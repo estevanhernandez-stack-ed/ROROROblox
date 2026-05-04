@@ -5,6 +5,7 @@ using ROROROblox.App.AppLifecycle;
 using ROROROblox.App.CookieCapture;
 using ROROROblox.App.Startup;
 using ROROROblox.App.Tray;
+using ROROROblox.App.Updates;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 
@@ -46,6 +47,37 @@ public partial class App : Application
         tray.Show();
         _singleInstance.StartListening(mainWindow);
         mainWindow.Show();
+
+        // Fire-and-forget startup checks. Failures are silent; banner stays null on no-drift / no-network.
+        _ = RunStartupChecksAsync();
+    }
+
+    private async Task RunStartupChecksAsync()
+    {
+        if (_services is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var updateChecker = _services.GetRequiredService<IUpdateChecker>();
+            await updateChecker.CheckForUpdatesAsync();
+        }
+        catch
+        {
+            // Best-effort — auto-update is comfort, not load-bearing.
+        }
+
+        try
+        {
+            var vm = _services.GetRequiredService<MainViewModel>();
+            await vm.LoadCompatBannerAsync();
+        }
+        catch
+        {
+            // Best-effort — version-drift banner is comfort, not load-bearing.
+        }
     }
 
     private static void ConfigureServices(IServiceCollection services)
@@ -66,8 +98,17 @@ public partial class App : Application
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("ROROROblox", version));
         });
 
+        // Compat checker uses its own HttpClient — different UA + different host pattern.
+        services.AddHttpClient<IRobloxCompatChecker, RobloxCompatChecker>(client =>
+        {
+            client.DefaultRequestHeaders.UserAgent.Clear();
+            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("ROROROblox", version));
+        });
+
         services.AddSingleton<IRobloxLauncher, RobloxLauncher>();
         services.AddSingleton<ICookieCapture, CookieCapture.CookieCapture>();
+        services.AddSingleton<IUpdateChecker, UpdateChecker>();
 
         // ViewModel + Window.
         services.AddSingleton<MainViewModel>();

@@ -1,0 +1,6 @@
+{
+  "knownGoodVersionMin": "0.700.0",
+  "knownGoodVersionMax": "0.704.999",
+  "mutexName": "Local\\ROBLOX_singletonEvent",
+  "generatedAt": "2026-05-04T00:00:00Z"
+}

@@ -19,20 +19,24 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly IRobloxApi _api;
     private readonly IAccountStore _accountStore;
     private readonly IRobloxLauncher _launcher;
+    private readonly IRobloxCompatChecker _compatChecker;
 
     private string _statusBanner = string.Empty;
+    private string? _robloxCompatBanner;
     private bool _isBusy;
 
     public MainViewModel(
         ICookieCapture cookieCapture,
         IRobloxApi api,
         IAccountStore accountStore,
-        IRobloxLauncher launcher)
+        IRobloxLauncher launcher,
+        IRobloxCompatChecker compatChecker)
     {
         _cookieCapture = cookieCapture;
         _api = api;
         _accountStore = accountStore;
         _launcher = launcher;
+        _compatChecker = compatChecker;
 
         AddAccountCommand = new RelayCommand(AddAccountAsync, () => !IsBusy);
         LaunchAccountCommand = new RelayCommand(p => LaunchAccountAsync(p as AccountSummary));
@@ -51,6 +55,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         get => _statusBanner;
         set => SetField(ref _statusBanner, value);
+    }
+
+    /// <summary>
+    /// Yellow drift banner — populated when the installed Roblox version is outside the remote
+    /// known-good range fetched from <c>roblox-compat.json</c>. Null when no drift / fetch failed.
+    /// Spec §7.1.
+    /// </summary>
+    public string? RobloxCompatBanner
+    {
+        get => _robloxCompatBanner;
+        set => SetField(ref _robloxCompatBanner, value);
     }
 
     public bool IsBusy
@@ -74,6 +89,23 @@ public sealed class MainViewModel : INotifyPropertyChanged
         catch (AccountStoreCorruptException)
         {
             ShowDpapiCorruptModal();
+        }
+    }
+
+    /// <summary>
+    /// Fires the remote compat fetch + version-drift check. Best-effort; failures leave the
+    /// banner null. Called by App.OnStartup after the main window is loaded.
+    /// </summary>
+    public async Task LoadCompatBannerAsync()
+    {
+        try
+        {
+            var result = await _compatChecker.CheckAsync();
+            RobloxCompatBanner = result.HasDrift ? result.Banner : null;
+        }
+        catch
+        {
+            RobloxCompatBanner = null;
         }
     }
 

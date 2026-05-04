@@ -330,6 +330,7 @@ Semantic versioning. v1.1.x for the initial release line. v1.2 will introduce pe
 - Live "Account is running" indicator (v1.2)
 - Cross-machine cookie sync (out of scope; revisit only if requested by clan)
 - Per-account default place URL (v1.2 candidate; v1.1 uses an app-level default — see §5.6)
+- Runtime mutex-name swap from remote config (v1.2 candidate; v1.1 hardcodes `Local\ROBLOX_singletonEvent` and ships a Velopack release on Roblox rename — see §11)
 
 ## 11. Decisions log
 
@@ -346,6 +347,7 @@ Semantic versioning. v1.1.x for the initial release line. v1.2 will introduce pe
 | Auth handshake requires non-empty `placelauncherurl` | Also caught at spike-time 2026-05-03. Without `placelauncherurl`, Roblox opens the launcher with cached account context but can't establish a session — the user sees the right avatar/username but is "not logged in." `LaunchAsync(cookie, placeUrl: null)` must resolve `placeUrl` to a default destination before URI construction. v1.1 uses an app-level default (set at first run or in settings); v1.2 candidate: per-account default place. Spec §5.6 + §10 updated inline. |
 | `IAccountStore.AddAsync` takes `avatarUrl` as a parameter | Spec v1.0's `AddAsync(displayName, cookie)` expected the store to fetch the avatar via `IRobloxApi` internally — but Core's clean layering wants the caller (MainViewModel, item 9) to coordinate the `IRobloxApi.GetAvatarHeadshotUrl` call and pass the result through. Adding `avatarUrl` as the second parameter avoids a back-pointer from `AccountStore` into `IRobloxApi` and keeps Core dependency-free at item 4 time. Pre-build drift, surgical inline edit. Spec §5.4 updated; checklist item 4 mirrors the change. |
 | `TouchLastLaunchedAsync` is the caller's responsibility, not the launcher's | Spec v1.0 §6.2 step 8 had RobloxLauncher call `IAccountStore.TouchLastLaunchedAsync(accountId)` — but `LaunchAsync(cookie, placeUrl)` has no accountId in its signature, so the launcher would need IAccountStore as a dependency just to look up which account a cookie belongs to (which it can't do anyway, since cookies aren't indexed). Cleaner: MainViewModel orchestrates `RetrieveCookieAsync(id) → LaunchAsync(cookie) → on Started, TouchLastLaunchedAsync(id)`. Pre-build drift, surgical edit. Spec §6.2 step 8 updated; checklist item 6 reflects. |
+| Mutex name stays hardcoded in v1.1; remote config drives only the version-drift banner | Spec §7.1 implies the mutex name itself comes from `roblox-compat.json` so a Roblox rename can ship via config-only. v1.1 instead hardcodes `Local\ROBLOX_singletonEvent` on `MutexHolder` and uses the remote config only for the version-drift banner. Rationale: runtime mutex-name swap requires a release+reacquire dance + cross-thread coordination that's bigger than item 10's scope. Trade for v1.1: if Roblox renames the mutex, ship a Velopack release with new hardcoded name (still hours, just a binary update instead of a config update). v1.2 candidate: introduce `IMutexHolder.RenameAsync` and DI factory that reads from cached config. Documented in §10 deferred. |
 
 ## Appendix A — Reference impl
 

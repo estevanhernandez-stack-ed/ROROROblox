@@ -118,6 +118,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -168,8 +169,20 @@
                        Foreground="{StaticResource WhiteBrush}" />
         </Border>
 
+        <!-- Roblox compat banner (drift detection per spec §7.1) -->
+        <Border Grid.Row="2" Padding="24,10"
+                Background="{StaticResource RowExpiredBgBrush}"
+                BorderBrush="{StaticResource RowExpiredAccentBrush}"
+                BorderThickness="0,0,0,1"
+                Visibility="{Binding RobloxCompatBanner, Converter={StaticResource StringToVisibilityConverter}}">
+            <TextBlock Text="{Binding RobloxCompatBanner}"
+                       FontSize="11"
+                       Foreground="{StaticResource RowExpiredAccentBrush}"
+                       TextWrapping="Wrap" />
+        </Border>
+
         <!-- Account list -->
-        <ScrollViewer Grid.Row="2" Padding="24,16,24,16" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="3" Padding="24,16,24,16" VerticalScrollBarVisibility="Auto">
             <Grid>
                 <ItemsControl ItemsSource="{Binding Accounts}" />
 
@@ -191,7 +204,7 @@
         </ScrollViewer>
 
         <!-- Footer -->
-        <Border Grid.Row="3" Padding="24,10" Background="{StaticResource NavyBrush}"
+        <Border Grid.Row="4" Padding="24,10" Background="{StaticResource NavyBrush}"
                 BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,1,0,0">
             <Grid>
                 <Grid.ColumnDefinitions>
