@@ -1108,6 +1108,44 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Launch <paramref name="source"/> into <paramref name="target"/>'s current Roblox server
+    /// via <see cref="LaunchTarget.FollowFriend"/>. Roblox does the privacy + game-state check
+    /// server-side; if target isn't currently in a place, the launcher silently lands at home.
+    /// We surface a status banner so the user knows whether the chip click did anything.
+    /// </summary>
+    public async Task FollowAltAsync(AccountSummary? source, AccountSummary? target)
+    {
+        if (source is null || target is null) return;
+        if (ReferenceEquals(source, target)) return;
+        if (source.SessionExpired)
+        {
+            StatusBanner = $"{source.DisplayName} has an expired session — re-authenticate first.";
+            return;
+        }
+        if (target.RobloxUserId is not long targetUserId || targetUserId <= 0)
+        {
+            // RobloxUserId is cached lazily (validation pass + cookie capture). If it's never
+            // landed, we don't have a userId to route to. Surface the gap rather than fail
+            // silently inside the launcher.
+            StatusBanner = $"Couldn't follow {target.DisplayName} — Roblox userId not yet known. " +
+                           "Try Re-authenticating that account, or wait a moment after login.";
+            return;
+        }
+        if (!target.IsRunning)
+        {
+            // Roblox returns "no game" when the target isn't in a place. We still fire the
+            // launch (Roblox might surface its own friendly error), but warn the user.
+            StatusBanner = $"{target.DisplayName} isn't currently in a game — Roblox may bounce {source.DisplayName} to the home page.";
+        }
+        else
+        {
+            StatusBanner = $"Following {target.DisplayName} from {source.DisplayName}...";
+        }
+        var follow = new LaunchTarget.FollowFriend(targetUserId);
+        await LaunchAccountAsync(source, overrideTarget: follow);
+    }
+
+    /// <summary>
     /// Push the current AccountSummary's caption color to any running Roblox window for that
     /// account RIGHT NOW (instead of waiting up to 1.5s for the decorator's poll). Called by
     /// the row's color picker after Apply / Reset so the visual feedback is instant.

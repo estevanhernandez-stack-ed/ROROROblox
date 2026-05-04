@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using ROROROblox.App.About;
 using ROROROblox.App.Theming;
@@ -143,11 +144,15 @@ internal partial class MainWindow : FluentWindow
 
     // Drag-to-reorder. The grip element on each row records the press position; once the cursor
     // moves a system-threshold distance with the left button held, we initiate a DragDrop
-    // operation carrying the AccountSummary as the data. The row's Border accepts the drop and
-    // calls back into MainViewModel.MoveAccountAsync to swap and persist.
+    // carrying the AccountSummary. Visual polish:
+    //   - DragGhostPopup (declared in XAML) hosts a RenderTargetBitmap snapshot of the source
+    //     row that follows the cursor at 0.78 opacity. Repositioned on every PreviewDragOver.
+    //   - Cyan insertion line above the target row via AccountSummary.IsDropTarget binding in
+    //     the row template.
     private const string DragFormat = "ROROROblox.AccountSummary";
     private Point _gripPressPoint;
     private AccountSummary? _gripPressedSummary;
+    private bool _ghostActive;
 
     private void OnAccountGripMouseDown(object sender, MouseButtonEventArgs e)
     {
@@ -173,6 +178,13 @@ internal partial class MainWindow : FluentWindow
             return;
         }
 
+        var sourceRow = FindParentRowBorder((DependencyObject)sender);
+        if (sourceRow is not null)
+        {
+            StartDragGhost(sourceRow, current);
+            PreviewDragOver += OnDragGhostFollow;
+        }
+
         try
         {
             var data = new DataObject(DragFormat, _gripPressedSummary);
@@ -181,7 +193,98 @@ internal partial class MainWindow : FluentWindow
         finally
         {
             _gripPressedSummary = null;
+            // Clear ghost + drop-target highlights regardless of how the drag ended (drop /
+            // cancel / outside-window release / Esc).
+            PreviewDragOver -= OnDragGhostFollow;
+            EndDragGhost();
+            ClearAllDropTargets();
         }
+    }
+
+    private void StartDragGhost(FrameworkElement sourceRow, Point cursorWin)
+    {
+        try
+        {
+            var width = (int)Math.Ceiling(sourceRow.ActualWidth);
+            var height = (int)Math.Ceiling(sourceRow.ActualHeight);
+            if (width <= 0 || height <= 0) return;
+
+            // Render at the source's actual DPI so the bitmap doesn't blur on high-DPI displays.
+            var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(sourceRow);
+            var rtb = new System.Windows.Media.Imaging.RenderTargetBitmap(
+                pixelWidth: (int)Math.Ceiling(width * dpi.DpiScaleX),
+                pixelHeight: (int)Math.Ceiling(height * dpi.DpiScaleY),
+                dpiX: dpi.PixelsPerInchX,
+                dpiY: dpi.PixelsPerInchY,
+                pixelFormat: System.Windows.Media.PixelFormats.Pbgra32);
+            rtb.Render(sourceRow);
+            rtb.Freeze();
+            DragGhostImage.Source = rtb;
+            DragGhostImage.Width = width;
+            DragGhostImage.Height = height;
+
+            PositionDragGhost(cursorWin);
+            DragGhostPopup.IsOpen = true;
+            _ghostActive = true;
+        }
+        catch
+        {
+            // Ghost is decoration only — never block the drag if rendering fails.
+            _ghostActive = false;
+        }
+    }
+
+    private void PositionDragGhost(Point cursorWin)
+    {
+        if (!_ghostActive) return;
+        var screenPoint = PointToScreen(cursorWin);
+        // Popup with Placement=Absolute uses screen coordinates. Offset slightly so the ghost
+        // sits below-right of the cursor instead of dead-center.
+        DragGhostPopup.HorizontalOffset = screenPoint.X + 8;
+        DragGhostPopup.VerticalOffset = screenPoint.Y + 8;
+    }
+
+    private void EndDragGhost()
+    {
+        DragGhostPopup.IsOpen = false;
+        DragGhostImage.Source = null;
+        _ghostActive = false;
+    }
+
+    private void OnDragGhostFollow(object sender, DragEventArgs e)
+    {
+        if (!_ghostActive) return;
+        PositionDragGhost(e.GetPosition(this));
+    }
+
+    private static FrameworkElement? FindParentRowBorder(DependencyObject start)
+    {
+        var current = start;
+        while (current is not null)
+        {
+            if (current is FrameworkElement fe && fe.Name == "AccountRowBorder")
+            {
+                return fe;
+            }
+            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+        }
+        return null;
+    }
+
+    private void OnAccountRowDragEnter(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DragFormat)) return;
+        if (sender is not FrameworkElement el || el.Tag is not AccountSummary target) return;
+        // Only one row can be highlighted at a time — clear any others first to defend against
+        // racey enter-before-leave events.
+        ClearAllDropTargets(except: target);
+        target.IsDropTarget = true;
+    }
+
+    private void OnAccountRowDragLeave(object sender, DragEventArgs e)
+    {
+        if (sender is not FrameworkElement el || el.Tag is not AccountSummary target) return;
+        target.IsDropTarget = false;
     }
 
     private void OnAccountRowDragOver(object sender, DragEventArgs e)
@@ -197,8 +300,55 @@ internal partial class MainWindow : FluentWindow
         if (sender is not FrameworkElement el || el.Tag is not AccountSummary target) return;
         if (DataContext is not MainViewModel vm) return;
 
+        ClearAllDropTargets();
         await vm.MoveAccountAsync(source, target);
         e.Handled = true;
+    }
+
+    private void ClearAllDropTargets(AccountSummary? except = null)
+    {
+        if (DataContext is not MainViewModel vm) return;
+        foreach (var summary in vm.Accounts)
+        {
+            if (!ReferenceEquals(summary, except))
+            {
+                summary.IsDropTarget = false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// A follow-alt chip in the row's follow strip got clicked. The chip's Tag is the TARGET
+    /// account (the one to follow); the row that owns the chip is the SOURCE (the one being
+    /// launched). Walk up the visual tree to find the source's AccountSummary, then route to
+    /// MainViewModel.FollowAltAsync.
+    /// </summary>
+    private async void OnFollowChipClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement el || el.Tag is not AccountSummary target) return;
+        // The row's outer Border was named AccountRowBorder in the template — it carries the
+        // row's AccountSummary as DataContext. Walk up until we find it.
+        var source = FindRowAccountSummary(el);
+        if (source is null) return;
+        if (DataContext is not MainViewModel vm) return;
+        await vm.FollowAltAsync(source, target);
+        e.Handled = true;
+    }
+
+    private static AccountSummary? FindRowAccountSummary(DependencyObject start)
+    {
+        var current = start;
+        while (current is not null)
+        {
+            if (current is FrameworkElement fe
+                && fe.DataContext is AccountSummary summary
+                && fe.Name == "AccountRowBorder")
+            {
+                return summary;
+            }
+            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+        }
+        return null;
     }
 
     /// <summary>

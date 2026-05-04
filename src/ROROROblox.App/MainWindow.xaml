@@ -8,6 +8,7 @@
                  Height="600" Width="900"
                  MinHeight="400" MinWidth="860"
                  WindowStartupLocation="CenterScreen"
+                 AllowDrop="True"
                  Background="{DynamicResource BgBrush}"
                  Icon="/ROROROblox.App;component/Tray/Resources/tray-on-titlebar.png"
                  ExtendsContentIntoTitleBar="True"
@@ -85,11 +86,23 @@
                  MainViewModel.MoveAccountAsync. The row no longer carries a MinWidth — the
                  parent Window.MinWidth=860 floors the available width, and the column layout
                  (Auto + * + Auto SharedSizeGroup) settles within that. -->
+            <!-- Wrap row in a StackPanel so the cyan insertion-line indicator renders ABOVE
+                 the row when this row is the active drop target. Visibility=Collapsed when
+                 inactive so the layout doesn't reserve space — the appearance + small layout
+                 shift is the visual cue for "drop lands here." -->
+            <StackPanel Margin="0,0,0,8">
+            <Border Height="3"
+                    Margin="0,0,0,4"
+                    CornerRadius="2"
+                    Background="{DynamicResource CyanBrush}"
+                    Visibility="{Binding IsDropTarget, Converter={StaticResource BoolToVisibilityConverter}}" />
             <Border x:Name="AccountRowBorder"
-                    Margin="0,0,0,8" Padding="14,10"
+                    Padding="14,10"
                     CornerRadius="8"
                     AllowDrop="True"
                     Tag="{Binding}"
+                    DragEnter="OnAccountRowDragEnter"
+                    DragLeave="OnAccountRowDragLeave"
                     DragOver="OnAccountRowDragOver"
                     Drop="OnAccountRowDrop"
                     Background="{DynamicResource RowBgBrush}">
@@ -143,7 +156,15 @@
                          The ring is what makes the per-account color visible inside the app even
                          when Roblox's window chrome refuses the DWM caption tint. -->
                     <Grid Grid.Column="1" Width="52" Height="52" VerticalAlignment="Center">
-                        <Ellipse Fill="{Binding ., Converter={StaticResource CaptionColorBrushConverter}}" />
+                        <Ellipse>
+                            <Ellipse.Fill>
+                                <MultiBinding Converter="{StaticResource CaptionColorBrushConverter}">
+                                    <Binding Path="CaptionColorHex" />
+                                    <Binding Path="IsMain" />
+                                    <Binding Path="Id" />
+                                </MultiBinding>
+                            </Ellipse.Fill>
+                        </Ellipse>
                         <Border Width="44" Height="44" CornerRadius="22"
                                 Background="{DynamicResource NavyBrush}" ClipToBounds="True"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -196,12 +217,114 @@
                             </TextBlock>
                             <!-- Selection toggle for batch launches. Filled cyan = included; hollow = skipped.
                                  Defaults to selected; user toggles to exclude an account from Launch multiple
-                                 / Private server runs. Per-app-session state — resets on restart. -->
+                                 / Private server runs. Persisted to accounts.dat so the choice sticks. -->
                             <ToggleButton Style="{StaticResource SelectionDotStyle}"
                                           IsChecked="{Binding IsSelected}"
-                                          Margin="12,0,0,0"
+                                          Margin="12,0,4,0"
                                           VerticalAlignment="Center"
-                                          ToolTip="Include this account in Launch multiple / Private server. Click to skip." />
+                                          ToolTip="Include this account in Launch multiple / Private server batches. Click to skip." />
+                            <TextBlock FontSize="11"
+                                       VerticalAlignment="Center"
+                                       ToolTip="Whether this account joins Launch multiple / Private server batch launches. Click the dot to flip.">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="In batches" />
+                                        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected}" Value="False">
+                                                <Setter Property="Text" Value="Skipped" />
+                                                <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                                                <Setter Property="Opacity" Value="0.65" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <!-- Follow strip — "Follow:" label + chips of OTHER accounts. Click a chip to
+                             launch THIS row's account into that account's current Roblox server
+                             (LaunchTarget.FollowFriend). Self-chip hides via EqualsToCollapseConverter
+                             on Id. Whole strip (label + chips) collapses when there's nothing to
+                             follow (≤ 1 saved account). -->
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding DataContext.Accounts.Count, RelativeSource={RelativeSource AncestorType=Window}}" Value="0">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding DataContext.Accounts.Count, RelativeSource={RelativeSource AncestorType=Window}}" Value="1">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock Text="Follow:"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,6,0"
+                                       ToolTip="Click a chip to launch this account into another account's current Roblox server." />
+                            <ItemsControl ItemsSource="{Binding DataContext.Accounts, RelativeSource={RelativeSource AncestorType=Window}}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:AccountSummary}">
+                                    <Button Click="OnFollowChipClick"
+                                            Tag="{Binding}"
+                                            Margin="0,0,6,0"
+                                            Padding="6,3"
+                                            BorderThickness="1"
+                                            Background="{DynamicResource NavyBrush}"
+                                            BorderBrush="{DynamicResource DividerBrush}"
+                                            Cursor="Hand">
+                                        <!-- Hide the chip that represents the row's own account so
+                                             you can't follow yourself. -->
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Value="Collapsed">
+                                                        <DataTrigger.Binding>
+                                                            <MultiBinding Converter="{StaticResource EqualsToCollapseConverter}">
+                                                                <Binding Path="Id" />
+                                                                <Binding Path="DataContext.Id" RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                                            </MultiBinding>
+                                                        </DataTrigger.Binding>
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                        <Button.ToolTip>
+                                            <TextBlock>
+                                                <Run Text="Follow " /><Run Text="{Binding DisplayName, Mode=OneWay}" /><Run Text=" into their server" />
+                                            </TextBlock>
+                                        </Button.ToolTip>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Border Width="14" Height="14" CornerRadius="7"
+                                                    Background="{DynamicResource NavyBrush}"
+                                                    ClipToBounds="True"
+                                                    VerticalAlignment="Center"
+                                                    Margin="0,0,5,0">
+                                                <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" />
+                                            </Border>
+                                            <TextBlock Text="{Binding DisplayName}"
+                                                       FontSize="10"
+                                                       Foreground="{DynamicResource WhiteBrush}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       MaxWidth="80" />
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                         </StackPanel>
                     </StackPanel>
 
@@ -213,13 +336,20 @@
                         <Border Width="22" Height="14"
                                 CornerRadius="3"
                                 Margin="0,0,8,0"
-                                Background="{Binding ., Converter={StaticResource CaptionColorBrushConverter}}"
                                 BorderBrush="{DynamicResource DividerBrush}"
                                 BorderThickness="1"
                                 Cursor="Hand"
                                 ToolTip="Pick a Roblox window title-bar color for this account."
                                 MouseLeftButtonUp="OnCaptionColorSwatchClick"
-                                Tag="{Binding}" />
+                                Tag="{Binding}">
+                            <Border.Background>
+                                <MultiBinding Converter="{StaticResource CaptionColorBrushConverter}">
+                                    <Binding Path="CaptionColorHex" />
+                                    <Binding Path="IsMain" />
+                                    <Binding Path="Id" />
+                                </MultiBinding>
+                            </Border.Background>
+                        </Border>
 
                         <!-- Set / unset main. Magenta filled star = main; outlined grey star = not.
                              Click toggles. Lives leftmost so it groups visually with the MAIN pill on
@@ -353,6 +483,7 @@
                     </StackPanel>
                 </Grid>
             </Border>
+            </StackPanel>
         </DataTemplate>
     </ui:FluentWindow.Resources>
 
@@ -817,5 +948,22 @@
                 </TextBlock>
             </Grid>
         </Border>
+
+        <!-- Drag-ghost preview Popup. Positioned absolute (screen coords) and repositioned on
+             every PreviewDragOver during a drag-to-reorder gesture. Uses a RenderTargetBitmap
+             snapshot rather than VisualBrush of the live row — adorners + live VisualBrushes
+             both have known WPF rendering issues during a modal drag operation; the bitmap+Popup
+             combination renders reliably across versions. -->
+        <Popup x:Name="DragGhostPopup"
+               Placement="Absolute"
+               AllowsTransparency="True"
+               IsOpen="False"
+               AllowDrop="False">
+            <Border Opacity="0.78" IsHitTestVisible="False" Background="Transparent">
+                <Image x:Name="DragGhostImage"
+                       Stretch="None"
+                       IsHitTestVisible="False" />
+            </Border>
+        </Popup>
     </Grid>
 </ui:FluentWindow>

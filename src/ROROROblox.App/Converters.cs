@@ -62,12 +62,17 @@ internal sealed class ZeroToVisibilityConverter : IValueConverter
 }
 
 /// <summary>
-/// Translate an <see cref="ROROROblox.App.ViewModels.AccountSummary"/> into the SolidColorBrush
-/// representing its current Roblox-window caption color. Mirrors
-/// <c>RobloxWindowDecorator.ResolveCaptionColor</c>: manual hex wins, then magenta-for-main,
-/// then a stable index from <c>Id</c> into the auto-palette. Used by the row's color swatch.
+/// Translate per-account caption-color signal into a SolidColorBrush. Implemented as an
+/// <see cref="IMultiValueConverter"/> deliberately: a single <c>{Binding .}</c> on
+/// AccountSummary doesn't re-evaluate when sub-properties (CaptionColorHex / IsMain) change,
+/// so the row swatch + avatar ring would freeze on first paint. MultiBinding subscribes to
+/// each Path individually and re-fires when any of them notifies.
+/// <para>
+/// Resolution order mirrors <c>RobloxWindowDecorator.ResolveCaptionColor</c>:
+/// manual hex wins → magenta-for-main → stable hash-index into the 8-palette.
+/// </para>
 /// </summary>
-internal sealed class CaptionColorBrushConverter : IValueConverter
+internal sealed class CaptionColorBrushConverter : IMultiValueConverter
 {
     // Same palette as RobloxWindowDecorator.AutoPalette — keep in sync if either changes.
     private static readonly System.Windows.Media.Color[] AutoPalette =
@@ -84,14 +89,16 @@ internal sealed class CaptionColorBrushConverter : IValueConverter
     private static readonly System.Windows.Media.Color MainColor =
         System.Windows.Media.Color.FromRgb(0xE1, 0x3A, 0xA0);
 
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    /// <summary>
+    /// Bindings, in order: <c>CaptionColorHex</c> (string?), <c>IsMain</c> (bool),
+    /// <c>Id</c> (Guid). Order matters — match the MultiBinding declaration in MainWindow.xaml.
+    /// </summary>
+    public object Convert(object[] values, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is not ROROROblox.App.ViewModels.AccountSummary summary)
-        {
-            return new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Transparent);
-        }
-        var color = MainColor; // safe fallback
-        var manual = summary.CaptionColorHex;
+        var manual = values.Length > 0 ? values[0] as string : null;
+        var isMain = values.Length > 1 && values[1] is bool b && b;
+        var id = values.Length > 2 && values[2] is Guid g ? g : Guid.Empty;
+
         if (!string.IsNullOrWhiteSpace(manual))
         {
             try
@@ -106,23 +113,40 @@ internal sealed class CaptionColorBrushConverter : IValueConverter
                 // Bad hex → fall through to auto path so the swatch still renders.
             }
         }
-        if (summary.IsMain)
-        {
-            color = MainColor;
-        }
-        else
-        {
-            var hash = summary.Id.GetHashCode();
-            var idx = ((hash % AutoPalette.Length) + AutoPalette.Length) % AutoPalette.Length;
-            color = AutoPalette[idx];
-        }
+
+        var color = isMain ? MainColor : ColorForId(id);
         return new System.Windows.Media.SolidColorBrush(color);
     }
 
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object[] ConvertBack(object value, Type[] targetTypes, object? parameter, CultureInfo culture)
     {
         throw new NotSupportedException();
     }
+
+    private static System.Windows.Media.Color ColorForId(Guid id)
+    {
+        if (id == Guid.Empty) return MainColor;
+        var hash = id.GetHashCode();
+        var idx = ((hash % AutoPalette.Length) + AutoPalette.Length) % AutoPalette.Length;
+        return AutoPalette[idx];
+    }
+}
+
+/// <summary>
+/// Compare two values and return <see cref="Visibility.Collapsed"/> when they're equal,
+/// <see cref="Visibility.Visible"/> otherwise. Used by the follow-alt chip strip — each chip
+/// represents one account; the chip whose Id matches the host row's Id self-hides so a row
+/// never lists itself as a follow target.
+/// </summary>
+internal sealed class EqualsToCollapseConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (values.Length < 2) return Visibility.Visible;
+        return Equals(values[0], values[1]) ? Visibility.Collapsed : Visibility.Visible;
+    }
+    public object[] ConvertBack(object value, Type[] targetTypes, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
 }
 
 /// <summary>

@@ -3,9 +3,9 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Welcome to ROROROblox"
-        Height="500" Width="560"
+        Height="760" Width="600"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         Background="{DynamicResource BgBrush}"
         Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
 
@@ -49,7 +49,8 @@
                        TextWrapping="Wrap" />
         </StackPanel>
 
-        <StackPanel Grid.Row="1" Margin="0,22,0,0">
+        <ScrollViewer Grid.Row="1" Margin="0,22,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
             <Border Style="{StaticResource StepStyle}">
                 <StackPanel Orientation="Horizontal">
                     <Border Style="{StaticResource StepNumberStyle}">
@@ -107,14 +108,69 @@
                 </StackPanel>
             </Border>
 
-            <TextBlock Margin="0,12,0,0" FontSize="11"
-                       Foreground="{DynamicResource MutedTextBrush}"
-                       TextWrapping="Wrap">
-                Closing the window minimizes to the tray. Right-click the tray icon to fully Quit
-                or toggle Multi-Instance. The Diagnostics button in the header shows what the app
-                sees if anything looks off.
-            </TextBlock>
+            <Border Background="{DynamicResource RowBgBrush}"
+                    CornerRadius="8" Padding="14,10"
+                    Margin="0,12,0,0">
+                <StackPanel>
+                    <TextBlock Text="Quick tips for the row controls"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource CyanBrush}"
+                               Margin="0,0,0,6" />
+                    <TextBlock FontSize="11"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,3">
+                        <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="&#x2630;" />
+                        <Run Text=" on the left of a row — drag to reorder." />
+                    </TextBlock>
+                    <TextBlock FontSize="11"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,3">
+                        <Run FontWeight="SemiBold" Foreground="{DynamicResource MagentaBrush}" Text="&#x2605;" />
+                        <Run Text=" star next to a row's actions — mark that account as your main (one at a time). The main launches on tray double-click and is the default for compact mode." />
+                    </TextBlock>
+                    <TextBlock FontSize="11"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,3">
+                        <Run Text="The colored swatch next to the star — pick a per-account color. The avatar ring + Roblox window title bar pick it up so you can tell windows apart." />
+                    </TextBlock>
+                    <TextBlock FontSize="11"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,3">
+                        <Run Text="The dot labeled " />
+                        <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="In batches" />
+                        <Run Text=" / " />
+                        <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="Skipped" />
+                        <Run Text=" — toggles whether this account joins Launch multiple / Private server runs. Persists across restarts." />
+                    </TextBlock>
+                    <TextBlock FontSize="11"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,3">
+                        <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="Follow:" />
+                        <Run Text=" chips below an account — click one of your other accounts to launch THIS one into THAT account's current Roblox server." />
+                    </TextBlock>
+                    <TextBlock FontSize="11"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,3">
+                        <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="Compact" />
+                        <Run Text=" button at the bottom-left — collapses to a tiny strip showing only running accounts. Great for parking it on a second monitor while you play." />
+                    </TextBlock>
+                    <TextBlock FontSize="11"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,4,0,0">
+                        Closing X minimizes to tray; right-click the tray icon for Preferences, History,
+                        Diagnostics, or Quit.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
         </StackPanel>
+        </ScrollViewer>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
             <Button Content="Got it" Padding="22,8"

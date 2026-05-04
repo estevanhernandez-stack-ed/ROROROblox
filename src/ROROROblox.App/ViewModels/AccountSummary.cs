@@ -21,6 +21,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private DateTimeOffset? _lastClosedAtUtc;
     private bool _isSelected = true;
     private string? _captionColorHex;
+    private bool _isDropTarget;
 
     public AccountSummary(Account account)
     {
@@ -141,6 +142,17 @@ public sealed class AccountSummary : INotifyPropertyChanged
     {
         get => _isSelected;
         set => SetField(ref _isSelected, value);
+    }
+
+    /// <summary>
+    /// True while this row is the active drop target during a drag-to-reorder gesture.
+    /// MainWindow's DragEnter / DragLeave / Drop handlers flip it; the row template binds a
+    /// cyan insertion-line above the row to this. Pure UI state — never persisted.
+    /// </summary>
+    public bool IsDropTarget
+    {
+        get => _isDropTarget;
+        set => SetField(ref _isDropTarget, value);
     }
 
     /// <summary>

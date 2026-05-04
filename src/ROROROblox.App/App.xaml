@@ -17,6 +17,7 @@
             <local:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter" />
             <local:StatusDotBrushConverter x:Key="StatusDotBrushConverter" />
             <local:CaptionColorBrushConverter x:Key="CaptionColorBrushConverter" />
+            <local:EqualsToCollapseConverter x:Key="EqualsToCollapseConverter" />
 
             <!-- Themed brushes — single source of truth at app level. ThemeService mutates
                  each brush's Color at startup + on theme change. References from any window
