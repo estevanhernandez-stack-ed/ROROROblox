@@ -31,4 +31,11 @@ public interface IRobloxApi
     /// (place not found, network error, malformed response).
     /// </summary>
     Task<GameMetadata?> GetGameMetadataByPlaceIdAsync(long placeId);
+
+    /// <summary>
+    /// Search Roblox games by free-text query via the public omni-search endpoint. Filters out
+    /// non-Game content groups (users, groups). Bulk-fetches icons for all returned games.
+    /// Caps results at 20. Returns empty on network failure / malformed response.
+    /// </summary>
+    Task<IReadOnlyList<GameSearchResult>> SearchGamesAsync(string query);
 }

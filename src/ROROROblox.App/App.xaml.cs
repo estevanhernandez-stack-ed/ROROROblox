@@ -44,6 +44,12 @@ public partial class App : Application
         WireTrayEvents(tray, mutex, mainWindow);
         WireMutexLost(mutex, tray);
 
+        // Default Multi-Instance ON. Acquire the ROBLOX_singletonEvent mutex at startup so the
+        // user can launch alts immediately without clicking the tray toggle first. The tray menu
+        // still lets them toggle OFF for single-instance behavior.
+        var acquired = mutex.Acquire();
+        tray.UpdateStatus(acquired ? MultiInstanceState.On : MultiInstanceState.Error);
+
         tray.Show();
         _singleInstance.StartListening(mainWindow);
         mainWindow.Show();

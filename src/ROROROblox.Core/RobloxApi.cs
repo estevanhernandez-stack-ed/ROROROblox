@@ -20,6 +20,7 @@ public sealed class RobloxApi : IRobloxApi
     private const string PlaceUniverseEndpoint = "https://apis.roblox.com/universes/v1/places";
     private const string GamesEndpoint = "https://games.roblox.com/v1/games";
     private const string GameIconsEndpoint = "https://thumbnails.roblox.com/v1/games/icons";
+    private const string OmniSearchEndpoint = "https://apis.roblox.com/search-api/omni-search";
     private const string Referer = "https://www.roblox.com/";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -223,6 +224,87 @@ public sealed class RobloxApi : IRobloxApi
         return new GameMetadata(placeId, universeId, name, iconUrl);
     }
 
+    public async Task<IReadOnlyList<GameSearchResult>> SearchGamesAsync(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return [];
+        }
+
+        var sessionId = Guid.NewGuid().ToString();
+        var searchUrl = $"{OmniSearchEndpoint}?searchQuery={Uri.EscapeDataString(query)}&pageType=all&sessionId={sessionId}";
+
+        OmniSearchResponse? payload;
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, searchUrl);
+            using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                return [];
+            }
+            payload = await response.Content
+                .ReadFromJsonAsync<OmniSearchResponse>(JsonOptions)
+                .ConfigureAwait(false);
+        }
+        catch
+        {
+            return [];
+        }
+
+        var games = payload?.SearchResults?
+            .Where(g => string.Equals(g.ContentGroupType, "Game", StringComparison.OrdinalIgnoreCase))
+            .SelectMany(g => g.Contents ?? [])
+            .Where(c => c.UniverseId > 0 && c.RootPlaceId > 0 && !string.IsNullOrEmpty(c.Name))
+            .Take(20)
+            .ToList()
+            ?? [];
+
+        if (games.Count == 0)
+        {
+            return [];
+        }
+
+        // Bulk icon fetch -- one HTTP call instead of N.
+        var iconsByUniverseId = new Dictionary<long, string>();
+        try
+        {
+            var universeIds = string.Join(",", games.Select(g => g.UniverseId));
+            var iconUrl = $"{GameIconsEndpoint}?universeIds={universeIds}&size=150x150&format=Png&isCircular=false";
+            using var iconRequest = new HttpRequestMessage(HttpMethod.Get, iconUrl);
+            using var iconResponse = await _httpClient.SendAsync(iconRequest).ConfigureAwait(false);
+            if (iconResponse.IsSuccessStatusCode)
+            {
+                var iconPayload = await iconResponse.Content
+                    .ReadFromJsonAsync<GameIconsResponse>(JsonOptions)
+                    .ConfigureAwait(false);
+                if (iconPayload?.Data != null)
+                {
+                    foreach (var item in iconPayload.Data)
+                    {
+                        if (item.TargetId > 0 && !string.IsNullOrEmpty(item.ImageUrl))
+                        {
+                            iconsByUniverseId[item.TargetId] = item.ImageUrl;
+                        }
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Best-effort; results without icons still useful.
+        }
+
+        return games.Select(g => new GameSearchResult(
+            PlaceId: g.RootPlaceId,
+            UniverseId: g.UniverseId,
+            Name: g.Name,
+            CreatorName: g.CreatorName ?? string.Empty,
+            PlayerCount: g.PlayerCount,
+            IconUrl: iconsByUniverseId.TryGetValue(g.UniverseId, out var icon) ? icon : string.Empty
+        )).ToList();
+    }
+
     private async Task<HttpResponseMessage> PostAuthTicketAsync(string cookie, string? csrfToken)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, AuthTicketEndpoint);
@@ -262,4 +344,16 @@ public sealed class RobloxApi : IRobloxApi
     private sealed record UniverseLookupResponse(long? UniverseId);
     private sealed record GamesListResponse(GamesListItem[] Data);
     private sealed record GamesListItem(string Name);
+    private sealed record OmniSearchResponse(OmniSearchGroup[]? SearchResults);
+    private sealed record OmniSearchGroup(string ContentGroupType, OmniSearchContent[]? Contents);
+    private sealed record OmniSearchContent(
+        long UniverseId,
+        long RootPlaceId,
+        string Name,
+        string? CreatorName,
+        long PlayerCount);
+    private sealed record GameIconsResponse(GameIconItem[] Data);
+    private sealed record GameIconItem(
+        long TargetId,
+        [property: JsonPropertyName("imageUrl")] string ImageUrl);
 }

@@ -295,4 +295,91 @@ public class RobloxApiTests
             Content = new StringContent(json, Encoding.UTF8, "application/json"),
         };
     }
+
+    // === SearchGamesAsync ===
+
+    [Fact]
+    public async Task SearchGamesAsync_HappyPath_ReturnsGamesWithIcons()
+    {
+        var (api, stub) = CreateApi();
+        // Step 1: omni-search returns mixed content groups; we keep only Game.
+        stub.EnqueueResponse(JsonResponse("""
+            {
+              "searchResults": [
+                {
+                  "contentGroupType": "Game",
+                  "contents": [
+                    {"universeId": 100, "rootPlaceId": 920587237, "name": "Adopt Me!", "creatorName": "DreamCraft", "playerCount": 50000},
+                    {"universeId": 200, "rootPlaceId": 142823291, "name": "Murder Mystery", "creatorName": "Nikilis", "playerCount": 30000}
+                  ]
+                },
+                {
+                  "contentGroupType": "User",
+                  "contents": [
+                    {"universeId": 999, "rootPlaceId": 0, "name": "ShouldBeFiltered", "creatorName": null, "playerCount": 0}
+                  ]
+                }
+              ]
+            }
+            """));
+        // Step 2: bulk icon fetch.
+        stub.EnqueueResponse(JsonResponse("""
+            {"data": [
+              {"targetId": 100, "imageUrl": "https://tr.rbxcdn.com/100.png"},
+              {"targetId": 200, "imageUrl": "https://tr.rbxcdn.com/200.png"}
+            ]}
+            """));
+
+        var results = await api.SearchGamesAsync("adopt me");
+
+        Assert.Equal(2, results.Count);
+        Assert.Equal("Adopt Me!", results[0].Name);
+        Assert.Equal(920587237, results[0].PlaceId);
+        Assert.Equal("DreamCraft", results[0].CreatorName);
+        Assert.Equal(50000, results[0].PlayerCount);
+        Assert.Equal("https://tr.rbxcdn.com/100.png", results[0].IconUrl);
+        Assert.Equal("Murder Mystery", results[1].Name);
+    }
+
+    [Fact]
+    public async Task SearchGamesAsync_EmptyQuery_ReturnsEmpty()
+    {
+        var (api, stub) = CreateApi();
+
+        var results = await api.SearchGamesAsync("   ");
+
+        Assert.Empty(results);
+        Assert.Empty(stub.Requests);  // didn't even hit the wire
+    }
+
+    [Fact]
+    public async Task SearchGamesAsync_NetworkFailure_ReturnsEmpty()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(System.Net.HttpStatusCode.InternalServerError));
+
+        var results = await api.SearchGamesAsync("anything");
+
+        Assert.Empty(results);
+    }
+
+    [Fact]
+    public async Task SearchGamesAsync_IconFetchFails_StillReturnsResultsWithEmptyIcons()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(JsonResponse("""
+            {"searchResults": [
+              {"contentGroupType": "Game", "contents": [
+                {"universeId": 100, "rootPlaceId": 1, "name": "X", "creatorName": "Y", "playerCount": 5}
+              ]}
+            ]}
+            """));
+        stub.EnqueueResponse(Response(System.Net.HttpStatusCode.NotFound));
+
+        var results = await api.SearchGamesAsync("x");
+
+        Assert.Single(results);
+        Assert.Equal("X", results[0].Name);
+        Assert.Equal(string.Empty, results[0].IconUrl);
+    }
 }

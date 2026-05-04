@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using ROROROblox.Core;
 
 namespace ROROROblox.App.Settings;
@@ -10,6 +11,7 @@ internal partial class SettingsWindow : Window
     private readonly IFavoriteGameStore _favorites;
     private readonly IRobloxApi _api;
     private readonly ObservableCollection<FavoriteGame> _items = [];
+    private readonly ObservableCollection<GameSearchResult> _searchItems = [];
 
     public SettingsWindow(IFavoriteGameStore favorites, IRobloxApi api)
     {
@@ -17,13 +19,84 @@ internal partial class SettingsWindow : Window
         _api = api;
         InitializeComponent();
         FavoritesList.ItemsSource = _items;
+        SearchResultsList.ItemsSource = _searchItems;
         Loaded += OnLoaded;
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
         await ReloadAsync();
-        UrlInput.Focus();
+        SearchInput.Focus();
+    }
+
+    private void OnSearchKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            OnSearchClick(sender, e);
+            e.Handled = true;
+        }
+    }
+
+    private async void OnSearchClick(object sender, RoutedEventArgs e)
+    {
+        var query = SearchInput.Text?.Trim();
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            StatusText.Text = "Type a game name to search.";
+            return;
+        }
+
+        SearchButton.IsEnabled = false;
+        StatusText.Text = $"Searching for \"{query}\"...";
+
+        try
+        {
+            var results = await _api.SearchGamesAsync(query);
+            _searchItems.Clear();
+            foreach (var r in results)
+            {
+                _searchItems.Add(r);
+            }
+
+            if (results.Count == 0)
+            {
+                SearchResultsContainer.Visibility = Visibility.Collapsed;
+                StatusText.Text = $"No results for \"{query}\". Try a different name or paste a URL below.";
+            }
+            else
+            {
+                SearchResultsContainer.Visibility = Visibility.Visible;
+                StatusText.Text = $"Found {results.Count} match{(results.Count == 1 ? "" : "es")}.";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Search failed: {ex.Message}";
+        }
+        finally
+        {
+            SearchButton.IsEnabled = true;
+        }
+    }
+
+    private async void OnAddSearchResultClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not GameSearchResult result)
+        {
+            return;
+        }
+
+        try
+        {
+            await _favorites.AddAsync(result.PlaceId, result.UniverseId, result.Name, result.IconUrl);
+            StatusText.Text = $"Added {result.Name}.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Couldn't add: {ex.Message}";
+        }
     }
 
     private async Task ReloadAsync()

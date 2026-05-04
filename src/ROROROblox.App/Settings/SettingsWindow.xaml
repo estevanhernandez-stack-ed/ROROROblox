@@ -19,6 +19,54 @@
         <SolidColorBrush x:Key="NavyBrush" Color="#0F1F31" />
         <SolidColorBrush x:Key="RowBgBrush" Color="#15263A" />
 
+        <DataTemplate DataType="{x:Type core:GameSearchResult}">
+            <Border Margin="0,0,0,6" Padding="10,8" CornerRadius="6"
+                    Background="{StaticResource RowBgBrush}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Width="48" Height="48" CornerRadius="4"
+                            Background="{StaticResource NavyBrush}" ClipToBounds="True"
+                            VerticalAlignment="Center">
+                        <Image Source="{Binding IconUrl}" Stretch="UniformToFill" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}"
+                                   FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{StaticResource WhiteBrush}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                            <TextBlock Text="{Binding CreatorName, StringFormat='by {0}'}"
+                                       FontSize="11"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+                            <TextBlock Text="  -  "
+                                       FontSize="11"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       Opacity="0.5" />
+                            <TextBlock Text="{Binding PlayerCount, StringFormat='{}{0:N0} playing'}"
+                                       FontSize="11"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Button Grid.Column="2" Content="+ Add"
+                            Tag="{Binding}"
+                            Click="OnAddSearchResultClick"
+                            Padding="12,6"
+                            Background="{StaticResource CyanBrush}"
+                            Foreground="{StaticResource NavyBrush}"
+                            BorderThickness="0"
+                            FontWeight="SemiBold"
+                            FontSize="11" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type core:FavoriteGame}">
             <Border Margin="0,0,0,8" Padding="14,10"
                     CornerRadius="8"
@@ -105,7 +153,9 @@
     <Grid Margin="32,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />  <!-- Title -->
-            <RowDefinition Height="Auto" />  <!-- Add box -->
+            <RowDefinition Height="Auto" />  <!-- Search box -->
+            <RowDefinition Height="Auto" />  <!-- Search results -->
+            <RowDefinition Height="Auto" />  <!-- Or paste URL -->
             <RowDefinition Height="Auto" />  <!-- Add status -->
             <RowDefinition Height="Auto" />  <!-- List header -->
             <RowDefinition Height="*" />     <!-- List -->
@@ -135,6 +185,43 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" x:Name="SearchInput"
+                     FontSize="13"
+                     Padding="10,8"
+                     Background="{StaticResource RowBgBrush}"
+                     Foreground="{StaticResource WhiteBrush}"
+                     BorderBrush="{StaticResource DividerBrush}"
+                     CaretBrush="{StaticResource CyanBrush}"
+                     BorderThickness="1"
+                     KeyDown="OnSearchKeyDown"
+                     ToolTip="Search Roblox games by name. Enter to search." />
+            <Button Grid.Column="1" x:Name="SearchButton" Content="Search"
+                    Padding="14,8" Margin="8,0,0,0"
+                    Background="{StaticResource CyanBrush}"
+                    Foreground="{StaticResource NavyBrush}"
+                    BorderThickness="0"
+                    FontWeight="Bold"
+                    Click="OnSearchClick" />
+        </Grid>
+
+        <Border Grid.Row="2" x:Name="SearchResultsContainer"
+                Margin="0,8,0,0"
+                MaxHeight="220"
+                Visibility="Collapsed"
+                BorderBrush="{StaticResource DividerBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="8">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl x:Name="SearchResultsList" />
+            </ScrollViewer>
+        </Border>
+
+        <Grid Grid.Row="3" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
             <TextBox Grid.Column="0" x:Name="UrlInput"
                      FontSize="12"
                      FontFamily="Consolas"
@@ -144,29 +231,30 @@
                      BorderBrush="{StaticResource DividerBrush}"
                      CaretBrush="{StaticResource CyanBrush}"
                      BorderThickness="1"
-                     ToolTip="Paste a roblox.com/games/&lt;id&gt;/&lt;name&gt; URL (or just the place id)" />
-            <Button Grid.Column="1" x:Name="AddButton" Content="+ Add Game"
+                     ToolTip="Or paste a roblox.com/games/&lt;id&gt;/&lt;name&gt; URL or place id" />
+            <Button Grid.Column="1" x:Name="AddButton" Content="+ Add by URL"
                     Padding="14,8" Margin="8,0,0,0"
-                    Background="{StaticResource CyanBrush}"
-                    Foreground="{StaticResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="Bold"
+                    Background="{StaticResource NavyBrush}"
+                    Foreground="{StaticResource WhiteBrush}"
+                    BorderBrush="{StaticResource DividerBrush}"
+                    BorderThickness="1"
+                    FontSize="12"
                     Click="OnAddClick" />
         </Grid>
 
-        <TextBlock Grid.Row="2" x:Name="StatusText"
+        <TextBlock Grid.Row="4" x:Name="StatusText"
                    FontSize="11"
                    Foreground="{StaticResource MutedTextBrush}"
                    Margin="0,8,0,0"
                    TextWrapping="Wrap" />
 
-        <TextBlock Grid.Row="3"
+        <TextBlock Grid.Row="5"
                    Text="Saved games"
                    FontSize="12" FontWeight="SemiBold"
                    Foreground="{StaticResource MutedTextBrush}"
                    Margin="0,20,0,8" />
 
-        <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="6" VerticalScrollBarVisibility="Auto">
             <Grid>
                 <ItemsControl x:Name="FavoritesList" />
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -185,7 +273,7 @@
             </Grid>
         </ScrollViewer>
 
-        <Button Grid.Row="5" Content="Close" Padding="16,8"
+        <Button Grid.Row="7" Content="Close" Padding="16,8"
                 HorizontalAlignment="Right" Margin="0,12,0,0"
                 Background="{StaticResource NavyBrush}"
                 Foreground="{StaticResource WhiteBrush}"
