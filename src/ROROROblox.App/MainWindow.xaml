@@ -121,7 +121,8 @@
                                       SelectedItem="{Binding SelectedGame}"
                                       DisplayMemberPath="Name"
                                       VerticalAlignment="Center"
-                                      ToolTip="Game to launch this account into. Manage games via the header Games button." />
+                                      SelectionChanged="OnGameComboBoxSelectionChanged"
+                                      ToolTip="Game to launch this account into, or '(Paste a link...)' for a one-shot link." />
                             <TextBlock Text="Add games with the Games button"
                                        FontSize="11"
                                        FontStyle="Italic"

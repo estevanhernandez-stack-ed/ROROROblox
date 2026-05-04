@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.App.About;
 using ROROROblox.App.Diagnostics;
 using ROROROblox.App.Friends;
+using ROROROblox.App.JoinByLink;
 using ROROROblox.App.Modals;
 using ROROROblox.App.Settings;
 using ROROROblox.App.SquadLaunch;
@@ -98,8 +99,26 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<AccountSummary> Accounts { get; } = [];
 
     /// <summary>
+    /// Sentinel entry the per-row ComboBox treats as "open the Join-by-link modal."
+    /// PlaceId == 0 is the marker; <see cref="IsJoinByLinkSentinel"/> is the typed predicate.
+    /// MainWindow's ComboBox SelectionChanged handler intercepts this and reverts the row's
+    /// SelectedGame after firing <see cref="OpenJoinByLinkAsync"/>.
+    /// </summary>
+    public static FavoriteGame JoinByLinkSentinel { get; } = new FavoriteGame(
+        PlaceId: 0,
+        UniverseId: 0,
+        Name: "(Paste a link...)",
+        ThumbnailUrl: string.Empty,
+        IsDefault: false,
+        AddedAt: DateTimeOffset.MinValue);
+
+    /// <summary>True if <paramref name="game"/> is the Join-by-link sentinel, NOT a real saved game.</summary>
+    public static bool IsJoinByLinkSentinel(FavoriteGame? game) => game is { PlaceId: 0 };
+
+    /// <summary>
     /// Games available for the per-account picker on each row. Synced from the favorites store
-    /// at LoadAsync time and again every time the Games dialog closes.
+    /// at LoadAsync time and again every time the Games dialog closes. Always ends with the
+    /// <see cref="JoinByLinkSentinel"/> "(Paste a link...)" entry.
     /// </summary>
     public ObservableCollection<FavoriteGame> AvailableGames { get; } = [];
 
@@ -193,11 +212,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             AvailableGames.Add(game);
         }
+        // Sentinel entry users click to open the Join-by-link modal. Lives at the bottom of the
+        // dropdown so accidental clicks are unlikely.
+        AvailableGames.Add(JoinByLinkSentinel);
 
-        var defaultGame = AvailableGames.FirstOrDefault(g => g.IsDefault) ?? AvailableGames.FirstOrDefault();
+        var defaultGame = AvailableGames.FirstOrDefault(g => g.IsDefault && !IsJoinByLinkSentinel(g))
+                          ?? AvailableGames.FirstOrDefault(g => !IsJoinByLinkSentinel(g));
         foreach (var account in Accounts)
         {
-            var stillThere = AvailableGames.FirstOrDefault(g => g.PlaceId == account.SelectedGame?.PlaceId);
+            var stillThere = AvailableGames.FirstOrDefault(g =>
+                !IsJoinByLinkSentinel(g) && g.PlaceId == account.SelectedGame?.PlaceId);
             account.SelectedGame = stillThere ?? defaultGame;
         }
     }
@@ -513,6 +537,27 @@ public sealed class MainViewModel : INotifyPropertyChanged
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Open the per-row "Join by link" paste modal. Triggered when the user picks the
+    /// <see cref="JoinByLinkSentinel"/> entry in their game dropdown. The modal parses the
+    /// pasted URL via <see cref="LaunchTarget.FromUrl"/> and, if valid, fires a one-shot launch
+    /// for this account into that target. Doesn't persist anywhere — it's the "play once into
+    /// what someone DM'd me" path.
+    /// </summary>
+    public async Task OpenJoinByLinkAsync(AccountSummary? summary)
+    {
+        if (summary is null) return;
+
+        var window = new JoinByLinkWindow(_api, summary.DisplayName)
+        {
+            Owner = Application.Current.MainWindow,
+        };
+        if (window.ShowDialog() == true && window.SelectedTarget is { } target)
+        {
+            await LaunchAccountAsync(summary, overrideTarget: target);
         }
     }
 
