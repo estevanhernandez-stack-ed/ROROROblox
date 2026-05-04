@@ -262,6 +262,102 @@ public class RobloxLauncherTests
         Assert.Throws<ArgumentNullException>(() => new RobloxLauncher(api, settings, null!));
     }
 
+    // === LaunchAsync(LaunchTarget) — typed API ===
+
+    [Fact]
+    public async Task LaunchAsync_TypedApi_PrivateServer_BuildsRequestPrivateGameUri()
+    {
+        var (launcher, _, processStarter) = CreateLauncher(
+            ticket: "TKT",
+            defaultPlaceUrl: null,
+            startResult: 1);
+
+        var result = await launcher.LaunchAsync(
+            TestCookie,
+            new LaunchTarget.PrivateServer(920587237, "share-code-xyz"));
+
+        Assert.IsType<LaunchResult.Started>(result);
+        // Encoded inside placelauncherurl segment.
+        Assert.Contains(Uri.EscapeDataString("request=RequestPrivateGame"), processStarter.LastUri);
+        Assert.Contains(Uri.EscapeDataString("placeId=920587237"), processStarter.LastUri);
+        Assert.Contains(Uri.EscapeDataString("accessCode=share-code-xyz"), processStarter.LastUri);
+    }
+
+    [Fact]
+    public async Task LaunchAsync_TypedApi_FollowFriend_BuildsRequestFollowUserUri()
+    {
+        var (launcher, _, processStarter) = CreateLauncher(
+            ticket: "TKT",
+            defaultPlaceUrl: null,
+            startResult: 1);
+
+        var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.FollowFriend(98765));
+
+        Assert.IsType<LaunchResult.Started>(result);
+        Assert.Contains(Uri.EscapeDataString("request=RequestFollowUser"), processStarter.LastUri);
+        Assert.Contains(Uri.EscapeDataString("userId=98765"), processStarter.LastUri);
+    }
+
+    [Fact]
+    public async Task LaunchAsync_TypedApi_DefaultGame_FallsBackToSettings()
+    {
+        var (launcher, _, processStarter) = CreateLauncher(
+            ticket: "TKT",
+            defaultPlaceUrl: "920587237", // bare numeric — FromUrl resolves to Place(920587237)
+            startResult: 1);
+
+        var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.DefaultGame());
+
+        Assert.IsType<LaunchResult.Started>(result);
+        Assert.Contains(Uri.EscapeDataString("placeId=920587237"), processStarter.LastUri);
+        Assert.Contains(Uri.EscapeDataString("request=RequestGame"), processStarter.LastUri);
+    }
+
+    [Fact]
+    public async Task LaunchAsync_TypedApi_DefaultGame_WithoutAnyDefault_ReturnsFailed()
+    {
+        var (launcher, _, _) = CreateLauncher(
+            ticket: "TKT",
+            defaultPlaceUrl: null,
+            startResult: 1);
+
+        var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.DefaultGame());
+
+        var failed = Assert.IsType<LaunchResult.Failed>(result);
+        Assert.Contains("default", failed.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task LaunchAsync_TypedApi_CookieExpired_ReturnsCookieExpired()
+    {
+        var api = new StubRobloxApi(_ => throw new CookieExpiredException());
+        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
+        var processStarter = new RecordingProcessStarter(_ => 1);
+        var launcher = new RobloxLauncher(api, settings, processStarter);
+
+        var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(42));
+
+        Assert.IsType<LaunchResult.CookieExpired>(result);
+    }
+
+    [Fact]
+    public async Task LaunchAsync_TypedApi_RejectsEmptyCookie()
+    {
+        var (launcher, _, _) = CreateLauncher("T", TestPlaceUrl, startResult: 1);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            launcher.LaunchAsync("", new LaunchTarget.Place(1)));
+    }
+
+    [Fact]
+    public async Task LaunchAsync_TypedApi_RejectsNullTarget()
+    {
+        var (launcher, _, _) = CreateLauncher("T", TestPlaceUrl, startResult: 1);
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            launcher.LaunchAsync(TestCookie, target: null!));
+    }
+
     // === Helpers ===
 
     private static (RobloxLauncher, InMemoryAppSettings, RecordingProcessStarter) CreateLauncher(

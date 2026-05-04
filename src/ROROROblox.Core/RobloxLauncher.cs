@@ -12,6 +12,7 @@ namespace ROROROblox.Core;
 public sealed class RobloxLauncher : IRobloxLauncher
 {
     private const string RobloxNotInstalledMessage = "Roblox does not appear to be installed.";
+    private const string PlaceLauncherEndpoint = "https://assetgame.roblox.com/game/PlaceLauncher.ashx";
 
     private readonly IRobloxApi _api;
     private readonly IAppSettings _settings;
@@ -44,6 +45,61 @@ public sealed class RobloxLauncher : IRobloxLauncher
         _favorites = favorites;
     }
 
+    public async Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target)
+    {
+        if (string.IsNullOrEmpty(cookie))
+        {
+            throw new ArgumentException("Cookie must not be empty.", nameof(cookie));
+        }
+        ArgumentNullException.ThrowIfNull(target);
+
+        // FollowFriend doesn't need place resolution — Roblox follows the user wherever they are.
+        // Place / PrivateServer are already concrete. DefaultGame resolves through favorites + settings.
+        var resolved = target is LaunchTarget.DefaultGame
+            ? await ResolveDefaultAsync().ConfigureAwait(false)
+            : target;
+
+        if (resolved is null)
+        {
+            return new LaunchResult.Failed(
+                "No default Roblox game configured. Add one in Games (header button), or pass an explicit target.");
+        }
+
+        AuthTicket ticket;
+        try
+        {
+            ticket = await _api.GetAuthTicketAsync(cookie).ConfigureAwait(false);
+        }
+        catch (CookieExpiredException)
+        {
+            return new LaunchResult.CookieExpired();
+        }
+        catch (Exception ex)
+        {
+            return new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}");
+        }
+
+        var browserTrackerId = _browserTrackerIdFactory().ToString();
+        var launchTime = _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
+        var placeLauncherUrl = BuildPlaceLauncherUrl(resolved, browserTrackerId);
+        var uri = BuildLaunchUri(ticket.Ticket, launchTime, browserTrackerId, placeLauncherUrl);
+
+        try
+        {
+            var launchedAtUtc = _timeProvider.GetUtcNow();
+            var pid = _processStarter.StartViaShell(uri);
+            return new LaunchResult.Started(pid, launchedAtUtc);
+        }
+        catch (Win32Exception)
+        {
+            return new LaunchResult.Failed(RobloxNotInstalledMessage);
+        }
+        catch (Exception ex)
+        {
+            return new LaunchResult.Failed($"Process.Start failed: {ex.Message}");
+        }
+    }
+
     public async Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null)
     {
         if (string.IsNullOrEmpty(cookie))
@@ -51,17 +107,16 @@ public sealed class RobloxLauncher : IRobloxLauncher
             throw new ArgumentException("Cookie must not be empty.", nameof(cookie));
         }
 
-        // Place-URL resolution tiers:
+        // Place-URL resolution tiers (legacy path, kept for back-compat):
         //   1. Explicit placeUrl param (caller picked a specific game).
         //   2. The default favorite (IFavoriteGameStore -- new in v1.x: multi-game library).
-        //   3. AppSettings.DefaultPlaceUrl (legacy single-URL setting; kept for back-compat).
+        //   3. AppSettings.DefaultPlaceUrl (legacy single-URL setting).
         var resolvedPlaceUrl = placeUrl;
         if (string.IsNullOrEmpty(resolvedPlaceUrl) && _favorites is not null)
         {
             var defaultFavorite = await _favorites.GetDefaultAsync().ConfigureAwait(false);
             if (defaultFavorite is not null)
             {
-                // Bare placeId; NormalizeToPlaceLauncherUrl wraps it in PlaceLauncher.ashx form.
                 resolvedPlaceUrl = defaultFavorite.PlaceId.ToString();
             }
         }
@@ -114,6 +169,74 @@ public sealed class RobloxLauncher : IRobloxLauncher
         {
             return new LaunchResult.Failed($"Process.Start failed: {ex.Message}");
         }
+    }
+
+    private async Task<LaunchTarget?> ResolveDefaultAsync()
+    {
+        if (_favorites is not null)
+        {
+            var defaultFavorite = await _favorites.GetDefaultAsync().ConfigureAwait(false);
+            if (defaultFavorite is not null)
+            {
+                return new LaunchTarget.Place(defaultFavorite.PlaceId);
+            }
+        }
+
+        var defaultUrl = await _settings.GetDefaultPlaceUrlAsync().ConfigureAwait(false);
+        if (string.IsNullOrEmpty(defaultUrl))
+        {
+            return null;
+        }
+
+        // The settings field can hold any of the historical shapes (URL, bare id, PlaceLauncher form).
+        // FromUrl handles all of them.
+        return LaunchTarget.FromUrl(defaultUrl);
+    }
+
+    /// <summary>
+    /// Build the <c>placelauncherurl</c> Roblox expects for each launch target shape.
+    /// Public for snapshot testing.
+    /// </summary>
+    public static string BuildPlaceLauncherUrl(LaunchTarget target, string browserTrackerId)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        if (string.IsNullOrEmpty(browserTrackerId))
+        {
+            throw new ArgumentException("Browser tracker id must not be empty.", nameof(browserTrackerId));
+        }
+
+        return target switch
+        {
+            LaunchTarget.Place place when place.PlaceId > 0 =>
+                $"{PlaceLauncherEndpoint}?request=RequestGame" +
+                $"&browserTrackerId={browserTrackerId}" +
+                $"&placeId={place.PlaceId}" +
+                "&isPlayTogetherGame=false",
+
+            // Send accessCode AND linkCode — Roblox accepts both names depending on launcher
+            // version; sending both is the conservative move and the launcher ignores extras.
+            LaunchTarget.PrivateServer ps when ps.PlaceId > 0 && !string.IsNullOrEmpty(ps.AccessCode) =>
+                $"{PlaceLauncherEndpoint}?request=RequestPrivateGame" +
+                $"&browserTrackerId={browserTrackerId}" +
+                $"&placeId={ps.PlaceId}" +
+                $"&accessCode={Uri.EscapeDataString(ps.AccessCode)}" +
+                $"&linkCode={Uri.EscapeDataString(ps.AccessCode)}",
+
+            // RequestFollowUser doesn't carry placeId — Roblox follows the user wherever they are
+            // and does the permission check server-side (works for public + private if allowed).
+            LaunchTarget.FollowFriend ff when ff.UserId > 0 =>
+                $"{PlaceLauncherEndpoint}?request=RequestFollowUser" +
+                $"&browserTrackerId={browserTrackerId}" +
+                $"&userId={ff.UserId}",
+
+            LaunchTarget.DefaultGame =>
+                throw new InvalidOperationException(
+                    "DefaultGame must be resolved before building the placelauncherurl. " +
+                    "Did you forget to call ResolveDefaultAsync?"),
+
+            _ => throw new ArgumentException(
+                $"Unsupported or invalid LaunchTarget: {target}", nameof(target)),
+        };
     }
 
     /// <summary>
@@ -175,7 +298,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         if (match.Success)
         {
             var placeId = match.Groups[1].Value;
-            return "https://assetgame.roblox.com/game/PlaceLauncher.ashx" +
+            return $"{PlaceLauncherEndpoint}" +
                    "?request=RequestGame" +
                    $"&browserTrackerId={browserTrackerId}" +
                    $"&placeId={placeId}" +
@@ -185,7 +308,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         if (Regex.IsMatch(input.Trim(), @"^\d+$"))
         {
             var placeId = input.Trim();
-            return "https://assetgame.roblox.com/game/PlaceLauncher.ashx" +
+            return $"{PlaceLauncherEndpoint}" +
                    "?request=RequestGame" +
                    $"&browserTrackerId={browserTrackerId}" +
                    $"&placeId={placeId}" +
