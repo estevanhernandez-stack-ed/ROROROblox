@@ -1,7 +1,11 @@
+using System.Net.Http.Headers;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using ROROROblox.App.AppLifecycle;
+using ROROROblox.App.CookieCapture;
 using ROROROblox.App.Startup;
+using ROROROblox.App.Tray;
+using ROROROblox.Core;
 
 namespace ROROROblox.App;
 
@@ -9,6 +13,12 @@ public partial class App : Application
 {
     private SingleInstanceGuard? _singleInstance;
     private ServiceProvider? _services;
+
+    /// <summary>
+    /// True after the user explicitly Quits via the tray menu. MainWindow's Closing handler
+    /// (item 9) checks this to decide between "minimize to tray" and "actually exit."
+    /// </summary>
+    public static bool IsShuttingDown { get; private set; }
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -25,19 +35,95 @@ public partial class App : Application
         ConfigureServices(services);
         _services = services.BuildServiceProvider();
 
+        var tray = _services.GetRequiredService<ITrayService>();
+        var mutex = _services.GetRequiredService<IMutexHolder>();
         var mainWindow = _services.GetRequiredService<MainWindow>();
+
+        WireTrayEvents(tray, mutex, mainWindow);
+        WireMutexLost(mutex, tray);
+
+        tray.Show();
         _singleInstance.StartListening(mainWindow);
         mainWindow.Show();
     }
 
     private static void ConfigureServices(IServiceCollection services)
     {
+        // Singletons — long-lived state we want exactly one of.
+        services.AddSingleton<IMutexHolder>(_ => new MutexHolder()); // Default name = Local\ROBLOX_singletonEvent
+        services.AddSingleton<ITrayService, TrayService>();
+        services.AddSingleton<IAppSettings>(_ => new AppSettings());
+        services.AddSingleton<IAccountStore>(_ => new AccountStore());
         services.AddSingleton<IStartupRegistration, StartupRegistration>();
+        services.AddSingleton<IProcessStarter, ProcessStarter>();
+
+        // RobloxApi over a managed HttpClient (factory handles lifetime + DNS rotation).
+        services.AddHttpClient<IRobloxApi, RobloxApi>(client =>
+        {
+            client.DefaultRequestHeaders.UserAgent.Clear();
+            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("ROROROblox", version));
+        });
+
+        services.AddSingleton<IRobloxLauncher, RobloxLauncher>();
+        services.AddSingleton<ICookieCapture, CookieCapture.CookieCapture>();
+
+        // Windows.
         services.AddSingleton<MainWindow>();
+    }
+
+    private void WireTrayEvents(ITrayService tray, IMutexHolder mutex, MainWindow mainWindow)
+    {
+        tray.RequestOpenMainWindow += (_, _) => SurfaceMainWindow(mainWindow);
+        tray.RequestToggleMutex += (_, _) => ToggleMutex(mutex, tray);
+        tray.RequestQuit += (_, _) => RequestShutdown();
+    }
+
+    private static void WireMutexLost(IMutexHolder mutex, ITrayService tray)
+    {
+        mutex.MutexLost += (_, _) =>
+        {
+            // MutexLost fires on a System.Timers.Timer thread; marshal to UI for tray update.
+            Current.Dispatcher.Invoke(() => tray.UpdateStatus(MultiInstanceState.Error));
+        };
+    }
+
+    private static void ToggleMutex(IMutexHolder mutex, ITrayService tray)
+    {
+        if (mutex.IsHeld)
+        {
+            mutex.Release();
+            tray.UpdateStatus(MultiInstanceState.Off);
+        }
+        else
+        {
+            var acquired = mutex.Acquire();
+            tray.UpdateStatus(acquired ? MultiInstanceState.On : MultiInstanceState.Error);
+        }
+    }
+
+    private static void SurfaceMainWindow(Window mainWindow)
+    {
+        if (!mainWindow.IsVisible)
+        {
+            mainWindow.Show();
+        }
+        if (mainWindow.WindowState == WindowState.Minimized)
+        {
+            mainWindow.WindowState = WindowState.Normal;
+        }
+        mainWindow.Activate();
+    }
+
+    private void RequestShutdown()
+    {
+        IsShuttingDown = true;
+        Shutdown(0);
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        IsShuttingDown = true;
         _singleInstance?.Dispose();
         _services?.Dispose();
         base.OnExit(e);

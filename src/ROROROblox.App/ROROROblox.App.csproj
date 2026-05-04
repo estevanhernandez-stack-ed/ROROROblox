@@ -5,7 +5,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.7" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3912.50" />
     <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.275">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -20,5 +22,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
+
+  <!-- Tray-icon placeholders. Cyan/grey/magenta circles matching brand tokens; clearly marked
+       .placeholder.ico so they're easy to grep + replace before ship. Item 11 (or earlier polish)
+       swaps these for design-skill-produced assets per pattern (x) from SnipSnap retro. -->
+  <ItemGroup>
+    <Resource Include="Tray\Resources\tray-on.placeholder.ico" />
+    <Resource Include="Tray\Resources\tray-off.placeholder.ico" />
+    <Resource Include="Tray\Resources\tray-error.placeholder.ico" />
+  </ItemGroup>
 
 </Project>
