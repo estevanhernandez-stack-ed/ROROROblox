@@ -21,6 +21,8 @@ public sealed class RobloxApi : IRobloxApi
     private const string GamesEndpoint = "https://games.roblox.com/v1/games";
     private const string GameIconsEndpoint = "https://thumbnails.roblox.com/v1/games/icons";
     private const string OmniSearchEndpoint = "https://apis.roblox.com/search-api/omni-search";
+    private const string FriendsEndpoint = "https://friends.roblox.com/v1/users";
+    private const string PresenceEndpoint = "https://presence.roblox.com/v1/presence/users";
     private const string Referer = "https://www.roblox.com/";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -305,6 +307,161 @@ public sealed class RobloxApi : IRobloxApi
         )).ToList();
     }
 
+    public async Task<IReadOnlyList<Friend>> GetFriendsAsync(string cookie, long userId)
+    {
+        if (string.IsNullOrEmpty(cookie))
+        {
+            throw new ArgumentException("Cookie must not be empty.", nameof(cookie));
+        }
+        if (userId <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(userId), "userId must be positive.");
+        }
+
+        FriendsListResponse? payload;
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{FriendsEndpoint}/{userId}/friends");
+            request.Headers.Add("Cookie", $".ROBLOSECURITY={cookie}");
+            using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+            ThrowOnAuthFailure(response);
+            if (!response.IsSuccessStatusCode)
+            {
+                return [];
+            }
+            payload = await response.Content
+                .ReadFromJsonAsync<FriendsListResponse>(JsonOptions)
+                .ConfigureAwait(false);
+        }
+        catch (CookieExpiredException)
+        {
+            throw;
+        }
+        catch
+        {
+            return [];
+        }
+
+        var friends = payload?.Data?.Where(f => f.Id > 0).ToList() ?? [];
+        if (friends.Count == 0)
+        {
+            return [];
+        }
+
+        // Bulk avatar fetch — one call instead of N. Best-effort; missing avatars stay empty.
+        var avatarsByUserId = await BulkFetchAvatarsAsync(friends.Select(f => f.Id)).ConfigureAwait(false);
+
+        return friends.Select(f => new Friend(
+            UserId: f.Id,
+            Username: f.Name ?? string.Empty,
+            DisplayName: string.IsNullOrEmpty(f.DisplayName) ? (f.Name ?? string.Empty) : f.DisplayName,
+            AvatarUrl: avatarsByUserId.TryGetValue(f.Id, out var url) ? url : string.Empty
+        )).ToList();
+    }
+
+    public async Task<IReadOnlyList<UserPresence>> GetPresenceAsync(string cookie, IEnumerable<long> userIds)
+    {
+        if (string.IsNullOrEmpty(cookie))
+        {
+            throw new ArgumentException("Cookie must not be empty.", nameof(cookie));
+        }
+        ArgumentNullException.ThrowIfNull(userIds);
+
+        var ids = userIds.Where(id => id > 0).Distinct().ToList();
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        PresenceResponse? payload;
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, PresenceEndpoint);
+            request.Headers.Add("Cookie", $".ROBLOSECURITY={cookie}");
+            request.Content = JsonContent.Create(new PresenceRequest(ids), options: JsonOptions);
+            using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+            ThrowOnAuthFailure(response);
+            if (!response.IsSuccessStatusCode)
+            {
+                return [];
+            }
+            payload = await response.Content
+                .ReadFromJsonAsync<PresenceResponse>(JsonOptions)
+                .ConfigureAwait(false);
+        }
+        catch (CookieExpiredException)
+        {
+            throw;
+        }
+        catch
+        {
+            return [];
+        }
+
+        return (payload?.UserPresences ?? [])
+            .Where(p => p.UserId > 0)
+            .Select(p => new UserPresence(
+                UserId: p.UserId,
+                PresenceType: MapPresenceType(p.UserPresenceType),
+                PlaceId: p.PlaceId is > 0 ? p.PlaceId : null,
+                GameJobId: string.IsNullOrEmpty(p.GameId) ? null : p.GameId,
+                LastLocation: string.IsNullOrEmpty(p.LastLocation) ? null : p.LastLocation))
+            .ToList();
+    }
+
+    private static UserPresenceType MapPresenceType(int raw) => raw switch
+    {
+        0 => UserPresenceType.Offline,
+        1 => UserPresenceType.OnlineWebsite,
+        2 => UserPresenceType.InGame,
+        3 => UserPresenceType.InStudio,
+        4 => UserPresenceType.Invisible,
+        _ => UserPresenceType.Offline,
+    };
+
+    /// <summary>
+    /// Bulk fetch avatar headshot URLs for many user ids in one call.
+    /// Returns an empty dictionary on any failure — callers treat avatars as best-effort.
+    /// </summary>
+    private async Task<Dictionary<long, string>> BulkFetchAvatarsAsync(IEnumerable<long> userIds)
+    {
+        var ids = userIds.Where(id => id > 0).Distinct().ToList();
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        try
+        {
+            var query = $"?userIds={string.Join(",", ids)}&size=150x150&format=Png&isCircular=false";
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{AvatarHeadshotEndpoint}{query}");
+            using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                return [];
+            }
+            var payload = await response.Content
+                .ReadFromJsonAsync<BulkThumbnailsResponse>(JsonOptions)
+                .ConfigureAwait(false);
+            var dict = new Dictionary<long, string>();
+            if (payload?.Data is not null)
+            {
+                foreach (var item in payload.Data)
+                {
+                    if (item.TargetId > 0 && !string.IsNullOrEmpty(item.ImageUrl))
+                    {
+                        dict[item.TargetId] = item.ImageUrl;
+                    }
+                }
+            }
+            return dict;
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
     private async Task<HttpResponseMessage> PostAuthTicketAsync(string cookie, string? csrfToken)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, AuthTicketEndpoint);
@@ -356,4 +513,18 @@ public sealed class RobloxApi : IRobloxApi
     private sealed record GameIconItem(
         long TargetId,
         [property: JsonPropertyName("imageUrl")] string ImageUrl);
+    private sealed record FriendsListResponse(FriendItem[]? Data);
+    private sealed record FriendItem(long Id, string? Name, string? DisplayName);
+    private sealed record BulkThumbnailsResponse(BulkThumbnailItem[] Data);
+    private sealed record BulkThumbnailItem(
+        long TargetId,
+        [property: JsonPropertyName("imageUrl")] string ImageUrl);
+    private sealed record PresenceRequest([property: JsonPropertyName("userIds")] IReadOnlyList<long> UserIds);
+    private sealed record PresenceResponse(PresenceItem[]? UserPresences);
+    private sealed record PresenceItem(
+        long UserId,
+        int UserPresenceType,
+        long? PlaceId,
+        string? GameId,
+        string? LastLocation);
 }

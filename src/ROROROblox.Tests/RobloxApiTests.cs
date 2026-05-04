@@ -382,4 +382,168 @@ public class RobloxApiTests
         Assert.Equal("X", results[0].Name);
         Assert.Equal(string.Empty, results[0].IconUrl);
     }
+
+    // === GetFriendsAsync ===
+
+    [Fact]
+    public async Task GetFriendsAsync_HappyPath_ReturnsFriendsWithBulkAvatars()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(JsonResponse("""
+            {"data": [
+              {"id": 100, "name": "alice", "displayName": "Alice"},
+              {"id": 200, "name": "bob",   "displayName": "Bob"}
+            ]}
+            """));
+        stub.EnqueueResponse(JsonResponse("""
+            {"data": [
+              {"targetId": 100, "imageUrl": "https://tr/100.png"},
+              {"targetId": 200, "imageUrl": "https://tr/200.png"}
+            ]}
+            """));
+
+        var friends = await api.GetFriendsAsync(TestCookie, userId: 42);
+
+        Assert.Equal(2, friends.Count);
+        Assert.Equal(100, friends[0].UserId);
+        Assert.Equal("alice", friends[0].Username);
+        Assert.Equal("Alice", friends[0].DisplayName);
+        Assert.Equal("https://tr/100.png", friends[0].AvatarUrl);
+        // First request should hit the friends endpoint with the right userId.
+        Assert.Contains("users/42/friends", stub.Requests[0].RequestUri!.ToString());
+        Assert.Contains(stub.Requests[0].Headers, h =>
+            h.Key == "Cookie" && h.Value.Any(v => v.Contains(TestCookie)));
+    }
+
+    [Fact]
+    public async Task GetFriendsAsync_AvatarFetchFails_StillReturnsFriendsWithEmptyAvatars()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(JsonResponse("""{"data": [{"id": 100, "name": "a", "displayName": "A"}]}"""));
+        stub.EnqueueResponse(Response(HttpStatusCode.InternalServerError));
+
+        var friends = await api.GetFriendsAsync(TestCookie, userId: 42);
+
+        Assert.Single(friends);
+        Assert.Equal(string.Empty, friends[0].AvatarUrl);
+    }
+
+    [Fact]
+    public async Task GetFriendsAsync_DisplayNameMissing_FallsBackToUsername()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(JsonResponse("""{"data": [{"id": 100, "name": "alice", "displayName": ""}]}"""));
+        stub.EnqueueResponse(JsonResponse("""{"data": []}"""));
+
+        var friends = await api.GetFriendsAsync(TestCookie, userId: 42);
+
+        Assert.Equal("alice", friends[0].DisplayName);
+    }
+
+    [Fact]
+    public async Task GetFriendsAsync_Unauthorized_ThrowsCookieExpired()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Unauthorized));
+
+        await Assert.ThrowsAsync<CookieExpiredException>(() => api.GetFriendsAsync(TestCookie, 42));
+    }
+
+    [Fact]
+    public async Task GetFriendsAsync_ServerError_ReturnsEmpty()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.InternalServerError));
+
+        Assert.Empty(await api.GetFriendsAsync(TestCookie, 42));
+    }
+
+    [Fact]
+    public async Task GetFriendsAsync_RejectsInvalidInput()
+    {
+        var (api, _) = CreateApi();
+        await Assert.ThrowsAsync<ArgumentException>(() => api.GetFriendsAsync("", 42));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => api.GetFriendsAsync(TestCookie, 0));
+    }
+
+    // === GetPresenceAsync ===
+
+    [Fact]
+    public async Task GetPresenceAsync_HappyPath_MapsAllFields()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(JsonResponse("""
+            {"userPresences": [
+              {"userId": 100, "userPresenceType": 2, "placeId": 920587237, "gameId": "job-uuid", "lastLocation": "Adopt Me"},
+              {"userId": 200, "userPresenceType": 0, "placeId": null,      "gameId": null,       "lastLocation": null}
+            ]}
+            """));
+
+        var presences = await api.GetPresenceAsync(TestCookie, new[] { 100L, 200L });
+
+        Assert.Equal(2, presences.Count);
+        Assert.Equal(UserPresenceType.InGame, presences[0].PresenceType);
+        Assert.Equal(920587237, presences[0].PlaceId);
+        Assert.Equal("job-uuid", presences[0].GameJobId);
+        Assert.Equal("Adopt Me", presences[0].LastLocation);
+
+        Assert.Equal(UserPresenceType.Offline, presences[1].PresenceType);
+        Assert.Null(presences[1].PlaceId);
+        Assert.Null(presences[1].GameJobId);
+    }
+
+    [Fact]
+    public async Task GetPresenceAsync_DedupesAndSkipsZeroIds()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(JsonResponse("""{"userPresences": []}"""));
+
+        await api.GetPresenceAsync(TestCookie, new[] { 0L, 100L, 100L, -5L });
+
+        var sentBody = await stub.Requests[0].Content!.ReadAsStringAsync();
+        Assert.Contains("\"userIds\":[100]", sentBody.Replace(" ", string.Empty));
+    }
+
+    [Fact]
+    public async Task GetPresenceAsync_EmptyInput_DoesNotCallEndpoint()
+    {
+        var (api, stub) = CreateApi();
+        var result = await api.GetPresenceAsync(TestCookie, []);
+        Assert.Empty(result);
+        Assert.Empty(stub.Requests);
+    }
+
+    [Fact]
+    public async Task GetPresenceAsync_Unauthorized_ThrowsCookieExpired()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Unauthorized));
+
+        await Assert.ThrowsAsync<CookieExpiredException>(() =>
+            api.GetPresenceAsync(TestCookie, new[] { 1L }));
+    }
+
+    [Fact]
+    public async Task GetPresenceAsync_UnknownPresenceTypeNumber_MapsToOffline()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(JsonResponse("""
+            {"userPresences": [{"userId": 1, "userPresenceType": 99}]}
+            """));
+
+        var presences = await api.GetPresenceAsync(TestCookie, new[] { 1L });
+
+        Assert.Single(presences);
+        Assert.Equal(UserPresenceType.Offline, presences[0].PresenceType);
+    }
+
+    [Fact]
+    public async Task GetPresenceAsync_RejectsInvalidInput()
+    {
+        var (api, _) = CreateApi();
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            api.GetPresenceAsync("", new[] { 1L }));
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            api.GetPresenceAsync(TestCookie, null!));
+    }
 }

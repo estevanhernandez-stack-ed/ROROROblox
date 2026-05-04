@@ -38,4 +38,22 @@ public interface IRobloxApi
     /// Caps results at 20. Returns empty on network failure / malformed response.
     /// </summary>
     Task<IReadOnlyList<GameSearchResult>> SearchGamesAsync(string query);
+
+    /// <summary>
+    /// GET <c>friends.roblox.com/v1/users/{userId}/friends</c> as the cookie's owner. Returns
+    /// the friends list with usernames + display names + avatar URLs (bulk-fetched).
+    /// Returns empty on network failure or 401-on-this-call (rare, since auth-ticket already
+    /// proved the cookie). 401 from this endpoint becomes <see cref="CookieExpiredException"/>.
+    /// </summary>
+    Task<IReadOnlyList<Friend>> GetFriendsAsync(string cookie, long userId);
+
+    /// <summary>
+    /// POST <c>presence.roblox.com/v1/presence/users</c> with the requested user IDs as the
+    /// cookie's owner. Returns presence type + (when the friend is in-game and their privacy
+    /// allows it) place id + game job id + last location. Roblox enforces privacy server-side
+    /// — friends with restricted presence return <see cref="UserPresenceType.Offline"/> or
+    /// <see cref="UserPresenceType.OnlineWebsite"/> regardless of their actual state.
+    /// 401 becomes <see cref="CookieExpiredException"/>; other failures return empty.
+    /// </summary>
+    Task<IReadOnlyList<UserPresence>> GetPresenceAsync(string cookie, IEnumerable<long> userIds);
 }

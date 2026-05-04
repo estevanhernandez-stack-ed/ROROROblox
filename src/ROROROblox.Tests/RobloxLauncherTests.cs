@@ -391,6 +391,8 @@ public class RobloxLauncherTests
         public Task<string> GetAvatarHeadshotUrlAsync(long userId) => throw new NotImplementedException();
         public Task<GameMetadata?> GetGameMetadataByPlaceIdAsync(long placeId) => throw new NotImplementedException();
         public Task<IReadOnlyList<GameSearchResult>> SearchGamesAsync(string query) => throw new NotImplementedException();
+        public Task<IReadOnlyList<Friend>> GetFriendsAsync(string cookie, long userId) => throw new NotImplementedException();
+        public Task<IReadOnlyList<UserPresence>> GetPresenceAsync(string cookie, IEnumerable<long> userIds) => throw new NotImplementedException();
     }
 
     private sealed class InMemoryAppSettings : IAppSettings

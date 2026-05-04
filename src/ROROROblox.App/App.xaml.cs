@@ -148,6 +148,7 @@ public partial class App : Application
         services.AddSingleton<ICookieCapture, CookieCapture.CookieCapture>();
         services.AddSingleton<IUpdateChecker, UpdateChecker>();
         services.AddSingleton<IRobloxProcessTracker, RobloxProcessTracker>();
+        services.AddSingleton<IPrivateServerStore>(_ => new PrivateServerStore());
 
         var dataDir = System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
