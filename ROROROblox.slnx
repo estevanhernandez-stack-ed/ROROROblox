@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ROROROblox.App/ROROROblox.App.csproj" />
+    <Project Path="src/ROROROblox.Core/ROROROblox.Core.csproj" />
+    <Project Path="src/ROROROblox.Tests/ROROROblox.Tests.csproj" />
+  </Folder>
+</Solution>

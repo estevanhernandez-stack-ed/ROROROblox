@@ -1,0 +1,26 @@
+<Window x:Class="ROROROblox.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ROROROblox"
+        Height="450" Width="800"
+        WindowStartupLocation="CenterScreen"
+        Background="#0F1F31">
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Text="ROROROblox"
+                       FontSize="32" FontWeight="Bold"
+                       Foreground="#17D4FA"
+                       HorizontalAlignment="Center"/>
+            <TextBlock Text="Main window placeholder — item 9 builds the real UI"
+                       FontSize="14"
+                       Foreground="#F22F89"
+                       HorizontalAlignment="Center"
+                       Margin="0,12,0,0"/>
+            <TextBlock x:Name="StatusText"
+                       FontSize="12"
+                       Foreground="#FFFFFF"
+                       HorizontalAlignment="Center"
+                       Margin="0,24,0,0"/>
+        </StackPanel>
+    </Grid>
+</Window>
