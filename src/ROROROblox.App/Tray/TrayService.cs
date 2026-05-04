@@ -18,6 +18,13 @@ internal sealed class TrayService : ITrayService
 
     private readonly TaskbarIcon _taskbarIcon;
     private readonly MenuItem _toggleItem;
+
+    // When the avatar painter sets these, UpdateStatus uses them in place of the resource ICOs.
+    // Per-state so the cyan/grey/magenta ring still reflects mutex status.
+    private Icon? _customOn;
+    private Icon? _customOff;
+    private Icon? _customError;
+    private MultiInstanceState _currentState = MultiInstanceState.Off;
     private bool _disposed;
 
     public event EventHandler? RequestOpenMainWindow;
@@ -25,11 +32,16 @@ internal sealed class TrayService : ITrayService
     public event EventHandler? RequestQuit;
     public event EventHandler? RequestOpenDiagnostics;
     public event EventHandler? RequestOpenLogs;
+    public event EventHandler? RequestOpenPreferences;
+    public event EventHandler? RequestActivateMain;
+    public event EventHandler? RequestOpenHistory;
 
     public TrayService()
     {
         _taskbarIcon = new TaskbarIcon();
-        _taskbarIcon.TrayMouseDoubleClick += (_, _) => RequestOpenMainWindow?.Invoke(this, EventArgs.Empty);
+        // Double-click is the user's "do the thing" gesture — App.xaml.cs decides whether
+        // that means "launch main" or "surface the window" based on whether a main is set.
+        _taskbarIcon.TrayMouseDoubleClick += (_, _) => RequestActivateMain?.Invoke(this, EventArgs.Empty);
 
         var (toggle, menu) = BuildContextMenu();
         _toggleItem = toggle;
@@ -45,7 +57,8 @@ internal sealed class TrayService : ITrayService
 
     public void UpdateStatus(MultiInstanceState state)
     {
-        _taskbarIcon.Icon = LoadIcon(state);
+        _currentState = state;
+        _taskbarIcon.Icon = ResolveIconForState(state);
         _taskbarIcon.ToolTipText = state switch
         {
             MultiInstanceState.On => "ROROROblox — Multi-Instance ON",
@@ -60,6 +73,38 @@ internal sealed class TrayService : ITrayService
             _ => "Multi-Instance: OFF",
         };
         _toggleItem.IsEnabled = state != MultiInstanceState.Error;
+    }
+
+    /// <summary>
+    /// Replace the default per-state ICOs with main-account-avatar-driven ones. Pass <c>null</c>
+    /// for any (or all) to revert to the bundled defaults for that state. Old icons are disposed
+    /// here so callers don't have to.
+    /// </summary>
+    public void SetCustomStateIcons(Icon? on, Icon? off, Icon? error)
+    {
+        // Dispose the previous customs we owned. Don't dispose the inputs — caller transfers
+        // ownership when calling.
+        _customOn?.Dispose();
+        _customOff?.Dispose();
+        _customError?.Dispose();
+
+        _customOn = on;
+        _customOff = off;
+        _customError = error;
+
+        // Refresh the live icon to reflect the new set.
+        _taskbarIcon.Icon = ResolveIconForState(_currentState);
+    }
+
+    private Icon ResolveIconForState(MultiInstanceState state)
+    {
+        var custom = state switch
+        {
+            MultiInstanceState.On => _customOn,
+            MultiInstanceState.Error => _customError,
+            _ => _customOff,
+        };
+        return custom ?? LoadIcon(state);
     }
 
     private (MenuItem toggle, ContextMenu menu) BuildContextMenu()
@@ -77,6 +122,14 @@ internal sealed class TrayService : ITrayService
         menu.Items.Add(open);
 
         menu.Items.Add(new Separator());
+
+        var preferences = new MenuItem { Header = "Preferences..." };
+        preferences.Click += (_, _) => RequestOpenPreferences?.Invoke(this, EventArgs.Empty);
+        menu.Items.Add(preferences);
+
+        var history = new MenuItem { Header = "History..." };
+        history.Click += (_, _) => RequestOpenHistory?.Invoke(this, EventArgs.Empty);
+        menu.Items.Add(history);
 
         var diagnostics = new MenuItem { Header = "Diagnostics..." };
         diagnostics.Click += (_, _) => RequestOpenDiagnostics?.Invoke(this, EventArgs.Empty);
@@ -117,6 +170,9 @@ internal sealed class TrayService : ITrayService
             return;
         }
         _disposed = true;
+        _customOn?.Dispose();
+        _customOff?.Dispose();
+        _customError?.Dispose();
         _taskbarIcon.Dispose();
     }
 }

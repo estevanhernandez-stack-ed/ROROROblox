@@ -17,6 +17,15 @@ public interface IRobloxProcessTracker
     /// </summary>
     Task TrackLaunchAsync(Guid accountId, DateTimeOffset launchedAtUtc, CancellationToken ct = default);
 
+    /// <summary>
+    /// Attach to an ALREADY-running <c>RobloxPlayerBeta.exe</c> by pid. Used at app startup
+    /// to re-establish tracking for windows the user launched in a prior ROROROblox session
+    /// (or manually outside the app), so they don't lose state across an app restart and so
+    /// auto-launch knows the account is already playing. Returns true if the attach succeeded
+    /// (process exists, isn't already claimed, and is the player binary).
+    /// </summary>
+    bool AttachExisting(Guid accountId, int pid);
+
     /// <summary>Snapshot of currently-attached PIDs by account id.</summary>
     IReadOnlyDictionary<Guid, TrackedProcess> Attached { get; }
 

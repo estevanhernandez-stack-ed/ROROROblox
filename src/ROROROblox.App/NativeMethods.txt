@@ -6,3 +6,6 @@ AttachThreadInput
 GetForegroundWindow
 GetWindowThreadProcessId
 GetCurrentThreadId
+SetWindowTextW
+DwmSetWindowAttribute
+DWMWINDOWATTRIBUTE

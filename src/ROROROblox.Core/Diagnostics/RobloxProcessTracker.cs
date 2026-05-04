@@ -53,6 +53,48 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IDisposable
     public event EventHandler<RobloxProcessEventArgs>? ProcessAttachFailed;
     public event EventHandler<RobloxProcessEventArgs>? ProcessExited;
 
+    public bool AttachExisting(Guid accountId, int pid)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (pid <= 0) return false;
+
+        Process? process = null;
+        try
+        {
+            process = Process.GetProcessById(pid);
+            if (process.HasExited) return false;
+            // Defensive: double-check we're actually attaching to a player process. If we're
+            // wrong here we'd end up tagging an unrelated process as a Roblox client.
+            if (!string.Equals(process.ProcessName, PlayerProcessName, StringComparison.OrdinalIgnoreCase))
+            {
+                process.Dispose();
+                return false;
+            }
+            if (!_claimedPidToAccount.TryAdd(pid, accountId))
+            {
+                // Already claimed (rare — same scanner re-runs). Bail without disturbing.
+                process.Dispose();
+                return false;
+            }
+            // Reuse the same attach path as the polled-launch flow so all consumers (UI badge,
+            // session history, window decorator) get the same ProcessAttached event shape.
+            AttachToProcess(accountId, process);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            // pid no longer exists.
+            process?.Dispose();
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "AttachExisting failed for pid {Pid} on account {AccountId}", pid, accountId);
+            process?.Dispose();
+            return false;
+        }
+    }
+
     public async Task TrackLaunchAsync(Guid accountId, DateTimeOffset launchedAtUtc, CancellationToken ct = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
