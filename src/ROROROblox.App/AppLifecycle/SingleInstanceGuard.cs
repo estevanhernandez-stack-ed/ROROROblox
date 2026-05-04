@@ -39,6 +39,14 @@ internal sealed class SingleInstanceGuard : IDisposable
 
     private void SignalExisting()
     {
+        // Grant the first instance permission to take foreground. Without this, Windows
+        // blocks SetForegroundWindow as a cross-process focus steal and only flashes the
+        // taskbar. ASFW_ANY = 0xFFFFFFFF lets the next call from any process succeed within
+        // the brief permission window. Second instance has foreground right now (it's the
+        // process the user just launched), so it has the authority to grant.
+        const uint ASFW_ANY = 0xFFFFFFFF;
+        PInvoke.AllowSetForegroundWindow(ASFW_ANY);
+
         try
         {
             using var client = new NamedPipeClientStream(".", _pipeName, PipeDirection.Out);
@@ -102,18 +110,43 @@ internal sealed class SingleInstanceGuard : IDisposable
         }
         window.Activate();
 
-        // Belt-and-suspenders: WPF's Activate() doesn't always grab focus when the foreground-set
-        // restriction is enforced (cross-process focus steal). SetForegroundWindow + restore-if-iconic
-        // is the documented recovery.
         var helper = new WindowInteropHelper(window);
-        if (helper.Handle != IntPtr.Zero)
+        if (helper.Handle == IntPtr.Zero)
         {
-            var hwnd = new HWND(helper.Handle);
-            if (PInvoke.IsIconic(hwnd))
-            {
-                PInvoke.ShowWindow(hwnd, SHOW_WINDOW_CMD.SW_RESTORE);
-            }
+            return;
+        }
+
+        var hwnd = new HWND(helper.Handle);
+        if (PInvoke.IsIconic(hwnd))
+        {
+            PInvoke.ShowWindow(hwnd, SHOW_WINDOW_CMD.SW_RESTORE);
+        }
+
+        // AttachThreadInput trick: temporarily attach our message-pump thread to the foreground
+        // thread's input queue, then SetForegroundWindow. Windows treats this as legitimate input
+        // (the focus change rides on the same input context as the user's last action) instead of
+        // a rude cross-process steal. This is the documented recovery for the AllowSetForegroundWindow
+        // permission window the second instance opened for us.
+        var foregroundHwnd = PInvoke.GetForegroundWindow();
+        var foregroundThreadId = PInvoke.GetWindowThreadProcessId(foregroundHwnd, out _);
+        var currentThreadId = PInvoke.GetCurrentThreadId();
+
+        var attached = false;
+        if (foregroundThreadId != 0 && foregroundThreadId != currentThreadId)
+        {
+            attached = PInvoke.AttachThreadInput(currentThreadId, foregroundThreadId, fAttach: true);
+        }
+
+        try
+        {
             PInvoke.SetForegroundWindow(hwnd);
+        }
+        finally
+        {
+            if (attached)
+            {
+                PInvoke.AttachThreadInput(currentThreadId, foregroundThreadId, fAttach: false);
+            }
         }
     }
 

@@ -1,3 +1,8 @@
 SetForegroundWindow
 ShowWindow
 IsIconic
+AllowSetForegroundWindow
+AttachThreadInput
+GetForegroundWindow
+GetWindowThreadProcessId
+GetCurrentThreadId
