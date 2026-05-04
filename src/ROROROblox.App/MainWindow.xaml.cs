@@ -1,10 +1,11 @@
 using System.ComponentModel;
 using System.Windows;
 using ROROROblox.App.ViewModels;
+using Wpf.Ui.Controls;
 
 namespace ROROROblox.App;
 
-public partial class MainWindow : Window
+public partial class MainWindow : FluentWindow
 {
     public MainWindow(MainViewModel viewModel)
     {

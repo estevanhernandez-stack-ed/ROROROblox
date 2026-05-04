@@ -28,6 +28,9 @@ webview2-data/
 *.p12
 *.key
 *.pem
+# Public cert produced by scripts/generate-dev-cert.ps1 next to the .pfx. Distributed with each
+# sideload release on GitHub Releases (testers import it before installing the .msix); not tracked.
+dev-cert.cer
 .env
 .env.local
 

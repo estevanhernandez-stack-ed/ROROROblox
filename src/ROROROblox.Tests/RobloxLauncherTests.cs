@@ -55,6 +55,87 @@ public class RobloxLauncherTests
             RobloxLauncher.BuildLaunchUri("T", 0, "", "https://x"));
     }
 
+    // === NormalizeToPlaceLauncherUrl ===
+
+    [Fact]
+    public void NormalizeToPlaceLauncherUrl_PublicGameUrl_RewritesToPlaceLauncherForm()
+    {
+        var result = RobloxLauncher.NormalizeToPlaceLauncherUrl(
+            "https://www.roblox.com/games/920587237/Adopt-Me",
+            browserTrackerId: "12345");
+
+        Assert.Contains("assetgame.roblox.com/game/PlaceLauncher.ashx", result);
+        Assert.Contains("placeId=920587237", result);
+        Assert.Contains("browserTrackerId=12345", result);
+        Assert.Contains("request=RequestGame", result);
+    }
+
+    [Fact]
+    public void NormalizeToPlaceLauncherUrl_PublicGameUrl_WithoutSlug_StillExtractsId()
+    {
+        var result = RobloxLauncher.NormalizeToPlaceLauncherUrl(
+            "https://www.roblox.com/games/920587237",
+            browserTrackerId: "12345");
+
+        Assert.Contains("placeId=920587237", result);
+    }
+
+    [Fact]
+    public void NormalizeToPlaceLauncherUrl_AlreadyPlaceLauncherUrl_PassesThroughUnchanged()
+    {
+        var input = "https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestGame&browserTrackerId=99&placeId=12345&isPlayTogetherGame=false";
+
+        var result = RobloxLauncher.NormalizeToPlaceLauncherUrl(input, browserTrackerId: "12345");
+
+        Assert.Equal(input, result);
+    }
+
+    [Fact]
+    public void NormalizeToPlaceLauncherUrl_BareNumericPlaceId_WrapsInPlaceLauncherForm()
+    {
+        var result = RobloxLauncher.NormalizeToPlaceLauncherUrl(
+            "920587237",
+            browserTrackerId: "12345");
+
+        Assert.Contains("placeId=920587237", result);
+        Assert.Contains("PlaceLauncher.ashx", result);
+    }
+
+    [Fact]
+    public void NormalizeToPlaceLauncherUrl_UnrecognizedInput_PassesThrough()
+    {
+        var input = "https://example.com/some/random/url";
+        var result = RobloxLauncher.NormalizeToPlaceLauncherUrl(input, browserTrackerId: "12345");
+        Assert.Equal(input, result);
+    }
+
+    [Fact]
+    public void NormalizeToPlaceLauncherUrl_WorksWithoutWww()
+    {
+        var result = RobloxLauncher.NormalizeToPlaceLauncherUrl(
+            "https://roblox.com/games/920587237/Adopt-Me",
+            browserTrackerId: "1");
+
+        Assert.Contains("placeId=920587237", result);
+    }
+
+    [Fact]
+    public async Task LaunchAsync_TransformsPublicUrlBeforeBuildingLaunchUri()
+    {
+        var (launcher, _, processStarter) = CreateLauncher(
+            ticket: "T",
+            defaultPlaceUrl: null,
+            startResult: 1);
+
+        await launcher.LaunchAsync(TestCookie, placeUrl: "https://www.roblox.com/games/920587237/Adopt-Me");
+
+        // The roblox-player URI's placelauncherurl segment should contain the URL-encoded
+        // PlaceLauncher.ashx form, not the public web URL.
+        Assert.Contains(Uri.EscapeDataString("PlaceLauncher.ashx"), processStarter.LastUri);
+        Assert.Contains(Uri.EscapeDataString("placeId=920587237"), processStarter.LastUri);
+        Assert.DoesNotContain(Uri.EscapeDataString("/games/920587237/Adopt-Me"), processStarter.LastUri);
+    }
+
     // === LaunchAsync ===
 
     [Fact]

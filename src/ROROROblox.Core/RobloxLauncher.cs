@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ROROROblox.Core;
 
@@ -69,7 +70,14 @@ public sealed class RobloxLauncher : IRobloxLauncher
 
         var launchTime = _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
         var browserTrackerId = _browserTrackerIdFactory().ToString();
-        var uri = BuildLaunchUri(ticket.Ticket, launchTime, browserTrackerId, resolvedPlaceUrl);
+
+        // Normalize: a "public" roblox.com/games/<id>/<slug> URL (what users copy from their browser
+        // address bar) is NOT what RobloxPlayerLauncher expects in placelauncherurl. The launcher
+        // hits that URL with the auth ticket expecting a JSON game-server connection blob; pointing
+        // it at the HTML game page makes Roblox open then exit silently (caught empirically 2026-05-04).
+        // Transform to the assetgame.roblox.com/game/PlaceLauncher.ashx form.
+        var normalizedPlaceUrl = NormalizeToPlaceLauncherUrl(resolvedPlaceUrl, browserTrackerId);
+        var uri = BuildLaunchUri(ticket.Ticket, launchTime, browserTrackerId, normalizedPlaceUrl);
 
         try
         {
@@ -87,7 +95,54 @@ public sealed class RobloxLauncher : IRobloxLauncher
     }
 
     /// <summary>
-    /// Pure URI construction — public for snapshot testing. Shape per spec §5.6 + the
+    /// Convert a user-friendly Roblox game URL into the <c>PlaceLauncher.ashx</c> form
+    /// <c>RobloxPlayerLauncher</c> expects. Accepts:
+    /// <list type="bullet">
+    ///   <item><c>https://www.roblox.com/games/{id}/{slug}</c> -- normalized.</item>
+    ///   <item><c>https://www.roblox.com/games/{id}</c> -- normalized.</item>
+    ///   <item>An existing PlaceLauncher URL -- passed through unchanged.</item>
+    ///   <item>Bare numeric place id -- wrapped in PlaceLauncher form.</item>
+    ///   <item>Anything else -- passed through (caller may have a non-standard form).</item>
+    /// </list>
+    /// </summary>
+    public static string NormalizeToPlaceLauncherUrl(string input, string browserTrackerId)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return input;
+        }
+
+        if (input.Contains("PlaceLauncher.ashx", StringComparison.OrdinalIgnoreCase))
+        {
+            return input;
+        }
+
+        var match = Regex.Match(input, @"roblox\.com/games/(\d+)", RegexOptions.IgnoreCase);
+        if (match.Success)
+        {
+            var placeId = match.Groups[1].Value;
+            return "https://assetgame.roblox.com/game/PlaceLauncher.ashx" +
+                   "?request=RequestGame" +
+                   $"&browserTrackerId={browserTrackerId}" +
+                   $"&placeId={placeId}" +
+                   "&isPlayTogetherGame=false";
+        }
+
+        if (Regex.IsMatch(input.Trim(), @"^\d+$"))
+        {
+            var placeId = input.Trim();
+            return "https://assetgame.roblox.com/game/PlaceLauncher.ashx" +
+                   "?request=RequestGame" +
+                   $"&browserTrackerId={browserTrackerId}" +
+                   $"&placeId={placeId}" +
+                   "&isPlayTogetherGame=false";
+        }
+
+        return input;
+    }
+
+    /// <summary>
+    /// Pure URI construction -- public for snapshot testing. Shape per spec §5.6 + the
     /// spike-time finding that <c>placelauncherurl</c> is required (not optional).
     /// </summary>
     public static string BuildLaunchUri(

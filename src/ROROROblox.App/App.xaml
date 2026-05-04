@@ -2,11 +2,19 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:ROROROblox.App"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
-        <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-        <local:InverseBoolConverter x:Key="InverseBoolConverter" />
-        <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
-        <local:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemesDictionary Theme="Dark" />
+                <ui:ControlsDictionary />
+            </ResourceDictionary.MergedDictionaries>
+
+            <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <local:InverseBoolConverter x:Key="InverseBoolConverter" />
+            <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+            <local:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter" />
+        </ResourceDictionary>
     </Application.Resources>
 </Application>
