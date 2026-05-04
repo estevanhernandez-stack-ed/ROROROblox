@@ -1,4 +1,4 @@
-# ROROROblox — MSIX build pipeline.
+# ROROROblox -- MSIX build pipeline.
 # Two flavors:
 #   -Sideload : self-signed via dev-cert.pfx (clan distribution + manual SmartScreen click-through)
 #   -Store    : unsigned (Partner Center signs after submission)
@@ -68,7 +68,7 @@ function Test-LogosPresent {
         $size = (Get-Item $path).Length
         if ($size -lt 200) {
             # 200 bytes is below the floor of any honest PNG at any of our sizes.
-            $suspicious += "$($logo.Name) (only $size bytes — looks like a placeholder stub)"
+            $suspicious += "$($logo.Name) (only $size bytes -- looks like a placeholder stub)"
             continue
         }
     }
@@ -84,16 +84,16 @@ function Test-LogosPresent {
 
     if (($missing.Count -gt 0 -or $suspicious.Count -gt 0) -and -not $AllowPlaceholders) {
         Write-Host ''
-        Write-Host '[logos] FAIL — produce real assets via the 626labs-design skill before building.' -ForegroundColor Red
+        Write-Host '[logos] FAIL -- produce real assets via the 626labs-design skill before building.' -ForegroundColor Red
         Write-Host '[logos] See src/ROROROblox.App/Package/Logos/README.md for sizes + skill invocation.' -ForegroundColor Red
         Write-Host '[logos] If you really need to bypass (only for early-dev smoke), pass -AllowPlaceholders.' -ForegroundColor Red
         return $false
     }
 
     if ($AllowPlaceholders -and ($missing.Count -gt 0 -or $suspicious.Count -gt 0)) {
-        Write-Host '[logos] WARN — building with -AllowPlaceholders. DO NOT submit this to the Store.' -ForegroundColor Yellow
+        Write-Host '[logos] WARN -- building with -AllowPlaceholders. DO NOT submit this to the Store.' -ForegroundColor Yellow
     } else {
-        Write-Host "[logos] OK — all $($requiredLogos.Count) required assets present." -ForegroundColor Green
+        Write-Host "[logos] OK -- all $($requiredLogos.Count) required assets present." -ForegroundColor Green
     }
     return $true
 }
@@ -132,7 +132,7 @@ if ($Verify) {
     $ok = Test-LogosPresent
     if (-not $ok) { exit 1 }
     Write-Host '[verify] Checking manifest...' -ForegroundColor Cyan
-    if (-not (Test-Path $manifestPath)) { Write-Host "[verify] FAIL — $manifestPath missing." -ForegroundColor Red; exit 1 }
+    if (-not (Test-Path $manifestPath)) { Write-Host "[verify] FAIL -- $manifestPath missing." -ForegroundColor Red; exit 1 }
     Write-Host '[verify] OK.' -ForegroundColor Green
     exit 0
 }

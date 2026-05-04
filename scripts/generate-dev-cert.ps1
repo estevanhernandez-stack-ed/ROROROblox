@@ -1,4 +1,4 @@
-# ROROROblox — generate a self-signed sideload code-signing certificate.
+# ROROROblox -- generate a self-signed sideload code-signing certificate.
 # Output: dev-cert.pfx (gitignored) + dev-cert.cer (the public half, for distribution to clan
 # testers who need to trust it on their machines).
 #
@@ -6,7 +6,7 @@
 #   powershell -ExecutionPolicy Bypass -File scripts/generate-dev-cert.ps1 -Password 'pick-a-password'
 #
 # This cert is for SIDELOAD ONLY. The Microsoft Store path uses a different cert issued by
-# Partner Center — never reuse this key for Store-bound builds.
+# Partner Center -- never reuse this key for Store-bound builds.
 
 param(
     [Parameter(Mandatory = $true)]
@@ -25,7 +25,7 @@ $pfxPath = Join-Path $OutDir 'dev-cert.pfx'
 $cerPath = Join-Path $OutDir 'dev-cert.cer'
 
 if (Test-Path $pfxPath) {
-    Write-Host "[cert] $pfxPath already exists — refusing to overwrite. Delete it first if you really want a new cert." -ForegroundColor Yellow
+    Write-Host "[cert] $pfxPath already exists -- refusing to overwrite. Delete it first if you really want a new cert." -ForegroundColor Yellow
     exit 1
 }
 
@@ -45,7 +45,7 @@ $securePassword = ConvertTo-SecureString -String $Password -Force -AsPlainText
 Export-PfxCertificate -Cert $cert -FilePath $pfxPath -Password $securePassword | Out-Null
 Export-Certificate -Cert $cert -FilePath $cerPath | Out-Null
 
-# Remove from local cert store now that we have the .pfx — keeps the Personal store tidy.
+# Remove from local cert store now that we have the .pfx -- keeps the Personal store tidy.
 Remove-Item -Path "Cert:\CurrentUser\My\$($cert.Thumbprint)" -Force -ErrorAction SilentlyContinue
 
 Write-Host ''
@@ -55,5 +55,5 @@ Write-Host "[cert] Thumbprint: $($cert.Thumbprint)"
 Write-Host ''
 Write-Host "Next steps:" -ForegroundColor Cyan
 Write-Host "  1. Build sideload MSIX:  powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertPath dev-cert.pfx -CertPassword '$Password'"
-Write-Host "  2. Distribute dev-cert.cer to anyone who'll install the sideload — they import it"
+Write-Host "  2. Distribute dev-cert.cer to anyone who'll install the sideload -- they import it"
 Write-Host "     into Local Machine \\ Trusted People before the MSIX install will succeed."
