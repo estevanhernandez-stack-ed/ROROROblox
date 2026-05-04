@@ -41,6 +41,10 @@ dist/
 Releases/
 *.nupkg
 
+# Tray-icon debug output -- scripts/generate-tray-icons.ps1 emits standalone PNGs at
+# small sizes (16/24/32) into Tray/Resources/.debug/ for visual inspection. Not shipped.
+src/ROROROblox.App/Tray/Resources/.debug/
+
 # OS noise
 Thumbs.db
 .DS_Store
