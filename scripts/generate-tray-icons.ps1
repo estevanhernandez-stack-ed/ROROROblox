@@ -16,12 +16,20 @@ Add-Type -AssemblyName System.Drawing
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $resourcesDir = Join-Path $repoRoot 'src\ROROROblox.App\Tray\Resources'
-$srcLogo = Join-Path $env:USERPROFILE '.claude\skills\626labs-design\assets\626Labs-logo.png'
 
-if (-not (Test-Path $srcLogo)) {
-    Write-Host "[fatal] 626Labs lockup not found at $srcLogo" -ForegroundColor Red
+# Source resolution -- prefer the labs-hub transparent icon, fall back to design-skill lockup.
+$sourceCandidates = @(
+    'E:\626Labs-Workspace\repos\626Labs-LLC.github.io\assets\brand\icon-transparent-1024.png',
+    (Join-Path $env:USERPROFILE 'Projects\626Labs-LLC.github.io\assets\brand\icon-transparent-1024.png'),
+    (Join-Path $env:USERPROFILE '.claude\skills\626labs-design\assets\626Labs-logo.png')
+)
+$srcLogo = $sourceCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $srcLogo) {
+    Write-Host '[fatal] No source logo found.' -ForegroundColor Red
     exit 1
 }
+$useTransparentSource = $srcLogo -like '*icon-transparent-*.png'
+Write-Host "[source] $srcLogo (transparent: $useTransparentSource)" -ForegroundColor Cyan
 
 # Brand tokens.
 $navy = [System.Drawing.Color]::FromArgb(255, 15, 31, 49)         # #0F1F31
@@ -30,8 +38,11 @@ $slate = [System.Drawing.Color]::FromArgb(255, 90, 105, 130)      # #5A6982
 $magenta = [System.Drawing.Color]::FromArgb(255, 242, 47, 137)    # #F22F89
 
 $source = [System.Drawing.Image]::FromFile($srcLogo)
-# Tight art crop (matches generate-store-assets.ps1)
-$markRect = New-Object System.Drawing.Rectangle(70, 20, 450, 410)
+if ($useTransparentSource) {
+    $markRect = New-Object System.Drawing.Rectangle(0, 0, $source.Width, $source.Height)
+} else {
+    $markRect = New-Object System.Drawing.Rectangle(70, 20, 450, 410)
+}
 
 $states = @(
     @{ Name = 'tray-on.ico';    Ring = $cyan },

@@ -22,13 +22,22 @@ Add-Type -AssemblyName System.Drawing
 
 $logosDir = Join-Path $RepoRoot 'src\ROROROblox.App\Package\Logos'
 $fontDir = Join-Path $logosDir '.fonts'
-$srcLogo = Join-Path $env:USERPROFILE '.claude\skills\626labs-design\assets\626Labs-logo.png'
 
-if (-not (Test-Path $srcLogo)) {
-    Write-Host "[fatal] 626Labs lockup not found at $srcLogo" -ForegroundColor Red
-    Write-Host "[fatal] Install the 626labs-design Claude Code skill first." -ForegroundColor Red
+# Source resolution -- prefer the labs-hub transparent icon (clean alpha, tight frame),
+# fall back to the design skill's lockup PNG (rectangular crop, navy frame artifact).
+$sourceCandidates = @(
+    'E:\626Labs-Workspace\repos\626Labs-LLC.github.io\assets\brand\icon-transparent-1024.png',
+    (Join-Path $env:USERPROFILE 'Projects\626Labs-LLC.github.io\assets\brand\icon-transparent-1024.png'),
+    (Join-Path $env:USERPROFILE '.claude\skills\626labs-design\assets\626Labs-logo.png')
+)
+$srcLogo = $sourceCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $srcLogo) {
+    Write-Host '[fatal] No source logo found. Tried:' -ForegroundColor Red
+    $sourceCandidates | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
     exit 1
 }
+$useTransparentSource = $srcLogo -like '*icon-transparent-*.png'
+Write-Host "[source] $srcLogo (transparent: $useTransparentSource)" -ForegroundColor Cyan
 
 # Brand tokens.
 $navy = [System.Drawing.Color]::FromArgb(255, 15, 31, 49)         # #0F1F31
@@ -48,11 +57,15 @@ if ($ttf) {
     Write-Host '[font] Space Grotesk not found, falling back to Segoe UI'
 }
 
-# Source-mark crop. The lockup is 589x598 with the hex+brain+swoosh artwork sitting ~y=20-430,
-# x=70-520 (eyeballed). Crop tighter than the full top half to minimize the source-navy frame
-# bleeding into our canvas at smaller sizes.
+# Source-mark crop.
+# - Transparent icon (preferred): full image is the artwork, no crop needed.
+# - Lockup PNG (fallback): hex+brain+swoosh sits ~y=20-430, x=70-520 (eyeballed).
 $source = [System.Drawing.Image]::FromFile($srcLogo)
-$markRect = New-Object System.Drawing.Rectangle(70, 20, 450, 410)
+if ($useTransparentSource) {
+    $markRect = New-Object System.Drawing.Rectangle(0, 0, $source.Width, $source.Height)
+} else {
+    $markRect = New-Object System.Drawing.Rectangle(70, 20, 450, 410)
+}
 
 function New-AssetCanvas([int]$width, [int]$height) {
     $bmp = New-Object System.Drawing.Bitmap($width, $height, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
