@@ -28,6 +28,7 @@ allow=(
   "docs/prd.md"
   "docs/builder-profile.md"
   "docs/superpowers/specs/2026-05-03-rororoblox-design.md"
+  "docs/security-audit-2026-05-04.md"
   ".claude/hooks/pre-commit-local-path-guard.sh"
   ".claude/hooks/README.md"
 )
