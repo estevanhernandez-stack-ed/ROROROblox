@@ -46,4 +46,7 @@ internal sealed class RelayCommand : ICommand
         add => CommandManager.RequerySuggested += value;
         remove => CommandManager.RequerySuggested -= value;
     }
+
+    /// <summary>Forces a CanExecute requery on the WPF UI thread.</summary>
+    public static void RaiseCanExecuteChanged() => CommandManager.InvalidateRequerySuggested();
 }

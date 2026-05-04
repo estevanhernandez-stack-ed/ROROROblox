@@ -61,23 +61,31 @@
                         <TextBlock Text="{Binding DisplayName}"
                                    FontSize="14" FontWeight="SemiBold"
                                    Foreground="{StaticResource WhiteBrush}" />
-                        <TextBlock FontSize="11" Foreground="{StaticResource MutedTextBrush}" Margin="0,2,0,0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Text" Value="{Binding StatusText}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding StatusText}" Value="">
-                                            <Setter Property="Text" Value="Ready" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding SessionExpired}" Value="True">
-                                            <Setter Property="Text" Value="Session expired" />
-                                            <Setter Property="Foreground" Value="{StaticResource RowExpiredAccentBrush}" />
-                                            <Setter Property="FontWeight" Value="SemiBold" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <!-- Live status dot: green=running, yellow=expired, grey=idle. -->
+                            <Ellipse Width="8" Height="8"
+                                     Fill="{Binding StatusDot, Converter={StaticResource StatusDotBrushConverter}}"
+                                     VerticalAlignment="Center"
+                                     Margin="0,0,8,0" />
+                            <TextBlock Text="{Binding SecondaryStatusText}"
+                                       FontSize="11"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SessionExpired}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource RowExpiredAccentBrush}" />
+                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource WhiteBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
                     </StackPanel>
 
                     <!-- Actions -->
@@ -113,7 +121,7 @@
                                        Visibility="{Binding DataContext.AvailableGames.Count, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ZeroToVisibilityConverter}}" />
                         </Grid>
 
-                        <!-- Launch As -->
+                        <!-- Launch As (hidden while running — Stop takes its place) -->
                         <Button Content="Launch As"
                                 Command="{Binding DataContext.LaunchAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
@@ -122,7 +130,30 @@
                                 Foreground="{StaticResource NavyBrush}"
                                 BorderThickness="0"
                                 FontWeight="SemiBold"
-                                IsEnabled="{Binding IsLaunching, Converter={StaticResource InverseBoolConverter}}" />
+                                IsEnabled="{Binding IsLaunching, Converter={StaticResource InverseBoolConverter}}">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <!-- Stop (visible while running) -->
+                        <Button Content="Stop"
+                                Command="{Binding DataContext.StopAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                Padding="14,6" Margin="0,0,8,0"
+                                Background="{StaticResource MagentaBrush}"
+                                Foreground="{StaticResource WhiteBrush}"
+                                BorderThickness="0"
+                                FontWeight="SemiBold"
+                                ToolTip="Close the Roblox window for this account."
+                                Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                         <!-- Remove -->
                         <Button Content="Remove"
@@ -186,6 +217,23 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="About"
+                            Command="{Binding OpenAboutCommand}"
+                            Padding="10,8" Margin="0,0,6,0"
+                            Background="Transparent"
+                            Foreground="{StaticResource MutedTextBrush}"
+                            BorderThickness="0"
+                            FontSize="11"
+                            ToolTip="Version, links, license." />
+                    <Button Content="Diagnostics"
+                            Command="{Binding OpenDiagnosticsCommand}"
+                            Padding="12,8" Margin="0,0,6,0"
+                            Background="{StaticResource NavyBrush}"
+                            Foreground="{StaticResource MutedTextBrush}"
+                            BorderBrush="{StaticResource DividerBrush}"
+                            BorderThickness="1"
+                            FontSize="12"
+                            ToolTip="System health, Roblox + WebView2 versions, log location." />
                     <Button Content="Games"
                             Command="{Binding OpenSettingsCommand}"
                             Padding="14,8" Margin="0,0,8,0"
@@ -194,6 +242,15 @@
                             BorderBrush="{StaticResource DividerBrush}"
                             BorderThickness="1"
                             FontSize="12" />
+                    <Button Content="Launch All"
+                            Command="{Binding LaunchAllCommand}"
+                            Padding="14,8" Margin="0,0,8,0"
+                            Background="{StaticResource MagentaBrush}"
+                            Foreground="{StaticResource WhiteBrush}"
+                            BorderThickness="0"
+                            FontSize="12"
+                            FontWeight="SemiBold"
+                            ToolTip="Launch every active account, throttled 1.5s apart so the tracker can attach to each client." />
                     <Button Content="+ Add Account"
                             Command="{Binding AddAccountCommand}"
                             Padding="16,8"
@@ -254,15 +311,44 @@
                 BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,1,0,0">
             <Grid>
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0"
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="7" Height="7"
+                             VerticalAlignment="Center" Margin="0,0,8,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill">
+                                    <Setter.Value>
+                                        <SolidColorBrush Color="#4FE08C" />
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding LiveProcessCount}" Value="0">
+                                        <Setter Property="Fill">
+                                            <Setter.Value>
+                                                <SolidColorBrush Color="#4A5C70" />
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Text="{Binding LiveProcessSummary}"
+                               FontSize="11"
+                               Foreground="{StaticResource WhiteBrush}"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBlock Grid.Column="1"
                            Text="A 626 Labs product. Imagine Something Else."
                            FontSize="10"
                            Foreground="{StaticResource MutedTextBrush}"
+                           HorizontalAlignment="Center"
                            VerticalAlignment="Center" />
-                <TextBlock Grid.Column="1"
+                <TextBlock Grid.Column="2"
                            Text="Closing the X minimizes to tray. Quit from the tray menu to exit."
                            FontSize="10"
                            Foreground="{StaticResource MutedTextBrush}"

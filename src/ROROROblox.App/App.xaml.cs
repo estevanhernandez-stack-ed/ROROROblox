@@ -1,13 +1,18 @@
 using System.Net.Http.Headers;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using ROROROblox.App.AppLifecycle;
 using ROROROblox.App.CookieCapture;
+using ROROROblox.App.Logging;
 using ROROROblox.App.Startup;
 using ROROROblox.App.Tray;
 using ROROROblox.App.Updates;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
+using ROROROblox.Core.Diagnostics;
 
 namespace ROROROblox.App;
 
@@ -15,6 +20,8 @@ public partial class App : Application
 {
     private SingleInstanceGuard? _singleInstance;
     private ServiceProvider? _services;
+    private ILoggerFactory? _loggerFactory;
+    private ILogger<App>? _log;
 
     /// <summary>
     /// True after the user explicitly Quits via the tray menu. MainWindow's Closing handler
@@ -26,15 +33,24 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // Configure logging FIRST — every other failure mode below benefits from a written record.
+        _loggerFactory = AppLogging.Configure();
+        _log = _loggerFactory.CreateLogger<App>();
+        WireGlobalExceptionHandlers();
+
+        var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        _log.LogInformation("ROROROblox starting (v{Version}, OS {Os})", version, Environment.OSVersion);
+
         _singleInstance = new SingleInstanceGuard("ROROROblox-app-singleton");
         if (!_singleInstance.AcquireOrSignalExisting())
         {
+            _log.LogInformation("Another instance is running; signaling and exiting.");
             Shutdown(0);
             return;
         }
 
         var services = new ServiceCollection();
-        ConfigureServices(services);
+        ConfigureServices(services, _loggerFactory);
         _services = services.BuildServiceProvider();
 
         var tray = _services.GetRequiredService<ITrayService>();
@@ -70,9 +86,9 @@ public partial class App : Application
             var updateChecker = _services.GetRequiredService<IUpdateChecker>();
             await updateChecker.CheckForUpdatesAsync();
         }
-        catch
+        catch (Exception ex)
         {
-            // Best-effort — auto-update is comfort, not load-bearing.
+            _log?.LogDebug(ex, "Update check threw; ignoring.");
         }
 
         try
@@ -80,14 +96,29 @@ public partial class App : Application
             var vm = _services.GetRequiredService<MainViewModel>();
             await vm.LoadCompatBannerAsync();
         }
-        catch
+        catch (Exception ex)
         {
-            // Best-effort — version-drift banner is comfort, not load-bearing.
+            _log?.LogDebug(ex, "Compat banner threw; ignoring.");
+        }
+
+        try
+        {
+            // Background validation — slight delay so the UI gets to render first.
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            var vm = _services.GetRequiredService<MainViewModel>();
+            await vm.ValidateSessionsAsync();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Session validation threw; ignoring.");
         }
     }
 
-    private static void ConfigureServices(IServiceCollection services)
+    private static void ConfigureServices(IServiceCollection services, ILoggerFactory loggerFactory)
     {
+        services.AddSingleton(loggerFactory);
+        services.AddLogging();
+
         // Singletons — long-lived state we want exactly one of.
         services.AddSingleton<IMutexHolder>(_ => new MutexHolder()); // Default name = Local\ROBLOX_singletonEvent
         services.AddSingleton<ITrayService, TrayService>();
@@ -116,6 +147,17 @@ public partial class App : Application
         services.AddSingleton<IRobloxLauncher, RobloxLauncher>();
         services.AddSingleton<ICookieCapture, CookieCapture.CookieCapture>();
         services.AddSingleton<IUpdateChecker, UpdateChecker>();
+        services.AddSingleton<IRobloxProcessTracker, RobloxProcessTracker>();
+
+        var dataDir = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "ROROROblox");
+        services.AddSingleton<IDiagnosticsCollector>(sp => new DiagnosticsCollector(
+            sp.GetRequiredService<IAccountStore>(),
+            sp.GetRequiredService<IRobloxProcessTracker>(),
+            sp.GetRequiredService<IMutexHolder>(),
+            AppLogging.LogDirectory,
+            dataDir));
 
         // ViewModel + Window.
         services.AddSingleton<MainViewModel>();
@@ -127,6 +169,45 @@ public partial class App : Application
         tray.RequestOpenMainWindow += (_, _) => SurfaceMainWindow(mainWindow);
         tray.RequestToggleMutex += (_, _) => ToggleMutex(mutex, tray);
         tray.RequestQuit += (_, _) => RequestShutdown();
+        tray.RequestOpenDiagnostics += (_, _) => OpenDiagnosticsFromTray(mainWindow);
+        tray.RequestOpenLogs += (_, _) => OpenLogsFolder();
+    }
+
+    private void OpenDiagnosticsFromTray(Window owner)
+    {
+        if (_services is null) return;
+        try
+        {
+            var collector = _services.GetRequiredService<IDiagnosticsCollector>();
+            var window = new Diagnostics.DiagnosticsWindow(collector);
+            if (owner.IsLoaded)
+            {
+                window.Owner = owner;
+            }
+            SurfaceMainWindow(owner);
+            window.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Couldn't open Diagnostics window from tray");
+        }
+    }
+
+    private void OpenLogsFolder()
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = AppLogging.LogDirectory,
+                UseShellExecute = true,
+                Verb = "open",
+            });
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Couldn't open log folder from tray");
+        }
     }
 
     private static void WireMutexLost(IMutexHolder mutex, ITrayService tray)
@@ -174,8 +255,44 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         IsShuttingDown = true;
+        _log?.LogInformation("ROROROblox exiting (code {Code}).", e.ApplicationExitCode);
         _singleInstance?.Dispose();
         _services?.Dispose();
+        AppLogging.Shutdown();
         base.OnExit(e);
+    }
+
+    /// <summary>
+    /// Three nets so a stray exception writes to the log instead of vanishing into a Windows
+    /// Error Reporting dialog. None of these <em>recover</em> — they record. The app still
+    /// shuts down on a true unhandled crash; we just have evidence afterward.
+    /// </summary>
+    private void WireGlobalExceptionHandlers()
+    {
+        DispatcherUnhandledException += (_, args) =>
+        {
+            _log?.LogError(args.Exception, "Unhandled WPF dispatcher exception.");
+            // Don't mark Handled — let the app crash visibly. Silent crash is worse than loud crash.
+        };
+
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            if (args.ExceptionObject is Exception ex)
+            {
+                _log?.LogCritical(ex, "Unhandled AppDomain exception (terminating={IsTerminating}).", args.IsTerminating);
+            }
+            else
+            {
+                _log?.LogCritical("Unhandled non-Exception object thrown: {Object}", args.ExceptionObject);
+            }
+            // Best-effort flush before the runtime tears us down.
+            try { AppLogging.Shutdown(); } catch { }
+        };
+
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            _log?.LogWarning(args.Exception, "Unobserved Task exception (already detached from its Task).");
+            args.SetObserved(); // Don't escalate to AppDomain.UnhandledException for a fire-and-forget.
+        };
     }
 }

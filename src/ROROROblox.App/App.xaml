@@ -15,6 +15,7 @@
             <local:InverseBoolConverter x:Key="InverseBoolConverter" />
             <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
             <local:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter" />
+            <local:StatusDotBrushConverter x:Key="StatusDotBrushConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

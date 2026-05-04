@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
+using ROROROblox.App.About;
 using ROROROblox.App.ViewModels;
 using Wpf.Ui.Controls;
 
@@ -19,6 +20,18 @@ public partial class MainWindow : FluentWindow
         if (DataContext is MainViewModel vm)
         {
             await vm.LoadAsync();
+        }
+
+        // First-run welcome — only when there's nothing in the account list. If the user
+        // already has accounts (returning from an upgrade), the sentinel write happens silently.
+        if (WelcomeWindow.IsFirstRun())
+        {
+            WelcomeWindow.MarkShown();
+            if (DataContext is MainViewModel mvm && mvm.Accounts.Count == 0)
+            {
+                var welcome = new WelcomeWindow { Owner = this };
+                welcome.ShowDialog();
+            }
         }
     }
 

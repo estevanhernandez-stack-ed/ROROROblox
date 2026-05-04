@@ -11,7 +11,13 @@ public abstract record LaunchResult
 {
     private LaunchResult() { }
 
-    public sealed record Started(int Pid) : LaunchResult;
+    /// <summary>
+    /// <paramref name="Pid"/> is the launcher process id (<c>RobloxPlayerLauncher.exe</c>),
+    /// which exits within seconds after spawning <c>RobloxPlayerBeta.exe</c>.
+    /// <paramref name="LaunchedAtUtc"/> is the moment we handed the URI to the shell — used by
+    /// <c>IRobloxProcessTracker</c> to match the resulting player process by start-time.
+    /// </summary>
+    public sealed record Started(int Pid, DateTimeOffset LaunchedAtUtc) : LaunchResult;
     public sealed record CookieExpired : LaunchResult;
     public sealed record Failed(string Message) : LaunchResult;
 }

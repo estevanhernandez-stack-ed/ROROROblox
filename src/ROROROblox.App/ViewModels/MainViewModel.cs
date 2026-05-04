@@ -3,9 +3,15 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using ROROROblox.App.About;
+using ROROROblox.App.Diagnostics;
 using ROROROblox.App.Modals;
 using ROROROblox.App.Settings;
 using ROROROblox.Core;
+using ROROROblox.Core.Diagnostics;
 
 namespace ROROROblox.App.ViewModels;
 
@@ -23,10 +29,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly IRobloxCompatChecker _compatChecker;
     private readonly IAppSettings _settings;
     private readonly IFavoriteGameStore _favorites;
+    private readonly IRobloxProcessTracker _processTracker;
+    private readonly IDiagnosticsCollector _diagnostics;
+    private readonly ILogger<MainViewModel> _log;
+    private readonly DispatcherTimer _ticker;
 
     private string _statusBanner = string.Empty;
     private string? _robloxCompatBanner;
     private bool _isBusy;
+    private int _liveProcessCount;
 
     public MainViewModel(
         ICookieCapture cookieCapture,
@@ -35,7 +46,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
         IRobloxLauncher launcher,
         IRobloxCompatChecker compatChecker,
         IAppSettings settings,
-        IFavoriteGameStore favorites)
+        IFavoriteGameStore favorites,
+        IRobloxProcessTracker processTracker,
+        IDiagnosticsCollector diagnostics,
+        ILogger<MainViewModel>? log = null)
     {
         _cookieCapture = cookieCapture;
         _api = api;
@@ -44,12 +58,34 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _compatChecker = compatChecker;
         _settings = settings;
         _favorites = favorites;
+        _processTracker = processTracker;
+        _diagnostics = diagnostics;
+        _log = log ?? NullLogger<MainViewModel>.Instance;
 
         AddAccountCommand = new RelayCommand(AddAccountAsync, () => !IsBusy);
         LaunchAccountCommand = new RelayCommand(p => LaunchAccountAsync(p as AccountSummary));
         RemoveAccountCommand = new RelayCommand(p => RemoveAccountAsync(p as AccountSummary));
         ReauthenticateCommand = new RelayCommand(p => ReauthenticateAsync(p as AccountSummary));
         OpenSettingsCommand = new RelayCommand(OpenSettings);
+        LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => !a.SessionExpired && !a.IsRunning));
+        StopAccountCommand = new RelayCommand(p => StopAccount(p as AccountSummary));
+        OpenDiagnosticsCommand = new RelayCommand(OpenDiagnostics);
+        OpenAboutCommand = new RelayCommand(OpenAbout);
+
+        _processTracker.ProcessAttached += OnProcessAttached;
+        _processTracker.ProcessExited += OnProcessExited;
+        _processTracker.ProcessAttachFailed += OnProcessAttachFailed;
+
+        // Tick once a minute to keep "5 min ago" / "Running for 12 min" current.
+        _ticker = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+        _ticker.Tick += (_, _) =>
+        {
+            foreach (var summary in Accounts)
+            {
+                summary.RefreshRelativeTimes();
+            }
+        };
+        _ticker.Start();
     }
 
     public ObservableCollection<AccountSummary> Accounts { get; } = [];
@@ -65,6 +101,31 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand RemoveAccountCommand { get; }
     public ICommand ReauthenticateCommand { get; }
     public ICommand OpenSettingsCommand { get; }
+    public ICommand LaunchAllCommand { get; }
+    public ICommand StopAccountCommand { get; }
+    public ICommand OpenDiagnosticsCommand { get; }
+    public ICommand OpenAboutCommand { get; }
+
+    /// <summary>How many tracked Roblox client processes are currently alive.</summary>
+    public int LiveProcessCount
+    {
+        get => _liveProcessCount;
+        private set
+        {
+            if (SetField(ref _liveProcessCount, value))
+            {
+                OnPropertyChanged(nameof(LiveProcessSummary));
+            }
+        }
+    }
+
+    /// <summary>Footer text — e.g. "3 Roblox clients running" / "No clients running".</summary>
+    public string LiveProcessSummary => _liveProcessCount switch
+    {
+        0 => "No Roblox clients running",
+        1 => "1 Roblox client running",
+        _ => $"{_liveProcessCount} Roblox clients running",
+    };
 
     public string StatusBanner
     {
@@ -143,9 +204,83 @@ public sealed class MainViewModel : INotifyPropertyChanged
             var result = await _compatChecker.CheckAsync();
             RobloxCompatBanner = result.HasDrift ? result.Banner : null;
         }
-        catch
+        catch (Exception ex)
         {
+            _log.LogDebug(ex, "Compat banner check failed; leaving null.");
             RobloxCompatBanner = null;
+        }
+    }
+
+    /// <summary>
+    /// Background pass that validates every saved cookie against Roblox's authenticated-user
+    /// endpoint. Marks expired sessions yellow proactively so the user doesn't discover them
+    /// only when Launch As fails. Runs sequentially with a 350 ms gap between requests so we
+    /// don't hammer auth on startup. Skips accounts already running (their cookie just worked).
+    /// </summary>
+    public async Task ValidateSessionsAsync(CancellationToken ct = default)
+    {
+        var snapshot = Accounts.ToList();
+        if (snapshot.Count == 0)
+        {
+            return;
+        }
+        _log.LogInformation("Validating {Count} stored sessions in background.", snapshot.Count);
+
+        foreach (var summary in snapshot)
+        {
+            if (ct.IsCancellationRequested) return;
+            if (summary.IsRunning) continue;
+
+            string cookie;
+            try
+            {
+                cookie = await _accountStore.RetrieveCookieAsync(summary.Id).ConfigureAwait(true);
+            }
+            catch (AccountStoreCorruptException)
+            {
+                // Don't show the modal here — first launch attempt will surface it cleanly.
+                _log.LogWarning("AccountStore corrupt during session validation; aborting pass.");
+                return;
+            }
+            catch (Exception ex)
+            {
+                _log.LogDebug(ex, "RetrieveCookieAsync failed for {AccountId}; skipping.", summary.Id);
+                continue;
+            }
+
+            try
+            {
+                _ = await _api.GetUserProfileAsync(cookie).ConfigureAwait(true);
+                summary.SessionExpired = false;
+            }
+            catch (CookieExpiredException)
+            {
+                _log.LogInformation("Session for {AccountId} ({Name}) is expired.", summary.Id, summary.DisplayName);
+                summary.SessionExpired = true;
+            }
+            catch (Exception ex)
+            {
+                // Network failure / 5xx — leave the session badge alone. Don't false-alarm yellow
+                // on a flaky DNS lookup.
+                _log.LogDebug(ex, "Validation transient failure for {AccountId}; leaving state.", summary.Id);
+            }
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(350), ct).ConfigureAwait(true);
+            }
+            catch (TaskCanceledException)
+            {
+                return;
+            }
+        }
+
+        var expired = snapshot.Count(s => s.SessionExpired);
+        if (expired > 0)
+        {
+            StatusBanner = expired == 1
+                ? "1 saved session has expired. Click Re-authenticate to refresh it."
+                : $"{expired} saved sessions have expired. Click Re-authenticate to refresh.";
         }
     }
 
@@ -183,13 +318,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             avatarUrl = await _api.GetAvatarHeadshotUrlAsync(captured.UserId);
         }
-        catch
+        catch (Exception ex)
         {
             // Avatar fetch is best-effort — the row still works without an image.
+            _log.LogDebug(ex, "Avatar fetch failed for new account {UserId}.", captured.UserId);
         }
 
         var account = await _accountStore.AddAsync(captured.Username, avatarUrl, captured.Cookie);
         Accounts.Insert(0, new AccountSummary(account));
+        _log.LogInformation("Added account {AccountId} ({Username}, userId {UserId})", account.Id, captured.Username, captured.UserId);
         StatusBanner = $"Added {captured.Username}.";
     }
 
@@ -202,6 +339,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         summary.IsLaunching = true;
         summary.StatusText = "Launching...";
+        _log.LogInformation("Launching account {AccountId} ({DisplayName})", summary.Id, summary.DisplayName);
         try
         {
             string cookie;
@@ -227,17 +365,25 @@ public sealed class MainViewModel : INotifyPropertyChanged
                     await _accountStore.TouchLastLaunchedAsync(summary.Id);
                     summary.StampLaunched(DateTimeOffset.UtcNow);
                     summary.SessionExpired = false;
-                    summary.StatusText = $"Launched (pid {started.Pid}).";
+                    summary.StatusText = string.Empty;
+                    summary.LastClosedAtUtc = null;
+                    _log.LogInformation("Launcher pid {Pid} for {AccountId}; tracking RobloxPlayerBeta", started.Pid, summary.Id);
+                    // Fire-and-forget: tracker watches for the player process. UI updates flow back
+                    // through ProcessAttached / ProcessAttachFailed events.
+                    _ = _processTracker.TrackLaunchAsync(summary.Id, started.LaunchedAtUtc);
                     break;
                 case LaunchResult.CookieExpired:
+                    _log.LogInformation("Cookie expired for account {AccountId}", summary.Id);
                     summary.SessionExpired = true;
-                    summary.StatusText = "Session expired.";
+                    summary.StatusText = string.Empty;
                     break;
                 case LaunchResult.Failed failed when failed.Message.Contains("Roblox does not appear to be installed", StringComparison.OrdinalIgnoreCase):
+                    _log.LogWarning("Roblox not installed at launch time for account {AccountId}", summary.Id);
                     summary.StatusText = "Roblox not installed.";
                     ShowRobloxNotInstalledModal();
                     break;
                 case LaunchResult.Failed failed:
+                    _log.LogWarning("Launch failed for account {AccountId}: {Message}", summary.Id, failed.Message);
                     summary.StatusText = failed.Message;
                     break;
             }
@@ -246,6 +392,104 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             summary.IsLaunching = false;
         }
+    }
+
+    /// <summary>
+    /// Launch every non-expired, non-running account in sequence with a 1.5s gap. The gap gives
+    /// the tracker time to claim each <c>RobloxPlayerBeta.exe</c> by start time before the next
+    /// launch fires (otherwise FIFO matching gets murky).
+    /// </summary>
+    private async Task LaunchAllAsync()
+    {
+        if (IsBusy) return;
+        IsBusy = true;
+        StatusBanner = "Launching all accounts...";
+        try
+        {
+            var targets = Accounts.Where(a => !a.SessionExpired && !a.IsRunning && !a.IsLaunching).ToList();
+            _log.LogInformation("LaunchAll: {Count} target accounts", targets.Count);
+            if (targets.Count == 0)
+            {
+                StatusBanner = "Nothing to launch — every account is already running or expired.";
+                return;
+            }
+
+            var i = 0;
+            foreach (var summary in targets)
+            {
+                StatusBanner = $"Launching {summary.DisplayName} ({++i} of {targets.Count})...";
+                await LaunchAccountAsync(summary);
+                if (i < targets.Count)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(1500));
+                }
+            }
+            StatusBanner = $"Launch all finished. {targets.Count} client{(targets.Count == 1 ? "" : "s")} dispatched.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Send the tracked Roblox window for this account a graceful close (CloseMainWindow).
+    /// Falls back to Kill if a second click arrives while still tracking.
+    /// </summary>
+    private void StopAccount(AccountSummary? summary)
+    {
+        if (summary is null || !_processTracker.IsTracking(summary.Id))
+        {
+            return;
+        }
+        _log.LogInformation("StopAccount {AccountId} (pid {Pid})", summary.Id, summary.RunningPid);
+        if (!_processTracker.RequestClose(summary.Id))
+        {
+            // Window unresponsive — escalate.
+            _processTracker.Kill(summary.Id);
+        }
+    }
+
+    private void OnProcessAttached(object? sender, RobloxProcessEventArgs e)
+    {
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
+            if (summary is null) return;
+            summary.IsRunning = true;
+            summary.RunningPid = e.Pid;
+            summary.RunningSinceUtc = e.OccurredAtUtc;
+            summary.StatusText = string.Empty;
+            LiveProcessCount = _processTracker.Attached.Count;
+            RelayCommand.RaiseCanExecuteChanged();
+        });
+    }
+
+    private void OnProcessExited(object? sender, RobloxProcessEventArgs e)
+    {
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
+            if (summary is null) return;
+            summary.IsRunning = false;
+            summary.RunningPid = null;
+            summary.RunningSinceUtc = null;
+            summary.LastClosedAtUtc = e.OccurredAtUtc;
+            LiveProcessCount = _processTracker.Attached.Count;
+            RelayCommand.RaiseCanExecuteChanged();
+        });
+    }
+
+    private void OnProcessAttachFailed(object? sender, RobloxProcessEventArgs e)
+    {
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
+            if (summary is null) return;
+            // The launcher fired but no player process appeared. Most common: Roblox version drift,
+            // place removed, antivirus quarantine. Surface the hint in the row.
+            summary.StatusText = "Launch never connected. Check Roblox is current + antivirus isn't blocking.";
+        });
     }
 
     private async Task RemoveAccountAsync(AccountSummary? summary)
@@ -297,12 +541,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
             {
                 _ = await _api.GetAvatarHeadshotUrlAsync(success.UserId);
             }
-            catch
+            catch (Exception ex)
             {
-                // best-effort
+                _log.LogDebug(ex, "Avatar refresh failed during reauth for {AccountId}.", summary.Id);
             }
 
             await _accountStore.UpdateCookieAsync(summary.Id, success.Cookie);
+            _log.LogInformation("Re-authenticated account {AccountId}", summary.Id);
             summary.SessionExpired = false;
             summary.StatusText = "Re-authenticated.";
         }
@@ -318,6 +563,18 @@ public sealed class MainViewModel : INotifyPropertyChanged
         window.ShowDialog();
         // Refresh in case the user added / removed / set-default'd a game.
         _ = ReloadGamesAsync();
+    }
+
+    private void OpenDiagnostics()
+    {
+        var window = new DiagnosticsWindow(_diagnostics) { Owner = Application.Current.MainWindow };
+        window.ShowDialog();
+    }
+
+    private void OpenAbout()
+    {
+        var window = new AboutWindow { Owner = Application.Current.MainWindow };
+        window.ShowDialog();
     }
 
     private static void ShowWebView2NotInstalledModal()

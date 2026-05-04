@@ -18,4 +18,10 @@ public interface ITrayService : IDisposable
 
     /// <summary>Fired when the user picks "Quit" from the tray menu.</summary>
     event EventHandler RequestQuit;
+
+    /// <summary>Fired when the user picks "Diagnostics..." from the tray menu.</summary>
+    event EventHandler RequestOpenDiagnostics;
+
+    /// <summary>Fired when the user picks "Open log folder" from the tray menu.</summary>
+    event EventHandler RequestOpenLogs;
 }

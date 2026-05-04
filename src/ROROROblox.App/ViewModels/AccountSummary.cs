@@ -6,7 +6,8 @@ namespace ROROROblox.App.ViewModels;
 
 /// <summary>
 /// Per-account view model. Wraps a Core <see cref="Account"/> with mutable UI state
-/// (session-expired badge, in-flight launch flag) so the row can flip without a re-fetch.
+/// (session-expired badge, in-flight launch flag, live process attachment) so the row can
+/// flip without a re-fetch.
 /// </summary>
 public sealed class AccountSummary : INotifyPropertyChanged
 {
@@ -14,6 +15,10 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private bool _isLaunching;
     private string _statusText = string.Empty;
     private FavoriteGame? _selectedGame;
+    private bool _isRunning;
+    private int? _runningPid;
+    private DateTimeOffset? _runningSinceUtc;
+    private DateTimeOffset? _lastClosedAtUtc;
 
     public AccountSummary(Account account)
     {
@@ -31,7 +36,14 @@ public sealed class AccountSummary : INotifyPropertyChanged
     public bool SessionExpired
     {
         get => _sessionExpired;
-        set => SetField(ref _sessionExpired, value);
+        set
+        {
+            if (SetField(ref _sessionExpired, value))
+            {
+                OnPropertyChanged(nameof(StatusDot));
+                OnPropertyChanged(nameof(SecondaryStatusText));
+            }
+        }
     }
 
     public bool IsLaunching
@@ -46,21 +58,105 @@ public sealed class AccountSummary : INotifyPropertyChanged
         set => SetField(ref _statusText, value);
     }
 
-    /// <summary>
-    /// The game this account will launch into when Launch As is clicked. Defaults to the
-    /// favorites-store default; user can change per-account via the in-row ComboBox.
-    /// In-memory only -- not persisted (resets to default on app restart).
-    /// </summary>
     public FavoriteGame? SelectedGame
     {
         get => _selectedGame;
         set => SetField(ref _selectedGame, value);
     }
 
+    /// <summary>True when a tracked <c>RobloxPlayerBeta.exe</c> is currently alive for this account.</summary>
+    public bool IsRunning
+    {
+        get => _isRunning;
+        set
+        {
+            if (SetField(ref _isRunning, value))
+            {
+                OnPropertyChanged(nameof(StatusDot));
+                OnPropertyChanged(nameof(SecondaryStatusText));
+            }
+        }
+    }
+
+    public int? RunningPid
+    {
+        get => _runningPid;
+        set => SetField(ref _runningPid, value);
+    }
+
+    public DateTimeOffset? RunningSinceUtc
+    {
+        get => _runningSinceUtc;
+        set
+        {
+            if (SetField(ref _runningSinceUtc, value))
+            {
+                OnPropertyChanged(nameof(SecondaryStatusText));
+            }
+        }
+    }
+
+    public DateTimeOffset? LastClosedAtUtc
+    {
+        get => _lastClosedAtUtc;
+        set
+        {
+            if (SetField(ref _lastClosedAtUtc, value))
+            {
+                OnPropertyChanged(nameof(SecondaryStatusText));
+            }
+        }
+    }
+
+    /// <summary>Three-state colored dot: <c>green</c> running / <c>yellow</c> expired / <c>grey</c> idle.</summary>
+    public string StatusDot => _sessionExpired
+        ? "yellow"
+        : _isRunning ? "green" : "grey";
+
+    /// <summary>
+    /// Human-friendly secondary text shown under the display name. Order of precedence:
+    /// session-expired ▸ explicit StatusText ▸ "Running for X" ▸ "Closed X ago" ▸ "Last launched X ago" ▸ "Ready".
+    /// Refresh by calling <see cref="RefreshRelativeTimes"/> from a periodic tick.
+    /// </summary>
+    public string SecondaryStatusText
+    {
+        get
+        {
+            if (_sessionExpired)
+            {
+                return "Session expired";
+            }
+            if (!string.IsNullOrEmpty(_statusText) && !_isRunning)
+            {
+                return _statusText;
+            }
+            if (_isRunning && _runningSinceUtc is DateTimeOffset since)
+            {
+                return $"Running — {RelativeAge(DateTimeOffset.UtcNow - since)}";
+            }
+            if (_lastClosedAtUtc is DateTimeOffset closed)
+            {
+                return $"Closed {RelativeAgo(closed)}";
+            }
+            if (LastLaunchedAt is DateTimeOffset last)
+            {
+                return $"Last launched {RelativeAgo(last)}";
+            }
+            return "Ready";
+        }
+    }
+
+    /// <summary>
+    /// Force the secondary text to recompute (relative timestamps drift). Called on a tick from
+    /// MainViewModel's clock.
+    /// </summary>
+    public void RefreshRelativeTimes() => OnPropertyChanged(nameof(SecondaryStatusText));
+
     public void StampLaunched(DateTimeOffset at)
     {
         LastLaunchedAt = at;
         OnPropertyChanged(nameof(LastLaunchedAt));
+        OnPropertyChanged(nameof(SecondaryStatusText));
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -77,5 +173,25 @@ public sealed class AccountSummary : INotifyPropertyChanged
         field = value;
         OnPropertyChanged(name);
         return true;
+    }
+
+    private static string RelativeAge(TimeSpan span)
+    {
+        if (span < TimeSpan.FromMinutes(1)) return "just now";
+        if (span < TimeSpan.FromHours(1)) return $"{(int)span.TotalMinutes} min";
+        if (span < TimeSpan.FromDays(1)) return $"{(int)span.TotalHours}h {span.Minutes}m";
+        return $"{(int)span.TotalDays}d";
+    }
+
+    private static string RelativeAgo(DateTimeOffset when)
+    {
+        var span = DateTimeOffset.UtcNow - when;
+        if (span < TimeSpan.Zero) return "in the future"; // clock skew safety
+        if (span < TimeSpan.FromSeconds(30)) return "just now";
+        if (span < TimeSpan.FromMinutes(1)) return "<1 min ago";
+        if (span < TimeSpan.FromHours(1)) return $"{(int)span.TotalMinutes} min ago";
+        if (span < TimeSpan.FromDays(1)) return $"{(int)span.TotalHours} hr ago";
+        if (span < TimeSpan.FromDays(7)) return $"{(int)span.TotalDays} days ago";
+        return when.ToLocalTime().ToString("MMM d");
     }
 }

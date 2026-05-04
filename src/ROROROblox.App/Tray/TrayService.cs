@@ -23,6 +23,8 @@ internal sealed class TrayService : ITrayService
     public event EventHandler? RequestOpenMainWindow;
     public event EventHandler? RequestToggleMutex;
     public event EventHandler? RequestQuit;
+    public event EventHandler? RequestOpenDiagnostics;
+    public event EventHandler? RequestOpenLogs;
 
     public TrayService()
     {
@@ -73,6 +75,18 @@ internal sealed class TrayService : ITrayService
         var open = new MenuItem { Header = "Open ROROROblox" };
         open.Click += (_, _) => RequestOpenMainWindow?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(open);
+
+        menu.Items.Add(new Separator());
+
+        var diagnostics = new MenuItem { Header = "Diagnostics..." };
+        diagnostics.Click += (_, _) => RequestOpenDiagnostics?.Invoke(this, EventArgs.Empty);
+        menu.Items.Add(diagnostics);
+
+        var logs = new MenuItem { Header = "Open log folder" };
+        logs.Click += (_, _) => RequestOpenLogs?.Invoke(this, EventArgs.Empty);
+        menu.Items.Add(logs);
+
+        menu.Items.Add(new Separator());
 
         var quit = new MenuItem { Header = "Quit" };
         quit.Click += (_, _) => RequestQuit?.Invoke(this, EventArgs.Empty);

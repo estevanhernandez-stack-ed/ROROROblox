@@ -102,8 +102,9 @@ public sealed class RobloxLauncher : IRobloxLauncher
 
         try
         {
+            var launchedAtUtc = _timeProvider.GetUtcNow();
             var pid = _processStarter.StartViaShell(uri);
-            return new LaunchResult.Started(pid);
+            return new LaunchResult.Started(pid, launchedAtUtc);
         }
         catch (Win32Exception)
         {

@@ -60,3 +60,34 @@ internal sealed class ZeroToVisibilityConverter : IValueConverter
         throw new NotSupportedException();
     }
 }
+
+/// <summary>
+/// Translate the AccountSummary.StatusDot string ("green" / "yellow" / "grey") into a SolidColorBrush
+/// matching the navy/cyan/magenta brand. Used by the row's leading status dot.
+/// </summary>
+internal sealed class StatusDotBrushConverter : IValueConverter
+{
+    private static readonly System.Windows.Media.SolidColorBrush Green =
+        new(System.Windows.Media.Color.FromRgb(0x4F, 0xE0, 0x8C)); // brand-friendly green
+
+    private static readonly System.Windows.Media.SolidColorBrush Yellow =
+        new(System.Windows.Media.Color.FromRgb(0xF1, 0xB2, 0x32)); // matches RowExpiredAccentBrush
+
+    private static readonly System.Windows.Media.SolidColorBrush Grey =
+        new(System.Windows.Media.Color.FromRgb(0x4A, 0x5C, 0x70));
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return (value as string) switch
+        {
+            "green" => Green,
+            "yellow" => Yellow,
+            _ => Grey,
+        };
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException();
+    }
+}
