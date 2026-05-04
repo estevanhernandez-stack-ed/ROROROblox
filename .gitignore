@@ -13,6 +13,9 @@ obj/
 .idea/
 *.user
 *.suo
+# Qodo IDE auto-regenerates a legacy .sln next to our .slnx — ignore so commits stay clean.
+# Build with: dotnet build ROROROblox.slnx
+ROROROblox.sln
 
 # Per-user Claude Code state (project-shared lives in .claude/settings.json if needed)
 .claude/settings.local.json
