@@ -222,8 +222,8 @@ Thin HttpClient wrapper. Handles the X-CSRF-TOKEN dance in `GetAuthTicketAsync`.
 6. `Process.Start(uri)` hands off to the OS.
    - Protocol handler missing → `Win32Exception` → returns `Failed("Roblox does not appear to be installed.")` with link to roblox.com/download.
 7. The `RobloxPlayerLauncher.exe` reads the ticket and spawns `RobloxPlayerBeta.exe`. Because ROROROblox already holds `ROBLOX_singletonEvent`, the new client's singleton check is non-blocking — multi-instance works.
-8. RobloxLauncher calls `IAccountStore.TouchLastLaunchedAsync(accountId)`.
-9. Returns `Started(pid)`. UI shows a "Launched ✓" toast for 2s.
+8. RobloxLauncher returns `Started(pid)`. The MainViewModel orchestrator (item 9) calls `IAccountStore.TouchLastLaunchedAsync(accountId)` on a `Started` result — `LaunchAsync(cookie, ...)` has no accountId in its signature, so the touch lives at the caller, not inside the launcher (pre-build drift caught at item 6 design).
+9. UI shows a "Launched ✓" toast for 2s.
 
 **Invariants:**
 - Plaintext cookies live in memory only during a single launch operation. Never written to disk unencrypted, never logged.
@@ -345,6 +345,7 @@ Semantic versioning. v1.1.x for the initial release line. v1.2 will introduce pe
 | Auth-ticket POST requires `Content-Type: application/json` | Caught at spike-time 2026-05-03 — Roblox returns 415 Unsupported Media Type on empty-body POSTs without it. Spec v1.0 didn't capture this; updated §5.7 + §6.2 inline (pre-build drift, not post-build divergence — banner-correct convention applies after items have been built, not before). The spike is doing exactly the gating job §10 was designed for. |
 | Auth handshake requires non-empty `placelauncherurl` | Also caught at spike-time 2026-05-03. Without `placelauncherurl`, Roblox opens the launcher with cached account context but can't establish a session — the user sees the right avatar/username but is "not logged in." `LaunchAsync(cookie, placeUrl: null)` must resolve `placeUrl` to a default destination before URI construction. v1.1 uses an app-level default (set at first run or in settings); v1.2 candidate: per-account default place. Spec §5.6 + §10 updated inline. |
 | `IAccountStore.AddAsync` takes `avatarUrl` as a parameter | Spec v1.0's `AddAsync(displayName, cookie)` expected the store to fetch the avatar via `IRobloxApi` internally — but Core's clean layering wants the caller (MainViewModel, item 9) to coordinate the `IRobloxApi.GetAvatarHeadshotUrl` call and pass the result through. Adding `avatarUrl` as the second parameter avoids a back-pointer from `AccountStore` into `IRobloxApi` and keeps Core dependency-free at item 4 time. Pre-build drift, surgical inline edit. Spec §5.4 updated; checklist item 4 mirrors the change. |
+| `TouchLastLaunchedAsync` is the caller's responsibility, not the launcher's | Spec v1.0 §6.2 step 8 had RobloxLauncher call `IAccountStore.TouchLastLaunchedAsync(accountId)` — but `LaunchAsync(cookie, placeUrl)` has no accountId in its signature, so the launcher would need IAccountStore as a dependency just to look up which account a cookie belongs to (which it can't do anyway, since cookies aren't indexed). Cleaner: MainViewModel orchestrates `RetrieveCookieAsync(id) → LaunchAsync(cookie) → on Started, TouchLastLaunchedAsync(id)`. Pre-build drift, surgical edit. Spec §6.2 step 8 updated; checklist item 6 reflects. |
 
 ## Appendix A — Reference impl
 
