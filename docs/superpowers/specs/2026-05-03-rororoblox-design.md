@@ -116,7 +116,7 @@ ICommand ReauthenticateAccountCommand;
 ```csharp
 interface IAccountStore {
     Task<IReadOnlyList<Account>> ListAsync();
-    Task<Account> AddAsync(string displayName, string cookie);
+    Task<Account> AddAsync(string displayName, string avatarUrl, string cookie);
     Task RemoveAsync(Guid id);
     Task<string> RetrieveCookieAsync(Guid id);
     Task UpdateCookieAsync(Guid id, string newCookie);
@@ -344,6 +344,7 @@ Semantic versioning. v1.1.x for the initial release line. v1.2 will introduce pe
 | Manual smoke gate over E2E automation | Real roblox.com automation risks flagging and produces flaky CI; manual is correct trade for a 1-person project |
 | Auth-ticket POST requires `Content-Type: application/json` | Caught at spike-time 2026-05-03 — Roblox returns 415 Unsupported Media Type on empty-body POSTs without it. Spec v1.0 didn't capture this; updated §5.7 + §6.2 inline (pre-build drift, not post-build divergence — banner-correct convention applies after items have been built, not before). The spike is doing exactly the gating job §10 was designed for. |
 | Auth handshake requires non-empty `placelauncherurl` | Also caught at spike-time 2026-05-03. Without `placelauncherurl`, Roblox opens the launcher with cached account context but can't establish a session — the user sees the right avatar/username but is "not logged in." `LaunchAsync(cookie, placeUrl: null)` must resolve `placeUrl` to a default destination before URI construction. v1.1 uses an app-level default (set at first run or in settings); v1.2 candidate: per-account default place. Spec §5.6 + §10 updated inline. |
+| `IAccountStore.AddAsync` takes `avatarUrl` as a parameter | Spec v1.0's `AddAsync(displayName, cookie)` expected the store to fetch the avatar via `IRobloxApi` internally — but Core's clean layering wants the caller (MainViewModel, item 9) to coordinate the `IRobloxApi.GetAvatarHeadshotUrl` call and pass the result through. Adding `avatarUrl` as the second parameter avoids a back-pointer from `AccountStore` into `IRobloxApi` and keeps Core dependency-free at item 4 time. Pre-build drift, surgical inline edit. Spec §5.4 updated; checklist item 4 mirrors the change. |
 
 ## Appendix A — Reference impl
 
