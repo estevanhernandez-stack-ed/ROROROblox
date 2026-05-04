@@ -93,13 +93,25 @@
                                 FontWeight="SemiBold"
                                 Visibility="{Binding SessionExpired, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                        <!-- Per-account game picker -->
-                        <ComboBox Margin="0,0,8,0" MinWidth="170"
-                                  ItemsSource="{Binding DataContext.AvailableGames, RelativeSource={RelativeSource AncestorType=Window}}"
-                                  SelectedItem="{Binding SelectedGame}"
-                                  DisplayMemberPath="Name"
-                                  VerticalAlignment="Center"
-                                  ToolTip="Game to launch this account into. Manage games via the header Games button." />
+                        <!-- Per-account game picker. Empty-state hint overlays the ComboBox until
+                             at least one game is in the library, otherwise it looks broken. -->
+                        <Grid Margin="0,0,8,0" MinWidth="200" VerticalAlignment="Center">
+                            <ComboBox ItemsSource="{Binding DataContext.AvailableGames, RelativeSource={RelativeSource AncestorType=Window}}"
+                                      SelectedItem="{Binding SelectedGame}"
+                                      DisplayMemberPath="Name"
+                                      VerticalAlignment="Center"
+                                      ToolTip="Game to launch this account into. Manage games via the header Games button." />
+                            <TextBlock Text="Add games with the Games button"
+                                       FontSize="11"
+                                       FontStyle="Italic"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       Opacity="0.85"
+                                       IsHitTestVisible="False"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Left"
+                                       Margin="10,0,30,0"
+                                       Visibility="{Binding DataContext.AvailableGames.Count, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ZeroToVisibilityConverter}}" />
+                        </Grid>
 
                         <!-- Launch As -->
                         <Button Content="Launch As"
