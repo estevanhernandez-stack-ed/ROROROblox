@@ -28,6 +28,9 @@ webview2-data/
 .env
 .env.local
 
+# MSIX build outputs (scripts/build-msix.ps1 publishes here)
+dist/
+
 # Velopack release outputs
 Releases/
 *.nupkg

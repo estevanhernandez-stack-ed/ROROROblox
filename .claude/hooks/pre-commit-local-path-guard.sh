@@ -21,6 +21,7 @@ allow=(
   "PROVENANCE.txt"
   "process-notes.md"
   "CLAUDE.md"
+  "CONTRIBUTING.md"
   "docs/checklist.md"
   "docs/scope.md"
   "docs/spec.md"
