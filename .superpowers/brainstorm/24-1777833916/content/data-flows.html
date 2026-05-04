@@ -1,0 +1,171 @@
+<h2>Data flows — the two journeys</h2>
+<p class="subtitle">Section 3 of the design. These are the only two user-initiated flows that hit external services in v1.</p>
+
+<style>
+  .flow { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .flow-title { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; }
+  .flow-title .badge { background: var(--accent); color: white; font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .flow-title h3 { font-size: 1.05rem; margin: 0; }
+  .step { display: grid; grid-template-columns: 24px 180px 1fr; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px dashed var(--border); align-items: start; }
+  .step:last-child { border-bottom: none; }
+  .step-num { background: var(--bg-tertiary); border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); }
+  .step-actors { font-size: 0.8rem; font-family: ui-monospace, "SF Mono", monospace; color: var(--text-secondary); padding-top: 0.15rem; }
+  .step-actors .from { color: var(--accent); font-weight: 600; }
+  .step-actors .to { color: var(--text-primary); font-weight: 600; }
+  .step-action { font-size: 0.88rem; padding-top: 0.1rem; }
+  .step-action code { background: var(--bg-tertiary); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.82rem; }
+  .branch { background: var(--selected-bg); border-left: 3px solid var(--accent); padding: 0.5rem 0.75rem; margin-top: 0.4rem; font-size: 0.8rem; border-radius: 4px; }
+  .branch-error { background: rgba(255,59,48,0.08); border-left-color: var(--error); }
+  .branch-error::before { content: "✗ "; color: var(--error); font-weight: 600; }
+</style>
+
+<!-- FLOW 1: Add Account -->
+<div class="flow">
+  <div class="flow-title">
+    <span class="badge">Flow A</span>
+    <h3>Add Account — first time a clan member adds an alt</h3>
+  </div>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-actors"><span class="from">User</span> →<br><span class="to">MainWindow</span></div>
+    <div class="step-action">Clicks "Add Account" button.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-actors"><span class="from">MainWindow</span> →<br><span class="to">CookieCapture</span></div>
+    <div class="step-action"><code>CaptureAsync()</code> — opens modal. v1: fresh WebView2 user-data folder per call.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-actors"><span class="from">CookieCapture</span> →<br><span class="to">WebView2</span></div>
+    <div class="step-action">Navigates to <code>https://www.roblox.com/login</code>.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-actors"><span class="from">User</span> →<br><span class="to">Roblox web</span></div>
+    <div class="step-action">Logs in normally (username + password + 2FA if enabled). The login form is the real Roblox one inside the embedded browser — we never see the password.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-actors"><span class="from">Roblox web</span> →<br><span class="to">WebView2</span></div>
+    <div class="step-action">On successful auth, sets <code>.ROBLOSECURITY</code> cookie on <code>roblox.com</code> domain.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">6</div>
+    <div class="step-actors"><span class="from">CookieCapture</span> →<br><span class="to">WebView2.CookieManager</span></div>
+    <div class="step-action">After redirect to <code>/home</code>, polls <code>GetCookiesAsync(".ROBLOSECURITY")</code>. When found, closes modal.</div>
+    <div class="branch branch-error">User closes modal first → returns <code>Cancelled</code>. Login fails → returns <code>Failed("Login was unsuccessful")</code>.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">7</div>
+    <div class="step-actors"><span class="from">CookieCapture</span> →<br><span class="to">IRobloxApi</span></div>
+    <div class="step-action"><code>GetUserProfileAsync(cookie)</code> → <code>{ userId, username, displayName }</code>.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">8</div>
+    <div class="step-actors"><span class="from">CookieCapture</span> →<br><span class="to">MainWindow</span></div>
+    <div class="step-action">Returns <code>Success(cookie, userId, username)</code>.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">9</div>
+    <div class="step-actors"><span class="from">MainWindow</span> →<br><span class="to">AccountStore</span></div>
+    <div class="step-action"><code>AddAsync(displayName, cookie)</code>. Store also fetches avatar URL via <code>IRobloxApi</code>.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">10</div>
+    <div class="step-actors"><span class="from">AccountStore</span> →<br><span class="to">DPAPI</span></div>
+    <div class="step-action">v1: serialize accounts list to JSON, encrypt entire blob with <code>ProtectedData.Protect()</code> (CurrentUser scope), write atomically to <code>%LOCALAPPDATA%\ROROROblox\accounts.dat</code>.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">11</div>
+    <div class="step-actors"><span class="from">MainWindow</span> →<br><span class="to">User</span></div>
+    <div class="step-action">New account row appears in list with avatar + display name.</div>
+  </div>
+</div>
+
+<!-- FLOW 2: Launch As -->
+<div class="flow">
+  <div class="flow-title">
+    <span class="badge" style="background: var(--success);">Flow B</span>
+    <h3>Launch As — clan member starts Roblox on a saved account</h3>
+  </div>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-actors"><span class="from">User</span> →<br><span class="to">MainWindow</span></div>
+    <div class="step-action">Clicks "Launch as Sarah_Alt".</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-actors"><span class="from">MainWindow</span> →<br><span class="to">AccountStore</span></div>
+    <div class="step-action"><code>RetrieveCookieAsync(accountId)</code>. Decrypts via DPAPI, returns plaintext cookie (held briefly in memory).</div>
+    <div class="branch branch-error">DPAPI decrypt fails (profile changed/restored) → "Can't read saved accounts. Re-add them."</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-actors"><span class="from">MainWindow</span> →<br><span class="to">RobloxLauncher</span></div>
+    <div class="step-action"><code>LaunchAsync(cookie)</code>.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-actors"><span class="from">RobloxLauncher</span> →<br><span class="to">auth.roblox.com</span></div>
+    <div class="step-action">POST <code>/v1/authentication-ticket</code> with cookie. First call returns 403 + <code>X-CSRF-TOKEN</code> header. Replay POST with token. Receives <code>RBX-Authentication-Ticket</code> header.</div>
+    <div class="branch branch-error">401 → cookie expired → return <code>CookieExpired</code> → MainWindow offers re-auth via WebView2.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-actors"><span class="from">RobloxLauncher</span> →<br><span class="to">RobloxLauncher</span></div>
+    <div class="step-action">Constructs URI:<br><code>roblox-player:1+launchmode:play+gameinfo:&lt;ticket&gt;+launchtime:&lt;now-ms&gt;+placelauncherurl:&lt;...&gt;+browsertrackerid:&lt;rand&gt;+robloxLocale:en_us+gameLocale:en_us</code></div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">6</div>
+    <div class="step-actors"><span class="from">RobloxLauncher</span> →<br><span class="to">Windows shell</span></div>
+    <div class="step-action"><code>Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true })</code>. OS hands off to registered <code>roblox-player://</code> handler.</div>
+    <div class="branch branch-error">Roblox not installed → shell can't resolve protocol → return <code>Failed("Roblox does not appear to be installed.")</code> with link to roblox.com/download.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">7</div>
+    <div class="step-actors"><span class="from">Roblox launcher</span> →<br><span class="to">RobloxPlayerBeta.exe</span></div>
+    <div class="step-action">Launcher reads ticket, spawns the actual game client. <strong>Mutex is already held by ROROROblox</strong>, so client doesn't see itself as the singleton — multi-instance works.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">8</div>
+    <div class="step-actors"><span class="from">RobloxLauncher</span> →<br><span class="to">AccountStore</span></div>
+    <div class="step-action"><code>TouchLastLaunchedAsync(accountId)</code> — updates <code>LastLaunchedAt</code> for sort/recency UX.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">9</div>
+    <div class="step-actors"><span class="from">RobloxLauncher</span> →<br><span class="to">MainWindow</span></div>
+    <div class="step-action">Returns <code>Started(pid)</code>. UI shows "Launched ✓" toast for 2s.</div>
+  </div>
+</div>
+
+<!-- Key invariants -->
+<div style="margin-top: 1rem; padding: 1rem 1.25rem; background: var(--selected-bg); border-left: 3px solid var(--accent); border-radius: 6px;">
+  <div class="label" style="margin-bottom: 0.5rem;">Invariants worth calling out</div>
+  <ul style="list-style: none; padding: 0; font-size: 0.85rem;">
+    <li style="padding: 0.15rem 0;">— Plaintext cookies live in memory only during a single launch operation. Never written to disk unencrypted, never logged.</li>
+    <li style="padding: 0.15rem 0;">— Password never touches our process — login happens inside Roblox's own page, served by Roblox into WebView2.</li>
+    <li style="padding: 0.15rem 0;">— No HTTP request from us masquerades as a browser; we identify with a clear UA string (<code>ROROROblox/&lt;version&gt;</code>) so Roblox can rate-limit / fingerprint us cleanly if they want to.</li>
+    <li style="padding: 0.15rem 0;">— The only Roblox endpoints we call are documented public ones used by Bloxstrap and prior account managers. No undocumented endpoints, no scraping.</li>
+  </ul>
+</div>

@@ -1,0 +1,99 @@
+<h2>ROROROblox — Architecture (v1.1)</h2>
+<p class="subtitle">Single WPF .NET 10 process, tray-resident, opens main window on demand. Components below talk through clear interfaces; each is independently testable.</p>
+
+<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:1.5rem;margin-top:1.5rem;">
+
+  <!-- LEFT: ROROROblox.exe internals -->
+  <div style="background: var(--bg-secondary); border: 2px solid var(--accent); border-radius: 12px; padding: 1.25rem;">
+    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
+      <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); font-weight: 600;">Process</div>
+      <div style="font-size: 1.1rem; font-weight: 600;">ROROROblox.exe</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:0.6rem;">
+
+      <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 0.75rem 1rem;">
+        <div style="font-weight: 600; font-size: 0.95rem;">MutexHolder</div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem;">Acquires <code>ROBLOX_singletonEvent</code> at startup, holds for app lifetime. Toggle from tray.</div>
+      </div>
+
+      <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 0.75rem 1rem;">
+        <div style="font-weight: 600; font-size: 0.95rem;">TrayService</div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem;">Hardcodet NotifyIcon. Right-click menu: Multi-Instance ON/OFF · Open · Quit.</div>
+      </div>
+
+      <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 0.75rem 1rem;">
+        <div style="font-weight: 600; font-size: 0.95rem;">MainWindow</div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem;">WPF + WPF-UI. Hidden by default. Account list, Add Account, Launch As.</div>
+      </div>
+
+      <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 0.75rem 1rem;">
+        <div style="font-weight: 600; font-size: 0.95rem;">AccountStore</div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem;">CRUD over saved accounts. Encrypts cookies with DPAPI before persistence.</div>
+      </div>
+
+      <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 0.75rem 1rem;">
+        <div style="font-weight: 600; font-size: 0.95rem;">CookieCapture</div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem;">Modal WebView2 → roblox.com/login → reads <code>.ROBLOSECURITY</code> from cookie store.</div>
+      </div>
+
+      <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 0.75rem 1rem;">
+        <div style="font-weight: 600; font-size: 0.95rem;">RobloxLauncher</div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem;">Cookie → auth ticket via Roblox API → spawns <code>RobloxPlayerLauncher.exe -t &lt;ticket&gt;</code>.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RIGHT: External boundaries -->
+  <div style="display:flex;flex-direction:column;gap:1rem;">
+
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 1rem;">
+      <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-tertiary); font-weight: 600; margin-bottom: 0.6rem;">Windows OS</div>
+      <ul style="list-style: none; padding: 0; font-size: 0.85rem;">
+        <li style="padding: 0.2rem 0;">→ Named Mutex (kernel)</li>
+        <li style="padding: 0.2rem 0;">→ DPAPI (per-user vault)</li>
+        <li style="padding: 0.2rem 0;">→ WebView2 runtime</li>
+      </ul>
+    </div>
+
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 1rem;">
+      <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-tertiary); font-weight: 600; margin-bottom: 0.6rem;">Roblox</div>
+      <ul style="list-style: none; padding: 0; font-size: 0.85rem;">
+        <li style="padding: 0.2rem 0;">→ auth.roblox.com (login + ticket exchange)</li>
+        <li style="padding: 0.2rem 0;">→ users.roblox.com (avatar fetch)</li>
+        <li style="padding: 0.2rem 0;">→ RobloxPlayerLauncher.exe</li>
+      </ul>
+    </div>
+
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 1rem;">
+      <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-tertiary); font-weight: 600; margin-bottom: 0.6rem;">Filesystem</div>
+      <ul style="list-style: none; padding: 0; font-size: 0.85rem;">
+        <li style="padding: 0.2rem 0;"><code>%LOCALAPPDATA%\ROROROblox\</code></li>
+        <li style="padding: 0.2rem 0; color: var(--text-secondary);">└ accounts.dat (DPAPI)</li>
+        <li style="padding: 0.2rem 0; color: var(--text-secondary);">└ logs/</li>
+        <li style="padding: 0.2rem 0; color: var(--text-secondary);">└ webview2-data/</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- Key principles -->
+<div style="margin-top: 1.5rem; padding: 1rem 1.25rem; background: var(--selected-bg); border-left: 3px solid var(--accent); border-radius: 6px;">
+  <div class="label" style="margin-bottom: 0.5rem;">Why this shape</div>
+  <ul style="list-style: none; padding: 0; font-size: 0.85rem;">
+    <li style="padding: 0.15rem 0;">— Each component has one purpose and a clear interface — testable in isolation</li>
+    <li style="padding: 0.15rem 0;">— No background services, no admin rights, no kernel drivers — runs as plain user</li>
+    <li style="padding: 0.15rem 0;">— Roblox-side calls go through the same auth flow Bloxstrap and RAM use — no novel attack surface</li>
+    <li style="padding: 0.15rem 0;">— DPAPI-per-user means an account on machine A can't be opened on machine B (intentional v1 limit)</li>
+  </ul>
+</div>
+
+<!-- Open questions flagged on this section -->
+<div style="margin-top: 1rem; padding: 1rem 1.25rem; background: var(--bg-secondary); border: 1px solid var(--warning); border-radius: 8px;">
+  <div class="label" style="margin-bottom: 0.5rem; color: var(--warning);">⚠ One thing to verify before we ship</div>
+  <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">
+    The exact auth-ticket exchange endpoint Roblox uses today (<code>auth.roblox.com/v1/authentication-ticket</code> + <code>X-CSRF-TOKEN</code> dance) needs verification against current Roblox web behavior. Bloxstrap and RAM forks both use this pattern, but Roblox has tweaked it before. We'll prove it works in a 30-min spike before locking the launcher implementation.
+  </p>
+</div>

@@ -1,0 +1,80 @@
+<h2>Lock in v1 scope</h2>
+<p class="subtitle">Multi-Roblox helper for Windows — clan-first distribution. Click a card to lock it in.</p>
+
+<div class="cards">
+  <div class="card" data-choice="v1.0" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: var(--bg-tertiary); padding: 1.5rem; text-align: center;">
+      <div style="font-size: 2.5rem; font-weight: 700; color: var(--text-secondary); letter-spacing: -0.02em;">v1.0</div>
+      <div style="font-size: 0.75rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.25rem;">Tray-Only</div>
+    </div>
+    <div class="card-body">
+      <h3>Lean parity</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.75rem;">Closest to MultiBloxy. Fastest to ship.</p>
+      <ul style="list-style: none; padding: 0; font-size: 0.85rem;">
+        <li style="padding: 0.2rem 0;">✓ Hold the mutex</li>
+        <li style="padding: 0.2rem 0;">✓ Tray icon + right-click menu</li>
+        <li style="padding: 0.2rem 0;">✓ 626 Labs branding</li>
+        <li style="padding: 0.2rem 0;">✓ Polished MSIX install</li>
+        <li style="padding: 0.2rem 0; color: var(--text-tertiary);">✗ No account management</li>
+        <li style="padding: 0.2rem 0; color: var(--text-tertiary);">✗ No window arrangement</li>
+      </ul>
+      <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.75rem;">Effort: ~1 weekend</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="v1.1" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: var(--bg-tertiary); padding: 1.5rem; text-align: center;">
+      <div style="font-size: 2.5rem; font-weight: 700; color: var(--text-secondary); letter-spacing: -0.02em;">v1.1</div>
+      <div style="font-size: 0.75rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.25rem;">Saved Accounts</div>
+    </div>
+    <div class="card-body">
+      <h3>Tray + accounts</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.75rem;">v1.0 plus per-account quick-launch.</p>
+      <ul style="list-style: none; padding: 0; font-size: 0.85rem;">
+        <li style="padding: 0.2rem 0;">✓ Everything in v1.0</li>
+        <li style="padding: 0.2rem 0;">✓ Saved Roblox accounts (DPAPI)</li>
+        <li style="padding: 0.2rem 0;">✓ One-click "launch as &lt;account&gt;"</li>
+        <li style="padding: 0.2rem 0;">✓ Small main window UI</li>
+        <li style="padding: 0.2rem 0; color: var(--text-tertiary);">✗ No window arrangement</li>
+      </ul>
+      <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.75rem;">Effort: ~2 weekends</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="v1.1+" onclick="toggleSelect(this)" style="border: 2px solid var(--accent); position: relative;">
+    <div style="position: absolute; top: -10px; right: 12px; background: var(--accent); color: white; font-size: 0.65rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Recommended</div>
+    <div class="card-image" style="background: linear-gradient(135deg, var(--selected-bg), var(--bg-tertiary)); padding: 1.5rem; text-align: center;">
+      <div style="font-size: 2.5rem; font-weight: 700; color: var(--accent); letter-spacing: -0.02em;">v1.1+</div>
+      <div style="font-size: 0.75rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.25rem;">Accounts + Auto-Tile</div>
+    </div>
+    <div class="card-body">
+      <h3>The clan win</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.75rem;">v1.1 plus auto-arrange windows side-by-side.</p>
+      <ul style="list-style: none; padding: 0; font-size: 0.85rem;">
+        <li style="padding: 0.2rem 0;">✓ Everything in v1.1</li>
+        <li style="padding: 0.2rem 0;">✓ Auto-tile 2 / 4 instances</li>
+        <li style="padding: 0.2rem 0;">✓ Layout presets (split / quad)</li>
+        <li style="padding: 0.2rem 0;">✓ Pure Win32 — no automation risk</li>
+        <li style="padding: 0.2rem 0; color: var(--success);">★ "Magical" first-run feel</li>
+      </ul>
+      <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.75rem;">Effort: ~2 weekends + a polish day</p>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 2rem; padding: 1rem 1.25rem; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px;">
+  <div class="label" style="margin-bottom: 0.5rem;">Out of scope for v1 (per your call)</div>
+  <ul style="list-style: none; padding: 0; font-size: 0.85rem; color: var(--text-secondary);">
+    <li style="padding: 0.15rem 0;">— Macros / input automation (lives in MaCro on Mac, separate product)</li>
+    <li style="padding: 0.15rem 0;">— Setup sharing (clan shares screenshots of in-game pet/book loadouts, not files)</li>
+    <li style="padding: 0.15rem 0;">— Clan tools (stat boards, loan shop) — not what we're building</li>
+    <li style="padding: 0.15rem 0;">— Cookie sync across PCs (DPAPI is per-machine; revisit if asked)</li>
+  </ul>
+</div>
+
+<div style="margin-top: 1rem; padding: 1rem 1.25rem; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px;">
+  <div class="label" style="margin-bottom: 0.5rem;">Cookie storage decision (inside v1.1+)</div>
+  <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">
+    <strong style="color: var(--text-primary);">DPAPI</strong> — Windows-native, encrypted-per-user, no key management on our side. Revisit cross-PC sync only if clan members ask.
+  </p>
+</div>

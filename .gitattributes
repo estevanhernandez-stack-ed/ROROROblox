@@ -1,0 +1,37 @@
+# ROROROblox — line-ending + binary policy
+
+# Default: let Git normalize text on checkin, deliver native LE on checkout
+* text=auto
+
+# Source — explicit LF for Unix-friendly tools (hooks, bash scripts, Markdown lint)
+*.cs        text eol=lf diff=csharp
+*.sh        text eol=lf
+*.md        text eol=lf
+*.json      text eol=lf
+*.xml       text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.csproj    text eol=lf
+*.sln       text eol=lf
+*.gitignore text eol=lf
+*.gitattributes text eol=lf
+
+# Windows-native — CRLF on checkout (PowerShell, batch)
+*.ps1       text eol=crlf
+*.psm1      text eol=crlf
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+
+# Binary — never touch
+*.exe       binary
+*.dll       binary
+*.pdb       binary
+*.pfx       binary
+*.p12       binary
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.ico       binary
+*.gif       binary
+*.zip       binary
+*.7z        binary

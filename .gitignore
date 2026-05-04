@@ -1,0 +1,37 @@
+# ROROROblox — minimal .gitignore (item 2 will expand this when scaffolding the real solution)
+
+# Throwaway spike — verification gate, not deliverable code
+spike/
+
+# .NET build outputs
+bin/
+obj/
+
+# IDE / tooling
+.vs/
+.qodo/
+.idea/
+*.user
+*.suo
+
+# Per-user Claude Code state (project-shared lives in .claude/settings.json if needed)
+.claude/settings.local.json
+
+# Secrets — DPAPI envelope file (per-machine), private-key bundles, env files
+accounts.dat
+last-update-check.txt
+webview2-data/
+*.pfx
+*.p12
+*.key
+*.pem
+.env
+.env.local
+
+# Velopack release outputs
+Releases/
+*.nupkg
+
+# OS noise
+Thumbs.db
+.DS_Store

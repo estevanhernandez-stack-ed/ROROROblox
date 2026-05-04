@@ -1,0 +1,60 @@
+MultiBloxy.exe — Provenance
+============================
+
+Source repo:   https://github.com/Zgoly/MultiBloxy
+Release:       v1.1.0.0
+Release URL:   https://github.com/Zgoly/MultiBloxy/releases/tag/v1.1.0.0
+Asset URL:     https://github.com/Zgoly/MultiBloxy/releases/download/v1.1.0.0/MultiBloxy.exe
+Published:     2024-11-23
+Downloaded:    2026-05-03 (to C:\Users\estev\Downloads, then copied here)
+
+File:          MultiBloxy.exe
+Size:          73,728 bytes
+SHA256:        168eedac1f655cd39f33fd8cfa5c971c46b08dda912b78fe330797eade7912c3
+
+Author:        Zgoly (github.com/Zgoly)
+Repo state at download: not archived, last code push 2025-11-24, 50 stars,
+                        5 forks, 7 open issues. Active but no new release
+                        cut since v1.1.0.0.
+
+What it does
+------------
+Holds the Windows named mutex `ROBLOX_singletonEvent` before Roblox launches,
+which defeats Roblox's single-instance check and lets multiple clients run
+side by side. Lives in the system tray; ~3 MB RAM, 0% CPU at idle. Does not
+inject into the Roblox process — it only reserves a mutex name.
+
+How to use
+----------
+1. Run MultiBloxy.exe. Look in the system tray (by the clock) for its icon.
+2. Right-click the tray icon and confirm "Multiple Instances" is enabled.
+3. Launch Roblox normally. Launch a second instance. Both should boot.
+
+Caveats
+-------
+- Unsigned binary. Defender / SmartScreen will flag it ("unrecognized
+  publisher"). Click "More info" -> "Run anyway." This is expected for a
+  mutex-fiddling tool — the behavior is exactly what AV heuristics watch.
+- Roblox / Byfron (Hyperion) has stated multi-instancing "may be considered
+  malicious behavior." Risk of a ban appears low because this tool does not
+  inject or modify the client, but it is non-zero. Avoid running it in
+  experiences known for aggressive anti-cheat.
+- Release binary dates from Nov 2024. Roblox has shipped client updates
+  since. If the singleton check moves, this will silently stop working —
+  fall back to the per-Windows-user trick (each Windows account has its
+  own mutex namespace).
+
+Alternatives considered
+-----------------------
+- Roblox Account Manager (ic3w0lf22) — broke for many users after Hyperion
+  rollout; upstream went quiet. Community forks exist but vetting required.
+- Dashbloxx/MultiRoblox — older, similar approach to MultiBloxy.
+- Zgoly/bloxstrap-multi-instance-integration — archived 2025; dead end.
+- Separate Windows user accounts — bulletproof, no third-party tool, but
+  clunky workflow (Fast User Switching).
+
+Verification
+------------
+To re-verify the binary at any time:
+    certutil -hashfile MultiBloxy.exe SHA256
+Expected: 168eedac1f655cd39f33fd8cfa5c971c46b08dda912b78fe330797eade7912c3
