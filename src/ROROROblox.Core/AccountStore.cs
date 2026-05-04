@@ -48,7 +48,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             var blob = await LoadAsync().ConfigureAwait(false);
             return blob.Accounts
-                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt))
+                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex))
                 .ToList();
         }
         finally
@@ -72,16 +72,134 @@ public sealed class AccountStore : IAccountStore, IDisposable
         try
         {
             var blob = await LoadAsync().ConfigureAwait(false);
+            // First account added gets auto-promoted to main. The user can re-pick later.
+            var promoteAsMain = blob.Accounts.Count == 0;
+            // Place new accounts after every existing one in manual-sort order so a fresh add
+            // doesn't jump above the user's curated arrangement.
+            var nextSortOrder = blob.Accounts.Count == 0
+                ? 0
+                : blob.Accounts.Max(a => a.SortOrder) + 1;
             var stored = new StoredAccount(
                 Id: Guid.NewGuid(),
                 DisplayName: displayName,
                 AvatarUrl: avatarUrl ?? string.Empty,
                 Cookie: cookie,
                 CreatedAt: DateTimeOffset.UtcNow,
-                LastLaunchedAt: null);
+                LastLaunchedAt: null,
+                IsMain: promoteAsMain,
+                SortOrder: nextSortOrder);
             blob.Accounts.Add(stored);
             await SaveAsync(blob).ConfigureAwait(false);
-            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt);
+            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task SetCaptionColorAsync(Guid id, string? hex)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var idx = blob.Accounts.FindIndex(a => a.Id == id);
+            if (idx < 0)
+            {
+                return;
+            }
+            // Normalize empty/whitespace → null. Don't validate hex shape here; the consumer
+            // (window decorator) tolerates malformed values by falling back to auto-palette.
+            var normalized = string.IsNullOrWhiteSpace(hex) ? null : hex.Trim();
+            if (string.Equals(blob.Accounts[idx].CaptionColorHex, normalized, StringComparison.Ordinal))
+            {
+                return; // no-op write avoidance
+            }
+            blob.Accounts[idx] = blob.Accounts[idx] with { CaptionColorHex = normalized };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task SetSelectedAsync(Guid id, bool isSelected)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var idx = blob.Accounts.FindIndex(a => a.Id == id);
+            if (idx < 0)
+            {
+                return;
+            }
+            if (blob.Accounts[idx].IsSelected == isSelected)
+            {
+                return; // no-op write avoidance — saves a DPAPI roundtrip on chatty toggles.
+            }
+            blob.Accounts[idx] = blob.Accounts[idx] with { IsSelected = isSelected };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task UpdateSortOrderAsync(IReadOnlyList<Guid> idsInOrder)
+    {
+        ArgumentNullException.ThrowIfNull(idsInOrder);
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var anyChanged = false;
+            for (var newOrder = 0; newOrder < idsInOrder.Count; newOrder++)
+            {
+                var id = idsInOrder[newOrder];
+                var idx = blob.Accounts.FindIndex(a => a.Id == id);
+                if (idx < 0) continue;
+                if (blob.Accounts[idx].SortOrder != newOrder)
+                {
+                    blob.Accounts[idx] = blob.Accounts[idx] with { SortOrder = newOrder };
+                    anyChanged = true;
+                }
+            }
+            if (anyChanged)
+            {
+                await SaveAsync(blob).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task SetMainAsync(Guid id)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var anyChanged = false;
+            for (var i = 0; i < blob.Accounts.Count; i++)
+            {
+                var shouldBeMain = blob.Accounts[i].Id == id;
+                if (blob.Accounts[i].IsMain != shouldBeMain)
+                {
+                    blob.Accounts[i] = blob.Accounts[i] with { IsMain = shouldBeMain };
+                    anyChanged = true;
+                }
+            }
+            if (anyChanged)
+            {
+                await SaveAsync(blob).ConfigureAwait(false);
+            }
         }
         finally
         {
@@ -95,7 +213,21 @@ public sealed class AccountStore : IAccountStore, IDisposable
         try
         {
             var blob = await LoadAsync().ConfigureAwait(false);
+            var removed = blob.Accounts.FirstOrDefault(a => a.Id == id);
             blob.Accounts.RemoveAll(a => a.Id == id);
+
+            // If we just removed the main and others remain, auto-promote the most-recently-launched
+            // (or, falling back, the most recently added) so compact mode never lands in the
+            // "no main" empty state right after a removal.
+            if (removed?.IsMain == true && blob.Accounts.Count > 0)
+            {
+                var promoteIndex = blob.Accounts
+                    .Select((a, i) => (a, i))
+                    .OrderByDescending(t => t.a.LastLaunchedAt ?? t.a.CreatedAt)
+                    .First().i;
+                blob.Accounts[promoteIndex] = blob.Accounts[promoteIndex] with { IsMain = true };
+            }
+
             await SaveAsync(blob).ConfigureAwait(false);
         }
         finally
@@ -239,13 +371,19 @@ public sealed class AccountStore : IAccountStore, IDisposable
     }
 
     // Internal storage shape — the encrypted blob payload. Cookie lives here, never on the public Account.
+    // IsMain + SortOrder default safely so older accounts.dat files load cleanly — System.Text.Json
+    // fills missing optional fields with their defaults, no migration step needed.
     internal sealed record StoredAccount(
         Guid Id,
         string DisplayName,
         string AvatarUrl,
         string Cookie,
         DateTimeOffset CreatedAt,
-        DateTimeOffset? LastLaunchedAt);
+        DateTimeOffset? LastLaunchedAt,
+        bool IsMain = false,
+        int SortOrder = 0,
+        bool IsSelected = true,
+        string? CaptionColorHex = null);
 
     internal sealed record StoredAccountsBlob(
         int Version,

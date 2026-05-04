@@ -99,4 +99,52 @@ public class AppSettingsTests : IDisposable
         var url = await settings.GetDefaultPlaceUrlAsync();
         Assert.Equal("https://second", url);
     }
+
+    [Fact]
+    public async Task GetLaunchMainOnStartupAsync_DefaultsToFalse()
+    {
+        using var settings = new AppSettings(_filePath);
+
+        Assert.False(await settings.GetLaunchMainOnStartupAsync());
+    }
+
+    [Fact]
+    public async Task LaunchMainOnStartup_RoundTripsTrueAndFalse()
+    {
+        using var settings = new AppSettings(_filePath);
+
+        await settings.SetLaunchMainOnStartupAsync(true);
+        Assert.True(await settings.GetLaunchMainOnStartupAsync());
+
+        await settings.SetLaunchMainOnStartupAsync(false);
+        Assert.False(await settings.GetLaunchMainOnStartupAsync());
+    }
+
+    [Fact]
+    public async Task LaunchMainOnStartup_PersistsAcrossInstances()
+    {
+        {
+            using var first = new AppSettings(_filePath);
+            await first.SetLaunchMainOnStartupAsync(true);
+        }
+
+        using var second = new AppSettings(_filePath);
+        Assert.True(await second.GetLaunchMainOnStartupAsync());
+    }
+
+    [Fact]
+    public async Task LaunchMainOnStartup_AndDefaultPlaceUrl_AreIndependent()
+    {
+        using var settings = new AppSettings(_filePath);
+
+        await settings.SetDefaultPlaceUrlAsync("https://place");
+        await settings.SetLaunchMainOnStartupAsync(true);
+
+        Assert.Equal("https://place", await settings.GetDefaultPlaceUrlAsync());
+        Assert.True(await settings.GetLaunchMainOnStartupAsync());
+
+        // Toggling one doesn't disturb the other.
+        await settings.SetLaunchMainOnStartupAsync(false);
+        Assert.Equal("https://place", await settings.GetDefaultPlaceUrlAsync());
+    }
 }

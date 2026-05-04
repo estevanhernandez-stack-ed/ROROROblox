@@ -74,11 +74,69 @@ public sealed class AppSettings : IAppSettings, IDisposable
         }
     }
 
+    public async Task<bool> GetLaunchMainOnStartupAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var settings = await LoadAsync().ConfigureAwait(false);
+            return settings.LaunchMainOnStartup;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task SetLaunchMainOnStartupAsync(bool enabled)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var settings = await LoadAsync().ConfigureAwait(false);
+            settings = settings with { LaunchMainOnStartup = enabled };
+            await SaveAsync(settings).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task<string?> GetActiveThemeIdAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var settings = await LoadAsync().ConfigureAwait(false);
+            return settings.ActiveThemeId;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task SetActiveThemeIdAsync(string themeId)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var settings = await LoadAsync().ConfigureAwait(false);
+            settings = settings with { ActiveThemeId = themeId };
+            await SaveAsync(settings).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     private async Task<SettingsBlob> LoadAsync()
     {
         if (!File.Exists(_filePath))
         {
-            return new SettingsBlob(Version: 1, DefaultPlaceUrl: null);
+            return new SettingsBlob(Version: 1, DefaultPlaceUrl: null, LaunchMainOnStartup: false, ActiveThemeId: null);
         }
 
         byte[] bytes;
@@ -88,12 +146,12 @@ public sealed class AppSettings : IAppSettings, IDisposable
         }
         catch (IOException)
         {
-            return new SettingsBlob(Version: 1, DefaultPlaceUrl: null);
+            return new SettingsBlob(Version: 1, DefaultPlaceUrl: null, LaunchMainOnStartup: false, ActiveThemeId: null);
         }
 
         if (bytes.Length == 0)
         {
-            return new SettingsBlob(Version: 1, DefaultPlaceUrl: null);
+            return new SettingsBlob(Version: 1, DefaultPlaceUrl: null, LaunchMainOnStartup: false, ActiveThemeId: null);
         }
 
         try
@@ -105,7 +163,7 @@ public sealed class AppSettings : IAppSettings, IDisposable
         {
             // Corrupt settings file — return defaults rather than fail. The user can re-set in
             // the settings UI; we log nothing because we have no logger surface in Core yet.
-            return new SettingsBlob(Version: 1, DefaultPlaceUrl: null);
+            return new SettingsBlob(Version: 1, DefaultPlaceUrl: null, LaunchMainOnStartup: false, ActiveThemeId: null);
         }
     }
 
@@ -133,5 +191,11 @@ public sealed class AppSettings : IAppSettings, IDisposable
         _gate.Dispose();
     }
 
-    private sealed record SettingsBlob(int Version, string? DefaultPlaceUrl);
+    // SettingsBlob: missing fields decode as defaults (System.Text.Json), so older v1 blobs
+    // without LaunchMainOnStartup load cleanly with it false — no migration step.
+    private sealed record SettingsBlob(
+        int Version,
+        string? DefaultPlaceUrl,
+        bool LaunchMainOnStartup = false,
+        string? ActiveThemeId = null);
 }

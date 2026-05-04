@@ -10,4 +10,8 @@ public sealed record Account(
     string DisplayName,
     string AvatarUrl,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? LastLaunchedAt);
+    DateTimeOffset? LastLaunchedAt,
+    bool IsMain = false,
+    int SortOrder = 0,
+    bool IsSelected = true,
+    string? CaptionColorHex = null);

@@ -205,4 +205,224 @@ public class AccountStoreTests : IDisposable
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() => store.UpdateCookieAsync(Guid.NewGuid(), "new-c"));
     }
+
+    [Fact]
+    public async Task AddAsync_FirstAccount_AutoPromotesToMain()
+    {
+        using var store = new AccountStore(_filePath);
+
+        var account = await store.AddAsync("FirstUser", "https://avatar/1", "cookie-1");
+
+        Assert.True(account.IsMain);
+    }
+
+    [Fact]
+    public async Task AddAsync_SubsequentAccounts_DoNotBecomeMain()
+    {
+        using var store = new AccountStore(_filePath);
+        await store.AddAsync("FirstUser", "https://avatar/1", "cookie-1");
+
+        var second = await store.AddAsync("SecondUser", "https://avatar/2", "cookie-2");
+
+        Assert.False(second.IsMain);
+        var list = await store.ListAsync();
+        Assert.Single(list, a => a.IsMain);
+    }
+
+    [Fact]
+    public async Task SetMainAsync_FlipsExactlyOneMain()
+    {
+        using var store = new AccountStore(_filePath);
+        var first = await store.AddAsync("First", "https://x", "c1");
+        var second = await store.AddAsync("Second", "https://x", "c2");
+        var third = await store.AddAsync("Third", "https://x", "c3");
+        Assert.True(first.IsMain);
+
+        await store.SetMainAsync(second.Id);
+
+        var list = await store.ListAsync();
+        Assert.False(list.Single(a => a.Id == first.Id).IsMain);
+        Assert.True(list.Single(a => a.Id == second.Id).IsMain);
+        Assert.False(list.Single(a => a.Id == third.Id).IsMain);
+    }
+
+    [Fact]
+    public async Task SetMainAsync_GuidEmpty_UnsetsAll()
+    {
+        using var store = new AccountStore(_filePath);
+        await store.AddAsync("First", "https://x", "c1");
+        await store.AddAsync("Second", "https://x", "c2");
+
+        await store.SetMainAsync(Guid.Empty);
+
+        var list = await store.ListAsync();
+        Assert.DoesNotContain(list, a => a.IsMain);
+    }
+
+    [Fact]
+    public async Task RemoveAsync_RemovingMain_AutoPromotesNextRemaining()
+    {
+        using var store = new AccountStore(_filePath);
+        var first = await store.AddAsync("First", "https://x", "c1");   // auto-main
+        var second = await store.AddAsync("Second", "https://x", "c2");
+        Assert.True(first.IsMain);
+
+        await store.RemoveAsync(first.Id);
+
+        var list = await store.ListAsync();
+        Assert.Single(list);
+        Assert.True(list[0].IsMain);
+        Assert.Equal(second.Id, list[0].Id);
+    }
+
+    [Fact]
+    public async Task RemoveAsync_RemovingNonMain_LeavesMainUntouched()
+    {
+        using var store = new AccountStore(_filePath);
+        var first = await store.AddAsync("First", "https://x", "c1");
+        var second = await store.AddAsync("Second", "https://x", "c2");
+        Assert.True(first.IsMain);
+
+        await store.RemoveAsync(second.Id);
+
+        var list = await store.ListAsync();
+        Assert.Single(list);
+        Assert.True(list[0].IsMain);
+        Assert.Equal(first.Id, list[0].Id);
+    }
+
+    [Fact]
+    public async Task RemoveAsync_RemovingOnlyAccount_LeavesEmptyStore()
+    {
+        using var store = new AccountStore(_filePath);
+        var first = await store.AddAsync("Solo", "https://x", "c1");
+
+        await store.RemoveAsync(first.Id);
+
+        var list = await store.ListAsync();
+        Assert.Empty(list);
+    }
+
+    [Fact]
+    public async Task UpdateSortOrderAsync_RenumbersAccountsByGivenOrder()
+    {
+        using var store = new AccountStore(_filePath);
+        var first = await store.AddAsync("First", "https://x", "c1");
+        var second = await store.AddAsync("Second", "https://x", "c2");
+        var third = await store.AddAsync("Third", "https://x", "c3");
+
+        // Reverse: third, first, second.
+        await store.UpdateSortOrderAsync(new[] { third.Id, first.Id, second.Id });
+
+        var list = await store.ListAsync();
+        Assert.Equal(0, list.Single(a => a.Id == third.Id).SortOrder);
+        Assert.Equal(1, list.Single(a => a.Id == first.Id).SortOrder);
+        Assert.Equal(2, list.Single(a => a.Id == second.Id).SortOrder);
+    }
+
+    [Fact]
+    public async Task UpdateSortOrderAsync_PersistsAcrossInstances()
+    {
+        Guid firstId, secondId;
+        {
+            using var store = new AccountStore(_filePath);
+            var first = await store.AddAsync("First", "https://x", "c1");
+            var second = await store.AddAsync("Second", "https://x", "c2");
+            firstId = first.Id;
+            secondId = second.Id;
+            await store.UpdateSortOrderAsync(new[] { secondId, firstId });
+        }
+
+        using var reopened = new AccountStore(_filePath);
+        var list = await reopened.ListAsync();
+        Assert.Equal(0, list.Single(a => a.Id == secondId).SortOrder);
+        Assert.Equal(1, list.Single(a => a.Id == firstId).SortOrder);
+    }
+
+    [Fact]
+    public async Task AddAsync_AfterReorder_NewAccountLandsAtTheEnd()
+    {
+        using var store = new AccountStore(_filePath);
+        var a = await store.AddAsync("A", "https://x", "c1");
+        var b = await store.AddAsync("B", "https://x", "c2");
+        await store.UpdateSortOrderAsync(new[] { b.Id, a.Id });
+
+        var c = await store.AddAsync("C", "https://x", "c3");
+
+        var list = await store.ListAsync();
+        Assert.Equal(0, list.Single(x => x.Id == b.Id).SortOrder);
+        Assert.Equal(1, list.Single(x => x.Id == a.Id).SortOrder);
+        // C should land after both reordered accounts.
+        Assert.Equal(2, list.Single(x => x.Id == c.Id).SortOrder);
+    }
+
+    [Fact]
+    public async Task NewAccount_DefaultsToSelectedTrue()
+    {
+        using var store = new AccountStore(_filePath);
+
+        var added = await store.AddAsync("U", "https://x", "c");
+
+        Assert.True(added.IsSelected);
+        var list = await store.ListAsync();
+        Assert.True(list.Single().IsSelected);
+    }
+
+    [Fact]
+    public async Task SetSelectedAsync_FlipsAndPersists()
+    {
+        using var store = new AccountStore(_filePath);
+        var added = await store.AddAsync("U", "https://x", "c");
+
+        await store.SetSelectedAsync(added.Id, false);
+
+        var list = await store.ListAsync();
+        Assert.False(list.Single().IsSelected);
+
+        await store.SetSelectedAsync(added.Id, true);
+        Assert.True((await store.ListAsync()).Single().IsSelected);
+    }
+
+    [Fact]
+    public async Task SetSelectedAsync_PersistsAcrossInstances()
+    {
+        Guid id;
+        {
+            using var store = new AccountStore(_filePath);
+            var added = await store.AddAsync("U", "https://x", "c");
+            id = added.Id;
+            await store.SetSelectedAsync(id, false);
+        }
+
+        using var reopened = new AccountStore(_filePath);
+        var list = await reopened.ListAsync();
+        Assert.False(list.Single(a => a.Id == id).IsSelected);
+    }
+
+    [Fact]
+    public async Task SetSelectedAsync_UnknownId_NoOp()
+    {
+        using var store = new AccountStore(_filePath);
+        await store.AddAsync("U", "https://x", "c");
+
+        await store.SetSelectedAsync(Guid.NewGuid(), false); // shouldn't throw
+
+        Assert.True((await store.ListAsync()).Single().IsSelected);
+    }
+
+    [Fact]
+    public async Task SetMainAsync_PersistsAcrossStoreInstances()
+    {
+        Account second;
+        {
+            using var store = new AccountStore(_filePath);
+            await store.AddAsync("First", "https://x", "c1");
+            second = await store.AddAsync("Second", "https://x", "c2");
+            await store.SetMainAsync(second.Id);
+        }
+
+        using var reopened = new AccountStore(_filePath);
+        var list = await reopened.ListAsync();
+        Assert.True(list.Single(a => a.Id == second.Id).IsMain);
+    }
 }
