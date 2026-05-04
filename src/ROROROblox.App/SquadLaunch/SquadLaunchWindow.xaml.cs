@@ -14,6 +14,7 @@ internal partial class SquadLaunchWindow : Window
 {
     private readonly IPrivateServerStore _store;
     private readonly IRobloxApi _api;
+    private readonly Func<string, Task<LaunchTarget?>> _resolveShareUrl;
     private readonly int _eligibleAccountCount;
     private readonly int _runningAccountCount;
     private readonly int _expiredAccountCount;
@@ -24,12 +25,14 @@ internal partial class SquadLaunchWindow : Window
     public SquadLaunchWindow(
         IPrivateServerStore store,
         IRobloxApi api,
+        Func<string, Task<LaunchTarget?>> resolveShareUrl,
         int eligibleAccountCount,
         int runningAccountCount,
         int expiredAccountCount)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _api = api ?? throw new ArgumentNullException(nameof(api));
+        _resolveShareUrl = resolveShareUrl ?? throw new ArgumentNullException(nameof(resolveShareUrl));
         _eligibleAccountCount = eligibleAccountCount;
         _runningAccountCount = runningAccountCount;
         _expiredAccountCount = expiredAccountCount;
@@ -192,7 +195,7 @@ internal partial class SquadLaunchWindow : Window
         {
             // touch failure is cosmetic — proceed with launch anyway.
         }
-        SelectedTarget = new LaunchTarget.PrivateServer(server.PlaceId, server.AccessCode);
+        SelectedTarget = new LaunchTarget.PrivateServer(server.PlaceId, server.Code, server.CodeKind);
         DialogResult = true;
         Close();
     }
@@ -206,24 +209,30 @@ internal partial class SquadLaunchWindow : Window
             return;
         }
 
-        var parsed = LaunchTarget.FromUrl(input);
-        if (parsed is not LaunchTarget.PrivateServer ps)
-        {
-            StatusText.Text = "That doesn't look like a private server link. The URL must include " +
-                              "?privateServerLinkCode=... — copy the share link from the VIP server's page.";
-            return;
-        }
-
         AddButton.IsEnabled = false;
-        StatusText.Text = "Looking up game info...";
+        StatusText.Text = "Resolving link...";
         try
         {
+            // Three URL forms supported via the resolver:
+            //   privateServerLinkCode share URL  -> direct parse, LinkCode kind
+            //   PlaceLauncher.ashx accessCode    -> direct parse, AccessCode kind
+            //   roblox.com/share?code=X&type=Y   -> Roblox API resolve-link, LinkCode kind
+            var parsed = await _resolveShareUrl(input);
+            if (parsed is not LaunchTarget.PrivateServer ps)
+            {
+                StatusText.Text = "Couldn't read that as a private server link. Paste the URL " +
+                                  "from your private server's \"Configure Server\" page (either " +
+                                  "the new roblox.com/share?... link or the older privateServerLinkCode= form).";
+                return;
+            }
+
+            StatusText.Text = "Looking up game info...";
             var meta = await _api.GetGameMetadataByPlaceIdAsync(ps.PlaceId);
             var placeName = meta?.Name ?? $"Place {ps.PlaceId}";
             var thumbnail = meta?.IconUrl ?? string.Empty;
 
             // Default user-given name to the place name; users can rename later by remove + re-add.
-            var saved = await _store.AddAsync(ps.PlaceId, ps.AccessCode, placeName, placeName, thumbnail);
+            var saved = await _store.AddAsync(ps.PlaceId, ps.Code, ps.Kind, placeName, placeName, thumbnail);
             await _store.TouchLastLaunchedAsync(saved.Id);
 
             SelectedTarget = ps;

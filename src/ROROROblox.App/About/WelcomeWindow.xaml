@@ -6,26 +6,18 @@
         Height="500" Width="560"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="#0F1F31"
+        Background="{DynamicResource BgBrush}"
         Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
 
     <Window.Resources>
-        <SolidColorBrush x:Key="DividerBrush" Color="#1F3149" />
-        <SolidColorBrush x:Key="MutedTextBrush" Color="#9AA8B8" />
-        <SolidColorBrush x:Key="CyanBrush" Color="#17D4FA" />
-        <SolidColorBrush x:Key="MagentaBrush" Color="#F22F89" />
-        <SolidColorBrush x:Key="WhiteBrush" Color="#FFFFFF" />
-        <SolidColorBrush x:Key="NavyBrush" Color="#0F1F31" />
-        <SolidColorBrush x:Key="RowBgBrush" Color="#15263A" />
-
         <Style x:Key="StepStyle" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource RowBgBrush}" />
+            <Setter Property="Background" Value="{DynamicResource RowBgBrush}" />
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Padding" Value="14,12" />
             <Setter Property="Margin" Value="0,0,0,10" />
         </Style>
         <Style x:Key="StepNumberStyle" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource CyanBrush}" />
+            <Setter Property="Background" Value="{DynamicResource CyanBrush}" />
             <Setter Property="CornerRadius" Value="14" />
             <Setter Property="Width" Value="28" />
             <Setter Property="Height" Value="28" />
@@ -45,14 +37,14 @@
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Welcome to "
                            FontSize="22" FontWeight="Bold"
-                           Foreground="{StaticResource WhiteBrush}" />
+                           Foreground="{DynamicResource WhiteBrush}" />
                 <TextBlock Text="ROROROblox"
                            FontSize="22" FontWeight="Bold"
-                           Foreground="{StaticResource CyanBrush}" />
+                           Foreground="{DynamicResource CyanBrush}" />
             </StackPanel>
             <TextBlock Text="Run multiple Roblox clients side by side. Three steps and you're set."
                        FontSize="12"
-                       Foreground="{StaticResource MutedTextBrush}"
+                       Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,6,0,0"
                        TextWrapping="Wrap" />
         </StackPanel>
@@ -62,15 +54,15 @@
                 <StackPanel Orientation="Horizontal">
                     <Border Style="{StaticResource StepNumberStyle}">
                         <TextBlock Text="1" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   FontSize="14" FontWeight="Bold" Foreground="{StaticResource NavyBrush}" />
+                                   FontSize="14" FontWeight="Bold" Foreground="{DynamicResource NavyBrush}" />
                     </Border>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Click + Add Account."
                                    FontSize="13" FontWeight="SemiBold"
-                                   Foreground="{StaticResource WhiteBrush}" />
+                                   Foreground="{DynamicResource WhiteBrush}" />
                         <TextBlock Text="Sign in to roblox.com in the popup. We capture the cookie, encrypt it, and never see your password."
                                    FontSize="11"
-                                   Foreground="{StaticResource MutedTextBrush}"
+                                   Foreground="{DynamicResource MutedTextBrush}"
                                    TextWrapping="Wrap"
                                    Margin="0,2,0,0" />
                     </StackPanel>
@@ -81,15 +73,15 @@
                 <StackPanel Orientation="Horizontal">
                     <Border Style="{StaticResource StepNumberStyle}">
                         <TextBlock Text="2" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   FontSize="14" FontWeight="Bold" Foreground="{StaticResource NavyBrush}" />
+                                   FontSize="14" FontWeight="Bold" Foreground="{DynamicResource NavyBrush}" />
                     </Border>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Open Games and add the place you launch into."
                                    FontSize="13" FontWeight="SemiBold"
-                                   Foreground="{StaticResource WhiteBrush}" />
+                                   Foreground="{DynamicResource WhiteBrush}" />
                         <TextBlock Text="Search by name or paste a roblox.com/games/&lt;id&gt; URL. The default game is what Launch As uses."
                                    FontSize="11"
-                                   Foreground="{StaticResource MutedTextBrush}"
+                                   Foreground="{DynamicResource MutedTextBrush}"
                                    TextWrapping="Wrap"
                                    Margin="0,2,0,0" />
                     </StackPanel>
@@ -100,15 +92,15 @@
                 <StackPanel Orientation="Horizontal">
                     <Border Style="{StaticResource StepNumberStyle}">
                         <TextBlock Text="3" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   FontSize="14" FontWeight="Bold" Foreground="{StaticResource NavyBrush}" />
+                                   FontSize="14" FontWeight="Bold" Foreground="{DynamicResource NavyBrush}" />
                     </Border>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Click Launch As. Or Launch All for every alt at once."
                                    FontSize="13" FontWeight="SemiBold"
-                                   Foreground="{StaticResource WhiteBrush}" />
+                                   Foreground="{DynamicResource WhiteBrush}" />
                         <TextBlock Text="Multi-Instance is on by default — Roblox windows open side by side without fighting each other for the singleton."
                                    FontSize="11"
-                                   Foreground="{StaticResource MutedTextBrush}"
+                                   Foreground="{DynamicResource MutedTextBrush}"
                                    TextWrapping="Wrap"
                                    Margin="0,2,0,0" />
                     </StackPanel>
@@ -116,7 +108,7 @@
             </Border>
 
             <TextBlock Margin="0,12,0,0" FontSize="11"
-                       Foreground="{StaticResource MutedTextBrush}"
+                       Foreground="{DynamicResource MutedTextBrush}"
                        TextWrapping="Wrap">
                 Closing the window minimizes to the tray. Right-click the tray icon to fully Quit
                 or toggle Multi-Instance. The Diagnostics button in the header shows what the app
@@ -126,8 +118,8 @@
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
             <Button Content="Got it" Padding="22,8"
-                    Background="{StaticResource CyanBrush}"
-                    Foreground="{StaticResource NavyBrush}"
+                    Background="{DynamicResource CyanBrush}"
+                    Foreground="{DynamicResource NavyBrush}"
                     BorderThickness="0"
                     FontWeight="SemiBold"
                     IsDefault="True"

@@ -6,17 +6,10 @@
         Height="320" Width="540"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
-        Background="#0F1F31"
+        Background="{DynamicResource BgBrush}"
         Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
 
     <Window.Resources>
-        <SolidColorBrush x:Key="DividerBrush" Color="#1F3149" />
-        <SolidColorBrush x:Key="MutedTextBrush" Color="#9AA8B8" />
-        <SolidColorBrush x:Key="CyanBrush" Color="#17D4FA" />
-        <SolidColorBrush x:Key="MagentaBrush" Color="#F22F89" />
-        <SolidColorBrush x:Key="WhiteBrush" Color="#FFFFFF" />
-        <SolidColorBrush x:Key="NavyBrush" Color="#0F1F31" />
-        <SolidColorBrush x:Key="RowBgBrush" Color="#15263A" />
     </Window.Resources>
 
     <Grid Margin="28,24">
@@ -32,30 +25,30 @@
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Join by link"
                            FontSize="20" FontWeight="Bold"
-                           Foreground="{StaticResource CyanBrush}" />
+                           Foreground="{DynamicResource CyanBrush}" />
                 <TextBlock x:Name="AccountSubtitle"
                            FontSize="20" FontWeight="Bold"
-                           Foreground="{StaticResource WhiteBrush}"
+                           Foreground="{DynamicResource WhiteBrush}"
                            Margin="8,0,0,0" />
             </StackPanel>
             <TextBlock Text="Paste a Roblox game URL or a private server share link. We figure out which kind it is."
                        FontSize="11"
-                       Foreground="{StaticResource MutedTextBrush}"
+                       Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0"
                        TextWrapping="Wrap" />
         </StackPanel>
 
         <TextBox Grid.Row="1" x:Name="UrlInput"
                  Padding="10,8" FontSize="12" Margin="0,18,0,0"
-                 Background="{StaticResource RowBgBrush}"
-                 Foreground="{StaticResource WhiteBrush}"
-                 BorderBrush="{StaticResource DividerBrush}"
+                 Background="{DynamicResource RowBgBrush}"
+                 Foreground="{DynamicResource WhiteBrush}"
+                 BorderBrush="{DynamicResource DividerBrush}"
                  BorderThickness="1"
                  VerticalContentAlignment="Center"
                  TextChanged="OnUrlChanged" />
 
         <Border Grid.Row="2" Margin="0,12,0,0"
-                Background="{StaticResource RowBgBrush}"
+                Background="{DynamicResource RowBgBrush}"
                 CornerRadius="6"
                 Padding="12,10"
                 Visibility="Collapsed"
@@ -63,12 +56,12 @@
             <StackPanel Orientation="Horizontal">
                 <TextBlock x:Name="PreviewLabel"
                            FontSize="11" FontWeight="SemiBold"
-                           Foreground="{StaticResource CyanBrush}"
+                           Foreground="{DynamicResource CyanBrush}"
                            Margin="0,0,8,0"
                            VerticalAlignment="Center" />
                 <TextBlock x:Name="PreviewDetail"
                            FontSize="11"
-                           Foreground="{StaticResource WhiteBrush}"
+                           Foreground="{DynamicResource WhiteBrush}"
                            VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis" />
             </StackPanel>
@@ -76,24 +69,24 @@
 
         <TextBlock Grid.Row="3" x:Name="StatusText"
                    FontSize="11"
-                   Foreground="{StaticResource MutedTextBrush}"
+                   Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,12,0,0"
                    TextWrapping="Wrap"
                    VerticalAlignment="Top" />
 
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
             <Button Content="Cancel" Padding="14,8" Margin="0,0,8,0"
-                    Background="{StaticResource NavyBrush}"
-                    Foreground="{StaticResource WhiteBrush}"
-                    BorderBrush="{StaticResource DividerBrush}"
+                    Background="{DynamicResource NavyBrush}"
+                    Foreground="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource DividerBrush}"
                     BorderThickness="1"
                     IsCancel="True"
                     Click="OnCancelClick" />
             <Button x:Name="LaunchButton"
                     Content="Launch"
                     Padding="18,8"
-                    Background="{StaticResource CyanBrush}"
-                    Foreground="{StaticResource NavyBrush}"
+                    Background="{DynamicResource CyanBrush}"
+                    Foreground="{DynamicResource NavyBrush}"
                     BorderThickness="0"
                     FontWeight="SemiBold"
                     IsDefault="True"

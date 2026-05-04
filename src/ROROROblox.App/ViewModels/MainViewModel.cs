@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.App.About;
 using ROROROblox.App.Diagnostics;
+using ROROROblox.App.History;
 using ROROROblox.App.Friends;
 using ROROROblox.App.JoinByLink;
 using ROROROblox.App.Modals;
@@ -23,7 +24,7 @@ namespace ROROROblox.App.ViewModels;
 /// Coordinates <see cref="ICookieCapture"/> + <see cref="IRobloxApi"/> + <see cref="IAccountStore"/>
 /// + <see cref="IRobloxLauncher"/>; surfaces error modals for the four spec §7 buckets.
 /// </summary>
-public sealed class MainViewModel : INotifyPropertyChanged
+internal sealed class MainViewModel : INotifyPropertyChanged
 {
     private readonly ICookieCapture _cookieCapture;
     private readonly IRobloxApi _api;
@@ -35,7 +36,20 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly IRobloxProcessTracker _processTracker;
     private readonly IDiagnosticsCollector _diagnostics;
     private readonly IPrivateServerStore _privateServerStore;
+    private readonly ISessionHistoryStore _sessionHistory;
+    private readonly Startup.IStartupRegistration _startupRegistration;
+    private readonly Core.Theming.IThemeStore _themeStore;
+    private readonly Theming.ThemeService _themeService;
+    private readonly Tray.RobloxWindowDecorator _windowDecorator;
     private readonly ILogger<MainViewModel> _log;
+
+    /// <summary>
+    /// In-flight session-history rows keyed by account id. Populated when LaunchAccountAsync
+    /// succeeds; consumed by OnProcessExited / OnProcessAttachFailed to stamp end / outcome.
+    /// In-memory only — restart loses pending end-stamps, but the launched-at row is already
+    /// persisted via <see cref="ISessionHistoryStore.AddAsync"/>.
+    /// </summary>
+    private readonly Dictionary<Guid, Guid> _pendingSessionByAccountId = new();
     private readonly DispatcherTimer _ticker;
 
     private string _statusBanner = string.Empty;
@@ -54,6 +68,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         IRobloxProcessTracker processTracker,
         IDiagnosticsCollector diagnostics,
         IPrivateServerStore privateServerStore,
+        ISessionHistoryStore sessionHistory,
+        Startup.IStartupRegistration startupRegistration,
+        Core.Theming.IThemeStore themeStore,
+        Theming.ThemeService themeService,
+        Tray.RobloxWindowDecorator windowDecorator,
         ILogger<MainViewModel>? log = null)
     {
         _cookieCapture = cookieCapture;
@@ -66,6 +85,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _processTracker = processTracker;
         _diagnostics = diagnostics;
         _privateServerStore = privateServerStore;
+        _sessionHistory = sessionHistory;
+        _startupRegistration = startupRegistration;
+        _themeStore = themeStore;
+        _themeService = themeService;
+        _windowDecorator = windowDecorator;
         _log = log ?? NullLogger<MainViewModel>.Instance;
 
         AddAccountCommand = new RelayCommand(AddAccountAsync, () => !IsBusy);
@@ -73,12 +97,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
         RemoveAccountCommand = new RelayCommand(p => RemoveAccountAsync(p as AccountSummary));
         ReauthenticateCommand = new RelayCommand(p => ReauthenticateAsync(p as AccountSummary));
         OpenSettingsCommand = new RelayCommand(OpenSettings);
-        LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => !a.SessionExpired && !a.IsRunning));
+        LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !a.IsRunning));
         StopAccountCommand = new RelayCommand(p => StopAccount(p as AccountSummary));
         OpenDiagnosticsCommand = new RelayCommand(OpenDiagnostics);
         OpenAboutCommand = new RelayCommand(OpenAbout);
         OpenSquadLaunchCommand = new RelayCommand(OpenSquadLaunchAsync, () => !IsBusy && Accounts.Count > 0);
         OpenFriendFollowCommand = new RelayCommand(p => OpenFriendFollowAsync(p as AccountSummary));
+        SetMainCommand = new RelayCommand(p => SetMainAsync(p as AccountSummary));
+        ToggleCompactCommand = new RelayCommand(ToggleCompact);
+        StartMainCommand = new RelayCommand(StartMainAsync, () => !IsBusy && Accounts.FirstOrDefault(a => a.IsMain) is { SessionExpired: false, IsRunning: false });
+        OpenHistoryCommand = new RelayCommand(OpenHistory);
+        OpenPreferencesCommand = new RelayCommand(OpenPreferences);
 
         _processTracker.ProcessAttached += OnProcessAttached;
         _processTracker.ProcessExited += OnProcessExited;
@@ -133,6 +162,56 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand OpenAboutCommand { get; }
     public ICommand OpenSquadLaunchCommand { get; }
     public ICommand OpenFriendFollowCommand { get; }
+    public ICommand SetMainCommand { get; }
+    public ICommand ToggleCompactCommand { get; }
+    public ICommand StartMainCommand { get; }
+    public ICommand OpenHistoryCommand { get; }
+    public ICommand OpenPreferencesCommand { get; }
+
+    private bool _isCompact;
+    /// <summary>True when the main window is in compact (collapsed) mode. Drives the bottom-bar
+    /// button label, the column visibility on the row template, and the empty-state surface.</summary>
+    public bool IsCompact
+    {
+        get => _isCompact;
+        set
+        {
+            if (SetField(ref _isCompact, value))
+            {
+                OnPropertyChanged(nameof(CompactToggleLabel));
+                OnPropertyChanged(nameof(CompactRows));
+                OnPropertyChanged(nameof(HasCompactRows));
+                OnPropertyChanged(nameof(MainAccount));
+                OnPropertyChanged(nameof(CompactEmptyKind));
+            }
+        }
+    }
+
+    public string CompactToggleLabel => _isCompact ? "Expand" : "Compact";
+
+    /// <summary>Account designated as the user's main, if any. Used by the compact-mode CTA + tray hooks.</summary>
+    public AccountSummary? MainAccount => Accounts.FirstOrDefault(a => a.IsMain);
+
+    /// <summary>Subset of accounts shown in compact mode — only ones currently running or launching.</summary>
+    public IEnumerable<AccountSummary> CompactRows =>
+        Accounts.Where(a => a.IsRunning || a.IsLaunching);
+
+    public bool HasCompactRows => CompactRows.Any();
+
+    /// <summary>
+    /// Empty-state for compact mode. Three discrete states keep the empty area from looking broken:
+    ///   <c>StartMain</c> — main is set, idle: show "Start [Username]" CTA.
+    ///   <c>NoMainPicked</c> — accounts exist but none is main: show "Pick a main →" hint.
+    ///   <c>NoAccounts</c> — no accounts saved at all: show "+ Add your first account" CTA.
+    /// </summary>
+    public CompactEmptyState CompactEmptyKind
+    {
+        get
+        {
+            if (Accounts.Count == 0) return CompactEmptyState.NoAccounts;
+            return MainAccount is null ? CompactEmptyState.NoMainPicked : CompactEmptyState.StartMain;
+        }
+    }
 
     /// <summary>How many tracked Roblox client processes are currently alive.</summary>
     public int LiveProcessCount
@@ -185,9 +264,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             var accounts = await _accountStore.ListAsync();
             Accounts.Clear();
-            foreach (var account in accounts.OrderByDescending(a => a.LastLaunchedAt ?? a.CreatedAt))
+            // Manual SortOrder wins when set; among rows that share a SortOrder (typical: every
+            // account at 0 because the user has never reordered), fall back to most-recently-
+            // launched first so freshly-touched accounts surface naturally.
+            var ordered = accounts
+                .OrderBy(a => a.SortOrder)
+                .ThenByDescending(a => a.LastLaunchedAt ?? a.CreatedAt);
+            foreach (var account in ordered)
             {
-                Accounts.Add(new AccountSummary(account));
+                var summary = new AccountSummary(account);
+                summary.PropertyChanged += OnAccountSummaryPropertyChanged;
+                Accounts.Add(summary);
             }
         }
         catch (AccountStoreCorruptException)
@@ -196,6 +283,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
 
         await ReloadGamesAsync();
+        OnPropertyChanged(nameof(MainAccount));
+        OnPropertyChanged(nameof(CompactEmptyKind));
+        OnPropertyChanged(nameof(CompactRows));
+        OnPropertyChanged(nameof(HasCompactRows));
+        RelayCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>
@@ -223,6 +315,85 @@ public sealed class MainViewModel : INotifyPropertyChanged
             var stillThere = AvailableGames.FirstOrDefault(g =>
                 !IsJoinByLinkSentinel(g) && g.PlaceId == account.SelectedGame?.PlaceId);
             account.SelectedGame = stillThere ?? defaultGame;
+        }
+    }
+
+    /// <summary>
+    /// Translate any of Roblox's three private-server URL forms — share URL with privateServerLinkCode,
+    /// already-resolved launcher URL with accessCode, or the newer <c>roblox.com/share?code=X&amp;type=Server</c>
+    /// share token — into a concrete <see cref="LaunchTarget"/>. The first two are pure-string parses
+    /// via <see cref="LaunchTarget.FromUrl"/>; the share-token form requires an authenticated API call
+    /// against Roblox's resolve-link endpoint, so this method needs an account cookie. We pick any
+    /// non-expired account for the resolution call — Roblox's API doesn't care which user asks; it
+    /// just needs a valid session. The resulting linkCode goes through normal launch as
+    /// <see cref="PrivateServerCodeKind.LinkCode"/>. Returns null if every form fails or no account
+    /// is available to resolve a share token.
+    /// </summary>
+    public async Task<LaunchTarget?> ResolveShareUrlAsync(string url, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return null;
+        }
+
+        // First: the cheap sync paths (existing share-link form + already-resolved launcher form).
+        var direct = LaunchTarget.FromUrl(url);
+        if (direct is not null)
+        {
+            return direct;
+        }
+
+        // Second: the newer roblox.com/share?code=X&type=Y form. Needs a Roblox API call to
+        // resolve the opaque code into a real (placeId, linkCode) pair.
+        if (!LaunchTarget.TryParseShareLink(url, out var code, out var linkType))
+        {
+            return null;
+        }
+        if (!string.Equals(linkType, "Server", StringComparison.OrdinalIgnoreCase))
+        {
+            // Non-server share tokens (Game / Profile / etc.) aren't useful for launching as a
+            // private server — bail rather than silently launch into something else.
+            return null;
+        }
+
+        var resolverAccount = Accounts.FirstOrDefault(a => !a.SessionExpired);
+        if (resolverAccount is null)
+        {
+            _log.LogInformation("No non-expired account available to resolve share token; skipping.");
+            return null;
+        }
+
+        string cookie;
+        try
+        {
+            cookie = await _accountStore.RetrieveCookieAsync(resolverAccount.Id).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "RetrieveCookieAsync failed during share-link resolution.");
+            return null;
+        }
+
+        try
+        {
+            var resolution = await _api.ResolveShareLinkAsync(cookie, code, "Server").ConfigureAwait(true);
+            if (resolution is null || resolution.PlaceId <= 0 || string.IsNullOrEmpty(resolution.LinkCode))
+            {
+                _log.LogInformation("Roblox share-link resolve returned no usable server data for code {Code}.", code);
+                return null;
+            }
+            return new LaunchTarget.PrivateServer(resolution.PlaceId, resolution.LinkCode, PrivateServerCodeKind.LinkCode);
+        }
+        catch (CookieExpiredException)
+        {
+            // The resolver's cookie expired between our last validation and now. Mark it.
+            resolverAccount.SessionExpired = true;
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "ResolveShareLinkAsync threw for code {Code}.", code);
+            return null;
         }
     }
 
@@ -360,9 +531,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         var account = await _accountStore.AddAsync(captured.Username, avatarUrl, captured.Cookie);
         var summary = new AccountSummary(account) { RobloxUserId = captured.UserId };
+        summary.PropertyChanged += OnAccountSummaryPropertyChanged;
         Accounts.Insert(0, summary);
-        _log.LogInformation("Added account {AccountId} ({Username}, userId {UserId})", account.Id, captured.Username, captured.UserId);
-        StatusBanner = $"Added {captured.Username}.";
+        _log.LogInformation("Added account {AccountId} ({Username}, userId {UserId}, isMain={IsMain})",
+            account.Id, captured.Username, captured.UserId, account.IsMain);
+        StatusBanner = account.IsMain
+            ? $"Added {captured.Username}. Marked as main — change it any time."
+            : $"Added {captured.Username}.";
+        OnPropertyChanged(nameof(MainAccount));
+        OnPropertyChanged(nameof(CompactEmptyKind));
+        RelayCommand.RaiseCanExecuteChanged();
     }
 
     private async Task LaunchAccountAsync(AccountSummary? summary, LaunchTarget? overrideTarget = null)
@@ -374,6 +552,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         summary.IsLaunching = true;
         summary.StatusText = "Launching...";
+        OnPropertyChanged(nameof(CompactRows));
+        OnPropertyChanged(nameof(HasCompactRows));
         _log.LogInformation("Launching account {AccountId} ({DisplayName}) target={Target}",
             summary.Id, summary.DisplayName, overrideTarget?.GetType().Name ?? "from-row");
         try
@@ -417,6 +597,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                     summary.StatusText = string.Empty;
                     summary.LastClosedAtUtc = null;
                     _log.LogInformation("Launcher pid {Pid} for {AccountId}; tracking RobloxPlayerBeta", started.Pid, summary.Id);
+                    await RecordSessionStartAsync(summary, target, started.LaunchedAtUtc);
                     // Fire-and-forget: tracker watches for the player process. UI updates flow back
                     // through ProcessAttached / ProcessAttachFailed events.
                     _ = _processTracker.TrackLaunchAsync(summary.Id, started.LaunchedAtUtc);
@@ -440,6 +621,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         finally
         {
             summary.IsLaunching = false;
+            OnPropertyChanged(nameof(CompactRows));
+            OnPropertyChanged(nameof(HasCompactRows));
         }
     }
 
@@ -452,17 +635,23 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         if (IsBusy) return;
         IsBusy = true;
-        StatusBanner = "Launching all accounts...";
         try
         {
-            var targets = Accounts.Where(a => !a.SessionExpired && !a.IsRunning && !a.IsLaunching).ToList();
-            _log.LogInformation("LaunchAll: {Count} target accounts", targets.Count);
+            var targets = Accounts
+                .Where(a => a.IsSelected && !a.SessionExpired && !a.IsRunning && !a.IsLaunching)
+                .ToList();
+            var deselectedCount = Accounts.Count(a => !a.IsSelected);
+            _log.LogInformation("LaunchMultiple: {Count} eligible, {Skipped} deselected", targets.Count, deselectedCount);
+
             if (targets.Count == 0)
             {
-                StatusBanner = "Nothing to launch — every account is already running or expired.";
+                StatusBanner = deselectedCount > 0
+                    ? "Nothing to launch — every selected account is running or expired. Toggle the dot next to a status to include more."
+                    : "Nothing to launch — every account is already running or expired.";
                 return;
             }
 
+            StatusBanner = $"Launching {targets.Count} selected account{(targets.Count == 1 ? "" : "s")}...";
             var i = 0;
             foreach (var summary in targets)
             {
@@ -473,7 +662,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
                     await Task.Delay(TimeSpan.FromMilliseconds(1500));
                 }
             }
-            StatusBanner = $"Launch all finished. {targets.Count} client{(targets.Count == 1 ? "" : "s")} dispatched.";
+            var tail = deselectedCount > 0 ? $" ({deselectedCount} deselected, skipped.)" : string.Empty;
+            StatusBanner = $"Launch multiple finished. {targets.Count} client{(targets.Count == 1 ? "" : "s")} dispatched.{tail}";
         }
         finally
         {
@@ -487,11 +677,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     private async Task OpenSquadLaunchAsync()
     {
-        var eligible = Accounts.Count(a => !a.SessionExpired && !a.IsRunning && !a.IsLaunching);
-        var running = Accounts.Count(a => a.IsRunning);
-        var expired = Accounts.Count(a => a.SessionExpired);
+        // Eligibility for the Private server modal counts SELECTED accounts only. Deselected
+        // rows are surfaced in the modal's status line so the user knows why the count is low.
+        var eligible = Accounts.Count(a => a.IsSelected && !a.SessionExpired && !a.IsRunning && !a.IsLaunching);
+        var running = Accounts.Count(a => a.IsSelected && a.IsRunning);
+        var expired = Accounts.Count(a => a.IsSelected && a.SessionExpired);
 
-        var window = new SquadLaunchWindow(_privateServerStore, _api, eligible, running, expired)
+        var window = new SquadLaunchWindow(_privateServerStore, _api, url => ResolveShareUrlAsync(url), eligible, running, expired)
         {
             Owner = Application.Current.MainWindow,
         };
@@ -513,26 +705,32 @@ public sealed class MainViewModel : INotifyPropertyChanged
         IsBusy = true;
         try
         {
-            var targets = Accounts.Where(a => !a.SessionExpired && !a.IsRunning && !a.IsLaunching).ToList();
-            _log.LogInformation("SquadLaunch: placeId={PlaceId}, {Count} target accounts",
-                target.PlaceId, targets.Count);
+            var targets = Accounts
+                .Where(a => a.IsSelected && !a.SessionExpired && !a.IsRunning && !a.IsLaunching)
+                .ToList();
+            var deselectedCount = Accounts.Count(a => !a.IsSelected);
+            _log.LogInformation("PrivateServer: placeId={PlaceId}, {Count} eligible, {Skipped} deselected",
+                target.PlaceId, targets.Count, deselectedCount);
             if (targets.Count == 0)
             {
-                StatusBanner = "Nothing to launch — every account is already running or expired.";
+                StatusBanner = deselectedCount > 0
+                    ? "Nothing to launch — every selected account is running or expired."
+                    : "Nothing to launch — every account is already running or expired.";
                 return;
             }
 
             var i = 0;
             foreach (var summary in targets)
             {
-                StatusBanner = $"Squad launching {summary.DisplayName} ({++i} of {targets.Count}) into the same private server...";
+                StatusBanner = $"Joining private server: {summary.DisplayName} ({++i} of {targets.Count})...";
                 await LaunchAccountAsync(summary, overrideTarget: target);
                 if (i < targets.Count)
                 {
                     await Task.Delay(TimeSpan.FromMilliseconds(1500));
                 }
             }
-            StatusBanner = $"Squad launch finished. {targets.Count} client{(targets.Count == 1 ? "" : "s")} dispatched into the same private server.";
+            var tail = deselectedCount > 0 ? $" ({deselectedCount} deselected, skipped.)" : string.Empty;
+            StatusBanner = $"Private server launch finished. {targets.Count} client{(targets.Count == 1 ? "" : "s")} joined.{tail}";
         }
         finally
         {
@@ -551,7 +749,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         if (summary is null) return;
 
-        var window = new JoinByLinkWindow(_api, summary.DisplayName)
+        var window = new JoinByLinkWindow(_api, url => ResolveShareUrlAsync(url), summary.DisplayName)
         {
             Owner = Application.Current.MainWindow,
         };
@@ -639,6 +837,78 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Persist a new in-flight session row at launch time. Failures are non-fatal — history is
+    /// comfort, not load-bearing — so any throw here just logs at debug.
+    /// </summary>
+    private async Task RecordSessionStartAsync(AccountSummary summary, LaunchTarget target, DateTimeOffset launchedAtUtc)
+    {
+        try
+        {
+            // Resolve a human-readable game name if we can. PrivateServer + Place know their
+            // PlaceId; DefaultGame doesn't (the launcher resolves it internally), so fall back
+            // to the row's SelectedGame name. FollowFriend has no place at all — null game name.
+            string? gameName = null;
+            long? placeId = null;
+            var isPrivate = false;
+            switch (target)
+            {
+                case LaunchTarget.PrivateServer ps:
+                    placeId = ps.PlaceId;
+                    isPrivate = true;
+                    gameName = summary.SelectedGame?.Name ?? $"Place {ps.PlaceId} (private server)";
+                    break;
+                case LaunchTarget.Place p:
+                    placeId = p.PlaceId;
+                    gameName = summary.SelectedGame?.Name ?? $"Place {p.PlaceId}";
+                    break;
+                case LaunchTarget.DefaultGame:
+                    gameName = summary.SelectedGame?.Name;
+                    placeId = summary.SelectedGame?.PlaceId;
+                    break;
+                case LaunchTarget.FollowFriend:
+                    gameName = "Following a friend";
+                    break;
+            }
+
+            var session = new LaunchSession(
+                Id: Guid.NewGuid(),
+                AccountId: summary.Id,
+                AccountDisplayName: summary.DisplayName,
+                AccountAvatarUrl: summary.AvatarUrl,
+                GameName: gameName,
+                PlaceId: placeId,
+                IsPrivateServer: isPrivate,
+                LaunchedAtUtc: launchedAtUtc,
+                EndedAtUtc: null,
+                OutcomeHint: null);
+
+            _pendingSessionByAccountId[summary.Id] = session.Id;
+            await _sessionHistory.AddAsync(session);
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Recording session start threw for account {AccountId}; continuing.", summary.Id);
+        }
+    }
+
+    private async Task RecordSessionEndAsync(Guid accountId, DateTimeOffset endedAtUtc, string? outcomeHint)
+    {
+        if (!_pendingSessionByAccountId.TryGetValue(accountId, out var sessionId))
+        {
+            return;
+        }
+        _pendingSessionByAccountId.Remove(accountId);
+        try
+        {
+            await _sessionHistory.MarkEndedAsync(sessionId, endedAtUtc, outcomeHint);
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Stamping session end threw for account {AccountId}; continuing.", accountId);
+        }
+    }
+
     private void OnProcessAttached(object? sender, RobloxProcessEventArgs e)
     {
         Application.Current?.Dispatcher.Invoke(() =>
@@ -650,6 +920,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             summary.RunningSinceUtc = e.OccurredAtUtc;
             summary.StatusText = string.Empty;
             LiveProcessCount = _processTracker.Attached.Count;
+            OnPropertyChanged(nameof(CompactRows));
+            OnPropertyChanged(nameof(HasCompactRows));
             RelayCommand.RaiseCanExecuteChanged();
         });
     }
@@ -665,8 +937,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
             summary.RunningSinceUtc = null;
             summary.LastClosedAtUtc = e.OccurredAtUtc;
             LiveProcessCount = _processTracker.Attached.Count;
+            OnPropertyChanged(nameof(CompactRows));
+            OnPropertyChanged(nameof(HasCompactRows));
             RelayCommand.RaiseCanExecuteChanged();
         });
+        // Fire-and-forget the history end-stamp; persistence isn't on the UI critical path.
+        _ = RecordSessionEndAsync(e.AccountId, e.OccurredAtUtc, outcomeHint: null);
     }
 
     private void OnProcessAttachFailed(object? sender, RobloxProcessEventArgs e)
@@ -679,6 +955,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
             // place removed, antivirus quarantine. Surface the hint in the row.
             summary.StatusText = "Launch never connected. Check Roblox is current + antivirus isn't blocking.";
         });
+        // Stamp the session row with an outcome hint instead of an end timestamp — the launch
+        // never actually ran. Useful when scrolling history later: "this one never connected."
+        _ = RecordSessionEndAsync(e.AccountId, e.OccurredAtUtc, outcomeHint: "Never connected");
     }
 
     private async Task RemoveAccountAsync(AccountSummary? summary)
@@ -698,8 +977,27 @@ public sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
 
+        var wasMain = summary.IsMain;
         await _accountStore.RemoveAsync(summary.Id);
         Accounts.Remove(summary);
+
+        // Store auto-promotes a new main when the previous one was just removed; mirror that
+        // promotion onto the in-memory AccountSummary list so the MAIN pill flips immediately.
+        if (wasMain && Accounts.Count > 0)
+        {
+            var promoted = await _accountStore.ListAsync();
+            var promotedId = promoted.FirstOrDefault(a => a.IsMain)?.Id;
+            foreach (var a in Accounts)
+            {
+                a.IsMain = promotedId.HasValue && a.Id == promotedId.Value;
+            }
+            OnPropertyChanged(nameof(MainAccount));
+        }
+
+        OnPropertyChanged(nameof(CompactEmptyKind));
+        OnPropertyChanged(nameof(CompactRows));
+        OnPropertyChanged(nameof(HasCompactRows));
+        RelayCommand.RaiseCanExecuteChanged();
         StatusBanner = $"Removed {summary.DisplayName}.";
     }
 
@@ -764,6 +1062,163 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         var window = new AboutWindow { Owner = Application.Current.MainWindow };
         window.ShowDialog();
+    }
+
+    /// <summary>
+    /// Persist account-level toggles whenever they flip. Today: <see cref="AccountSummary.IsSelected"/>
+    /// (the per-row dot for batch launches). Fire-and-forget — a write failure doesn't block the
+    /// UI flip; the next click reconverges. Other AccountSummary properties (running state,
+    /// status text, etc.) are intentionally session-only.
+    /// </summary>
+    private void OnAccountSummaryPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (sender is not AccountSummary summary) return;
+        if (e.PropertyName == nameof(AccountSummary.IsSelected))
+        {
+            _ = PersistIsSelectedAsync(summary.Id, summary.IsSelected);
+        }
+        else if (e.PropertyName == nameof(AccountSummary.CaptionColorHex))
+        {
+            _ = PersistCaptionColorAsync(summary.Id, summary.CaptionColorHex);
+        }
+    }
+
+    private async Task PersistIsSelectedAsync(Guid accountId, bool isSelected)
+    {
+        try
+        {
+            await _accountStore.SetSelectedAsync(accountId, isSelected);
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Persisting IsSelected={Selected} for {AccountId} failed.", isSelected, accountId);
+        }
+    }
+
+    private async Task PersistCaptionColorAsync(Guid accountId, string? hex)
+    {
+        try
+        {
+            await _accountStore.SetCaptionColorAsync(accountId, hex);
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Persisting caption color {Hex} for {AccountId} failed.", hex, accountId);
+        }
+    }
+
+    /// <summary>
+    /// Push the current AccountSummary's caption color to any running Roblox window for that
+    /// account RIGHT NOW (instead of waiting up to 1.5s for the decorator's poll). Called by
+    /// the row's color picker after Apply / Reset so the visual feedback is instant.
+    /// </summary>
+    public void RefreshDecoratorForAccount(Guid accountId)
+    {
+        try
+        {
+            _windowDecorator.RefreshAccount(accountId);
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Decorator refresh for {AccountId} threw; will land on next tick.", accountId);
+        }
+    }
+
+    /// <summary>
+    /// Move <paramref name="source"/> to the position currently held by <paramref name="target"/>,
+    /// shifting <paramref name="target"/> + everything below down one slot. Used by the row's
+    /// drag handler. Persists the new order via <see cref="IAccountStore.UpdateSortOrderAsync"/>;
+    /// silently no-ops if either argument is null or the same row.
+    /// </summary>
+    public async Task MoveAccountAsync(AccountSummary? source, AccountSummary? target)
+    {
+        if (source is null || target is null || ReferenceEquals(source, target))
+        {
+            return;
+        }
+        var srcIdx = Accounts.IndexOf(source);
+        var dstIdx = Accounts.IndexOf(target);
+        if (srcIdx < 0 || dstIdx < 0 || srcIdx == dstIdx)
+        {
+            return;
+        }
+        Accounts.Move(srcIdx, dstIdx);
+
+        try
+        {
+            await _accountStore.UpdateSortOrderAsync(Accounts.Select(a => a.Id).ToList());
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Persisting reordered accounts failed; in-memory order kept.");
+        }
+    }
+
+    private void OpenHistory()
+    {
+        var window = new SessionHistoryWindow(_sessionHistory, _favorites, _api)
+        {
+            Owner = Application.Current.MainWindow,
+        };
+        window.ShowDialog();
+        // The user may have bookmarked games from history; refresh the per-row dropdowns so
+        // they appear without a restart.
+        _ = ReloadGamesAsync();
+    }
+
+    private void OpenPreferences()
+    {
+        var window = new Preferences.PreferencesWindow(_settings, _startupRegistration, _themeStore, _themeService)
+        {
+            Owner = Application.Current.MainWindow,
+        };
+        window.ShowDialog();
+    }
+
+    /// <summary>
+    /// Set the given account as the user's main. Persists via <see cref="IAccountStore.SetMainAsync"/>;
+    /// flips the in-memory IsMain flag on every account in lockstep so the row's MAIN pill updates
+    /// without a re-list. Click the current main again to unset (toggle behavior).
+    /// </summary>
+    private async Task SetMainAsync(AccountSummary? summary)
+    {
+        if (summary is null) return;
+        var newMainId = summary.IsMain ? Guid.Empty : summary.Id;
+        try
+        {
+            await _accountStore.SetMainAsync(newMainId);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "SetMain failed for {AccountId}", summary.Id);
+            StatusBanner = "Couldn't set main account — see log for details.";
+            return;
+        }
+
+        foreach (var a in Accounts)
+        {
+            a.IsMain = a.Id == newMainId;
+        }
+        OnPropertyChanged(nameof(MainAccount));
+        OnPropertyChanged(nameof(CompactEmptyKind));
+        StatusBanner = newMainId == Guid.Empty
+            ? "Main account cleared."
+            : $"{summary.DisplayName} is now your main.";
+        RelayCommand.RaiseCanExecuteChanged();
+    }
+
+    private void ToggleCompact() => IsCompact = !IsCompact;
+
+    /// <summary>
+    /// Compact-mode CTA: launch the main account into its current per-row game pick. Falls back
+    /// to the launcher's default-place resolution if the row hasn't picked a game yet. Mirrors
+    /// LaunchAccountAsync so the same tracker / cookie-expired / not-installed paths apply.
+    /// </summary>
+    private async Task StartMainAsync()
+    {
+        var main = MainAccount;
+        if (main is null) return;
+        await LaunchAccountAsync(main);
     }
 
     private static void ShowWebView2NotInstalledModal()

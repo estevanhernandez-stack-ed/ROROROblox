@@ -1,6 +1,8 @@
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Linq;
 using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -8,11 +10,13 @@ using ROROROblox.App.AppLifecycle;
 using ROROROblox.App.CookieCapture;
 using ROROROblox.App.Logging;
 using ROROROblox.App.Startup;
+using ROROROblox.App.Theming;
 using ROROROblox.App.Tray;
 using ROROROblox.App.Updates;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
+using ROROROblox.Core.Theming;
 
 namespace ROROROblox.App;
 
@@ -38,6 +42,11 @@ public partial class App : Application
         _log = _loggerFactory.CreateLogger<App>();
         WireGlobalExceptionHandlers();
 
+        // Force dark Win11 immersive title bar chrome on every plain Window created in this
+        // process (Diagnostics, Settings, About, modals, etc.). MainWindow uses FluentWindow
+        // and is unaffected. One-time class handler — covers windows opened later too.
+        WindowTheming.RegisterGlobalDarkTitleBar();
+
         var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
         _log.LogInformation("ROROROblox starting (v{Version}, OS {Os})", version, Environment.OSVersion);
 
@@ -53,12 +62,28 @@ public partial class App : Application
         ConfigureServices(services, _loggerFactory);
         _services = services.BuildServiceProvider();
 
+        // Apply the saved theme synchronously so the first paint is already on the chosen
+        // palette. The async path was deadlocking — IAppSettings.GetActiveThemeIdAsync
+        // continues on the UI thread (ConfigureAwait(true)), and we were blocking the UI
+        // thread with GetResult(). Sync file-read avoids the cycle entirely; the JSON parse
+        // is small enough that startup latency stays imperceptible.
+        try
+        {
+            _services.GetRequiredService<ThemeService>().ApplyAtStartup();
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Theme apply at startup threw; continuing with default brushes.");
+        }
+
         var tray = _services.GetRequiredService<ITrayService>();
         var mutex = _services.GetRequiredService<IMutexHolder>();
         var mainWindow = _services.GetRequiredService<MainWindow>();
 
         WireTrayEvents(tray, mutex, mainWindow);
         WireMutexLost(mutex, tray);
+        WireMainAvatarTrayPainter();
+        WireRobloxWindowDecorator();
 
         // Default Multi-Instance ON. Acquire the ROBLOX_singletonEvent mutex at startup so the
         // user can launch alts immediately without clicking the tray toggle first. The tray menu
@@ -112,6 +137,76 @@ public partial class App : Application
         {
             _log?.LogDebug(ex, "Session validation threw; ignoring.");
         }
+
+        // FIRST: scan for already-running RobloxPlayerBeta windows + re-attach the ones whose
+        // titles match saved accounts. After this, vm.Accounts[i].IsRunning correctly reflects
+        // the world for any tagged session that survived our restart.
+        ScanResult scan = new(0, 0);
+        try
+        {
+            var scanner = _services.GetRequiredService<RunningRobloxScanner>();
+            var tracker = _services.GetRequiredService<IRobloxProcessTracker>();
+            var vm = _services.GetRequiredService<MainViewModel>();
+            scan = scanner.Scan(vm.Accounts.ToList(), tracker);
+            if (scan.MatchedAndAttached > 0)
+            {
+                _log?.LogInformation("Re-attached to {Count} existing Roblox window(s) by title.", scan.MatchedAndAttached);
+            }
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Pre-existing Roblox scan threw; continuing without re-attach.");
+        }
+
+        try
+        {
+            // Auto-launch main on startup, but with strong guardrails so we never duplicate a
+            // running session. Roblox enforces one-session-per-account server-side: if we
+            // launch a second client for an already-signed-in account, the first gets kicked.
+            // Skip when:
+            //   — opt-in is off
+            //   — no main is set
+            //   — main's session expired
+            //   — main is already running (scanner just attached, OR launching)
+            //   — ANY Roblox window is running, even untagged (defensive — if the user manually
+            //     opened Roblox before us, we don't know which account it is, and launching the
+            //     main might kick them out if it happens to be them)
+            var settings = _services.GetRequiredService<IAppSettings>();
+            if (await settings.GetLaunchMainOnStartupAsync())
+            {
+                var vm = _services.GetRequiredService<MainViewModel>();
+                var main = vm.MainAccount;
+                if (main is null)
+                {
+                    _log?.LogDebug("LaunchMainOnStartup enabled but no main account picked.");
+                }
+                else if (main.IsRunning)
+                {
+                    _log?.LogInformation("Main {AccountId} ({Name}) already running — skipping auto-launch.", main.Id, main.DisplayName);
+                    Dispatcher.Invoke(() =>
+                        vm.StatusBanner = $"{main.DisplayName} is already running — skipped auto-launch.");
+                }
+                else if (scan.AnyRobloxRunning)
+                {
+                    _log?.LogInformation("Untagged Roblox window detected — skipping auto-launch to avoid kicking the user out.");
+                    Dispatcher.Invoke(() =>
+                        vm.StatusBanner = "Roblox is already open — skipped auto-launch so you don't get kicked out. Click Launch As when you're ready.");
+                }
+                else if (main.SessionExpired || main.IsLaunching || !vm.StartMainCommand.CanExecute(null))
+                {
+                    _log?.LogDebug("Main not eligible for auto-launch (expired={Expired}, launching={Launching}).", main.SessionExpired, main.IsLaunching);
+                }
+                else
+                {
+                    _log?.LogInformation("Auto-launching main account {AccountId} per LaunchMainOnStartup", main.Id);
+                    Dispatcher.Invoke(() => vm.StartMainCommand.Execute(null));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Auto-launch main threw; ignoring.");
+        }
     }
 
     private static void ConfigureServices(IServiceCollection services, ILoggerFactory loggerFactory)
@@ -124,6 +219,10 @@ public partial class App : Application
         services.AddSingleton<ITrayService, TrayService>();
         services.AddSingleton<IAppSettings>(_ => new AppSettings());
         services.AddSingleton<IFavoriteGameStore>(_ => new FavoriteGameStore());
+        services.AddSingleton<IPrivateServerStore>(_ => new PrivateServerStore());
+        services.AddSingleton<ISessionHistoryStore>(_ => new SessionHistoryStore());
+        services.AddSingleton<IThemeStore>(_ => new ThemeStore());
+        services.AddSingleton<ThemeService>();
         services.AddSingleton<IAccountStore>(_ => new AccountStore());
         services.AddSingleton<IStartupRegistration, StartupRegistration>();
         services.AddSingleton<IProcessStarter, ProcessStarter>();
@@ -148,7 +247,22 @@ public partial class App : Application
         services.AddSingleton<ICookieCapture, CookieCapture.CookieCapture>();
         services.AddSingleton<IUpdateChecker, UpdateChecker>();
         services.AddSingleton<IRobloxProcessTracker, RobloxProcessTracker>();
-        services.AddSingleton<IPrivateServerStore>(_ => new PrivateServerStore());
+        services.AddSingleton<RobloxWindowDecorator>();
+        services.AddSingleton<RunningRobloxScanner>();
+
+        // Tray avatar painter — owns its own HttpClient (default UA fine for public Roblox CDN
+        // avatar URLs). TrayService is registered as ITrayService elsewhere; the painter takes
+        // the concrete type because SetCustomStateIcons is App-internal.
+        services.AddSingleton(sp =>
+        {
+            var tray = (Tray.TrayService)sp.GetRequiredService<ITrayService>();
+            var httpFactory = sp.GetRequiredService<IHttpClientFactory>();
+            var http = httpFactory.CreateClient(nameof(Tray.MainAvatarTrayPainter));
+            return new Tray.MainAvatarTrayPainter(
+                tray,
+                http,
+                sp.GetRequiredService<ILogger<Tray.MainAvatarTrayPainter>>());
+        });
 
         var dataDir = System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -172,6 +286,145 @@ public partial class App : Application
         tray.RequestQuit += (_, _) => RequestShutdown();
         tray.RequestOpenDiagnostics += (_, _) => OpenDiagnosticsFromTray(mainWindow);
         tray.RequestOpenLogs += (_, _) => OpenLogsFolder();
+        tray.RequestOpenPreferences += (_, _) => OpenPreferencesFromTray(mainWindow);
+        tray.RequestActivateMain += (_, _) => ActivateMainFromTray(mainWindow);
+        tray.RequestOpenHistory += (_, _) => OpenHistoryFromTray(mainWindow);
+    }
+
+    private void OpenHistoryFromTray(Window owner)
+    {
+        if (_services is null) return;
+        try
+        {
+            var store = _services.GetRequiredService<ISessionHistoryStore>();
+            var favorites = _services.GetRequiredService<IFavoriteGameStore>();
+            var api = _services.GetRequiredService<IRobloxApi>();
+            var window = new History.SessionHistoryWindow(store, favorites, api);
+            if (owner.IsLoaded) window.Owner = owner;
+            SurfaceMainWindow(owner);
+            window.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Couldn't open History window from tray");
+        }
+    }
+
+    /// <summary>
+    /// Tray double-click target. If a main is set + idle + not expired, launch it. Otherwise
+    /// fall back to surfacing the main window so the user can pick one. Either way, this is
+    /// the "do the most useful thing" path.
+    /// </summary>
+    private void ActivateMainFromTray(Window mainWindow)
+    {
+        if (_services is null)
+        {
+            SurfaceMainWindow(mainWindow);
+            return;
+        }
+        try
+        {
+            var vm = _services.GetRequiredService<MainViewModel>();
+            var main = vm.MainAccount;
+            if (main is { SessionExpired: false, IsRunning: false, IsLaunching: false })
+            {
+                _log?.LogInformation("Tray double-click: launching main {AccountId}", main.Id);
+                if (vm.StartMainCommand.CanExecute(null))
+                {
+                    vm.StartMainCommand.Execute(null);
+                    return;
+                }
+            }
+            // Fallback: open the window so the user can see/pick.
+            SurfaceMainWindow(mainWindow);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "ActivateMainFromTray failed; falling back to window surface");
+            SurfaceMainWindow(mainWindow);
+        }
+    }
+
+    /// <summary>
+    /// Subscribe to the ViewModel's MainAccount changes and ask the avatar painter to refresh
+    /// the tray icons whenever the user picks a new main, unsets, or adds the first account.
+    /// Painter runs off-thread; failures silently fall back to the bundled defaults.
+    /// </summary>
+    /// <summary>
+    /// Hook the window decorator to <see cref="IRobloxProcessTracker"/> events: when a Roblox
+    /// player process attaches to an account, push the title text + per-account caption color
+    /// onto its main HWND (re-applied every 1.5s by the decorator's own timer to defeat
+    /// Roblox's occasional self-rename). Untrack on exit so we don't leak entries.
+    /// </summary>
+    private void WireRobloxWindowDecorator()
+    {
+        if (_services is null) return;
+        try
+        {
+            var tracker = _services.GetRequiredService<IRobloxProcessTracker>();
+            var decorator = _services.GetRequiredService<RobloxWindowDecorator>();
+            var vm = _services.GetRequiredService<MainViewModel>();
+
+            tracker.ProcessAttached += (_, e) =>
+            {
+                var summary = vm.Accounts.FirstOrDefault(a => a.Id == e.AccountId);
+                if (summary is null) return;
+                decorator.Track(e.Pid, summary);
+            };
+            tracker.ProcessExited += (_, e) => decorator.Untrack(e.Pid);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "WireRobloxWindowDecorator failed; window titles stay default.");
+        }
+    }
+
+    private void WireMainAvatarTrayPainter()
+    {
+        if (_services is null) return;
+        try
+        {
+            var vm = _services.GetRequiredService<MainViewModel>();
+            var painter = _services.GetRequiredService<MainAvatarTrayPainter>();
+            var dispatcher = Dispatcher;
+
+            // Initial paint — runs after Load fills the accounts list (LoadAsync triggers
+            // OnPropertyChanged for MainAccount, which we'll catch). But also kick once now
+            // in case the VM was already populated synchronously.
+            _ = painter.UpdateAsync(vm.MainAccount?.AvatarUrl, dispatcher);
+
+            vm.PropertyChanged += async (_, e) =>
+            {
+                if (e.PropertyName == nameof(MainViewModel.MainAccount))
+                {
+                    await painter.UpdateAsync(vm.MainAccount?.AvatarUrl, dispatcher);
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "WireMainAvatarTrayPainter failed; tray stays default.");
+        }
+    }
+
+    private void OpenPreferencesFromTray(Window owner)
+    {
+        if (_services is null) return;
+        try
+        {
+            var settings = _services.GetRequiredService<IAppSettings>();
+            var startup = _services.GetRequiredService<IStartupRegistration>();
+            var themeStore = _services.GetRequiredService<IThemeStore>();
+            var themeService = _services.GetRequiredService<ThemeService>();
+            var window = new Preferences.PreferencesWindow(settings, startup, themeStore, themeService);
+            if (owner.IsLoaded) window.Owner = owner;
+            SurfaceMainWindow(owner);
+            window.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Couldn't open Preferences window from tray");
+        }
     }
 
     private void OpenDiagnosticsFromTray(Window owner)

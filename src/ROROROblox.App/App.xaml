@@ -16,6 +16,67 @@
             <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
             <local:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter" />
             <local:StatusDotBrushConverter x:Key="StatusDotBrushConverter" />
+            <local:CaptionColorBrushConverter x:Key="CaptionColorBrushConverter" />
+
+            <!-- Themed brushes — single source of truth at app level. ThemeService mutates
+                 each brush's Color at startup + on theme change. References from any window
+                 use {StaticResource} since the brush instance is stable; only Color flips. -->
+            <SolidColorBrush x:Key="BgBrush" Color="#0F1F31" />
+            <SolidColorBrush x:Key="CyanBrush" Color="#17D4FA" />
+            <SolidColorBrush x:Key="MagentaBrush" Color="#F22F89" />
+            <SolidColorBrush x:Key="WhiteBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="MutedTextBrush" Color="#9AA8B8" />
+            <SolidColorBrush x:Key="DividerBrush" Color="#1F3149" />
+            <SolidColorBrush x:Key="RowBgBrush" Color="#15263A" />
+            <SolidColorBrush x:Key="RowExpiredBgBrush" Color="#3A2D14" />
+            <SolidColorBrush x:Key="RowExpiredAccentBrush" Color="#F1B232" />
+            <SolidColorBrush x:Key="NavyBrush" Color="#0F1F31" />
+
+            <!-- Small round toggle for "include this account in batch launches."
+                 Selected = filled cyan; deselected = hollow grey ring. ~14px, lives inline with
+                 the secondary status text on each row. -->
+            <Style x:Key="SelectionDotStyle" TargetType="ToggleButton">
+                <Setter Property="Width" Value="14" />
+                <Setter Property="Height" Value="14" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Focusable" Value="False" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Grid>
+                                <!-- Outer ring (always visible). -->
+                                <Ellipse x:Name="Ring"
+                                         Stroke="#4A5C70" StrokeThickness="1.5"
+                                         Fill="Transparent" />
+                                <!-- Inner fill (visible when checked). -->
+                                <Ellipse x:Name="Fill"
+                                         Margin="2"
+                                         Fill="#17D4FA"
+                                         Visibility="Collapsed" />
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Ring" Property="Stroke" Value="#17D4FA" />
+                                    <Setter TargetName="Fill" Property="Visibility" Value="Visible" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Ring" Property="Stroke" Value="#9AA8B8" />
+                                </Trigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsChecked" Value="True" />
+                                        <Condition Property="IsMouseOver" Value="True" />
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="Fill" Property="Opacity" Value="0.85" />
+                                </MultiTrigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

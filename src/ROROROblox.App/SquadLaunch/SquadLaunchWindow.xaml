@@ -6,17 +6,10 @@
         Height="600" Width="640"
         MinHeight="480" MinWidth="540"
         WindowStartupLocation="CenterOwner"
-        Background="#0F1F31"
+        Background="{DynamicResource BgBrush}"
         Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
 
     <Window.Resources>
-        <SolidColorBrush x:Key="DividerBrush" Color="#1F3149" />
-        <SolidColorBrush x:Key="MutedTextBrush" Color="#9AA8B8" />
-        <SolidColorBrush x:Key="CyanBrush" Color="#17D4FA" />
-        <SolidColorBrush x:Key="MagentaBrush" Color="#F22F89" />
-        <SolidColorBrush x:Key="WhiteBrush" Color="#FFFFFF" />
-        <SolidColorBrush x:Key="NavyBrush" Color="#0F1F31" />
-        <SolidColorBrush x:Key="RowBgBrush" Color="#15263A" />
     </Window.Resources>
 
     <Grid Margin="32,24">
@@ -32,17 +25,17 @@
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Squad Launch"
                            FontSize="22" FontWeight="Bold"
-                           Foreground="{StaticResource CyanBrush}" />
+                           Foreground="{DynamicResource CyanBrush}" />
                 <TextBlock Text=" / "
                            FontSize="22" FontWeight="Bold"
-                           Foreground="{StaticResource MagentaBrush}" />
+                           Foreground="{DynamicResource MagentaBrush}" />
                 <TextBlock Text="every account, one server"
                            FontSize="22" FontWeight="Bold"
-                           Foreground="{StaticResource WhiteBrush}" />
+                           Foreground="{DynamicResource WhiteBrush}" />
             </StackPanel>
             <TextBlock Text="Send every active account into the same Roblox private server. Each cookie auths separately; Roblox just needs the share link to know which server."
                        FontSize="11"
-                       Foreground="{StaticResource MutedTextBrush}"
+                       Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0"
                        TextWrapping="Wrap" />
         </StackPanel>
@@ -51,12 +44,12 @@
             <StackPanel x:Name="SavedServersList" />
         </ScrollViewer>
 
-        <Border Grid.Row="2" Background="{StaticResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,16,0,0">
+        <Border Grid.Row="2" Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,16,0,0">
             <StackPanel>
                 <TextBlock Text="Add by URL" FontSize="11" FontWeight="SemiBold"
-                           Foreground="{StaticResource CyanBrush}" Margin="0,0,0,6" />
+                           Foreground="{DynamicResource CyanBrush}" Margin="0,0,0,6" />
                 <TextBlock TextWrapping="Wrap" FontSize="10"
-                           Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,8">
+                           Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,8">
                     Paste a private server share link — looks like
                     <Run FontFamily="Consolas">https://www.roblox.com/games/&lt;id&gt;/&lt;name&gt;?privateServerLinkCode=&lt;code&gt;</Run>
                 </TextBlock>
@@ -67,16 +60,16 @@
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="UrlInput" Grid.Column="0"
                              Padding="8,6" FontSize="11"
-                             Background="{StaticResource NavyBrush}"
-                             Foreground="{StaticResource WhiteBrush}"
-                             BorderBrush="{StaticResource DividerBrush}"
+                             Background="{DynamicResource NavyBrush}"
+                             Foreground="{DynamicResource WhiteBrush}"
+                             BorderBrush="{DynamicResource DividerBrush}"
                              BorderThickness="1"
                              VerticalContentAlignment="Center" />
                     <Button x:Name="AddButton" Grid.Column="1"
                             Content="Add and launch all"
                             Padding="14,6" Margin="8,0,0,0"
-                            Background="{StaticResource MagentaBrush}"
-                            Foreground="{StaticResource WhiteBrush}"
+                            Background="{DynamicResource MagentaBrush}"
+                            Foreground="{DynamicResource WhiteBrush}"
                             BorderThickness="0"
                             FontWeight="SemiBold"
                             Click="OnAddAndLaunchClick" />
@@ -86,7 +79,7 @@
 
         <TextBlock Grid.Row="3" x:Name="EligibilityText"
                    FontSize="11"
-                   Foreground="{StaticResource MutedTextBrush}"
+                   Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,12,0,0"
                    TextWrapping="Wrap" />
 
@@ -97,13 +90,13 @@
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" x:Name="StatusText"
                        FontSize="11"
-                       Foreground="{StaticResource MutedTextBrush}"
+                       Foreground="{DynamicResource MutedTextBrush}"
                        VerticalAlignment="Center"
                        TextWrapping="Wrap" />
             <Button Grid.Column="1" Content="Close" Padding="14,8"
-                    Background="{StaticResource NavyBrush}"
-                    Foreground="{StaticResource WhiteBrush}"
-                    BorderBrush="{StaticResource DividerBrush}"
+                    Background="{DynamicResource NavyBrush}"
+                    Foreground="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource DividerBrush}"
                     BorderThickness="1"
                     IsCancel="True"
                     Click="OnCloseClick" />

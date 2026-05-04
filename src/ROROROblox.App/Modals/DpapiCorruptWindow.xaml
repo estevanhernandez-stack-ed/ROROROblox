@@ -6,7 +6,7 @@
         Height="320" Width="560"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="#0F1F31">
+        Background="{DynamicResource BgBrush}">
     <Grid Margin="32">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -31,7 +31,7 @@
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button Content="Quit" Padding="16,8" Margin="0,0,8,0"
-                    Background="#0F1F31" Foreground="#FFFFFF" BorderBrush="#5A6982" BorderThickness="1"
+                    Background="{DynamicResource BgBrush}" Foreground="#FFFFFF" BorderBrush="#5A6982" BorderThickness="1"
                     Click="OnQuitClick" />
             <Button Content="Start Fresh" Padding="16,8" IsDefault="True"
                     Background="#17D4FA" Foreground="#0F1F31" BorderThickness="0"

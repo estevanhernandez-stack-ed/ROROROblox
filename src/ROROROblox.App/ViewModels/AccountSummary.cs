@@ -19,6 +19,8 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private int? _runningPid;
     private DateTimeOffset? _runningSinceUtc;
     private DateTimeOffset? _lastClosedAtUtc;
+    private bool _isSelected = true;
+    private string? _captionColorHex;
 
     public AccountSummary(Account account)
     {
@@ -26,12 +28,28 @@ public sealed class AccountSummary : INotifyPropertyChanged
         DisplayName = account.DisplayName;
         AvatarUrl = account.AvatarUrl;
         LastLaunchedAt = account.LastLaunchedAt;
+        _isMain = account.IsMain;
+        _isSelected = account.IsSelected;
+        _captionColorHex = account.CaptionColorHex;
     }
 
     public Guid Id { get; }
     public string DisplayName { get; }
     public string AvatarUrl { get; }
     public DateTimeOffset? LastLaunchedAt { get; private set; }
+
+    private bool _isMain;
+    /// <summary>
+    /// True if this account is the user's designated "main." Drives compact-mode CTAs ("Start
+    /// [MainName]"), tray double-click behavior, and the MAIN pill on the row. Persisted via
+    /// <see cref="IAccountStore.SetMainAsync"/>; the ViewModel updates this in lockstep with
+    /// the store so the UI doesn't have to re-list.
+    /// </summary>
+    public bool IsMain
+    {
+        get => _isMain;
+        set => SetField(ref _isMain, value);
+    }
 
     /// <summary>
     /// Cached Roblox userId for this account — populated lazily on first need (Friends modal).
@@ -112,6 +130,29 @@ public sealed class AccountSummary : INotifyPropertyChanged
                 OnPropertyChanged(nameof(SecondaryStatusText));
             }
         }
+    }
+
+    /// <summary>
+    /// Whether this account is included in batch launches (Launch multiple / Private server).
+    /// Defaults to true; the user toggles via the small dot next to the status text.
+    /// Persisted to <c>accounts.dat</c> so unticked alts stay unticked across restarts.
+    /// </summary>
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set => SetField(ref _isSelected, value);
+    }
+
+    /// <summary>
+    /// User-picked hex color (<c>#rrggbb</c>) for this account's Roblox window title bar.
+    /// Null = auto-derive from <see cref="Id"/> hash (the default 8-palette behavior).
+    /// MainViewModel persists changes to <see cref="IAccountStore.SetCaptionColorAsync"/>;
+    /// the running window picks it up within ~1.5 s via the decorator's re-apply timer.
+    /// </summary>
+    public string? CaptionColorHex
+    {
+        get => _captionColorHex;
+        set => SetField(ref _captionColorHex, value);
     }
 
     /// <summary>Three-state colored dot: <c>green</c> running / <c>yellow</c> expired / <c>grey</c> idle.</summary>

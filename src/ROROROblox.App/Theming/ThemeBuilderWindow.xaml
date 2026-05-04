@@ -1,0 +1,126 @@
+<Window x:Class="ROROROblox.App.Theming.ThemeBuilderWindow"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ROROROblox -- Build a theme"
+        Height="640" Width="640"
+        MinHeight="500" MinWidth="540"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BgBrush}"
+        Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
+
+    <Grid Margin="28,24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Theme builder"
+                           FontSize="22" FontWeight="Bold"
+                           Foreground="{DynamicResource CyanBrush}" />
+                <TextBlock Text=" / "
+                           FontSize="22" FontWeight="Bold"
+                           Foreground="{DynamicResource MagentaBrush}" />
+                <TextBlock Text="Paste from any AI"
+                           FontSize="22" FontWeight="Bold"
+                           Foreground="{DynamicResource WhiteBrush}" />
+            </StackPanel>
+            <TextBlock TextWrapping="Wrap"
+                       FontSize="11"
+                       Foreground="{DynamicResource MutedTextBrush}"
+                       Margin="0,4,0,0"
+                       Text="Step 1 — copy the AI prompt. Step 2 — paste into Claude/ChatGPT/etc. with a vibe description or reference image. Step 3 — paste the JSON it returns below. We save it, apply it, and add it to the picker." />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,18,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0"
+                       Text="1.  AI prompt"
+                       FontSize="12" FontWeight="SemiBold"
+                       Foreground="{DynamicResource WhiteBrush}"
+                       VerticalAlignment="Center" />
+            <Button Grid.Column="1"
+                    x:Name="CopyPromptButton"
+                    Content="&#x1F4CB; Copy AI prompt"
+                    Padding="12,6"
+                    Background="{DynamicResource CyanBrush}"
+                    Foreground="{DynamicResource NavyBrush}"
+                    BorderThickness="0"
+                    FontWeight="SemiBold"
+                    FontSize="12"
+                    Click="OnCopyPromptClick"
+                    ToolTip="Copies the prompt to your clipboard. Paste into Claude or ChatGPT, attach a reference image or describe a vibe, and paste the JSON they return into the box below." />
+        </Grid>
+
+        <Border Grid.Row="2" Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="12">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0"
+                           Text="2.  Paste the JSON the AI returned"
+                           FontSize="12" FontWeight="SemiBold"
+                           Foreground="{DynamicResource WhiteBrush}"
+                           Margin="0,0,0,8" />
+                <TextBox Grid.Row="1"
+                         x:Name="JsonInput"
+                         AcceptsReturn="True"
+                         AcceptsTab="True"
+                         FontFamily="Consolas"
+                         FontSize="12"
+                         Background="{DynamicResource NavyBrush}"
+                         Foreground="{DynamicResource WhiteBrush}"
+                         CaretBrush="{DynamicResource CyanBrush}"
+                         BorderBrush="{DynamicResource DividerBrush}"
+                         BorderThickness="1"
+                         Padding="10"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto"
+                         TextWrapping="NoWrap" />
+            </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="3"
+                   x:Name="StatusText"
+                   FontSize="11"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   Margin="0,12,0,0"
+                   TextWrapping="Wrap" />
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button x:Name="OpenFolderButton"
+                    Content="Open themes folder"
+                    Padding="12,8" Margin="0,0,8,0"
+                    Background="{DynamicResource NavyBrush}"
+                    Foreground="{DynamicResource MutedTextBrush}"
+                    BorderBrush="{DynamicResource DividerBrush}"
+                    BorderThickness="1"
+                    Click="OnOpenFolderClick" />
+            <Button Content="Cancel" Padding="14,8" Margin="0,0,8,0"
+                    Background="{DynamicResource NavyBrush}"
+                    Foreground="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource DividerBrush}"
+                    BorderThickness="1"
+                    IsCancel="True"
+                    Click="OnCancelClick" />
+            <Button x:Name="SaveButton"
+                    Content="Save and apply"
+                    Padding="18,8"
+                    Background="{DynamicResource CyanBrush}"
+                    Foreground="{DynamicResource NavyBrush}"
+                    BorderThickness="0"
+                    FontWeight="SemiBold"
+                    IsDefault="True"
+                    Click="OnSaveClick" />
+        </StackPanel>
+    </Grid>
+</Window>

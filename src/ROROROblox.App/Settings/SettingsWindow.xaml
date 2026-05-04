@@ -7,21 +7,13 @@
         Height="600" Width="700"
         MinHeight="480" MinWidth="640"
         WindowStartupLocation="CenterOwner"
-        Background="#0F1F31"
+        Background="{DynamicResource BgBrush}"
         Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
 
     <Window.Resources>
-        <SolidColorBrush x:Key="DividerBrush" Color="#1F3149" />
-        <SolidColorBrush x:Key="MutedTextBrush" Color="#9AA8B8" />
-        <SolidColorBrush x:Key="CyanBrush" Color="#17D4FA" />
-        <SolidColorBrush x:Key="MagentaBrush" Color="#F22F89" />
-        <SolidColorBrush x:Key="WhiteBrush" Color="#FFFFFF" />
-        <SolidColorBrush x:Key="NavyBrush" Color="#0F1F31" />
-        <SolidColorBrush x:Key="RowBgBrush" Color="#15263A" />
-
         <DataTemplate DataType="{x:Type core:GameSearchResult}">
             <Border Margin="0,0,0,6" Padding="10,8" CornerRadius="6"
-                    Background="{StaticResource RowBgBrush}">
+                    Background="{DynamicResource RowBgBrush}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -30,7 +22,7 @@
                     </Grid.ColumnDefinitions>
 
                     <Border Grid.Column="0" Width="48" Height="48" CornerRadius="4"
-                            Background="{StaticResource NavyBrush}" ClipToBounds="True"
+                            Background="{DynamicResource NavyBrush}" ClipToBounds="True"
                             VerticalAlignment="Center">
                         <Image Source="{Binding IconUrl}" Stretch="UniformToFill" />
                     </Border>
@@ -38,19 +30,19 @@
                     <StackPanel Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Name}"
                                    FontSize="13" FontWeight="SemiBold"
-                                   Foreground="{StaticResource WhiteBrush}"
+                                   Foreground="{DynamicResource WhiteBrush}"
                                    TextTrimming="CharacterEllipsis" />
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                             <TextBlock Text="{Binding CreatorName, StringFormat='by {0}'}"
                                        FontSize="11"
-                                       Foreground="{StaticResource MutedTextBrush}" />
+                                       Foreground="{DynamicResource MutedTextBrush}" />
                             <TextBlock Text="  -  "
                                        FontSize="11"
-                                       Foreground="{StaticResource MutedTextBrush}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
                                        Opacity="0.5" />
                             <TextBlock Text="{Binding PlayerCount, StringFormat='{}{0:N0} playing'}"
                                        FontSize="11"
-                                       Foreground="{StaticResource MutedTextBrush}" />
+                                       Foreground="{DynamicResource MutedTextBrush}" />
                         </StackPanel>
                     </StackPanel>
 
@@ -58,8 +50,8 @@
                             Tag="{Binding}"
                             Click="OnAddSearchResultClick"
                             Padding="12,6"
-                            Background="{StaticResource CyanBrush}"
-                            Foreground="{StaticResource NavyBrush}"
+                            Background="{DynamicResource CyanBrush}"
+                            Foreground="{DynamicResource NavyBrush}"
                             BorderThickness="0"
                             FontWeight="SemiBold"
                             FontSize="11" />
@@ -70,12 +62,12 @@
         <DataTemplate DataType="{x:Type core:FavoriteGame}">
             <Border Margin="0,0,0,8" Padding="14,10"
                     CornerRadius="8"
-                    Background="{StaticResource RowBgBrush}">
+                    Background="{DynamicResource RowBgBrush}">
                 <Border.Style>
                     <Style TargetType="Border">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsDefault}" Value="True">
-                                <Setter Property="BorderBrush" Value="{StaticResource CyanBrush}" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource CyanBrush}" />
                                 <Setter Property="BorderThickness" Value="1" />
                             </DataTrigger>
                         </Style.Triggers>
@@ -90,7 +82,7 @@
                     </Grid.ColumnDefinitions>
 
                     <Border Grid.Column="0" Width="56" Height="56" CornerRadius="6"
-                            Background="{StaticResource NavyBrush}" ClipToBounds="True"
+                            Background="{DynamicResource NavyBrush}" ClipToBounds="True"
                             VerticalAlignment="Center">
                         <Image Source="{Binding ThumbnailUrl}" Stretch="UniformToFill" />
                     </Border>
@@ -99,19 +91,19 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="{Binding Name}"
                                        FontSize="14" FontWeight="SemiBold"
-                                       Foreground="{StaticResource WhiteBrush}" />
-                            <Border Background="{StaticResource CyanBrush}" CornerRadius="3"
+                                       Foreground="{DynamicResource WhiteBrush}" />
+                            <Border Background="{DynamicResource CyanBrush}" CornerRadius="3"
                                     Margin="10,2,0,0" Padding="6,1"
                                     Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <TextBlock Text="DEFAULT"
                                            FontSize="9" FontWeight="Bold"
-                                           Foreground="{StaticResource NavyBrush}" />
+                                           Foreground="{DynamicResource NavyBrush}" />
                             </Border>
                         </StackPanel>
                         <TextBlock Text="{Binding PlaceId, StringFormat='Place ID {0}'}"
                                    FontSize="11"
                                    FontFamily="Consolas"
-                                   Foreground="{StaticResource MutedTextBrush}"
+                                   Foreground="{DynamicResource MutedTextBrush}"
                                    Margin="0,2,0,0" />
                     </StackPanel>
 
@@ -120,9 +112,9 @@
                                 Tag="{Binding PlaceId}"
                                 Click="OnSetDefaultClick"
                                 Padding="10,6" Margin="0,0,8,0"
-                                Background="{StaticResource NavyBrush}"
-                                Foreground="{StaticResource MutedTextBrush}"
-                                BorderBrush="{StaticResource DividerBrush}"
+                                Background="{DynamicResource NavyBrush}"
+                                Foreground="{DynamicResource MutedTextBrush}"
+                                BorderBrush="{DynamicResource DividerBrush}"
                                 BorderThickness="1"
                                 FontSize="11"
                                 Visibility="{Binding IsDefault, Converter={StaticResource InverseBoolConverter}}" />
@@ -130,9 +122,9 @@
                                 Tag="{Binding PlaceId}"
                                 Click="OnRemoveClick"
                                 Padding="10,6"
-                                Background="{StaticResource NavyBrush}"
-                                Foreground="{StaticResource MutedTextBrush}"
-                                BorderBrush="{StaticResource DividerBrush}"
+                                Background="{DynamicResource NavyBrush}"
+                                Foreground="{DynamicResource MutedTextBrush}"
+                                BorderBrush="{DynamicResource DividerBrush}"
                                 BorderThickness="1"
                                 FontSize="11" />
                     </StackPanel>
@@ -166,17 +158,17 @@
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Games"
                            FontSize="22" FontWeight="Bold"
-                           Foreground="{StaticResource CyanBrush}" />
+                           Foreground="{DynamicResource CyanBrush}" />
                 <TextBlock Text=" / "
                            FontSize="22" FontWeight="Bold"
-                           Foreground="{StaticResource MagentaBrush}" />
+                           Foreground="{DynamicResource MagentaBrush}" />
                 <TextBlock Text="Library"
                            FontSize="22" FontWeight="Bold"
-                           Foreground="{StaticResource WhiteBrush}" />
+                           Foreground="{DynamicResource WhiteBrush}" />
             </StackPanel>
             <TextBlock Text="Save the games you launch alts into. The one marked DEFAULT is what Launch As uses."
                        FontSize="11"
-                       Foreground="{StaticResource MutedTextBrush}"
+                       Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0" />
         </StackPanel>
 
@@ -188,17 +180,17 @@
             <TextBox Grid.Column="0" x:Name="SearchInput"
                      FontSize="13"
                      Padding="10,8"
-                     Background="{StaticResource RowBgBrush}"
-                     Foreground="{StaticResource WhiteBrush}"
-                     BorderBrush="{StaticResource DividerBrush}"
-                     CaretBrush="{StaticResource CyanBrush}"
+                     Background="{DynamicResource RowBgBrush}"
+                     Foreground="{DynamicResource WhiteBrush}"
+                     BorderBrush="{DynamicResource DividerBrush}"
+                     CaretBrush="{DynamicResource CyanBrush}"
                      BorderThickness="1"
                      KeyDown="OnSearchKeyDown"
                      ToolTip="Search Roblox games by name. Enter to search." />
             <Button Grid.Column="1" x:Name="SearchButton" Content="Search"
                     Padding="14,8" Margin="8,0,0,0"
-                    Background="{StaticResource CyanBrush}"
-                    Foreground="{StaticResource NavyBrush}"
+                    Background="{DynamicResource CyanBrush}"
+                    Foreground="{DynamicResource NavyBrush}"
                     BorderThickness="0"
                     FontWeight="Bold"
                     Click="OnSearchClick" />
@@ -208,7 +200,7 @@
                 Margin="0,8,0,0"
                 MaxHeight="220"
                 Visibility="Collapsed"
-                BorderBrush="{StaticResource DividerBrush}"
+                BorderBrush="{DynamicResource DividerBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
                 Padding="8">
@@ -226,17 +218,17 @@
                      FontSize="12"
                      FontFamily="Consolas"
                      Padding="10,8"
-                     Background="{StaticResource RowBgBrush}"
-                     Foreground="{StaticResource WhiteBrush}"
-                     BorderBrush="{StaticResource DividerBrush}"
-                     CaretBrush="{StaticResource CyanBrush}"
+                     Background="{DynamicResource RowBgBrush}"
+                     Foreground="{DynamicResource WhiteBrush}"
+                     BorderBrush="{DynamicResource DividerBrush}"
+                     CaretBrush="{DynamicResource CyanBrush}"
                      BorderThickness="1"
                      ToolTip="Or paste a roblox.com/games/&lt;id&gt;/&lt;name&gt; URL or place id" />
             <Button Grid.Column="1" x:Name="AddButton" Content="+ Add by URL"
                     Padding="14,8" Margin="8,0,0,0"
-                    Background="{StaticResource NavyBrush}"
-                    Foreground="{StaticResource WhiteBrush}"
-                    BorderBrush="{StaticResource DividerBrush}"
+                    Background="{DynamicResource NavyBrush}"
+                    Foreground="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource DividerBrush}"
                     BorderThickness="1"
                     FontSize="12"
                     Click="OnAddClick" />
@@ -244,14 +236,14 @@
 
         <TextBlock Grid.Row="4" x:Name="StatusText"
                    FontSize="11"
-                   Foreground="{StaticResource MutedTextBrush}"
+                   Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,8,0,0"
                    TextWrapping="Wrap" />
 
         <TextBlock Grid.Row="5"
                    Text="Saved games"
                    FontSize="12" FontWeight="SemiBold"
-                   Foreground="{StaticResource MutedTextBrush}"
+                   Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,20,0,8" />
 
         <ScrollViewer Grid.Row="6" VerticalScrollBarVisibility="Auto">
@@ -261,11 +253,11 @@
                             x:Name="EmptyState">
                     <TextBlock Text="No saved games yet."
                                FontSize="13"
-                               Foreground="{StaticResource MutedTextBrush}"
+                               Foreground="{DynamicResource MutedTextBrush}"
                                HorizontalAlignment="Center" />
                     <TextBlock Text="Paste a Roblox game URL above to add your first one."
                                FontSize="11"
-                               Foreground="{StaticResource MutedTextBrush}"
+                               Foreground="{DynamicResource MutedTextBrush}"
                                HorizontalAlignment="Center"
                                Margin="0,4,0,0"
                                Opacity="0.7" />
@@ -275,9 +267,9 @@
 
         <Button Grid.Row="7" Content="Close" Padding="16,8"
                 HorizontalAlignment="Right" Margin="0,12,0,0"
-                Background="{StaticResource NavyBrush}"
-                Foreground="{StaticResource WhiteBrush}"
-                BorderBrush="{StaticResource DividerBrush}"
+                Background="{DynamicResource NavyBrush}"
+                Foreground="{DynamicResource WhiteBrush}"
+                BorderBrush="{DynamicResource DividerBrush}"
                 BorderThickness="1"
                 IsCancel="True"
                 Click="OnCloseClick" />
