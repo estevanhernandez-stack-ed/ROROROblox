@@ -70,7 +70,8 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
 
     public async Task<SavedPrivateServer> AddAsync(
         long placeId,
-        string accessCode,
+        string code,
+        PrivateServerCodeKind codeKind,
         string name,
         string placeName,
         string thumbnailUrl)
@@ -79,9 +80,9 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
         {
             throw new ArgumentOutOfRangeException(nameof(placeId), "placeId must be positive.");
         }
-        if (string.IsNullOrWhiteSpace(accessCode))
+        if (string.IsNullOrWhiteSpace(code))
         {
-            throw new ArgumentException("Access code must not be empty.", nameof(accessCode));
+            throw new ArgumentException("Code must not be empty.", nameof(code));
         }
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -93,14 +94,16 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
         {
             var blob = await LoadAsync().ConfigureAwait(false);
 
-            // Replace by (placeId, accessCode) pair — preserves Id + AddedAt for the same server.
+            // Replace by (placeId, code) pair — preserves Id + AddedAt for the same server even
+            // if the user re-pastes the same share URL with a different display name.
             var existingIndex = blob.Servers.FindIndex(s =>
-                s.PlaceId == placeId && string.Equals(s.AccessCode, accessCode, StringComparison.Ordinal));
+                s.PlaceId == placeId && string.Equals(s.Code, code, StringComparison.Ordinal));
 
             var record = new SavedPrivateServer(
                 Id: existingIndex >= 0 ? blob.Servers[existingIndex].Id : Guid.NewGuid(),
                 PlaceId: placeId,
-                AccessCode: accessCode,
+                Code: code,
+                CodeKind: codeKind,
                 Name: name,
                 PlaceName: placeName ?? string.Empty,
                 ThumbnailUrl: thumbnailUrl ?? string.Empty,
@@ -189,8 +192,37 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
 
         try
         {
-            return JsonSerializer.Deserialize<PrivateServersBlob>(bytes, JsonOptions)
-                ?? new PrivateServersBlob(Version: 1, Servers: []);
+            // Deserialize through a tolerant on-disk shape that accepts BOTH the legacy
+            // accessCode field (pre-link/access discriminator) and the new code+codeKind pair.
+            // Pre-discriminator records always wrote what the user pasted into accessCode, but
+            // users mostly pasted share URLs (linkCode), so legacy values default to LinkCode.
+            var stored = JsonSerializer.Deserialize<StoredBlob>(bytes, JsonOptions);
+            if (stored is null)
+            {
+                return new PrivateServersBlob(Version: 1, Servers: []);
+            }
+
+            var migrated = new List<SavedPrivateServer>(stored.Servers.Count);
+            foreach (var s in stored.Servers)
+            {
+                var code = !string.IsNullOrEmpty(s.Code) ? s.Code : s.AccessCode ?? string.Empty;
+                if (string.IsNullOrEmpty(code))
+                {
+                    continue; // skip rows we can't reconstruct
+                }
+                var kind = s.CodeKind ?? SavedPrivateServer.DefaultLegacyKind;
+                migrated.Add(new SavedPrivateServer(
+                    Id: s.Id == Guid.Empty ? Guid.NewGuid() : s.Id,
+                    PlaceId: s.PlaceId,
+                    Code: code,
+                    CodeKind: kind,
+                    Name: s.Name ?? string.Empty,
+                    PlaceName: s.PlaceName ?? string.Empty,
+                    ThumbnailUrl: s.ThumbnailUrl ?? string.Empty,
+                    AddedAt: s.AddedAt,
+                    LastLaunchedAt: s.LastLaunchedAt));
+            }
+            return new PrivateServersBlob(Version: 1, Servers: migrated);
         }
         catch (JsonException)
         {
@@ -224,4 +256,21 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
     }
 
     private sealed record PrivateServersBlob(int Version, List<SavedPrivateServer> Servers);
+
+    // On-disk-tolerant shape: accepts both the legacy accessCode field and the new code +
+    // codeKind pair. Used only by Load; SaveAsync writes the canonical SavedPrivateServer
+    // shape. System.Text.Json fills missing optional fields with defaults.
+    private sealed record StoredBlob(int Version, List<StoredServer> Servers);
+
+    private sealed record StoredServer(
+        Guid Id,
+        long PlaceId,
+        string? Code,
+        PrivateServerCodeKind? CodeKind,
+        string? AccessCode, // legacy
+        string? Name,
+        string? PlaceName,
+        string? ThumbnailUrl,
+        DateTimeOffset AddedAt,
+        DateTimeOffset? LastLaunchedAt);
 }

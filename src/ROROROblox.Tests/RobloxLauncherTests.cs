@@ -274,13 +274,14 @@ public class RobloxLauncherTests
 
         var result = await launcher.LaunchAsync(
             TestCookie,
-            new LaunchTarget.PrivateServer(920587237, "share-code-xyz"));
+            new LaunchTarget.PrivateServer(920587237, "share-code-xyz", PrivateServerCodeKind.LinkCode));
 
         Assert.IsType<LaunchResult.Started>(result);
-        // Encoded inside placelauncherurl segment.
+        // Encoded inside placelauncherurl segment. LinkCode kind => emits linkCode=, never accessCode=.
         Assert.Contains(Uri.EscapeDataString("request=RequestPrivateGame"), processStarter.LastUri);
         Assert.Contains(Uri.EscapeDataString("placeId=920587237"), processStarter.LastUri);
-        Assert.Contains(Uri.EscapeDataString("accessCode=share-code-xyz"), processStarter.LastUri);
+        Assert.Contains(Uri.EscapeDataString("linkCode=share-code-xyz"), processStarter.LastUri);
+        Assert.DoesNotContain(Uri.EscapeDataString("accessCode="), processStarter.LastUri);
     }
 
     [Fact]
@@ -393,14 +394,21 @@ public class RobloxLauncherTests
         public Task<IReadOnlyList<GameSearchResult>> SearchGamesAsync(string query) => throw new NotImplementedException();
         public Task<IReadOnlyList<Friend>> GetFriendsAsync(string cookie, long userId) => throw new NotImplementedException();
         public Task<IReadOnlyList<UserPresence>> GetPresenceAsync(string cookie, IEnumerable<long> userIds) => throw new NotImplementedException();
+        public Task<ShareLinkResolution?> ResolveShareLinkAsync(string cookie, string code, string linkType) => throw new NotImplementedException();
     }
 
     private sealed class InMemoryAppSettings : IAppSettings
     {
         public string? DefaultPlaceUrl { get; set; }
+        public bool LaunchMainOnStartup { get; set; }
+        public string? ActiveThemeId { get; set; }
 
         public Task<string?> GetDefaultPlaceUrlAsync() => Task.FromResult(DefaultPlaceUrl);
         public Task SetDefaultPlaceUrlAsync(string url) { DefaultPlaceUrl = url; return Task.CompletedTask; }
+        public Task<bool> GetLaunchMainOnStartupAsync() => Task.FromResult(LaunchMainOnStartup);
+        public Task SetLaunchMainOnStartupAsync(bool enabled) { LaunchMainOnStartup = enabled; return Task.CompletedTask; }
+        public Task<string?> GetActiveThemeIdAsync() => Task.FromResult(ActiveThemeId);
+        public Task SetActiveThemeIdAsync(string themeId) { ActiveThemeId = themeId; return Task.CompletedTask; }
     }
 
     private sealed class RecordingProcessStarter : IProcessStarter

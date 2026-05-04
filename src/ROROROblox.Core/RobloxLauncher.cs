@@ -213,14 +213,16 @@ public sealed class RobloxLauncher : IRobloxLauncher
                 $"&placeId={place.PlaceId}" +
                 "&isPlayTogetherGame=false",
 
-            // Send accessCode AND linkCode — Roblox accepts both names depending on launcher
-            // version; sending both is the conservative move and the launcher ignores extras.
-            LaunchTarget.PrivateServer ps when ps.PlaceId > 0 && !string.IsNullOrEmpty(ps.AccessCode) =>
+            // Emit ONLY the matching slot. The two codes are not interchangeable — sending a
+            // linkCode in the accessCode slot returns permission-denied even on owner servers.
+            // Roblox resolves linkCode -> server-side at launch, so we hand off either form.
+            LaunchTarget.PrivateServer ps when ps.PlaceId > 0 && !string.IsNullOrEmpty(ps.Code) =>
                 $"{PlaceLauncherEndpoint}?request=RequestPrivateGame" +
                 $"&browserTrackerId={browserTrackerId}" +
                 $"&placeId={ps.PlaceId}" +
-                $"&accessCode={Uri.EscapeDataString(ps.AccessCode)}" +
-                $"&linkCode={Uri.EscapeDataString(ps.AccessCode)}",
+                (ps.Kind == PrivateServerCodeKind.LinkCode
+                    ? $"&linkCode={Uri.EscapeDataString(ps.Code)}"
+                    : $"&accessCode={Uri.EscapeDataString(ps.Code)}"),
 
             // RequestFollowUser doesn't carry placeId — Roblox follows the user wherever they are
             // and does the permission check server-side (works for public + private if allowed).

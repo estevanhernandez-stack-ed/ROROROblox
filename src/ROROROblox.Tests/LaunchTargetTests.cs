@@ -32,35 +32,120 @@ public class LaunchTargetTests
     }
 
     [Fact]
-    public void FromUrl_PrivateServerShareUrl_ReturnsPrivateServer()
+    public void FromUrl_PrivateServerShareUrl_ReturnsPrivateServerWithLinkCodeKind()
     {
         var target = LaunchTarget.FromUrl(
             "https://www.roblox.com/games/920587237/Adopt-Me?privateServerLinkCode=ABC-123_xyz");
 
         var ps = Assert.IsType<LaunchTarget.PrivateServer>(target);
         Assert.Equal(920587237L, ps.PlaceId);
-        Assert.Equal("ABC-123_xyz", ps.AccessCode);
+        Assert.Equal("ABC-123_xyz", ps.Code);
+        Assert.Equal(PrivateServerCodeKind.LinkCode, ps.Kind);
     }
 
     [Fact]
-    public void FromUrl_PrivateServerLinkCodeAlias_LinkCode_AlsoWorks()
+    public void FromUrl_LinkCodeAlias_AlsoTaggedAsLinkCode()
     {
         var target = LaunchTarget.FromUrl(
             "https://www.roblox.com/games/100/Foo?linkCode=KKK");
 
         var ps = Assert.IsType<LaunchTarget.PrivateServer>(target);
-        Assert.Equal("KKK", ps.AccessCode);
+        Assert.Equal("KKK", ps.Code);
+        Assert.Equal(PrivateServerCodeKind.LinkCode, ps.Kind);
     }
 
     [Fact]
-    public void FromUrl_PlaceLauncherWithAccessCode_ReturnsPrivateServer()
+    public void FromUrl_PlaceLauncherWithAccessCode_TaggedAsAccessCode()
     {
         var target = LaunchTarget.FromUrl(
             "https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestPrivateGame&placeId=42&accessCode=secret");
 
         var ps = Assert.IsType<LaunchTarget.PrivateServer>(target);
         Assert.Equal(42L, ps.PlaceId);
-        Assert.Equal("secret", ps.AccessCode);
+        Assert.Equal("secret", ps.Code);
+        Assert.Equal(PrivateServerCodeKind.AccessCode, ps.Kind);
+    }
+
+    // === TryParseShareLink (the newer roblox.com/share?code=X&type=Y form) ===
+
+    [Fact]
+    public void TryParseShareLink_ServerType_ExtractsCodeAndType()
+    {
+        var ok = LaunchTarget.TryParseShareLink(
+            "https://www.roblox.com/share?code=a5ad1dae7cb0bd47bd7f665614d5a3e6&type=Server",
+            out var code, out var linkType);
+
+        Assert.True(ok);
+        Assert.Equal("a5ad1dae7cb0bd47bd7f665614d5a3e6", code);
+        Assert.Equal("Server", linkType);
+    }
+
+    [Fact]
+    public void TryParseShareLink_TypeReversedQueryOrder_StillExtracted()
+    {
+        var ok = LaunchTarget.TryParseShareLink(
+            "https://www.roblox.com/share?type=Server&code=ABC",
+            out var code, out var linkType);
+
+        Assert.True(ok);
+        Assert.Equal("ABC", code);
+        Assert.Equal("Server", linkType);
+    }
+
+    [Fact]
+    public void TryParseShareLink_MissingType_DefaultsToServer()
+    {
+        var ok = LaunchTarget.TryParseShareLink(
+            "https://www.roblox.com/share?code=ABC",
+            out var code, out var linkType);
+
+        Assert.True(ok);
+        Assert.Equal("ABC", code);
+        Assert.Equal("Server", linkType);
+    }
+
+    [Fact]
+    public void TryParseShareLink_NotAShareUrl_ReturnsFalse()
+    {
+        Assert.False(LaunchTarget.TryParseShareLink(
+            "https://www.roblox.com/games/12345/Foo?privateServerLinkCode=X",
+            out _, out _));
+
+        Assert.False(LaunchTarget.TryParseShareLink("https://example.com/share?code=X&type=Server", out _, out _));
+        Assert.False(LaunchTarget.TryParseShareLink("", out _, out _));
+        Assert.False(LaunchTarget.TryParseShareLink(null, out _, out _));
+    }
+
+    [Fact]
+    public void TryParseShareLink_MissingCode_ReturnsFalse()
+    {
+        Assert.False(LaunchTarget.TryParseShareLink(
+            "https://www.roblox.com/share?type=Server",
+            out _, out _));
+    }
+
+    [Fact]
+    public void FromUrl_RobloxComShareUrl_ReturnsNull_RequiresAsyncResolution()
+    {
+        // The /share?code=X token URL needs an authenticated API call to resolve to a real
+        // (placeId, linkCode) pair. Sync FromUrl returns null; callers route to the async
+        // resolver in MainViewModel.
+        Assert.Null(LaunchTarget.FromUrl(
+            "https://www.roblox.com/share?code=ABC&type=Server"));
+    }
+
+    [Fact]
+    public void FromUrl_LinkCodeBeatsAccessCode_WhenBothPresent()
+    {
+        // Defensive: a URL containing both params (rare but possible from messy paste) prefers
+        // linkCode since that's what the share-link path needs and is the stricter
+        // server-side-resolved path. Either way Roblox will validate.
+        var target = LaunchTarget.FromUrl(
+            "https://www.roblox.com/games/42/Foo?privateServerLinkCode=LINK&accessCode=ACCESS");
+
+        var ps = Assert.IsType<LaunchTarget.PrivateServer>(target);
+        Assert.Equal("LINK", ps.Code);
+        Assert.Equal(PrivateServerCodeKind.LinkCode, ps.Kind);
     }
 
     [Fact]
@@ -108,23 +193,38 @@ public class LaunchTargetTests
     }
 
     [Fact]
-    public void BuildPlaceLauncherUrl_PrivateServer_ProducesRequestPrivateGameWithAccessCode()
+    public void BuildPlaceLauncherUrl_PrivateServer_LinkCodeKind_EmitsOnlyLinkCodeSlot()
     {
         var url = RobloxLauncher.BuildPlaceLauncherUrl(
-            new LaunchTarget.PrivateServer(12345, "ABC_xyz-1"),
+            new LaunchTarget.PrivateServer(12345, "SHARE_TOKEN", PrivateServerCodeKind.LinkCode),
             browserTrackerId: "BT-1");
 
         Assert.Contains("request=RequestPrivateGame", url);
         Assert.Contains("placeId=12345", url);
-        Assert.Contains("accessCode=ABC_xyz-1", url);
-        Assert.Contains("linkCode=ABC_xyz-1", url);
+        Assert.Contains("linkCode=SHARE_TOKEN", url);
+        // Critical: don't ALSO emit accessCode= when the value is a link code — Roblox returns
+        // permission-denied if a linkCode value is sent in the accessCode slot.
+        Assert.DoesNotContain("accessCode=", url);
     }
 
     [Fact]
-    public void BuildPlaceLauncherUrl_PrivateServer_UrlEncodesAccessCode()
+    public void BuildPlaceLauncherUrl_PrivateServer_AccessCodeKind_EmitsOnlyAccessCodeSlot()
     {
         var url = RobloxLauncher.BuildPlaceLauncherUrl(
-            new LaunchTarget.PrivateServer(12345, "code with spaces&special=chars"),
+            new LaunchTarget.PrivateServer(12345, "RAW_ACCESS", PrivateServerCodeKind.AccessCode),
+            browserTrackerId: "BT-1");
+
+        Assert.Contains("request=RequestPrivateGame", url);
+        Assert.Contains("placeId=12345", url);
+        Assert.Contains("accessCode=RAW_ACCESS", url);
+        Assert.DoesNotContain("linkCode=", url);
+    }
+
+    [Fact]
+    public void BuildPlaceLauncherUrl_PrivateServer_UrlEncodesCode()
+    {
+        var url = RobloxLauncher.BuildPlaceLauncherUrl(
+            new LaunchTarget.PrivateServer(12345, "code with spaces&special=chars", PrivateServerCodeKind.LinkCode),
             browserTrackerId: "1");
 
         Assert.Contains(Uri.EscapeDataString("code with spaces&special=chars"), url);
@@ -172,10 +272,11 @@ public class LaunchTargetTests
     }
 
     [Fact]
-    public void BuildPlaceLauncherUrl_RejectsEmptyAccessCode()
+    public void BuildPlaceLauncherUrl_RejectsEmptyCode()
     {
         Assert.Throws<ArgumentException>(() =>
-            RobloxLauncher.BuildPlaceLauncherUrl(new LaunchTarget.PrivateServer(1, ""), "BT"));
+            RobloxLauncher.BuildPlaceLauncherUrl(
+                new LaunchTarget.PrivateServer(1, "", PrivateServerCodeKind.LinkCode), "BT"));
     }
 
     [Fact]

@@ -12,11 +12,20 @@ public interface IPrivateServerStore
     Task<SavedPrivateServer?> GetAsync(Guid id);
 
     /// <summary>
-    /// Add or replace by (placeId, accessCode) pair. If a server with the same pair already
-    /// exists, its <see cref="SavedPrivateServer.Id"/> + <see cref="SavedPrivateServer.AddedAt"/>
-    /// are preserved and the rest of the fields are updated.
+    /// Add or replace by (placeId, code) pair. If a server with the same pair already exists,
+    /// its <see cref="SavedPrivateServer.Id"/> + <see cref="SavedPrivateServer.AddedAt"/> are
+    /// preserved and the rest of the fields are updated. <paramref name="codeKind"/> tells the
+    /// launcher which Roblox query slot the code goes in — pasting a share URL produces
+    /// <see cref="PrivateServerCodeKind.LinkCode"/>; pasting a browser-resolved launcher URI
+    /// produces <see cref="PrivateServerCodeKind.AccessCode"/>.
     /// </summary>
-    Task<SavedPrivateServer> AddAsync(long placeId, string accessCode, string name, string placeName, string thumbnailUrl);
+    Task<SavedPrivateServer> AddAsync(
+        long placeId,
+        string code,
+        PrivateServerCodeKind codeKind,
+        string name,
+        string placeName,
+        string thumbnailUrl);
 
     Task RemoveAsync(Guid id);
 

@@ -23,6 +23,7 @@ public sealed class RobloxApi : IRobloxApi
     private const string OmniSearchEndpoint = "https://apis.roblox.com/search-api/omni-search";
     private const string FriendsEndpoint = "https://friends.roblox.com/v1/users";
     private const string PresenceEndpoint = "https://presence.roblox.com/v1/presence/users";
+    private const string ShareLinksEndpoint = "https://apis.roblox.com/sharelinks/v1/resolve-link";
     private const string Referer = "https://www.roblox.com/";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -476,6 +477,111 @@ public sealed class RobloxApi : IRobloxApi
         return await _httpClient.SendAsync(request).ConfigureAwait(false);
     }
 
+    public async Task<ShareLinkResolution?> ResolveShareLinkAsync(string cookie, string code, string linkType)
+    {
+        if (string.IsNullOrEmpty(cookie))
+        {
+            throw new ArgumentException("Cookie must not be empty.", nameof(cookie));
+        }
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return null;
+        }
+        if (string.IsNullOrWhiteSpace(linkType))
+        {
+            linkType = "Server";
+        }
+
+        // Same CSRF-dance shape as the auth-ticket endpoint: first call surfaces the token,
+        // second call sends it. Body shape: { linkId, linkType }.
+        var bodyJson = JsonSerializer.Serialize(new ResolveShareLinkRequest(code, linkType), JsonOptions);
+
+        using var firstResponse = await PostShareLinkAsync(cookie, bodyJson, csrfToken: null).ConfigureAwait(false);
+        ThrowOnAuthFailure(firstResponse);
+
+        string csrfToken;
+        if (firstResponse.IsSuccessStatusCode)
+        {
+            // Some Roblox tenants return 200 directly without a CSRF challenge — accept either.
+            return await ParseShareLinkResponseAsync(firstResponse, linkType).ConfigureAwait(false);
+        }
+        else if (firstResponse.StatusCode == HttpStatusCode.Forbidden
+            && firstResponse.Headers.TryGetValues("x-csrf-token", out var csrfTokens))
+        {
+            csrfToken = csrfTokens.FirstOrDefault() ?? string.Empty;
+            if (string.IsNullOrEmpty(csrfToken))
+            {
+                return null;
+            }
+        }
+        else
+        {
+            return null;
+        }
+
+        using var secondResponse = await PostShareLinkAsync(cookie, bodyJson, csrfToken).ConfigureAwait(false);
+        ThrowOnAuthFailure(secondResponse);
+        if (!secondResponse.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await ParseShareLinkResponseAsync(secondResponse, linkType).ConfigureAwait(false);
+    }
+
+    private async Task<HttpResponseMessage> PostShareLinkAsync(string cookie, string bodyJson, string? csrfToken)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, ShareLinksEndpoint);
+        request.Headers.Add("Cookie", $".ROBLOSECURITY={cookie}");
+        request.Headers.Add("Referer", Referer);
+        if (!string.IsNullOrEmpty(csrfToken))
+        {
+            request.Headers.Add("X-CSRF-TOKEN", csrfToken);
+        }
+        request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+        return await _httpClient.SendAsync(request).ConfigureAwait(false);
+    }
+
+    private static async Task<ShareLinkResolution?> ParseShareLinkResponseAsync(HttpResponseMessage response, string requestedLinkType)
+    {
+        ShareLinkResponse? payload;
+        try
+        {
+            payload = await response.Content
+                .ReadFromJsonAsync<ShareLinkResponse>(JsonOptions)
+                .ConfigureAwait(false);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
+        if (payload is null)
+        {
+            return null;
+        }
+
+        // Server kind: privateServerInviteData carries placeId + linkCode. Status must be Valid.
+        var invite = payload.PrivateServerInviteData;
+        if (invite is not null
+            && string.Equals(invite.Status, "Valid", StringComparison.OrdinalIgnoreCase)
+            && invite.PlaceId > 0
+            && !string.IsNullOrEmpty(invite.LinkCode))
+        {
+            return new ShareLinkResolution(
+                LinkType: payload.LinkType ?? requestedLinkType,
+                PlaceId: invite.PlaceId,
+                LinkCode: invite.LinkCode);
+        }
+
+        // Other types (Game / Profile / etc.) aren't load-bearing for v1 — caller branches on
+        // empty PlaceId. Surface the LinkType so the caller knows what came back.
+        return new ShareLinkResolution(
+            LinkType: payload.LinkType ?? requestedLinkType,
+            PlaceId: 0,
+            LinkCode: string.Empty);
+    }
+
     private static void ThrowOnAuthFailure(HttpResponseMessage response)
     {
         if (response.StatusCode == HttpStatusCode.Unauthorized)
@@ -527,4 +633,14 @@ public sealed class RobloxApi : IRobloxApi
         long? PlaceId,
         string? GameId,
         string? LastLocation);
+    private sealed record ResolveShareLinkRequest(
+        [property: JsonPropertyName("linkId")] string LinkId,
+        [property: JsonPropertyName("linkType")] string LinkType);
+    private sealed record ShareLinkResponse(
+        string? LinkType,
+        ShareLinkInviteData? PrivateServerInviteData);
+    private sealed record ShareLinkInviteData(
+        long PlaceId,
+        string? LinkCode,
+        string? Status);
 }

@@ -22,9 +22,21 @@ namespace ROROROblox.Core;
 public sealed record SavedPrivateServer(
     Guid Id,
     long PlaceId,
-    string AccessCode,
+    string Code,
+    PrivateServerCodeKind CodeKind,
     string Name,
     string PlaceName,
     string ThumbnailUrl,
     DateTimeOffset AddedAt,
-    DateTimeOffset? LastLaunchedAt);
+    DateTimeOffset? LastLaunchedAt)
+{
+    /// <summary>
+    /// Back-compat shim for older storage blobs that persisted only an <c>accessCode</c> field
+    /// before the kind discriminator landed. The previous app build emitted both
+    /// <c>accessCode=</c> and <c>linkCode=</c> in the launcher URI, but only share-URL paste
+    /// flow (which is what users actually used) wrote rows here — meaning legacy values are
+    /// almost always link codes. Default to <see cref="PrivateServerCodeKind.LinkCode"/> when
+    /// loading old records.
+    /// </summary>
+    public const PrivateServerCodeKind DefaultLegacyKind = PrivateServerCodeKind.LinkCode;
+}

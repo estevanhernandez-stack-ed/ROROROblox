@@ -56,4 +56,25 @@ public interface IRobloxApi
     /// 401 becomes <see cref="CookieExpiredException"/>; other failures return empty.
     /// </summary>
     Task<IReadOnlyList<UserPresence>> GetPresenceAsync(string cookie, IEnumerable<long> userIds);
+
+    /// <summary>
+    /// Resolve a Roblox <c>roblox.com/share?code=X&amp;type=Y</c> share token into the underlying
+    /// target. POSTs <c>apis.roblox.com/sharelinks/v1/resolve-link</c> with the same CSRF dance
+    /// the auth-ticket endpoint requires. For <c>type=Server</c> returns the place id + linkCode
+    /// pair you can feed straight into <see cref="LaunchTarget.PrivateServer"/>. Returns null on
+    /// invalid / expired / network-failed share tokens; the caller surfaces a friendly message.
+    /// 401 becomes <see cref="CookieExpiredException"/> — the resolution call is authenticated.
+    /// </summary>
+    Task<ShareLinkResolution?> ResolveShareLinkAsync(string cookie, string code, string linkType);
 }
+
+/// <summary>
+/// Result of resolving a Roblox share token. <see cref="LinkType"/> echoes the requested kind
+/// (<c>Server</c>, <c>Game</c>, <c>Profile</c>, etc.). For <c>Server</c>, <see cref="PlaceId"/>
+/// + <see cref="LinkCode"/> are populated and ready for <see cref="LaunchTarget.PrivateServer"/>.
+/// For other types they may be 0 / empty — callers should branch on <see cref="LinkType"/>.
+/// </summary>
+public sealed record ShareLinkResolution(
+    string LinkType,
+    long PlaceId,
+    string LinkCode);
