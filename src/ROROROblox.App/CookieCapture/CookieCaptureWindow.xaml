@@ -1,0 +1,31 @@
+<Window x:Class="ROROROblox.App.CookieCapture.CookieCaptureWindow"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wv="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="Add Roblox Account — log in"
+        Height="700" Width="1024"
+        WindowStartupLocation="CenterScreen"
+        Background="#0F1F31">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#0F1F31" Padding="16,10">
+            <StackPanel>
+                <TextBlock Text="Add Roblox Account"
+                           FontSize="14" FontWeight="Bold"
+                           Foreground="#17D4FA" />
+                <TextBlock Text="Log in to your Roblox account in the window below. We'll capture your session and add it to ROROROblox."
+                           FontSize="11"
+                           Foreground="#FFFFFF"
+                           Opacity="0.85"
+                           Margin="0,4,0,0" />
+            </StackPanel>
+        </Border>
+
+        <wv:WebView2 x:Name="WebView" Grid.Row="1" />
+    </Grid>
+</Window>
