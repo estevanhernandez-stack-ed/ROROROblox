@@ -1,0 +1,234 @@
+using System.Net;
+using System.Net.Http.Json;
+using System.Text;
+using ROROROblox.Core;
+
+namespace ROROROblox.Tests;
+
+/// <summary>
+/// Stubbed-HTTP coverage of <see cref="RobloxApi"/>. No live Roblox calls; that's the manual
+/// smoke checklist's job before each release tag. Includes the 415 regression guard for the
+/// Content-Type contract caught at spike-time 2026-05-03.
+/// </summary>
+public class RobloxApiTests
+{
+    private const string TestCookie = "FAKE_COOKIE_FOR_TESTS_ONLY";
+
+    private static (RobloxApi api, StubHttpHandler stub) CreateApi()
+    {
+        var stub = new StubHttpHandler();
+        var client = new HttpClient(stub);
+        return (new RobloxApi(client), stub);
+    }
+
+    private static HttpResponseMessage Response(HttpStatusCode status, params (string Key, string Value)[] headers)
+    {
+        var response = new HttpResponseMessage(status);
+        foreach (var (key, value) in headers)
+        {
+            response.Headers.TryAddWithoutValidation(key, value);
+        }
+        return response;
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_HappyPath_ReturnsTicketAfterCsrfDance()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "csrf-abc-123")));
+        stub.EnqueueResponse(Response(HttpStatusCode.OK, ("RBX-Authentication-Ticket", "TICKET-XYZ")));
+
+        var ticket = await api.GetAuthTicketAsync(TestCookie);
+
+        Assert.Equal("TICKET-XYZ", ticket.Ticket);
+        Assert.True(ticket.CapturedAt > DateTimeOffset.UtcNow.AddMinutes(-1));
+        Assert.Equal(2, stub.Requests.Count);
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_BothPostsSendContentTypeApplicationJson()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "t")));
+        stub.EnqueueResponse(Response(HttpStatusCode.OK, ("RBX-Authentication-Ticket", "T")));
+
+        await api.GetAuthTicketAsync(TestCookie);
+
+        foreach (var req in stub.Requests)
+        {
+            Assert.NotNull(req.Content);
+            Assert.Equal("application/json", req.Content!.Headers.ContentType?.MediaType);
+        }
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_BothPostsSendCookieAndReferer()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "t")));
+        stub.EnqueueResponse(Response(HttpStatusCode.OK, ("RBX-Authentication-Ticket", "T")));
+
+        await api.GetAuthTicketAsync(TestCookie);
+
+        foreach (var req in stub.Requests)
+        {
+            Assert.Contains(req.Headers, h => h.Key == "Cookie" && h.Value.Any(v => v.Contains(TestCookie)));
+            Assert.Contains(req.Headers, h => h.Key == "Referer" && h.Value.Any(v => v == "https://www.roblox.com/"));
+        }
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_SecondPostHasCsrfToken_FirstDoesNot()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "csrf-token-value")));
+        stub.EnqueueResponse(Response(HttpStatusCode.OK, ("RBX-Authentication-Ticket", "T")));
+
+        await api.GetAuthTicketAsync(TestCookie);
+
+        Assert.DoesNotContain(stub.Requests[0].Headers, h => h.Key == "X-CSRF-TOKEN");
+        Assert.Contains(stub.Requests[1].Headers,
+            h => h.Key == "X-CSRF-TOKEN" && h.Value.Any(v => v == "csrf-token-value"));
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_401OnFirstPost_ThrowsCookieExpired()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Unauthorized));
+
+        await Assert.ThrowsAsync<CookieExpiredException>(() => api.GetAuthTicketAsync(TestCookie));
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_401OnSecondPost_ThrowsCookieExpired()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "t")));
+        stub.EnqueueResponse(Response(HttpStatusCode.Unauthorized));
+
+        await Assert.ThrowsAsync<CookieExpiredException>(() => api.GetAuthTicketAsync(TestCookie));
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_415_ThrowsHelpfulError_RegressionGuardForSpikeFinding()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.UnsupportedMediaType));
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => api.GetAuthTicketAsync(TestCookie));
+        Assert.Contains("Content-Type", ex.Message);
+        Assert.Contains("§5.7", ex.Message);
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_NoCsrfTokenHeader_Throws()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden));
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => api.GetAuthTicketAsync(TestCookie));
+        Assert.Contains("X-CSRF-TOKEN", ex.Message);
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_NoTicketHeader_Throws()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "t")));
+        stub.EnqueueResponse(Response(HttpStatusCode.OK));
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => api.GetAuthTicketAsync(TestCookie));
+        Assert.Contains("RBX-Authentication-Ticket", ex.Message);
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_TicketHeaderCasing_InsensitiveLookup()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("X-CSRF-Token", "t")));
+        stub.EnqueueResponse(Response(HttpStatusCode.OK, ("rbx-authentication-ticket", "T-LOWER")));
+
+        var ticket = await api.GetAuthTicketAsync(TestCookie);
+
+        Assert.Equal("T-LOWER", ticket.Ticket);
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_RejectsEmptyCookie()
+    {
+        var (api, _) = CreateApi();
+        await Assert.ThrowsAsync<ArgumentException>(() => api.GetAuthTicketAsync(""));
+    }
+
+    [Fact]
+    public async Task GetUserProfileAsync_HappyPath_ReturnsUserIdUsernameDisplayName()
+    {
+        var (api, stub) = CreateApi();
+        var json = """{"id": 12345, "name": "TestUser", "displayName": "Test User Display"}""";
+        var response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(json, Encoding.UTF8, "application/json"),
+        };
+        stub.EnqueueResponse(response);
+
+        var profile = await api.GetUserProfileAsync(TestCookie);
+
+        Assert.Equal(12345, profile.UserId);
+        Assert.Equal("TestUser", profile.Username);
+        Assert.Equal("Test User Display", profile.DisplayName);
+    }
+
+    [Fact]
+    public async Task GetUserProfileAsync_401_ThrowsCookieExpired()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Unauthorized));
+
+        await Assert.ThrowsAsync<CookieExpiredException>(() => api.GetUserProfileAsync(TestCookie));
+    }
+
+    [Fact]
+    public async Task GetAvatarHeadshotUrlAsync_HappyPath_ReturnsImageUrlFromFirstDataItem()
+    {
+        var (api, stub) = CreateApi();
+        var json = """{"data": [{"imageUrl": "https://tr.rbxcdn.com/avatar/headshot.png"}]}""";
+        var response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(json, Encoding.UTF8, "application/json"),
+        };
+        stub.EnqueueResponse(response);
+
+        var url = await api.GetAvatarHeadshotUrlAsync(userId: 12345);
+
+        Assert.Equal("https://tr.rbxcdn.com/avatar/headshot.png", url);
+    }
+
+    [Fact]
+    public async Task GetAvatarHeadshotUrlAsync_RejectsZeroOrNegativeUserId()
+    {
+        var (api, _) = CreateApi();
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => api.GetAvatarHeadshotUrlAsync(0));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => api.GetAvatarHeadshotUrlAsync(-1));
+    }
+
+    [Fact]
+    public async Task GetAvatarHeadshotUrlAsync_EmptyData_Throws()
+    {
+        var (api, stub) = CreateApi();
+        var json = """{"data": []}""";
+        var response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(json, Encoding.UTF8, "application/json"),
+        };
+        stub.EnqueueResponse(response);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => api.GetAvatarHeadshotUrlAsync(12345));
+    }
+
+    [Fact]
+    public void Constructor_RejectsNullHttpClient()
+    {
+        Assert.Throws<ArgumentNullException>(() => new RobloxApi(null!));
+    }
+}
