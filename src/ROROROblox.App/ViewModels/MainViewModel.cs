@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 using ROROROblox.App.Modals;
+using ROROROblox.App.Settings;
 using ROROROblox.Core;
 
 namespace ROROROblox.App.ViewModels;
@@ -20,6 +21,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly IAccountStore _accountStore;
     private readonly IRobloxLauncher _launcher;
     private readonly IRobloxCompatChecker _compatChecker;
+    private readonly IAppSettings _settings;
 
     private string _statusBanner = string.Empty;
     private string? _robloxCompatBanner;
@@ -30,18 +32,21 @@ public sealed class MainViewModel : INotifyPropertyChanged
         IRobloxApi api,
         IAccountStore accountStore,
         IRobloxLauncher launcher,
-        IRobloxCompatChecker compatChecker)
+        IRobloxCompatChecker compatChecker,
+        IAppSettings settings)
     {
         _cookieCapture = cookieCapture;
         _api = api;
         _accountStore = accountStore;
         _launcher = launcher;
         _compatChecker = compatChecker;
+        _settings = settings;
 
         AddAccountCommand = new RelayCommand(AddAccountAsync, () => !IsBusy);
         LaunchAccountCommand = new RelayCommand(p => LaunchAccountAsync(p as AccountSummary));
         RemoveAccountCommand = new RelayCommand(p => RemoveAccountAsync(p as AccountSummary));
         ReauthenticateCommand = new RelayCommand(p => ReauthenticateAsync(p as AccountSummary));
+        OpenSettingsCommand = new RelayCommand(OpenSettings);
     }
 
     public ObservableCollection<AccountSummary> Accounts { get; } = [];
@@ -50,6 +55,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand LaunchAccountCommand { get; }
     public ICommand RemoveAccountCommand { get; }
     public ICommand ReauthenticateCommand { get; }
+    public ICommand OpenSettingsCommand { get; }
 
     public string StatusBanner
     {
@@ -264,6 +270,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private void OpenSettings()
+    {
+        var window = new SettingsWindow(_settings) { Owner = Application.Current.MainWindow };
+        var saved = window.ShowDialog() == true;
+        if (saved)
+        {
+            StatusBanner = "Settings saved.";
         }
     }
 

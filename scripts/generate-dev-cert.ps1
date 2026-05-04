@@ -14,12 +14,18 @@ param(
 
     [string]$Subject = 'CN=Estevan Hernandez',
 
-    [string]$OutDir = (Join-Path $PSScriptRoot '..'),
+    [string]$OutDir,
 
     [int]$ValidityYears = 3
 )
 
 $ErrorActionPreference = 'Stop'
+
+# $PSScriptRoot isn't populated when used in param defaults on some PS5 invocations,
+# so resolve OutDir here instead. Defaults to the repo root (scripts/..).
+if ([string]::IsNullOrEmpty($OutDir)) {
+    $OutDir = Split-Path -Parent $PSScriptRoot
+}
 
 $pfxPath = Join-Path $OutDir 'dev-cert.pfx'
 $cerPath = Join-Path $OutDir 'dev-cert.cer'

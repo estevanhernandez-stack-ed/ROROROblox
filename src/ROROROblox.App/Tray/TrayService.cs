@@ -85,9 +85,9 @@ internal sealed class TrayService : ITrayService
     {
         var filename = state switch
         {
-            MultiInstanceState.On => "tray-on.placeholder.ico",
-            MultiInstanceState.Error => "tray-error.placeholder.ico",
-            _ => "tray-off.placeholder.ico",
+            MultiInstanceState.On => "tray-on.ico",
+            MultiInstanceState.Error => "tray-error.ico",
+            _ => "tray-off.ico",
         };
 
         var resource = Application.GetResourceStream(new Uri(IconResourceBase + filename, UriKind.Relative))

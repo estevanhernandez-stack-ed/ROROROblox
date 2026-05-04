@@ -13,16 +13,27 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Background="#0F1F31" Padding="16,10">
+        <Border Grid.Row="0" Background="#0F1F31" Padding="16,12">
             <StackPanel>
                 <TextBlock Text="Add Roblox Account"
                            FontSize="14" FontWeight="Bold"
                            Foreground="#17D4FA" />
-                <TextBlock Text="Log in to your Roblox account in the window below. We'll capture your session and add it to ROROROblox."
-                           FontSize="11"
+                <TextBlock FontSize="11"
                            Foreground="#FFFFFF"
-                           Opacity="0.85"
-                           Margin="0,4,0,0" />
+                           Opacity="0.9"
+                           Margin="0,4,0,0"
+                           TextWrapping="Wrap">
+                    <Run Text="Your password goes only to " />
+                    <Run Text="roblox.com" FontWeight="Bold" />
+                    <Run Text=" over HTTPS, inside this embedded browser. ROROROblox never sees it." />
+                </TextBlock>
+                <TextBlock FontSize="11"
+                           Foreground="#FFFFFF"
+                           Opacity="0.7"
+                           Margin="0,2,0,0"
+                           TextWrapping="Wrap">
+                    <Run Text="We capture only the session cookie that Roblox sets after a successful login, then encrypt it on disk via Windows DPAPI tied to your user." />
+                </TextBlock>
             </StackPanel>
         </Border>
 

@@ -149,14 +149,24 @@
                                Margin="0,4,0,0" />
                 </StackPanel>
 
-                <Button Grid.Column="1" Content="+ Add Account"
-                        Command="{Binding AddAccountCommand}"
-                        Padding="16,8" VerticalAlignment="Center"
-                        Background="{StaticResource CyanBrush}"
-                        Foreground="{StaticResource NavyBrush}"
-                        BorderThickness="0"
-                        FontWeight="Bold"
-                        FontSize="13" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Settings"
+                            Command="{Binding OpenSettingsCommand}"
+                            Padding="14,8" Margin="0,0,8,0"
+                            Background="{StaticResource NavyBrush}"
+                            Foreground="{StaticResource MutedTextBrush}"
+                            BorderBrush="{StaticResource DividerBrush}"
+                            BorderThickness="1"
+                            FontSize="12" />
+                    <Button Content="+ Add Account"
+                            Command="{Binding AddAccountCommand}"
+                            Padding="16,8"
+                            Background="{StaticResource CyanBrush}"
+                            Foreground="{StaticResource NavyBrush}"
+                            BorderThickness="0"
+                            FontWeight="Bold"
+                            FontSize="13" />
+                </StackPanel>
             </Grid>
         </Border>
 
