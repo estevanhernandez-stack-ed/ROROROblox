@@ -8,8 +8,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.App.About;
 using ROROROblox.App.Diagnostics;
+using ROROROblox.App.Friends;
 using ROROROblox.App.Modals;
 using ROROROblox.App.Settings;
+using ROROROblox.App.SquadLaunch;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
 
@@ -31,6 +33,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly IFavoriteGameStore _favorites;
     private readonly IRobloxProcessTracker _processTracker;
     private readonly IDiagnosticsCollector _diagnostics;
+    private readonly IPrivateServerStore _privateServerStore;
     private readonly ILogger<MainViewModel> _log;
     private readonly DispatcherTimer _ticker;
 
@@ -49,6 +52,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         IFavoriteGameStore favorites,
         IRobloxProcessTracker processTracker,
         IDiagnosticsCollector diagnostics,
+        IPrivateServerStore privateServerStore,
         ILogger<MainViewModel>? log = null)
     {
         _cookieCapture = cookieCapture;
@@ -60,6 +64,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _favorites = favorites;
         _processTracker = processTracker;
         _diagnostics = diagnostics;
+        _privateServerStore = privateServerStore;
         _log = log ?? NullLogger<MainViewModel>.Instance;
 
         AddAccountCommand = new RelayCommand(AddAccountAsync, () => !IsBusy);
@@ -71,6 +76,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         StopAccountCommand = new RelayCommand(p => StopAccount(p as AccountSummary));
         OpenDiagnosticsCommand = new RelayCommand(OpenDiagnostics);
         OpenAboutCommand = new RelayCommand(OpenAbout);
+        OpenSquadLaunchCommand = new RelayCommand(OpenSquadLaunchAsync, () => !IsBusy && Accounts.Count > 0);
+        OpenFriendFollowCommand = new RelayCommand(p => OpenFriendFollowAsync(p as AccountSummary));
 
         _processTracker.ProcessAttached += OnProcessAttached;
         _processTracker.ProcessExited += OnProcessExited;
@@ -105,6 +112,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand StopAccountCommand { get; }
     public ICommand OpenDiagnosticsCommand { get; }
     public ICommand OpenAboutCommand { get; }
+    public ICommand OpenSquadLaunchCommand { get; }
+    public ICommand OpenFriendFollowCommand { get; }
 
     /// <summary>How many tracked Roblox client processes are currently alive.</summary>
     public int LiveProcessCount
@@ -250,8 +259,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
             try
             {
-                _ = await _api.GetUserProfileAsync(cookie).ConfigureAwait(true);
+                var profile = await _api.GetUserProfileAsync(cookie).ConfigureAwait(true);
                 summary.SessionExpired = false;
+                summary.RobloxUserId = profile.Id; // cache for the Friends modal
             }
             catch (CookieExpiredException)
             {
@@ -325,12 +335,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
 
         var account = await _accountStore.AddAsync(captured.Username, avatarUrl, captured.Cookie);
-        Accounts.Insert(0, new AccountSummary(account));
+        var summary = new AccountSummary(account) { RobloxUserId = captured.UserId };
+        Accounts.Insert(0, summary);
         _log.LogInformation("Added account {AccountId} ({Username}, userId {UserId})", account.Id, captured.Username, captured.UserId);
         StatusBanner = $"Added {captured.Username}.";
     }
 
-    private async Task LaunchAccountAsync(AccountSummary? summary)
+    private async Task LaunchAccountAsync(AccountSummary? summary, LaunchTarget? overrideTarget = null)
     {
         if (summary is null)
         {
@@ -339,7 +350,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         summary.IsLaunching = true;
         summary.StatusText = "Launching...";
-        _log.LogInformation("Launching account {AccountId} ({DisplayName})", summary.Id, summary.DisplayName);
+        _log.LogInformation("Launching account {AccountId} ({DisplayName}) target={Target}",
+            summary.Id, summary.DisplayName, overrideTarget?.GetType().Name ?? "from-row");
         try
         {
             string cookie;
@@ -353,12 +365,25 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 return;
             }
 
-            // Per-account game pick from the row's ComboBox (in-memory, resets on app restart).
-            // Launcher wraps bare placeId in PlaceLauncher.ashx form via NormalizeToPlaceLauncherUrl.
-            // null SelectedGame falls through to launcher tier-2 (favorites default) then tier-3
-            // (legacy AppSettings.DefaultPlaceUrl).
-            var placeUrl = summary.SelectedGame?.PlaceId.ToString();
-            var result = await _launcher.LaunchAsync(cookie, placeUrl);
+            // Target precedence:
+            //   1. Explicit override (Squad Launch / Friend Follow / Join-by-Link).
+            //   2. Per-row SelectedGame from the ComboBox.
+            //   3. LaunchTarget.DefaultGame -> launcher resolves favorites + settings tier.
+            LaunchTarget target;
+            if (overrideTarget is not null)
+            {
+                target = overrideTarget;
+            }
+            else if (summary.SelectedGame is { PlaceId: > 0 } sg)
+            {
+                target = new LaunchTarget.Place(sg.PlaceId);
+            }
+            else
+            {
+                target = new LaunchTarget.DefaultGame();
+            }
+
+            var result = await _launcher.LaunchAsync(cookie, target);
             switch (result)
             {
                 case LaunchResult.Started started:
@@ -429,6 +454,125 @@ public sealed class MainViewModel : INotifyPropertyChanged
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Open the Squad Launch modal. After the modal closes, if the user picked a target,
+    /// dispatch every eligible account into it via <see cref="SquadLaunchAsync"/>.
+    /// </summary>
+    private async Task OpenSquadLaunchAsync()
+    {
+        var eligible = Accounts.Count(a => !a.SessionExpired && !a.IsRunning && !a.IsLaunching);
+        var running = Accounts.Count(a => a.IsRunning);
+        var expired = Accounts.Count(a => a.SessionExpired);
+
+        var window = new SquadLaunchWindow(_privateServerStore, _api, eligible, running, expired)
+        {
+            Owner = Application.Current.MainWindow,
+        };
+        var dialogResult = window.ShowDialog();
+        if (dialogResult == true && window.SelectedTarget is { } target)
+        {
+            await SquadLaunchAsync(target);
+        }
+    }
+
+    /// <summary>
+    /// Mass-launch every eligible account into the same private server, throttled 1.5 s apart so
+    /// the process tracker can FIFO-claim each <c>RobloxPlayerBeta.exe</c> by start time. The
+    /// override target trumps each row's per-account SelectedGame.
+    /// </summary>
+    private async Task SquadLaunchAsync(LaunchTarget.PrivateServer target)
+    {
+        if (IsBusy) return;
+        IsBusy = true;
+        try
+        {
+            var targets = Accounts.Where(a => !a.SessionExpired && !a.IsRunning && !a.IsLaunching).ToList();
+            _log.LogInformation("SquadLaunch: placeId={PlaceId}, {Count} target accounts",
+                target.PlaceId, targets.Count);
+            if (targets.Count == 0)
+            {
+                StatusBanner = "Nothing to launch — every account is already running or expired.";
+                return;
+            }
+
+            var i = 0;
+            foreach (var summary in targets)
+            {
+                StatusBanner = $"Squad launching {summary.DisplayName} ({++i} of {targets.Count}) into the same private server...";
+                await LaunchAccountAsync(summary, overrideTarget: target);
+                if (i < targets.Count)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(1500));
+                }
+            }
+            StatusBanner = $"Squad launch finished. {targets.Count} client{(targets.Count == 1 ? "" : "s")} dispatched into the same private server.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Open the Friends modal for one account. Resolves the Roblox userId on first open
+    /// (cached on <see cref="AccountSummary"/> for subsequent opens). After the modal closes,
+    /// if the user picked a friend to follow, fire the launch with that target.
+    /// </summary>
+    private async Task OpenFriendFollowAsync(AccountSummary? summary)
+    {
+        if (summary is null) return;
+
+        string cookie;
+        try
+        {
+            cookie = await _accountStore.RetrieveCookieAsync(summary.Id);
+        }
+        catch (AccountStoreCorruptException)
+        {
+            ShowDpapiCorruptModal();
+            return;
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "RetrieveCookieAsync failed for friends modal {AccountId}", summary.Id);
+            StatusBanner = "Couldn't read this account's saved session.";
+            return;
+        }
+
+        // Resolve userId if we don't already have it cached.
+        long userId = summary.RobloxUserId ?? 0;
+        if (userId <= 0)
+        {
+            try
+            {
+                var profile = await _api.GetUserProfileAsync(cookie);
+                userId = profile.Id;
+                summary.RobloxUserId = userId;
+            }
+            catch (CookieExpiredException)
+            {
+                summary.SessionExpired = true;
+                StatusBanner = $"{summary.DisplayName}'s session expired — re-authenticate first.";
+                return;
+            }
+            catch (Exception ex)
+            {
+                _log.LogDebug(ex, "Couldn't resolve userId for friends modal {AccountId}", summary.Id);
+                StatusBanner = "Couldn't reach Roblox to load friends. Try again in a moment.";
+                return;
+            }
+        }
+
+        var window = new FriendFollowWindow(_api, cookie, userId, summary.DisplayName)
+        {
+            Owner = Application.Current.MainWindow,
+        };
+        if (window.ShowDialog() == true && window.SelectedTarget is { } target)
+        {
+            await LaunchAccountAsync(summary, overrideTarget: target);
         }
     }
 

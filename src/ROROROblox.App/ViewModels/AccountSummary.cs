@@ -33,6 +33,12 @@ public sealed class AccountSummary : INotifyPropertyChanged
     public string AvatarUrl { get; }
     public DateTimeOffset? LastLaunchedAt { get; private set; }
 
+    /// <summary>
+    /// Cached Roblox userId for this account — populated lazily on first need (Friends modal).
+    /// Not persisted; gets re-fetched after app restart. Null = not yet resolved.
+    /// </summary>
+    public long? RobloxUserId { get; set; }
+
     public bool SessionExpired
     {
         get => _sessionExpired;

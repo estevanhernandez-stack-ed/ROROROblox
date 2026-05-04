@@ -101,6 +101,19 @@
                                 FontWeight="SemiBold"
                                 Visibility="{Binding SessionExpired, Converter={StaticResource BoolToVisibilityConverter}}" />
 
+                        <!-- Friends — opens per-account follow modal. Disabled when expired. -->
+                        <Button Content="Friends"
+                                Command="{Binding DataContext.OpenFriendFollowCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                Padding="10,6" Margin="0,0,8,0"
+                                Background="{StaticResource NavyBrush}"
+                                Foreground="{StaticResource MutedTextBrush}"
+                                BorderBrush="{StaticResource DividerBrush}"
+                                BorderThickness="1"
+                                FontSize="11"
+                                ToolTip="See this account's friends and follow one into their server (works for public + private)."
+                                IsEnabled="{Binding SessionExpired, Converter={StaticResource InverseBoolConverter}}" />
+
                         <!-- Per-account game picker. Empty-state hint overlays the ComboBox until
                              at least one game is in the library, otherwise it looks broken. -->
                         <Grid Margin="0,0,8,0" MinWidth="200" VerticalAlignment="Center">
@@ -242,15 +255,25 @@
                             BorderBrush="{StaticResource DividerBrush}"
                             BorderThickness="1"
                             FontSize="12" />
-                    <Button Content="Launch All"
-                            Command="{Binding LaunchAllCommand}"
+                    <Button Content="Squad Launch"
+                            Command="{Binding OpenSquadLaunchCommand}"
                             Padding="14,8" Margin="0,0,8,0"
                             Background="{StaticResource MagentaBrush}"
                             Foreground="{StaticResource WhiteBrush}"
                             BorderThickness="0"
                             FontSize="12"
                             FontWeight="SemiBold"
-                            ToolTip="Launch every active account, throttled 1.5s apart so the tracker can attach to each client." />
+                            ToolTip="Send every active account into the same private server. Pet Sim 99 squad use case." />
+                    <Button Content="Launch All"
+                            Command="{Binding LaunchAllCommand}"
+                            Padding="14,8" Margin="0,0,8,0"
+                            Background="{StaticResource NavyBrush}"
+                            Foreground="{StaticResource MutedTextBrush}"
+                            BorderBrush="{StaticResource MagentaBrush}"
+                            BorderThickness="1"
+                            FontSize="12"
+                            FontWeight="SemiBold"
+                            ToolTip="Launch every active account into its per-row game, throttled 1.5s apart so the tracker can attach to each client." />
                     <Button Content="+ Add Account"
                             Command="{Binding AddAccountCommand}"
                             Padding="16,8"
