@@ -500,7 +500,9 @@ public class RobloxApiTests
 
         await api.GetPresenceAsync(TestCookie, new[] { 0L, 100L, 100L, -5L });
 
-        var sentBody = await stub.Requests[0].Content!.ReadAsStringAsync();
+        // Read the body via StubHttpHandler.RequestBodies — Requests[0].Content is disposed by
+        // the API method's `using` block before this assertion runs.
+        var sentBody = stub.RequestBodies[0];
         Assert.Contains("\"userIds\":[100]", sentBody.Replace(" ", string.Empty));
     }
 

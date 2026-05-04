@@ -285,7 +285,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             {
                 var profile = await _api.GetUserProfileAsync(cookie).ConfigureAwait(true);
                 summary.SessionExpired = false;
-                summary.RobloxUserId = profile.Id; // cache for the Friends modal
+                summary.RobloxUserId = profile.UserId; // cache for the Friends modal
             }
             catch (CookieExpiredException)
             {
@@ -594,7 +594,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             try
             {
                 var profile = await _api.GetUserProfileAsync(cookie);
-                userId = profile.Id;
+                userId = profile.UserId;
                 summary.RobloxUserId = userId;
             }
             catch (CookieExpiredException)
