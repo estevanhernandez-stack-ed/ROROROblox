@@ -1,0 +1,14 @@
+{
+  "name": "626 Labs",
+
+  "bg": "#0F1F31",
+  "cyan": "#17D4FA",
+  "magenta": "#F22F89",
+  "white": "#FFFFFF",
+  "muted_text": "#9AA8B8",
+  "divider": "#1F3149",
+  "row_bg": "#15263A",
+  "row_expired_bg": "#3A2D14",
+  "row_expired_accent": "#F1B232",
+  "navy": "#0F1F31"
+}
