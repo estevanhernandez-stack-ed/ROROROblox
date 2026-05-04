@@ -5,6 +5,7 @@ using ROROROblox.App.AppLifecycle;
 using ROROROblox.App.CookieCapture;
 using ROROROblox.App.Startup;
 using ROROROblox.App.Tray;
+using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 
 namespace ROROROblox.App;
@@ -68,7 +69,8 @@ public partial class App : Application
         services.AddSingleton<IRobloxLauncher, RobloxLauncher>();
         services.AddSingleton<ICookieCapture, CookieCapture.CookieCapture>();
 
-        // Windows.
+        // ViewModel + Window.
+        services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
     }
 

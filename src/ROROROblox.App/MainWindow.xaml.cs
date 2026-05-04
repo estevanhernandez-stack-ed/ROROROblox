@@ -1,16 +1,37 @@
+using System.ComponentModel;
 using System.Windows;
-using ROROROblox.App.Startup;
+using ROROROblox.App.ViewModels;
 
 namespace ROROROblox.App;
 
 public partial class MainWindow : Window
 {
-    private readonly IStartupRegistration _startupRegistration;
-
-    public MainWindow(IStartupRegistration startupRegistration)
+    public MainWindow(MainViewModel viewModel)
     {
-        _startupRegistration = startupRegistration;
+        DataContext = viewModel;
         InitializeComponent();
-        StatusText.Text = $"DI wired. run-on-login: {(_startupRegistration.IsEnabled() ? "ON" : "OFF")}";
+        Loaded += OnLoaded;
+    }
+
+    private async void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel vm)
+        {
+            await vm.LoadAsync();
+        }
+    }
+
+    /// <summary>
+    /// Closing the X minimizes to tray (does not quit). Real exit happens via the tray menu's
+    /// Quit, which sets <see cref="App.IsShuttingDown"/> before <see cref="Application.Shutdown(int)"/>.
+    /// </summary>
+    protected override void OnClosing(CancelEventArgs e)
+    {
+        if (!App.IsShuttingDown)
+        {
+            e.Cancel = true;
+            Hide();
+        }
+        base.OnClosing(e);
     }
 }

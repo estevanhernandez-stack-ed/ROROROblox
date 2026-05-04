@@ -1,0 +1,42 @@
+<Window x:Class="ROROROblox.App.Modals.DpapiCorruptWindow"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Saved accounts can't be unlocked"
+        Height="320" Width="560"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#0F1F31">
+    <Grid Margin="32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Your saved accounts can't be unlocked on this PC"
+                   FontSize="18" FontWeight="Bold"
+                   Foreground="#F22F89"
+                   TextWrapping="Wrap" />
+
+        <TextBlock Grid.Row="1"
+                   Text="This usually means Windows was restored from a backup that didn't preserve the encryption key, or the saved-accounts file was copied from another machine. We need to start your account list fresh — your Roblox accounts themselves are fine, you'll just need to log in again."
+                   TextWrapping="Wrap"
+                   FontSize="12"
+                   Foreground="#FFFFFF"
+                   Opacity="0.85"
+                   Margin="0,12,0,0" />
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Quit" Padding="16,8" Margin="0,0,8,0"
+                    Background="#0F1F31" Foreground="#FFFFFF" BorderBrush="#5A6982" BorderThickness="1"
+                    Click="OnQuitClick" />
+            <Button Content="Start Fresh" Padding="16,8" IsDefault="True"
+                    Background="#17D4FA" Foreground="#0F1F31" BorderThickness="0"
+                    FontWeight="Bold"
+                    Click="OnStartFreshClick" />
+        </StackPanel>
+    </Grid>
+</Window>
