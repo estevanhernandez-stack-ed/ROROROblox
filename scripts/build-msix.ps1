@@ -190,7 +190,7 @@ if ($Sideload) {
     }
     $signTool = Get-SignToolPath
     Write-Host "[build-msix] Signing $msixPath..." -ForegroundColor Cyan
-    & $signTool sign /pa /v /f $CertPath /p $CertPassword /td sha256 /fd sha256 $msixPath
+    & $signTool sign /v /f $CertPath /p $CertPassword /td sha256 /fd sha256 $msixPath
     if ($LASTEXITCODE -ne 0) { Write-Host '[build-msix] signtool FAILED.' -ForegroundColor Red; exit $LASTEXITCODE }
 }
 
