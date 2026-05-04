@@ -1,20 +1,24 @@
+<div align="center">
+
+<img src="docs/images/hero.png" alt="ROROROblox" width="220" />
+
 # ROROROblox
 
-**Run multiple Roblox clients side by side. Quick-launch saved accounts. A 626 Labs product.**
+_Multi-Roblox Instant Generator — run multiple Roblox clients on Windows, signed in as different saved accounts._
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-cyan)](#license)
-[![Platform: Windows 11](https://img.shields.io/badge/platform-Windows%2011-magenta)](https://www.microsoft.com/windows/windows-11)
-[![Stack: .NET 10 LTS](https://img.shields.io/badge/.NET-10%20LTS-cyan)](https://dotnet.microsoft.com/)
+[![Latest release](https://img.shields.io/github/v/release/estevanhernandez-stack-ed/ROROROblox?color=17d4fa&label=release&style=flat-square)](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases)
+[![Stars](https://img.shields.io/github/stars/estevanhernandez-stack-ed/ROROROblox?color=f22f89&style=flat-square)](https://github.com/estevanhernandez-stack-ed/ROROROblox/stargazers)
+[![License: MIT](https://img.shields.io/badge/license-MIT-17d4fa?style=flat-square)](#license)
+[![Platform: Windows 11](https://img.shields.io/badge/platform-Windows%2011-f22f89?style=flat-square)](https://www.microsoft.com/windows/windows-11)
+[![Stack: .NET 10 LTS](https://img.shields.io/badge/.NET-10%20LTS-17d4fa?style=flat-square)](https://dotnet.microsoft.com/)
 
-> *Imagine Something Else.*
+**Windows 11** · **.NET 10 LTS** · **WPF**
+
+</div>
+
+> **"Roblox" is a trademark of Roblox Corporation.** ROROROblox is not affiliated with, endorsed by, or sponsored by Roblox Corporation. We use the term to describe compatibility — this app launches the official Roblox client unmodified. A 626 Labs product.
 
 ---
-
-## What it does
-
-- **One-click multi-instance.** Tray toggle defeats Roblox's single-instance check so multiple clients can run side by side. Same trick MultiBloxy and other tools use, just packaged for the rest of us.
-- **Saved Roblox accounts.** Add your alts once via an embedded login window. Click "Launch As" to spawn each one.
-- **No DevTools, no registry edits.** Common-Windows-user UX from install through launch.
 
 ## Install
 
@@ -32,6 +36,16 @@ Until the Store listing is live:
 4. ROROROblox shows up in your Start Menu.
 
 A 30-second video walkthrough is linked from each Release page.
+
+## What it does
+
+- **One-click multi-instance.** Tray toggle holds the Roblox singleton mutex so multiple clients can run side by side. Same trick MultiBloxy and other tools use, just packaged for the rest of us.
+- **Saved Roblox accounts.** Add your alts once via an embedded login window. Click *Launch As* to spawn each one.
+- **DPAPI-encrypted account vault.** Saved cookies are tied to your Windows user. A copy of `accounts.dat` moved to another PC won't decrypt.
+- **Per-game launch routing.** Set a default Roblox game URL once; *Launch As* lands every alt in that game.
+- **System tray UX.** State-coloured ring shows mutex status at a glance (cyan = on, slate = off, magenta = error).
+- **Velopack auto-update.** Drift-compatible with Roblox-side changes; remote `roblox-compat.json` config tells the app the current known-good Roblox version + mutex name.
+- **No DevTools, no registry edits.** Common-Windows-user UX from install through launch.
 
 ## How to use
 
@@ -83,10 +97,6 @@ The named-mutex defeat technique originated with **MultiBloxy** by [Zgoly](https
 - Roblox / Hyperion has stated that multi-instancing "may be considered malicious behavior." Risk of a ban appears low because we don't inject into or modify the Roblox client — we only hold a Windows mutex name before launch. But it is non-zero. Don't run this on accounts you can't afford to lose.
 - The auth-ticket endpoint contract is what we depend on. If Roblox changes it, multi-instance launches will start failing — see the [auth-ticket-flow-validator agent](.claude/agents/auth-ticket-flow-validator.md) and the version-drift banner in the main window.
 
-## Environment variables
-
-None required for v1.1. `ROROROBLOX_TEST_COOKIE` is read **only** by the throwaway spike at `spike/auth-ticket/` — it's a verification gate for development, not used by the shipped product.
-
 ## Building from source
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the dev setup, spike re-run, and MSIX packaging walkthroughs. Short version:
@@ -96,20 +106,64 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the dev setup, spike re-run, and MS
 dotnet build
 dotnet test
 dotnet run --project src/ROROROblox.App
+
+# Regenerate Store-bound logo assets (Direction C iso voxel stack)
+powershell -ExecutionPolicy Bypass -File scripts/generate-store-assets.ps1
+powershell -ExecutionPolicy Bypass -File scripts/generate-tray-icons.ps1
+
+# Build sideload MSIX (after items 11-12 from docs/checklist.md land)
+powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertPath dev-cert.pfx -CertPassword '...'
 ```
 
 ## Documentation
 
+- **Privacy policy:** [`docs/PRIVACY.md`](docs/PRIVACY.md)
 - **Architecture & decisions:** [`docs/superpowers/specs/2026-05-03-rororoblox-design.md`](docs/superpowers/specs/2026-05-03-rororoblox-design.md)
 - **Build plan:** [`docs/checklist.md`](docs/checklist.md)
 - **Cycle process notes:** [`process-notes.md`](process-notes.md)
 - **Security audit:** [`docs/security-audit-2026-05-04.md`](docs/security-audit-2026-05-04.md)
+- **Microsoft Store submission:** [`docs/store/submission-checklist.md`](docs/store/submission-checklist.md) — pre/post-flight procedure, listing copy, age rating, screenshots
 - **Repo conventions for AI agents:** [`CLAUDE.md`](CLAUDE.md)
+
+## Roadmap
+
+**Shipped in v1.1**
+- [x] Multi-instance via singleton-mutex hold
+- [x] DPAPI-encrypted account vault
+- [x] Per-account *Launch As* via documented authentication-ticket flow
+- [x] System tray with state-coloured ring
+- [x] Velopack auto-update via GitHub Releases
+- [x] Remote `roblox-compat.json` config (mutex name + known-good Roblox versions)
+- [x] Sideload MSIX with self-signed cert
+- [x] Squad Launch + Friend Follow surfaces
+- [x] Join-by-link entry per saved account
+
+**Up next**
+- [ ] Microsoft Store submission (cert + listing + Partner Center upload)
+- [ ] Per-cookie encryption envelope (today: whole-blob; v1.2: per-account)
+- [ ] Per-account WebView2 profile isolation (today: shared cache, wiped pre-login)
+- [ ] Crash report opt-in (today: local logs only)
+- [ ] Winget manifest (`winget install rororoblox`)
+- [ ] Auto-detect when Roblox renames the singleton mutex; warn with current `roblox-compat.json` version
+
+## Why "ROROROblox"?
+
+The name is a stutter spelling of **Roblox** — *RO RO RO blox* — visualizing what the app does: spawn three (or more) Roblox clients side by side. The icon mirrors the wordmark: three voxel blocks stacked, cyan-bright on top, magenta in the middle, cyan at the base. The tagline "Multi-Roblox Instant Generator" leans into the same beat.
+
+The brand DNA is 626 Labs — neon cyan + magenta on deep navy, geometric type, builder-to-builder voice. *Imagine Something Else* is the umbrella; **Multi-Roblox Instant Generator** is the product.
+
+> "Roblox" and the Roblox logo are trademarks of Roblox Corporation. ROROROblox is an independent third-party tool, not affiliated with, endorsed by, or sponsored by Roblox Corporation. The trademarked term is used solely to describe compatibility with the Roblox platform.
 
 ## License
 
-Source code is MIT-licensed. The reference binary (`MultiBloxy.exe`) is governed by Zgoly's original license — see [`PROVENANCE.txt`](PROVENANCE.txt).
+Source code is **MIT-licensed** © 626 Labs LLC. Do whatever you want with it.
+
+The reference binary (`MultiBloxy.exe`) is governed by Zgoly's original license — see [`PROVENANCE.txt`](PROVENANCE.txt).
 
 ---
 
-*A 626 Labs product. Imagine Something Else.*
+<div align="center">
+
+<sub>A <strong>626 Labs</strong> product · <em>Multi-Roblox Instant Generator</em></sub>
+
+</div>
