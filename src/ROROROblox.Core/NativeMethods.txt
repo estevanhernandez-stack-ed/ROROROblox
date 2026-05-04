@@ -1,0 +1,4 @@
+CreateMutexW
+ReleaseMutex
+CloseHandle
+WaitForSingleObject
