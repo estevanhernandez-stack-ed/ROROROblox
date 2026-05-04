@@ -21,7 +21,11 @@
         <DisplayName>ROROROblox</DisplayName>
         <PublisherDisplayName>Estevan Hernandez</PublisherDisplayName>
         <Logo>Package\Logos\StoreLogo.png</Logo>
-        <Description>Run multiple Roblox clients side by side. Quick-launch saved accounts. A 626 Labs product.</Description>
+        <!-- Description: surfaces in package metadata + Store listing fallback. Trademark
+             disclaimer is required for nominative-use of "Roblox" per Sanduhr Store playbook
+             (10.1.4.4.a). Long-form disclaimer lives in docs/store/listing-copy.md and the
+             privacy policy; this is the abbreviated form that fits the manifest field. -->
+        <Description>Run multiple Roblox clients side by side. Quick-launch saved accounts. "Roblox" is a trademark of Roblox Corporation; ROROROblox is an independent third-party tool, not affiliated with Roblox Corporation. A 626 Labs product.</Description>
     </Properties>
 
     <Dependencies>
