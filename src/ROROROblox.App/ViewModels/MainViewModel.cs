@@ -22,6 +22,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly IRobloxLauncher _launcher;
     private readonly IRobloxCompatChecker _compatChecker;
     private readonly IAppSettings _settings;
+    private readonly IFavoriteGameStore _favorites;
 
     private string _statusBanner = string.Empty;
     private string? _robloxCompatBanner;
@@ -33,7 +34,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         IAccountStore accountStore,
         IRobloxLauncher launcher,
         IRobloxCompatChecker compatChecker,
-        IAppSettings settings)
+        IAppSettings settings,
+        IFavoriteGameStore favorites)
     {
         _cookieCapture = cookieCapture;
         _api = api;
@@ -41,6 +43,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _launcher = launcher;
         _compatChecker = compatChecker;
         _settings = settings;
+        _favorites = favorites;
 
         AddAccountCommand = new RelayCommand(AddAccountAsync, () => !IsBusy);
         LaunchAccountCommand = new RelayCommand(p => LaunchAccountAsync(p as AccountSummary));
@@ -275,12 +278,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private void OpenSettings()
     {
-        var window = new SettingsWindow(_settings) { Owner = Application.Current.MainWindow };
-        var saved = window.ShowDialog() == true;
-        if (saved)
-        {
-            StatusBanner = "Settings saved.";
-        }
+        var window = new SettingsWindow(_favorites, _api) { Owner = Application.Current.MainWindow };
+        window.ShowDialog();
     }
 
     private static void ShowWebView2NotInstalledModal()

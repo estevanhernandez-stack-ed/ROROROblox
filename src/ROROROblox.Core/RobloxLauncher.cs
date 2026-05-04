@@ -16,12 +16,14 @@ public sealed class RobloxLauncher : IRobloxLauncher
     private readonly IRobloxApi _api;
     private readonly IAppSettings _settings;
     private readonly IProcessStarter _processStarter;
+    private readonly IFavoriteGameStore? _favorites;
     private readonly TimeProvider _timeProvider;
     private readonly Func<long> _browserTrackerIdFactory;
 
-    public RobloxLauncher(IRobloxApi api, IAppSettings settings, IProcessStarter processStarter)
+    public RobloxLauncher(IRobloxApi api, IAppSettings settings, IProcessStarter processStarter, IFavoriteGameStore? favorites = null)
         : this(api, settings, processStarter, TimeProvider.System,
-              () => Random.Shared.NextInt64(1_000_000_000_000, 9_999_999_999_999))
+              () => Random.Shared.NextInt64(1_000_000_000_000, 9_999_999_999_999),
+              favorites)
     {
     }
 
@@ -31,13 +33,15 @@ public sealed class RobloxLauncher : IRobloxLauncher
         IAppSettings settings,
         IProcessStarter processStarter,
         TimeProvider timeProvider,
-        Func<long> browserTrackerIdFactory)
+        Func<long> browserTrackerIdFactory,
+        IFavoriteGameStore? favorites = null)
     {
         _api = api ?? throw new ArgumentNullException(nameof(api));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _processStarter = processStarter ?? throw new ArgumentNullException(nameof(processStarter));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         _browserTrackerIdFactory = browserTrackerIdFactory ?? throw new ArgumentNullException(nameof(browserTrackerIdFactory));
+        _favorites = favorites;
     }
 
     public async Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null)
@@ -47,11 +51,28 @@ public sealed class RobloxLauncher : IRobloxLauncher
             throw new ArgumentException("Cookie must not be empty.", nameof(cookie));
         }
 
-        var resolvedPlaceUrl = placeUrl ?? await _settings.GetDefaultPlaceUrlAsync().ConfigureAwait(false);
+        // Place-URL resolution tiers:
+        //   1. Explicit placeUrl param (caller picked a specific game).
+        //   2. The default favorite (IFavoriteGameStore -- new in v1.x: multi-game library).
+        //   3. AppSettings.DefaultPlaceUrl (legacy single-URL setting; kept for back-compat).
+        var resolvedPlaceUrl = placeUrl;
+        if (string.IsNullOrEmpty(resolvedPlaceUrl) && _favorites is not null)
+        {
+            var defaultFavorite = await _favorites.GetDefaultAsync().ConfigureAwait(false);
+            if (defaultFavorite is not null)
+            {
+                // Bare placeId; NormalizeToPlaceLauncherUrl wraps it in PlaceLauncher.ashx form.
+                resolvedPlaceUrl = defaultFavorite.PlaceId.ToString();
+            }
+        }
+        if (string.IsNullOrEmpty(resolvedPlaceUrl))
+        {
+            resolvedPlaceUrl = await _settings.GetDefaultPlaceUrlAsync().ConfigureAwait(false);
+        }
         if (string.IsNullOrEmpty(resolvedPlaceUrl))
         {
             return new LaunchResult.Failed(
-                "No default Roblox game URL is configured. Set one in Settings or pass a place URL.");
+                "No default Roblox game configured. Add one in Games (header button), or pass a place URL.");
         }
 
         AuthTicket ticket;
@@ -92,6 +113,38 @@ public sealed class RobloxLauncher : IRobloxLauncher
         {
             return new LaunchResult.Failed($"Process.Start failed: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Pull a numeric place id out of any of the input shapes <see cref="NormalizeToPlaceLauncherUrl"/>
+    /// accepts. Returns null if no place id can be located. Used by the Games dialog to extract
+    /// place ids from pasted URLs.
+    /// </summary>
+    public static long? ExtractPlaceId(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return null;
+        }
+
+        var match = Regex.Match(input, @"placeId=(\d+)", RegexOptions.IgnoreCase);
+        if (match.Success && long.TryParse(match.Groups[1].Value, out var fromQuery))
+        {
+            return fromQuery;
+        }
+
+        match = Regex.Match(input, @"roblox\.com/games/(\d+)", RegexOptions.IgnoreCase);
+        if (match.Success && long.TryParse(match.Groups[1].Value, out var fromPath))
+        {
+            return fromPath;
+        }
+
+        if (long.TryParse(input.Trim(), out var bare) && bare > 0)
+        {
+            return bare;
+        }
+
+        return null;
     }
 
     /// <summary>

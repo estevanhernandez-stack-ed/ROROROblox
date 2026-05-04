@@ -8,6 +8,7 @@
                  MinHeight="400" MinWidth="640"
                  WindowStartupLocation="CenterScreen"
                  Background="#0F1F31"
+                 Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico"
                  ExtendsContentIntoTitleBar="True"
                  WindowBackdropType="Mica"
                  WindowCornerPreference="Default">
@@ -165,7 +166,7 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="Settings"
+                    <Button Content="Games"
                             Command="{Binding OpenSettingsCommand}"
                             Padding="14,8" Margin="0,0,8,0"
                             Background="{StaticResource NavyBrush}"

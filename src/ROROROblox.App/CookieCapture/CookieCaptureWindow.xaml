@@ -3,10 +3,11 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wv="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
-        Title="Add Roblox Account — log in"
+        Title="Add Roblox Account -- log in"
         Height="700" Width="1024"
         WindowStartupLocation="CenterScreen"
-        Background="#0F1F31">
+        Background="#0F1F31"
+        Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

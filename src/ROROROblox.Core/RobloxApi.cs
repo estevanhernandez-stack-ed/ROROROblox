@@ -17,6 +17,9 @@ public sealed class RobloxApi : IRobloxApi
     private const string AuthTicketEndpoint = "https://auth.roblox.com/v1/authentication-ticket";
     private const string AuthenticatedUserEndpoint = "https://users.roblox.com/v1/users/authenticated";
     private const string AvatarHeadshotEndpoint = "https://thumbnails.roblox.com/v1/users/avatar-headshot";
+    private const string PlaceUniverseEndpoint = "https://apis.roblox.com/universes/v1/places";
+    private const string GamesEndpoint = "https://games.roblox.com/v1/games";
+    private const string GameIconsEndpoint = "https://thumbnails.roblox.com/v1/games/icons";
     private const string Referer = "https://www.roblox.com/";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -141,6 +144,85 @@ public sealed class RobloxApi : IRobloxApi
         return first.ImageUrl;
     }
 
+    public async Task<GameMetadata?> GetGameMetadataByPlaceIdAsync(long placeId)
+    {
+        if (placeId <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(placeId), "placeId must be positive.");
+        }
+
+        // Step 1: place id -> universe id (public, no cookie).
+        long universeId;
+        try
+        {
+            using var universeRequest = new HttpRequestMessage(HttpMethod.Get, $"{PlaceUniverseEndpoint}/{placeId}/universe");
+            using var universeResponse = await _httpClient.SendAsync(universeRequest).ConfigureAwait(false);
+            if (!universeResponse.IsSuccessStatusCode)
+            {
+                return null;
+            }
+            var universePayload = await universeResponse.Content
+                .ReadFromJsonAsync<UniverseLookupResponse>(JsonOptions)
+                .ConfigureAwait(false);
+            if (universePayload?.UniverseId is null or 0)
+            {
+                return null;
+            }
+            universeId = universePayload.UniverseId.Value;
+        }
+        catch
+        {
+            return null;
+        }
+
+        // Step 2: universe id -> game name (public, no cookie).
+        string name;
+        try
+        {
+            using var gamesRequest = new HttpRequestMessage(HttpMethod.Get, $"{GamesEndpoint}?universeIds={universeId}");
+            using var gamesResponse = await _httpClient.SendAsync(gamesRequest).ConfigureAwait(false);
+            if (!gamesResponse.IsSuccessStatusCode)
+            {
+                return null;
+            }
+            var gamesPayload = await gamesResponse.Content
+                .ReadFromJsonAsync<GamesListResponse>(JsonOptions)
+                .ConfigureAwait(false);
+            var firstGame = gamesPayload?.Data?.FirstOrDefault();
+            if (firstGame is null || string.IsNullOrEmpty(firstGame.Name))
+            {
+                return null;
+            }
+            name = firstGame.Name;
+        }
+        catch
+        {
+            return null;
+        }
+
+        // Step 3: universe id -> icon URL (public, no cookie). Soft-failure: if icon fetch fails,
+        // still return metadata with empty IconUrl -- the favorite is still useful.
+        var iconUrl = string.Empty;
+        try
+        {
+            var iconQuery = $"?universeIds={universeId}&size=150x150&format=Png&isCircular=false";
+            using var iconRequest = new HttpRequestMessage(HttpMethod.Get, $"{GameIconsEndpoint}{iconQuery}");
+            using var iconResponse = await _httpClient.SendAsync(iconRequest).ConfigureAwait(false);
+            if (iconResponse.IsSuccessStatusCode)
+            {
+                var iconPayload = await iconResponse.Content
+                    .ReadFromJsonAsync<ThumbnailsResponse>(JsonOptions)
+                    .ConfigureAwait(false);
+                iconUrl = iconPayload?.Data?.FirstOrDefault()?.ImageUrl ?? string.Empty;
+            }
+        }
+        catch
+        {
+        }
+
+        return new GameMetadata(placeId, universeId, name, iconUrl);
+    }
+
     private async Task<HttpResponseMessage> PostAuthTicketAsync(string cookie, string? csrfToken)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, AuthTicketEndpoint);
@@ -177,4 +259,7 @@ public sealed class RobloxApi : IRobloxApi
     private sealed record AuthenticatedUserResponse(long Id, string Name, string DisplayName);
     private sealed record ThumbnailsResponse(ThumbnailItem[] Data);
     private sealed record ThumbnailItem([property: JsonPropertyName("imageUrl")] string ImageUrl);
+    private sealed record UniverseLookupResponse(long? UniverseId);
+    private sealed record GamesListResponse(GamesListItem[] Data);
+    private sealed record GamesListItem(string Name);
 }

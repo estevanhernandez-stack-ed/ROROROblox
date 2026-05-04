@@ -86,6 +86,7 @@ public partial class App : Application
         services.AddSingleton<IMutexHolder>(_ => new MutexHolder()); // Default name = Local\ROBLOX_singletonEvent
         services.AddSingleton<ITrayService, TrayService>();
         services.AddSingleton<IAppSettings>(_ => new AppSettings());
+        services.AddSingleton<IFavoriteGameStore>(_ => new FavoriteGameStore());
         services.AddSingleton<IAccountStore>(_ => new AccountStore());
         services.AddSingleton<IStartupRegistration, StartupRegistration>();
         services.AddSingleton<IProcessStarter, ProcessStarter>();

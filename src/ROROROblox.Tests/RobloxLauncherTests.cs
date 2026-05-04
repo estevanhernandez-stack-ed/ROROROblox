@@ -293,6 +293,7 @@ public class RobloxLauncherTests
         public Task<AuthTicket> GetAuthTicketAsync(string cookie) => _ticketBehavior(cookie);
         public Task<UserProfile> GetUserProfileAsync(string cookie) => throw new NotImplementedException();
         public Task<string> GetAvatarHeadshotUrlAsync(long userId) => throw new NotImplementedException();
+        public Task<GameMetadata?> GetGameMetadataByPlaceIdAsync(long placeId) => throw new NotImplementedException();
     }
 
     private sealed class InMemoryAppSettings : IAppSettings

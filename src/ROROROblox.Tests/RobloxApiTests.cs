@@ -231,4 +231,68 @@ public class RobloxApiTests
     {
         Assert.Throws<ArgumentNullException>(() => new RobloxApi(null!));
     }
+
+    // === GetGameMetadataByPlaceIdAsync ===
+
+    [Fact]
+    public async Task GetGameMetadataByPlaceIdAsync_HappyPath_ReturnsAllFields()
+    {
+        var (api, stub) = CreateApi();
+        // Step 1: place -> universe
+        stub.EnqueueResponse(JsonResponse("""{"universeId": 1234567}"""));
+        // Step 2: universe -> game name
+        stub.EnqueueResponse(JsonResponse("""{"data": [{"name": "Adopt Me!"}]}"""));
+        // Step 3: universe -> icon
+        stub.EnqueueResponse(JsonResponse("""{"data": [{"imageUrl": "https://tr.rbxcdn.com/icon.png"}]}"""));
+
+        var result = await api.GetGameMetadataByPlaceIdAsync(920587237);
+
+        Assert.NotNull(result);
+        Assert.Equal(920587237, result!.PlaceId);
+        Assert.Equal(1234567, result.UniverseId);
+        Assert.Equal("Adopt Me!", result.Name);
+        Assert.Equal("https://tr.rbxcdn.com/icon.png", result.IconUrl);
+    }
+
+    [Fact]
+    public async Task GetGameMetadataByPlaceIdAsync_PlaceLookupFails_ReturnsNull()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(System.Net.HttpStatusCode.NotFound));
+
+        var result = await api.GetGameMetadataByPlaceIdAsync(999);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetGameMetadataByPlaceIdAsync_IconFetchFails_StillReturnsMetadataWithEmptyIcon()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(JsonResponse("""{"universeId": 1234567}"""));
+        stub.EnqueueResponse(JsonResponse("""{"data": [{"name": "Adopt Me!"}]}"""));
+        stub.EnqueueResponse(Response(System.Net.HttpStatusCode.InternalServerError));
+
+        var result = await api.GetGameMetadataByPlaceIdAsync(920587237);
+
+        Assert.NotNull(result);
+        Assert.Equal("Adopt Me!", result!.Name);
+        Assert.Equal(string.Empty, result.IconUrl);
+    }
+
+    [Fact]
+    public async Task GetGameMetadataByPlaceIdAsync_RejectsNonPositivePlaceId()
+    {
+        var (api, _) = CreateApi();
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => api.GetGameMetadataByPlaceIdAsync(0));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => api.GetGameMetadataByPlaceIdAsync(-1));
+    }
+
+    private static HttpResponseMessage JsonResponse(string json)
+    {
+        return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+        {
+            Content = new StringContent(json, Encoding.UTF8, "application/json"),
+        };
+    }
 }

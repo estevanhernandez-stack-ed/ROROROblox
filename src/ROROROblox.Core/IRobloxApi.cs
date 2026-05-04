@@ -24,4 +24,11 @@ public interface IRobloxApi
     /// GET <c>thumbnails.roblox.com/v1/users/avatar-headshot</c> for the headshot image URL.
     /// </summary>
     Task<string> GetAvatarHeadshotUrlAsync(long userId);
+
+    /// <summary>
+    /// Look up game metadata (universe id + display name + icon URL) from a place id.
+    /// Uses Roblox's public endpoints; no cookie required. Returns null if any lookup fails
+    /// (place not found, network error, malformed response).
+    /// </summary>
+    Task<GameMetadata?> GetGameMetadataByPlaceIdAsync(long placeId);
 }

@@ -2,70 +2,196 @@
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="ROROROblox -- Settings"
-        Height="380" Width="600"
+        xmlns:core="clr-namespace:ROROROblox.Core;assembly=ROROROblox.Core"
+        Title="ROROROblox -- Games"
+        Height="600" Width="700"
+        MinHeight="480" MinWidth="640"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
-        Background="#0F1F31">
-    <Grid Margin="32">
+        Background="#0F1F31"
+        Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="DividerBrush" Color="#1F3149" />
+        <SolidColorBrush x:Key="MutedTextBrush" Color="#9AA8B8" />
+        <SolidColorBrush x:Key="CyanBrush" Color="#17D4FA" />
+        <SolidColorBrush x:Key="MagentaBrush" Color="#F22F89" />
+        <SolidColorBrush x:Key="WhiteBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="NavyBrush" Color="#0F1F31" />
+        <SolidColorBrush x:Key="RowBgBrush" Color="#15263A" />
+
+        <DataTemplate DataType="{x:Type core:FavoriteGame}">
+            <Border Margin="0,0,0,8" Padding="14,10"
+                    CornerRadius="8"
+                    Background="{StaticResource RowBgBrush}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDefault}" Value="True">
+                                <Setter Property="BorderBrush" Value="{StaticResource CyanBrush}" />
+                                <Setter Property="BorderThickness" Value="1" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Width="56" Height="56" CornerRadius="6"
+                            Background="{StaticResource NavyBrush}" ClipToBounds="True"
+                            VerticalAlignment="Center">
+                        <Image Source="{Binding ThumbnailUrl}" Stretch="UniformToFill" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Margin="14,0,14,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Name}"
+                                       FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{StaticResource WhiteBrush}" />
+                            <Border Background="{StaticResource CyanBrush}" CornerRadius="3"
+                                    Margin="10,2,0,0" Padding="6,1"
+                                    Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="DEFAULT"
+                                           FontSize="9" FontWeight="Bold"
+                                           Foreground="{StaticResource NavyBrush}" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="{Binding PlaceId, StringFormat='Place ID {0}'}"
+                                   FontSize="11"
+                                   FontFamily="Consolas"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   Margin="0,2,0,0" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="Set default"
+                                Tag="{Binding PlaceId}"
+                                Click="OnSetDefaultClick"
+                                Padding="10,6" Margin="0,0,8,0"
+                                Background="{StaticResource NavyBrush}"
+                                Foreground="{StaticResource MutedTextBrush}"
+                                BorderBrush="{StaticResource DividerBrush}"
+                                BorderThickness="1"
+                                FontSize="11"
+                                Visibility="{Binding IsDefault, Converter={StaticResource InverseBoolConverter}}" />
+                        <Button Content="Remove"
+                                Tag="{Binding PlaceId}"
+                                Click="OnRemoveClick"
+                                Padding="10,6"
+                                Background="{StaticResource NavyBrush}"
+                                Foreground="{StaticResource MutedTextBrush}"
+                                BorderBrush="{StaticResource DividerBrush}"
+                                BorderThickness="1"
+                                FontSize="11" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <Style x:Key="InverseBoolToVisibilityStyle" TargetType="UIElement">
+            <Setter Property="Visibility" Value="Visible" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDefault}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="32,24">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />  <!-- Title -->
+            <RowDefinition Height="Auto" />  <!-- Add box -->
+            <RowDefinition Height="Auto" />  <!-- Add status -->
+            <RowDefinition Height="Auto" />  <!-- List header -->
+            <RowDefinition Height="*" />     <!-- List -->
+            <RowDefinition Height="Auto" />  <!-- Footer -->
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Text="Settings"
-                   FontSize="20" FontWeight="Bold"
-                   Foreground="#17D4FA" />
-
-        <TextBlock Grid.Row="1"
-                   Text="Default Roblox game URL"
-                   FontSize="13" FontWeight="SemiBold"
-                   Foreground="#FFFFFF"
-                   Margin="0,24,0,4" />
-
-        <TextBlock Grid.Row="2"
-                   FontSize="11"
-                   Foreground="#9AA8B8"
-                   TextWrapping="Wrap"
-                   Margin="0,0,0,8">
-            <Run Text="When you click " />
-            <Run Text="Launch As" FontWeight="SemiBold" />
-            <Run Text=", ROROROblox launches Roblox into this game by default. Paste any roblox.com/games/&lt;id&gt;/&lt;name&gt; URL." />
-        </TextBlock>
-
-        <TextBox Grid.Row="3"
-                 x:Name="PlaceUrlInput"
-                 FontSize="12"
-                 FontFamily="Consolas"
-                 Padding="10,8"
-                 Background="#15263A"
-                 Foreground="#FFFFFF"
-                 BorderBrush="#1F3149"
-                 CaretBrush="#17D4FA"
-                 BorderThickness="1" />
-
-        <TextBlock Grid.Row="4"
-                   FontSize="10"
-                   Foreground="#9AA8B8"
-                   Opacity="0.7"
-                   TextWrapping="Wrap"
-                   Margin="0,12,0,0">
-            <Run Text="Tip: open Roblox in your browser, find a game you want as your default, copy the URL from the address bar, paste it here. Example: https://www.roblox.com/games/920587237/Adopt-Me" />
-        </TextBlock>
-
-        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Content="Cancel" Padding="16,8" Margin="0,0,8,0"
-                    Background="#0F1F31" Foreground="#FFFFFF" BorderBrush="#5A6982" BorderThickness="1"
-                    Click="OnCancelClick" />
-            <Button Content="Save" Padding="16,8" IsDefault="True"
-                    Background="#17D4FA" Foreground="#0F1F31" BorderThickness="0"
-                    FontWeight="Bold"
-                    Click="OnSaveClick" />
+        <StackPanel Grid.Row="0">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Games"
+                           FontSize="22" FontWeight="Bold"
+                           Foreground="{StaticResource CyanBrush}" />
+                <TextBlock Text=" / "
+                           FontSize="22" FontWeight="Bold"
+                           Foreground="{StaticResource MagentaBrush}" />
+                <TextBlock Text="Library"
+                           FontSize="22" FontWeight="Bold"
+                           Foreground="{StaticResource WhiteBrush}" />
+            </StackPanel>
+            <TextBlock Text="Save the games you launch alts into. The one marked DEFAULT is what Launch As uses."
+                       FontSize="11"
+                       Foreground="{StaticResource MutedTextBrush}"
+                       Margin="0,4,0,0" />
         </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,20,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" x:Name="UrlInput"
+                     FontSize="12"
+                     FontFamily="Consolas"
+                     Padding="10,8"
+                     Background="{StaticResource RowBgBrush}"
+                     Foreground="{StaticResource WhiteBrush}"
+                     BorderBrush="{StaticResource DividerBrush}"
+                     CaretBrush="{StaticResource CyanBrush}"
+                     BorderThickness="1"
+                     ToolTip="Paste a roblox.com/games/&lt;id&gt;/&lt;name&gt; URL (or just the place id)" />
+            <Button Grid.Column="1" x:Name="AddButton" Content="+ Add Game"
+                    Padding="14,8" Margin="8,0,0,0"
+                    Background="{StaticResource CyanBrush}"
+                    Foreground="{StaticResource NavyBrush}"
+                    BorderThickness="0"
+                    FontWeight="Bold"
+                    Click="OnAddClick" />
+        </Grid>
+
+        <TextBlock Grid.Row="2" x:Name="StatusText"
+                   FontSize="11"
+                   Foreground="{StaticResource MutedTextBrush}"
+                   Margin="0,8,0,0"
+                   TextWrapping="Wrap" />
+
+        <TextBlock Grid.Row="3"
+                   Text="Saved games"
+                   FontSize="12" FontWeight="SemiBold"
+                   Foreground="{StaticResource MutedTextBrush}"
+                   Margin="0,20,0,8" />
+
+        <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <ItemsControl x:Name="FavoritesList" />
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                            x:Name="EmptyState">
+                    <TextBlock Text="No saved games yet."
+                               FontSize="13"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="Paste a Roblox game URL above to add your first one."
+                               FontSize="11"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,4,0,0"
+                               Opacity="0.7" />
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <Button Grid.Row="5" Content="Close" Padding="16,8"
+                HorizontalAlignment="Right" Margin="0,12,0,0"
+                Background="{StaticResource NavyBrush}"
+                Foreground="{StaticResource WhiteBrush}"
+                BorderBrush="{StaticResource DividerBrush}"
+                BorderThickness="1"
+                IsCancel="True"
+                Click="OnCloseClick" />
     </Grid>
 </Window>
