@@ -93,6 +93,14 @@
                                 FontWeight="SemiBold"
                                 Visibility="{Binding SessionExpired, Converter={StaticResource BoolToVisibilityConverter}}" />
 
+                        <!-- Per-account game picker -->
+                        <ComboBox Margin="0,0,8,0" MinWidth="170"
+                                  ItemsSource="{Binding DataContext.AvailableGames, RelativeSource={RelativeSource AncestorType=Window}}"
+                                  SelectedItem="{Binding SelectedGame}"
+                                  DisplayMemberPath="Name"
+                                  VerticalAlignment="Center"
+                                  ToolTip="Game to launch this account into. Manage games via the header Games button." />
+
                         <!-- Launch As -->
                         <Button Content="Launch As"
                                 Command="{Binding DataContext.LaunchAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"

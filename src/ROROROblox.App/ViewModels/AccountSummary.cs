@@ -13,6 +13,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private bool _sessionExpired;
     private bool _isLaunching;
     private string _statusText = string.Empty;
+    private FavoriteGame? _selectedGame;
 
     public AccountSummary(Account account)
     {
@@ -43,6 +44,17 @@ public sealed class AccountSummary : INotifyPropertyChanged
     {
         get => _statusText;
         set => SetField(ref _statusText, value);
+    }
+
+    /// <summary>
+    /// The game this account will launch into when Launch As is clicked. Defaults to the
+    /// favorites-store default; user can change per-account via the in-row ComboBox.
+    /// In-memory only -- not persisted (resets to default on app restart).
+    /// </summary>
+    public FavoriteGame? SelectedGame
+    {
+        get => _selectedGame;
+        set => SetField(ref _selectedGame, value);
     }
 
     public void StampLaunched(DateTimeOffset at)

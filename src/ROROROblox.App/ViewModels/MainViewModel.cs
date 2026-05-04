@@ -54,6 +54,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public ObservableCollection<AccountSummary> Accounts { get; } = [];
 
+    /// <summary>
+    /// Games available for the per-account picker on each row. Synced from the favorites store
+    /// at LoadAsync time and again every time the Games dialog closes.
+    /// </summary>
+    public ObservableCollection<FavoriteGame> AvailableGames { get; } = [];
+
     public ICommand AddAccountCommand { get; }
     public ICommand LaunchAccountCommand { get; }
     public ICommand RemoveAccountCommand { get; }
@@ -83,7 +89,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         set => SetField(ref _isBusy, value);
     }
 
-    /// <summary>Loads accounts from disk into <see cref="Accounts"/>. Called once at MainWindow load.</summary>
+    /// <summary>Loads accounts + games from disk. Called once at MainWindow load.</summary>
     public async Task LoadAsync()
     {
         try
@@ -98,6 +104,31 @@ public sealed class MainViewModel : INotifyPropertyChanged
         catch (AccountStoreCorruptException)
         {
             ShowDpapiCorruptModal();
+        }
+
+        await ReloadGamesAsync();
+    }
+
+    /// <summary>
+    /// Reload <see cref="AvailableGames"/> from the favorites store and re-sync each account's
+    /// <see cref="AccountSummary.SelectedGame"/> -- preserve current selection if still present,
+    /// else fall back to the favorites default. Called on initial load + after the Games dialog
+    /// closes (since the user may have added / removed / set-default'd a game).
+    /// </summary>
+    public async Task ReloadGamesAsync()
+    {
+        var games = await _favorites.ListAsync();
+        AvailableGames.Clear();
+        foreach (var game in games)
+        {
+            AvailableGames.Add(game);
+        }
+
+        var defaultGame = AvailableGames.FirstOrDefault(g => g.IsDefault) ?? AvailableGames.FirstOrDefault();
+        foreach (var account in Accounts)
+        {
+            var stillThere = AvailableGames.FirstOrDefault(g => g.PlaceId == account.SelectedGame?.PlaceId);
+            account.SelectedGame = stillThere ?? defaultGame;
         }
     }
 
@@ -184,7 +215,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 return;
             }
 
-            var result = await _launcher.LaunchAsync(cookie);
+            // Per-account game pick from the row's ComboBox (in-memory, resets on app restart).
+            // Launcher wraps bare placeId in PlaceLauncher.ashx form via NormalizeToPlaceLauncherUrl.
+            // null SelectedGame falls through to launcher tier-2 (favorites default) then tier-3
+            // (legacy AppSettings.DefaultPlaceUrl).
+            var placeUrl = summary.SelectedGame?.PlaceId.ToString();
+            var result = await _launcher.LaunchAsync(cookie, placeUrl);
             switch (result)
             {
                 case LaunchResult.Started started:
@@ -280,6 +316,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         var window = new SettingsWindow(_favorites, _api) { Owner = Application.Current.MainWindow };
         window.ShowDialog();
+        // Refresh in case the user added / removed / set-default'd a game.
+        _ = ReloadGamesAsync();
     }
 
     private static void ShowWebView2NotInstalledModal()
