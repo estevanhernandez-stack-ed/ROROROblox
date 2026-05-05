@@ -80,6 +80,10 @@ Partner Center status page will move through:
 - [ ] Capture the listing URL + add to dashboard
 - [ ] Announce in clan Discord with Store link
 
+### Carry to next release (Partner Center surfaced these on the v1.1 submission)
+
+- [ ] **Arm64 (AArch64) build target.** Partner Center flagged: *"Future Windows on Arm devices will no longer support AArch32, therefore we recommend updating your targeted platforms to Arm64 (AArch64), which works on all Windows on Arm devices, as soon as possible in order to ensure your customers can continue to enjoy your experience."* Current MSIX is x64 only (`<Identity ProcessorArchitecture="x64" />`). v1.1.1 or v1.2 should add an Arm64 build flavor + ship a multi-arch package (or two packages — Microsoft accepts either pattern). Action: extend `scripts/build-msix.ps1` to support `-Architecture arm64`, regenerate manifest with arm64 ProcessorArchitecture, and produce `dist/ROROROblox-Store-arm64.msix` alongside the x64 build. Bump version when shipping.
+
 ## Post-flight — if rejected
 
 Per Sanduhr playbook response protocol:

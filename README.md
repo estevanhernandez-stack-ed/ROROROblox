@@ -140,6 +140,7 @@ powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertP
 
 **Up next**
 - [ ] Microsoft Store submission (cert + listing + Partner Center upload)
+- [ ] **Arm64 (AArch64) build target.** Partner Center flagged that future Windows on Arm devices will not support AArch32; current MSIX is x64-only. Add an Arm64 build flavor + manifest variant so customers on Arm devices can install. Track for v1.1.1 or v1.2.
 - [ ] Per-cookie encryption envelope (today: whole-blob; v1.2: per-account)
 - [ ] Per-account WebView2 profile isolation (today: shared cache, wiped pre-login)
 - [ ] Crash report opt-in (today: local logs only)

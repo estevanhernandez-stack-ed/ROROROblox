@@ -257,6 +257,28 @@ function Render-Poster {
     return $c
 }
 
+function Render-Hero {
+    # 16:9 hero image for Partner Center listing top banner. Voxel stack on left ~20% of
+    # width, wordmark + tagline + attribution stacked on the right ~60%. Same DNA as the
+    # wide tile but tuned for 1920x1080 / 3840x2160 viewports (more vertical breathing
+    # room around the stack, larger text, attribution gets its own line).
+    param([int]$width, [int]$height)
+    $c = New-Canvas $width $height $navy
+    $stackSize = [single]($height * 0.62)
+    $stackCx = $width * 0.20
+    $stackCy = $height * 0.50
+    Draw-VoxelStack $c.Graphics $stackCx $stackCy $stackSize
+
+    $textX = $width * 0.40
+    $wordmarkSize = [single]($height * 0.13)
+    $taglineSize  = [single]($height * 0.045)
+    $attribSize   = [single]($height * 0.032)
+    Draw-Text $c.Graphics 'ROROROblox' $textX ($height * 0.34) $wordmarkSize ([System.Drawing.Color]::White) ([System.Drawing.FontStyle]::Bold) $false
+    Draw-Text $c.Graphics 'Multi-Roblox Instant Generator.' $textX ($height * 0.56) $taglineSize $cyan ([System.Drawing.FontStyle]::Regular) $false
+    Draw-Text $c.Graphics 'A 626 Labs product' $textX ($height * 0.66) $attribSize $mutedText ([System.Drawing.FontStyle]::Regular) $false
+    return $c
+}
+
 function Render-Splash {
     # 620x300 base. Voxel stack on left (taller), wordmark + tagline + attribution on right.
     param([int]$width, [int]$height)
@@ -410,6 +432,16 @@ foreach ($pair in $posterSizes) {
     $h = $pair[1]
     $c = Render-Poster $w $h
     Save-Png $c.Bitmap (Join-Path $listingDir "store-poster-${w}x${h}.png")
+    $c.Graphics.Dispose(); $c.Bitmap.Dispose()
+}
+
+# 16:9 Hero image (Partner Center listing top banner). 1920x1080 base + 3840x2160 retina.
+$heroSizes = @(@(1920, 1080), @(3840, 2160))
+foreach ($pair in $heroSizes) {
+    $w = $pair[0]
+    $h = $pair[1]
+    $c = Render-Hero $w $h
+    Save-Png $c.Bitmap (Join-Path $listingDir "store-hero-${w}x${h}.png")
     $c.Graphics.Dispose(); $c.Bitmap.Dispose()
 }
 
