@@ -15,14 +15,21 @@
 
 [CmdletBinding()]
 param(
-    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path,
-    [string]$CertPath = $null,
-    [string]$CertPassword = $null,
+    [string]$RepoRoot,
+    [string]$CertPath,
+    [string]$CertPassword,
     [switch]$SkipBuild,
     [switch]$Force
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Resolve repo root in the BODY -- $PSScriptRoot in a param() default doesn't populate
+# reliably under Windows PowerShell 5.1 (the default `powershell.exe`). pwsh 7 handles it
+# fine but we don't get to assume the invocation shell.
+if (-not $RepoRoot) {
+    $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+}
 
 # Resolve dev-cert defaults
 if (-not $CertPath) {

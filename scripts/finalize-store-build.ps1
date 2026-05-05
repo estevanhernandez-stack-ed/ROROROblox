@@ -37,12 +37,19 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$Version,
 
-    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path,
+    [string]$RepoRoot,
     [switch]$RestoreManifest,
     [switch]$DryRun
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Resolve repo root in the BODY -- $PSScriptRoot in a param() default doesn't populate
+# reliably under Windows PowerShell 5.1 (the default `powershell.exe`). pwsh 7 handles it
+# fine but we don't get to assume the invocation shell.
+if (-not $RepoRoot) {
+    $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+}
 
 # Sanity-check the inputs before we touch the manifest.
 if ($IdentityName -notmatch '^[A-Za-z0-9.\-]+$') {
