@@ -1,3 +1,9 @@
+---
+title: Privacy Policy
+description: How ROROROblox handles your Roblox session data on Windows.
+permalink: /privacy/
+---
+
 # Privacy Policy — ROROROblox
 
 **Effective date:** *(set on the day of public Store listing)*

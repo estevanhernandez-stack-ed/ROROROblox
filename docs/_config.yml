@@ -1,0 +1,46 @@
+# GitHub Pages site config for ROROROblox.
+# Public surface = the privacy policy + a minimal landing page. Internal docs
+# (Cart artefacts, Store-prep notes, design specs) are excluded so they don't
+# leak as URLs from the published site.
+#
+# Site source: docs/ folder on the main branch. Enable in Settings -> Pages
+# -> Build and deployment -> Source: Deploy from a branch -> main + /docs.
+
+title: ROROROblox
+description: Multi-Roblox Instant Generator. A 626 Labs product.
+author: 626 Labs LLC
+url: https://estevanhernandez-stack-ed.github.io
+baseurl: /ROROROblox
+
+remote_theme: pages-themes/cayman@v0.2.0
+plugins:
+  - jekyll-remote-theme
+  - jekyll-relative-links
+
+# Pretty URLs: PRIVACY.md -> /privacy/ instead of /PRIVACY.html. Easier to
+# paste into Partner Center, easier to remember, no case-sensitivity gotcha.
+permalink: pretty
+
+# Convert relative repo-style links (e.g. ./PRIVACY.md) to site-correct URLs.
+relative_links:
+  enabled: true
+  collections: true
+
+# Keep the build noise out of the published site. Pre-submission Store notes,
+# Cart spec artefacts, and stub data files don't belong on the public domain.
+exclude:
+  - store/
+  - superpowers/
+  - "*.example.json"
+  - "*.bak"
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+
+# Decent defaults for any markdown file rendered as a page.
+defaults:
+  - scope:
+      path: ""
+      type: pages
+    values:
+      layout: default
