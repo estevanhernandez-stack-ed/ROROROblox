@@ -217,6 +217,46 @@ function Render-Wide {
     return $c
 }
 
+function Render-BoxArt {
+    # 1:1 Box art for Partner Center 'Store logos' (Xbox display surface). Voxel stack
+    # centered in the upper ~60% of the canvas, wordmark + tagline + attribution below.
+    param([int]$size)
+    $c = New-Canvas $size $size $navy
+    $stackSize = [single]($size * 0.55)
+    $stackCx = $size * 0.50
+    $stackCy = $size * 0.40
+    Draw-VoxelStack $c.Graphics $stackCx $stackCy $stackSize
+
+    $cx = $size * 0.50
+    $wordmarkSize = [single]($size * 0.090)
+    $taglineSize  = [single]($size * 0.032)
+    $attribSize   = [single]($size * 0.024)
+    Draw-Text $c.Graphics 'ROROROblox' $cx ($size * 0.70) $wordmarkSize ([System.Drawing.Color]::White) ([System.Drawing.FontStyle]::Bold) $true
+    Draw-Text $c.Graphics 'Multi-Roblox Instant Generator.' $cx ($size * 0.81) $taglineSize $cyan ([System.Drawing.FontStyle]::Regular) $true
+    Draw-Text $c.Graphics 'A 626 Labs product' $cx ($size * 0.88) $attribSize $mutedText ([System.Drawing.FontStyle]::Regular) $true
+    return $c
+}
+
+function Render-Poster {
+    # 9:16 Poster art for Partner Center 'Store logos' (Xbox display surface). Vertical
+    # composition: voxel stack in upper third, wordmark + tagline + attribution stacked below.
+    param([int]$width, [int]$height)
+    $c = New-Canvas $width $height $navy
+    $stackSize = [single]($width * 0.55)
+    $stackCx = $width * 0.50
+    $stackCy = $height * 0.32
+    Draw-VoxelStack $c.Graphics $stackCx $stackCy $stackSize
+
+    $cx = $width * 0.50
+    $wordmarkSize = [single]($width * 0.10)
+    $taglineSize  = [single]($width * 0.035)
+    $attribSize   = [single]($width * 0.025)
+    Draw-Text $c.Graphics 'ROROROblox' $cx ($height * 0.62) $wordmarkSize ([System.Drawing.Color]::White) ([System.Drawing.FontStyle]::Bold) $true
+    Draw-Text $c.Graphics 'Multi-Roblox Instant Generator.' $cx ($height * 0.74) $taglineSize $cyan ([System.Drawing.FontStyle]::Regular) $true
+    Draw-Text $c.Graphics 'A 626 Labs product' $cx ($height * 0.81) $attribSize $mutedText ([System.Drawing.FontStyle]::Regular) $true
+    return $c
+}
+
 function Render-Splash {
     # 620x300 base. Voxel stack on left (taller), wordmark + tagline + attribution on right.
     param([int]$width, [int]$height)
@@ -337,6 +377,42 @@ foreach ($s in $scales.GetEnumerator()) {
     $c.Graphics.Dispose(); $c.Bitmap.Dispose()
 }
 
+# ----- Partner Center listing graphics ----------------------------------------
+# These live OUTSIDE the MSIX -- they're uploaded directly to Partner Center as
+# 'Store logos' (Xbox box art + 9:16 poster) and 'Store display images' (Win10/11
+# 1:1 tile icons at 300/150/71). Output to docs/store/graphics/ so they're committed
+# alongside the rest of the Store-prep notes and discoverable when filling in the
+# Partner Center listing.
+
+$listingDir = Join-Path $RepoRoot 'docs\store\graphics'
+if (-not (Test-Path $listingDir)) {
+    New-Item -ItemType Directory -Path $listingDir -Force | Out-Null
+}
+
+# Store display images (Win10/11 customer-facing listing card graphics)
+foreach ($size in @(71, 150, 300)) {
+    $c = Render-Square $size
+    Save-Png $c.Bitmap (Join-Path $listingDir "store-display-${size}x${size}.png")
+    $c.Graphics.Dispose(); $c.Bitmap.Dispose()
+}
+
+# Store logos (Xbox display surface) -- 1:1 Box art + 9:16 Poster art at both scale variants
+$boxArtSizes = @(1080, 2160)
+foreach ($size in $boxArtSizes) {
+    $c = Render-BoxArt $size
+    Save-Png $c.Bitmap (Join-Path $listingDir "store-boxart-${size}x${size}.png")
+    $c.Graphics.Dispose(); $c.Bitmap.Dispose()
+}
+
+$posterSizes = @(@(720, 1080), @(1440, 2160))
+foreach ($pair in $posterSizes) {
+    $w = $pair[0]
+    $h = $pair[1]
+    $c = Render-Poster $w $h
+    Save-Png $c.Bitmap (Join-Path $listingDir "store-poster-${w}x${h}.png")
+    $c.Graphics.Dispose(); $c.Bitmap.Dispose()
+}
+
 # Cleanup font collection.
 $pfc.Dispose()
 
@@ -344,3 +420,5 @@ Write-Host ''
 Write-Host '[done] Store-bound assets generated. Run scripts/build-msix.ps1 -Verify to confirm packaging.' -ForegroundColor Green
 $count = (Get-ChildItem $logosDir -Filter '*.png').Count
 Write-Host "[count] $count PNG files written to $logosDir" -ForegroundColor Green
+$listingCount = (Get-ChildItem $listingDir -Filter '*.png').Count
+Write-Host "[count] $listingCount Partner Center listing graphics written to $listingDir" -ForegroundColor Green
