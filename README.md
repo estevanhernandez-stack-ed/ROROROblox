@@ -22,13 +22,15 @@ _Multi-launcher for Windows — run multiple Roblox clients on Windows, signed i
 
 ## Install
 
-### Microsoft Store *(primary path)*
+### Microsoft Store *(recommended)*
 
-Coming soon. The Store-signed install bypasses SmartScreen entirely.
+[**Install RoRoRo on the Microsoft Store →**](https://apps.microsoft.com/detail/9NMJCS390KWB)
 
-### GitHub Releases *(clan-direct path)*
+Signed by Microsoft, bypasses SmartScreen entirely, auto-updates through the Store. Best path for most clan members — one click and you're in.
 
-Until the Store listing is live — or if you'd rather not wait:
+### GitHub Releases *(clan-direct fallback)*
+
+If you'd rather skip the Store account flow, or want to install on a PC without Store access:
 
 1. Download the latest `rororo-win-Setup.exe` from [Releases](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases).
 2. Double-click it. SmartScreen will warn (the installer is unsigned) — click **More info** → **Run anyway**. (One-time per machine.)

@@ -28,7 +28,7 @@ The repo URL (`github.com/.../ROROROblox`) is unchanged. Inbound links and bookm
 
 ## Other channels
 
-- **Microsoft Store** — listing under review. When it goes live, the Store path bypasses SmartScreen and is the recommended install for non-technical users.
+- **Microsoft Store *(recommended)*** — [Install RoRoRo on the Microsoft Store](https://apps.microsoft.com/detail/9NMJCS390KWB). Signed by Microsoft, bypasses SmartScreen, auto-updates through the Store. Best path if you have a Microsoft account.
 - **MSIX sideload** — `RORORO-Sideload.msix` + `dev-cert.cer` are also attached if you prefer the cert-import flow over `Setup.exe`.
 
 ## Issues, ideas

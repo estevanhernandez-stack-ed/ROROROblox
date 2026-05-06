@@ -9,8 +9,8 @@ description: Multi-launcher for Windows. Run multiple Roblox clients side by sid
   <p class="hero__tagline">Multi-launcher for Windows.</p>
   <p class="hero__lede">Run multiple Roblox clients side by side, signed in as different saved accounts. Free. Open source. Brand-spreads-for-free under 626 Labs.</p>
   <div class="cta-row">
-    <a href="https://github.com/estevanhernandez-stack-ed/ROROROblox/releases/latest/download/rororo-win-Setup.exe" class="btn btn-primary">Download Setup.exe</a>
-    <a href="https://github.com/estevanhernandez-stack-ed/ROROROblox/releases" class="btn btn-secondary">All releases</a>
+    <a href="https://apps.microsoft.com/detail/9NMJCS390KWB" class="btn btn-primary">Install on Microsoft Store</a>
+    <a href="https://github.com/estevanhernandez-stack-ed/ROROROblox/releases/latest/download/rororo-win-Setup.exe" class="btn btn-secondary">Download Setup.exe</a>
   </div>
   <p class="hero__meta">Windows 11 · .NET 10 LTS · WPF</p>
   <figure class="hero__shot">
@@ -26,9 +26,9 @@ No DevTools. No registry edits. No telemetry. The Roblox client launches unmodif
 
 ## Install it
 
-[**Download `rororo-win-Setup.exe`**](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases/latest/download/rororo-win-Setup.exe) and double-click. The installer is currently unsigned, so Windows SmartScreen will warn on first run — click **More info** → **Run anyway**. One-time per machine. Future updates roll out automatically.
+**Easiest:** [**install RoRoRo on the Microsoft Store**](https://apps.microsoft.com/detail/9NMJCS390KWB). Signed by Microsoft, no SmartScreen, auto-updates through the Store.
 
-The Microsoft Store listing is in review. Once it goes live, that path bypasses SmartScreen entirely.
+**Clan-direct fallback** (no Microsoft account needed): [download `rororo-win-Setup.exe`](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases/latest/download/rororo-win-Setup.exe). SmartScreen will warn — click **More info** → **Run anyway**. One-time per machine. Future updates roll out automatically.
 
 ## Surfaces
 
