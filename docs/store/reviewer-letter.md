@@ -1,20 +1,20 @@
-# Notes for certification — reviewer letter (v1.1.1.0, post-rename)
+# Notes for certification — reviewer letter (v1.1.2.0, post-rename)
 
 > Paste this into Partner Center → your app → **Submission options** → **Notes for certification**.
 >
-> v1.1.0.0 was rejected under clause **10.1.1.1 Inaccurate Representation** for containing the name of another product. v1.1.1.0 ships with the product renamed from `ROROROblox` to **`RORORO`** across every user-visible surface. The letter below names the rename context up-front so the reviewer sees a deliberate good-faith fix, not a re-attempt of the same submission.
+> v1.1.0.0 was rejected under clause **10.1.1.1 Inaccurate Representation** for containing the name of another product. v1.1.2.0 ships with the product renamed from `ROROROblox` to **`RORORO`** across every user-visible surface. The letter below names the rename context up-front so the reviewer sees a deliberate good-faith fix, not a re-attempt of the same submission.
 
 ---
 
 ```
 Hello reviewer,
 
-Thank you for taking the time to certify v1.1.1.0 of this submission. A short orientation that should make this faster to evaluate.
+Thank you for taking the time to certify v1.1.2.0 of this submission. A short orientation that should make this faster to evaluate.
 
 CONTEXT — RENAME FROM v1.1.0.0
 The previous submission (v1.1.0.0) was rejected under clause 10.1.1.1 Inaccurate Representation: "The product name does not accurately represent the product. The product name contains the title of another piece of software or service. Please edit the Product Name field in the Store Listings section."
 
-For v1.1.1.0 we have renamed the product from "ROROROblox" to "RORORO" across every user-visible surface — the Store listing Product Name field, the MSIX manifest DisplayName + VisualElements DisplayName, the in-app window titles, the About box, the Welcome window, the wordmark in tile + splash + box-art + poster + hero graphics, the README, the privacy policy, and the trademark notices. The new name drops "blox" entirely; it does not contain or resemble the name of any other product. The functionality of the app is unchanged from v1.1.0.0.
+For v1.1.2.0 we have renamed the product from "ROROROblox" to "RORORO" across every user-visible surface — the Store listing Product Name field, the MSIX manifest DisplayName + VisualElements DisplayName, the in-app window titles, the About box, the Welcome window, the wordmark in tile + splash + box-art + poster + hero graphics, the README, the privacy policy, and the trademark notices. The new name drops "blox" entirely; it does not contain or resemble the name of any other product. The functionality of the app is unchanged from v1.1.0.0.
 
 The Identity Name (`626LabsLLC.RoRoRoBlox`) and Partner Center reservation are unchanged — your rejection note specifically asked us to edit the Product Name field in the Store Listings section, not to re-reserve. If a different surface inside the package is the source of the concern, please tell us and we will re-reserve in a follow-up submission.
 
@@ -45,7 +45,7 @@ Multiple cooperating features, not a single trick:
 - Diagnostics bundle for bug reports
 
 PLATFORM SUPPORT (Arm64 acknowledgment)
-v1.1.1.0 targets x64 only (`<Identity ProcessorArchitecture="x64" />`). We have read Partner Center's recommendation that future Windows on Arm devices will no longer support AArch32 emulation, and that an Arm64 (AArch64) build is the recommended path forward for Arm device customers. An Arm64 build flavor is on our v1.1.1 / v1.2 roadmap and is publicly tracked at docs/store/submission-checklist.md in the repository. For v1.1.1.0, x64 covers our entire targeted audience (Windows 11 on Intel and AMD). We are not asking for a waiver — just confirming we have the recommendation captured and queued, and that customers on Arm devices today can still install via the standard x64-on-Arm emulation path until the native Arm64 flavor ships.
+v1.1.2.0 targets x64 only (`<Identity ProcessorArchitecture="x64" />`). We have read Partner Center's recommendation that future Windows on Arm devices will no longer support AArch32 emulation, and that an Arm64 (AArch64) build is the recommended path forward for Arm device customers. An Arm64 build flavor is on our v1.1.1 / v1.2 roadmap and is publicly tracked at docs/store/submission-checklist.md in the repository. For v1.1.2.0, x64 covers our entire targeted audience (Windows 11 on Intel and AMD). We are not asking for a waiver — just confirming we have the recommendation captured and queued, and that customers on Arm devices today can still install via the standard x64-on-Arm emulation path until the native Arm64 flavor ships.
 
 PRIVACY POLICY
 Live at: https://estevanhernandez-stack-ed.github.io/ROROROblox/privacy/
@@ -55,7 +55,7 @@ https://github.com/estevanhernandez-stack-ed/ROROROblox
 
 The repository name and Pages baseurl retain the previous "ROROROblox" path because changing them would break external links to documentation, the privacy policy URL, and prior issue references. The product itself — the user-visible application, its name, and its branding — is now exclusively "RORORO."
 
-If anything is unclear or you'd like additional information about the technical approach or the rename, the PROVENANCE.txt file in the repository explains the relationship to the predecessor MultiBloxy implementation, docs/store/rename-plan.md details the v1.1.1.0 rename surfaces, and docs/store/submission-checklist.md details our trademark-disclaimer surfaces.
+If anything is unclear or you'd like additional information about the technical approach or the rename, the PROVENANCE.txt file in the repository explains the relationship to the predecessor MultiBloxy implementation, docs/store/rename-plan.md details the v1.1.2.0 rename surfaces, and docs/store/submission-checklist.md details our trademark-disclaimer surfaces.
 
 Thank you for your time and consideration.
 
@@ -79,7 +79,7 @@ If this submission is rejected on a different clause than 10.1.1.1, the response
 
 ## Pre-submission sanity check
 
-Before clicking **Submit for review** for v1.1.1.0, eyeball:
+Before clicking **Submit for review** for v1.1.2.0, eyeball:
 
 - [ ] Privacy URL renders cleanly when opened in an incognito browser
 - [ ] Trademark disclaimer is in the long description, not just the trademark info field
@@ -87,11 +87,11 @@ Before clicking **Submit for review** for v1.1.1.0, eyeball:
 - [ ] **Product Name field shows `RORORO`** (this is the field Microsoft asked us to fix)
 - [ ] Age rating answers are consistent with privacy policy (no telemetry, no UGC, etc.)
 - [ ] Identity name in `Package.appxmanifest` matches your Partner Center reservation
-- [ ] Version in `Package.appxmanifest` is `1.1.1.0`
+- [ ] Version in `Package.appxmanifest` is `1.1.2.0`
 - [ ] In-app About box wordmark reads `RORORO` (not `ROROROblox`)
 - [ ] In-app MainWindow title reads `RORORO`
 - [ ] Wide tile and splash graphics show `RORORO` wordmark
 
 ## Source
 
-This letter was generated as part of the v1.1.1.0 rename pass. Regenerable from chat history if needed; primary copy lives here.
+This letter was generated as part of the v1.1.2.0 rename pass. Regenerable from chat history if needed; primary copy lives here.

@@ -119,6 +119,23 @@ $writerSettings.OmitXmlDeclaration = $false
 $writer = [System.Xml.XmlWriter]::Create($manifestPath, $writerSettings)
 try { $manifest.Save($writer) } finally { $writer.Close() }
 Write-Host '[finalize] Manifest patched.' -ForegroundColor Green
+
+# Also patch the .NET assembly version in src\ROROROblox.App\ROROROblox.App.csproj so the
+# About box (which reads Assembly.GetName().Version) shows the same version Microsoft sees.
+# Drift between manifest and csproj is exactly the v1.1.0.0 bug -- About showed 1.0.0 because
+# csproj had no <Version> override and the assembly defaulted to 1.0.0.0.
+$csprojPath = Join-Path $RepoRoot 'src\ROROROblox.App\ROROROblox.App.csproj'
+if (Test-Path $csprojPath) {
+    $csproj = Get-Content $csprojPath -Raw
+    $beforeCsproj = $csproj
+    $csproj = $csproj -replace '<Version>[^<]*</Version>', "<Version>$Version</Version>"
+    if ($csproj -ne $beforeCsproj) {
+        Set-Content -Path $csprojPath -Value $csproj -NoNewline -Encoding UTF8
+        Write-Host "[finalize] csproj <Version> patched -> $Version" -ForegroundColor Green
+    } else {
+        Write-Host "[finalize] csproj <Version> already $Version (or element absent); no change" -ForegroundColor Yellow
+    }
+}
 Write-Host ''
 
 # Run the Store build (unsigned -- Partner Center signs after upload).

@@ -126,17 +126,22 @@ public partial class App : Application
             _log?.LogDebug(ex, "Compat banner threw; ignoring.");
         }
 
-        try
-        {
-            // Background validation — slight delay so the UI gets to render first.
-            await Task.Delay(TimeSpan.FromSeconds(2));
-            var vm = _services.GetRequiredService<MainViewModel>();
-            await vm.ValidateSessionsAsync();
-        }
-        catch (Exception ex)
-        {
-            _log?.LogDebug(ex, "Session validation threw; ignoring.");
-        }
+        // Startup session validation REMOVED in v1.1.2.0.
+        //
+        // Previously called vm.ValidateSessionsAsync() here to proactively mark expired
+        // sessions yellow on launch. In practice, hitting users.roblox.com/v1/users/authenticated
+        // for every saved account at startup -- right after the cookie comes off disk and right
+        // before any other authenticated endpoint has been touched -- pattern-matches Roblox's
+        // anti-fraud heuristics. They flag the session for re-verification, our 401 handler maps
+        // that to CookieExpiredException, the badge flips to "expired", and the user gets
+        // surprise 2FA prompts on the next Launch As even though the cookie is minutes old.
+        //
+        // Pivoted to lazy validation: the actual GetAuthTicketAsync call inside Launch As
+        // surfaces a real expiry (or a real reverification prompt) at the moment the user
+        // chose to interact, where the friction is justified. Saves one fresh-context API
+        // call per saved account on every startup -- exactly the surface Roblox flags as
+        // suspicious. Track follow-up §4 in docs/store/next-revision-followups.md proposes a
+        // proper NeedsReverification state distinct from SessionExpired for v1.2.0.0+.
 
         // FIRST: scan for already-running RobloxPlayerBeta windows + re-attach the ones whose
         // titles match saved accounts. After this, vm.Accounts[i].IsRunning correctly reflects

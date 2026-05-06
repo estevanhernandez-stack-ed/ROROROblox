@@ -35,6 +35,22 @@
                            TextWrapping="Wrap">
                     <Run Text="We capture only the session cookie that Roblox sets after a successful login, then encrypt it on disk via Windows DPAPI tied to your user." />
                 </TextBlock>
+                <Border Margin="0,8,0,0" Padding="10,8"
+                        Background="#15263A" CornerRadius="4">
+                    <StackPanel>
+                        <TextBlock FontSize="11" FontWeight="SemiBold"
+                                   Foreground="#5CE6FF">
+                            <Run Text="If the page is blank, click Reload (F5)." />
+                        </TextBlock>
+                        <TextBlock FontSize="11"
+                                   Foreground="#FFFFFF"
+                                   Opacity="0.85"
+                                   Margin="0,2,0,0"
+                                   TextWrapping="Wrap">
+                            <Run Text="The embedded browser sometimes loads slowly on first open. If Roblox asks for two-factor verification, that's normal — verify here and your saved login keeps working." />
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </Border>
 

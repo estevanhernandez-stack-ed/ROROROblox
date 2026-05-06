@@ -4,8 +4,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:core="clr-namespace:ROROROblox.Core;assembly=ROROROblox.Core"
         Title="RORORO -- Games"
-        Height="600" Width="700"
-        MinHeight="480" MinWidth="640"
+        Height="720" Width="700"
+        MinHeight="540" MinWidth="640"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BgBrush}"
         Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
@@ -246,7 +246,10 @@
                    Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,20,0,8" />
 
-        <ScrollViewer Grid.Row="6" VerticalScrollBarVisibility="Auto">
+        <!-- Visible (not Auto) scrollbar so the user can see at-a-glance that the list is
+             scrollable. Saves the 'wait, is there more?' moment when the favorites list
+             overflows and an Auto-hidden scrollbar would only flicker on hover. -->
+        <ScrollViewer Grid.Row="6" VerticalScrollBarVisibility="Visible">
             <Grid>
                 <ItemsControl x:Name="FavoritesList" />
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"

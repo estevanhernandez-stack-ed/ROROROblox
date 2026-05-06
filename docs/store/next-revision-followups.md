@@ -1,8 +1,8 @@
-# Next-revision follow-ups (post-v1.1.1.0)
+# Follow-ups discovered during v1.1.2.0 screenshot capture
 
-> Captured during the v1.1.1.0 screenshot capture session. None of these blocked Microsoft cert review on either v1.1.0.0 (rejected on 10.1.1.1 only) or v1.1.1.0 (in review). Defer to the next minor — likely v1.2.0.0 since these are user-facing UX fixes, not patches.
+> Discovered: 2026-05-04 by Este during sideload smoke before the v1.1.2.0 Partner Center submission. The user opted to fix in-band rather than defer — a "minimum viable fix" for each item shipped in **v1.1.2.0** itself. The "proper fix" for each (deeper architectural changes, runtime manifest reads, distinct state machines) remains future work; tracked here for v1.2.0.0+ so the items don't drop off the radar.
 >
-> Discovered: 2026-05-04 by Este during sideload smoke. Carry forward each cycle until shipped.
+> Status legend below: **✅ shipped in v1.1.2.0** (the minimum viable fix landed) — **🔮 v1.2.0.0+** (the proper fix is still queued).
 
 ## 1. WebView2 white-screen on Add Account
 
@@ -35,7 +35,7 @@
 
 ## 3. About box shows v1.0.0 instead of the actual release version
 
-**Symptom:** After renaming + bumping to MSIX manifest version `1.1.1.0`, the About box still shows `v1.0.0`. Caused by `Assembly.GetName().Version.ToString(3)` reading the .NET-default assembly version (1.0.0.0) because `<Version>` is not set in `ROROROblox.App.csproj`.
+**Symptom:** After renaming + bumping to MSIX manifest version `1.1.2.0`, the About box still shows `v1.0.0`. Caused by `Assembly.GetName().Version.ToString(3)` reading the .NET-default assembly version (1.0.0.0) because `<Version>` is not set in `ROROROblox.App.csproj`.
 
 **Fix candidates (next revision):**
 
@@ -58,7 +58,7 @@ C. **Read the manifest at runtime** — pivot the About box to call `Package.Cur
 
 ## 4. Session marked "expired" after using Friends / presence / enumerate features — surprise 2FA re-prompt
 
-**Symptom:** Within ~30 minutes of installing v1.1.1.0 + saving a main account, using a feature that calls authenticated Roblox endpoints (Friends modal, Squad Launch, presence-fetching surfaces — anything that "enumerates Roblox info" beyond the basic profile) caused the saved session to flip to `SessionExpired=true`. Re-authenticate flow then forced a 2FA round-trip even though the cookie was minutes old.
+**Symptom:** Within ~30 minutes of installing v1.1.2.0 + saving a main account, using a feature that calls authenticated Roblox endpoints (Friends modal, Squad Launch, presence-fetching surfaces — anything that "enumerates Roblox info" beyond the basic profile) caused the saved session to flip to `SessionExpired=true`. Re-authenticate flow then forced a 2FA round-trip even though the cookie was minutes old.
 
 **Theory:** This is largely Roblox-side behavior, not a bug in our cookie handling. Roblox's anti-fraud system flags a session when the cookie is suddenly used against endpoints it hasn't been used for before, and when small 2FA grace periods elapse. Our code sees a `CookieExpiredException` (mapped from Roblox's 401/403 response) in `ValidateSessionsAsync` (`MainViewModel.cs:461-465`) or in the per-feature call paths and marks the session expired. The cookie isn't strictly expired — Roblox just wants the user to re-confirm with 2FA. Once re-confirmed, the same cookie value is fine again.
 
@@ -81,8 +81,15 @@ D. **Capture the 2FA experience under telemetry-free local logs.** Today logs re
 
 **Roblox-side reference:** the `xsrf-token` + `2sv` (two-step verification) flow is documented unofficially in community resources; Bloxstrap solves a similar problem by surfacing a "verification needed" state distinct from full logout. Worth a study session.
 
-## Disposition
+## What shipped in v1.1.2.0 vs. what's still queued
 
-All four are queued for the **next minor release (v1.2.0.0)** — they're UX-quality fixes rather than cert-side blockers. Microsoft accepted v1.1.1.0 with all four present (or the rejection was 10.1.1.1, unrelated to these). Carry forward in `README.md` Roadmap → "Up next" so the items don't drop off the radar.
+| # | Issue | v1.1.2.0 status | What's left for v1.2.0.0+ |
+|---|---|---|---|
+| 1 | WebView2 white-screen on Add Account | ✅ Visible reload hint added to CookieCaptureWindow.xaml. Inline copy now tells the user "If the page is blank, click Reload (F5)" plus a 2FA-re-prompt explainer. | 🔮 The proper fix is detecting the blank-document case at the WebView2 level and re-issuing navigation automatically. Hint copy is the user-facing band-aid. |
+| 2 | Games / Settings tab — content cut off, no scrollbar affordance | ✅ Default Height bumped 600→720, MinHeight 480→540, Saved-games ScrollViewer set to `VerticalScrollBarVisibility="Visible"` (always-on, not Auto-hide). | 🔮 The proper fix is responsive layout that adapts when the user resizes; for now Visible scrollbar is the discoverability cue. |
+| 3 | About box shows v1.0.0 instead of release version | ✅ `<Version>1.1.2.0</Version>` added to ROROROblox.App.csproj — assembly version now matches manifest. About reads `Assembly.GetName().Version.ToString(3)` correctly. `scripts/finalize-store-build.ps1` extended to patch both csproj + manifest atomically on every release bump. | 🔮 The proper fix is reading from `Package.Current.Id.Version` at runtime (single source of truth, no possibility of drift) per Sanduhr's pattern. Today csproj and manifest can still drift if hand-edited; the script keeps them honest but requires using the script. |
+| 4 | Session "expired" after using authenticated endpoints — surprise 2FA re-prompt | ✅ Removed `vm.ValidateSessionsAsync()` from `App.xaml.cs RunStartupChecksAsync`. No longer hammers `users.roblox.com/v1/users/authenticated` for every saved account at startup. The eager-validation surface that pattern-matched Roblox's anti-fraud is gone. | 🔮 The proper fix is the `NeedsReverification` state distinct from `SessionExpired`, with a "Verify in browser" button. Today Launch As surfaces real expiry/reverify need lazily; the band-aid avoids the false-positive cascade but doesn't fix the underlying conflation of "expired" vs "needs 2FA confirm". |
 
-Workshop the order during the next vibe-cartographer / build-plan pass — likely #4 first (most user-visible / most-recent pain), then #3 (smallest), then #1 (user-experience gap), then #2 (lowest urgency).
+The four `🔮` items remain in [`README.md`](../../README.md#roadmap) Roadmap → "Up next" so they carry into the v1.2.0.0 plan.
+
+Workshop the proper-fix order during the next vibe-cartographer / build-plan pass — likely #4 first (highest-quality UX gain), then #3 (single-source-of-truth wins), then #1 (resilience), then #2 (responsive layout).
