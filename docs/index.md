@@ -34,6 +34,13 @@ The Microsoft Store listing is in review. Once it goes live, that path bypasses 
 
 <div class="surfaces" markdown="0">
   <figure class="surface-card">
+    <img src="{{ '/screenshots/welcome.png' | relative_url }}" alt="Welcome to RORORO — three-step onboarding overlay shown on first launch" />
+    <figcaption class="surface-card__caption">
+      <strong>Welcome</strong>
+      <span>Three steps and you're set. Shown on first launch.</span>
+    </figcaption>
+  </figure>
+  <figure class="surface-card">
     <img src="{{ '/screenshots/squad-launch.png' | relative_url }}" alt="Squad Launch — pick accounts, fire them at one game" />
     <figcaption class="surface-card__caption">
       <strong>Squad launch</strong>
