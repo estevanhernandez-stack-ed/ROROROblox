@@ -39,7 +39,7 @@ public sealed class RobloxApi : IRobloxApi
         var version = typeof(RobloxApi).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
         if (!_httpClient.DefaultRequestHeaders.UserAgent.Any())
         {
-            _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("ROROROblox", version));
+            _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         }
     }
 

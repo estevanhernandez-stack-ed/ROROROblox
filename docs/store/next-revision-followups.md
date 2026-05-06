@@ -56,8 +56,33 @@ C. **Read the manifest at runtime** — pivot the About box to call `Package.Cur
 
 **Acceptance:** About box reads `v1.2.0.0` (or whatever the manifest says) at runtime, both for MSIX-installed users and for unpackaged dev runs.
 
+## 4. Session marked "expired" after using Friends / presence / enumerate features — surprise 2FA re-prompt
+
+**Symptom:** Within ~30 minutes of installing v1.1.1.0 + saving a main account, using a feature that calls authenticated Roblox endpoints (Friends modal, Squad Launch, presence-fetching surfaces — anything that "enumerates Roblox info" beyond the basic profile) caused the saved session to flip to `SessionExpired=true`. Re-authenticate flow then forced a 2FA round-trip even though the cookie was minutes old.
+
+**Theory:** This is largely Roblox-side behavior, not a bug in our cookie handling. Roblox's anti-fraud system flags a session when the cookie is suddenly used against endpoints it hasn't been used for before, and when small 2FA grace periods elapse. Our code sees a `CookieExpiredException` (mapped from Roblox's 401/403 response) in `ValidateSessionsAsync` (`MainViewModel.cs:461-465`) or in the per-feature call paths and marks the session expired. The cookie isn't strictly expired — Roblox just wants the user to re-confirm with 2FA. Once re-confirmed, the same cookie value is fine again.
+
+**What we can do better:**
+
+A. **Distinguish "permanently expired" from "needs re-verification."** Today both map to `SessionExpired=true`. Roblox's response codes can hint:
+   - 401 with `Token-Validation-Required` or specific body text → needs 2FA refresh, but cookie is still valid
+   - 401 without that hint → genuinely expired, need re-login
+   Add a new `AccountSummary` property `NeedsReverification` distinct from `SessionExpired`, and a yellow "Verify in browser" button that opens an embedded WebView2 to roblox.com (which auto-prompts 2FA) without requiring full re-login.
+
+B. **Reduce eager validation surface.** Today `ValidateSessionsAsync` runs at startup against every saved account. That's potentially ~N calls to `users.roblox.com/v1/users/authenticated` against a fresh-from-storage cookie — exactly the pattern Roblox's anti-fraud watches. Pivot to lazy validation: only validate on a Launch As attempt, not at startup. Keeps the badge accurate without provoking re-auth.
+
+C. **Better messaging in the Re-authenticate flow.** When the user clicks Re-authenticate, the WebView2 opens to roblox.com/login. If they were already logged in via cookie, Roblox renders a "Verify it's you" page (2FA) instead of the login form. Add inline copy explaining: *"Roblox sometimes asks for 2FA again when you use new features. Verify here and your saved login keeps working."*
+
+D. **Capture the 2FA experience under telemetry-free local logs.** Today logs redact cookie values but don't note "session forced re-auth at HH:MM after feature X was used." Adding that context to the Diagnostics bundle would make this kind of report repro-able for a future maintainer.
+
+**Acceptance:** A user who triggers Roblox's anti-fraud re-verification understands what's happening, knows their cookie isn't lost, and re-verifies in under 30 seconds without the app suggesting they re-add the account from scratch.
+
+**File:** `src/ROROROblox.App/ViewModels/MainViewModel.cs` (`ValidateSessionsAsync`, `ReauthenticateAsync`), `src/ROROROblox.Core/CookieExpiredException.cs` (split into two exceptions or add a `Reason` enum), `src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml` (new copy for re-verify mode).
+
+**Roblox-side reference:** the `xsrf-token` + `2sv` (two-step verification) flow is documented unofficially in community resources; Bloxstrap solves a similar problem by surfacing a "verification needed" state distinct from full logout. Worth a study session.
+
 ## Disposition
 
-All three are queued for the **next minor release (v1.2.0.0)** — they're UX-quality fixes rather than cert-side blockers. Microsoft accepted v1.1.1.0 with all three present (or the rejection was 10.1.1.1, unrelated to these). Carry forward in `README.md` Roadmap → "Up next" so the items don't drop off the radar.
+All four are queued for the **next minor release (v1.2.0.0)** — they're UX-quality fixes rather than cert-side blockers. Microsoft accepted v1.1.1.0 with all four present (or the rejection was 10.1.1.1, unrelated to these). Carry forward in `README.md` Roadmap → "Up next" so the items don't drop off the radar.
 
-Workshop the order during the next vibe-cartographer / build-plan pass — likely #3 first (smallest, highest signal), then #1 (user-experience gap), then #2 (lowest urgency).
+Workshop the order during the next vibe-cartographer / build-plan pass — likely #4 first (most user-visible / most-recent pain), then #3 (smallest), then #1 (user-experience gap), then #2 (lowest urgency).
