@@ -92,10 +92,18 @@ The full pre-release checklist lives in [docs/checklist.md](docs/checklist.md) i
 3. Replace placeholder tray + Store icons via the design skill.
 4. Bump version in `Package.appxmanifest` + the assembly version.
 5. Build sideload + Store MSIX flavors. Validate both.
-6. Tag the release: `git tag v1.1.x && git push origin v1.1.x`.
-7. Cut a Velopack release: `vpk pack -u <updateUrl> -p dist/publish -e ROROROblox.App.exe -v 1.1.x`.
+6. Tag the release: `git tag v1.1.x.0 && git push origin v1.1.x.0`.
+7. Cut the Velopack `Setup.exe` + delta package. **Two paths, same artifact:**
+
+   **CI (default — recommended):** the tag push triggers `.github/workflows/release.yml`, which runs on `windows-latest`, executes the test suite, fetches the prior release for delta computation, runs `vpk pack`, and uploads everything as a **draft** GitHub Release. You review assets + add release notes + click **Publish release**. To skip the draft step (auto-publish), use Actions → Release → *Run workflow* with `publish=true`.
+
+   **Local (fallback when CI is unavailable):**
+   ```
+   pwsh scripts/build-velopack-release.ps1 -Version 1.1.x.0
+   ```
+   Runs `dotnet publish` (self-contained `win-x64`) → generates a multi-size `AppIcon.ico` from Square44x44Logo PNGs → calls `vpk pack` with `--packId RORORO`. Artifacts land in `dist/release/`. Then drag every file from that dir into a GitHub Release manually — partial uploads break auto-update because `UpdateChecker` pings `releases.win.json` and pulls the matching `*-full.nupkg`.
 8. Publish `roblox-compat.json` as a release asset (schema in [`docs/roblox-compat.example.json`](docs/roblox-compat.example.json)).
-9. Submit the Store MSIX via Partner Center. Distribute sideload to clan via Discord with the SmartScreen-bypass video.
+9. Submit the Store MSIX via Partner Center. Distribute the GitHub Release to clan via Discord with the SmartScreen-bypass video.
 
 ## Decision logging
 

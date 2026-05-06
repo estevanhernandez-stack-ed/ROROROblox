@@ -1,0 +1,152 @@
+# RORORO -- tag-triggered release pipeline.
+#
+# Trigger: pushing a tag matching `v*.*.*` or `v*.*.*.*` (e.g. v1.1.2.0).
+# Output: a DRAFT GitHub Release with rororo-win-Setup.exe + delta nupkg + releases.win.json
+# attached. Maintainer reviews assets + notes, then clicks Publish.
+#
+# To auto-publish (skip the draft step), use Actions -> Release -> Run workflow with
+# publish=true. Tag-push always produces a draft so a botched build can't go live silently.
+#
+# Why Windows runner: WPF + System.Drawing PNG generation + Velopack Setup.exe builder
+# are all Windows-only.
+
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+      - 'v*.*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. 1.1.2.0)'
+        required: true
+        type: string
+      publish:
+        description: 'Auto-publish (vs draft)'
+        required: false
+        type: boolean
+        default: false
+      pre:
+        description: 'Mark as pre-release'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write   # create + upload to Releases
+
+env:
+  DOTNET_NOLOGO: 'true'
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+
+jobs:
+  release:
+    name: build + pack + upload
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # vpk reads tag history when computing deltas
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install vpk
+        run: dotnet tool install -g vpk
+
+      - name: Resolve version + tag
+        id: ver
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $tag = $env:GITHUB_REF_NAME
+            $v = $tag -replace '^v', ''
+          } else {
+            $v = '${{ inputs.version }}'
+            $tag = "v$v"
+          }
+          if ($v -notmatch '^\d+\.\d+\.\d+(\.\d+)?$') {
+            throw "Invalid version: '$v'. Expected semver-ish (e.g. 1.1.2.0)."
+          }
+          "version=$v" | Out-File $env:GITHUB_OUTPUT -Append
+          "tag=$tag"   | Out-File $env:GITHUB_OUTPUT -Append
+          Write-Host "Resolved: $tag (version $v)"
+
+      - name: Restore
+        run: dotnet restore ROROROblox.slnx
+
+      - name: Test
+        run: dotnet test ROROROblox.slnx --configuration Release --no-restore --logger "console;verbosity=minimal"
+
+      - name: Fetch prior release (for delta generation)
+        # First-ever release: no prior release exists -> non-zero exit -> tolerated.
+        # All subsequent releases: this populates dist/release/ with the previous
+        # *-full.nupkg so `vpk pack` can compute a delta against it.
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path 'dist/release' -Force | Out-Null
+          vpk download github `
+            --repoUrl "https://github.com/${{ github.repository }}" `
+            --token "$env:GITHUB_TOKEN" `
+            --outputDir 'dist/release'
+
+      - name: Build Velopack release
+        shell: pwsh
+        run: |
+          pwsh scripts/build-velopack-release.ps1 `
+            -Version '${{ steps.ver.outputs.version }}' `
+            -NoClean
+
+      - name: Upload artifacts (audit trail)
+        uses: actions/upload-artifact@v4
+        with:
+          name: velopack-${{ steps.ver.outputs.version }}
+          path: dist/release/*
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Publish to GitHub Releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $args = @(
+            'upload', 'github'
+            '--repoUrl',     "https://github.com/${{ github.repository }}"
+            '--token',       "$env:GITHUB_TOKEN"
+            '--tag',         '${{ steps.ver.outputs.tag }}'
+            '--releaseName', 'RORORO ${{ steps.ver.outputs.tag }}'
+            '--outputDir',   'dist/release'
+            '--merge'
+          )
+          if ('${{ inputs.publish }}' -eq 'true') { $args += '--publish' }
+          if ('${{ inputs.pre }}'     -eq 'true') { $args += '--pre' }
+          Write-Host "vpk $($args -join ' ')"
+          vpk @args
+          if ($LASTEXITCODE -ne 0) { throw "vpk upload failed (exit $LASTEXITCODE)" }
+
+      - name: Summary
+        shell: pwsh
+        run: |
+          $tag = '${{ steps.ver.outputs.tag }}'
+          $url = "https://github.com/${{ github.repository }}/releases/tag/$tag"
+          $isDraft = '${{ inputs.publish }}' -ne 'true'
+          $state = if ($isDraft) { 'DRAFT (review + publish manually)' } else { 'PUBLISHED' }
+          @"
+          ## RORORO $tag
+          - State: **$state**
+          - Release: $url
+          - Artifacts: rororo-win-Setup.exe + *-full.nupkg + *-delta.nupkg + releases.win.json
+
+          $(if ($isDraft) { 'Open the release URL, review the assets, add release notes, then click ' + '**Publish release**' + '.' } else { 'Live now. Auto-update will roll out to existing installs within 24h (debounced).' })
+          "@ | Out-File $env:GITHUB_STEP_SUMMARY -Append

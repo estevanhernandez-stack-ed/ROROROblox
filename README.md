@@ -26,16 +26,17 @@ _Multi-launcher for Windows — run multiple Roblox clients on Windows, signed i
 
 Coming soon. The Store-signed install bypasses SmartScreen entirely.
 
-### Sideload *(clan-direct path)*
+### GitHub Releases *(clan-direct path)*
 
-Until the Store listing is live:
+Until the Store listing is live — or if you'd rather not wait:
 
-1. Download the latest `RORORO-Sideload.msix` and `dev-cert.cer` from [Releases](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases).
-2. Right-click `dev-cert.cer` → **Install Certificate** → **Local Machine** → **Place all certificates in the following store** → **Trusted People**. (One-time per machine.)
-3. Double-click `RORORO-Sideload.msix` to install. SmartScreen will warn — click **More info** → **Run anyway**. (One-time per release.)
-4. RORORO shows up in your Start Menu.
+1. Download the latest `rororo-win-Setup.exe` from [Releases](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases).
+2. Double-click it. SmartScreen will warn (the installer is unsigned) — click **More info** → **Run anyway**. (One-time per machine.)
+3. RORORO installs to your user profile, lands in the Start Menu, and auto-updates from this Releases page going forward — no second SmartScreen prompt on later versions.
 
 A 30-second video walkthrough is linked from each Release page.
+
+> Prefer MSIX? `RORORO-Sideload.msix` + `dev-cert.cer` are also attached to each release — same app, slightly more setup (you import the cert once into Trusted People, then double-click the MSIX). Use whichever flow you trust more.
 
 ## What it does
 
