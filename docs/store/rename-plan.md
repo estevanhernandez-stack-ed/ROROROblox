@@ -2,7 +2,7 @@
 
 > **Context:** Partner Center rejected v1.1.0.0 under clause **10.1.1.1 Inaccurate Representation**. Reviewer note: *"The product name does not accurately represent the product. The product name contains the title of another piece of software or service. Please edit the Product Name field in the Store Listings section."*
 >
-> The fix is a rename of the user-visible product. The package's internal Identity (`626LabsLLC.RORORO`) and Partner Center reservation can stay — Microsoft asked specifically for a Listing-side change. We bump version (1.1.0.1 minimum, 1.2.0.0 if we want a clean reset), update every user-visible surface, re-upload.
+> The fix is a rename of the user-visible product. The package's internal Identity (`626LabsLLC.RORORO`) and Partner Center reservation can stay — Microsoft asked specifically for a Listing-side change. We bump version (1.1.1.0 minimum, 1.2.0.0 if we want a clean reset), update every user-visible surface, re-upload.
 
 ## Decisions to lock before any execution
 
@@ -13,7 +13,7 @@
 3. **Identity Name strategy.** Recommendation: **keep `626LabsLLC.RORORO`** for now (Microsoft's rejection was Listing-specific, not Identity-specific; re-reserving means a new Store ID + losing the existing reservation). If Microsoft re-rejects citing Identity-side visibility, escalate to a re-reservation in a follow-up cycle.
 4. **Internal data path strategy.** Recommendation: **keep `%LOCALAPPDATA%\ROROROblox\`** as the local data folder. These paths are filesystem-internal, never user-facing. Changing them would orphan existing dev/test data. The constant string `"RORORO"` lives on as a folder name — Microsoft cert reviewers don't see filesystem structure inside the MSIX install (it's virtualized to package LocalState by Identity Name anyway).
 5. **Repo name.** Recommendation: **keep `github.com/.../RORORO`**. Repo renames break external links and require Pages baseurl reconfig. Internal-only artifact; doesn't surface to Store reviewers.
-6. **Version.** Recommendation: bump to **1.1.0.1** if Microsoft accepts a Listing-only fix without a manifest re-upload, OR **1.2.0.0** if we re-pack the MSIX with a new DisplayName.
+6. **Version.** Recommendation: bump to **1.1.1.0** if Microsoft accepts a Listing-only fix without a manifest re-upload, OR **1.2.0.0** if we re-pack the MSIX with a new DisplayName.
 
 ## Surfaces inventory — every place "RORORO" appears as a user-visible string
 
@@ -32,7 +32,7 @@
 - [ ] `<Properties><Description>` → revise (drop "Multi-launcher for Windows" from this slot)
 - [ ] `<Application uap:VisualElements DisplayName="RORORO"` → new name
 - [ ] `<Application uap:VisualElements Description="Run multiple Roblox clients side by side.">` → keep (nominative use OK in Description)
-- [ ] `<Identity Name="626LabsLLC.RORORO" Version="1.1.0.0">` → bump Version to `1.1.0.1` (or `1.2.0.0` if we want a clean reset)
+- [ ] `<Identity Name="626LabsLLC.RORORO" Version="1.1.0.0">` → bump Version to `1.1.1.0` (or `1.2.0.0` if we want a clean reset)
 - [ ] `<Application Id="RORORO">` → leave (internal application ID, not user-visible)
 - [ ] `<uap:ShowNameOnTiles>` declarations → keep (Windows overlays the new DisplayName automatically)
 
@@ -118,7 +118,7 @@ Hero images for README (`docs/images/`):
 - [ ] `scripts/finalize-store-build.ps1` — no change (uses parameters, not string literals)
 - [ ] `scripts/build-msix.ps1` — no change (manifest-driven)
 - [ ] Re-run `scripts/generate-store-assets.ps1` to regenerate all PNGs
-- [ ] Re-run `scripts/finalize-store-build.ps1 -Version "1.1.0.1"` to rebuild the Store MSIX with the new DisplayName
+- [ ] Re-run `scripts/finalize-store-build.ps1 -Version "1.1.1.0"` to rebuild the Store MSIX with the new DisplayName
 
 ### Phase 8 — Resubmit (USER does this)
 

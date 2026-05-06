@@ -1,6 +1,6 @@
 # Microsoft Store listing copy — RORORO
 
-> **Stake:** v1.1.0.0 was rejected under clause **10.1.1.1 Inaccurate Representation** for containing the name of another product (Roblox) in the Product Name field. The fix was to rename the product to **RORORO** (drops the `blox` suffix entirely; keeps the stutter that ties to the icon and the brand DNA). v1.1.0.1 ships with the new name across every user-visible surface; nominative use of "Roblox" in the description body is permitted under fair-use precedent and is clearly disclaimed.
+> **Stake:** v1.1.0.0 was rejected under clause **10.1.1.1 Inaccurate Representation** for containing the name of another product (Roblox) in the Product Name field. The fix was to rename the product to **RORORO** (drops the `blox` suffix entirely; keeps the stutter that ties to the icon and the brand DNA). v1.1.1.0 ships with the new name across every user-visible surface; nominative use of "Roblox" in the description body is permitted under fair-use precedent and is clearly disclaimed.
 
 ## Pre-submission checklist (do this BEFORE Partner Center)
 
@@ -102,10 +102,10 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 
 > Avoid "cheat", "exploit", "bypass" — those will trigger reviewer concerns even if irrelevant.
 
-## What's new (release notes for v1.1.0.1)
+## What's new (release notes for v1.1.1.0)
 
 ```
-v1.1.0.1:
+v1.1.1.0:
 • Renamed product from ROROROblox to RORORO per Microsoft Store listing guidance (clause 10.1.1.1).
 • Updated tagline: Multi-launcher for Windows.
 • Functionality unchanged from v1.1.0.0.
@@ -143,4 +143,4 @@ Per Sanduhr playbook:
 - [`docs/store/screenshots-checklist.md`](screenshots-checklist.md) — screenshots to capture
 - [`docs/store/submission-checklist.md`](submission-checklist.md) — pre-flight + post-flight procedure
 - [`docs/store/reviewer-letter.md`](reviewer-letter.md) — Notes-for-certification letter (post-rename version with rename context)
-- [`docs/store/rename-plan.md`](rename-plan.md) — comprehensive rename plan (executed in v1.1.0.1)
+- [`docs/store/rename-plan.md`](rename-plan.md) — comprehensive rename plan (executed in v1.1.1.0)

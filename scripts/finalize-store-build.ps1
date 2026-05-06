@@ -61,6 +61,14 @@ if ($PublisherCN -notmatch '^CN=') {
 if ($Version -notmatch '^\d+\.\d+\.\d+\.\d+$') {
     throw "Version must be four-part (e.g. '1.1.0.0'). Got: $Version"
 }
+# Microsoft Store requires the 4th component (revision) to be 0 -- non-zero
+# revisions get rejected at upload validation:
+#   "Apps are not allowed to have a Version with a revision number other than
+#    zero specified in the app manifest."
+# Bump the third component (build) for resubmissions instead, e.g. 1.1.0.0 -> 1.1.1.0.
+if ($Version -notmatch '\.0$') {
+    throw "Version revision (4th component) must be 0 for Microsoft Store submissions. Got: $Version. Bump the build component (3rd) instead, e.g. 1.1.0.0 -> 1.1.1.0."
+}
 
 $manifestPath = Join-Path $RepoRoot 'src\ROROROblox.App\Package.appxmanifest'
 if (-not (Test-Path $manifestPath)) {
