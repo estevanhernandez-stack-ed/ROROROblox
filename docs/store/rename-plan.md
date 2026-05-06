@@ -122,7 +122,7 @@ Hero images for README (`docs/images/`):
 
 ### Phase 8 — Resubmit (USER does this)
 
-- [ ] Upload `dist/ROROROblox-Store.msix` (still the same filename; package contents have new DisplayName)
+- [ ] Upload `dist/RORORO-Store.msix` (still the same filename; package contents have new DisplayName)
 - [ ] Edit Partner Center listing **Product Name** to the new name
 - [ ] Update **What's new** field
 - [ ] Re-paste long description from updated `docs/store/listing-copy.md`

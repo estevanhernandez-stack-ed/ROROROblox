@@ -131,7 +131,7 @@ if ($buildExit -ne 0) {
 }
 
 # Report the artefact.
-$msixPath = Join-Path $RepoRoot 'dist\ROROROblox-Store.msix'
+$msixPath = Join-Path $RepoRoot 'dist\RORORO-Store.msix'
 if (Test-Path $msixPath) {
     $info = Get-Item $msixPath
     Write-Host ''

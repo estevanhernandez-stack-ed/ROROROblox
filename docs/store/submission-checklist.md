@@ -39,7 +39,7 @@ Per Sanduhr playbook 10.1.4.4.a — the disclaimer must appear in MULTIPLE surfa
   ```powershell
   powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Store
   ```
-- [ ] MSIX packed at `dist/ROROROblox-Store.msix`
+- [ ] MSIX packed at `dist/RORORO-Store.msix`
 
 ### Listing materials
 
@@ -63,7 +63,7 @@ Per Sanduhr playbook 10.1.4.4.a — the disclaimer must appear in MULTIPLE surfa
 
 1. Partner Center → Apps → New product → MSIX/PWA app
 2. Pick the reserved app name
-3. Upload `dist/ROROROblox-Store.msix`
+3. Upload `dist/RORORO-Store.msix`
 4. Fill in pricing (Free), markets (Worldwide unless intentional limit), age rating questionnaire
 5. Paste listing copy, screenshots, keywords, privacy policy URL
 6. Submit for certification

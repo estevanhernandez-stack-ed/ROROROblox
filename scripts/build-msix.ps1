@@ -173,7 +173,7 @@ Copy-Item -Path "$logosDir\*" -Destination $stagingLogosDir -Force
 
 # === Pack. ===
 $flavor = if ($Sideload) { 'Sideload' } else { 'Store' }
-$msixPath = Join-Path $outDir "ROROROblox-$flavor.msix"
+$msixPath = Join-Path $outDir "RORORO-$flavor.msix"
 if (Test-Path $msixPath) { Remove-Item $msixPath -Force }
 
 $makeAppx = Get-MakeAppxPath

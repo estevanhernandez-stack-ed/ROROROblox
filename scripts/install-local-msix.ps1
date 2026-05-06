@@ -65,7 +65,7 @@ if ($existing -and $Force) {
 }
 
 # Build the sideload MSIX.
-$msixPath = Join-Path $RepoRoot 'dist\ROROROblox-Sideload.msix'
+$msixPath = Join-Path $RepoRoot 'dist\RORORO-Sideload.msix'
 if (-not $SkipBuild) {
     Write-Host '[install] Building sideload MSIX...' -ForegroundColor Cyan
     $buildScript = Join-Path $RepoRoot 'scripts\build-msix.ps1'

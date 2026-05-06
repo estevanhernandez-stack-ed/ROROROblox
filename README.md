@@ -30,9 +30,9 @@ Coming soon. The Store-signed install bypasses SmartScreen entirely.
 
 Until the Store listing is live:
 
-1. Download the latest `ROROROblox-Sideload.msix` and `dev-cert.cer` from [Releases](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases).
+1. Download the latest `RORORO-Sideload.msix` and `dev-cert.cer` from [Releases](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases).
 2. Right-click `dev-cert.cer` → **Install Certificate** → **Local Machine** → **Place all certificates in the following store** → **Trusted People**. (One-time per machine.)
-3. Double-click `ROROROblox-Sideload.msix` to install. SmartScreen will warn — click **More info** → **Run anyway**. (One-time per release.)
+3. Double-click `RORORO-Sideload.msix` to install. SmartScreen will warn — click **More info** → **Run anyway**. (One-time per release.)
 4. RORORO shows up in your Start Menu.
 
 A 30-second video walkthrough is linked from each Release page.

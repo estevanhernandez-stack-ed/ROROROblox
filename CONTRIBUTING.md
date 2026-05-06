@@ -52,10 +52,10 @@ powershell -ExecutionPolicy Bypass -File scripts/generate-dev-cert.ps1 -Password
 powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertPath dev-cert.pfx -CertPassword 'pick-a-password'
 ```
 
-Output: `dist/ROROROblox-Sideload.msix` (signed) + `dev-cert.cer` (the public cert your testers import into **Local Machine → Trusted People** before installing).
+Output: `dist/RORORO-Sideload.msix` (signed) + `dev-cert.cer` (the public cert your testers import into **Local Machine → Trusted People** before installing).
 
 The first-install flow on a fresh Win11 box:
-1. Tester downloads `dev-cert.cer` and `ROROROblox-Sideload.msix`.
+1. Tester downloads `dev-cert.cer` and `RORORO-Sideload.msix`.
 2. Right-click `dev-cert.cer` → Install → Local Machine → Trusted People.
 3. Double-click the `.msix` to install.
 4. SmartScreen will prompt: "More info → Run anyway." Document this with a 30-second video on the README.
@@ -67,10 +67,10 @@ The first-install flow on a fresh Win11 box:
 powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Store
 ```
 
-Output: `dist/ROROROblox-Store.msix` (unsigned — Partner Center signs on submission). Validate locally before uploading:
+Output: `dist/RORORO-Store.msix` (unsigned — Partner Center signs on submission). Validate locally before uploading:
 
 ```powershell
-& "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.22621.0\x64\makeappx.exe" verify /p dist/ROROROblox-Store.msix
+& "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.22621.0\x64\makeappx.exe" verify /p dist/RORORO-Store.msix
 ```
 
 Then upload via Partner Center → Apps & games → RORORO → Packages.
