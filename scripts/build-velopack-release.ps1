@@ -45,6 +45,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# Velopack's --packVersion requires 3-part SemVer2. The assembly + tag use the
+# .NET-style 4-part version (1.1.2.0); strip the 4th segment for vpk only.
+$packVersion = ($Version -split '\.')[0..2] -join '.'
+
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $projectFile = Join-Path $repoRoot 'src\ROROROblox.App\ROROROblox.App.csproj'
 $publishDir = Join-Path $repoRoot 'dist\publish'
@@ -52,7 +56,7 @@ $releaseDir = Join-Path $repoRoot 'dist\release'
 $logosDir = Join-Path $repoRoot 'src\ROROROblox.App\Package\Logos'
 $icoOutPath = Join-Path $logosDir 'AppIcon.ico'
 
-Write-Host "[velopack] RORORO v$Version ($Runtime, $Configuration)" -ForegroundColor Cyan
+Write-Host "[velopack] RORORO v$Version ($Runtime, $Configuration) -- vpk packVersion=$packVersion" -ForegroundColor Cyan
 
 # ----- 1. Pre-flight ----------------------------------------------------------
 
@@ -152,7 +156,7 @@ New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
 $vpkArgs = @(
     'pack'
     '--packId',      'RORORO'
-    '--packVersion', $Version
+    '--packVersion', $packVersion
     '--packDir',     $publishDir
     '--mainExe',     'ROROROblox.App.exe'
     '--packTitle',   'RORORO'
