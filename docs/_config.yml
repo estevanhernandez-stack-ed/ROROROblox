@@ -12,9 +12,9 @@ author: 626 Labs LLC
 url: https://estevanhernandez-stack-ed.github.io
 baseurl: /ROROROblox
 
-remote_theme: pages-themes/cayman@v0.2.0
+# Custom 626 Labs brand layout in _layouts/default.html replaces the previous
+# cayman remote theme. brand.css handles all surface styling.
 plugins:
-  - jekyll-remote-theme
   - jekyll-relative-links
 
 # Pretty URLs: PRIVACY.md -> /privacy/ instead of /PRIVACY.html. Easier to
