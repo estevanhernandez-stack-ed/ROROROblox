@@ -2,7 +2,7 @@
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="ROROROblox -- History"
+        Title="RORORO -- History"
         Height="600" Width="700"
         MinHeight="420" MinWidth="600"
         WindowStartupLocation="CenterOwner"

@@ -1,6 +1,6 @@
-# ROROROblox Theme Builder — AI Prompt
+# RORORO Theme Builder — AI Prompt
 
-Paste this prompt into Claude, ChatGPT, or any chat agent along with a **vibe description** or **a reference image**, and the agent will return a ready-to-drop theme JSON for ROROROblox.
+Paste this prompt into Claude, ChatGPT, or any chat agent along with a **vibe description** or **a reference image**, and the agent will return a ready-to-drop theme JSON for RORORO.
 
 ## How to use
 
@@ -15,7 +15,7 @@ If you'd rather drop a `.json` file in directly, that path still works:
 
 ## The prompt
 
-You are designing a color theme for **ROROROblox**, a small Windows desktop app that lets a user run multiple Roblox clients side by side as different saved accounts. The window has a navy-leaning dark base with cyan + magenta as the brand accent pair. Themes are JSON dicts of named slot → hex; they are mutated into the app's brush dictionary at runtime, so the slot names matter exactly.
+You are designing a color theme for **RORORO**, a small Windows desktop app that lets a user run multiple Roblox clients side by side as different saved accounts. The window has a navy-leaning dark base with cyan + magenta as the brand accent pair. Themes are JSON dicts of named slot → hex; they are mutated into the app's brush dictionary at runtime, so the slot names matter exactly.
 
 Given the reference image or vibe description I'm providing, return **only** a valid JSON object matching this schema. No markdown fences, no preamble, no commentary — just the raw JSON.
 
@@ -90,4 +90,4 @@ Notice: distinct cyan + magenta hues; `cyan` is clearly different from `white`; 
 2. Drop it into `%LOCALAPPDATA%\ROROROblox\themes\`. (Open Preferences → "Open themes folder" to get there in one click.)
 3. Re-open Preferences. Your theme appears in the picker; click to apply live.
 
-If your theme doesn't show up, the JSON is probably missing a required field or has a typo — check the log at `%LOCALAPPDATA%\ROROROblox\logs\rororoblox-*.log` for a "theme parse" warning. The in-app builder catches these inline; the drop-a-file path falls silent.
+If your theme doesn't show up, the JSON is probably missing a required field or has a typo — check the log at `%LOCALAPPDATA%\ROROROblox\logs\RORORO-*.log` for a "theme parse" warning. The in-app builder catches these inline; the drop-a-file path falls silent.

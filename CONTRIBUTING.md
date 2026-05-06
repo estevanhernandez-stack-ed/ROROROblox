@@ -1,4 +1,4 @@
-# Contributing to ROROROblox
+# Contributing to RORORO
 
 This is a small, single-developer product for now. The notes below are the muscle memory you'll want re-reading before each release tag — most of it isn't checked by the build pipeline.
 
@@ -32,11 +32,11 @@ The contract between us and `auth.roblox.com/v1/authentication-ticket` can shift
 - Any time `dpapi-cookie-blast-radius` or `auth-ticket-flow-validator` agents flag something.
 
 ```powershell
-$env:ROROROBLOX_TEST_COOKIE = '<paste .ROBLOSECURITY value from a TEST account>'
+$env:RORORO_TEST_COOKIE = '<paste .ROBLOSECURITY value from a TEST account>'
 dotnet run --project spike/auth-ticket -- --validate-only
 ```
 
-Document any contract shift in [process-notes.md](process-notes.md), update [the canonical spec](docs/superpowers/specs/2026-05-03-rororoblox-design.md) §5.7 / §6.2, log a decision via the dashboard MCP. Don't proceed to a release until the spike is green.
+Document any contract shift in [process-notes.md](process-notes.md), update [the canonical spec](docs/superpowers/specs/2026-05-03-RORORO-design.md) §5.7 / §6.2, log a decision via the dashboard MCP. Don't proceed to a release until the spike is green.
 
 ## Building MSIX
 
@@ -59,7 +59,7 @@ The first-install flow on a fresh Win11 box:
 2. Right-click `dev-cert.cer` → Install → Local Machine → Trusted People.
 3. Double-click the `.msix` to install.
 4. SmartScreen will prompt: "More info → Run anyway." Document this with a 30-second video on the README.
-5. ROROROblox shows up in Start Menu.
+5. RORORO shows up in Start Menu.
 
 ### Store
 
@@ -73,7 +73,7 @@ Output: `dist/ROROROblox-Store.msix` (unsigned — Partner Center signs on submi
 & "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.22621.0\x64\makeappx.exe" verify /p dist/ROROROblox-Store.msix
 ```
 
-Then upload via Partner Center → Apps & games → ROROROblox → Packages.
+Then upload via Partner Center → Apps & games → RORORO → Packages.
 
 ## Asset production (logos, splash, tray icons)
 

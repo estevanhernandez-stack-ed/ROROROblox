@@ -1,11 +1,11 @@
 ---
-title: ROROROblox
-description: Multi-Roblox Instant Generator. A 626 Labs product.
+title: RORORO
+description: Multi-launcher for Windows. A 626 Labs product.
 ---
 
-# ROROROblox
+# RORORO
 
-**Multi-Roblox Instant Generator.** A Windows 11 launcher that runs multiple Roblox clients side by side, signed in as different saved accounts. Free; open source; available via Microsoft Store and GitHub Releases.
+**Multi-launcher for Windows.** A Windows 11 launcher that runs multiple Roblox clients side by side, signed in as different saved accounts. Free; open source; available via Microsoft Store and GitHub Releases.
 
 ## Public links
 
@@ -19,7 +19,7 @@ Runs multiple Roblox clients on one PC simultaneously, each signed in as a diffe
 
 ## Trademark notice
 
-"Roblox" and the Roblox logo are trademarks of Roblox Corporation. ROROROblox is an independent third-party tool, **not affiliated with, endorsed by, or sponsored by Roblox Corporation**. The trademarked term is used solely to describe compatibility with the Roblox platform. ROROROblox launches the official Roblox client unmodified.
+"Roblox" and the Roblox logo are trademarks of Roblox Corporation. RORORO is an independent third-party tool, **not affiliated with, endorsed by, or sponsored by Roblox Corporation**. The trademarked term is used solely to describe compatibility with the Roblox platform. RORORO launches the official Roblox client unmodified.
 
 ---
 

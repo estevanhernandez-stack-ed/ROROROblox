@@ -5,7 +5,7 @@ namespace ROROROblox.App.Startup;
 internal sealed class StartupRegistration : IStartupRegistration
 {
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName = "ROROROblox";
+    private const string ValueName = "RORORO";
 
     public bool IsEnabled()
     {

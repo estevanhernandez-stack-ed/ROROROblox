@@ -1,4 +1,4 @@
-# Store screenshots — ROROROblox
+# Store screenshots — RORORO
 
 > Partner Center accepts 1–9 screenshots per device family. Per Sanduhr playbook: 3–6 screenshots showing **different states** of the app proves the multi-feature value claim (10.1.4.4.b). Single-state screenshot reels read as single-view-utility — that's a rejection vector.
 
@@ -24,7 +24,7 @@ Each screenshot needs an alt-text caption. Captions go in Partner Center's "Scre
 
 ### 2. Multi-instance running — three Roblox windows side by side
 
-**What to show:** ROROROblox MainWindow on the left, three actual Roblox client windows tiled across the rest of the screen. Tray-on icon visible in the system tray.
+**What to show:** RORORO MainWindow on the left, three actual Roblox client windows tiled across the rest of the screen. Tray-on icon visible in the system tray.
 
 **Caption:** "Multi-instance with one click — three Roblox clients, three accounts, one PC."
 
@@ -34,7 +34,7 @@ Each screenshot needs an alt-text caption. Captions go in Partner Center's "Scre
 
 **What to show:** AboutWindow open over MainWindow. Direction C voxel stack visible, version + tagline + 626 Labs attribution.
 
-**Caption:** "Multi-Roblox Instant Generator — a 626 Labs product. Open source under MIT."
+**Caption:** "Multi-launcher for Windows — a 626 Labs product. Open source under MIT."
 
 **Setup:** Click About in the toolbar. Capture.
 
@@ -50,7 +50,7 @@ Each screenshot needs an alt-text caption. Captions go in Partner Center's "Scre
 
 **What to show:** DiagnosticsWindow with system health + Roblox/WebView2 versions + log location. Dark title bar (per the global theming hook).
 
-**Caption:** "Diagnostics shows what ROROROblox sees right now — save the bundle when filing a bug."
+**Caption:** "Diagnostics shows what RORORO sees right now — save the bundle when filing a bug."
 
 **Setup:** Click Diagnostics in the toolbar. Wait for collection to complete.
 
@@ -68,7 +68,7 @@ If we have room, capture **Friend Follow** open over the account list. Adds anot
 
 ## Capture procedure
 
-1. Run a clean install of ROROROblox on a Windows 11 VM or fresh user account (avoid personal data leaking into screenshots).
+1. Run a clean install of RORORO on a Windows 11 VM or fresh user account (avoid personal data leaking into screenshots).
 2. Use the Snipping Tool (`Win+Shift+S`) — Window mode for #3, #5, #6; Rectangle mode for full-desktop #2.
 3. Save as PNG (Partner Center accepts PNG / JPG; PNG is sharper).
 4. Stage in `docs/store/screenshots/` (gitignored — these are big files).

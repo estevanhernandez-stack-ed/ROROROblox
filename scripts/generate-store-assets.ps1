@@ -211,8 +211,8 @@ function Render-Wide {
     $wordmarkY = $height * 0.32 - $wordmarkSize / 2
     $taglineY  = $height * 0.55
     $attribY   = $height * 0.74
-    Draw-Text $c.Graphics 'ROROROblox' $textX $wordmarkY $wordmarkSize ([System.Drawing.Color]::White) ([System.Drawing.FontStyle]::Bold) $false
-    Draw-Text $c.Graphics 'Multi-Roblox Instant Generator.' $textX $taglineY $taglineSize $cyan ([System.Drawing.FontStyle]::Regular) $false
+    Draw-Text $c.Graphics 'RORORO' $textX $wordmarkY $wordmarkSize ([System.Drawing.Color]::White) ([System.Drawing.FontStyle]::Bold) $false
+    Draw-Text $c.Graphics 'Multi-launcher for Windows.' $textX $taglineY $taglineSize $cyan ([System.Drawing.FontStyle]::Regular) $false
     Draw-Text $c.Graphics 'A 626 Labs product' $textX $attribY $attribSize $mutedText ([System.Drawing.FontStyle]::Regular) $false
     return $c
 }
@@ -231,8 +231,8 @@ function Render-BoxArt {
     $wordmarkSize = [single]($size * 0.090)
     $taglineSize  = [single]($size * 0.032)
     $attribSize   = [single]($size * 0.024)
-    Draw-Text $c.Graphics 'ROROROblox' $cx ($size * 0.70) $wordmarkSize ([System.Drawing.Color]::White) ([System.Drawing.FontStyle]::Bold) $true
-    Draw-Text $c.Graphics 'Multi-Roblox Instant Generator.' $cx ($size * 0.81) $taglineSize $cyan ([System.Drawing.FontStyle]::Regular) $true
+    Draw-Text $c.Graphics 'RORORO' $cx ($size * 0.70) $wordmarkSize ([System.Drawing.Color]::White) ([System.Drawing.FontStyle]::Bold) $true
+    Draw-Text $c.Graphics 'Multi-launcher for Windows.' $cx ($size * 0.81) $taglineSize $cyan ([System.Drawing.FontStyle]::Regular) $true
     Draw-Text $c.Graphics 'A 626 Labs product' $cx ($size * 0.88) $attribSize $mutedText ([System.Drawing.FontStyle]::Regular) $true
     return $c
 }
@@ -251,8 +251,8 @@ function Render-Poster {
     $wordmarkSize = [single]($width * 0.10)
     $taglineSize  = [single]($width * 0.035)
     $attribSize   = [single]($width * 0.025)
-    Draw-Text $c.Graphics 'ROROROblox' $cx ($height * 0.62) $wordmarkSize ([System.Drawing.Color]::White) ([System.Drawing.FontStyle]::Bold) $true
-    Draw-Text $c.Graphics 'Multi-Roblox Instant Generator.' $cx ($height * 0.74) $taglineSize $cyan ([System.Drawing.FontStyle]::Regular) $true
+    Draw-Text $c.Graphics 'RORORO' $cx ($height * 0.62) $wordmarkSize ([System.Drawing.Color]::White) ([System.Drawing.FontStyle]::Bold) $true
+    Draw-Text $c.Graphics 'Multi-launcher for Windows.' $cx ($height * 0.74) $taglineSize $cyan ([System.Drawing.FontStyle]::Regular) $true
     Draw-Text $c.Graphics 'A 626 Labs product' $cx ($height * 0.81) $attribSize $mutedText ([System.Drawing.FontStyle]::Regular) $true
     return $c
 }
@@ -273,8 +273,8 @@ function Render-Hero {
     $wordmarkSize = [single]($height * 0.13)
     $taglineSize  = [single]($height * 0.045)
     $attribSize   = [single]($height * 0.032)
-    Draw-Text $c.Graphics 'ROROROblox' $textX ($height * 0.34) $wordmarkSize ([System.Drawing.Color]::White) ([System.Drawing.FontStyle]::Bold) $false
-    Draw-Text $c.Graphics 'Multi-Roblox Instant Generator.' $textX ($height * 0.56) $taglineSize $cyan ([System.Drawing.FontStyle]::Regular) $false
+    Draw-Text $c.Graphics 'RORORO' $textX ($height * 0.34) $wordmarkSize ([System.Drawing.Color]::White) ([System.Drawing.FontStyle]::Bold) $false
+    Draw-Text $c.Graphics 'Multi-launcher for Windows.' $textX ($height * 0.56) $taglineSize $cyan ([System.Drawing.FontStyle]::Regular) $false
     Draw-Text $c.Graphics 'A 626 Labs product' $textX ($height * 0.66) $attribSize $mutedText ([System.Drawing.FontStyle]::Regular) $false
     return $c
 }
@@ -295,8 +295,8 @@ function Render-Splash {
     $wordmarkY = $height * 0.32
     $taglineY  = $height * 0.56
     $attribY   = $height * 0.70
-    Draw-Text $c.Graphics 'ROROROblox' $textX $wordmarkY $wordmarkSize ([System.Drawing.Color]::White) ([System.Drawing.FontStyle]::Bold) $false
-    Draw-Text $c.Graphics 'Multi-Roblox Instant Generator.' $textX $taglineY $taglineSize $cyan ([System.Drawing.FontStyle]::Regular) $false
+    Draw-Text $c.Graphics 'RORORO' $textX $wordmarkY $wordmarkSize ([System.Drawing.Color]::White) ([System.Drawing.FontStyle]::Bold) $false
+    Draw-Text $c.Graphics 'Multi-launcher for Windows.' $textX $taglineY $taglineSize $cyan ([System.Drawing.FontStyle]::Regular) $false
     Draw-Text $c.Graphics 'A 626 Labs product' $textX $attribY $attribSize $mutedText ([System.Drawing.FontStyle]::Regular) $false
     return $c
 }

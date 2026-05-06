@@ -1,13 +1,13 @@
-# Microsoft Store submission checklist — ROROROblox
+# Microsoft Store submission checklist — RORORO
 
-> Pre-flight + post-flight procedure for submitting to Partner Center. Lifted from Sanduhr's playbook with ROROROblox-specific addenda. Run the pre-flight EVERY submission (initial + every resubmission).
+> Pre-flight + post-flight procedure for submitting to Partner Center. Lifted from Sanduhr's playbook with RORORO-specific addenda. Run the pre-flight EVERY submission (initial + every resubmission).
 
 ## Pre-flight (in order)
 
 ### Identity & paperwork
 
 - [ ] Partner Center publisher account exists and is verified
-- [ ] App identity reserved in Partner Center (e.g., `626Labs.ROROROblox` or similar — must be unique across the Store)
+- [ ] App identity reserved in Partner Center (e.g., `626Labs.RORORO` or similar — must be unique across the Store)
 - [ ] Publisher display name decided: **626 Labs LLC** *(or Estevan Hernandez until LLC paperwork lands)*
 - [ ] Identity fields in `Package.appxmanifest` updated to match Partner Center reservation:
   - `<Identity Name="..." Publisher="..." />` matches the reserved name + the Partner-Center-issued publisher CN
@@ -82,7 +82,7 @@ Partner Center status page will move through:
 
 ### Carry to next release (Partner Center surfaced these on the v1.1 submission)
 
-- [ ] **Arm64 (AArch64) build target.** Partner Center flagged: *"Future Windows on Arm devices will no longer support AArch32, therefore we recommend updating your targeted platforms to Arm64 (AArch64), which works on all Windows on Arm devices, as soon as possible in order to ensure your customers can continue to enjoy your experience."* Current MSIX is x64 only (`<Identity ProcessorArchitecture="x64" />`). v1.1.1 or v1.2 should add an Arm64 build flavor + ship a multi-arch package (or two packages — Microsoft accepts either pattern). Action: extend `scripts/build-msix.ps1` to support `-Architecture arm64`, regenerate manifest with arm64 ProcessorArchitecture, and produce `dist/ROROROblox-Store-arm64.msix` alongside the x64 build. Bump version when shipping.
+- [ ] **Arm64 (AArch64) build target.** Partner Center flagged: *"Future Windows on Arm devices will no longer support AArch32, therefore we recommend updating your targeted platforms to Arm64 (AArch64), which works on all Windows on Arm devices, as soon as possible in order to ensure your customers can continue to enjoy your experience."* Current MSIX is x64 only (`<Identity ProcessorArchitecture="x64" />`). v1.1.1 or v1.2 should add an Arm64 build flavor + ship a multi-arch package (or two packages — Microsoft accepts either pattern). Action: extend `scripts/build-msix.ps1` to support `-Architecture arm64`, regenerate manifest with arm64 ProcessorArchitecture, and produce `dist/RORORO-Store-arm64.msix` alongside the x64 build. Bump version when shipping.
 
 ## Post-flight — if rejected
 
@@ -100,9 +100,9 @@ Per Sanduhr playbook response protocol:
 
 ## Resubmission cycles to expect
 
-Sanduhr passed on submission **3** (two rejections, both 10.1.4.4). For ROROROblox the bar is higher (Roblox trademark exposure > Anthropic exposure). **Plan for 2–4 cycles.** Each cycle ~24–72 hours.
+Sanduhr passed on submission **3** (two rejections, both 10.1.4.4). For RORORO the bar is higher (Roblox trademark exposure > Anthropic exposure). **Plan for 2–4 cycles.** Each cycle ~24–72 hours.
 
-## Roblox-side risk (ROROROblox-specific, not in Sanduhr playbook)
+## Roblox-side risk (RORORO-specific, not in Sanduhr playbook)
 
 Microsoft cert reviewers don't typically Google the trademark holder's stance, but Roblox Corp could submit a complaint to Microsoft if they object to our distribution. Probability is low — multi-instancing tools have existed for years (MultiBloxy, Bloxstrap-related forks, etc.) without takedown action. But it's non-zero. If it happens:
 

@@ -1,10 +1,10 @@
-# Age-rating questionnaire — ROROROblox
+# Age-rating questionnaire — RORORO
 
 > Microsoft Store age rating uses the IARC questionnaire. Per Sanduhr playbook 10.1.4.4: answers must be CONSISTENT with the privacy policy and listing description — inconsistency is its own rejection vector.
 
-## ROROROblox is a launcher, not a game
+## RORORO is a launcher, not a game
 
-The most important framing point: ROROROblox is a **utility/launcher** that opens the official Roblox client. It does not contain any game content of its own. Its rating reflects what's *in this app*, not what Roblox itself contains. The Roblox application has its own IARC rating (10+ in most regions); we route traffic to it but don't control its content.
+The most important framing point: RORORO is a **utility/launcher** that opens the official Roblox client. It does not contain any game content of its own. Its rating reflects what's *in this app*, not what Roblox itself contains. The Roblox application has its own IARC rating (10+ in most regions); we route traffic to it but don't control its content.
 
 Phrase any "does this app contain..." answer as: **does this app, on its own, in its own UI, contain X**.
 
@@ -29,7 +29,7 @@ Phrase any "does this app contain..." answer as: **does this app, on its own, in
 
 ## Free-text disclosures (where the questionnaire allows)
 
-- **Network usage:** "ROROROblox makes HTTPS calls to `auth.roblox.com` (documented authentication-ticket endpoint, called only during a Launch As action), `users.roblox.com` (avatar metadata), `thumbnails.roblox.com` (avatar imagery), and the GitHub Releases API for auto-update checks. No analytics, no telemetry, no third-party tracking."
+- **Network usage:** "RORORO makes HTTPS calls to `auth.roblox.com` (documented authentication-ticket endpoint, called only during a Launch As action), `users.roblox.com` (avatar metadata), `thumbnails.roblox.com` (avatar imagery), and the GitHub Releases API for auto-update checks. No analytics, no telemetry, no third-party tracking."
 - **Local storage:** "Roblox session cookies are stored in `accounts.dat` in the app's local data folder, encrypted with the Windows Data Protection API. No plaintext secrets are ever written to disk."
 - **Trademark notice:** Drop the standard nominative-use disclaimer in any "anything else we should know" field.
 

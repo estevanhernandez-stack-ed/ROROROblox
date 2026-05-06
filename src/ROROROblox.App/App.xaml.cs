@@ -232,7 +232,7 @@ public partial class App : Application
         {
             client.DefaultRequestHeaders.UserAgent.Clear();
             var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
-            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("ROROROblox", version));
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         });
 
         // Compat checker uses its own HttpClient — different UA + different host pattern.
@@ -240,7 +240,7 @@ public partial class App : Application
         {
             client.DefaultRequestHeaders.UserAgent.Clear();
             var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
-            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("ROROROblox", version));
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         });
 
         services.AddSingleton<IRobloxLauncher, RobloxLauncher>();

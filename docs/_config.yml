@@ -1,4 +1,4 @@
-# GitHub Pages site config for ROROROblox.
+# GitHub Pages site config for RORORO.
 # Public surface = the privacy policy + a minimal landing page. Internal docs
 # (Cart artefacts, Store-prep notes, design specs) are excluded so they don't
 # leak as URLs from the published site.
@@ -6,8 +6,8 @@
 # Site source: docs/ folder on the main branch. Enable in Settings -> Pages
 # -> Build and deployment -> Source: Deploy from a branch -> main + /docs.
 
-title: ROROROblox
-description: Multi-Roblox Instant Generator. A 626 Labs product.
+title: RORORO
+description: Multi-launcher for Windows. A 626 Labs product.
 author: 626 Labs LLC
 url: https://estevanhernandez-stack-ed.github.io
 baseurl: /ROROROblox

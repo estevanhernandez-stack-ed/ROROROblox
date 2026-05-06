@@ -1,13 +1,13 @@
 <div align="center">
 
-<img src="docs/images/hero.png" alt="ROROROblox" width="220" />
+<img src="docs/images/hero.png" alt="RORORO" width="220" />
 
-# ROROROblox
+# RORORO
 
-_Multi-Roblox Instant Generator — run multiple Roblox clients on Windows, signed in as different saved accounts._
+_Multi-launcher for Windows — run multiple Roblox clients on Windows, signed in as different saved accounts._
 
-[![Latest release](https://img.shields.io/github/v/release/estevanhernandez-stack-ed/ROROROblox?color=17d4fa&label=release&style=flat-square)](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases)
-[![Stars](https://img.shields.io/github/stars/estevanhernandez-stack-ed/ROROROblox?color=f22f89&style=flat-square)](https://github.com/estevanhernandez-stack-ed/ROROROblox/stargazers)
+[![Latest release](https://img.shields.io/github/v/release/estevanhernandez-stack-ed/RORORO?color=17d4fa&label=release&style=flat-square)](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases)
+[![Stars](https://img.shields.io/github/stars/estevanhernandez-stack-ed/RORORO?color=f22f89&style=flat-square)](https://github.com/estevanhernandez-stack-ed/ROROROblox/stargazers)
 [![License: MIT](https://img.shields.io/badge/license-MIT-17d4fa?style=flat-square)](#license)
 [![Platform: Windows 11](https://img.shields.io/badge/platform-Windows%2011-f22f89?style=flat-square)](https://www.microsoft.com/windows/windows-11)
 [![Stack: .NET 10 LTS](https://img.shields.io/badge/.NET-10%20LTS-17d4fa?style=flat-square)](https://dotnet.microsoft.com/)
@@ -16,7 +16,7 @@ _Multi-Roblox Instant Generator — run multiple Roblox clients on Windows, sign
 
 </div>
 
-> **"Roblox" is a trademark of Roblox Corporation.** ROROROblox is not affiliated with, endorsed by, or sponsored by Roblox Corporation. We use the term to describe compatibility — this app launches the official Roblox client unmodified. A 626 Labs product.
+> **"Roblox" is a trademark of Roblox Corporation.** RORORO is not affiliated with, endorsed by, or sponsored by Roblox Corporation. We use the term to describe compatibility — this app launches the official Roblox client unmodified. A 626 Labs product.
 
 ---
 
@@ -33,7 +33,7 @@ Until the Store listing is live:
 1. Download the latest `ROROROblox-Sideload.msix` and `dev-cert.cer` from [Releases](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases).
 2. Right-click `dev-cert.cer` → **Install Certificate** → **Local Machine** → **Place all certificates in the following store** → **Trusted People**. (One-time per machine.)
 3. Double-click `ROROROblox-Sideload.msix` to install. SmartScreen will warn — click **More info** → **Run anyway**. (One-time per release.)
-4. ROROROblox shows up in your Start Menu.
+4. RORORO shows up in your Start Menu.
 
 A 30-second video walkthrough is linked from each Release page.
 
@@ -49,7 +49,7 @@ A 30-second video walkthrough is linked from each Release page.
 
 ## How to use
 
-1. Click ROROROblox in the system tray to open the main window.
+1. Click RORORO in the system tray to open the main window.
 2. Click **+ Add Account**, log in with the Roblox account you want to save. The login happens entirely inside Roblox's own page — your password never touches our process.
 3. Repeat for each alt.
 4. Right-click the tray icon → toggle **Multi-Instance: ON**.
@@ -67,9 +67,9 @@ The first time you Launch As, you'll be prompted for a default Roblox game URL. 
 
 ## What about my Roblox password?
 
-Short version: **ROROROblox never sees it.**
+Short version: **RORORO never sees it.**
 
-Long version: when you click *Add Account*, ROROROblox opens an embedded Microsoft Edge WebView2 control pointed at `https://www.roblox.com/login`. The login page is Roblox's own — same HTML, same form, same HTTPS connection your browser would make. Your keystrokes go from the embedded browser straight to Roblox's servers. ROROROblox is the window frame, not the form handler.
+Long version: when you click *Add Account*, RORORO opens an embedded Microsoft Edge WebView2 control pointed at `https://www.roblox.com/login`. The login page is Roblox's own — same HTML, same form, same HTTPS connection your browser would make. Your keystrokes go from the embedded browser straight to Roblox's servers. RORORO is the window frame, not the form handler.
 
 What we **do** capture, after Roblox confirms a successful login, is the `.ROBLOSECURITY` session cookie that Roblox sets in your browser. That cookie is what we hand back to Roblox during *Launch As* to start a session as you. Before we write it to disk, we run it through Windows' [Data Protection API](https://learn.microsoft.com/en-us/dotnet/standard/security/how-to-use-data-protection) — encryption tied to your specific Windows user account on your specific machine. The encrypted file (`accounts.dat`) is unreadable on any other PC, by any other Windows user, or even by you if Windows ever loses its DPAPI master key (e.g., after a from-scratch reinstall).
 
@@ -90,7 +90,7 @@ We never log the cookie value. We never send the cookie to anyone other than Rob
 
 ## Provenance
 
-The named-mutex defeat technique originated with **MultiBloxy** by [Zgoly](https://github.com/Zgoly/MultiBloxy). ROROROblox is **not a fork** — it's a clean reimplementation in C# with substantially expanded scope (account management, structured launch flow, error handling, distribution). The reference binary `MultiBloxy.exe` is in this repo for verification; details + hash + caveats in [`PROVENANCE.txt`](PROVENANCE.txt).
+The named-mutex defeat technique originated with **MultiBloxy** by [Zgoly](https://github.com/Zgoly/MultiBloxy). RORORO is **not a fork** — it's a clean reimplementation in C# with substantially expanded scope (account management, structured launch flow, error handling, distribution). The reference binary `MultiBloxy.exe` is in this repo for verification; details + hash + caveats in [`PROVENANCE.txt`](PROVENANCE.txt).
 
 ## Roblox-side caveats
 
@@ -118,7 +118,7 @@ powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertP
 ## Documentation
 
 - **Privacy policy:** [`docs/PRIVACY.md`](docs/PRIVACY.md)
-- **Architecture & decisions:** [`docs/superpowers/specs/2026-05-03-rororoblox-design.md`](docs/superpowers/specs/2026-05-03-rororoblox-design.md)
+- **Architecture & decisions:** [`docs/superpowers/specs/2026-05-03-RORORO-design.md`](docs/superpowers/specs/2026-05-03-RORORO-design.md)
 - **Build plan:** [`docs/checklist.md`](docs/checklist.md)
 - **Cycle process notes:** [`process-notes.md`](process-notes.md)
 - **Security audit:** [`docs/security-audit-2026-05-04.md`](docs/security-audit-2026-05-04.md)
@@ -144,16 +144,16 @@ powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertP
 - [ ] Per-cookie encryption envelope (today: whole-blob; v1.2: per-account)
 - [ ] Per-account WebView2 profile isolation (today: shared cache, wiped pre-login)
 - [ ] Crash report opt-in (today: local logs only)
-- [ ] Winget manifest (`winget install rororoblox`)
+- [ ] Winget manifest (`winget install RORORO`)
 - [ ] Auto-detect when Roblox renames the singleton mutex; warn with current `roblox-compat.json` version
 
-## Why "ROROROblox"?
+## Why "RORORO"?
 
-The name is a stutter spelling of **Roblox** — *RO RO RO blox* — visualizing what the app does: spawn three (or more) Roblox clients side by side. The icon mirrors the wordmark: three voxel blocks stacked, cyan-bright on top, magenta in the middle, cyan at the base. The tagline "Multi-Roblox Instant Generator" leans into the same beat.
+The name is a stutter spelling of **Roblox** — *RO RO RO blox* — visualizing what the app does: spawn three (or more) Roblox clients side by side. The icon mirrors the wordmark: three voxel blocks stacked, cyan-bright on top, magenta in the middle, cyan at the base. The tagline "Multi-launcher for Windows" leans into the same beat.
 
-The brand DNA is 626 Labs — neon cyan + magenta on deep navy, geometric type, builder-to-builder voice. *Imagine Something Else* is the umbrella; **Multi-Roblox Instant Generator** is the product.
+The brand DNA is 626 Labs — neon cyan + magenta on deep navy, geometric type, builder-to-builder voice. *Imagine Something Else* is the umbrella; **Multi-launcher for Windows** is the product.
 
-> "Roblox" and the Roblox logo are trademarks of Roblox Corporation. ROROROblox is an independent third-party tool, not affiliated with, endorsed by, or sponsored by Roblox Corporation. The trademarked term is used solely to describe compatibility with the Roblox platform.
+> "Roblox" and the Roblox logo are trademarks of Roblox Corporation. RORORO is an independent third-party tool, not affiliated with, endorsed by, or sponsored by Roblox Corporation. The trademarked term is used solely to describe compatibility with the Roblox platform.
 
 ## License
 
@@ -165,6 +165,6 @@ The reference binary (`MultiBloxy.exe`) is governed by Zgoly's original license 
 
 <div align="center">
 
-<sub>A <strong>626 Labs</strong> product · <em>Multi-Roblox Instant Generator</em></sub>
+<sub>A <strong>626 Labs</strong> product · <em>Multi-launcher for Windows</em></sub>
 
 </div>

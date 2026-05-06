@@ -1,8 +1,8 @@
-# ROROROblox
+# RORORO
 
 > **Persona:** This repo inherits **The Architect** from `~/.claude/CLAUDE.md`. No need to re-establish — just adds project context below.
 
-ROROROblox is a Windows desktop app that lets a Roblox player run multiple clients side by side and quick-launch them as different saved accounts. Distributed first to Este's Pet Sim 99 clan, then to the Microsoft Store. Free product, branded under 626 Labs — every install spreads the umbrella.
+RORORO is a Windows desktop app that lets a Roblox player run multiple clients side by side and quick-launch them as different saved accounts. Distributed first to Este's Pet Sim 99 clan, then to the Microsoft Store. Free product, branded under 626 Labs — every install spreads the umbrella.
 
 ## Tech Stack & Voice
 
@@ -13,7 +13,7 @@ ROROROblox is a Windows desktop app that lets a Roblox player run multiple clien
 
 ## Design system
 
-Canonical brand spec lives at `~/.claude/skills/626labs-design/` (globally available — same skill across every 626 Labs repo). Use `colors_and_type.css` as the token source and `ui_kits/` as the pattern reference. **Apply via the design skill before producing icons, Store tile graphics, splash, or About-box artwork** — programmatic placeholders are disqualifying for the "won't ship a broken-looking tile even if the rest works" bar (pattern x from SnipSnap retro). For ROROROblox specifically: the `Square150x150Logo`, `Square44x44Logo`, `Wide310x150Logo`, splash, and tray icon set must all go through the skill.
+Canonical brand spec lives at `~/.claude/skills/626labs-design/` (globally available — same skill across every 626 Labs repo). Use `colors_and_type.css` as the token source and `ui_kits/` as the pattern reference. **Apply via the design skill before producing icons, Store tile graphics, splash, or About-box artwork** — programmatic placeholders are disqualifying for the "won't ship a broken-looking tile even if the rest works" bar (pattern x from SnipSnap retro). For RORORO specifically: the `Square150x150Logo`, `Square44x44Logo`, `Wide310x150Logo`, splash, and tray icon set must all go through the skill.
 
 ## What's where
 
@@ -21,7 +21,7 @@ Canonical brand spec lives at `~/.claude/skills/626labs-design/` (globally avail
 
 | Path | What it is |
 |---|---|
-| `docs/superpowers/specs/2026-05-03-rororoblox-design.md` | **CANONICAL design spec.** Every architectural decision lives here. Other `docs/*.md` are pointer-stubs. |
+| `docs/superpowers/specs/2026-05-03-RORORO-design.md` | **CANONICAL design spec.** Every architectural decision lives here. Other `docs/*.md` are pointer-stubs. |
 | `docs/scope.md` | Spec-first Cart pointer-stub |
 | `docs/spec.md` | Spec-first Cart pointer-stub with section index |
 | `docs/prd.md` | Compressed PRD — stories + acceptance criteria + prioritization |
@@ -39,7 +39,7 @@ Canonical brand spec lives at `~/.claude/skills/626labs-design/` (globally avail
 | `src/ROROROblox.App/` | WPF process — App, MainWindow + ViewModel, TrayService, CookieCapture |
 | `src/ROROROblox.Core/` | Interfaces + primitives — `IMutexHolder`, `IAccountStore`, `IRobloxApi`, `IRobloxLauncher` (no UI dependencies) |
 | `src/ROROROblox.Tests/` | xUnit — unit + integration coverage per spec §8 |
-| `src/ROROROblox.Package/` | MSIX wapproj for Store-signed + self-signed sideload flavors |
+| `src/RORORO.Package/` | MSIX wapproj for Store-signed + self-signed sideload flavors |
 | `spike/auth-ticket/` | Throwaway spike per spec §10 — gitignored |
 | `roblox-compat.json` (in GitHub Releases) | Remote config — known-good Roblox version range + current mutex name; fetched at app startup |
 | `dev-cert.pfx` | Self-signed sideload cert; **gitignored**, regenerated per dev box (instructions in CONTRIBUTING.md once it lands) |
@@ -59,15 +59,15 @@ The full architecture, data flows, error buckets, and decision rationale live in
 
 | You want to… | Path / command |
 |---|---|
-| See architectural intent | [`docs/superpowers/specs/2026-05-03-rororoblox-design.md`](docs/superpowers/specs/2026-05-03-rororoblox-design.md) |
+| See architectural intent | [`docs/superpowers/specs/2026-05-03-RORORO-design.md`](docs/superpowers/specs/2026-05-03-RORORO-design.md) |
 | See the active build sequence | [`docs/checklist.md`](docs/checklist.md) |
 | See sequencing rationale + risk callouts | [`process-notes.md`](process-notes.md) |
 | See reference-impl provenance | [`PROVENANCE.txt`](PROVENANCE.txt) |
 | Run the auth-ticket spike (item 1 HARD gate) | `dotnet run --project spike/auth-ticket` *(after item 1 lands)* |
 | Build the app | `dotnet build` *(after item 2)* |
 | Run unit + integration tests | `dotnet test` *(after item 2)* |
-| Build sideload MSIX | `msbuild src/ROROROblox.Package/ROROROblox.Package.wapproj /p:AppxPackageSigningEnabled=true /p:PackageCertificateKeyFile=dev-cert.pfx` *(after item 11)* |
-| Build Store-signed MSIX | `dotnet publish src/ROROROblox.Package -p:GenerateAppxPackageOnBuild=true` *(after item 11)* |
+| Build sideload MSIX | `msbuild src/RORORO.Package/RORORO.Package.wapproj /p:AppxPackageSigningEnabled=true /p:PackageCertificateKeyFile=dev-cert.pfx` *(after item 11)* |
+| Build Store-signed MSIX | `dotnet publish src/RORORO.Package -p:GenerateAppxPackageOnBuild=true` *(after item 11)* |
 | Cut a release | Velopack via `vpk pack` against the latest signed MSIX *(after item 10 + 11)* |
 
 ## Conventions
@@ -75,7 +75,7 @@ The full architecture, data flows, error buckets, and decision rationale live in
 - **Commits:** conventional commits (`feat` / `fix` / `docs` / `refactor` / `test` / `chore` / `build` / `ci`). Item 1 (spike) is gitignored — first real commit is item 2's `feat: solution scaffold + AppLifecycle (single-instance + DI + run-on-login)`.
 - **Style:** .NET defaults via `.editorconfig` (lands at item 2). C# 14 features welcome where they earn their place — no novelty for novelty's sake.
 - **File rules:**
-  - `docs/superpowers/specs/2026-05-03-rororoblox-design.md` is canonical. When build reality drifts from the spec, **banner-correct** at the top of the doc (per pattern v from Vibe Thesis) — name what was originally proposed vs what was actually built. Do NOT rewrite top-to-bottom; that destroys /reflect-time framing.
+  - `docs/superpowers/specs/2026-05-03-RORORO-design.md` is canonical. When build reality drifts from the spec, **banner-correct** at the top of the doc (per pattern v from Vibe Thesis) — name what was originally proposed vs what was actually built. Do NOT rewrite top-to-bottom; that destroys /reflect-time framing.
   - `MultiBloxy.exe` and `PROVENANCE.txt` are reference-only. Treat as immutable — they're load-bearing for the "clean reimplementation, not a fork" framing.
   - `accounts.dat`, `webview2-data/`, `*.pfx`, `spike/`, `bin/`, `obj/`, `*.user`, `last-update-check.txt` are gitignored at all times.
   - The singleton mutex name lives in `roblox-compat.json` (remote config). Hardcoded fallback is OK in `MutexHolder`'s constructor as a last-resort default; the runtime read is always from config.
@@ -93,12 +93,12 @@ Especially log:
 - **Architectural choices.** Examples already locked in spec §11: WPF over WinUI 3, whole-blob over per-cookie encryption for v1.1, wipe-userdata-per-capture, `roblox-player:` URI over direct launcher exec, remote config for known-good Roblox versions.
 - **Roblox-side compatibility events.** Mutex rename, auth-ticket endpoint shift, Hyperion adding a non-mutex check, RobloxPlayerLauncher protocol-handler behavior change. These are the events that make `roblox-compat.json` shift; each warrants a decision entry.
 - **Distribution decisions.** Microsoft Store submission outcome (accept / reject / cert request), sideload cert rotation, SmartScreen escalation strategy if AV heuristic flags surface.
-- **Deviations from the canonical spec.** Any time build reality requires drifting from `docs/superpowers/specs/2026-05-03-rororoblox-design.md`, log the *why* — banner-correct the spec separately.
+- **Deviations from the canonical spec.** Any time build reality requires drifting from `docs/superpowers/specs/2026-05-03-RORORO-design.md`, log the *why* — banner-correct the spec separately.
 - **Overcame momentous hurdle.** Hyperion-shape changes that almost killed multi-instance, DPAPI envelope shifts, packaging breakdowns. Per global Architect rules: not "we fixed a bug," but "we found out the bar was higher and met it anyway."
 
 Skip the routine: ran tests, fixed typo, renamed a variable.
 
-If unbound (no 626 Labs Dashboard project yet): tag with `ROROROblox` in the description and set `projectId: null`. First session in this repo should attempt `mcp__626Labs__manage_projects findByRepo` against `https://github.com/estevanhernandez-stack-ed/ROROROblox` to bind, and offer to create a Dashboard project if no match.
+If unbound (no 626 Labs Dashboard project yet): tag with `RORORO` in the description and set `projectId: null`. First session in this repo should attempt `mcp__626Labs__manage_projects findByRepo` against `https://github.com/estevanhernandez-stack-ed/ROROROblox` to bind, and offer to create a Dashboard project if no match.
 
 ## What NOT to do
 
@@ -106,15 +106,15 @@ If unbound (no 626 Labs Dashboard project yet): tag with `ROROROblox` in the des
 - **Don't hardcode the singleton mutex name in source.** It lives in `roblox-compat.json`. Hardcoded fallback is OK as a last-resort default in `MutexHolder`'s constructor; the runtime read is always from config. This is the reason we can ship a config update in hours when Roblox renames the mutex (spec §7.1).
 - **Don't masquerade as a browser in HTTP requests.** User-Agent is `ROROROblox/<version>` — no `Mozilla/5.0`, no Edge spoofing. Roblox treats spoofed UAs as a flag; we want to be transparent and identifiable, both for compatibility and for the "we're a tool, not malware" Store narrative.
 - **Don't ship programmatic icon placeholders to the Store.** All icons / Store tile graphics / splash / tray icons go through the `626labs-design` skill (pattern x from SnipSnap retro). The Store reviewers AND the Pet Sim 99 clan eyes will both notice. Brand-spreads-for-free only works when the brand actually shows up.
-- **Don't rewrite the canonical spec on drift — banner-correct it.** When build reality diverges from `docs/superpowers/specs/2026-05-03-rororoblox-design.md`, add a top-of-doc warning block naming what was originally proposed vs what was actually built (pattern v from Vibe Thesis). Top-to-bottom rewrites destroy /reflect-time framing and bury the original architectural reasoning.
-- **Don't add macros, input automation, or any client-injection capability.** That product is **MaCro** (separate macOS product) and the wall is intentional. Roblox treats macro-tooling as far higher-risk than mutex-fiddling. Keeping ROROROblox macro-free is a deliberate Roblox-relations move, not a feature gap. If a clan member asks for it: "MaCro handles that — different product, different platform."
+- **Don't rewrite the canonical spec on drift — banner-correct it.** When build reality diverges from `docs/superpowers/specs/2026-05-03-RORORO-design.md`, add a top-of-doc warning block naming what was originally proposed vs what was actually built (pattern v from Vibe Thesis). Top-to-bottom rewrites destroy /reflect-time framing and bury the original architectural reasoning.
+- **Don't add macros, input automation, or any client-injection capability.** That product is **MaCro** (separate macOS product) and the wall is intentional. Roblox treats macro-tooling as far higher-risk than mutex-fiddling. Keeping RORORO macro-free is a deliberate Roblox-relations move, not a feature gap. If a clan member asks for it: "MaCro handles that — different product, different platform."
 - **Don't push to main without item 12's local-path audit.** Per pattern kk from wbp-azure: a `c:\Users\<name>\` reference in committable code breaks CI on every machine that isn't yours. The grep is one line; run it before push.
 - **Don't run end-to-end automation against real roblox.com.** Bot accounts get flagged; flaky CI eats trust. Manual smoke from spec §8 on a clean Win11 VM is the v1 trade. If automated coverage of the auth-ticket flow becomes load-bearing later, that's a v1.2 conversation about owning a dedicated test-account with appropriate isolation.
 - **Don't ship the Store-signed cert and the sideload cert as the same key.** Store-signed identity is owned by Microsoft Partner Center; sideload cert is generated locally per dev box and gitignored. Cross-contamination of the two keys is an immediate distribution-trust incident.
 
 ## References
 
-- Canonical design spec: [`docs/superpowers/specs/2026-05-03-rororoblox-design.md`](docs/superpowers/specs/2026-05-03-rororoblox-design.md)
+- Canonical design spec: [`docs/superpowers/specs/2026-05-03-RORORO-design.md`](docs/superpowers/specs/2026-05-03-RORORO-design.md)
 - Active build plan: [`docs/checklist.md`](docs/checklist.md)
 - Cart process notes: [`process-notes.md`](process-notes.md)
 - Reference-impl provenance: [`PROVENANCE.txt`](PROVENANCE.txt)

@@ -2,7 +2,7 @@
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="About ROROROblox"
+        Title="About RORORO"
         Height="460" Width="500"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
@@ -55,7 +55,7 @@
 
             <StackPanel VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="ROROROblox"
+                    <TextBlock Text="RORORO"
                                FontSize="24" FontWeight="Bold"
                                Foreground="{DynamicResource CyanBrush}" />
                     <TextBlock Text=" / "
@@ -68,7 +68,7 @@
                                ToolTip="Version"
                                MouseLeftButtonDown="OnVersionClicked" />
                 </StackPanel>
-                <TextBlock Text="Multi-Roblox Instant Generator."
+                <TextBlock Text="Multi-launcher for Windows."
                            FontSize="11" FontWeight="SemiBold"
                            Foreground="{DynamicResource CyanBrush}"
                            Margin="0,4,0,0" />
@@ -123,7 +123,7 @@
             </TextBlock>
             <TextBlock Margin="0,8,0,0" FontSize="10" Foreground="{DynamicResource MutedTextBrush}"
                        TextWrapping="Wrap">
-                "Roblox" is a trademark of Roblox Corporation. ROROROblox is not affiliated with,
+                "Roblox" is a trademark of Roblox Corporation. RORORO is not affiliated with,
                 endorsed by, or sponsored by Roblox Corporation.
             </TextBlock>
         </StackPanel>
