@@ -26,4 +26,12 @@
     <ProjectReference Include="..\ROROROblox.App\ROROROblox.App.csproj" />
   </ItemGroup>
 
+  <!-- Golden fixtures for ServerShareExtractorTests — copied next to the test DLL so tests
+       resolve them via AppContext.BaseDirectory. -->
+  <ItemGroup>
+    <None Include="Discord\Fixtures\*.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

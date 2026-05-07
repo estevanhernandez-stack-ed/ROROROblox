@@ -1,0 +1,1 @@
+roblox-player:1+launchmode:play+gameinfo:TESTTICKET+launchtime:1714780000000+placelauncherurl:https%3A%2F%2Fwww.roblox.com%2Fgames%2F920587237%2FPet-Sim-99%3FprivateServerLinkCode%3DLINKCODESHARE-FAKE+browsertrackerid:00000000-0000-0000-0000-000000000000+robloxLocale:en_us+gameLocale:en_us

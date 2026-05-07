@@ -1,0 +1,1 @@
+roblox-player:1+launchmode:play+gameinfo:TESTTICKET+launchtime:1714780000000+placelauncherurl:https%3A%2F%2Fassetgame.roblox.com%2Fgame%2FPlaceLauncher.ashx%3Frequest%3DRequestPrivateGame%26accessCode%3DABC123-FAKE-CODE%26placeId%3D920587237+browsertrackerid:00000000-0000-0000-0000-000000000000+robloxLocale:en_us+gameLocale:en_us

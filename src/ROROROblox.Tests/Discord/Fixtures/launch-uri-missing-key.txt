@@ -1,0 +1,1 @@
+roblox-player:1+launchmode:play+gameinfo:TESTTICKET+launchtime:1714780000000+browsertrackerid:00000000-0000-0000-0000-000000000000+robloxLocale:en_us+gameLocale:en_us
