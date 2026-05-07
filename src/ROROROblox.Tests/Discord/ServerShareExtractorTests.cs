@@ -42,6 +42,22 @@ public class ServerShareExtractorTests
     }
 
     [Fact]
+    public void PrivateLauncherLinkCodeFixture_ReturnsDecodedUrl()
+    {
+        // RobloxLauncher.BuildPlaceLauncherUrl emits "linkCode=" (no privateServer prefix)
+        // for LaunchTarget.PrivateServer with Kind=LinkCode. This is the URI shape the
+        // launcher actually produces — different from the website share-link format.
+        // Bug bash 2026-05-06: every LinkCode launch was being missed by the extractor.
+        var uri = LoadFixture("launch-uri-private-launcher-linkcode.txt");
+
+        var result = ServerShareExtractor.TryExtractPrivateServerUrl(uri);
+
+        Assert.NotNull(result);
+        Assert.Contains("linkCode=LAUNCHER-LINKCODE-FAKE", result);
+        Assert.Contains("PlaceLauncher.ashx", result);
+    }
+
+    [Fact]
     public void PublicGameFixture_ReturnsNull()
     {
         var uri = LoadFixture("launch-uri-public.txt");

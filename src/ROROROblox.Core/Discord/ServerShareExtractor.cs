@@ -73,10 +73,16 @@ public static class ServerShareExtractor
             return null;
         }
 
-        // Private-server signatures: either the legacy access-code query param OR the link-share
-        // path/query segment. Roblox sometimes title-cases query keys; match case-insensitive.
+        // Private-server signatures (case-insensitive — Roblox occasionally re-cases query keys):
+        //   accessCode=         — legacy private-server flow + RobloxLauncher AccessCode kind
+        //   privateServerLinkCode= — newer share-link format on roblox.com/games/{id}?...
+        //   linkCode=           — RobloxLauncher LinkCode kind in the placelauncherurl emit
+        //                          (different from the website URL prefix; bug bash 2026-05-06
+        //                          surfaced this — Layer 2 outbound was missing every LinkCode
+        //                          launch because we were only checking the website prefix)
         if (decoded.Contains("accessCode=", StringComparison.OrdinalIgnoreCase) ||
-            decoded.Contains("privateServerLinkCode=", StringComparison.OrdinalIgnoreCase))
+            decoded.Contains("privateServerLinkCode=", StringComparison.OrdinalIgnoreCase) ||
+            decoded.Contains("linkCode=", StringComparison.OrdinalIgnoreCase))
         {
             return decoded;
         }
