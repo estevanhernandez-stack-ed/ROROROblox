@@ -41,6 +41,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly Core.Theming.IThemeStore _themeStore;
     private readonly Theming.ThemeService _themeService;
     private readonly Tray.RobloxWindowDecorator _windowDecorator;
+    private readonly IBloxstrapDetector _bloxstrapDetector;
     private readonly ILogger<MainViewModel> _log;
 
     /// <summary>
@@ -54,6 +55,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private string _statusBanner = string.Empty;
     private string? _robloxCompatBanner;
+    private bool _bloxstrapWarningVisible;
     private bool _isBusy;
     private int _liveProcessCount;
 
@@ -73,6 +75,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         Core.Theming.IThemeStore themeStore,
         Theming.ThemeService themeService,
         Tray.RobloxWindowDecorator windowDecorator,
+        IBloxstrapDetector bloxstrapDetector,
         ILogger<MainViewModel>? log = null)
     {
         _cookieCapture = cookieCapture;
@@ -90,6 +93,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _themeStore = themeStore;
         _themeService = themeService;
         _windowDecorator = windowDecorator;
+        _bloxstrapDetector = bloxstrapDetector;
         _log = log ?? NullLogger<MainViewModel>.Instance;
 
         AddAccountCommand = new RelayCommand(AddAccountAsync, () => !IsBusy);
@@ -108,10 +112,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         StartMainCommand = new RelayCommand(StartMainAsync, () => !IsBusy && Accounts.FirstOrDefault(a => a.IsMain) is { SessionExpired: false, IsRunning: false });
         OpenHistoryCommand = new RelayCommand(OpenHistory);
         OpenPreferencesCommand = new RelayCommand(OpenPreferences);
+        DismissBloxstrapWarningCommand = new RelayCommand(_ => _ = DismissBloxstrapWarningAsync());
 
         _processTracker.ProcessAttached += OnProcessAttached;
         _processTracker.ProcessExited += OnProcessExited;
         _processTracker.ProcessAttachFailed += OnProcessAttachFailed;
+
+        _ = InitializeBloxstrapWarningAsync();
 
         // Tick once a minute to keep "5 min ago" / "Running for 12 min" current.
         _ticker = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
@@ -167,6 +174,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand StartMainCommand { get; }
     public ICommand OpenHistoryCommand { get; }
     public ICommand OpenPreferencesCommand { get; }
+    public ICommand DismissBloxstrapWarningCommand { get; }
 
     private bool _isCompact;
     /// <summary>True when the main window is in compact (collapsed) mode. Drives the bottom-bar
@@ -249,6 +257,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         get => _robloxCompatBanner;
         set => SetField(ref _robloxCompatBanner, value);
+    }
+
+    /// <summary>
+    /// True when Bloxstrap is the registered <c>roblox-player</c> handler AND the user has
+    /// not yet dismissed the warning. The MainWindow XAML binds a yellow banner to this.
+    /// Resolves to false silently when registry access is denied — no scary error to the user.
+    /// </summary>
+    public bool BloxstrapWarningVisible
+    {
+        get => _bloxstrapWarningVisible;
+        private set => SetField(ref _bloxstrapWarningVisible, value);
     }
 
     public bool IsBusy
@@ -1105,6 +1124,39 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             _log.LogDebug(ex, "Persisting caption color {Hex} for {AccountId} failed.", hex, accountId);
         }
+    }
+
+    /// <summary>
+    /// Persist a per-account FPS cap. Called by the row template's ComboBox SelectionChanged
+    /// handler. Catches and swallows store exceptions — a failed FPS write should never
+    /// prevent the row from re-rendering with the new selection.
+    /// </summary>
+    public async Task OnFpsCapChangedAsync(AccountSummary row, int? newValue)
+    {
+        if (row is null) return;
+        row.FpsCap = newValue;
+        try
+        {
+            await _accountStore.SetFpsCapAsync(row.Id, newValue);
+        }
+        catch (Exception ex)
+        {
+            // Swallow — the in-memory row already reflects the new value, and a future restart
+            // will surface store problems via the standard load path.
+            _log.LogWarning(ex, "Failed to persist FPS cap for {Id}", row.Id);
+        }
+    }
+
+    private async Task DismissBloxstrapWarningAsync()
+    {
+        BloxstrapWarningVisible = false;
+        await _settings.SetBloxstrapWarningDismissedAsync(true);
+    }
+
+    private async Task InitializeBloxstrapWarningAsync()
+    {
+        var dismissed = await _settings.GetBloxstrapWarningDismissedAsync();
+        BloxstrapWarningVisible = !dismissed && _bloxstrapDetector.IsBloxstrapHandler();
     }
 
     /// <summary>
