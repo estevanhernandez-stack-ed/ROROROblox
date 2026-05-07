@@ -265,11 +265,25 @@ public partial class App : Application
         services.AddSingleton<IProcessStarter, ProcessStarter>();
 
         // RobloxApi over a managed HttpClient (factory handles lifetime + DNS rotation).
+        // CRITICAL: UseCookies=false — every auth-ticket call sets the Cookie header
+        // explicitly with a single account's .ROBLOSECURITY value. With the default
+        // CookieContainer enabled, Roblox's auth-ticket response cookies get stashed and
+        // re-sent on subsequent calls. Result: a multi-launch fires 4 auth-ticket POSTs
+        // in quick succession, the second-through-fourth calls have the FIRST account's
+        // cookie sneaking back in via the container, and Roblox authenticates all 4
+        // launches as the most-recently-active session (the main, in practice). Visible
+        // empirically as "all 4 alt windows show the main account" + "follow → main kicks
+        // the original main session."
         services.AddHttpClient<IRobloxApi, RobloxApi>(client =>
         {
             client.DefaultRequestHeaders.UserAgent.Clear();
             var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            UseCookies = false,
+            AllowAutoRedirect = true,
         });
 
         // Compat checker uses its own HttpClient — different UA + different host pattern.
