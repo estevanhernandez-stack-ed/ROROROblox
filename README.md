@@ -60,6 +60,23 @@ A 30-second video walkthrough is linked from each Release page.
 
 The first time you Launch As, you'll be prompted for a default Roblox game URL. Paste any Roblox game's `roblox.com/games/...` link — that's where Launch As will land your alts. Edit it later in Settings.
 
+## Discord clan integration *(v1.2)*
+
+Three opt-in surfaces, all default OFF, configured from the tray menu under **Discord integrations…**:
+
+1. **Rich presence.** Your Discord profile shows "Playing ROROROblox" with a live count of how many alts are active. No account names, no Roblox usernames — just that the app is open and how many sessions are running. Toggle: *Show RORORO in your Discord status*.
+
+2. **Server-share Join button.** When you launch an alt into a Roblox **private server**, a Discord party Join button appears on your profile card. Clanmates click → their RORORO opens Roblox to the same private server using their most-recently-launched account. No Roblox-side mods, no link sharing in DMs — Discord handles the routing. Auto-engages whenever Layer 1 is on; no separate toggle.
+
+3. **Clan-channel webhook.** Optional. Your clan admin creates a channel webhook in Discord (Channel Settings → Integrations → Webhooks → New Webhook), shares the URL, you paste it into RORORO settings. Per-event toggles let RORORO post to the channel when:
+   - You start ROROROblox
+   - You join a private server
+   - You have 4+ alts running at once (fires once per crossing, 30-min quiet window)
+
+   Each clanmate opts in separately. Webhook URL is local to your install — never broadcast, never synced. See [`CONTRIBUTING.md`](CONTRIBUTING.md#discord-integration-setup-for-clan-admins) for the admin-side setup walk.
+
+**What we deliberately don't do:** no bot user, no OAuth scopes, no installation in any server, no message reading, no voice channel auto-join, no telemetry. Rich presence is per-user; webhook is per-channel; both are built from public Discord APIs.
+
 ## What gets stored on your PC
 
 | Where | What |
@@ -67,6 +84,7 @@ The first time you Launch As, you'll be prompted for a default Roblox game URL. 
 | `%LOCALAPPDATA%\ROROROblox\accounts.dat` | Your saved Roblox cookies. **DPAPI-encrypted** (Windows-issued; tied to your Windows user). Cannot be moved between PCs. |
 | `%LOCALAPPDATA%\ROROROblox\settings.json` | Your default game URL + UI preferences. Plain text (no secrets). |
 | `%LOCALAPPDATA%\ROROROblox\webview2-data\` | Embedded-browser cache. Wiped before every Add Account so the next login starts on a fresh page. |
+| `%LOCALAPPDATA%\ROROROblox\discord-config.json` *(v1.2)* | Discord clan-coordination opt-ins + webhook URL. Plain JSON — webhook URL is a clan-shared resource, not a per-user secret. Defaults to all-off; only created when you change a Discord setting. |
 
 ## What about my Roblox password?
 
@@ -89,6 +107,7 @@ We never log the cookie value. We never send the cookie to anyone other than Rob
 - **Microsoft.Windows.CsWin32** (typed P/Invokes for the singleton-mutex hold)
 - **System.Security.Cryptography.ProtectedData** (DPAPI envelope on saved cookies)
 - **Velopack** (auto-update via GitHub Releases)
+- **DiscordRichPresence** (Lachee) — Discord IPC client for v1.2 rich-presence + party Join
 - **xUnit** (unit + integration tests)
 
 ## Provenance

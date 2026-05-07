@@ -24,6 +24,11 @@ Holds the Roblox singleton mutex so additional clients open instead of stealing 
 
 No DevTools. No registry edits. No telemetry. The Roblox client launches unmodified.
 
+**v1.2 — Discord clan coordination** *(opt-in, defaults all-off):*
+- **Rich presence:** your Discord profile shows you're running RORORO and how many alts are active. No usernames, no game-state details.
+- **Server-share Join button:** launch into a private Roblox server → a **Join** button shows on your Discord profile card. Clanmates click → their RORORO opens Roblox to the same private server.
+- **Optional clan-channel webhook:** clan admin creates a Discord webhook, shares the URL, opted-in clanmates pick which events post (start, join, 4+ active).
+
 ## Install it
 
 **Easiest:** [**install RoRoRo on the Microsoft Store**](https://apps.microsoft.com/detail/9NMJCS390KWB). Signed by Microsoft, no SmartScreen, auto-updates through the Store.

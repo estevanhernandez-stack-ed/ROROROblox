@@ -69,6 +69,8 @@ The full architecture, data flows, error buckets, and decision rationale live in
 | Build sideload MSIX | `msbuild src/RORORO.Package/RORORO.Package.wapproj /p:AppxPackageSigningEnabled=true /p:PackageCertificateKeyFile=dev-cert.pfx` *(after item 11)* |
 | Build Store-signed MSIX | `dotnet publish src/RORORO.Package -p:GenerateAppxPackageOnBuild=true` *(after item 11)* |
 | Cut a release | Velopack via `vpk pack` against the latest signed MSIX *(after item 10 + 11)* |
+| Configure Discord clan integration *(v1.2)* | Right-click tray → **Discord integrations…**; or hand-edit `%LOCALAPPDATA%\ROROROblox\discord-config.json` |
+| See v1.2 Discord spec / brand brief | [`docs/superpowers/specs/2026-05-06-discord-clan-coordination-design.md`](docs/superpowers/specs/2026-05-06-discord-clan-coordination-design.md) · [`docs/themes/discord-asset-brief.md`](docs/themes/discord-asset-brief.md) |
 
 ## Conventions
 

@@ -50,6 +50,14 @@ Everything else is the wrapper that makes those two operations safe, repeatable,
 
 WPF was chosen over WinUI 3 for v1 because tray support and Win32 interop are battle-tested. Migration to WinUI 3 in a later major version remains an open path.
 
+**v1.2 stack additions** (extension, see [`2026-05-06-discord-clan-coordination-design.md`](2026-05-06-discord-clan-coordination-design.md) §3):
+
+| Layer | Pick | Rationale |
+|---|---|---|
+| Discord IPC | DiscordRichPresence (Lachee) | MIT, netstandard2.0, no native deps; only consumer is `DiscordRichPresenceService` behind an internal test seam |
+| Configuration | Microsoft.Extensions.Configuration{,.Json,.Binder} | Standard, lets `Discord:ApplicationId` come from `appsettings.json` shipped next to the .exe |
+| Hosted service shape | Microsoft.Extensions.Hosting.Abstractions | `DiscordPresenceLifecycle` implements `IHostedService` for shape parity with future Generic Host migration; bootstrapped manually from `App.OnStartup` since v1.x uses raw `ServiceCollection` |
+
 ## 4. Architecture
 
 A single WPF process. Tray-resident, opens its main window on demand. A small set of focused components plus a composition root — listed in §5.
@@ -348,6 +356,7 @@ Semantic versioning. v1.1.x for the initial release line. v1.2 will introduce pe
 | `IAccountStore.AddAsync` takes `avatarUrl` as a parameter | Spec v1.0's `AddAsync(displayName, cookie)` expected the store to fetch the avatar via `IRobloxApi` internally — but Core's clean layering wants the caller (MainViewModel, item 9) to coordinate the `IRobloxApi.GetAvatarHeadshotUrl` call and pass the result through. Adding `avatarUrl` as the second parameter avoids a back-pointer from `AccountStore` into `IRobloxApi` and keeps Core dependency-free at item 4 time. Pre-build drift, surgical inline edit. Spec §5.4 updated; checklist item 4 mirrors the change. |
 | `TouchLastLaunchedAsync` is the caller's responsibility, not the launcher's | Spec v1.0 §6.2 step 8 had RobloxLauncher call `IAccountStore.TouchLastLaunchedAsync(accountId)` — but `LaunchAsync(cookie, placeUrl)` has no accountId in its signature, so the launcher would need IAccountStore as a dependency just to look up which account a cookie belongs to (which it can't do anyway, since cookies aren't indexed). Cleaner: MainViewModel orchestrates `RetrieveCookieAsync(id) → LaunchAsync(cookie) → on Started, TouchLastLaunchedAsync(id)`. Pre-build drift, surgical edit. Spec §6.2 step 8 updated; checklist item 6 reflects. |
 | Mutex name stays hardcoded in v1.1; remote config drives only the version-drift banner | Spec §7.1 implies the mutex name itself comes from `roblox-compat.json` so a Roblox rename can ship via config-only. v1.1 instead hardcodes `Local\ROBLOX_singletonEvent` on `MutexHolder` and uses the remote config only for the version-drift banner. Rationale: runtime mutex-name swap requires a release+reacquire dance + cross-thread coordination that's bigger than item 10's scope. Trade for v1.1: if Roblox renames the mutex, ship a Velopack release with new hardcoded name (still hours, just a binary update instead of a config update). v1.2 candidate: introduce `IMutexHolder.RenameAsync` and DI factory that reads from cached config. Documented in §10 deferred. |
+| **v1.2 — Discord clan-coordination layer** | Adds rich presence + party Join + opt-in clan-channel webhook in v1.2.0. Three opt-in cascades (master rich-presence, webhook URL set + valid, per-event toggle); defaults all OFF. No Roblox-side surface touch — share URLs are extracted from the launch URI we already build, never observed from Roblox traffic. See [`2026-05-06-discord-clan-coordination-design.md`](2026-05-06-discord-clan-coordination-design.md) for the full architecture, data flows, error buckets, and decision rationale. |
 
 ## Appendix A — Reference impl
 

@@ -25,6 +25,13 @@ ROROROblox.sln
 accounts.dat
 last-update-check.txt
 webview2-data/
+# v1.2 Discord clan-coordination — defense-in-depth (these live in %LOCALAPPDATA%, but
+# a developer accidentally placing one in the repo root is exactly the secret leak we want
+# to catch at pre-commit time). discord-config.json holds the clan webhook URL on a
+# per-machine basis; webhook URLs are credentials in disguise (anyone with one can post).
+discord-config.json
+discord-config.json.corrupt-*
+discord.log
 *.pfx
 *.p12
 *.key

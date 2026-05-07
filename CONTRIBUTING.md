@@ -105,6 +105,42 @@ The full pre-release checklist lives in [docs/checklist.md](docs/checklist.md) i
 8. Publish `roblox-compat.json` as a release asset (schema in [`docs/roblox-compat.example.json`](docs/roblox-compat.example.json)).
 9. Submit the Store MSIX via Partner Center. Distribute the GitHub Release to clan via Discord with the SmartScreen-bypass video.
 
+## Discord integration setup *(for clan admins, v1.2+)*
+
+The v1.2 cycle introduced three Discord-side surfaces (rich presence, party Join, optional clan-channel webhook). Two of them — rich presence + party Join — work out of the box with the bundled Discord Application ID and need zero per-clan setup. The third — clan-channel webhook — needs a one-time admin step.
+
+### One-time: clan admin creates the webhook
+
+1. Right-click the channel where you want RORORO posts to land → **Edit Channel** → **Integrations** → **Webhooks** → **New Webhook**.
+2. Name it whatever you like (`RORORO-feed`, `Pet Sim 99 launches`, anything).
+3. Copy the **Webhook URL**. Format is `https://discord.com/api/webhooks/{id}/{token}`.
+4. Share the URL with clanmates who want to opt in. Treat it as a credential — anyone with the URL can post to that channel as the webhook bot.
+
+**The webhook URL is NOT bundled with RORORO.** Each clanmate pastes it into their own RORORO settings. There's no central registry, no auto-discover, no sync — by design. Keeps RORORO from being a coordination point that breaks when any single piece (the channel, the bot, the sync server) goes down.
+
+### Per-user: clanmate enables Discord integrations
+
+1. Right-click the RORORO tray icon → **Discord integrations…**
+2. Toggle **Show RORORO in your Discord status** ON. Rich presence + party Join start working immediately.
+3. *(Optional, if your clan admin shared a webhook URL)* Paste it into the **Webhook URL** field. Wait for the cyan border (validation passes). Then check whichever per-event toggles you want:
+   - *I start ROROROblox*
+   - *I join a private server*
+   - *I have 4+ accounts running at once*
+4. Close the dialog. Settings persist immediately — no Apply button.
+
+**All defaults are OFF.** Each clanmate opts in separately. There is no admin-side ability to force any clanmate into broadcasting; the opt-in is at the install level.
+
+### Discord application asset uploads *(maintainer-only)*
+
+The Discord developer portal at https://discord.com/developers/applications/1501748116985221272 has four Rich Presence asset slots (`idle_large`, `active_large`, `idle_small`, `active_small`) that need PNG uploads for the presence card to render with brand visuals. Per `docs/themes/discord-asset-brief.md` (Resolution section), v1.2 lifts the existing MSIX Package logos:
+
+- Upload `src/ROROROblox.App/Package/Logos/Square310x310Logo.scale-400.png` to **`idle_large`** AND **`active_large`** slots.
+- Upload `src/ROROROblox.App/Package/Logos/Square44x44Logo.targetsize-256.png` to **`idle_small`** AND **`active_small`** slots.
+
+Slot keys are referenced literally as constants in `src/ROROROblox.App/Discord/DiscordRichPresenceService.cs` — naming them anything else breaks the presence card visual.
+
+The webhook avatar at `docs/assets/rororoblox-webhook-avatar.png` is committed to the repo + served via GitHub Pages on push. Verify with `curl -I https://estevanhernandez-stack-ed.github.io/ROROROblox/assets/rororoblox-webhook-avatar.png` after the Pages rebuild lands.
+
 ## Decision logging
 
 Every architectural decision worth knowing in 3-6 months goes to the **626 Labs Dashboard** via `mcp__626Labs__manage_decisions log`. The bar and categories are in [CLAUDE.md](CLAUDE.md). When in doubt, log it — overshoot is cheaper than the gap.
