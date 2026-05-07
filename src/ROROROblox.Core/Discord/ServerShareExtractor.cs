@@ -1,4 +1,4 @@
-namespace ROROROblox.App.Discord;
+namespace ROROROblox.Core.Discord;
 
 /// <summary>
 /// Pure parser: lifts the private-server share URL out of a roblox-player: launch URI when one

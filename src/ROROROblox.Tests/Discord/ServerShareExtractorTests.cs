@@ -1,5 +1,5 @@
 using System.IO;
-using ROROROblox.App.Discord;
+using ROROROblox.Core.Discord;
 
 namespace ROROROblox.Tests.Discord;
 

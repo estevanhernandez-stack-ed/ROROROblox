@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Text;
 using System.Text.RegularExpressions;
+using ROROROblox.Core.Discord;
 
 namespace ROROROblox.Core;
 
@@ -18,13 +19,20 @@ public sealed class RobloxLauncher : IRobloxLauncher
     private readonly IAppSettings _settings;
     private readonly IProcessStarter _processStarter;
     private readonly IFavoriteGameStore? _favorites;
+    private readonly IDiscordPresence? _discordPresence;
     private readonly TimeProvider _timeProvider;
     private readonly Func<long> _browserTrackerIdFactory;
 
-    public RobloxLauncher(IRobloxApi api, IAppSettings settings, IProcessStarter processStarter, IFavoriteGameStore? favorites = null)
+    public RobloxLauncher(
+        IRobloxApi api,
+        IAppSettings settings,
+        IProcessStarter processStarter,
+        IFavoriteGameStore? favorites = null,
+        IDiscordPresence? discordPresence = null)
         : this(api, settings, processStarter, TimeProvider.System,
               () => Random.Shared.NextInt64(1_000_000_000_000, 9_999_999_999_999),
-              favorites)
+              favorites,
+              discordPresence)
     {
     }
 
@@ -35,7 +43,8 @@ public sealed class RobloxLauncher : IRobloxLauncher
         IProcessStarter processStarter,
         TimeProvider timeProvider,
         Func<long> browserTrackerIdFactory,
-        IFavoriteGameStore? favorites = null)
+        IFavoriteGameStore? favorites = null,
+        IDiscordPresence? discordPresence = null)
     {
         _api = api ?? throw new ArgumentNullException(nameof(api));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -43,6 +52,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         _browserTrackerIdFactory = browserTrackerIdFactory ?? throw new ArgumentNullException(nameof(browserTrackerIdFactory));
         _favorites = favorites;
+        _discordPresence = discordPresence;
     }
 
     public async Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target)
@@ -88,6 +98,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         {
             var launchedAtUtc = _timeProvider.GetUtcNow();
             var pid = _processStarter.StartViaShell(uri);
+            UpdateDiscordPartyFireAndForget(uri);
             return new LaunchResult.Started(pid, launchedAtUtc);
         }
         catch (Win32Exception)
@@ -159,6 +170,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         {
             var launchedAtUtc = _timeProvider.GetUtcNow();
             var pid = _processStarter.StartViaShell(uri);
+            UpdateDiscordPartyFireAndForget(uri);
             return new LaunchResult.Started(pid, launchedAtUtc);
         }
         catch (Win32Exception)
@@ -168,6 +180,43 @@ public sealed class RobloxLauncher : IRobloxLauncher
         catch (Exception ex)
         {
             return new LaunchResult.Failed($"Process.Start failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Layer 2 outbound (spec §6.2): inspect the launch URI for a private-server share, then
+    /// fire-and-forget the Discord party update. Optional dep — null when Discord disabled or
+    /// in tests. Wrapped end to end so a Discord IPC failure cannot fail the launch.
+    /// </summary>
+    private void UpdateDiscordPartyFireAndForget(string launchUri)
+    {
+        if (_discordPresence is null) return;
+        try
+        {
+            var shareUrl = ServerShareExtractor.TryExtractPrivateServerUrl(launchUri);
+            // Run on the thread pool — never block the launch path on Discord IPC.
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    if (shareUrl is not null)
+                    {
+                        await _discordPresence.SetPartyAsync(shareUrl, CancellationToken.None).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        await _discordPresence.ClearPartyAsync(CancellationToken.None).ConfigureAwait(false);
+                    }
+                }
+                catch
+                {
+                    // Discord is comfort, not load-bearing. Failures are silent.
+                }
+            });
+        }
+        catch
+        {
+            // Even the extractor / scheduling can't be allowed to crash the launch.
         }
     }
 
