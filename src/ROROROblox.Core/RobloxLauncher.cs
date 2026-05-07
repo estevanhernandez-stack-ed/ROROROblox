@@ -20,11 +20,19 @@ public sealed class RobloxLauncher : IRobloxLauncher
     private readonly IFavoriteGameStore? _favorites;
     private readonly TimeProvider _timeProvider;
     private readonly Func<long> _browserTrackerIdFactory;
+    private readonly IClientAppSettingsWriter? _clientAppSettings;
+    private readonly SemaphoreSlim _launchGate = new(initialCount: 1, maxCount: 1);
+    private static readonly TimeSpan FFlagReadHold = TimeSpan.FromMilliseconds(250);
 
-    public RobloxLauncher(IRobloxApi api, IAppSettings settings, IProcessStarter processStarter, IFavoriteGameStore? favorites = null)
+    public RobloxLauncher(
+        IRobloxApi api,
+        IAppSettings settings,
+        IProcessStarter processStarter,
+        IFavoriteGameStore? favorites = null,
+        IClientAppSettingsWriter? clientAppSettings = null)
         : this(api, settings, processStarter, TimeProvider.System,
               () => Random.Shared.NextInt64(1_000_000_000_000, 9_999_999_999_999),
-              favorites)
+              favorites, clientAppSettings)
     {
     }
 
@@ -35,7 +43,8 @@ public sealed class RobloxLauncher : IRobloxLauncher
         IProcessStarter processStarter,
         TimeProvider timeProvider,
         Func<long> browserTrackerIdFactory,
-        IFavoriteGameStore? favorites = null)
+        IFavoriteGameStore? favorites = null,
+        IClientAppSettingsWriter? clientAppSettings = null)
     {
         _api = api ?? throw new ArgumentNullException(nameof(api));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -43,9 +52,10 @@ public sealed class RobloxLauncher : IRobloxLauncher
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         _browserTrackerIdFactory = browserTrackerIdFactory ?? throw new ArgumentNullException(nameof(browserTrackerIdFactory));
         _favorites = favorites;
+        _clientAppSettings = clientAppSettings;
     }
 
-    public async Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target)
+    public async Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null)
     {
         if (string.IsNullOrEmpty(cookie))
         {
@@ -53,6 +63,33 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
         ArgumentNullException.ThrowIfNull(target);
 
+        await _launchGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (fpsCap.HasValue && _clientAppSettings is not null)
+            {
+                try
+                {
+                    await _clientAppSettings.WriteFpsAsync(fpsCap.Value).ConfigureAwait(false);
+                }
+                catch (ClientAppSettingsWriteException)
+                {
+                    // Spec §7.7: degraded, non-blocking. Continue with the launch.
+                }
+            }
+
+            var result = await ExecuteLaunchAsync(cookie, target).ConfigureAwait(false);
+            await Task.Delay(FFlagReadHold).ConfigureAwait(false);
+            return result;
+        }
+        finally
+        {
+            _launchGate.Release();
+        }
+    }
+
+    private async Task<LaunchResult> ExecuteLaunchAsync(string cookie, LaunchTarget target)
+    {
         // FollowFriend doesn't need place resolution — Roblox follows the user wherever they are.
         // Place / PrivateServer are already concrete. DefaultGame resolves through favorites + settings.
         var resolved = target is LaunchTarget.DefaultGame
@@ -100,7 +137,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
     }
 
-    public async Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null)
+    public async Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null)
     {
         if (string.IsNullOrEmpty(cookie))
         {
@@ -130,6 +167,33 @@ public sealed class RobloxLauncher : IRobloxLauncher
                 "No default Roblox game configured. Add one in Games (header button), or pass a place URL.");
         }
 
+        await _launchGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (fpsCap.HasValue && _clientAppSettings is not null)
+            {
+                try
+                {
+                    await _clientAppSettings.WriteFpsAsync(fpsCap.Value).ConfigureAwait(false);
+                }
+                catch (ClientAppSettingsWriteException)
+                {
+                    // Spec §7.7: degraded, non-blocking. Continue with the launch.
+                }
+            }
+
+            var result = await ExecuteLegacyLaunchAsync(cookie, resolvedPlaceUrl).ConfigureAwait(false);
+            await Task.Delay(FFlagReadHold).ConfigureAwait(false);
+            return result;
+        }
+        finally
+        {
+            _launchGate.Release();
+        }
+    }
+
+    private async Task<LaunchResult> ExecuteLegacyLaunchAsync(string cookie, string resolvedPlaceUrl)
+    {
         AuthTicket ticket;
         try
         {
