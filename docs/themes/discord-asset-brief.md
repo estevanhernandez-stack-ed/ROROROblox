@@ -1,9 +1,39 @@
 # Discord asset brief — v1.2 clan-coordination
 
-**Status:** active brief · pending production
-**Owner:** Este (offline production via `626labs-design` skill or design tooling)
+**Status:** **resolved 2026-05-06** — lift existing Store-shipped assets to all four Discord slots + webhook avatar; no new design pass needed for v1.2 ship. Magenta-ring active-state visual variants deferred (see "Resolution" section below).
 **Spec ref:** [`docs/superpowers/specs/2026-05-06-discord-clan-coordination-design.md`](superpowers/specs/2026-05-06-discord-clan-coordination-design.md) §9.2 + §9.3
 **Why this doc exists:** v1.2 introduces five public-facing brand surfaces in Discord. Each one is reviewed by both Pet Sim 99 clan eyes and Microsoft Store reviewers. Pattern (x) from the SnipSnap retro applies: "won't ship a broken-looking tile even if the rest works." This brief locks the sizes, palette, composition, and disposition so production work hits the bar in one pass.
+
+## Resolution (2026-05-06)
+
+After inventorying the repo, the existing MSIX Package logos already pass the pattern (x) bar — Microsoft Store review approved them, the brand work is real, the dimensions match. v1.2 lifts them straight to Discord:
+
+| Discord asset slot | Source file | Source dimensions |
+|---|---|---|
+| `idle_large` | `src/ROROROblox.App/Package/Logos/Square310x310Logo.scale-400.png` | 1240×1240 |
+| `active_large` | (same as `idle_large`) | 1240×1240 |
+| `idle_small` | `src/ROROROblox.App/Package/Logos/Square44x44Logo.targetsize-256.png` | 256×256 |
+| `active_small` | (same as `idle_small`) | 256×256 |
+| Webhook avatar | `docs/assets/rororoblox-webhook-avatar.png` (lifted from `Square310x310Logo.scale-400.png`) | 1240×1240 |
+
+**Tradeoff accepted:** idle and active slots get the same image — no magenta-ring visual state-distinction. The presence text already carries state ("1 account active" vs "Idle" vs "In a private server"), so the ring color was reinforcement, not load-bearing. If clan feedback asks for visual state-distinction in a future cycle, we derive `active_large` + `active_small` magenta variants and re-upload — no code changes needed (the asset slot keys are stable).
+
+**Why the lift wins over a fresh design pass:** the Store-shipped assets are already vetted at the brand bar. Producing new ones risks drift from the canonical brand identity that Pet Sim 99 clanmates have been seeing since v1.0 launched. Consistency across surfaces > visual state-distinction.
+
+## Production checklist (resolved path)
+
+- [x] **Asset 5 (webhook avatar)** committed to `docs/assets/rororoblox-webhook-avatar.png` 2026-05-06
+- [ ] **Este uploads** `Square310x310Logo.scale-400.png` to Discord dev portal at https://discord.com/developers/applications/1501748116985221272 → Rich Presence → Art Assets, naming the slot **`idle_large`**.
+- [ ] **Este uploads** the same `Square310x310Logo.scale-400.png` to the **`active_large`** slot.
+- [ ] **Este uploads** `Square44x44Logo.targetsize-256.png` to the **`idle_small`** slot.
+- [ ] **Este uploads** the same `Square44x44Logo.targetsize-256.png` to the **`active_small`** slot.
+- [ ] **Verify Pages URL** with `curl -I https://estevanhernandez-stack-ed.github.io/ROROROblox/assets/rororoblox-webhook-avatar.png` after the next push lands and Pages rebuilds — expect `HTTP/2 200` and `content-type: image/png`.
+
+The original full-design-pass brief is preserved below as the canonical spec for any future iteration that wants the magenta-ring active variants.
+
+---
+
+## Original brief (preserved for future iteration)
 
 ---
 
