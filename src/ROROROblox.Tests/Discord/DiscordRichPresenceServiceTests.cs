@@ -121,10 +121,11 @@ public class DiscordRichPresenceServiceTests
     }
 
     [Fact]
-    public async Task SetPartyAsync_BuildsHashedPartyIdAndBase64JoinSecret()
+    public async Task SetPartyAsync_BuildsHashedPartyIdAndCompactJoinSecret()
     {
         var (service, fake) = StartedService(richPresenceEnabled: true);
-        const string shareUrl = "https://www.roblox.com/games/123/x?privateServerLinkCode=ABCDEF";
+        // Realistic launcher-shape URL — what RobloxLauncher.BuildPlaceLauncherUrl emits.
+        const string shareUrl = "https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestPrivateGame&placeId=920587237&linkCode=ABCDEF1234567890";
 
         await service.SetPartyAsync(shareUrl, CancellationToken.None);
 
@@ -132,7 +133,19 @@ public class DiscordRichPresenceServiceTests
         Assert.Equal(DiscordRichPresenceService.HashPartyId(shareUrl), fake.LastPresence!.Party!.PartyId);
         Assert.Equal(16, fake.LastPresence.Party.PartyId.Length);
         Assert.Equal(DiscordRichPresenceService.PartyMaxSize, fake.LastPresence.Party.MaxSize);
-        Assert.Equal(shareUrl, DiscordRichPresenceService.DecodeJoinSecret(fake.LastPresence.Party.JoinSecret));
+
+        // CHECKPOINT 1.8 fix: JoinSecret must be ≤128 chars (Lachee's Secrets.JoinSecret cap).
+        // Compact format starts with "P|" and embeds placeId + linkCode + accessCode.
+        Assert.True(fake.LastPresence.Party.JoinSecret.Length <= 128,
+            $"JoinSecret length {fake.LastPresence.Party.JoinSecret.Length} exceeds Discord's 128-char cap.");
+        Assert.StartsWith("P|", fake.LastPresence.Party.JoinSecret);
+
+        // Decoder reconstructs a launchable PlaceLauncher.ashx URL with the same placeId + linkCode.
+        var decoded = DiscordRichPresenceService.DecodeJoinSecret(fake.LastPresence.Party.JoinSecret);
+        Assert.Contains("placeId=920587237", decoded);
+        Assert.Contains("linkCode=ABCDEF1234567890", decoded);
+        Assert.Contains("PlaceLauncher.ashx", decoded);
+        Assert.Contains("request=RequestPrivateGame", decoded);
     }
 
     [Fact]
@@ -205,10 +218,10 @@ public class DiscordRichPresenceServiceTests
     }
 
     [Fact]
-    public async Task JoinRequested_DecodesBase64Secret_IntoEventArgs()
+    public async Task JoinRequested_DecodesCompactSecret_IntoLaunchableUrl()
     {
         var (service, fake) = StartedService(richPresenceEnabled: true);
-        const string shareUrl = "https://www.roblox.com/games/9/y?accessCode=Z";
+        const string shareUrl = "https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestPrivateGame&placeId=42&accessCode=Z";
         var encoded = DiscordRichPresenceService.EncodeJoinSecret(shareUrl);
 
         string? captured = null;
@@ -216,11 +229,14 @@ public class DiscordRichPresenceServiceTests
 
         fake.RaiseJoinRequested(encoded);
 
-        Assert.Equal(shareUrl, captured);
+        Assert.NotNull(captured);
+        Assert.Contains("placeId=42", captured);
+        Assert.Contains("accessCode=Z", captured);
+        Assert.Contains("PlaceLauncher.ashx", captured);
     }
 
     [Fact]
-    public async Task JoinRequested_BadBase64_DoesNotThrow_AndDoesNotRaise()
+    public async Task JoinRequested_BadSecret_DoesNotThrow_DoesNotRaiseLaunchable()
     {
         var (service, fake) = StartedService(richPresenceEnabled: true);
         var raised = false;
@@ -295,12 +311,41 @@ public class DiscordRichPresenceServiceTests
     }
 
     [Fact]
-    public void EncodeJoinSecret_RoundTrips()
+    public void EncodeJoinSecret_FitsDiscord128Cap_AndRoundTripsPlaceAndCode()
     {
-        const string url = "https://www.roblox.com/games/1?privateServerLinkCode=XYZ&placeId=42";
+        // Lachee's Secrets.JoinSecret throws StringOutOfRangeException above 128 chars.
+        // CHECKPOINT 1.8 fix: compact "P|placeId|linkCode|accessCode" format guarantees fit.
+        const string url = "https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestPrivateGame&placeId=42&linkCode=XYZ1234567890";
         var encoded = DiscordRichPresenceService.EncodeJoinSecret(url);
+        Assert.True(encoded.Length <= 128, $"Encoded JoinSecret length {encoded.Length} > 128.");
+
         var decoded = DiscordRichPresenceService.DecodeJoinSecret(encoded);
-        Assert.Equal(url, decoded);
+        // Decoded URL is reconstructed (different shape — no browserTrackerId, etc.) but
+        // carries the same placeId + linkCode that the joining launcher needs.
+        Assert.Contains("placeId=42", decoded);
+        Assert.Contains("linkCode=XYZ1234567890", decoded);
+        Assert.Contains("PlaceLauncher.ashx", decoded);
+    }
+
+    [Fact]
+    public void EncodeJoinSecret_PublicGame_FitsAndDecodesToRequestGame()
+    {
+        const string url = "https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestGame&placeId=920587237&isPlayTogetherGame=false";
+        var encoded = DiscordRichPresenceService.EncodeJoinSecret(url);
+        Assert.True(encoded.Length <= 128);
+
+        var decoded = DiscordRichPresenceService.DecodeJoinSecret(encoded);
+        Assert.Contains("placeId=920587237", decoded);
+        Assert.Contains("request=RequestGame", decoded);
+        Assert.Contains("isPlayTogetherGame=true", decoded); // decoder upgrades to true
+    }
+
+    [Fact]
+    public void DecodeJoinSecret_UnknownFormat_ReturnsEmpty()
+    {
+        Assert.Equal(string.Empty, DiscordRichPresenceService.DecodeJoinSecret("not_a_compact_secret"));
+        Assert.Equal(string.Empty, DiscordRichPresenceService.DecodeJoinSecret(""));
+        Assert.Equal(string.Empty, DiscordRichPresenceService.DecodeJoinSecret("P|||")); // missing placeId
     }
 
     // ---- Helpers ----

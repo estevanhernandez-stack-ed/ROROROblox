@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ROROROblox.App.Discord.Internal;
@@ -199,12 +200,68 @@ public sealed class DiscordRichPresenceService : IDiscordPresence, IDisposable
         return Convert.ToHexString(bytes)[..16];
     }
 
-    /// <summary>Encode the share URL as a Discord join secret. Round-trippable via <see cref="DecodeJoinSecret"/>.</summary>
-    internal static string EncodeJoinSecret(string serverShareUrl) =>
-        Convert.ToBase64String(Encoding.UTF8.GetBytes(serverShareUrl));
+    /// <summary>
+    /// Encode the share URL as a Discord JoinSecret. Compact pipe-separated format because
+    /// Discord's <c>Secrets.JoinSecret</c> caps at 128 characters (the Lachee library throws
+    /// <c>StringOutOfRangeException</c> above that). A Base64-encoded full URL hits ~270 chars
+    /// and silently breaks Layer 2; instead we extract just placeId + linkCode + accessCode and
+    /// reconstruct on the joining side.
+    ///
+    /// Format: <c>P|placeId|linkCode|accessCode</c> — both code slots may be empty (public games
+    /// only carry placeId). Length stays under 60 chars even for full-length linkCode payloads.
+    /// </summary>
+    internal static string EncodeJoinSecret(string serverShareUrl)
+    {
+        var placeId = Match(serverShareUrl, @"placeId=(\d+)");
+        var linkCode = Match(serverShareUrl, @"linkCode=([^&]+)");
+        var accessCode = Match(serverShareUrl, @"accessCode=([^&]+)");
+        return $"P|{placeId}|{linkCode}|{accessCode}";
 
-    internal static string DecodeJoinSecret(string joinSecret) =>
-        Encoding.UTF8.GetString(Convert.FromBase64String(joinSecret));
+        static string Match(string input, string pattern)
+        {
+            var m = Regex.Match(input, pattern, RegexOptions.IgnoreCase);
+            return m.Success ? Uri.UnescapeDataString(m.Groups[1].Value) : string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Reconstruct a launchable PlaceLauncher.ashx URL from a compact JoinSecret. Honors the
+    /// three RobloxLauncher request shapes: linkCode → RequestPrivateGame, accessCode →
+    /// RequestPrivateGame, neither → RequestGame with isPlayTogetherGame=true so Roblox tries
+    /// to land the joiner in the same shard as the inviter.
+    /// </summary>
+    internal static string DecodeJoinSecret(string joinSecret)
+    {
+        if (string.IsNullOrEmpty(joinSecret)) return string.Empty;
+        var parts = joinSecret.Split('|');
+        if (parts.Length < 4 || parts[0] != "P")
+        {
+            // Unknown / malformed format — return empty so the JoinRequested handler skips
+            // raising rather than dispatching a launch on an unrecognized payload.
+            return string.Empty;
+        }
+        var placeId = parts[1];
+        var linkCode = parts[2];
+        var accessCode = parts[3];
+
+        if (string.IsNullOrEmpty(placeId))
+        {
+            return string.Empty;
+        }
+
+        const string endpoint = "https://assetgame.roblox.com/game/PlaceLauncher.ashx";
+        if (!string.IsNullOrEmpty(linkCode))
+        {
+            return $"{endpoint}?request=RequestPrivateGame&placeId={placeId}&linkCode={Uri.EscapeDataString(linkCode)}";
+        }
+        if (!string.IsNullOrEmpty(accessCode))
+        {
+            return $"{endpoint}?request=RequestPrivateGame&placeId={placeId}&accessCode={Uri.EscapeDataString(accessCode)}";
+        }
+        // Public-game fallback — same place, possibly different shard, isPlayTogetherGame
+        // raises the chance Roblox bridges the joiner into the inviter's instance.
+        return $"{endpoint}?request=RequestGame&placeId={placeId}&isPlayTogetherGame=true";
+    }
 
     private void ConnectClient()
     {
@@ -311,11 +368,12 @@ public sealed class DiscordRichPresenceService : IDiscordPresence, IDisposable
         try
         {
             var url = DecodeJoinSecret(joinSecret);
+            if (string.IsNullOrEmpty(url))
+            {
+                _log.LogWarning("Discord JoinRequested with unrecognized secret format; ignoring.");
+                return;
+            }
             JoinRequested?.Invoke(this, new JoinRequestedEventArgs(url));
-        }
-        catch (FormatException ex)
-        {
-            _log.LogWarning(ex, "Couldn't decode JoinSecret as Base64; ignoring join request.");
         }
         catch (Exception ex)
         {
