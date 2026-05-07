@@ -43,4 +43,11 @@ public interface IAccountStore
     /// the next tick so the color change shows up live in any currently-running Roblox window.
     /// </summary>
     Task SetCaptionColorAsync(Guid id, string? hex);
+
+    /// <summary>
+    /// Persist a per-account FPS cap. Pass <c>null</c> to clear (the next launch will not
+    /// touch <c>ClientAppSettings.json</c>'s FPS flag). Pass an integer in [10, 9999] to set.
+    /// Drives the per-account dropdown on the main window. Spec §5.4 + §6.1.
+    /// </summary>
+    Task SetFpsCapAsync(Guid id, int? fps);
 }

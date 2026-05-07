@@ -425,4 +425,41 @@ public class AccountStoreTests : IDisposable
         var list = await reopened.ListAsync();
         Assert.True(list.Single(a => a.Id == second.Id).IsMain);
     }
+
+    [Fact]
+    public async Task SetFpsCapAsync_RoundTrip_PersistsValue()
+    {
+        using var store = new AccountStore(_filePath);
+        var added = await store.AddAsync("alice", "https://example/a.png", "ROBLOSECURITY-stub-1");
+
+        await store.SetFpsCapAsync(added.Id, 60);
+
+        var listed = (await store.ListAsync()).Single();
+        Assert.Equal(60, listed.FpsCap);
+    }
+
+    [Fact]
+    public async Task SetFpsCapAsync_NullClearsValue()
+    {
+        using var store = new AccountStore(_filePath);
+        var added = await store.AddAsync("alice", "https://example/a.png", "ROBLOSECURITY-stub-1");
+        await store.SetFpsCapAsync(added.Id, 144);
+
+        await store.SetFpsCapAsync(added.Id, null);
+
+        var listed = (await store.ListAsync()).Single();
+        Assert.Null(listed.FpsCap);
+    }
+
+    [Fact]
+    public async Task SetFpsCapAsync_OutOfRangeIsClamped()
+    {
+        using var store = new AccountStore(_filePath);
+        var added = await store.AddAsync("alice", "https://example/a.png", "ROBLOSECURITY-stub-1");
+
+        await store.SetFpsCapAsync(added.Id, 99999);
+
+        var listed = (await store.ListAsync()).Single();
+        Assert.Equal(FpsPresets.MaxCustom, listed.FpsCap);
+    }
 }
