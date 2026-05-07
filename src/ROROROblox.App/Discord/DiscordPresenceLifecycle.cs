@@ -140,7 +140,12 @@ public sealed class DiscordPresenceLifecycle : IHostedService
 
             if (target is null)
             {
-                _log.LogWarning("Discord Join requested but no saved accounts; cannot fulfill join to {Url}.", Redact(e.ServerShareUrl));
+                // No saved accounts means we can't launch Roblox via the auth-ticket path.
+                // Open the public web URL instead — clanmate can sign into Roblox in their
+                // browser and click Play, landing on the same private server (link-code path).
+                var webUrl = ConvertToPublicWebUrl(e.ServerShareUrl);
+                _log.LogInformation("Discord Join: no saved accounts in RORORO; opening web URL in browser → {WebUrl}", webUrl);
+                OpenInDefaultBrowser(webUrl);
                 return;
             }
 
@@ -166,6 +171,17 @@ public sealed class DiscordPresenceLifecycle : IHostedService
                 case LaunchResult.CookieExpired:
                     _log.LogWarning("Discord Join couldn't launch — cookie expired for account {AccountId}.", target.Id);
                     break;
+                case LaunchResult.Failed failed when failed.Message.Contains("Roblox does not appear to be installed", StringComparison.OrdinalIgnoreCase):
+                    // Fallback: open the public Roblox web URL in the user's default browser.
+                    // Roblox.com handles the "install Roblox" prompt + post-install join. We're
+                    // not the installer; we're just opening the right URL — same flow Roblox
+                    // expects for first-time players. Surfaced from CHECKPOINT 2 cross-machine
+                    // smoke 2026-05-07: clanmate clicks Join with no Roblox installed, Discord
+                    // pulses forever. Now: their browser opens, Roblox handles the rest.
+                    var webUrl = ConvertToPublicWebUrl(e.ServerShareUrl);
+                    _log.LogInformation("Discord Join: Roblox not installed; opening web URL in browser → {WebUrl}", webUrl);
+                    OpenInDefaultBrowser(webUrl);
+                    break;
                 case LaunchResult.Failed failed:
                     _log.LogWarning("Discord Join launch failed for account {AccountId}: {Message}", target.Id, failed.Message);
                     break;
@@ -174,6 +190,53 @@ public sealed class DiscordPresenceLifecycle : IHostedService
         catch (Exception ex)
         {
             _log.LogWarning(ex, "OnJoinRequested handler threw; ignoring.");
+        }
+    }
+
+    /// <summary>
+    /// Convert a PlaceLauncher.ashx URL into the public roblox.com web URL the joiner can
+    /// open in a browser. For LinkCode private servers, preserves the share via the
+    /// privateServerLinkCode query param so post-install they can still land on the same
+    /// server. AccessCode private servers can't be represented in a public URL (owner-shared
+    /// only) — falls back to the public game page.
+    /// </summary>
+    internal static string ConvertToPublicWebUrl(string placeLauncherUrl)
+    {
+        // Extract placeId + linkCode (linkCode is share-friendly via the public URL;
+        // accessCode isn't, so we drop it).
+        var placeId = System.Text.RegularExpressions.Regex.Match(
+            placeLauncherUrl, @"placeId=(\d+)",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase).Groups[1].Value;
+        var linkCode = System.Text.RegularExpressions.Regex.Match(
+            placeLauncherUrl, @"linkCode=([^&]+)",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase).Groups[1].Value;
+
+        if (string.IsNullOrEmpty(placeId))
+        {
+            // Truly unparseable — fall back to the Roblox home page.
+            return "https://www.roblox.com/";
+        }
+
+        if (!string.IsNullOrEmpty(linkCode))
+        {
+            return $"https://www.roblox.com/games/{placeId}?privateServerLinkCode={Uri.EscapeDataString(linkCode)}";
+        }
+        return $"https://www.roblox.com/games/{placeId}";
+    }
+
+    private void OpenInDefaultBrowser(string url)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Couldn't open browser for Discord Join fallback.");
         }
     }
 

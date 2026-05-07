@@ -119,6 +119,44 @@ public class DiscordPresenceLifecycleTests
     }
 
     [Fact]
+    public void ConvertToPublicWebUrl_LinkCode_PreservesShareViaQueryParam()
+    {
+        var input = "https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestPrivateGame&placeId=920587237&linkCode=ABC123";
+        var output = DiscordPresenceLifecycle.ConvertToPublicWebUrl(input);
+
+        Assert.Equal("https://www.roblox.com/games/920587237?privateServerLinkCode=ABC123", output);
+    }
+
+    [Fact]
+    public void ConvertToPublicWebUrl_PublicGame_StripsToPlacePage()
+    {
+        var input = "https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestGame&placeId=920587237&isPlayTogetherGame=true";
+        var output = DiscordPresenceLifecycle.ConvertToPublicWebUrl(input);
+
+        Assert.Equal("https://www.roblox.com/games/920587237", output);
+    }
+
+    [Fact]
+    public void ConvertToPublicWebUrl_AccessCode_FallsBackToPlacePageOnly()
+    {
+        // accessCode is owner-shared and has no public URL representation; we drop it and
+        // open the place page. Joiner can still find the inviter in-game via friends list
+        // once they're on the same place.
+        var input = "https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestPrivateGame&placeId=920587237&accessCode=PRIV";
+        var output = DiscordPresenceLifecycle.ConvertToPublicWebUrl(input);
+
+        Assert.Equal("https://www.roblox.com/games/920587237", output);
+    }
+
+    [Fact]
+    public void ConvertToPublicWebUrl_Unparseable_FallsBackToHomePage()
+    {
+        var output = DiscordPresenceLifecycle.ConvertToPublicWebUrl("garbage-not-a-url");
+
+        Assert.Equal("https://www.roblox.com/", output);
+    }
+
+    [Fact]
     public async Task StopAsync_DisposesPresence_AndUnsubscribes()
     {
         var (sut, presence, _, lifecycle, _, _) = NewSystemUnderTest(AccountNewer);
