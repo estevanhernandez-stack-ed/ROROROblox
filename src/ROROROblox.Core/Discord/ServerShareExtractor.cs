@@ -1,16 +1,20 @@
 namespace ROROROblox.Core.Discord;
 
 /// <summary>
-/// Pure parser: lifts the private-server share URL out of a roblox-player: launch URI when one
-/// is present. Returns null for public games and for any malformed input — never throws.
+/// Pure parser: lifts a shareable Roblox URL out of a roblox-player: launch URI when one is
+/// present. Returns the URL for any Roblox launch (public game OR private server), null only
+/// when the URI carries no recognizable place reference (FollowFriend, malformed, etc).
+/// Never throws.
 ///
 /// Format reminder (canonical RobloxLauncher build per v1.0 item 6):
 ///   roblox-player:1+launchmode:play+gameinfo:TICKET+launchtime:MS+placelauncherurl:URLENCODED+...
 ///
-/// Segments are plus-separated; each segment is "key:value" with the value possibly containing
-/// colons (URL-encoded payload). The placelauncherurl value, once Uri.UnescapeDataString'd,
-/// is the share-able URL — we recognize private-server payloads by either the legacy
-/// "accessCode=" query param or the newer "privateServerLinkCode=" link-share format.
+/// v1.2 spec originally constrained this to private-server-only; CHECKPOINT 2 smoke surfaced
+/// that public-game Join is also useful for clan coordination ("come find me" — same place,
+/// possibly different shard, but Roblox's friend-join can land them together). Expanded to
+/// match any URL with placeId= as the fallback. The narrower private-server signals
+/// (accessCode= / linkCode= / privateServerLinkCode=) are checked first so the recognized
+/// shape stays attributable in tests + diagnostics.
 /// </summary>
 public static class ServerShareExtractor
 {
@@ -18,10 +22,11 @@ public static class ServerShareExtractor
     private const string Key = "placelauncherurl";
 
     /// <returns>
-    /// The decoded private-server share URL, or null if the URI targets a public game,
-    /// has no placelauncherurl segment, or cannot be parsed.
+    /// The decoded shareable URL — private-server share URL when one is present, otherwise
+    /// the public-game URL with placeId. Null if the URI carries no placelauncherurl segment
+    /// or none of the recognized share/place params. Never throws.
     /// </returns>
-    public static string? TryExtractPrivateServerUrl(string launchUri)
+    public static string? TryExtractShareableUrl(string launchUri)
     {
         if (string.IsNullOrWhiteSpace(launchUri))
         {
@@ -73,16 +78,20 @@ public static class ServerShareExtractor
             return null;
         }
 
-        // Private-server signatures (case-insensitive — Roblox occasionally re-cases query keys):
-        //   accessCode=         — legacy private-server flow + RobloxLauncher AccessCode kind
-        //   privateServerLinkCode= — newer share-link format on roblox.com/games/{id}?...
-        //   linkCode=           — RobloxLauncher LinkCode kind in the placelauncherurl emit
-        //                          (different from the website URL prefix; bug bash 2026-05-06
-        //                          surfaced this — Layer 2 outbound was missing every LinkCode
-        //                          launch because we were only checking the website prefix)
+        // Recognized share / place signatures, all case-insensitive.
+        // Private-server-specific (narrow signal):
+        //   accessCode=             — legacy private-server flow + RobloxLauncher AccessCode kind
+        //   privateServerLinkCode=  — newer share-link format on roblox.com/games/{id}?...
+        //   linkCode=               — RobloxLauncher LinkCode kind in the placelauncherurl emit
+        // Public-game fallback (broad signal — v1.2.5 expansion):
+        //   placeId=                — every Roblox launch URL carries placeId; if no narrower
+        //                             signal matched, this still gives the joiner enough info
+        //                             to land in the same place (same-shard not guaranteed,
+        //                             but the place is enough for clan-side coordination).
         if (decoded.Contains("accessCode=", StringComparison.OrdinalIgnoreCase) ||
             decoded.Contains("privateServerLinkCode=", StringComparison.OrdinalIgnoreCase) ||
-            decoded.Contains("linkCode=", StringComparison.OrdinalIgnoreCase))
+            decoded.Contains("linkCode=", StringComparison.OrdinalIgnoreCase) ||
+            decoded.Contains("placeId=", StringComparison.OrdinalIgnoreCase))
         {
             return decoded;
         }

@@ -40,6 +40,13 @@ public sealed class DiscordRichPresenceService : IDiscordPresence, IDisposable
     private bool _started;
     private bool _disposed;
 
+    /// <summary>
+    /// Cached party state — preserved across <see cref="UpdateStateAsync"/> calls so the
+    /// lifecycle's per-account state updates don't blow away the Join button. Set by
+    /// <see cref="SetPartyAsync"/>, cleared by <see cref="ClearPartyAsync"/>.
+    /// </summary>
+    private DiscordPresenceParty? _currentParty;
+
     public DiscordRichPresenceService(
         IDiscordConfig config,
         ILogger<DiscordRichPresenceService> log,
@@ -85,7 +92,11 @@ public sealed class DiscordRichPresenceService : IDiscordPresence, IDisposable
         var client = _client;
         if (client is null) return Task.CompletedTask;
 
-        var payload = BuildPayload(state, party: null);
+        // Preserve the cached party across state updates so lifecycle events (AccountStarted,
+        // AccountStopped) don't wipe the Join button. Party is only cleared by an explicit
+        // ClearPartyAsync — which DiscordPresenceLifecycle calls when the active count drops
+        // to zero.
+        var payload = BuildPayload(state, party: _currentParty);
         TrySetPresence(client, payload);
         return Task.CompletedTask;
     }
@@ -100,10 +111,16 @@ public sealed class DiscordRichPresenceService : IDiscordPresence, IDisposable
             PartyId: HashPartyId(serverShareUrl),
             JoinSecret: EncodeJoinSecret(serverShareUrl),
             MaxSize: PartyMaxSize);
+        _currentParty = party;
 
-        // Default to InPrivateServer when we set a party — the count is unknown at this seam,
-        // DiscordPresenceLifecycle (item 7) will follow up with a precise UpdateStateAsync.
-        var state = new RichPresenceState(PresenceMode.InPrivateServer, ActiveAccountCount: 1, CurrentActivity: "In a private server");
+        // Default to AccountsActive/1 when we set a party from the launcher seam — the precise
+        // count comes a beat later from the lifecycle's AccountStarted, which now also preserves
+        // _currentParty. Activity text stays generic ("Playing Roblox") since the same code path
+        // runs for both private servers and public games (v1.2.5 expansion — public-game Join).
+        var state = new RichPresenceState(
+            PresenceMode.InPrivateServer,
+            ActiveAccountCount: 1,
+            CurrentActivity: "Playing Roblox");
         var payload = BuildPayload(state, party);
         TrySetPresence(client, payload);
         return Task.CompletedTask;
@@ -111,12 +128,12 @@ public sealed class DiscordRichPresenceService : IDiscordPresence, IDisposable
 
     public Task ClearPartyAsync(CancellationToken ct)
     {
+        _currentParty = null;
         var client = _client;
         if (client is null) return Task.CompletedTask;
 
-        // Re-emit current state without a party. Without finer-grained state knowledge here,
-        // emit Idle/0 — DiscordPresenceLifecycle (item 7) immediately follows up with the real
-        // count when its AccountStarted/Stopped handler fires.
+        // Re-emit current state without a party. Idle/0 here — DiscordPresenceLifecycle
+        // immediately follows up with the real count via AccountStarted/Stopped.
         var payload = BuildPayload(new RichPresenceState(PresenceMode.Idle, 0, null), party: null);
         TrySetPresence(client, payload);
         return Task.CompletedTask;

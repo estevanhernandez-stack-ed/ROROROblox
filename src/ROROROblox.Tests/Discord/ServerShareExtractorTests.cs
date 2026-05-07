@@ -22,7 +22,7 @@ public class ServerShareExtractorTests
     {
         var uri = LoadFixture("launch-uri-private-accesscode.txt");
 
-        var result = ServerShareExtractor.TryExtractPrivateServerUrl(uri);
+        var result = ServerShareExtractor.TryExtractShareableUrl(uri);
 
         Assert.NotNull(result);
         Assert.Contains("accessCode=ABC123-FAKE-CODE", result);
@@ -34,7 +34,7 @@ public class ServerShareExtractorTests
     {
         var uri = LoadFixture("launch-uri-private-linkcode.txt");
 
-        var result = ServerShareExtractor.TryExtractPrivateServerUrl(uri);
+        var result = ServerShareExtractor.TryExtractShareableUrl(uri);
 
         Assert.NotNull(result);
         Assert.Contains("privateServerLinkCode=LINKCODESHARE-FAKE", result);
@@ -50,7 +50,7 @@ public class ServerShareExtractorTests
         // Bug bash 2026-05-06: every LinkCode launch was being missed by the extractor.
         var uri = LoadFixture("launch-uri-private-launcher-linkcode.txt");
 
-        var result = ServerShareExtractor.TryExtractPrivateServerUrl(uri);
+        var result = ServerShareExtractor.TryExtractShareableUrl(uri);
 
         Assert.NotNull(result);
         Assert.Contains("linkCode=LAUNCHER-LINKCODE-FAKE", result);
@@ -58,13 +58,21 @@ public class ServerShareExtractorTests
     }
 
     [Fact]
-    public void PublicGameFixture_ReturnsNull()
+    public void PublicGameFixture_ReturnsDecodedUrl()
     {
+        // v1.2.5 expansion: public-game launches now also produce a shareable URL so the
+        // Discord Join button can serve "come find me" clan coordination, not just private
+        // servers. Same-place / possibly-different-shard for public games.
         var uri = LoadFixture("launch-uri-public.txt");
 
-        var result = ServerShareExtractor.TryExtractPrivateServerUrl(uri);
+        var result = ServerShareExtractor.TryExtractShareableUrl(uri);
 
-        Assert.Null(result);
+        Assert.NotNull(result);
+        Assert.Contains("placeId=920587237", result);
+        Assert.Contains("PlaceLauncher.ashx", result);
+        // Public games carry no narrower share signal — only placeId.
+        Assert.DoesNotContain("accessCode=", result);
+        Assert.DoesNotContain("linkCode=", result);
     }
 
     [Fact]
@@ -72,7 +80,7 @@ public class ServerShareExtractorTests
     {
         var uri = LoadFixture("launch-uri-malformed.txt");
 
-        var result = ServerShareExtractor.TryExtractPrivateServerUrl(uri);
+        var result = ServerShareExtractor.TryExtractShareableUrl(uri);
 
         Assert.Null(result);
     }
@@ -82,7 +90,7 @@ public class ServerShareExtractorTests
     {
         var uri = LoadFixture("launch-uri-missing-key.txt");
 
-        var result = ServerShareExtractor.TryExtractPrivateServerUrl(uri);
+        var result = ServerShareExtractor.TryExtractShareableUrl(uri);
 
         Assert.Null(result);
     }
@@ -93,7 +101,7 @@ public class ServerShareExtractorTests
     [InlineData("   ")]
     public void NullOrWhitespaceInput_ReturnsNull(string? input)
     {
-        var result = ServerShareExtractor.TryExtractPrivateServerUrl(input!);
+        var result = ServerShareExtractor.TryExtractShareableUrl(input!);
 
         Assert.Null(result);
     }
@@ -102,7 +110,7 @@ public class ServerShareExtractorTests
     public void NonRobloxScheme_ReturnsNull_WhenNoPlaceLauncherUrl()
     {
         // Anything without a placelauncherurl segment falls through to null, regardless of scheme.
-        var result = ServerShareExtractor.TryExtractPrivateServerUrl("https://example.com/foo?bar=baz");
+        var result = ServerShareExtractor.TryExtractShareableUrl("https://example.com/foo?bar=baz");
 
         Assert.Null(result);
     }
@@ -113,7 +121,7 @@ public class ServerShareExtractorTests
         // Roblox is consistent today, but we don't want a one-character casing change to break us.
         var uri = "roblox-player:1+launchmode:play+PlaceLauncherURL:https%3A%2F%2Fx%2F%3FaccessCode%3DZ";
 
-        var result = ServerShareExtractor.TryExtractPrivateServerUrl(uri);
+        var result = ServerShareExtractor.TryExtractShareableUrl(uri);
 
         Assert.NotNull(result);
         Assert.Contains("accessCode=Z", result);
@@ -125,7 +133,7 @@ public class ServerShareExtractorTests
         // Mixed-case accessCode key in the decoded URL still triggers the match.
         var uri = "roblox-player:1+placelauncherurl:https%3A%2F%2Fx%2F%3FAccessCode%3DXYZ";
 
-        var result = ServerShareExtractor.TryExtractPrivateServerUrl(uri);
+        var result = ServerShareExtractor.TryExtractShareableUrl(uri);
 
         Assert.NotNull(result);
     }
@@ -135,7 +143,7 @@ public class ServerShareExtractorTests
     {
         var uri = "roblox-player:1+placelauncherurl:";
 
-        var result = ServerShareExtractor.TryExtractPrivateServerUrl(uri);
+        var result = ServerShareExtractor.TryExtractShareableUrl(uri);
 
         Assert.Null(result);
     }
@@ -146,7 +154,7 @@ public class ServerShareExtractorTests
         // "gameinfo" has no value; we skip it instead of treating it as a key match.
         var uri = "roblox-player:1+launchmode:play+gameinfo+placelauncherurl:https%3A%2F%2Fx%2F%3FaccessCode%3DA";
 
-        var result = ServerShareExtractor.TryExtractPrivateServerUrl(uri);
+        var result = ServerShareExtractor.TryExtractShareableUrl(uri);
 
         Assert.NotNull(result);
         Assert.Contains("accessCode=A", result);

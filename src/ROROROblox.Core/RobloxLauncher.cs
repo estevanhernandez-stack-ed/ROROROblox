@@ -200,7 +200,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         if (_discordPresence is null) return;
         try
         {
-            var shareUrl = ServerShareExtractor.TryExtractPrivateServerUrl(launchUri);
+            var shareUrl = ServerShareExtractor.TryExtractShareableUrl(launchUri);
             // Diagnostic: print the decoded placelauncherurl segment + whether the extractor
             // matched. If shareUrl is null on what was supposed to be a private-server launch,
             // this line shows whether the share param was simply absent (LaunchTarget routing

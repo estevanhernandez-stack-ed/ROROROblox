@@ -29,8 +29,13 @@ public class RobloxLauncherDiscordHookTests
     }
 
     [Fact]
-    public async Task LaunchAsync_PublicGameTarget_CallsClearPartyAsync()
+    public async Task LaunchAsync_PublicGameTarget_CallsSetPartyAsync_WithPlaceUrl()
     {
+        // v1.2.5 expansion (CHECKPOINT 1.7): public games now also produce a shareable URL
+        // so the Discord Join button supports clan "come find me" coordination, not just
+        // private-server matching. Public-game launches go through SetPartyAsync (not
+        // ClearPartyAsync) and the shareUrl carries placeId= without any narrower share
+        // signal.
         var presence = new RecordingPresence();
         var launcher = NewLauncher(presence, ticket: "TKT");
 
@@ -38,9 +43,11 @@ public class RobloxLauncherDiscordHookTests
 
         Assert.IsType<LaunchResult.Started>(result);
 
-        var cleared = await presence.WaitForClearPartyAsync(TimeSpan.FromSeconds(2));
-        Assert.True(cleared);
-        Assert.Null(presence.LastSetPartyUrl);
+        var partyUrl = await presence.WaitForSetPartyAsync(TimeSpan.FromSeconds(2));
+        Assert.NotNull(partyUrl);
+        Assert.Contains("placeId=920587237", partyUrl);
+        Assert.DoesNotContain("accessCode=", partyUrl);
+        Assert.DoesNotContain("linkCode=", partyUrl);
     }
 
     [Fact]

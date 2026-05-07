@@ -166,6 +166,45 @@ public class DiscordRichPresenceServiceTests
     }
 
     [Fact]
+    public async Task UpdateStateAsync_PreservesParty_AfterSetPartyAsync()
+    {
+        // Regression guard for CHECKPOINT 1.7 fix: lifecycle's UpdateStateAsync was wiping the
+        // party milliseconds after SetPartyAsync set it (because it built the payload with
+        // party=null). The Join button would appear briefly then vanish as soon as the
+        // RobloxPlayerBeta attached and AccountStarted fired.
+        var (service, fake) = StartedService(richPresenceEnabled: true);
+        await service.SetPartyAsync("https://x/?accessCode=A", CancellationToken.None);
+        var partyAfterSet = fake.LastPresence!.Party;
+        Assert.NotNull(partyAfterSet);
+
+        // Simulate the lifecycle's per-account state update.
+        await service.UpdateStateAsync(
+            new RichPresenceState(PresenceMode.AccountsActive, 1, "Multi-clienting"),
+            CancellationToken.None);
+
+        // Party MUST still be present — preserved from the cache.
+        Assert.NotNull(fake.LastPresence?.Party);
+        Assert.Equal(partyAfterSet!.PartyId, fake.LastPresence!.Party!.PartyId);
+        Assert.Equal(partyAfterSet.JoinSecret, fake.LastPresence.Party.JoinSecret);
+    }
+
+    [Fact]
+    public async Task UpdateStateAsync_AfterClearPartyAsync_DoesNotResurrectParty()
+    {
+        var (service, fake) = StartedService(richPresenceEnabled: true);
+        await service.SetPartyAsync("https://x/?accessCode=A", CancellationToken.None);
+        await service.ClearPartyAsync(CancellationToken.None);
+        Assert.Null(fake.LastPresence!.Party);
+
+        await service.UpdateStateAsync(
+            new RichPresenceState(PresenceMode.Idle, 0, null),
+            CancellationToken.None);
+
+        // Party stays cleared after explicit ClearPartyAsync, even across UpdateStateAsync.
+        Assert.Null(fake.LastPresence!.Party);
+    }
+
+    [Fact]
     public async Task JoinRequested_DecodesBase64Secret_IntoEventArgs()
     {
         var (service, fake) = StartedService(richPresenceEnabled: true);
