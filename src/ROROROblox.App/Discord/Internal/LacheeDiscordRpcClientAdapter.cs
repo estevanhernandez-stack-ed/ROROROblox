@@ -31,7 +31,28 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
 
     public bool IsInitialized => _inner.IsInitialized;
 
-    public void Initialize() => _inner.Initialize();
+    public void Initialize()
+    {
+        _inner.Initialize();
+        // Lachee throws BadPresenceException on every SetPresence with Secrets unless the URI
+        // scheme is registered. The registration writes a discord-<appId>:// handler to the
+        // Windows registry pointing at our current process — Discord uses that scheme to relaunch
+        // our app when a clanmate clicks Join. Null `executable` lets Lachee auto-detect the
+        // running .exe path. Wrapped in try/catch because RegisterUriScheme can fail on some
+        // Windows configurations (RegEdit permission issues) and we'd rather degrade
+        // gracefully than crash the IPC connection.
+        try
+        {
+            _inner.RegisterUriScheme();
+        }
+        catch
+        {
+            // Best-effort. Without registration, presence-with-secrets calls will throw
+            // BadPresenceException; the Join button won't render to friends, but the
+            // text-only rich presence still works.
+        }
+    }
+
     public void Deinitialize() => _inner.Deinitialize();
     public void ClearPresence() => _inner.ClearPresence();
 
