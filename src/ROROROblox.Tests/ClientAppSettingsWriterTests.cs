@@ -82,6 +82,14 @@ public sealed class ClientAppSettingsWriterTests : IDisposable
 
         Assert.True(File.Exists(Path.Combine(standaloneFolder, "ClientSettings", "ClientAppSettings.json")));
         Assert.True(File.Exists(Path.Combine(uwpFolder, "ClientSettings", "ClientAppSettings.json")));
+        foreach (var path in new[] {
+            Path.Combine(standaloneFolder, "ClientSettings", "ClientAppSettings.json"),
+            Path.Combine(uwpFolder, "ClientSettings", "ClientAppSettings.json")
+        })
+        {
+            using var doc = JsonDocument.Parse(await File.ReadAllTextAsync(path));
+            Assert.Equal(120, doc.RootElement.GetProperty("DFIntTaskSchedulerTargetFps").GetInt32());
+        }
     }
 
     [Fact]
@@ -147,13 +155,14 @@ public sealed class ClientAppSettingsWriterTests : IDisposable
         var clientSettings = Path.Combine(versionFolder, "ClientSettings");
         Directory.CreateDirectory(clientSettings);
         var jsonPath = Path.Combine(clientSettings, "ClientAppSettings.json");
-        await File.WriteAllTextAsync(jsonPath, "{\"DFIntTaskSchedulerTargetFps\": 60, \"FStringOther\": \"keep\"}");
+        await File.WriteAllTextAsync(jsonPath, "{\"DFIntTaskSchedulerTargetFps\": 60, \"FFlagTaskSchedulerLimitTargetFpsTo2402\": false, \"FStringOther\": \"keep\"}");
         var writer = new ClientAppSettingsWriter(_standaloneRoot, _packagesRoot);
 
         await writer.WriteFpsAsync(null);
 
         using var doc = JsonDocument.Parse(await File.ReadAllTextAsync(jsonPath));
         Assert.False(doc.RootElement.TryGetProperty("DFIntTaskSchedulerTargetFps", out _));
+        Assert.False(doc.RootElement.TryGetProperty("FFlagTaskSchedulerLimitTargetFpsTo2402", out _));
         Assert.Equal("keep", doc.RootElement.GetProperty("FStringOther").GetString());
     }
 

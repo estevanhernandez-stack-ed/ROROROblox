@@ -27,6 +27,8 @@ public sealed class ClientAppSettingsWriter : IClientAppSettingsWriter
     // Visible for tests — accept arbitrary roots.
     public ClientAppSettingsWriter(string standaloneVersionsRoot, string packagesRoot)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(standaloneVersionsRoot);
+        ArgumentException.ThrowIfNullOrWhiteSpace(packagesRoot);
         _standaloneVersionsRoot = standaloneVersionsRoot;
         _packagesRoot = packagesRoot;
     }
@@ -53,10 +55,16 @@ public sealed class ClientAppSettingsWriter : IClientAppSettingsWriter
                     $"Failed to write FPS flag at {folder}: {ex.Message}", ex));
             }
         }
-        if (failures is not null && failures.Count == targets.Count)
+        if (failures is not null && failures.Count > 0)
         {
+            if (failures.Count == targets.Count)
+            {
+                throw new ClientAppSettingsWriteException(
+                    $"All {targets.Count} candidate write(s) failed: {failures[0].Message}", failures[0]);
+            }
             throw new ClientAppSettingsWriteException(
-                $"All {targets.Count} candidate write(s) failed: {failures[0].Message}", failures[0]);
+                $"{failures.Count} of {targets.Count} candidate write(s) failed (others succeeded). First error: {failures[0].Message}",
+                new AggregateException(failures));
         }
     }
 
@@ -78,8 +86,9 @@ public sealed class ClientAppSettingsWriter : IClientAppSettingsWriter
         if (uwp is null) return [standalone.Value.FullName];
 
         // Both exist — write to both if both are active in the last 30 days. Otherwise, just the newer.
-        var ageStandalone = DateTime.UtcNow - standalone.Value.PlayerBetaWriteUtc;
-        var ageUwp = DateTime.UtcNow - uwp.Value.PlayerBetaWriteUtc;
+        var now = DateTime.UtcNow;
+        var ageStandalone = now - standalone.Value.PlayerBetaWriteUtc;
+        var ageUwp = now - uwp.Value.PlayerBetaWriteUtc;
         if (ageStandalone < CoActiveWindow && ageUwp < CoActiveWindow)
         {
             return [standalone.Value.FullName, uwp.Value.FullName];
@@ -107,13 +116,18 @@ public sealed class ClientAppSettingsWriter : IClientAppSettingsWriter
     private static (string FullName, DateTime PlayerBetaWriteUtc)? ResolveUwpVersionFolder(string packagesRoot)
     {
         if (!Directory.Exists(packagesRoot)) return null;
+        (string FullName, DateTime PlayerBetaWriteUtc)? best = null;
         foreach (var pkg in Directory.EnumerateDirectories(packagesRoot, "ROBLOXCORPORATION.ROBLOX_*"))
         {
             var versions = Path.Combine(pkg, "LocalCache", "Local", "Roblox", "Versions");
             var found = NewestActiveVersionFolder(versions);
-            if (found is not null) return found;
+            if (found is null) continue;
+            if (best is null || found.Value.PlayerBetaWriteUtc > best.Value.PlayerBetaWriteUtc)
+            {
+                best = found;
+            }
         }
-        return null;
+        return best;
     }
 
     private static async Task WriteOneAsync(string versionFolder, int? fps, CancellationToken ct)
@@ -160,7 +174,19 @@ public sealed class ClientAppSettingsWriter : IClientAppSettingsWriter
         }
 
         var tempPath = jsonPath + ".tmp";
-        await File.WriteAllTextAsync(tempPath, root.ToJsonString(WriteOptions), ct).ConfigureAwait(false);
-        File.Move(tempPath, jsonPath, overwrite: true);
+        var moved = false;
+        try
+        {
+            await File.WriteAllTextAsync(tempPath, root.ToJsonString(WriteOptions), ct).ConfigureAwait(false);
+            File.Move(tempPath, jsonPath, overwrite: true);
+            moved = true;
+        }
+        finally
+        {
+            if (!moved && File.Exists(tempPath))
+            {
+                try { File.Delete(tempPath); } catch { /* best-effort cleanup */ }
+            }
+        }
     }
 }
