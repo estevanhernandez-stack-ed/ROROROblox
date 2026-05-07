@@ -410,6 +410,9 @@ public class RobloxLauncherTests
         public Task SetLaunchMainOnStartupAsync(bool enabled) { LaunchMainOnStartup = enabled; return Task.CompletedTask; }
         public Task<string?> GetActiveThemeIdAsync() => Task.FromResult(ActiveThemeId);
         public Task SetActiveThemeIdAsync(string themeId) { ActiveThemeId = themeId; return Task.CompletedTask; }
+        public bool BloxstrapWarningDismissed { get; set; }
+        public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(BloxstrapWarningDismissed);
+        public Task SetBloxstrapWarningDismissedAsync(bool value) { BloxstrapWarningDismissed = value; return Task.CompletedTask; }
     }
 
     private sealed class RecordingProcessStarter : IProcessStarter
