@@ -37,10 +37,7 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
         // Lachee throws BadPresenceException on every SetPresence with Secrets unless the URI
         // scheme is registered. The registration writes a discord-<appId>:// handler to the
         // Windows registry pointing at our current process — Discord uses that scheme to relaunch
-        // our app when a clanmate clicks Join. Null `executable` lets Lachee auto-detect the
-        // running .exe path. Wrapped in try/catch because RegisterUriScheme can fail on some
-        // Windows configurations (RegEdit permission issues) and we'd rather degrade
-        // gracefully than crash the IPC connection.
+        // our app when a clanmate clicks Join.
         try
         {
             _inner.RegisterUriScheme();
@@ -48,8 +45,38 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
         catch
         {
             // Best-effort. Without registration, presence-with-secrets calls will throw
-            // BadPresenceException; the Join button won't render to friends, but the
-            // text-only rich presence still works.
+            // BadPresenceException; the Join button won't render to friends.
+        }
+
+        // CRITICAL: Lachee's RegisterUriScheme writes the registry command WITHOUT the "%1"
+        // argument placeholder, so Discord's URI dispatch launches our exe with NO command-line
+        // arg. The join secret is silently dropped before our parser ever sees it. Confirmed
+        // empirically via registry inspection on her laptop:
+        //   (default) : "E:\rororo-portable\ROROROblox.App.exe"
+        // Should be:
+        //   (default) : "E:\rororo-portable\ROROROblox.App.exe" "%1"
+        // Overwrite the registry entry ourselves to add the placeholder.
+        FixupUriSchemeRegistryEntry();
+    }
+
+    private void FixupUriSchemeRegistryEntry()
+    {
+        try
+        {
+            var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+            if (string.IsNullOrEmpty(exePath)) return;
+
+            var commandKeyPath = $@"Software\Classes\discord-{_inner.ApplicationID}\shell\open\command";
+            using var commandKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(commandKeyPath);
+            if (commandKey is null) return;
+            // The "%1" placeholder is what Windows substitutes with the URI Discord dispatches.
+            // Quoting both halves preserves paths with spaces + URIs with query params.
+            commandKey.SetValue(string.Empty, $"\"{exePath}\" \"%1\"");
+        }
+        catch
+        {
+            // Registry write can fail (permissions, locked-down user). Best-effort — without
+            // this, URI scheme dispatch loses the join secret but the rest of the app works.
         }
     }
 
