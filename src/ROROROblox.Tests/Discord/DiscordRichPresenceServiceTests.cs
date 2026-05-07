@@ -51,6 +51,25 @@ public class DiscordRichPresenceServiceTests
     }
 
     [Fact]
+    public async Task StartAsync_PushesInitialIdlePresence_SoDiscordHasSomethingToShow()
+    {
+        // Regression guard for CHECKPOINT 1.5 fix: without this, the IPC pipe is open but
+        // Discord shows nothing on the user's profile until OnAccountStarted fires from
+        // DiscordPresenceLifecycle. We push Idle right after Initialize so the user
+        // immediately sees "Playing ROROROblox · Idle" the moment the app opens.
+        var config = new FakeConfig(richPresenceEnabled: true);
+        var fake = new FakeDiscordRpcClient();
+        var service = NewService(config, fake);
+
+        await service.StartAsync(CancellationToken.None);
+
+        Assert.NotNull(fake.LastPresence);
+        Assert.Equal(DiscordRichPresenceService.IdleLargeKey, fake.LastPresence!.LargeImageKey);
+        Assert.Equal("Idle", fake.LastPresence.Details);
+        Assert.Null(fake.LastPresence.Party);
+    }
+
+    [Fact]
     public async Task UpdateStateAsync_AccountsActive_SetsActiveAssetKeys()
     {
         var (service, fake) = StartedService(richPresenceEnabled: true);
@@ -121,11 +140,16 @@ public class DiscordRichPresenceServiceTests
     {
         var (service, fake) = StartedService(richPresenceEnabled: true);
 
+        // StartAsync pushed the initial Idle presence (CHECKPOINT 1.5 fix). Snapshot it,
+        // then assert SetPartyAsync(empty) does NOT overwrite it.
+        var beforeParty = fake.LastPresence;
+        Assert.NotNull(beforeParty);
+        Assert.Null(beforeParty!.Party);
+
         await service.SetPartyAsync("", CancellationToken.None);
 
-        // No new presence emitted past whatever StartAsync did (which is none, since we don't
-        // call UpdateStateAsync from StartAsync — Lifecycle is responsible).
-        Assert.Null(fake.LastPresence);
+        // No party emitted; presence still the initial Idle (no overwrite from empty-url path).
+        Assert.Same(beforeParty, fake.LastPresence);
     }
 
     [Fact]

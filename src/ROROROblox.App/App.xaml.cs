@@ -366,24 +366,6 @@ public partial class App : Application
         tray.RequestOpenPreferences += (_, _) => OpenPreferencesFromTray(mainWindow);
         tray.RequestActivateMain += (_, _) => ActivateMainFromTray(mainWindow);
         tray.RequestOpenHistory += (_, _) => OpenHistoryFromTray(mainWindow);
-        tray.RequestOpenDiscordSettings += (_, _) => OpenDiscordSettingsFromTray(mainWindow);
-    }
-
-    private void OpenDiscordSettingsFromTray(Window owner)
-    {
-        if (_services is null) return;
-        try
-        {
-            var config = _services.GetRequiredService<IDiscordConfig>();
-            var window = new Settings.DiscordIntegrationsWindow(config);
-            if (owner.IsLoaded) window.Owner = owner;
-            SurfaceMainWindow(owner);
-            window.ShowDialog();
-        }
-        catch (Exception ex)
-        {
-            _log?.LogWarning(ex, "Couldn't open Discord integrations window from tray");
-        }
     }
 
     private void OpenHistoryFromTray(Window owner)
@@ -511,7 +493,8 @@ public partial class App : Application
             var startup = _services.GetRequiredService<IStartupRegistration>();
             var themeStore = _services.GetRequiredService<IThemeStore>();
             var themeService = _services.GetRequiredService<ThemeService>();
-            var window = new Preferences.PreferencesWindow(settings, startup, themeStore, themeService);
+            var discordConfig = _services.GetRequiredService<IDiscordConfig>();
+            var window = new Preferences.PreferencesWindow(settings, startup, themeStore, themeService, discordConfig);
             if (owner.IsLoaded) window.Owner = owner;
             SurfaceMainWindow(owner);
             window.ShowDialog();

@@ -194,6 +194,14 @@ public sealed class DiscordRichPresenceService : IDiscordPresence
                 _client = client;
                 _started = true;
                 _log.LogInformation("Discord RPC client initialized for ApplicationId {AppId}.", Redact(_applicationId!));
+
+                // Push initial Idle presence immediately so Discord has something to display
+                // before any account is launched. Without this the user sees nothing on their
+                // profile card — Discord shows the LAST-set presence, and an unset presence is
+                // just absence. Lachee buffers SetPresence calls until the pipe is ready, so
+                // calling synchronously here is safe; the actual IPC payload flushes on Ready.
+                var idle = new RichPresenceState(PresenceMode.Idle, 0, null);
+                TrySetPresence(client, BuildPayload(idle, party: null));
             }
             catch (Exception ex)
             {

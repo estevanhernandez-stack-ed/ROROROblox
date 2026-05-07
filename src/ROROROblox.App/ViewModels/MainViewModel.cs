@@ -40,6 +40,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly Startup.IStartupRegistration _startupRegistration;
     private readonly Core.Theming.IThemeStore _themeStore;
     private readonly Theming.ThemeService _themeService;
+    private readonly Core.Discord.IDiscordConfig _discordConfig;
     private readonly Tray.RobloxWindowDecorator _windowDecorator;
     private readonly ILogger<MainViewModel> _log;
 
@@ -72,6 +73,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         Startup.IStartupRegistration startupRegistration,
         Core.Theming.IThemeStore themeStore,
         Theming.ThemeService themeService,
+        Core.Discord.IDiscordConfig discordConfig,
         Tray.RobloxWindowDecorator windowDecorator,
         ILogger<MainViewModel>? log = null)
     {
@@ -89,6 +91,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _startupRegistration = startupRegistration;
         _themeStore = themeStore;
         _themeService = themeService;
+        _discordConfig = discordConfig;
         _windowDecorator = windowDecorator;
         _log = log ?? NullLogger<MainViewModel>.Instance;
 
@@ -1206,7 +1209,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OpenPreferences()
     {
-        var window = new Preferences.PreferencesWindow(_settings, _startupRegistration, _themeStore, _themeService)
+        var window = new Preferences.PreferencesWindow(_settings, _startupRegistration, _themeStore, _themeService, _discordConfig)
         {
             Owner = Application.Current.MainWindow,
         };
