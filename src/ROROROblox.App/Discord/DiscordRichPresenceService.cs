@@ -17,7 +17,7 @@ namespace ROROROblox.App.Discord;
 ///   - On <see cref="IDiscordConfig.Changed"/> with RichPresenceEnabled flipped, tear down or
 ///     spin up accordingly.
 /// </summary>
-public sealed class DiscordRichPresenceService : IDiscordPresence
+public sealed class DiscordRichPresenceService : IDiscordPresence, IDisposable
 {
     // Match Discord developer portal asset slot names. Item 10 uploads the actual PNGs.
     internal const string IdleLargeKey = "idle_large";
@@ -126,11 +126,23 @@ public sealed class DiscordRichPresenceService : IDiscordPresence
 
     public ValueTask DisposeAsync()
     {
-        if (_disposed) return ValueTask.CompletedTask;
+        DisposeCore();
+        return ValueTask.CompletedTask;
+    }
+
+    /// <summary>
+    /// Sync IDisposable shim so the DI container's sync ServiceProvider.Dispose() can shut us
+    /// down without throwing InvalidOperationException ("type only implements IAsyncDisposable").
+    /// Teardown is sync-safe — cancels timers, unsubscribes events, calls client.Dispose().
+    /// </summary>
+    public void Dispose() => DisposeCore();
+
+    private void DisposeCore()
+    {
+        if (_disposed) return;
         _disposed = true;
         _config.Changed -= OnConfigChanged;
         TeardownClient();
-        return ValueTask.CompletedTask;
     }
 
     // ---- Internals ----
@@ -190,6 +202,8 @@ public sealed class DiscordRichPresenceService : IDiscordPresence
                 client.JoinRequested += OnRpcJoinRequested;
                 client.ConnectionFailed += OnRpcConnectionFailed;
                 client.Ready += OnRpcReady;
+                client.Errored += OnRpcErrored;
+                client.PresenceUpdated += OnRpcPresenceUpdated;
                 client.Initialize();
                 _client = client;
                 _started = true;
@@ -229,6 +243,8 @@ public sealed class DiscordRichPresenceService : IDiscordPresence
             client.JoinRequested -= OnRpcJoinRequested;
             client.ConnectionFailed -= OnRpcConnectionFailed;
             client.Ready -= OnRpcReady;
+            client.Errored -= OnRpcErrored;
+            client.PresenceUpdated -= OnRpcPresenceUpdated;
             try { client.ClearPresence(); } catch { /* best effort */ }
             try { client.Deinitialize(); } catch { /* best effort */ }
             client.Dispose();
@@ -244,10 +260,13 @@ public sealed class DiscordRichPresenceService : IDiscordPresence
         try
         {
             client.SetPresence(payload);
+            _log.LogInformation(
+                "Discord SetPresence queued: details={Details} largeKey={LargeKey} party={HasParty}",
+                payload.Details, payload.LargeImageKey, payload.Party is not null);
         }
         catch (Exception ex)
         {
-            _log.LogDebug(ex, "Discord RPC SetPresence threw; presence stale until next update.");
+            _log.LogWarning(ex, "Discord RPC SetPresence threw; presence stale until next update.");
         }
     }
 
@@ -302,6 +321,30 @@ public sealed class DiscordRichPresenceService : IDiscordPresence
             _reconnectTimer?.Dispose();
             _reconnectTimer = null;
         }
+        // Belt-and-suspenders: re-push Idle on Ready so the presence is established even if the
+        // pre-Ready SetPresence in ConnectClient raced or got lost. Lachee's queue should handle
+        // pre-Ready calls but this guarantees Discord has a payload to display by the time the
+        // user looks at their profile card.
+        var client = _client;
+        if (client is not null)
+        {
+            var idle = new RichPresenceState(PresenceMode.Idle, 0, null);
+            TrySetPresence(client, BuildPayload(idle, party: null));
+        }
+    }
+
+    private void OnRpcErrored(object? sender, string message)
+    {
+        // Discord-side rejection. Most likely cause: malformed payload, missing required field,
+        // or asset-key referenced that isn't uploaded to the dev portal. Log loud so we see it.
+        _log.LogWarning("Discord RPC error from server: {Message}", message);
+    }
+
+    private void OnRpcPresenceUpdated(object? sender, EventArgs e)
+    {
+        // Proof Discord acknowledged the presence — if we never see this line in the log,
+        // SetPresence is being silently dropped on the Discord side.
+        _log.LogInformation("Discord acknowledged presence update.");
     }
 
     private void ScheduleReconnect()

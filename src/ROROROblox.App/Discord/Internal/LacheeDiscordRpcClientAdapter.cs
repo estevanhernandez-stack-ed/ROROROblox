@@ -25,6 +25,8 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
         _inner.OnJoin += OnJoinHandler;
         _inner.OnConnectionFailed += OnConnectionFailedHandler;
         _inner.OnReady += OnReadyHandler;
+        _inner.OnError += OnErrorHandler;
+        _inner.OnPresenceUpdate += OnPresenceUpdateHandler;
     }
 
     public bool IsInitialized => _inner.IsInitialized;
@@ -74,6 +76,8 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
     public event EventHandler<string>? JoinRequested;
     public event EventHandler? ConnectionFailed;
     public event EventHandler? Ready;
+    public event EventHandler<string>? Errored;
+    public event EventHandler? PresenceUpdated;
 
     private void OnJoinHandler(object sender, JoinMessage args) =>
         JoinRequested?.Invoke(this, args.Secret);
@@ -84,6 +88,12 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
     private void OnReadyHandler(object sender, ReadyMessage args) =>
         Ready?.Invoke(this, EventArgs.Empty);
 
+    private void OnErrorHandler(object sender, ErrorMessage args) =>
+        Errored?.Invoke(this, $"{args.Code}: {args.Message}");
+
+    private void OnPresenceUpdateHandler(object sender, PresenceMessage args) =>
+        PresenceUpdated?.Invoke(this, EventArgs.Empty);
+
     public void Dispose()
     {
         if (_disposed) return;
@@ -93,6 +103,8 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
             _inner.OnJoin -= OnJoinHandler;
             _inner.OnConnectionFailed -= OnConnectionFailedHandler;
             _inner.OnReady -= OnReadyHandler;
+            _inner.OnError -= OnErrorHandler;
+            _inner.OnPresenceUpdate -= OnPresenceUpdateHandler;
             _inner.Dispose();
         }
         catch

@@ -22,6 +22,12 @@ internal interface IDiscordRpcClient : IDisposable
 
     /// <summary>Raised on a successful (re)connect.</summary>
     event EventHandler? Ready;
+
+    /// <summary>Raised when Discord rejects something (bad payload, missing asset key, rate limit). Payload = human-readable message.</summary>
+    event EventHandler<string>? Errored;
+
+    /// <summary>Raised after Discord has acknowledged a successful presence update. Proof-of-display.</summary>
+    event EventHandler? PresenceUpdated;
 }
 
 /// <summary>

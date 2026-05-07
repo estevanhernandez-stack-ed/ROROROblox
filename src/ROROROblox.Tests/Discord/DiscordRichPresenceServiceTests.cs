@@ -348,10 +348,14 @@ public class DiscordRichPresenceServiceTests
         public event EventHandler<string>? JoinRequested;
         public event EventHandler? ConnectionFailed;
         public event EventHandler? Ready;
+        public event EventHandler<string>? Errored;
+        public event EventHandler? PresenceUpdated;
 
         public void RaiseJoinRequested(string secret) => JoinRequested?.Invoke(this, secret);
         public void RaiseConnectionFailed() => ConnectionFailed?.Invoke(this, EventArgs.Empty);
         public void RaiseReady() => Ready?.Invoke(this, EventArgs.Empty);
+        public void RaiseErrored(string message) => Errored?.Invoke(this, message);
+        public void RaisePresenceUpdated() => PresenceUpdated?.Invoke(this, EventArgs.Empty);
 
         public void Dispose() => DisposeCalled = true;
     }
