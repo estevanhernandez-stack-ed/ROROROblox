@@ -271,6 +271,9 @@ public partial class App : Application
         services.AddSingleton<ICookieCapture, CookieCapture.CookieCapture>();
         services.AddSingleton<IUpdateChecker, UpdateChecker>();
         services.AddSingleton<IRobloxProcessTracker, RobloxProcessTracker>();
+        // v1.2 item 6: Account-shaped lifecycle adapter on top of IRobloxProcessTracker.
+        // Closes the IAccountLifecycle gap spec §5.8 assumed; consumed by DiscordPresenceLifecycle (item 7).
+        services.AddSingleton<IAccountLifecycle, AccountLifecycleTracker>();
         services.AddSingleton<RobloxWindowDecorator>();
         services.AddSingleton<RunningRobloxScanner>();
 
