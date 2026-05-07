@@ -20,6 +20,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ROROROblox.Core\ROROROblox.Core.csproj" />
+    <!-- App reference is test-only — needed for App-namespaced services like DiscordConfigStore
+         (lives in App per spec §5.6 component layout). Pulls WPF transitively, but Tests is
+         already net10.0-windows so the runtime cost is zero at test time. -->
+    <ProjectReference Include="..\ROROROblox.App\ROROROblox.App.csproj" />
   </ItemGroup>
 
 </Project>
