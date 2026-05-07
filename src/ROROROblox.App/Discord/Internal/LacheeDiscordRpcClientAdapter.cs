@@ -36,7 +36,7 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
         _inner.Initialize();
         // Lachee throws BadPresenceException on every SetPresence with Secrets unless the URI
         // scheme is registered. The registration writes a discord-<appId>:// handler to the
-        // Windows registry pointing at our current process — Discord uses that scheme to relaunch
+        // Windows registry pointing at our current process — Discord uses that scheme to wake
         // our app when a clanmate clicks Join.
         try
         {
@@ -48,15 +48,26 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
             // BadPresenceException; the Join button won't render to friends.
         }
 
-        // CRITICAL: Lachee's RegisterUriScheme writes the registry command WITHOUT the "%1"
-        // argument placeholder, so Discord's URI dispatch launches our exe with NO command-line
-        // arg. The join secret is silently dropped before our parser ever sees it. Confirmed
-        // empirically via registry inspection on her laptop:
-        //   (default) : "E:\rororo-portable\ROROROblox.App.exe"
-        // Should be:
-        //   (default) : "E:\rororo-portable\ROROROblox.App.exe" "%1"
-        // Overwrite the registry entry ourselves to add the placeholder.
+        // Lachee's RegisterUriScheme writes the registry command WITHOUT the "%1" argument
+        // placeholder. Without it, Windows launches our exe with no command-line argument when
+        // Discord dispatches the URI scheme. Surfaced 2026-05-07 via registry inspection.
         FixupUriSchemeRegistryEntry();
+
+        // CRITICAL: subscribe to Discord IPC join events. The URI scheme dispatch is just a
+        // wake-up — the actual join secret arrives via the IPC pipe as an ACTIVITY_JOIN
+        // command. Without this subscription, Discord doesn't deliver the event at all,
+        // OnJoin never fires, and we sit on a useless wake-only dispatch (URI shape:
+        // "discord-{appId}:///" with empty path + empty query, observed in her log).
+        try
+        {
+            _inner.Subscribe(EventType.Join | EventType.JoinRequest);
+        }
+        catch
+        {
+            // Best-effort. Without subscription, Layer 2 inbound is silent on the joiner's
+            // side; the launcher's outbound party Join button still renders correctly to
+            // friends, the click just goes nowhere on this user's machine.
+        }
     }
 
     private void FixupUriSchemeRegistryEntry()
