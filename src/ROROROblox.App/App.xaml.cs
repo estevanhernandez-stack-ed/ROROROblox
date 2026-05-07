@@ -54,7 +54,17 @@ public partial class App : Application
         WindowTheming.RegisterGlobalDarkTitleBar();
 
         var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
-        _log.LogInformation("ROROROblox starting (v{Version}, OS {Os})", version, Environment.OSVersion);
+        // Log full command-line args so URI-scheme dispatch shape is visible empirically.
+        // Without this, debugging Layer 2 inbound routing is guesswork — we need to see what
+        // Lachee's RegisterUriScheme registered + what Discord actually passed.
+        var rawArgs = Environment.GetCommandLineArgs().Skip(1).ToArray();
+        _log.LogInformation(
+            "ROROROblox starting (v{Version}, OS {Os}, argCount={ArgCount}, args=[{Args}], extractedJoinUri={JoinUri})",
+            version,
+            Environment.OSVersion,
+            rawArgs.Length,
+            string.Join(" || ", rawArgs.Select(a => $"\"{a}\"")),
+            Program.DiscordJoinUriArg ?? "(null)");
 
         _singleInstance = new SingleInstanceGuard("ROROROblox-app-singleton");
         // If we were launched by Discord's URI-scheme dispatch (clanmate clicked Join),
