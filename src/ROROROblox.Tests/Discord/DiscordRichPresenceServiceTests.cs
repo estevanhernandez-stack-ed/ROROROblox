@@ -341,6 +341,43 @@ public class DiscordRichPresenceServiceTests
     }
 
     [Fact]
+    public async Task HandleExternalJoinUri_ExtractsSecret_AndRaisesJoinRequested()
+    {
+        // CHECKPOINT 1.10 fix: Discord's URI-scheme dispatch launches our exe with a
+        // discord-{appId}://join?secret={secret} URI. The single-instance guard relays the
+        // URI to the running first instance, which calls HandleExternalJoinUri to synthesize
+        // the JoinRequested event Lachee'\''s OnJoin would have raised via IPC.
+        var (service, _) = StartedService(richPresenceEnabled: true);
+        const string shareUrl = "https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestPrivateGame&placeId=42&accessCode=Z";
+        var secret = DiscordRichPresenceService.EncodeJoinSecret(shareUrl);
+
+        string? captured = null;
+        service.JoinRequested += (_, args) => captured = args.ServerShareUrl;
+
+        // Construct the URI Discord would dispatch (secret URL-encoded into the query).
+        var uri = $"discord-1501748116985221272://join?secret={Uri.EscapeDataString(secret)}";
+        service.HandleExternalJoinUri(uri);
+
+        Assert.NotNull(captured);
+        Assert.Contains("placeId=42", captured);
+        Assert.Contains("accessCode=Z", captured);
+    }
+
+    [Fact]
+    public async Task HandleExternalJoinUri_MalformedUri_DoesNotThrow_AndDoesNotRaise()
+    {
+        var (service, _) = StartedService(richPresenceEnabled: true);
+        var raised = false;
+        service.JoinRequested += (_, _) => raised = true;
+
+        service.HandleExternalJoinUri("not a uri");
+        service.HandleExternalJoinUri("discord-1501://no-query-here");
+        service.HandleExternalJoinUri("");
+
+        Assert.False(raised);
+    }
+
+    [Fact]
     public void DecodeJoinSecret_UnknownFormat_ReturnsEmpty()
     {
         Assert.Equal(string.Empty, DiscordRichPresenceService.DecodeJoinSecret("not_a_compact_secret"));

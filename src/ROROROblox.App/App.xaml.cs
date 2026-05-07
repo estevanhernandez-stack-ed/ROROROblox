@@ -57,9 +57,14 @@ public partial class App : Application
         _log.LogInformation("ROROROblox starting (v{Version}, OS {Os})", version, Environment.OSVersion);
 
         _singleInstance = new SingleInstanceGuard("ROROROblox-app-singleton");
-        if (!_singleInstance.AcquireOrSignalExisting())
+        // If we were launched by Discord's URI-scheme dispatch (clanmate clicked Join),
+        // hand the URI to the running first instance via the pipe so it can synthesize
+        // the OnJoin event. Without this relay, the second exe quits and the join secret
+        // is silently dropped.
+        if (!_singleInstance.AcquireOrSignalExisting(Program.DiscordJoinUriArg))
         {
-            _log.LogInformation("Another instance is running; signaling and exiting.");
+            _log.LogInformation("Another instance is running; signaling{Suffix} and exiting.",
+                string.IsNullOrEmpty(Program.DiscordJoinUriArg) ? string.Empty : " (with Discord Join URI)");
             Shutdown(0);
             return;
         }
@@ -106,8 +111,16 @@ public partial class App : Application
         tray.UpdateStatus(acquired ? MultiInstanceState.On : MultiInstanceState.Error);
 
         tray.Show();
-        _singleInstance.StartListening(mainWindow);
+        _singleInstance.StartListening(mainWindow, joinUriHandler: HandleExternalDiscordJoinUri);
         mainWindow.Show();
+
+        // If THIS instance was the cold-start launched by Discord URI scheme (no prior
+        // RORORO running), process the join URI ourselves now that DI + lifecycle are wired.
+        if (!string.IsNullOrEmpty(Program.DiscordJoinUriArg))
+        {
+            _log.LogInformation("Cold-start launched by Discord Join URI; dispatching after init.");
+            _ = Task.Run(() => HandleExternalDiscordJoinUri(Program.DiscordJoinUriArg!));
+        }
 
         // Discord clan-coordination bootstrap (item 1 scaffolding). Manual hosted-service start
         // because we use raw ServiceCollection. AppId-unset → log + skip; otherwise StartAsync
@@ -322,6 +335,36 @@ public partial class App : Application
         // ViewModel + Window.
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
+    }
+
+    /// <summary>
+    /// Route a discord-{appId}://join?secret=... URI to DiscordRichPresenceService so it can
+    /// synthesize the OnJoin event Lachee would have raised over IPC. Called from two places:
+    /// (1) cold-start when our exe was launched by Discord's URI-scheme dispatch with no prior
+    /// RORORO running; (2) the single-instance guard's pipe-relay path when a URI dispatch
+    /// fired against an already-running RORORO. Both routes converge here.
+    /// </summary>
+    private void HandleExternalDiscordJoinUri(string uri)
+    {
+        if (_services is null)
+        {
+            _log?.LogWarning("HandleExternalDiscordJoinUri called before DI ready; dropping {Uri}.", uri);
+            return;
+        }
+        try
+        {
+            var presence = _services.GetService<IDiscordPresence>() as DiscordRichPresenceService;
+            if (presence is null)
+            {
+                _log?.LogWarning("DiscordRichPresenceService not resolvable; can't dispatch external Join URI.");
+                return;
+            }
+            presence.HandleExternalJoinUri(uri);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "HandleExternalDiscordJoinUri threw; ignoring.");
+        }
     }
 
     /// <summary>

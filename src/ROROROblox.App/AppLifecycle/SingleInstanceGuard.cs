@@ -13,6 +13,9 @@ internal sealed class SingleInstanceGuard : IDisposable
     private const string MutexNameTemplate = @"Local\{0}";
     private const string PipeNameTemplate = "{0}-show-window";
     private const string ShowWindowMessage = "SHOW";
+    // Pipe protocol: JOIN <uri> on a single line, where <uri> is the discord-{appId}://...
+    // string Discord dispatched to the second instance via URI scheme registration.
+    private const string JoinMessagePrefix = "JOIN ";
 
     private readonly string _pipeName;
     private readonly Mutex _mutex;
@@ -27,17 +30,24 @@ internal sealed class SingleInstanceGuard : IDisposable
         _mutex = new Mutex(initiallyOwned: true, name: mutexName, createdNew: out _ownsMutex);
     }
 
-    public bool AcquireOrSignalExisting()
+    /// <summary>
+    /// Acquire the mutex (first instance) OR signal the running first instance and bail.
+    /// When <paramref name="discordJoinUri"/> is non-null on the second-instance path, the
+    /// signal carries the URI so the first instance can dispatch the Discord Join. Without
+    /// this hand-off the URI args from Discord's URI-scheme dispatch get silently dropped
+    /// when the second exe quits.
+    /// </summary>
+    public bool AcquireOrSignalExisting(string? discordJoinUri = null)
     {
         if (_ownsMutex)
         {
             return true;
         }
-        SignalExisting();
+        SignalExisting(discordJoinUri);
         return false;
     }
 
-    private void SignalExisting()
+    private void SignalExisting(string? discordJoinUri)
     {
         // Grant the first instance permission to take foreground. Without this, Windows
         // blocks SetForegroundWindow as a cross-process focus steal and only flashes the
@@ -52,7 +62,14 @@ internal sealed class SingleInstanceGuard : IDisposable
             using var client = new NamedPipeClientStream(".", _pipeName, PipeDirection.Out);
             client.Connect(timeout: 1000);
             using var writer = new StreamWriter(client) { AutoFlush = true };
-            writer.WriteLine(ShowWindowMessage);
+            if (!string.IsNullOrEmpty(discordJoinUri))
+            {
+                writer.WriteLine(JoinMessagePrefix + discordJoinUri);
+            }
+            else
+            {
+                writer.WriteLine(ShowWindowMessage);
+            }
         }
         catch (TimeoutException)
         {
@@ -62,13 +79,13 @@ internal sealed class SingleInstanceGuard : IDisposable
         }
     }
 
-    public void StartListening(Window mainWindow)
+    public void StartListening(Window mainWindow, Action<string>? joinUriHandler = null)
     {
         _listenerCts = new CancellationTokenSource();
-        _listenerTask = Task.Run(() => ListenLoopAsync(mainWindow, _listenerCts.Token));
+        _listenerTask = Task.Run(() => ListenLoopAsync(mainWindow, joinUriHandler, _listenerCts.Token));
     }
 
-    private async Task ListenLoopAsync(Window mainWindow, CancellationToken cancellationToken)
+    private async Task ListenLoopAsync(Window mainWindow, Action<string>? joinUriHandler, CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -86,6 +103,17 @@ internal sealed class SingleInstanceGuard : IDisposable
                 if (message == ShowWindowMessage)
                 {
                     mainWindow.Dispatcher.Invoke(() => SurfaceWindow(mainWindow));
+                }
+                else if (message is not null && message.StartsWith(JoinMessagePrefix, StringComparison.Ordinal))
+                {
+                    var uri = message.Substring(JoinMessagePrefix.Length);
+                    if (joinUriHandler is not null && !string.IsNullOrEmpty(uri))
+                    {
+                        // Surface the window too so the user has visual confirmation, then
+                        // dispatch the join handler off the listener loop thread.
+                        mainWindow.Dispatcher.Invoke(() => SurfaceWindow(mainWindow));
+                        try { joinUriHandler(uri); } catch { /* handler must not break the loop */ }
+                    }
                 }
             }
             catch (OperationCanceledException)

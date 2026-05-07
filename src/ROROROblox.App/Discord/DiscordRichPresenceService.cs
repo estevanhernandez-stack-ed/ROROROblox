@@ -381,6 +381,58 @@ public sealed class DiscordRichPresenceService : IDiscordPresence, IDisposable
         }
     }
 
+    /// <summary>
+    /// External path for the URI-scheme dispatch flow. When Discord routes a Join click via
+    /// the registered <c>discord-{appId}://</c> URI scheme, Windows launches our exe with the
+    /// URI as a command-line arg. The single-instance guard relays the URI to the running
+    /// first instance via the named pipe; this method extracts the secret from the URI and
+    /// raises <see cref="JoinRequested"/> the same way Lachee'\''s <c>OnJoin</c> would have.
+    /// </summary>
+    /// <param name="discordJoinUri">A <c>discord-{appId}://join?secret={secret}</c> URI.</param>
+    public void HandleExternalJoinUri(string discordJoinUri)
+    {
+        if (string.IsNullOrWhiteSpace(discordJoinUri))
+        {
+            return;
+        }
+        try
+        {
+            // Lachee dispatches as discord-{appId}://join?secret={percent-encoded-secret}.
+            // Parse defensively — Discord may shift query format across versions.
+            var uri = new Uri(discordJoinUri, UriKind.Absolute);
+            var query = uri.Query.TrimStart('?');
+            var secret = (string?)null;
+            foreach (var pair in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var eq = pair.IndexOf('=');
+                if (eq <= 0) continue;
+                var key = pair[..eq];
+                var value = pair[(eq + 1)..];
+                if (key.Equals("secret", StringComparison.OrdinalIgnoreCase))
+                {
+                    secret = Uri.UnescapeDataString(value);
+                    break;
+                }
+            }
+
+            if (string.IsNullOrEmpty(secret))
+            {
+                _log.LogWarning("External Discord Join URI had no secret query param; ignoring.");
+                return;
+            }
+            _log.LogInformation("External Discord Join URI received; synthesizing JoinRequested.");
+            OnRpcJoinRequested(this, secret);
+        }
+        catch (UriFormatException ex)
+        {
+            _log.LogWarning(ex, "External Discord Join URI was malformed; ignoring.");
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "HandleExternalJoinUri threw; ignoring.");
+        }
+    }
+
     private void OnRpcConnectionFailed(object? sender, EventArgs e)
     {
         _log.LogDebug("Discord RPC connection failed; scheduling reconnect.");
