@@ -301,13 +301,21 @@ public partial class App : Application
             AppLogging.LogDirectory,
             dataDir));
 
-        // Discord clan-coordination (v1.2 — item 1 scaffolding). Real implementations land in
-        // items 2/4/7/8. All four register as singletons; lifecycle is bootstrapped manually
-        // from OnStartup after BuildServiceProvider (we use raw ServiceCollection, not Generic
-        // Host, so AddHostedService isn't wired — the DiscordPresenceLifecycle service still
-        // implements IHostedService for shape parity + clean test surface).
+        // Discord clan-coordination (v1.2). Real implementations across items 2/4/7/8.
+        // Lifecycle is bootstrapped manually from OnStartup after BuildServiceProvider (we
+        // use raw ServiceCollection, not Generic Host, so AddHostedService isn't wired —
+        // DiscordPresenceLifecycle still implements IHostedService for shape parity + clean
+        // test surface).
         services.AddSingleton<IDiscordConfig, DiscordConfigStore>();
         services.AddSingleton<IDiscordPresence, DiscordRichPresenceService>();
+        services.AddHttpClient("DiscordWebhook", client =>
+        {
+            // Per-call timeout enforced inside DiscordWebhookService so we can measure each
+            // attempt independently; HttpClient default is left at infinite to avoid double-counting.
+            client.DefaultRequestHeaders.UserAgent.Clear();
+            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
+        });
         services.AddSingleton<IDiscordWebhook, DiscordWebhookService>();
         services.AddSingleton<DiscordPresenceLifecycle>();
 
