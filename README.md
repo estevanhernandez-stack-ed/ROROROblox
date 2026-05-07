@@ -64,7 +64,9 @@ The first time you Launch As, you'll be prompted for a default Roblox game URL. 
 
 Three opt-in surfaces, all default OFF, configured from the tray menu under **Discord integrations…**:
 
-1. **Rich presence.** Your Discord profile shows "Playing ROROROblox" with a live count of how many alts are active. No account names, no Roblox usernames — just that the app is open and how many sessions are running. Toggle: *Show RORORO in your Discord status*.
+1. **Rich presence.** Your Discord profile shows "Playing RORORO" with a live count of how many alts are active. No account names, no Roblox usernames — just that the app is open and how many sessions are running. Toggle: *Show RORORO in your Discord status*.
+
+   > **One-time setup needed:** Discord doesn't auto-detect rich-presence apps the same way it auto-detects games like Roblox. After you install RORORO, open Discord → **User Settings (gear, bottom-left)** → **Activity Privacy** → **Registered Games** → click **"Add it!"** and pick **RORORO** from the dropdown → **Add Game**. Now your profile card shows ROROROblox activity. You only do this once per Discord install.
 
 2. **Server-share Join button.** When you launch an alt into a Roblox **private server**, a Discord party Join button appears on your profile card. Clanmates click → their RORORO opens Roblox to the same private server using their most-recently-launched account. No Roblox-side mods, no link sharing in DMs — Discord handles the routing. Auto-engages whenever Layer 1 is on; no separate toggle.
 

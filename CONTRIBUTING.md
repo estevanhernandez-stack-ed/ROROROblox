@@ -120,9 +120,10 @@ The v1.2 cycle introduced three Discord-side surfaces (rich presence, party Join
 
 ### Per-user: clanmate enables Discord integrations
 
-1. Right-click the RORORO tray icon → **Discord integrations…**
+1. Right-click the RORORO tray icon → **Preferences…** → scroll to the **Discord integration** section.
 2. Toggle **Show RORORO in your Discord status** ON. Rich presence + party Join start working immediately.
-3. *(Optional, if your clan admin shared a webhook URL)* Paste it into the **Webhook URL** field. Wait for the cyan border (validation passes). Then check whichever per-event toggles you want:
+3. **One-time Discord-side setup** (because Discord doesn't auto-detect non-game rich-presence apps): open Discord → **User Settings (gear icon, bottom-left)** → **Activity Privacy** → **Registered Games** → click **"Add it!"**, pick **RORORO** from the dropdown, click **Add Game**. After this, your Discord profile card shows your RORORO state to friends + clanmates. You only need to do this once per Discord install — the registration sticks.
+4. *(Optional, if your clan admin shared a webhook URL)* Paste it into the **Webhook URL** field. Wait for the cyan border (validation passes). Then check whichever per-event toggles you want:
    - *I start ROROROblox*
    - *I join a private server*
    - *I have 4+ accounts running at once*
