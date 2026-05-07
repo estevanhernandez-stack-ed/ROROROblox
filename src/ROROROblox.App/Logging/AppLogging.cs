@@ -29,6 +29,14 @@ internal static class AppLogging
 
         var serilogLogger = new LoggerConfiguration()
             .MinimumLevel.Debug()
+            // Microsoft.Extensions.Http logs the full request URL at Information for every POST.
+            // For the DiscordWebhook named client that URL contains the webhook secret token —
+            // anyone with the URL can post to the channel. Suppress those categories so the
+            // credential never ends up in our log file. Our own DiscordWebhookService log
+            // statements already use RedactHost() for the explicit "host only" line.
+            // Both LogicalHandler + ClientHandler categories matter; cover both.
+            .MinimumLevel.Override("System.Net.Http.HttpClient.DiscordWebhook.LogicalHandler", LogEventLevel.Warning)
+            .MinimumLevel.Override("System.Net.Http.HttpClient.DiscordWebhook.ClientHandler", LogEventLevel.Warning)
             .Enrich.WithProperty("App", "ROROROblox")
             .WriteTo.File(
                 path: LogFilePath,
