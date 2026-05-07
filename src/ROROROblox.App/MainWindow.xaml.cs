@@ -374,4 +374,56 @@ internal partial class MainWindow : FluentWindow
         window.ShowDialog();
         e.Handled = true;
     }
+
+    /// <summary>
+    /// Per-row FPS cap ComboBox — selection changed. Reads the selected item's Tag, converts to
+    /// int? (null = no cap, int = target fps), guards against no-op re-fires, then routes to
+    /// <see cref="MainViewModel.OnFpsCapChangedAsync"/>.
+    /// </summary>
+    private void FpsCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ComboBox combo) return;
+        if (combo.DataContext is not AccountSummary row) return;
+        if (combo.SelectedItem is not ComboBoxItem item) return;
+        int? newValue = item.Tag switch
+        {
+            null => null,
+            int i => i,
+            string s when int.TryParse(s, out var parsed) => parsed,
+            _ => null
+        };
+        if (row.FpsCap == newValue) return;
+        if (DataContext is MainViewModel vm)
+        {
+            _ = vm.OnFpsCapChangedAsync(row, newValue);
+        }
+    }
+
+    /// <summary>
+    /// Per-row FPS cap ComboBox — loaded. Selects the ComboBoxItem whose Tag matches the row's
+    /// current <see cref="AccountSummary.FpsCap"/> so the dropdown shows the right value on first
+    /// render (and after virtualization recycles the row).
+    /// </summary>
+    private void FpsCombo_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is not ComboBox combo) return;
+        if (combo.DataContext is not AccountSummary row) return;
+        var current = row.FpsCap;
+        foreach (var obj in combo.Items)
+        {
+            if (obj is not ComboBoxItem item) continue;
+            int? itemValue = item.Tag switch
+            {
+                null => null,
+                int i => i,
+                string s when int.TryParse(s, out var parsed) => parsed,
+                _ => null
+            };
+            if (itemValue == current)
+            {
+                combo.SelectedItem = item;
+                return;
+            }
+        }
+    }
 }
