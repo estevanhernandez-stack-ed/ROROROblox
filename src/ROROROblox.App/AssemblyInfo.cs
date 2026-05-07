@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Windows;
 
 [assembly:ThemeInfo(
@@ -8,3 +9,7 @@ using System.Windows;
                                                 //(used if a resource is not found in the page,
                                                 // app, or any theme specific resource dictionaries)
 )]
+
+// Tests project gets internal-access for the Discord/Internal/* test seam (IDiscordRpcClient,
+// DiscordPresencePayload, the test-only constructor on DiscordRichPresenceService).
+[assembly: InternalsVisibleTo("ROROROblox.Tests")]
