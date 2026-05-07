@@ -1,13 +1,17 @@
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Linq;
 using System.Windows.Threading;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ROROROblox.App.AppLifecycle;
 using ROROROblox.App.CookieCapture;
+using ROROROblox.App.Discord;
 using ROROROblox.App.Logging;
 using ROROROblox.App.Startup;
 using ROROROblox.App.Theming;
@@ -16,6 +20,7 @@ using ROROROblox.App.Updates;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
+using ROROROblox.Core.Discord;
 using ROROROblox.Core.Theming;
 
 namespace ROROROblox.App;
@@ -26,6 +31,7 @@ public partial class App : Application
     private ServiceProvider? _services;
     private ILoggerFactory? _loggerFactory;
     private ILogger<App>? _log;
+    private DiscordPresenceLifecycle? _discordLifecycle;
 
     /// <summary>
     /// True after the user explicitly Quits via the tray menu. MainWindow's Closing handler
@@ -58,7 +64,15 @@ public partial class App : Application
             return;
         }
 
+        // Build IConfiguration from appsettings.json (ships next to the .exe). Optional so a missing
+        // file degrades gracefully — Discord:ApplicationId becomes null, Discord init is skipped.
+        var appConfig = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+            .Build();
+
         var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(appConfig);
         ConfigureServices(services, _loggerFactory);
         _services = services.BuildServiceProvider();
 
@@ -94,6 +108,11 @@ public partial class App : Application
         tray.Show();
         _singleInstance.StartListening(mainWindow);
         mainWindow.Show();
+
+        // Discord clan-coordination bootstrap (item 1 scaffolding). Manual hosted-service start
+        // because we use raw ServiceCollection. AppId-unset → log + skip; otherwise StartAsync
+        // off the UI thread.
+        StartDiscordLifecycle();
 
         // Fire-and-forget startup checks. Failures are silent; banner stays null on no-drift / no-network.
         _ = RunStartupChecksAsync();
@@ -279,9 +298,51 @@ public partial class App : Application
             AppLogging.LogDirectory,
             dataDir));
 
+        // Discord clan-coordination (v1.2 — item 1 scaffolding). Real implementations land in
+        // items 2/4/7/8. All four register as singletons; lifecycle is bootstrapped manually
+        // from OnStartup after BuildServiceProvider (we use raw ServiceCollection, not Generic
+        // Host, so AddHostedService isn't wired — the DiscordPresenceLifecycle service still
+        // implements IHostedService for shape parity + clean test surface).
+        services.AddSingleton<IDiscordConfig, DiscordConfigStore>();
+        services.AddSingleton<IDiscordPresence, DiscordRichPresenceService>();
+        services.AddSingleton<IDiscordWebhook, DiscordWebhookService>();
+        services.AddSingleton<DiscordPresenceLifecycle>();
+
         // ViewModel + Window.
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
+    }
+
+    /// <summary>
+    /// Bootstrap the DiscordPresenceLifecycle hosted service if Discord:ApplicationId is set
+    /// in appsettings.json. Unset → log a warning + skip; the rest of the app runs normally
+    /// (Layer 1 effectively OFF). Per spec §10 + checklist item 1 HARD GATE.
+    /// </summary>
+    private void StartDiscordLifecycle()
+    {
+        if (_services is null) return;
+
+        var appConfig = _services.GetRequiredService<IConfiguration>();
+        var appId = appConfig["Discord:ApplicationId"];
+        if (string.IsNullOrWhiteSpace(appId))
+        {
+            _log?.LogWarning(
+                "Discord:ApplicationId is unset in appsettings.json — Discord clan-coordination disabled. "
+                + "Register a Discord application at https://discord.com/developers/applications and add the ID.");
+            return;
+        }
+
+        try
+        {
+            _discordLifecycle = _services.GetRequiredService<DiscordPresenceLifecycle>();
+            // Fire-and-forget: StartAsync's await happens off the UI thread; failures are
+            // swallowed by the lifecycle's own logging. Discord must never block app startup.
+            _ = Task.Run(() => _discordLifecycle.StartAsync(CancellationToken.None));
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "DiscordPresenceLifecycle resolution/start threw; Discord features unavailable this session.");
+        }
     }
 
     private void WireTrayEvents(ITrayService tray, IMutexHolder mutex, MainWindow mainWindow)
@@ -515,6 +576,22 @@ public partial class App : Application
     {
         IsShuttingDown = true;
         _log?.LogInformation("ROROROblox exiting (code {Code}).", e.ApplicationExitCode);
+
+        // Stop the Discord lifecycle before disposing the container (its DisposeAsync needs
+        // services that go away on _services.Dispose). 5s budget to avoid blocking exit.
+        if (_discordLifecycle is not null)
+        {
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                _discordLifecycle.StopAsync(cts.Token).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "DiscordPresenceLifecycle.StopAsync threw on exit; ignoring.");
+            }
+        }
+
         _singleInstance?.Dispose();
         _services?.Dispose();
         AppLogging.Shutdown();
