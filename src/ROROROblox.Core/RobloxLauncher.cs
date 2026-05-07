@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.Core.Discord;
 
 namespace ROROROblox.Core;
@@ -20,6 +22,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
     private readonly IProcessStarter _processStarter;
     private readonly IFavoriteGameStore? _favorites;
     private readonly IDiscordPresence? _discordPresence;
+    private readonly ILogger<RobloxLauncher> _log;
     private readonly TimeProvider _timeProvider;
     private readonly Func<long> _browserTrackerIdFactory;
 
@@ -28,11 +31,13 @@ public sealed class RobloxLauncher : IRobloxLauncher
         IAppSettings settings,
         IProcessStarter processStarter,
         IFavoriteGameStore? favorites = null,
-        IDiscordPresence? discordPresence = null)
+        IDiscordPresence? discordPresence = null,
+        ILogger<RobloxLauncher>? log = null)
         : this(api, settings, processStarter, TimeProvider.System,
               () => Random.Shared.NextInt64(1_000_000_000_000, 9_999_999_999_999),
               favorites,
-              discordPresence)
+              discordPresence,
+              log)
     {
     }
 
@@ -44,7 +49,8 @@ public sealed class RobloxLauncher : IRobloxLauncher
         TimeProvider timeProvider,
         Func<long> browserTrackerIdFactory,
         IFavoriteGameStore? favorites = null,
-        IDiscordPresence? discordPresence = null)
+        IDiscordPresence? discordPresence = null,
+        ILogger<RobloxLauncher>? log = null)
     {
         _api = api ?? throw new ArgumentNullException(nameof(api));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -53,6 +59,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         _browserTrackerIdFactory = browserTrackerIdFactory ?? throw new ArgumentNullException(nameof(browserTrackerIdFactory));
         _favorites = favorites;
         _discordPresence = discordPresence;
+        _log = log ?? NullLogger<RobloxLauncher>.Instance;
     }
 
     public async Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target)
@@ -194,6 +201,20 @@ public sealed class RobloxLauncher : IRobloxLauncher
         try
         {
             var shareUrl = ServerShareExtractor.TryExtractPrivateServerUrl(launchUri);
+            // Diagnostic: print the decoded placelauncherurl segment + whether the extractor
+            // matched. If shareUrl is null on what was supposed to be a private-server launch,
+            // this line shows whether the share param was simply absent (LaunchTarget routing
+            // bug) or present but unrecognized (extractor pattern bug).
+            try
+            {
+                var segment = ExtractPlaceLauncherSegment(launchUri);
+                _log.LogInformation(
+                    "Discord party check: placelauncherurl={Segment} shareUrl={ShareUrl}",
+                    segment ?? "(missing)",
+                    shareUrl ?? "(null)");
+            }
+            catch { /* diagnostic must not break the launch */ }
+
             // Run on the thread pool — never block the launch path on Discord IPC.
             _ = Task.Run(async () =>
             {
@@ -219,6 +240,26 @@ public sealed class RobloxLauncher : IRobloxLauncher
             // Even the extractor / scheduling can't be allowed to crash the launch.
         }
     }
+
+    private static string? ExtractPlaceLauncherSegment(string launchUri)
+    {
+        if (string.IsNullOrEmpty(launchUri)) return null;
+        var body = launchUri.StartsWith("roblox-player:", StringComparison.OrdinalIgnoreCase)
+            ? launchUri["roblox-player:".Length..]
+            : launchUri;
+        foreach (var segment in body.Split('+', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var colon = segment.IndexOf(':');
+            if (colon <= 0 || colon == segment.Length - 1) continue;
+            if (segment[..colon].Equals("placelauncherurl", StringComparison.OrdinalIgnoreCase))
+            {
+                try { return Uri.UnescapeDataString(segment[(colon + 1)..]); }
+                catch { return segment[(colon + 1)..]; }
+            }
+        }
+        return null;
+    }
+
 
     private async Task<LaunchTarget?> ResolveDefaultAsync()
     {
