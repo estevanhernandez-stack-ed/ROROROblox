@@ -31,6 +31,9 @@ public interface ITrayService : IDisposable
     /// <summary>Fired when the user picks "History..." from the tray menu.</summary>
     event EventHandler RequestOpenHistory;
 
+    /// <summary>Fired when the user picks "Discord integrations..." from the tray menu.</summary>
+    event EventHandler RequestOpenDiscordSettings;
+
     /// <summary>
     /// Fired when the user double-clicks the tray icon. The composition root decides whether
     /// to launch the main account (if eligible) or fall back to surfacing the main window.

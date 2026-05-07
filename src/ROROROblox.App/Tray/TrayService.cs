@@ -35,6 +35,7 @@ internal sealed class TrayService : ITrayService
     public event EventHandler? RequestOpenPreferences;
     public event EventHandler? RequestActivateMain;
     public event EventHandler? RequestOpenHistory;
+    public event EventHandler? RequestOpenDiscordSettings;
 
     public TrayService()
     {
@@ -126,6 +127,10 @@ internal sealed class TrayService : ITrayService
         var preferences = new MenuItem { Header = "Preferences..." };
         preferences.Click += (_, _) => RequestOpenPreferences?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(preferences);
+
+        var discord = new MenuItem { Header = "Discord integrations..." };
+        discord.Click += (_, _) => RequestOpenDiscordSettings?.Invoke(this, EventArgs.Empty);
+        menu.Items.Add(discord);
 
         var history = new MenuItem { Header = "History..." };
         history.Click += (_, _) => RequestOpenHistory?.Invoke(this, EventArgs.Empty);
