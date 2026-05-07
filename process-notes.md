@@ -82,3 +82,54 @@ Second full-launch run (with the default placelauncherurl): Roblox launched into
 **Total spike findings:** 2 (Content-Type + placelauncherurl). Both caught BEFORE production code committed to the architecture — item 1 did exactly the gating job spec §10 designed it for. Net cost of the spike: ~30 min wall-clock, two surgical spec edits, zero rework of production code (because there is no production code yet).
 
 **Item 1 status: DONE.** Ready to proceed to item 2 (solution scaffold + AppLifecycle).
+
+---
+
+## /checklist — v1.2 Discord clan-coordination cycle
+
+Cycle started 2026-05-06 from a `/vibe-iterate competitive` scan against Bloxstrap / Fishstrap / Roblox Account Manager. Outcome: ship the Discord clan-coordination layer (rich presence + server-share party Join + opt-in clan-channel webhook) as v1.2.0.
+
+**Cycle type:** Feature extension to v1.0. Spec at [`docs/superpowers/specs/2026-05-06-discord-clan-coordination-design.md`](docs/superpowers/specs/2026-05-06-discord-clan-coordination-design.md). Extends — does NOT replace — canonical at [`docs/superpowers/specs/2026-05-03-rororoblox-design.md`](docs/superpowers/specs/2026-05-03-rororoblox-design.md).
+
+**Build mode:** autonomous-with-verification. Same posture as v1.0. Architect persona + Builder mode + brisk pacing + fully-autonomous flag in unified profile (promoted 2026-04-26 after 9+ Cart cycles). Verification checkpoints at items 7 (after Layer 1+2 functional, no UI yet) and 10 (after brand assets land).
+
+**Comprehension checks:** off (autonomous default).
+
+**Git cadence:** commit after each item. Single PR shipping all three layers per spec §11 decision (override on small-diff-preferred posture).
+
+**Sequencing rationale:**
+
+- **Item 1 (administrative gate)** — Este creates Discord application + drops AppId in `appsettings.json`. /build hard-pauses if AppId is unset.
+- **Items 2-3 (zero-dep primitives)** — DiscordConfigStore + ServerShareExtractor. Pure, testable, no external dependencies.
+- **Item 4 (Layer 1 service)** — DiscordRichPresenceService against Lachee.DiscordRichPresence. State machine + reconnect backoff + branded asset keys.
+- **Item 5 (Layer 2 outbound)** — RobloxLauncher modification to call ServerShareExtractor + SetParty. Optional dependency keeps existing tests green.
+- **Item 6 (architectural gap-closer)** — IAccountLifecycle + AccountLifecycleTracker. **Spec §5.8 assumed this existed in canonical §5; it doesn't.** Item 6 lands the abstraction so item 7 has something to hook.
+- **Item 7 (HostedService — wires it all together)** — DiscordPresenceLifecycle. Subscribes to lifecycle events, handles JoinRequested, posts webhooks. The keystone item.
+- **CHECKPOINT 1** after item 7 — Layers 1+2 functional manual smoke before adding webhooks + UI.
+- **Item 8 (Layer 3 service)** — DiscordWebhookService. Branded embed + threshold-crossing logic + silent-fail wrap.
+- **Item 9 (Settings UI)** — Discord Integrations panel. WPF-UI styled, brand tokens via 626labs-design, regex-validated webhook URL.
+- **Item 10 (brand assets — human review pause)** — 4 Discord PNGs + webhook avatar via 626labs-design skill. Eyes-on bar applies (pattern x).
+- **CHECKPOINT 2** after item 10 — full feature stack manual smoke.
+- **Item 11 (final doc + security)** — README v1.2 section, canonical spec extension (NOT banner-correct), CONTRIBUTING.md clan-admin setup, security audit append, dependency audit, local-path audit.
+
+**Spec coverage:** Every numbered new-spec §5 component (5.1-5.8) maps to a checklist item. Data flows §6.1-6.3 distribute across items 4-8. Error handling §7 distributes per-item. Distribution §9 (brand assets) hits item 10. Open items §10: AppId at item 1, webhook avatar at item 10, threshold-config locked at fixed-4.
+
+**Item count:** 11 build items + 2 checkpoints + final doc/security = 13 entries. Within Cart's 8-12 item target band (counting build items only).
+
+**Deepening rounds:** zero (per builder profile habit; spec is 600+ lines of locked design with explicit hand-off section to Cart).
+
+**Risk callouts logged for /build:**
+
+- **Item 1 administrative gate.** /build must hard-pause if `Discord:ApplicationId` is unset in `appsettings.json`. Do not proceed to item 2 without confirming Este completed the dev portal step.
+- **Item 6 closes a real spec gap.** `IAccountLifecycle` doesn't exist in canonical §5 despite spec §5.8 assuming it. /build must implement the abstraction in item 6, not assume it.
+- **Item 9 size watch.** Settings UI is the largest single item. Flag if it slips past 90 minutes for split into 9a (master toggle) + 9b (webhook config + validation).
+- **Item 10 human review.** Brand asset pack must pass human eyes-on review against `~/.claude/skills/626labs-design/colors_and_type.css` even in autonomous mode (pattern x — won't ship broken-looking tile).
+- **Single PR posture override.** Small-diff-preferred posture is intentionally bent for this feature; documented in spec §11 + §12. /build should NOT split into multiple PRs without explicit user confirmation.
+
+**Session/friction loggers:** Cart's plugin data dir at `~/.claude/plugins/data/vibe-cartographer/` still does not exist on this machine (carried over from v1.0 cycle). Skipped session-logger.start + friction-logger.log calls; no JSONL entries written. Already filed for /evolve via the v1.0 cycle.
+
+**Atlas + Dashboard cross-reference:**
+
+- Atlas entry: [`.vibe-iterate/atlas.jsonl`](.vibe-iterate/atlas.jsonl) — `competitive` / `queued` (flips to `shipped` on merge with PR URL appended).
+- Dashboard decision: `PlA9sfFzlQ2qINOO1kLB` against project `PBWgg5mimZyAzAG3niAp` (RORORO).
+- Vibe-iterate flash notes: `~/vibe-iterate-flash-notes.md` carries the standing principle "missing-mode = evolve candidate" and the open candidate `/vibe-iterate:infer`. Discord clan-coordination cycle did not surface new evolve candidates.
