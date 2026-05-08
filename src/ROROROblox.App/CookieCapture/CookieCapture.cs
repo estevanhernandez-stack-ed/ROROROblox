@@ -1,6 +1,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
+using Microsoft.Extensions.Logging;
 using ROROROblox.Core;
 
 namespace ROROROblox.App.CookieCapture;
@@ -19,10 +20,12 @@ public sealed class CookieCapture : ICookieCapture
         "webview2-data");
 
     private readonly IRobloxApi _api;
+    private readonly ILoggerFactory _loggerFactory;
 
-    public CookieCapture(IRobloxApi api)
+    public CookieCapture(IRobloxApi api, ILoggerFactory loggerFactory)
     {
         _api = api ?? throw new ArgumentNullException(nameof(api));
+        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
 
     public Task<CookieCaptureResult> CaptureAsync()
@@ -44,7 +47,7 @@ public sealed class CookieCapture : ICookieCapture
 
         try
         {
-            var window = new CookieCaptureWindow(UserDataDir, _api);
+            var window = new CookieCaptureWindow(UserDataDir, _api, _loggerFactory.CreateLogger<CookieCaptureWindow>());
             return await window.RunAsync().ConfigureAwait(true);
         }
         catch (Exception ex)

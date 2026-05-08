@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using Microsoft.Extensions.Logging;
 using Microsoft.Web.WebView2.Core;
 using ROROROblox.Core;
 
@@ -14,13 +15,15 @@ internal partial class CookieCaptureWindow : Window
 
     private readonly string _userDataDir;
     private readonly IRobloxApi _api;
+    private readonly ILogger<CookieCaptureWindow> _log;
     private readonly TaskCompletionSource<CookieCaptureResult> _tcs = new();
     private bool _captured;
 
-    public CookieCaptureWindow(string userDataDir, IRobloxApi api)
+    public CookieCaptureWindow(string userDataDir, IRobloxApi api, ILogger<CookieCaptureWindow> log)
     {
         _userDataDir = userDataDir;
         _api = api;
+        _log = log;
         InitializeComponent();
         Loaded += OnLoaded;
         Closed += OnClosed;
@@ -41,20 +44,33 @@ internal partial class CookieCaptureWindow : Window
                 userDataFolder: _userDataDir);
             await WebView.EnsureCoreWebView2Async(environment);
 
+            // NavigationCompleted catches server-driven page loads; SourceChanged catches the
+            // SPA route changes Roblox does post-login. Both fire on roblox.com nav events;
+            // the cookie+API check below is the truth signal for "user is authenticated."
             WebView.CoreWebView2.NavigationCompleted += OnNavigationCompleted;
+            WebView.CoreWebView2.SourceChanged += OnSourceChanged;
             WebView.CoreWebView2.Navigate(LoginUrl);
+            _log.LogInformation("CookieCapture window loaded; navigating to login.");
         }
         catch (WebView2RuntimeNotFoundException)
         {
+            _log.LogWarning("WebView2 runtime missing.");
             CompleteAndClose(new CookieCaptureResult.Failed("WebView2 runtime missing"));
         }
         catch (Exception ex)
         {
+            _log.LogError(ex, "WebView2 init failed.");
             CompleteAndClose(new CookieCaptureResult.Failed($"WebView2 init failed: {ex.Message}"));
         }
     }
 
-    private async void OnNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+    private void OnNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+        => _ = TryCaptureAsync("NavigationCompleted");
+
+    private void OnSourceChanged(object? sender, CoreWebView2SourceChangedEventArgs e)
+        => _ = TryCaptureAsync("SourceChanged");
+
+    private async Task TryCaptureAsync(string trigger)
     {
         if (_captured)
         {
@@ -69,15 +85,9 @@ internal partial class CookieCaptureWindow : Window
                 return;
             }
 
-            // Only consider roblox.com pages — avoid responding to embedded analytics, recaptcha, etc.
+            // Only consider roblox.com pages — avoid firing on embedded analytics, captcha
+            // iframes, telemetry, or third-party hosts inside the page.
             if (!Uri.TryCreate(sourceUrl, UriKind.Absolute, out var uri) || uri.Host != RobloxHost)
-            {
-                return;
-            }
-
-            // We're "home" once Roblox has redirected to /home, /, or /discover.
-            var path = uri.AbsolutePath.TrimEnd('/');
-            if (path != string.Empty && path != "/home" && path != "/discover")
             {
                 return;
             }
@@ -86,7 +96,18 @@ internal partial class CookieCaptureWindow : Window
                 .GetCookiesAsync("https://www.roblox.com")
                 .ConfigureAwait(true);
             var roblosec = cookies.FirstOrDefault(c => c.Name == RoblosecurityCookieName);
-            if (roblosec is null || string.IsNullOrEmpty(roblosec.Value))
+            var cookiePresent = roblosec is not null && !string.IsNullOrEmpty(roblosec.Value);
+
+            // Log only path + presence — never the cookie value. This is what we read when a
+            // user reports "the window won't close": we can see exactly which path Roblox
+            // landed them on and whether the cookie was set yet.
+            _log.LogDebug(
+                "CookieCapture nav ({Trigger}): path={Path} cookiePresent={CookiePresent}",
+                trigger,
+                uri.AbsolutePath,
+                cookiePresent);
+
+            if (!cookiePresent)
             {
                 return;
             }
@@ -95,7 +116,11 @@ internal partial class CookieCaptureWindow : Window
 
             try
             {
-                var profile = await _api.GetUserProfileAsync(roblosec.Value).ConfigureAwait(true);
+                var profile = await _api.GetUserProfileAsync(roblosec!.Value).ConfigureAwait(true);
+                _log.LogInformation(
+                    "CookieCapture success for userId={UserId} on path={Path}.",
+                    profile.UserId,
+                    uri.AbsolutePath);
                 CompleteAndClose(new CookieCaptureResult.Success(
                     roblosec.Value,
                     profile.UserId,
@@ -105,15 +130,18 @@ internal partial class CookieCaptureWindow : Window
             {
                 // The cookie was rejected by Roblox — the WebView2 session looked logged in but
                 // the .ROBLOSECURITY isn't usable for API calls. Surface as login-failure.
+                _log.LogWarning("CookieCapture: cookie rejected by Roblox API on path={Path}.", uri.AbsolutePath);
                 CompleteAndClose(new CookieCaptureResult.Failed("Login was unsuccessful."));
             }
             catch (Exception ex)
             {
+                _log.LogError(ex, "CookieCapture: profile fetch failed.");
                 CompleteAndClose(new CookieCaptureResult.Failed($"Profile fetch failed: {ex.Message}"));
             }
         }
         catch (Exception ex)
         {
+            _log.LogError(ex, "CookieCapture: handler threw on trigger={Trigger}.", trigger);
             CompleteAndClose(new CookieCaptureResult.Failed($"Cookie capture failed: {ex.Message}"));
         }
     }
