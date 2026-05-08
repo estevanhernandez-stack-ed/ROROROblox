@@ -462,4 +462,82 @@ public class AccountStoreTests : IDisposable
         var listed = (await store.ListAsync()).Single();
         Assert.Equal(FpsPresets.MaxCustom, listed.FpsCap);
     }
+
+    // ---------- v1.3.x — UpdateLocalNameAsync (DPAPI roundtrip) ----------
+
+    [Fact]
+    public async Task UpdateLocalNameAsync_HappyPath_RoundtripsThroughDpapiAcrossColdStart()
+    {
+        Guid id;
+        {
+            using var store = new AccountStore(_filePath);
+            var added = await store.AddAsync("TestUser", "https://avatar", "fake-cookie");
+            id = added.Id;
+            await store.UpdateLocalNameAsync(id, "Mr. Solo Dolo");
+        }
+
+        // Reopen — verify DPAPI envelope roundtrips the new property cleanly.
+        using var reopened = new AccountStore(_filePath);
+        var list = await reopened.ListAsync();
+
+        Assert.Single(list);
+        Assert.Equal("Mr. Solo Dolo", list[0].LocalName);
+        Assert.Equal("TestUser", list[0].DisplayName);
+        // DPAPI envelope still works — cookie still retrievable.
+        Assert.Equal("fake-cookie", await reopened.RetrieveCookieAsync(id));
+    }
+
+    [Fact]
+    public async Task UpdateLocalNameAsync_NullInput_ClearsLocalName()
+    {
+        using var store = new AccountStore(_filePath);
+        var added = await store.AddAsync("TestUser", "https://avatar", "fake-cookie");
+        await store.UpdateLocalNameAsync(added.Id, "Custom");
+
+        await store.UpdateLocalNameAsync(added.Id, null);
+
+        var list = await store.ListAsync();
+        Assert.Null(list[0].LocalName);
+    }
+
+    [Fact]
+    public async Task UpdateLocalNameAsync_EmptyOrWhitespace_NormalizesToNull()
+    {
+        using var store = new AccountStore(_filePath);
+        var added = await store.AddAsync("TestUser", "https://avatar", "fake-cookie");
+        await store.UpdateLocalNameAsync(added.Id, "Custom");
+
+        await store.UpdateLocalNameAsync(added.Id, "  \t  ");
+
+        var list = await store.ListAsync();
+        Assert.Null(list[0].LocalName);
+    }
+
+    [Fact]
+    public async Task UpdateLocalNameAsync_MissingId_ThrowsKeyNotFoundException()
+    {
+        using var store = new AccountStore(_filePath);
+        await store.AddAsync("TestUser", "https://avatar", "fake-cookie");
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => store.UpdateLocalNameAsync(Guid.NewGuid(), "Custom"));
+    }
+
+    [Fact]
+    public async Task UpdateLocalNameAsync_PreservesOtherAccountFields()
+    {
+        using var store = new AccountStore(_filePath);
+        var added = await store.AddAsync("TestUser", "https://avatar", "fake-cookie");
+        await store.SetMainAsync(added.Id);
+        await store.SetFpsCapAsync(added.Id, 60);
+        await store.SetCaptionColorAsync(added.Id, "#17d4fa");
+
+        await store.UpdateLocalNameAsync(added.Id, "Mr. Solo Dolo");
+
+        var list = await store.ListAsync();
+        Assert.Equal("Mr. Solo Dolo", list[0].LocalName);
+        Assert.True(list[0].IsMain);
+        Assert.Equal(60, list[0].FpsCap);
+        Assert.Equal("#17d4fa", list[0].CaptionColorHex);
+    }
 }

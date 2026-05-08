@@ -40,7 +40,8 @@
 
                     <StackPanel Grid.Column="1" Margin="10,0,10,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding DisplayName}"
+                            <!-- v1.3.x — RenderName = LocalName ?? DisplayName. Compact-mode row. -->
+                            <TextBlock Text="{Binding RenderName}"
                                        FontSize="12" FontWeight="SemiBold"
                                        Foreground="{DynamicResource WhiteBrush}"
                                        TextTrimming="CharacterEllipsis" />
@@ -117,6 +118,34 @@
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
+                <!-- v1.3.x — right-click context menu for the rename overlay. Existing row buttons
+                     (Launch As, Re-authenticate, Remove) stay as buttons. Rename / Reset are
+                     context-menu only because they're per-account-rare actions. The PlacementTarget
+                     pattern reaches up to MainWindow's DataContext for the commands; CommandParameter
+                     is the row's data context (AccountSummary). -->
+                <Border.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Rename…"
+                                  Command="{Binding PlacementTarget.DataContext.RenameItemCommand,
+                                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                  CommandParameter="{Binding}" />
+                        <MenuItem Header="Reset name"
+                                  Command="{Binding PlacementTarget.DataContext.ResetItemNameCommand,
+                                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                  CommandParameter="{Binding}">
+                            <MenuItem.Style>
+                                <Style TargetType="MenuItem">
+                                    <Setter Property="IsEnabled" Value="True" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding LocalName}" Value="{x:Null}">
+                                            <Setter Property="IsEnabled" Value="False" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </MenuItem.Style>
+                        </MenuItem>
+                    </ContextMenu>
+                </Border.ContextMenu>
 
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -175,11 +204,13 @@
                     <!-- Name + status -->
                     <StackPanel Grid.Column="2" Margin="14,0,14,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding DisplayName}"
+                            <!-- v1.3.x — RenderName = LocalName ?? DisplayName. Regular row primary
+                                 label + tooltip both flip; tooltip shows the un-truncated rename. -->
+                            <TextBlock Text="{Binding RenderName}"
                                        FontSize="14" FontWeight="SemiBold"
                                        Foreground="{DynamicResource WhiteBrush}"
                                        TextTrimming="CharacterEllipsis"
-                                       ToolTip="{Binding DisplayName}" />
+                                       ToolTip="{Binding RenderName}" />
                             <!-- MAIN pill — magenta, only when this account IsMain. Tells the user
                                  at a glance which row is their default for compact mode + tray double-click. -->
                             <Border Background="{DynamicResource MagentaBrush}" CornerRadius="3"
@@ -303,7 +334,7 @@
                                         </Button.Style>
                                         <Button.ToolTip>
                                             <TextBlock>
-                                                <Run Text="Follow " /><Run Text="{Binding DisplayName, Mode=OneWay}" /><Run Text=" into their server" />
+                                                <Run Text="Follow " /><Run Text="{Binding RenderName, Mode=OneWay}" /><Run Text=" into their server" />
                                             </TextBlock>
                                         </Button.ToolTip>
                                         <StackPanel Orientation="Horizontal">
@@ -314,7 +345,7 @@
                                                     Margin="0,0,5,0">
                                                 <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" />
                                             </Border>
-                                            <TextBlock Text="{Binding DisplayName}"
+                                            <TextBlock Text="{Binding RenderName}"
                                                        FontSize="10"
                                                        Foreground="{DynamicResource WhiteBrush}"
                                                        VerticalAlignment="Center"
@@ -421,10 +452,43 @@
                         <Grid Margin="0,0,8,0" MinWidth="160" VerticalAlignment="Center">
                             <ComboBox ItemsSource="{Binding DataContext.AvailableGames, RelativeSource={RelativeSource AncestorType=Window}}"
                                       SelectedItem="{Binding SelectedGame}"
-                                      DisplayMemberPath="Name"
+                                      DisplayMemberPath="RenderName"
                                       VerticalAlignment="Center"
                                       SelectionChanged="OnGameComboBoxSelectionChanged"
-                                      ToolTip="Game to launch this account into, or '(Paste a link...)' for a one-shot link." />
+                                      ToolTip="Game to launch this account into, or '(Paste a link...)' for a one-shot link.">
+                                <!-- v1.3.x — right-click any item in the dropdown for Rename / Reset.
+                                     Skips the JoinByLink sentinel because BuildRenameTarget guards on
+                                     PlaceId > 0 and returns null for the sentinel. -->
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem">
+                                        <Setter Property="ContextMenu">
+                                            <Setter.Value>
+                                                <ContextMenu>
+                                                    <MenuItem Header="Rename…"
+                                                              Command="{Binding PlacementTarget.DataContext.RenameItemCommand,
+                                                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                              CommandParameter="{Binding}" />
+                                                    <MenuItem Header="Reset name"
+                                                              Command="{Binding PlacementTarget.DataContext.ResetItemNameCommand,
+                                                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                              CommandParameter="{Binding}">
+                                                        <MenuItem.Style>
+                                                            <Style TargetType="MenuItem">
+                                                                <Setter Property="IsEnabled" Value="True" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding LocalName}" Value="{x:Null}">
+                                                                        <Setter Property="IsEnabled" Value="False" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </MenuItem.Style>
+                                                    </MenuItem>
+                                                </ContextMenu>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
                             <TextBlock Text="Add games with the Games button"
                                        FontSize="11"
                                        FontStyle="Italic"
@@ -650,6 +714,258 @@
                                 ToolTip="Manage saved games for the per-row launch picker." />
                     </StackPanel>
 
+                    <!-- v1.3.x — default-game widget. Lives between the left-side nav and the
+                         right-side launch CTAs. Click toggles a popup of saved games; pick one
+                         to set it default. Empty state hides the widget and shows a one-click
+                         "Add games" entry in the same slot. Compact mode hides the entire header
+                         (line 547), so the widget gets compact-mode hide for free. -->
+                    <Grid Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <!-- Filled state: ToggleButton + dropdown Popup. -->
+                        <ToggleButton x:Name="DefaultGameWidget"
+                                      MinWidth="220" MaxWidth="340"
+                                      Padding="12,6"
+                                      Background="{DynamicResource RowBgBrush}"
+                                      Foreground="{DynamicResource WhiteBrush}"
+                                      BorderBrush="{DynamicResource CyanBrush}"
+                                      BorderThickness="1"
+                                      Cursor="Hand"
+                                      ToolTip="The default game Launch As uses when no per-row pick is set. Click to change."
+                                      IsChecked="{Binding IsDefaultGameDropdownOpen, Mode=TwoWay}">
+                            <ToggleButton.Style>
+                                <Style TargetType="ToggleButton">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding WidgetGames.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ToggleButton.Style>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Cyan default dot. -->
+                                <Ellipse Grid.Column="0"
+                                         Width="8" Height="8"
+                                         Fill="{DynamicResource CyanBrush}"
+                                         VerticalAlignment="Center"
+                                         Margin="0,0,8,0" />
+
+                                <!-- Mono-micro label. Brand: uppercase + tracking, magenta tint. -->
+                                <TextBlock Grid.Column="1"
+                                           Text="DEFAULT"
+                                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                           FontSize="9"
+                                           Foreground="{DynamicResource MagentaBrush}"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,8,0" />
+
+                                <!-- The current default game's display name (LocalName ?? Name).
+                                     Bound to MainViewModel.DefaultGameDisplay. -->
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding DefaultGameDisplay}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource WhiteBrush}"
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis" />
+
+                                <!-- Chevron — flips visually via the ToggleButton's IsChecked
+                                     state if a future style upgrade wants it. For v1.3.x just
+                                     a static down-pointing glyph. -->
+                                <TextBlock Grid.Column="3"
+                                           Text="&#x25BE;"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           VerticalAlignment="Center"
+                                           Margin="8,0,0,0" />
+                            </Grid>
+                        </ToggleButton>
+
+                        <!-- Empty state: replaces the toggle when no games are saved.
+                             One click → Games settings sheet (same as the toolbar Games button). -->
+                        <Button Content="No saved games yet — Add a game"
+                                Command="{Binding OpenSettingsCommand}"
+                                MinWidth="220" MaxWidth="340"
+                                Padding="12,6"
+                                Background="{DynamicResource NavyBrush}"
+                                Foreground="{DynamicResource MutedTextBrush}"
+                                BorderBrush="{DynamicResource DividerBrush}"
+                                BorderThickness="1"
+                                FontSize="11"
+                                Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding WidgetGames.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <!-- Dropdown popup: ListBox of saved games + Manage games footer. Closes on
+                             pick (StaysOpen=False) or on outside-click. -->
+                        <Popup IsOpen="{Binding ElementName=DefaultGameWidget, Path=IsChecked}"
+                               PlacementTarget="{Binding ElementName=DefaultGameWidget}"
+                               Placement="Bottom"
+                               StaysOpen="False"
+                               AllowsTransparency="True">
+                            <Border Background="{DynamicResource RowBgBrush}"
+                                    BorderBrush="{DynamicResource CyanBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Padding="4"
+                                    Margin="0,4,0,0"
+                                    MinWidth="280" MaxWidth="360">
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Bottom"
+                                            Content="Manage games…"
+                                            Command="{Binding OpenSettingsCommand}"
+                                            Padding="10,6"
+                                            Margin="0,4,0,0"
+                                            HorizontalContentAlignment="Left"
+                                            Background="{DynamicResource NavyBrush}"
+                                            Foreground="{DynamicResource MutedTextBrush}"
+                                            BorderBrush="{DynamicResource DividerBrush}"
+                                            BorderThickness="0,1,0,0"
+                                            FontSize="11"
+                                            Cursor="Hand" />
+                                    <ListBox ItemsSource="{Binding WidgetGames}"
+                                             SelectedItem="{Binding CurrentDefaultGame, Mode=OneWay}"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             MaxHeight="280"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem">
+                                                <Setter Property="Padding" Value="0" />
+                                                <Setter Property="Margin" Value="0,1" />
+                                                <Setter Property="Cursor" Value="Hand" />
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Padding="10,6"
+                                                        HorizontalContentAlignment="Stretch"
+                                                        Background="Transparent"
+                                                        Foreground="{DynamicResource WhiteBrush}"
+                                                        BorderThickness="0"
+                                                        Cursor="Hand"
+                                                        Command="{Binding DataContext.SetDefaultGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}">
+                                                    <!-- v1.3.x — right-click on a widget dropdown row for the
+                                                         four-item action menu per spec §5.6. Click on the row
+                                                         (the Button itself) is set-as-default; right-click is
+                                                         the rest. -->
+                                                    <Button.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem Header="Set as default"
+                                                                      Command="{Binding PlacementTarget.DataContext.SetDefaultGameCommand,
+                                                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding}" />
+                                                            <Separator />
+                                                            <MenuItem Header="Rename…"
+                                                                      Command="{Binding PlacementTarget.DataContext.RenameItemCommand,
+                                                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding}" />
+                                                            <MenuItem Header="Reset name"
+                                                                      Command="{Binding PlacementTarget.DataContext.ResetItemNameCommand,
+                                                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding}">
+                                                                <MenuItem.Style>
+                                                                    <Style TargetType="MenuItem">
+                                                                        <Setter Property="IsEnabled" Value="True" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding LocalName}" Value="{x:Null}">
+                                                                                <Setter Property="IsEnabled" Value="False" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </MenuItem.Style>
+                                                            </MenuItem>
+                                                            <Separator />
+                                                            <MenuItem Header="Remove"
+                                                                      Command="{Binding PlacementTarget.DataContext.RemoveGameCommand,
+                                                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding}" />
+                                                        </ContextMenu>
+                                                    </Button.ContextMenu>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <!-- Cyan dot for the current default; transparent otherwise. -->
+                                                        <Ellipse Grid.Column="0"
+                                                                 Width="6" Height="6"
+                                                                 VerticalAlignment="Center"
+                                                                 Margin="0,0,8,0">
+                                                            <Ellipse.Style>
+                                                                <Style TargetType="Ellipse">
+                                                                    <Setter Property="Fill" Value="Transparent" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsDefault}" Value="True">
+                                                                            <Setter Property="Fill" Value="{DynamicResource CyanBrush}" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Ellipse.Style>
+                                                        </Ellipse>
+
+                                                        <!-- Display name: LocalName ?? Name via the FavoriteGame.RenderName
+                                                             computed property. PriorityBinding doesn't work here because
+                                                             a null LocalName is a successful binding result, not a
+                                                             fall-through trigger. -->
+                                                        <TextBlock Grid.Column="1"
+                                                                   Text="{Binding RenderName}"
+                                                                   FontSize="12"
+                                                                   Foreground="{DynamicResource WhiteBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis" />
+
+                                                        <!-- DEFAULT pill on the current default. -->
+                                                        <Border Grid.Column="2"
+                                                                Background="{DynamicResource MagentaBrush}"
+                                                                CornerRadius="2"
+                                                                Padding="5,1"
+                                                                Margin="8,0,0,0">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsDefault}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                            <TextBlock Text="DEFAULT"
+                                                                       FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                                                       FontSize="8"
+                                                                       FontWeight="Bold"
+                                                                       Foreground="{DynamicResource WhiteBrush}" />
+                                                        </Border>
+                                                    </Grid>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </DockPanel>
+                            </Border>
+                        </Popup>
+                    </Grid>
+
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Content="Launch multiple"
                                 Command="{Binding LaunchAllCommand}"
@@ -830,7 +1146,7 @@
                                         ToolTip="Launch your main account into its current per-row game.">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <TextBlock Text="&#x25B6; Start " />
-                                        <TextBlock Text="{Binding MainAccount.DisplayName, FallbackValue='main'}" />
+                                        <TextBlock Text="{Binding MainAccount.RenderName, FallbackValue='main'}" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>

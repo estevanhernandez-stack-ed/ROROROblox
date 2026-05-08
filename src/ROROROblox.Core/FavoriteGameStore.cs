@@ -22,6 +22,9 @@ public sealed class FavoriteGameStore : IFavoriteGameStore, IDisposable
     private readonly SemaphoreSlim _gate = new(initialCount: 1, maxCount: 1);
     private bool _disposed;
 
+    /// <inheritdoc />
+    public event EventHandler? DefaultChanged;
+
     public FavoriteGameStore() : this(DefaultPath()) { }
 
     public FavoriteGameStore(string filePath)
@@ -88,13 +91,18 @@ public sealed class FavoriteGameStore : IFavoriteGameStore, IDisposable
             var isDefault = blob.Favorites.Count == 0
                 || (existingIndex >= 0 && blob.Favorites[existingIndex].IsDefault);
 
+            // LocalName survives re-add (spec §8) — preserve the existing local nickname
+            // when the user's add path runs against an already-saved placeId.
+            var preservedLocalName = existingIndex >= 0 ? blob.Favorites[existingIndex].LocalName : null;
+
             var updated = new FavoriteGame(
                 PlaceId: placeId,
                 UniverseId: universeId,
                 Name: name,
                 ThumbnailUrl: thumbnailUrl ?? string.Empty,
                 IsDefault: isDefault,
-                AddedAt: existingIndex >= 0 ? blob.Favorites[existingIndex].AddedAt : DateTimeOffset.UtcNow);
+                AddedAt: existingIndex >= 0 ? blob.Favorites[existingIndex].AddedAt : DateTimeOffset.UtcNow,
+                LocalName: preservedLocalName);
 
             if (existingIndex >= 0)
             {
@@ -145,6 +153,7 @@ public sealed class FavoriteGameStore : IFavoriteGameStore, IDisposable
 
     public async Task SetDefaultAsync(long placeId)
     {
+        bool changed = false;
         await _gate.WaitAsync().ConfigureAwait(false);
         try
         {
@@ -154,11 +163,53 @@ public sealed class FavoriteGameStore : IFavoriteGameStore, IDisposable
                 throw new KeyNotFoundException($"Favorite with placeId {placeId} not found.");
             }
 
+            // No-op short-circuit: if the requested default is already the default, skip the
+            // write AND skip the event fire. Lets subscribers treat each event as a real change.
+            var alreadyDefault = blob.Favorites.Any(f => f.PlaceId == placeId && f.IsDefault);
+            if (alreadyDefault)
+            {
+                return;
+            }
+
             for (var i = 0; i < blob.Favorites.Count; i++)
             {
                 blob.Favorites[i] = blob.Favorites[i] with { IsDefault = blob.Favorites[i].PlaceId == placeId };
             }
 
+            await SaveAsync(blob).ConfigureAwait(false);
+            changed = true;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+
+        if (changed)
+        {
+            // Fire outside the gate so subscribers can re-enter the store without deadlocking.
+            DefaultChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public async Task UpdateLocalNameAsync(long placeId, string? localName)
+    {
+        // Trim + collapse empty/whitespace to null. Effective reset on empty input.
+        var normalized = string.IsNullOrWhiteSpace(localName) ? null : localName.Trim();
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var index = blob.Favorites.FindIndex(f => f.PlaceId == placeId);
+            if (index < 0)
+            {
+                throw new KeyNotFoundException($"Favorite with placeId {placeId} not found.");
+            }
+            if (string.Equals(blob.Favorites[index].LocalName, normalized, StringComparison.Ordinal))
+            {
+                return; // no-op write avoidance
+            }
+            blob.Favorites[index] = blob.Favorites[index] with { LocalName = normalized };
             await SaveAsync(blob).ConfigureAwait(false);
         }
         finally

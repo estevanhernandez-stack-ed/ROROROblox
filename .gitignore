@@ -45,6 +45,9 @@ Releases/
 # small sizes (16/24/32) into Tray/Resources/.debug/ for visual inspection. Not shipped.
 src/ROROROblox.App/Tray/Resources/.debug/
 
+# Superpowers brainstorm-companion artifacts (browser mockups, session state)
+.superpowers/
+
 # OS noise
 Thumbs.db
 .DS_Store

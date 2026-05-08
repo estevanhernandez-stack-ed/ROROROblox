@@ -48,7 +48,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             var blob = await LoadAsync().ConfigureAwait(false);
             return blob.Accounts
-                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap))
+                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName))
                 .ToList();
         }
         finally
@@ -90,7 +90,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 SortOrder: nextSortOrder);
             blob.Accounts.Add(stored);
             await SaveAsync(blob).ConfigureAwait(false);
-            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap);
+            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName);
         }
         finally
         {
@@ -305,6 +305,32 @@ public sealed class AccountStore : IAccountStore, IDisposable
         }
     }
 
+    public async Task UpdateLocalNameAsync(Guid accountId, string? localName)
+    {
+        var normalized = string.IsNullOrWhiteSpace(localName) ? null : localName.Trim();
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var index = blob.Accounts.FindIndex(a => a.Id == accountId);
+            if (index < 0)
+            {
+                throw new KeyNotFoundException($"Account {accountId} not found.");
+            }
+            if (string.Equals(blob.Accounts[index].LocalName, normalized, StringComparison.Ordinal))
+            {
+                return; // no-op write avoidance — saves a DPAPI roundtrip on chatty rename UIs.
+            }
+            blob.Accounts[index] = blob.Accounts[index] with { LocalName = normalized };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async Task TouchLastLaunchedAsync(Guid id)
     {
         await _gate.WaitAsync().ConfigureAwait(false);
@@ -412,7 +438,8 @@ public sealed class AccountStore : IAccountStore, IDisposable
         int SortOrder = 0,
         bool IsSelected = true,
         string? CaptionColorHex = null,
-        int? FpsCap = null);
+        int? FpsCap = null,
+        string? LocalName = null);
 
     internal sealed record StoredAccountsBlob(
         int Version,

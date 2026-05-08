@@ -15,4 +15,5 @@ public sealed record Account(
     int SortOrder = 0,
     bool IsSelected = true,
     string? CaptionColorHex = null,
-    int? FpsCap = null);
+    int? FpsCap = null,
+    string? LocalName = null);

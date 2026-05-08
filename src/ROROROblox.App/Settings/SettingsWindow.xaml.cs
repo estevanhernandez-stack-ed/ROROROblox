@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using ROROROblox.App.Modals;
 using ROROROblox.Core;
 
 namespace ROROROblox.App.Settings;
@@ -9,23 +10,28 @@ namespace ROROROblox.App.Settings;
 internal partial class SettingsWindow : Window
 {
     private readonly IFavoriteGameStore _favorites;
+    private readonly IPrivateServerStore _servers;
     private readonly IRobloxApi _api;
     private readonly ObservableCollection<FavoriteGame> _items = [];
     private readonly ObservableCollection<GameSearchResult> _searchItems = [];
+    private readonly ObservableCollection<SavedPrivateServer> _serverItems = [];
 
-    public SettingsWindow(IFavoriteGameStore favorites, IRobloxApi api)
+    public SettingsWindow(IFavoriteGameStore favorites, IPrivateServerStore servers, IRobloxApi api)
     {
         _favorites = favorites;
+        _servers = servers;
         _api = api;
         InitializeComponent();
         FavoritesList.ItemsSource = _items;
         SearchResultsList.ItemsSource = _searchItems;
+        ServersList.ItemsSource = _serverItems;
         Loaded += OnLoaded;
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
         await ReloadAsync();
+        await ReloadServersAsync();
         SearchInput.Focus();
     }
 
@@ -110,6 +116,17 @@ internal partial class SettingsWindow : Window
         EmptyState.Visibility = _items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    private async Task ReloadServersAsync()
+    {
+        _serverItems.Clear();
+        var list = await _servers.ListAsync();
+        foreach (var server in list)
+        {
+            _serverItems.Add(server);
+        }
+        ServersEmptyState.Visibility = _serverItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private async void OnAddClick(object sender, RoutedEventArgs e)
     {
         var input = UrlInput.Text?.Trim();
@@ -181,7 +198,7 @@ internal partial class SettingsWindow : Window
         var game = _items.FirstOrDefault(f => f.PlaceId == placeId);
         var confirm = MessageBox.Show(
             this,
-            $"Remove {game?.Name ?? "this game"} from your library?",
+            $"Remove {game?.RenderName ?? "this game"} from your library?",
             "Remove game",
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
@@ -199,6 +216,141 @@ internal partial class SettingsWindow : Window
         catch (Exception ex)
         {
             StatusText.Text = $"Couldn't remove: {ex.Message}";
+        }
+    }
+
+    private async void OnRemoveServerClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not Guid id)
+        {
+            return;
+        }
+
+        var server = _serverItems.FirstOrDefault(s => s.Id == id);
+        var confirm = MessageBox.Show(
+            this,
+            $"Remove {server?.RenderName ?? "this server"} from your library?",
+            "Remove server",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+        if (confirm != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        try
+        {
+            await _servers.RemoveAsync(id);
+            await ReloadServersAsync();
+            StatusText.Text = "Removed.";
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Couldn't remove: {ex.Message}";
+        }
+    }
+
+    // ---------- v1.3.x — rename handlers (button + right-click context menu both target these) ----------
+
+    private async void OnRenameGameClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement el || el.Tag is not FavoriteGame game)
+        {
+            return;
+        }
+
+        var target = new RenameTarget(
+            RenameTargetKind.Game,
+            game.PlaceId,
+            game.Name,
+            game.LocalName);
+        var result = await RenameWindow.ShowAsync(this, target);
+        if (result.Kind == RenameResultKind.Cancel)
+        {
+            return;
+        }
+        try
+        {
+            await _favorites.UpdateLocalNameAsync(game.PlaceId, result.NewName);
+            await ReloadAsync();
+        }
+        catch (KeyNotFoundException)
+        {
+            StatusText.Text = "That game isn't saved any more.";
+            await ReloadAsync();
+        }
+        catch (System.IO.IOException ex)
+        {
+            StatusText.Text = $"Couldn't save name change. Disk error? ({ex.Message})";
+        }
+    }
+
+    private async void OnResetGameNameClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement el || el.Tag is not FavoriteGame game)
+        {
+            return;
+        }
+        try
+        {
+            await _favorites.UpdateLocalNameAsync(game.PlaceId, null);
+            await ReloadAsync();
+        }
+        catch (KeyNotFoundException)
+        {
+            StatusText.Text = "That game isn't saved any more.";
+            await ReloadAsync();
+        }
+    }
+
+    private async void OnRenameServerClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement el || el.Tag is not SavedPrivateServer server)
+        {
+            return;
+        }
+
+        var target = new RenameTarget(
+            RenameTargetKind.PrivateServer,
+            server.Id,
+            server.Name,
+            server.LocalName);
+        var result = await RenameWindow.ShowAsync(this, target);
+        if (result.Kind == RenameResultKind.Cancel)
+        {
+            return;
+        }
+        try
+        {
+            await _servers.UpdateLocalNameAsync(server.Id, result.NewName);
+            await ReloadServersAsync();
+        }
+        catch (KeyNotFoundException)
+        {
+            StatusText.Text = "That server isn't saved any more.";
+            await ReloadServersAsync();
+        }
+        catch (System.IO.IOException ex)
+        {
+            StatusText.Text = $"Couldn't save name change. Disk error? ({ex.Message})";
+        }
+    }
+
+    private async void OnResetServerNameClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement el || el.Tag is not SavedPrivateServer server)
+        {
+            return;
+        }
+        try
+        {
+            await _servers.UpdateLocalNameAsync(server.Id, null);
+            await ReloadServersAsync();
+        }
+        catch (KeyNotFoundException)
+        {
+            StatusText.Text = "That server isn't saved any more.";
+            await ReloadServersAsync();
         }
     }
 

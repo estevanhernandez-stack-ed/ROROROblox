@@ -114,6 +114,19 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OpenPreferencesCommand = new RelayCommand(OpenPreferences);
         DismissBloxstrapWarningCommand = new RelayCommand(_ => _ = DismissBloxstrapWarningAsync());
 
+        // v1.3.x — default-game widget + rename overlay commands.
+        SetDefaultGameCommand = new RelayCommand(p => _ = SetDefaultGameAsync(p as FavoriteGame));
+        // RenameItemCommand / ResetItemNameCommand take the row's data context (FavoriteGame /
+        // AccountSummary / SavedPrivateServer) as CommandParameter — saves writing 6 commands or
+        // threading RenameTarget through XAML constructor binding gymnastics.
+        RenameItemCommand = new RelayCommand(p => _ = RenameItemAsync(BuildRenameTarget(p)));
+        ResetItemNameCommand = new RelayCommand(p => _ = ResetItemNameAsync(BuildRenameTarget(p)));
+        RemoveGameCommand = new RelayCommand(p => _ = RemoveGameAsync(p as FavoriteGame));
+
+        // Subscribe to favorites' default-changed event so the widget readout updates without a
+        // manual re-fetch. Fires after SetDefaultAsync mutates + persists, on real change only.
+        _favorites.DefaultChanged += OnFavoritesDefaultChanged;
+
         _processTracker.ProcessAttached += OnProcessAttached;
         _processTracker.ProcessExited += OnProcessExited;
         _processTracker.ProcessAttachFailed += OnProcessAttachFailed;
@@ -175,6 +188,51 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand OpenHistoryCommand { get; }
     public ICommand OpenPreferencesCommand { get; }
     public ICommand DismissBloxstrapWarningCommand { get; }
+
+    // v1.3.x default-game widget + rename overlay.
+    public ICommand SetDefaultGameCommand { get; }
+    public ICommand RenameItemCommand { get; }
+    public ICommand ResetItemNameCommand { get; }
+    public ICommand RemoveGameCommand { get; }
+
+    /// <summary>
+    /// Saved games for the default-game widget dropdown. Same content as
+    /// <see cref="AvailableGames"/> minus the JoinByLink sentinel. Updated alongside
+    /// AvailableGames in <see cref="ReloadGamesAsync"/>. Empty when no games are saved —
+    /// the widget XAML's empty-state trigger reads this length. v1.3.x.
+    /// </summary>
+    public ObservableCollection<FavoriteGame> WidgetGames { get; } = [];
+
+    private bool _isDefaultGameDropdownOpen;
+    /// <summary>Two-way bound to the widget's ToggleButton/Popup. v1.3.x.</summary>
+    public bool IsDefaultGameDropdownOpen
+    {
+        get => _isDefaultGameDropdownOpen;
+        set => SetField(ref _isDefaultGameDropdownOpen, value);
+    }
+
+    private FavoriteGame? _currentDefaultGame;
+    /// <summary>The currently-default <see cref="FavoriteGame"/>, or null when no games saved.
+    /// One-way bound on the widget popup ListBox to highlight the current default. v1.3.x.</summary>
+    public FavoriteGame? CurrentDefaultGame
+    {
+        get => _currentDefaultGame;
+        private set
+        {
+            if (SetField(ref _currentDefaultGame, value))
+            {
+                OnPropertyChanged(nameof(DefaultGameDisplay));
+            }
+        }
+    }
+
+    /// <summary>
+    /// What the widget shows in its toolbar readout. Reads <see cref="FavoriteGame.LocalName"/>
+    /// when set, falling back to <see cref="FavoriteGame.Name"/>, then to a muted placeholder
+    /// when no games are saved. v1.3.x.
+    /// </summary>
+    public string DefaultGameDisplay =>
+        _currentDefaultGame?.LocalName ?? _currentDefaultGame?.Name ?? "No saved games yet";
 
     private bool _isCompact;
     /// <summary>True when the main window is in compact (collapsed) mode. Drives the bottom-bar
@@ -319,12 +377,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         var games = await _favorites.ListAsync();
         AvailableGames.Clear();
+        WidgetGames.Clear();
         foreach (var game in games)
         {
             AvailableGames.Add(game);
+            WidgetGames.Add(game); // widget dropdown excludes the sentinel entirely
         }
         // Sentinel entry users click to open the Join-by-link modal. Lives at the bottom of the
-        // dropdown so accidental clicks are unlikely.
+        // dropdown so accidental clicks are unlikely. NOT added to WidgetGames — the widget is for
+        // setting the default game, not for one-off launches.
         AvailableGames.Add(JoinByLinkSentinel);
 
         var defaultGame = AvailableGames.FirstOrDefault(g => g.IsDefault && !IsJoinByLinkSentinel(g))
@@ -335,6 +396,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 !IsJoinByLinkSentinel(g) && g.PlaceId == account.SelectedGame?.PlaceId);
             account.SelectedGame = stillThere ?? defaultGame;
         }
+
+        // Keep the widget readout in lockstep with what the store thinks. INPC fires for
+        // DefaultGameDisplay are coupled via CurrentDefaultGame's setter.
+        CurrentDefaultGame = defaultGame;
     }
 
     /// <summary>
@@ -1065,7 +1130,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OpenSettings()
     {
-        var window = new SettingsWindow(_favorites, _api) { Owner = Application.Current.MainWindow };
+        var window = new SettingsWindow(_favorites, _privateServerStore, _api) { Owner = Application.Current.MainWindow };
         window.ShowDialog();
         // Refresh in case the user added / removed / set-default'd a game.
         _ = ReloadGamesAsync();
@@ -1342,6 +1407,176 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             // User chose Quit — let the app exit so they can restore from a backup.
             Application.Current.Shutdown(0);
+        }
+    }
+
+    // ---------- v1.3.x — default-game widget + rename overlay handlers ----------
+
+    /// <summary>
+    /// Build a <see cref="RenameTarget"/> from a row's data context. Pattern-matches on the
+    /// known entity types so XAML can pass <c>CommandParameter="{Binding}"</c> directly.
+    /// Returns null on unrecognized types (no-op at command boundary).
+    /// </summary>
+    private static RenameTarget? BuildRenameTarget(object? source) => source switch
+    {
+        FavoriteGame game when game.PlaceId > 0 =>
+            new RenameTarget(RenameTargetKind.Game, game.PlaceId, game.Name, game.LocalName),
+        AccountSummary account =>
+            new RenameTarget(RenameTargetKind.Account, account.Id, account.DisplayName, account.LocalName),
+        SavedPrivateServer server =>
+            new RenameTarget(RenameTargetKind.PrivateServer, server.Id, server.Name, server.LocalName),
+        _ => null,
+    };
+
+    private void OnFavoritesDefaultChanged(object? sender, EventArgs e)
+    {
+        // The store has already mutated + persisted; just refresh our cached view of "what's
+        // the current default" so the widget readout flips. ReloadGamesAsync also re-syncs
+        // each account's SelectedGame to the new default — keeps row pickers in lockstep.
+        _ = ReloadGamesAsync();
+    }
+
+    private async Task RemoveGameAsync(FavoriteGame? game)
+    {
+        if (game is null || IsJoinByLinkSentinel(game))
+        {
+            return;
+        }
+
+        try
+        {
+            await _favorites.RemoveAsync(game.PlaceId);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "RemoveAsync failed for placeId {PlaceId}.", game.PlaceId);
+            StatusBanner = "Couldn't remove that game. Disk error?";
+            return;
+        }
+
+        await ReloadGamesAsync();
+    }
+
+    private async Task SetDefaultGameAsync(FavoriteGame? game)
+    {
+        if (game is null || IsJoinByLinkSentinel(game))
+        {
+            return;
+        }
+
+        // Close the popup first — gives instant visual feedback even if the SetDefaultAsync
+        // call takes a tick. The DefaultChanged event will trigger ReloadGamesAsync which
+        // refreshes CurrentDefaultGame + DefaultGameDisplay anyway.
+        IsDefaultGameDropdownOpen = false;
+
+        try
+        {
+            await _favorites.SetDefaultAsync(game.PlaceId);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            // Race: game removed from another surface between the user opening the popup and
+            // clicking. Surface a quiet status banner; in-memory list will reconcile on next reload.
+            _log.LogDebug(ex, "SetDefaultAsync: game {PlaceId} no longer exists.", game.PlaceId);
+            StatusBanner = "That game isn't saved any more.";
+            await ReloadGamesAsync();
+        }
+    }
+
+    private async Task RenameItemAsync(RenameTarget? target)
+    {
+        if (target is null)
+        {
+            return;
+        }
+
+        var owner = Application.Current.MainWindow;
+        if (owner is null)
+        {
+            _log.LogWarning("RenameItemAsync invoked with no MainWindow available.");
+            return;
+        }
+
+        var result = await Modals.RenameWindow.ShowAsync(owner, target);
+        if (result.Kind == RenameResultKind.Cancel)
+        {
+            return;
+        }
+
+        try
+        {
+            await RenameDispatch.ApplyAsync(_favorites, _privateServerStore, _accountStore, target, result.NewName);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            // Race: the entity was removed from another surface between context-menu open and Save.
+            _log.LogDebug(ex, "Rename target {Kind} {Id} no longer exists.", target.Kind, target.Id);
+            StatusBanner = $"That {target.Kind.ToString().ToLowerInvariant()} isn't saved any more.";
+        }
+        catch (System.IO.IOException ex)
+        {
+            _log.LogWarning(ex, "Atomic write failed during rename of {Kind} {Id}.", target.Kind, target.Id);
+            StatusBanner = "Couldn't save name change. Disk error?";
+            return;
+        }
+
+        await OnRenameAppliedAsync(target, result.NewName);
+    }
+
+    private async Task ResetItemNameAsync(RenameTarget? target)
+    {
+        if (target is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await RenameDispatch.ApplyAsync(_favorites, _privateServerStore, _accountStore, target, newLocalName: null);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            _log.LogDebug(ex, "Reset target {Kind} {Id} no longer exists.", target.Kind, target.Id);
+            StatusBanner = $"That {target.Kind.ToString().ToLowerInvariant()} isn't saved any more.";
+            return;
+        }
+        catch (System.IO.IOException ex)
+        {
+            _log.LogWarning(ex, "Atomic write failed during reset of {Kind} {Id}.", target.Kind, target.Id);
+            StatusBanner = "Couldn't save name change. Disk error?";
+            return;
+        }
+
+        await OnRenameAppliedAsync(target, null);
+    }
+
+    /// <summary>
+    /// After a successful rename or reset, refresh whatever surfaces could now be stale.
+    /// Account renames: update the matching <see cref="AccountSummary"/>'s LocalName so the
+    /// row's RenderName flips immediately. Game renames: full ReloadGamesAsync so AvailableGames
+    /// + WidgetGames + per-row SelectedGame all see the new instance with new LocalName.
+    /// PrivateServer renames: nothing to refresh at MainViewModel level — Squad Launch sheet
+    /// re-lists from the store on its next open.
+    /// </summary>
+    private async Task OnRenameAppliedAsync(RenameTarget target, string? newLocalName)
+    {
+        switch (target.Kind)
+        {
+            case RenameTargetKind.Game:
+                await ReloadGamesAsync();
+                break;
+            case RenameTargetKind.Account:
+                var accountId = (Guid)target.Id;
+                var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
+                if (summary is not null)
+                {
+                    summary.LocalName = newLocalName;
+                }
+                break;
+            case RenameTargetKind.PrivateServer:
+                // No MainViewModel-side surface for saved private servers. Squad Launch sheet
+                // re-lists on open.
+                break;
         }
     }
 

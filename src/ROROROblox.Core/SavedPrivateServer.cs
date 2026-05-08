@@ -28,7 +28,8 @@ public sealed record SavedPrivateServer(
     string PlaceName,
     string ThumbnailUrl,
     DateTimeOffset AddedAt,
-    DateTimeOffset? LastLaunchedAt)
+    DateTimeOffset? LastLaunchedAt,
+    string? LocalName = null)
 {
     /// <summary>
     /// Back-compat shim for older storage blobs that persisted only an <c>accessCode</c> field
@@ -39,4 +40,9 @@ public sealed record SavedPrivateServer(
     /// loading old records.
     /// </summary>
     public const PrivateServerCodeKind DefaultLegacyKind = PrivateServerCodeKind.LinkCode;
+
+    /// <summary>
+    /// What the UI should show wherever it used to show <see cref="Name"/>. v1.3.x.
+    /// </summary>
+    public string RenderName => string.IsNullOrEmpty(LocalName) ? Name : LocalName;
 }
