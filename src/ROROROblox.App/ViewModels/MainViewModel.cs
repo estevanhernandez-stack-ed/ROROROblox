@@ -606,7 +606,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 target = new LaunchTarget.DefaultGame();
             }
 
-            var result = await _launcher.LaunchAsync(cookie, target);
+            var result = await _launcher.LaunchAsync(cookie, target, fpsCap: summary.FpsCap);
             switch (result)
             {
                 case LaunchResult.Started started:

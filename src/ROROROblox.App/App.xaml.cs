@@ -248,6 +248,8 @@ public partial class App : Application
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         });
 
+        services.AddSingleton<IBloxstrapDetector, BloxstrapDetector>();
+        services.AddSingleton<IClientAppSettingsWriter, ClientAppSettingsWriter>();
         services.AddSingleton<IRobloxLauncher, RobloxLauncher>();
         services.AddSingleton<ICookieCapture, CookieCapture.CookieCapture>();
         services.AddSingleton<IUpdateChecker, UpdateChecker>();
