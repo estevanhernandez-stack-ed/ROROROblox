@@ -6,6 +6,16 @@
 **Branch:** `feat/per-account-fps-limiter`
 **Repo:** https://github.com/estevanhernandez-stack-ed/ROROROblox
 
+> ## ⚠ Spec banner-correction (2026-05-07, post-smoke)
+>
+> **What the spec originally proposed:** FFlag-only mechanism — write `DFIntTaskSchedulerTargetFps` to `ClientAppSettings.json` in the Roblox version folder. Multi-source coverage of standalone + UWP install paths was the load-bearing add over RAM.
+>
+> **What manual smoke discovered:** On modern Roblox builds, the user's in-game **Settings → Performance → Frame Rate** value is read from `%LOCALAPPDATA%\Roblox\GlobalBasicSettings_<N>.xml` (the `<int name="FramerateCap">` node) and **wins over the FFlag** for users who haven't already set their in-game frame-rate to "Unlimited." This explains the "RAM doesn't work for everybody" pattern in the wild — RAM's FFlag write silently loses to the user's default in-menu cap of 60.
+>
+> **What actually shipped:** FFlag write retained as belt-and-suspenders (still helps Bloxstrap-managed launches and any older-build flow that respects FFlags) PLUS a new `IGlobalBasicSettingsWriter` that updates `FramerateCap` in `GlobalBasicSettings_<N>.xml` before each launch. Same semaphore-gated launch flow — both writes happen before `Process.Start`, then the 250 ms hold lets Roblox finish reading both before the next launch can write again.
+>
+> **Why banner-correct rather than rewrite:** preserves the design-evolution context (pattern v from Vibe Thesis). The §5.1 / §6.2 sections below describe the FFlag mechanism as written; §5.7 + §6.3 (added below) describe the GlobalBasicSettings mechanism. Future readers see what we believed at spec time vs what we learned at smoke time.
+
 ## 1. Overview
 
 Each saved account in ROROROblox gets its own FPS cap, applied at launch via Roblox's `DFIntTaskSchedulerTargetFps` FFlag in `ClientAppSettings.json`. The strategic frame is **parity-plus with Roblox Account Manager (RAM)** — RAM's FPS limiter is the holdout knob, but it has reliability gaps in the wild (notably for users on the Microsoft Store / UWP install of Roblox, whose `ClientAppSettings.json` lives at a sandboxed path RAM does not appear to write to). Our version handles both install layouts so it works for every clan member, not just the Bloxstrap / standalone slice.
