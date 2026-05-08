@@ -34,12 +34,38 @@ public sealed class AccountSummary : INotifyPropertyChanged
         _isSelected = account.IsSelected;
         _captionColorHex = account.CaptionColorHex;
         _fpsCap = account.FpsCap;
+        _localName = account.LocalName;
     }
 
     public Guid Id { get; }
     public string DisplayName { get; }
     public string AvatarUrl { get; }
     public DateTimeOffset? LastLaunchedAt { get; private set; }
+
+    private string? _localName;
+    /// <summary>
+    /// Per-user local nickname override. <see langword="null"/> = no override; UI falls back to
+    /// <see cref="DisplayName"/> via <see cref="RenderName"/>. Persisted via
+    /// <see cref="IAccountStore.UpdateLocalNameAsync"/>; the ViewModel keeps this in lockstep with
+    /// the store so the UI doesn't have to re-list. Roblox-side <see cref="DisplayName"/> never
+    /// touches this — see spec §9 decision 3. v1.3.x.
+    /// </summary>
+    public string? LocalName
+    {
+        get => _localName;
+        set
+        {
+            if (SetField(ref _localName, value))
+            {
+                OnPropertyChanged(nameof(RenderName));
+            }
+        }
+    }
+
+    /// <summary>
+    /// What the UI should show wherever it used to show <see cref="DisplayName"/>. v1.3.x.
+    /// </summary>
+    public string RenderName => _localName ?? DisplayName;
 
     private bool _isMain;
     /// <summary>
