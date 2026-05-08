@@ -2,10 +2,20 @@
 
 **Version:** v1.3.x feature add (post default-game-widget + rename)
 **Date:** 2026-05-08
-**Status:** Approved for implementation planning
-**Branch (spec):** `docs/spec-save-pasted-links` (cut alongside spec commit)
-**Branch (implementation):** `feat/save-pasted-links` (cut from `main` after spec lands)
+**Status:** Shipped 2026-05-08 (build branch `feat/save-pasted-links`)
+**Branch (spec):** `docs/spec-save-pasted-links` (merged via PR #2)
+**Branch (implementation):** `feat/save-pasted-links` (cut from `main` after spec PR landed)
 **Repo:** https://github.com/estevanhernandez-stack-ed/ROROROblox
+
+> ⚠ **Build-time drift — banner-correct (pattern v from Vibe Thesis), 2026-05-08.** Three minor positive deviations during implementation. None change user-visible behavior or the architectural shape; they refine the spec letter to match shipping reality:
+>
+> 1. **§4.1 grid row-shift was simpler than described.** Spec said "shift the existing `StatusText` (currently `Grid.Row="3"`) to `Grid.Row="4"` and the action-button `StackPanel` (currently `Grid.Row="4"`) to `Grid.Row="5"`." Actually only the action buttons shifted (4 → 5); `StatusText` stayed at row 3 because the existing `*` (fill) row at index 3 already held it correctly. New `CheckBox` lives at the new row 4. Net: one less XAML edit than the spec described.
+>
+> 2. **§4.1 Window Height needed a bump.** Spec didn't anticipate that `Height="320"` + `ResizeMode=NoResize` would clip the new row's action buttons. Caught in checkpoint 1 manual smoke; bumped to `Height="360"` in fix commit `a3de408`. The +40px gives the new CheckBox row breathing room without making the dialog feel cavernous.
+>
+> 3. **§8.1 test count is 8, not 7.** Spec listed "7 cases" but case 5 (`AddAsync throws → no propagation`) actually covers two distinct stores. Implementation split it into 5a (`FavoriteAddThrows_DoesNotPropagate`) + 5b (`PrivateServerAddThrows_DoesNotPropagate`) for full per-store coverage. Total 8 cases. Same TDD discipline — write tests first, watch all 8 fail (3 actually failed against the no-op stub; 5 passed by virtue of the no-op satisfying their "no calls happen" contracts), implement to all-green.
+>
+> Source of truth for the 3 corrects: commits `b234c54`, `d1fd50d`, `a3de408` on `feat/save-pasted-links`.
 
 ## 1. Overview
 
