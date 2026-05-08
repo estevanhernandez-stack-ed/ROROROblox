@@ -21,6 +21,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
     private readonly TimeProvider _timeProvider;
     private readonly Func<long> _browserTrackerIdFactory;
     private readonly IClientAppSettingsWriter? _clientAppSettings;
+    private readonly IGlobalBasicSettingsWriter? _globalBasicSettings;
     private readonly SemaphoreSlim _launchGate = new(initialCount: 1, maxCount: 1);
     private static readonly TimeSpan FFlagReadHold = TimeSpan.FromMilliseconds(250);
 
@@ -29,10 +30,11 @@ public sealed class RobloxLauncher : IRobloxLauncher
         IAppSettings settings,
         IProcessStarter processStarter,
         IFavoriteGameStore? favorites = null,
-        IClientAppSettingsWriter? clientAppSettings = null)
+        IClientAppSettingsWriter? clientAppSettings = null,
+        IGlobalBasicSettingsWriter? globalBasicSettings = null)
         : this(api, settings, processStarter, TimeProvider.System,
               () => Random.Shared.NextInt64(1_000_000_000_000, 9_999_999_999_999),
-              favorites, clientAppSettings)
+              favorites, clientAppSettings, globalBasicSettings)
     {
     }
 
@@ -44,7 +46,8 @@ public sealed class RobloxLauncher : IRobloxLauncher
         TimeProvider timeProvider,
         Func<long> browserTrackerIdFactory,
         IFavoriteGameStore? favorites = null,
-        IClientAppSettingsWriter? clientAppSettings = null)
+        IClientAppSettingsWriter? clientAppSettings = null,
+        IGlobalBasicSettingsWriter? globalBasicSettings = null)
     {
         _api = api ?? throw new ArgumentNullException(nameof(api));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -53,6 +56,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         _browserTrackerIdFactory = browserTrackerIdFactory ?? throw new ArgumentNullException(nameof(browserTrackerIdFactory));
         _favorites = favorites;
         _clientAppSettings = clientAppSettings;
+        _globalBasicSettings = globalBasicSettings;
     }
 
     public async Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null)
@@ -66,15 +70,31 @@ public sealed class RobloxLauncher : IRobloxLauncher
         await _launchGate.WaitAsync().ConfigureAwait(false);
         try
         {
-            if (fpsCap.HasValue && _clientAppSettings is not null)
+            if (fpsCap.HasValue)
             {
-                try
+                if (_clientAppSettings is not null)
                 {
-                    await _clientAppSettings.WriteFpsAsync(fpsCap.Value).ConfigureAwait(false);
+                    try
+                    {
+                        await _clientAppSettings.WriteFpsAsync(fpsCap.Value).ConfigureAwait(false);
+                    }
+                    catch (ClientAppSettingsWriteException)
+                    {
+                        // Spec §7.7: degraded, non-blocking. Continue with the launch.
+                    }
                 }
-                catch (ClientAppSettingsWriteException)
+                if (_globalBasicSettings is not null)
                 {
-                    // Spec §7.7: degraded, non-blocking. Continue with the launch.
+                    // Wins over the FFlag for users who haven't set in-game frame-rate to
+                    // Unlimited — i.e. the dominant clan profile (banner-correction 2026-05-07).
+                    try
+                    {
+                        await _globalBasicSettings.WriteFramerateCapAsync(fpsCap.Value).ConfigureAwait(false);
+                    }
+                    catch (GlobalBasicSettingsWriteException)
+                    {
+                        // Non-blocking. Roblox falls back to whatever cap is currently in the file.
+                    }
                 }
             }
 
@@ -170,15 +190,31 @@ public sealed class RobloxLauncher : IRobloxLauncher
         await _launchGate.WaitAsync().ConfigureAwait(false);
         try
         {
-            if (fpsCap.HasValue && _clientAppSettings is not null)
+            if (fpsCap.HasValue)
             {
-                try
+                if (_clientAppSettings is not null)
                 {
-                    await _clientAppSettings.WriteFpsAsync(fpsCap.Value).ConfigureAwait(false);
+                    try
+                    {
+                        await _clientAppSettings.WriteFpsAsync(fpsCap.Value).ConfigureAwait(false);
+                    }
+                    catch (ClientAppSettingsWriteException)
+                    {
+                        // Spec §7.7: degraded, non-blocking. Continue with the launch.
+                    }
                 }
-                catch (ClientAppSettingsWriteException)
+                if (_globalBasicSettings is not null)
                 {
-                    // Spec §7.7: degraded, non-blocking. Continue with the launch.
+                    // Wins over the FFlag for users who haven't set in-game frame-rate to
+                    // Unlimited — i.e. the dominant clan profile (banner-correction 2026-05-07).
+                    try
+                    {
+                        await _globalBasicSettings.WriteFramerateCapAsync(fpsCap.Value).ConfigureAwait(false);
+                    }
+                    catch (GlobalBasicSettingsWriteException)
+                    {
+                        // Non-blocking. Roblox falls back to whatever cap is currently in the file.
+                    }
                 }
             }
 
