@@ -1130,7 +1130,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OpenSettings()
     {
-        var window = new SettingsWindow(_favorites, _api) { Owner = Application.Current.MainWindow };
+        var window = new SettingsWindow(_favorites, _privateServerStore, _api) { Owner = Application.Current.MainWindow };
         window.ShowDialog();
         // Refresh in case the user added / removed / set-default'd a game.
         _ = ReloadGamesAsync();
