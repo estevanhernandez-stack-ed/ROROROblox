@@ -117,6 +117,34 @@
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
+                <!-- v1.3.x — right-click context menu for the rename overlay. Existing row buttons
+                     (Launch As, Re-authenticate, Remove) stay as buttons. Rename / Reset are
+                     context-menu only because they're per-account-rare actions. The PlacementTarget
+                     pattern reaches up to MainWindow's DataContext for the commands; CommandParameter
+                     is the row's data context (AccountSummary). -->
+                <Border.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Rename…"
+                                  Command="{Binding PlacementTarget.DataContext.RenameItemCommand,
+                                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                  CommandParameter="{Binding}" />
+                        <MenuItem Header="Reset name"
+                                  Command="{Binding PlacementTarget.DataContext.ResetItemNameCommand,
+                                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                  CommandParameter="{Binding}">
+                            <MenuItem.Style>
+                                <Style TargetType="MenuItem">
+                                    <Setter Property="IsEnabled" Value="True" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding LocalName}" Value="{x:Null}">
+                                            <Setter Property="IsEnabled" Value="False" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </MenuItem.Style>
+                        </MenuItem>
+                    </ContextMenu>
+                </Border.ContextMenu>
 
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -421,10 +449,57 @@
                         <Grid Margin="0,0,8,0" MinWidth="160" VerticalAlignment="Center">
                             <ComboBox ItemsSource="{Binding DataContext.AvailableGames, RelativeSource={RelativeSource AncestorType=Window}}"
                                       SelectedItem="{Binding SelectedGame}"
-                                      DisplayMemberPath="Name"
                                       VerticalAlignment="Center"
                                       SelectionChanged="OnGameComboBoxSelectionChanged"
-                                      ToolTip="Game to launch this account into, or '(Paste a link...)' for a one-shot link." />
+                                      ToolTip="Game to launch this account into, or '(Paste a link...)' for a one-shot link.">
+                                <!-- v1.3.x — display LocalName when set, else Name (PriorityBinding).
+                                     Drops DisplayMemberPath="Name" for the inline template. -->
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Text>
+                                                <PriorityBinding>
+                                                    <Binding Path="LocalName" />
+                                                    <Binding Path="Name" />
+                                                </PriorityBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                                <!-- v1.3.x — right-click any item in the dropdown for Rename / Reset.
+                                     Skips the JoinByLink sentinel because BuildRenameTarget guards on
+                                     PlaceId > 0 and returns null for the sentinel. -->
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem">
+                                        <Setter Property="ContextMenu">
+                                            <Setter.Value>
+                                                <ContextMenu>
+                                                    <MenuItem Header="Rename…"
+                                                              Command="{Binding PlacementTarget.DataContext.RenameItemCommand,
+                                                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                              CommandParameter="{Binding}" />
+                                                    <MenuItem Header="Reset name"
+                                                              Command="{Binding PlacementTarget.DataContext.ResetItemNameCommand,
+                                                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                              CommandParameter="{Binding}">
+                                                        <MenuItem.Style>
+                                                            <Style TargetType="MenuItem">
+                                                                <Setter Property="IsEnabled" Value="True" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding LocalName}" Value="{x:Null}">
+                                                                        <Setter Property="IsEnabled" Value="False" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </MenuItem.Style>
+                                                    </MenuItem>
+                                                </ContextMenu>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
                             <TextBlock Text="Add games with the Games button"
                                        FontSize="11"
                                        FontStyle="Italic"
@@ -798,6 +873,43 @@
                                                         Cursor="Hand"
                                                         Command="{Binding DataContext.SetDefaultGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                         CommandParameter="{Binding}">
+                                                    <!-- v1.3.x — right-click on a widget dropdown row for the
+                                                         four-item action menu per spec §5.6. Click on the row
+                                                         (the Button itself) is set-as-default; right-click is
+                                                         the rest. -->
+                                                    <Button.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem Header="Set as default"
+                                                                      Command="{Binding PlacementTarget.DataContext.SetDefaultGameCommand,
+                                                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding}" />
+                                                            <Separator />
+                                                            <MenuItem Header="Rename…"
+                                                                      Command="{Binding PlacementTarget.DataContext.RenameItemCommand,
+                                                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding}" />
+                                                            <MenuItem Header="Reset name"
+                                                                      Command="{Binding PlacementTarget.DataContext.ResetItemNameCommand,
+                                                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding}">
+                                                                <MenuItem.Style>
+                                                                    <Style TargetType="MenuItem">
+                                                                        <Setter Property="IsEnabled" Value="True" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding LocalName}" Value="{x:Null}">
+                                                                                <Setter Property="IsEnabled" Value="False" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </MenuItem.Style>
+                                                            </MenuItem>
+                                                            <Separator />
+                                                            <MenuItem Header="Remove"
+                                                                      Command="{Binding PlacementTarget.DataContext.RemoveGameCommand,
+                                                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                                      CommandParameter="{Binding}" />
+                                                        </ContextMenu>
+                                                    </Button.ContextMenu>
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="Auto" />

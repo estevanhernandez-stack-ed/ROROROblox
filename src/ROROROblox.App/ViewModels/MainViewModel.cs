@@ -116,8 +116,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
         // v1.3.x — default-game widget + rename overlay commands.
         SetDefaultGameCommand = new RelayCommand(p => _ = SetDefaultGameAsync(p as FavoriteGame));
-        RenameItemCommand = new RelayCommand(p => _ = RenameItemAsync(p as RenameTarget));
-        ResetItemNameCommand = new RelayCommand(p => _ = ResetItemNameAsync(p as RenameTarget));
+        // RenameItemCommand / ResetItemNameCommand take the row's data context (FavoriteGame /
+        // AccountSummary / SavedPrivateServer) as CommandParameter — saves writing 6 commands or
+        // threading RenameTarget through XAML constructor binding gymnastics.
+        RenameItemCommand = new RelayCommand(p => _ = RenameItemAsync(BuildRenameTarget(p)));
+        ResetItemNameCommand = new RelayCommand(p => _ = ResetItemNameAsync(BuildRenameTarget(p)));
+        RemoveGameCommand = new RelayCommand(p => _ = RemoveGameAsync(p as FavoriteGame));
 
         // Subscribe to favorites' default-changed event so the widget readout updates without a
         // manual re-fetch. Fires after SetDefaultAsync mutates + persists, on real change only.
@@ -189,6 +193,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand SetDefaultGameCommand { get; }
     public ICommand RenameItemCommand { get; }
     public ICommand ResetItemNameCommand { get; }
+    public ICommand RemoveGameCommand { get; }
 
     /// <summary>
     /// Saved games for the default-game widget dropdown. Same content as
@@ -1407,12 +1412,49 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     // ---------- v1.3.x — default-game widget + rename overlay handlers ----------
 
+    /// <summary>
+    /// Build a <see cref="RenameTarget"/> from a row's data context. Pattern-matches on the
+    /// known entity types so XAML can pass <c>CommandParameter="{Binding}"</c> directly.
+    /// Returns null on unrecognized types (no-op at command boundary).
+    /// </summary>
+    private static RenameTarget? BuildRenameTarget(object? source) => source switch
+    {
+        FavoriteGame game when game.PlaceId > 0 =>
+            new RenameTarget(RenameTargetKind.Game, game.PlaceId, game.Name, game.LocalName),
+        AccountSummary account =>
+            new RenameTarget(RenameTargetKind.Account, account.Id, account.DisplayName, account.LocalName),
+        SavedPrivateServer server =>
+            new RenameTarget(RenameTargetKind.PrivateServer, server.Id, server.Name, server.LocalName),
+        _ => null,
+    };
+
     private void OnFavoritesDefaultChanged(object? sender, EventArgs e)
     {
         // The store has already mutated + persisted; just refresh our cached view of "what's
         // the current default" so the widget readout flips. ReloadGamesAsync also re-syncs
         // each account's SelectedGame to the new default — keeps row pickers in lockstep.
         _ = ReloadGamesAsync();
+    }
+
+    private async Task RemoveGameAsync(FavoriteGame? game)
+    {
+        if (game is null || IsJoinByLinkSentinel(game))
+        {
+            return;
+        }
+
+        try
+        {
+            await _favorites.RemoveAsync(game.PlaceId);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "RemoveAsync failed for placeId {PlaceId}.", game.PlaceId);
+            StatusBanner = "Couldn't remove that game. Disk error?";
+            return;
+        }
+
+        await ReloadGamesAsync();
     }
 
     private async Task SetDefaultGameAsync(FavoriteGame? game)

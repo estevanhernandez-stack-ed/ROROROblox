@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using ROROROblox.App.Modals;
 using ROROROblox.Core;
 
 namespace ROROROblox.App.SquadLaunch;
@@ -107,9 +108,14 @@ internal partial class SquadLaunchWindow : Window
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
         var info = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        // v1.3.x — LocalName ?? Name. Roblox-side Name still drives the placeholder when both
+        // are empty (rare).
+        var renderName = !string.IsNullOrEmpty(server.LocalName)
+            ? server.LocalName
+            : (string.IsNullOrEmpty(server.Name) ? $"Place {server.PlaceId}" : server.Name);
         info.Children.Add(new TextBlock
         {
-            Text = string.IsNullOrEmpty(server.Name) ? $"Place {server.PlaceId}" : server.Name,
+            Text = renderName,
             FontSize = 13,
             FontWeight = FontWeights.SemiBold,
             Foreground = (Brush)FindResource("WhiteBrush"),
@@ -181,8 +187,61 @@ internal partial class SquadLaunchWindow : Window
         Grid.SetColumn(removeBtn, 2);
         grid.Children.Add(removeBtn);
 
+        // v1.3.x — right-click context menu for rename/reset. Existing Launch all + Remove
+        // buttons stay; the rename actions are context-menu-only because they're rare.
+        var menu = new ContextMenu();
+        var renameItem = new MenuItem { Header = "Rename…" };
+        renameItem.Click += async (_, _) => await OnRenameSavedServerAsync(server);
+        menu.Items.Add(renameItem);
+        var resetItem = new MenuItem { Header = "Reset name", IsEnabled = server.LocalName is not null };
+        resetItem.Click += async (_, _) => await OnResetSavedServerNameAsync(server);
+        menu.Items.Add(resetItem);
+        row.ContextMenu = menu;
+
         row.Child = grid;
         return row;
+    }
+
+    private async Task OnRenameSavedServerAsync(SavedPrivateServer server)
+    {
+        var target = new RenameTarget(
+            RenameTargetKind.PrivateServer,
+            server.Id,
+            server.Name,
+            server.LocalName);
+        var result = await RenameWindow.ShowAsync(this, target);
+        if (result.Kind == RenameResultKind.Cancel)
+        {
+            return;
+        }
+        try
+        {
+            await _store.UpdateLocalNameAsync(server.Id, result.NewName);
+            await RenderListAsync();
+        }
+        catch (KeyNotFoundException)
+        {
+            StatusText.Text = "That server isn't saved any more.";
+            await RenderListAsync();
+        }
+        catch (System.IO.IOException ex)
+        {
+            StatusText.Text = $"Couldn't save name change. Disk error? ({ex.Message})";
+        }
+    }
+
+    private async Task OnResetSavedServerNameAsync(SavedPrivateServer server)
+    {
+        try
+        {
+            await _store.UpdateLocalNameAsync(server.Id, null);
+            await RenderListAsync();
+        }
+        catch (KeyNotFoundException)
+        {
+            StatusText.Text = "That server isn't saved any more.";
+            await RenderListAsync();
+        }
     }
 
     private async Task OnLaunchSavedAsync(SavedPrivateServer server)
