@@ -1,0 +1,82 @@
+<Window x:Class="ROROROblox.App.Modals.RenameWindow"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Rename"
+        Height="220" Width="400"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{DynamicResource BgBrush}">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Title heading — matches the cyan h2 the other modals open with. -->
+        <TextBlock Grid.Row="0"
+                   Text="Rename"
+                   FontSize="18" FontWeight="Bold"
+                   Foreground="{DynamicResource CyanBrush}" />
+
+        <!-- Mono-micro reference: ROBLOX NAME — {OriginalName}. The mono-stack falls back through
+             JetBrains Mono → Cascadia Mono → Consolas; users who don't have JetBrains Mono
+             installed get Cascadia (Win11 default). Brand-aligned uppercase + tracking. -->
+        <TextBlock Grid.Row="1"
+                   x:Name="OriginalNameLine"
+                   FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                   FontSize="10"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   Margin="0,12,0,4"
+                   TextTrimming="CharacterEllipsis" />
+
+        <!-- The actual rename input. Pre-filled by code-behind with CurrentLocalName ?? OriginalName.
+             Focused on load with all-text-selected for fast retype. -->
+        <TextBox Grid.Row="2"
+                 x:Name="NameTextBox"
+                 FontSize="14"
+                 Padding="8,6"
+                 MaxLines="1"
+                 Background="{DynamicResource RowBgBrush}"
+                 Foreground="{DynamicResource WhiteBrush}"
+                 BorderBrush="{DynamicResource DividerBrush}"
+                 CaretBrush="{DynamicResource CyanBrush}"
+                 BorderThickness="1" />
+
+        <!-- Reset hyperlink — visible only when CurrentLocalName != null. Code-behind sets
+             Visibility on construct. Magenta-tinted to read as a destructive-ish tertiary. -->
+        <TextBlock Grid.Row="3"
+                   x:Name="ResetRow"
+                   Margin="0,8,0,0"
+                   Visibility="Collapsed"
+                   FontSize="11">
+            <Hyperlink x:Name="ResetLink"
+                       Foreground="{DynamicResource MagentaBrush}"
+                       Click="OnResetClick"
+                       TextDecorations="None">
+                Reset to original
+            </Hyperlink>
+        </TextBlock>
+
+        <!-- Buttons row — matches the existing modal button styling. Save = cyan-fill, Cancel = ghost. -->
+        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Cancel" Padding="16,8" Margin="0,0,8,0"
+                    Background="{DynamicResource BgBrush}"
+                    Foreground="{DynamicResource WhiteBrush}"
+                    BorderBrush="#5A6982" BorderThickness="1"
+                    IsCancel="True"
+                    Click="OnCancelClick" />
+            <Button Content="Save" Padding="16,8"
+                    Background="{DynamicResource CyanBrush}"
+                    Foreground="{DynamicResource NavyBrush}"
+                    BorderThickness="0"
+                    FontWeight="Bold"
+                    IsDefault="True"
+                    Click="OnSaveClick" />
+        </StackPanel>
+    </Grid>
+</Window>
