@@ -1,84 +1,96 @@
-# ROROROblox — PRD (compressed)
+# ROROROblox v1.3.x — PRD (compressed)
 
-Stories + acceptance criteria + prioritization. For full design rationale see [`spec.md`](spec.md) → canonical at `docs/superpowers/specs/2026-05-03-rororoblox-design.md`.
+Stories + acceptance criteria + prioritization. For full design rationale see [`docs/superpowers/specs/2026-05-07-default-game-widget-and-rename-design.md`](superpowers/specs/2026-05-07-default-game-widget-and-rename-design.md).
 
-This is a Spec-first cycle (pattern mm) — the heavy thinking happened in the upstream design spec. This PRD compresses to stories that map cleanly to checklist items.
+This is a Spec-first cycle (pattern mm) — the heavy thinking happened in the upstream design spec. This PRD compresses to stories that map cleanly to checklist items. Prior cycles' PRDs are preserved in their respective specs: [`v1.1`](superpowers/specs/2026-05-03-rororoblox-design.md) and [`v1.2`](superpowers/specs/2026-05-07-per-account-fps-limiter-design.md).
 
-## Epic 1 — Core multi-instance + account management (v1.1 must-ship)
+## Epic 1 — Default-game widget (v1.3.x must-ship)
 
-### Story 1.1 — Multi-instance toggle
-**As a** Roblox player **I want** a tray toggle that flips multi-instance on/off **so that** I can run multiple clients side by side without DevTools or registry edits.
-- AC: Tray icon visible after install. Right-click menu shows current state ("Multi-Instance ON / OFF") and a toggle item.
-- AC: Toggle ON acquires `Local\ROBLOX_singletonEvent` within 200ms; toggle OFF releases it.
-- AC: With toggle ON, launching Roblox a second time produces a second running client (verified in Task Manager).
-- AC: With toggle OFF, the app does not interfere with Roblox's normal single-instance behavior.
+### Story 1.1 — Widget readout in toolbar
+**As a** Roblox player with several saved games **I want** the current default game visible at a glance in the toolbar **so that** I don't have to open Settings to remember which game `Launch multiple` is going to start.
+- AC: `MainWindow` Header Row 2 shows a `ToggleButton` between the `Games` button and the `Launch multiple` CTA, sized `MinWidth=200 / MaxWidth=340`.
+- AC: Readout displays `LocalName ?? Name` of the current default game (icon + `DEFAULT` micro-label + game name + chevron).
+- AC: Widget reads from `MainViewModel.DefaultGameDisplay` (INPC-backed), which itself reads `IFavoriteGameStore`. No new external API calls.
+- AC: When `IFavoriteGameStore.DefaultChanged` fires, the readout updates without manual refresh.
 
-### Story 1.2 — Add Account
-**As a** user **I want** to add a saved Roblox account by logging in **so that** I can quick-launch it later.
-- AC: "Add Account" opens a WebView2 modal pre-pointed at `roblox.com/login` on a fresh user-data folder (no leaked previous-account state).
-- AC: After successful login, modal closes; account row appears in the list with display name + avatar.
-- AC: Cookie is encrypted at rest (DPAPI), never written to logs, never serialized in plaintext.
-- AC: Cancel returns to main window with no row added; login failure surfaces "Login was unsuccessful."
+### Story 1.2 — Pick a different game from the dropdown
+**As a** user **I want** to click the widget and pick a saved game from a dropdown **so that** I can swap the default in one click instead of opening the Games settings sheet.
+- AC: Click on the widget toggles a `Popup` placed below it; current default is highlighted (`DEFAULT` tag); other rows show `LocalName ?? Name` only.
+- AC: Click on a non-default row fires `SetDefaultGameCommand`, calls `IFavoriteGameStore.SetDefaultAsync(placeId)`, mutates `favorites.json` via the existing atomic-write contract, and fires `DefaultChanged`.
+- AC: Popup closes automatically (`StaysOpen=False`) once selection is made.
+- AC: Keyboard: Esc closes the popup with no change.
 
-### Story 1.3 — Launch As
-**As a** user **I want** to click "Launch as <account>" **so that** Roblox opens already signed in as that account.
-- AC: One click on the account row spawns a Roblox client signed in as that account.
-- AC: With Story 1.1's toggle ON, repeated Launch-As against different accounts spawns multiple clients side by side.
-- AC: 401 from auth-ticket endpoint surfaces "Session expired" badge + Re-authenticate button (Story 2.3 flow).
-- AC: `Win32Exception` on `Process.Start("roblox-player:...")` surfaces "Roblox doesn't appear to be installed" modal with Download Roblox + I have Bloxstrap buttons.
-- AC: `lastLaunchedAt` updates on success.
+### Story 1.3 — Empty-state + Manage games entry
+**As a** new user with zero saved games **I want** the widget to tell me I have no defaults and how to add one **so that** I'm not staring at a broken-looking control.
+- AC: When `AvailableGames.Count == 0`, the widget shows a muted "No saved games yet" readout and routes its click to `OpenSettingsCommand` (Games settings sheet) instead of opening the popup.
+- AC: When at least one game is saved, popup footer button `Manage games…` invokes `OpenSettingsCommand`.
 
-### Story 1.4 — Remove / Re-authenticate account
-**As a** user **I want** to remove a saved account or refresh its session **so that** I can manage my account list over time.
-- AC: Remove asks for confirmation; on confirm, account row disappears and disk no longer contains its data after next save.
-- AC: Re-authenticate opens the same WebView2 flow as Add but is contextually labeled; new cookie replaces the old one in-place; row turns green.
+### Story 1.4 — Hidden in compact mode
+**As a** user running RORORO in compact mode **I want** the widget to disappear with the rest of the header chrome **so that** my row of accounts doesn't get squeezed.
+- AC: The widget binds to the same `IsCompact` trigger pattern the surrounding header already uses; it collapses (not hides) so the toolbar reflows cleanly.
 
-### Story 1.5 — First-run + tray UX
-**As a** "common Windows user" **I want** the app to be obvious to use after installing **so that** I don't need a tutorial.
-- AC: After install, tray icon appears within 5 seconds of first run.
-- AC: Right-click tray → Open shows main window. Closing main window minimizes to tray (does not quit).
-- AC: Quitting from tray menu fully exits and releases the mutex.
-- AC: Run-on-login toggle in main window settings writes/clears `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`.
+## Epic 2 — Local rename overlay (v1.3.x must-ship)
 
-## Epic 2 — Resilience + distribution (v1.1 must-ship)
+### Story 2.1 — Right-click → Rename… on every relevant surface
+**As a** user **I want** a right-click `Rename…` option everywhere I see a saved game, saved private server, or account **so that** I can replace long Roblox-side names with something I recognize at a glance.
+- AC: Right-click context menu appears on five trigger surfaces with the items below. `Reset name` is enabled only when `LocalName != null`.
+  - Default-game widget dropdown row: `Set as default · Rename… · Reset name · Remove`
+  - Per-row game ComboBox dropdown item: `Rename… · Reset name`
+  - Games settings sheet row: `Set as default · Rename… · Reset name · Remove`
+  - Squad Launch sheet (saved private server row): `Rename… · Reset name · Remove` (existing button stays)
+  - Account row (main + compact): `Rename… · Reset name`
+- AC: `Rename…` fires `RenameItemCommand` with a `RenameTarget {Kind, Id, OriginalName, CurrentLocalName}` shaped to the surface.
+- AC: `Reset name` calls the right `UpdateLocalNameAsync(id, null)` directly (no popup).
 
-### Story 2.1 — Auto-update
-- AC: Velopack checks for updates once per app launch (debounced 24h between checks).
-- AC: User can decline an update; app continues working.
-- AC: GitHub Releases is the update source.
+### Story 2.2 — RenameWindow save / cancel / reset
+**As a** user **I want** a small popup that shows the original Roblox name and lets me type a local one **so that** I always know what the underlying name is and can revert.
+- AC: `RenameWindow` is a `ui:FluentWindow` (~360×180, non-resizable, owner-modal) that matches existing modal chrome — quality bar from cycle #1 applies (must not look like a programmatic placeholder).
+- AC: Title `Rename`. Mono-micro line `ROBLOX NAME — {OriginalName}` is always visible. TextBox pre-filled with `CurrentLocalName ?? OriginalName`.
+- AC: `Reset to original` hyperlink visible only when `CurrentLocalName != null`; clicking it calls `UpdateLocalNameAsync(id, null)` and closes the window.
+- AC: Save trims input; empty/whitespace normalizes to `null` (effective reset, no error toast).
+- AC: Enter = Save default; Esc = Cancel. Cancel makes no store call.
+- AC: One window class is shared across all three entity kinds; `MainViewModel` switches on `RenameTarget.Kind` to dispatch to the right store.
 
-### Story 2.2 — Roblox-update detection
-- AC: On startup, app fetches a remote config file (GitHub-hosted alongside releases) with known-good Roblox version range and the current mutex name.
-- AC: If the installed Roblox version is outside the known-good range, a yellow banner appears in main window with the documented copy + GitHub-issues link.
-- AC: Mutex name is sourced from the remote config (NOT hardcoded) — when Roblox renames it, an updated config + Velopack release ships within hours, not a binary rebuild cycle.
+### Story 2.3 — `LocalName ?? Name` rendering across all surfaces
+**As a** user who renamed something **I want** my local name to show everywhere the original used to **so that** I'm not playing find-the-rename across surfaces.
+- AC: All 12 surfaces from spec §7 render via `LocalName ?? Name` (or `LocalName ?? DisplayName` for accounts): default-game widget readout, widget dropdown rows, per-row game ComboBox display, ComboBox dropdown items, Games settings sheet rows, Squad Launch sheet rows, account row primary label, account MAIN-pill row, follow-strip chips (rendered when v1.2 follow-feature unmask lands — see memory `project_rororo_follow_masked_v1.2`), compact-mode account row, tray menu `Start [Account]` label, Session History entries.
+- AC: After rename, `MainViewModel` re-reads the relevant collection and raises INPC; no manual surface-by-surface refresh required.
+- AC: After reset, the same surfaces revert to the Roblox-side original.
 
-### Story 2.3 — Cookie expired
-- AC: 401 from auth-ticket endpoint marks the row yellow with a "Session expired" badge and a Re-authenticate button.
-- AC: Re-authenticate opens the WebView2 flow; new cookie replaces the old via `IAccountStore.UpdateCookieAsync`; row turns green; no data loss.
+### Story 2.4 — Forward/backward-compatible JSON storage
+**As a** user **I want** my renames to survive across upgrades and downgrades **so that** I don't lose my work when I update RORORO or roll back a flaky release.
+- AC: `FavoriteGame`, `SavedPrivateServer`, and `Account` each gain a `LocalName: string?` property defaulting to `null`.
+- AC: Loading a legacy `favorites.json` / `private-servers.json` / `accounts.dat` written by an older RORORO version deserializes cleanly with `LocalName = null` (System.Text.Json default-fill behavior).
+- AC: An older RORORO version reading a file written by v1.3.x ignores the unknown `LocalName` property and roundtrips it cleanly on next write — no silent strip.
+- AC: Each store gains `UpdateLocalNameAsync(id, string? localName)` with the same atomic-write contract as existing single-property updates. Calling with a non-existent ID throws `KeyNotFoundException` (matches `SetDefaultAsync` shape).
+- AC: `IFavoriteGameStore` exposes a new `event EventHandler? DefaultChanged` fired after `SetDefaultAsync` completes successfully.
 
-### Story 2.4 — DPAPI failure recovery
-- AC: On `CryptographicException` reading `accounts.dat`, modal: "Your saved accounts can't be unlocked on this PC..." with [Start Fresh] and [Quit] buttons.
-- AC: Start Fresh renames the file to `accounts-corrupt-<date>.dat` and creates an empty store; the user's Roblox accounts themselves are unaffected, they just need to log in again.
+### Story 2.5 — Roblox-side refresh never overwrites a local rename
+**As a** user **I want** my rename to survive when Roblox-side name fetches happen in the background **so that** my local override doesn't get clobbered.
+- AC: `IRobloxApi.GetUserProfileAsync` updates `Account.DisplayName` and never touches `LocalName`.
+- AC: `IRobloxApi.GetUniverseInfo` (and equivalent game-name refreshes) update `FavoriteGame.Name` and never touch `LocalName`.
+- AC: Re-adding a saved game with the same `placeId` (existing replace semantics) preserves the prior `LocalName`. Same for re-adding a saved private server with the same `code`.
 
-### Story 2.5 — Missing-runtime modals
-- AC: WebView2 runtime missing → modal with [Install Now] (downloads Evergreen Bootstrapper) and [Learn More].
-- AC: Roblox not installed → modal with [Download Roblox] and [I have Bloxstrap].
-
-### Story 2.6 — Distribution
-- AC: MSIX builds successfully via Windows Application Packaging Project. Two flavors produced: Store-signed and self-signed sideload.
-- AC: Self-signed sideload installs on a clean Win11 VM after the documented SmartScreen "More info → Run anyway" path; README + 30s video link cover the bypass.
-- AC: Microsoft Store submission package validates locally with Microsoft's MSIX verification tooling (`MakeAppx.exe verify` + `signtool verify`).
+### Story 2.6 — Edge-case error surfacing
+**As a** user **I want** rename errors to be visible but never destructive **so that** I know what happened without losing in-memory state.
+- AC: `KeyNotFoundException` on `UpdateLocalNameAsync` (concurrent removal from another surface) → `MainViewModel` catches and sets a quiet status banner; the popup closes; the in-memory list reflects reality.
+- AC: `IOException` from atomic-write failure (disk full, permissions) → status banner reads `"Couldn't save name change. Disk error?"`; in-memory state stays correct for the session; user can retry.
+- AC: Inputs >50 chars are allowed; UI truncates with ellipsis everywhere it renders.
+- AC: Two items renamed to the same string is allowed — IDs disambiguate; this is local display only.
 
 ## Prioritization
 
-- **P0 (must ship in v1.1):** All Epic 1 stories + 2.3 + 2.4 + 2.5 + 2.6.
-- **P0.5 (gate before broader distribution):** 2.1 + 2.2.
-- **P1 (v1.2):** Per-cookie encryption, per-account WebView2 profiles, auto-tile, live "running" indicator, cross-machine cookie sync (only if requested by clan).
+- **P0 (must ship in v1.3.x):** all Epic 1 + Epic 2 stories.
+- **P1 (deferred — see spec §10 + §11):** combined Games + Servers settings sheet (or dedicated `Servers` toolbar button); tray-menu per-account list (would auto-render `LocalName ?? DisplayName`); bulk rename / find-and-replace; auto-shorten heuristics on long Roblox names.
+- **Forward-looking (separate cycle, not v1.3.x):** Mac parity port at [`rororo-mac`](https://github.com/estevanhernandez-stack-ed/rororo-mac); shared on-disk JSON shape means the schema ports for free.
 
 ## Explicit cuts
 
-- Macros / input automation (separate product **MaCro**)
-- Setup-sharing / clan tooling (screenshots are the current pattern)
-- Cross-machine cookie sync (DPAPI per-machine is intentional)
-- E2E automation against real roblox.com (would require bot accounts + risks Roblox flagging)
-- WPF visual snapshot tests (too brittle for v1's small UI)
+- Mac parity in this cycle (Mac is single-URL today; port is its own cycle once Windows ships).
+- Bulk rename / find-and-replace.
+- Sync overrides between Mac and Windows installations.
+- A new "Saved private servers" settings sheet — Squad Launch sheet stays the surface; discoverability concern logged in spec §10 for a future /reflect cycle.
+- Tray-menu per-account list (no surface to attach a rename to today).
+- Auto-shorten heuristics on long Roblox names. Renames are explicit user choices; UI truncates with ellipsis.
+- Pencil-on-hover affordance — right-click is the chosen gesture per spec §9 decision 4. Trade documented; revisitable if user testing flags discoverability.
+- WPF visual snapshot tests (consistent with cycle #1 — too brittle for v1.x's small UI; manual smoke checklist in spec §12 covers regression).

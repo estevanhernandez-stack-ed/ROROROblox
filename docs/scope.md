@@ -1,26 +1,29 @@
 # ROROROblox — Scope (pointer stub)
 
-This is a Spec-first Cart cycle (pattern mm from cycle #13's reflection). The substantive scope decisions live in the upstream design spec authored before /onboard:
+Spec-first Cart cycle (pattern mm) — substantive scope decisions live in the upstream design spec authored before /onboard:
 
-→ [docs/superpowers/specs/2026-05-03-rororoblox-design.md](superpowers/specs/2026-05-03-rororoblox-design.md)
+→ [docs/superpowers/specs/2026-05-07-default-game-widget-and-rename-design.md](superpowers/specs/2026-05-07-default-game-widget-and-rename-design.md)
 
-## In scope (v1.1)
+Cycle history: v1.1 scope (multi-instance + saved-account quick-launch) lives in [`2026-05-03-rororoblox-design.md`](superpowers/specs/2026-05-03-rororoblox-design.md). v1.2 (per-account FPS limiter via `GlobalBasicSettingsWriter`) shipped 2026-05-07; spec at [`2026-05-07-per-account-fps-limiter-design.md`](superpowers/specs/2026-05-07-per-account-fps-limiter-design.md).
 
-- One-click multi-instance Roblox via tray toggle
-- Saved Roblox accounts with per-account quick-launch
-- "Common Windows user" install + first-run UX (no DevTools, no registry edits)
-- Microsoft Store distribution as primary path; self-signed MSIX sideload as fallback
+## In scope (v1.3.x)
+
+- Default-game quick-switch widget in `MainWindow` Header Row 2 (between `Games` and `Launch multiple`). Reads existing `IFavoriteGameStore`. Click → dropdown → pick → new default. Empty-state link to Games settings sheet. Hidden in compact mode.
+- Per-record `LocalName: string?` rename overlay across `FavoriteGame`, `SavedPrivateServer`, and `Account`. Right-click → `Rename…` / `Reset name` from five trigger surfaces (widget dropdown, per-row game ComboBox, Games settings sheet, Squad Launch sheet, account row main + compact).
+- `LocalName ?? Name` (or `LocalName ?? DisplayName` for accounts) rendering across every UI surface that shows the original — 12 read-side surfaces enumerated in spec §7.
+- Forward/backward-compatible JSON storage on all three on-disk stores (`favorites.json`, `private-servers.json`, `accounts.dat`). Old records load with `LocalName = null`; older RORORO versions ignore the unknown property.
+- Single shared `RenameWindow` (`ui:FluentWindow`, ~360×180, owner-modal) reused across all three entity kinds via a `RenameTarget` DTO.
 
 ## Out of scope (deferred or never)
 
-- Macros / input automation (lives in **MaCro**, separate macOS product — explicitly walled off)
-- Setup sharing or clan tooling (clan members share screenshots today, not files)
-- Cross-machine cookie sync (DPAPI is per-machine by design)
-- Auto-tile windows (deferred to v1.2)
-- Live "Account is running" indicator (deferred to v1.2)
-- Per-cookie encryption + per-account WebView2 profiles (v1.2)
-- E2E automation against real roblox.com (manual smoke gate is the v1 trade)
+- **Mac parity port.** Mac is single-URL today; the widget + rename feature ports to Mac as a separate cycle once Windows ships. The on-disk JSON shape is identical so the port inherits the schema for free.
+- Bulk rename / find-and-replace. One item at a time.
+- Sync overrides between Mac and Windows installations (no cookie / setting sync at all per v1 design).
+- A new "Saved private servers" settings sheet — Squad Launch stays the surface; discoverability concern logged in spec §10 for a future cycle.
+- Tray-menu per-account list (no surface to attach a rename to today; if added later it reads `LocalName ?? DisplayName` for free).
+- Auto-shorten heuristics on long Roblox names. Renames are explicit user choices; UI truncates with ellipsis.
+- Pencil-on-hover affordance — right-click is the chosen gesture (spec §9 decision 4).
 
 ## Distribution audience
 
-Pet Sim 99 clan first (non-technical Windows users running multi-alt for farming), Microsoft Store second. UX bar is "common Windows user" — assume zero comfort with DevTools, registry, command-line, or unsigned-binary install warnings.
+Carried unchanged from v1.1 — Pet Sim 99 clan first (non-technical Windows users running multi-alt for farming), Microsoft Store second. The rename feature exists specifically because long Roblox game names crowd this audience's UI; the default-game widget exists because they swap defaults more often than Settings-sheet round-trips support comfortably.
