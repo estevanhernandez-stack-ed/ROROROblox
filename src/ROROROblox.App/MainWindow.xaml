@@ -437,6 +437,29 @@
                                        Visibility="{Binding DataContext.AvailableGames.Count, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ZeroToVisibilityConverter}}" />
                         </Grid>
 
+                        <!-- Per-account FPS cap. ComboBox is populated with static items; code-behind
+                             handles Loaded (initial selection) and SelectionChanged (persist + route to VM).
+                             Tag on each item carries the int value (or x:Null for "no cap"). -->
+                        <ComboBox
+                            Width="120"
+                            Margin="0,0,8,0"
+                            VerticalAlignment="Center"
+                            SelectionChanged="FpsCombo_SelectionChanged"
+                            Loaded="FpsCombo_Loaded"
+                            ToolTip="FPS cap applied at launch (DFIntTaskSchedulerTargetFps + GlobalBasicSettings FramerateCap)">
+                            <ComboBoxItem Content="— FPS"         Tag="{x:Null}" />
+                            <ComboBoxItem Content="20 FPS"        Tag="20" />
+                            <ComboBoxItem Content="30 FPS"        Tag="30" />
+                            <ComboBoxItem Content="45 FPS"        Tag="45" />
+                            <ComboBoxItem Content="60 FPS"        Tag="60" />
+                            <ComboBoxItem Content="90 FPS"        Tag="90" />
+                            <ComboBoxItem Content="120 FPS"       Tag="120" />
+                            <ComboBoxItem Content="144 FPS"       Tag="144" />
+                            <ComboBoxItem Content="165 FPS"       Tag="165" />
+                            <ComboBoxItem Content="240 FPS"       Tag="240" />
+                            <ComboBoxItem Content="Unlimited FPS" Tag="9999" />
+                        </ComboBox>
+
                         <!-- Launch As (hidden while running — Stop takes its place) -->
                         <Button Content="Launch As"
                                 Command="{Binding DataContext.LaunchAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -493,6 +516,7 @@
             <RowDefinition Height="Auto" />  <!-- Header -->
             <RowDefinition Height="Auto" />  <!-- StatusBanner -->
             <RowDefinition Height="Auto" />  <!-- Compat banner -->
+            <RowDefinition Height="Auto" />  <!-- Bloxstrap warning banner -->
             <RowDefinition Height="*" />     <!-- Account list -->
             <RowDefinition Height="Auto" />  <!-- Footer -->
         </Grid.RowDefinitions>
@@ -672,8 +696,30 @@
                        TextWrapping="Wrap" />
         </Border>
 
-        <!-- Row 4 — switches between full account list (normal) and compact strip (compact mode). -->
-        <Grid Grid.Row="4">
+        <!-- Bloxstrap warning banner — visible when BloxstrapWarningVisible is true.
+             Warm amber tone distinct from the red-ish compat banner above it. -->
+        <Border Grid.Row="4"
+                Background="#3F3000"
+                BorderBrush="#8F7000"
+                BorderThickness="0,0,0,1"
+                Padding="16,10"
+                Visibility="{Binding BloxstrapWarningVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+            <DockPanel>
+                <Button
+                    DockPanel.Dock="Right"
+                    Content="Dismiss"
+                    Margin="12,0,0,0"
+                    Command="{Binding DismissBloxstrapWarningCommand}" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    TextWrapping="Wrap"
+                    Foreground="#FFE3A6"
+                    Text="Bloxstrap is set as your Roblox launcher — it will override per-account FPS. Set FPS in Bloxstrap to match." />
+            </DockPanel>
+        </Border>
+
+        <!-- Row 5 — switches between full account list (normal) and compact strip (compact mode). -->
+        <Grid Grid.Row="5">
             <!-- Full account list — visible when NOT compact. Horizontal scroll is a
                  No horizontal scrollbar — Window.MinWidth=860 floors the window wide enough
                  that all row content fits. If the user shrinks below that we'd rather clip /
@@ -857,7 +903,7 @@
         </Grid>
 
         <!-- Footer -->
-        <Border Grid.Row="5" Padding="16,8" Background="{DynamicResource NavyBrush}"
+        <Border Grid.Row="6" Padding="16,8" Background="{DynamicResource NavyBrush}"
                 BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,1,0,0">
             <Grid>
                 <Grid.ColumnDefinitions>

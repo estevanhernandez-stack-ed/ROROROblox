@@ -25,4 +25,11 @@ public interface IAppSettings
     /// </summary>
     Task<string?> GetActiveThemeIdAsync();
     Task SetActiveThemeIdAsync(string themeId);
+
+    /// <summary>
+    /// True after the user has dismissed the "Bloxstrap will override per-account FPS"
+    /// banner. Persisted so the banner does not re-render on every launch.
+    /// </summary>
+    Task<bool> GetBloxstrapWarningDismissedAsync();
+    Task SetBloxstrapWarningDismissedAsync(bool value);
 }

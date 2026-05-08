@@ -48,7 +48,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             var blob = await LoadAsync().ConfigureAwait(false);
             return blob.Accounts
-                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex))
+                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap))
                 .ToList();
         }
         finally
@@ -90,7 +90,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 SortOrder: nextSortOrder);
             blob.Accounts.Add(stored);
             await SaveAsync(blob).ConfigureAwait(false);
-            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex);
+            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap);
         }
         finally
         {
@@ -117,6 +117,34 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 return; // no-op write avoidance
             }
             blob.Accounts[idx] = blob.Accounts[idx] with { CaptionColorHex = normalized };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task SetFpsCapAsync(Guid id, int? fps)
+    {
+        // Caller is responsible for clamping; we still defensively clamp to [10, 9999] so
+        // disk never holds an invalid value.
+        var clamped = fps is null ? (int?)null : FpsPresets.ClampCustom(fps.Value);
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var idx = blob.Accounts.FindIndex(a => a.Id == id);
+            if (idx < 0)
+            {
+                return;
+            }
+            if (blob.Accounts[idx].FpsCap == clamped)
+            {
+                return; // no-op write avoidance
+            }
+            blob.Accounts[idx] = blob.Accounts[idx] with { FpsCap = clamped };
             await SaveAsync(blob).ConfigureAwait(false);
         }
         finally
@@ -383,7 +411,8 @@ public sealed class AccountStore : IAccountStore, IDisposable
         bool IsMain = false,
         int SortOrder = 0,
         bool IsSelected = true,
-        string? CaptionColorHex = null);
+        string? CaptionColorHex = null,
+        int? FpsCap = null);
 
     internal sealed record StoredAccountsBlob(
         int Version,

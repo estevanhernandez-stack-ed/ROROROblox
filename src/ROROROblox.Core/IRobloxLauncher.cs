@@ -15,12 +15,12 @@ public interface IRobloxLauncher
     /// place; <see cref="LaunchTarget.PrivateServer"/> targets a VIP server with placeId +
     /// accessCode; <see cref="LaunchTarget.FollowFriend"/> follows a friend's userId.
     /// </summary>
-    Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target);
+    Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null);
 
     /// <summary>
     /// Legacy string-based overload. Pasted URLs run through <see cref="LaunchTarget.FromUrl"/>
     /// — a private-server share URL becomes a <see cref="LaunchTarget.PrivateServer"/> automatically.
     /// Null/empty placeUrl falls back to <see cref="LaunchTarget.DefaultGame"/>.
     /// </summary>
-    Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null);
+    Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null);
 }

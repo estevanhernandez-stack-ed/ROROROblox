@@ -132,6 +132,35 @@ public sealed class AppSettings : IAppSettings, IDisposable
         }
     }
 
+    public async Task<bool> GetBloxstrapWarningDismissedAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var settings = await LoadAsync().ConfigureAwait(false);
+            return settings.BloxstrapWarningDismissed;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task SetBloxstrapWarningDismissedAsync(bool value)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var settings = await LoadAsync().ConfigureAwait(false);
+            settings = settings with { BloxstrapWarningDismissed = value };
+            await SaveAsync(settings).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     private async Task<SettingsBlob> LoadAsync()
     {
         if (!File.Exists(_filePath))
@@ -192,10 +221,12 @@ public sealed class AppSettings : IAppSettings, IDisposable
     }
 
     // SettingsBlob: missing fields decode as defaults (System.Text.Json), so older v1 blobs
-    // without LaunchMainOnStartup load cleanly with it false — no migration step.
+    // without LaunchMainOnStartup or BloxstrapWarningDismissed load cleanly with those
+    // fields false — no migration step.
     private sealed record SettingsBlob(
         int Version,
         string? DefaultPlaceUrl,
         bool LaunchMainOnStartup = false,
-        string? ActiveThemeId = null);
+        string? ActiveThemeId = null,
+        bool BloxstrapWarningDismissed = false);
 }

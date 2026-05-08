@@ -147,4 +147,36 @@ public class AppSettingsTests : IDisposable
         await settings.SetLaunchMainOnStartupAsync(false);
         Assert.Equal("https://place", await settings.GetDefaultPlaceUrlAsync());
     }
+
+    [Fact]
+    public async Task BloxstrapWarningDismissed_DefaultsToFalse()
+    {
+        using var settings = new AppSettings(_filePath);
+
+        Assert.False(await settings.GetBloxstrapWarningDismissedAsync());
+    }
+
+    [Fact]
+    public async Task BloxstrapWarningDismissed_PersistsAcrossInstances()
+    {
+        {
+            using var first = new AppSettings(_filePath);
+            await first.SetBloxstrapWarningDismissedAsync(true);
+        }
+
+        using var second = new AppSettings(_filePath);
+        Assert.True(await second.GetBloxstrapWarningDismissedAsync());
+    }
+
+    [Fact]
+    public async Task BloxstrapWarningDismissed_RoundTripsTrueAndFalse()
+    {
+        using var settings = new AppSettings(_filePath);
+
+        await settings.SetBloxstrapWarningDismissedAsync(true);
+        Assert.True(await settings.GetBloxstrapWarningDismissedAsync());
+
+        await settings.SetBloxstrapWarningDismissedAsync(false);
+        Assert.False(await settings.GetBloxstrapWarningDismissedAsync());
+    }
 }

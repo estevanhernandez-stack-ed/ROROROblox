@@ -21,6 +21,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private DateTimeOffset? _lastClosedAtUtc;
     private bool _isSelected = true;
     private string? _captionColorHex;
+    private int? _fpsCap;
     private bool _isDropTarget;
 
     public AccountSummary(Account account)
@@ -32,6 +33,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
         _isMain = account.IsMain;
         _isSelected = account.IsSelected;
         _captionColorHex = account.CaptionColorHex;
+        _fpsCap = account.FpsCap;
     }
 
     public Guid Id { get; }
@@ -165,6 +167,18 @@ public sealed class AccountSummary : INotifyPropertyChanged
     {
         get => _captionColorHex;
         set => SetField(ref _captionColorHex, value);
+    }
+
+    /// <summary>
+    /// Per-account FPS cap, or null for "don't write" (= leave Roblox's default).
+    /// Bound to the ComboBox on each row. Set values fall in the
+    /// <see cref="ROROROblox.Core.FpsPresets"/> range (10..9999); null clears the FFlag.
+    /// MainViewModel persists changes via <see cref="ROROROblox.Core.IAccountStore.SetFpsCapAsync"/>.
+    /// </summary>
+    public int? FpsCap
+    {
+        get => _fpsCap;
+        set => SetField(ref _fpsCap, value);
     }
 
     /// <summary>Three-state colored dot: <c>green</c> running / <c>yellow</c> expired / <c>grey</c> idle.</summary>

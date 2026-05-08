@@ -365,7 +365,8 @@ public class RobloxLauncherTests
         string ticket,
         string? defaultPlaceUrl,
         int startResult = 1,
-        Exception? startThrows = null)
+        Exception? startThrows = null,
+        IClientAppSettingsWriter? clientAppSettings = null)
     {
         var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket(ticket, DateTimeOffset.UtcNow)));
         var settings = new InMemoryAppSettings { DefaultPlaceUrl = defaultPlaceUrl };
@@ -374,7 +375,7 @@ public class RobloxLauncherTests
             if (startThrows is not null) throw startThrows;
             return startResult;
         });
-        var launcher = new RobloxLauncher(api, settings, processStarter);
+        var launcher = new RobloxLauncher(api, settings, processStarter, favorites: null, clientAppSettings: clientAppSettings);
         return (launcher, settings, processStarter);
     }
 
@@ -409,6 +410,9 @@ public class RobloxLauncherTests
         public Task SetLaunchMainOnStartupAsync(bool enabled) { LaunchMainOnStartup = enabled; return Task.CompletedTask; }
         public Task<string?> GetActiveThemeIdAsync() => Task.FromResult(ActiveThemeId);
         public Task SetActiveThemeIdAsync(string themeId) { ActiveThemeId = themeId; return Task.CompletedTask; }
+        public bool BloxstrapWarningDismissed { get; set; }
+        public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(BloxstrapWarningDismissed);
+        public Task SetBloxstrapWarningDismissedAsync(bool value) { BloxstrapWarningDismissed = value; return Task.CompletedTask; }
     }
 
     private sealed class RecordingProcessStarter : IProcessStarter
@@ -425,6 +429,36 @@ public class RobloxLauncherTests
         {
             LastUri = fileNameOrUri;
             return _behavior(fileNameOrUri);
+        }
+    }
+
+    // === Sequencing / semaphore ===
+
+    [Fact]
+    public async Task LaunchAsync_TwoConcurrentCalls_AreSerialized()
+    {
+        var writeOrder = new List<int>();
+        var writer = new RecordingWriter(writeOrder);
+        var (launcher, _, _) = CreateLauncher(
+            ticket: "T",
+            defaultPlaceUrl: TestPlaceUrl,
+            startResult: 1,
+            clientAppSettings: writer);
+
+        var firstTask = launcher.LaunchAsync("cookie-a", placeUrl: null, fpsCap: 30);
+        var secondTask = launcher.LaunchAsync("cookie-b", placeUrl: null, fpsCap: 144);
+
+        await Task.WhenAll(firstTask, secondTask);
+
+        Assert.Equal(new[] { 30, 144 }, writeOrder);
+    }
+
+    private sealed class RecordingWriter(List<int> writeOrder) : IClientAppSettingsWriter
+    {
+        public Task WriteFpsAsync(int? fps, CancellationToken ct = default)
+        {
+            if (fps.HasValue) writeOrder.Add(fps.Value);
+            return Task.CompletedTask;
         }
     }
 }
