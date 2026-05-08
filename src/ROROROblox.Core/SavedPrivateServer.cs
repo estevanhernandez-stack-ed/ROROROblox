@@ -28,7 +28,8 @@ public sealed record SavedPrivateServer(
     string PlaceName,
     string ThumbnailUrl,
     DateTimeOffset AddedAt,
-    DateTimeOffset? LastLaunchedAt)
+    DateTimeOffset? LastLaunchedAt,
+    string? LocalName = null)
 {
     /// <summary>
     /// Back-compat shim for older storage blobs that persisted only an <c>accessCode</c> field

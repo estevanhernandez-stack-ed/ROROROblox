@@ -48,7 +48,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             var blob = await LoadAsync().ConfigureAwait(false);
             return blob.Accounts
-                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap))
+                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName))
                 .ToList();
         }
         finally
@@ -90,7 +90,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 SortOrder: nextSortOrder);
             blob.Accounts.Add(stored);
             await SaveAsync(blob).ConfigureAwait(false);
-            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap);
+            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName);
         }
         finally
         {
@@ -412,7 +412,8 @@ public sealed class AccountStore : IAccountStore, IDisposable
         int SortOrder = 0,
         bool IsSelected = true,
         string? CaptionColorHex = null,
-        int? FpsCap = null);
+        int? FpsCap = null,
+        string? LocalName = null);
 
     internal sealed record StoredAccountsBlob(
         int Version,

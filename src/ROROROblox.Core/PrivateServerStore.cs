@@ -220,7 +220,8 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
                     PlaceName: s.PlaceName ?? string.Empty,
                     ThumbnailUrl: s.ThumbnailUrl ?? string.Empty,
                     AddedAt: s.AddedAt,
-                    LastLaunchedAt: s.LastLaunchedAt));
+                    LastLaunchedAt: s.LastLaunchedAt,
+                    LocalName: s.LocalName));
             }
             return new PrivateServersBlob(Version: 1, Servers: migrated);
         }
@@ -272,5 +273,6 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
         string? PlaceName,
         string? ThumbnailUrl,
         DateTimeOffset AddedAt,
-        DateTimeOffset? LastLaunchedAt);
+        DateTimeOffset? LastLaunchedAt,
+        string? LocalName = null);
 }
