@@ -99,6 +99,10 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
             var existingIndex = blob.Servers.FindIndex(s =>
                 s.PlaceId == placeId && string.Equals(s.Code, code, StringComparison.Ordinal));
 
+            // LocalName survives re-add (spec §8) — preserve the existing local nickname
+            // when the user's add path runs against an already-saved (placeId, code) pair.
+            var preservedLocalName = existingIndex >= 0 ? blob.Servers[existingIndex].LocalName : null;
+
             var record = new SavedPrivateServer(
                 Id: existingIndex >= 0 ? blob.Servers[existingIndex].Id : Guid.NewGuid(),
                 PlaceId: placeId,
@@ -108,7 +112,8 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
                 PlaceName: placeName ?? string.Empty,
                 ThumbnailUrl: thumbnailUrl ?? string.Empty,
                 AddedAt: existingIndex >= 0 ? blob.Servers[existingIndex].AddedAt : DateTimeOffset.UtcNow,
-                LastLaunchedAt: existingIndex >= 0 ? blob.Servers[existingIndex].LastLaunchedAt : null);
+                LastLaunchedAt: existingIndex >= 0 ? blob.Servers[existingIndex].LastLaunchedAt : null,
+                LocalName: preservedLocalName);
 
             if (existingIndex >= 0)
             {
@@ -140,6 +145,32 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
                 return;
             }
             blob.Servers.RemoveAt(idx);
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task UpdateLocalNameAsync(Guid serverId, string? localName)
+    {
+        var normalized = string.IsNullOrWhiteSpace(localName) ? null : localName.Trim();
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var idx = blob.Servers.FindIndex(s => s.Id == serverId);
+            if (idx < 0)
+            {
+                throw new KeyNotFoundException($"Private server {serverId} not found.");
+            }
+            if (string.Equals(blob.Servers[idx].LocalName, normalized, StringComparison.Ordinal))
+            {
+                return; // no-op write avoidance
+            }
+            blob.Servers[idx] = blob.Servers[idx] with { LocalName = normalized };
             await SaveAsync(blob).ConfigureAwait(false);
         }
         finally

@@ -305,6 +305,32 @@ public sealed class AccountStore : IAccountStore, IDisposable
         }
     }
 
+    public async Task UpdateLocalNameAsync(Guid accountId, string? localName)
+    {
+        var normalized = string.IsNullOrWhiteSpace(localName) ? null : localName.Trim();
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var index = blob.Accounts.FindIndex(a => a.Id == accountId);
+            if (index < 0)
+            {
+                throw new KeyNotFoundException($"Account {accountId} not found.");
+            }
+            if (string.Equals(blob.Accounts[index].LocalName, normalized, StringComparison.Ordinal))
+            {
+                return; // no-op write avoidance — saves a DPAPI roundtrip on chatty rename UIs.
+            }
+            blob.Accounts[index] = blob.Accounts[index] with { LocalName = normalized };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async Task TouchLastLaunchedAsync(Guid id)
     {
         await _gate.WaitAsync().ConfigureAwait(false);

@@ -25,4 +25,19 @@ public interface IFavoriteGameStore
     /// <see cref="KeyNotFoundException"/> if no such favorite exists.
     /// </summary>
     Task SetDefaultAsync(long placeId);
+
+    /// <summary>
+    /// Set the per-user local nickname override. <paramref name="localName"/> is normalized:
+    /// null / empty / whitespace all collapse to <c>null</c> (effective reset). The Roblox-side
+    /// <see cref="FavoriteGame.Name"/> is never touched. Throws <see cref="KeyNotFoundException"/>
+    /// if no favorite has the given <paramref name="placeId"/>. v1.3.x.
+    /// </summary>
+    Task UpdateLocalNameAsync(long placeId, string? localName);
+
+    /// <summary>
+    /// Fired after <see cref="SetDefaultAsync"/> mutates state and persists. Lets the
+    /// default-game widget react without a manual re-fetch. Subscribers should expect to be
+    /// invoked on whatever thread <see cref="SetDefaultAsync"/> ran on. v1.3.x.
+    /// </summary>
+    event EventHandler? DefaultChanged;
 }

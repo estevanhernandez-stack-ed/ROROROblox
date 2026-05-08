@@ -31,4 +31,13 @@ public interface IPrivateServerStore
 
     /// <summary>Stamp <see cref="SavedPrivateServer.LastLaunchedAt"/> = now (used for sort order).</summary>
     Task TouchLastLaunchedAsync(Guid id);
+
+    /// <summary>
+    /// Set the per-user local nickname override. <paramref name="localName"/> is normalized:
+    /// null / empty / whitespace all collapse to <c>null</c> (effective reset). The Roblox-side
+    /// <see cref="SavedPrivateServer.Name"/> is never touched. Throws
+    /// <see cref="KeyNotFoundException"/> if no server has the given <paramref name="serverId"/>.
+    /// v1.3.x.
+    /// </summary>
+    Task UpdateLocalNameAsync(Guid serverId, string? localName);
 }

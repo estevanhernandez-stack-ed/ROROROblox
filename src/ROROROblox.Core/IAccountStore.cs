@@ -50,4 +50,13 @@ public interface IAccountStore
     /// Drives the per-account dropdown on the main window. Spec §5.4 + §6.1.
     /// </summary>
     Task SetFpsCapAsync(Guid id, int? fps);
+
+    /// <summary>
+    /// Set the per-user local nickname override. <paramref name="localName"/> is normalized:
+    /// null / empty / whitespace all collapse to <c>null</c> (effective reset). The Roblox-side
+    /// <see cref="Account.DisplayName"/> is never touched. Throws
+    /// <see cref="KeyNotFoundException"/> if no account has the given <paramref name="accountId"/>.
+    /// v1.3.x.
+    /// </summary>
+    Task UpdateLocalNameAsync(Guid accountId, string? localName);
 }

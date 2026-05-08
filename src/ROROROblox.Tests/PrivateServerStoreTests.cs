@@ -232,4 +232,75 @@ public class PrivateServerStoreTests : IDisposable
         await Assert.ThrowsAsync<ArgumentException>(() =>
             store.AddAsync(1, "code", PrivateServerCodeKind.LinkCode, "", "place", ""));
     }
+
+    // ---------- v1.3.x — UpdateLocalNameAsync + re-add preservation ----------
+
+    [Fact]
+    public async Task UpdateLocalNameAsync_HappyPath_SetsAndPersistsAcrossColdStart()
+    {
+        Guid id;
+        using (var first = new PrivateServerStore(_tempPath))
+        {
+            var added = await first.AddAsync(100, "code", PrivateServerCodeKind.LinkCode, "Squad VIP", "Adopt Me", "");
+            id = added.Id;
+            await first.UpdateLocalNameAsync(id, "My Squad");
+        }
+
+        using var second = new PrivateServerStore(_tempPath);
+        var list = await second.ListAsync();
+
+        Assert.Equal("My Squad", list[0].LocalName);
+        Assert.Equal("Squad VIP", list[0].Name);
+    }
+
+    [Fact]
+    public async Task UpdateLocalNameAsync_NullInput_ClearsLocalName()
+    {
+        using var store = new PrivateServerStore(_tempPath);
+        var added = await store.AddAsync(100, "code", PrivateServerCodeKind.LinkCode, "Squad VIP", "Adopt Me", "");
+        await store.UpdateLocalNameAsync(added.Id, "Custom");
+
+        await store.UpdateLocalNameAsync(added.Id, null);
+
+        var list = await store.ListAsync();
+        Assert.Null(list[0].LocalName);
+    }
+
+    [Fact]
+    public async Task UpdateLocalNameAsync_EmptyOrWhitespace_NormalizesToNull()
+    {
+        using var store = new PrivateServerStore(_tempPath);
+        var added = await store.AddAsync(100, "code", PrivateServerCodeKind.LinkCode, "Squad VIP", "Adopt Me", "");
+        await store.UpdateLocalNameAsync(added.Id, "Custom");
+
+        await store.UpdateLocalNameAsync(added.Id, "   ");
+
+        var list = await store.ListAsync();
+        Assert.Null(list[0].LocalName);
+    }
+
+    [Fact]
+    public async Task UpdateLocalNameAsync_MissingId_ThrowsKeyNotFoundException()
+    {
+        using var store = new PrivateServerStore(_tempPath);
+        await store.AddAsync(100, "code", PrivateServerCodeKind.LinkCode, "Squad VIP", "Adopt Me", "");
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => store.UpdateLocalNameAsync(Guid.NewGuid(), "Custom"));
+    }
+
+    [Fact]
+    public async Task AddAsync_ReAdd_PreservesLocalName()
+    {
+        using var store = new PrivateServerStore(_tempPath);
+        var first = await store.AddAsync(100, "code", PrivateServerCodeKind.LinkCode, "Original", "Place", "");
+        await store.UpdateLocalNameAsync(first.Id, "My Squad");
+
+        // Re-add same (placeId, code) pair with a different display name.
+        var reAdded = await store.AddAsync(100, "code", PrivateServerCodeKind.LinkCode, "Roblox-Renamed", "Place", "");
+
+        Assert.Equal(first.Id, reAdded.Id); // existing replace semantics preserved
+        Assert.Equal("My Squad", reAdded.LocalName);
+        Assert.Equal("Roblox-Renamed", reAdded.Name);
+    }
 }
