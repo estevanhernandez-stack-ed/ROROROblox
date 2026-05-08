@@ -6,6 +6,7 @@
         Height="320" Width="520"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
+        Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico"
         Background="{DynamicResource BgBrush}">
     <!-- Cycle 4 hard-block startup modal. Pre-empts MainWindow when RobloxPlayerBeta.exe is
          already running at app launch — that scenario silently breaks multi-instance because

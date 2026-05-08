@@ -12,7 +12,7 @@ namespace ROROROblox.Tests;
 public class StartupGateTests
 {
     [Fact]
-    public void ShouldProceed_ProbeReturnsEmpty_ReturnsTrueWithNoWarning()
+    public void ShouldProceed_ProbeReturnsEmpty_ReturnsTrueLogsProceeding()
     {
         var probe = new FakeRobloxRunningProbe { NextResult = Array.Empty<int>() };
         var logger = new ListLogger<StartupGate>();
@@ -22,6 +22,11 @@ public class StartupGateTests
 
         Assert.True(result);
         Assert.Empty(logger.Warnings);
+        // Diagnostic value during cycle-4 smoke: a "proceeding" log line on every clean
+        // startup makes it easy to confirm the gate ran and decided not to block. Without
+        // this, a silent pass leaves no log evidence that mutex.Acquire was reached.
+        var info = Assert.Single(logger.Information);
+        Assert.Contains("proceeding", info.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

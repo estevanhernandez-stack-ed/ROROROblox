@@ -105,6 +105,11 @@ public partial class App : Application
         // user can launch alts immediately without clicking the tray toggle first. The tray menu
         // still lets them toggle OFF for single-instance behavior.
         var acquired = mutex.Acquire();
+        _log.LogInformation(
+            "Mutex acquire at startup: name={Name}, acquired={Acquired}. Multi-instance is {State} (tray icon will reflect).",
+            ROROROblox.Core.MutexHolder.DefaultMutexName,
+            acquired,
+            acquired ? "ON" : "ERROR");
         tray.UpdateStatus(acquired ? MultiInstanceState.On : MultiInstanceState.Error);
 
         tray.Show();

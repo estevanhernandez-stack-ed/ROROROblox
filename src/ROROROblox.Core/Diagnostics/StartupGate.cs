@@ -34,11 +34,12 @@ public sealed class StartupGate
             if (pids.Count > 0)
             {
                 _log.LogInformation(
-                    "Detected {Count} running RobloxPlayerBeta.exe process(es) at startup; blocking. PIDs: {Pids}",
+                    "StartupGate: detected {Count} running RobloxPlayerBeta.exe process(es) at startup; blocking. PIDs: {Pids}",
                     pids.Count,
                     string.Join(",", pids));
                 return false;
             }
+            _log.LogInformation("StartupGate: no RobloxPlayerBeta.exe detected; proceeding to mutex.Acquire.");
             return true;
         }
         catch (Exception ex)
