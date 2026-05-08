@@ -108,11 +108,11 @@ internal partial class SquadLaunchWindow : Window
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
         var info = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-        // v1.3.x — LocalName ?? Name. Roblox-side Name still drives the placeholder when both
-        // are empty (rare).
-        var renderName = !string.IsNullOrEmpty(server.LocalName)
-            ? server.LocalName
-            : (string.IsNullOrEmpty(server.Name) ? $"Place {server.PlaceId}" : server.Name);
+        // v1.3.x — server.RenderName falls back to Name when LocalName is null/empty.
+        // Place placeholder kicks in only when both are empty (rare edge case).
+        var renderName = !string.IsNullOrEmpty(server.RenderName)
+            ? server.RenderName
+            : $"Place {server.PlaceId}";
         info.Children.Add(new TextBlock
         {
             Text = renderName,

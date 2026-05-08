@@ -17,4 +17,12 @@ public sealed record FavoriteGame(
     string ThumbnailUrl,
     bool IsDefault,
     DateTimeOffset AddedAt,
-    string? LocalName = null);
+    string? LocalName = null)
+{
+    /// <summary>
+    /// What the UI should show wherever it used to show <see cref="Name"/>. v1.3.x.
+    /// PriorityBinding doesn't fall through on null (it treats null as a successful value), so
+    /// XAML binds <c>Path=RenderName</c> instead of two-binding gymnastics.
+    /// </summary>
+    public string RenderName => string.IsNullOrEmpty(LocalName) ? Name : LocalName;
+}

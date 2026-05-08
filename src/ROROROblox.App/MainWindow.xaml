@@ -452,24 +452,10 @@
                         <Grid Margin="0,0,8,0" MinWidth="160" VerticalAlignment="Center">
                             <ComboBox ItemsSource="{Binding DataContext.AvailableGames, RelativeSource={RelativeSource AncestorType=Window}}"
                                       SelectedItem="{Binding SelectedGame}"
+                                      DisplayMemberPath="RenderName"
                                       VerticalAlignment="Center"
                                       SelectionChanged="OnGameComboBoxSelectionChanged"
                                       ToolTip="Game to launch this account into, or '(Paste a link...)' for a one-shot link.">
-                                <!-- v1.3.x — display LocalName when set, else Name (PriorityBinding).
-                                     Drops DisplayMemberPath="Name" for the inline template. -->
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock VerticalAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis">
-                                            <TextBlock.Text>
-                                                <PriorityBinding>
-                                                    <Binding Path="LocalName" />
-                                                    <Binding Path="Name" />
-                                                </PriorityBinding>
-                                            </TextBlock.Text>
-                                        </TextBlock>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
                                 <!-- v1.3.x — right-click any item in the dropdown for Rename / Reset.
                                      Skips the JoinByLink sentinel because BuildRenameTarget guards on
                                      PlaceId > 0 and returns null for the sentinel. -->
@@ -937,21 +923,16 @@
                                                             </Ellipse.Style>
                                                         </Ellipse>
 
-                                                        <!-- Display name: LocalName ?? Name. Item 8 wires the
-                                                             RenderName binding pattern in full; for the widget
-                                                             we use a small inline converter via priority binding. -->
+                                                        <!-- Display name: LocalName ?? Name via the FavoriteGame.RenderName
+                                                             computed property. PriorityBinding doesn't work here because
+                                                             a null LocalName is a successful binding result, not a
+                                                             fall-through trigger. -->
                                                         <TextBlock Grid.Column="1"
+                                                                   Text="{Binding RenderName}"
                                                                    FontSize="12"
                                                                    Foreground="{DynamicResource WhiteBrush}"
                                                                    VerticalAlignment="Center"
-                                                                   TextTrimming="CharacterEllipsis">
-                                                            <TextBlock.Text>
-                                                                <PriorityBinding>
-                                                                    <Binding Path="LocalName" />
-                                                                    <Binding Path="Name" />
-                                                                </PriorityBinding>
-                                                            </TextBlock.Text>
-                                                        </TextBlock>
+                                                                   TextTrimming="CharacterEllipsis" />
 
                                                         <!-- DEFAULT pill on the current default. -->
                                                         <Border Grid.Column="2"
