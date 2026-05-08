@@ -441,23 +441,23 @@
                              handles Loaded (initial selection) and SelectionChanged (persist + route to VM).
                              Tag on each item carries the int value (or x:Null for "no cap"). -->
                         <ComboBox
-                            Width="100"
+                            Width="120"
                             Margin="0,0,8,0"
                             VerticalAlignment="Center"
                             SelectionChanged="FpsCombo_SelectionChanged"
                             Loaded="FpsCombo_Loaded"
-                            ToolTip="FPS cap applied at launch (DFIntTaskSchedulerTargetFps)">
-                            <ComboBoxItem Content="—"         Tag="{x:Null}" />
-                            <ComboBoxItem Content="20"        Tag="20" />
-                            <ComboBoxItem Content="30"        Tag="30" />
-                            <ComboBoxItem Content="45"        Tag="45" />
-                            <ComboBoxItem Content="60"        Tag="60" />
-                            <ComboBoxItem Content="90"        Tag="90" />
-                            <ComboBoxItem Content="120"       Tag="120" />
-                            <ComboBoxItem Content="144"       Tag="144" />
-                            <ComboBoxItem Content="165"       Tag="165" />
-                            <ComboBoxItem Content="240"       Tag="240" />
-                            <ComboBoxItem Content="Unlimited" Tag="9999" />
+                            ToolTip="FPS cap applied at launch (DFIntTaskSchedulerTargetFps + GlobalBasicSettings FramerateCap)">
+                            <ComboBoxItem Content="— FPS"         Tag="{x:Null}" />
+                            <ComboBoxItem Content="20 FPS"        Tag="20" />
+                            <ComboBoxItem Content="30 FPS"        Tag="30" />
+                            <ComboBoxItem Content="45 FPS"        Tag="45" />
+                            <ComboBoxItem Content="60 FPS"        Tag="60" />
+                            <ComboBoxItem Content="90 FPS"        Tag="90" />
+                            <ComboBoxItem Content="120 FPS"       Tag="120" />
+                            <ComboBoxItem Content="144 FPS"       Tag="144" />
+                            <ComboBoxItem Content="165 FPS"       Tag="165" />
+                            <ComboBoxItem Content="240 FPS"       Tag="240" />
+                            <ComboBoxItem Content="Unlimited FPS" Tag="9999" />
                         </ComboBox>
 
                         <!-- Launch As (hidden while running — Stop takes its place) -->
