@@ -40,7 +40,8 @@
 
                     <StackPanel Grid.Column="1" Margin="10,0,10,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding DisplayName}"
+                            <!-- v1.3.x — RenderName = LocalName ?? DisplayName. Compact-mode row. -->
+                            <TextBlock Text="{Binding RenderName}"
                                        FontSize="12" FontWeight="SemiBold"
                                        Foreground="{DynamicResource WhiteBrush}"
                                        TextTrimming="CharacterEllipsis" />
@@ -203,11 +204,13 @@
                     <!-- Name + status -->
                     <StackPanel Grid.Column="2" Margin="14,0,14,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding DisplayName}"
+                            <!-- v1.3.x — RenderName = LocalName ?? DisplayName. Regular row primary
+                                 label + tooltip both flip; tooltip shows the un-truncated rename. -->
+                            <TextBlock Text="{Binding RenderName}"
                                        FontSize="14" FontWeight="SemiBold"
                                        Foreground="{DynamicResource WhiteBrush}"
                                        TextTrimming="CharacterEllipsis"
-                                       ToolTip="{Binding DisplayName}" />
+                                       ToolTip="{Binding RenderName}" />
                             <!-- MAIN pill — magenta, only when this account IsMain. Tells the user
                                  at a glance which row is their default for compact mode + tray double-click. -->
                             <Border Background="{DynamicResource MagentaBrush}" CornerRadius="3"
@@ -331,7 +334,7 @@
                                         </Button.Style>
                                         <Button.ToolTip>
                                             <TextBlock>
-                                                <Run Text="Follow " /><Run Text="{Binding DisplayName, Mode=OneWay}" /><Run Text=" into their server" />
+                                                <Run Text="Follow " /><Run Text="{Binding RenderName, Mode=OneWay}" /><Run Text=" into their server" />
                                             </TextBlock>
                                         </Button.ToolTip>
                                         <StackPanel Orientation="Horizontal">
@@ -342,7 +345,7 @@
                                                     Margin="0,0,5,0">
                                                 <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" />
                                             </Border>
-                                            <TextBlock Text="{Binding DisplayName}"
+                                            <TextBlock Text="{Binding RenderName}"
                                                        FontSize="10"
                                                        Foreground="{DynamicResource WhiteBrush}"
                                                        VerticalAlignment="Center"
@@ -1162,7 +1165,7 @@
                                         ToolTip="Launch your main account into its current per-row game.">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <TextBlock Text="&#x25B6; Start " />
-                                        <TextBlock Text="{Binding MainAccount.DisplayName, FallbackValue='main'}" />
+                                        <TextBlock Text="{Binding MainAccount.RenderName, FallbackValue='main'}" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
