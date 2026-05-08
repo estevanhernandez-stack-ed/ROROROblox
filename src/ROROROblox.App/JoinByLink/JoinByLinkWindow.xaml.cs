@@ -18,6 +18,8 @@ internal partial class JoinByLinkWindow : Window
 
     public LaunchTarget? SelectedTarget { get; private set; }
 
+    public bool SaveToLibrary => SaveCheckBox.IsChecked == true;
+
     public JoinByLinkWindow(IRobloxApi api, Func<string, Task<LaunchTarget?>> resolveShareUrl, string accountDisplayName)
     {
         _api = api ?? throw new ArgumentNullException(nameof(api));

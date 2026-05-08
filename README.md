@@ -149,7 +149,7 @@ powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertP
 - [x] Remote `roblox-compat.json` config (mutex name + known-good Roblox versions)
 - [x] Sideload MSIX with self-signed cert
 - [x] Squad Launch + Friend Follow surfaces
-- [x] Join-by-link entry per saved account
+- [x] Join-by-link entry per saved account (with optional **Save to my library** toggle, v1.3.x — saves the pasted game or private server to your library for next time)
 
 **Up next**
 - [ ] Microsoft Store submission (cert + listing + Partner Center upload)
