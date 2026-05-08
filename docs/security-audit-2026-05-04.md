@@ -121,3 +121,70 @@ Per pattern (ll) from the wbp-azure cycle: findings are categorized as **actiona
 This audit was performed at item-12 time of the 2026-05-03 Cart cycle and reflects the state of `main` after commit `bc4cf4b` (item 11 + hook allowlist fix). No source-code changes are required to ship from a security perspective. The remaining gates are **product-side**: design-skill-produced Store assets (item 11 empirical), Partner Center submission, and the manual smoke walk on a clean Win11 VM.
 
 Re-run this audit before every release tag. The dependency scan especially — Microsoft and the broader .NET ecosystem ship vulnerability patches frequently.
+
+---
+
+## v1.3.x re-scan (2026-05-08, post-implementation)
+
+**Scope:** Re-verify the cycle #1 audit categories against the v1.3.x feature surface (default-game widget + local rename overlay). New code: schema additions to three records, three `UpdateLocalNameAsync` methods on existing stores + a `DefaultChanged` event, a new `RenameWindow` modal, MainViewModel command plumbing, XAML render-coverage flips. No new dependencies, no new manifest capabilities, no new HTTP endpoints, no new shell-out call sites.
+
+**Result:** ✅ All categories clean. Inherits the cycle #1 sign-off shape; no new actionable findings; no new documented-and-mitigated findings.
+
+### 1. Secrets scan (re-run)
+
+**Method:** `git ls-files | xargs grep -lE "ROBLOSECURITY=|-----BEGIN|MIIB"`
+
+**Result:** Three known-acceptable hits identical to cycle #1's audit set:
+
+| Path | Reason |
+|---|---|
+| `docs/checklist.md` | The grep pattern itself appears in the cycle #1 item 12 spec (the "what to grep for" line); not an actual cookie value. |
+| `docs/security-audit-2026-05-04.md` | This document literally references the canonical-cookie-prefix in §1's method line; not an actual cookie value. |
+| `src/ROROROblox.Core/RobloxApi.cs` | Source code that constructs `Cookie: .ROBLOSECURITY=<value>` headers from in-memory cookie strings. The literal `.ROBLOSECURITY=` is the header name being constructed, not a leaked secret. |
+
+The pre-commit `secret-scan.sh` hook fired clean on every v1.3.x commit. None of the v1.3.x changes introduce new cookie-handling code (`UpdateLocalNameAsync` does not touch cookies).
+
+### 2. Dependency audit (re-run)
+
+**Method:** `dotnet list package --vulnerable --include-transitive` against `ROROROblox.Core.csproj`, `ROROROblox.App.csproj`, `ROROROblox.Tests.csproj`.
+
+**Result:** Zero vulnerable packages across all three projects. No new packages added in v1.3.x — `RenameDispatch`, `RenameTarget`, `RenameResult`, `RenameWindow` all rely on the BCL + WPF + System.Text.Json that v1.1/v1.2 already pulled.
+
+### 3. Local-path audit (re-run)
+
+**Method:** `git ls-files | xargs grep -lE "c:\\\\Users\\\\|C:/Users/"`
+
+**Result:** Zero hits in source/XAML. (Documentation files containing absolute-path examples — e.g., this audit doc, `process-notes.md` — are pre-existing and intentional.)
+
+### 4. Input validation (delta scan)
+
+**New strings flowing through the v1.3.x surface:** the rename popup's `NameTextBox.Text`. Trimmed in `RenameWindow.OnSaveClick` (empty/whitespace → null), trimmed again in each store's `UpdateLocalNameAsync` (defense in depth). String value flows to:
+
+- `System.Text.Json` serializer → JSON file on disk via the existing atomic-write contract (no shell-out, no SQL).
+- WPF data-bound `TextBlock.Text` for display.
+
+**No new `Process.Start` call sites.** No new `HttpClient` request paths. The local-rename string never crosses a process or network boundary.
+
+### 5. DPAPI envelope re-verify
+
+**Method:** `LocalNameSchemaTests.Account_LegacyDpapiBlobWithoutLocalName_LoadsAsNull` fabricates a v1.2-shaped blob without `localName`, DPAPI-encrypts it, drops it on disk, and confirms the v1.3 `AccountStore.ListAsync` decrypts cleanly + loads with `LocalName == null`. Plus `UpdateLocalNameAsync_HappyPath_RoundtripsThroughDpapiAcrossColdStart` round-trips a populated `LocalName` through the encrypted envelope across a store dispose/reopen, then re-retrieves the cookie via `RetrieveCookieAsync` to confirm DPAPI decrypt still works after the schema change.
+
+**Result:** Both tests pass. The DPAPI envelope shape is unchanged. The header bytes (`01 00 00 00 D0 8C 9D DF`) are preserved.
+
+### 6. MSIX manifest unchanged
+
+**Method:** `git diff` of `Package.appxmanifest` between `main` and `feat/default-game-widget-and-rename` HEAD.
+
+**Result:** Zero changes. v1.3.x adds zero capabilities, zero declarations, zero asset references. (Asset paths + version bump will land at packaging time.)
+
+### 7. Categorization summary (v1.3.x)
+
+| Category | Count | Notes |
+|---|---|---|
+| Actionable | 0 | |
+| Documented-and-mitigated | 0 | |
+| Manual-smoke-pending | 9 (carried) | Cycle #1's manual-smoke list still applies. v1.3.x adds eyes-on smoke at Checkpoint 2: rename → render across surfaces, reset → revert, RenameWindow chrome side-by-side vs cycle #1 modals, default-game widget click-to-pick + empty-state. |
+
+### 8. Sign-off (v1.3.x)
+
+The v1.3.x feature surface ships clean against the cycle #1 audit categories. Re-run this re-scan section before each v1.3.x release tag.

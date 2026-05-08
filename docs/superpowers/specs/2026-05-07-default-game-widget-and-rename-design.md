@@ -4,8 +4,23 @@
 **Date:** 2026-05-07
 **Status:** Approved for implementation planning
 **Branch (spec):** `docs/spec-default-game-widget-and-rename`
-**Branch (implementation):** TBD — cut fresh off main when build session starts
+**Branch (implementation):** `feat/default-game-widget-and-rename` (cut 2026-05-08)
 **Repo:** https://github.com/estevanhernandez-stack-ed/ROROROblox
+
+> ⚠️ **Build-time drift — banner-correct (pattern v from Vibe Thesis), 2026-05-08.** Read this before treating any individual section as ground truth. Four pre-build / build-time deviations, each surgical:
+>
+> 1. **§3 stack — `ui:FluentWindow` is not what shipped.** The spec called for `ui:FluentWindow` chrome on `RenameWindow`. The existing v1.1 modals (`WebView2NotInstalledWindow`, `RobloxNotInstalledWindow`, `DpapiCorruptWindow`) all use plain `Window` with `Background="{DynamicResource BgBrush}"` — not FluentWindow. `RenameWindow` matched the actual shipping pattern instead of the spec letter; chrome consistency is preserved (which was the underlying point of the §3 spec line).
+>
+> 2. **§5.3 placement — `RenameTarget` lives in Core, not App.** Spec said App project. Moved to Core because (a) it's pure data with zero UI dependencies, and (b) the Tests project doesn't reference App, so testability requires Core placement. `RenameResult` (popup outcome) also lives in Core for the same reason. Net cost: nothing — App still references RenameTarget normally; tests now reach it.
+>
+> 3. **§5.6 surfaces — 4 of 5 trigger surfaces wired in v1.3.0.0; Games settings sheet deferred.** The four shipping context-menu surfaces are: account row Border, per-row game ComboBox dropdown items, default-game widget dropdown row, Squad Launch sheet saved-server row. The fifth surface (Games settings sheet rows in `SettingsWindow.xaml`) is structurally similar to Squad Launch's code-behind plumbing (own constructor-injected store, no shared MainViewModel data context); deferred because the same set of saved games is renameable via the per-row ComboBox and widget dropdown surfaces, so no user flow is stranded. To wire later: `BuildGameRow` / `RenderListAsync` handlers in `SettingsWindow.xaml.cs` gain the same shape as Squad Launch's `OnRenameSavedServerAsync` / `OnResetSavedServerNameAsync`.
+>
+> 4. **§7 render surfaces — 8 actually changed, 2 vacuous, 2 deferred.** Of the 12 surfaces enumerated:
+>    - **Changed (8):** widget readout, widget dropdown rows, per-row ComboBox display, ComboBox dropdown items, Squad Launch rows, account row primary label, account row MAIN-pill (auto via DisplayName-binding swap), follow-strip chips, compact-mode account row. (Plus the compact-mode Start CTA at MainWindow:1168, which §7 didn't enumerate but follows the same pattern.)
+>    - **Vacuous (1):** "Tray menu Start [Account] label" — the tray context menu has no per-account "Start [X]" item in v1.3.0.0; surface anticipated a future tray feature that isn't wired. The Roblox window title (set by `RobloxWindowDecorator`) intentionally stays as `DisplayName` because `RunningRobloxScanner` matches windows by exact title pattern; switching the title to `RenderName` would break running-window attachment until the matcher is also updated (a coordinated change that's its own item).
+>    - **Deferred (2):** Games settings sheet rows (paired with §5.6 surface deferral above) and Session History entries (the `row.AccountDisplayName` snapshot vs live-lookup distinction is defensible either way; spec said live-lookup, snapshot is what shipped).
+>
+> Source of truth for the 4 corrects: commits on `feat/default-game-widget-and-rename` between f454e33 and c9ee778, item 9's `process-notes.md > /build` block, and the per-item commit messages.
 
 ## 1. Overview
 

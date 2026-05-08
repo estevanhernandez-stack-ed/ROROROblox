@@ -20,6 +20,16 @@ _Multi-launcher for Windows — run multiple Roblox clients on Windows, signed i
 
 ---
 
+## What's new in v1.3
+
+**Local rename overlay.** Right-click any saved game, saved private server, or account row → **Rename…** to set a per-user nickname. The Roblox-side name stays untouched; just the row in RORORO carries your local name. Reset any time via the popup's **Reset to original** link or the right-click **Reset name** action. Renames survive re-adding the same game/server, survive Roblox-side display-name refreshes, and roundtrip cleanly through DPAPI on accounts.
+
+**Default-game widget.** A quick-switch dropdown lives in the toolbar between **Games** and **Launch multiple**. Click for the saved-games list — pick one, that's your new default. Right-click a row for the four-item action menu (Set as default · Rename… · Reset name · Remove). When zero games are saved, the widget shows a one-click "Add a game" entry instead.
+
+Both features are local-only. No new network calls, no manifest changes, no schema migration. Older RORORO builds reading a v1.3 file will just ignore the new field.
+
+---
+
 ## Install
 
 ### Microsoft Store *(recommended)*
