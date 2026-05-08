@@ -249,11 +249,20 @@ public partial class App : Application
         services.AddSingleton<IProcessStarter, ProcessStarter>();
 
         // RobloxApi over a managed HttpClient (factory handles lifetime + DNS rotation).
+        // UseCookies=false is load-bearing: RobloxApi sets the .ROBLOSECURITY cookie manually
+        // per-request via request.Headers.Add("Cookie", ...). With the default cookie container
+        // enabled, the first auth-ticket request leaks its account's cookie into the container
+        // and every subsequent Launch As routes through that same account — every alt opens as
+        // the first user. This is the actual root cause of the multi-instance bug v1.2 saw.
         services.AddHttpClient<IRobloxApi, RobloxApi>(client =>
         {
             client.DefaultRequestHeaders.UserAgent.Clear();
             var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new System.Net.Http.SocketsHttpHandler
+        {
+            UseCookies = false,
         });
 
         // Compat checker uses its own HttpClient — different UA + different host pattern.
