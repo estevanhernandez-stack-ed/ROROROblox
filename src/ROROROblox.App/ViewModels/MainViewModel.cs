@@ -839,6 +839,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         };
         if (window.ShowDialog() == true && window.SelectedTarget is { } target)
         {
+            var saveToLibrary = window.SaveToLibrary;
+            await JoinByLinkSave.ApplyAsync(_api, _favorites, _privateServerStore, target, saveToLibrary, _log);
+            if (saveToLibrary && target is LaunchTarget.Place)
+            {
+                // ApplyAsync already swallowed any save failure; reload is best-effort.
+                // PrivateServer saves don't need this — the Library sheet lists from the
+                // store directly on next open.
+                await ReloadGamesAsync();
+            }
             await LaunchAccountAsync(summary, overrideTarget: target);
         }
     }
