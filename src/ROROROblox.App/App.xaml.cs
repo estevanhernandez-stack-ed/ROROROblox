@@ -76,6 +76,22 @@ public partial class App : Application
             _log.LogDebug(ex, "Theme apply at startup threw; continuing with default brushes.");
         }
 
+        // Cycle 4 hard-block: if Roblox is already running before RoRoRo started, multi-instance
+        // is broken — every Launch As routes through the existing process which has a bound user
+        // identity, ignoring our auth-ticket hand-off. Show the modal explaining the recovery path
+        // (close both, restart RoRoRo) and exit cleanly. MainWindow never renders; tray never
+        // shows; mutex never acquired against a hostile Roblox.
+        // Placement note: must run AFTER ApplyAtStartup so BgBrush resolves before the modal
+        // paints, but BEFORE mutex.Acquire so we never enter the broken state.
+        var gate = _services.GetRequiredService<StartupGate>();
+        if (!gate.ShouldProceed())
+        {
+            var modal = new Modals.RobloxAlreadyRunningWindow();
+            modal.ShowDialog();
+            Shutdown(0);
+            return;
+        }
+
         var tray = _services.GetRequiredService<ITrayService>();
         var mutex = _services.GetRequiredService<IMutexHolder>();
         var mainWindow = _services.GetRequiredService<MainWindow>();
@@ -257,6 +273,13 @@ public partial class App : Application
         services.AddSingleton<IRobloxProcessTracker, RobloxProcessTracker>();
         services.AddSingleton<RobloxWindowDecorator>();
         services.AddSingleton<RunningRobloxScanner>();
+
+        // Cycle 4 startup gate — detects RobloxPlayerBeta.exe running BEFORE RoRoRo so we
+        // can hard-block instead of silently entering the broken state where every Launch As
+        // routes through the existing process. Lives next to other Diagnostics-namespace
+        // services in Core; consumed by App.OnStartup before mutex.Acquire.
+        services.AddSingleton<IRobloxRunningProbe, RobloxRunningProbe>();
+        services.AddSingleton<StartupGate>();
 
         // Tray avatar painter — owns its own HttpClient (default UA fine for public Roblox CDN
         // avatar URLs). TrayService is registered as ITrayService elsewhere; the painter takes
