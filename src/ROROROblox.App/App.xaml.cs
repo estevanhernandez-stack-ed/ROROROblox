@@ -186,6 +186,22 @@ public partial class App : Application
 
         try
         {
+            // Cycle 5: eager one-time backfill of RobloxUserId for any saved account where
+            // it's still null. Runs ~5s after MainWindow.Show to give the UI a chance to
+            // paint and Multi-Instance to settle before any background HTTP traffic. Sequential
+            // with 2.5s ± 500ms stagger between accounts (anti-fraud discipline per spec §5).
+            // Idempotent: returning users with all accounts backfilled make zero API calls.
+            var backfill = _services.GetRequiredService<AccountUserIdBackfillService>();
+            await Task.Delay(5_000).ConfigureAwait(false);
+            await backfill.RunAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "RobloxUserId backfill threw; ignoring.");
+        }
+
+        try
+        {
             // Auto-launch main on startup, but with strong guardrails so we never duplicate a
             // running session. Roblox enforces one-session-per-account server-side: if we
             // launch a second client for an already-signed-in account, the first gets kicked.
@@ -294,6 +310,11 @@ public partial class App : Application
         // services in Core; consumed by App.OnStartup before mutex.Acquire.
         services.AddSingleton<IRobloxRunningProbe, RobloxRunningProbe>();
         services.AddSingleton<StartupGate>();
+
+        // Cycle 5 RobloxUserId backfill — fire-and-forget worker that resolves and persists
+        // any saved account where RobloxUserId is null. Triggered post-MainWindow.Show in
+        // RunStartupChecksAsync; idempotent on subsequent runs. Lives in Core for testability.
+        services.AddSingleton<AccountUserIdBackfillService>();
 
         // Tray avatar painter — owns its own HttpClient (default UA fine for public Roblox CDN
         // avatar URLs). TrayService is registered as ITrayService elsewhere; the painter takes

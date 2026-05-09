@@ -541,6 +541,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 var profile = await _api.GetUserProfileAsync(cookie).ConfigureAwait(true);
                 summary.SessionExpired = false;
                 summary.RobloxUserId = profile.UserId; // cache for the Friends modal
+                // Cycle 5: persist so a restart doesn't lose the resolved userId.
+                // Soft-fail — persist failure must not bubble to the validation flow.
+                try
+                {
+                    await _accountStore.UpdateRobloxUserIdAsync(summary.Id, profile.UserId).ConfigureAwait(true);
+                }
+                catch (Exception persistEx)
+                {
+                    _log.LogDebug(persistEx, "Couldn't persist RobloxUserId for {AccountId} (validation pass); will retry on next resolution.", summary.Id);
+                }
             }
             catch (CookieExpiredException)
             {
@@ -615,6 +625,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
         var account = await _accountStore.AddAsync(captured.Username, avatarUrl, captured.Cookie);
         var summary = new AccountSummary(account) { RobloxUserId = captured.UserId };
+        // Cycle 5: persist the userId from cookie capture so the next session has it without
+        // any API call. AddAsync doesn't take a userId parameter; this is a follow-up write.
+        // Soft-fail — persist failure must not bubble to the add flow's success banner.
+        try
+        {
+            await _accountStore.UpdateRobloxUserIdAsync(account.Id, captured.UserId).ConfigureAwait(true);
+        }
+        catch (Exception persistEx)
+        {
+            _log.LogDebug(persistEx, "Couldn't persist RobloxUserId for newly-added {AccountId}; will retry on next resolution.", account.Id);
+        }
         summary.PropertyChanged += OnAccountSummaryPropertyChanged;
         Accounts.Insert(0, summary);
         _log.LogInformation("Added account {AccountId} ({Username}, userId {UserId}, isMain={IsMain})",
@@ -887,6 +908,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 var profile = await _api.GetUserProfileAsync(cookie);
                 userId = profile.UserId;
                 summary.RobloxUserId = userId;
+                // Cycle 5: persist so the next session can skip this resolve.
+                // Soft-fail — persist failure must not bubble to the friends-modal flow.
+                try
+                {
+                    await _accountStore.UpdateRobloxUserIdAsync(summary.Id, userId);
+                }
+                catch (Exception persistEx)
+                {
+                    _log.LogDebug(persistEx, "Couldn't persist RobloxUserId for {AccountId} (Friends modal); will retry on next resolution.", summary.Id);
+                }
             }
             catch (CookieExpiredException)
             {

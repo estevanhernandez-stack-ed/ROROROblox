@@ -16,4 +16,5 @@ public sealed record Account(
     bool IsSelected = true,
     string? CaptionColorHex = null,
     int? FpsCap = null,
-    string? LocalName = null);
+    string? LocalName = null,
+    long? RobloxUserId = null);
