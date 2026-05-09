@@ -26,10 +26,6 @@ What was happening: each Add Account flow reused the same Edge browser data fold
 - No new Windows permissions. No new network calls. No new dependencies.
 - Saved accounts, favorites, private servers, default-game widget, renames, themes — all unchanged from v1.3.3.0.
 
-## Known issues going into the next update
-
-- **FPS cap can bleed between back-to-back launches.** If you Launch As account A (set to 20 FPS) and then launch account B (set to 120 FPS) within a few seconds, account B can come up at 20 instead of 120 — they're both reading the same Roblox-side settings file and the timing isn't quite right. Workaround: wait until account A's window is fully loaded before launching B. Real fix targeted for the next update.
-
 ## Other channels
 
 - **Microsoft Store *(recommended)*** — [Install RoRoRo on the Microsoft Store](https://apps.microsoft.com/detail/9NMJCS390KWB). Signed by Microsoft, bypasses SmartScreen, auto-updates through the Store.
