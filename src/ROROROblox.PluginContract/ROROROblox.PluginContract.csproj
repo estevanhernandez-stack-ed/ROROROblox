@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PackageId>ROROROblox.PluginContract</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>626 Labs LLC</Authors>
+    <Description>gRPC contract for RoRoRo plugins. Reference this NuGet to author a plugin.</Description>
+    <PackageReadmeFile>PackageReadme.md</PackageReadmeFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.28.3" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.68.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.68.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="Protos\plugin_contract.proto" GrpcServices="Both" />
+    <None Include="PackageReadme.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
