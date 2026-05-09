@@ -1,4 +1,4 @@
-# Release notes — v1.3.2.1
+# Release notes — v1.3.3.0
 
 > Paste the block between the `---` markers below into the GitHub Release body.
 > Tone: clan-facing (Pet Sim 99 audience). Plain, warm, no Microsoft-reviewer formality.
