@@ -6,6 +6,24 @@
 **Branch (implementation):** `feat/persist-roblox-user-id` (cut from `main` after spec lands)
 **Repo:** https://github.com/estevanhernandez-stack-ed/ROROROblox
 
+> ## ⚠️ Banner-correct (2026-05-08, post-build)
+>
+> Implementation matched the spec end-to-end on the load-bearing surface (schema, store API, opportunistic-persist sites, eager backfill, anti-fraud divergence). Two genuine drifts worth naming:
+>
+> **§4.4 location drift.** Spec said `src/ROROROblox.App/Startup/AccountUserIdBackfillService.cs`. Actual: `src/ROROROblox.Core/AccountUserIdBackfillService.cs`. Same reason as cycle-4's `StartupGate` drift — the unit-test project references Core but not App, and the orchestrator has zero WPF dependencies. Putting it in Core honored the spec's express intent ("unit-testable without WPF, similar to JoinByLinkSave pattern") more faithfully than the App/Startup folder placement.
+>
+> **§7 testing drift — MainViewModel persist-on-resolve tests skipped.** Spec called for ~3 cases verifying each opportunistic-persist site invokes `UpdateRobloxUserIdAsync` via a `FakeAccountStore`. Reality: the existing test suite has zero MainViewModel unit tests (every cycle's discipline lives at lower layers — AccountStore, RobloxApi, MutexHolder, JoinByLinkSave-as-static-helper). Adding MainViewModel-level tests would require stubbing 8+ dependencies (`IRobloxApi`, `IAccountStore`, `IFavoriteGameStore`, `IPrivateServerStore`, `ICookieCapture`, `IRobloxLauncher`, `IRobloxProcessTracker`, `ISessionHistoryStore`...) — inconsistent with how the rest of the suite stays focused. The persist behavior itself is fully covered by:
+>
+> - The 3 `AccountStore.UpdateRobloxUserIdAsync` contract tests (set, idempotent, throw)
+> - The 6 `AccountUserIdBackfillService` orchestrator tests (which exercise the same persist path through a fake store)
+> - Path A of checkpoint 1 (which observed 7-of-7 successful end-to-end persists in production logs, with 2-3s ± jitter intervals matching the spec's anti-fraud divergence)
+>
+> If the persist sites ever regress, the breakage shows up in checkpoint smoke before it ships, not in a unit test. Acceptable trade for staying consistent with the suite's discipline.
+>
+> **Anti-fraud verdict (spec §5):** Path C of checkpoint 1 was the highest-risk verification. 7 sequential `users.roblox.com/v1/users/authenticated` calls, 2.2-2.7s apart, all returned **HTTP 200**, with zero session-expired flips and zero "verify your identity" prompts. The five-dimension divergence from the v1.1.2.0 trip-wire (idempotent, sequential, paced, post-paint, scoped-to-missing) holds. No endpoint swap needed; the build-time spike option from §5 stays parked unless a regression surfaces in field testing.
+>
+> The body below remains as originally written, per the "Don't rewrite the canonical spec on drift — banner-correct it" rule from `CLAUDE.md` (pattern v from Vibe Thesis).
+
 ## 1. Overview
 
 The follow feature (per-row "Follow:" chips, "Friends" button → `FriendFollowWindow`, `LaunchTarget.FollowFriend`) needs each saved account's Roblox `userId` to render meaningfully. Today, `RobloxUserId` is in-memory-only on `AccountSummary` (the runtime ViewModel wrapper) — not persisted. Three existing paths set it lazily:
