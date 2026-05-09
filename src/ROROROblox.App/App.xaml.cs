@@ -298,6 +298,18 @@ public partial class App : Application
         services.AddSingleton<IClientAppSettingsWriter, ClientAppSettingsWriter>();
         services.AddSingleton<IGlobalBasicSettingsWriter, GlobalBasicSettingsWriter>();
         services.AddSingleton<IRobloxLauncher, RobloxLauncher>();
+
+        // Per-capture WebView2 user-data dir manager. Each Add Account gets a fresh GUID dir
+        // under %LOCALAPPDATA%\ROROROblox\webview2-data\<guid>\; siblings are best-effort swept
+        // on each capture. Replaces the pre-1.3.4 single-shared-dir + pre-wipe pattern, which
+        // failed silently when the previous capture's msedgewebview2.exe children still pinned
+        // files — causing every subsequent Add Account to re-capture the first account.
+        services.AddSingleton(sp => new WebView2UserDataDirectory(
+            System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "ROROROblox",
+                "webview2-data"),
+            sp.GetRequiredService<ILogger<WebView2UserDataDirectory>>()));
         services.AddSingleton<ICookieCapture, CookieCapture.CookieCapture>();
         services.AddSingleton<IUpdateChecker, UpdateChecker>();
         services.AddSingleton<IRobloxProcessTracker, RobloxProcessTracker>();
