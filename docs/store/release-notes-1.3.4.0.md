@@ -2,6 +2,12 @@
 
 > Paste the block between the `---` markers below into the GitHub Release body.
 > Tone: clan-facing (Pet Sim 99 audience). Plain, warm, no Microsoft-reviewer formality.
+>
+> **Edit log:**
+> - 2026-05-09 — Dropped the "FPS cap can bleed between back-to-back launches" known-issue
+>   paragraph carried forward from v1.3.3.0. Gate fix (commit `02aa4c4`, SemaphoreSlim +
+>   250ms hold) shipped pre-1.3.3.0; no fresh field reports. Reinstate in the next release
+>   if it resurfaces. See commit `a09ae90`.
 
 ---
 
