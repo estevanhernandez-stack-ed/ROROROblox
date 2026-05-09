@@ -59,4 +59,18 @@ public interface IAccountStore
     /// v1.3.x.
     /// </summary>
     Task UpdateLocalNameAsync(Guid accountId, string? localName);
+
+    /// <summary>
+    /// Persist the resolved Roblox <paramref name="userId"/> for the saved account identified
+    /// by <paramref name="accountId"/>. Idempotent — no-op (no disk write, no DPAPI roundtrip)
+    /// if the account already has the same <paramref name="userId"/> persisted. Throws
+    /// <see cref="KeyNotFoundException"/> if no account has the given id. Cycle 5 (2026-05-08).
+    /// </summary>
+    /// <remarks>
+    /// Granular write so the cycle-5 backfill orchestrator doesn't have to round-trip the full
+    /// account list on every account it resolves. Three opportunistic-persist call sites in
+    /// <c>MainViewModel</c> also call this whenever the in-memory <c>AccountSummary.RobloxUserId</c>
+    /// is set. Soft-failure handling lives at the call site — see spec §6.
+    /// </remarks>
+    Task UpdateRobloxUserIdAsync(Guid accountId, long userId);
 }

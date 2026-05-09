@@ -331,6 +331,30 @@ public sealed class AccountStore : IAccountStore, IDisposable
         }
     }
 
+    public async Task UpdateRobloxUserIdAsync(Guid accountId, long userId)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var index = blob.Accounts.FindIndex(a => a.Id == accountId);
+            if (index < 0)
+            {
+                throw new KeyNotFoundException($"Account {accountId} not found.");
+            }
+            if (blob.Accounts[index].RobloxUserId == userId)
+            {
+                return; // idempotent — saves a DPAPI roundtrip on chatty backfill orchestrator passes.
+            }
+            blob.Accounts[index] = blob.Accounts[index] with { RobloxUserId = userId };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async Task TouchLastLaunchedAsync(Guid id)
     {
         await _gate.WaitAsync().ConfigureAwait(false);
