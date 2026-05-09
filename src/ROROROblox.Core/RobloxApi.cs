@@ -16,6 +16,8 @@ public sealed class RobloxApi : IRobloxApi
 {
     private const string AuthTicketEndpoint = "https://auth.roblox.com/v1/authentication-ticket";
     private const string AuthenticatedUserEndpoint = "https://users.roblox.com/v1/users/authenticated";
+    private const string BulkUsersEndpoint = "https://users.roblox.com/v1/users";
+    private const int BulkThumbnailBatchSize = 100; // Roblox enforces 100-id-per-request cap on thumbnails.
     private const string AvatarHeadshotEndpoint = "https://thumbnails.roblox.com/v1/users/avatar-headshot";
     private const string PlaceUniverseEndpoint = "https://apis.roblox.com/universes/v1/places";
     private const string GamesEndpoint = "https://games.roblox.com/v1/games";
@@ -349,15 +351,83 @@ public sealed class RobloxApi : IRobloxApi
             return [];
         }
 
-        // Bulk avatar fetch — one call instead of N. Best-effort; missing avatars stay empty.
-        var avatarsByUserId = await BulkFetchAvatarsAsync(friends.Select(f => f.Id)).ConfigureAwait(false);
+        // Cycle 5.5: friends.roblox.com/v1/users/{userId}/friends now returns userIds with
+        // empty name + displayName fields (Roblox-side change — likely anti-scraping or
+        // privacy default). Follow up with a bulk lookup against users.roblox.com/v1/users
+        // to get the actual names. Best-effort: if the bulk lookup fails, fall back to
+        // whatever the friends endpoint sent (likely empty strings).
+        var ids = friends.Select(f => f.Id).ToList();
+        var namesByUserId = await BulkFetchUserNamesAsync(cookie, ids).ConfigureAwait(false);
+        var avatarsByUserId = await BulkFetchAvatarsAsync(ids).ConfigureAwait(false);
 
-        return friends.Select(f => new Friend(
-            UserId: f.Id,
-            Username: f.Name ?? string.Empty,
-            DisplayName: string.IsNullOrEmpty(f.DisplayName) ? (f.Name ?? string.Empty) : f.DisplayName,
-            AvatarUrl: avatarsByUserId.TryGetValue(f.Id, out var url) ? url : string.Empty
-        )).ToList();
+        return friends.Select(f =>
+        {
+            var (username, displayName) = namesByUserId.TryGetValue(f.Id, out var n)
+                ? n
+                : (f.Name ?? string.Empty, f.DisplayName ?? string.Empty);
+            return new Friend(
+                UserId: f.Id,
+                Username: username,
+                DisplayName: string.IsNullOrEmpty(displayName) ? username : displayName,
+                AvatarUrl: avatarsByUserId.TryGetValue(f.Id, out var url) ? url : string.Empty);
+        }).ToList();
+    }
+
+    /// <summary>
+    /// Bulk-fetch usernames + display names for a list of userIds via
+    /// <c>POST users.roblox.com/v1/users</c>. Cycle 5.5 — needed because the friends endpoint
+    /// stopped returning name/displayName in its response. Roblox enforces a per-request
+    /// userId limit on this endpoint too; chunked in <see cref="BulkThumbnailBatchSize"/>
+    /// batches to be safe (the documented cap is 200 but 100 matches the thumbnail batch
+    /// size and is well below the limit).
+    /// </summary>
+    private async Task<Dictionary<long, (string Username, string DisplayName)>> BulkFetchUserNamesAsync(
+        string cookie, IReadOnlyList<long> userIds)
+    {
+        var ids = userIds.Where(id => id > 0).Distinct().ToList();
+        var result = new Dictionary<long, (string, string)>();
+        if (ids.Count == 0)
+        {
+            return result;
+        }
+
+        for (var offset = 0; offset < ids.Count; offset += BulkThumbnailBatchSize)
+        {
+            var batch = ids.Skip(offset).Take(BulkThumbnailBatchSize).ToList();
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Post, BulkUsersEndpoint);
+                request.Headers.Add("Cookie", $".ROBLOSECURITY={cookie}");
+                request.Content = JsonContent.Create(
+                    new BulkUsersRequest(batch, ExcludeBannedUsers: false),
+                    options: JsonOptions);
+                using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+                if (!response.IsSuccessStatusCode)
+                {
+                    continue; // best-effort per batch; fall through to whatever the friends endpoint provided
+                }
+                var payload = await response.Content
+                    .ReadFromJsonAsync<BulkUsersResponse>(JsonOptions)
+                    .ConfigureAwait(false);
+                if (payload?.Data is null)
+                {
+                    continue;
+                }
+                foreach (var item in payload.Data)
+                {
+                    if (item.Id <= 0) continue;
+                    var username = item.Name ?? string.Empty;
+                    var displayName = string.IsNullOrEmpty(item.DisplayName) ? username : item.DisplayName;
+                    result[item.Id] = (username, displayName);
+                }
+            }
+            catch
+            {
+                // Soft-fail per batch — friends list still renders with whatever name fields we have.
+            }
+        }
+
+        return result;
     }
 
     public async Task<IReadOnlyList<UserPresence>> GetPresenceAsync(string cookie, IEnumerable<long> userIds)
@@ -421,46 +491,54 @@ public sealed class RobloxApi : IRobloxApi
     };
 
     /// <summary>
-    /// Bulk fetch avatar headshot URLs for many user ids in one call.
-    /// Returns an empty dictionary on any failure — callers treat avatars as best-effort.
+    /// Bulk fetch avatar headshot URLs for many user ids. Cycle 5.5: chunked into batches of
+    /// <see cref="BulkThumbnailBatchSize"/> because Roblox's thumbnail endpoint returns
+    /// 400 Bad Request when given more than ~100 ids in a single request — the prior
+    /// "single call for all 102 friends" path was silently failing for users with >100
+    /// friends. Each batch is best-effort; merged into one dictionary at the end.
     /// </summary>
     private async Task<Dictionary<long, string>> BulkFetchAvatarsAsync(IEnumerable<long> userIds)
     {
         var ids = userIds.Where(id => id > 0).Distinct().ToList();
+        var dict = new Dictionary<long, string>();
         if (ids.Count == 0)
         {
-            return [];
+            return dict;
         }
 
-        try
+        for (var offset = 0; offset < ids.Count; offset += BulkThumbnailBatchSize)
         {
-            var query = $"?userIds={string.Join(",", ids)}&size=150x150&format=Png&isCircular=false";
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"{AvatarHeadshotEndpoint}{query}");
-            using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
-            if (!response.IsSuccessStatusCode)
+            var batch = ids.Skip(offset).Take(BulkThumbnailBatchSize).ToList();
+            try
             {
-                return [];
-            }
-            var payload = await response.Content
-                .ReadFromJsonAsync<BulkThumbnailsResponse>(JsonOptions)
-                .ConfigureAwait(false);
-            var dict = new Dictionary<long, string>();
-            if (payload?.Data is not null)
-            {
-                foreach (var item in payload.Data)
+                var query = $"?userIds={string.Join(",", batch)}&size=150x150&format=Png&isCircular=false";
+                using var request = new HttpRequestMessage(HttpMethod.Get, $"{AvatarHeadshotEndpoint}{query}");
+                using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+                if (!response.IsSuccessStatusCode)
                 {
-                    if (item.TargetId > 0 && !string.IsNullOrEmpty(item.ImageUrl))
+                    continue; // skip this batch; other batches may still succeed
+                }
+                var payload = await response.Content
+                    .ReadFromJsonAsync<BulkThumbnailsResponse>(JsonOptions)
+                    .ConfigureAwait(false);
+                if (payload?.Data is not null)
+                {
+                    foreach (var item in payload.Data)
                     {
-                        dict[item.TargetId] = item.ImageUrl;
+                        if (item.TargetId > 0 && !string.IsNullOrEmpty(item.ImageUrl))
+                        {
+                            dict[item.TargetId] = item.ImageUrl;
+                        }
                     }
                 }
             }
-            return dict;
+            catch
+            {
+                // soft-fail per batch; don't kill the whole bulk fetch
+            }
         }
-        catch
-        {
-            return [];
-        }
+
+        return dict;
     }
 
     private async Task<HttpResponseMessage> PostAuthTicketAsync(string cookie, string? csrfToken)
@@ -621,6 +699,13 @@ public sealed class RobloxApi : IRobloxApi
         [property: JsonPropertyName("imageUrl")] string ImageUrl);
     private sealed record FriendsListResponse(FriendItem[]? Data);
     private sealed record FriendItem(long Id, string? Name, string? DisplayName);
+    // Cycle 5.5 — bulk-lookup names because friends.roblox.com now strips them.
+    // POST users.roblox.com/v1/users body: {"userIds":[...], "excludeBannedUsers":false}
+    private sealed record BulkUsersRequest(
+        [property: JsonPropertyName("userIds")] IReadOnlyList<long> UserIds,
+        [property: JsonPropertyName("excludeBannedUsers")] bool ExcludeBannedUsers);
+    private sealed record BulkUsersResponse(BulkUsersItem[]? Data);
+    private sealed record BulkUsersItem(long Id, string? Name, string? DisplayName, bool? HasVerifiedBadge);
     private sealed record BulkThumbnailsResponse(BulkThumbnailItem[] Data);
     private sealed record BulkThumbnailItem(
         long TargetId,

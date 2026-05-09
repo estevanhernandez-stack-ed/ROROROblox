@@ -389,12 +389,22 @@ public class RobloxApiTests
     public async Task GetFriendsAsync_HappyPath_ReturnsFriendsWithBulkAvatars()
     {
         var (api, stub) = CreateApi();
+        // 1. friends endpoint — Cycle 5.5: returns userIds with stripped names (Roblox-side
+        //    privacy/anti-scraping change). Test mirrors current production shape.
+        stub.EnqueueResponse(JsonResponse("""
+            {"data": [
+              {"id": 100, "name": "", "displayName": ""},
+              {"id": 200, "name": "", "displayName": ""}
+            ]}
+            """));
+        // 2. bulk-users endpoint — Cycle 5.5: follow-up call that resolves name + displayName.
         stub.EnqueueResponse(JsonResponse("""
             {"data": [
               {"id": 100, "name": "alice", "displayName": "Alice"},
               {"id": 200, "name": "bob",   "displayName": "Bob"}
             ]}
             """));
+        // 3. bulk thumbnails endpoint.
         stub.EnqueueResponse(JsonResponse("""
             {"data": [
               {"targetId": 100, "imageUrl": "https://tr/100.png"},
@@ -413,18 +423,27 @@ public class RobloxApiTests
         Assert.Contains("users/42/friends", stub.Requests[0].RequestUri!.ToString());
         Assert.Contains(stub.Requests[0].Headers, h =>
             h.Key == "Cookie" && h.Value.Any(v => v.Contains(TestCookie)));
+        // Second request should be the bulk-users name resolution (POST to users.roblox.com).
+        Assert.Contains("users.roblox.com/v1/users", stub.Requests[1].RequestUri!.ToString());
+        Assert.Equal(HttpMethod.Post, stub.Requests[1].Method);
     }
 
     [Fact]
     public async Task GetFriendsAsync_AvatarFetchFails_StillReturnsFriendsWithEmptyAvatars()
     {
         var (api, stub) = CreateApi();
+        // friends endpoint (post-cycle-5.5: stripped names)
+        stub.EnqueueResponse(JsonResponse("""{"data": [{"id": 100, "name": "", "displayName": ""}]}"""));
+        // bulk-users endpoint resolves names
         stub.EnqueueResponse(JsonResponse("""{"data": [{"id": 100, "name": "a", "displayName": "A"}]}"""));
+        // thumbnails fail
         stub.EnqueueResponse(Response(HttpStatusCode.InternalServerError));
 
         var friends = await api.GetFriendsAsync(TestCookie, userId: 42);
 
         Assert.Single(friends);
+        Assert.Equal("a", friends[0].Username);
+        Assert.Equal("A", friends[0].DisplayName);
         Assert.Equal(string.Empty, friends[0].AvatarUrl);
     }
 
@@ -432,7 +451,11 @@ public class RobloxApiTests
     public async Task GetFriendsAsync_DisplayNameMissing_FallsBackToUsername()
     {
         var (api, stub) = CreateApi();
+        // friends endpoint (cycle 5.5: stripped names)
+        stub.EnqueueResponse(JsonResponse("""{"data": [{"id": 100, "name": "", "displayName": ""}]}"""));
+        // bulk-users returns username but empty displayName — fallback should fire.
         stub.EnqueueResponse(JsonResponse("""{"data": [{"id": 100, "name": "alice", "displayName": ""}]}"""));
+        // thumbnails empty
         stub.EnqueueResponse(JsonResponse("""{"data": []}"""));
 
         var friends = await api.GetFriendsAsync(TestCookie, userId: 42);
