@@ -76,6 +76,22 @@ public partial class App : Application
             _log.LogDebug(ex, "Theme apply at startup threw; continuing with default brushes.");
         }
 
+        // Cycle 4 hard-block: if Roblox is already running before RoRoRo started, multi-instance
+        // is broken — every Launch As routes through the existing process which has a bound user
+        // identity, ignoring our auth-ticket hand-off. Show the modal explaining the recovery path
+        // (close both, restart RoRoRo) and exit cleanly. MainWindow never renders; tray never
+        // shows; mutex never acquired against a hostile Roblox.
+        // Placement note: must run AFTER ApplyAtStartup so BgBrush resolves before the modal
+        // paints, but BEFORE mutex.Acquire so we never enter the broken state.
+        var gate = _services.GetRequiredService<StartupGate>();
+        if (!gate.ShouldProceed())
+        {
+            var modal = new Modals.RobloxAlreadyRunningWindow();
+            modal.ShowDialog();
+            Shutdown(0);
+            return;
+        }
+
         var tray = _services.GetRequiredService<ITrayService>();
         var mutex = _services.GetRequiredService<IMutexHolder>();
         var mainWindow = _services.GetRequiredService<MainWindow>();
@@ -89,6 +105,11 @@ public partial class App : Application
         // user can launch alts immediately without clicking the tray toggle first. The tray menu
         // still lets them toggle OFF for single-instance behavior.
         var acquired = mutex.Acquire();
+        _log.LogInformation(
+            "Mutex acquire at startup: name={Name}, acquired={Acquired}. Multi-instance is {State} (tray icon will reflect).",
+            ROROROblox.Core.MutexHolder.DefaultMutexName,
+            acquired,
+            acquired ? "ON" : "ERROR");
         tray.UpdateStatus(acquired ? MultiInstanceState.On : MultiInstanceState.Error);
 
         tray.Show();
@@ -233,11 +254,20 @@ public partial class App : Application
         services.AddSingleton<IProcessStarter, ProcessStarter>();
 
         // RobloxApi over a managed HttpClient (factory handles lifetime + DNS rotation).
+        // UseCookies=false is load-bearing: RobloxApi sets the .ROBLOSECURITY cookie manually
+        // per-request via request.Headers.Add("Cookie", ...). With the default cookie container
+        // enabled, the first auth-ticket request leaks its account's cookie into the container
+        // and every subsequent Launch As routes through that same account — every alt opens as
+        // the first user. This is the actual root cause of the multi-instance bug v1.2 saw.
         services.AddHttpClient<IRobloxApi, RobloxApi>(client =>
         {
             client.DefaultRequestHeaders.UserAgent.Clear();
             var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new System.Net.Http.SocketsHttpHandler
+        {
+            UseCookies = false,
         });
 
         // Compat checker uses its own HttpClient — different UA + different host pattern.
@@ -257,6 +287,13 @@ public partial class App : Application
         services.AddSingleton<IRobloxProcessTracker, RobloxProcessTracker>();
         services.AddSingleton<RobloxWindowDecorator>();
         services.AddSingleton<RunningRobloxScanner>();
+
+        // Cycle 4 startup gate — detects RobloxPlayerBeta.exe running BEFORE RoRoRo so we
+        // can hard-block instead of silently entering the broken state where every Launch As
+        // routes through the existing process. Lives next to other Diagnostics-namespace
+        // services in Core; consumed by App.OnStartup before mutex.Acquire.
+        services.AddSingleton<IRobloxRunningProbe, RobloxRunningProbe>();
+        services.AddSingleton<StartupGate>();
 
         // Tray avatar painter — owns its own HttpClient (default UA fine for public Roblox CDN
         // avatar URLs). TrayService is registered as ITrayService elsewhere; the painter takes

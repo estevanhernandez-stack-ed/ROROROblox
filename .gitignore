@@ -19,6 +19,10 @@ ROROROblox.sln
 
 # Per-user Claude Code state (project-shared lives in .claude/settings.json if needed)
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# Vibe Iterate plugin runtime state — atlas + config are per-machine, not shared
+.vibe-iterate/
 
 # Secrets — DPAPI envelope file (per-machine), private-key bundles, env files
 accounts.dat

@@ -1,0 +1,76 @@
+<Window x:Class="ROROROblox.App.Modals.RobloxAlreadyRunningWindow"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Roblox is already running"
+        Height="320" Width="520"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico"
+        Background="{DynamicResource BgBrush}">
+    <!-- Cycle 4 hard-block startup modal. Pre-empts MainWindow when RobloxPlayerBeta.exe is
+         already running at app launch — that scenario silently breaks multi-instance because
+         the auth-ticket hand-off routes through the existing process. WindowStartupLocation
+         is CenterScreen (not CenterOwner) because there is no owner; this window is the only
+         UI surface we render before Application.Current.Shutdown(). -->
+    <Grid Margin="32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Heading — cyan h2 to match the cycle-2 modal pattern. -->
+        <TextBlock Grid.Row="0"
+                   Text="Roblox is already running"
+                   FontSize="18" FontWeight="Bold"
+                   Foreground="#17D4FA" />
+
+        <!-- Body paragraph explaining the constraint. -->
+        <TextBlock Grid.Row="1"
+                   Text="Multi-instance launches won't work right while another Roblox process is open outside of RoRoRo. To get back to a clean state:"
+                   TextWrapping="Wrap"
+                   FontSize="12"
+                   Foreground="#FFFFFF"
+                   Opacity="0.85"
+                   Margin="0,12,0,0" />
+
+        <!-- Numbered recovery steps — magenta numerals, white step text (brand pairing). -->
+        <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,12,0,0">
+            <TextBlock FontSize="12" Margin="0,2,0,0">
+                <Run Text="1." Foreground="#F22F89" FontWeight="Bold" />
+                <Run Text=" Close Roblox" Foreground="#FFFFFF" />
+            </TextBlock>
+            <TextBlock FontSize="12" Margin="0,2,0,0">
+                <Run Text="2." Foreground="#F22F89" FontWeight="Bold" />
+                <Run Text=" Close RoRoRo" Foreground="#FFFFFF" />
+            </TextBlock>
+            <TextBlock FontSize="12" Margin="0,2,0,0">
+                <Run Text="3." Foreground="#F22F89" FontWeight="Bold" />
+                <Run Text=" Re-open RoRoRo" Foreground="#FFFFFF" />
+            </TextBlock>
+        </StackPanel>
+
+        <!-- Mono-micro tag — same pattern as RenameWindow's ROBLOX NAME line. JetBrains Mono
+             stack falls back to Cascadia (Win11 default) then Consolas. -->
+        <TextBlock Grid.Row="3"
+                   Text="MUTEX HOLD REQUIRES CLEAN START"
+                   FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                   FontSize="10"
+                   Foreground="#5A6982"
+                   Margin="0,16,0,0" />
+
+        <!-- Single action — Quit RoRoRo. IsDefault + IsCancel both true so Enter and Esc both
+             fire OnQuitClick. There is no in-place recovery path — verified mutex-recovery data
+             says quitting RoRoRo is required for clean re-acquisition. -->
+        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Quit RoRoRo" Padding="16,8" IsDefault="True" IsCancel="True"
+                    Background="#17D4FA" Foreground="#0F1F31" BorderThickness="0"
+                    FontWeight="Bold"
+                    Click="OnQuitClick" />
+        </StackPanel>
+    </Grid>
+</Window>
