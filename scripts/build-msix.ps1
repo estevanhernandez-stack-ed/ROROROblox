@@ -147,10 +147,14 @@ $publishDir = Join-Path $outDir 'publish'
 if (Test-Path $publishDir) { Remove-Item $publishDir -Recurse -Force }
 New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
 
+# Self-contained: bundles .NET 10 Desktop Runtime into the MSIX. The package grows from
+# ~5MB to ~80MB but installs and launches cleanly on a fresh Win11 box that doesn't have
+# .NET 10 preinstalled. Without this, MSIX launch fails on framework-missing systems —
+# Setup.exe (Velopack) already self-contains; this brings MSIX to parity.
 & "$env:USERPROFILE\.dotnet\dotnet.exe" publish $appProject `
     -c $Configuration `
     -r $Runtime `
-    --self-contained false `
+    --self-contained true `
     -o $publishDir `
     /p:PublishReadyToRun=true `
     /p:DebugType=None `
