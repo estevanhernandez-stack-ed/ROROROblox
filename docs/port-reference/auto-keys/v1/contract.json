@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "name": "auto-keys",
+  "version": "v1",
+  "language": "other:swift",
+  "framework": "swiftui",
+  "interface_kind": "library",
+  "inputs": [
+    {
+      "name": "targets",
+      "type": "other",
+      "required": true,
+      "description": "[AutoKeysCycler.Target] — list of (pid, AutoKeysSequence, label?) for the running windows to cycle over."
+    },
+    {
+      "name": "loopDelay",
+      "type": "float",
+      "required": true,
+      "description": "Seconds to sleep between full cycle iterations (after the last target's last step)."
+    },
+    {
+      "name": "safetyConfig",
+      "type": "other",
+      "required": false,
+      "description": "AutoKeysSafetyConfig — kill-key combo (keyCode + modifiers), gesture (.holdFor(seconds) | .doubleTap(within)), resumeGrace. Defaults to .default."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "state",
+      "type": "other",
+      "description": "AsyncStream<State> — emits .stopped(reason?) / .running(pids) / .paused(reason, until?) transitions."
+    },
+    {
+      "name": "progress",
+      "type": "other",
+      "description": "ProgressCallback (current: String?, next: String?, currentKeyCode: CGKeyCode?) fired per-step for UI mirroring."
+    },
+    {
+      "name": "engagementEvents",
+      "type": "other",
+      "description": "AsyncStream<EngagementEvent> from AutoKeysSafetyMonitor — .userEngaged / .killRequested for kill-key-as-toggle wiring."
+    }
+  ],
+  "dependencies": [
+    "Foundation",
+    "CoreGraphics",
+    "AppKit",
+    "ApplicationServices",
+    "IOKit",
+    "SwiftUI",
+    "XCTest"
+  ],
+  "env_vars": [],
+  "source_repo": "git@github.com:estevanhernandez-stack-ed/rororo-mac.git",
+  "source_path": "App/RORORO/Domain/AutoKeys/",
+  "captured_at": "2026-05-09T16:17:59Z",
+  "entry_points": [
+    "domain/AutoKeysCycler.swift",
+    "domain/AutoKeysCyclerViewModel.swift",
+    "domain/AutoKeysSafetyMonitor.swift"
+  ],
+  "tags": [
+    "macos",
+    "swift",
+    "swiftui",
+    "cycler",
+    "hotkeys",
+    "macros",
+    "automation",
+    "afk",
+    "roblox",
+    "windows-port-reference",
+    "actor",
+    "core-graphics",
+    "accessibility-api"
+  ],
+  "summary": "macOS auto-keys cycler — focus-then-fire serial keystroke driver across multiple windowed apps. Engine + UI + tests + ADR, captured for the Windows / WPF sibling port.",
+  "notes_completeness": {
+    "substantive_count": 14,
+    "interview_fired": false
+  }
+}
