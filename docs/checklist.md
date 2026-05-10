@@ -107,7 +107,7 @@ After M1: plugin install/registry/lifecycle work end-to-end on disk; no gRPC plu
 
 After M2: a stub plugin connects over a real Windows named pipe, exchanges all RPCs, contributes UI surfaces. End-to-end integration test green.
 
-- [ ] **8. Add `Grpc.AspNetCore` + Kestrel named-pipe transport deps to App**
+- [x] **8. Add `Grpc.AspNetCore` + Kestrel named-pipe transport deps to App**
   Spec ref: spec § Architecture → "Wire transport"; "MSIX size impact"
   Effort: ~10 min
   Dependencies: item 7
@@ -119,7 +119,7 @@ After M2: a stub plugin connects over a real Windows named pipe, exchanges all R
   Acceptance: `dotnet restore` clean; `dotnet build src/ROROROblox.App/` clean (modulo running-App bin-copy lock).
   Verify: `dotnet build src/ROROROblox.App/`. Commit: `build(plugins): add Grpc.AspNetCore + Kestrel named-pipe transport`.
 
-- [ ] **9. `IInstalledPluginsLookup` + `PluginHostService` (handshake-only)**
+- [x] **9. `IInstalledPluginsLookup` + `PluginHostService` (handshake-only)**
   Spec ref: spec § Data flow → "Startup flow" step 4 (handshake); Error handling → "Contract-version mismatch"
   Effort: ~45 min
   Dependencies: items 4, 8
@@ -130,7 +130,7 @@ After M2: a stub plugin connects over a real Windows named pipe, exchanges all R
   Acceptance: 3 new tests pass.
   Verify: `dotnet test src/ROROROblox.Tests/ --filter "PluginHostServiceTests"`. Commit: `feat(plugins): PluginHostService — handshake (accept/reject/version-check)`.
 
-- [ ] **10. Read surface — `GetHostInfo` + `GetRunningAccounts` + provider seams**
+- [x] **10. Read surface — `GetHostInfo` + `GetRunningAccounts` + provider seams**
   Spec ref: spec § Architecture diagram (UID-aware contract); Data flow → "Event flow"
   Effort: ~30 min
   Dependencies: item 9
@@ -143,7 +143,7 @@ After M2: a stub plugin connects over a real Windows named pipe, exchanges all R
   Acceptance: 5 total `PluginHostServiceTests` passing.
   Verify: `dotnet test src/ROROROblox.Tests/ --filter "PluginHostServiceTests"`. Commit: `feat(plugins): host read surface — GetHostInfo + GetRunningAccounts`.
 
-- [ ] **11. `RpcMethodCapabilityMap` + `CapabilityInterceptor`**
+- [x] **11. `RpcMethodCapabilityMap` + `CapabilityInterceptor`**
   Spec ref: spec § Components → "CapabilityInterceptor"; Trust model (locked decision #7)
   Effort: ~45–60 min
   Dependencies: items 9, 10
@@ -154,7 +154,7 @@ After M2: a stub plugin connects over a real Windows named pipe, exchanges all R
   Acceptance: 3 new tests pass.
   Verify: `dotnet test src/ROROROblox.Tests/ --filter "CapabilityInterceptorTests"`. Commit: `feat(plugins): CapabilityInterceptor — gRPC capability gating`.
 
-- [ ] **12. Event subscription RPCs (server streaming) + `IPluginEventBus`**
+- [x] **12. Event subscription RPCs (server streaming) + `IPluginEventBus`**
   Spec ref: spec § Data flow → "Event flow"; Error handling → "Plugin slow consumer"
   Effort: ~60–75 min
   Dependencies: items 10, 11
@@ -171,7 +171,7 @@ After M2: a stub plugin connects over a real Windows named pipe, exchanges all R
   Acceptance: event test passes; existing tests still green.
   Verify: `dotnet test src/ROROROblox.Tests/`. Commit: `feat(plugins): event subscription RPCs (account launched/exited, mutex)`.
 
-- [ ] **13. Command surface (`RequestLaunch`) + `IPluginLaunchInvoker` + crash event**
+- [x] **13. Command surface (`RequestLaunch`) + `IPluginLaunchInvoker` + crash event**
   Spec ref: spec § Data flow → "Launch trigger flow"; Error handling → "Plugin process crashes"
   Effort: ~45 min
   Dependencies: items 6, 11, 12
@@ -183,7 +183,7 @@ After M2: a stub plugin connects over a real Windows named pipe, exchanges all R
   Acceptance: tests pass.
   Verify: `dotnet test src/ROROROblox.Tests/`. Commit: `feat(plugins): RequestLaunch + plugin-exited event`.
 
-- [ ] **14. UI translator + `IPluginUIHost` + `PluginHostStartupService` + integration test**
+- [x] **14. UI translator + `IPluginUIHost` + `PluginHostStartupService` + integration test**
   Spec ref: spec § Components → "PluginUITranslator"; Architecture → "Wire transport"; Testing → "Integration"
   Effort: ~120–150 min (the big one)
   Dependencies: items 11, 12, 13
