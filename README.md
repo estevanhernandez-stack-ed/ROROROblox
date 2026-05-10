@@ -20,6 +20,18 @@ _Multi-launcher for Windows — run multiple Roblox clients on Windows, signed i
 
 ---
 
+## What's new in v1.4
+
+**Plugin system.** RoRoRo now hosts a per-user named-pipe gRPC server on startup. Plugins are separately distributed Windows EXEs that connect, declare what they do in a manifest, ask consent for each capability, and contribute UI back to RoRoRo (tray menu items, per-account row badges, status panels). Right-click the tray icon → **Plugins…** to install one from a GitHub release URL.
+
+Why this exists: macro / AFK-defeat features can't ship inside the Microsoft Store binary (Store policy 10.2.2 forbids dynamic inclusion of code that changes described functionality). Plugins live outside the Store-listed RoRoRo, communicate via gRPC, and stay sideload-only — keeps RoRoRo in the Store while still letting the clan run automation.
+
+No plugins ship with v1.4. The first one — auto-keys, the AFK-defeat cycler — lands in a sibling repo (`rororo-autokeys-plugin`) in a follow-up sprint. Until then the Plugins window shows an empty state and waits.
+
+If you're a builder thinking about writing one: see [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR_GUIDE.md). The contract is `ROROROblox.PluginContract` on NuGet — bundle it, implement the gRPC client, ship a `manifest.json` + `manifest.sha256` + `plugin.zip` GitHub release.
+
+---
+
 ## What's new in v1.3
 
 **Local rename overlay.** Right-click any saved game, saved private server, or account row → **Rename…** to set a per-user nickname. The Roblox-side name stays untouched; just the row in RORORO carries your local name. Reset any time via the popup's **Reset to original** link or the right-click **Reset name** action. Renames survive re-adding the same game/server, survive Roblox-side display-name refreshes, and roundtrip cleanly through DPAPI on accounts.
@@ -77,6 +89,8 @@ The first time you Launch As, you'll be prompted for a default Roblox game URL. 
 | `%LOCALAPPDATA%\ROROROblox\accounts.dat` | Your saved Roblox cookies. **DPAPI-encrypted** (Windows-issued; tied to your Windows user). Cannot be moved between PCs. |
 | `%LOCALAPPDATA%\ROROROblox\settings.json` | Your default game URL + UI preferences. Plain text (no secrets). |
 | `%LOCALAPPDATA%\ROROROblox\webview2-data\` | Embedded-browser cache. Wiped before every Add Account so the next login starts on a fresh page. |
+| `%LOCALAPPDATA%\ROROROblox\consent.dat` | Per-plugin consent records (capabilities granted, autostart toggle). **DPAPI-encrypted**, same secrecy contract as `accounts.dat`. Empty until you install your first plugin. |
+| `%LOCALAPPDATA%\ROROROblox\plugins\<plugin-id>\` | Installed plugin files (the EXE + `manifest.json` from each plugin you installed). Plain files — plugins are not encrypted, but each plugin's behavior is gated by your `consent.dat` capability grants. |
 
 ## What about my Roblox password?
 
@@ -136,6 +150,7 @@ powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertP
 - **Cycle process notes:** [`process-notes.md`](process-notes.md)
 - **Security audit:** [`docs/security-audit-2026-05-04.md`](docs/security-audit-2026-05-04.md)
 - **Microsoft Store submission:** [`docs/store/submission-checklist.md`](docs/store/submission-checklist.md) — pre/post-flight procedure, listing copy, age rating, screenshots
+- **Plugin author guide (v1.4+):** [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR_GUIDE.md) — contract surface, capability vocabulary, manifest format, gRPC client connection example
 - **Repo conventions for AI agents:** [`CLAUDE.md`](CLAUDE.md)
 
 ## Roadmap

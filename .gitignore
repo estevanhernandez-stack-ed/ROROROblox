@@ -31,8 +31,9 @@ consent.dat
 last-update-check.txt
 webview2-data/
 # Plugin install root — sideloaded plugins land at %LOCALAPPDATA%\ROROROblox\plugins\.
-# If a dev test ever drops a plugin tree under the repo, this stops it from shipping.
-plugins/
+# If a dev test ever drops a plugin tree at the repo root, this stops it from shipping.
+# Anchored to root so it doesn't shadow docs/plugins/ or any future src/*/plugins/.
+/plugins/
 *.pfx
 *.p12
 *.key
