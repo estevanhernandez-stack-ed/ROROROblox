@@ -1,3 +1,4 @@
+using System.Threading.Channels;
 using Grpc.Core;
 using ROROROblox.PluginContract;
 
@@ -19,19 +20,22 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     private readonly string _supportedContractVersion;
     private readonly IPluginHostStateProvider _hostState;
     private readonly IRunningAccountsProvider _runningAccounts;
+    private readonly IPluginEventBus _eventBus;
 
     public PluginHostService(
         IInstalledPluginsLookup registry,
         string hostVersion,
         string supportedContractVersion,
         IPluginHostStateProvider hostState,
-        IRunningAccountsProvider runningAccounts)
+        IRunningAccountsProvider runningAccounts,
+        IPluginEventBus eventBus)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _hostVersion = hostVersion ?? throw new ArgumentNullException(nameof(hostVersion));
         _supportedContractVersion = supportedContractVersion ?? throw new ArgumentNullException(nameof(supportedContractVersion));
         _hostState = hostState ?? throw new ArgumentNullException(nameof(hostState));
         _runningAccounts = runningAccounts ?? throw new ArgumentNullException(nameof(runningAccounts));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
     }
 
     public override Task<HandshakeResponse> Handshake(HandshakeRequest request, ServerCallContext context)
@@ -91,5 +95,133 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
             });
         }
         return Task.FromResult(list);
+    }
+
+    // =====================================================================
+    // Server-streaming event subscriptions (item 12 / plan task 14).
+    //
+    // Each subscribe RPC creates a per-call bounded channel (capacity 64,
+    // DropOldest), attaches a handler to the bus, and pumps events to the
+    // gRPC stream. The stream completes when the caller cancels (typically
+    // when the plugin process disconnects, which the supervisor in item 13
+    // surfaces as a cancelled CancellationToken on this context).
+    //
+    // Bounded over unbounded so a stuck consumer can't grow memory without
+    // limit; DropOldest over Wait so a slow consumer doesn't block the
+    // producer (the App layer raising events). The 5s write-timeout / treat-
+    // as-crashed semantics from spec §plugin live with the supervisor side
+    // of the connection, not here — v1 simply drops the oldest event.
+    // =====================================================================
+
+    public override async Task SubscribeAccountLaunched(
+        SubscriptionRequest request,
+        IServerStreamWriter<AccountLaunchedEvent> responseStream,
+        ServerCallContext context)
+    {
+        var channel = Channel.CreateBounded<AccountLaunchedEvent>(
+            new BoundedChannelOptions(64)
+            {
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleReader = true,
+                SingleWriter = false,
+            });
+
+        void Handler(RunningAccountSnapshot s)
+        {
+            channel.Writer.TryWrite(new AccountLaunchedEvent
+            {
+                AccountId = s.AccountId,
+                RobloxUserId = s.RobloxUserId,
+                DisplayName = s.DisplayName,
+                ProcessId = s.ProcessId,
+                LaunchedAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            });
+        }
+
+        _eventBus.AccountLaunched += Handler;
+        try
+        {
+            await foreach (var evt in channel.Reader.ReadAllAsync(context.CancellationToken).ConfigureAwait(false))
+            {
+                await responseStream.WriteAsync(evt).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) { /* clean stream end on caller disconnect */ }
+        finally
+        {
+            _eventBus.AccountLaunched -= Handler;
+            channel.Writer.TryComplete();
+        }
+    }
+
+    public override async Task SubscribeAccountExited(
+        SubscriptionRequest request,
+        IServerStreamWriter<AccountExitedEvent> responseStream,
+        ServerCallContext context)
+    {
+        var channel = Channel.CreateBounded<AccountExitedEvent>(
+            new BoundedChannelOptions(64)
+            {
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleReader = true,
+                SingleWriter = false,
+            });
+
+        void Handler(RunningAccountSnapshot s, long exitedAtUnixMs)
+        {
+            channel.Writer.TryWrite(new AccountExitedEvent
+            {
+                AccountId = s.AccountId,
+                RobloxUserId = s.RobloxUserId,
+                ProcessId = s.ProcessId,
+                ExitedAtUnixMs = exitedAtUnixMs,
+            });
+        }
+
+        _eventBus.AccountExited += Handler;
+        try
+        {
+            await foreach (var evt in channel.Reader.ReadAllAsync(context.CancellationToken).ConfigureAwait(false))
+            {
+                await responseStream.WriteAsync(evt).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) { /* clean stream end on caller disconnect */ }
+        finally
+        {
+            _eventBus.AccountExited -= Handler;
+            channel.Writer.TryComplete();
+        }
+    }
+
+    public override async Task SubscribeMutexStateChanged(
+        SubscriptionRequest request,
+        IServerStreamWriter<MutexStateEvent> responseStream,
+        ServerCallContext context)
+    {
+        var channel = Channel.CreateBounded<MutexStateEvent>(
+            new BoundedChannelOptions(64)
+            {
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleReader = true,
+                SingleWriter = false,
+            });
+
+        void Handler(string state) => channel.Writer.TryWrite(new MutexStateEvent { State = state });
+
+        _eventBus.MutexStateChanged += Handler;
+        try
+        {
+            await foreach (var evt in channel.Reader.ReadAllAsync(context.CancellationToken).ConfigureAwait(false))
+            {
+                await responseStream.WriteAsync(evt).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) { /* clean stream end on caller disconnect */ }
+        finally
+        {
+            _eventBus.MutexStateChanged -= Handler;
+            channel.Writer.TryComplete();
+        }
     }
 }
