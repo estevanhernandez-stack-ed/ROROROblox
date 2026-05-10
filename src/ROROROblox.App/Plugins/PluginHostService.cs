@@ -22,6 +22,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     private readonly IRunningAccountsProvider _runningAccounts;
     private readonly IPluginEventBus _eventBus;
     private readonly IPluginLaunchInvoker _launcher;
+    private readonly PluginUITranslator _uiTranslator;
 
     public PluginHostService(
         IInstalledPluginsLookup registry,
@@ -30,7 +31,8 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         IPluginHostStateProvider hostState,
         IRunningAccountsProvider runningAccounts,
         IPluginEventBus eventBus,
-        IPluginLaunchInvoker launcher)
+        IPluginLaunchInvoker launcher,
+        PluginUITranslator uiTranslator)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _hostVersion = hostVersion ?? throw new ArgumentNullException(nameof(hostVersion));
@@ -39,6 +41,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         _runningAccounts = runningAccounts ?? throw new ArgumentNullException(nameof(runningAccounts));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _launcher = launcher ?? throw new ArgumentNullException(nameof(launcher));
+        _uiTranslator = uiTranslator ?? throw new ArgumentNullException(nameof(uiTranslator));
     }
 
     public override Task<HandshakeResponse> Handshake(HandshakeRequest request, ServerCallContext context)
@@ -248,5 +251,62 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
             FailureReason = reason ?? string.Empty,
             ProcessId = pid,
         };
+    }
+
+    // =====================================================================
+    // UI surface (item 14 / plan task 16).
+    //
+    // AddTrayMenuItem / AddRowBadge / AddStatusPanel forward to the
+    // PluginUITranslator, which in turn calls into IPluginUIHost (the WPF-side
+    // host wired in App.xaml.cs item 15). Capability gates are enforced by
+    // CapabilityInterceptor; bodies assume the call has already passed consent.
+    //
+    // Per-connection plugin-id binding is read from the request metadata header
+    // "x-plugin-id". v1 ships this as the convention until per-call interceptor
+    // state plumbing lands (v1.5+). The end-to-end test in PluginTestHarness
+    // exercises this header path; the in-process unit tests for the translator
+    // exercise the ownership / dispatch logic directly.
+    // =====================================================================
+
+    public override Task<UIHandle> AddTrayMenuItem(MenuItemSpec request, ServerCallContext context)
+    {
+        var pluginId = ResolveCurrentPluginId(context);
+        return Task.FromResult(_uiTranslator.AddTrayMenuItem(pluginId, request));
+    }
+
+    public override Task<UIHandle> AddRowBadge(RowBadgeSpec request, ServerCallContext context)
+    {
+        var pluginId = ResolveCurrentPluginId(context);
+        return Task.FromResult(_uiTranslator.AddRowBadge(pluginId, request));
+    }
+
+    public override Task<UIHandle> AddStatusPanel(StatusPanelSpec request, ServerCallContext context)
+    {
+        var pluginId = ResolveCurrentPluginId(context);
+        return Task.FromResult(_uiTranslator.AddStatusPanel(pluginId, request));
+    }
+
+    public override Task<Empty> UpdateUI(UIUpdate request, ServerCallContext context)
+    {
+        // v1: UpdateUI is an ungated no-op stub. The capability map does not gate
+        // it; future work will plumb the spec-typed update through to IPluginUIHost.
+        return Task.FromResult(new Empty());
+    }
+
+    public override Task<Empty> RemoveUI(UIHandle request, ServerCallContext context)
+    {
+        var pluginId = ResolveCurrentPluginId(context);
+        _uiTranslator.RemoveUI(pluginId, request);
+        return Task.FromResult(new Empty());
+    }
+
+    private static string ResolveCurrentPluginId(ServerCallContext context)
+    {
+        // v1 contract: the plugin process puts its id in the call's request metadata
+        // header "x-plugin-id". The handshake-rejection path enforces that only
+        // installed plugins can connect, so a forged header from outside the
+        // per-user named pipe is not a useful attack vector. Tighter binding
+        // (per-connection interceptor state) lands in v1.5+.
+        return context.RequestHeaders.GetValue("x-plugin-id") ?? string.Empty;
     }
 }
