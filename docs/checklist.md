@@ -17,7 +17,7 @@
 
 After M1: plugin install/registry/lifecycle work end-to-end on disk; no gRPC plumbing yet.
 
-- [ ] **1. Scaffold `ROROROblox.PluginContract` project + initial `.proto` contract**
+- [x] **1. Scaffold `ROROROblox.PluginContract` project + initial `.proto` contract**
   Spec ref: spec § Components → "ROROROblox.PluginContract"
   Effort: ~30–40 min
   Dependencies: none
@@ -29,7 +29,7 @@ After M1: plugin install/registry/lifecycle work end-to-end on disk; no gRPC plu
   Acceptance: `dotnet build src/ROROROblox.PluginContract/` succeeds; generated C# types `RoRoRoHost.RoRoRoHostBase` and `Plugin.PluginBase` exist in `obj/Debug/.../Protos/PluginContractGrpc.cs`.
   Verify: `dotnet build src/ROROROblox.PluginContract/`. Commit: `feat(plugins): scaffold ROROROblox.PluginContract project + gRPC contract`.
 
-- [ ] **2. `PluginManifest` model + JSON parser + capability vocabulary**
+- [x] **2. `PluginManifest` model + JSON parser + capability vocabulary**
   Spec ref: spec § Components → "Manifest format"
   Effort: ~45 min
   Dependencies: item 1
@@ -40,7 +40,7 @@ After M1: plugin install/registry/lifecycle work end-to-end on disk; no gRPC plu
   Acceptance: 9 new tests passing. Existing 300 tests still green.
   Verify: `dotnet test src/ROROROblox.Tests/ --filter "PluginManifestTests|PluginCapabilityTests"`. Commit: `feat(plugins): PluginManifest + PluginCapability vocabulary`.
 
-- [ ] **3. `ConsentStore` (DPAPI-encrypted per-plugin consent records)**
+- [x] **3. `ConsentStore` (DPAPI-encrypted per-plugin consent records)**
   Spec ref: spec § Components → "ConsentStore"; Data flow → "Install flow" step 7
   Effort: ~45–60 min
   Dependencies: item 2
@@ -49,7 +49,7 @@ After M1: plugin install/registry/lifecycle work end-to-end on disk; no gRPC plu
   Acceptance: 5 new tests pass; `git diff` shows only Plugins/ + Tests/ changes.
   Verify: `dotnet test src/ROROROblox.Tests/ --filter "ConsentStoreTests"`. Commit: `feat(plugins): ConsentStore — DPAPI-encrypted consent records`.
 
-- [ ] **4. `InstalledPlugin` + `PluginRegistry` (disk scan + manifest+consent pairing)**
+- [x] **4. `InstalledPlugin` + `PluginRegistry` (disk scan + manifest+consent pairing)**
   Spec ref: spec § Components → "PluginRegistry"; Data flow → "Startup flow" step 2
   Effort: ~30 min
   Dependencies: items 2, 3
@@ -61,7 +61,7 @@ After M1: plugin install/registry/lifecycle work end-to-end on disk; no gRPC plu
   Acceptance: 4 new tests pass.
   Verify: `dotnet test src/ROROROblox.Tests/ --filter "PluginRegistryTests"`. Commit: `feat(plugins): InstalledPlugin + PluginRegistry disk scan`.
 
-- [ ] **5. `PluginInstaller` — GitHub URL → SHA verify → unpack**
+- [x] **5. `PluginInstaller` — GitHub URL → SHA verify → unpack**
   Spec ref: spec § Data flow → "Install flow" steps 1–7
   Effort: ~60–75 min
   Dependencies: items 2, 3, 4
@@ -77,7 +77,7 @@ After M1: plugin install/registry/lifecycle work end-to-end on disk; no gRPC plu
   Acceptance: 3 new tests pass. Zip-slip guard verified by attempted-escape test.
   Verify: `dotnet test src/ROROROblox.Tests/ --filter "PluginInstallerTests"`. Commit: `feat(plugins): PluginInstaller — GitHub URL fetch + SHA verify + unpack`.
 
-- [ ] **6. `IPluginProcessStarter` + `PluginProcessSupervisor`**
+- [x] **6. `IPluginProcessStarter` + `PluginProcessSupervisor`**
   Spec ref: spec § Components → "PluginProcessSupervisor"; Error handling → "Plugin process crashes"
   Effort: ~45 min
   Dependencies: item 4
@@ -89,7 +89,7 @@ After M1: plugin install/registry/lifecycle work end-to-end on disk; no gRPC plu
   Acceptance: 3 new tests pass.
   Verify: `dotnet test src/ROROROblox.Tests/ --filter "PluginProcessSupervisorTests"`. Commit: `feat(plugins): PluginProcessSupervisor — launch + monitor + teardown`.
 
-- [ ] **7. M1 milestone gate**
+- [x] **7. M1 milestone gate**
   Spec ref: all of items 1–6
   Effort: ~15 min
   Dependencies: items 1–6
