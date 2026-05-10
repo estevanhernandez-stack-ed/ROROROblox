@@ -815,12 +815,26 @@ public partial class App : Application
         // Stop the plugin host BEFORE disposing the service provider. Kestrel needs the
         // logger / DI graph alive to drain in-flight calls cleanly. Wrap defensively —
         // a hung StopAsync must not block the user's exit path.
+        //
+        // Run on the threadpool (not the WPF UI sync context) and bound by a hard timeout —
+        // some Kestrel/Hosting continuations capture the calling DispatcherSynchronizationContext,
+        // and a blocking GetResult() on the UI thread deadlocks (same pattern the comment on
+        // ApplyAtStartup above already calls out). On timeout we abandon the stop and let the
+        // process exit reclaim the pipe handle; OnExit must always finish promptly.
         if (_services is not null)
         {
             try
             {
                 var pluginHost = _services.GetService<ROROROblox.App.Plugins.PluginHostStartupService>();
-                pluginHost?.StopAsync(CancellationToken.None).GetAwaiter().GetResult();
+                if (pluginHost is not null)
+                {
+                    var stopped = Task.Run(() => pluginHost.StopAsync(CancellationToken.None))
+                        .Wait(TimeSpan.FromSeconds(2));
+                    if (!stopped)
+                    {
+                        _log?.LogDebug("PluginHostStartupService.StopAsync did not complete within 2s; abandoning.");
+                    }
+                }
             }
             catch (Exception ex)
             {
