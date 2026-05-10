@@ -90,6 +90,37 @@ public class PluginProcessSupervisorTests : IDisposable
     }
 
     [Fact]
+    public void Stop_KillsTrackedPlugin_AndUntracksIt()
+    {
+        var fake = new FakeProcessStarter();
+        var supervisor = new PluginProcessSupervisor(fake);
+        var a = MakePlugin("626labs.a", autostart: true);
+        var b = MakePlugin("626labs.b", autostart: true);
+
+        supervisor.StartAutostart(new[] { a, b });
+        var aPid = supervisor.RunningPids["626labs.a"];
+
+        supervisor.Stop("626labs.a");
+
+        Assert.Single(fake.KilledPids);
+        Assert.Equal(aPid, fake.KilledPids[0]);
+        Assert.False(supervisor.RunningPids.ContainsKey("626labs.a"));
+        Assert.True(supervisor.RunningPids.ContainsKey("626labs.b"));
+    }
+
+    [Fact]
+    public void Stop_IsNoOpForUntrackedPlugin()
+    {
+        var fake = new FakeProcessStarter();
+        var supervisor = new PluginProcessSupervisor(fake);
+
+        // No plugin started yet — Stop should not throw and should not call Kill.
+        supervisor.Stop("626labs.nonexistent");
+
+        Assert.Empty(fake.KilledPids);
+    }
+
+    [Fact]
     public void PluginExited_FiresWhenStarterReportsExit()
     {
         var fake = new FakeProcessStarter();

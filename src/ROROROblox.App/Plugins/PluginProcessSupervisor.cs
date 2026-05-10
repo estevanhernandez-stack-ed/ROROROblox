@@ -36,15 +36,26 @@ public sealed class PluginProcessSupervisor
 
     public void Restart(InstalledPlugin plugin)
     {
+        Stop(plugin.Manifest.Id);
+        StartOne(plugin);
+    }
+
+    /// <summary>
+    /// Kill the running plugin process for <paramref name="pluginId"/> if one is tracked.
+    /// No-op when the plugin isn't running. Called by Revoke so a plugin that was active
+    /// when consent is removed actually goes away (rather than walking zombie until the
+    /// host restarts).
+    /// </summary>
+    public void Stop(string pluginId)
+    {
         lock (_lock)
         {
-            if (_pidByPluginId.TryGetValue(plugin.Manifest.Id, out var oldPid))
+            if (_pidByPluginId.TryGetValue(pluginId, out var pid))
             {
-                _starter.Kill(oldPid);
-                _pidByPluginId.Remove(plugin.Manifest.Id);
+                _starter.Kill(pid);
+                _pidByPluginId.Remove(pluginId);
             }
         }
-        StartOne(plugin);
     }
 
     public void StopAll()

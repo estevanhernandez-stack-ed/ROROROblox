@@ -174,6 +174,14 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         if (row is null) return;
         try
         {
+            // Kill the running plugin process FIRST so its DLL handles release before we
+            // try to delete the install dir. Plugin processes hold their own EXE + dependent
+            // DLLs open while running — without this, TryDeleteInstallDir silently fails and
+            // the user is left with a "removed" plugin that's still in memory + on disk.
+            // Brief delay lets the OS finish releasing handles before the delete attempt.
+            _supervisor.Stop(row.Plugin.Manifest.Id);
+            await Task.Delay(150).ConfigureAwait(true);
+
             await _consentStore.RevokeAsync(row.Plugin.Manifest.Id).ConfigureAwait(true);
             TryDeleteInstallDir(row.Plugin.InstallDir);
             _registryAdapter.Refresh();
