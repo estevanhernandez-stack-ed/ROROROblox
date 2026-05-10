@@ -466,11 +466,11 @@ public partial class App : Application
             var installer = _services.GetRequiredService<ROROROblox.App.Plugins.PluginInstaller>();
             var supervisor = _services.GetRequiredService<ROROROblox.App.Plugins.PluginProcessSupervisor>();
 
-            // Commit 1 stub: grant every declared capability without prompting. Commit 2 swaps
-            // this for the real ConsentSheet that lets the user untick capabilities they don't
-            // want to allow before clicking Install.
+            // Show the manifest consent sheet so the user can review + per-capability opt
+            // out (system.* default-off, host.* default-on). Cancel returns null and the VM
+            // rolls back the install dir.
             Func<ROROROblox.App.Plugins.PluginManifest, Task<IReadOnlyList<string>?>> showSheet =
-                manifest => Task.FromResult<IReadOnlyList<string>?>(manifest.Capabilities);
+                manifest => ROROROblox.App.Plugins.ConsentSheet.ShowAndAwaitDecisionAsync(owner, manifest);
 
             var vm = new ROROROblox.App.Plugins.PluginsViewModel(
                 registry, registryAdapter, consentStore, installer, supervisor, showSheet);

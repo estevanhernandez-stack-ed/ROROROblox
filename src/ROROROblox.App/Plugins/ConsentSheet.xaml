@@ -1,0 +1,134 @@
+<Window x:Class="ROROROblox.App.Plugins.ConsentSheet"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="RORORO -- Install plugin"
+        Height="560" Width="560"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BgBrush}"
+        Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
+
+    <Grid Margin="32,28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header — plugin name + version -->
+        <StackPanel Grid.Row="0">
+            <TextBlock x:Name="HeaderTitle"
+                       FontSize="20" FontWeight="Bold"
+                       Foreground="{DynamicResource WhiteBrush}"
+                       TextWrapping="Wrap" />
+            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                <TextBlock x:Name="HeaderVersion"
+                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                           FontSize="11"
+                           Foreground="{DynamicResource CyanBrush}" />
+                <TextBlock Text=" -- "
+                           FontSize="11"
+                           Foreground="{DynamicResource MutedTextBrush}"
+                           VerticalAlignment="Center"
+                           Margin="6,0,6,0" />
+                <TextBlock x:Name="HeaderPublisher"
+                           FontSize="11"
+                           Foreground="{DynamicResource MutedTextBrush}"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Description block -->
+        <Border Grid.Row="1"
+                Margin="0,16,0,0"
+                Padding="14,10"
+                Background="{DynamicResource RowBgBrush}"
+                CornerRadius="8">
+            <TextBlock x:Name="HeaderDescription"
+                       Foreground="{DynamicResource WhiteBrush}"
+                       Opacity="0.85"
+                       FontSize="12"
+                       TextWrapping="Wrap" />
+        </Border>
+
+        <!-- Capability heading -->
+        <TextBlock Grid.Row="2"
+                   Text="THIS PLUGIN ASKS FOR"
+                   FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                   FontSize="10"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   Margin="0,18,0,8" />
+
+        <!-- Capability list -->
+        <Border Grid.Row="3"
+                BorderBrush="{DynamicResource DividerBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl x:Name="CapabilityList" Margin="8">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{DynamicResource RowBgBrush}"
+                                    CornerRadius="6"
+                                    Padding="12,10"
+                                    Margin="0,0,0,6">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox Grid.Column="0"
+                                              IsChecked="{Binding IsGranted, Mode=TwoWay}"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,12,0" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{Binding Id}"
+                                                   FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                                   FontSize="10"
+                                                   Foreground="{Binding NamespaceBrush}"
+                                                   TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding Display}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource WhiteBrush}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,3,0,0" />
+                                        <TextBlock Text="{Binding NamespaceLabel}"
+                                                   FontSize="10"
+                                                   Foreground="{DynamicResource MutedTextBrush}"
+                                                   Margin="0,4,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Footer buttons -->
+        <StackPanel Grid.Row="4"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="0,16,0,0">
+            <Button Content="Cancel"
+                    Padding="18,8" Margin="0,0,8,0"
+                    Background="{DynamicResource NavyBrush}"
+                    Foreground="{DynamicResource MutedTextBrush}"
+                    BorderBrush="{DynamicResource DividerBrush}"
+                    BorderThickness="1"
+                    IsCancel="True"
+                    Click="OnCancelClick" />
+            <Button Content="Install"
+                    Padding="22,8"
+                    Background="{DynamicResource CyanBrush}"
+                    Foreground="{DynamicResource NavyBrush}"
+                    BorderThickness="0"
+                    FontWeight="SemiBold"
+                    IsDefault="True"
+                    Click="OnInstallClick" />
+        </StackPanel>
+    </Grid>
+</Window>
