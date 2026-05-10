@@ -2,7 +2,9 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using ROROROblox.App.Plugins.Adapters;
 using ROROROblox.App.ViewModels;
 
@@ -78,6 +80,16 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
     {
         get => _isBusy;
         set { if (_isBusy != value) { _isBusy = value; Raise(); RelayCommand.RaiseCanExecuteChanged(); } }
+    }
+
+    /// <summary>
+    /// True when the banner is referencing a plugin that exited and offers a Restart action.
+    /// XAML uses this to swap the banner cosmetic from "info" (cyan strip) to "actionable"
+    /// (clickable + magenta accent).
+    /// </summary>
+    public bool BannerIsRestartable
+    {
+        get => _bannerPluginId is not null;
     }
 
     public ICommand InstallFromUrlCommand { get; }
@@ -176,13 +188,14 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
 
     private Task RestartFromBannerAsync()
     {
-        // Commit 3 fills in this body. Stub for commit 1 so the binding resolves.
         if (_bannerPluginId is null) return Task.CompletedTask;
         var match = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == _bannerPluginId);
         if (match is null)
         {
+            // The plugin was uninstalled between exit + click; clear banner gracefully.
             StatusBanner = null;
             _bannerPluginId = null;
+            Raise(nameof(BannerIsRestartable));
             return Task.CompletedTask;
         }
         try
@@ -190,6 +203,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             _supervisor.Restart(match.Plugin);
             StatusBanner = $"{match.Name} restarted.";
             _bannerPluginId = null;
+            Raise(nameof(BannerIsRestartable));
         }
         catch (Exception ex)
         {
@@ -200,10 +214,27 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
 
     private void OnPluginExited(string pluginId, int pid)
     {
-        // Commit 3 wires the marshalled banner update — for commit 1 a no-op so the
-        // subscription doesn't break anything. The PluginsWindow code-behind will marshal
-        // to the dispatcher in commit 3.
-        _ = pluginId; _ = pid;
+        _ = pid;
+        // Supervisor fires from a Process.Exited handler, which lands on a worker thread.
+        // Marshal to the WPF dispatcher before mutating observable state — otherwise INPC
+        // raises on a non-UI thread and the binding system throws.
+        var dispatcher = Application.Current?.Dispatcher;
+        Action update = () =>
+        {
+            var match = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == pluginId);
+            var displayName = match?.Name ?? pluginId;
+            _bannerPluginId = pluginId;
+            StatusBanner = $"{displayName} stopped -- click to restart.";
+            Raise(nameof(BannerIsRestartable));
+        };
+        if (dispatcher is null || dispatcher.CheckAccess())
+        {
+            update();
+        }
+        else
+        {
+            dispatcher.BeginInvoke(DispatcherPriority.Normal, update);
+        }
     }
 
     private static void TryDeleteInstallDir(string dir)

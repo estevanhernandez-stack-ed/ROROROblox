@@ -46,21 +46,53 @@
                        TextWrapping="Wrap" />
         </StackPanel>
 
-        <!-- Status banner — visible when StatusBanner is non-empty. Commit 3 layers the
-             "click to restart" interaction on top of this. For commit 1 it's read-only info. -->
-        <Border Grid.Row="1"
-                Margin="0,16,0,0"
-                Padding="14,10"
-                Background="{DynamicResource RowBgBrush}"
-                BorderBrush="{DynamicResource CyanBrush}"
-                BorderThickness="0,0,0,2"
-                CornerRadius="6"
-                Visibility="{Binding StatusBanner, Converter={StaticResource StringToVisibilityConverterLocal}}">
-            <TextBlock Text="{Binding StatusBanner}"
-                       Foreground="{DynamicResource WhiteBrush}"
-                       FontSize="12"
-                       TextWrapping="Wrap" />
-        </Border>
+        <!-- Status banner — non-actionable cyan strip when an info / install message is set.
+             When BannerIsRestartable flips on (PluginExited fired), the magenta-strip banner
+             shows underneath with a Restart button bound to RestartCommand. Two banners so
+             the cosmetic difference between "info" and "actionable" lands on first read. -->
+        <StackPanel Grid.Row="1" Margin="0,16,0,0">
+            <Border Padding="14,10"
+                    Background="{DynamicResource RowBgBrush}"
+                    BorderBrush="{DynamicResource CyanBrush}"
+                    BorderThickness="0,0,0,2"
+                    CornerRadius="6">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding BannerIsRestartable}" Value="True">
+                                <Setter Property="BorderBrush" Value="{DynamicResource MagentaBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding StatusBanner, Converter={StaticResource StringToVisibilityConverterLocal}}" Value="Collapsed">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding StatusBanner}"
+                               Foreground="{DynamicResource WhiteBrush}"
+                               FontSize="12"
+                               VerticalAlignment="Center"
+                               TextWrapping="Wrap" />
+                    <Button Grid.Column="1"
+                            Content="Restart"
+                            Margin="12,0,0,0"
+                            Padding="14,4"
+                            Background="{DynamicResource MagentaBrush}"
+                            Foreground="{DynamicResource WhiteBrush}"
+                            BorderThickness="0"
+                            FontWeight="SemiBold"
+                            FontSize="11"
+                            Command="{Binding RestartCommand}"
+                            Visibility="{Binding BannerIsRestartable, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </Grid>
+            </Border>
+        </StackPanel>
 
         <!-- Install row -->
         <Border Grid.Row="2"
