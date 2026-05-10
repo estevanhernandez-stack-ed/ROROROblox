@@ -54,8 +54,16 @@ public sealed class CapabilityInterceptor : Interceptor
             return; // ungated method
         }
 
-        var pluginId = _currentPluginAccessor();
-        if (pluginId is null)
+        // v1.4 contract: plugin sends "x-plugin-id" request metadata header on every call
+        // (same convention PluginHostService.ResolveCurrentPluginId uses for UI calls).
+        // Fall back to the constructor-supplied accessor so existing in-process tests
+        // that wire a fixed accessor keep passing — header takes precedence in production.
+        var pluginId = context.RequestHeaders.GetValue("x-plugin-id");
+        if (string.IsNullOrEmpty(pluginId))
+        {
+            pluginId = _currentPluginAccessor();
+        }
+        if (string.IsNullOrEmpty(pluginId))
         {
             throw new RpcException(new Status(StatusCode.FailedPrecondition,
                 "Handshake required before this call."));

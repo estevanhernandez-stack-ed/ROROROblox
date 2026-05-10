@@ -37,9 +37,11 @@ Reference the contract NuGet, take a dependency on `Grpc.Net.Client` for the wir
 
 ```csharp
 using System.IO.Pipes;
+using Grpc.Core;
 using Grpc.Net.Client;
 using ROROROblox.PluginContract;
 
+const string PluginId = "yourcompany.your-plugin";
 const string PipeName = "rororo-plugin-host";
 
 using var channel = GrpcChannel.ForAddress("http://pipe", new GrpcChannelOptions
@@ -58,11 +60,18 @@ using var channel = GrpcChannel.ForAddress("http://pipe", new GrpcChannelOptions
 
 var client = new RoRoRoHost.RoRoRoHostClient(channel);
 
+// REQUIRED on every call: the x-plugin-id header. RoRoRo's CapabilityInterceptor
+// reads this header to identify which plugin is calling and looks up its consent.
+// Calls without this header throw FailedPrecondition on every gated RPC
+// (Subscribe*, RequestLaunch, AddTrayMenuItem/RowBadge/StatusPanel).
+var headers = new Metadata { { "x-plugin-id", PluginId } };
+var callOptions = new CallOptions(headers: headers);
+
 var handshake = await client.HandshakeAsync(new HandshakeRequest
 {
-    PluginId = "yourcompany.your-plugin",
+    PluginId = PluginId,
     ContractVersion = "1.0",
-});
+}, callOptions);
 
 if (!handshake.Accepted)
 {
@@ -74,6 +83,8 @@ Console.WriteLine($"Connected to RoRoRo {handshake.HostVersion}.");
 ```
 
 The handshake is the FIRST call after the pipe connects. If RoRoRo doesn't recognize your plugin id (you haven't been installed) or rejects your contract version, every subsequent RPC fails. Surface the reject reason — your dev cycle is faster.
+
+**The `x-plugin-id` header is non-negotiable** — every call needs it (handshake included for consistency, gated calls require it). Pass `callOptions` (unary) or `headers` (streaming) on each invocation, or wrap the client in a custom `CallInvoker` that injects it automatically.
 
 ## Capability vocabulary
 
@@ -177,13 +188,15 @@ RoRoRo doesn't enforce Authenticode signing on plugins in v1.4. **You should sti
 ### Subscribe to account launches + react
 
 ```csharp
-using var stream = client.SubscribeAccountLaunched(new SubscriptionRequest());
+using var stream = client.SubscribeAccountLaunched(new SubscriptionRequest(), headers);
 await foreach (var evt in stream.ResponseStream.ReadAllAsync())
 {
     Console.WriteLine($"{evt.DisplayName} (uid {evt.RobloxUserId}) launched, pid {evt.ProcessId}");
     // your react logic here
 }
 ```
+
+Streaming RPCs take `Metadata` directly (not `CallOptions`). Pass the same `headers` from the connect example.
 
 The stream stays open as long as the connection is alive. RoRoRo uses bounded channels with `DropOldest` on the host side — if your plugin is too slow to read, you'll silently miss old events while the freshest ones still arrive. Don't sleep inside the consumer loop.
 
@@ -195,7 +208,7 @@ var handle = await client.AddTrayMenuItemAsync(new MenuItemSpec
     Label = "Toggle automation",
     Tooltip = "Pauses or resumes the cycler.",
     Enabled = true,
-});
+}, callOptions);
 // stash handle.Id if you want to later UpdateUI or RemoveUI it
 ```
 
@@ -207,7 +220,7 @@ The handle id is RoRoRo's — opaque to you. Pass it back when you call `UpdateU
 var result = await client.RequestLaunchAsync(new LaunchRequest
 {
     AccountId = "00000000-0000-0000-0000-000000000001", // RoRoRo's internal Guid
-});
+}, callOptions);
 if (!result.Ok)
 {
     Console.Error.WriteLine($"Launch failed: {result.FailureReason}");
