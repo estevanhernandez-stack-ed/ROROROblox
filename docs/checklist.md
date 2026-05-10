@@ -208,7 +208,7 @@ After M2: a stub plugin connects over a real Windows named pipe, exchanges all R
 
 After M3: end users can install and manage plugins via RoRoRo's UI; sprint shippable.
 
-- [ ] **15. DI wiring + adapter classes in App.xaml.cs**
+- [x] **15. DI wiring + adapter classes in App.xaml.cs**
   Spec ref: spec § Architecture diagram (PluginHost block); Data flow → "Startup flow"
   Effort: ~90 min
   Dependencies: items 7, 14
@@ -220,7 +220,7 @@ After M3: end users can install and manage plugins via RoRoRo's UI; sprint shipp
   Acceptance: App launches, log line "PluginHost gRPC server listening on ..." appears, App exits cleanly with the gRPC server torn down.
   Verify: build + run RoRoRo manually; check log output. Commit: `feat(plugins): DI wiring + lifecycle hooks`.
 
-- [ ] **16. Plugins page UI + manifest consent sheet + status banner**
+- [x] **16. Plugins page UI + manifest consent sheet + status banner**
   Spec ref: spec § Data flow → "Install flow" step 3 (consent sheet); Error handling → "Plugin process crashes"
   Effort: ~180–240 min (UI is the long pole)
   Dependencies: item 15
@@ -232,7 +232,7 @@ After M3: end users can install and manage plugins via RoRoRo's UI; sprint shipp
   Acceptance: install flow works end-to-end with a hand-crafted local manifest+zip (file:// URL); consent persists; autostart toggle works; killing a plugin process from Task Manager surfaces the banner within ~3 seconds.
   Verify: manual smoke test — install, consent, restart RoRoRo, verify autostart fires; kill plugin, verify banner. Commit: `feat(plugins): Plugins page + consent sheet + status banner`.
 
-- [ ] **17. Integration tests (capability-gate + consent-revoke + UI-add) + M3 gate + release prep**
+- [x] **17. Integration tests (capability-gate + consent-revoke + UI-add) + M3 gate + release prep**
   Spec ref: spec § Testing → "Integration"; Error handling → "User revokes consent mid-session"
   Effort: ~90 min
   Dependencies: item 16
