@@ -100,6 +100,8 @@ public partial class App : Application
         WireMutexLost(mutex, tray);
         WireMainAvatarTrayPainter();
         WireRobloxWindowDecorator();
+        WirePluginEventBus();
+        StartPluginHost();
 
         // Default Multi-Instance ON. Acquire the ROBLOX_singletonEvent mutex at startup so the
         // user can launch alts immediately without clicking the tray toggle first. The tray menu
@@ -355,6 +357,88 @@ public partial class App : Application
         // ViewModel + Window.
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
+
+        // === Plugins (v1.4) =========================================================
+        // Wires the gRPC plugin host (items 5-14) into the App lifecycle. The host runs
+        // on a per-user named pipe; failure to start MUST NOT break RoRoRo's normal
+        // launch — every plugin-side service is wrapped at the App.OnStartup hook so a
+        // broken plugins root or a corrupt consent file just disables plugin support.
+        var pluginsRoot = ROROROblox.App.Plugins.PluginRegistry.DefaultPluginsRoot;
+        var consentPath = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "ROROROblox", "consent.dat");
+
+        services.AddSingleton(_ => new ROROROblox.App.Plugins.ConsentStore(consentPath));
+        services.AddSingleton(sp => new ROROROblox.App.Plugins.PluginRegistry(
+            pluginsRoot,
+            sp.GetRequiredService<ROROROblox.App.Plugins.ConsentStore>()));
+        services.AddSingleton<ROROROblox.App.Plugins.IInstalledPluginsLookup>(sp =>
+            new ROROROblox.App.Plugins.Adapters.InstalledPluginsLookupAdapter(
+                sp.GetRequiredService<ROROROblox.App.Plugins.PluginRegistry>()));
+
+        // PluginInstaller takes (HttpClient, string pluginsRoot) — register the typed
+        // HttpClient with the right UA, then build the installer with the resolved client.
+        services.AddHttpClient(nameof(ROROROblox.App.Plugins.PluginInstaller), client =>
+        {
+            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            client.DefaultRequestHeaders.UserAgent.Add(
+                new ProductInfoHeaderValue("ROROROblox-PluginInstaller", version));
+        });
+        services.AddSingleton(sp =>
+        {
+            var http = sp.GetRequiredService<IHttpClientFactory>()
+                .CreateClient(nameof(ROROROblox.App.Plugins.PluginInstaller));
+            return new ROROROblox.App.Plugins.PluginInstaller(http, pluginsRoot);
+        });
+
+        services.AddSingleton<ROROROblox.App.Plugins.IPluginProcessStarter,
+            ROROROblox.App.Plugins.Adapters.DefaultPluginProcessStarter>();
+        services.AddSingleton<ROROROblox.App.Plugins.PluginProcessSupervisor>();
+
+        services.AddSingleton<ROROROblox.App.Plugins.IPluginEventBus,
+            ROROROblox.App.Plugins.InProcessPluginEventBus>();
+        services.AddSingleton<ROROROblox.App.Plugins.IPluginHostStateProvider,
+            ROROROblox.App.Plugins.Adapters.MutexHostStateAdapter>();
+        services.AddSingleton<ROROROblox.App.Plugins.IRunningAccountsProvider,
+            ROROROblox.App.Plugins.Adapters.MainViewModelRunningAccountsAdapter>();
+        services.AddSingleton<ROROROblox.App.Plugins.IPluginLaunchInvoker,
+            ROROROblox.App.Plugins.Adapters.MainViewModelLaunchInvokerAdapter>();
+        services.AddSingleton<ROROROblox.App.Plugins.IPluginUIHost,
+            ROROROblox.App.Plugins.Adapters.WpfPluginUIHost>();
+        services.AddSingleton<ROROROblox.App.Plugins.PluginUITranslator>();
+
+        services.AddSingleton(sp => new ROROROblox.App.Plugins.PluginHostService(
+            sp.GetRequiredService<ROROROblox.App.Plugins.IInstalledPluginsLookup>(),
+            typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0",
+            "1.0",
+            sp.GetRequiredService<ROROROblox.App.Plugins.IPluginHostStateProvider>(),
+            sp.GetRequiredService<ROROROblox.App.Plugins.IRunningAccountsProvider>(),
+            sp.GetRequiredService<ROROROblox.App.Plugins.IPluginEventBus>(),
+            sp.GetRequiredService<ROROROblox.App.Plugins.IPluginLaunchInvoker>(),
+            sp.GetRequiredService<ROROROblox.App.Plugins.PluginUITranslator>()));
+
+        // CapabilityInterceptor: per-connection plugin id binding is deferred to v1.5+
+        // (the gRPC interceptor sees the call before any plugin-id metadata is bound).
+        // For v1.4 we pass a no-op accessor; the consent lookup goes through the
+        // (decrypted) ConsentStore each call. Wrapped in try/catch so a corrupt
+        // consent.dat returns empty capabilities rather than throwing into the host.
+        services.AddSingleton(sp => new ROROROblox.App.Plugins.CapabilityInterceptor(
+            currentPluginAccessor: () => null,
+            consentLookup: pluginId =>
+            {
+                try
+                {
+                    var consent = sp.GetRequiredService<ROROROblox.App.Plugins.ConsentStore>();
+                    var records = consent.ListAsync().GetAwaiter().GetResult();
+                    return records.FirstOrDefault(r => r.PluginId == pluginId)?.GrantedCapabilities
+                        ?? Array.Empty<string>();
+                }
+                catch
+                {
+                    return Array.Empty<string>();
+                }
+            }));
+        services.AddSingleton<ROROROblox.App.Plugins.PluginHostStartupService>();
     }
 
     private void WireTrayEvents(ITrayService tray, IMutexHolder mutex, MainWindow mainWindow)
@@ -542,26 +626,133 @@ public partial class App : Application
         }
     }
 
-    private static void WireMutexLost(IMutexHolder mutex, ITrayService tray)
+    private void WireMutexLost(IMutexHolder mutex, ITrayService tray)
     {
         mutex.MutexLost += (_, _) =>
         {
             // MutexLost fires on a System.Timers.Timer thread; marshal to UI for tray update.
             Current.Dispatcher.Invoke(() => tray.UpdateStatus(MultiInstanceState.Error));
+            // Plugin bus is thread-safe (synchronous Action invoke) — fire from the
+            // timer thread directly so subscribers see the event without the UI marshal.
+            TryRaiseMutexBusEvent("Error");
         };
     }
 
-    private static void ToggleMutex(IMutexHolder mutex, ITrayService tray)
+    private void ToggleMutex(IMutexHolder mutex, ITrayService tray)
     {
         if (mutex.IsHeld)
         {
             mutex.Release();
             tray.UpdateStatus(MultiInstanceState.Off);
+            TryRaiseMutexBusEvent("Off");
         }
         else
         {
             var acquired = mutex.Acquire();
             tray.UpdateStatus(acquired ? MultiInstanceState.On : MultiInstanceState.Error);
+            TryRaiseMutexBusEvent(acquired ? "On" : "Error");
+        }
+    }
+
+    private void TryRaiseMutexBusEvent(string state)
+    {
+        if (_services is null) return;
+        try
+        {
+            var bus = _services.GetService<ROROROblox.App.Plugins.IPluginEventBus>()
+                as ROROROblox.App.Plugins.InProcessPluginEventBus;
+            bus?.RaiseMutexStateChanged(state);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Plugin event bus mutex-state raise failed; ignoring.");
+        }
+    }
+
+    /// <summary>
+    /// Bridges existing App-layer events into the plugin event bus so subscribed plugins
+    /// see them via the SubscribeAccountLaunched / SubscribeAccountExited / SubscribeMutexStateChanged
+    /// gRPC streams. Wrapped in try/catch — a wiring failure must not block App startup.
+    /// </summary>
+    private void WirePluginEventBus()
+    {
+        if (_services is null) return;
+        try
+        {
+            var tracker = _services.GetRequiredService<IRobloxProcessTracker>();
+            var vm = _services.GetRequiredService<MainViewModel>();
+            var bus = _services.GetRequiredService<ROROROblox.App.Plugins.IPluginEventBus>()
+                as ROROROblox.App.Plugins.InProcessPluginEventBus;
+            if (bus is null) return;
+
+            tracker.ProcessAttached += (_, e) =>
+            {
+                try
+                {
+                    var summary = vm.Accounts.FirstOrDefault(a => a.Id == e.AccountId);
+                    if (summary is null) return;
+                    var snapshot = new ROROROblox.App.Plugins.RunningAccountSnapshot(
+                        AccountId: summary.Id.ToString(),
+                        RobloxUserId: summary.RobloxUserId ?? 0,
+                        DisplayName: summary.RenderName,
+                        ProcessId: e.Pid);
+                    bus.RaiseAccountLaunched(snapshot);
+                }
+                catch (Exception ex)
+                {
+                    _log?.LogDebug(ex, "Plugin bus AccountLaunched bridge threw; ignoring.");
+                }
+            };
+
+            tracker.ProcessExited += (_, e) =>
+            {
+                try
+                {
+                    var summary = vm.Accounts.FirstOrDefault(a => a.Id == e.AccountId);
+                    var snapshot = new ROROROblox.App.Plugins.RunningAccountSnapshot(
+                        AccountId: e.AccountId.ToString(),
+                        RobloxUserId: summary?.RobloxUserId ?? 0,
+                        DisplayName: summary?.RenderName ?? string.Empty,
+                        ProcessId: e.Pid);
+                    bus.RaiseAccountExited(snapshot, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+                }
+                catch (Exception ex)
+                {
+                    _log?.LogDebug(ex, "Plugin bus AccountExited bridge threw; ignoring.");
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "WirePluginEventBus failed; plugins will not see runtime events.");
+        }
+    }
+
+    /// <summary>
+    /// Starts the gRPC plugin host (Kestrel + named pipe) in the background. The plugin
+    /// host failing must NOT break RoRoRo's normal launch — fully-broken plugin host =
+    /// RoRoRo still launches without plugin support.
+    /// </summary>
+    private void StartPluginHost()
+    {
+        if (_services is null) return;
+        try
+        {
+            var pluginHost = _services.GetRequiredService<ROROROblox.App.Plugins.PluginHostStartupService>();
+            // Fire-and-forget: StartAsync's first await yields after Kestrel's bind, so
+            // App.OnStartup doesn't block on it. Failures inside StartAsync are caught
+            // by ContinueWith so they show up as a debug log instead of an unobserved task.
+            _ = pluginHost.StartAsync(CancellationToken.None).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    _log?.LogDebug(t.Exception, "PluginHostStartupService.StartAsync threw; plugins disabled this session.");
+                }
+            }, TaskScheduler.Default);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Resolving PluginHostStartupService threw; plugins disabled this session.");
         }
     }
 
@@ -588,6 +779,23 @@ public partial class App : Application
     {
         IsShuttingDown = true;
         _log?.LogInformation("ROROROblox exiting (code {Code}).", e.ApplicationExitCode);
+
+        // Stop the plugin host BEFORE disposing the service provider. Kestrel needs the
+        // logger / DI graph alive to drain in-flight calls cleanly. Wrap defensively —
+        // a hung StopAsync must not block the user's exit path.
+        if (_services is not null)
+        {
+            try
+            {
+                var pluginHost = _services.GetService<ROROROblox.App.Plugins.PluginHostStartupService>();
+                pluginHost?.StopAsync(CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "PluginHostStartupService.StopAsync threw on exit; ignoring.");
+            }
+        }
+
         _singleInstance?.Dispose();
         _services?.Dispose();
         AppLogging.Shutdown();
