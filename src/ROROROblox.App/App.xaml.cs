@@ -774,17 +774,53 @@ public partial class App : Application
             // Fire-and-forget: StartAsync's first await yields after Kestrel's bind, so
             // App.OnStartup doesn't block on it. Failures inside StartAsync are caught
             // by ContinueWith so they show up as a debug log instead of an unobserved task.
+            //
+            // After Kestrel is listening, kick off autostart for any plugin whose consent
+            // record has AutostartEnabled=true. Ordering matters — plugin processes handshake
+            // immediately on launch, so the gRPC server has to be up first or the first
+            // call fails with "pipe not found".
             _ = pluginHost.StartAsync(CancellationToken.None).ContinueWith(t =>
             {
                 if (t.IsFaulted)
                 {
                     _log?.LogDebug(t.Exception, "PluginHostStartupService.StartAsync threw; plugins disabled this session.");
+                    return;
                 }
+                _ = Task.Run(StartPluginAutostartAsync);
             }, TaskScheduler.Default);
         }
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "Resolving PluginHostStartupService threw; plugins disabled this session.");
+        }
+    }
+
+    /// <summary>
+    /// Scans the plugin registry and launches every plugin whose consent record has
+    /// AutostartEnabled=true. Runs on the threadpool, well after MainWindow.Show — a
+    /// broken plugin or registry must NOT break RoRoRo's normal startup.
+    /// </summary>
+    private async Task StartPluginAutostartAsync()
+    {
+        if (_services is null) return;
+        try
+        {
+            var registry = _services.GetRequiredService<ROROROblox.App.Plugins.PluginRegistry>();
+            var supervisor = _services.GetRequiredService<ROROROblox.App.Plugins.PluginProcessSupervisor>();
+            var plugins = await registry.ScanAsync().ConfigureAwait(false);
+            var autostartCount = plugins.Count(p => p.Consent.AutostartEnabled);
+            _log?.LogDebug(
+                "Plugin autostart: registry scan found {Count} plugin(s), {AutostartCount} autostart-enabled.",
+                plugins.Count, autostartCount);
+            supervisor.StartAutostart(plugins);
+            if (autostartCount > 0)
+            {
+                _log?.LogInformation("Started {Count} plugin process(es) on autostart.", autostartCount);
+            }
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Plugin autostart threw; plugins not launched this session.");
         }
     }
 
