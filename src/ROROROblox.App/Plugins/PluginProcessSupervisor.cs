@@ -6,9 +6,18 @@ public sealed class PluginProcessSupervisor
     private readonly Dictionary<string, int> _pidByPluginId = new(StringComparer.Ordinal);
     private readonly object _lock = new();
 
+    /// <summary>
+    /// Raised when a plugin process exits — kill, crash, or graceful shutdown.
+    /// The supervisor strips the PID-to-plugin-id mapping before invoking, so
+    /// subscribers can safely query <see cref="RunningPids"/> for fresh state.
+    /// Crash-detection sits on top of this event in later items.
+    /// </summary>
+    public event Action<string, int>? PluginExited;
+
     public PluginProcessSupervisor(IPluginProcessStarter starter)
     {
         _starter = starter ?? throw new ArgumentNullException(nameof(starter));
+        _starter.ProcessExited += OnProcessExited;
     }
 
     public IReadOnlyDictionary<string, int> RunningPids
@@ -54,5 +63,33 @@ public sealed class PluginProcessSupervisor
     {
         var pid = _starter.Start(plugin.Manifest.Id, plugin.ExecutablePath);
         lock (_lock) { _pidByPluginId[plugin.Manifest.Id] = pid; }
+    }
+
+    private void OnProcessExited(int pid)
+    {
+        // Map PID → plugin id under the lock, then drop the mapping. We hold
+        // the lock just long enough to mutate state; PluginExited fires outside
+        // the lock so subscribers can re-enter (Restart, query RunningPids,
+        // etc.) without deadlocking.
+        string? pluginId = null;
+        lock (_lock)
+        {
+            foreach (var kv in _pidByPluginId)
+            {
+                if (kv.Value == pid)
+                {
+                    pluginId = kv.Key;
+                    break;
+                }
+            }
+            if (pluginId is not null)
+            {
+                _pidByPluginId.Remove(pluginId);
+            }
+        }
+        if (pluginId is not null)
+        {
+            PluginExited?.Invoke(pluginId, pid);
+        }
     }
 }

@@ -21,6 +21,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     private readonly IPluginHostStateProvider _hostState;
     private readonly IRunningAccountsProvider _runningAccounts;
     private readonly IPluginEventBus _eventBus;
+    private readonly IPluginLaunchInvoker _launcher;
 
     public PluginHostService(
         IInstalledPluginsLookup registry,
@@ -28,7 +29,8 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         string supportedContractVersion,
         IPluginHostStateProvider hostState,
         IRunningAccountsProvider runningAccounts,
-        IPluginEventBus eventBus)
+        IPluginEventBus eventBus,
+        IPluginLaunchInvoker launcher)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _hostVersion = hostVersion ?? throw new ArgumentNullException(nameof(hostVersion));
@@ -36,6 +38,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         _hostState = hostState ?? throw new ArgumentNullException(nameof(hostState));
         _runningAccounts = runningAccounts ?? throw new ArgumentNullException(nameof(runningAccounts));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _launcher = launcher ?? throw new ArgumentNullException(nameof(launcher));
     }
 
     public override Task<HandshakeResponse> Handshake(HandshakeRequest request, ServerCallContext context)
@@ -223,5 +226,27 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
             _eventBus.MutexStateChanged -= Handler;
             channel.Writer.TryComplete();
         }
+    }
+
+    // =====================================================================
+    // Command surface (item 13 / plan task 15).
+    //
+    // RequestLaunch is the plugin-side trigger for the launch pipeline. The
+    // RPC hands off to IPluginLaunchInvoker — the App-layer adapter wires it
+    // to the cookie-capture / auth-ticket / roblox-player: URI flow. Capability
+    // gate (host.commands.request-launch) is enforced upstream by the
+    // CapabilityInterceptor (item 11) via RpcMethodCapabilityMap, so this body
+    // assumes the call already passed consent.
+    // =====================================================================
+
+    public override async Task<LaunchResult> RequestLaunch(LaunchRequest request, ServerCallContext context)
+    {
+        var (ok, reason, pid) = await _launcher.RequestLaunchAsync(request.AccountId).ConfigureAwait(false);
+        return new LaunchResult
+        {
+            Ok = ok,
+            FailureReason = reason ?? string.Empty,
+            ProcessId = pid,
+        };
     }
 }

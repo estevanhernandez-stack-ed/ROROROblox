@@ -89,10 +89,31 @@ public class PluginProcessSupervisorTests : IDisposable
         Assert.Single(fake.KilledPids);
     }
 
+    [Fact]
+    public void PluginExited_FiresWhenStarterReportsExit()
+    {
+        var fake = new FakeProcessStarter();
+        var supervisor = new PluginProcessSupervisor(fake);
+        var fired = new List<(string id, int pid)>();
+        supervisor.PluginExited += (id, pid) => fired.Add((id, pid));
+
+        supervisor.StartAutostart(new[] { MakePlugin("626labs.crash", autostart: true) });
+        var pid = supervisor.RunningPids["626labs.crash"];
+
+        fake.RaiseExit(pid);
+
+        Assert.Single(fired);
+        Assert.Equal("626labs.crash", fired[0].id);
+        Assert.Equal(pid, fired[0].pid);
+        // Mapping cleared: the plugin no longer shows up as running.
+        Assert.False(supervisor.RunningPids.ContainsKey("626labs.crash"));
+    }
+
     private sealed class FakeProcessStarter : IPluginProcessStarter
     {
         public List<(string id, string exePath)> Started { get; } = new();
         public List<int> KilledPids { get; } = new();
+        public event Action<int>? ProcessExited;
         private int _nextPid = 1000;
 
         public int Start(string id, string exePath)
@@ -102,5 +123,7 @@ public class PluginProcessSupervisorTests : IDisposable
         }
 
         public void Kill(int pid) => KilledPids.Add(pid);
+
+        public void RaiseExit(int pid) => ProcessExited?.Invoke(pid);
     }
 }
