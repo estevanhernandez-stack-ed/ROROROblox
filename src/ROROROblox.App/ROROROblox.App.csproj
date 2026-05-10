@@ -2,11 +2,21 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ROROROblox.Core\ROROROblox.Core.csproj" />
+    <ProjectReference Include="..\ROROROblox.PluginContract\ROROROblox.PluginContract.csproj" />
+  </ItemGroup>
+
+  <!-- Microsoft.AspNetCore.App shared framework provides Kestrel + named-pipe transport
+       + Grpc.AspNetCore.Server hosting. The standalone NuGet for the named-pipe transport
+       does not exist; the transport ships inside the shared framework starting .NET 8+. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" Version="2.68.0" />
     <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.7" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.7" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3912.50" />
