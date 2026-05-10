@@ -1,4 +1,3 @@
-using Grpc.Core;
 using ROROROblox.App.Plugins;
 using ROROROblox.PluginContract;
 
@@ -136,32 +135,5 @@ public class PluginHostServiceTests
         private readonly List<RunningAccountSnapshot> _snapshots;
         public FakeRunningAccountsProvider(IEnumerable<RunningAccountSnapshot> snapshots) { _snapshots = snapshots.ToList(); }
         public IReadOnlyList<RunningAccountSnapshot> Snapshot() => _snapshots;
-    }
-
-    /// <summary>
-    /// Minimal ServerCallContext fake. Grpc.Core.Testing.TestServerCallContext does exist
-    /// in the Grpc.Core.Testing package, but pulling that whole package in just for a
-    /// no-op context is heavier than a 20-line stub. The host RPCs do not read any context
-    /// fields in v1, so a no-op is sufficient.
-    /// </summary>
-    private sealed class FakeServerCallContext : ServerCallContext
-    {
-        public static FakeServerCallContext Create() => new();
-
-        protected override string MethodCore => "Test";
-        protected override string HostCore => "test";
-        protected override string PeerCore => "peer";
-        protected override DateTime DeadlineCore => DateTime.UtcNow.AddMinutes(1);
-        protected override Metadata RequestHeadersCore => new();
-        protected override CancellationToken CancellationTokenCore => CancellationToken.None;
-        protected override Metadata ResponseTrailersCore => new();
-        protected override Status StatusCore { get; set; }
-        protected override WriteOptions? WriteOptionsCore { get; set; }
-        protected override AuthContext AuthContextCore => new("anonymous", new Dictionary<string, List<AuthProperty>>());
-
-        protected override ContextPropagationToken CreatePropagationTokenCore(ContextPropagationOptions? options)
-            => throw new NotSupportedException();
-
-        protected override Task WriteResponseHeadersAsyncCore(Metadata responseHeaders) => Task.CompletedTask;
     }
 }
