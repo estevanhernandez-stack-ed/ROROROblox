@@ -451,6 +451,38 @@ public partial class App : Application
         tray.RequestOpenPreferences += (_, _) => OpenPreferencesFromTray(mainWindow);
         tray.RequestActivateMain += (_, _) => ActivateMainFromTray(mainWindow);
         tray.RequestOpenHistory += (_, _) => OpenHistoryFromTray(mainWindow);
+        tray.RequestOpenPlugins += (_, _) => OpenPluginsFromTray(mainWindow);
+    }
+
+    private void OpenPluginsFromTray(Window owner)
+    {
+        if (_services is null) return;
+        try
+        {
+            var registry = _services.GetRequiredService<ROROROblox.App.Plugins.PluginRegistry>();
+            var registryAdapter = (ROROROblox.App.Plugins.Adapters.InstalledPluginsLookupAdapter)
+                _services.GetRequiredService<ROROROblox.App.Plugins.IInstalledPluginsLookup>();
+            var consentStore = _services.GetRequiredService<ROROROblox.App.Plugins.ConsentStore>();
+            var installer = _services.GetRequiredService<ROROROblox.App.Plugins.PluginInstaller>();
+            var supervisor = _services.GetRequiredService<ROROROblox.App.Plugins.PluginProcessSupervisor>();
+
+            // Commit 1 stub: grant every declared capability without prompting. Commit 2 swaps
+            // this for the real ConsentSheet that lets the user untick capabilities they don't
+            // want to allow before clicking Install.
+            Func<ROROROblox.App.Plugins.PluginManifest, Task<IReadOnlyList<string>?>> showSheet =
+                manifest => Task.FromResult<IReadOnlyList<string>?>(manifest.Capabilities);
+
+            var vm = new ROROROblox.App.Plugins.PluginsViewModel(
+                registry, registryAdapter, consentStore, installer, supervisor, showSheet);
+            var window = new ROROROblox.App.Plugins.PluginsWindow(vm);
+            if (owner.IsLoaded) window.Owner = owner;
+            SurfaceMainWindow(owner);
+            window.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Couldn't open Plugins window from tray");
+        }
     }
 
     private void OpenHistoryFromTray(Window owner)
