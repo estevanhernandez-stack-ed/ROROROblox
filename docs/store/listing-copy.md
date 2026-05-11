@@ -61,6 +61,7 @@ Per-account game launch routing — default URL or custom per account
 System tray with state-coloured icon and double-click main launch
 Squad Launch and Friend Follow into private servers
 Join-by-link from any roblox.com URL
+Plugin system with per-capability consent and out-of-process isolation (v1.4+)
 Auto-update via Velopack with Roblox-compat drift detection
 ```
 
