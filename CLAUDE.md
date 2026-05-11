@@ -26,23 +26,29 @@ Canonical brand spec lives at `~/.claude/skills/626labs-design/` (globally avail
 | `docs/spec.md` | Spec-first Cart pointer-stub with section index |
 | `docs/prd.md` | Compressed PRD — stories + acceptance criteria + prioritization |
 | `docs/builder-profile.md` | Builder-profile excerpt for this cycle |
-| `docs/checklist.md` | **Active build plan.** 12 items, autonomous-with-verification, two checkpoints |
+| `docs/checklist.md` | **Active build plan.** Cycle-shaped — current cycle (v1.4 plugin system) ships 18 items across 3 milestones with 3 verification checkpoints. Older cycles overwrite this file each round. |
 | `process-notes.md` | Cart cycle notes — sequencing rationale + risk callouts |
 | `PROVENANCE.txt` | Source/hash/caveats for the reference binary; load-bearing for "this is a clean reimplementation, not a fork" |
 | `MultiBloxy.exe` | Reference binary (Zgoly's MultiBloxy v1.1.0.0). Read-only — DO NOT modify or replace. |
+| `src/ROROROblox.PluginContract/` | Shared NuGet (v0.1.0+) — `.proto` + generated C# bindings consumed by both RoRoRo and plugin authors. Versioned independently from RoRoRo's app version. |
+| `src/ROROROblox.App/Plugins/` | Plugin host module — `PluginManifest`, `PluginCapability` vocab, `ConsentStore` (DPAPI), `PluginRegistry`, `PluginInstaller` (SHA-verified GitHub URL flow), `PluginProcessSupervisor`, `PluginHostService` (gRPC server impl), `CapabilityInterceptor`, `PluginUITranslator`, `PluginHostStartupService` (Kestrel + named pipe). |
+| `src/ROROROblox.App/Plugins/Adapters/` | Adapters bridging existing RoRoRo singletons to plugin interfaces (mutex state, running accounts, launch invoker, WPF UI host). |
+| `src/ROROROblox.PluginTestHarness/` | Integration test project — real Kestrel + named-pipe gRPC against real RoRoRoHostClient. |
+| `docs/plugins/AUTHOR_GUIDE.md` | Plugin author guide — contract NuGet, capability vocabulary, manifest format, GitHub release shape (manifest.json + manifest.sha256 + plugin.zip), recipes. |
+| `docs/store/reviewer-letter-1.4.0.0.md` | Partner Center submission letter for v1.4 — leads with the policy 10.2.2 alignment narrative. |
 | `.superpowers/brainstorm/` | Pre-onboard brainstorming session artifacts |
 
-**What will exist after `docs/checklist.md` items 2-12 run:**
+**Source tree shipped (v1.0 onward):**
 
 | Path | What it is |
 |---|---|
-| `src/ROROROblox.App/` | WPF process — App, MainWindow + ViewModel, TrayService, CookieCapture |
+| `src/ROROROblox.App/` | WPF process — App, MainWindow + ViewModel, TrayService, CookieCapture, Plugins/ (v1.4) |
 | `src/ROROROblox.Core/` | Interfaces + primitives — `IMutexHolder`, `IAccountStore`, `IRobloxApi`, `IRobloxLauncher` (no UI dependencies) |
-| `src/ROROROblox.Tests/` | xUnit — unit + integration coverage per spec §8 |
+| `src/ROROROblox.Tests/` | xUnit unit-test coverage |
+| `src/ROROROblox.PluginTestHarness/` | xUnit integration tests — real named-pipe gRPC (v1.4+) |
 | `src/RORORO.Package/` | MSIX wapproj for Store-signed + self-signed sideload flavors |
-| `spike/auth-ticket/` | Throwaway spike per spec §10 — gitignored |
 | `roblox-compat.json` (in GitHub Releases) | Remote config — known-good Roblox version range + current mutex name; fetched at app startup |
-| `dev-cert.pfx` | Self-signed sideload cert; **gitignored**, regenerated per dev box (instructions in CONTRIBUTING.md once it lands) |
+| `dev-cert.pfx` | Self-signed sideload cert; **gitignored**, regenerated per dev box (see [`CONTRIBUTING.md`](CONTRIBUTING.md)) |
 
 ## How the system works at runtime
 
@@ -65,7 +71,9 @@ The full architecture, data flows, error buckets, and decision rationale live in
 | See reference-impl provenance | [`PROVENANCE.txt`](PROVENANCE.txt) |
 | Run the auth-ticket spike (item 1 HARD gate) | `dotnet run --project spike/auth-ticket` *(after item 1 lands)* |
 | Build the app | `dotnet build` *(after item 2)* |
-| Run unit + integration tests | `dotnet test` *(after item 2)* |
+| Run unit + integration tests | `dotnet test src/ROROROblox.Tests/` (unit) + `dotnet test src/ROROROblox.PluginTestHarness/` (integration, v1.4+) |
+| See plugin author guide (v1.4+) | [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR_GUIDE.md) |
+| See v1.4 plugin-system design | [`docs/superpowers/specs/2026-05-09-rororo-plugin-system-design.md`](docs/superpowers/specs/2026-05-09-rororo-plugin-system-design.md) |
 | Build sideload MSIX | `msbuild src/RORORO.Package/RORORO.Package.wapproj /p:AppxPackageSigningEnabled=true /p:PackageCertificateKeyFile=dev-cert.pfx` *(after item 11)* |
 | Build Store-signed MSIX | `dotnet publish src/RORORO.Package -p:GenerateAppxPackageOnBuild=true` *(after item 11)* |
 | Cut a release | Velopack via `vpk pack` against the latest signed MSIX *(after item 10 + 11)* |
@@ -77,7 +85,7 @@ The full architecture, data flows, error buckets, and decision rationale live in
 - **File rules:**
   - `docs/superpowers/specs/2026-05-03-RORORO-design.md` is canonical. When build reality drifts from the spec, **banner-correct** at the top of the doc (per pattern v from Vibe Thesis) — name what was originally proposed vs what was actually built. Do NOT rewrite top-to-bottom; that destroys /reflect-time framing.
   - `MultiBloxy.exe` and `PROVENANCE.txt` are reference-only. Treat as immutable — they're load-bearing for the "clean reimplementation, not a fork" framing.
-  - `accounts.dat`, `webview2-data/`, `*.pfx`, `spike/`, `bin/`, `obj/`, `*.user`, `last-update-check.txt` are gitignored at all times.
+  - `accounts.dat`, `consent.dat`, `webview2-data/`, `/plugins/`, `*.pfx`, `spike/`, `bin/`, `obj/`, `*.user`, `last-update-check.txt` are gitignored at all times. (`/plugins/` is anchored to root so it doesn't shadow `docs/plugins/`.)
   - The singleton mutex name lives in `roblox-compat.json` (remote config). Hardcoded fallback is OK in `MutexHolder`'s constructor as a last-resort default; the runtime read is always from config.
 - **Manifests:**
   - `Package.appxmanifest` declares `runFullTrust` ONLY. No `broadFileSystemAccess`, no `internetClient` (outgoing HTTPS doesn't need declaration).

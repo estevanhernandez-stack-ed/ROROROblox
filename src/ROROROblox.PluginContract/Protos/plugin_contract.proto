@@ -1,0 +1,155 @@
+syntax = "proto3";
+
+option csharp_namespace = "ROROROblox.PluginContract";
+
+package rororo.plugin.v1;
+
+// =====================================================================
+// Services
+// =====================================================================
+
+// RoRoRoHost — implemented by RoRoRo, called by the plugin.
+service RoRoRoHost {
+  // Handshake — first call after the named-pipe connection is established.
+  // Plugin sends manifest hash + contract version; RoRoRo responds with host info
+  // or rejects the connection.
+  rpc Handshake(HandshakeRequest) returns (HandshakeResponse);
+
+  // Read surface
+  rpc GetHostInfo(Empty) returns (HostInfo);
+  rpc GetRunningAccounts(Empty) returns (RunningAccountsList);
+
+  // Server-streaming events
+  rpc SubscribeAccountLaunched(SubscriptionRequest) returns (stream AccountLaunchedEvent);
+  rpc SubscribeAccountExited(SubscriptionRequest) returns (stream AccountExitedEvent);
+  rpc SubscribeMutexStateChanged(SubscriptionRequest) returns (stream MutexStateEvent);
+
+  // Command surface
+  rpc RequestLaunch(LaunchRequest) returns (LaunchResult);
+
+  // UI surface (v1: tray menu, row badge, status panel)
+  rpc AddTrayMenuItem(MenuItemSpec) returns (UIHandle);
+  rpc AddRowBadge(RowBadgeSpec) returns (UIHandle);
+  rpc AddStatusPanel(StatusPanelSpec) returns (UIHandle);
+  rpc UpdateUI(UIUpdate) returns (Empty);
+  rpc RemoveUI(UIHandle) returns (Empty);
+}
+
+// Plugin — implemented by the plugin, called by RoRoRo.
+service Plugin {
+  rpc OnUIInteraction(UIInteractionEvent) returns (Empty);
+  rpc OnConsentChanged(ConsentChangeEvent) returns (Empty);
+  rpc OnShutdown(Empty) returns (Empty);
+}
+
+// =====================================================================
+// Messages
+// =====================================================================
+
+message Empty {}
+
+message HandshakeRequest {
+  string plugin_id = 1;
+  string manifest_sha256 = 2;
+  string contract_version = 3;  // semver, e.g. "1.0"
+  repeated string declared_capabilities = 4;
+}
+
+message HandshakeResponse {
+  bool accepted = 1;
+  string reject_reason = 2;
+  string host_version = 3;
+  string contract_version = 4;
+}
+
+message HostInfo {
+  string version = 1;
+  bool multi_instance_enabled = 2;
+  string multi_instance_state = 3;  // "On" / "Off" / "Error"
+}
+
+message RunningAccountsList {
+  repeated RunningAccount accounts = 1;
+}
+
+message RunningAccount {
+  string account_id = 1;       // RoRoRo internal Guid as string
+  int64 roblox_user_id = 2;    // UID-aware: which Roblox user this account is
+  string display_name = 3;
+  int32 process_id = 4;
+}
+
+message SubscriptionRequest {
+  // No filters in v1 — plugin subscribes to all events.
+}
+
+message AccountLaunchedEvent {
+  string account_id = 1;
+  int64 roblox_user_id = 2;
+  string display_name = 3;
+  int32 process_id = 4;
+  int64 launched_at_unix_ms = 5;
+}
+
+message AccountExitedEvent {
+  string account_id = 1;
+  int64 roblox_user_id = 2;
+  int32 process_id = 3;
+  int64 exited_at_unix_ms = 4;
+}
+
+message MutexStateEvent {
+  string state = 1;  // "On" / "Off" / "Error"
+}
+
+message LaunchRequest {
+  string account_id = 1;
+  // future: place_id, fps_cap (not v1)
+}
+
+message LaunchResult {
+  bool ok = 1;
+  string failure_reason = 2;
+  int32 process_id = 3;
+}
+
+message UIHandle {
+  string id = 1;  // RoRoRo-issued, opaque to plugin
+}
+
+message MenuItemSpec {
+  string label = 1;
+  string tooltip = 2;
+  bool enabled = 3;
+}
+
+message RowBadgeSpec {
+  string text = 1;
+  string color_hex = 2;  // optional override; default to brand cyan
+  string tooltip = 3;
+}
+
+message StatusPanelSpec {
+  string title = 1;
+  string body_markdown = 2;  // basic markdown subset (bold, italic, lists)
+}
+
+message UIUpdate {
+  UIHandle handle = 1;
+  oneof kind {
+    MenuItemSpec menu_item = 2;
+    RowBadgeSpec row_badge = 3;
+    StatusPanelSpec status_panel = 4;
+  }
+}
+
+message UIInteractionEvent {
+  UIHandle handle = 1;
+  string interaction_kind = 2;  // "click", "hover-enter", "hover-leave"
+  int64 timestamp_unix_ms = 3;
+}
+
+message ConsentChangeEvent {
+  repeated string newly_granted_capabilities = 1;
+  repeated string newly_revoked_capabilities = 2;
+}

@@ -35,6 +35,7 @@ internal sealed class TrayService : ITrayService
     public event EventHandler? RequestOpenPreferences;
     public event EventHandler? RequestActivateMain;
     public event EventHandler? RequestOpenHistory;
+    public event EventHandler? RequestOpenPlugins;
 
     public TrayService()
     {
@@ -134,6 +135,10 @@ internal sealed class TrayService : ITrayService
         var diagnostics = new MenuItem { Header = "Diagnostics..." };
         diagnostics.Click += (_, _) => RequestOpenDiagnostics?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(diagnostics);
+
+        var plugins = new MenuItem { Header = "Plugins..." };
+        plugins.Click += (_, _) => RequestOpenPlugins?.Invoke(this, EventArgs.Empty);
+        menu.Items.Add(plugins);
 
         var logs = new MenuItem { Header = "Open log folder" };
         logs.Click += (_, _) => RequestOpenLogs?.Invoke(this, EventArgs.Empty);

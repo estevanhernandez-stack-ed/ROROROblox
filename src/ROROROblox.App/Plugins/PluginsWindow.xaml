@@ -1,0 +1,332 @@
+<Window x:Class="ROROROblox.App.Plugins.PluginsWindow"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ROROROblox.App"
+        xmlns:plugins="clr-namespace:ROROROblox.App.Plugins"
+        Title="RORORO -- Plugins"
+        Height="600" Width="720"
+        MinHeight="480" MinWidth="600"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BgBrush}"
+        Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
+
+    <Window.Resources>
+        <local:StringToVisibilityConverter x:Key="StringToVisibilityConverterLocal" />
+        <local:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverterLocal" />
+        <local:InverseBoolConverter x:Key="InverseBoolConverterLocal" />
+
+        <!-- DIM-on-hover for filled CTAs. Default WPF Button overlays a gray chrome on hover that
+             reads as "disabled" against cyan-on-navy; opacity-down preserves the fill and signals
+             interactivity. Decision M9E6B82i4y4gAyd7esG3. -->
+        <Style x:Key="CyanCtaButton" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource CyanBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource NavyBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.85" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.7" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="32,24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Plugins"
+                           FontSize="22" FontWeight="Bold"
+                           Foreground="{DynamicResource CyanBrush}" />
+                <TextBlock Text=" / "
+                           FontSize="22" FontWeight="Bold"
+                           Foreground="{DynamicResource MagentaBrush}" />
+                <TextBlock Text="Installed"
+                           FontSize="22" FontWeight="Bold"
+                           Foreground="{DynamicResource WhiteBrush}" />
+            </StackPanel>
+            <TextBlock Text="What you've added on top of RoRoRo. Each plugin runs in its own process and only sees what you grant."
+                       FontSize="11"
+                       Foreground="{DynamicResource MutedTextBrush}"
+                       Margin="0,4,0,0"
+                       TextWrapping="Wrap" />
+        </StackPanel>
+
+        <!-- Status banner — non-actionable cyan strip when an info / install message is set.
+             When BannerIsRestartable flips on (PluginExited fired), the magenta-strip banner
+             shows underneath with a Restart button bound to RestartCommand. Two banners so
+             the cosmetic difference between "info" and "actionable" lands on first read.
+             A third banner below this one (IsAppRestartPending) surfaces a "Restart RoRoRo"
+             CTA after a fresh install — plugins start on next app launch. -->
+        <StackPanel Grid.Row="1" Margin="0,16,0,0">
+            <Border Padding="14,10"
+                    Background="{DynamicResource RowBgBrush}"
+                    BorderBrush="{DynamicResource CyanBrush}"
+                    BorderThickness="0,0,0,2"
+                    CornerRadius="6">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding BannerIsRestartable}" Value="True">
+                                <Setter Property="BorderBrush" Value="{DynamicResource MagentaBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding StatusBanner, Converter={StaticResource StringToVisibilityConverterLocal}}" Value="Collapsed">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding StatusBanner}"
+                               Foreground="{DynamicResource WhiteBrush}"
+                               FontSize="12"
+                               VerticalAlignment="Center"
+                               TextWrapping="Wrap" />
+                    <Button Grid.Column="1"
+                            Content="Restart"
+                            Margin="12,0,0,0"
+                            Padding="14,4"
+                            Background="{DynamicResource MagentaBrush}"
+                            Foreground="{DynamicResource WhiteBrush}"
+                            BorderThickness="0"
+                            FontWeight="SemiBold"
+                            FontSize="11"
+                            Command="{Binding RestartCommand}"
+                            Visibility="{Binding BannerIsRestartable, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </Grid>
+            </Border>
+
+            <!-- App-restart CTA after a fresh install. Plugin processes are launched at
+                 App.OnStartup via autostart, so a new install doesn't run until restart.
+                 Decision M9E6B82i4y4gAyd7esG3. -->
+            <Border Padding="14,10"
+                    Margin="0,8,0,0"
+                    Background="{DynamicResource RowBgBrush}"
+                    BorderBrush="{DynamicResource CyanBrush}"
+                    BorderThickness="0,0,0,2"
+                    CornerRadius="6"
+                    Visibility="{Binding IsAppRestartPending, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="Restart RoRoRo to start your newly installed plugin."
+                               Foreground="{DynamicResource WhiteBrush}"
+                               FontSize="12"
+                               VerticalAlignment="Center"
+                               TextWrapping="Wrap" />
+                    <Button Grid.Column="1"
+                            Content="Restart RoRoRo"
+                            Margin="12,0,0,0"
+                            Padding="14,4"
+                            Style="{StaticResource CyanCtaButton}"
+                            FontSize="11"
+                            Command="{Binding RestartAppCommand}" />
+                    <Button Grid.Column="2"
+                            Content="Later"
+                            Margin="6,0,0,0"
+                            Padding="10,4"
+                            Background="{DynamicResource NavyBrush}"
+                            Foreground="{DynamicResource MutedTextBrush}"
+                            BorderBrush="{DynamicResource DividerBrush}"
+                            BorderThickness="1"
+                            FontSize="11"
+                            Command="{Binding DismissAppRestartCommand}" />
+                </Grid>
+            </Border>
+        </StackPanel>
+
+        <!-- Install row -->
+        <Border Grid.Row="2"
+                Margin="0,16,0,0"
+                Padding="14,12"
+                Background="{DynamicResource RowBgBrush}"
+                CornerRadius="8">
+            <StackPanel>
+                <TextBlock Text="INSTALL FROM URL"
+                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                           FontSize="10"
+                           Foreground="{DynamicResource MutedTextBrush}"
+                           Margin="0,0,0,6" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0"
+                             Text="{Binding InstallUrlInput, UpdateSourceTrigger=PropertyChanged}"
+                             Background="{DynamicResource NavyBrush}"
+                             Foreground="{DynamicResource WhiteBrush}"
+                             BorderBrush="{DynamicResource DividerBrush}"
+                             BorderThickness="1"
+                             Padding="8,6"
+                             FontSize="12"
+                             VerticalContentAlignment="Center"
+                             IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverterLocal}}" />
+                    <Button Grid.Column="1"
+                            Content="Install"
+                            Margin="8,0,0,0"
+                            Padding="18,6"
+                            Style="{StaticResource CyanCtaButton}"
+                            Command="{Binding InstallFromUrlCommand}" />
+                </Grid>
+                <TextBlock Text="Paste the base URL of a plugin release (the folder containing manifest.json, manifest.sha256, and plugin.zip)."
+                           FontSize="11"
+                           Foreground="{DynamicResource MutedTextBrush}"
+                           TextWrapping="Wrap"
+                           Margin="0,6,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- Plugin list + empty state -->
+        <Border Grid.Row="3"
+                Margin="0,16,0,0"
+                BorderBrush="{DynamicResource DividerBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+            <Grid>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Plugins}" Margin="8">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type plugins:PluginRow}">
+                                <Border Background="{DynamicResource RowBgBrush}"
+                                        CornerRadius="8"
+                                        Padding="14,12"
+                                        Margin="0,0,0,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Name}"
+                                                           FontSize="14" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource WhiteBrush}" />
+                                                <TextBlock Text="{Binding Version}"
+                                                           Margin="8,2,0,0"
+                                                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                                           FontSize="10"
+                                                           Foreground="{DynamicResource MutedTextBrush}"
+                                                           VerticalAlignment="Center" />
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Publisher}"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource MutedTextBrush}"
+                                                       Margin="0,2,0,0" />
+                                            <TextBlock Text="{Binding Description}"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource MutedTextBrush}"
+                                                       TextWrapping="Wrap"
+                                                       Opacity="0.85"
+                                                       Margin="0,4,0,0" />
+
+                                            <Border Background="{DynamicResource NavyBrush}"
+                                                    CornerRadius="4"
+                                                    Padding="6,2"
+                                                    HorizontalAlignment="Left"
+                                                    Margin="0,8,0,0">
+                                                <TextBlock Text="{Binding CapabilitySummary}"
+                                                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                                           FontSize="10"
+                                                           Foreground="{DynamicResource CyanBrush}" />
+                                            </Border>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1"
+                                                    Orientation="Vertical"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Top">
+                                            <CheckBox IsChecked="{Binding AutostartEnabled, Mode=OneWay}"
+                                                      Content="Autostart"
+                                                      Foreground="{DynamicResource WhiteBrush}"
+                                                      FontSize="11"
+                                                      Command="{Binding DataContext.ToggleAutostartCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                      CommandParameter="{Binding}" />
+                                            <Button Content="Remove"
+                                                    Margin="0,8,0,0"
+                                                    Padding="10,4"
+                                                    Background="{DynamicResource MagentaBrush}"
+                                                    Foreground="{DynamicResource WhiteBrush}"
+                                                    BorderThickness="0"
+                                                    FontSize="11"
+                                                    FontWeight="SemiBold"
+                                                    HorizontalAlignment="Right"
+                                                    Command="{Binding DataContext.RevokeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding Plugins.Count, Converter={StaticResource ZeroToVisibilityConverterLocal}}">
+                    <TextBlock Text="No plugins installed."
+                               FontSize="13"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="Paste a release URL above to add one."
+                               FontSize="11"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,4,0,0"
+                               Opacity="0.7" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Footer -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="Close" Padding="22,8"
+                    Background="{DynamicResource CyanBrush}"
+                    Foreground="{DynamicResource NavyBrush}"
+                    BorderThickness="0"
+                    FontWeight="SemiBold"
+                    IsDefault="True"
+                    IsCancel="True"
+                    Click="OnCloseClick" />
+        </StackPanel>
+    </Grid>
+</Window>
