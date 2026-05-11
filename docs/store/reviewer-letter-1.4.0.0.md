@@ -81,10 +81,50 @@ WHAT v1.4 SHIPS
 
 WHAT v1.4 DOES NOT SHIP
 
-  - No plugins. The first plugin (auto-keys, an AFK-defeat cycler) is
-    being authored in a sibling repository and will be distributed via
-    its own GitHub releases page when it's ready. It will never be
-    bundled into RoRoRo.
+  - No plugins. RoRoRo's MSIX contains zero plugin code. The first
+    public plugin (RoRoRo Ur Task — a per-window macro recorder) is
+    distributed separately at
+    github.com/estevanhernandez-stack-ed/rororo-ur-task as its own
+    signed Windows EXE. Users install it by pasting the GitHub release
+    URL into RoRoRo's Plugins page; it will never be bundled into
+    RoRoRo's MSIX.
+
+EXAMPLES OF PLUGINS THAT FIT WITHIN POLICY 10.2.2
+
+To clarify the kind of plugin RoRoRo's architecture supports, here are
+example plugins that fit cleanly within the policy — both already-shipped
+and hypothetical-but-realistic — showing the breadth of legitimate
+third-party use:
+
+  1. "RoRoRo Ur Task" (shipped) — a per-window macro recorder/player
+     for Roblox alts. Live today as the first first-party example.
+     Declares system.synthesize-keyboard-input + synthesize-mouse-input
+     + watch-global-input; every capability is explicitly granted by
+     the user in the consent sheet at install time. Macros are
+     window-bound: the recorder captures the target alt's user-id at
+     record time and the player refuses playback against any other
+     window.
+
+  2. "Clan Tracker" (example use case) — a read-only side panel that
+     surfaces clan member online/offline state from Roblox's public
+     group API. Would declare only host.events.account-launched +
+     host.events.account-exited + host.ui.status-panel — no keystroke
+     synthesis, no automation, no foreign-window manipulation. A user
+     installs it the same way: paste URL, review the (read-only)
+     capability list, consent.
+
+  3. "Clan Management" (example use case) — a workflow tool for clan
+     officers to view member rosters and last-seen timestamps via
+     Roblox's public APIs, with a small UI for filtering by role. Would
+     declare host.ui.status-panel + host.events.* and nothing system.*
+     — pure read + present. Consent at install time; revocation
+     terminates streams within seconds.
+
+The capability vocabulary is deliberately granular so that read-only
+plugins (the most common shape) ask for less, the consent sheet is
+shorter, and users can refuse system.* capabilities without breaking
+the plugin's core function. This is the same shape Microsoft uses for
+Edge extension permissions — declarative, gated, user-revocable.
 
 WHAT REMAINS UNCHANGED FROM v1.3
 
