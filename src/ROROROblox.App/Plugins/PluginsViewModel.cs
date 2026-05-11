@@ -35,6 +35,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
     private string? _statusBanner;
     private string? _bannerPluginId; // tracks which plugin the banner refers to (commit 3)
     private bool _isBusy;
+    private bool _isAppRestartPending;
     private bool _disposed;
 
     public PluginsViewModel(
@@ -56,6 +57,8 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         ToggleAutostartCommand = new RelayCommand(p => ToggleAutostartAsync(p as PluginRow));
         RevokeCommand = new RelayCommand(p => RevokeAsync(p as PluginRow));
         RestartCommand = new RelayCommand(_ => RestartFromBannerAsync());
+        RestartAppCommand = new RelayCommand(_ => RestartApp());
+        DismissAppRestartCommand = new RelayCommand(_ => IsAppRestartPending = false);
 
         // Subscribe to supervisor exit events (commit 3 wires the banner update). Detached
         // in Dispose so the window's Closed handler can unhook us cleanly.
@@ -92,10 +95,24 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         get => _bannerPluginId is not null;
     }
 
+    /// <summary>
+    /// True after a fresh install while the user hasn't restarted RoRoRo yet. Surfaces the
+    /// post-install "Restart RoRoRo now" CTA. Plugins start at app startup via autostart, so
+    /// a fresh install doesn't actually launch anything until restart. Decision
+    /// M9E6B82i4y4gAyd7esG3.
+    /// </summary>
+    public bool IsAppRestartPending
+    {
+        get => _isAppRestartPending;
+        set { if (_isAppRestartPending != value) { _isAppRestartPending = value; Raise(); } }
+    }
+
     public ICommand InstallFromUrlCommand { get; }
     public ICommand ToggleAutostartCommand { get; }
     public ICommand RevokeCommand { get; }
     public ICommand RestartCommand { get; }
+    public ICommand RestartAppCommand { get; }
+    public ICommand DismissAppRestartCommand { get; }
 
     public async Task LoadAsync()
     {
@@ -132,6 +149,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             _registryAdapter.Refresh();
             await LoadAsync().ConfigureAwait(true);
             StatusBanner = $"{installed.Manifest.Name} installed.";
+            IsAppRestartPending = true;
             InstallUrlInput = string.Empty;
         }
         catch (Exception ex)
@@ -191,6 +209,31 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         catch (Exception ex)
         {
             StatusBanner = $"Remove failed: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Restart RoRoRo to pick up freshly installed plugins. Plugin processes are launched by
+    /// <see cref="PluginProcessSupervisor.StartAutostart"/> during App.OnStartup, so a fresh
+    /// install doesn't run until next launch. Best-effort: spawn the same EXE then shut down.
+    /// Decision M9E6B82i4y4gAyd7esG3.
+    /// </summary>
+    private void RestartApp()
+    {
+        var exe = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(exe))
+        {
+            StatusBanner = "Restart failed: couldn't resolve process path. Close and reopen RoRoRo manually.";
+            return;
+        }
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = true });
+            Application.Current.Shutdown(0);
+        }
+        catch (Exception ex)
+        {
+            StatusBanner = $"Restart failed: {ex.Message}. Close and reopen RoRoRo manually.";
         }
     }
 

@@ -97,6 +97,7 @@ public partial class App : Application
         var mainWindow = _services.GetRequiredService<MainWindow>();
 
         WireTrayEvents(tray, mutex, mainWindow);
+        WireMainViewModelEvents(mainWindow);
         WireMutexLost(mutex, tray);
         WireMainAvatarTrayPainter();
         WireRobloxWindowDecorator();
@@ -452,6 +453,13 @@ public partial class App : Application
         tray.RequestActivateMain += (_, _) => ActivateMainFromTray(mainWindow);
         tray.RequestOpenHistory += (_, _) => OpenHistoryFromTray(mainWindow);
         tray.RequestOpenPlugins += (_, _) => OpenPluginsFromTray(mainWindow);
+    }
+
+    private void WireMainViewModelEvents(MainWindow mainWindow)
+    {
+        if (_services is null) return;
+        var vm = _services.GetRequiredService<MainViewModel>();
+        vm.RequestOpenPlugins += (_, _) => OpenPluginsFromTray(mainWindow);
     }
 
     private void OpenPluginsFromTray(Window owner)

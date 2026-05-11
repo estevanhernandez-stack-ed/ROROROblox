@@ -112,6 +112,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         StartMainCommand = new RelayCommand(StartMainAsync, () => !IsBusy && Accounts.FirstOrDefault(a => a.IsMain) is { SessionExpired: false, IsRunning: false });
         OpenHistoryCommand = new RelayCommand(OpenHistory);
         OpenPreferencesCommand = new RelayCommand(OpenPreferences);
+        OpenPluginsCommand = new RelayCommand(_ => RequestOpenPlugins?.Invoke(this, EventArgs.Empty));
         DismissBloxstrapWarningCommand = new RelayCommand(_ => _ = DismissBloxstrapWarningAsync());
 
         // v1.3.x — default-game widget + rename overlay commands.
@@ -187,7 +188,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand StartMainCommand { get; }
     public ICommand OpenHistoryCommand { get; }
     public ICommand OpenPreferencesCommand { get; }
+    public ICommand OpenPluginsCommand { get; }
     public ICommand DismissBloxstrapWarningCommand { get; }
+
+    public event EventHandler? RequestOpenPlugins;
 
     // v1.3.x default-game widget + rename overlay.
     public ICommand SetDefaultGameCommand { get; }

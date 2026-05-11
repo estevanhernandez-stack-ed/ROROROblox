@@ -16,6 +16,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- Header — plugin name + version -->
@@ -108,8 +109,25 @@
             </ScrollViewer>
         </Border>
 
+        <!-- Restart-on-next-launch hint. Plugins start at app startup via autostart, so a
+             fresh install doesn't run anything until RoRoRo is restarted. Decision
+             M9E6B82i4y4gAyd7esG3. -->
+        <Border Grid.Row="4"
+                Margin="0,14,0,0"
+                Padding="12,8"
+                Background="{DynamicResource RowBgBrush}"
+                BorderBrush="{DynamicResource CyanBrush}"
+                BorderThickness="0,0,0,2"
+                CornerRadius="6">
+            <TextBlock Text="This plugin starts the next time RoRoRo launches. You can restart from the Plugins page right after install."
+                       Foreground="{DynamicResource WhiteBrush}"
+                       FontSize="11"
+                       TextWrapping="Wrap"
+                       Opacity="0.9" />
+        </Border>
+
         <!-- Footer buttons -->
-        <StackPanel Grid.Row="4"
+        <StackPanel Grid.Row="5"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Margin="0,16,0,0">

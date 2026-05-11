@@ -712,6 +712,15 @@
                                 BorderThickness="1"
                                 FontSize="11"
                                 ToolTip="Manage saved games for the per-row launch picker." />
+                        <Button Content="Plugins"
+                                Command="{Binding OpenPluginsCommand}"
+                                Padding="10,6" Margin="0,0,6,0"
+                                Background="{DynamicResource NavyBrush}"
+                                Foreground="{DynamicResource MutedTextBrush}"
+                                BorderBrush="{DynamicResource DividerBrush}"
+                                BorderThickness="1"
+                                FontSize="11"
+                                ToolTip="Install and manage RoRoRo plugins." />
                     </StackPanel>
 
                     <!-- v1.3.x — default-game widget. Lives between the left-side nav and the
