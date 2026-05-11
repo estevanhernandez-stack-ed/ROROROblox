@@ -32,6 +32,8 @@ permalink: /privacy/
 | WebView2 cache (in the app's local data folder) | Embedded-browser cache used during Add Account | Wiped before every Add Account |
 | `last-update-check.txt` (in the app's local data folder) | Timestamp of the most recent update check | Plain text — no secrets |
 | Logs (in the app's local data folder) | Structured operational logs. Cookie values are **never** logged — only redacted indicators. | Plain text — no secrets |
+| `consent.dat` *(v1.4+)* (in the app's local data folder) | Per-plugin consent records — which plugins you installed, which capabilities you granted, autostart toggles | **DPAPI-encrypted** per Windows user |
+| `plugins\<plugin-id>\` *(v1.4+)* (in the app's local data folder) | Files for plugins you installed (manifest, EXE, dependencies). Plugins are SHA-256-verified against the publisher's hash before extraction; the unpacked files are plain on disk. | Plain — integrity is enforced at install time, not at rest |
 
 For Microsoft Store installs, the "app's local data folder" is the package's virtualized LocalState directory, which Windows automatically removes when the app is uninstalled.
 
@@ -57,8 +59,9 @@ RORORO initiates HTTPS connections **only** to:
 | `users.roblox.com` | When listing accounts | Public account metadata (display name, ID). Used to confirm the saved cookie still maps to a real account. |
 | `thumbnails.roblox.com` | When listing accounts | Public avatar imagery. |
 | `api.github.com` | At app startup | Velopack auto-update checks against the public RORORO GitHub Releases. |
-| `objects.githubusercontent.com` | When applying an update | Velopack downloads the update package from GitHub Releases. |
+| `objects.githubusercontent.com` | When applying an update **or** installing a plugin (v1.4+) | Velopack downloads update packages from GitHub Releases; plugin installs download from the GitHub release URL you paste into Plugins → Install. |
 | Optional: `gist.githubusercontent.com` | At app startup | Fetches `roblox-compat.json` (current known-good Roblox version + mutex name). Used so we can ship config updates within hours when Roblox renames the singleton mutex. |
+| Plugin-publisher URLs *(v1.4+)* | Only when **you** paste a plugin install URL | RoRoRo fetches `manifest.json`, `manifest.sha256`, and `plugin.zip` from the exact URL you provide. Never auto-fetched. Each plugin's own network behavior after install is governed by that plugin's policy, not this one. |
 
 RORORO sends a `User-Agent` header of `RORORO/<version>` on every request. We do **not** spoof a browser UA. We are transparent and identifiable to the receiving servers.
 
@@ -73,6 +76,22 @@ When you click *Add Account*, RORORO opens an embedded Microsoft Edge WebView2 c
 After Roblox confirms a successful login, RORORO captures the `.ROBLOSECURITY` session cookie that Roblox sets in your browser. Before writing it to disk, RORORO runs it through Windows' [Data Protection API](https://learn.microsoft.com/en-us/dotnet/standard/security/how-to-use-data-protection) — encryption tied to your specific Windows user account on your specific machine. The encrypted file (`accounts.dat`) is unreadable on any other PC, by any other Windows user, or even by you if Windows ever loses its DPAPI master key (e.g., after a from-scratch reinstall).
 
 The cookie value is held in plaintext only briefly in memory during a single *Launch As* operation, then goes back to disk in encrypted form. The cookie value is **never** written to logs, **never** included in error reports, and **never** transmitted to any party other than Roblox.
+
+---
+
+## Plugins (v1.4 and later)
+
+RoRoRo v1.4 introduced a plugin system. Plugins are **separate products** — separate Windows programs you choose to install by pasting a GitHub release URL into the Plugins page. RoRoRo never auto-fetches plugins, never polls a curated list, and never bundles plugin code in its own MSIX.
+
+What this means for your privacy:
+
+- **Each plugin's network behavior is governed by that plugin's own privacy policy**, not this one. When you install a plugin, review the publisher's policy on its release page.
+- **Capabilities are gated.** When you install a plugin, RoRoRo shows a consent sheet listing every capability the plugin asks for, in plain language. You grant capabilities individually. RoRoRo's gRPC server refuses any plugin call that needs a capability you haven't granted.
+- **Plugins run in their own processes**, separately from RoRoRo. A plugin process cannot read RoRoRo's memory, your saved accounts, or `accounts.dat`.
+- **Plugin install downloads** hit the URL you paste — typically `github.com` and `objects.githubusercontent.com` for the manifest + SHA + zip. The same hosts RoRoRo uses for its own updates.
+- **Removing a plugin** via Plugins → Remove kills its process, deletes its install directory, and removes its consent record from `consent.dat`.
+
+If you have not installed any plugins, this section does not apply to you — none of the plugin paths are written and no plugin-related network calls are made.
 
 ---
 
