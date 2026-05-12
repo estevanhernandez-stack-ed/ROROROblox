@@ -35,6 +35,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
         _captionColorHex = account.CaptionColorHex;
         _fpsCap = account.FpsCap;
         _localName = account.LocalName;
+        RobloxUserId = account.RobloxUserId;
     }
 
     public Guid Id { get; }
@@ -81,8 +82,11 @@ public sealed class AccountSummary : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Cached Roblox userId for this account — populated lazily on first need (Friends modal).
-    /// Not persisted; gets re-fetched after app restart. Null = not yet resolved.
+    /// Roblox userId for this account, read from the persisted <see cref="Account.RobloxUserId"/>
+    /// at AccountSummary construction (post-backfill by <see cref="ROROROblox.Core.AccountUserIdBackfillService"/>).
+    /// Friends modal can populate it on demand if the backfill hasn't run yet. Plugin gRPC adapters
+    /// rely on this being non-null for v1.4+ plugins that target specific alts (rororo-ur-task etc.).
+    /// Null = not yet resolved (brand-new account before first backfill, or cookie retrieval failed).
     /// </summary>
     public long? RobloxUserId { get; set; }
 
