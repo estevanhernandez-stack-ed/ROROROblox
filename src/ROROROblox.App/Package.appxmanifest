@@ -41,7 +41,7 @@
     </Applications>
     <Capabilities>
         <!-- runFullTrust is required for a WPF desktop app that calls Process.Start of the
-             roblox-player: protocol handler. We deliberately omit broadFileSystemAccess --
+             roblox-player: protocol handler. We deliberately omit broadFileSystemAccess;
              accounts.dat lives in our own LocalAppData folder; no other user-content access. -->
         <rescap:Capability Name="runFullTrust" />
     </Capabilities>
