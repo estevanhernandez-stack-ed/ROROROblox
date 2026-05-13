@@ -678,6 +678,27 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 return;
             }
 
+            _log.LogInformation("Launch dispatch: id={Id} name={Name} robloxUserId={RobloxUserId} cookieFp={CookieFp}",
+                summary.Id, summary.DisplayName, summary.RobloxUserId, CookieFp(cookie));
+
+            // Stamp identity into appStorage.json + defend it for ~12s against
+            // late writes from sibling RPB processes. See AppStorageDefender.
+            if (summary.RobloxUserId is { } userId)
+            {
+                var defender = new AppStorageDefender(
+                    summary.DisplayName, summary.DisplayName, userId,
+                    _log, TimeSpan.FromSeconds(12));
+                _ = defender.Completion.ContinueWith(
+                    _ => defender.DisposeAsync().AsTask(),
+                    TaskScheduler.Default);
+            }
+            else
+            {
+                _log.LogWarning(
+                    "Skipping appStorage defender for {Account} — RobloxUserId is null",
+                    summary.DisplayName);
+            }
+
             // Target precedence:
             //   1. Explicit override (Squad Launch / Friend Follow / Join-by-Link).
             //   2. Per-row SelectedGame from the ComboBox.
@@ -751,6 +772,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 .ToList();
             var deselectedCount = Accounts.Count(a => !a.IsSelected);
             _log.LogInformation("LaunchMultiple: {Count} eligible, {Skipped} deselected", targets.Count, deselectedCount);
+            foreach (var t in targets)
+            {
+                _log.LogInformation("LaunchMultiple target: id={Id} name={Name} robloxUserId={RobloxUserId}",
+                    t.Id, t.DisplayName, t.RobloxUserId);
+            }
 
             if (targets.Count == 0)
             {
@@ -768,7 +794,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 await LaunchAccountAsync(summary);
                 if (i < targets.Count)
                 {
-                    await Task.Delay(TimeSpan.FromMilliseconds(1500));
+                    // Bumped from 1500ms in v1.4.2.0: each RPB writes its own
+                    // identity to appStorage.json ~3-5s after attach. The
+                    // AppStorageDefender re-stamps on drift, but a wider gap
+                    // here further reduces the contested window between launches.
+                    await Task.Delay(TimeSpan.FromMilliseconds(5000));
                 }
             }
             var tail = deselectedCount > 0 ? $" ({deselectedCount} deselected, skipped.)" : string.Empty;
@@ -835,7 +865,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 await LaunchAccountAsync(summary, overrideTarget: target);
                 if (i < targets.Count)
                 {
-                    await Task.Delay(TimeSpan.FromMilliseconds(1500));
+                    // Bumped from 1500ms in v1.4.2.0: each RPB writes its own
+                    // identity to appStorage.json ~3-5s after attach. The
+                    // AppStorageDefender re-stamps on drift, but a wider gap
+                    // here further reduces the contested window between launches.
+                    await Task.Delay(TimeSpan.FromMilliseconds(5000));
                 }
             }
             var tail = deselectedCount > 0 ? $" ({deselectedCount} deselected, skipped.)" : string.Empty;
@@ -1638,5 +1672,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         field = value;
         OnPropertyChanged(name);
         return true;
+    }
+
+    private static string CookieFp(string? cookie)
+    {
+        if (string.IsNullOrEmpty(cookie)) return "<empty>";
+        var bytes = System.Text.Encoding.UTF8.GetBytes(cookie);
+        var hash = System.Security.Cryptography.SHA256.HashData(bytes);
+        return Convert.ToHexString(hash, 0, 4);
     }
 }

@@ -43,7 +43,7 @@
     <!-- Assembly version surfaces in the About box via Assembly.GetName().Version.
          Keep in sync with <Identity Version> in Package.appxmanifest. The script
          scripts/finalize-store-build.ps1 patches both atomically on every release. -->
-    <Version>1.4.1.0</Version>
+    <Version>1.4.2.0</Version>
   </PropertyGroup>
 
   <!-- Tray icons: Direction C iso voxel stack on a navy disk with state-coloured ring.
