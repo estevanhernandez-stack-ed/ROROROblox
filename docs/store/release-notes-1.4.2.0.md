@@ -36,7 +36,7 @@ You'll see this most if you multi-launch four or more alts at once and Roblox de
 ## Other channels
 
 - **Microsoft Store *(recommended)*** — [Install RoRoRo on the Microsoft Store](https://apps.microsoft.com/detail/9NMJCS390KWB). Signed by Microsoft, bypasses SmartScreen, auto-updates through the Store.
-- **MSIX sideload** — `RORORO-Sideload.msix` + `dev-cert.cer` are also attached if you prefer the cert-import flow over `Setup.exe`. Same dev-cert as v1.3.x / v1.4.x — if you've already imported it once, no re-import needed.
+- **MSIX sideload** — `RORORO-Sideload.msix` + `dev-cert.cer` are also attached if you'd rather install a package than run `Setup.exe`. Download both, right-click `dev-cert.cer` → Install → Local Machine → Trusted People, then open the `.msix`. The signing certificate is new as of this release — import it even if you've sideloaded RoRoRo before. Not sure? Just use `Setup.exe` above; it needs none of this.
 
 ## Issues, ideas
 
