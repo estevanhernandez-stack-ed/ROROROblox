@@ -8,7 +8,8 @@ namespace ROROROblox.App.Plugins;
 /// <summary>
 /// Installs a plugin from a base URL: pulls manifest.json + manifest.sha256 + plugin.zip,
 /// SHA-verifies the zip, parses + validates the manifest (including required-capability
-/// presence check), unpacks to <c>%LOCALAPPDATA%\ROROROblox\plugins\&lt;id&gt;\</c>.
+/// presence check), stops any running instance of the plugin, then unpacks to
+/// <c>%LOCALAPPDATA%\ROROROblox\plugins\&lt;id&gt;\</c>.
 /// User-initiated only — the call originates from the plugin install dialog,
 /// never from auto-discovery or background polling. Store-policy 10.2.2 clean.
 /// </summary>
@@ -16,11 +17,17 @@ public sealed class PluginInstaller
 {
     private readonly HttpClient _http;
     private readonly string _pluginsRoot;
+    private readonly Func<string, Task> _stopRunningPluginAsync;
 
-    public PluginInstaller(HttpClient http, string pluginsRoot)
+    /// <param name="stopRunningPluginAsync">
+    /// Invoked with the plugin id just before the install dir is wiped + re-extracted, so a
+    /// running instance releases its locked DLLs first. No-op when the plugin isn't running.
+    /// </param>
+    public PluginInstaller(HttpClient http, string pluginsRoot, Func<string, Task> stopRunningPluginAsync)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
         _pluginsRoot = pluginsRoot ?? throw new ArgumentNullException(nameof(pluginsRoot));
+        _stopRunningPluginAsync = stopRunningPluginAsync ?? throw new ArgumentNullException(nameof(stopRunningPluginAsync));
     }
 
     public async Task<InstalledPlugin> InstallAsync(string baseUrl, IReadOnlyList<string> requireCapabilities)
@@ -62,7 +69,13 @@ public sealed class PluginInstaller
                 $"Plugin zip SHA256 mismatch. Expected {expectedSha}, got {actualSha}.");
         }
 
-        // 3. Unpack to install dir.
+        // 3. Stop any running instance of this plugin before we touch the install dir.
+        // A live plugin process holds its own EXE + DLLs locked, so Directory.Delete
+        // (or the extract below) fails with "access denied" on a re-install. No-op when
+        // the plugin isn't running. Mirrors PluginsViewModel.RevokeAsync's stop-first dance.
+        await _stopRunningPluginAsync(manifest.Id).ConfigureAwait(false);
+
+        // 4. Unpack to install dir.
         var installDir = Path.Combine(_pluginsRoot, manifest.Id);
         if (Directory.Exists(installDir))
         {

@@ -53,7 +53,7 @@ public class PluginInstallerTests : IDisposable
         _http.EnqueueResponse(new HttpResponseMessage(HttpStatusCode.OK)
             { Content = new ByteArrayContent(zipBytes) });
 
-        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot);
+        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, _ => Task.CompletedTask);
         var result = await installer.InstallAsync(
             "https://example.com/plugin/v1/",
             requireCapabilities: new[] { "host.events.account-launched" });
@@ -75,7 +75,7 @@ public class PluginInstallerTests : IDisposable
         _http.EnqueueResponse(new HttpResponseMessage(HttpStatusCode.OK)
             { Content = new ByteArrayContent(zipBytes) });
 
-        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot);
+        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, _ => Task.CompletedTask);
 
         await Assert.ThrowsAsync<PluginInstallerException>(() => installer.InstallAsync(
             "https://example.com/plugin/v1/",
@@ -97,10 +97,50 @@ public class PluginInstallerTests : IDisposable
         _http.EnqueueResponse(new HttpResponseMessage(HttpStatusCode.OK)
             { Content = new ByteArrayContent(zipBytes) });
 
-        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot);
+        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, _ => Task.CompletedTask);
 
         await Assert.ThrowsAsync<PluginInstallerException>(() => installer.InstallAsync(
             "https://example.com/plugin/v1/",
             requireCapabilities: new[] { "host.events.account-launched" }));
+    }
+
+    [Fact]
+    public async Task InstallAsync_StopsRunningPluginBeforeTouchingInstallDir()
+    {
+        // Regression guard: a running plugin process holds its own DLLs locked, so the
+        // installer's Directory.Delete / extract over an existing install dir fails with
+        // "access denied". The installer must stop the running instance first — mirrors
+        // the stop-before-delete dance in PluginsViewModel.RevokeAsync.
+        const string manifestJson = """{"schemaVersion":1,"id":"626labs.test","name":"Test","version":"0.2.0","contractVersion":"1.0","publisher":"626 Labs","description":"x","capabilities":[]}""";
+        var (zipBytes, sha) = BuildZipWithManifest(manifestJson);
+
+        // Simulate a prior install already on disk.
+        var installDir = Path.Combine(_pluginsRoot, "626labs.test");
+        Directory.CreateDirectory(installDir);
+        File.WriteAllText(Path.Combine(installDir, "OLD.txt"), "stale");
+
+        _http.EnqueueResponse(new HttpResponseMessage(HttpStatusCode.OK)
+            { Content = new StringContent(manifestJson) });
+        _http.EnqueueResponse(new HttpResponseMessage(HttpStatusCode.OK)
+            { Content = new StringContent(sha) });
+        _http.EnqueueResponse(new HttpResponseMessage(HttpStatusCode.OK)
+            { Content = new ByteArrayContent(zipBytes) });
+
+        string? stoppedId = null;
+        bool oldInstallStillPresentAtStopTime = false;
+        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, pluginId =>
+        {
+            stoppedId = pluginId;
+            // The stop hook must run BEFORE the installer wipes the old install dir.
+            oldInstallStillPresentAtStopTime = File.Exists(Path.Combine(installDir, "OLD.txt"));
+            return Task.CompletedTask;
+        });
+
+        await installer.InstallAsync("https://example.com/plugin/v1/", Array.Empty<string>());
+
+        Assert.Equal("626labs.test", stoppedId);                            // stop hook got the manifest id
+        Assert.True(oldInstallStillPresentAtStopTime);                      // ...before the destructive delete
+        Assert.False(File.Exists(Path.Combine(installDir, "OLD.txt")));     // ...and the delete still happened
+        Assert.True(File.Exists(Path.Combine(installDir, "manifest.json"))); // ...and fresh content extracted
     }
 }
