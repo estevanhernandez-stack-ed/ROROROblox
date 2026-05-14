@@ -12,7 +12,11 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$Password,
 
-    [string]$Subject = 'CN=Estevan Hernandez',
+    # MUST match <Identity Publisher> in src/ROROROblox.App/Package.appxmanifest exactly,
+    # or signtool fails MSIX signing with 0x8007000b (ERROR_BAD_FORMAT). This is the Partner
+    # Center publisher ID -- the sideload cert shares the Store cert's SUBJECT but is a
+    # separate self-signed key (never the same key; see CLAUDE.md packaging rules).
+    [string]$Subject = 'CN=177BCE59-0966-4975-9962-10E36652141F',
 
     [string]$OutDir,
 
