@@ -140,6 +140,38 @@ public class PluginProcessSupervisorTests : IDisposable
         Assert.False(supervisor.RunningPids.ContainsKey("626labs.crash"));
     }
 
+    [Fact]
+    public void Start_LaunchesPluginNotAlreadyRunning()
+    {
+        var fake = new FakeProcessStarter();
+        var supervisor = new PluginProcessSupervisor(fake);
+        var plugin = MakePlugin("626labs.a", autostart: false);
+
+        supervisor.Start(plugin);
+
+        Assert.Single(fake.Started);
+        Assert.Equal("626labs.a", fake.Started[0].id);
+        Assert.True(supervisor.RunningPids.ContainsKey("626labs.a"));
+    }
+
+    [Fact]
+    public void Start_RestartsPluginAlreadyRunning()
+    {
+        var fake = new FakeProcessStarter();
+        var supervisor = new PluginProcessSupervisor(fake);
+        var plugin = MakePlugin("626labs.a", autostart: false);
+
+        supervisor.Start(plugin);
+        var firstPid = supervisor.RunningPids["626labs.a"];
+
+        supervisor.Start(plugin);
+
+        Assert.Equal(2, fake.Started.Count);          // started twice
+        Assert.Single(fake.KilledPids);               // old process killed once
+        Assert.Equal(firstPid, fake.KilledPids[0]);
+        Assert.NotEqual(firstPid, supervisor.RunningPids["626labs.a"]);
+    }
+
     private sealed class FakeProcessStarter : IPluginProcessStarter
     {
         public List<(string id, string exePath)> Started { get; } = new();

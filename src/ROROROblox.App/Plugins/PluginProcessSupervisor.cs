@@ -41,6 +41,27 @@ public sealed class PluginProcessSupervisor
     }
 
     /// <summary>
+    /// Start a single plugin process now, outside the autostart sweep. If the plugin is
+    /// already running it's restarted (stop + start) so the caller always ends with a
+    /// fresh process. The install flow calls this right after consent is granted so a
+    /// freshly-installed plugin runs without a RoRoRo restart — autostart governs future
+    /// launches, this governs "now".
+    /// </summary>
+    public void Start(InstalledPlugin plugin)
+    {
+        bool alreadyRunning;
+        lock (_lock) { alreadyRunning = _pidByPluginId.ContainsKey(plugin.Manifest.Id); }
+        if (alreadyRunning)
+        {
+            Restart(plugin);
+        }
+        else
+        {
+            StartOne(plugin);
+        }
+    }
+
+    /// <summary>
     /// Kill the running plugin process for <paramref name="pluginId"/> if one is tracked.
     /// No-op when the plugin isn't running. Called by Revoke so a plugin that was active
     /// when consent is removed actually goes away (rather than walking zombie until the
