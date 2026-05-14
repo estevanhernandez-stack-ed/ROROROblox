@@ -8,9 +8,18 @@
     <PackageId>ROROROblox.PluginContract</PackageId>
     <Version>0.1.0</Version>
     <Authors>626 Labs LLC</Authors>
+    <Company>626 Labs LLC</Company>
+    <Copyright>Copyright (c) 2026 626 Labs LLC</Copyright>
     <Description>gRPC contract for RoRoRo plugins. Reference this NuGet to author a plugin.</Description>
     <PackageReadmeFile>PackageReadme.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/estevanhernandez-stack-ed/ROROROblox</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/estevanhernandez-stack-ed/ROROROblox</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>roblox;rororo;plugin;grpc;626labs</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
