@@ -92,7 +92,6 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         get => _bannerPluginId is not null;
     }
 
-
     public ICommand InstallFromUrlCommand { get; }
     public ICommand ToggleAutostartCommand { get; }
     public ICommand RevokeCommand { get; }
@@ -146,7 +145,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             }
             catch (Exception startEx)
             {
-                StatusBanner = $"{installed.Manifest.Name} installed, but failed to start: {startEx.Message}";
+                StatusBanner = $"{installed.Manifest.Name} installed — start failed: {startEx.Message}";
             }
 
             InstallUrlInput = string.Empty;

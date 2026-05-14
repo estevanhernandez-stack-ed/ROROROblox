@@ -18,7 +18,7 @@
 
         <!-- DIM-on-hover for filled CTAs. Default WPF Button overlays a gray chrome on hover that
              reads as "disabled" against cyan-on-navy; opacity-down preserves the fill and signals
-             interactivity. Decision M9E6B82i4y4gAyd7esG3. -->
+             interactivity. -->
         <Style x:Key="CyanCtaButton" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource CyanBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource NavyBrush}" />
