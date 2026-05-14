@@ -53,7 +53,7 @@ public class PluginInstallerTests : IDisposable
         _http.EnqueueResponse(new HttpResponseMessage(HttpStatusCode.OK)
             { Content = new ByteArrayContent(zipBytes) });
 
-        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, _ => Task.CompletedTask);
+        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, (_, _) => Task.CompletedTask);
         var result = await installer.InstallAsync(
             "https://example.com/plugin/v1/",
             requireCapabilities: new[] { "host.events.account-launched" });
@@ -75,7 +75,7 @@ public class PluginInstallerTests : IDisposable
         _http.EnqueueResponse(new HttpResponseMessage(HttpStatusCode.OK)
             { Content = new ByteArrayContent(zipBytes) });
 
-        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, _ => Task.CompletedTask);
+        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, (_, _) => Task.CompletedTask);
 
         await Assert.ThrowsAsync<PluginInstallerException>(() => installer.InstallAsync(
             "https://example.com/plugin/v1/",
@@ -97,7 +97,7 @@ public class PluginInstallerTests : IDisposable
         _http.EnqueueResponse(new HttpResponseMessage(HttpStatusCode.OK)
             { Content = new ByteArrayContent(zipBytes) });
 
-        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, _ => Task.CompletedTask);
+        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, (_, _) => Task.CompletedTask);
 
         await Assert.ThrowsAsync<PluginInstallerException>(() => installer.InstallAsync(
             "https://example.com/plugin/v1/",
@@ -128,7 +128,7 @@ public class PluginInstallerTests : IDisposable
 
         string? stoppedId = null;
         bool oldInstallStillPresentAtStopTime = false;
-        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, pluginId =>
+        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, (pluginId, dir) =>
         {
             stoppedId = pluginId;
             // The stop hook must run BEFORE the installer wipes the old install dir.

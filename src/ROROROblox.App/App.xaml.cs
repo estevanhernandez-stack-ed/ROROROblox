@@ -391,15 +391,12 @@ public partial class App : Application
             var http = sp.GetRequiredService<IHttpClientFactory>()
                 .CreateClient(nameof(ROROROblox.App.Plugins.PluginInstaller));
             var supervisor = sp.GetRequiredService<ROROROblox.App.Plugins.PluginProcessSupervisor>();
-            return new ROROROblox.App.Plugins.PluginInstaller(http, pluginsRoot, async pluginId =>
-            {
-                // Re-installing a plugin that's currently running fails on Directory.Delete —
-                // the live process holds its DLLs locked. Kill it first; the brief delay lets
-                // the OS release the handles before the installer touches the dir. Same 150ms
-                // PluginsViewModel.RevokeAsync uses for the identical reason.
-                supervisor.Stop(pluginId);
-                await Task.Delay(150).ConfigureAwait(false);
-            });
+            return new ROROROblox.App.Plugins.PluginInstaller(http, pluginsRoot, (pluginId, installDir) =>
+                // Re-installing fails on Directory.Delete if anything is still running out of
+                // the plugin's dir — a tracked instance OR an orphan that outlived a prior
+                // RoRoRo session. StopByInstallDirAsync kills both (orphans found by image
+                // path) and polls until their file handles release.
+                supervisor.StopByInstallDirAsync(pluginId, installDir));
         });
 
         services.AddSingleton<ROROROblox.App.Plugins.IPluginProcessStarter,

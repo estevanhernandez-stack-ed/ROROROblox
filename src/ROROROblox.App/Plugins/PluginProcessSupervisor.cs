@@ -67,6 +67,36 @@ public sealed class PluginProcessSupervisor
     }
 
     /// <summary>
+    /// Stop every plugin process — tracked OR orphaned — running out of
+    /// <paramref name="installDir"/>, then wait for them to actually exit so their file
+    /// handles release. The install flow calls this before wiping a plugin's dir:
+    /// <see cref="Stop"/> alone only kills what THIS session tracks, but an orphan — a
+    /// plugin process that outlived the RoRoRo session that launched it — holds its DLLs
+    /// locked and would block the re-extract. Found by image path so orphans can't hide.
+    /// Polls until the dir is clear rather than sleeping a fixed interval.
+    /// </summary>
+    public async Task StopByInstallDirAsync(string pluginId, string installDir)
+    {
+        // Clean tracked stop first — kills + drops the PID mapping so OnProcessExited
+        // doesn't fire a spurious "plugin stopped" banner mid-install.
+        Stop(pluginId);
+
+        // Sweep for anything else running out of the dir — orphans the PID map never knew.
+        foreach (var pid in _starter.FindRunningUnder(installDir))
+        {
+            _starter.Kill(pid);
+        }
+
+        // Killing only signals termination; the OS releases file handles a beat later.
+        // Poll until nothing runs from the dir (or give up after a bounded wait).
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+        while (_starter.FindRunningUnder(installDir).Count > 0 && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(50).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
     /// Kill the running plugin process for <paramref name="pluginId"/> if one is tracked.
     /// No-op when the plugin isn't running. Called by Revoke so a plugin that was active
     /// when consent is removed actually goes away (rather than walking zombie until the
