@@ -84,9 +84,7 @@
         <!-- Status banner — non-actionable cyan strip when an info / install message is set.
              When BannerIsRestartable flips on (PluginExited fired), the magenta-strip banner
              shows underneath with a Restart button bound to RestartCommand. Two banners so
-             the cosmetic difference between "info" and "actionable" lands on first read.
-             A third banner below this one (IsAppRestartPending) surfaces a "Restart RoRoRo"
-             CTA after a fresh install — plugins start on next app launch. -->
+             the cosmetic difference between "info" and "actionable" lands on first read. -->
         <StackPanel Grid.Row="1" Margin="0,16,0,0">
             <Border Padding="14,10"
                     Background="{DynamicResource RowBgBrush}"
@@ -127,48 +125,6 @@
                             FontSize="11"
                             Command="{Binding RestartCommand}"
                             Visibility="{Binding BannerIsRestartable, Converter={StaticResource BoolToVisibilityConverter}}" />
-                </Grid>
-            </Border>
-
-            <!-- App-restart CTA after a fresh install. Plugin processes are launched at
-                 App.OnStartup via autostart, so a new install doesn't run until restart.
-                 Decision M9E6B82i4y4gAyd7esG3. -->
-            <Border Padding="14,10"
-                    Margin="0,8,0,0"
-                    Background="{DynamicResource RowBgBrush}"
-                    BorderBrush="{DynamicResource CyanBrush}"
-                    BorderThickness="0,0,0,2"
-                    CornerRadius="6"
-                    Visibility="{Binding IsAppRestartPending, Converter={StaticResource BoolToVisibilityConverter}}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0"
-                               Text="Restart RoRoRo to start your newly installed plugin."
-                               Foreground="{DynamicResource WhiteBrush}"
-                               FontSize="12"
-                               VerticalAlignment="Center"
-                               TextWrapping="Wrap" />
-                    <Button Grid.Column="1"
-                            Content="Restart RoRoRo"
-                            Margin="12,0,0,0"
-                            Padding="14,4"
-                            Style="{StaticResource CyanCtaButton}"
-                            FontSize="11"
-                            Command="{Binding RestartAppCommand}" />
-                    <Button Grid.Column="2"
-                            Content="Later"
-                            Margin="6,0,0,0"
-                            Padding="10,4"
-                            Background="{DynamicResource NavyBrush}"
-                            Foreground="{DynamicResource MutedTextBrush}"
-                            BorderBrush="{DynamicResource DividerBrush}"
-                            BorderThickness="1"
-                            FontSize="11"
-                            Command="{Binding DismissAppRestartCommand}" />
                 </Grid>
             </Border>
         </StackPanel>
