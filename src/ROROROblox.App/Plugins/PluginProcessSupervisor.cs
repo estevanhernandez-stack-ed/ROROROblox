@@ -49,6 +49,11 @@ public sealed class PluginProcessSupervisor
     /// </summary>
     public void Start(InstalledPlugin plugin)
     {
+        // Check under the lock, act outside it — same minimal-hold pattern as StartOne /
+        // OnProcessExited (keep the Process.Start syscall off the lock). The window between
+        // lock-release and Restart/StartOne is safe: Stop is idempotent (a TryGetValue miss
+        // is a no-op), and no other caller reaches StartOne concurrently (autostart is a
+        // fire-once startup sweep).
         bool alreadyRunning;
         lock (_lock) { alreadyRunning = _pidByPluginId.ContainsKey(plugin.Manifest.Id); }
         if (alreadyRunning)
