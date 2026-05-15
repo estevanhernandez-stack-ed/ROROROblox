@@ -8,7 +8,8 @@ namespace ROROROblox.App.Plugins;
 /// <summary>
 /// Installs a plugin from a base URL: pulls manifest.json + manifest.sha256 + plugin.zip,
 /// SHA-verifies the zip, parses + validates the manifest (including required-capability
-/// presence check), unpacks to <c>%LOCALAPPDATA%\ROROROblox\plugins\&lt;id&gt;\</c>.
+/// presence check), stops any running instance of the plugin, then unpacks to
+/// <c>%LOCALAPPDATA%\ROROROblox\plugins\&lt;id&gt;\</c>.
 /// User-initiated only — the call originates from the plugin install dialog,
 /// never from auto-discovery or background polling. Store-policy 10.2.2 clean.
 /// </summary>
@@ -16,11 +17,18 @@ public sealed class PluginInstaller
 {
     private readonly HttpClient _http;
     private readonly string _pluginsRoot;
+    private readonly Func<string, string, Task> _stopRunningPluginAsync;
 
-    public PluginInstaller(HttpClient http, string pluginsRoot)
+    /// <param name="stopRunningPluginAsync">
+    /// Invoked with (pluginId, installDir) just before the install dir is wiped + re-extracted,
+    /// so any process running out of that dir — a tracked instance OR an orphan — releases its
+    /// locked DLLs first. No-op when nothing is running there.
+    /// </param>
+    public PluginInstaller(HttpClient http, string pluginsRoot, Func<string, string, Task> stopRunningPluginAsync)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
         _pluginsRoot = pluginsRoot ?? throw new ArgumentNullException(nameof(pluginsRoot));
+        _stopRunningPluginAsync = stopRunningPluginAsync ?? throw new ArgumentNullException(nameof(stopRunningPluginAsync));
     }
 
     public async Task<InstalledPlugin> InstallAsync(string baseUrl, IReadOnlyList<string> requireCapabilities)
@@ -62,8 +70,14 @@ public sealed class PluginInstaller
                 $"Plugin zip SHA256 mismatch. Expected {expectedSha}, got {actualSha}.");
         }
 
-        // 3. Unpack to install dir.
+        // 3. Stop everything running out of the install dir before we touch it. A live
+        // plugin process — tracked OR an orphan from a prior RoRoRo session — holds its
+        // EXE + DLLs locked, so Directory.Delete / extract fails with "access denied" on a
+        // re-install. The hook finds processes by image path so orphans can't hide from it.
         var installDir = Path.Combine(_pluginsRoot, manifest.Id);
+        await _stopRunningPluginAsync(manifest.Id, installDir).ConfigureAwait(false);
+
+        // 4. Unpack to install dir.
         if (Directory.Exists(installDir))
         {
             Directory.Delete(installDir, recursive: true);

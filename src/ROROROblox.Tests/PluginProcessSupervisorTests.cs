@@ -140,12 +140,69 @@ public class PluginProcessSupervisorTests : IDisposable
         Assert.False(supervisor.RunningPids.ContainsKey("626labs.crash"));
     }
 
+    [Fact]
+    public void Start_LaunchesPluginNotAlreadyRunning()
+    {
+        var fake = new FakeProcessStarter();
+        var supervisor = new PluginProcessSupervisor(fake);
+        var plugin = MakePlugin("626labs.a", autostart: false);
+
+        supervisor.Start(plugin);
+
+        Assert.Single(fake.Started);
+        Assert.Equal("626labs.a", fake.Started[0].id);
+        Assert.True(supervisor.RunningPids.ContainsKey("626labs.a"));
+    }
+
+    [Fact]
+    public void Start_RestartsPluginAlreadyRunning()
+    {
+        var fake = new FakeProcessStarter();
+        var supervisor = new PluginProcessSupervisor(fake);
+        var plugin = MakePlugin("626labs.a", autostart: false);
+
+        supervisor.Start(plugin);
+        var firstPid = supervisor.RunningPids["626labs.a"];
+
+        supervisor.Start(plugin);
+
+        Assert.Equal(2, fake.Started.Count);          // started twice
+        Assert.Single(fake.KilledPids);               // old process killed once
+        Assert.Equal(firstPid, fake.KilledPids[0]);
+        Assert.NotEqual(firstPid, supervisor.RunningPids["626labs.a"]);
+    }
+
+    [Fact]
+    public async Task StopByInstallDirAsync_KillsTrackedAndOrphanProcesses()
+    {
+        // The install flow must clear an install dir of EVERY process running from it —
+        // not just the one this session's PID map tracks. An orphan (a plugin that outlived
+        // the RoRoRo session that started it) holds its DLLs locked and is invisible to Stop.
+        var fake = new FakeProcessStarter();
+        var supervisor = new PluginProcessSupervisor(fake);
+        var plugin = MakePlugin("626labs.a", autostart: true);
+        var installDir = plugin.InstallDir;
+
+        supervisor.StartAutostart(new[] { plugin });
+        var trackedPid = supervisor.RunningPids["626labs.a"];
+
+        const int orphanPid = 9999; // running from installDir, never started by this supervisor
+        fake.SetRunningUnder(installDir, new[] { trackedPid, orphanPid });
+
+        await supervisor.StopByInstallDirAsync("626labs.a", installDir);
+
+        Assert.Contains(trackedPid, fake.KilledPids);                   // tracked process killed
+        Assert.Contains(orphanPid, fake.KilledPids);                    // orphan killed too
+        Assert.False(supervisor.RunningPids.ContainsKey("626labs.a"));  // and untracked
+    }
+
     private sealed class FakeProcessStarter : IPluginProcessStarter
     {
         public List<(string id, string exePath)> Started { get; } = new();
         public List<int> KilledPids { get; } = new();
         public event Action<int>? ProcessExited;
         private int _nextPid = 1000;
+        private readonly Dictionary<string, List<int>> _runningUnder = new(StringComparer.OrdinalIgnoreCase);
 
         public int Start(string id, string exePath)
         {
@@ -154,6 +211,26 @@ public class PluginProcessSupervisorTests : IDisposable
         }
 
         public void Kill(int pid) => KilledPids.Add(pid);
+
+        /// <summary>Test seam: declare which PIDs are "running" out of <paramref name="dir"/>.
+        /// Key is normalized via Path.GetFullPath to mirror DefaultPluginProcessStarter.</summary>
+        public void SetRunningUnder(string dir, IEnumerable<int> pids)
+            => _runningUnder[Path.GetFullPath(dir)] = new List<int>(pids);
+
+        /// <summary>
+        /// Declared PIDs minus any already killed — so a poll-until-clear loop terminates
+        /// once the fake's processes are "dead".
+        /// </summary>
+        public IReadOnlyList<int> FindRunningUnder(string dirPath)
+        {
+            if (!_runningUnder.TryGetValue(Path.GetFullPath(dirPath), out var pids)) return Array.Empty<int>();
+            var live = new List<int>();
+            foreach (var pid in pids)
+            {
+                if (!KilledPids.Contains(pid)) live.Add(pid);
+            }
+            return live;
+        }
 
         public void RaiseExit(int pid) => ProcessExited?.Invoke(pid);
     }

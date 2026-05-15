@@ -377,8 +377,9 @@ public partial class App : Application
             new ROROROblox.App.Plugins.Adapters.InstalledPluginsLookupAdapter(
                 sp.GetRequiredService<ROROROblox.App.Plugins.PluginRegistry>()));
 
-        // PluginInstaller takes (HttpClient, string pluginsRoot) — register the typed
-        // HttpClient with the right UA, then build the installer with the resolved client.
+        // PluginInstaller takes (HttpClient, pluginsRoot, stopRunningPluginAsync) — register
+        // the typed HttpClient with the right UA, then build the installer with the resolved
+        // client + a stop-hook that kills a running instance before a re-install touches its dir.
         services.AddHttpClient(nameof(ROROROblox.App.Plugins.PluginInstaller), client =>
         {
             var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
@@ -389,7 +390,13 @@ public partial class App : Application
         {
             var http = sp.GetRequiredService<IHttpClientFactory>()
                 .CreateClient(nameof(ROROROblox.App.Plugins.PluginInstaller));
-            return new ROROROblox.App.Plugins.PluginInstaller(http, pluginsRoot);
+            var supervisor = sp.GetRequiredService<ROROROblox.App.Plugins.PluginProcessSupervisor>();
+            return new ROROROblox.App.Plugins.PluginInstaller(http, pluginsRoot, (pluginId, installDir) =>
+                // Re-installing fails on Directory.Delete if anything is still running out of
+                // the plugin's dir — a tracked instance OR an orphan that outlived a prior
+                // RoRoRo session. StopByInstallDirAsync kills both (orphans found by image
+                // path) and polls until their file handles release.
+                supervisor.StopByInstallDirAsync(pluginId, installDir));
         });
 
         services.AddSingleton<ROROROblox.App.Plugins.IPluginProcessStarter,

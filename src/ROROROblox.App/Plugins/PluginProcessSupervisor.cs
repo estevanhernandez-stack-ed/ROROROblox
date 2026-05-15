@@ -41,6 +41,70 @@ public sealed class PluginProcessSupervisor
     }
 
     /// <summary>
+    /// Start a single plugin process now, outside the autostart sweep. If the plugin is
+    /// already running it's restarted (stop + start) so the caller always ends with a
+    /// fresh process. The install flow calls this right after consent is granted so a
+    /// freshly-installed plugin runs without a RoRoRo restart — autostart governs future
+    /// launches, this governs "now".
+    /// </summary>
+    public void Start(InstalledPlugin plugin)
+    {
+        // Check under the lock, act outside it — same minimal-hold pattern as StartOne /
+        // OnProcessExited (keep the Process.Start syscall off the lock). The window between
+        // lock-release and Restart/StartOne is safe: Stop is idempotent (a TryGetValue miss
+        // is a no-op), and no other caller reaches StartOne concurrently (autostart is a
+        // fire-once startup sweep).
+        bool alreadyRunning;
+        lock (_lock) { alreadyRunning = _pidByPluginId.ContainsKey(plugin.Manifest.Id); }
+        if (alreadyRunning)
+        {
+            Restart(plugin);
+        }
+        else
+        {
+            StartOne(plugin);
+        }
+    }
+
+    /// <summary>
+    /// Stop every plugin process — tracked OR orphaned — running out of
+    /// <paramref name="installDir"/>, then wait for them to actually exit so their file
+    /// handles release. The install flow calls this before wiping a plugin's dir:
+    /// <see cref="Stop"/> alone only kills what THIS session tracks, but an orphan — a
+    /// plugin process that outlived the RoRoRo session that launched it — holds its DLLs
+    /// locked and would block the re-extract. Found by image path so orphans can't hide.
+    /// Polls until the dir is clear rather than sleeping a fixed interval.
+    /// </summary>
+    public async Task StopByInstallDirAsync(string pluginId, string installDir)
+    {
+        // Clean tracked stop first — kills + drops the PID mapping so OnProcessExited
+        // doesn't fire a spurious "plugin stopped" banner mid-install.
+        Stop(pluginId);
+
+        // Sweep for anything else running out of the dir — orphans the PID map never knew.
+        foreach (var pid in _starter.FindRunningUnder(installDir))
+        {
+            _starter.Kill(pid);
+        }
+
+        // Killing only signals termination; the OS releases file handles a beat later.
+        // Poll until nothing runs from the dir (or give up after a bounded wait).
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+        while (_starter.FindRunningUnder(installDir).Count > 0 && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(50).ConfigureAwait(false);
+        }
+
+        // Still alive after the ceiling — the dir can't be safely wiped. Fail loud with an
+        // actionable message instead of letting the caller hit a bare "access denied".
+        if (_starter.FindRunningUnder(installDir).Count > 0)
+        {
+            throw new TimeoutException(
+                $"A '{pluginId}' process is still running and won't exit — close it, then try again.");
+        }
+    }
+
+    /// <summary>
     /// Kill the running plugin process for <paramref name="pluginId"/> if one is tracked.
     /// No-op when the plugin isn't running. Called by Revoke so a plugin that was active
     /// when consent is removed actually goes away (rather than walking zombie until the

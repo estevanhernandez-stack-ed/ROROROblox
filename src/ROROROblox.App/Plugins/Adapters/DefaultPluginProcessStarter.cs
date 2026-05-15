@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 
 namespace ROROROblox.App.Plugins.Adapters;
 
@@ -69,5 +70,36 @@ public sealed class DefaultPluginProcessStarter : IPluginProcessStarter
             // Last-ditch swallow; v1 doesn't escalate Kill failures (the supervisor
             // strips the mapping unconditionally on next process-exit signal).
         }
+    }
+
+    public IReadOnlyList<int> FindRunningUnder(string dirPath)
+    {
+        var prefix = Path.GetFullPath(dirPath);
+        if (!prefix.EndsWith(Path.DirectorySeparatorChar)) prefix += Path.DirectorySeparatorChar;
+
+        var hits = new List<int>();
+        foreach (var process in Process.GetProcesses())
+        {
+            try
+            {
+                var image = process.MainModule?.FileName;
+                if (image is not null &&
+                    Path.GetFullPath(image).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    hits.Add(process.Id);
+                }
+            }
+            catch
+            {
+                // MainModule throws for processes we can't query (access denied, exited
+                // mid-enumeration, bitness mismatch). A plugin process runs as the same
+                // user, non-elevated — those are queryable. Anything that throws isn't ours.
+            }
+            finally
+            {
+                process.Dispose();
+            }
+        }
+        return hits;
     }
 }
