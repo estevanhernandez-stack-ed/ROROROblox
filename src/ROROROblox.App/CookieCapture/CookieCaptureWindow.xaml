@@ -54,6 +54,35 @@
             </StackPanel>
         </Border>
 
-        <wv:WebView2 x:Name="WebView" Grid.Row="1" />
+        <Grid Grid.Row="1">
+            <wv:WebView2 x:Name="WebView" />
+
+            <!-- Loading overlay; shown until the first NavigationCompleted fires successfully.
+                 Covers the slow CoreWebView2Environment.CreateAsync + EnsureCoreWebView2Async
+                 + first Navigate pre-render window. Hidden in code-behind once roblox.com paints. -->
+            <Border x:Name="LoadingOverlay"
+                    Background="#0F1F31">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="Loading roblox.com..."
+                               Foreground="#17D4FA"
+                               FontSize="14" FontWeight="SemiBold"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,12" />
+                    <ProgressBar IsIndeterminate="True"
+                                 Width="200" Height="4"
+                                 Foreground="#17D4FA"
+                                 Background="#15263A"
+                                 BorderThickness="0" />
+                    <TextBlock Text="First open can take a few seconds on a fresh WebView2 install."
+                               Foreground="#FFFFFF"
+                               Opacity="0.65"
+                               FontSize="11"
+                               Margin="0,12,0,0"
+                               HorizontalAlignment="Center"
+                               TextWrapping="Wrap"
+                               MaxWidth="300" />
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>
