@@ -94,6 +94,14 @@ public sealed class PluginProcessSupervisor
         {
             await Task.Delay(50).ConfigureAwait(false);
         }
+
+        // Still alive after the ceiling — the dir can't be safely wiped. Fail loud with an
+        // actionable message instead of letting the caller hit a bare "access denied".
+        if (_starter.FindRunningUnder(installDir).Count > 0)
+        {
+            throw new TimeoutException(
+                $"A '{pluginId}' process is still running and won't exit — close it, then retry the install.");
+        }
     }
 
     /// <summary>

@@ -212,8 +212,10 @@ public class PluginProcessSupervisorTests : IDisposable
 
         public void Kill(int pid) => KilledPids.Add(pid);
 
-        /// <summary>Test seam: declare which PIDs are "running" out of <paramref name="dir"/>.</summary>
-        public void SetRunningUnder(string dir, IEnumerable<int> pids) => _runningUnder[dir] = new List<int>(pids);
+        /// <summary>Test seam: declare which PIDs are "running" out of <paramref name="dir"/>.
+        /// Key is normalized via Path.GetFullPath to mirror DefaultPluginProcessStarter.</summary>
+        public void SetRunningUnder(string dir, IEnumerable<int> pids)
+            => _runningUnder[Path.GetFullPath(dir)] = new List<int>(pids);
 
         /// <summary>
         /// Declared PIDs minus any already killed — so a poll-until-clear loop terminates
@@ -221,7 +223,7 @@ public class PluginProcessSupervisorTests : IDisposable
         /// </summary>
         public IReadOnlyList<int> FindRunningUnder(string dirPath)
         {
-            if (!_runningUnder.TryGetValue(dirPath, out var pids)) return Array.Empty<int>();
+            if (!_runningUnder.TryGetValue(Path.GetFullPath(dirPath), out var pids)) return Array.Empty<int>();
             var live = new List<int>();
             foreach (var pid in pids)
             {
