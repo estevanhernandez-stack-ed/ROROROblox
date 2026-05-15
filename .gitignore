@@ -50,6 +50,10 @@ dist/
 # Velopack release outputs
 Releases/
 *.nupkg
+*.snupkg
+
+# Local NuGet pack output (dotnet pack -o artifacts/nuget)
+artifacts/
 
 # Tray-icon debug output -- scripts/generate-tray-icons.ps1 emits standalone PNGs at
 # small sizes (16/24/32) into Tray/Resources/.debug/ for visual inspection. Not shipped.
