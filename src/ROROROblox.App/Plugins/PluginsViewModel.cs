@@ -190,13 +190,14 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         if (row is null) return;
         try
         {
-            // Kill the running plugin process FIRST so its DLL handles release before we
-            // try to delete the install dir. Plugin processes hold their own EXE + dependent
-            // DLLs open while running — without this, TryDeleteInstallDir silently fails and
-            // the user is left with a "removed" plugin that's still in memory + on disk.
-            // Brief delay lets the OS finish releasing handles before the delete attempt.
-            _supervisor.Stop(row.Plugin.Manifest.Id);
-            await Task.Delay(150).ConfigureAwait(true);
+            // Stop the plugin FIRST so its DLL handles release before we delete the install
+            // dir — a running plugin holds its own EXE + dependent DLLs open, and without this
+            // TryDeleteInstallDir silently fails, leaving the plugin "removed" but still on
+            // disk + in memory. StopByInstallDirAsync also catches orphans (a process that
+            // outlived the RoRoRo session that started it) — plain Stop only kills what this
+            // session's PID map tracks, so an orphan would slip through.
+            await _supervisor.StopByInstallDirAsync(row.Plugin.Manifest.Id, row.Plugin.InstallDir)
+                .ConfigureAwait(true);
 
             await _consentStore.RevokeAsync(row.Plugin.Manifest.Id).ConfigureAwait(true);
             TryDeleteInstallDir(row.Plugin.InstallDir);

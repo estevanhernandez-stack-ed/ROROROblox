@@ -100,7 +100,7 @@ public sealed class PluginProcessSupervisor
         if (_starter.FindRunningUnder(installDir).Count > 0)
         {
             throw new TimeoutException(
-                $"A '{pluginId}' process is still running and won't exit — close it, then retry the install.");
+                $"A '{pluginId}' process is still running and won't exit — close it, then try again.");
         }
     }
 
