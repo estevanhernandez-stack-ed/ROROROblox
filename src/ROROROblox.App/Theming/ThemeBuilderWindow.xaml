@@ -2,7 +2,7 @@
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="RORORO -- Build a theme"
+        Title="RoRoRo -- Build a theme"
         Height="640" Width="640"
         MinHeight="500" MinWidth="540"
         WindowStartupLocation="CenterOwner"

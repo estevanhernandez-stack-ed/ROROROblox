@@ -26,7 +26,7 @@
                            TextWrapping="Wrap">
                     <Run Text="Your password goes only to " />
                     <Run Text="roblox.com" FontWeight="Bold" />
-                    <Run Text=" over HTTPS, inside this embedded browser. RORORO never sees it." />
+                    <Run Text=" over HTTPS, inside this embedded browser. RoRoRo never sees it." />
                 </TextBlock>
                 <TextBlock FontSize="11"
                            Foreground="#FFFFFF"
