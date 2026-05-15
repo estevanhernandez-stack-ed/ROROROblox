@@ -59,6 +59,12 @@ artifacts/
 # small sizes (16/24/32) into Tray/Resources/.debug/ for visual inspection. Not shipped.
 src/ROROROblox.App/Tray/Resources/.debug/
 
+# Velopack-generated app icon -- scripts/build-velopack-release.ps1 regenerates this
+# from the source-of-truth Logos/ PNG family on every release build. Tracked icons
+# (Square*Logo, SplashScreen, StoreLogo) are the source of truth; this is the
+# baked .ico derivative.
+src/ROROROblox.App/Package/Logos/AppIcon.ico
+
 # Superpowers brainstorm-companion artifacts (browser mockups, session state)
 .superpowers/
 
