@@ -18,6 +18,7 @@ internal partial class CookieCaptureWindow : Window
     private readonly ILogger<CookieCaptureWindow> _log;
     private readonly TaskCompletionSource<CookieCaptureResult> _tcs = new();
     private bool _captured;
+    private bool _firstNavComplete;
 
     public CookieCaptureWindow(string userDataDir, IRobloxApi api, ILogger<CookieCaptureWindow> log)
     {
@@ -65,7 +66,14 @@ internal partial class CookieCaptureWindow : Window
     }
 
     private void OnNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
-        => _ = TryCaptureAsync("NavigationCompleted");
+    {
+        if (!_firstNavComplete && e.IsSuccess)
+        {
+            _firstNavComplete = true;
+            LoadingOverlay.Visibility = Visibility.Collapsed;
+        }
+        _ = TryCaptureAsync("NavigationCompleted");
+    }
 
     private void OnSourceChanged(object? sender, CoreWebView2SourceChangedEventArgs e)
         => _ = TryCaptureAsync("SourceChanged");
