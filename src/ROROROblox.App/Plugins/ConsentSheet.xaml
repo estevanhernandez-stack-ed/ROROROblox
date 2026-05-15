@@ -2,7 +2,7 @@
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="RORORO -- Install plugin"
+        Title="RoRoRo -- Install plugin"
         Height="560" Width="560"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"

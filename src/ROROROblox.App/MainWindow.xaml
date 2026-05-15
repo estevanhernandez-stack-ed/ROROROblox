@@ -4,7 +4,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:vm="clr-namespace:ROROROblox.App.ViewModels"
-                 Title="RORORO"
+                 Title="RoRoRo"
                  Height="600" Width="900"
                  MinHeight="400" MinWidth="860"
                  WindowStartupLocation="CenterScreen"
@@ -586,7 +586,7 @@
         </Grid.RowDefinitions>
 
         <ui:TitleBar Grid.Row="0"
-                     Title="RORORO"
+                     Title="RoRoRo"
                      ShowMaximize="True"
                      ShowMinimize="True"
                      ShowClose="True">
@@ -629,7 +629,7 @@
 
                     <StackPanel Grid.Column="0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="RORORO"
+                            <TextBlock Text="RoRoRo"
                                        FontSize="22" FontWeight="Bold"
                                        Foreground="{DynamicResource CyanBrush}" />
                             <TextBlock Text=" / "

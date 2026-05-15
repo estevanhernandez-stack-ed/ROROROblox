@@ -22,7 +22,7 @@
                    Foreground="#F22F89" />
 
         <TextBlock Grid.Row="1"
-                   Text="RORORO launches Roblox via the standard roblox-player: handler. We can't find that handler on this PC, which usually means Roblox isn't installed yet."
+                   Text="RoRoRo launches Roblox via the standard roblox-player: handler. We can't find that handler on this PC, which usually means Roblox isn't installed yet."
                    TextWrapping="Wrap"
                    FontSize="12"
                    Foreground="#FFFFFF"

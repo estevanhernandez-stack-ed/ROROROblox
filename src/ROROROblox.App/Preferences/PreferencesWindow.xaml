@@ -2,7 +2,7 @@
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="RORORO -- Preferences"
+        Title="RoRoRo -- Preferences"
         Height="600" Width="500"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
@@ -28,7 +28,7 @@
                            FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource WhiteBrush}" />
             </StackPanel>
-            <TextBlock Text="How RORORO behaves when Windows starts up."
+            <TextBlock Text="How RoRoRo behaves when Windows starts up."
                        FontSize="11"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0" />
@@ -43,7 +43,7 @@
                                   FontSize="13"
                                   FontWeight="SemiBold"
                                   Click="OnRunOnLoginToggle">
-                            <TextBlock Text="Start RORORO when Windows starts." />
+                            <TextBlock Text="Start RoRoRo when Windows starts." />
                         </CheckBox>
                         <TextBlock FontSize="11"
                                    Foreground="{DynamicResource MutedTextBrush}"
@@ -60,7 +60,7 @@
                                   FontSize="13"
                                   FontWeight="SemiBold"
                                   Click="OnLaunchMainToggle">
-                            <TextBlock Text="Launch my main account when RORORO starts." />
+                            <TextBlock Text="Launch my main account when RoRoRo starts." />
                         </CheckBox>
                         <TextBlock x:Name="LaunchMainHint"
                                    FontSize="11"

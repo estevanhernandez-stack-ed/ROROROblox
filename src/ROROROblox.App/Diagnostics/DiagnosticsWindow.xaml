@@ -2,7 +2,7 @@
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="RORORO -- Diagnostics"
+        Title="RoRoRo -- Diagnostics"
         Height="560" Width="640"
         MinHeight="420" MinWidth="540"
         WindowStartupLocation="CenterOwner"
@@ -32,7 +32,7 @@
                            FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource WhiteBrush}" />
             </StackPanel>
-            <TextBlock Text="Snapshot of what RORORO sees right now. Save the bundle when filing a bug — log files redact secrets."
+            <TextBlock Text="Snapshot of what RoRoRo sees right now. Save the bundle when filing a bug — log files redact secrets."
                        FontSize="11"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0"

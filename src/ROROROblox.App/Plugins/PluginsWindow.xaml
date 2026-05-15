@@ -4,7 +4,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:ROROROblox.App"
         xmlns:plugins="clr-namespace:ROROROblox.App.Plugins"
-        Title="RORORO -- Plugins"
+        Title="RoRoRo -- Plugins"
         Height="600" Width="720"
         MinHeight="480" MinWidth="600"
         WindowStartupLocation="CenterOwner"
