@@ -6,5 +6,7 @@ public sealed record InstalledPlugin
     public required string InstallDir { get; init; }
     public required ConsentRecord Consent { get; init; }
 
-    public string ExecutablePath => System.IO.Path.Combine(InstallDir, Manifest.Id + ".exe");
+    public string ExecutablePath => System.IO.Path.Combine(
+        InstallDir,
+        string.IsNullOrWhiteSpace(Manifest.Entrypoint) ? Manifest.Id + ".exe" : Manifest.Entrypoint);
 }

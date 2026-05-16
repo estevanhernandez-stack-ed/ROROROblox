@@ -391,12 +391,17 @@ public partial class App : Application
             var http = sp.GetRequiredService<IHttpClientFactory>()
                 .CreateClient(nameof(ROROROblox.App.Plugins.PluginInstaller));
             var supervisor = sp.GetRequiredService<ROROROblox.App.Plugins.PluginProcessSupervisor>();
+            // Host version sourced from the App assembly — the manifest minHostVersion
+            // gate compares against this. Fallback of 0.0.0.0 means a missing AssemblyVersion
+            // refuses every minHostVersion-bearing manifest, which is the safe default.
+            var hostVersion = typeof(App).Assembly.GetName().Version ?? new Version(0, 0, 0, 0);
             return new ROROROblox.App.Plugins.PluginInstaller(http, pluginsRoot, (pluginId, installDir) =>
                 // Re-installing fails on Directory.Delete if anything is still running out of
                 // the plugin's dir — a tracked instance OR an orphan that outlived a prior
                 // RoRoRo session. StopByInstallDirAsync kills both (orphans found by image
                 // path) and polls until their file handles release.
-                supervisor.StopByInstallDirAsync(pluginId, installDir));
+                supervisor.StopByInstallDirAsync(pluginId, installDir),
+                hostVersion);
         });
 
         services.AddSingleton<ROROROblox.App.Plugins.IPluginProcessStarter,
