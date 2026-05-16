@@ -103,14 +103,19 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 
 > Avoid "cheat", "exploit", "bypass" — those will trigger reviewer concerns even if irrelevant.
 
-## What's new (release notes for v1.1.2.0)
+## What's new (release notes for v1.4.3.0)
 
 ```
-v1.1.2.0:
-• Renamed product from ROROROblox to RORORO per Microsoft Store listing guidance (clause 10.1.1.1).
-• Updated tagline: Multi-launcher for Windows.
-• Functionality unchanged from v1.1.0.0.
+v1.4.3.0:
+• Per-plugin Launch button — spawn any installed plugin on demand without restarting RoRoRo.
+• Plugins start the moment you finish installing them — no more "toggle Autostart, restart" dance.
+• Cleaner plugin re-installs — the prior instance is killed before the new files land.
+• Plugin authors: three new optional manifest fields (autostartDefault, minHostVersion, entrypoint) and one new disclosure-only capability (system.read-screen).
+• Cookie capture now shows a spinner during WebView2's first init (no more "is this frozen?").
+• Polish: DPAPI-corrupt modal defaults to Quit (safer), "Open Bloxstrap setup" verb-first label, RoRoRo branding consistent across in-app surfaces.
 ```
+
+(Historical "What's new" blocks for prior releases live in their respective `docs/store/release-notes-*.md` files.)
 
 ## Multi-feature value justification (10.1.4.4.b — DO NOT SKIP)
 
