@@ -56,6 +56,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         ToggleAutostartCommand = new RelayCommand(p => ToggleAutostartAsync(p as PluginRow));
         RevokeCommand = new RelayCommand(p => RevokeAsync(p as PluginRow));
         RestartCommand = new RelayCommand(_ => RestartFromBannerAsync());
+        LaunchPluginCommand = new RelayCommand(p => LaunchPluginAsync(p as PluginRow));
 
         // Subscribe to supervisor exit events (commit 3 wires the banner update). Detached
         // in Dispose so the window's Closed handler can unhook us cleanly.
@@ -97,13 +98,19 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
     public ICommand RevokeCommand { get; }
     public ICommand RestartCommand { get; }
 
+    /// <summary>Per-row Launch — spawns the plugin EXE on demand without an install or
+    /// RoRoRo restart. Belt-and-suspenders with install-time autostart for the case where
+    /// autostart is intentionally off but the user wants to run the plugin now.</summary>
+    public ICommand LaunchPluginCommand { get; }
+
     public async Task LoadAsync()
     {
         var installed = await _registry.ScanAsync().ConfigureAwait(true);
+        var running = _supervisor.RunningPids;
         Plugins.Clear();
         foreach (var p in installed)
         {
-            Plugins.Add(new PluginRow(p));
+            Plugins.Add(new PluginRow(p, isRunning: running.ContainsKey(p.Manifest.Id)));
         }
     }
 
@@ -141,6 +148,10 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             try
             {
                 _supervisor.Start(installed);
+                // LoadAsync above already rebuilt Plugins. Flip the matching row's
+                // IsRunning so the Launch button on it shows disabled-state immediately.
+                var newRow = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == installed.Manifest.Id);
+                if (newRow is not null) newRow.IsRunning = true;
                 StatusBanner = $"{installed.Manifest.Name} installed and running.";
             }
             catch (Exception startEx)
@@ -183,6 +194,26 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         {
             StatusBanner = $"Autostart toggle failed: {ex.Message}";
         }
+    }
+
+    private Task LaunchPluginAsync(PluginRow? row)
+    {
+        if (row is null) return Task.CompletedTask;
+        if (row.IsRunning) return Task.CompletedTask; // belt-and-suspenders — XAML disables the
+                                                      // button on IsRunning, but a stale binding
+                                                      // shouldn't ever hand us a double-launch.
+        try
+        {
+            StatusBanner = $"Launching {row.Name}...";
+            _supervisor.Start(row.Plugin);
+            row.IsRunning = true;
+            StatusBanner = $"{row.Name} is running.";
+        }
+        catch (Exception ex)
+        {
+            StatusBanner = $"Launch failed: {ex.Message}";
+        }
+        return Task.CompletedTask;
     }
 
     private async Task RevokeAsync(PluginRow? row)
@@ -249,6 +280,9 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         {
             var match = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == pluginId);
             var displayName = match?.Name ?? pluginId;
+            // Flip the row's IsRunning so the Launch button comes back enabled. Safe when
+            // match is null (uninstalled mid-exit) — null-skip the row state mutation.
+            if (match is not null) match.IsRunning = false;
             _bannerPluginId = pluginId;
             StatusBanner = $"{displayName} stopped -- click to restart.";
             Raise(nameof(BannerIsRestartable));
@@ -290,14 +324,19 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
 
 /// <summary>
 /// Per-row VM. Wraps <see cref="InstalledPlugin"/> so XAML can bind to friendly property
-/// names. Mutations route through the parent VM's commands; the parent rebuilds the
-/// observable list after each mutation, so per-row INPC isn't needed for v1.4.
+/// names. Most mutations route through the parent VM's commands; the parent rebuilds the
+/// observable list after each mutation, so most fields don't need INPC. <see cref="IsRunning"/>
+/// is the exception — it flips on every Start / process-exit pair WITHOUT a list rebuild,
+/// so the row implements INPC to drive the Launch button's IsEnabled binding live.
 /// </summary>
-internal sealed class PluginRow
+internal sealed class PluginRow : INotifyPropertyChanged
 {
-    public PluginRow(InstalledPlugin p)
+    private bool _isRunning;
+
+    public PluginRow(InstalledPlugin p, bool isRunning = false)
     {
         Plugin = p ?? throw new ArgumentNullException(nameof(p));
+        _isRunning = isRunning;
     }
 
     public InstalledPlugin Plugin { get; }
@@ -309,8 +348,23 @@ internal sealed class PluginRow
     public int CapabilityCount => Plugin.Manifest.Capabilities.Count;
     public bool AutostartEnabled => Plugin.Consent.AutostartEnabled;
 
+    /// <summary>True when the supervisor reports an active process for this plugin id.
+    /// Bound by XAML to invert into the Launch button's IsEnabled.</summary>
+    public bool IsRunning
+    {
+        get => _isRunning;
+        internal set
+        {
+            if (_isRunning == value) return;
+            _isRunning = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsRunning)));
+        }
+    }
+
     /// <summary>"3 capabilities" / "1 capability" — the row chip label.</summary>
     public string CapabilitySummary => CapabilityCount == 1
         ? "1 capability"
         : $"{CapabilityCount} capabilities";
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 }

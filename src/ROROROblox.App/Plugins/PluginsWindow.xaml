@@ -231,12 +231,29 @@
                                                     Orientation="Vertical"
                                                     HorizontalAlignment="Right"
                                                     VerticalAlignment="Top">
-                                            <CheckBox IsChecked="{Binding AutostartEnabled, Mode=OneWay}"
-                                                      Content="Autostart"
-                                                      Foreground="{DynamicResource WhiteBrush}"
-                                                      FontSize="11"
-                                                      Command="{Binding DataContext.ToggleAutostartCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                      CommandParameter="{Binding}" />
+                                            <!-- Autostart + Launch live on the same horizontal row.
+                                                 Autostart governs FUTURE RoRoRo starts; Launch fires
+                                                 the plugin NOW (#66 — covers the "intentionally off
+                                                 autostart, but want to run ad-hoc" gap). Launch
+                                                 disables while the plugin's running so the user
+                                                 can't double-spawn — IsRunning fires INPC. -->
+                                            <StackPanel Orientation="Horizontal">
+                                                <CheckBox IsChecked="{Binding AutostartEnabled, Mode=OneWay}"
+                                                          Content="Autostart"
+                                                          Foreground="{DynamicResource WhiteBrush}"
+                                                          FontSize="11"
+                                                          VerticalAlignment="Center"
+                                                          Command="{Binding DataContext.ToggleAutostartCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                          CommandParameter="{Binding}" />
+                                                <Button Content="Launch"
+                                                        Margin="10,0,0,0"
+                                                        Padding="12,4"
+                                                        Style="{StaticResource CyanCtaButton}"
+                                                        FontSize="11"
+                                                        IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBoolConverterLocal}}"
+                                                        Command="{Binding DataContext.LaunchPluginCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}" />
+                                            </StackPanel>
                                             <Button Content="Remove"
                                                     Margin="0,8,0,0"
                                                     Padding="10,4"
