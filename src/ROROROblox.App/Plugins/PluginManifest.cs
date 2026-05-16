@@ -17,6 +17,17 @@ public sealed record PluginManifest
     public string? Icon { get; init; }
     public string? UpdateFeed { get; init; }
 
+    /// <summary>Initial autostart preference for a fresh install: "on" or "off". Null = "off" (current default).
+    /// Does NOT override an existing consent record on re-install — set once at first install.</summary>
+    public string? AutostartDefault { get; init; }
+
+    /// <summary>Minimum RoRoRo version required to install. Compared via <see cref="System.Version"/>;
+    /// pre-release tags (e.g. "1.4.3-beta") tolerated by parsing the numeric head. Null = no constraint.</summary>
+    public string? MinHostVersion { get; init; }
+
+    /// <summary>Plugin EXE filename relative to install dir. Null = fall back to <c>&lt;id&gt;.exe</c>.</summary>
+    public string? Entrypoint { get; init; }
+
     public const int CurrentSchemaVersion = 1;
     private static readonly Regex IdPattern = new(@"^[a-z0-9]+(\.[a-z0-9-]+)+$", RegexOptions.Compiled);
 
@@ -67,6 +78,16 @@ public sealed record PluginManifest
                 $"Manifest id '{dto.Id}' is not in reverse-DNS form (e.g. '626labs.auto-keys').");
         }
 
+        // autostartDefault is a string enum so a future "prompt" value can join without a schema bump.
+        // Anything other than the known values is a manifest authoring bug — reject loudly.
+        if (dto.AutostartDefault is not null
+            && dto.AutostartDefault != "on"
+            && dto.AutostartDefault != "off")
+        {
+            throw new PluginManifestException(
+                $"Manifest autostartDefault '{dto.AutostartDefault}' is not recognized. Expected \"on\" or \"off\".");
+        }
+
         return new PluginManifest
         {
             SchemaVersion = dto.SchemaVersion.Value,
@@ -79,6 +100,9 @@ public sealed record PluginManifest
             Capabilities = dto.Capabilities,
             Icon = dto.Icon,
             UpdateFeed = dto.UpdateFeed,
+            AutostartDefault = dto.AutostartDefault,
+            MinHostVersion = dto.MinHostVersion,
+            Entrypoint = dto.Entrypoint,
         };
     }
 
@@ -102,6 +126,9 @@ public sealed record PluginManifest
         [JsonPropertyName("capabilities")] public List<string>? Capabilities { get; set; }
         [JsonPropertyName("icon")] public string? Icon { get; set; }
         [JsonPropertyName("updateFeed")] public string? UpdateFeed { get; set; }
+        [JsonPropertyName("autostartDefault")] public string? AutostartDefault { get; set; }
+        [JsonPropertyName("minHostVersion")] public string? MinHostVersion { get; set; }
+        [JsonPropertyName("entrypoint")] public string? Entrypoint { get; set; }
     }
 }
 
