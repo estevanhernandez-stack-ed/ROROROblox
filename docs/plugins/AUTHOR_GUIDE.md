@@ -118,6 +118,7 @@ Disclosure-only. RoRoRo can't sandbox your process — you're a separate EXE. `s
 | `system.watch-global-input` | You read keyboard / mouse globally |
 | `system.prevent-sleep` | You keep the user's PC from sleeping while you run |
 | `system.focus-foreign-windows` | You activate / focus other applications' windows |
+| `system.read-screen` | You capture and read pixels from the user's screen |
 
 Declare every `system.*` capability that matches your behavior. Honest disclosure is the contract — users are reading it on the consent sheet to decide whether to trust you.
 

@@ -23,6 +23,7 @@ public static class PluginCapability
     public const string SystemWatchGlobalInput = "system.watch-global-input";
     public const string SystemPreventSleep = "system.prevent-sleep";
     public const string SystemFocusForeignWindows = "system.focus-foreign-windows";
+    public const string SystemReadScreen = "system.read-screen";
 
     private static readonly IReadOnlyDictionary<string, string> Catalog = new Dictionary<string, string>
     {
@@ -38,6 +39,7 @@ public static class PluginCapability
         [SystemWatchGlobalInput] = "The plugin will watch your keyboard + mouse input system-wide.",
         [SystemPreventSleep] = "The plugin will prevent your computer from sleeping while it runs.",
         [SystemFocusForeignWindows] = "The plugin will activate / focus other applications' windows.",
+        [SystemReadScreen] = "The plugin will read pixels from your screen.",
     };
 
     public static bool IsKnown(string capability)

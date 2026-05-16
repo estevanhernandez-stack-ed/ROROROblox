@@ -10,6 +10,7 @@ public class PluginCapabilityTests
         Assert.True(PluginCapability.IsKnown("host.events.account-launched"));
         Assert.True(PluginCapability.IsKnown("host.ui.tray-menu"));
         Assert.True(PluginCapability.IsKnown("system.synthesize-keyboard-input"));
+        Assert.True(PluginCapability.IsKnown("system.read-screen"));
     }
 
     [Fact]
@@ -38,5 +39,13 @@ public class PluginCapabilityTests
     {
         var explanation = PluginCapability.Display("host.events.account-launched");
         Assert.Contains("when an account launches", explanation, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Display_ReturnsHumanReadableExplanation_ForReadScreen()
+    {
+        var explanation = PluginCapability.Display("system.read-screen");
+        Assert.Contains("read pixels", explanation, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Unknown capability", explanation, StringComparison.OrdinalIgnoreCase);
     }
 }
