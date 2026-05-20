@@ -34,6 +34,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly IAppSettings _settings;
     private readonly IFavoriteGameStore _favorites;
     private readonly IRobloxProcessTracker _processTracker;
+    private readonly IPresenceService _presenceService;
     private readonly IDiagnosticsCollector _diagnostics;
     private readonly IPrivateServerStore _privateServerStore;
     private readonly ISessionHistoryStore _sessionHistory;
@@ -68,6 +69,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         IAppSettings settings,
         IFavoriteGameStore favorites,
         IRobloxProcessTracker processTracker,
+        IPresenceService presenceService,
         IDiagnosticsCollector diagnostics,
         IPrivateServerStore privateServerStore,
         ISessionHistoryStore sessionHistory,
@@ -86,6 +88,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _settings = settings;
         _favorites = favorites;
         _processTracker = processTracker;
+        _presenceService = presenceService;
         _diagnostics = diagnostics;
         _privateServerStore = privateServerStore;
         _sessionHistory = sessionHistory;
@@ -131,6 +134,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _processTracker.ProcessAttached += OnProcessAttached;
         _processTracker.ProcessExited += OnProcessExited;
         _processTracker.ProcessAttachFailed += OnProcessAttachFailed;
+
+        // v1.5.0 presence — server-truth running state for display (the ghost fix). Events may
+        // arrive on threadpool threads (the poller runs up to 4 concurrent), so the handlers
+        // marshal to the dispatcher just like the process-tracker handlers do.
+        _presenceService.AccountPresenceUpdated += OnAccountPresenceUpdated;
+        _presenceService.AccountSessionExpired += OnAccountSessionExpired;
 
         _ = InitializeBloxstrapWarningAsync();
 
@@ -369,6 +378,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CompactRows));
         OnPropertyChanged(nameof(HasCompactRows));
         RelayCommand.RaiseCanExecuteChanged();
+
+        // v1.5.0 — start the presence poll loop now that Accounts is populated, so the first
+        // tick has targets. Start() is idempotent (no-op if already running), so the repeated
+        // LoadAsync calls on Games-dialog close don't spin up a second loop. Accounts that get
+        // their RobloxUserId backfilled after this point enter the poll snapshot automatically —
+        // the snapshot provider re-reads Accounts on every tick.
+        _presenceService.Start();
     }
 
     /// <summary>
@@ -1094,10 +1110,39 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
             if (summary is null) return;
+
+            // The pid is genuinely gone — always clear process state.
             summary.IsRunning = false;
             summary.RunningPid = null;
             summary.RunningSinceUtc = null;
-            summary.LastClosedAtUtc = e.OccurredAtUtc;
+
+            // v1.5.0 anti-ghost rule: do NOT unconditionally stamp LastClosedAtUtc. A row is
+            // "Closed" only when BOTH presence and process tracking agree it's gone. The Roblox
+            // anti-multilaunch bootstrapper kills the pid we attached to and respawns the real
+            // client under a new pid we never claimed — if we stamped "Closed" here while
+            // presence still reports in-game, the live client reads "Closed" (the ghost).
+            if (summary.InGame)
+            {
+                // Process gone but presence still in-game (the ghost case). Don't stamp Closed.
+                // Fire a fast-confirm re-poll: if the window is truly gone the next presence
+                // event will stamp the close via OnAccountPresenceUpdated; if it's still up the
+                // row keeps showing "In <game>".
+                _ = _presenceService.RequestImmediateRefreshAsync(e.AccountId);
+            }
+            else if (summary.RobloxUserId is > 0)
+            {
+                // Presence-capable account, currently not in-game — both signals agree it's
+                // closed, so stamp it now. Still fast-confirm to keep presence current.
+                summary.LastClosedAtUtc = e.OccurredAtUtc;
+                _ = _presenceService.RequestImmediateRefreshAsync(e.AccountId);
+            }
+            else
+            {
+                // No RobloxUserId — presence can never run for this account, so process tracking
+                // is the only signal. Keep the pre-v1.5.0 behavior: stamp the close immediately.
+                summary.LastClosedAtUtc = e.OccurredAtUtc;
+            }
+
             LiveProcessCount = _processTracker.Attached.Count;
             OnPropertyChanged(nameof(CompactRows));
             OnPropertyChanged(nameof(HasCompactRows));
@@ -1105,6 +1150,77 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         });
         // Fire-and-forget the history end-stamp; persistence isn't on the UI critical path.
         _ = RecordSessionEndAsync(e.AccountId, e.OccurredAtUtc, outcomeHint: null);
+    }
+
+    /// <summary>
+    /// Presence poll landed for one account (v1.5.0). Authoritative for <em>display</em>:
+    /// in-game state + game name. Events arrive on threadpool threads (the poller runs up to 4
+    /// concurrent), so marshal to the dispatcher before touching the UI-bound summary. Spec
+    /// §"Components > 2" + "Data flow."
+    /// </summary>
+    private void OnAccountPresenceUpdated(object? sender, AccountPresenceEventArgs e)
+    {
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
+            if (summary is null) return;
+
+            if (e.PresenceType == UserPresenceType.InGame)
+            {
+                // Stamp the in-game-since time on the transition into a game OR on a game switch
+                // (place id changed), so the "· {age}" tail resets when they hop games.
+                if (!summary.InGame || e.PlaceId != summary.CurrentPlaceId)
+                {
+                    summary.InGameSinceUtc = e.OccurredAtUtc;
+                }
+                summary.CurrentPlaceId = e.PlaceId;
+                summary.CurrentGameName = e.GameName;
+                summary.PresenceState = e.PresenceType;
+            }
+            else
+            {
+                // Capture combined active state BEFORE mutating presence so we can tell whether
+                // this poll is the moment the row went fully inactive.
+                var wasActive = summary.InGame || summary.IsRunning;
+
+                summary.PresenceState = e.PresenceType;
+                summary.CurrentGameName = null;
+                summary.CurrentPlaceId = null;
+                summary.InGameSinceUtc = null;
+
+                // Presence-confirmed close: the row was active, presence now says not-in-game,
+                // and the process is also gone — both signals agree, so stamp the close. This is
+                // the close-stamp the deferred OnProcessExited handed off to presence (the ghost
+                // case resolving once the respawned client truly closes).
+                if (wasActive && !summary.IsRunning)
+                {
+                    summary.LastClosedAtUtc = e.OccurredAtUtc;
+                }
+            }
+
+            // Mirror the OnProcessAttached/Exited refresh shape so command-enablement (LaunchAll
+            // CanExecute keys off InGame || IsRunning) and the compact view stay in sync.
+            // LiveProcessCount is process-only, so it isn't touched here.
+            OnPropertyChanged(nameof(CompactRows));
+            OnPropertyChanged(nameof(HasCompactRows));
+            RelayCommand.RaiseCanExecuteChanged();
+        });
+    }
+
+    /// <summary>
+    /// Presence poll returned 401 for one account (v1.5.0) — the cookie died between launches.
+    /// Flip the row to the yellow "Session expired" badge. Marshalled to the dispatcher because
+    /// the poller raises this off a threadpool thread. Spec §"Error handling" (401 from presence).
+    /// </summary>
+    private void OnAccountSessionExpired(object? sender, Guid accountId)
+    {
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
+            if (summary is null) return;
+            summary.SessionExpired = true;
+            RelayCommand.RaiseCanExecuteChanged();
+        });
     }
 
     private void OnProcessAttachFailed(object? sender, RobloxProcessEventArgs e)
