@@ -32,7 +32,7 @@ Focused hotfix. **Total ≈ 5-7 hours** of autonomous engineering. Heaviest item
   Acceptance: 401 path raises the expired signal; 429 sets backoff and skips the rest of the cycle; a generic poll failure holds last state (no spurious not-in-game event); `RequestImmediateRefreshAsync` polls exactly the one account.
   Verify: `dotnet test src/ROROROblox.Tests/ --filter "PresenceServiceTests"`. Commit: `feat(presence): resilience (401/429/hold-last) + fast-confirm re-poll`.
 
-- [ ] **3. `AccountSummary` status reconciliation**
+- [x] **3. `AccountSummary` status reconciliation**
   Spec ref: `spec.md > Components > 2. Status reconciliation`
   What to build: Add `PresenceState` (`UserPresenceType`), `CurrentGameName`, `CurrentPlaceId`, `InGameSinceUtc`, and computed `InGame`. Rewrite `StatusDot` (expired→yellow; `InGame || IsRunning`→green; else grey) and `SecondaryStatusText` with the spec's precedence: Session expired ▸ "In {game} · {age}" ▸ "Connecting…" (first ~60s) / "Running" (after) ▸ explicit `StatusText` ▸ "Closed {ago}" (presence-confirmed, both false) ▸ "Last launched {ago}" ▸ "Ready". Raise the correct `OnPropertyChanged` when `PresenceState` / `CurrentGameName` / `IsRunning` change.
   Acceptance: table-driven tests over `SessionExpired × InGame × IsRunning × LastClosed`. Headline case: `IsRunning=false, InGame=true` → "In {game}", **not** "Closed". `InGame=false, IsRunning=true` within 60s → "Connecting…"; after 60s → "Running". Both false + `LastClosedAtUtc` set → "Closed {ago}".

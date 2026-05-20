@@ -147,7 +147,7 @@ Unit + reconciliation tests only — no end-to-end against real roblox.com (CLAU
 ## Out of scope (and where it goes)
 
 - **Tags / notes per account** (PS99, RCU, PLAZA) → **v1.5.1**. `Account.Tags`, chips + filter.
-- **Saved private servers in the per-account picker** → **v1.5.1**. `IPrivateServerStore` exists; surface it in the per-row Join-by-link dropdown rather than Squad-only.
+- **Private servers as a managed library** → **v1.5.1** (clan ask sharpened 2026-05-20). Today saved private servers (`IPrivateServerStore`) live ONLY inside the Squad Launch modal, and the only verb is "send every selected account into this one server." The ask: promote private servers to a first-class library that works *like the games section* — saved, named, organized, and selectable **per account** from the row dropdown (alongside games), so different alts can target different private servers (or different games) in a single Launch multiple pass. This is the original "let us pick from the pre-set ones" request leveled up to library-grade management. Needs its own brainstorm/spec pass (new picker UX + how private-server entries coexist with games in the per-row target dropdown + `SelectedGame`/`LaunchTarget` model changes).
 - **Cross-machine account import/export** → **deferred to its own cycle.** DPAPI is per-user/per-machine by design; this is the per-cookie-encryption portability work, security-sensitive, not a hotfix.
 - **The Roblox anti-multilaunch bootstrapper itself** → not ours to fix. The presence approach sidesteps its effect on our UI.
 
