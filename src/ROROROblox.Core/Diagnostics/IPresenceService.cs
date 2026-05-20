@@ -19,6 +19,15 @@ public interface IPresenceService
     /// <summary>Fired once per polled target after each <see cref="PollOnceAsync"/> pass.</summary>
     event EventHandler<AccountPresenceEventArgs>? AccountPresenceUpdated;
 
+    /// <summary>
+    /// Fired (payload = the account id) when a poll for that account returns 401 /
+    /// <see cref="CookieExpiredException"/> — its cookie died between launches. The ViewModel flips
+    /// the row to the yellow "Session expired" badge. On a 401, <see cref="AccountPresenceUpdated"/>
+    /// is NOT raised for that account — the two signals are mutually exclusive per poll. Spec §1
+    /// (Concurrency / rate limits) + "Error handling / edge cases" (401 from presence).
+    /// </summary>
+    event EventHandler<Guid>? AccountSessionExpired;
+
     /// <summary>Start the internal <see cref="System.Threading.PeriodicTimer"/> poll loop.</summary>
     void Start();
 
@@ -31,6 +40,17 @@ public interface IPresenceService
     /// each. The timer loop calls this each tick; tests call it directly.
     /// </summary>
     Task PollOnceAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Fast-confirm hook (spec §1). Polls a SINGLE account out-of-band — looks up its
+    /// <c>RobloxUserId</c> in the current snapshot and, if present, polls just that account instead
+    /// of waiting for the next 25 s tick. Wired to <c>RobloxProcessTracker.ProcessExited</c> so a
+    /// just-closed client is re-checked immediately: if presence then says not-in-game, the close is
+    /// confirmed; if it still says <see cref="UserPresenceType.InGame"/>, the row keeps showing the
+    /// game (the ghost case). If the account is absent from the snapshot (expired / no userId yet),
+    /// this is a no-op — no api call, no throw.
+    /// </summary>
+    Task RequestImmediateRefreshAsync(Guid accountId);
 }
 
 /// <summary>

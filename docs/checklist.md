@@ -20,13 +20,13 @@ Focused hotfix. **Total ≈ 5-7 hours** of autonomous engineering. Heaviest item
 
 ## Checklist
 
-- [ ] **1. `IPresenceService` + `PresenceService` poll loop with presence→event mapping + game-name cache**
+- [x] **1. `IPresenceService` + `PresenceService` poll loop with presence→event mapping + game-name cache**
   Spec ref: `spec.md > Components > 1. PresenceService`
   What to build: New `src/ROROROblox.Core/Diagnostics/IPresenceService.cs` (interface + `AccountPresenceUpdated` event carrying `accountId`, `UserPresenceType`, `placeId`, `gameName`) and `PresenceService.cs` (no WPF deps; lives beside `RobloxProcessTracker`). Constructor: `IRobloxApi`, `IAccountStore`, `ILogger`, poll interval (default 25s), and a snapshot-provider delegate yielding the pollable account set (`id`, `RobloxUserId`, `SessionExpired`). `PeriodicTimer` loop: for each non-expired account with non-null `RobloxUserId`, `RetrieveCookieAsync(id)` → `GetPresenceAsync(cookie, [userId])` → map the single `UserPresence`; if `InGame` with a `PlaceId`, resolve the game name via `GetGameMetadataByPlaceIdAsync(placeId)` cached in a `ConcurrentDictionary<long,string>`; raise `AccountPresenceUpdated`. `Start()` / `Stop()`.
   Acceptance: `InGame` presence raises the event with a resolved game name; a second poll for the same `PlaceId` does **not** refetch metadata (cache hit); `Offline`/`OnlineWebsite` raises the event with a null game name. Existing test suite stays green.
   Verify: `dotnet test src/ROROROblox.Tests/ --filter "PresenceServiceTests"` (stub `IRobloxApi` + `IAccountStore`). Commit: `feat(presence): PresenceService poll loop + game-name cache`.
 
-- [ ] **2. `PresenceService` resilience + fast-confirm re-poll**
+- [x] **2. `PresenceService` resilience + fast-confirm re-poll**
   Spec ref: `spec.md > Components > 1. PresenceService` (Concurrency / rate limits, Fast-confirm hook) + `Error handling / edge cases`
   What to build: 401 / `CookieExpiredException` → raise an expired signal so the VM can flip the row to session-expired. HTTP 429 → back off for the remainder of the cycle. Any other failure → **hold last-known** (never emit an event that would clear running state). Concurrency cap (`SemaphoreSlim`) + small jitter so N accounts don't fire simultaneously. Add `RequestImmediateRefreshAsync(accountId)` — an out-of-band single-account poll (the `ProcessExited` subscription is wired in item 4; the method + its behavior land here with tests).
   Acceptance: 401 path raises the expired signal; 429 sets backoff and skips the rest of the cycle; a generic poll failure holds last state (no spurious not-in-game event); `RequestImmediateRefreshAsync` polls exactly the one account.
