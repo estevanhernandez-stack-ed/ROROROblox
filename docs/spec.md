@@ -2,7 +2,7 @@
 
 Spec-first Cart cycles. Active cycle's canonical spec lives upstream:
 
-→ [docs/superpowers/specs/2026-05-09-rororo-plugin-system-design.md](superpowers/specs/2026-05-09-rororo-plugin-system-design.md)
+→ [docs/superpowers/specs/2026-05-20-rororo-presence-account-ux-design.md](superpowers/specs/2026-05-20-rororo-presence-account-ux-design.md)
 
 Cycle history (each cycle's canonical spec is its own durable artifact):
 
@@ -13,7 +13,8 @@ Cycle history (each cycle's canonical spec is its own durable artifact):
 - v1.3.x detect-Roblox-already-running + cookie-container fix (cycle 4): [`2026-05-08-roblox-already-running-detect-design.md`](superpowers/specs/2026-05-08-roblox-already-running-detect-design.md) (shipped 2026-05-08 via PR #6)
 - v1.3.x persist `RobloxUserId` (cycle 5): [`2026-05-08-persist-roblox-user-id-design.md`](superpowers/specs/2026-05-08-persist-roblox-user-id-design.md) (shipped via friends-list-field-drift)
 - v1.3.4 cookie-capture per-capture user-data dir: shipped 2026-05-09 (commit 981068a)
-- **v1.4 plugin system (current cycle):** [`2026-05-09-rororo-plugin-system-design.md`](superpowers/specs/2026-05-09-rororo-plugin-system-design.md)
+- v1.4 plugin system: [`2026-05-09-rororo-plugin-system-design.md`](superpowers/specs/2026-05-09-rororo-plugin-system-design.md) (shipped to main)
+- **v1.5.0 presence account-UX (current cycle):** [`2026-05-20-rororo-presence-account-ux-design.md`](superpowers/specs/2026-05-20-rororo-presence-account-ux-design.md) — presence-based running-state (kills the ghost-closed bug) + game-aware row text + Launch multiple hardening
 
 ## Section index (for checklist references — current cycle)
 
