@@ -111,6 +111,7 @@ v1.5.0.0:
 • Fixed accounts falsely showing "Closed" while still running — the running state now comes from Roblox presence, so a live in-game alt can't be mislabeled "Closed."
 • Launch multiple tells you what it skipped and why — "6 dispatched (1 already running)" — and never silently does nothing.
 • Launch multiple re-checks each alt's live state right before launching, so a just-closed alt gets picked up instead of wrongly skipped.
+• Tag your alts — free-text labels (PS99, RCU, PLAZA) shown as chips on each row, to tell accounts apart at a glance.
 ```
 
 (Historical "What's new" blocks for prior releases live in their respective `docs/store/release-notes-*.md` files.)

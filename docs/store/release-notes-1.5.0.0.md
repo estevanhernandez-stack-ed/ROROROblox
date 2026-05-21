@@ -32,6 +32,10 @@ Before, if Launch multiple skipped an account (because it was already running), 
 - If nothing's eligible, it says so plainly — **"Nothing to launch — 7 already running."** — instead of looking like the button did nothing.
 - It double-checks each alt's live state right before launching, so an alt you just closed gets picked up instead of wrongly skipped. (One caveat: Roblox's presence takes a few seconds to catch up after a client closes — if you close an alt and *immediately* relaunch, give it a moment and retry.)
 
+### Tag your alts
+
+Give each account free-text tags — **PS99**, **RCU**, **PLAZA**, whatever — to mark what it's for. They show up as chips on the row and stick across restarts. Click the "add tag" box on a row to add one, the **×** on a chip to remove it. Handy when you run a lot of accounts and need to tell them apart at a glance.
+
 ## Compatibility
 
 - No changes to **saved accounts**, **mutex handling**, the **auth-ticket flow**, **plugins**, favorites, private servers, themes, or renames — all unchanged from v1.4.3.
