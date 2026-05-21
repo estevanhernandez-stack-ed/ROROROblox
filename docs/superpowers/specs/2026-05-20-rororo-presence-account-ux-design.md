@@ -77,16 +77,19 @@ New presence-derived state on the row:
 - `DateTimeOffset? InGameSinceUtc` (first tick we saw `InGame`, for the duration label)
 - `bool InGame => PresenceState == UserPresenceType.InGame`
 
-**`StatusDot`** precedence: expired → `yellow`; `InGame || IsRunning` → `green`; else `grey`.
+**`StatusDot`** precedence: expired → `yellow`; `InGame || InStudio || IsRunning` → `green`; else `grey`.
 
-**`SecondaryStatusText`** precedence (replaces the current `IsRunning`-only logic at `AccountSummary.cs:224-250`):
+**`SecondaryStatusText`** precedence (replaces the current `IsRunning`-only logic at `AccountSummary.cs:224-250`). Refined at the C1 checkpoint (2026-05-20) — the original draft had only "Connecting…/Running" for the pid-alive-not-in-game case, which read as a vague "Running" once a user exited a game but stayed in the client. Replaced with an explicit "At Roblox home" state, plus "In Studio":
 1. `SessionExpired` → `"Session expired"`
 2. `InGame` → `"In {CurrentGameName} · {age since InGameSinceUtc}"` (falls back to `"In {game}"` when no since-time; `"In a game"` when the name hasn't resolved yet)
-3. `IsRunning && !InGame` → `"Connecting…"` for the first ~60 s after launch; after that, fall back to `"Running"` (process alive, presence not reporting in-game — e.g. at the Roblox menu, or presence set to invisible)
-4. non-empty `StatusText` (launch error) → show it
-5. presence-confirmed close (`LastClosedAtUtc` set, `!InGame && !IsRunning`) → `"Closed {ago}"`
-6. `LastLaunchedAt` → `"Last launched {ago}"`
-7. `"Ready"`
+3. `InStudio` → `"In Studio"`
+4. `IsRunning && !InGame`: presence `OnlineWebsite` → `"At Roblox home"` immediately; else `"Connecting…"` for the first ~60 s after attach; after that → `"At Roblox home"` (a live client past the connecting window with no in-game presence = sitting at the home screen — covers "exited the game, stayed in the app" regardless of whether Roblox reports the at-home client as `OnlineWebsite` or `Offline`)
+5. non-empty `StatusText` (launch error) → show it
+6. presence-confirmed close (`LastClosedAtUtc` set, `!InGame && !IsRunning`) → `"Closed {ago}"`
+7. `LastLaunchedAt` → `"Last launched {ago}"`
+8. `"Ready"`
+
+> **Note on the at-home signal:** we have no confirmed evidence of which `UserPresenceType` Roblox returns for a desktop client idling at the home screen (a user reported the row aging from "Connecting…" to "Running," which is the pre-fix fallback and tells us nothing about the presence value). The reconciliation is therefore robust to both: `OnlineWebsite` short-circuits to "At Roblox home" immediately, and a settled-but-not-in-game live client also reads "At Roblox home." Confirm the actual presence value during the next manual smoke.
 
 **Anti-ghost change in `MainViewModel.OnProcessExited`** (`MainViewModel.cs:1091`):
 - Still clear `RunningPid`, set `IsRunning = false` (the pid is genuinely gone).

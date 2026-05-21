@@ -288,21 +288,22 @@ public sealed class AccountSummary : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Three-state colored dot: <c>yellow</c> expired / <c>green</c> active (in-game OR pid alive) /
-    /// <c>grey</c> idle. The augment rule (v1.5.0): a row is active if <see cref="InGame"/> OR
-    /// <see cref="IsRunning"/>, so a lost local pid can no longer force the dot grey once presence
-    /// reports in-game. Spec §"Components > 2".
+    /// Three-state colored dot: <c>yellow</c> expired / <c>green</c> active (in-game, in Studio, OR
+    /// pid alive) / <c>grey</c> idle. The augment rule (v1.5.0): a row is active if <see cref="InGame"/>
+    /// OR <see cref="IsRunning"/>, so a lost local pid can no longer force the dot grey once presence
+    /// reports in-game. Studio presence also counts as active. Spec §"Components > 2".
     /// </summary>
     public string StatusDot => _sessionExpired
         ? "yellow"
-        : (InGame || _isRunning) ? "green" : "grey";
+        : (InGame || _presenceState == UserPresenceType.InStudio || _isRunning) ? "green" : "grey";
 
     /// <summary>
     /// Human-friendly secondary text shown under the display name. Precedence (v1.5.0 augment rule):
-    /// session-expired ▸ "In {game} · {age}" (presence) ▸ "Connecting…" / "Running" (pid alive,
-    /// not in-game) ▸ launch error (StatusText) ▸ "Closed {ago}" (both signals agree it's gone) ▸
-    /// "Last launched {ago}" ▸ "Ready". Refresh by calling <see cref="RefreshRelativeTimes"/> from a
-    /// periodic tick. Spec §"Components > 2".
+    /// session-expired ▸ "In {game} · {age}" (presence) ▸ "In Studio" ▸ "Connecting…" (pid alive,
+    /// first ~60s, no in-game presence yet) ▸ "At Roblox home" (pid alive, not in a game — exited the
+    /// game but stayed in the app) ▸ launch error (StatusText) ▸ "Closed {ago}" (both signals agree
+    /// it's gone) ▸ "Last launched {ago}" ▸ "Ready". Refresh by calling
+    /// <see cref="RefreshRelativeTimes"/> from a periodic tick. Spec §"Components > 2".
     /// </summary>
     public string SecondaryStatusText
     {
@@ -326,32 +327,46 @@ public sealed class AccountSummary : INotifyPropertyChanged
                 }
                 return $"In {_currentGameName}";
             }
-            // 3. Process alive but presence hasn't reported in-game yet — fresh launch vs stuck.
+            // 3. In Roblox Studio (presence) — a real activity, surfaced even if it wasn't our launch.
+            if (_presenceState == UserPresenceType.InStudio)
+            {
+                return "In Studio";
+            }
+            // 4. Client alive but not in a game — sitting at the Roblox home screen / menus. Two ways
+            //    to land here: presence explicitly reports online-not-in-game (OnlineWebsite), OR the
+            //    client has been up past the connecting window without presence ever landing on
+            //    in-game (self-presence settles; not-in-game with a live client means it's at home —
+            //    e.g. exited the game but stayed in the app). The first ~60s still reads "Connecting…"
+            //    so a fresh launch doesn't flash "At Roblox home" before the game loads.
             if (_isRunning)
             {
+                if (_presenceState == UserPresenceType.OnlineWebsite)
+                {
+                    return "At Roblox home";
+                }
                 if (_runningSinceUtc is DateTimeOffset since &&
                     DateTimeOffset.UtcNow - since < TimeSpan.FromSeconds(60))
                 {
                     return "Connecting…";
                 }
-                return "Running";
+                return "At Roblox home";
             }
-            // 4. Launch error surfaced only when the row isn't active.
+            // 5. Launch error surfaced only when the row isn't active.
             if (!string.IsNullOrEmpty(_statusText))
             {
                 return _statusText;
             }
-            // 5. Both signals agree it's gone — presence-confirmed close.
+            // 6. Both signals agree it's gone — presence-confirmed close.
             if (_lastClosedAtUtc is DateTimeOffset closed)
             {
                 return $"Closed {RelativeAgo(closed)}";
             }
-            // 6. Never been active this session, but launched before.
+            // 7. Never been active this session, but launched before.
             if (LastLaunchedAt is DateTimeOffset last)
             {
                 return $"Last launched {RelativeAgo(last)}";
             }
-            // 7. Cold.
+            // 8. Cold.
             return "Ready";
         }
     }

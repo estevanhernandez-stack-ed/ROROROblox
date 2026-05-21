@@ -69,16 +69,17 @@ public class AccountSummaryTests
         Assert.Equal("green", s.StatusDot);
     }
 
-    // === 4. Running, not in game, older launch → Running ===
+    // === 4. Running, not in game, older launch → At Roblox home (settled, client up, not in a game) ===
 
     [Fact]
-    public void Running_NotInGame_OlderLaunch_ShowsRunning_Green()
+    public void Running_NotInGame_OlderLaunch_ShowsAtRobloxHome_Green()
     {
         var s = NewSummary();
         s.IsRunning = true;
-        s.RunningSinceUtc = DateTimeOffset.UtcNow.AddMinutes(-2); // > 60s ago
+        s.RunningSinceUtc = DateTimeOffset.UtcNow.AddMinutes(-2); // > 60s ago, presence still not in-game
 
-        Assert.Equal("Running", s.SecondaryStatusText);
+        // Past the connecting window with a live client and no in-game presence = sitting at home.
+        Assert.Equal("At Roblox home", s.SecondaryStatusText);
         Assert.Equal("green", s.StatusDot);
     }
 
@@ -216,5 +217,56 @@ public class AccountSummaryTests
 
         Assert.Equal(UserPresenceType.Offline, s.PresenceState);
         Assert.False(s.InGame);
+    }
+
+    // === At Roblox home: exited the game but stayed in the client ===
+
+    [Fact]
+    public void OnlineWebsite_WhileRunning_ShowsAtRobloxHome_Green()
+    {
+        var s = NewSummary();
+        s.IsRunning = true;
+        s.RunningSinceUtc = DateTimeOffset.UtcNow; // even fresh — presence type wins over the timing fallback
+        s.PresenceState = UserPresenceType.OnlineWebsite;
+
+        Assert.Equal("At Roblox home", s.SecondaryStatusText);
+        Assert.Equal("green", s.StatusDot);
+    }
+
+    [Fact]
+    public void OnlineWebsite_OlderRunning_StillAtRobloxHome_NotConnecting()
+    {
+        var s = NewSummary();
+        s.IsRunning = true;
+        s.RunningSinceUtc = DateTimeOffset.UtcNow.AddMinutes(-10);
+        s.PresenceState = UserPresenceType.OnlineWebsite;
+
+        // The bug: this used to read "Connecting…"/"Running". Now it reads the real state.
+        Assert.Equal("At Roblox home", s.SecondaryStatusText);
+    }
+
+    [Fact]
+    public void OnlineWebsite_NotRunning_FallsThroughToClosed_Grey()
+    {
+        var s = NewSummary();
+        s.IsRunning = false; // our client is gone; account merely online on web/mobile
+        s.LastClosedAtUtc = DateTimeOffset.UtcNow;
+        s.PresenceState = UserPresenceType.OnlineWebsite;
+
+        // Don't show "At Roblox home" for a closed local client — honest "Closed" instead.
+        Assert.StartsWith("Closed", s.SecondaryStatusText);
+        Assert.Equal("grey", s.StatusDot);
+    }
+
+    // === In Studio ===
+
+    [Fact]
+    public void InStudio_ShowsInStudio_Green()
+    {
+        var s = NewSummary();
+        s.PresenceState = UserPresenceType.InStudio;
+
+        Assert.Equal("In Studio", s.SecondaryStatusText);
+        Assert.Equal("green", s.StatusDot);
     }
 }
