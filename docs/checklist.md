@@ -73,7 +73,7 @@ Bigger than v1.5.0 — crypto + five surfaces. **Total ≈ 8-12 hours.** Heavies
   Acceptance: a late-attaching launch keeps the correct identity stamped until consumption; normal launches wind down promptly after attach; bounded by the cap on a never-attaches launch. New defender tests pass; full suite green.
   Verify: `dotnet test ROROROblox.slnx --filter "AppStorageDefender*"`. Commit: `fix(launch): defend appStorage identity until client consumes it (install-resilient)`.
 
-- [ ] **10. Documentation & Security Verification**
+- [x] **10. Documentation & Security Verification**
   Spec ref: `spec.md > 2. Security pass` + `spec.md > Testing` + `CLAUDE.md > What NOT to do`
   What to build: Full app-wide `dpapi-cookie-blast-radius` audit (whole app, this is the security-pass cycle). Update the disclosure surfaces for the deliberate-export reality: a note for the next reviewer letter ("cookies leave only on user-initiated, passphrase-encrypted export") + a privacy-policy line. Sync `docs/` (spec status, checklist, spec.md pointer; banner-correct the canonical spec if build drifted). Secrets scan + local-path grep (no `c:\Users\` in committable code). `dotnet list ROROROblox.slnx package --vulnerable`. Confirm `.gitignore` still covers `accounts.dat`, `*.rororo-accounts` export bundles (add if missing — must never be committed), `*.pfx`. Branch ready for PR to `main`. (Version bump + Store/Velopack release is the builder-driven release flow, separate.)
   Acceptance: cookie audit clean app-wide; export bundles gitignored; no secrets/local-paths in staged files; deps clean or documented; docs current. Branch PR-ready.
