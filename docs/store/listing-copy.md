@@ -103,16 +103,14 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 
 > Avoid "cheat", "exploit", "bypass" — those will trigger reviewer concerns even if irrelevant.
 
-## What's new (release notes for v1.4.3.0)
+## What's new (release notes for v1.5.0.0)
 
 ```
-v1.4.3.0:
-• Per-plugin Launch button — spawn any installed plugin on demand without restarting RoRoRo.
-• Plugins start the moment you finish installing them — no more "toggle Autostart, restart" dance.
-• Cleaner plugin re-installs — the prior instance is killed before the new files land.
-• Plugin authors: three new optional manifest fields (autostartDefault, minHostVersion, entrypoint) and one new disclosure-only capability (system.read-screen).
-• Cookie capture now shows a spinner during WebView2's first init (no more "is this frozen?").
-• Polish: DPAPI-corrupt modal defaults to Quit (safer), "Open Bloxstrap setup" verb-first label, RoRoRo branding consistent across in-app surfaces.
+v1.5.0.0:
+• Your alts now show the game they're actually in — "In Pet Sim 99", "At Roblox home", "In Studio" — instead of a vague "active."
+• Fixed accounts falsely showing "Closed" while still running — the running state now comes from Roblox presence, so a live in-game alt can't be mislabeled "Closed."
+• Launch multiple tells you what it skipped and why — "6 dispatched (1 already running)" — and never silently does nothing.
+• Launch multiple re-checks each alt's live state right before launching, so a just-closed alt gets picked up instead of wrongly skipped.
 ```
 
 (Historical "What's new" blocks for prior releases live in their respective `docs/store/release-notes-*.md` files.)
