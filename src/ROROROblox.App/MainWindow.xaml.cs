@@ -169,6 +169,14 @@ internal partial class MainWindow : FluentWindow
             _gripPressedSummary = null;
             return;
         }
+        // Reorder is disabled while a tag/name filter is active (v1.6.0, item 7b) — the visible row
+        // set is a subset of Accounts, so drop-position → source-index math would be wrong. Clearing
+        // the filter restores reorder. Filtering + reordering simultaneously is a non-case.
+        if (DataContext is MainViewModel { IsFilterActive: true })
+        {
+            _gripPressedSummary = null;
+            return;
+        }
         var current = e.GetPosition(this);
         var dx = Math.Abs(current.X - _gripPressPoint.X);
         var dy = Math.Abs(current.Y - _gripPressPoint.Y);
@@ -299,6 +307,13 @@ internal partial class MainWindow : FluentWindow
         if (e.Data.GetData(DragFormat) is not AccountSummary source) return;
         if (sender is not FrameworkElement el || el.Tag is not AccountSummary target) return;
         if (DataContext is not MainViewModel vm) return;
+        // Belt-and-suspenders with the drag-start guard: never mutate order while filtered (the
+        // visible rows are a subset of Accounts, so the reorder math would be wrong). v1.6.0 (7b).
+        if (vm.IsFilterActive)
+        {
+            ClearAllDropTargets();
+            return;
+        }
 
         ClearAllDropTargets();
         await vm.MoveAccountAsync(source, target);
@@ -335,16 +350,61 @@ internal partial class MainWindow : FluentWindow
         e.Handled = true;
     }
 
+    // Add-affordance toggle (v1.6.0, item 7a). The collapsed "+" pill engages an inline TextBox:
+    //   - OnAddTagPlusClick      — "+" clicked → IsAddingTag=true (XAML swaps pill → box).
+    //   - OnAddTagBoxVisibleChanged — box just became visible → auto-focus + select-all.
+    //   - OnAddTagKeyDown        — Enter commits the tag (AddTagCommand) + collapses; Esc cancels.
+    //   - OnAddTagBoxLostFocus   — focus lost with no commit → clear + collapse unchanged.
+    // Compact-mode rows never carry these handlers (chips stay read-only), so the toggle is
+    // full-mode only by construction.
+
+    /// <summary>The "+" pill was clicked — engage the inline tag input for this row.</summary>
+    private void OnAddTagPlusClick(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement el || el.Tag is not AccountSummary summary) return;
+        summary.IsAddingTag = true;
+        e.Handled = true;
+        // Focus happens in OnAddTagBoxVisibleChanged once the box is realized + visible.
+    }
+
     /// <summary>
-    /// Inline "add tag" box (v1.5.0). Enter routes the trimmed text to the row's
+    /// The inline tag box just became visible — focus it so the user can type immediately.
+    /// Dispatched at Input priority because the element isn't focusable until layout settles.
+    /// </summary>
+    private void OnAddTagBoxVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.NewValue is not true) return;
+        if (sender is not Wpf.Ui.Controls.TextBox box) return;
+        box.Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.Input,
+            new Action(() =>
+            {
+                box.Focus();
+                box.SelectAll();
+            }));
+    }
+
+    /// <summary>
+    /// Inline "add tag" box. Enter routes the trimmed text to the row's
     /// <see cref="AccountSummary.AddTagCommand"/> (normalization — trim/dedupe/length+count caps —
-    /// lives in the command) then clears the box. The box's Tag carries the row's AccountSummary.
+    /// lives in the command), clears the box, and collapses back to the "+" pill. Escape cancels:
+    /// clears + collapses unchanged. The box's Tag carries the row's AccountSummary. v1.6.0 (7a).
     /// </summary>
     private void OnAddTagKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Enter && e.Key != Key.Return) return;
         if (sender is not Wpf.Ui.Controls.TextBox box) return;
         if (box.Tag is not AccountSummary summary) return;
+
+        if (e.Key == Key.Escape)
+        {
+            // Cancel — discard text and collapse back to the "+" pill.
+            box.Text = string.Empty;
+            summary.IsAddingTag = false;
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key != Key.Enter && e.Key != Key.Return) return;
 
         var text = box.Text;
         if (summary.AddTagCommand.CanExecute(text))
@@ -352,7 +412,20 @@ internal partial class MainWindow : FluentWindow
             summary.AddTagCommand.Execute(text);
         }
         box.Text = string.Empty;
+        summary.IsAddingTag = false;
         e.Handled = true;
+    }
+
+    /// <summary>
+    /// Focus left the inline tag box with no Enter commit (click elsewhere / Tab away) — collapse
+    /// back to the "+" pill, discarding any half-typed text. v1.6.0 (7a).
+    /// </summary>
+    private void OnAddTagBoxLostFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Wpf.Ui.Controls.TextBox box) return;
+        if (box.Tag is not AccountSummary summary) return;
+        box.Text = string.Empty;
+        summary.IsAddingTag = false;
     }
 
     private static AccountSummary? FindRowAccountSummary(DependencyObject start)

@@ -1,0 +1,179 @@
+<Window x:Class="ROROROblox.App.Transport.ExportAccountsWindow"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Export accounts"
+        Height="640" Width="520"
+        MinHeight="560" MinWidth="480"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        Background="{DynamicResource BgBrush}"
+        Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
+    <Grid Margin="28,24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />  <!-- Title -->
+            <RowDefinition Height="Auto" />  <!-- Subtitle -->
+            <RowDefinition Height="Auto" />  <!-- Pick label -->
+            <RowDefinition Height="*" />     <!-- Account checklist -->
+            <RowDefinition Height="Auto" />  <!-- Passphrase label -->
+            <RowDefinition Height="Auto" />  <!-- Passphrase box -->
+            <RowDefinition Height="Auto" />  <!-- Strength meter -->
+            <RowDefinition Height="Auto" />  <!-- Confirm box -->
+            <RowDefinition Height="Auto" />  <!-- Validation line -->
+            <RowDefinition Height="Auto" />  <!-- Buttons -->
+        </Grid.RowDefinitions>
+
+        <!-- Brand title — RoRoRo / Export -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <TextBlock Text="RoRoRo"
+                       FontSize="20" FontWeight="Bold"
+                       Foreground="{DynamicResource CyanBrush}" />
+            <TextBlock Text=" / "
+                       FontSize="20" FontWeight="Bold"
+                       Foreground="{DynamicResource MagentaBrush}" />
+            <TextBlock Text="Export accounts"
+                       FontSize="20" FontWeight="Bold"
+                       Foreground="{DynamicResource WhiteBrush}" />
+        </StackPanel>
+
+        <TextBlock Grid.Row="1"
+                   Text="Pick accounts and set a passphrase. The saved file is encrypted — anyone who opens it needs the passphrase. There's no recovery if you lose it."
+                   FontSize="11"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   TextWrapping="Wrap"
+                   Margin="0,6,0,0" />
+
+        <TextBlock Grid.Row="2"
+                   Text="Accounts"
+                   FontSize="12" FontWeight="SemiBold"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   Margin="0,18,0,8" />
+
+        <Border Grid.Row="3"
+                BorderBrush="{DynamicResource DividerBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="6">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl x:Name="AccountsList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,4" Padding="10,8" CornerRadius="6"
+                                    Background="{DynamicResource RowBgBrush}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <CheckBox Grid.Column="0"
+                                              VerticalAlignment="Center"
+                                              IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                              IsEnabled="{Binding CanExport}"
+                                              Foreground="{DynamicResource WhiteBrush}" />
+
+                                    <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding RenderName}"
+                                                   FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource WhiteBrush}"
+                                                   TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding CanExport}" Value="False">
+                                                            <Setter Property="Opacity" Value="0.45" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <!-- Inline note for accounts with no Roblox userId yet (SkippedNoUserId). -->
+                                        <TextBlock Text="No Roblox ID yet — launch this account once before it can be exported."
+                                                   FontSize="10"
+                                                   Foreground="{DynamicResource MagentaBrush}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,2,0,0"
+                                                   Visibility="{Binding NoUserIdNoteVisibility}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <TextBlock Grid.Row="4"
+                   Text="Passphrase (at least 12 characters)"
+                   FontSize="12" FontWeight="SemiBold"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   Margin="0,16,0,6" />
+
+        <PasswordBox Grid.Row="5" x:Name="PassphraseBox"
+                     FontSize="13"
+                     Padding="10,8"
+                     Background="{DynamicResource RowBgBrush}"
+                     Foreground="{DynamicResource WhiteBrush}"
+                     BorderBrush="{DynamicResource DividerBrush}"
+                     CaretBrush="{DynamicResource CyanBrush}"
+                     BorderThickness="1"
+                     PasswordChanged="OnPassphraseChanged" />
+
+        <!-- Strength meter — a 4-segment bar + label. -->
+        <Grid Grid.Row="6" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ProgressBar Grid.Column="0" x:Name="StrengthBar"
+                         Height="6"
+                         Minimum="0" Maximum="4" Value="0"
+                         Background="{DynamicResource RowBgBrush}"
+                         Foreground="{DynamicResource CyanBrush}"
+                         BorderThickness="0"
+                         VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" x:Name="StrengthLabel"
+                       Text=""
+                       FontSize="10"
+                       FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                       Foreground="{DynamicResource MutedTextBrush}"
+                       Margin="10,0,0,0"
+                       VerticalAlignment="Center" />
+        </Grid>
+
+        <PasswordBox Grid.Row="7" x:Name="ConfirmBox"
+                     FontSize="13"
+                     Padding="10,8"
+                     Margin="0,10,0,0"
+                     Background="{DynamicResource RowBgBrush}"
+                     Foreground="{DynamicResource WhiteBrush}"
+                     BorderBrush="{DynamicResource DividerBrush}"
+                     CaretBrush="{DynamicResource CyanBrush}"
+                     BorderThickness="1"
+                     PasswordChanged="OnPassphraseChanged" />
+
+        <TextBlock Grid.Row="8" x:Name="ValidationText"
+                   FontSize="11"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   TextWrapping="Wrap"
+                   Margin="0,8,0,0" />
+
+        <StackPanel Grid.Row="9" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Cancel" Padding="16,8" Margin="0,0,8,0"
+                    Background="{DynamicResource NavyBrush}"
+                    Foreground="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource DividerBrush}"
+                    BorderThickness="1"
+                    IsCancel="True"
+                    Click="OnCancelClick" />
+            <Button x:Name="ExportButton" Content="Export…" Padding="16,8"
+                    Background="{DynamicResource CyanBrush}"
+                    Foreground="{DynamicResource NavyBrush}"
+                    BorderThickness="0"
+                    FontWeight="Bold"
+                    IsDefault="True"
+                    IsEnabled="False"
+                    Click="OnExportClick" />
+        </StackPanel>
+    </Grid>
+</Window>

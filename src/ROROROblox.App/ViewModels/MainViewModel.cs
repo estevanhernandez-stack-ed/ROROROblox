@@ -44,6 +44,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly Theming.ThemeService _themeService;
     private readonly Tray.RobloxWindowDecorator _windowDecorator;
     private readonly IBloxstrapDetector _bloxstrapDetector;
+    private readonly Core.Transport.IAccountTransport _accountTransport;
     private readonly ILogger<MainViewModel> _log;
 
     /// <summary>
@@ -53,6 +54,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// persisted via <see cref="ISessionHistoryStore.AddAsync"/>.
     /// </summary>
     private readonly Dictionary<Guid, Guid> _pendingSessionByAccountId = new();
+
+    /// <summary>
+    /// Live appStorage identity defenders keyed by account id (v1.6.0 item 9). Tracked
+    /// per-account (not fire-and-forget) so <see cref="OnProcessAttached"/> can find the
+    /// right defender and call <see cref="AppStorageDefender.NotifyConsumed"/> once the
+    /// client is up. Entries are removed when the defender disposes (cap fallback or
+    /// post-attach grace). The defender's own <c>_active</c> takeover still cancels a prior
+    /// launch's defender when a newer launch dispatches.
+    /// </summary>
+    private readonly Dictionary<Guid, AppStorageDefender> _defendersByAccountId = new();
+    private readonly object _defendersLock = new();
     private readonly DispatcherTimer _ticker;
 
     private string _statusBanner = string.Empty;
@@ -79,6 +91,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         Theming.ThemeService themeService,
         Tray.RobloxWindowDecorator windowDecorator,
         IBloxstrapDetector bloxstrapDetector,
+        Core.Transport.IAccountTransport accountTransport,
         ILogger<MainViewModel>? log = null)
     {
         _cookieCapture = cookieCapture;
@@ -98,6 +111,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _themeService = themeService;
         _windowDecorator = windowDecorator;
         _bloxstrapDetector = bloxstrapDetector;
+        _accountTransport = accountTransport;
         _log = log ?? NullLogger<MainViewModel>.Instance;
 
         AddAccountCommand = new RelayCommand(AddAccountAsync, () => !IsBusy);
@@ -174,6 +188,114 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     /// <summary>True if <paramref name="game"/> is the Join-by-link sentinel, NOT a real saved game.</summary>
     public static bool IsJoinByLinkSentinel(FavoriteGame? game) => game is { PlaceId: 0 };
+
+    /// <summary>
+    /// Pure mapping from a row's picker selection to the concrete <see cref="LaunchTarget"/> the
+    /// launcher dispatches. Extracted from <c>LaunchAccountAsync</c> so the precedence is
+    /// unit-testable without standing up the VM. v1.6.0.
+    /// </summary>
+    /// <remarks>
+    /// Precedence:
+    /// <list type="number">
+    ///   <item>Explicit override (Squad Launch / Friend Follow / Join-by-Link) trumps everything.</item>
+    ///   <item>A PS-carrying <see cref="FavoriteGame"/> entry -> <see cref="LaunchTarget.PrivateServer"/>
+    ///   (checked BEFORE the plain Place case — a PS entry has PlaceId &gt; 0 too).</item>
+    ///   <item>A plain saved game (PlaceId &gt; 0, no PS code) -> <see cref="LaunchTarget.Place"/>.</item>
+    ///   <item>Null / the JoinByLink sentinel (PlaceId == 0) -> <see cref="LaunchTarget.DefaultGame"/>,
+    ///   which the launcher resolves from favorites + settings.</item>
+    /// </list>
+    /// </remarks>
+    public static LaunchTarget ResolveLaunchTarget(FavoriteGame? selected, LaunchTarget? overrideTarget)
+    {
+        if (overrideTarget is not null)
+        {
+            return overrideTarget;
+        }
+
+        if (selected is { PlaceId: > 0, IsPrivateServer: true } ps)
+        {
+            return new LaunchTarget.PrivateServer(
+                ps.PlaceId,
+                ps.PrivateServerCode!,
+                ps.PrivateServerCodeKind ?? PrivateServerCodeKind.LinkCode);
+        }
+
+        if (selected is { PlaceId: > 0 } sg)
+        {
+            return new LaunchTarget.Place(sg.PlaceId);
+        }
+
+        return new LaunchTarget.DefaultGame();
+    }
+
+    /// <summary>
+    /// Pure match predicate for the v1.6.0 tag filter (item 7b). An account is shown when the
+    /// (outer-trimmed) filter is a case-insensitive substring of ANY of its <paramref name="tags"/>
+    /// OR of its <paramref name="renderName"/>. An empty/whitespace filter matches everything.
+    /// Extracted from the per-row <c>IsFilteredOut</c> wiring so the rules are unit-testable
+    /// without standing up the VM or WPF.
+    /// </summary>
+    /// <param name="tags">The account's tags. Null is treated as no tags.</param>
+    /// <param name="renderName">The account's display label (LocalName ?? DisplayName).</param>
+    /// <param name="filter">Raw filter-box text. Only the outer whitespace is trimmed.</param>
+    public static bool AccountMatchesFilter(IEnumerable<string> tags, string renderName, string filter)
+    {
+        if (string.IsNullOrWhiteSpace(filter))
+        {
+            return true;
+        }
+        var needle = filter.Trim();
+        if (!string.IsNullOrEmpty(renderName) &&
+            renderName.Contains(needle, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        if (tags is null)
+        {
+            return false;
+        }
+        foreach (var tag in tags)
+        {
+            if (!string.IsNullOrEmpty(tag) &&
+                tag.Contains(needle, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Land-at-home guard for the follow paths (v1.6.0 item 8). A follow may only fire when the
+    /// target is in a <em>joinable</em> place — <see cref="UserPresenceType.InGame"/> AND a place id
+    /// is actually visible to us. A friend can be InGame yet expose a null/zero
+    /// <see cref="UserPresence.PlaceId"/> because their join/visibility privacy hides the server; in
+    /// that case <c>RequestFollowUser</c> gets server-rejected and the launcher silently bounces to
+    /// the Roblox home page. Every non-joinable shape (privacy-hidden InGame, online-not-in-game,
+    /// in Studio, offline, invisible, or no presence at all) is treated uniformly: do NOT launch,
+    /// surface a plain message instead.
+    /// <para>
+    /// Pure so both follow surfaces (the Friends modal and the follow-an-alt path) share the exact
+    /// same decision and can't drift apart.
+    /// </para>
+    /// </summary>
+    /// <param name="presence">The target's presence snapshot, or null when none could be read.</param>
+    /// <param name="targetName">The target's display name, for the user-facing message.</param>
+    public static FollowDecision EvaluateFollow(UserPresence? presence, string targetName)
+    {
+        var name = string.IsNullOrWhiteSpace(targetName) ? "that friend" : targetName;
+
+        // Joinable == InGame AND a real place id we can actually see. PlaceId is populated only when
+        // InGame AND the target's privacy lets the requesting cookie's owner see the server; a
+        // null/zero place id means "InGame, but no joinable place visible to us."
+        if (presence is { PresenceType: UserPresenceType.InGame, PlaceId: > 0 })
+        {
+            return FollowDecision.Allow();
+        }
+
+        return FollowDecision.Block(
+            $"Can't follow {name} — they're not in a joinable game right now (or their join privacy is off).");
+    }
 
     /// <summary>
     /// Games available for the per-account picker on each row. Synced from the favorites store
@@ -268,6 +390,48 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     public string CompactToggleLabel => _isCompact ? "Expand" : "Compact";
+
+    private string _accountFilter = string.Empty;
+    /// <summary>
+    /// Tag/name filter text bound to the filter box above the account list (v1.6.0, item 7b).
+    /// On change, every account's <see cref="AccountSummary.IsFilteredOut"/> is recomputed via
+    /// <see cref="AccountMatchesFilter"/> — the row container's Visibility binds to that flag, so
+    /// the underlying <see cref="Accounts"/> collection and its order are NEVER touched (this is
+    /// what keeps drag-to-reorder index math intact, vs a CollectionViewSource filter). While a
+    /// filter is active (<see cref="IsFilterActive"/>) the drag handlers no-op, so filtering and
+    /// reordering can't fight each other.
+    /// </summary>
+    public string AccountFilter
+    {
+        get => _accountFilter;
+        set
+        {
+            if (SetField(ref _accountFilter, value))
+            {
+                OnPropertyChanged(nameof(IsFilterActive));
+                ApplyFilter();
+            }
+        }
+    }
+
+    /// <summary>
+    /// True when a non-empty filter is in effect. The drag-reorder handlers read this to disable
+    /// reordering while filtered (clearing the filter restores it). v1.6.0.
+    /// </summary>
+    public bool IsFilterActive => !string.IsNullOrWhiteSpace(_accountFilter);
+
+    /// <summary>
+    /// Recompute <see cref="AccountSummary.IsFilteredOut"/> for every account against the current
+    /// <see cref="AccountFilter"/>. Empty/whitespace filter clears the flag on all rows. Called on
+    /// every filter change and after the account list (re)loads. v1.6.0.
+    /// </summary>
+    private void ApplyFilter()
+    {
+        foreach (var summary in Accounts)
+        {
+            summary.IsFilteredOut = !AccountMatchesFilter(summary.Tags, summary.RenderName, _accountFilter);
+        }
+    }
 
     /// <summary>Account designated as the user's main, if any. Used by the compact-mode CTA + tray hooks.</summary>
     public AccountSummary? MainAccount => Accounts.FirstOrDefault(a => a.IsMain);
@@ -373,6 +537,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             ShowDpapiCorruptModal();
         }
 
+        // Re-apply any active filter against the freshly-loaded rows so a reload (e.g. after the
+        // Games dialog closes) doesn't surface filtered-out rows. No-op when the filter is empty.
+        ApplyFilter();
+
         await ReloadGamesAsync();
         OnPropertyChanged(nameof(MainAccount));
         OnPropertyChanged(nameof(CompactEmptyKind));
@@ -397,6 +565,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public async Task ReloadGamesAsync()
     {
         var games = await _favorites.ListAsync();
+        var privateServers = await _privateServerStore.ListAsync();
         AvailableGames.Clear();
         WidgetGames.Clear();
         foreach (var game in games)
@@ -404,23 +573,71 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             AvailableGames.Add(game);
             WidgetGames.Add(game); // widget dropdown excludes the sentinel entirely
         }
+        // Saved private servers join the per-account dropdown as FavoriteGame-shaped entries
+        // carrying the PS code/kind + stable PS Id (v1.6.0). They render with the server's
+        // RenderName so renames show, plus a "(private server)" suffix via DropdownLabel. NOT
+        // added to WidgetGames — the default-game widget is for games, not one-off PS launches
+        // (same exclusion the JoinByLink sentinel gets).
+        foreach (var server in privateServers)
+        {
+            AvailableGames.Add(ToFavoriteEntry(server));
+        }
         // Sentinel entry users click to open the Join-by-link modal. Lives at the bottom of the
         // dropdown so accidental clicks are unlikely. NOT added to WidgetGames — the widget is for
         // setting the default game, not for one-off launches.
         AvailableGames.Add(JoinByLinkSentinel);
 
-        var defaultGame = AvailableGames.FirstOrDefault(g => g.IsDefault && !IsJoinByLinkSentinel(g))
-                          ?? AvailableGames.FirstOrDefault(g => !IsJoinByLinkSentinel(g));
+        // Default-game candidates exclude PS entries + the sentinel — the default is a game.
+        var defaultGame = AvailableGames.FirstOrDefault(g => g.IsDefault && !IsJoinByLinkSentinel(g) && !g.IsPrivateServer)
+                          ?? AvailableGames.FirstOrDefault(g => !IsJoinByLinkSentinel(g) && !g.IsPrivateServer);
         foreach (var account in Accounts)
         {
-            var stillThere = AvailableGames.FirstOrDefault(g =>
-                !IsJoinByLinkSentinel(g) && g.PlaceId == account.SelectedGame?.PlaceId);
-            account.SelectedGame = stillThere ?? defaultGame;
+            account.SelectedGame = FindMatchingEntry(account.SelectedGame) ?? defaultGame;
         }
 
         // Keep the widget readout in lockstep with what the store thinks. INPC fires for
         // DefaultGameDisplay are coupled via CurrentDefaultGame's setter.
         CurrentDefaultGame = defaultGame;
+    }
+
+    /// <summary>
+    /// Project a <see cref="SavedPrivateServer"/> into the <see cref="FavoriteGame"/> shape the
+    /// per-account dropdown consumes. Carries the PS code/kind (for launch) + the stable PS Id
+    /// (for re-sync matching and in-dropdown rename routing). v1.6.0.
+    /// </summary>
+    private static FavoriteGame ToFavoriteEntry(SavedPrivateServer server) => new(
+        PlaceId: server.PlaceId,
+        UniverseId: 0,
+        Name: server.Name,
+        ThumbnailUrl: server.ThumbnailUrl,
+        IsDefault: false,
+        AddedAt: server.AddedAt,
+        LocalName: server.LocalName,
+        PrivateServerCode: server.Code,
+        PrivateServerCodeKind: server.CodeKind,
+        PrivateServerId: server.Id);
+
+    /// <summary>
+    /// Re-sync a row's prior selection to the freshly-rebuilt <see cref="AvailableGames"/> list.
+    /// PS entries match by stable PS Id (a PS can share a placeId with a favorite game OR with
+    /// another PS, so placeId alone collides); game entries match by placeId. The sentinel never
+    /// re-syncs. Returns null when the prior selection is gone, so the caller falls back to the
+    /// default game. v1.6.0.
+    /// </summary>
+    private FavoriteGame? FindMatchingEntry(FavoriteGame? prior)
+    {
+        if (prior is null || IsJoinByLinkSentinel(prior))
+        {
+            return null;
+        }
+
+        if (prior.IsPrivateServer)
+        {
+            return AvailableGames.FirstOrDefault(g => g.IsPrivateServer && g.PrivateServerId == prior.PrivateServerId);
+        }
+
+        return AvailableGames.FirstOrDefault(g =>
+            !IsJoinByLinkSentinel(g) && !g.IsPrivateServer && g.PlaceId == prior.PlaceId);
     }
 
     /// <summary>
@@ -698,15 +915,40 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             _log.LogInformation("Launch dispatch: id={Id} name={Name} robloxUserId={RobloxUserId} cookieFp={CookieFp}",
                 summary.Id, summary.DisplayName, summary.RobloxUserId, CookieFp(cookie));
 
-            // Stamp identity into appStorage.json + defend it for ~12s against
-            // late writes from sibling RPB processes. See AppStorageDefender.
+            // Stamp identity into appStorage.json + defend it until the launched client
+            // CONSUMES it (OnProcessAttached → NotifyConsumed → ~10s grace) rather than a
+            // fixed window. The ~120s max cap is the install-delay upper bound: a Roblox
+            // install box popping mid-launch can postpone the real RPB's first read of
+            // appStorage.json well past the old 12s window, expiring the defense before
+            // the identity is consumed → wrong account + captcha (v1.6.0 item 9).
             if (summary.RobloxUserId is { } userId)
             {
                 var defender = new AppStorageDefender(
                     summary.DisplayName, summary.DisplayName, userId,
-                    _log, TimeSpan.FromSeconds(12));
+                    _log,
+                    maxCap: TimeSpan.FromSeconds(120),
+                    postAttachGrace: TimeSpan.FromSeconds(10));
+                var accountId = summary.Id;
+                lock (_defendersLock)
+                {
+                    _defendersByAccountId[accountId] = defender;
+                }
                 _ = defender.Completion.ContinueWith(
-                    _ => defender.DisposeAsync().AsTask(),
+                    _ =>
+                    {
+                        lock (_defendersLock)
+                        {
+                            // Only remove if it's still the same defender — a newer launch
+                            // for the same account may have replaced it (and the older one's
+                            // Completion fires when its takeover cancels it).
+                            if (_defendersByAccountId.TryGetValue(accountId, out var current)
+                                && ReferenceEquals(current, defender))
+                            {
+                                _defendersByAccountId.Remove(accountId);
+                            }
+                        }
+                        return defender.DisposeAsync().AsTask();
+                    },
                     TaskScheduler.Default);
             }
             else
@@ -716,23 +958,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     summary.DisplayName);
             }
 
-            // Target precedence:
-            //   1. Explicit override (Squad Launch / Friend Follow / Join-by-Link).
-            //   2. Per-row SelectedGame from the ComboBox.
-            //   3. LaunchTarget.DefaultGame -> launcher resolves favorites + settings tier.
-            LaunchTarget target;
-            if (overrideTarget is not null)
-            {
-                target = overrideTarget;
-            }
-            else if (summary.SelectedGame is { PlaceId: > 0 } sg)
-            {
-                target = new LaunchTarget.Place(sg.PlaceId);
-            }
-            else
-            {
-                target = new LaunchTarget.DefaultGame();
-            }
+            LaunchTarget target = ResolveLaunchTarget(summary.SelectedGame, overrideTarget);
 
             var result = await _launcher.LaunchAsync(cookie, target, fpsCap: summary.FpsCap);
             switch (result)
@@ -1038,12 +1264,25 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             }
         }
 
-        var window = new FriendFollowWindow(_api, cookie, userId, summary.DisplayName)
+        // Pass the store + account id, not the plaintext cookie — the window retrieves the cookie
+        // fresh per refresh into a short-lived local instead of holding it for its whole lifetime.
+        var window = new FriendFollowWindow(_api, _accountStore, summary.Id, userId, summary.DisplayName)
         {
             Owner = Application.Current.MainWindow,
         };
         if (window.ShowDialog() == true && window.SelectedTarget is { } target)
         {
+            // Re-run the same land-at-home guard FollowAltAsync uses, against the friend's presence
+            // snapshot carried out of the modal. The modal already gates the button on this, but we
+            // re-check here so the launch decision is owned by one shared rule (EvaluateFollow) and
+            // a privacy-hidden / stale-presence target gets a clear message instead of a silent
+            // bounce to the Roblox home page.
+            var decision = EvaluateFollow(window.SelectedPresence, window.SelectedFriendName ?? "that friend");
+            if (!decision.CanFollow)
+            {
+                StatusBanner = decision.BlockedMessage!; // non-null whenever CanFollow is false (see FollowDecision.Block)
+                return;
+            }
             await LaunchAccountAsync(summary, overrideTarget: target);
         }
     }
@@ -1085,11 +1324,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 case LaunchTarget.PrivateServer ps:
                     placeId = ps.PlaceId;
                     isPrivate = true;
-                    gameName = summary.SelectedGame?.Name ?? $"Place {ps.PlaceId} (private server)";
+                    // Prefer the row's PS entry name (RenderName picks up the rename); fall back
+                    // to a generic label if the row selection isn't a PS entry (override path).
+                    gameName = summary.SelectedGame?.IsPrivateServer == true
+                        ? summary.SelectedGame.RenderName
+                        : summary.SelectedGame?.RenderName ?? $"Place {ps.PlaceId} (private server)";
                     break;
                 case LaunchTarget.Place p:
                     placeId = p.PlaceId;
-                    gameName = summary.SelectedGame?.Name ?? $"Place {p.PlaceId}";
+                    gameName = summary.SelectedGame?.RenderName ?? $"Place {p.PlaceId}";
                     break;
                 case LaunchTarget.DefaultGame:
                     gameName = summary.SelectedGame?.Name;
@@ -1140,6 +1383,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OnProcessAttached(object? sender, RobloxProcessEventArgs e)
     {
+        // The launched client is up and can now read the stamped identity for captcha
+        // branding. Tell its defender to wind down after the post-attach grace (v1.6.0
+        // item 9). Normal path: attach in ~1-2s → defends ~12s total (attach + grace),
+        // same protective behavior as the old fixed window, just measured from attach.
+        AppStorageDefender? defender;
+        lock (_defendersLock)
+        {
+            _defendersByAccountId.TryGetValue(e.AccountId, out defender);
+        }
+        defender?.NotifyConsumed();
+
         Application.Current?.Dispatcher.Invoke(() =>
         {
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
@@ -1276,6 +1530,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OnProcessAttachFailed(object? sender, RobloxProcessEventArgs e)
     {
+        // IMPORTANT (v1.6.0 item 9): do NOT dispose the appStorage defender here. During a
+        // long Roblox install the RPB spawns AFTER the 30s tracker attach timeout, so this
+        // fires while the install is still in progress — disposing now would re-expose the
+        // wrong-account bug (defense expires before the real client reads the identity). Let
+        // the ~120s max cap bound the defender instead. The defender stays in
+        // _defendersByAccountId until its Completion ContinueWith removes it at the cap.
+        _log.LogInformation(
+            "Process attach failed for account {AccountId}; leaving appStorage defender to its max cap (install may still be in progress).",
+            e.AccountId);
+
         Application.Current?.Dispatcher.Invoke(() =>
         {
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
@@ -1410,8 +1674,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <see cref="PersistIsSelectedAsync"/> soft-failure shape: fire-and-forget, a write failure
     /// doesn't block the chip showing/hiding; the next edit reconverges.
     /// </summary>
-    private void OnAccountTagsChanged(AccountSummary summary) =>
+    private void OnAccountTagsChanged(AccountSummary summary)
+    {
+        // Re-evaluate this row against the active filter — a tag added/removed while a filter is
+        // applied should immediately reflect in the row's visibility (v1.6.0, item 7b). No-op
+        // visually when no filter is set (the predicate returns "matches" for an empty filter).
+        if (IsFilterActive)
+        {
+            summary.IsFilteredOut = !AccountMatchesFilter(summary.Tags, summary.RenderName, _accountFilter);
+        }
         _ = PersistTagsAsync(summary.Id, summary.Tags.ToList());
+    }
 
     private async Task PersistTagsAsync(Guid accountId, IReadOnlyList<string> tags)
     {
@@ -1503,9 +1776,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     /// <summary>
     /// Launch <paramref name="source"/> into <paramref name="target"/>'s current Roblox server
-    /// via <see cref="LaunchTarget.FollowFriend"/>. Roblox does the privacy + game-state check
-    /// server-side; if target isn't currently in a place, the launcher silently lands at home.
-    /// We surface a status banner so the user knows whether the chip click did anything.
+    /// via <see cref="LaunchTarget.FollowFriend"/>. Guarded by the shared
+    /// <see cref="EvaluateFollow"/> rule (same as the Friends-modal path): when the target isn't in
+    /// a joinable game we block with a clear message instead of firing a launch that silently lands
+    /// at the Roblox home page. Only a real joinable place launches.
     /// </summary>
     public async Task FollowAltAsync(AccountSummary? source, AccountSummary? target)
     {
@@ -1525,16 +1799,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                            "Try Re-authenticating that account, or wait a moment after login.";
             return;
         }
-        if (!target.IsRunning)
+        // Share the SAME land-at-home guard as the Friends-modal path so the two follow surfaces
+        // can't drift. The saved-account row carries the v1.5.0 presence (PresenceState +
+        // CurrentPlaceId); project it into a UserPresence and let EvaluateFollow be the single rule.
+        // A target not in a joinable game is blocked here instead of firing a launch that bounces
+        // source to the Roblox home page.
+        var targetPresence = new UserPresence(
+            targetUserId, target.PresenceState, target.CurrentPlaceId, GameJobId: null, LastLocation: null);
+        var decision = EvaluateFollow(targetPresence, target.DisplayName);
+        if (!decision.CanFollow)
         {
-            // Roblox returns "no game" when the target isn't in a place. We still fire the
-            // launch (Roblox might surface its own friendly error), but warn the user.
-            StatusBanner = $"{target.DisplayName} isn't currently in a game — Roblox may bounce {source.DisplayName} to the home page.";
+            StatusBanner = decision.BlockedMessage!; // non-null whenever CanFollow is false (see FollowDecision.Block)
+            return;
         }
-        else
-        {
-            StatusBanner = $"Following {target.DisplayName} from {source.DisplayName}...";
-        }
+        StatusBanner = $"Following {target.DisplayName} from {source.DisplayName}...";
         var follow = new LaunchTarget.FollowFriend(targetUserId);
         await LaunchAccountAsync(source, overrideTarget: follow);
     }
@@ -1600,7 +1878,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OpenPreferences()
     {
-        var window = new Preferences.PreferencesWindow(_settings, _startupRegistration, _themeStore, _themeService)
+        var window = new Preferences.PreferencesWindow(
+            _settings, _startupRegistration, _themeStore, _themeService,
+            _accountStore, _accountTransport, this)
         {
             Owner = Application.Current.MainWindow,
         };
@@ -1696,6 +1976,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     private static RenameTarget? BuildRenameTarget(object? source) => source switch
     {
+        // PS-carrying dropdown entries (v1.6.0) route to the PrivateServer rename path by stable
+        // PS Id — checked BEFORE the plain game case since a PS entry has PlaceId > 0 too.
+        FavoriteGame { IsPrivateServer: true, PrivateServerId: { } psId } psEntry =>
+            new RenameTarget(RenameTargetKind.PrivateServer, psId, psEntry.Name, psEntry.LocalName),
         FavoriteGame game when game.PlaceId > 0 =>
             new RenameTarget(RenameTargetKind.Game, game.PlaceId, game.Name, game.LocalName),
         AccountSummary account =>
@@ -1832,8 +2116,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// Account renames: update the matching <see cref="AccountSummary"/>'s LocalName so the
     /// row's RenderName flips immediately. Game renames: full ReloadGamesAsync so AvailableGames
     /// + WidgetGames + per-row SelectedGame all see the new instance with new LocalName.
-    /// PrivateServer renames: nothing to refresh at MainViewModel level — Squad Launch sheet
-    /// re-lists from the store on its next open.
+    /// PrivateServer renames: full ReloadGamesAsync (v1.6.0) — saved PS entries now live in the
+    /// per-account dropdown, so the rebuilt list picks up the new RenderName; Squad Launch sheet
+    /// also re-lists from the store on its next open.
     /// </summary>
     private async Task OnRenameAppliedAsync(RenameTarget target, string? newLocalName)
     {
@@ -1851,8 +2136,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 }
                 break;
             case RenameTargetKind.PrivateServer:
-                // No MainViewModel-side surface for saved private servers. Squad Launch sheet
-                // re-lists on open.
+                // Saved private servers now appear in the per-account dropdown (v1.6.0), so a
+                // rename has to rebuild AvailableGames for the new RenderName to show. Squad Launch
+                // sheet still re-lists from the store on its own open.
+                await ReloadGamesAsync();
                 break;
         }
     }
@@ -1880,4 +2167,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var hash = System.Security.Cryptography.SHA256.HashData(bytes);
         return Convert.ToHexString(hash, 0, 4);
     }
+}
+
+/// <summary>
+/// Result of <see cref="MainViewModel.EvaluateFollow"/>: whether a follow may launch, and the
+/// plain user-facing message to surface when it may not. <see cref="BlockedMessage"/> is non-null
+/// exactly when <see cref="CanFollow"/> is false.
+/// </summary>
+public sealed record FollowDecision(bool CanFollow, string? BlockedMessage)
+{
+    public static FollowDecision Allow() => new(true, null);
+
+    public static FollowDecision Block(string message) => new(false, message);
 }

@@ -1,3 +1,5 @@
+using ROROROblox.Core.Transport;
+
 namespace ROROROblox.Core;
 
 /// <summary>
@@ -84,4 +86,29 @@ public interface IAccountStore
     /// v1.5.0 — spec §"Components > 4".
     /// </summary>
     Task SetTagsAsync(Guid id, IReadOnlyList<string> tags);
+
+    /// <summary>
+    /// Bulk export read for account transport (v1.6.0 — spec §1). For each requested id that has a
+    /// non-null <see cref="Account.RobloxUserId"/>, build a full <see cref="AccountExportRecord"/>:
+    /// decrypt the cookie via the existing DPAPI path and copy every per-account field (display
+    /// name, avatar, tags, fps cap, caption color, local name, main flag, sort order, selected).
+    /// Requested ids whose userId is null land in <see cref="AccountExportResult.SkippedNoUserId"/>
+    /// instead — the merge key on import requires a real userId, so they cannot be exported. Ids
+    /// that don't match any local account are silently ignored. SECURITY-SENSITIVE: the returned
+    /// records carry plaintext cookies; the caller (transport service) encrypts them immediately
+    /// and they are never logged.
+    /// </summary>
+    Task<AccountExportResult> ExportAccountsAsync(IEnumerable<Guid> ids);
+
+    /// <summary>
+    /// Merge import for account transport (v1.6.0 — spec §1). Non-destructive: merge by Roblox
+    /// userId. Each record whose userId is NOT already present among local accounts is added (new
+    /// Guid, CreatedAt=now, all fields incl. RobloxUserId, cookie DPAPI-encrypted). Records whose
+    /// userId already exists locally are skipped — the existing local account is kept untouched.
+    /// Dedupe is by userId only (display names aren't unique). All imported accounts are written in
+    /// a single store read-modify-write cycle (one DPAPI roundtrip), not one per account.
+    /// SECURITY-SENSITIVE: the supplied records carry plaintext cookies, re-encrypted on write and
+    /// never logged.
+    /// </summary>
+    Task<ImportMergeResult> ImportMergeAsync(IReadOnlyList<AccountExportRecord> records);
 }

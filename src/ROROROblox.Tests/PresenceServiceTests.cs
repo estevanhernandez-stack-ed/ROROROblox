@@ -380,6 +380,8 @@ public class PresenceServiceTests
         public Task UpdateLocalNameAsync(Guid accountId, string? localName) => throw new NotImplementedException();
         public Task UpdateRobloxUserIdAsync(Guid accountId, long userId) => throw new NotImplementedException();
         public Task SetTagsAsync(Guid id, IReadOnlyList<string> tags) => throw new NotImplementedException();
+        public Task<AccountExportResult> ExportAccountsAsync(IEnumerable<Guid> ids) => throw new NotImplementedException();
+        public Task<ImportMergeResult> ImportMergeAsync(IReadOnlyList<ROROROblox.Core.Transport.AccountExportRecord> records) => throw new NotImplementedException();
     }
 
     private sealed class FakeRobloxApi : IRobloxApi
@@ -428,7 +430,7 @@ public class PresenceServiceTests
 
                 return PresenceByCookie.TryGetValue(cookie, out var p)
                     ? p
-                    : throw new InvalidOperationException($"FakeRobloxApi: no presence for cookie '{cookie}'");
+                    : throw new InvalidOperationException("FakeRobloxApi: no presence configured for the requested cookie");
             }
             finally
             {

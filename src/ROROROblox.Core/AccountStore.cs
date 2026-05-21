@@ -2,6 +2,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ROROROblox.Core.Transport;
 
 namespace ROROROblox.Core;
 
@@ -443,6 +444,127 @@ public sealed class AccountStore : IAccountStore, IDisposable
             }
             blob.Accounts[index] = blob.Accounts[index] with { LastLaunchedAt = DateTimeOffset.UtcNow };
             await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task<AccountExportResult> ExportAccountsAsync(IEnumerable<Guid> ids)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+        // Snapshot the requested ids in order, de-duped, so a caller passing the same id twice
+        // doesn't yield duplicate records.
+        var requested = new List<Guid>();
+        var seenIds = new HashSet<Guid>();
+        foreach (var id in ids)
+        {
+            if (seenIds.Add(id))
+            {
+                requested.Add(id);
+            }
+        }
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var byId = blob.Accounts.ToDictionary(a => a.Id);
+
+            var records = new List<AccountExportRecord>(requested.Count);
+            var skipped = new List<Guid>();
+
+            foreach (var id in requested)
+            {
+                if (!byId.TryGetValue(id, out var stored))
+                {
+                    continue; // unknown id — silently ignored, not a "no userId" skip
+                }
+                if (stored.RobloxUserId is not long userId)
+                {
+                    skipped.Add(id); // merge key requires a real userId
+                    continue;
+                }
+
+                // Cookie is already in plaintext here — LoadAsync DPAPI-decrypted the whole blob.
+                records.Add(new AccountExportRecord(
+                    DisplayName: stored.DisplayName,
+                    AvatarUrl: stored.AvatarUrl,
+                    RobloxUserId: userId,
+                    Cookie: stored.Cookie,
+                    Tags: stored.Tags ?? [],
+                    FpsCap: stored.FpsCap,
+                    CaptionColorHex: stored.CaptionColorHex,
+                    LocalName: stored.LocalName,
+                    IsMain: stored.IsMain,
+                    SortOrder: stored.SortOrder,
+                    IsSelected: stored.IsSelected));
+            }
+
+            return new AccountExportResult(records, skipped);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task<ImportMergeResult> ImportMergeAsync(IReadOnlyList<AccountExportRecord> records)
+    {
+        ArgumentNullException.ThrowIfNull(records);
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+
+            // Merge key set — every userId already present locally. A record whose userId is in
+            // here is skipped; otherwise it's added (and its userId joins the set so an in-bundle
+            // duplicate only imports once).
+            var presentUserIds = new HashSet<long>(
+                blob.Accounts.Where(a => a.RobloxUserId is not null).Select(a => a.RobloxUserId!.Value));
+
+            var imported = 0;
+            var skipped = 0;
+            var now = DateTimeOffset.UtcNow;
+
+            foreach (var record in records)
+            {
+                if (!presentUserIds.Add(record.RobloxUserId))
+                {
+                    skipped++; // userId already present locally or earlier in this same batch
+                    continue;
+                }
+
+                // SortOrder travels with the record (spec §1 — full per-account setup travels). A
+                // collision with an existing local order is harmless: ListAsync doesn't order by it,
+                // the UI does, and one drag-reorder resolves any tie.
+                blob.Accounts.Add(new StoredAccount(
+                    Id: Guid.NewGuid(),
+                    DisplayName: record.DisplayName,
+                    AvatarUrl: record.AvatarUrl ?? string.Empty,
+                    Cookie: record.Cookie,
+                    CreatedAt: now,
+                    LastLaunchedAt: null,
+                    IsMain: record.IsMain,
+                    SortOrder: record.SortOrder,
+                    IsSelected: record.IsSelected,
+                    CaptionColorHex: record.CaptionColorHex,
+                    FpsCap: record.FpsCap,
+                    LocalName: record.LocalName,
+                    RobloxUserId: record.RobloxUserId,
+                    Tags: record.Tags is { Count: > 0 } ? record.Tags : null));
+                imported++;
+            }
+
+            // One atomic write for the whole batch — not one DPAPI roundtrip per imported account.
+            if (imported > 0)
+            {
+                await SaveAsync(blob).ConfigureAwait(false);
+            }
+
+            return new ImportMergeResult(imported, skipped);
         }
         finally
         {

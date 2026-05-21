@@ -1,69 +1,80 @@
-# RORORO — v1.5.0 Presence Account-UX Build Checklist
+# RORORO — v1.6.0 Account Transport + Bundle Build Checklist
 
-**Cycle:** v1.5.0 (credibility hotfix — presence-based account status + Launch multiple hardening)
-**Cycle type:** Spec-first cycle (pattern mm). Canonical spec: [`docs/superpowers/specs/2026-05-20-rororo-presence-account-ux-design.md`](superpowers/specs/2026-05-20-rororo-presence-account-ux-design.md). [`spec.md`](spec.md) is a pointer-stub.
+**Cycle:** v1.6.0 (account transport + saved-PS-in-dropdown + tag UI + Follow restore + security pass)
+**Cycle type:** Spec-first cycle (pattern mm). Canonical spec: [`docs/superpowers/specs/2026-05-21-rororo-account-transport-and-bundle-design.md`](superpowers/specs/2026-05-21-rororo-account-transport-and-bundle-design.md). [`spec.md`](spec.md) is a pointer-stub.
 
 ## Build Preferences
 
 - **Build mode:** Autonomous
 - **Comprehension checks:** N/A (autonomous)
-- **Git:** Commit after each item. Conventional commits (`feat` / `fix` / `test` / `refactor` / `docs` / `build`). Branch `v1.5.0-presence-account-ux` (already cut from `main`; spec committed at `18bec93`).
-- **Verification:** Yes — checkpoints. **C1 after item 4** (first runnable: rows read "In <game>"; ghost gone on a respawned client). **C2 after item 6** (Launch multiple skip-reason + race). Manual smoke is the v1 trade per canonical spec § Testing — no E2E against real roblox.com.
-- **Check-in cadence:** N/A (autonomous)
-- **TDD:** strict for Core + ViewModel logic (items 1-3, 5 test-first). UI/DI wiring (item 4) and docs (item 7) are verification-by-running, not unit-tested.
+- **Git:** Commit after each item. Conventional commits. Branch `v1.6.0-account-transport` (cut from `main`; spec committed).
+- **Verification:** Yes — checkpoints. **C1 after item 5** (transport export→import runnable end to end). **C2 after item 8** (private servers + tag UI + Follow). Manual smoke is the v1 trade; no E2E against real roblox.com.
+- **TDD:** strict for Core + ViewModel logic (items 2, 3, 6, 7 test-first). UI/DI wiring (items 5, 8) + investigation (item 1) + audit (item 9) are verify-by-running.
 
 ## Effort
 
-Focused hotfix. **Total ≈ 5-7 hours** of autonomous engineering. Heaviest item is 4 (VM/DI wiring + the OnProcessExited anti-ghost change); riskiest external surface is the presence endpoint (item 1).
+Bigger than v1.5.0 — crypto + five surfaces. **Total ≈ 8-12 hours.** Heaviest: item 2 (transport crypto, security-sensitive) and item 5 (transport UI). Riskiest unknown: item 1 (why Follow broke — gated first so we learn early).
 
 ---
 
 ## Checklist
 
-- [x] **1. `IPresenceService` + `PresenceService` poll loop with presence→event mapping + game-name cache**
-  Spec ref: `spec.md > Components > 1. PresenceService`
-  What to build: New `src/ROROROblox.Core/Diagnostics/IPresenceService.cs` (interface + `AccountPresenceUpdated` event carrying `accountId`, `UserPresenceType`, `placeId`, `gameName`) and `PresenceService.cs` (no WPF deps; lives beside `RobloxProcessTracker`). Constructor: `IRobloxApi`, `IAccountStore`, `ILogger`, poll interval (default 25s), and a snapshot-provider delegate yielding the pollable account set (`id`, `RobloxUserId`, `SessionExpired`). `PeriodicTimer` loop: for each non-expired account with non-null `RobloxUserId`, `RetrieveCookieAsync(id)` → `GetPresenceAsync(cookie, [userId])` → map the single `UserPresence`; if `InGame` with a `PlaceId`, resolve the game name via `GetGameMetadataByPlaceIdAsync(placeId)` cached in a `ConcurrentDictionary<long,string>`; raise `AccountPresenceUpdated`. `Start()` / `Stop()`.
-  Acceptance: `InGame` presence raises the event with a resolved game name; a second poll for the same `PlaceId` does **not** refetch metadata (cache hit); `Offline`/`OnlineWebsite` raises the event with a null game name. Existing test suite stays green.
-  Verify: `dotnet test src/ROROROblox.Tests/ --filter "PresenceServiceTests"` (stub `IRobloxApi` + `IAccountStore`). Commit: `feat(presence): PresenceService poll loop + game-name cache`.
+- [x] **1. Follow root-cause diagnostic (GATE — read-only)** → DONE. Finding: Follow is NOT masked in committed code (stale memory/spec). Real issue is functional — Friends-modal follow path lacks the land-at-home guard `FollowAltAsync` has; needs a live two-account smoke to confirm `RequestFollowUser`. Item 8 reshaped to "live-smoke confirm + port the guard (~10-20 lines)". In-cycle. See `docs/investigations/2026-05-21-follow-restore-diagnostic.md`.
+  Spec ref: `spec.md > 5. Fix + restore the Follow feature`
+  What to build: Nothing yet — investigate. Read `FollowAltAsync`, `OpenFriendFollowCommand`, `FriendFollowWindow`, `LaunchTarget.FollowFriend`, and the presence/join-by-user path. Determine WHY the feature was masked (`Visibility=Collapsed`) — what breaks against current Roblox behavior. Pull any clues from `docs/` + git history + the masked-feature memory. Produce a findings note: root cause, whether the fix is small (lands in item 7 this cycle) or deep (split to its own cycle, descope item 7).
+  Acceptance: a written root-cause finding + a scoped go/no-go on item 7. No code changes.
+  Verify: findings reported; item 7 scope confirmed before reaching it. Commit: `docs: Follow restore root-cause diagnostic`.
 
-- [x] **2. `PresenceService` resilience + fast-confirm re-poll**
-  Spec ref: `spec.md > Components > 1. PresenceService` (Concurrency / rate limits, Fast-confirm hook) + `Error handling / edge cases`
-  What to build: 401 / `CookieExpiredException` → raise an expired signal so the VM can flip the row to session-expired. HTTP 429 → back off for the remainder of the cycle. Any other failure → **hold last-known** (never emit an event that would clear running state). Concurrency cap (`SemaphoreSlim`) + small jitter so N accounts don't fire simultaneously. Add `RequestImmediateRefreshAsync(accountId)` — an out-of-band single-account poll (the `ProcessExited` subscription is wired in item 4; the method + its behavior land here with tests).
-  Acceptance: 401 path raises the expired signal; 429 sets backoff and skips the rest of the cycle; a generic poll failure holds last state (no spurious not-in-game event); `RequestImmediateRefreshAsync` polls exactly the one account.
-  Verify: `dotnet test src/ROROROblox.Tests/ --filter "PresenceServiceTests"`. Commit: `feat(presence): resilience (401/429/hold-last) + fast-confirm re-poll`.
+- [x] **2. `AccountTransportService` crypto core (Core, TDD)**
+  Spec ref: `spec.md > 1. Account transport > Crypto / Bundle format`
+  What to build: `src/ROROROblox.Core/Transport/IAccountTransport.cs` + `AccountTransportService.cs` + `AccountExportRecord` (display name, userId, cookie, tags, fpsCap, captionColorHex, localName, isMain, sortOrder/selected). `Export(records, passphrase) → byte[]` and `Import(byte[], passphrase) → records`. PBKDF2-HMAC-SHA256 @ 600,000 iters, random 16-byte salt; AES-256-GCM, random 12-byte nonce, 16-byte tag. Versioned binary header (magic + formatVersion + iterations + salt + nonce + ciphertext+tag). No DPAPI, no UI — pure crypto + serialization. Never log the passphrase/key/cookie; clear key material after use where the BCL allows.
+  Acceptance: round-trip (export→import = same records); wrong passphrase throws (no partial data); tampered ciphertext/tag throws; unknown formatVersion rejected; two exports of identical data differ (random salt/nonce). New tests pass; existing 420 stay green.
+  Verify: `dotnet test ROROROblox.slnx --filter "AccountTransport*"`. Commit: `feat(transport): AccountTransportService — PBKDF2 + AES-GCM bundle`.
 
-- [x] **3. `AccountSummary` status reconciliation**
-  Spec ref: `spec.md > Components > 2. Status reconciliation`
-  What to build: Add `PresenceState` (`UserPresenceType`), `CurrentGameName`, `CurrentPlaceId`, `InGameSinceUtc`, and computed `InGame`. Rewrite `StatusDot` (expired→yellow; `InGame || IsRunning`→green; else grey) and `SecondaryStatusText` with the spec's precedence: Session expired ▸ "In {game} · {age}" ▸ "Connecting…" (first ~60s) / "Running" (after) ▸ explicit `StatusText` ▸ "Closed {ago}" (presence-confirmed, both false) ▸ "Last launched {ago}" ▸ "Ready". Raise the correct `OnPropertyChanged` when `PresenceState` / `CurrentGameName` / `IsRunning` change.
-  Acceptance: table-driven tests over `SessionExpired × InGame × IsRunning × LastClosed`. Headline case: `IsRunning=false, InGame=true` → "In {game}", **not** "Closed". `InGame=false, IsRunning=true` within 60s → "Connecting…"; after 60s → "Running". Both false + `LastClosedAtUtc` set → "Closed {ago}".
-  Verify: `dotnet test src/ROROROblox.Tests/ --filter "AccountSummaryTests"`. Commit: `feat(status): presence-aware AccountSummary reconciliation`.
+- [x] **3. `AccountStore` bulk export read + merge import (Core, TDD)**
+  Spec ref: `spec.md > 1. Account transport > Import flow / Components`
+  What to build: `IAccountStore` gains a bulk export (decrypt the chosen accounts' cookies + settings into `AccountExportRecord`s) and a merge import (`ImportMergeAsync(records)`: for each record whose `RobloxUserId` is not already present locally, add it — re-encrypt its cookie into the local DPAPI `accounts.dat`, persist its settings; skip duplicates; return imported/skipped counts). Reuses the existing DPAPI path.
+  Acceptance: export read returns full records for selected ids; merge adds non-dupes, skips existing (by userId), reports counts; round-trips through `AccountTransportService`; old `accounts.dat` unaffected. Tests pass.
+  Verify: `dotnet test ROROROblox.slnx --filter "AccountStore*"`. Commit: `feat(transport): AccountStore bulk export + merge-by-userId import`.
 
-- [x] **4. Wire `PresenceService` into `MainViewModel` + DI + lifecycle; defer close-stamp to presence**
-  Spec ref: `spec.md > Components > 1` (Lifecycle) + `Components > 2` (anti-ghost `OnProcessExited` change) + `Data flow`
-  What to build: Register `IPresenceService` → `PresenceService` as a DI singleton in `App.xaml.cs`, supplying the account-snapshot delegate from `MainViewModel.Accounts`. `MainViewModel` subscribes to `AccountPresenceUpdated` → `Dispatcher.Invoke` → update the matching `AccountSummary` (`PresenceState` / `CurrentGameName` / `CurrentPlaceId` / `InGameSinceUtc`); subscribe the expired signal → set `SessionExpired`. Start the service after accounts load; stop on app exit. Change `OnProcessExited` (`MainViewModel.cs:1091`): clear `RunningPid` + set `IsRunning=false`, but **do not** stamp `LastClosedAtUtc` while `InGame`; instead call `PresenceService.RequestImmediateRefreshAsync(accountId)` so presence confirms or refutes the close (presence stamps `LastClosedAtUtc` only when it sees not-in-game).
-  Acceptance: app builds and runs; launching an alt makes its row read "Connecting…" then "In {game}"; a client that Roblox's bootstrapper respawns (tracked pid exits, window stays up) keeps the row "In {game}" instead of flipping to "Closed".
-  Verify: `dotnet build` then run; launch 2-3 alts and watch the rows transition. **Checkpoint C1.** Commit: `feat(status): wire presence into MainViewModel + defer close-stamp to presence`.
+- [x] **4. Transport security review of items 2-3 (TDD-backed hardening)**
+  Spec ref: `spec.md > 2. Security pass`
+  What to build: Tighten the crypto path before it gets a UI. Confirm KDF iterations are a named constant at the OWASP floor; nonce is unique per export (test); AEAD tag is verified before any plaintext is used; no passphrase/key/cookie reaches logs or exception messages (grep + the `dpapi-cookie-blast-radius` agent against `Transport/` + the new AccountStore paths); key/passphrase buffers cleared after use. Add any missing negative tests.
+  Acceptance: dpapi-cookie-blast-radius reports clean on the transport path; no secret in logs/exceptions; nonce-uniqueness + tag-verify tests present.
+  Verify: agent report + `dotnet test ROROROblox.slnx --filter "AccountTransport*|AccountStore*"`. Commit: `test(transport): crypto hardening + cookie-leak audit on transport path`.
 
-- [x] **5. Launch multiple hardening**
-  Spec ref: `spec.md > Components > 3. Launch multiple hardening`
-  What to build: In `LaunchAllAsync` (`MainViewModel.cs:771`) and `SquadLaunchAsync` (`:848`), change the busy test from `!a.IsRunning` to `!(a.InGame || a.IsRunning)`. Before the eligibility snapshot, await a one-shot `PresenceService` refresh of the selected accounts (closes the 67ms race). Replace the zero-eligible banner with the full breakdown ("Nothing to launch — N in a game, M expired, K deselected"). On a partial launch, append the skip-reason tail ("Launched 6 · 1 already in a game (skipped)"). Update `LaunchAllCommand` CanExecute (`MainViewModel.cs:104`) to `!(InGame || IsRunning)`, and set the Launch multiple button tooltip to explain when it's disabled.
-  Acceptance: an in-game-but-pid-lost account is excluded; a both-false account is included; the pre-snapshot refresh flips a just-closed alt to eligible; the success banner contains the skip-reason tail; the zero-eligible banner shows the breakdown.
-  Verify: `dotnet test src/ROROROblox.Tests/ --filter "MainViewModel*"` + manual: close one alt and immediately hit Launch multiple — confirm it's included and the banner names the skips. **Checkpoint C2.** Commit: `fix(launch): presence-aware eligibility + never-silent no-op + skip-reason feedback`.
+- [x] **5. Transport UI — export/import dialogs + passphrase strength meter**
+  Spec ref: `spec.md > 1. Account transport > Export flow / Import flow`
+  What to build: Export dialog (account checklist defaulting to all; passphrase field with **enforced floor ≥12 + strength meter + confirm**; export disabled until it clears; save-file picker; plain warning on success). Import dialog (file picker; passphrase; calls decrypt → `ImportMergeAsync`; reports "Imported N, skipped M"; clear fail-closed message on wrong passphrase / damaged file). Wire to `AccountTransportService` + `AccountStore`. Brand-styled per 626 tokens. Entry points in Settings (or a dedicated dialog).
+  Acceptance: export a bundle, import it on a clean profile → accounts appear; wrong passphrase fails cleanly; merge skips dupes; weak passphrase blocks export.
+  Verify: `dotnet build ROROROblox.slnx`; run, export + re-import. **Checkpoint C1.** Commit: `feat(transport): export/import dialogs + passphrase strength gate`.
 
-- [x] **6. Bump to 1.5.0.0 + release notes**
-  Spec ref: `spec.md > Why this exists` + `CLAUDE.md > Conventions`
-  What to build: Bump `<Version>` to `1.5.0.0` in the app csproj (and any version-paired manifests — keep them in lockstep per CLAUDE.md). Write v1.5.0 release notes (what changed, builder-to-builder voice): the ghost fix ("your alts now show the game they're actually in, and stop falsely reporting closed"), Launch multiple now tells you what it skipped and why. Note in the canonical spec's status line that build matches design, or banner-correct if reality drifted during items 1-5.
-  Acceptance: version reads `1.5.0.0` everywhere it's declared; release notes exist and read in-voice; no version-pair drift.
-  Verify: `dotnet build` succeeds at the new version; grep confirms a single consistent version string. Commit: `build: bump to 1.5.0.0 + v1.5.0 release notes`.
+- [x] **6. Saved private servers in the per-account dropdown**
+  Spec ref: `spec.md > 3. Saved private servers in the per-account dropdown`
+  What to build: Populate the per-row dropdown (`AvailableGames`, `MainWindow.xaml:565`) with saved private servers from `IPrivateServerStore` alongside games. Give the dropdown a common item abstraction (or a `FavoriteGame`-shaped wrapper carrying the PS code); selecting a private server sets the row's launch target to `LaunchTarget.PrivateServer`. Render with the server's `RenderName`. No new management UI — rename/remove already exist for `SavedPrivateServer`.
+  Acceptance: saved private servers show in the dropdown, named; selecting one launches that account into that private server; games still work; Launch multiple can send different alts to different targets. Tests on the launch-target mapping where feasible.
+  Verify: `dotnet test ROROROblox.slnx`; run, pick a saved PS on a row, launch. Commit: `feat(launch): saved private servers selectable in the per-account dropdown`.
 
-- [x] **7. Documentation & Security Verification**
-  Spec ref: `spec.md > Testing` + `spec.md > Risks / open questions` + `CLAUDE.md > What NOT to do`
-  What to build: Confirm `docs/` artifacts reflect reality (spec, this checklist, `spec.md` pointer-stub updated to make v1.5.0 the current cycle). Run the secrets scan — **`PresenceService` must never log a cookie or `.ROBLOSECURITY` value** (run the `dpapi-cookie-blast-radius` agent against the new presence path). Run the one-line local-path grep (no `c:\Users\<name>\` in committable code, per pattern kk). Run `dotnet list package --vulnerable` / `dotnet build -warnaserror` sanity on the changed projects. Confirm `.gitignore` still covers `accounts.dat`, `consent.dat`, `*.pfx`, `webview2-data/`. The Store-MSIX + Velopack release itself is builder-driven post-merge (memory: "I drive the full release through Store MSIX build") — this item readies the branch, it does not cut the release.
-  Acceptance: no cookie/secret in logs or staged files; no machine-local paths; dependency check clean or findings documented; docs current. Branch ready for PR to `main`.
-  Verify: `dpapi-cookie-blast-radius` agent reports clean on the presence path; pre-commit secret-scan + local-path-guard hooks pass; `dotnet build` clean. Commit: `docs: v1.5.0 spec/checklist sync + security verification`.
+- [x] **7. Tag UI — collapsed "+" chip + reorder-safe filter**
+  Spec ref: `spec.md > 4. Tag UI — add-affordance redesign + filter`
+  What to build: **7a** — replace the always-open add-tag bar with a collapsed **"+" chip** (tag-shaped pill, just a plus) where chips live; click engages a small inline input; Enter commits + collapses; blur/escape collapses unchanged. Compact mode stays read-only (no "+"). **7b** — a filter box that narrows the account list by tag (or name) via a non-persisted per-row `IsFilteredOut` visibility flag (leave `Accounts` order intact) and **disable drag-reorder while a filter is active**; clearing restores reorder.
+  Acceptance: no empty bar — rows show chips + a quiet "+"; clicking "+" adds a tag and re-collapses; filter hides non-matching rows without reordering; reorder disabled while filtered, restored on clear. VM-logic tests for the filter predicate.
+  Verify: `dotnet test ROROROblox.slnx --filter "AccountSummary*|TagFilter*"`; run, add a tag via the "+", filter the list. Commit: `feat(tags): collapsed + chip add-affordance + reorder-safe tag filter`.
 
-- [x] **8. Account tags (free-text)** — pulled into v1.5.0 (avoid a second Store update)
-  Spec ref: `spec.md > Components > 4. Account tags (free-text)`
-  What to build: free-text per-account tags. Model — `Account` gains a trailing `IReadOnlyList<string> Tags = null` record param (back/forward-compatible with existing `accounts.dat`; trim + dedupe + drop-empty, cap ~24 chars / ~8 tags). Persistence — `IAccountStore.SetTagsAsync(Guid, IReadOnlyList<string>)` mirroring `SetCaptionColorAsync`. ViewModel — `AccountSummary.Tags` (`ObservableCollection<string>`) + `AddTagCommand`/`RemoveTagCommand`; `MainViewModel` persists on change in lockstep with the store. UI — brand-styled chips on each row (cyan/magenta on navy per 626 tokens) each with a remove "×", plus an inline add affordance; compact mode shows chips read-only. Nice-to-have: a top-of-list filter box (ship if the list binding takes it cleanly; defer with a note if it risks virtualization/drag-reorder). Tag colors / cross-account rename / tag-based bulk launch are out of scope.
-  Acceptance: add a tag → chip appears + persists across restart; remove → gone + persisted; old `accounts.dat` (no Tags) loads clean; tags survive the round-trip through DPAPI. Existing 404 tests stay green + new model/store/VM tests pass.
-  Verify: `dotnet test src/ROROROblox.Tests/` green; run the app, add/remove tags on a row, restart, confirm they stuck. Commit: `feat(accounts): free-text per-account tags (chips + persistence)`.
+- [x] **8. Fix + restore the Follow feature** *(scope gated by item 1)*
+  Spec ref: `spec.md > 5. Fix + restore the Follow feature`
+  What to build: Per item 1's finding — fix the root cause of the Follow break, then unmask the UI (`Visibility` flips on the friend-follow surface). If item 1 found the cause is deep, this item is descoped to "deferred to its own cycle" and the checklist is updated (per the When-Something-Breaks protocol).
+  Acceptance: friend-follow visible + functional (follow an alt into a friend's game), OR a documented descope decision if item 1 gated it out.
+  Verify: `dotnet test ROROROblox.slnx`; run, follow a friend. **Checkpoint C2.** Commit: `feat(follow): fix + restore friend-follow` (or `docs: defer Follow restore — root cause deep`).
+
+- [x] **9. AppStorageDefender install-resilience hardening (folded into v1.6.0 from C2 finding)**
+  Spec ref: `spec.md > 2. Security pass` + memory `project_rororo_captcha_appstorage_defender`
+  What to build: Fix the wrong-account-launched-with-captcha bug surfaced at C2 — a Roblox install/update mid-launch delays the real client reading `appStorage.json` past the defender's fixed 12s window (and past the tracker's 30s attach timeout), so the identity stamp expires before consumption → wrong account + captcha. Change `AppStorageDefender` to defend until the launched client CONSUMES the identity (its `RobloxPlayerBeta` attaches + a short grace) bounded by a generous max cap (~120s), instead of a fixed 12s from launch. Wiring: track the defender per accountId; `OnProcessAttached` → `NotifyConsumed()` (wind down after ~10s grace); do NOT dispose on `ProcessAttachFailed` (install spawns the RPB after the 30s tracker timeout — let the cap cover it). Make `AppStoragePath` injectable for tests. NOT in scope: full Bloxstrap-style install suppression (its own future cycle).
+  Acceptance: a late-attaching launch keeps the correct identity stamped until consumption; normal launches wind down promptly after attach; bounded by the cap on a never-attaches launch. New defender tests pass; full suite green.
+  Verify: `dotnet test ROROROblox.slnx --filter "AppStorageDefender*"`. Commit: `fix(launch): defend appStorage identity until client consumes it (install-resilient)`.
+
+- [x] **10. Documentation & Security Verification**
+  Spec ref: `spec.md > 2. Security pass` + `spec.md > Testing` + `CLAUDE.md > What NOT to do`
+  What to build: Full app-wide `dpapi-cookie-blast-radius` audit (whole app, this is the security-pass cycle). Update the disclosure surfaces for the deliberate-export reality: a note for the next reviewer letter ("cookies leave only on user-initiated, passphrase-encrypted export") + a privacy-policy line. Sync `docs/` (spec status, checklist, spec.md pointer; banner-correct the canonical spec if build drifted). Secrets scan + local-path grep (no `c:\Users\` in committable code). `dotnet list ROROROblox.slnx package --vulnerable`. Confirm `.gitignore` still covers `accounts.dat`, `*.rororo-accounts` export bundles (add if missing — must never be committed), `*.pfx`. Branch ready for PR to `main`. (Version bump + Store/Velopack release is the builder-driven release flow, separate.)
+  Acceptance: cookie audit clean app-wide; export bundles gitignored; no secrets/local-paths in staged files; deps clean or documented; docs current. Branch PR-ready.
+  Verify: agent report clean; pre-commit hooks pass; `dotnet build ROROROblox.slnx` clean. Commit: `docs: v1.6.0 security pass + docs sync + disclosure updates`.

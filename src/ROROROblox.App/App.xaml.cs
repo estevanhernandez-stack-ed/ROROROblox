@@ -269,6 +269,11 @@ public partial class App : Application
         services.AddSingleton<IThemeStore>(_ => new ThemeStore());
         services.AddSingleton<ThemeService>();
         services.AddSingleton<IAccountStore>(_ => new AccountStore());
+
+        // v1.6.0 account transport (item 5). Pure-crypto bundle service (PBKDF2 + AES-256-GCM);
+        // stateless, so a singleton is fine. The export/import dialogs consume this + IAccountStore.
+        services.AddSingleton<ROROROblox.Core.Transport.IAccountTransport,
+            ROROROblox.Core.Transport.AccountTransportService>();
         services.AddSingleton<IStartupRegistration, StartupRegistration>();
         services.AddSingleton<IProcessStarter, ProcessStarter>();
 
@@ -645,7 +650,12 @@ public partial class App : Application
             var startup = _services.GetRequiredService<IStartupRegistration>();
             var themeStore = _services.GetRequiredService<IThemeStore>();
             var themeService = _services.GetRequiredService<ThemeService>();
-            var window = new Preferences.PreferencesWindow(settings, startup, themeStore, themeService);
+            var accountStore = _services.GetRequiredService<IAccountStore>();
+            var transport = _services.GetRequiredService<ROROROblox.Core.Transport.IAccountTransport>();
+            var mainViewModel = _services.GetRequiredService<MainViewModel>();
+            var window = new Preferences.PreferencesWindow(
+                settings, startup, themeStore, themeService,
+                accountStore, transport, mainViewModel);
             if (owner.IsLoaded) window.Owner = owner;
             SurfaceMainWindow(owner);
             window.ShowDialog();

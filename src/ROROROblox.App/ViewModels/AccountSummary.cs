@@ -29,6 +29,8 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private string? _captionColorHex;
     private int? _fpsCap;
     private bool _isDropTarget;
+    private bool _isAddingTag;
+    private bool _isFilteredOut;
 
     public AccountSummary(Account account)
     {
@@ -269,6 +271,32 @@ public sealed class AccountSummary : INotifyPropertyChanged
     {
         get => _isDropTarget;
         set => SetField(ref _isDropTarget, value);
+    }
+
+    /// <summary>
+    /// True while this row's "add tag" affordance is engaged — the collapsed "+" pill swaps to an
+    /// inline TextBox (auto-focused). Clicking "+" sets this true; Enter commits the tag and sets it
+    /// false; Escape / losing focus with no commit sets it false. Pure UI state — NEVER persisted.
+    /// Compact-mode rows keep tags read-only and never flip this. v1.6.0 — spec §"4. Tag UI > 4a".
+    /// </summary>
+    public bool IsAddingTag
+    {
+        get => _isAddingTag;
+        set => SetField(ref _isAddingTag, value);
+    }
+
+    /// <summary>
+    /// True when an active tag/name filter excludes this account (item 7b). The row container's
+    /// Visibility binds to this (collapsed when filtered out) — the underlying
+    /// <see cref="MainViewModel.Accounts"/> collection + order are UNCHANGED, which is what keeps
+    /// drag-to-reorder index math valid (vs a CollectionViewSource filter). Recomputed by
+    /// <see cref="MainViewModel"/> on every filter change via <see cref="MainViewModel.AccountMatchesFilter"/>.
+    /// Pure UI state — NEVER persisted. v1.6.0 — spec §"4. Tag UI > 4b".
+    /// </summary>
+    public bool IsFilteredOut
+    {
+        get => _isFilteredOut;
+        set => SetField(ref _isFilteredOut, value);
     }
 
     /// <summary>

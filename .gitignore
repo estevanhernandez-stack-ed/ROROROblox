@@ -26,6 +26,8 @@ ROROROblox.sln
 
 # Secrets — DPAPI envelope file (per-machine), private-key bundles, env files
 accounts.dat
+# Account export bundles (v1.6) — passphrase-encrypted, contain cookies. NEVER commit one.
+*.rororo-accounts
 # Per-plugin user consent (DPAPI-encrypted, lives next to accounts.dat in %LOCALAPPDATA%\ROROROblox\)
 consent.dat
 last-update-check.txt
