@@ -53,6 +53,37 @@ public class AccountStoreTransportTests : IDisposable
         Assert.Contains(result.Records, r => r.RobloxUserId == 222L);
     }
 
+    // ---------- At-rest encryption (item-4 security gate) ----------
+
+    [Fact]
+    public async Task ImportedAccounts_AreDpapiEncryptedAtRest_NotPlaintextOnDisk()
+    {
+        // Export from store A, import into a fresh store B, then read B's raw .dat bytes and confirm
+        // the cookie never appears in plaintext on disk — i.e. ImportMergeAsync routed through the
+        // DPAPI SaveAsync path, not an accidental File.WriteAllText of the records.
+        const string secretCookie = "FAKE-COOKIE-secret-ZZZZ";
+        using (var a = new AccountStore(PathFor("a.dat")))
+        {
+            var acc = await a.AddAsync("Alpha", "https://avatar/a", secretCookie);
+            await a.UpdateRobloxUserIdAsync(acc.Id, 111L);
+            var export = await a.ExportAccountsAsync(new[] { acc.Id });
+
+            var bundle = new AccountTransportService().Export(export.Records, "a-strong-passphrase-123");
+            var records = new AccountTransportService().Import(bundle, "a-strong-passphrase-123");
+
+            var bPath = PathFor("b.dat");
+            using var b = new AccountStore(bPath);
+            await b.ImportMergeAsync(records);
+
+            var raw = await File.ReadAllBytesAsync(bPath);
+            var asText = System.Text.Encoding.UTF8.GetString(raw);
+            Assert.DoesNotContain(secretCookie, asText); // DPAPI ciphertext, not plaintext JSON
+            // ...but the cookie still round-trips back out via the decrypt path.
+            var imported = (await b.ListAsync()).Single(x => x.RobloxUserId == 111L);
+            Assert.Equal(secretCookie, await b.RetrieveCookieAsync(imported.Id));
+        }
+    }
+
     [Fact]
     public async Task ExportAccountsAsync_SkipsAccountWithNullUserId()
     {

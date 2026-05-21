@@ -37,7 +37,7 @@ Bigger than v1.5.0 — crypto + five surfaces. **Total ≈ 8-12 hours.** Heavies
   Acceptance: export read returns full records for selected ids; merge adds non-dupes, skips existing (by userId), reports counts; round-trips through `AccountTransportService`; old `accounts.dat` unaffected. Tests pass.
   Verify: `dotnet test ROROROblox.slnx --filter "AccountStore*"`. Commit: `feat(transport): AccountStore bulk export + merge-by-userId import`.
 
-- [ ] **4. Transport security review of items 2-3 (TDD-backed hardening)**
+- [x] **4. Transport security review of items 2-3 (TDD-backed hardening)**
   Spec ref: `spec.md > 2. Security pass`
   What to build: Tighten the crypto path before it gets a UI. Confirm KDF iterations are a named constant at the OWASP floor; nonce is unique per export (test); AEAD tag is verified before any plaintext is used; no passphrase/key/cookie reaches logs or exception messages (grep + the `dpapi-cookie-blast-radius` agent against `Transport/` + the new AccountStore paths); key/passphrase buffers cleared after use. Add any missing negative tests.
   Acceptance: dpapi-cookie-blast-radius reports clean on the transport path; no secret in logs/exceptions; nonce-uniqueness + tag-verify tests present.

@@ -94,9 +94,18 @@ public class AccountTransportServiceTests
         var svc = NewService();
         var bundle = svc.Export(SampleRecords(), Passphrase);
 
-        var ex = Assert.Throws<AccountTransportException>(() => svc.Import(bundle, "totally-wrong-passphrase"));
+        const string wrongPass = "totally-wrong-passphrase";
+        var ex = Assert.Throws<AccountTransportException>(() => svc.Import(bundle, wrongPass));
         // Message must NOT leak which failure mode (passphrase vs tamper).
         Assert.DoesNotContain("passphrase is wrong", ex.Message, System.StringComparison.OrdinalIgnoreCase);
+        // No secret leak in the surfaced message OR the inner exception: neither the real nor the
+        // attempted passphrase may appear (a future catch-rethrow that included ex.ToString() would
+        // regress this). Item-4 security gate.
+        var inner = ex.InnerException?.Message ?? string.Empty;
+        Assert.DoesNotContain(Passphrase, ex.Message);
+        Assert.DoesNotContain(wrongPass, ex.Message);
+        Assert.DoesNotContain(Passphrase, inner);
+        Assert.DoesNotContain(wrongPass, inner);
     }
 
     [Fact]
