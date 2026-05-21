@@ -54,6 +54,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// persisted via <see cref="ISessionHistoryStore.AddAsync"/>.
     /// </summary>
     private readonly Dictionary<Guid, Guid> _pendingSessionByAccountId = new();
+
+    /// <summary>
+    /// Live appStorage identity defenders keyed by account id (v1.6.0 item 9). Tracked
+    /// per-account (not fire-and-forget) so <see cref="OnProcessAttached"/> can find the
+    /// right defender and call <see cref="AppStorageDefender.NotifyConsumed"/> once the
+    /// client is up. Entries are removed when the defender disposes (cap fallback or
+    /// post-attach grace). The defender's own <c>_active</c> takeover still cancels a prior
+    /// launch's defender when a newer launch dispatches.
+    /// </summary>
+    private readonly Dictionary<Guid, AppStorageDefender> _defendersByAccountId = new();
+    private readonly object _defendersLock = new();
     private readonly DispatcherTimer _ticker;
 
     private string _statusBanner = string.Empty;
@@ -904,15 +915,40 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             _log.LogInformation("Launch dispatch: id={Id} name={Name} robloxUserId={RobloxUserId} cookieFp={CookieFp}",
                 summary.Id, summary.DisplayName, summary.RobloxUserId, CookieFp(cookie));
 
-            // Stamp identity into appStorage.json + defend it for ~12s against
-            // late writes from sibling RPB processes. See AppStorageDefender.
+            // Stamp identity into appStorage.json + defend it until the launched client
+            // CONSUMES it (OnProcessAttached → NotifyConsumed → ~10s grace) rather than a
+            // fixed window. The ~120s max cap is the install-delay upper bound: a Roblox
+            // install box popping mid-launch can postpone the real RPB's first read of
+            // appStorage.json well past the old 12s window, expiring the defense before
+            // the identity is consumed → wrong account + captcha (v1.6.0 item 9).
             if (summary.RobloxUserId is { } userId)
             {
                 var defender = new AppStorageDefender(
                     summary.DisplayName, summary.DisplayName, userId,
-                    _log, TimeSpan.FromSeconds(12));
+                    _log,
+                    maxCap: TimeSpan.FromSeconds(120),
+                    postAttachGrace: TimeSpan.FromSeconds(10));
+                var accountId = summary.Id;
+                lock (_defendersLock)
+                {
+                    _defendersByAccountId[accountId] = defender;
+                }
                 _ = defender.Completion.ContinueWith(
-                    _ => defender.DisposeAsync().AsTask(),
+                    _ =>
+                    {
+                        lock (_defendersLock)
+                        {
+                            // Only remove if it's still the same defender — a newer launch
+                            // for the same account may have replaced it (and the older one's
+                            // Completion fires when its takeover cancels it).
+                            if (_defendersByAccountId.TryGetValue(accountId, out var current)
+                                && ReferenceEquals(current, defender))
+                            {
+                                _defendersByAccountId.Remove(accountId);
+                            }
+                        }
+                        return defender.DisposeAsync().AsTask();
+                    },
                     TaskScheduler.Default);
             }
             else
@@ -1345,6 +1381,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OnProcessAttached(object? sender, RobloxProcessEventArgs e)
     {
+        // The launched client is up and can now read the stamped identity for captcha
+        // branding. Tell its defender to wind down after the post-attach grace (v1.6.0
+        // item 9). Normal path: attach in ~1-2s → defends ~12s total (attach + grace),
+        // same protective behavior as the old fixed window, just measured from attach.
+        AppStorageDefender? defender;
+        lock (_defendersLock)
+        {
+            _defendersByAccountId.TryGetValue(e.AccountId, out defender);
+        }
+        defender?.NotifyConsumed();
+
         Application.Current?.Dispatcher.Invoke(() =>
         {
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
@@ -1481,6 +1528,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OnProcessAttachFailed(object? sender, RobloxProcessEventArgs e)
     {
+        // IMPORTANT (v1.6.0 item 9): do NOT dispose the appStorage defender here. During a
+        // long Roblox install the RPB spawns AFTER the 30s tracker attach timeout, so this
+        // fires while the install is still in progress — disposing now would re-expose the
+        // wrong-account bug (defense expires before the real client reads the identity). Let
+        // the ~120s max cap bound the defender instead. The defender stays in
+        // _defendersByAccountId until its Completion ContinueWith removes it at the cap.
+        _log.LogInformation(
+            "Process attach failed for account {AccountId}; leaving appStorage defender to its max cap (install may still be in progress).",
+            e.AccountId);
+
         Application.Current?.Dispatcher.Invoke(() =>
         {
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
