@@ -182,8 +182,9 @@ $repo = 'estevanhernandez-stack-ed/ROROROblox'
 
 1. Open Partner Center → Apps → RORORO → **Packages**.
 2. Drag `dist/RORORO-Store.msix` into the Packages slot. Wait for upload + validation. If validation fails on version (4th component non-zero), bump and re-run from Phase 3.
-3. Edit **Notes for certification** — give the reviewer a paragraph on what changed in this version and where the trademark disclaimer surfaces. Reuse the v1.1 reviewer letter ([`docs/store/reviewer-letter.md`](reviewer-letter.md)) as the template; swap in the version number and new-feature summary.
-4. **Submit to the Store**. Status moves through *In submission* → *Certification* → *Publishing* (success) or *Failed* (rejection). Typical turnaround 24-72h.
+3. Edit **Notes for certification** — paste the `---` block from `docs/store/reviewer-letter-X.Y.Z.0.md` (the per-version reviewer letter; leads with that release's disclosure-surface change + the trademark disclaimer). This is reviewer-only, not shown to users.
+4. **Edit the Store listing → "What's new in this version"** — paste the `What's new` block from [`docs/store/listing-copy.md`](listing-copy.md). **DO NOT SKIP — this is the public update-note Store users see, and it's the step that keeps getting left off.** It's a *different field* from Notes for certification (step 3): step 3 is private to Microsoft's reviewer; this one is public. Both must be filled every release. (Partner Center: Store listings → [language] → "What's new in this version".)
+5. **Submit to the Store**. Status moves through *In submission* → *Certification* → *Publishing* (success) or *Failed* (rejection). Typical turnaround 24-72h.
 
 If the previous version is still pending certification, Partner Center stages this submission to replace it (you don't get duplicate submissions). The new MSIX takes over the slot; the previous one is implicitly withdrawn.
 
