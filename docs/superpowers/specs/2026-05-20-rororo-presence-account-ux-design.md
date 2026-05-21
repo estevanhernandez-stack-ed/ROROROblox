@@ -1,6 +1,6 @@
 # RoRoRo v1.5.0 — Presence-based account status + Launch multiple hardening
 
-> **Status:** Implemented 2026-05-20 on branch `v1.5.0-presence-account-ux` (items 1-7), pending merge to `main`. Build matches design; two in-build refinements are recorded inline — the "At Roblox home" / "In Studio" status states (see Components > 2) and the accepted Roblox-presence-lag eligibility limitation (see Risks).
+> **Status:** Implemented 2026-05-20 on branch `v1.5.0-presence-account-ux` (items 1-8), pending merge to `main`. Build matches design; in-build changes recorded inline — the "At Roblox home" / "In Studio" status states (Components > 2), the accepted Roblox-presence-lag eligibility limitation (Risks), and free-text account tags pulled forward from v1.5.1 to avoid a second Store update (Components > 4).
 > **Cycle:** v1.5.0 (credibility hotfix). Tags + private-server picker deferred to v1.5.1; cross-machine account import/export deferred to its own cycle.
 > **Current source:** v1.4.3.0. Reported-against build: Store v1.3.4.0.
 
