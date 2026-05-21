@@ -19,7 +19,7 @@ Bigger than v1.5.0 — crypto + five surfaces. **Total ≈ 8-12 hours.** Heavies
 
 ## Checklist
 
-- [ ] **1. Follow root-cause diagnostic (GATE — read-only)**
+- [x] **1. Follow root-cause diagnostic (GATE — read-only)** → DONE. Finding: Follow is NOT masked in committed code (stale memory/spec). Real issue is functional — Friends-modal follow path lacks the land-at-home guard `FollowAltAsync` has; needs a live two-account smoke to confirm `RequestFollowUser`. Item 8 reshaped to "live-smoke confirm + port the guard (~10-20 lines)". In-cycle. See `docs/investigations/2026-05-21-follow-restore-diagnostic.md`.
   Spec ref: `spec.md > 5. Fix + restore the Follow feature`
   What to build: Nothing yet — investigate. Read `FollowAltAsync`, `OpenFriendFollowCommand`, `FriendFollowWindow`, `LaunchTarget.FollowFriend`, and the presence/join-by-user path. Determine WHY the feature was masked (`Visibility=Collapsed`) — what breaks against current Roblox behavior. Pull any clues from `docs/` + git history + the masked-feature memory. Produce a findings note: root cause, whether the fix is small (lands in item 7 this cycle) or deep (split to its own cycle, descope item 7).
   Acceptance: a written root-cause finding + a scoped go/no-go on item 7. No code changes.
