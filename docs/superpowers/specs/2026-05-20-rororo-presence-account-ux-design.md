@@ -111,6 +111,17 @@ New presence-derived state on the row:
 
 **The v1.3.4 "In Batches radio":** does not exist in current source — Launch multiple is a direct button (`MainWindow.xaml:979`). The confusion resolves on update; no new control is added. The built-in throttle (5 s between launches, `MainViewModel.cs:801`) stays.
 
+### 4. Account tags (free-text) — pulled into v1.5.0 (2026-05-20)
+
+Originally carved to v1.5.1; pulled forward at the builder's call to avoid a second Microsoft Store submission. The clan ask: per-account free-text labels to mark what each alt is for (PS99, RCU, PLAZA). Confirmed **free-text** (type anything), not a preset palette.
+
+- **Model:** `Account` (`Account.cs`) gains `IReadOnlyList<string> Tags` as a trailing optional record parameter (`Tags = null` → treated as empty), so existing DPAPI `accounts.dat` blobs deserialize unchanged (forward/backward compatible). Trim + dedupe + drop-empty on write; cap tag length (~24 chars) and count (~8) to keep the row from overflowing.
+- **Persistence:** `IAccountStore.SetTagsAsync(Guid id, IReadOnlyList<string> tags)` — granular write mirroring `SetCaptionColorAsync` / `SetFpsCapAsync`. No Save button; the edit is the save.
+- **ViewModel:** `AccountSummary.Tags` (`ObservableCollection<string>` for live chip updates) + `AddTagCommand` / `RemoveTagCommand`. `MainViewModel` persists on change via `SetTagsAsync`, in lockstep with the store like `PersistIsSelectedAsync`.
+- **UI:** chips on each account row (an `ItemsControl` over `Tags`, brand-styled — cyan/magenta on navy per the 626 design tokens, each chip with a small remove "×"), plus an inline add affordance (small text box / "+ tag"). Compact mode shows the chips read-only (no edit chrome). No new window.
+- **Filter (nice-to-have, ship if clean):** a top-of-list filter box that narrows the account list to rows whose tags (or name) match. Include it if the list binding takes it cleanly; defer with a note if it risks the existing virtualization/drag-reorder. The core deliverable is display + add/remove.
+- **Out of scope for tags v1:** tag colors, tag rename-across-accounts, tag-based bulk launch. Free-text only.
+
 ## Data flow
 
 ```
@@ -149,7 +160,7 @@ Unit + reconciliation tests only — no end-to-end against real roblox.com (CLAU
 
 ## Out of scope (and where it goes)
 
-- **Tags / notes per account** (PS99, RCU, PLAZA) → **v1.5.1**. `Account.Tags`, chips + filter.
+- ~~**Tags / notes per account** (PS99, RCU, PLAZA) → v1.5.1.~~ **Pulled into v1.5.0** (2026-05-20) to avoid a second Store update — see Components > 4.
 - **Private servers as a managed library** → **v1.5.1** (clan ask sharpened 2026-05-20). Today saved private servers (`IPrivateServerStore`) live ONLY inside the Squad Launch modal, and the only verb is "send every selected account into this one server." The ask: promote private servers to a first-class library that works *like the games section* — saved, named, organized, and selectable **per account** from the row dropdown (alongside games), so different alts can target different private servers (or different games) in a single Launch multiple pass. This is the original "let us pick from the pre-set ones" request leveled up to library-grade management. Needs its own brainstorm/spec pass (new picker UX + how private-server entries coexist with games in the per-row target dropdown + `SelectedGame`/`LaunchTarget` model changes).
 - **Cross-machine account import/export** → **deferred to its own cycle.** DPAPI is per-user/per-machine by design; this is the per-cookie-encryption portability work, security-sensitive, not a hotfix.
 - **The Roblox anti-multilaunch bootstrapper itself** → not ours to fix. The presence approach sidesteps its effect on our UI.
