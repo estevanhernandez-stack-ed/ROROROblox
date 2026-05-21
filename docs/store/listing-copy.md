@@ -103,15 +103,15 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 
 > Avoid "cheat", "exploit", "bypass" — those will trigger reviewer concerns even if irrelevant.
 
-## What's new (release notes for v1.5.0.0)
+## What's new (release notes for v1.6.0.0)
 
 ```
-v1.5.0.0:
-• Your alts now show the game they're actually in — "In Pet Sim 99", "At Roblox home", "In Studio" — instead of a vague "active."
-• Fixed accounts falsely showing "Closed" while still running — the running state now comes from Roblox presence, so a live in-game alt can't be mislabeled "Closed."
-• Launch multiple tells you what it skipped and why — "6 dispatched (1 already running)" — and never silently does nothing.
-• Launch multiple re-checks each alt's live state right before launching, so a just-closed alt gets picked up instead of wrongly skipped.
-• Tag your alts — free-text labels (PS99, RCU, PLAZA) shown as chips on each row, to tell accounts apart at a glance.
+v1.6.0.0:
+• Move your accounts to another PC — export them to a passphrase-encrypted file, import on the other machine. Offline, no cloud; merges without overwriting.
+• Saved private servers now appear in each account's game dropdown — pick one and that alt launches straight into that server.
+• Cleaner tags — a small "+" to add a tag (no more empty bar) plus a filter box to narrow the account list by tag or name.
+• Follow no longer dumps you on the Roblox home page when a friend isn't in a joinable game — it tells you instead.
+• Fixed launching the wrong account when a Roblox update pops up mid-launch — the account you pick is the one that launches.
 ```
 
 (Historical "What's new" blocks for prior releases live in their respective `docs/store/release-notes-*.md` files.)
