@@ -55,7 +55,7 @@ Bigger than v1.5.0 — crypto + five surfaces. **Total ≈ 8-12 hours.** Heavies
   Acceptance: saved private servers show in the dropdown, named; selecting one launches that account into that private server; games still work; Launch multiple can send different alts to different targets. Tests on the launch-target mapping where feasible.
   Verify: `dotnet test ROROROblox.slnx`; run, pick a saved PS on a row, launch. Commit: `feat(launch): saved private servers selectable in the per-account dropdown`.
 
-- [ ] **7. Tag UI — collapsed "+" chip + reorder-safe filter**
+- [x] **7. Tag UI — collapsed "+" chip + reorder-safe filter**
   Spec ref: `spec.md > 4. Tag UI — add-affordance redesign + filter`
   What to build: **7a** — replace the always-open add-tag bar with a collapsed **"+" chip** (tag-shaped pill, just a plus) where chips live; click engages a small inline input; Enter commits + collapses; blur/escape collapses unchanged. Compact mode stays read-only (no "+"). **7b** — a filter box that narrows the account list by tag (or name) via a non-persisted per-row `IsFilteredOut` visibility flag (leave `Accounts` order intact) and **disable drag-reorder while a filter is active**; clearing restores reorder.
   Acceptance: no empty bar — rows show chips + a quiet "+"; clicking "+" adds a tag and re-collapses; filter hides non-matching rows without reordering; reorder disabled while filtered, restored on clear. VM-logic tests for the filter predicate.
