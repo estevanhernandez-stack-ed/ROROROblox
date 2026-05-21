@@ -1,6 +1,6 @@
 # RoRoRo v1.6.0 — Account transport + bundle (private-server library, tag filter, Follow restore) + security pass
 
-> **Status:** Design in progress 2026-05-21. Brainstorm decisions captured; pending spec review.
+> **Status:** Implemented 2026-05-21 on branch `v1.6.0-account-transport` (items 1-10). Two in-build additions folded in: an AppStorageDefender install-resilience hardening (wrong-account-on-install fix surfaced at C2) and the privacy/disclosure updates for the deliberate-export change (`docs/PRIVACY.md`). Full Bloxstrap-style install deferral deferred to its own cycle.
 > **Cycle:** v1.6.0 (feature minor bump on v1.5.0). Anchor feature is account transport; security-sensitive, so it gets the deepest design.
 > **Bundle:** account transport · saved private servers in the dropdown · tag UI (add-affordance + filter) · Follow restore · cross-cutting security pass.
 

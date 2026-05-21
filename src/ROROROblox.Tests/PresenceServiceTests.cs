@@ -430,7 +430,7 @@ public class PresenceServiceTests
 
                 return PresenceByCookie.TryGetValue(cookie, out var p)
                     ? p
-                    : throw new InvalidOperationException($"FakeRobloxApi: no presence for cookie '{cookie}'");
+                    : throw new InvalidOperationException("FakeRobloxApi: no presence configured for the requested cookie");
             }
             finally
             {

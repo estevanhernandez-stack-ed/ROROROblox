@@ -16,7 +16,8 @@ namespace ROROROblox.App.Friends;
 internal partial class FriendFollowWindow : Window
 {
     private readonly IRobloxApi _api;
-    private readonly string _cookie;
+    private readonly IAccountStore _accountStore;
+    private readonly Guid _accountId;
     private readonly long _accountUserId;
 
     /// <summary>The friend the user picked — null if the user closed without following.</summary>
@@ -32,11 +33,11 @@ internal partial class FriendFollowWindow : Window
     /// <summary>The picked friend's display name — for the caller's status messaging.</summary>
     public string? SelectedFriendName { get; private set; }
 
-    public FriendFollowWindow(IRobloxApi api, string cookie, long accountUserId, string accountDisplayName)
+    public FriendFollowWindow(IRobloxApi api, IAccountStore accountStore, Guid accountId, long accountUserId, string accountDisplayName)
     {
-        if (string.IsNullOrEmpty(cookie))
+        if (accountId == Guid.Empty)
         {
-            throw new ArgumentException("Cookie must not be empty.", nameof(cookie));
+            throw new ArgumentException("Account id must not be empty.", nameof(accountId));
         }
         if (accountUserId <= 0)
         {
@@ -44,7 +45,8 @@ internal partial class FriendFollowWindow : Window
         }
 
         _api = api ?? throw new ArgumentNullException(nameof(api));
-        _cookie = cookie;
+        _accountStore = accountStore ?? throw new ArgumentNullException(nameof(accountStore));
+        _accountId = accountId;
         _accountUserId = accountUserId;
         InitializeComponent();
         Title = $"ROROROblox -- Friends -- {accountDisplayName}";
@@ -61,14 +63,18 @@ internal partial class FriendFollowWindow : Window
         RefreshButton.IsEnabled = false;
         try
         {
-            var friends = await _api.GetFriendsAsync(_cookie, _accountUserId);
+            // Fetch the plaintext cookie fresh per refresh into a local that falls out of scope
+            // after the API calls below — we never retain it on the window for the modal's lifetime.
+            var cookie = await _accountStore.RetrieveCookieAsync(_accountId);
+
+            var friends = await _api.GetFriendsAsync(cookie, _accountUserId);
             if (friends.Count == 0)
             {
                 StatusText.Text = "No friends visible. Either this account has none, or its privacy filter is hiding them.";
                 return;
             }
 
-            var presences = await _api.GetPresenceAsync(_cookie, friends.Select(f => f.UserId));
+            var presences = await _api.GetPresenceAsync(cookie, friends.Select(f => f.UserId));
             var presenceByUserId = presences.ToDictionary(p => p.UserId);
 
             var inGame = new List<(Friend Friend, UserPresence Presence)>();
@@ -133,6 +139,10 @@ internal partial class FriendFollowWindow : Window
         catch (CookieExpiredException)
         {
             StatusText.Text = "Session expired — close this and re-authenticate the account first.";
+        }
+        catch (AccountStoreCorruptException)
+        {
+            StatusText.Text = "Couldn't read this account's saved session — close this and re-add the account.";
         }
         catch (Exception ex)
         {

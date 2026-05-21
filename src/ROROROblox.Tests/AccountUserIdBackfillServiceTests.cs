@@ -243,7 +243,7 @@ public class AccountUserIdBackfillServiceTests
             if (ThrowOnCookie == cookie && ThrowToRaise is not null) throw ThrowToRaise;
             return ProfileByCookie.TryGetValue(cookie, out var p)
                 ? Task.FromResult(p)
-                : throw new InvalidOperationException($"FakeRobloxApi: no UserProfile configured for cookie '{cookie}'");
+                : throw new InvalidOperationException("FakeRobloxApi: no UserProfile configured for the requested cookie");
         }
 
         // Unused — throw to surface accidental use.

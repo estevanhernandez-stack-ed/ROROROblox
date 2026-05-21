@@ -1264,7 +1264,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             }
         }
 
-        var window = new FriendFollowWindow(_api, cookie, userId, summary.DisplayName)
+        // Pass the store + account id, not the plaintext cookie — the window retrieves the cookie
+        // fresh per refresh into a short-lived local instead of holding it for its whole lifetime.
+        var window = new FriendFollowWindow(_api, _accountStore, summary.Id, userId, summary.DisplayName)
         {
             Owner = Application.Current.MainWindow,
         };

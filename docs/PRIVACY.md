@@ -16,9 +16,9 @@ permalink: /privacy/
 ## TL;DR
 
 - **Your Roblox password is never seen by RORORO.** Login happens inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame.
-- **Roblox session cookies are stored locally only**, encrypted with the Windows Data Protection API (DPAPI), tied to your Windows user account. They cannot be moved off the machine and decrypted.
+- **Roblox session cookies are stored locally only**, encrypted with the Windows Data Protection API (DPAPI), tied to your Windows user account. Copying the file to another PC won't work — *unless you deliberately export your accounts* (Account export, v1.6), which re-encrypts them under a passphrase you choose into a file you save where you want. No cloud, no upload.
 - **No telemetry. No analytics. No third-party tracking.** RORORO makes network calls only to Roblox-owned endpoints (during launch and avatar fetching) and to GitHub Releases (for auto-update checks).
-- **No data leaves your PC** except the Roblox-side calls described below — the same calls Roblox.com would make from your browser.
+- **No data leaves your PC** except the Roblox-side calls described below — the same calls Roblox.com would make from your browser — and, if you choose to use it, a passphrase-encrypted account-export file that you save yourself (never auto-uploaded).
 - **You can delete everything** by uninstalling the app. The Store-installed MSIX automatically removes the encrypted vault on uninstall.
 
 ---
@@ -76,6 +76,17 @@ When you click *Add Account*, RORORO opens an embedded Microsoft Edge WebView2 c
 After Roblox confirms a successful login, RORORO captures the `.ROBLOSECURITY` session cookie that Roblox sets in your browser. Before writing it to disk, RORORO runs it through Windows' [Data Protection API](https://learn.microsoft.com/en-us/dotnet/standard/security/how-to-use-data-protection) — encryption tied to your specific Windows user account on your specific machine. The encrypted file (`accounts.dat`) is unreadable on any other PC, by any other Windows user, or even by you if Windows ever loses its DPAPI master key (e.g., after a from-scratch reinstall).
 
 The cookie value is held in plaintext only briefly in memory during a single *Launch As* operation, then goes back to disk in encrypted form. The cookie value is **never** written to logs, **never** included in error reports, and **never** transmitted to any party other than Roblox.
+
+---
+
+## Account export and import (v1.6 and later)
+
+RoRoRo v1.6 added the ability to move your saved accounts to another PC. This is the **only** way your cookies leave the machine, and it only happens when you choose to do it:
+
+- **Export** asks you for a passphrase, then writes a single `.rororo-accounts` file wherever you pick. Inside, your accounts (cookies included) are encrypted with AES-256-GCM under a key derived from your passphrase (PBKDF2-SHA256, 600,000 iterations). The file is useless to anyone without the passphrase.
+- **Import** on the other PC asks for the same passphrase, decrypts the file, and re-encrypts the accounts into that machine's DPAPI vault. Accounts you already have are skipped.
+- **The file is yours.** RoRoRo never uploads it, never sends it anywhere, and never stores the passphrase. If you lose the passphrase the file can't be opened — by design; there's no recovery key, because a recovery key would mean we held a way in.
+- Treat the file like a password: anyone with both the file **and** the passphrase can sign in as you. Keep it private.
 
 ---
 
