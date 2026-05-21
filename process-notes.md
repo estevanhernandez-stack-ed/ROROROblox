@@ -278,3 +278,29 @@ Spec-first cycle (pattern mm). Canonical spec authored this session via brainsto
 **Session/friction loggers:** Cart's plugin data dir at `~/.claude/plugins/data/vibe-cartographer/` still absent on this machine — fourth cycle confirming the gap (cycles #1, #2 already flagged). Standing /evolve signal; loggers should auto-create their data dir or fail loud. Skipped the JSONL session/friction logging accordingly; user-facing artifacts (checklist.md, this section) are the durable record.
 
 **Handoff:** Run `/build`. Autonomous through the checklist, pausing at C1 (after item 4) and C2 (after item 6).
+
+## /build — autonomous run (2026-05-20, cycle v1.5.0 presence account-UX)
+
+All 7 items complete on branch `v1.5.0-presence-account-ux`. Final state: `dotnet build ROROROblox.sln` 0 errors, **404/404 tests passing** (was 363 at cycle start; +41 across the cycle). Each item dispatched to a general-purpose subagent (TDD-strict on items 1-3, 5; verify-by-running on item 4); orchestrator marked items complete + ran the two checkpoints.
+
+**Items 1-2 (PresenceService, Core):** poll loop + game-name cache; resilience (401→expired signal, empty-list→hold-last, concurrency cap + jitter, fast-confirm `RequestImmediateRefreshAsync`). Verified against source that `GetPresenceAsync` swallows non-401 to empty list → that's the hold-last signal; populated-Offline = genuinely offline. 429 true-backoff documented as a limitation (RobloxApi would need to surface the status code).
+
+**Item 3 (AccountSummary):** presence-aware reconciliation. Headline ghost-fix test: `IsRunning=false, InGame=true` → "In {game}", never "Closed".
+
+**Item 4 (VM + DI wiring):** lazy DI delegate to avoid the MainViewModel↔PresenceService construction cycle; anti-ghost `OnProcessExited` rewrite (defers close-stamp to presence). Checkpoint C1.
+
+**C1 finding → fix:** builder verified rows show the game, then flagged an account that exited a game but stayed in the client read a vague "Connecting…→Running". Added explicit "At Roblox home" (OnlineWebsite presence, or a settled live client not in-game) + "In Studio" states. Builder confirmed "switches to roblox home fast." Robust to whichever presence type Roblox returns at-home (unconfirmed which).
+
+**Item 5 (Launch multiple):** extracted a pure `LaunchEligibility` helper (testable without the VM) over mocking; eligibility = `!(InGame || IsRunning)`; pre-snapshot presence refresh; never-silent banners with skip-reason ("6 dispatched · 1 already running"). Checkpoint C2.
+
+**C2 finding → accepted:** builder hit a just-closed alt being skipped on instant retry. Root cause is Roblox's own presence propagation lag (upstream of our poll cadence) — `IsRunning` flips instantly but Roblox keeps reporting in-game for a few seconds. The 25s-cadence race is closed; the Roblox-side lag is not, without trusting local process-exit over presence for eligibility (reopens a bootstrapper-respawn edge). Builder accepted; recorded in spec Risks. StartMain CanExecute also brought onto the augment rule.
+
+**Items 6-7:** version 1.5.0.0 (csproj + manifest lockstep), clan-facing release notes + Store listing "What's new", cookie-leak audit (dpapi-cookie-blast-radius: PASS — cookie never logged/persisted outside DPAPI), local-path grep clean, no vulnerable deps, docs synced.
+
+**Mid-build scope event:** clan asked for private-server management "like the games library" (selectable per-account, not Squad-into-one-server). Builder chose finish-v1.5.0-first; sharpened requirement captured in spec out-of-scope as the **v1.5.1** shape (with account tags). Cross-machine import/export still deferred to its own cycle.
+
+**Repo hygiene flag (open):** both `ROROROblox.sln` and `ROROROblox.slnx` exist → bare `dotnet build` errors MSB1011; all cycle builds passed `ROROROblox.sln` explicitly. Canonical-solution decision left to the builder.
+
+**Session/friction loggers:** Cart plugin data dir still absent (4th cycle) — JSONL logging skipped, durable record is here. Standing /evolve signal.
+
+**Handoff:** branch ready for PR to `main`. Store-MSIX + Velopack release is builder-driven (memory: "I drive the full release through Store MSIX build"). Next feature cycle: v1.5.1 (private-server library + account tags).
