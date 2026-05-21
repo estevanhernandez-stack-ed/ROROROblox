@@ -327,3 +327,23 @@ Spec-first cycle. Canonical spec authored this session: `docs/superpowers/specs/
 **Session/friction loggers:** Cart plugin data dir still absent (5th cycle).
 
 **Handoff:** Run `/build`. Autonomous; C1 after item 5, C2 after item 8; Follow scope confirmed at item 1 before item 8.
+
+## /build — autonomous run (2026-05-21, cycle v1.6.0 account transport + bundle)
+
+All 10 items complete on branch `v1.6.0-account-transport`. Final: `dotnet build ROROROblox.slnx` 0 errors, **519 unit + 5 harness (1 skipped) green** (was 450 at cycle start; +69). Each item dispatched to a subagent; two checkpoints + several builder course-corrections.
+
+**Items 1-5 (transport):** Follow diagnostic gate (item 1) found Follow was never masked — corrected memory + spec, reshaped item 8. Crypto core (2: PBKDF2-600k + AES-256-GCM, versioned bundle), AccountStore export/merge (3), security gate (4: dpapi audit PASS + hardening tests), export/import UI + passphrase strength gate (5). **C1 passed** (builder tested export→import).
+
+**C1 fix:** builder couldn't find Export in "Settings" — item 5 had put it in `SettingsWindow` (the *Games* window); the gear "⚙ Settings" opens `PreferencesWindow`. Relocated the entry points there (commit 64a9329).
+
+**Items 6-8:** saved private servers in the per-account dropdown (6, low-blast-radius FavoriteGame extension), tag "+" chip + reorder-safe filter (7), Follow land-at-home guard unified across all 3 follow paths via tested `EvaluateFollow` (8). **C2 passed** — builder confirmed PS ✓, tag chip ✓, **follow ✓** (clears the Roblox-side `RequestFollowUser` gate; Follow ships).
+
+**C2 finding → item 9 folded in:** during C2 the builder hit a Roblox install box mid-launch → the WRONG account launched (with captcha). Root cause: the AppStorageDefender's fixed 12s window expired before the install-delayed client read the identity. Confirmed item 6 did NOT cause it (untouched account-identity path) — pre-existing. Builder chose to fold a hardening into v1.6.0: defender now defends until the client CONSUMES the identity (attach + grace) capped at ~120s, attach-fail no longer disposes. The full Bloxstrap-style install *deferral* is its own future cycle (the multilaunch-during-install edge remains).
+
+**Item 10 (security pass + docs):** app-wide cookie audit — 7/8 PASS; 2 findings fixed (FriendFollowWindow held the cookie as a class field → per-call retrieval; 2 test stubs interpolated the fake cookie into exception messages). PRIVACY.md corrected for the deliberate-export reality + new export/import section. `*.rororo-accounts` gitignored. Deps clean, no local paths.
+
+**Next-cycle backlog surfaced this run:** "Roblox install/bootstrapper interruption" — Bloxstrap-style install suppression/deferral + the multilaunch-during-install identity edge. This is the clan's recurring "black installer" pain.
+
+**Session/friction loggers:** Cart plugin data dir still absent (5th cycle).
+
+**Handoff:** branch PR-ready. Per the release-workflow memory, I drive the Store MSIX + sideload + reviewer letter + GitHub release; builder's only step is the Partner Center submit click.
