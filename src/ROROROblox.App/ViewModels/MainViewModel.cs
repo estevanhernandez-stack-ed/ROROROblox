@@ -104,7 +104,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         RemoveAccountCommand = new RelayCommand(p => RemoveAccountAsync(p as AccountSummary));
         ReauthenticateCommand = new RelayCommand(p => ReauthenticateAsync(p as AccountSummary));
         OpenSettingsCommand = new RelayCommand(OpenSettings);
-        LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !a.IsRunning));
+        LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !(a.InGame || a.IsRunning)));
         StopAccountCommand = new RelayCommand(p => StopAccount(p as AccountSummary));
         OpenDiagnosticsCommand = new RelayCommand(OpenDiagnostics);
         OpenAboutCommand = new RelayCommand(OpenAbout);
@@ -783,11 +783,19 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         IsBusy = true;
         try
         {
-            var targets = Accounts
-                .Where(a => a.IsSelected && !a.SessionExpired && !a.IsRunning && !a.IsLaunching)
-                .ToList();
-            var deselectedCount = Accounts.Count(a => !a.IsSelected);
-            _log.LogInformation("LaunchMultiple: {Count} eligible, {Skipped} deselected", targets.Count, deselectedCount);
+            // Pre-snapshot presence refresh (closes the 67ms race): a just-closed client resolves
+            // to not-in-game before we read eligibility, so it's correctly counted as launchable
+            // rather than "already running." AccountPresenceUpdated is marshaled to this (UI) thread
+            // and we await on it, so after this returns each AccountSummary's state is fresh and we
+            // compute eligibility below. A presence failure must never block a launch — log + proceed
+            // with current state. (v1.5.0 spec §"Components > 3".)
+            await RefreshPresenceBeforeLaunchAsync();
+
+            var summaries = Accounts.ToList();
+            var result = LaunchEligibility.Compute(summaries.Select(ToLaunchCandidate));
+            var targets = MatchEligible(summaries, result.Eligible);
+            _log.LogInformation("LaunchMultiple: {Count} eligible, {Running} running, {Expired} expired, {Deselected} deselected",
+                targets.Count, result.Breakdown.Running, result.Breakdown.Expired, result.Breakdown.Deselected);
             foreach (var t in targets)
             {
                 _log.LogInformation("LaunchMultiple target: id={Id} name={Name} robloxUserId={RobloxUserId}",
@@ -796,9 +804,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
             if (targets.Count == 0)
             {
-                StatusBanner = deselectedCount > 0
-                    ? "Nothing to launch — every selected account is running or expired. Toggle the dot next to a status to include more."
-                    : "Nothing to launch — every account is already running or expired.";
+                StatusBanner = result.ZeroEligibleBanner;
                 return;
             }
 
@@ -817,12 +823,53 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     await Task.Delay(TimeSpan.FromMilliseconds(5000));
                 }
             }
-            var tail = deselectedCount > 0 ? $" ({deselectedCount} deselected, skipped.)" : string.Empty;
-            StatusBanner = $"Launch multiple finished. {targets.Count} client{(targets.Count == 1 ? "" : "s")} dispatched.{tail}";
+            StatusBanner = result.PartialBanner(targets.Count, "Launch multiple finished");
         }
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Project an <see cref="AccountSummary"/> into the pure <see cref="LaunchCandidate"/> the
+    /// eligibility computation consumes. The v1.5.0 augment rule lives in
+    /// <see cref="LaunchEligibility"/>, not here — this is a flat field map only.
+    /// </summary>
+    private static LaunchCandidate ToLaunchCandidate(AccountSummary a) => new(
+        a.IsSelected, a.SessionExpired, a.InGame, a.IsRunning, a.IsLaunching, a.DisplayName);
+
+    /// <summary>
+    /// Re-resolve the <see cref="AccountSummary"/> rows for the eligible candidates the helper
+    /// returned. The helper works on value snapshots; we match back by index against the same
+    /// ordered list it was computed from so we launch the live summaries (not stale copies).
+    /// </summary>
+    private static List<AccountSummary> MatchEligible(
+        IReadOnlyList<AccountSummary> ordered,
+        IReadOnlyList<LaunchCandidate> eligible)
+    {
+        // Recompute the eligibility predicate against the live rows in the same order — cheaper and
+        // less error-prone than threading identity through the value structs, and the predicate is
+        // the single source of truth in LaunchEligibility.IsBusy.
+        return ordered
+            .Where(a => a.IsSelected && !a.SessionExpired && !LaunchEligibility.IsBusy(ToLaunchCandidate(a)) && !a.IsLaunching)
+            .ToList();
+    }
+
+    /// <summary>
+    /// One-shot presence refresh run before a batch launch computes eligibility. Wrapped so a
+    /// presence failure (network/5xx/timeout) never blocks the launch — we log and proceed with the
+    /// current (held-last) state. v1.5.0 spec §"Components > 3".
+    /// </summary>
+    private async Task RefreshPresenceBeforeLaunchAsync()
+    {
+        try
+        {
+            await _presenceService.PollOnceAsync();
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Pre-launch presence refresh failed; proceeding with last-known state.");
         }
     }
 
@@ -833,10 +880,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private async Task OpenSquadLaunchAsync()
     {
         // Eligibility for the Private server modal counts SELECTED accounts only. Deselected
-        // rows are surfaced in the modal's status line so the user knows why the count is low.
-        var eligible = Accounts.Count(a => a.IsSelected && !a.SessionExpired && !a.IsRunning && !a.IsLaunching);
-        var running = Accounts.Count(a => a.IsSelected && a.IsRunning);
-        var expired = Accounts.Count(a => a.IsSelected && a.SessionExpired);
+        // rows are surfaced in the modal's status line so the user knows why the count is low. The
+        // "running" count uses the v1.5.0 augment rule (InGame || IsRunning) so an in-game alt with
+        // a lost pid is correctly surfaced as skipped, matching SquadLaunchAsync's eligibility.
+        var breakdown = LaunchEligibility.Compute(Accounts.Select(ToLaunchCandidate));
+        var eligible = breakdown.Eligible.Count;
+        var running = breakdown.Breakdown.Running;
+        var expired = breakdown.Breakdown.Expired;
 
         var window = new SquadLaunchWindow(_privateServerStore, _api, url => ResolveShareUrlAsync(url), eligible, running, expired)
         {
@@ -860,17 +910,18 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         IsBusy = true;
         try
         {
-            var targets = Accounts
-                .Where(a => a.IsSelected && !a.SessionExpired && !a.IsRunning && !a.IsLaunching)
-                .ToList();
-            var deselectedCount = Accounts.Count(a => !a.IsSelected);
-            _log.LogInformation("PrivateServer: placeId={PlaceId}, {Count} eligible, {Skipped} deselected",
-                target.PlaceId, targets.Count, deselectedCount);
+            // Same pre-snapshot presence refresh as LaunchAllAsync — closes the just-closed-client
+            // race before computing eligibility. Failures never block the launch.
+            await RefreshPresenceBeforeLaunchAsync();
+
+            var summaries = Accounts.ToList();
+            var result = LaunchEligibility.Compute(summaries.Select(ToLaunchCandidate));
+            var targets = MatchEligible(summaries, result.Eligible);
+            _log.LogInformation("PrivateServer: placeId={PlaceId}, {Count} eligible, {Running} running, {Expired} expired, {Deselected} deselected",
+                target.PlaceId, targets.Count, result.Breakdown.Running, result.Breakdown.Expired, result.Breakdown.Deselected);
             if (targets.Count == 0)
             {
-                StatusBanner = deselectedCount > 0
-                    ? "Nothing to launch — every selected account is running or expired."
-                    : "Nothing to launch — every account is already running or expired.";
+                StatusBanner = result.ZeroEligibleBanner;
                 return;
             }
 
@@ -888,8 +939,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     await Task.Delay(TimeSpan.FromMilliseconds(5000));
                 }
             }
-            var tail = deselectedCount > 0 ? $" ({deselectedCount} deselected, skipped.)" : string.Empty;
-            StatusBanner = $"Private server launch finished. {targets.Count} client{(targets.Count == 1 ? "" : "s")} joined.{tail}";
+            StatusBanner = result.PartialBanner(targets.Count, "Private server launch finished");
         }
         finally
         {
