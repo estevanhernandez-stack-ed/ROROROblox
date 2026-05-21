@@ -70,8 +70,8 @@ The full architecture, data flows, error buckets, and decision rationale live in
 | See sequencing rationale + risk callouts | [`process-notes.md`](process-notes.md) |
 | See reference-impl provenance | [`PROVENANCE.txt`](PROVENANCE.txt) |
 | Run the auth-ticket spike (item 1 HARD gate) | `dotnet run --project spike/auth-ticket` *(after item 1 lands)* |
-| Build the app | `dotnet build` *(after item 2)* |
-| Run unit + integration tests | `dotnet test src/ROROROblox.Tests/` (unit) + `dotnet test src/ROROROblox.PluginTestHarness/` (integration, v1.4+) |
+| Build the app | `dotnet build ROROROblox.slnx` — **`.slnx` is the canonical solution** (tracked + used by CI `release.yml`). Qodo IDE regenerates a legacy `ROROROblox.sln` stray (gitignored, missing the PluginTestHarness project) — never build it. Bare `dotnet build` errors MSB1011 while both files exist. |
+| Run unit + integration tests | `dotnet test ROROROblox.slnx` (whole solution) — or scope: `dotnet test src/ROROROblox.Tests/` (unit) + `dotnet test src/ROROROblox.PluginTestHarness/` (integration, v1.4+) |
 | See plugin author guide (v1.4+) | [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR_GUIDE.md) |
 | See v1.4 plugin-system design | [`docs/superpowers/specs/2026-05-09-rororo-plugin-system-design.md`](docs/superpowers/specs/2026-05-09-rororo-plugin-system-design.md) |
 | Build sideload MSIX | `msbuild src/RORORO.Package/RORORO.Package.wapproj /p:AppxPackageSigningEnabled=true /p:PackageCertificateKeyFile=dev-cert.pfx` *(after item 11)* |
