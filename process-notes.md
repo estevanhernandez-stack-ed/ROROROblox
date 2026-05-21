@@ -304,3 +304,26 @@ All 7 items complete on branch `v1.5.0-presence-account-ux`. Final state: `dotne
 **Session/friction loggers:** Cart plugin data dir still absent (4th cycle) — JSONL logging skipped, durable record is here. Standing /evolve signal.
 
 **Handoff:** branch ready for PR to `main`. Store-MSIX + Velopack release is builder-driven (memory: "I drive the full release through Store MSIX build"). Next feature cycle: v1.5.1 (private-server library + account tags).
+
+---
+
+## /checklist — autonomous run (2026-05-21, cycle v1.6.0 account transport + bundle)
+
+Spec-first cycle. Canonical spec authored this session: `docs/superpowers/specs/2026-05-21-rororo-account-transport-and-bundle-design.md`. Skipped the interview (fully-autonomous, brisk, deepening-rounds-zero — same as prior cycles). v1.5.0 shipped (PR #24, released v1.5.0.0 to GitHub; Store submission builder-driven). Tags graduated from v1.5.1 into v1.5.0; v1.6.0 absorbed the rest.
+
+**Bundle (5):** account transport (anchor, security-sensitive) · saved private servers in the dropdown · tag UI (collapsed "+" chip + filter) · fix/restore Follow · cross-cutting security pass.
+
+**Brainstorm decisions (transport):** PBKDF2-SHA256 @600k + AES-256-GCM (dependency-free); merge-by-userId import (non-destructive); full per-account setup travels; enforced passphrase + strength meter. Two scope corrections from the builder mid-design: (1) private servers already exist + are renamable — the fix is just populating the dropdown, NOT a library overhaul; (2) the open empty add-tag bar becomes a collapsed "+" chip you engage.
+
+**Sequencing rationale:**
+- **Follow diagnostic is item 1, a read-only GATE.** It was masked because it broke; root-cause first so we learn early whether the fix lands this cycle (item 8) or splits out. Builder explicitly wanted it gated first.
+- **Transport crypto early (items 2-4), riskiest + security-sensitive.** Core service (2) -> AccountStore export/merge (3) -> a dedicated crypto-hardening + cookie-audit pass (4) BEFORE any UI touches it.
+- **Transport UI (5) = C1** — first end-to-end export->import. Private servers (6) + tag UI (7) + Follow fix (8) = C2. Item 9 = mandatory Documentation & Security Verification (app-wide cookie audit, deliberate-export disclosure updates, gitignore `*.rororo-accounts`).
+
+**Item count:** 9. autonomous-with-verification, TDD-strict on Core/VM (2,3,6,7), verify-by-running on UI (5,8) + investigation (1) + audit (4,9).
+
+**New gitignore need flagged:** `*.rororo-accounts` export bundles contain encrypted cookies — never commit. Item 9 adds the rule; pre-commit secret-scan is the backstop.
+
+**Session/friction loggers:** Cart plugin data dir still absent (5th cycle).
+
+**Handoff:** Run `/build`. Autonomous; C1 after item 5, C2 after item 8; Follow scope confirmed at item 1 before item 8.
