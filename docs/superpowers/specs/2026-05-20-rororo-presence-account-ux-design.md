@@ -1,6 +1,6 @@
 # RoRoRo v1.5.0 — Presence-based account status + Launch multiple hardening
 
-> **Status:** Design approved (augment approach) 2026-05-20. Pre-implementation.
+> **Status:** Implemented 2026-05-20 on branch `v1.5.0-presence-account-ux` (items 1-7), pending merge to `main`. Build matches design; two in-build refinements are recorded inline — the "At Roblox home" / "In Studio" status states (see Components > 2) and the accepted Roblox-presence-lag eligibility limitation (see Risks).
 > **Cycle:** v1.5.0 (credibility hotfix). Tags + private-server picker deferred to v1.5.1; cross-machine account import/export deferred to its own cycle.
 > **Current source:** v1.4.3.0. Reported-against build: Store v1.3.4.0.
 
@@ -159,6 +159,7 @@ Unit + reconciliation tests only — no end-to-end against real roblox.com (CLAU
 - **Presence rate limits at high account counts (50+).** Mitigated by stagger + cache + 429 backoff. The actual limits are unconfirmed — do **not** assume; if a heavy-account user reports throttling, measure before tuning the cadence. (Flag for a short spike if it bites.)
 - **DPAPI decrypt cost per poll.** Acceptable at 25 s over non-expired accounts. Plaintext cookie caching is explicitly off the table for secret-hygiene reasons unless measured as a real problem.
 - **Presence self-visibility under "invisible" mode** is not verified against live Roblox. Covered defensively by the `IsRunning` fallback; worth a one-account manual check during build.
+- **Launch-multiple eligibility lags a just-closed client (CONFIRMED at C2, accepted).** When a client closes, the local process signal (`IsRunning`) flips instantly but Roblox's *own* presence service keeps reporting the user in-game for a while — so an alt closed and immediately re-launched can be skipped as "already running" until Roblox catches up (a few seconds; the pre-snapshot refresh re-queries but gets Roblox's stale value). The 25 s *poll-cadence* race is closed; the upstream Roblox propagation delay is not, and can't be from our side without trusting local "process gone" over presence for eligibility (which reopens a different edge — a bootstrapper-respawn would look closed). Builder accepted this 2026-05-20: retry-after-a-moment works. Future option (v1.5.1+): for eligibility only, treat a *recent* local process-exit as authoritative over a stale in-game presence. Not built — measure demand first.
 
 ## Decisions to log (626 Labs Dashboard)
 
