@@ -1,0 +1,113 @@
+<Window x:Class="ROROROblox.App.Transport.ImportAccountsWindow"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Import accounts"
+        Height="360" Width="500"
+        MinHeight="340" MinWidth="460"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{DynamicResource BgBrush}"
+        Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
+    <Grid Margin="28,24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />  <!-- Title -->
+            <RowDefinition Height="Auto" />  <!-- Subtitle -->
+            <RowDefinition Height="Auto" />  <!-- File label -->
+            <RowDefinition Height="Auto" />  <!-- File picker row -->
+            <RowDefinition Height="Auto" />  <!-- Passphrase label -->
+            <RowDefinition Height="Auto" />  <!-- Passphrase box -->
+            <RowDefinition Height="Auto" />  <!-- Status line -->
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />  <!-- Buttons -->
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <TextBlock Text="RoRoRo"
+                       FontSize="20" FontWeight="Bold"
+                       Foreground="{DynamicResource CyanBrush}" />
+            <TextBlock Text=" / "
+                       FontSize="20" FontWeight="Bold"
+                       Foreground="{DynamicResource MagentaBrush}" />
+            <TextBlock Text="Import accounts"
+                       FontSize="20" FontWeight="Bold"
+                       Foreground="{DynamicResource WhiteBrush}" />
+        </StackPanel>
+
+        <TextBlock Grid.Row="1"
+                   Text="Pick a .rororo-accounts file and enter its passphrase. Accounts already on this PC are kept as-is — only new ones are added."
+                   FontSize="11"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   TextWrapping="Wrap"
+                   Margin="0,6,0,0" />
+
+        <TextBlock Grid.Row="2"
+                   Text="File"
+                   FontSize="12" FontWeight="SemiBold"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   Margin="0,18,0,6" />
+
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" x:Name="FilePathBox"
+                     FontSize="12"
+                     FontFamily="Consolas"
+                     Padding="10,8"
+                     IsReadOnly="True"
+                     Background="{DynamicResource RowBgBrush}"
+                     Foreground="{DynamicResource WhiteBrush}"
+                     BorderBrush="{DynamicResource DividerBrush}"
+                     BorderThickness="1" />
+            <Button Grid.Column="1" Content="Browse…"
+                    Padding="14,8" Margin="8,0,0,0"
+                    Background="{DynamicResource NavyBrush}"
+                    Foreground="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource DividerBrush}"
+                    BorderThickness="1"
+                    Click="OnBrowseClick" />
+        </Grid>
+
+        <TextBlock Grid.Row="4"
+                   Text="Passphrase"
+                   FontSize="12" FontWeight="SemiBold"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   Margin="0,16,0,6" />
+
+        <PasswordBox Grid.Row="5" x:Name="PassphraseBox"
+                     FontSize="13"
+                     Padding="10,8"
+                     Background="{DynamicResource RowBgBrush}"
+                     Foreground="{DynamicResource WhiteBrush}"
+                     BorderBrush="{DynamicResource DividerBrush}"
+                     CaretBrush="{DynamicResource CyanBrush}"
+                     BorderThickness="1"
+                     PasswordChanged="OnInputChanged" />
+
+        <TextBlock Grid.Row="6" x:Name="StatusText"
+                   FontSize="11"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   TextWrapping="Wrap"
+                   Margin="0,10,0,0" />
+
+        <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Cancel" Padding="16,8" Margin="0,0,8,0"
+                    Background="{DynamicResource NavyBrush}"
+                    Foreground="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource DividerBrush}"
+                    BorderThickness="1"
+                    IsCancel="True"
+                    Click="OnCancelClick" />
+            <Button x:Name="ImportButton" Content="Import" Padding="16,8"
+                    Background="{DynamicResource CyanBrush}"
+                    Foreground="{DynamicResource NavyBrush}"
+                    BorderThickness="0"
+                    FontWeight="Bold"
+                    IsDefault="True"
+                    IsEnabled="False"
+                    Click="OnImportClick" />
+        </StackPanel>
+    </Grid>
+</Window>

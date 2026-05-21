@@ -3,7 +3,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using ROROROblox.App.Modals;
+using ROROROblox.App.Transport;
+using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
+using ROROROblox.Core.Transport;
 
 namespace ROROROblox.App.Settings;
 
@@ -12,15 +15,27 @@ internal partial class SettingsWindow : Window
     private readonly IFavoriteGameStore _favorites;
     private readonly IPrivateServerStore _servers;
     private readonly IRobloxApi _api;
+    private readonly IAccountStore _accountStore;
+    private readonly IAccountTransport _transport;
+    private readonly MainViewModel _mainViewModel;
     private readonly ObservableCollection<FavoriteGame> _items = [];
     private readonly ObservableCollection<GameSearchResult> _searchItems = [];
     private readonly ObservableCollection<SavedPrivateServer> _serverItems = [];
 
-    public SettingsWindow(IFavoriteGameStore favorites, IPrivateServerStore servers, IRobloxApi api)
+    public SettingsWindow(
+        IFavoriteGameStore favorites,
+        IPrivateServerStore servers,
+        IRobloxApi api,
+        IAccountStore accountStore,
+        IAccountTransport transport,
+        MainViewModel mainViewModel)
     {
         _favorites = favorites;
         _servers = servers;
         _api = api;
+        _accountStore = accountStore;
+        _transport = transport;
+        _mainViewModel = mainViewModel;
         InitializeComponent();
         FavoritesList.ItemsSource = _items;
         SearchResultsList.ItemsSource = _searchItems;
@@ -352,6 +367,34 @@ internal partial class SettingsWindow : Window
             StatusText.Text = "That server isn't saved any more.";
             await ReloadServersAsync();
         }
+    }
+
+    // ---------- v1.6.0 — account transport (export / import) entry points ----------
+
+    private void OnExportAccountsClick(object sender, RoutedEventArgs e)
+    {
+        // Snapshot the live account list from the ViewModel — gives the export checklist each row's
+        // RenderName + RobloxUserId (the latter decides exportable vs SkippedNoUserId).
+        var accounts = _mainViewModel.Accounts.ToList();
+        if (accounts.Count == 0)
+        {
+            MessageBox.Show(
+                this,
+                "You don't have any saved accounts to export yet.",
+                "Nothing to export",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        var window = new ExportAccountsWindow(_accountStore, _transport, accounts) { Owner = this };
+        window.ShowDialog();
+    }
+
+    private void OnImportAccountsClick(object sender, RoutedEventArgs e)
+    {
+        var window = new ImportAccountsWindow(_accountStore, _transport, _mainViewModel) { Owner = this };
+        window.ShowDialog();
     }
 
     private void OnCloseClick(object sender, RoutedEventArgs e)

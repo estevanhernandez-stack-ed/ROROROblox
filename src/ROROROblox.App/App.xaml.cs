@@ -269,6 +269,11 @@ public partial class App : Application
         services.AddSingleton<IThemeStore>(_ => new ThemeStore());
         services.AddSingleton<ThemeService>();
         services.AddSingleton<IAccountStore>(_ => new AccountStore());
+
+        // v1.6.0 account transport (item 5). Pure-crypto bundle service (PBKDF2 + AES-256-GCM);
+        // stateless, so a singleton is fine. The export/import dialogs consume this + IAccountStore.
+        services.AddSingleton<ROROROblox.Core.Transport.IAccountTransport,
+            ROROROblox.Core.Transport.AccountTransportService>();
         services.AddSingleton<IStartupRegistration, StartupRegistration>();
         services.AddSingleton<IProcessStarter, ProcessStarter>();
 

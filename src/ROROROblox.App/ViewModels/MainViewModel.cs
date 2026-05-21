@@ -44,6 +44,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly Theming.ThemeService _themeService;
     private readonly Tray.RobloxWindowDecorator _windowDecorator;
     private readonly IBloxstrapDetector _bloxstrapDetector;
+    private readonly Core.Transport.IAccountTransport _accountTransport;
     private readonly ILogger<MainViewModel> _log;
 
     /// <summary>
@@ -79,6 +80,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         Theming.ThemeService themeService,
         Tray.RobloxWindowDecorator windowDecorator,
         IBloxstrapDetector bloxstrapDetector,
+        Core.Transport.IAccountTransport accountTransport,
         ILogger<MainViewModel>? log = null)
     {
         _cookieCapture = cookieCapture;
@@ -98,6 +100,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _themeService = themeService;
         _windowDecorator = windowDecorator;
         _bloxstrapDetector = bloxstrapDetector;
+        _accountTransport = accountTransport;
         _log = log ?? NullLogger<MainViewModel>.Instance;
 
         AddAccountCommand = new RelayCommand(AddAccountAsync, () => !IsBusy);
@@ -1375,7 +1378,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OpenSettings()
     {
-        var window = new SettingsWindow(_favorites, _privateServerStore, _api) { Owner = Application.Current.MainWindow };
+        var window = new SettingsWindow(_favorites, _privateServerStore, _api, _accountStore, _accountTransport, this) { Owner = Application.Current.MainWindow };
         window.ShowDialog();
         // Refresh in case the user added / removed / set-default'd a game.
         _ = ReloadGamesAsync();
