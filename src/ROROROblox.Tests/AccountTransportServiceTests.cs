@@ -35,6 +35,7 @@ public class AccountTransportServiceTests
     {
         new AccountExportRecord(
             DisplayName: "MainGuy",
+            AvatarUrl: "https://avatar.example/main.png",
             RobloxUserId: 12345678901L,
             // Fake placeholder — deliberately NOT the real .ROBLOSECURITY signature so the
             // pre-commit secret scanner stays happy. The crypto round-trip is content-agnostic;
@@ -49,6 +50,7 @@ public class AccountTransportServiceTests
             IsSelected: true),
         new AccountExportRecord(
             DisplayName: "AltOne",
+            AvatarUrl: "",
             RobloxUserId: 22222222222L,
             Cookie: "FAKE-COOKIE-PLACEHOLDER-alt-BBBBBBBBBBBB",
             Tags: System.Array.Empty<string>(),
@@ -73,6 +75,7 @@ public class AccountTransportServiceTests
         for (int i = 0; i < original.Count; i++)
         {
             Assert.Equal(original[i].DisplayName, restored[i].DisplayName);
+            Assert.Equal(original[i].AvatarUrl, restored[i].AvatarUrl);
             Assert.Equal(original[i].RobloxUserId, restored[i].RobloxUserId);
             Assert.Equal(original[i].Cookie, restored[i].Cookie);
             Assert.Equal(original[i].Tags, restored[i].Tags);

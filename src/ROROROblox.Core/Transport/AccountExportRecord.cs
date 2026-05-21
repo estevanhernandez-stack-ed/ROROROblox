@@ -8,6 +8,7 @@ namespace ROROROblox.Core.Transport;
 /// never logged or persisted by the transport layer itself. Spec §1 "Bundle format" / "Components".
 /// </summary>
 /// <param name="DisplayName">Roblox-side display name (informational; the source of truth is re-resolved on import if needed).</param>
+/// <param name="AvatarUrl">Avatar headshot URL. Carried so import is fully offline — no avatar refetch needed on the destination PC.</param>
 /// <param name="RobloxUserId">Roblox user id — the merge key on import (dedupe by userId).</param>
 /// <param name="Cookie">Plaintext <c>.ROBLOSECURITY</c>. Treat as a secret. Never log.</param>
 /// <param name="Tags">Free-text per-account tags (PS99, RCU…).</param>
@@ -19,6 +20,7 @@ namespace ROROROblox.Core.Transport;
 /// <param name="IsSelected">Whether the account is included in batch launches.</param>
 public sealed record AccountExportRecord(
     string DisplayName,
+    string AvatarUrl,
     long RobloxUserId,
     string Cookie,
     IReadOnlyList<string> Tags,
