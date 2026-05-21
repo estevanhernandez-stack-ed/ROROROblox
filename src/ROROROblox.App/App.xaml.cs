@@ -650,7 +650,12 @@ public partial class App : Application
             var startup = _services.GetRequiredService<IStartupRegistration>();
             var themeStore = _services.GetRequiredService<IThemeStore>();
             var themeService = _services.GetRequiredService<ThemeService>();
-            var window = new Preferences.PreferencesWindow(settings, startup, themeStore, themeService);
+            var accountStore = _services.GetRequiredService<IAccountStore>();
+            var transport = _services.GetRequiredService<ROROROblox.Core.Transport.IAccountTransport>();
+            var mainViewModel = _services.GetRequiredService<MainViewModel>();
+            var window = new Preferences.PreferencesWindow(
+                settings, startup, themeStore, themeService,
+                accountStore, transport, mainViewModel);
             if (owner.IsLoaded) window.Owner = owner;
             SurfaceMainWindow(owner);
             window.ShowDialog();

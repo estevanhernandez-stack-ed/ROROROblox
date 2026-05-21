@@ -2,8 +2,11 @@ using System.Diagnostics;
 using System.Windows;
 using ROROROblox.App.Startup;
 using ROROROblox.App.Theming;
+using ROROROblox.App.Transport;
+using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 using ROROROblox.Core.Theming;
+using ROROROblox.Core.Transport;
 
 namespace ROROROblox.App.Preferences;
 
@@ -20,18 +23,27 @@ internal partial class PreferencesWindow : Window
     private readonly IStartupRegistration _startupRegistration;
     private readonly IThemeStore _themeStore;
     private readonly ThemeService _themeService;
+    private readonly IAccountStore _accountStore;
+    private readonly IAccountTransport _transport;
+    private readonly MainViewModel _mainViewModel;
     private bool _suppressClickHandlers; // true while we set the initial check states.
 
     public PreferencesWindow(
         IAppSettings settings,
         IStartupRegistration startupRegistration,
         IThemeStore themeStore,
-        ThemeService themeService)
+        ThemeService themeService,
+        IAccountStore accountStore,
+        IAccountTransport transport,
+        MainViewModel mainViewModel)
     {
         _settings = settings;
         _startupRegistration = startupRegistration;
         _themeStore = themeStore;
         _themeService = themeService;
+        _accountStore = accountStore;
+        _transport = transport;
+        _mainViewModel = mainViewModel;
         InitializeComponent();
         Loaded += OnLoaded;
     }
@@ -163,6 +175,34 @@ internal partial class PreferencesWindow : Window
     {
         try { return _startupRegistration.IsEnabled(); }
         catch { return false; }
+    }
+
+    // ---------- v1.6.0 — account transport (export / import) entry points ----------
+
+    private void OnExportAccountsClick(object sender, RoutedEventArgs e)
+    {
+        // Snapshot the live account list from the ViewModel — gives the export checklist each row's
+        // RenderName + RobloxUserId (the latter decides exportable vs SkippedNoUserId).
+        var accounts = _mainViewModel.Accounts.ToList();
+        if (accounts.Count == 0)
+        {
+            MessageBox.Show(
+                this,
+                "You don't have any saved accounts to export yet.",
+                "Nothing to export",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        var window = new ExportAccountsWindow(_accountStore, _transport, accounts) { Owner = this };
+        window.ShowDialog();
+    }
+
+    private void OnImportAccountsClick(object sender, RoutedEventArgs e)
+    {
+        var window = new ImportAccountsWindow(_accountStore, _transport, _mainViewModel) { Owner = this };
+        window.ShowDialog();
     }
 
     private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
