@@ -43,7 +43,7 @@ Bigger than v1.5.0 — crypto + five surfaces. **Total ≈ 8-12 hours.** Heavies
   Acceptance: dpapi-cookie-blast-radius reports clean on the transport path; no secret in logs/exceptions; nonce-uniqueness + tag-verify tests present.
   Verify: agent report + `dotnet test ROROROblox.slnx --filter "AccountTransport*|AccountStore*"`. Commit: `test(transport): crypto hardening + cookie-leak audit on transport path`.
 
-- [ ] **5. Transport UI — export/import dialogs + passphrase strength meter**
+- [x] **5. Transport UI — export/import dialogs + passphrase strength meter**
   Spec ref: `spec.md > 1. Account transport > Export flow / Import flow`
   What to build: Export dialog (account checklist defaulting to all; passphrase field with **enforced floor ≥12 + strength meter + confirm**; export disabled until it clears; save-file picker; plain warning on success). Import dialog (file picker; passphrase; calls decrypt → `ImportMergeAsync`; reports "Imported N, skipped M"; clear fail-closed message on wrong passphrase / damaged file). Wire to `AccountTransportService` + `AccountStore`. Brand-styled per 626 tokens. Entry points in Settings (or a dedicated dialog).
   Acceptance: export a bundle, import it on a clean profile → accounts appear; wrong passphrase fails cleanly; merge skips dupes; weak passphrase blocks export.
