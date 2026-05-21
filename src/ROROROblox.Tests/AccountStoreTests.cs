@@ -540,4 +540,113 @@ public class AccountStoreTests : IDisposable
         Assert.Equal(60, list[0].FpsCap);
         Assert.Equal("#17d4fa", list[0].CaptionColorHex);
     }
+
+    // ---------- v1.5.0 — SetTagsAsync (free-text per-account tags, DPAPI roundtrip) ----------
+
+    [Fact]
+    public async Task NewAccount_DefaultsToEmptyTags()
+    {
+        using var store = new AccountStore(_filePath);
+
+        var added = await store.AddAsync("U", "https://x", "c");
+
+        Assert.NotNull(added.Tags);
+        Assert.Empty(added.Tags!);
+        var list = await store.ListAsync();
+        Assert.Empty(list.Single().Tags!);
+    }
+
+    [Fact]
+    public async Task SetTagsAsync_RoundTrips_AcrossColdStart()
+    {
+        Guid id;
+        {
+            using var store = new AccountStore(_filePath);
+            var added = await store.AddAsync("TestUser", "https://avatar", "fake-cookie");
+            id = added.Id;
+            await store.SetTagsAsync(id, new[] { "PS99", "RCU", "PLAZA" });
+        }
+
+        using var reopened = new AccountStore(_filePath);
+        var list = await reopened.ListAsync();
+
+        Assert.Single(list);
+        Assert.Equal(new[] { "PS99", "RCU", "PLAZA" }, list[0].Tags);
+        // DPAPI envelope still works — cookie still retrievable.
+        Assert.Equal("fake-cookie", await reopened.RetrieveCookieAsync(id));
+    }
+
+    [Fact]
+    public async Task SetTagsAsync_ClearToEmpty_RoundTrips()
+    {
+        using var store = new AccountStore(_filePath);
+        var added = await store.AddAsync("U", "https://x", "c");
+        await store.SetTagsAsync(added.Id, new[] { "PS99" });
+
+        await store.SetTagsAsync(added.Id, Array.Empty<string>());
+
+        var list = await store.ListAsync();
+        Assert.Empty(list.Single().Tags!);
+    }
+
+    [Fact]
+    public async Task SetTagsAsync_Normalizes_TrimsDedupesCapsLengthAndCount()
+    {
+        using var store = new AccountStore(_filePath);
+        var added = await store.AddAsync("U", "https://x", "c");
+
+        await store.SetTagsAsync(added.Id, new[]
+        {
+            "  PS99  ",          // trims to "PS99"
+            "ps99",              // case-insensitive dupe of PS99 — dropped
+            "   ",               // whitespace-only — dropped
+            "",                  // empty — dropped
+            new string('x', 40), // over 24 chars — truncated to 24
+            "RCU", "PLAZA", "A", "B", "C", "D", "E", "F", // pushes total past the 8 cap
+        });
+
+        var stored = (await store.ListAsync()).Single().Tags!;
+        Assert.True(stored.Count <= 8, "Tag count must be capped at 8.");
+        Assert.Contains("PS99", stored);
+        Assert.DoesNotContain("ps99", stored); // dedupe kept first-seen casing
+        Assert.DoesNotContain(stored, t => string.IsNullOrWhiteSpace(t));
+        Assert.All(stored, t => Assert.True(t.Length <= 24, "Each tag must be capped at 24 chars."));
+    }
+
+    [Fact]
+    public async Task SetTagsAsync_MissingId_ThrowsKeyNotFoundException()
+    {
+        using var store = new AccountStore(_filePath);
+        await store.AddAsync("TestUser", "https://avatar", "fake-cookie");
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => store.SetTagsAsync(Guid.NewGuid(), new[] { "PS99" }));
+    }
+
+    [Fact]
+    public async Task SetTagsAsync_NullList_ThrowsArgumentNull()
+    {
+        using var store = new AccountStore(_filePath);
+        var added = await store.AddAsync("U", "https://x", "c");
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => store.SetTagsAsync(added.Id, null!));
+    }
+
+    [Fact]
+    public async Task SetTagsAsync_PreservesOtherAccountFields()
+    {
+        using var store = new AccountStore(_filePath);
+        var added = await store.AddAsync("TestUser", "https://avatar", "fake-cookie");
+        await store.SetMainAsync(added.Id);
+        await store.SetFpsCapAsync(added.Id, 60);
+        await store.UpdateLocalNameAsync(added.Id, "Mr. Solo Dolo");
+
+        await store.SetTagsAsync(added.Id, new[] { "PS99" });
+
+        var list = await store.ListAsync();
+        Assert.Equal(new[] { "PS99" }, list[0].Tags);
+        Assert.True(list[0].IsMain);
+        Assert.Equal(60, list[0].FpsCap);
+        Assert.Equal("Mr. Solo Dolo", list[0].LocalName);
+    }
 }

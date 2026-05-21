@@ -48,7 +48,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             var blob = await LoadAsync().ConfigureAwait(false);
             return blob.Accounts
-                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName, a.RobloxUserId))
+                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName, a.RobloxUserId, a.Tags ?? []))
                 .ToList();
         }
         finally
@@ -90,7 +90,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 SortOrder: nextSortOrder);
             blob.Accounts.Add(stored);
             await SaveAsync(blob).ConfigureAwait(false);
-            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName, stored.RobloxUserId);
+            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName, stored.RobloxUserId, stored.Tags ?? []);
         }
         finally
         {
@@ -355,6 +355,81 @@ public sealed class AccountStore : IAccountStore, IDisposable
         }
     }
 
+    public async Task SetTagsAsync(Guid id, IReadOnlyList<string> tags)
+    {
+        ArgumentNullException.ThrowIfNull(tags);
+
+        // Defensively normalize on the write path so disk never holds dupes, blanks, over-length,
+        // or more than the cap — even if a caller bypasses the ViewModel's incremental normalization.
+        var normalized = NormalizeTags(tags);
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var index = blob.Accounts.FindIndex(a => a.Id == id);
+            if (index < 0)
+            {
+                throw new KeyNotFoundException($"Account {id} not found.");
+            }
+            // No-op write avoidance — skip the DPAPI roundtrip when nothing changed.
+            var current = blob.Accounts[index].Tags ?? [];
+            if (current.SequenceEqual(normalized, StringComparer.Ordinal))
+            {
+                return;
+            }
+            blob.Accounts[index] = blob.Accounts[index] with { Tags = normalized };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    /// <summary>
+    /// Tag count cap — keeps the account row from overflowing. Spec §"Components > 4" (~8).
+    /// </summary>
+    public const int MaxTags = 8;
+
+    /// <summary>
+    /// Tag length cap — keeps a single chip from blowing out the row width. Spec §"Components > 4" (~24).
+    /// </summary>
+    public const int MaxTagLength = 24;
+
+    /// <summary>
+    /// Trim each tag, drop empty/whitespace, truncate to <see cref="MaxTagLength"/>, dedupe
+    /// case-insensitively (first-seen casing wins), and cap at <see cref="MaxTags"/>. Mirrors the
+    /// ViewModel's incremental AddTag rules so the two never diverge.
+    /// </summary>
+    private static List<string> NormalizeTags(IReadOnlyList<string> tags)
+    {
+        var result = new List<string>(Math.Min(tags.Count, MaxTags));
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var raw in tags)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                continue;
+            }
+            var trimmed = raw.Trim();
+            if (trimmed.Length > MaxTagLength)
+            {
+                trimmed = trimmed[..MaxTagLength];
+            }
+            if (!seen.Add(trimmed))
+            {
+                continue; // case-insensitive dupe
+            }
+            result.Add(trimmed);
+            if (result.Count >= MaxTags)
+            {
+                break;
+            }
+        }
+        return result;
+    }
+
     public async Task TouchLastLaunchedAsync(Guid id)
     {
         await _gate.WaitAsync().ConfigureAwait(false);
@@ -464,7 +539,8 @@ public sealed class AccountStore : IAccountStore, IDisposable
         string? CaptionColorHex = null,
         int? FpsCap = null,
         string? LocalName = null,
-        long? RobloxUserId = null);
+        long? RobloxUserId = null,
+        IReadOnlyList<string>? Tags = null);
 
     internal sealed record StoredAccountsBlob(
         int Version,

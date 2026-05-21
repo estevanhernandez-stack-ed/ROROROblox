@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -363,7 +364,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             foreach (var account in ordered)
             {
                 var summary = new AccountSummary(account);
-                summary.PropertyChanged += OnAccountSummaryPropertyChanged;
+                WireAccountSummary(summary);
                 Accounts.Add(summary);
             }
         }
@@ -656,7 +657,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             _log.LogDebug(persistEx, "Couldn't persist RobloxUserId for newly-added {AccountId}; will retry on next resolution.", account.Id);
         }
-        summary.PropertyChanged += OnAccountSummaryPropertyChanged;
+        WireAccountSummary(summary);
         Accounts.Insert(0, summary);
         _log.LogInformation("Added account {AccountId} ({Username}, userId {UserId}, isMain={IsMain})",
             account.Id, captured.Username, captured.UserId, account.IsMain);
@@ -1390,6 +1391,38 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         var window = new AboutWindow { Owner = Application.Current.MainWindow };
         window.ShowDialog();
+    }
+
+    /// <summary>
+    /// Attach every reactive-persist subscription a row needs. Called at both row-creation sites
+    /// (initial load + Add Account) so a freshly-added account persists tag edits just like a loaded
+    /// one. Tags are seeded in the AccountSummary constructor BEFORE this subscribe, so wiring
+    /// CollectionChanged here never fires a redundant persist for the rows loaded from disk.
+    /// </summary>
+    private void WireAccountSummary(AccountSummary summary)
+    {
+        summary.PropertyChanged += OnAccountSummaryPropertyChanged;
+        summary.Tags.CollectionChanged += (_, _) => OnAccountTagsChanged(summary);
+    }
+
+    /// <summary>
+    /// A row's tag collection changed (add/remove) — persist the whole normalized list. Mirrors the
+    /// <see cref="PersistIsSelectedAsync"/> soft-failure shape: fire-and-forget, a write failure
+    /// doesn't block the chip showing/hiding; the next edit reconverges.
+    /// </summary>
+    private void OnAccountTagsChanged(AccountSummary summary) =>
+        _ = PersistTagsAsync(summary.Id, summary.Tags.ToList());
+
+    private async Task PersistTagsAsync(Guid accountId, IReadOnlyList<string> tags)
+    {
+        try
+        {
+            await _accountStore.SetTagsAsync(accountId, tags);
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Persisting {Count} tags for {AccountId} failed.", tags.Count, accountId);
+        }
     }
 
     /// <summary>

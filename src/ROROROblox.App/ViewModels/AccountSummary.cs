@@ -1,5 +1,7 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Input;
 using ROROROblox.Core;
 
 namespace ROROROblox.App.ViewModels;
@@ -40,6 +42,12 @@ public sealed class AccountSummary : INotifyPropertyChanged
         _fpsCap = account.FpsCap;
         _localName = account.LocalName;
         RobloxUserId = account.RobloxUserId;
+        // Seed tags from the persisted record BEFORE any CollectionChanged subscriber is attached
+        // (MainViewModel subscribes after construction), so loading existing tags never triggers a
+        // redundant persist back to the store.
+        Tags = new ObservableCollection<string>(account.Tags ?? []);
+        AddTagCommand = new RelayCommand(p => AddTag(p as string));
+        RemoveTagCommand = new RelayCommand(p => RemoveTag(p as string));
     }
 
     public Guid Id { get; }
@@ -261,6 +269,71 @@ public sealed class AccountSummary : INotifyPropertyChanged
     {
         get => _isDropTarget;
         set => SetField(ref _isDropTarget, value);
+    }
+
+    /// <summary>
+    /// Free-text labels for this account (PS99, RCU, PLAZA…). Live-bound to the row's chips
+    /// <c>ItemsControl</c> so add/remove shows instantly. <see cref="MainViewModel"/> subscribes to
+    /// <see cref="ObservableCollection{T}.CollectionChanged"/> and persists via
+    /// <see cref="IAccountStore.SetTagsAsync"/> — no Save button, the edit is the save. Seeded in the
+    /// constructor (before MainViewModel subscribes) so loading existing tags doesn't re-persist.
+    /// Mutate only through <see cref="AddTagCommand"/> / <see cref="RemoveTagCommand"/> so the
+    /// normalization rules (trim, dedupe, length + count caps) always apply. v1.5.0 — spec §"Components > 4".
+    /// </summary>
+    public ObservableCollection<string> Tags { get; }
+
+    /// <summary>Maximum number of tags per account. Keeps the row from overflowing.</summary>
+    public const int MaxTags = 8;
+
+    /// <summary>Maximum length of a single tag. Keeps one chip from blowing out the row width.</summary>
+    public const int MaxTagLength = 24;
+
+    /// <summary>
+    /// Add a free-text tag (parameter = the new tag text). Normalizes: trims whitespace; ignores
+    /// empty/whitespace; truncates to <see cref="MaxTagLength"/> chars; dedupes case-insensitively
+    /// (a tag already present, ignoring case, is not re-added); ignores adds once
+    /// <see cref="MaxTags"/> tags exist. Pure VM state — persistence is wired in MainViewModel.
+    /// </summary>
+    public ICommand AddTagCommand { get; }
+
+    /// <summary>
+    /// Remove the exact tag passed as the parameter (the chip's "×" binds the tag string here).
+    /// </summary>
+    public ICommand RemoveTagCommand { get; }
+
+    private void AddTag(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return;
+        }
+        if (Tags.Count >= MaxTags)
+        {
+            return;
+        }
+        var trimmed = raw.Trim();
+        if (trimmed.Length > MaxTagLength)
+        {
+            trimmed = trimmed[..MaxTagLength];
+        }
+        // Case-insensitive dedupe — don't add a tag that already exists ignoring case.
+        foreach (var existing in Tags)
+        {
+            if (string.Equals(existing, trimmed, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+        }
+        Tags.Add(trimmed);
+    }
+
+    private void RemoveTag(string? tag)
+    {
+        if (tag is null)
+        {
+            return;
+        }
+        Tags.Remove(tag);
     }
 
     /// <summary>

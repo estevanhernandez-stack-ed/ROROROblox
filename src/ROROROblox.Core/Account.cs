@@ -17,4 +17,5 @@ public sealed record Account(
     string? CaptionColorHex = null,
     int? FpsCap = null,
     string? LocalName = null,
-    long? RobloxUserId = null);
+    long? RobloxUserId = null,
+    IReadOnlyList<string>? Tags = null);
