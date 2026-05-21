@@ -31,7 +31,7 @@ Bigger than v1.5.0 — crypto + five surfaces. **Total ≈ 8-12 hours.** Heavies
   Acceptance: round-trip (export→import = same records); wrong passphrase throws (no partial data); tampered ciphertext/tag throws; unknown formatVersion rejected; two exports of identical data differ (random salt/nonce). New tests pass; existing 420 stay green.
   Verify: `dotnet test ROROROblox.slnx --filter "AccountTransport*"`. Commit: `feat(transport): AccountTransportService — PBKDF2 + AES-GCM bundle`.
 
-- [ ] **3. `AccountStore` bulk export read + merge import (Core, TDD)**
+- [x] **3. `AccountStore` bulk export read + merge import (Core, TDD)**
   Spec ref: `spec.md > 1. Account transport > Import flow / Components`
   What to build: `IAccountStore` gains a bulk export (decrypt the chosen accounts' cookies + settings into `AccountExportRecord`s) and a merge import (`ImportMergeAsync(records)`: for each record whose `RobloxUserId` is not already present locally, add it — re-encrypt its cookie into the local DPAPI `accounts.dat`, persist its settings; skip duplicates; return imported/skipped counts). Reuses the existing DPAPI path.
   Acceptance: export read returns full records for selected ids; merge adds non-dupes, skips existing (by userId), reports counts; round-trips through `AccountTransportService`; old `accounts.dat` unaffected. Tests pass.
