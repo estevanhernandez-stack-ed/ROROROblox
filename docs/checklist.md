@@ -50,13 +50,13 @@ Focused hotfix. **Total ≈ 5-7 hours** of autonomous engineering. Heaviest item
   Acceptance: an in-game-but-pid-lost account is excluded; a both-false account is included; the pre-snapshot refresh flips a just-closed alt to eligible; the success banner contains the skip-reason tail; the zero-eligible banner shows the breakdown.
   Verify: `dotnet test src/ROROROblox.Tests/ --filter "MainViewModel*"` + manual: close one alt and immediately hit Launch multiple — confirm it's included and the banner names the skips. **Checkpoint C2.** Commit: `fix(launch): presence-aware eligibility + never-silent no-op + skip-reason feedback`.
 
-- [ ] **6. Bump to 1.5.0.0 + release notes**
+- [x] **6. Bump to 1.5.0.0 + release notes**
   Spec ref: `spec.md > Why this exists` + `CLAUDE.md > Conventions`
   What to build: Bump `<Version>` to `1.5.0.0` in the app csproj (and any version-paired manifests — keep them in lockstep per CLAUDE.md). Write v1.5.0 release notes (what changed, builder-to-builder voice): the ghost fix ("your alts now show the game they're actually in, and stop falsely reporting closed"), Launch multiple now tells you what it skipped and why. Note in the canonical spec's status line that build matches design, or banner-correct if reality drifted during items 1-5.
   Acceptance: version reads `1.5.0.0` everywhere it's declared; release notes exist and read in-voice; no version-pair drift.
   Verify: `dotnet build` succeeds at the new version; grep confirms a single consistent version string. Commit: `build: bump to 1.5.0.0 + v1.5.0 release notes`.
 
-- [ ] **7. Documentation & Security Verification**
+- [x] **7. Documentation & Security Verification**
   Spec ref: `spec.md > Testing` + `spec.md > Risks / open questions` + `CLAUDE.md > What NOT to do`
   What to build: Confirm `docs/` artifacts reflect reality (spec, this checklist, `spec.md` pointer-stub updated to make v1.5.0 the current cycle). Run the secrets scan — **`PresenceService` must never log a cookie or `.ROBLOSECURITY` value** (run the `dpapi-cookie-blast-radius` agent against the new presence path). Run the one-line local-path grep (no `c:\Users\<name>\` in committable code, per pattern kk). Run `dotnet list package --vulnerable` / `dotnet build -warnaserror` sanity on the changed projects. Confirm `.gitignore` still covers `accounts.dat`, `consent.dat`, `*.pfx`, `webview2-data/`. The Store-MSIX + Velopack release itself is builder-driven post-merge (memory: "I drive the full release through Store MSIX build") — this item readies the branch, it does not cut the release.
   Acceptance: no cookie/secret in logs or staged files; no machine-local paths; dependency check clean or findings documented; docs current. Branch ready for PR to `main`.
