@@ -44,7 +44,7 @@ Focused hotfix. **Total ≈ 5-7 hours** of autonomous engineering. Heaviest item
   Acceptance: app builds and runs; launching an alt makes its row read "Connecting…" then "In {game}"; a client that Roblox's bootstrapper respawns (tracked pid exits, window stays up) keeps the row "In {game}" instead of flipping to "Closed".
   Verify: `dotnet build` then run; launch 2-3 alts and watch the rows transition. **Checkpoint C1.** Commit: `feat(status): wire presence into MainViewModel + defer close-stamp to presence`.
 
-- [ ] **5. Launch multiple hardening**
+- [x] **5. Launch multiple hardening**
   Spec ref: `spec.md > Components > 3. Launch multiple hardening`
   What to build: In `LaunchAllAsync` (`MainViewModel.cs:771`) and `SquadLaunchAsync` (`:848`), change the busy test from `!a.IsRunning` to `!(a.InGame || a.IsRunning)`. Before the eligibility snapshot, await a one-shot `PresenceService` refresh of the selected accounts (closes the 67ms race). Replace the zero-eligible banner with the full breakdown ("Nothing to launch — N in a game, M expired, K deselected"). On a partial launch, append the skip-reason tail ("Launched 6 · 1 already in a game (skipped)"). Update `LaunchAllCommand` CanExecute (`MainViewModel.cs:104`) to `!(InGame || IsRunning)`, and set the Launch multiple button tooltip to explain when it's disabled.
   Acceptance: an in-game-but-pid-lost account is excluded; a both-false account is included; the pre-snapshot refresh flips a just-closed alt to eligible; the success banner contains the skip-reason tail; the zero-eligible banner shows the breakdown.
