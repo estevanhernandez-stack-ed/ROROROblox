@@ -25,7 +25,7 @@ Bigger than v1.5.0 — crypto + five surfaces. **Total ≈ 8-12 hours.** Heavies
   Acceptance: a written root-cause finding + a scoped go/no-go on item 7. No code changes.
   Verify: findings reported; item 7 scope confirmed before reaching it. Commit: `docs: Follow restore root-cause diagnostic`.
 
-- [ ] **2. `AccountTransportService` crypto core (Core, TDD)**
+- [x] **2. `AccountTransportService` crypto core (Core, TDD)**
   Spec ref: `spec.md > 1. Account transport > Crypto / Bundle format`
   What to build: `src/ROROROblox.Core/Transport/IAccountTransport.cs` + `AccountTransportService.cs` + `AccountExportRecord` (display name, userId, cookie, tags, fpsCap, captionColorHex, localName, isMain, sortOrder/selected). `Export(records, passphrase) → byte[]` and `Import(byte[], passphrase) → records`. PBKDF2-HMAC-SHA256 @ 600,000 iters, random 16-byte salt; AES-256-GCM, random 12-byte nonce, 16-byte tag. Versioned binary header (magic + formatVersion + iterations + salt + nonce + ciphertext+tag). No DPAPI, no UI — pure crypto + serialization. Never log the passphrase/key/cookie; clear key material after use where the BCL allows.
   Acceptance: round-trip (export→import = same records); wrong passphrase throws (no partial data); tampered ciphertext/tag throws; unknown formatVersion rejected; two exports of identical data differ (random salt/nonce). New tests pass; existing 420 stay green.
