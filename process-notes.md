@@ -299,7 +299,7 @@ All 7 items complete on branch `v1.5.0-presence-account-ux`. Final state: `dotne
 
 **Mid-build scope event:** clan asked for private-server management "like the games library" (selectable per-account, not Squad-into-one-server). Builder chose finish-v1.5.0-first; sharpened requirement captured in spec out-of-scope as the **v1.5.1** shape (with account tags). Cross-machine import/export still deferred to its own cycle.
 
-**Repo hygiene flag (open):** both `ROROROblox.sln` and `ROROROblox.slnx` exist → bare `dotnet build` errors MSB1011; all cycle builds passed `ROROROblox.sln` explicitly. Canonical-solution decision left to the builder.
+**Repo hygiene flag (RESOLVED 2026-05-20):** `ROROROblox.slnx` is canonical — it's the only git-tracked solution, CI `release.yml` restores/tests against it, and it holds all 5 real projects (incl. `PluginTestHarness`) while excluding the gitignored `spike/`. The `ROROROblox.sln` was an UNTRACKED local stray that Qodo IDE auto-regenerates (already gitignored, and incomplete — missing `PluginTestHarness`). Cycle builds used the stray `.sln` explicitly, which silently skipped the integration-test project. Fix: deleted the local stray; `.gitignore` already covers it; CLAUDE.md "Common tasks" now says build/test with `ROROROblox.slnx`. Bare `dotnet build` resolves to `.slnx` cleanly until Qodo regenerates the stray again — build `ROROROblox.slnx` explicitly to be safe.
 
 **Session/friction loggers:** Cart plugin data dir still absent (4th cycle) — JSONL logging skipped, durable record is here. Standing /evolve signal.
 
