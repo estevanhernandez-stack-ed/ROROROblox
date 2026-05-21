@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 
 namespace ROROROblox.App.Friends;
@@ -20,6 +21,16 @@ internal partial class FriendFollowWindow : Window
 
     /// <summary>The friend the user picked — null if the user closed without following.</summary>
     public LaunchTarget.FollowFriend? SelectedTarget { get; private set; }
+
+    /// <summary>
+    /// The picked friend's presence snapshot at click time — carried so the caller
+    /// (<c>OpenFriendFollowAsync</c>) re-runs the same <see cref="MainViewModel.EvaluateFollow"/>
+    /// land-at-home guard before launching, instead of trusting the modal alone.
+    /// </summary>
+    public UserPresence? SelectedPresence { get; private set; }
+
+    /// <summary>The picked friend's display name — for the caller's status messaging.</summary>
+    public string? SelectedFriendName { get; private set; }
 
     public FriendFollowWindow(IRobloxApi api, string cookie, long accountUserId, string accountDisplayName)
     {
@@ -92,7 +103,11 @@ internal partial class FriendFollowWindow : Window
                 AddSectionHeader("In game", inGame.Count, isAccent: true);
                 foreach (var (f, p) in inGame)
                 {
-                    FriendsList.Children.Add(BuildFriendRow(f, p, isFollowable: true));
+                    // A friend can be InGame yet expose no joinable place (join/visibility privacy
+                    // off) — the same land-at-home guard FollowAltAsync uses gates the button here so
+                    // we never offer a Follow that silently bounces to the Roblox home page.
+                    var followable = MainViewModel.EvaluateFollow(p, FriendName(f)).CanFollow;
+                    FriendsList.Children.Add(BuildFriendRow(f, p, isFollowable: followable));
                 }
             }
             if (online.Count > 0)
@@ -223,18 +238,38 @@ internal partial class FriendFollowWindow : Window
                 FontSize = 11,
                 ToolTip = "Launch this account into the server your friend is in.",
             };
-            followBtn.Click += (_, _) => OnFollowClick(friend.UserId);
+            followBtn.Click += (_, _) => OnFollowClick(friend, presence);
             Grid.SetColumn(followBtn, 2);
             grid.Children.Add(followBtn);
+        }
+        else if (presence?.PresenceType == UserPresenceType.InGame)
+        {
+            // InGame but not joinable — the friend's join/visibility privacy hides the server, so a
+            // Follow would land at home. Say why instead of offering a button that silently bounces.
+            var hint = new TextBlock
+            {
+                Text = "Join privacy off",
+                FontSize = 10,
+                Foreground = (Brush)FindResource("MutedTextBrush"),
+                VerticalAlignment = VerticalAlignment.Center,
+                ToolTip = "This friend is in a game, but their join privacy hides the server so RoRoRo can't follow them in.",
+            };
+            Grid.SetColumn(hint, 2);
+            grid.Children.Add(hint);
         }
 
         row.Child = grid;
         return row;
     }
 
-    private void OnFollowClick(long friendUserId)
+    private static string FriendName(Friend friend) =>
+        string.IsNullOrEmpty(friend.DisplayName) ? friend.Username : friend.DisplayName;
+
+    private void OnFollowClick(Friend friend, UserPresence? presence)
     {
-        SelectedTarget = new LaunchTarget.FollowFriend(friendUserId);
+        SelectedTarget = new LaunchTarget.FollowFriend(friend.UserId);
+        SelectedPresence = presence;
+        SelectedFriendName = FriendName(friend);
         DialogResult = true;
         Close();
     }

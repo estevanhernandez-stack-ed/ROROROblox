@@ -255,6 +255,38 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Land-at-home guard for the follow paths (v1.6.0 item 8). A follow may only fire when the
+    /// target is in a <em>joinable</em> place — <see cref="UserPresenceType.InGame"/> AND a place id
+    /// is actually visible to us. A friend can be InGame yet expose a null/zero
+    /// <see cref="UserPresence.PlaceId"/> because their join/visibility privacy hides the server; in
+    /// that case <c>RequestFollowUser</c> gets server-rejected and the launcher silently bounces to
+    /// the Roblox home page. Every non-joinable shape (privacy-hidden InGame, online-not-in-game,
+    /// in Studio, offline, invisible, or no presence at all) is treated uniformly: do NOT launch,
+    /// surface a plain message instead.
+    /// <para>
+    /// Pure so both follow surfaces (the Friends modal and the follow-an-alt path) share the exact
+    /// same decision and can't drift apart.
+    /// </para>
+    /// </summary>
+    /// <param name="presence">The target's presence snapshot, or null when none could be read.</param>
+    /// <param name="targetName">The target's display name, for the user-facing message.</param>
+    public static FollowDecision EvaluateFollow(UserPresence? presence, string targetName)
+    {
+        var name = string.IsNullOrWhiteSpace(targetName) ? "that friend" : targetName;
+
+        // Joinable == InGame AND a real place id we can actually see. PlaceId is populated only when
+        // InGame AND the target's privacy lets the requesting cookie's owner see the server; a
+        // null/zero place id means "InGame, but no joinable place visible to us."
+        if (presence is { PresenceType: UserPresenceType.InGame, PlaceId: > 0 })
+        {
+            return FollowDecision.Allow();
+        }
+
+        return FollowDecision.Block(
+            $"Can't follow {name} — they're not in a joinable game right now (or their join privacy is off).");
+    }
+
+    /// <summary>
     /// Games available for the per-account picker on each row. Synced from the favorites store
     /// at LoadAsync time and again every time the Games dialog closes. Always ends with the
     /// <see cref="JoinByLinkSentinel"/> "(Paste a link...)" entry.
@@ -1202,6 +1234,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         };
         if (window.ShowDialog() == true && window.SelectedTarget is { } target)
         {
+            // Re-run the same land-at-home guard FollowAltAsync uses, against the friend's presence
+            // snapshot carried out of the modal. The modal already gates the button on this, but we
+            // re-check here so the launch decision is owned by one shared rule (EvaluateFollow) and
+            // a privacy-hidden / stale-presence target gets a clear message instead of a silent
+            // bounce to the Roblox home page.
+            var decision = EvaluateFollow(window.SelectedPresence, window.SelectedFriendName ?? "that friend");
+            if (!decision.CanFollow)
+            {
+                StatusBanner = decision.BlockedMessage!; // non-null whenever CanFollow is false (see FollowDecision.Block)
+                return;
+            }
             await LaunchAccountAsync(summary, overrideTarget: target);
         }
     }
@@ -1674,9 +1717,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     /// <summary>
     /// Launch <paramref name="source"/> into <paramref name="target"/>'s current Roblox server
-    /// via <see cref="LaunchTarget.FollowFriend"/>. Roblox does the privacy + game-state check
-    /// server-side; if target isn't currently in a place, the launcher silently lands at home.
-    /// We surface a status banner so the user knows whether the chip click did anything.
+    /// via <see cref="LaunchTarget.FollowFriend"/>. Guarded by the shared
+    /// <see cref="EvaluateFollow"/> rule (same as the Friends-modal path): when the target isn't in
+    /// a joinable game we block with a clear message instead of firing a launch that silently lands
+    /// at the Roblox home page. Only a real joinable place launches.
     /// </summary>
     public async Task FollowAltAsync(AccountSummary? source, AccountSummary? target)
     {
@@ -1696,16 +1740,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                            "Try Re-authenticating that account, or wait a moment after login.";
             return;
         }
-        if (!target.IsRunning)
+        // Share the SAME land-at-home guard as the Friends-modal path so the two follow surfaces
+        // can't drift. The saved-account row carries the v1.5.0 presence (PresenceState +
+        // CurrentPlaceId); project it into a UserPresence and let EvaluateFollow be the single rule.
+        // A target not in a joinable game is blocked here instead of firing a launch that bounces
+        // source to the Roblox home page.
+        var targetPresence = new UserPresence(
+            targetUserId, target.PresenceState, target.CurrentPlaceId, GameJobId: null, LastLocation: null);
+        var decision = EvaluateFollow(targetPresence, target.DisplayName);
+        if (!decision.CanFollow)
         {
-            // Roblox returns "no game" when the target isn't in a place. We still fire the
-            // launch (Roblox might surface its own friendly error), but warn the user.
-            StatusBanner = $"{target.DisplayName} isn't currently in a game — Roblox may bounce {source.DisplayName} to the home page.";
+            StatusBanner = decision.BlockedMessage!; // non-null whenever CanFollow is false (see FollowDecision.Block)
+            return;
         }
-        else
-        {
-            StatusBanner = $"Following {target.DisplayName} from {source.DisplayName}...";
-        }
+        StatusBanner = $"Following {target.DisplayName} from {source.DisplayName}...";
         var follow = new LaunchTarget.FollowFriend(targetUserId);
         await LaunchAccountAsync(source, overrideTarget: follow);
     }
@@ -2060,4 +2108,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var hash = System.Security.Cryptography.SHA256.HashData(bytes);
         return Convert.ToHexString(hash, 0, 4);
     }
+}
+
+/// <summary>
+/// Result of <see cref="MainViewModel.EvaluateFollow"/>: whether a follow may launch, and the
+/// plain user-facing message to surface when it may not. <see cref="BlockedMessage"/> is non-null
+/// exactly when <see cref="CanFollow"/> is false.
+/// </summary>
+public sealed record FollowDecision(bool CanFollow, string? BlockedMessage)
+{
+    public static FollowDecision Allow() => new(true, null);
+
+    public static FollowDecision Block(string message) => new(false, message);
 }

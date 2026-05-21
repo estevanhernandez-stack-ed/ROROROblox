@@ -90,6 +90,8 @@ Two tag-UI items, both touching the v1.5.0 row tag chrome.
 
 ## 5. Fix + restore the Follow feature
 
+> **CORRECTION (2026-05-21):** The feature was NEVER masked in committed source — see [the item-1 diagnostic](../../investigations/2026-05-21-follow-restore-diagnostic.md). Both follow surfaces are visible and wired. The real defect was functional: the Friends-modal path fired the launch with no presence/place guard, so a friend not in a joinable game (or privacy-hidden) silently landed the user at the Roblox home page. The actual item-8 work was porting the land-at-home guard (`EvaluateFollow`) into the Friends-modal path and sharing it with `FollowAltAsync` so the two can't drift — not a 3-XAML-edit unmask. The original framing below is preserved for /reflect-time context.
+
 The friend-follow feature is masked (UI `Visibility=Collapsed`, code intact: `FollowAltAsync`, `OpenFriendFollowCommand`, `FriendFollowWindow`, `LaunchTarget.FollowFriend`) — it was hidden because it was broken, not merely unfinished. **This item is investigate-then-fix-then-unmask**, not a 3-XAML-edit unmask. Build sequence: (a) root-cause why it was masked (presence/join-by-userid path against current Roblox behavior), (b) fix it, (c) unmask. The diagnostic gate comes first; if the root cause turns out deep, it may split into its own follow-up rather than block the cycle.
 
 ## Testing
