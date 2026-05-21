@@ -1,5 +1,7 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Input;
 using ROROROblox.Core;
 
 namespace ROROROblox.App.ViewModels;
@@ -19,6 +21,10 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private int? _runningPid;
     private DateTimeOffset? _runningSinceUtc;
     private DateTimeOffset? _lastClosedAtUtc;
+    private UserPresenceType _presenceState = UserPresenceType.Offline;
+    private string? _currentGameName;
+    private long? _currentPlaceId;
+    private DateTimeOffset? _inGameSinceUtc;
     private bool _isSelected = true;
     private string? _captionColorHex;
     private int? _fpsCap;
@@ -36,6 +42,12 @@ public sealed class AccountSummary : INotifyPropertyChanged
         _fpsCap = account.FpsCap;
         _localName = account.LocalName;
         RobloxUserId = account.RobloxUserId;
+        // Seed tags from the persisted record BEFORE any CollectionChanged subscriber is attached
+        // (MainViewModel subscribes after construction), so loading existing tags never triggers a
+        // redundant persist back to the store.
+        Tags = new ObservableCollection<string>(account.Tags ?? []);
+        AddTagCommand = new RelayCommand(p => AddTag(p as string));
+        RemoveTagCommand = new RelayCommand(p => RemoveTag(p as string));
     }
 
     public Guid Id { get; }
@@ -166,6 +178,78 @@ public sealed class AccountSummary : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Server-truth presence for this account, fed by <c>PresenceService</c> (v1.5.0). Authoritative
+    /// for <em>display</em> — when this is <see cref="UserPresenceType.InGame"/> the row shows the
+    /// game even if the local pid was lost (the ghost fix). Defaults to
+    /// <see cref="UserPresenceType.Offline"/> until the first poll lands. Flipping <see cref="InGame"/>
+    /// also re-renders the dot and secondary text. Spec §"Components > 2".
+    /// </summary>
+    public UserPresenceType PresenceState
+    {
+        get => _presenceState;
+        set
+        {
+            var wasInGame = InGame;
+            if (SetField(ref _presenceState, value))
+            {
+                if (InGame != wasInGame)
+                {
+                    OnPropertyChanged(nameof(InGame));
+                }
+                OnPropertyChanged(nameof(StatusDot));
+                OnPropertyChanged(nameof(SecondaryStatusText));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Resolved game name for the current in-game presence, or null when not in a game / not yet
+    /// resolved (presence reports <see cref="UserPresenceType.InGame"/> ~10-30 s before the name
+    /// cache fills). Drives the "In {game}" secondary text. v1.5.0.
+    /// </summary>
+    public string? CurrentGameName
+    {
+        get => _currentGameName;
+        set
+        {
+            if (SetField(ref _currentGameName, value))
+            {
+                OnPropertyChanged(nameof(SecondaryStatusText));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Place id of the current in-game presence, or null when not in a game. Used by the game-name
+    /// cache and (later) per-row "join" affordances. v1.5.0.
+    /// </summary>
+    public long? CurrentPlaceId
+    {
+        get => _currentPlaceId;
+        set => SetField(ref _currentPlaceId, value);
+    }
+
+    /// <summary>
+    /// When we first observed <see cref="UserPresenceType.InGame"/> for this account — drives the
+    /// "· {age}" duration tail on the in-game label. Set by the presence consumer (item 4) on the
+    /// first in-game tick and cleared when the account leaves the game. v1.5.0.
+    /// </summary>
+    public DateTimeOffset? InGameSinceUtc
+    {
+        get => _inGameSinceUtc;
+        set
+        {
+            if (SetField(ref _inGameSinceUtc, value))
+            {
+                OnPropertyChanged(nameof(SecondaryStatusText));
+            }
+        }
+    }
+
+    /// <summary>True when presence reports this account is currently in a game. v1.5.0.</summary>
+    public bool InGame => _presenceState == UserPresenceType.InGame;
+
+    /// <summary>
     /// Whether this account is included in batch launches (Launch multiple / Private server).
     /// Defaults to true; the user toggles via the small dot next to the status text.
     /// Persisted to <c>accounts.dat</c> so unticked alts stay unticked across restarts.
@@ -185,6 +269,71 @@ public sealed class AccountSummary : INotifyPropertyChanged
     {
         get => _isDropTarget;
         set => SetField(ref _isDropTarget, value);
+    }
+
+    /// <summary>
+    /// Free-text labels for this account (PS99, RCU, PLAZA…). Live-bound to the row's chips
+    /// <c>ItemsControl</c> so add/remove shows instantly. <see cref="MainViewModel"/> subscribes to
+    /// <see cref="ObservableCollection{T}.CollectionChanged"/> and persists via
+    /// <see cref="IAccountStore.SetTagsAsync"/> — no Save button, the edit is the save. Seeded in the
+    /// constructor (before MainViewModel subscribes) so loading existing tags doesn't re-persist.
+    /// Mutate only through <see cref="AddTagCommand"/> / <see cref="RemoveTagCommand"/> so the
+    /// normalization rules (trim, dedupe, length + count caps) always apply. v1.5.0 — spec §"Components > 4".
+    /// </summary>
+    public ObservableCollection<string> Tags { get; }
+
+    /// <summary>Maximum number of tags per account. Keeps the row from overflowing.</summary>
+    public const int MaxTags = 8;
+
+    /// <summary>Maximum length of a single tag. Keeps one chip from blowing out the row width.</summary>
+    public const int MaxTagLength = 24;
+
+    /// <summary>
+    /// Add a free-text tag (parameter = the new tag text). Normalizes: trims whitespace; ignores
+    /// empty/whitespace; truncates to <see cref="MaxTagLength"/> chars; dedupes case-insensitively
+    /// (a tag already present, ignoring case, is not re-added); ignores adds once
+    /// <see cref="MaxTags"/> tags exist. Pure VM state — persistence is wired in MainViewModel.
+    /// </summary>
+    public ICommand AddTagCommand { get; }
+
+    /// <summary>
+    /// Remove the exact tag passed as the parameter (the chip's "×" binds the tag string here).
+    /// </summary>
+    public ICommand RemoveTagCommand { get; }
+
+    private void AddTag(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return;
+        }
+        if (Tags.Count >= MaxTags)
+        {
+            return;
+        }
+        var trimmed = raw.Trim();
+        if (trimmed.Length > MaxTagLength)
+        {
+            trimmed = trimmed[..MaxTagLength];
+        }
+        // Case-insensitive dedupe — don't add a tag that already exists ignoring case.
+        foreach (var existing in Tags)
+        {
+            if (string.Equals(existing, trimmed, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+        }
+        Tags.Add(trimmed);
+    }
+
+    private void RemoveTag(string? tag)
+    {
+        if (tag is null)
+        {
+            return;
+        }
+        Tags.Remove(tag);
     }
 
     /// <summary>
@@ -211,40 +360,86 @@ public sealed class AccountSummary : INotifyPropertyChanged
         set => SetField(ref _fpsCap, value);
     }
 
-    /// <summary>Three-state colored dot: <c>green</c> running / <c>yellow</c> expired / <c>grey</c> idle.</summary>
+    /// <summary>
+    /// Three-state colored dot: <c>yellow</c> expired / <c>green</c> active (in-game, in Studio, OR
+    /// pid alive) / <c>grey</c> idle. The augment rule (v1.5.0): a row is active if <see cref="InGame"/>
+    /// OR <see cref="IsRunning"/>, so a lost local pid can no longer force the dot grey once presence
+    /// reports in-game. Studio presence also counts as active. Spec §"Components > 2".
+    /// </summary>
     public string StatusDot => _sessionExpired
         ? "yellow"
-        : _isRunning ? "green" : "grey";
+        : (InGame || _presenceState == UserPresenceType.InStudio || _isRunning) ? "green" : "grey";
 
     /// <summary>
-    /// Human-friendly secondary text shown under the display name. Order of precedence:
-    /// session-expired ▸ explicit StatusText ▸ "Running for X" ▸ "Closed X ago" ▸ "Last launched X ago" ▸ "Ready".
-    /// Refresh by calling <see cref="RefreshRelativeTimes"/> from a periodic tick.
+    /// Human-friendly secondary text shown under the display name. Precedence (v1.5.0 augment rule):
+    /// session-expired ▸ "In {game} · {age}" (presence) ▸ "In Studio" ▸ "Connecting…" (pid alive,
+    /// first ~60s, no in-game presence yet) ▸ "At Roblox home" (pid alive, not in a game — exited the
+    /// game but stayed in the app) ▸ launch error (StatusText) ▸ "Closed {ago}" (both signals agree
+    /// it's gone) ▸ "Last launched {ago}" ▸ "Ready". Refresh by calling
+    /// <see cref="RefreshRelativeTimes"/> from a periodic tick. Spec §"Components > 2".
     /// </summary>
     public string SecondaryStatusText
     {
         get
         {
+            // 1. Session expired wins over everything — the cookie is dead, nothing else matters.
             if (_sessionExpired)
             {
                 return "Session expired";
             }
-            if (!string.IsNullOrEmpty(_statusText) && !_isRunning)
+            // 2. In a game (presence authoritative for display — this is the ghost fix).
+            if (InGame)
+            {
+                if (string.IsNullOrEmpty(_currentGameName))
+                {
+                    return "In a game";
+                }
+                if (_inGameSinceUtc is DateTimeOffset since)
+                {
+                    return $"In {_currentGameName} · {RelativeAge(DateTimeOffset.UtcNow - since)}";
+                }
+                return $"In {_currentGameName}";
+            }
+            // 3. In Roblox Studio (presence) — a real activity, surfaced even if it wasn't our launch.
+            if (_presenceState == UserPresenceType.InStudio)
+            {
+                return "In Studio";
+            }
+            // 4. Client alive but not in a game — sitting at the Roblox home screen / menus. Two ways
+            //    to land here: presence explicitly reports online-not-in-game (OnlineWebsite), OR the
+            //    client has been up past the connecting window without presence ever landing on
+            //    in-game (self-presence settles; not-in-game with a live client means it's at home —
+            //    e.g. exited the game but stayed in the app). The first ~60s still reads "Connecting…"
+            //    so a fresh launch doesn't flash "At Roblox home" before the game loads.
+            if (_isRunning)
+            {
+                if (_presenceState == UserPresenceType.OnlineWebsite)
+                {
+                    return "At Roblox home";
+                }
+                if (_runningSinceUtc is DateTimeOffset since &&
+                    DateTimeOffset.UtcNow - since < TimeSpan.FromSeconds(60))
+                {
+                    return "Connecting…";
+                }
+                return "At Roblox home";
+            }
+            // 5. Launch error surfaced only when the row isn't active.
+            if (!string.IsNullOrEmpty(_statusText))
             {
                 return _statusText;
             }
-            if (_isRunning && _runningSinceUtc is DateTimeOffset since)
-            {
-                return $"Running — {RelativeAge(DateTimeOffset.UtcNow - since)}";
-            }
+            // 6. Both signals agree it's gone — presence-confirmed close.
             if (_lastClosedAtUtc is DateTimeOffset closed)
             {
                 return $"Closed {RelativeAgo(closed)}";
             }
+            // 7. Never been active this session, but launched before.
             if (LastLaunchedAt is DateTimeOffset last)
             {
                 return $"Last launched {RelativeAgo(last)}";
             }
+            // 8. Cold.
             return "Ready";
         }
     }

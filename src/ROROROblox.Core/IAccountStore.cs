@@ -73,4 +73,15 @@ public interface IAccountStore
     /// is set. Soft-failure handling lives at the call site — see spec §6.
     /// </remarks>
     Task UpdateRobloxUserIdAsync(Guid accountId, long userId);
+
+    /// <summary>
+    /// Persist free-text per-account tags (PS99, RCU, PLAZA…). Granular write mirroring
+    /// <see cref="SetCaptionColorAsync"/> — no Save button, the edit is the save. The list is
+    /// normalized before persisting: each tag is trimmed, empty/whitespace entries are dropped,
+    /// duplicates collapse case-insensitively (first-seen casing wins), tag length is capped at
+    /// 24 chars and total count at 8. Pass an empty list to clear all tags. Throws
+    /// <see cref="KeyNotFoundException"/> if no account has the given <paramref name="id"/>.
+    /// v1.5.0 — spec §"Components > 4".
+    /// </summary>
+    Task SetTagsAsync(Guid id, IReadOnlyList<string> tags);
 }

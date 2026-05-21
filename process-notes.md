@@ -257,3 +257,50 @@ Second full-launch run (with the default placelauncherurl): Roblox launched into
 **Total spike findings:** 2 (Content-Type + placelauncherurl). Both caught BEFORE production code committed to the architecture — item 1 did exactly the gating job spec §10 designed it for. Net cost of the spike: ~30 min wall-clock, two surgical spec edits, zero rework of production code (because there is no production code yet).
 
 **Item 1 status: DONE.** Ready to proceed to item 2 (solution scaffold + AppLifecycle).
+
+---
+
+## /checklist — autonomous run (2026-05-20, cycle v1.5.0 presence account-UX)
+
+Spec-first cycle (pattern mm). Canonical spec authored this session via brainstorming: [`docs/superpowers/specs/2026-05-20-rororo-presence-account-ux-design.md`](docs/superpowers/specs/2026-05-20-rororo-presence-account-ux-design.md), approved (augment approach). Skipped the conversational interview — builder profile is `fully-autonomous` (locked 2026-04-26), brisk pacing, Architect persona, deepening-rounds-zero on a clean spec. Same "autonomous run" shape as cycles #1-#2.
+
+**Sequencing rationale (dependency-aware):**
+
+- **Core before VM before UI.** Items 1-2 (`PresenceService` in Core) have no dependency on the WPF layer and are pure TDD — they land first so the data source exists before anything consumes it. Item 3 (`AccountSummary` reconciliation) is also pure VM logic, TDD, depends only on the presence enum already in Core. Item 4 wires the two together into `MainViewModel` + DI — the heaviest item and the only one that touches app lifecycle.
+- **Riskiest external surface early.** Item 1 hits `presence.roblox.com` — the new Roblox-side dependency. Putting it first means if the presence contract surprises us (rate limits, self-visibility under invisible mode), we find out before building four items on top of it.
+- **Launch multiple after the status fix (item 5).** The "Launch multiple does nothing" symptom is downstream of the ghost (phantom-running starves eligibility), so the eligibility change has to read the *reconciled* state from items 3-4. Building it earlier would mean wiring against a state model that doesn't exist yet.
+- **Anti-ghost `OnProcessExited` change rides in item 4**, not its own item — it's a 3-line change that only makes sense once the presence subscription and `RequestImmediateRefreshAsync` (item 2) are both present to confirm the close.
+
+**Methodology:** autonomous-with-verification. Two checkpoints — C1 after item 4 (first runnable; ghost visibly fixed on a respawned client), C2 after item 6. TDD-strict on items 1-3, 5; items 4 + 7 are verify-by-running. Commit after each item, conventional commits. Branch `v1.5.0-presence-account-ux` already cut; spec committed at `18bec93`; decision logged to dashboard (`cHX5g7nOQeDmSHWjqPym`).
+
+**Item count:** 7. Tighter than the 8-12 "typical" because this is a focused credibility hotfix, not a feature cycle — tags + private-server picker (v1.5.1) and import/export (deferred) were carved out at brainstorm time, so the spec is deliberately narrow. Final item is Documentation & Security Verification per the skill contract, with the cookie-leak audit (`dpapi-cookie-blast-radius`) called out explicitly because the new presence path decrypts cookies per poll.
+
+**Session/friction loggers:** Cart's plugin data dir at `~/.claude/plugins/data/vibe-cartographer/` still absent on this machine — fourth cycle confirming the gap (cycles #1, #2 already flagged). Standing /evolve signal; loggers should auto-create their data dir or fail loud. Skipped the JSONL session/friction logging accordingly; user-facing artifacts (checklist.md, this section) are the durable record.
+
+**Handoff:** Run `/build`. Autonomous through the checklist, pausing at C1 (after item 4) and C2 (after item 6).
+
+## /build — autonomous run (2026-05-20, cycle v1.5.0 presence account-UX)
+
+All 7 items complete on branch `v1.5.0-presence-account-ux`. Final state: `dotnet build ROROROblox.sln` 0 errors, **404/404 tests passing** (was 363 at cycle start; +41 across the cycle). Each item dispatched to a general-purpose subagent (TDD-strict on items 1-3, 5; verify-by-running on item 4); orchestrator marked items complete + ran the two checkpoints.
+
+**Items 1-2 (PresenceService, Core):** poll loop + game-name cache; resilience (401→expired signal, empty-list→hold-last, concurrency cap + jitter, fast-confirm `RequestImmediateRefreshAsync`). Verified against source that `GetPresenceAsync` swallows non-401 to empty list → that's the hold-last signal; populated-Offline = genuinely offline. 429 true-backoff documented as a limitation (RobloxApi would need to surface the status code).
+
+**Item 3 (AccountSummary):** presence-aware reconciliation. Headline ghost-fix test: `IsRunning=false, InGame=true` → "In {game}", never "Closed".
+
+**Item 4 (VM + DI wiring):** lazy DI delegate to avoid the MainViewModel↔PresenceService construction cycle; anti-ghost `OnProcessExited` rewrite (defers close-stamp to presence). Checkpoint C1.
+
+**C1 finding → fix:** builder verified rows show the game, then flagged an account that exited a game but stayed in the client read a vague "Connecting…→Running". Added explicit "At Roblox home" (OnlineWebsite presence, or a settled live client not in-game) + "In Studio" states. Builder confirmed "switches to roblox home fast." Robust to whichever presence type Roblox returns at-home (unconfirmed which).
+
+**Item 5 (Launch multiple):** extracted a pure `LaunchEligibility` helper (testable without the VM) over mocking; eligibility = `!(InGame || IsRunning)`; pre-snapshot presence refresh; never-silent banners with skip-reason ("6 dispatched · 1 already running"). Checkpoint C2.
+
+**C2 finding → accepted:** builder hit a just-closed alt being skipped on instant retry. Root cause is Roblox's own presence propagation lag (upstream of our poll cadence) — `IsRunning` flips instantly but Roblox keeps reporting in-game for a few seconds. The 25s-cadence race is closed; the Roblox-side lag is not, without trusting local process-exit over presence for eligibility (reopens a bootstrapper-respawn edge). Builder accepted; recorded in spec Risks. StartMain CanExecute also brought onto the augment rule.
+
+**Items 6-7:** version 1.5.0.0 (csproj + manifest lockstep), clan-facing release notes + Store listing "What's new", cookie-leak audit (dpapi-cookie-blast-radius: PASS — cookie never logged/persisted outside DPAPI), local-path grep clean, no vulnerable deps, docs synced.
+
+**Mid-build scope event:** clan asked for private-server management "like the games library" (selectable per-account, not Squad-into-one-server). Builder chose finish-v1.5.0-first; sharpened requirement captured in spec out-of-scope as the **v1.5.1** shape (with account tags). Cross-machine import/export still deferred to its own cycle.
+
+**Repo hygiene flag (open):** both `ROROROblox.sln` and `ROROROblox.slnx` exist → bare `dotnet build` errors MSB1011; all cycle builds passed `ROROROblox.sln` explicitly. Canonical-solution decision left to the builder.
+
+**Session/friction loggers:** Cart plugin data dir still absent (4th cycle) — JSONL logging skipped, durable record is here. Standing /evolve signal.
+
+**Handoff:** branch ready for PR to `main`. Store-MSIX + Velopack release is builder-driven (memory: "I drive the full release through Store MSIX build"). Next feature cycle: v1.5.1 (private-server library + account tags).

@@ -335,6 +335,26 @@ internal partial class MainWindow : FluentWindow
         e.Handled = true;
     }
 
+    /// <summary>
+    /// Inline "add tag" box (v1.5.0). Enter routes the trimmed text to the row's
+    /// <see cref="AccountSummary.AddTagCommand"/> (normalization — trim/dedupe/length+count caps —
+    /// lives in the command) then clears the box. The box's Tag carries the row's AccountSummary.
+    /// </summary>
+    private void OnAddTagKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter && e.Key != Key.Return) return;
+        if (sender is not Wpf.Ui.Controls.TextBox box) return;
+        if (box.Tag is not AccountSummary summary) return;
+
+        var text = box.Text;
+        if (summary.AddTagCommand.CanExecute(text))
+        {
+            summary.AddTagCommand.Execute(text);
+        }
+        box.Text = string.Empty;
+        e.Handled = true;
+    }
+
     private static AccountSummary? FindRowAccountSummary(DependencyObject start)
     {
         var current = start;

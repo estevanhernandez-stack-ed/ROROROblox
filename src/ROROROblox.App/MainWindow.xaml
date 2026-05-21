@@ -61,6 +61,41 @@
                             <Run Text=" · " />
                             <Run Text="{Binding SecondaryStatusText, Mode=OneWay}" />
                         </TextBlock>
+                        <!-- Compact mode: tags READ-ONLY — labels only, no "×", no add box. Whole
+                             strip collapses when there are no tags so the compact row stays tight. -->
+                        <ItemsControl ItemsSource="{Binding Tags}" Margin="0,3,0,0">
+                            <ItemsControl.Style>
+                                <Style TargetType="ItemsControl">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Tags.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ItemsControl.Style>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border CornerRadius="8"
+                                            Margin="0,0,4,3"
+                                            Padding="6,1"
+                                            Background="{DynamicResource NavyBrush}"
+                                            BorderBrush="{DynamicResource CyanBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="{Binding}"
+                                                   FontSize="9"
+                                                   Foreground="{DynamicResource WhiteBrush}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   MaxWidth="120" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
 
                     <Button Grid.Column="2"
@@ -357,6 +392,83 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                         </StackPanel>
+
+                        <!-- Tags strip (v1.5.0) — free-text per-account labels (PS99, RCU, PLAZA).
+                             Chips wrap; the AccountSummary normalization caps them at 8 tags / 24
+                             chars each so the row stays bounded. Each chip carries a "×" that fires
+                             RemoveTagCommand on the row's AccountSummary (the chip's own DataContext
+                             is the tag string, so the command reaches up via the ItemsControl's
+                             DataContext, mirroring the Follow strip). The inline "add tag" box fires
+                             AddTagCommand on Enter (handled in MainWindow.xaml.cs). -->
+                        <WrapPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <ItemsControl ItemsSource="{Binding Tags}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="9"
+                                                Margin="0,0,5,5"
+                                                Padding="8,2,4,2"
+                                                Background="{DynamicResource NavyBrush}"
+                                                BorderBrush="{DynamicResource CyanBrush}"
+                                                BorderThickness="1">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding}"
+                                                           FontSize="10"
+                                                           Foreground="{DynamicResource WhiteBrush}"
+                                                           VerticalAlignment="Center"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           MaxWidth="160" />
+                                                <!-- Remove "×". DataContext here is the tag string; reach
+                                                     up to the ItemsControl whose DataContext is the row's
+                                                     AccountSummary for the command. -->
+                                                <Button Content="&#x00D7;"
+                                                        Command="{Binding DataContext.RemoveTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Margin="4,0,0,0"
+                                                        Padding="3,0"
+                                                        FontSize="11"
+                                                        FontWeight="Bold"
+                                                        Background="Transparent"
+                                                        BorderThickness="0"
+                                                        Foreground="{DynamicResource MutedTextBrush}"
+                                                        Cursor="Hand"
+                                                        ToolTip="Remove this tag." />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <!-- Inline add affordance. Unobtrusive until focused; Enter adds the tag
+                                 then clears (OnAddTagKeyDown in code-behind). Tag={Binding} so the
+                                 handler can resolve the row's AccountSummary. -->
+                            <ui:TextBox x:Name="AddTagBox"
+                                        PlaceholderText="add tag"
+                                        Tag="{Binding}"
+                                        Width="84"
+                                        MaxLength="24"
+                                        FontSize="10"
+                                        Margin="0,0,0,5"
+                                        Padding="6,1"
+                                        VerticalContentAlignment="Center"
+                                        Opacity="0.6"
+                                        KeyDown="OnAddTagKeyDown"
+                                        ToolTip="Type a label (PS99, RCU…) and press Enter.">
+                                <ui:TextBox.Style>
+                                    <Style TargetType="ui:TextBox">
+                                        <Setter Property="Opacity" Value="0.6" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                                <Setter Property="Opacity" Value="1" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ui:TextBox.Style>
+                            </ui:TextBox>
+                        </WrapPanel>
                     </StackPanel>
 
                     <!-- Actions -->

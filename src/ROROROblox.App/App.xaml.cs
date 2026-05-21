@@ -319,6 +319,21 @@ public partial class App : Application
         services.AddSingleton<RobloxWindowDecorator>();
         services.AddSingleton<RunningRobloxScanner>();
 
+        // v1.5.0 presence poller (the ghost fix). Singleton — one poll loop for the process.
+        // The snapshot-provider delegate reads live accounts from MainViewModel at POLL time,
+        // never at construction: MainViewModel also depends on IPresenceService, so resolving it
+        // eagerly here would form a construction cycle. The lazy capture below resolves
+        // MainViewModel only when the delegate fires (first tick / fast-confirm), well after the
+        // graph is built. It snapshots non-expired, userId-resolved accounts as PresenceTargets.
+        services.AddSingleton<IPresenceService>(sp => new PresenceService(
+            sp.GetRequiredService<IRobloxApi>(),
+            sp.GetRequiredService<IAccountStore>(),
+            () => sp.GetRequiredService<MainViewModel>().Accounts
+                    .Where(a => !a.SessionExpired && a.RobloxUserId is > 0)
+                    .Select(a => new PresenceTarget(a.Id, a.RobloxUserId!.Value))
+                    .ToList(),
+            sp.GetRequiredService<ILogger<PresenceService>>()));
+
         // Cycle 4 startup gate — detects RobloxPlayerBeta.exe running BEFORE RoRoRo so we
         // can hard-block instead of silently entering the broken state where every Launch As
         // routes through the existing process. Lives next to other Diagnostics-namespace
@@ -895,6 +910,19 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _log?.LogDebug(ex, "PluginHostStartupService.StopAsync threw on exit; ignoring.");
+            }
+
+            // Stop the presence poll loop before the provider disposes (mirrors the process
+            // tracker / plugin-host shutdown shape). _services.Dispose() also disposes it
+            // (PresenceService : IDisposable), but stopping first halts the timer cleanly.
+            try
+            {
+                var presence = _services.GetService<IPresenceService>();
+                presence?.Stop();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "PresenceService.Stop threw on exit; ignoring.");
             }
         }
 

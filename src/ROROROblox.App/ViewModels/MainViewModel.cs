@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -34,6 +35,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly IAppSettings _settings;
     private readonly IFavoriteGameStore _favorites;
     private readonly IRobloxProcessTracker _processTracker;
+    private readonly IPresenceService _presenceService;
     private readonly IDiagnosticsCollector _diagnostics;
     private readonly IPrivateServerStore _privateServerStore;
     private readonly ISessionHistoryStore _sessionHistory;
@@ -68,6 +70,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         IAppSettings settings,
         IFavoriteGameStore favorites,
         IRobloxProcessTracker processTracker,
+        IPresenceService presenceService,
         IDiagnosticsCollector diagnostics,
         IPrivateServerStore privateServerStore,
         ISessionHistoryStore sessionHistory,
@@ -86,6 +89,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _settings = settings;
         _favorites = favorites;
         _processTracker = processTracker;
+        _presenceService = presenceService;
         _diagnostics = diagnostics;
         _privateServerStore = privateServerStore;
         _sessionHistory = sessionHistory;
@@ -101,7 +105,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         RemoveAccountCommand = new RelayCommand(p => RemoveAccountAsync(p as AccountSummary));
         ReauthenticateCommand = new RelayCommand(p => ReauthenticateAsync(p as AccountSummary));
         OpenSettingsCommand = new RelayCommand(OpenSettings);
-        LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !a.IsRunning));
+        LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !(a.InGame || a.IsRunning)));
         StopAccountCommand = new RelayCommand(p => StopAccount(p as AccountSummary));
         OpenDiagnosticsCommand = new RelayCommand(OpenDiagnostics);
         OpenAboutCommand = new RelayCommand(OpenAbout);
@@ -109,7 +113,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OpenFriendFollowCommand = new RelayCommand(p => OpenFriendFollowAsync(p as AccountSummary));
         SetMainCommand = new RelayCommand(p => SetMainAsync(p as AccountSummary));
         ToggleCompactCommand = new RelayCommand(ToggleCompact);
-        StartMainCommand = new RelayCommand(StartMainAsync, () => !IsBusy && Accounts.FirstOrDefault(a => a.IsMain) is { SessionExpired: false, IsRunning: false });
+        StartMainCommand = new RelayCommand(StartMainAsync, () => !IsBusy && Accounts.FirstOrDefault(a => a.IsMain) is { SessionExpired: false, IsRunning: false, InGame: false });
         OpenHistoryCommand = new RelayCommand(OpenHistory);
         OpenPreferencesCommand = new RelayCommand(OpenPreferences);
         OpenPluginsCommand = new RelayCommand(_ => RequestOpenPlugins?.Invoke(this, EventArgs.Empty));
@@ -131,6 +135,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _processTracker.ProcessAttached += OnProcessAttached;
         _processTracker.ProcessExited += OnProcessExited;
         _processTracker.ProcessAttachFailed += OnProcessAttachFailed;
+
+        // v1.5.0 presence — server-truth running state for display (the ghost fix). Events may
+        // arrive on threadpool threads (the poller runs up to 4 concurrent), so the handlers
+        // marshal to the dispatcher just like the process-tracker handlers do.
+        _presenceService.AccountPresenceUpdated += OnAccountPresenceUpdated;
+        _presenceService.AccountSessionExpired += OnAccountSessionExpired;
 
         _ = InitializeBloxstrapWarningAsync();
 
@@ -354,7 +364,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             foreach (var account in ordered)
             {
                 var summary = new AccountSummary(account);
-                summary.PropertyChanged += OnAccountSummaryPropertyChanged;
+                WireAccountSummary(summary);
                 Accounts.Add(summary);
             }
         }
@@ -369,6 +379,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CompactRows));
         OnPropertyChanged(nameof(HasCompactRows));
         RelayCommand.RaiseCanExecuteChanged();
+
+        // v1.5.0 — start the presence poll loop now that Accounts is populated, so the first
+        // tick has targets. Start() is idempotent (no-op if already running), so the repeated
+        // LoadAsync calls on Games-dialog close don't spin up a second loop. Accounts that get
+        // their RobloxUserId backfilled after this point enter the poll snapshot automatically —
+        // the snapshot provider re-reads Accounts on every tick.
+        _presenceService.Start();
     }
 
     /// <summary>
@@ -640,7 +657,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             _log.LogDebug(persistEx, "Couldn't persist RobloxUserId for newly-added {AccountId}; will retry on next resolution.", account.Id);
         }
-        summary.PropertyChanged += OnAccountSummaryPropertyChanged;
+        WireAccountSummary(summary);
         Accounts.Insert(0, summary);
         _log.LogInformation("Added account {AccountId} ({Username}, userId {UserId}, isMain={IsMain})",
             account.Id, captured.Username, captured.UserId, account.IsMain);
@@ -767,11 +784,19 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         IsBusy = true;
         try
         {
-            var targets = Accounts
-                .Where(a => a.IsSelected && !a.SessionExpired && !a.IsRunning && !a.IsLaunching)
-                .ToList();
-            var deselectedCount = Accounts.Count(a => !a.IsSelected);
-            _log.LogInformation("LaunchMultiple: {Count} eligible, {Skipped} deselected", targets.Count, deselectedCount);
+            // Pre-snapshot presence refresh (closes the 67ms race): a just-closed client resolves
+            // to not-in-game before we read eligibility, so it's correctly counted as launchable
+            // rather than "already running." AccountPresenceUpdated is marshaled to this (UI) thread
+            // and we await on it, so after this returns each AccountSummary's state is fresh and we
+            // compute eligibility below. A presence failure must never block a launch — log + proceed
+            // with current state. (v1.5.0 spec §"Components > 3".)
+            await RefreshPresenceBeforeLaunchAsync();
+
+            var summaries = Accounts.ToList();
+            var result = LaunchEligibility.Compute(summaries.Select(ToLaunchCandidate));
+            var targets = MatchEligible(summaries, result.Eligible);
+            _log.LogInformation("LaunchMultiple: {Count} eligible, {Running} running, {Expired} expired, {Deselected} deselected",
+                targets.Count, result.Breakdown.Running, result.Breakdown.Expired, result.Breakdown.Deselected);
             foreach (var t in targets)
             {
                 _log.LogInformation("LaunchMultiple target: id={Id} name={Name} robloxUserId={RobloxUserId}",
@@ -780,9 +805,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
             if (targets.Count == 0)
             {
-                StatusBanner = deselectedCount > 0
-                    ? "Nothing to launch — every selected account is running or expired. Toggle the dot next to a status to include more."
-                    : "Nothing to launch — every account is already running or expired.";
+                StatusBanner = result.ZeroEligibleBanner;
                 return;
             }
 
@@ -801,12 +824,53 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     await Task.Delay(TimeSpan.FromMilliseconds(5000));
                 }
             }
-            var tail = deselectedCount > 0 ? $" ({deselectedCount} deselected, skipped.)" : string.Empty;
-            StatusBanner = $"Launch multiple finished. {targets.Count} client{(targets.Count == 1 ? "" : "s")} dispatched.{tail}";
+            StatusBanner = result.PartialBanner(targets.Count, "Launch multiple finished");
         }
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Project an <see cref="AccountSummary"/> into the pure <see cref="LaunchCandidate"/> the
+    /// eligibility computation consumes. The v1.5.0 augment rule lives in
+    /// <see cref="LaunchEligibility"/>, not here — this is a flat field map only.
+    /// </summary>
+    private static LaunchCandidate ToLaunchCandidate(AccountSummary a) => new(
+        a.IsSelected, a.SessionExpired, a.InGame, a.IsRunning, a.IsLaunching, a.DisplayName);
+
+    /// <summary>
+    /// Re-resolve the <see cref="AccountSummary"/> rows for the eligible candidates the helper
+    /// returned. The helper works on value snapshots; we match back by index against the same
+    /// ordered list it was computed from so we launch the live summaries (not stale copies).
+    /// </summary>
+    private static List<AccountSummary> MatchEligible(
+        IReadOnlyList<AccountSummary> ordered,
+        IReadOnlyList<LaunchCandidate> eligible)
+    {
+        // Recompute the eligibility predicate against the live rows in the same order — cheaper and
+        // less error-prone than threading identity through the value structs, and the predicate is
+        // the single source of truth in LaunchEligibility.IsBusy.
+        return ordered
+            .Where(a => a.IsSelected && !a.SessionExpired && !LaunchEligibility.IsBusy(ToLaunchCandidate(a)) && !a.IsLaunching)
+            .ToList();
+    }
+
+    /// <summary>
+    /// One-shot presence refresh run before a batch launch computes eligibility. Wrapped so a
+    /// presence failure (network/5xx/timeout) never blocks the launch — we log and proceed with the
+    /// current (held-last) state. v1.5.0 spec §"Components > 3".
+    /// </summary>
+    private async Task RefreshPresenceBeforeLaunchAsync()
+    {
+        try
+        {
+            await _presenceService.PollOnceAsync();
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Pre-launch presence refresh failed; proceeding with last-known state.");
         }
     }
 
@@ -817,10 +881,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private async Task OpenSquadLaunchAsync()
     {
         // Eligibility for the Private server modal counts SELECTED accounts only. Deselected
-        // rows are surfaced in the modal's status line so the user knows why the count is low.
-        var eligible = Accounts.Count(a => a.IsSelected && !a.SessionExpired && !a.IsRunning && !a.IsLaunching);
-        var running = Accounts.Count(a => a.IsSelected && a.IsRunning);
-        var expired = Accounts.Count(a => a.IsSelected && a.SessionExpired);
+        // rows are surfaced in the modal's status line so the user knows why the count is low. The
+        // "running" count uses the v1.5.0 augment rule (InGame || IsRunning) so an in-game alt with
+        // a lost pid is correctly surfaced as skipped, matching SquadLaunchAsync's eligibility.
+        var breakdown = LaunchEligibility.Compute(Accounts.Select(ToLaunchCandidate));
+        var eligible = breakdown.Eligible.Count;
+        var running = breakdown.Breakdown.Running;
+        var expired = breakdown.Breakdown.Expired;
 
         var window = new SquadLaunchWindow(_privateServerStore, _api, url => ResolveShareUrlAsync(url), eligible, running, expired)
         {
@@ -844,17 +911,18 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         IsBusy = true;
         try
         {
-            var targets = Accounts
-                .Where(a => a.IsSelected && !a.SessionExpired && !a.IsRunning && !a.IsLaunching)
-                .ToList();
-            var deselectedCount = Accounts.Count(a => !a.IsSelected);
-            _log.LogInformation("PrivateServer: placeId={PlaceId}, {Count} eligible, {Skipped} deselected",
-                target.PlaceId, targets.Count, deselectedCount);
+            // Same pre-snapshot presence refresh as LaunchAllAsync — closes the just-closed-client
+            // race before computing eligibility. Failures never block the launch.
+            await RefreshPresenceBeforeLaunchAsync();
+
+            var summaries = Accounts.ToList();
+            var result = LaunchEligibility.Compute(summaries.Select(ToLaunchCandidate));
+            var targets = MatchEligible(summaries, result.Eligible);
+            _log.LogInformation("PrivateServer: placeId={PlaceId}, {Count} eligible, {Running} running, {Expired} expired, {Deselected} deselected",
+                target.PlaceId, targets.Count, result.Breakdown.Running, result.Breakdown.Expired, result.Breakdown.Deselected);
             if (targets.Count == 0)
             {
-                StatusBanner = deselectedCount > 0
-                    ? "Nothing to launch — every selected account is running or expired."
-                    : "Nothing to launch — every account is already running or expired.";
+                StatusBanner = result.ZeroEligibleBanner;
                 return;
             }
 
@@ -872,8 +940,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     await Task.Delay(TimeSpan.FromMilliseconds(5000));
                 }
             }
-            var tail = deselectedCount > 0 ? $" ({deselectedCount} deselected, skipped.)" : string.Empty;
-            StatusBanner = $"Private server launch finished. {targets.Count} client{(targets.Count == 1 ? "" : "s")} joined.{tail}";
+            StatusBanner = result.PartialBanner(targets.Count, "Private server launch finished");
         }
         finally
         {
@@ -1094,10 +1161,39 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
             if (summary is null) return;
+
+            // The pid is genuinely gone — always clear process state.
             summary.IsRunning = false;
             summary.RunningPid = null;
             summary.RunningSinceUtc = null;
-            summary.LastClosedAtUtc = e.OccurredAtUtc;
+
+            // v1.5.0 anti-ghost rule: do NOT unconditionally stamp LastClosedAtUtc. A row is
+            // "Closed" only when BOTH presence and process tracking agree it's gone. The Roblox
+            // anti-multilaunch bootstrapper kills the pid we attached to and respawns the real
+            // client under a new pid we never claimed — if we stamped "Closed" here while
+            // presence still reports in-game, the live client reads "Closed" (the ghost).
+            if (summary.InGame)
+            {
+                // Process gone but presence still in-game (the ghost case). Don't stamp Closed.
+                // Fire a fast-confirm re-poll: if the window is truly gone the next presence
+                // event will stamp the close via OnAccountPresenceUpdated; if it's still up the
+                // row keeps showing "In <game>".
+                _ = _presenceService.RequestImmediateRefreshAsync(e.AccountId);
+            }
+            else if (summary.RobloxUserId is > 0)
+            {
+                // Presence-capable account, currently not in-game — both signals agree it's
+                // closed, so stamp it now. Still fast-confirm to keep presence current.
+                summary.LastClosedAtUtc = e.OccurredAtUtc;
+                _ = _presenceService.RequestImmediateRefreshAsync(e.AccountId);
+            }
+            else
+            {
+                // No RobloxUserId — presence can never run for this account, so process tracking
+                // is the only signal. Keep the pre-v1.5.0 behavior: stamp the close immediately.
+                summary.LastClosedAtUtc = e.OccurredAtUtc;
+            }
+
             LiveProcessCount = _processTracker.Attached.Count;
             OnPropertyChanged(nameof(CompactRows));
             OnPropertyChanged(nameof(HasCompactRows));
@@ -1105,6 +1201,77 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         });
         // Fire-and-forget the history end-stamp; persistence isn't on the UI critical path.
         _ = RecordSessionEndAsync(e.AccountId, e.OccurredAtUtc, outcomeHint: null);
+    }
+
+    /// <summary>
+    /// Presence poll landed for one account (v1.5.0). Authoritative for <em>display</em>:
+    /// in-game state + game name. Events arrive on threadpool threads (the poller runs up to 4
+    /// concurrent), so marshal to the dispatcher before touching the UI-bound summary. Spec
+    /// §"Components > 2" + "Data flow."
+    /// </summary>
+    private void OnAccountPresenceUpdated(object? sender, AccountPresenceEventArgs e)
+    {
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
+            if (summary is null) return;
+
+            if (e.PresenceType == UserPresenceType.InGame)
+            {
+                // Stamp the in-game-since time on the transition into a game OR on a game switch
+                // (place id changed), so the "· {age}" tail resets when they hop games.
+                if (!summary.InGame || e.PlaceId != summary.CurrentPlaceId)
+                {
+                    summary.InGameSinceUtc = e.OccurredAtUtc;
+                }
+                summary.CurrentPlaceId = e.PlaceId;
+                summary.CurrentGameName = e.GameName;
+                summary.PresenceState = e.PresenceType;
+            }
+            else
+            {
+                // Capture combined active state BEFORE mutating presence so we can tell whether
+                // this poll is the moment the row went fully inactive.
+                var wasActive = summary.InGame || summary.IsRunning;
+
+                summary.PresenceState = e.PresenceType;
+                summary.CurrentGameName = null;
+                summary.CurrentPlaceId = null;
+                summary.InGameSinceUtc = null;
+
+                // Presence-confirmed close: the row was active, presence now says not-in-game,
+                // and the process is also gone — both signals agree, so stamp the close. This is
+                // the close-stamp the deferred OnProcessExited handed off to presence (the ghost
+                // case resolving once the respawned client truly closes).
+                if (wasActive && !summary.IsRunning)
+                {
+                    summary.LastClosedAtUtc = e.OccurredAtUtc;
+                }
+            }
+
+            // Mirror the OnProcessAttached/Exited refresh shape so command-enablement (LaunchAll
+            // CanExecute keys off InGame || IsRunning) and the compact view stay in sync.
+            // LiveProcessCount is process-only, so it isn't touched here.
+            OnPropertyChanged(nameof(CompactRows));
+            OnPropertyChanged(nameof(HasCompactRows));
+            RelayCommand.RaiseCanExecuteChanged();
+        });
+    }
+
+    /// <summary>
+    /// Presence poll returned 401 for one account (v1.5.0) — the cookie died between launches.
+    /// Flip the row to the yellow "Session expired" badge. Marshalled to the dispatcher because
+    /// the poller raises this off a threadpool thread. Spec §"Error handling" (401 from presence).
+    /// </summary>
+    private void OnAccountSessionExpired(object? sender, Guid accountId)
+    {
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
+            if (summary is null) return;
+            summary.SessionExpired = true;
+            RelayCommand.RaiseCanExecuteChanged();
+        });
     }
 
     private void OnProcessAttachFailed(object? sender, RobloxProcessEventArgs e)
@@ -1224,6 +1391,38 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         var window = new AboutWindow { Owner = Application.Current.MainWindow };
         window.ShowDialog();
+    }
+
+    /// <summary>
+    /// Attach every reactive-persist subscription a row needs. Called at both row-creation sites
+    /// (initial load + Add Account) so a freshly-added account persists tag edits just like a loaded
+    /// one. Tags are seeded in the AccountSummary constructor BEFORE this subscribe, so wiring
+    /// CollectionChanged here never fires a redundant persist for the rows loaded from disk.
+    /// </summary>
+    private void WireAccountSummary(AccountSummary summary)
+    {
+        summary.PropertyChanged += OnAccountSummaryPropertyChanged;
+        summary.Tags.CollectionChanged += (_, _) => OnAccountTagsChanged(summary);
+    }
+
+    /// <summary>
+    /// A row's tag collection changed (add/remove) — persist the whole normalized list. Mirrors the
+    /// <see cref="PersistIsSelectedAsync"/> soft-failure shape: fire-and-forget, a write failure
+    /// doesn't block the chip showing/hiding; the next edit reconverges.
+    /// </summary>
+    private void OnAccountTagsChanged(AccountSummary summary) =>
+        _ = PersistTagsAsync(summary.Id, summary.Tags.ToList());
+
+    private async Task PersistTagsAsync(Guid accountId, IReadOnlyList<string> tags)
+    {
+        try
+        {
+            await _accountStore.SetTagsAsync(accountId, tags);
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Persisting {Count} tags for {AccountId} failed.", tags.Count, accountId);
+        }
     }
 
     /// <summary>

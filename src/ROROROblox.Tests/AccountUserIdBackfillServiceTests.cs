@@ -225,6 +225,7 @@ public class AccountUserIdBackfillServiceTests
         public Task SetCaptionColorAsync(Guid id, string? hex) => throw new NotImplementedException();
         public Task SetFpsCapAsync(Guid id, int? fps) => throw new NotImplementedException();
         public Task UpdateLocalNameAsync(Guid accountId, string? localName) => throw new NotImplementedException();
+        public Task SetTagsAsync(Guid id, IReadOnlyList<string> tags) => throw new NotImplementedException();
     }
 
     private sealed class FakeRobloxApi : IRobloxApi
