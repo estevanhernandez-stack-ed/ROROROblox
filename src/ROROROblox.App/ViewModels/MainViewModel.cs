@@ -179,6 +179,45 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public static bool IsJoinByLinkSentinel(FavoriteGame? game) => game is { PlaceId: 0 };
 
     /// <summary>
+    /// Pure mapping from a row's picker selection to the concrete <see cref="LaunchTarget"/> the
+    /// launcher dispatches. Extracted from <c>LaunchAccountAsync</c> so the precedence is
+    /// unit-testable without standing up the VM. v1.6.0.
+    /// </summary>
+    /// <remarks>
+    /// Precedence:
+    /// <list type="number">
+    ///   <item>Explicit override (Squad Launch / Friend Follow / Join-by-Link) trumps everything.</item>
+    ///   <item>A PS-carrying <see cref="FavoriteGame"/> entry -> <see cref="LaunchTarget.PrivateServer"/>
+    ///   (checked BEFORE the plain Place case — a PS entry has PlaceId &gt; 0 too).</item>
+    ///   <item>A plain saved game (PlaceId &gt; 0, no PS code) -> <see cref="LaunchTarget.Place"/>.</item>
+    ///   <item>Null / the JoinByLink sentinel (PlaceId == 0) -> <see cref="LaunchTarget.DefaultGame"/>,
+    ///   which the launcher resolves from favorites + settings.</item>
+    /// </list>
+    /// </remarks>
+    public static LaunchTarget ResolveLaunchTarget(FavoriteGame? selected, LaunchTarget? overrideTarget)
+    {
+        if (overrideTarget is not null)
+        {
+            return overrideTarget;
+        }
+
+        if (selected is { PlaceId: > 0, IsPrivateServer: true } ps)
+        {
+            return new LaunchTarget.PrivateServer(
+                ps.PlaceId,
+                ps.PrivateServerCode!,
+                ps.PrivateServerCodeKind ?? PrivateServerCodeKind.LinkCode);
+        }
+
+        if (selected is { PlaceId: > 0 } sg)
+        {
+            return new LaunchTarget.Place(sg.PlaceId);
+        }
+
+        return new LaunchTarget.DefaultGame();
+    }
+
+    /// <summary>
     /// Games available for the per-account picker on each row. Synced from the favorites store
     /// at LoadAsync time and again every time the Games dialog closes. Always ends with the
     /// <see cref="JoinByLinkSentinel"/> "(Paste a link...)" entry.
@@ -400,6 +439,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public async Task ReloadGamesAsync()
     {
         var games = await _favorites.ListAsync();
+        var privateServers = await _privateServerStore.ListAsync();
         AvailableGames.Clear();
         WidgetGames.Clear();
         foreach (var game in games)
@@ -407,23 +447,71 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             AvailableGames.Add(game);
             WidgetGames.Add(game); // widget dropdown excludes the sentinel entirely
         }
+        // Saved private servers join the per-account dropdown as FavoriteGame-shaped entries
+        // carrying the PS code/kind + stable PS Id (v1.6.0). They render with the server's
+        // RenderName so renames show, plus a "(private server)" suffix via DropdownLabel. NOT
+        // added to WidgetGames — the default-game widget is for games, not one-off PS launches
+        // (same exclusion the JoinByLink sentinel gets).
+        foreach (var server in privateServers)
+        {
+            AvailableGames.Add(ToFavoriteEntry(server));
+        }
         // Sentinel entry users click to open the Join-by-link modal. Lives at the bottom of the
         // dropdown so accidental clicks are unlikely. NOT added to WidgetGames — the widget is for
         // setting the default game, not for one-off launches.
         AvailableGames.Add(JoinByLinkSentinel);
 
-        var defaultGame = AvailableGames.FirstOrDefault(g => g.IsDefault && !IsJoinByLinkSentinel(g))
-                          ?? AvailableGames.FirstOrDefault(g => !IsJoinByLinkSentinel(g));
+        // Default-game candidates exclude PS entries + the sentinel — the default is a game.
+        var defaultGame = AvailableGames.FirstOrDefault(g => g.IsDefault && !IsJoinByLinkSentinel(g) && !g.IsPrivateServer)
+                          ?? AvailableGames.FirstOrDefault(g => !IsJoinByLinkSentinel(g) && !g.IsPrivateServer);
         foreach (var account in Accounts)
         {
-            var stillThere = AvailableGames.FirstOrDefault(g =>
-                !IsJoinByLinkSentinel(g) && g.PlaceId == account.SelectedGame?.PlaceId);
-            account.SelectedGame = stillThere ?? defaultGame;
+            account.SelectedGame = FindMatchingEntry(account.SelectedGame) ?? defaultGame;
         }
 
         // Keep the widget readout in lockstep with what the store thinks. INPC fires for
         // DefaultGameDisplay are coupled via CurrentDefaultGame's setter.
         CurrentDefaultGame = defaultGame;
+    }
+
+    /// <summary>
+    /// Project a <see cref="SavedPrivateServer"/> into the <see cref="FavoriteGame"/> shape the
+    /// per-account dropdown consumes. Carries the PS code/kind (for launch) + the stable PS Id
+    /// (for re-sync matching and in-dropdown rename routing). v1.6.0.
+    /// </summary>
+    private static FavoriteGame ToFavoriteEntry(SavedPrivateServer server) => new(
+        PlaceId: server.PlaceId,
+        UniverseId: 0,
+        Name: server.Name,
+        ThumbnailUrl: server.ThumbnailUrl,
+        IsDefault: false,
+        AddedAt: server.AddedAt,
+        LocalName: server.LocalName,
+        PrivateServerCode: server.Code,
+        PrivateServerCodeKind: server.CodeKind,
+        PrivateServerId: server.Id);
+
+    /// <summary>
+    /// Re-sync a row's prior selection to the freshly-rebuilt <see cref="AvailableGames"/> list.
+    /// PS entries match by stable PS Id (a PS can share a placeId with a favorite game OR with
+    /// another PS, so placeId alone collides); game entries match by placeId. The sentinel never
+    /// re-syncs. Returns null when the prior selection is gone, so the caller falls back to the
+    /// default game. v1.6.0.
+    /// </summary>
+    private FavoriteGame? FindMatchingEntry(FavoriteGame? prior)
+    {
+        if (prior is null || IsJoinByLinkSentinel(prior))
+        {
+            return null;
+        }
+
+        if (prior.IsPrivateServer)
+        {
+            return AvailableGames.FirstOrDefault(g => g.IsPrivateServer && g.PrivateServerId == prior.PrivateServerId);
+        }
+
+        return AvailableGames.FirstOrDefault(g =>
+            !IsJoinByLinkSentinel(g) && !g.IsPrivateServer && g.PlaceId == prior.PlaceId);
     }
 
     /// <summary>
@@ -719,23 +807,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     summary.DisplayName);
             }
 
-            // Target precedence:
-            //   1. Explicit override (Squad Launch / Friend Follow / Join-by-Link).
-            //   2. Per-row SelectedGame from the ComboBox.
-            //   3. LaunchTarget.DefaultGame -> launcher resolves favorites + settings tier.
-            LaunchTarget target;
-            if (overrideTarget is not null)
-            {
-                target = overrideTarget;
-            }
-            else if (summary.SelectedGame is { PlaceId: > 0 } sg)
-            {
-                target = new LaunchTarget.Place(sg.PlaceId);
-            }
-            else
-            {
-                target = new LaunchTarget.DefaultGame();
-            }
+            LaunchTarget target = ResolveLaunchTarget(summary.SelectedGame, overrideTarget);
 
             var result = await _launcher.LaunchAsync(cookie, target, fpsCap: summary.FpsCap);
             switch (result)
@@ -1088,11 +1160,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 case LaunchTarget.PrivateServer ps:
                     placeId = ps.PlaceId;
                     isPrivate = true;
-                    gameName = summary.SelectedGame?.Name ?? $"Place {ps.PlaceId} (private server)";
+                    // Prefer the row's PS entry name (RenderName picks up the rename); fall back
+                    // to a generic label if the row selection isn't a PS entry (override path).
+                    gameName = summary.SelectedGame?.IsPrivateServer == true
+                        ? summary.SelectedGame.RenderName
+                        : summary.SelectedGame?.RenderName ?? $"Place {ps.PlaceId} (private server)";
                     break;
                 case LaunchTarget.Place p:
                     placeId = p.PlaceId;
-                    gameName = summary.SelectedGame?.Name ?? $"Place {p.PlaceId}";
+                    gameName = summary.SelectedGame?.RenderName ?? $"Place {p.PlaceId}";
                     break;
                 case LaunchTarget.DefaultGame:
                     gameName = summary.SelectedGame?.Name;
@@ -1701,6 +1777,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     private static RenameTarget? BuildRenameTarget(object? source) => source switch
     {
+        // PS-carrying dropdown entries (v1.6.0) route to the PrivateServer rename path by stable
+        // PS Id — checked BEFORE the plain game case since a PS entry has PlaceId > 0 too.
+        FavoriteGame { IsPrivateServer: true, PrivateServerId: { } psId } psEntry =>
+            new RenameTarget(RenameTargetKind.PrivateServer, psId, psEntry.Name, psEntry.LocalName),
         FavoriteGame game when game.PlaceId > 0 =>
             new RenameTarget(RenameTargetKind.Game, game.PlaceId, game.Name, game.LocalName),
         AccountSummary account =>
@@ -1837,8 +1917,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// Account renames: update the matching <see cref="AccountSummary"/>'s LocalName so the
     /// row's RenderName flips immediately. Game renames: full ReloadGamesAsync so AvailableGames
     /// + WidgetGames + per-row SelectedGame all see the new instance with new LocalName.
-    /// PrivateServer renames: nothing to refresh at MainViewModel level — Squad Launch sheet
-    /// re-lists from the store on its next open.
+    /// PrivateServer renames: full ReloadGamesAsync (v1.6.0) — saved PS entries now live in the
+    /// per-account dropdown, so the rebuilt list picks up the new RenderName; Squad Launch sheet
+    /// also re-lists from the store on its next open.
     /// </summary>
     private async Task OnRenameAppliedAsync(RenameTarget target, string? newLocalName)
     {
@@ -1856,8 +1937,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 }
                 break;
             case RenameTargetKind.PrivateServer:
-                // No MainViewModel-side surface for saved private servers. Squad Launch sheet
-                // re-lists on open.
+                // Saved private servers now appear in the per-account dropdown (v1.6.0), so a
+                // rename has to rebuild AvailableGames for the new RenderName to show. Squad Launch
+                // sheet still re-lists from the store on its own open.
+                await ReloadGamesAsync();
                 break;
         }
     }

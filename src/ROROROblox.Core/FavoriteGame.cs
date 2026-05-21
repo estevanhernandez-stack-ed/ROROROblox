@@ -17,7 +17,10 @@ public sealed record FavoriteGame(
     string ThumbnailUrl,
     bool IsDefault,
     DateTimeOffset AddedAt,
-    string? LocalName = null)
+    string? LocalName = null,
+    string? PrivateServerCode = null,
+    PrivateServerCodeKind? PrivateServerCodeKind = null,
+    Guid? PrivateServerId = null)
 {
     /// <summary>
     /// What the UI should show wherever it used to show <see cref="Name"/>. v1.3.x.
@@ -25,4 +28,20 @@ public sealed record FavoriteGame(
     /// XAML binds <c>Path=RenderName</c> instead of two-binding gymnastics.
     /// </summary>
     public string RenderName => string.IsNullOrEmpty(LocalName) ? Name : LocalName;
+
+    /// <summary>
+    /// True when this entry stands in for a <see cref="SavedPrivateServer"/> in the per-account
+    /// dropdown rather than a plain favorite game. v1.6.0. A normal game and the JoinByLink
+    /// sentinel both leave <see cref="PrivateServerCode"/> null. Selecting a PS entry makes the
+    /// row launch into <see cref="LaunchTarget.PrivateServer"/>; the launch precedence in
+    /// <c>MainViewModel.ResolveLaunchTarget</c> branches on this before the plain Place case.
+    /// </summary>
+    public bool IsPrivateServer => !string.IsNullOrEmpty(PrivateServerCode);
+
+    /// <summary>
+    /// Dropdown label for the per-account picker. Appends a quiet "(private server)" suffix to
+    /// PS entries so they're distinguishable from games at a glance, without polluting
+    /// <see cref="RenderName"/> (which the rename feature reads + writes). v1.6.0.
+    /// </summary>
+    public string DropdownLabel => IsPrivateServer ? $"{RenderName} (private server)" : RenderName;
 }

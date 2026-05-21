@@ -49,7 +49,7 @@ Bigger than v1.5.0 — crypto + five surfaces. **Total ≈ 8-12 hours.** Heavies
   Acceptance: export a bundle, import it on a clean profile → accounts appear; wrong passphrase fails cleanly; merge skips dupes; weak passphrase blocks export.
   Verify: `dotnet build ROROROblox.slnx`; run, export + re-import. **Checkpoint C1.** Commit: `feat(transport): export/import dialogs + passphrase strength gate`.
 
-- [ ] **6. Saved private servers in the per-account dropdown**
+- [x] **6. Saved private servers in the per-account dropdown**
   Spec ref: `spec.md > 3. Saved private servers in the per-account dropdown`
   What to build: Populate the per-row dropdown (`AvailableGames`, `MainWindow.xaml:565`) with saved private servers from `IPrivateServerStore` alongside games. Give the dropdown a common item abstraction (or a `FavoriteGame`-shaped wrapper carrying the PS code); selecting a private server sets the row's launch target to `LaunchTarget.PrivateServer`. Render with the server's `RenderName`. No new management UI — rename/remove already exist for `SavedPrivateServer`.
   Acceptance: saved private servers show in the dropdown, named; selecting one launches that account into that private server; games still work; Launch multiple can send different alts to different targets. Tests on the launch-target mapping where feasible.

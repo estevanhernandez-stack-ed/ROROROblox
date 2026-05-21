@@ -564,10 +564,10 @@
                         <Grid Margin="0,0,8,0" MinWidth="160" VerticalAlignment="Center">
                             <ComboBox ItemsSource="{Binding DataContext.AvailableGames, RelativeSource={RelativeSource AncestorType=Window}}"
                                       SelectedItem="{Binding SelectedGame}"
-                                      DisplayMemberPath="RenderName"
+                                      DisplayMemberPath="DropdownLabel"
                                       VerticalAlignment="Center"
                                       SelectionChanged="OnGameComboBoxSelectionChanged"
-                                      ToolTip="Game to launch this account into, or '(Paste a link...)' for a one-shot link.">
+                                      ToolTip="Game or saved private server to launch this account into, or '(Paste a link...)' for a one-shot link.">
                                 <!-- v1.3.x — right-click any item in the dropdown for Rename / Reset.
                                      Skips the JoinByLink sentinel because BuildRenameTarget guards on
                                      PlaceId > 0 and returns null for the sentinel. -->
