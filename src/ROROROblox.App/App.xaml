@@ -13,6 +13,7 @@
 
             <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <local:InverseBoolConverter x:Key="InverseBoolConverter" />
+            <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
             <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
             <local:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter" />
             <local:StatusDotBrushConverter x:Key="StatusDotBrushConverter" />

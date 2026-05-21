@@ -125,8 +125,13 @@
             <!-- Wrap row in a StackPanel so the cyan insertion-line indicator renders ABOVE
                  the row when this row is the active drop target. Visibility=Collapsed when
                  inactive so the layout doesn't reserve space — the appearance + small layout
-                 shift is the visual cue for "drop lands here." -->
-            <StackPanel Margin="0,0,0,8">
+                 shift is the visual cue for "drop lands here."
+                 v1.6.0 (7b): the whole row collapses when an active tag/name filter excludes it
+                 (IsFilteredOut). The underlying Accounts collection + order are untouched — only
+                 visibility flips — so drag-reorder index math stays valid (and reorder itself is
+                 disabled while filtered, see the OnAccountRow* guards in code-behind). -->
+            <StackPanel Margin="0,0,0,8"
+                        Visibility="{Binding IsFilteredOut, Converter={StaticResource InverseBoolToVisibilityConverter}}">
             <Border Height="3"
                     Margin="0,0,0,4"
                     CornerRadius="2"
@@ -442,9 +447,45 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                            <!-- Inline add affordance. Unobtrusive until focused; Enter adds the tag
-                                 then clears (OnAddTagKeyDown in code-behind). Tag={Binding} so the
-                                 handler can resolve the row's AccountSummary. -->
+                            <!-- Add affordance (v1.6.0, item 7a) — a collapsed "+" pill that engages
+                                 an inline input. Visible when !IsAddingTag; clicking it sets
+                                 IsAddingTag=true (OnAddTagPlusClick) and focuses the box. The box is
+                                 visible when IsAddingTag: Enter commits the tag + collapses;
+                                 Escape / LostFocus collapses unchanged (OnAddTagKeyDown /
+                                 OnAddTagBoxLostFocus). Tag={Binding} so the handlers resolve the row's
+                                 AccountSummary. So the row shows existing chips + a quiet "+", never an
+                                 empty open text bar. -->
+                            <Border x:Name="AddTagPlus"
+                                    CornerRadius="9"
+                                    Margin="0,0,5,5"
+                                    Padding="8,2"
+                                    Background="{DynamicResource NavyBrush}"
+                                    BorderBrush="{DynamicResource CyanBrush}"
+                                    BorderThickness="1"
+                                    Cursor="Hand"
+                                    Tag="{Binding}"
+                                    MouseLeftButtonUp="OnAddTagPlusClick"
+                                    ToolTip="Add a label (PS99, RCU…)."
+                                    Visibility="{Binding IsAddingTag, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <!-- Muted until hover so it stays quiet next to the chips. -->
+                                        <Setter Property="Opacity" Value="0.55" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Opacity" Value="1" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="+"
+                                           FontSize="11"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource CyanBrush}"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Center"
+                                           IsHitTestVisible="False" />
+                            </Border>
                             <ui:TextBox x:Name="AddTagBox"
                                         PlaceholderText="add tag"
                                         Tag="{Binding}"
@@ -454,20 +495,11 @@
                                         Margin="0,0,0,5"
                                         Padding="6,1"
                                         VerticalContentAlignment="Center"
-                                        Opacity="0.6"
                                         KeyDown="OnAddTagKeyDown"
-                                        ToolTip="Type a label (PS99, RCU…) and press Enter.">
-                                <ui:TextBox.Style>
-                                    <Style TargetType="ui:TextBox">
-                                        <Setter Property="Opacity" Value="0.6" />
-                                        <Style.Triggers>
-                                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                                                <Setter Property="Opacity" Value="1" />
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </ui:TextBox.Style>
-                            </ui:TextBox>
+                                        LostFocus="OnAddTagBoxLostFocus"
+                                        IsVisibleChanged="OnAddTagBoxVisibleChanged"
+                                        Visibility="{Binding IsAddingTag, Converter={StaticResource BoolToVisibilityConverter}}"
+                                        ToolTip="Type a label (PS99, RCU…) and press Enter. Esc to cancel." />
                         </WrapPanel>
                     </StackPanel>
 
@@ -1163,11 +1195,11 @@
                  trim the name (TextTrimming on DisplayName handles long names) than let a
                  horizontal scrollbar steal vertical space. Compact mode is the right answer
                  for "I want this small." -->
-            <ScrollViewer Padding="24,16,24,16"
-                          VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled">
-                <ScrollViewer.Style>
-                    <Style TargetType="ScrollViewer">
+            <!-- Full-list view: a tag/name filter bar docked above the scrollable account list.
+                 The whole DockPanel hides in compact mode (the compact strip below takes over). -->
+            <DockPanel>
+                <DockPanel.Style>
+                    <Style TargetType="DockPanel">
                         <Setter Property="Visibility" Value="Visible" />
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsCompact}" Value="True">
@@ -1175,7 +1207,34 @@
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </ScrollViewer.Style>
+                </DockPanel.Style>
+
+                <!-- v1.6.0 (7b) — tag/name filter. Narrows the list by toggling per-row visibility
+                     (AccountSummary.IsFilteredOut) so the Accounts order is untouched and drag-
+                     reorder stays valid. Reorder is disabled while a filter is active; clearing it
+                     restores reorder. Whole bar hides when there are no accounts to filter. -->
+                <Grid DockPanel.Dock="Top" Margin="24,12,24,0">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Accounts.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <ui:TextBox PlaceholderText="Filter accounts by tag or name…"
+                                Text="{Binding AccountFilter, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                Icon="{ui:SymbolIcon Filter24}"
+                                ClearButtonEnabled="True"
+                                FontSize="12"
+                                ToolTip="Show only accounts whose tag or name contains this text. Drag-reorder is paused while filtering — clear the box to reorder again." />
+                </Grid>
+
+                <ScrollViewer Padding="24,12,24,16"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
                 <Grid Grid.IsSharedSizeScope="True">
                     <ItemsControl ItemsSource="{Binding Accounts}" />
 
@@ -1194,7 +1253,8 @@
                                    Opacity="0.7" />
                     </StackPanel>
                 </Grid>
-            </ScrollViewer>
+                </ScrollViewer>
+            </DockPanel>
 
             <!-- Compact strip — visible ONLY when compact. Three layers: live-rows list,
                  then a content overlay with the 3-state empty area when nothing's running. -->

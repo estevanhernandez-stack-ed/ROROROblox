@@ -218,6 +218,43 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Pure match predicate for the v1.6.0 tag filter (item 7b). An account is shown when the
+    /// (outer-trimmed) filter is a case-insensitive substring of ANY of its <paramref name="tags"/>
+    /// OR of its <paramref name="renderName"/>. An empty/whitespace filter matches everything.
+    /// Extracted from the per-row <c>IsFilteredOut</c> wiring so the rules are unit-testable
+    /// without standing up the VM or WPF.
+    /// </summary>
+    /// <param name="tags">The account's tags. Null is treated as no tags.</param>
+    /// <param name="renderName">The account's display label (LocalName ?? DisplayName).</param>
+    /// <param name="filter">Raw filter-box text. Only the outer whitespace is trimmed.</param>
+    public static bool AccountMatchesFilter(IEnumerable<string> tags, string renderName, string filter)
+    {
+        if (string.IsNullOrWhiteSpace(filter))
+        {
+            return true;
+        }
+        var needle = filter.Trim();
+        if (!string.IsNullOrEmpty(renderName) &&
+            renderName.Contains(needle, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        if (tags is null)
+        {
+            return false;
+        }
+        foreach (var tag in tags)
+        {
+            if (!string.IsNullOrEmpty(tag) &&
+                tag.Contains(needle, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
     /// Games available for the per-account picker on each row. Synced from the favorites store
     /// at LoadAsync time and again every time the Games dialog closes. Always ends with the
     /// <see cref="JoinByLinkSentinel"/> "(Paste a link...)" entry.
@@ -310,6 +347,48 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     public string CompactToggleLabel => _isCompact ? "Expand" : "Compact";
+
+    private string _accountFilter = string.Empty;
+    /// <summary>
+    /// Tag/name filter text bound to the filter box above the account list (v1.6.0, item 7b).
+    /// On change, every account's <see cref="AccountSummary.IsFilteredOut"/> is recomputed via
+    /// <see cref="AccountMatchesFilter"/> — the row container's Visibility binds to that flag, so
+    /// the underlying <see cref="Accounts"/> collection and its order are NEVER touched (this is
+    /// what keeps drag-to-reorder index math intact, vs a CollectionViewSource filter). While a
+    /// filter is active (<see cref="IsFilterActive"/>) the drag handlers no-op, so filtering and
+    /// reordering can't fight each other.
+    /// </summary>
+    public string AccountFilter
+    {
+        get => _accountFilter;
+        set
+        {
+            if (SetField(ref _accountFilter, value))
+            {
+                OnPropertyChanged(nameof(IsFilterActive));
+                ApplyFilter();
+            }
+        }
+    }
+
+    /// <summary>
+    /// True when a non-empty filter is in effect. The drag-reorder handlers read this to disable
+    /// reordering while filtered (clearing the filter restores it). v1.6.0.
+    /// </summary>
+    public bool IsFilterActive => !string.IsNullOrWhiteSpace(_accountFilter);
+
+    /// <summary>
+    /// Recompute <see cref="AccountSummary.IsFilteredOut"/> for every account against the current
+    /// <see cref="AccountFilter"/>. Empty/whitespace filter clears the flag on all rows. Called on
+    /// every filter change and after the account list (re)loads. v1.6.0.
+    /// </summary>
+    private void ApplyFilter()
+    {
+        foreach (var summary in Accounts)
+        {
+            summary.IsFilteredOut = !AccountMatchesFilter(summary.Tags, summary.RenderName, _accountFilter);
+        }
+    }
 
     /// <summary>Account designated as the user's main, if any. Used by the compact-mode CTA + tray hooks.</summary>
     public AccountSummary? MainAccount => Accounts.FirstOrDefault(a => a.IsMain);
@@ -414,6 +493,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             ShowDpapiCorruptModal();
         }
+
+        // Re-apply any active filter against the freshly-loaded rows so a reload (e.g. after the
+        // Games dialog closes) doesn't surface filtered-out rows. No-op when the filter is empty.
+        ApplyFilter();
 
         await ReloadGamesAsync();
         OnPropertyChanged(nameof(MainAccount));
@@ -1489,8 +1572,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <see cref="PersistIsSelectedAsync"/> soft-failure shape: fire-and-forget, a write failure
     /// doesn't block the chip showing/hiding; the next edit reconverges.
     /// </summary>
-    private void OnAccountTagsChanged(AccountSummary summary) =>
+    private void OnAccountTagsChanged(AccountSummary summary)
+    {
+        // Re-evaluate this row against the active filter — a tag added/removed while a filter is
+        // applied should immediately reflect in the row's visibility (v1.6.0, item 7b). No-op
+        // visually when no filter is set (the predicate returns "matches" for an empty filter).
+        if (IsFilterActive)
+        {
+            summary.IsFilteredOut = !AccountMatchesFilter(summary.Tags, summary.RenderName, _accountFilter);
+        }
         _ = PersistTagsAsync(summary.Id, summary.Tags.ToList());
+    }
 
     private async Task PersistTagsAsync(Guid accountId, IReadOnlyList<string> tags)
     {

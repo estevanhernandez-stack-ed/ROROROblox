@@ -35,6 +35,19 @@ internal sealed class InverseBoolConverter : IValueConverter
     }
 }
 
+internal sealed class InverseBoolToVisibilityConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return value is true ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return value is not Visibility.Visible;
+    }
+}
+
 internal sealed class StringToVisibilityConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
