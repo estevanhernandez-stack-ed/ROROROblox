@@ -61,7 +61,7 @@ Bigger than v1.5.0 — crypto + five surfaces. **Total ≈ 8-12 hours.** Heavies
   Acceptance: no empty bar — rows show chips + a quiet "+"; clicking "+" adds a tag and re-collapses; filter hides non-matching rows without reordering; reorder disabled while filtered, restored on clear. VM-logic tests for the filter predicate.
   Verify: `dotnet test ROROROblox.slnx --filter "AccountSummary*|TagFilter*"`; run, add a tag via the "+", filter the list. Commit: `feat(tags): collapsed + chip add-affordance + reorder-safe tag filter`.
 
-- [ ] **8. Fix + restore the Follow feature** *(scope gated by item 1)*
+- [x] **8. Fix + restore the Follow feature** *(scope gated by item 1)*
   Spec ref: `spec.md > 5. Fix + restore the Follow feature`
   What to build: Per item 1's finding — fix the root cause of the Follow break, then unmask the UI (`Visibility` flips on the friend-follow surface). If item 1 found the cause is deep, this item is descoped to "deferred to its own cycle" and the checklist is updated (per the When-Something-Breaks protocol).
   Acceptance: friend-follow visible + functional (follow an alt into a friend's game), OR a documented descope decision if item 1 gated it out.
