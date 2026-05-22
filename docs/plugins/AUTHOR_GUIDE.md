@@ -100,6 +100,8 @@ Gated by the gRPC interceptor. If you call a method whose required capability is
 | `host.events.account-exited` | `SubscribeAccountExited` |
 | `host.events.mutex-state-changed` | `SubscribeMutexStateChanged` |
 | `host.commands.request-launch` | `RequestLaunch(accountId)` — ask RoRoRo to launch an alt |
+| `host.commands.launch-target` | `RequestLaunchTarget(accountId, share_url \| follow_user_id)` — launch an account into a *specific* server: a private-server link, a public place, or by following a friend (NuGet 0.2.0+) |
+| `host.queries.current-server` | `GetCurrentServer()` — read the user's most-recently-launched private-server share link (NuGet 0.2.0+) |
 | `host.ui.tray-menu` | `AddTrayMenuItem` — contribute a tray-menu entry |
 | `host.ui.row-badge` | `AddRowBadge` — paint a per-account badge in RoRoRo's main window |
 | `host.ui.status-panel` | `AddStatusPanel` — contribute a status panel pane |
@@ -229,6 +231,38 @@ if (!result.Ok)
 ```
 
 Account ids come from `GetRunningAccounts()` (already-running) or via `SubscribeAccountLaunched` events. There's no "list all saved accounts" RPC in v1.4 — by design, plugins shouldn't enumerate the user's full account inventory.
+
+### Squad up — share the server you're in, join the server a clanmate shared
+
+`RequestLaunch` only fires an account's *default* launch. To launch into a **specific** server (NuGet 0.2.0+, capability `host.commands.launch-target`), use `RequestLaunchTarget` — the host resolves any Roblox link form (private-server share URL, `roblox.com/share` token, PlaceLauncher `accessCode` URL, public game URL, bare place id) or follows a friend.
+
+```csharp
+// Inbound — join the exact server a clanmate shared (the share_url came from Discord):
+var result = await client.RequestLaunchTargetAsync(new LaunchTargetRequest
+{
+    AccountId = accountId,
+    ShareUrl = "https://www.roblox.com/games/920587237?privateServerLinkCode=ABC-LINK",
+}, callOptions);
+
+// Or join by following a friend into whatever server they're in:
+var followed = await client.RequestLaunchTargetAsync(new LaunchTargetRequest
+{
+    AccountId = accountId,
+    FollowUserId = 4242, // a Roblox userId; Roblox permission-checks the follow
+}, callOptions);
+```
+
+```csharp
+// Outbound — read the private server YOU most recently launched, to share it
+// (NuGet 0.2.0+, capability host.queries.current-server):
+var current = await client.GetCurrentServerAsync(new Empty(), callOptions);
+if (current.Present)
+{
+    // post current.ShareUrl to your clan's Discord channel, etc.
+}
+```
+
+The host owns all link parsing, cookie handling, and the authenticated launch — your plugin only passes links and account ids around. The plaintext account cookie never leaves RoRoRo. These additions are wire-compatible: `contractVersion` stays `"1.0"`; you only need NuGet `0.2.0`.
 
 ## Versioning policy (provisional)
 
