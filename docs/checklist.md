@@ -37,7 +37,7 @@ Smaller than v1.6.0 — mostly process-watching + gating logic + small UI. **Tot
   Acceptance: installer present → tracker waits past 30s + still attaches a late RPB; no installer → unchanged (30s). Tests pass.
   Verify: `dotnet test ROROROblox.slnx --filter "RobloxProcessTracker*"`. Commit: `fix(launch): extend tracker attach-timeout while Roblox installer is running`.
 
-- [ ] **4. Pre-warm batch launch + version pre-check gating (ViewModel, TDD the gate)**
+- [x] **4. Pre-warm batch launch + version pre-check gating (ViewModel, TDD the gate)**
   Spec ref: `spec.md > Components > 2. Pre-warm batch launch` + `3. Version pre-check` + `Data flow`
   What to build: in `LaunchAllAsync` / `SquadLaunchAsync`, gate the batch: strap handles launches (item 2) → launch all as today (skip pre-warm); else no update pending (item 1) → launch all as today; else (update pending) → launch the FIRST account, **wait** until `IsInstallerRunning()` is false AND the first account's `RobloxPlayerBeta` attached, **then** release the rest. Extract the gating decision (should-pre-warm + wait-condition) into a pure tested helper; wire the VM to it. Reuse the existing 5s inter-launch throttle for post-pre-warm releases.
   Acceptance: strap present → no pre-warm; no update → no pre-warm (normal speed); update pending → batch holds after #1 until installer-clear + #1 attach, then releases. Pure-gate tests cover all three branches.
