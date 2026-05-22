@@ -25,7 +25,7 @@ Smaller than v1.6.0 — mostly process-watching + gating logic + small UI. **Tot
   Acceptance: installer-running detected when present; update-pending true on version mismatch, false on match, false-on-failure (degrade safe). New tests pass (stub the process scan + version/CDN).
   Verify: `dotnet test ROROROblox.slnx --filter "RobloxUpdateProbe*"`. Commit: `feat(launch): RobloxUpdateProbe — installer-running + update-pending detection`.
 
-- [ ] **2. Strap-aware detection (TDD)**
+- [x] **2. Strap-aware detection (TDD)**
   Spec ref: `spec.md > Components > Riders > 7. Strap-aware skip`
   What to build: extend the existing `BloxstrapDetector` (reads the `roblox-player:` handler-registry key) to also recognize **Fishstrap** and expose `bool IsStrapHandlingLaunches()` ("a strap is the registered handler, so it updates proactively itself"). Detect only — no co-driving the strap's mutex.
   Acceptance: Bloxstrap handler → true; Fishstrap handler → true; vanilla Roblox → false. Tests pass.
