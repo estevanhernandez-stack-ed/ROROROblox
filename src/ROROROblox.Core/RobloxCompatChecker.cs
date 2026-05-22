@@ -85,7 +85,13 @@ public sealed class RobloxCompatChecker : IRobloxCompatChecker
         }
     }
 
-    private static string? GetInstalledRobloxVersion()
+    /// <summary>
+    /// Reads the file-version string of the newest installed <c>RobloxPlayerBeta.exe</c>
+    /// (the current <c>version-*</c> dir). Returns <c>null</c> when Roblox isn't installed or the
+    /// read fails. Exposed <c>internal</c> so the v1.7.0 <c>RobloxUpdateProbe</c> reuses the exact
+    /// same installed-version read (spec §"Components > 1. Update-pending detection").
+    /// </summary>
+    internal static string? GetInstalledRobloxVersion()
     {
         try
         {
