@@ -27,6 +27,11 @@ service RoRoRoHost {
   // Command surface
   rpc RequestLaunch(LaunchRequest) returns (LaunchResult);
 
+  // Command surface (contract 1.0, additive in NuGet 0.2.0)
+  rpc RequestLaunchTarget(LaunchTargetRequest) returns (LaunchResult);
+  // Query surface (additive)
+  rpc GetCurrentServer(Empty) returns (CurrentServer);
+
   // UI surface (v1: tray menu, row badge, status panel)
   rpc AddTrayMenuItem(MenuItemSpec) returns (UIHandle);
   rpc AddRowBadge(RowBadgeSpec) returns (UIHandle);
@@ -111,6 +116,26 @@ message LaunchResult {
   bool ok = 1;
   string failure_reason = 2;
   int32 process_id = 3;
+}
+
+message LaunchTargetRequest {
+  string account_id = 1;
+  oneof target {
+    // A Roblox server link in ANY form the host understands (private-server share
+    // URL, PlaceLauncher accessCode URL, roblox.com/share token, public game URL,
+    // or a bare place id). The host resolves it via its existing share-URL resolver.
+    string share_url = 2;
+    // Follow a friend into whatever server they're in (Roblox permission-checks).
+    int64 follow_user_id = 3;
+  }
+}
+
+message CurrentServer {
+  bool present = 1;                    // false when no private server has been launched
+  string share_url = 2;               // ready-to-post shareable link
+  string place_name = 3;
+  int64  place_id = 4;
+  int64  last_launched_at_unix_ms = 5;
 }
 
 message UIHandle {
