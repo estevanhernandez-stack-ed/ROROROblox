@@ -14,7 +14,14 @@ namespace ROROROblox.Core.Diagnostics;
 public sealed class RobloxProcessTracker : IRobloxProcessTracker, IDisposable
 {
     private const string PlayerProcessName = "RobloxPlayerBeta";
+    private const string InstallerProcessName = "RobloxPlayerInstaller";
     private static readonly TimeSpan DefaultAttachTimeout = TimeSpan.FromSeconds(30);
+    // Install-aware extended deadline (v1.7.0 install-deferral rider 6). When RobloxPlayerInstaller.exe
+    // is running during the attach wait, an update can delay the real RobloxPlayerBeta well past the
+    // 30s base deadline. This cap is held in lockstep with the v1.6.0 AppStorageDefender's ~120s
+    // identity hold (AppStorageDefender max-cap) so the two stop disagreeing — the tracker keeps
+    // waiting for as long as the defender keeps defending the launching account's identity.
+    private static readonly TimeSpan DefaultInstallerExtendedTimeout = TimeSpan.FromSeconds(120);
     private static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMilliseconds(750);
     // Process.StartTime can read a hair earlier than the wall clock we captured pre-Process.Start,
     // so allow a small grace window when comparing against launchedAtUtc.
@@ -22,7 +29,10 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IDisposable
 
     private readonly ILogger<RobloxProcessTracker> _log;
     private readonly TimeSpan _attachTimeout;
+    private readonly TimeSpan _installerExtendedTimeout;
     private readonly TimeSpan _pollInterval;
+    private readonly Func<bool> _isInstallerRunning;
+    private readonly Func<IReadOnlyList<Process>> _candidateProcesses;
     private readonly ConcurrentDictionary<Guid, AttachedSlot> _attachedByAccount = new();
     private readonly ConcurrentDictionary<int, Guid> _claimedPidToAccount = new();
     private bool _disposed;
@@ -30,16 +40,37 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IDisposable
     public RobloxProcessTracker() : this(NullLogger<RobloxProcessTracker>.Instance) { }
 
     public RobloxProcessTracker(ILogger<RobloxProcessTracker> log)
-        : this(log, DefaultAttachTimeout, DefaultPollInterval) { }
+        : this(
+            log,
+            DefaultAttachTimeout,
+            DefaultInstallerExtendedTimeout,
+            DefaultPollInterval,
+            DefaultInstallerScan,
+            DefaultPlayerScan)
+    { }
 
+    /// <summary>
+    /// Seam ctor — inject the timeouts/poll plus the two install-deferral seams:
+    /// <paramref name="isInstallerRunning"/> (the <c>RobloxPlayerInstaller.exe</c> signal, same shape
+    /// as <c>RobloxUpdateProbe.IsInstallerRunning</c>) and <paramref name="candidateProcesses"/> (the
+    /// raw <c>RobloxPlayerBeta</c> candidate source). The tracker still applies its own claim / FIFO /
+    /// start-time filtering on top of the candidates, so that logic stays under test. Used by tests
+    /// and any DI override; the public ctors wire the real live scans.
+    /// </summary>
     internal RobloxProcessTracker(
         ILogger<RobloxProcessTracker> log,
         TimeSpan attachTimeout,
-        TimeSpan pollInterval)
+        TimeSpan installerExtendedTimeout,
+        TimeSpan pollInterval,
+        Func<bool> isInstallerRunning,
+        Func<IReadOnlyList<Process>> candidateProcesses)
     {
         _log = log ?? throw new ArgumentNullException(nameof(log));
         _attachTimeout = attachTimeout;
+        _installerExtendedTimeout = installerExtendedTimeout;
         _pollInterval = pollInterval;
+        _isInstallerRunning = isInstallerRunning ?? throw new ArgumentNullException(nameof(isInstallerRunning));
+        _candidateProcesses = candidateProcesses ?? throw new ArgumentNullException(nameof(candidateProcesses));
     }
 
     public IReadOnlyDictionary<Guid, TrackedProcess> Attached =>
@@ -99,12 +130,43 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        var deadline = DateTimeOffset.UtcNow + _attachTimeout;
-        _log.LogDebug("Tracking launch for account {AccountId}, deadline {Deadline:O}", accountId, deadline);
+        var startUtc = DateTimeOffset.UtcNow;
+        // Base deadline = today's 30s behavior. The extended ceiling is only ever USED when the
+        // Roblox installer is found running as the base deadline elapses — an install can delay the
+        // real RobloxPlayerBeta past 30s, and the v1.6.0 defender holds identity to ~120s, so the
+        // tracker matches that hold instead of firing a false attach-failure mid-update. With no
+        // installer running, the loop never extends and behavior is unchanged.
+        var baseDeadline = startUtc + _attachTimeout;
+        // The extended cap can't be shorter than the base deadline (guards a misconfigured ctor).
+        var extendedDeadline = startUtc + (_installerExtendedTimeout > _attachTimeout
+            ? _installerExtendedTimeout
+            : _attachTimeout);
+        var extended = false;
+        _log.LogDebug("Tracking launch for account {AccountId}, base deadline {Deadline:O}", accountId, baseDeadline);
 
-        while (DateTimeOffset.UtcNow < deadline)
+        while (true)
         {
             ct.ThrowIfCancellationRequested();
+
+            var now = DateTimeOffset.UtcNow;
+            // Past the base deadline: extend ONLY while the installer is running, and only up to the
+            // bounded extended cap. Re-check the installer signal each pass so a finished install
+            // doesn't keep us waiting needlessly past the base window.
+            if (now >= baseDeadline)
+            {
+                if (now >= extendedDeadline || !InstallerRunningSafe())
+                {
+                    break;
+                }
+                if (!extended)
+                {
+                    extended = true;
+                    _log.LogInformation(
+                        "RobloxPlayerInstaller.exe is running at the {Base}s mark for account {AccountId}; " +
+                        "extending attach wait up to {Cap}s (lockstep with the appStorage defender's hold).",
+                        _attachTimeout.TotalSeconds, accountId, _installerExtendedTimeout.TotalSeconds);
+                }
+            }
 
             var match = TryFindUnclaimedPlayerProcess(launchedAtUtc);
             if (match is not null)
@@ -128,10 +190,11 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IDisposable
             }
         }
 
+        var waited = extended ? _installerExtendedTimeout : _attachTimeout;
         _log.LogWarning(
-            "No RobloxPlayerBeta.exe spawned within {Timeout}s for account {AccountId}. " +
+            "No RobloxPlayerBeta.exe spawned within {Timeout}s for account {AccountId}{Extended}. " +
             "Likely silent launch failure (Roblox version drift, place removed, AV interference).",
-            _attachTimeout.TotalSeconds, accountId);
+            waited.TotalSeconds, accountId, extended ? " (installer-extended)" : string.Empty);
         ProcessAttachFailed?.Invoke(this, new RobloxProcessEventArgs(accountId, 0));
     }
 
@@ -180,16 +243,31 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IDisposable
         }
     }
 
-    private Process? TryFindUnclaimedPlayerProcess(DateTimeOffset earliestStartUtc)
+    // Degrade-safe wrapper for the installer signal: an injected scan that throws must never extend
+    // the wait forever — treat a failed read as "not installing" (same bias as RobloxUpdateProbe).
+    private bool InstallerRunningSafe()
     {
-        Process[] candidates;
         try
         {
-            candidates = Process.GetProcessesByName(PlayerProcessName);
+            return _isInstallerRunning();
         }
         catch (Exception ex)
         {
-            _log.LogDebug(ex, "GetProcessesByName failed; will retry next poll.");
+            _log.LogDebug(ex, "Installer-running signal threw; treating as not installing.");
+            return false;
+        }
+    }
+
+    private Process? TryFindUnclaimedPlayerProcess(DateTimeOffset earliestStartUtc)
+    {
+        IReadOnlyList<Process> candidates;
+        try
+        {
+            candidates = _candidateProcesses();
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Candidate-process scan failed; will retry next poll.");
             return null;
         }
 
@@ -292,6 +370,35 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IDisposable
         }
         _attachedByAccount.Clear();
         _claimedPidToAccount.Clear();
+    }
+
+    // Default live scans wired by the public ctors. The candidate scan hands the FULL set of
+    // RobloxPlayerBeta processes to TryFindUnclaimedPlayerProcess, which owns the claim / FIFO /
+    // start-time filtering. The installer scan mirrors RobloxUpdateProbe.IsInstallerRunning's
+    // process-name family (kept local so the tracker doesn't take a hard dependency on the probe).
+    private static IReadOnlyList<Process> DefaultPlayerScan() =>
+        Process.GetProcessesByName(PlayerProcessName);
+
+    private static bool DefaultInstallerScan()
+    {
+        var processes = Process.GetProcessesByName(InstallerProcessName);
+        try
+        {
+            return processes.Length > 0;
+        }
+        catch
+        {
+            // Degrade-safe: a scan failure must never extend the wait forever. Treat as "not installing".
+            return false;
+        }
+        finally
+        {
+            // Dispose every handle — same anti-leak discipline as the probe / running scanner.
+            foreach (var p in processes)
+            {
+                p.Dispose();
+            }
+        }
     }
 
     private sealed record AttachedSlot(Process Process, DateTimeOffset AttachedAtUtc);

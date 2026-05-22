@@ -14,6 +14,11 @@ public interface IRobloxProcessTracker
     /// then attaches and fires <see cref="ProcessAttached"/>. Times out after 30 seconds, in
     /// which case <see cref="ProcessAttachFailed"/> fires (silent launch failure — wrong
     /// Roblox version, place gone, antivirus, etc.).
+    /// <para><b>Install-aware deadline (v1.7.0).</b> If <c>RobloxPlayerInstaller.exe</c> is running
+    /// when the 30s base deadline elapses, the wait extends (up to a ~120s cap, in lockstep with the
+    /// v1.6.0 appStorage defender's identity hold) so an update-delayed client still attaches instead
+    /// of registering a false attach-failure. With no installer running, the 30s behavior is
+    /// unchanged.</para>
     /// </summary>
     Task TrackLaunchAsync(Guid accountId, DateTimeOffset launchedAtUtc, CancellationToken ct = default);
 
