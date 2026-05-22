@@ -44,6 +44,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly Theming.ThemeService _themeService;
     private readonly Tray.RobloxWindowDecorator _windowDecorator;
     private readonly IBloxstrapDetector _bloxstrapDetector;
+    private readonly IRobloxUpdateProbe _updateProbe;
     private readonly Core.Transport.IAccountTransport _accountTransport;
     private readonly ILogger<MainViewModel> _log;
 
@@ -71,6 +72,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private string? _robloxCompatBanner;
     private bool _bloxstrapWarningVisible;
     private bool _isBusy;
+    private bool _robloxUpdating;
     private int _liveProcessCount;
 
     public MainViewModel(
@@ -91,6 +93,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         Theming.ThemeService themeService,
         Tray.RobloxWindowDecorator windowDecorator,
         IBloxstrapDetector bloxstrapDetector,
+        IRobloxUpdateProbe updateProbe,
         Core.Transport.IAccountTransport accountTransport,
         ILogger<MainViewModel>? log = null)
     {
@@ -111,6 +114,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _themeService = themeService;
         _windowDecorator = windowDecorator;
         _bloxstrapDetector = bloxstrapDetector;
+        _updateProbe = updateProbe;
         _accountTransport = accountTransport;
         _log = log ?? NullLogger<MainViewModel>.Instance;
 
@@ -510,6 +514,19 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         get => _isBusy;
         set => SetField(ref _isBusy, value);
+    }
+
+    /// <summary>
+    /// True while a batch is holding for a pending Roblox update to land on the first client
+    /// (v1.7.0 install-deferral pre-warm). The seam item 5 binds the "Roblox is updating — hold on"
+    /// UX to; this item only sets/clears the flag (and a plain status line) around the pre-warm
+    /// wait. False on the no-update / strap paths — those never enter the wait. Spec
+    /// §"Components > 4. Updating-UX".
+    /// </summary>
+    public bool RobloxUpdating
+    {
+        get => _robloxUpdating;
+        private set => SetField(ref _robloxUpdating, value);
     }
 
     /// <summary>Loads accounts + games from disk. Called once at MainWindow load.</summary>
@@ -1036,20 +1053,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             }
 
             StatusBanner = $"Launching {targets.Count} selected account{(targets.Count == 1 ? "" : "s")}...";
-            var i = 0;
-            foreach (var summary in targets)
-            {
-                StatusBanner = $"Launching {summary.DisplayName} ({++i} of {targets.Count})...";
-                await LaunchAccountAsync(summary);
-                if (i < targets.Count)
-                {
-                    // Bumped from 1500ms in v1.4.2.0: each RPB writes its own
-                    // identity to appStorage.json ~3-5s after attach. The
-                    // AppStorageDefender re-stamps on drift, but a wider gap
-                    // here further reduces the contested window between launches.
-                    await Task.Delay(TimeSpan.FromMilliseconds(5000));
-                }
-            }
+            await DispatchBatchAsync(
+                targets,
+                overrideTarget: null,
+                launchingBanner: (summary, n, total) => $"Launching {summary.DisplayName} ({n} of {total})...");
             StatusBanner = result.PartialBanner(targets.Count, "Launch multiple finished");
         }
         finally
@@ -1097,6 +1104,160 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             _log.LogWarning(ex, "Pre-launch presence refresh failed; proceeding with last-known state.");
+        }
+    }
+
+    /// <summary>
+    /// Inter-launch throttle between batch clients — gives the tracker time to FIFO-claim each
+    /// <c>RobloxPlayerBeta.exe</c> by start time AND widens the appStorage contested window
+    /// (v1.4.2.0). Shared by Launch-multiple + Private-server batches.
+    /// </summary>
+    private static readonly TimeSpan InterLaunchThrottle = TimeSpan.FromMilliseconds(5000);
+
+    /// <summary>
+    /// Poll cadence for the v1.7.0 pre-warm wait — checks the installer-gone + first-attached
+    /// signals roughly twice a second, bounded by <see cref="PreWarmGate.MaxWait"/>.
+    /// </summary>
+    private static readonly TimeSpan PreWarmPollInterval = TimeSpan.FromMilliseconds(500);
+
+    /// <summary>
+    /// Dispatch a batch of eligible accounts through the throttled launch loop, with the v1.7.0
+    /// install-deferral pre-warm gate wrapped AROUND it (spec §"Components > 2/3" + "Data flow").
+    /// <para>
+    /// Gate (pure <see cref="PreWarmGate.Decide"/>): a strap is the handler → it self-updates, so
+    /// launch the whole batch at normal speed; else no update pending → launch the whole batch at
+    /// normal speed (the common path, unchanged); else (update pending) → launch the FIRST account,
+    /// wait until the installer is gone AND #1 attached (bounded by <see cref="PreWarmGate.MaxWait"/>),
+    /// then release the rest through the same loop. The update lands once, up front, on #1; the rest
+    /// find a matching version and never trigger the installer.
+    /// </para>
+    /// Eligibility / skip-reason banners are computed by the callers BEFORE this — pre-warm wraps the
+    /// batch, it doesn't replace eligibility.
+    /// </summary>
+    private async Task DispatchBatchAsync(
+        IReadOnlyList<AccountSummary> targets,
+        LaunchTarget.PrivateServer? overrideTarget,
+        Func<AccountSummary, int, int, string> launchingBanner)
+    {
+        if (targets.Count == 0)
+        {
+            return;
+        }
+
+        var decision = await DecidePreWarmAsync().ConfigureAwait(true);
+
+        // Single-account batches can't benefit from serializing the update (there is no "rest"),
+        // so they always go down the normal path — the lone launch IS the pre-warm.
+        if (decision == PreWarmDecision.PreWarmThenRelease && targets.Count > 1)
+        {
+            // --- Pre-warm: launch #1, hold the rest until the update clears. ---
+            var first = targets[0];
+            StatusBanner = launchingBanner(first, 1, targets.Count);
+            await LaunchAccountAsync(first, overrideTarget).ConfigureAwait(true);
+
+            await WaitForPreWarmAsync(first).ConfigureAwait(true);
+
+            // Release the REST through the existing throttled loop. #1 is already up.
+            await ReleaseBatchAsync(targets, overrideTarget, launchingBanner, startIndex: 1).ConfigureAwait(true);
+            return;
+        }
+
+        // --- Normal path: strap-handled OR no update pending OR a single-account batch. ---
+        await ReleaseBatchAsync(targets, overrideTarget, launchingBanner, startIndex: 0).ConfigureAwait(true);
+    }
+
+    /// <summary>
+    /// Run the pure <see cref="PreWarmGate.Decide"/> gate against the two live probes. Both probe
+    /// reads are degrade-safe by contract (a strap-detect or CDN failure returns the "don't block"
+    /// answer), and we additionally swallow here so a probe surprise never stalls a batch — on any
+    /// throw we fall back to <see cref="PreWarmDecision.LaunchAllNow"/> (today's behavior).
+    /// </summary>
+    private async Task<PreWarmDecision> DecidePreWarmAsync()
+    {
+        try
+        {
+            // Strap-handling short-circuits the (more expensive) network update check.
+            var strapHandling = _bloxstrapDetector.IsStrapHandlingLaunches();
+            if (strapHandling)
+            {
+                return PreWarmGate.Decide(strapHandling: true, updatePending: false);
+            }
+
+            var updatePending = await _updateProbe.IsUpdatePendingAsync().ConfigureAwait(true);
+            return PreWarmGate.Decide(strapHandling: false, updatePending);
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Pre-warm decision probe threw; defaulting to launch-all-now.");
+            return PreWarmDecision.LaunchAllNow;
+        }
+    }
+
+    /// <summary>
+    /// Block (cooperatively, polling on the UI thread) until the v1.7.0 pre-warm wait completes:
+    /// <c>RobloxPlayerInstaller.exe</c> gone AND the first account attached (its
+    /// <c>summary.IsRunning</c> flipped true via <see cref="OnProcessAttached"/>). Bounded by
+    /// <see cref="PreWarmGate.MaxWait"/> — on the cap we proceed best-effort and release the rest
+    /// anyway (never hang the batch forever). Sets/clears <see cref="RobloxUpdating"/> as the seam
+    /// item 5 binds the "Roblox is updating — hold on" UX to.
+    /// </summary>
+    private async Task WaitForPreWarmAsync(AccountSummary first)
+    {
+        var deadline = DateTime.UtcNow + PreWarmGate.MaxWait;
+        RobloxUpdating = true;
+        StatusBanner = "Roblox is updating — hold on...";
+        _log.LogInformation("Pre-warm: holding the batch on {Account} until the Roblox update clears.", first.DisplayName);
+        try
+        {
+            while (true)
+            {
+                // installerRunning is degrade-safe-to-false; firstAttached is the UI-thread summary
+                // flag set by OnProcessAttached. Both feed the pure wait-complete predicate.
+                var installerRunning = _updateProbe.IsInstallerRunning();
+                if (PreWarmGate.PreWarmWaitComplete(installerRunning, first.IsRunning))
+                {
+                    _log.LogInformation("Pre-warm complete: installer gone + {Account} attached. Releasing the rest.", first.DisplayName);
+                    return;
+                }
+
+                if (DateTime.UtcNow >= deadline)
+                {
+                    _log.LogWarning(
+                        "Pre-warm wait hit the {Cap}s cap (installerRunning={Installer}, firstAttached={Attached}); releasing the rest best-effort.",
+                        (int)PreWarmGate.MaxWait.TotalSeconds, installerRunning, first.IsRunning);
+                    return;
+                }
+
+                await Task.Delay(PreWarmPollInterval).ConfigureAwait(true);
+            }
+        }
+        finally
+        {
+            RobloxUpdating = false;
+        }
+    }
+
+    /// <summary>
+    /// The throttled launch loop, factored out of Launch-multiple / Private-server so the pre-warm
+    /// path can release the tail of the batch through the SAME loop (with the SAME 5s throttle and
+    /// "(n of total)" banner) after #1 is up. <paramref name="startIndex"/> skips the already-warmed
+    /// first account; the throttle is applied between every dispatched client.
+    /// </summary>
+    private async Task ReleaseBatchAsync(
+        IReadOnlyList<AccountSummary> targets,
+        LaunchTarget.PrivateServer? overrideTarget,
+        Func<AccountSummary, int, int, string> launchingBanner,
+        int startIndex)
+    {
+        for (var idx = startIndex; idx < targets.Count; idx++)
+        {
+            var summary = targets[idx];
+            StatusBanner = launchingBanner(summary, idx + 1, targets.Count);
+            await LaunchAccountAsync(summary, overrideTarget).ConfigureAwait(true);
+            if (idx < targets.Count - 1)
+            {
+                await Task.Delay(InterLaunchThrottle).ConfigureAwait(true);
+            }
         }
     }
 
@@ -1152,20 +1313,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 return;
             }
 
-            var i = 0;
-            foreach (var summary in targets)
-            {
-                StatusBanner = $"Joining private server: {summary.DisplayName} ({++i} of {targets.Count})...";
-                await LaunchAccountAsync(summary, overrideTarget: target);
-                if (i < targets.Count)
-                {
-                    // Bumped from 1500ms in v1.4.2.0: each RPB writes its own
-                    // identity to appStorage.json ~3-5s after attach. The
-                    // AppStorageDefender re-stamps on drift, but a wider gap
-                    // here further reduces the contested window between launches.
-                    await Task.Delay(TimeSpan.FromMilliseconds(5000));
-                }
-            }
+            await DispatchBatchAsync(
+                targets,
+                overrideTarget: target,
+                launchingBanner: (summary, n, total) => $"Joining private server: {summary.DisplayName} ({n} of {total})...");
             StatusBanner = result.PartialBanner(targets.Count, "Private server launch finished");
         }
         finally

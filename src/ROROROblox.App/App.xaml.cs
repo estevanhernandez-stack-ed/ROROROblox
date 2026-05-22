@@ -303,6 +303,18 @@ public partial class App : Application
         });
 
         services.AddSingleton<IBloxstrapDetector, BloxstrapDetector>();
+
+        // v1.7.0 install-deferral probe (item 1). Its own typed HttpClient — the CDN GET against
+        // clientsettingscdn.roblox.com carries the ROROROblox UA (never a browser spoof). The probe
+        // resolves its other two seams itself (live installer process scan + GetInstalledRobloxVersion).
+        // Same IHttpClientFactory pattern as RobloxApi; both members degrade-safe to "no update".
+        services.AddHttpClient<IRobloxUpdateProbe, RobloxUpdateProbe>(client =>
+        {
+            client.DefaultRequestHeaders.UserAgent.Clear();
+            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
+        });
+
         services.AddSingleton<IClientAppSettingsWriter, ClientAppSettingsWriter>();
         services.AddSingleton<IGlobalBasicSettingsWriter, GlobalBasicSettingsWriter>();
         services.AddSingleton<IRobloxLauncher, RobloxLauncher>();
