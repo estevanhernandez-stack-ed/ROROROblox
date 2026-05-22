@@ -2,7 +2,7 @@
 
 Spec-first Cart cycles. Active cycle's canonical spec lives upstream:
 
-→ [docs/superpowers/specs/2026-05-21-rororo-account-transport-and-bundle-design.md](superpowers/specs/2026-05-21-rororo-account-transport-and-bundle-design.md)
+→ [docs/superpowers/specs/2026-05-21-rororo-install-deferral-design.md](superpowers/specs/2026-05-21-rororo-install-deferral-design.md)
 
 Cycle history (each cycle's canonical spec is its own durable artifact):
 
@@ -15,7 +15,8 @@ Cycle history (each cycle's canonical spec is its own durable artifact):
 - v1.3.4 cookie-capture per-capture user-data dir: shipped 2026-05-09 (commit 981068a)
 - v1.4 plugin system: [`2026-05-09-rororo-plugin-system-design.md`](superpowers/specs/2026-05-09-rororo-plugin-system-design.md) (shipped to main)
 - v1.5.0 presence account-UX: [`2026-05-20-rororo-presence-account-ux-design.md`](superpowers/specs/2026-05-20-rororo-presence-account-ux-design.md) — presence-based running-state (kills the ghost-closed bug) + game-aware row text + Launch multiple hardening + free-text tags (shipped 2026-05-21 via PR #24, released v1.5.0.0)
-- **v1.6.0 account transport + bundle (current cycle):** [`2026-05-21-rororo-account-transport-and-bundle-design.md`](superpowers/specs/2026-05-21-rororo-account-transport-and-bundle-design.md) — passphrase-encrypted account export/import + private servers in the dropdown + tag UI (collapsed "+" + filter) + Follow restore + security pass
+- v1.6.0 account transport + bundle: [`2026-05-21-rororo-account-transport-and-bundle-design.md`](superpowers/specs/2026-05-21-rororo-account-transport-and-bundle-design.md) — passphrase-encrypted account export/import + private servers in the dropdown + tag UI (collapsed "+" + filter) + Follow restore + security pass (shipped 2026-05-21 via PR #25, released v1.6.0.0)
+- **v1.7.0 install-deferral + launch-lane reliability (current cycle):** [`2026-05-21-rororo-install-deferral-design.md`](superpowers/specs/2026-05-21-rororo-install-deferral-design.md) — no-takeover Roblox-update deferral (pre-warm + version pre-check + updating-UX) + install-aware messaging/tracker-timeout + strap-aware skip
 
 ## Section index (for checklist references — current cycle)
 
