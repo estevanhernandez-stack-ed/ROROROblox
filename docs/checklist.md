@@ -43,7 +43,7 @@ Smaller than v1.6.0 — mostly process-watching + gating logic + small UI. **Tot
   Acceptance: strap present → no pre-warm; no update → no pre-warm (normal speed); update pending → batch holds after #1 until installer-clear + #1 attach, then releases. Pure-gate tests cover all three branches.
   Verify: `dotnet test ROROROblox.slnx --filter "PreWarm*|LaunchGate*"`. Commit: `feat(launch): pre-warm the first client through a pending Roblox update before the batch`.
 
-- [ ] **5. Updating-UX (App)**
+- [x] **5. Updating-UX (App)**
   Spec ref: `spec.md > Components > 4. Updating-UX`
   What to build: a clear "Roblox is updating — hold on" status (StatusBanner + the launching account's row state) during the item-4 pre-warm wait, cleared when the batch releases. Brand-styled, consistent with existing launch banners.
   Acceptance: pending-update batch shows the updating banner + clears once the batch proceeds; no spurious banner on the no-update path.
