@@ -72,4 +72,17 @@ internal static class PreWarmGate
     /// <param name="firstAttached">The first account's <c>summary.IsRunning</c> — its RPB attached.</param>
     public static bool PreWarmWaitComplete(bool installerRunning, bool firstAttached)
         => !installerRunning && firstAttached;
+
+    /// <summary>
+    /// Row status text when a launch never connected (the tracker's <c>ProcessAttachFailed</c>
+    /// fired). Branch on whether a Roblox installer is running: if it is, the client hasn't attached
+    /// because Roblox is mid-update — surface the intended-hold copy instead of the scary failure
+    /// hint, which on the slow-install case this cycle targets reads as a hang/AV problem when it
+    /// isn't. Spec §"Riders > 5. Install-aware ProcessAttachFailed messaging".
+    /// </summary>
+    /// <param name="installerRunning"><c>IRobloxUpdateProbe.IsInstallerRunning()</c> — install in progress.</param>
+    public static string AttachFailedMessage(bool installerRunning)
+        => installerRunning
+            ? "Roblox is updating — hold on."
+            : "Launch never connected. Check Roblox is current + antivirus isn't blocking.";
 }

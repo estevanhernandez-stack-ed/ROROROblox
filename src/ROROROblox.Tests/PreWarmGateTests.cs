@@ -80,4 +80,22 @@ public class PreWarmGateTests
     {
         Assert.Equal(expected, PreWarmGate.PreWarmWaitComplete(installerRunning, firstAttached));
     }
+
+    // === AttachFailedMessage: install-aware ProcessAttachFailed copy (spec Riders §5) ===
+
+    [Fact]
+    public void AttachFailedMessage_InstallerRunning_UpdatingCopy()
+    {
+        // Installer running → the client hasn't attached because Roblox is mid-update, not a failure.
+        Assert.Equal("Roblox is updating — hold on.", PreWarmGate.AttachFailedMessage(installerRunning: true));
+    }
+
+    [Fact]
+    public void AttachFailedMessage_NoInstaller_FailureCopy()
+    {
+        // No installer → a real never-connected failure; keep the existing antivirus/version hint.
+        Assert.Equal(
+            "Launch never connected. Check Roblox is current + antivirus isn't blocking.",
+            PreWarmGate.AttachFailedMessage(installerRunning: false));
+    }
 }

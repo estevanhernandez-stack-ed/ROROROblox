@@ -1694,13 +1694,19 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             "Process attach failed for account {AccountId}; leaving appStorage defender to its max cap (install may still be in progress).",
             e.AccountId);
 
+        // v1.7.0 item 5: if a Roblox installer is running, the client hasn't attached because Roblox
+        // is mid-update — not a real failure. Branch the row copy on that signal so the slow-install
+        // case this cycle targets reads as an intended hold, not a scary AV/never-connected error.
+        // IsInstallerRunning() is synchronous and never throws — call it directly.
+        var installerRunning = _updateProbe.IsInstallerRunning();
         Application.Current?.Dispatcher.Invoke(() =>
         {
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
             if (summary is null) return;
             // The launcher fired but no player process appeared. Most common: Roblox version drift,
-            // place removed, antivirus quarantine. Surface the hint in the row.
-            summary.StatusText = "Launch never connected. Check Roblox is current + antivirus isn't blocking.";
+            // place removed, antivirus quarantine — UNLESS an install is in progress, in which case
+            // the install is the reason. PreWarmGate.AttachFailedMessage owns the branch (tested).
+            summary.StatusText = PreWarmGate.AttachFailedMessage(installerRunning);
         });
         // Stamp the session row with an outcome hint instead of an end timestamp — the launch
         // never actually ran. Useful when scrolling history later: "this one never connected."
