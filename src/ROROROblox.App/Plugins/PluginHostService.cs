@@ -253,6 +253,33 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         };
     }
 
+    public override async Task<LaunchResult> RequestLaunchTarget(LaunchTargetRequest request, ServerCallContext context)
+    {
+        string? shareUrl = request.TargetCase == LaunchTargetRequest.TargetOneofCase.ShareUrl ? request.ShareUrl : null;
+        long? followUserId = request.TargetCase == LaunchTargetRequest.TargetOneofCase.FollowUserId ? request.FollowUserId : null;
+        var (ok, reason, pid) = await _launcher.RequestLaunchTargetAsync(request.AccountId, shareUrl, followUserId).ConfigureAwait(false);
+        return new LaunchResult
+        {
+            Ok = ok,
+            FailureReason = reason ?? string.Empty,
+            ProcessId = pid,
+        };
+    }
+
+    public override async Task<CurrentServer> GetCurrentServer(Empty request, ServerCallContext context)
+    {
+        var info = await _launcher.GetCurrentServerAsync().ConfigureAwait(false);
+        if (info is null) return new CurrentServer { Present = false };
+        return new CurrentServer
+        {
+            Present = true,
+            ShareUrl = info.ShareUrl,
+            PlaceName = info.PlaceName,
+            PlaceId = info.PlaceId,
+            LastLaunchedAtUnixMs = info.LastLaunchedAtUnixMs,
+        };
+    }
+
     // =====================================================================
     // UI surface (item 14 / plan task 16).
     //

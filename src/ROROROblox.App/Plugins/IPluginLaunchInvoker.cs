@@ -17,4 +17,20 @@ public interface IPluginLaunchInvoker
     /// so the calling plugin can surface the failure cleanly.
     /// </summary>
     Task<(bool ok, string? failureReason, int processId)> RequestLaunchAsync(string accountId);
+
+    /// <summary>
+    /// Launch <paramref name="accountId"/> into a target. Exactly one of
+    /// <paramref name="shareUrl"/> / <paramref name="followUserId"/> is set by the caller;
+    /// shareUrl is resolved by the host's share-URL resolver, followUserId becomes a
+    /// follow-friend launch. Same return contract as <see cref="RequestLaunchAsync"/>.
+    /// </summary>
+    Task<(bool ok, string? failureReason, int processId)> RequestLaunchTargetAsync(
+        string accountId, string? shareUrl, long? followUserId);
+
+    /// <summary>Most-recently-launched saved private server, or null if none.</summary>
+    Task<CurrentServerInfo?> GetCurrentServerAsync();
 }
+
+/// <summary>Host-internal DTO for the GetCurrentServer RPC (mapped to proto in the service).</summary>
+public sealed record CurrentServerInfo(
+    string ShareUrl, string PlaceName, long PlaceId, long LastLaunchedAtUnixMs);

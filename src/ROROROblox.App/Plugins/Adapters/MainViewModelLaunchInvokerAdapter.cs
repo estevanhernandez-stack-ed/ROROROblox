@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Windows;
 using ROROROblox.App.ViewModels;
+using ROROROblox.Core;
 
 namespace ROROROblox.App.Plugins.Adapters;
 
@@ -68,6 +69,61 @@ internal sealed class MainViewModelLaunchInvokerAdapter : IPluginLaunchInvoker
             dispatcher.Invoke(() => DispatchExecute(summary));
         }
         return Task.FromResult<(bool, string?, int)>((true, null, 0));
+    }
+
+    internal static (bool ok, string? reason) ValidateLaunchTargetArgs(string accountId, string? shareUrl, long? followUserId)
+    {
+        if (string.IsNullOrWhiteSpace(accountId)) return (false, "accountId is required.");
+        if (!Guid.TryParse(accountId, out _)) return (false, $"accountId '{accountId}' is not a valid GUID.");
+        if (string.IsNullOrWhiteSpace(shareUrl) && followUserId is null) return (false, "A launch target (share_url or follow_user_id) is required.");
+        return (true, null);
+    }
+
+    public async Task<(bool ok, string? failureReason, int processId)> RequestLaunchTargetAsync(
+        string accountId, string? shareUrl, long? followUserId)
+    {
+        var (argsOk, argsReason) = ValidateLaunchTargetArgs(accountId, shareUrl, followUserId);
+        if (!argsOk) return (false, argsReason, 0);
+
+        var id = Guid.Parse(accountId);
+        var summary = _vm.Accounts.FirstOrDefault(a => a.Id == id);
+        if (summary is null) return (false, $"No saved account with id {id}.", 0);
+        if (summary.SessionExpired) return (false, "Account session is expired; re-add the account first.", 0);
+        if (summary.IsLaunching) return (false, "Account is already launching.", 0);
+        if (summary.IsRunning) return (false, "Account is already running.", 0);
+
+        LaunchTarget? target;
+        if (followUserId is { } uid)
+        {
+            target = new LaunchTarget.FollowFriend(uid);
+        }
+        else
+        {
+            target = await _vm.ResolveShareUrlAsync(shareUrl!).ConfigureAwait(false);
+            if (target is null) return (false, "Couldn't read that as a Roblox server link.", 0);
+        }
+
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+            await _vm.LaunchAccountForPluginAsync(summary, target).ConfigureAwait(false);
+        else
+            await dispatcher.InvokeAsync(() => _vm.LaunchAccountForPluginAsync(summary, target)).Task.Unwrap().ConfigureAwait(false);
+
+        return (true, null, 0); // PID arrives via SubscribeAccountLaunched
+    }
+
+    public async Task<CurrentServerInfo?> GetCurrentServerAsync()
+    {
+        var servers = await _vm.PrivateServerStoreForPlugin.ListAsync().ConfigureAwait(false);
+        var newest = servers.Where(s => s.LastLaunchedAt is not null)
+                            .OrderByDescending(s => s.LastLaunchedAt)
+                            .FirstOrDefault();
+        if (newest is null) return null;
+        return new CurrentServerInfo(
+            newest.ToShareUrl(),
+            string.IsNullOrEmpty(newest.PlaceName) ? newest.RenderName : newest.PlaceName,
+            newest.PlaceId,
+            newest.LastLaunchedAt!.Value.ToUnixTimeMilliseconds());
     }
 
     private void DispatchExecute(AccountSummary summary)

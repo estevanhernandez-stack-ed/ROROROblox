@@ -903,6 +903,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         RelayCommand.RaiseCanExecuteChanged();
     }
 
+    /// <summary>Plugin-host seam: launch a specific account into a resolved target.</summary>
+    internal Task LaunchAccountForPluginAsync(AccountSummary summary, LaunchTarget target)
+        => LaunchAccountAsync(summary, overrideTarget: target);
+
+    /// <summary>Plugin-host seam: read-only access to the saved private-server store.</summary>
+    internal IPrivateServerStore PrivateServerStoreForPlugin => _privateServerStore;
+
     private async Task LaunchAccountAsync(AccountSummary? summary, LaunchTarget? overrideTarget = null)
     {
         if (summary is null)

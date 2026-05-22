@@ -175,14 +175,97 @@ public class PluginHostServiceTests
         Assert.Equal(accountId, Assert.Single(fakeLauncher.Invocations));
     }
 
+    [Fact]
+    public async Task RequestLaunchTarget_DispatchesShareUrl_ToLauncher()
+    {
+        var fake = new FakeLaunchInvoker();
+        var service = new PluginHostService(
+            new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
+            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator());
+
+        var acct = Guid.NewGuid().ToString();
+        var result = await service.RequestLaunchTarget(new LaunchTargetRequest
+        {
+            AccountId = acct,
+            ShareUrl = "https://www.roblox.com/games/1?privateServerLinkCode=ABC",
+        }, FakeServerCallContext.Create());
+
+        Assert.True(result.Ok);
+        Assert.Equal(6789, result.ProcessId);
+        var inv = Assert.Single(fake.TargetInvocations);
+        Assert.Equal(acct, inv.acct);
+        Assert.Equal("https://www.roblox.com/games/1?privateServerLinkCode=ABC", inv.url);
+        Assert.Null(inv.follow);
+    }
+
+    [Fact]
+    public async Task RequestLaunchTarget_DispatchesFollowUserId_ToLauncher()
+    {
+        var fake = new FakeLaunchInvoker();
+        var service = new PluginHostService(
+            new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
+            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator());
+
+        var acct = Guid.NewGuid().ToString();
+        var result = await service.RequestLaunchTarget(new LaunchTargetRequest
+        {
+            AccountId = acct,
+            FollowUserId = 4242L,
+        }, FakeServerCallContext.Create());
+
+        Assert.True(result.Ok);
+        var inv = Assert.Single(fake.TargetInvocations);
+        Assert.Null(inv.url);
+        Assert.Equal(4242L, inv.follow);
+    }
+
+    [Fact]
+    public async Task GetCurrentServer_ReturnsPresentFalse_WhenNone()
+    {
+        var fake = new FakeLaunchInvoker { Current = null };
+        var service = new PluginHostService(
+            new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
+            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator());
+
+        var result = await service.GetCurrentServer(new Empty(), FakeServerCallContext.Create());
+        Assert.False(result.Present);
+    }
+
+    [Fact]
+    public async Task GetCurrentServer_MapsInfo_WhenPresent()
+    {
+        var fake = new FakeLaunchInvoker { Current = new CurrentServerInfo("https://x", "Pet Sim", 99, 1700000000000) };
+        var service = new PluginHostService(
+            new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
+            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator());
+
+        var result = await service.GetCurrentServer(new Empty(), FakeServerCallContext.Create());
+        Assert.True(result.Present);
+        Assert.Equal("https://x", result.ShareUrl);
+        Assert.Equal("Pet Sim", result.PlaceName);
+        Assert.Equal(99, result.PlaceId);
+        Assert.Equal(1700000000000, result.LastLaunchedAtUnixMs);
+    }
+
     private sealed class FakeLaunchInvoker : IPluginLaunchInvoker
     {
         public List<string> Invocations { get; } = new();
+        public List<(string acct, string? url, long? follow)> TargetInvocations { get; } = new();
+        public CurrentServerInfo? Current { get; set; }
+
         public Task<(bool ok, string? failureReason, int processId)> RequestLaunchAsync(string accountId)
         {
             Invocations.Add(accountId);
             return Task.FromResult<(bool, string?, int)>((true, null, 12345));
         }
+
+        public Task<(bool ok, string? failureReason, int processId)> RequestLaunchTargetAsync(string accountId, string? shareUrl, long? followUserId)
+        {
+            TargetInvocations.Add((accountId, shareUrl, followUserId));
+            return Task.FromResult<(bool, string?, int)>((true, null, 6789));
+        }
+
+        public Task<CurrentServerInfo?> GetCurrentServerAsync() => Task.FromResult(Current);
     }
 
     private sealed class TestStreamWriter<T> : IServerStreamWriter<T>
