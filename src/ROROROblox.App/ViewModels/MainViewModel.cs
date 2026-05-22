@@ -1204,8 +1204,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private async Task WaitForPreWarmAsync(AccountSummary first)
     {
         var deadline = DateTime.UtcNow + PreWarmGate.MaxWait;
+        // RobloxUpdating drives the branded "Roblox is updating" banner (MainWindow.xaml, item 5) —
+        // it owns the user-facing message now, so we no longer set the plain StatusBanner line here
+        // (that would double the same words). The status row returns to the launch-progress banner
+        // once ReleaseBatchAsync releases the rest of the batch.
         RobloxUpdating = true;
-        StatusBanner = "Roblox is updating — hold on...";
         _log.LogInformation("Pre-warm: holding the batch on {Account} until the Roblox update clears.", first.DisplayName);
         try
         {
