@@ -359,3 +359,23 @@ Spec-first. Canonical spec `docs/superpowers/specs/2026-05-21-rororo-install-def
 **Iterate-pass result worth noting:** the slate retired the cycle's only spike (version-GUID read already exists via RobloxCompatChecker) and produced two evidence-backed NON-findings (launch path already MessageBox-free; RobloxAlreadyRunning modal already hard-blocks correctly) — so no busywork there. Scope-creep kept out: log retention, Studio bootstrap, Fishstrap static-dir/channel (the takeover wall).
 
 **Handoff:** Run `/build`. Autonomous; C1 after item 5.
+
+## /build — autonomous run (2026-05-21, cycle v1.7.0 install-deferral + launch-lane reliability)
+
+All 7 items complete on branch `v1.7.0-install-deferral`. Final: `dotnet build ROROROblox.slnx` 0 errors, **575 unit + 5 harness (1 skipped) green** (was 519 at cycle start; +56). Each item dispatched to a subagent.
+
+**Items 1-3 (foundation):** `RobloxUpdateProbe` (1 — IsInstallerRunning + degrade-safe IsUpdatePendingAsync; corrected the slate's assumption — GetInstalledRobloxVersion returns the FileVersion, so compare the CDN `version` field not the GUID). Strap-aware detection (2 — Fishstrap added + `IsStrapHandlingLaunches()`, distinct from the Bloxstrap-only FFlag-banner check). Install-aware tracker timeout (3 — extends 30s→120s while the installer runs, lockstep with the v1.6.0 defender).
+
+**Item 4 (core):** pre-warm gate — pure `PreWarmGate.Decide` + `PreWarmWaitComplete` (12 tests), `DispatchBatchAsync` orchestration, DI-wired probe + detector. No-update / strap paths unchanged (normal speed); only the update-pending path holds the batch behind one update. `RobloxUpdating` flag left as the item-5 seam.
+
+**Item 5 (C1):** branded "Roblox is updating — hold on" banner bound to `RobloxUpdating`. C1 verification caveat surfaced honestly — the pre-warm LOGIC is unit-tested, but the live banner/deferral can't be triggered on demand (needs a real pending Roblox update); builder accepted finishing the cycle + real-smoking later.
+
+**Item 6 (rider):** install-aware `ProcessAttachFailed` messaging via `PreWarmGate.AttachFailedMessage` — installer running → "Roblox is updating" instead of the scary "check antivirus" copy.
+
+**Item 7 (docs/security):** spec marked implemented; 2 dashboard decisions logged (install-deferral-at-our-layer rationale + the two new degrade-safe Roblox-side compat dependencies: `RobloxPlayerInstaller.exe` name + `clientsettingscdn.roblox.com/v2/client-version` endpoint); no local paths; no vulnerable deps; secret-scan clean.
+
+**Iterate-pass payoff (this lane):** the vibe-iterate slate retired the only spike (version read already in RobloxCompatChecker) and caught 2 non-findings (launch path already MessageBox-free; RobloxAlreadyRunning already hard-blocks) — zero busywork. Scope-creep kept out: log retention, Studio bootstrap, Fishstrap static-dir (the takeover wall).
+
+**Open at cycle end:** real-smoke the banner/deferral at the next actual Roblox update. The full Bloxstrap-style install *deferral/suppression* (and the multilaunch-during-install identity edge) remains a future cycle — this cycle handles the *interruption* at our layer, not Roblox's update cadence itself.
+
+**Handoff:** branch PR-ready. I drive the release (version 1.7.0.0, Store MSIX + sideload + reviewer letter + GitHub release); builder's only step is the Partner Center submit.

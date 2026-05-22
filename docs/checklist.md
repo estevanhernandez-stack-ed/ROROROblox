@@ -55,7 +55,7 @@ Smaller than v1.6.0 — mostly process-watching + gating logic + small UI. **Tot
   Acceptance: installer running at attach-fail → updating copy; not running → existing failure copy. Test the branch.
   Verify: `dotnet test ROROROblox.slnx --filter "MainViewModel*|AttachFailed*"`. Commit: `fix(launch): install-aware ProcessAttachFailed messaging`.
 
-- [ ] **7. Documentation & Security Verification**
+- [x] **7. Documentation & Security Verification**
   Spec ref: `spec.md > Decisions to log` + `spec.md > Testing` + `CLAUDE.md > What NOT to do`
   What to build: sync `docs/` (spec status → implemented, checklist ticks, spec.md pointer). Record the new compat-risk dependencies (`RobloxPlayerInstaller.exe` name + `clientsettingscdn.roblox.com/v2/client-version` GUID) as decisions + confirm they degrade gracefully. Secrets scan + local-path grep (no `c:\Users\` in committable code). `dotnet list ROROROblox.slnx package --vulnerable`. Branch ready for PR to `main`. (Version bump + Store/Velopack release is the builder-driven release flow, separate.)
   Acceptance: docs current; no secrets/local-paths; deps clean or documented; compat-risk decisions logged. Branch PR-ready.

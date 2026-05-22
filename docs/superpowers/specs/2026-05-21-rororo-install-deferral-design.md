@@ -1,6 +1,6 @@
 # RoRoRo v1.7.0 — Roblox install-deferral (no-takeover) + launch-lane reliability riders
 
-> **Status:** Design 2026-05-21 (spec-first; design groundwork in the two investigation docs below). Scope locked by builder.
+> **Status:** Implemented 2026-05-21 on branch `v1.7.0-install-deferral` (items 1-7). Build matches design. The pre-warm logic + detection + tracker extension + gating are unit-tested; the live banner/deferral is a manual smoke for the next real Roblox client update (no on-demand trigger).
 > **Cycle:** v1.7.0 (launch/install reliability). Credibility lane.
 > **Design inputs:** [`docs/investigations/2026-05-21-bloxstrap-update-deferral.md`](../../investigations/2026-05-21-bloxstrap-update-deferral.md) (mechanism + options) and [`docs/investigations/2026-05-21-launch-lane-iterate-slate.md`](../../investigations/2026-05-21-launch-lane-iterate-slate.md) (the low-cost riders).
 
