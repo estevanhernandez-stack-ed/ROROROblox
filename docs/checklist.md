@@ -19,7 +19,7 @@ Smaller than v1.6.0 — mostly process-watching + gating logic + small UI. **Tot
 
 ## Checklist
 
-- [ ] **1. Update-pending detection (Core, TDD)**
+- [x] **1. Update-pending detection (Core, TDD)**
   Spec ref: `spec.md > Components > 1. Update-pending detection`
   What to build: a small `IRobloxUpdateProbe` / `RobloxUpdateProbe` in `src/ROROROblox.Core/Diagnostics/` exposing `bool IsInstallerRunning()` (scan for `RobloxPlayerInstaller.exe`, mirroring `RobloxProcessTracker`'s process-scan) and `Task<bool> IsUpdatePendingAsync()` (compare `RobloxCompatChecker.GetInstalledRobloxVersion()` to the documented `clientsettingscdn.roblox.com/v2/client-version/WindowsPlayer` GUID via the existing HttpClient; on any network/parse failure return false = "don't block"). Posture-clean (one process scan + one documented GET). Consumed by items 3-6.
   Acceptance: installer-running detected when present; update-pending true on version mismatch, false on match, false-on-failure (degrade safe). New tests pass (stub the process scan + version/CDN).
