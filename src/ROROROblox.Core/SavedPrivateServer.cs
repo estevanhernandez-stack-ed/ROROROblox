@@ -45,4 +45,18 @@ public sealed record SavedPrivateServer(
     /// What the UI should show wherever it used to show <see cref="Name"/>. v1.3.x.
     /// </summary>
     public string RenderName => string.IsNullOrEmpty(LocalName) ? Name : LocalName;
+
+    /// <summary>
+    /// A shareable Roblox URL for this server that round-trips through
+    /// <see cref="LaunchTarget.FromUrl"/>. LinkCode → the website share form;
+    /// AccessCode → a PlaceLauncher form (FromUrl recognizes accessCode=).
+    /// </summary>
+    public string ToShareUrl() => CodeKind switch
+    {
+        PrivateServerCodeKind.LinkCode =>
+            $"https://www.roblox.com/games/{PlaceId}?privateServerLinkCode={Uri.EscapeDataString(Code)}",
+        PrivateServerCodeKind.AccessCode =>
+            $"https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestPrivateGame&placeId={PlaceId}&accessCode={Uri.EscapeDataString(Code)}",
+        _ => $"https://www.roblox.com/games/{PlaceId}",
+    };
 }

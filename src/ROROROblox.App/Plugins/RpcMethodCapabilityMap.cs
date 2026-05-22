@@ -18,6 +18,8 @@ public static class RpcMethodCapabilityMap
         ["SubscribeAccountExited"] = PluginCapability.HostEventsAccountExited,
         ["SubscribeMutexStateChanged"] = PluginCapability.HostEventsMutexStateChanged,
         ["RequestLaunch"] = PluginCapability.HostCommandsRequestLaunch,
+        ["RequestLaunchTarget"] = PluginCapability.HostCommandsLaunchTarget,
+        ["GetCurrentServer"] = PluginCapability.HostQueriesCurrentServer,
         ["AddTrayMenuItem"] = PluginCapability.HostUITrayMenu,
         ["AddRowBadge"] = PluginCapability.HostUIRowBadge,
         ["AddStatusPanel"] = PluginCapability.HostUIStatusPanel,

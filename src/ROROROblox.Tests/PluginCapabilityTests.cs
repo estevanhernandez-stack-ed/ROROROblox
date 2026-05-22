@@ -48,4 +48,19 @@ public class PluginCapabilityTests
         Assert.Contains("read pixels", explanation, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Unknown capability", explanation, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void IsKnown_ReturnsTrue_ForNewClanCapabilities()
+    {
+        Assert.True(PluginCapability.IsKnown("host.commands.launch-target"));
+        Assert.True(PluginCapability.IsKnown("host.queries.current-server"));
+    }
+
+    [Fact]
+    public void Display_LaunchTarget_DisclosesTheRisk()
+    {
+        var explanation = PluginCapability.Display("host.commands.launch-target");
+        Assert.Contains("server", explanation, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Unknown capability", explanation, StringComparison.OrdinalIgnoreCase);
+    }
 }
