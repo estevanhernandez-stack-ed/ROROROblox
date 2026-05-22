@@ -31,7 +31,7 @@ Smaller than v1.6.0 — mostly process-watching + gating logic + small UI. **Tot
   Acceptance: Bloxstrap handler → true; Fishstrap handler → true; vanilla Roblox → false. Tests pass.
   Verify: `dotnet test ROROROblox.slnx --filter "BloxstrapDetector*|StrapDetect*"`. Commit: `feat(launch): strap-aware detection (Bloxstrap + Fishstrap handler)`.
 
-- [ ] **3. Install-aware tracker attach-timeout (Core, TDD)**
+- [x] **3. Install-aware tracker attach-timeout (Core, TDD)**
   Spec ref: `spec.md > Components > Riders > 6. Install-aware tracker attach-timeout`
   What to build: `RobloxProcessTracker` bails at a fixed 30s (`RobloxProcessTracker.cs:17`), out of lockstep with the v1.6.0 defender's 120s. When `RobloxUpdateProbe.IsInstallerRunning()` is true during the attach wait, extend the deadline (~120s family cap) so an install-delayed `RobloxPlayerBeta` still attaches instead of a false `ProcessAttachFailed`. Inject the probe (or a delegate) for testability.
   Acceptance: installer present → tracker waits past 30s + still attaches a late RPB; no installer → unchanged (30s). Tests pass.
