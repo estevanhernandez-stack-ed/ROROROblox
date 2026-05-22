@@ -49,7 +49,7 @@ Smaller than v1.6.0 — mostly process-watching + gating logic + small UI. **Tot
   Acceptance: pending-update batch shows the updating banner + clears once the batch proceeds; no spurious banner on the no-update path.
   Verify: `dotnet build ROROROblox.slnx`; simulate an update-pending launch (stubbed probe) and watch the banner. **Checkpoint C1.** Commit: `feat(launch): 'Roblox is updating' UX during pre-warm`.
 
-- [ ] **6. Install-aware ProcessAttachFailed messaging (App, rider)**
+- [x] **6. Install-aware ProcessAttachFailed messaging (App, rider)**
   Spec ref: `spec.md > Components > Riders > 5. Install-aware ProcessAttachFailed messaging`
   What to build: in `OnProcessAttachFailed`, branch the row message on `RobloxUpdateProbe.IsInstallerRunning()` — installer running → "Roblox is updating — hold on" instead of the current "Launch never connected. Check Roblox is current + antivirus isn't blocking." Keep the failure copy for the genuine no-installer case.
   Acceptance: installer running at attach-fail → updating copy; not running → existing failure copy. Test the branch.
