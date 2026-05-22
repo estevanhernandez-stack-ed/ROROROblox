@@ -347,3 +347,15 @@ All 10 items complete on branch `v1.6.0-account-transport`. Final: `dotnet build
 **Session/friction loggers:** Cart plugin data dir still absent (5th cycle).
 
 **Handoff:** branch PR-ready. Per the release-workflow memory, I drive the Store MSIX + sideload + reviewer letter + GitHub release; builder's only step is the Partner Center submit click.
+
+## /checklist — autonomous run (2026-05-21, cycle v1.7.0 install-deferral + launch-lane reliability)
+
+Spec-first. Canonical spec `docs/superpowers/specs/2026-05-21-rororo-install-deferral-design.md`, synthesized from two investigation docs this session: the Bloxstrap update-deferral mechanism study + a vibe-iterate launch-lane slate (low-cost riders). Scope locked by builder.
+
+**Cycle shape (credibility lane):** rebuild Bloxstrap's "update once, then launch the batch" at RoRoRo's layer WITHOUT bootstrapper takeover (posture: documented endpoints, no handler takeover). Core: update-pending detection (RobloxPlayerInstaller.exe process + version pre-check reusing RobloxCompatChecker — no spike) → pre-warm batch launch → version pre-check skip → updating-UX. Riders folded from the iterate slate (all ride the same install-detection signal): install-aware ProcessAttachFailed messaging, install-aware tracker attach-timeout (lockstep with the v1.6.0 defender's 120s), strap-aware skip (BloxstrapDetector + Fishstrap).
+
+**Sequencing:** detection signal first (item 1 — everything consumes it), then strap-detect (2) + tracker-timeout (3), then the pre-warm gate (4, the core), updating-UX (5, C1), attach-fail messaging (6), docs/security (7). 7 items, ~4-6h.
+
+**Iterate-pass result worth noting:** the slate retired the cycle's only spike (version-GUID read already exists via RobloxCompatChecker) and produced two evidence-backed NON-findings (launch path already MessageBox-free; RobloxAlreadyRunning modal already hard-blocks correctly) — so no busywork there. Scope-creep kept out: log retention, Studio bootstrap, Fishstrap static-dir/channel (the takeover wall).
+
+**Handoff:** Run `/build`. Autonomous; C1 after item 5.

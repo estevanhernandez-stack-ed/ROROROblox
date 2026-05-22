@@ -1,80 +1,62 @@
-# RORORO — v1.6.0 Account Transport + Bundle Build Checklist
+# RORORO — v1.7.0 Install-Deferral + Launch-Lane Reliability Build Checklist
 
-**Cycle:** v1.6.0 (account transport + saved-PS-in-dropdown + tag UI + Follow restore + security pass)
-**Cycle type:** Spec-first cycle (pattern mm). Canonical spec: [`docs/superpowers/specs/2026-05-21-rororo-account-transport-and-bundle-design.md`](superpowers/specs/2026-05-21-rororo-account-transport-and-bundle-design.md). [`spec.md`](spec.md) is a pointer-stub.
+**Cycle:** v1.7.0 (no-takeover Roblox-update deferral + launch-lane riders)
+**Cycle type:** Spec-first cycle (pattern mm). Canonical spec: [`docs/superpowers/specs/2026-05-21-rororo-install-deferral-design.md`](superpowers/specs/2026-05-21-rororo-install-deferral-design.md). Design inputs: the two investigation docs under `docs/investigations/2026-05-21-*`. [`spec.md`](spec.md) is a pointer-stub.
 
 ## Build Preferences
 
 - **Build mode:** Autonomous
 - **Comprehension checks:** N/A (autonomous)
-- **Git:** Commit after each item. Conventional commits. Branch `v1.6.0-account-transport` (cut from `main`; spec committed).
-- **Verification:** Yes — checkpoints. **C1 after item 5** (transport export→import runnable end to end). **C2 after item 8** (private servers + tag UI + Follow). Manual smoke is the v1 trade; no E2E against real roblox.com.
-- **TDD:** strict for Core + ViewModel logic (items 2, 3, 6, 7 test-first). UI/DI wiring (items 5, 8) + investigation (item 1) + audit (item 9) are verify-by-running.
+- **Git:** Commit after each item. Conventional commits. Branch `v1.7.0-install-deferral` (cut from `main`; carries the two investigation docs + the spec).
+- **Verification:** Yes — **C1 after item 5** (pre-warm + updating-UX runnable; simulate an update-pending launch). The real install-interruption is a manual smoke whenever Roblox next updates — no E2E against real roblox.com.
+- **TDD:** strict for Core + ViewModel logic (items 1-4, 6 — detection + gating + timeout + messaging decisions are pure-extractable). UI wiring (item 5) + docs (item 7) are verify-by-running.
 
 ## Effort
 
-Bigger than v1.5.0 — crypto + five surfaces. **Total ≈ 8-12 hours.** Heaviest: item 2 (transport crypto, security-sensitive) and item 5 (transport UI). Riskiest unknown: item 1 (why Follow broke — gated first so we learn early).
+Smaller than v1.6.0 — mostly process-watching + gating logic + small UI. **Total ≈ 4-6 hours.** Heaviest: item 4 (pre-warm sequencing in the batch-launch path). No spike — the version read reuses `RobloxCompatChecker`.
 
 ---
 
 ## Checklist
 
-- [x] **1. Follow root-cause diagnostic (GATE — read-only)** → DONE. Finding: Follow is NOT masked in committed code (stale memory/spec). Real issue is functional — Friends-modal follow path lacks the land-at-home guard `FollowAltAsync` has; needs a live two-account smoke to confirm `RequestFollowUser`. Item 8 reshaped to "live-smoke confirm + port the guard (~10-20 lines)". In-cycle. See `docs/investigations/2026-05-21-follow-restore-diagnostic.md`.
-  Spec ref: `spec.md > 5. Fix + restore the Follow feature`
-  What to build: Nothing yet — investigate. Read `FollowAltAsync`, `OpenFriendFollowCommand`, `FriendFollowWindow`, `LaunchTarget.FollowFriend`, and the presence/join-by-user path. Determine WHY the feature was masked (`Visibility=Collapsed`) — what breaks against current Roblox behavior. Pull any clues from `docs/` + git history + the masked-feature memory. Produce a findings note: root cause, whether the fix is small (lands in item 7 this cycle) or deep (split to its own cycle, descope item 7).
-  Acceptance: a written root-cause finding + a scoped go/no-go on item 7. No code changes.
-  Verify: findings reported; item 7 scope confirmed before reaching it. Commit: `docs: Follow restore root-cause diagnostic`.
+- [ ] **1. Update-pending detection (Core, TDD)**
+  Spec ref: `spec.md > Components > 1. Update-pending detection`
+  What to build: a small `IRobloxUpdateProbe` / `RobloxUpdateProbe` in `src/ROROROblox.Core/Diagnostics/` exposing `bool IsInstallerRunning()` (scan for `RobloxPlayerInstaller.exe`, mirroring `RobloxProcessTracker`'s process-scan) and `Task<bool> IsUpdatePendingAsync()` (compare `RobloxCompatChecker.GetInstalledRobloxVersion()` to the documented `clientsettingscdn.roblox.com/v2/client-version/WindowsPlayer` GUID via the existing HttpClient; on any network/parse failure return false = "don't block"). Posture-clean (one process scan + one documented GET). Consumed by items 3-6.
+  Acceptance: installer-running detected when present; update-pending true on version mismatch, false on match, false-on-failure (degrade safe). New tests pass (stub the process scan + version/CDN).
+  Verify: `dotnet test ROROROblox.slnx --filter "RobloxUpdateProbe*"`. Commit: `feat(launch): RobloxUpdateProbe — installer-running + update-pending detection`.
 
-- [x] **2. `AccountTransportService` crypto core (Core, TDD)**
-  Spec ref: `spec.md > 1. Account transport > Crypto / Bundle format`
-  What to build: `src/ROROROblox.Core/Transport/IAccountTransport.cs` + `AccountTransportService.cs` + `AccountExportRecord` (display name, userId, cookie, tags, fpsCap, captionColorHex, localName, isMain, sortOrder/selected). `Export(records, passphrase) → byte[]` and `Import(byte[], passphrase) → records`. PBKDF2-HMAC-SHA256 @ 600,000 iters, random 16-byte salt; AES-256-GCM, random 12-byte nonce, 16-byte tag. Versioned binary header (magic + formatVersion + iterations + salt + nonce + ciphertext+tag). No DPAPI, no UI — pure crypto + serialization. Never log the passphrase/key/cookie; clear key material after use where the BCL allows.
-  Acceptance: round-trip (export→import = same records); wrong passphrase throws (no partial data); tampered ciphertext/tag throws; unknown formatVersion rejected; two exports of identical data differ (random salt/nonce). New tests pass; existing 420 stay green.
-  Verify: `dotnet test ROROROblox.slnx --filter "AccountTransport*"`. Commit: `feat(transport): AccountTransportService — PBKDF2 + AES-GCM bundle`.
+- [ ] **2. Strap-aware detection (TDD)**
+  Spec ref: `spec.md > Components > Riders > 7. Strap-aware skip`
+  What to build: extend the existing `BloxstrapDetector` (reads the `roblox-player:` handler-registry key) to also recognize **Fishstrap** and expose `bool IsStrapHandlingLaunches()` ("a strap is the registered handler, so it updates proactively itself"). Detect only — no co-driving the strap's mutex.
+  Acceptance: Bloxstrap handler → true; Fishstrap handler → true; vanilla Roblox → false. Tests pass.
+  Verify: `dotnet test ROROROblox.slnx --filter "BloxstrapDetector*|StrapDetect*"`. Commit: `feat(launch): strap-aware detection (Bloxstrap + Fishstrap handler)`.
 
-- [x] **3. `AccountStore` bulk export read + merge import (Core, TDD)**
-  Spec ref: `spec.md > 1. Account transport > Import flow / Components`
-  What to build: `IAccountStore` gains a bulk export (decrypt the chosen accounts' cookies + settings into `AccountExportRecord`s) and a merge import (`ImportMergeAsync(records)`: for each record whose `RobloxUserId` is not already present locally, add it — re-encrypt its cookie into the local DPAPI `accounts.dat`, persist its settings; skip duplicates; return imported/skipped counts). Reuses the existing DPAPI path.
-  Acceptance: export read returns full records for selected ids; merge adds non-dupes, skips existing (by userId), reports counts; round-trips through `AccountTransportService`; old `accounts.dat` unaffected. Tests pass.
-  Verify: `dotnet test ROROROblox.slnx --filter "AccountStore*"`. Commit: `feat(transport): AccountStore bulk export + merge-by-userId import`.
+- [ ] **3. Install-aware tracker attach-timeout (Core, TDD)**
+  Spec ref: `spec.md > Components > Riders > 6. Install-aware tracker attach-timeout`
+  What to build: `RobloxProcessTracker` bails at a fixed 30s (`RobloxProcessTracker.cs:17`), out of lockstep with the v1.6.0 defender's 120s. When `RobloxUpdateProbe.IsInstallerRunning()` is true during the attach wait, extend the deadline (~120s family cap) so an install-delayed `RobloxPlayerBeta` still attaches instead of a false `ProcessAttachFailed`. Inject the probe (or a delegate) for testability.
+  Acceptance: installer present → tracker waits past 30s + still attaches a late RPB; no installer → unchanged (30s). Tests pass.
+  Verify: `dotnet test ROROROblox.slnx --filter "RobloxProcessTracker*"`. Commit: `fix(launch): extend tracker attach-timeout while Roblox installer is running`.
 
-- [x] **4. Transport security review of items 2-3 (TDD-backed hardening)**
-  Spec ref: `spec.md > 2. Security pass`
-  What to build: Tighten the crypto path before it gets a UI. Confirm KDF iterations are a named constant at the OWASP floor; nonce is unique per export (test); AEAD tag is verified before any plaintext is used; no passphrase/key/cookie reaches logs or exception messages (grep + the `dpapi-cookie-blast-radius` agent against `Transport/` + the new AccountStore paths); key/passphrase buffers cleared after use. Add any missing negative tests.
-  Acceptance: dpapi-cookie-blast-radius reports clean on the transport path; no secret in logs/exceptions; nonce-uniqueness + tag-verify tests present.
-  Verify: agent report + `dotnet test ROROROblox.slnx --filter "AccountTransport*|AccountStore*"`. Commit: `test(transport): crypto hardening + cookie-leak audit on transport path`.
+- [ ] **4. Pre-warm batch launch + version pre-check gating (ViewModel, TDD the gate)**
+  Spec ref: `spec.md > Components > 2. Pre-warm batch launch` + `3. Version pre-check` + `Data flow`
+  What to build: in `LaunchAllAsync` / `SquadLaunchAsync`, gate the batch: strap handles launches (item 2) → launch all as today (skip pre-warm); else no update pending (item 1) → launch all as today; else (update pending) → launch the FIRST account, **wait** until `IsInstallerRunning()` is false AND the first account's `RobloxPlayerBeta` attached, **then** release the rest. Extract the gating decision (should-pre-warm + wait-condition) into a pure tested helper; wire the VM to it. Reuse the existing 5s inter-launch throttle for post-pre-warm releases.
+  Acceptance: strap present → no pre-warm; no update → no pre-warm (normal speed); update pending → batch holds after #1 until installer-clear + #1 attach, then releases. Pure-gate tests cover all three branches.
+  Verify: `dotnet test ROROROblox.slnx --filter "PreWarm*|LaunchGate*"`. Commit: `feat(launch): pre-warm the first client through a pending Roblox update before the batch`.
 
-- [x] **5. Transport UI — export/import dialogs + passphrase strength meter**
-  Spec ref: `spec.md > 1. Account transport > Export flow / Import flow`
-  What to build: Export dialog (account checklist defaulting to all; passphrase field with **enforced floor ≥12 + strength meter + confirm**; export disabled until it clears; save-file picker; plain warning on success). Import dialog (file picker; passphrase; calls decrypt → `ImportMergeAsync`; reports "Imported N, skipped M"; clear fail-closed message on wrong passphrase / damaged file). Wire to `AccountTransportService` + `AccountStore`. Brand-styled per 626 tokens. Entry points in Settings (or a dedicated dialog).
-  Acceptance: export a bundle, import it on a clean profile → accounts appear; wrong passphrase fails cleanly; merge skips dupes; weak passphrase blocks export.
-  Verify: `dotnet build ROROROblox.slnx`; run, export + re-import. **Checkpoint C1.** Commit: `feat(transport): export/import dialogs + passphrase strength gate`.
+- [ ] **5. Updating-UX (App)**
+  Spec ref: `spec.md > Components > 4. Updating-UX`
+  What to build: a clear "Roblox is updating — hold on" status (StatusBanner + the launching account's row state) during the item-4 pre-warm wait, cleared when the batch releases. Brand-styled, consistent with existing launch banners.
+  Acceptance: pending-update batch shows the updating banner + clears once the batch proceeds; no spurious banner on the no-update path.
+  Verify: `dotnet build ROROROblox.slnx`; simulate an update-pending launch (stubbed probe) and watch the banner. **Checkpoint C1.** Commit: `feat(launch): 'Roblox is updating' UX during pre-warm`.
 
-- [x] **6. Saved private servers in the per-account dropdown**
-  Spec ref: `spec.md > 3. Saved private servers in the per-account dropdown`
-  What to build: Populate the per-row dropdown (`AvailableGames`, `MainWindow.xaml:565`) with saved private servers from `IPrivateServerStore` alongside games. Give the dropdown a common item abstraction (or a `FavoriteGame`-shaped wrapper carrying the PS code); selecting a private server sets the row's launch target to `LaunchTarget.PrivateServer`. Render with the server's `RenderName`. No new management UI — rename/remove already exist for `SavedPrivateServer`.
-  Acceptance: saved private servers show in the dropdown, named; selecting one launches that account into that private server; games still work; Launch multiple can send different alts to different targets. Tests on the launch-target mapping where feasible.
-  Verify: `dotnet test ROROROblox.slnx`; run, pick a saved PS on a row, launch. Commit: `feat(launch): saved private servers selectable in the per-account dropdown`.
+- [ ] **6. Install-aware ProcessAttachFailed messaging (App, rider)**
+  Spec ref: `spec.md > Components > Riders > 5. Install-aware ProcessAttachFailed messaging`
+  What to build: in `OnProcessAttachFailed`, branch the row message on `RobloxUpdateProbe.IsInstallerRunning()` — installer running → "Roblox is updating — hold on" instead of the current "Launch never connected. Check Roblox is current + antivirus isn't blocking." Keep the failure copy for the genuine no-installer case.
+  Acceptance: installer running at attach-fail → updating copy; not running → existing failure copy. Test the branch.
+  Verify: `dotnet test ROROROblox.slnx --filter "MainViewModel*|AttachFailed*"`. Commit: `fix(launch): install-aware ProcessAttachFailed messaging`.
 
-- [x] **7. Tag UI — collapsed "+" chip + reorder-safe filter**
-  Spec ref: `spec.md > 4. Tag UI — add-affordance redesign + filter`
-  What to build: **7a** — replace the always-open add-tag bar with a collapsed **"+" chip** (tag-shaped pill, just a plus) where chips live; click engages a small inline input; Enter commits + collapses; blur/escape collapses unchanged. Compact mode stays read-only (no "+"). **7b** — a filter box that narrows the account list by tag (or name) via a non-persisted per-row `IsFilteredOut` visibility flag (leave `Accounts` order intact) and **disable drag-reorder while a filter is active**; clearing restores reorder.
-  Acceptance: no empty bar — rows show chips + a quiet "+"; clicking "+" adds a tag and re-collapses; filter hides non-matching rows without reordering; reorder disabled while filtered, restored on clear. VM-logic tests for the filter predicate.
-  Verify: `dotnet test ROROROblox.slnx --filter "AccountSummary*|TagFilter*"`; run, add a tag via the "+", filter the list. Commit: `feat(tags): collapsed + chip add-affordance + reorder-safe tag filter`.
-
-- [x] **8. Fix + restore the Follow feature** *(scope gated by item 1)*
-  Spec ref: `spec.md > 5. Fix + restore the Follow feature`
-  What to build: Per item 1's finding — fix the root cause of the Follow break, then unmask the UI (`Visibility` flips on the friend-follow surface). If item 1 found the cause is deep, this item is descoped to "deferred to its own cycle" and the checklist is updated (per the When-Something-Breaks protocol).
-  Acceptance: friend-follow visible + functional (follow an alt into a friend's game), OR a documented descope decision if item 1 gated it out.
-  Verify: `dotnet test ROROROblox.slnx`; run, follow a friend. **Checkpoint C2.** Commit: `feat(follow): fix + restore friend-follow` (or `docs: defer Follow restore — root cause deep`).
-
-- [x] **9. AppStorageDefender install-resilience hardening (folded into v1.6.0 from C2 finding)**
-  Spec ref: `spec.md > 2. Security pass` + memory `project_rororo_captcha_appstorage_defender`
-  What to build: Fix the wrong-account-launched-with-captcha bug surfaced at C2 — a Roblox install/update mid-launch delays the real client reading `appStorage.json` past the defender's fixed 12s window (and past the tracker's 30s attach timeout), so the identity stamp expires before consumption → wrong account + captcha. Change `AppStorageDefender` to defend until the launched client CONSUMES the identity (its `RobloxPlayerBeta` attaches + a short grace) bounded by a generous max cap (~120s), instead of a fixed 12s from launch. Wiring: track the defender per accountId; `OnProcessAttached` → `NotifyConsumed()` (wind down after ~10s grace); do NOT dispose on `ProcessAttachFailed` (install spawns the RPB after the 30s tracker timeout — let the cap cover it). Make `AppStoragePath` injectable for tests. NOT in scope: full Bloxstrap-style install suppression (its own future cycle).
-  Acceptance: a late-attaching launch keeps the correct identity stamped until consumption; normal launches wind down promptly after attach; bounded by the cap on a never-attaches launch. New defender tests pass; full suite green.
-  Verify: `dotnet test ROROROblox.slnx --filter "AppStorageDefender*"`. Commit: `fix(launch): defend appStorage identity until client consumes it (install-resilient)`.
-
-- [x] **10. Documentation & Security Verification**
-  Spec ref: `spec.md > 2. Security pass` + `spec.md > Testing` + `CLAUDE.md > What NOT to do`
-  What to build: Full app-wide `dpapi-cookie-blast-radius` audit (whole app, this is the security-pass cycle). Update the disclosure surfaces for the deliberate-export reality: a note for the next reviewer letter ("cookies leave only on user-initiated, passphrase-encrypted export") + a privacy-policy line. Sync `docs/` (spec status, checklist, spec.md pointer; banner-correct the canonical spec if build drifted). Secrets scan + local-path grep (no `c:\Users\` in committable code). `dotnet list ROROROblox.slnx package --vulnerable`. Confirm `.gitignore` still covers `accounts.dat`, `*.rororo-accounts` export bundles (add if missing — must never be committed), `*.pfx`. Branch ready for PR to `main`. (Version bump + Store/Velopack release is the builder-driven release flow, separate.)
-  Acceptance: cookie audit clean app-wide; export bundles gitignored; no secrets/local-paths in staged files; deps clean or documented; docs current. Branch PR-ready.
-  Verify: agent report clean; pre-commit hooks pass; `dotnet build ROROROblox.slnx` clean. Commit: `docs: v1.6.0 security pass + docs sync + disclosure updates`.
+- [ ] **7. Documentation & Security Verification**
+  Spec ref: `spec.md > Decisions to log` + `spec.md > Testing` + `CLAUDE.md > What NOT to do`
+  What to build: sync `docs/` (spec status → implemented, checklist ticks, spec.md pointer). Record the new compat-risk dependencies (`RobloxPlayerInstaller.exe` name + `clientsettingscdn.roblox.com/v2/client-version` GUID) as decisions + confirm they degrade gracefully. Secrets scan + local-path grep (no `c:\Users\` in committable code). `dotnet list ROROROblox.slnx package --vulnerable`. Branch ready for PR to `main`. (Version bump + Store/Velopack release is the builder-driven release flow, separate.)
+  Acceptance: docs current; no secrets/local-paths; deps clean or documented; compat-risk decisions logged. Branch PR-ready.
+  Verify: pre-commit hooks pass; `dotnet build ROROROblox.slnx` clean; full suite green. Commit: `docs: v1.7.0 install-deferral docs sync + compat-risk decisions`.
