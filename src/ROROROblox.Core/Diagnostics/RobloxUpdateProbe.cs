@@ -49,36 +49,25 @@ public sealed class RobloxUpdateProbe : IRobloxUpdateProbe
     private readonly ILogger<RobloxUpdateProbe> _log;
 
     /// <summary>
-    /// Convenience ctor for the composition root — wires the real seams (live process scan +
-    /// <see cref="RobloxCompatChecker.GetInstalledRobloxVersion"/>) with a NullLogger default,
-    /// mirroring the other Core diagnostics. The <see cref="HttpClient"/> comes from
-    /// <c>IHttpClientFactory</c> at the composition root (same pattern as <see cref="RobloxApi"/>).
-    /// </summary>
-    public RobloxUpdateProbe(HttpClient httpClient)
-        : this(httpClient, NullLogger<RobloxUpdateProbe>.Instance) { }
-
-    public RobloxUpdateProbe(HttpClient httpClient, ILogger<RobloxUpdateProbe> log)
-        : this(
-            installerRunning: DefaultInstallerScan,
-            installedVersionProvider: RobloxCompatChecker.GetInstalledRobloxVersion,
-            httpClient: httpClient,
-            log: log)
-    { }
-
-    /// <summary>
-    /// Seam ctor — inject the installer-running scan, the installed-version provider, and the
-    /// <see cref="HttpClient"/> backing the CDN GET. Used by tests; also the place DI can override
-    /// any single seam without a real process or live network.
+    /// ONE public ctor only — the typed-HttpClient DI activator requires exactly one applicable
+    /// constructor for <c>[HttpClient]</c>; a second applicable overload (e.g. a
+    /// <c>(HttpClient, ILogger&lt;T&gt;)</c> form, since <c>AddLogging</c> registers <c>ILogger&lt;T&gt;</c>)
+    /// makes it throw "Multiple constructors" at resolve time and crashes startup. The composition
+    /// root supplies just the <see cref="HttpClient"/> (DI fills the optional <see cref="ILogger{T}"/>);
+    /// the installer-running scan and installed-version provider default to the real seams (live
+    /// process scan + <see cref="RobloxCompatChecker.GetInstalledRobloxVersion"/>, the same file-version
+    /// read the compat banner uses). Tests pass fakes via named arguments to drive each degrade-safe
+    /// branch without a real process or live network.
     /// </summary>
     public RobloxUpdateProbe(
-        Func<bool> installerRunning,
-        Func<string?> installedVersionProvider,
         HttpClient httpClient,
+        Func<bool>? installerRunning = null,
+        Func<string?>? installedVersionProvider = null,
         ILogger<RobloxUpdateProbe>? log = null)
     {
-        _installerRunning = installerRunning ?? throw new ArgumentNullException(nameof(installerRunning));
-        _installedVersionProvider = installedVersionProvider ?? throw new ArgumentNullException(nameof(installedVersionProvider));
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _installerRunning = installerRunning ?? DefaultInstallerScan;
+        _installedVersionProvider = installedVersionProvider ?? RobloxCompatChecker.GetInstalledRobloxVersion;
         _log = log ?? NullLogger<RobloxUpdateProbe>.Instance;
         EnsureUserAgent(_httpClient);
     }
