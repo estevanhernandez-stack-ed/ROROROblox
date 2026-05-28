@@ -1,0 +1,51 @@
+# RORORO -- pre-merge CI gate.
+#
+# Runs the FULL-SOLUTION build + test (dotnet test ROROROblox.slnx, incl. the
+# ROROROblox.PluginTestHarness integration project) on every push and PR. This is the gate that
+# would have caught the three breaks that reached the feat/clan-link-host-support branch while the
+# unit-only workflow stayed green: a typed-client ctor ambiguity (startup crash), a non-compiling
+# integration harness, and a DI break. Lesson, now enforced: unit-green is NOT landable -- the
+# whole-solution test is.
+#
+# Why a Windows runner: WPF (net10.0-windows) + the integration harness only build on Windows.
+
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: 'true'
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+
+jobs:
+  build-test:
+    name: build + full-solution test
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore ROROROblox.slnx
+
+      - name: Build (full solution)
+        run: dotnet build ROROROblox.slnx --configuration Release --no-restore
+
+      - name: Test (full solution -- unit + integration harness)
+        run: dotnet test ROROROblox.slnx --configuration Release --no-build --logger "console;verbosity=minimal"
