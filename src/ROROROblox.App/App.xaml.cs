@@ -33,7 +33,7 @@ public partial class App : Application
     /// </summary>
     public static bool IsShuttingDown { get; private set; }
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
@@ -92,6 +92,25 @@ public partial class App : Application
             return;
         }
 
+        // Resolve the singleton mutex NAME from remote config (data-only) BEFORE IMutexHolder is
+        // first materialized below — write it into the holder the factory reads. 2s-bounded,
+        // degrade-safe (valid remote -> last-known-good -> hardcoded default), never throws.
+        // No ConfigureAwait(false): this continuation must stay on the UI thread for the
+        // Dispatcher-affined tray/window shows below. async void + await yields the UI thread
+        // (never blocks), so the lines 65-69 GetResult() deadlock cannot recur.
+        var nameSource = MutexNameSource.Default;
+        try
+        {
+            var compat = _services.GetRequiredService<IRobloxCompatChecker>();
+            var resolved = await compat.ResolveMutexNameAsync();
+            _services.GetRequiredService<ResolvedMutexName>().Value = resolved.Name;
+            nameSource = resolved.Source;
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Mutex-name resolve threw; binding the hardcoded default.");
+        }
+
         var tray = _services.GetRequiredService<ITrayService>();
         var mutex = _services.GetRequiredService<IMutexHolder>();
         var mainWindow = _services.GetRequiredService<MainWindow>();
@@ -109,8 +128,9 @@ public partial class App : Application
         // still lets them toggle OFF for single-instance behavior.
         var acquired = mutex.Acquire();
         _log.LogInformation(
-            "Mutex acquire at startup: name={Name}, acquired={Acquired}. Multi-instance is {State} (tray icon will reflect).",
-            ROROROblox.Core.MutexHolder.DefaultMutexName,
+            "Mutex acquire at startup: name={Name}, source={Source}, acquired={Acquired}. Multi-instance is {State} (tray icon will reflect).",
+            mutex.MutexName,
+            nameSource,
             acquired,
             acquired ? "ON" : "ERROR");
         tray.UpdateStatus(acquired ? MultiInstanceState.On : MultiInstanceState.Error);
@@ -260,7 +280,11 @@ public partial class App : Application
         services.AddLogging();
 
         // Singletons — long-lived state we want exactly one of.
-        services.AddSingleton<IMutexHolder>(_ => new MutexHolder()); // Default name = Local\ROBLOX_singletonEvent
+        // The singleton mutex NAME is resolved from roblox-compat.json at startup (before this
+        // singleton is first materialized) and written into ResolvedMutexName; the factory reads it.
+        // Falls back to MutexHolder.DefaultMutexName when resolution hasn't run or yielded the default.
+        services.AddSingleton<ResolvedMutexName>();
+        services.AddSingleton<IMutexHolder>(sp => new MutexHolder(sp.GetRequiredService<ResolvedMutexName>().Value));
         services.AddSingleton<ITrayService, TrayService>();
         services.AddSingleton<IAppSettings>(_ => new AppSettings());
         services.AddSingleton<IFavoriteGameStore>(_ => new FavoriteGameStore());

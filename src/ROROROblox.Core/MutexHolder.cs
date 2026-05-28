@@ -21,6 +21,9 @@ public sealed class MutexHolder : IMutexHolder, IDisposable
     /// </summary>
     public const string DefaultMutexName = @"Local\ROBLOX_singletonEvent";
 
+    /// <summary>Win32 <c>CreateMutex</c> caps <c>lpName</c> at MAX_PATH characters.</summary>
+    private const int MaxNameLength = 260;
+
     private const uint ErrorAlreadyExists = 0xB7;
     private const double WatchdogIntervalMs = 5_000;
 
@@ -43,6 +46,30 @@ public sealed class MutexHolder : IMutexHolder, IDisposable
         _watchdog = new Timer(WatchdogIntervalMs) { AutoReset = true };
         _watchdog.Elapsed += OnWatchdogTick;
     }
+
+    /// <summary>
+    /// True when <paramref name="name"/> is safe to pass to <see cref="MutexHolder(string)"/> and on
+    /// to Win32 <c>CreateMutex</c>. A strict SUPERSET of the ctor's reject conditions
+    /// (null / empty / whitespace) — also rejects an embedded NUL and an over-length name. The
+    /// config-driven mutex-name resolver gates every candidate through this and falls back to
+    /// <see cref="DefaultMutexName"/> on false, so a malformed roblox-compat.json value never reaches
+    /// the throwing ctor and never bricks multi-instance.
+    /// </summary>
+    public static bool IsValidName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+        if (name.Contains('\0'))
+        {
+            return false;
+        }
+        return name.Length <= MaxNameLength;
+    }
+
+    /// <summary>The resolved mutex name this holder was constructed with. See <see cref="IMutexHolder.MutexName"/>.</summary>
+    public string MutexName => _mutexName;
 
     public bool IsHeld
     {

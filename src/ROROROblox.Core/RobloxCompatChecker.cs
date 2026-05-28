@@ -25,11 +25,27 @@ public sealed class RobloxCompatChecker : IRobloxCompatChecker
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
 
-    private readonly HttpClient _httpClient;
+    private const string LastKnownMutexFileName = "last-known-mutex.txt";
 
-    public RobloxCompatChecker(HttpClient httpClient)
+    private readonly HttpClient _httpClient;
+    private readonly Func<string?> _readLastKnownMutex;
+    private readonly Action<string> _writeLastKnownMutex;
+
+    /// <summary>
+    /// ONE public ctor only — the typed-HttpClient DI activator requires exactly one applicable
+    /// constructor (two would make it throw "Multiple constructors" at resolve time). The DI
+    /// registration supplies just the <see cref="HttpClient"/>; the last-known-good cache read/write
+    /// default to the real <c>%LOCALAPPDATA%\ROROROblox\last-known-mutex.txt</c> seams. Unit tests
+    /// pass fakes to drive the resolver's fallback ladder without touching disk.
+    /// </summary>
+    public RobloxCompatChecker(
+        HttpClient httpClient,
+        Func<string?>? readLastKnownMutex = null,
+        Action<string>? writeLastKnownMutex = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _readLastKnownMutex = readLastKnownMutex ?? ReadLastKnownMutexFromDisk;
+        _writeLastKnownMutex = writeLastKnownMutex ?? WriteLastKnownMutexToDisk;
     }
 
     public async Task<CompatCheckResult> CheckAsync()
@@ -42,7 +58,7 @@ public sealed class RobloxCompatChecker : IRobloxCompatChecker
             return new CompatCheckResult(HasDrift: false, Banner: null);
         }
 
-        var config = await FetchConfigAsync().ConfigureAwait(false);
+        var config = await FetchConfigAsync(TimeSpan.FromSeconds(8)).ConfigureAwait(false);
         if (config is null)
         {
             // No network or no published config — fail-quiet. Returning no-drift means the user
@@ -71,11 +87,11 @@ public sealed class RobloxCompatChecker : IRobloxCompatChecker
         return new CompatCheckResult(HasDrift: true, Banner: banner);
     }
 
-    private async Task<RobloxCompatConfig?> FetchConfigAsync()
+    private async Task<RobloxCompatConfig?> FetchConfigAsync(TimeSpan timeout)
     {
         try
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+            using var cts = new CancellationTokenSource(timeout);
             return await _httpClient.GetFromJsonAsync<RobloxCompatConfig>(CompatConfigUrl, JsonOptions, cts.Token)
                 .ConfigureAwait(false);
         }
@@ -83,6 +99,78 @@ public sealed class RobloxCompatChecker : IRobloxCompatChecker
         {
             return null;
         }
+    }
+
+    /// <inheritdoc />
+    public async Task<(string Name, MutexNameSource Source)> ResolveMutexNameAsync()
+    {
+        try
+        {
+            // Own 2s budget (vs the 8s banner fetch) so name resolution can run before mutex.Acquire
+            // without holding first paint hostage to the network.
+            var config = await FetchConfigAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+            if (config is not null && MutexHolder.IsValidName(config.MutexName))
+            {
+                TryPersistLastKnown(config.MutexName);
+                return (config.MutexName, MutexNameSource.RemoteConfig);
+            }
+
+            var cached = TryReadLastKnown();
+            if (MutexHolder.IsValidName(cached))
+            {
+                return (cached!, MutexNameSource.LastKnownGood);
+            }
+
+            return (MutexHolder.DefaultMutexName, MutexNameSource.Default);
+        }
+        catch
+        {
+            // The resolver promises no-throw; any unexpected failure binds the safe default so a
+            // broken roblox-compat.json can never brick multi-instance.
+            return (MutexHolder.DefaultMutexName, MutexNameSource.Default);
+        }
+    }
+
+    private string? TryReadLastKnown()
+    {
+        try
+        {
+            return _readLastKnownMutex();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void TryPersistLastKnown(string name)
+    {
+        try
+        {
+            _writeLastKnownMutex(name);
+        }
+        catch
+        {
+            // Best-effort cache. A persist failure must never break resolution.
+        }
+    }
+
+    private static string LastKnownMutexPath => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "ROROROblox",
+        LastKnownMutexFileName);
+
+    private static string? ReadLastKnownMutexFromDisk()
+    {
+        var path = LastKnownMutexPath;
+        return File.Exists(path) ? File.ReadAllText(path).Trim() : null;
+    }
+
+    private static void WriteLastKnownMutexToDisk(string name)
+    {
+        var path = LastKnownMutexPath;
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, name);
     }
 
     /// <summary>

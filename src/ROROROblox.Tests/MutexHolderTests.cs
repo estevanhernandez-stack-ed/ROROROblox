@@ -107,4 +107,62 @@ public class MutexHolderTests
         Assert.Throws<ArgumentException>(() => new MutexHolder(""));
         Assert.Throws<ArgumentException>(() => new MutexHolder("   "));
     }
+
+    // ---- IsValidName: the pre-ctor validator (config-driven mutex name, spec item #1) -------
+    // Strict SUPERSET of the ctor's throw conditions: any name IsValidName approves must
+    // construct without throwing, so a garbage roblox-compat.json value can never reach the
+    // throwing ctor — it is rejected and the resolver falls back to DefaultMutexName.
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    [InlineData("has\0embedded-null")]
+    public void IsValidName_False_ForUnsafeName(string? candidate)
+    {
+        Assert.False(MutexHolder.IsValidName(candidate));
+    }
+
+    [Fact]
+    public void IsValidName_False_ForOverlongName()
+    {
+        var tooLong = @"Local\" + new string('a', 300);
+
+        Assert.False(MutexHolder.IsValidName(tooLong));
+    }
+
+    [Fact]
+    public void IsValidName_True_ForDefaultName()
+    {
+        Assert.True(MutexHolder.IsValidName(MutexHolder.DefaultMutexName));
+    }
+
+    [Fact]
+    public void IsValidName_True_ForPlausibleRenamedName()
+    {
+        Assert.True(MutexHolder.IsValidName(@"Local\ROBLOX_singletonEvent_v2"));
+    }
+
+    // ---- MutexName: the resolved-name forward-hook for the Handle64 plugin host -------------
+
+    [Fact]
+    public void MutexName_ExposesConfiguredName_OnTheInterface()
+    {
+        // The future add-to-already-running plugin reads the resolved name off IMutexHolder so it
+        // closes the SAME singleton handle the app holds.
+        var name = UniqueName();
+        using var holder = new MutexHolder(name);
+        IMutexHolder asInterface = holder;
+
+        Assert.Equal(name, asInterface.MutexName);
+    }
+
+    [Fact]
+    public void MutexName_DefaultsToDefaultMutexName_WithParameterlessCtor()
+    {
+        using var holder = new MutexHolder();
+
+        Assert.Equal(MutexHolder.DefaultMutexName, holder.MutexName);
+    }
 }
