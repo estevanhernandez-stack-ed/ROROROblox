@@ -5,6 +5,20 @@
 **Status:** Approved for implementation planning
 **Repo:** https://github.com/estevanhernandez-stack-ed/ROROROblox
 
+---
+
+> **BUILD-REALITY CORRECTION (2026-05-28) — the mutex name is NOT remote-config-driven.**
+>
+> **Originally proposed** (§7.1, and echoed in CLAUDE.md): *"The known-compatible-range and current mutex name live in a remote config file fetched at app startup, not baked into the binary... when Roblox renames the mutex, we publish an updated config + Velopack release within hours."*
+>
+> **Actually built (through v1.6):** only the **known-good Roblox version range** is fetched from `roblox-compat.json` (`RobloxCompatChecker`, which drives the yellow drift banner). The **mutex name is a hardcoded constant** — `MutexHolder.DefaultMutexName = @"Local\ROBLOX_singletonEvent"` (see [../../../src/ROROROblox.Core/MutexHolder.cs](../../../src/ROROROblox.Core/MutexHolder.cs)). The injection seam exists (`MutexHolder(string mutexName)`) but nothing wires a config-sourced name into it; composition uses the parameterless ctor's default.
+>
+> **Consequence:** a Roblox **version** change surfaces a banner in hours via config — but a Roblox **mutex rename** still requires a Velopack **binary** release, not a config push. The §13 future-work line is the accurate one: *"Runtime mutex-name swap from remote config (v1.2 candidate; v1.1 hardcodes `Local\ROBLOX_singletonEvent`)."* That swap remains **deferred and unbuilt as of v1.6.**
+>
+> Do **not** rewrite §7.1 prose — this banner is the correction (pattern v; preserves /reflect-time framing). Closing this drift is the #1-ranked outdo move in [../../competitive/2026-05-28-parity-and-outdo-plan.md](../../competitive/2026-05-28-parity-and-outdo-plan.md).
+
+---
+
 ## 1. Overview
 
 ROROROblox is a Windows desktop app that lets a Roblox player run multiple Roblox clients side by side and quickly launch them as different saved accounts. It is distributed first to a Pet Sim 99 clan and second through the Microsoft Store.
