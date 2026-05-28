@@ -135,6 +135,17 @@ jobs:
           vpk @args
           if ($LASTEXITCODE -ne 0) { throw "vpk upload failed (exit $LASTEXITCODE)" }
 
+      - name: Upload remote compat config
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          # roblox-compat.json (known-good Roblox version range + singleton mutex name) must ride on
+          # every release so releases/latest/download/roblox-compat.json resolves. The app fetches it
+          # at startup for the version-drift banner + the config-driven mutex name; a missing asset
+          # means the app silently falls back (drift banner never fires, mutex name = hardcoded default).
+          gh release upload '${{ steps.ver.outputs.tag }}' roblox-compat.json --clobber
+
       - name: Summary
         shell: pwsh
         run: |
