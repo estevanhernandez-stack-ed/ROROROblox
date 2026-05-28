@@ -16,6 +16,9 @@ public interface ITrayService : IDisposable
     /// <summary>Fired when the user toggles the "Multi-Instance" menu item.</summary>
     event EventHandler RequestToggleMutex;
 
+    /// <summary>Fired when the user picks "Stop all Roblox instances" from the tray menu.</summary>
+    event EventHandler RequestStopAllInstances;
+
     /// <summary>Fired when the user picks "Quit" from the tray menu.</summary>
     event EventHandler RequestQuit;
 

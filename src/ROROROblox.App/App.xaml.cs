@@ -380,6 +380,7 @@ public partial class App : Application
         // routes through the existing process. Lives next to other Diagnostics-namespace
         // services in Core; consumed by App.OnStartup before mutex.Acquire.
         services.AddSingleton<IRobloxRunningProbe, RobloxRunningProbe>();
+        services.AddSingleton<IRobloxInstanceStopper, RobloxInstanceStopper>();
         services.AddSingleton<StartupGate>();
 
         // Cycle 5 RobloxUserId backfill — fire-and-forget worker that resolves and persists
@@ -514,6 +515,7 @@ public partial class App : Application
     {
         tray.RequestOpenMainWindow += (_, _) => SurfaceMainWindow(mainWindow);
         tray.RequestToggleMutex += (_, _) => ToggleMutex(mutex, tray);
+        tray.RequestStopAllInstances += (_, _) => StopAllInstances();
         tray.RequestQuit += (_, _) => RequestShutdown();
         tray.RequestOpenDiagnostics += (_, _) => OpenDiagnosticsFromTray(mainWindow);
         tray.RequestOpenLogs += (_, _) => OpenLogsFolder();
@@ -764,6 +766,31 @@ public partial class App : Application
             var acquired = mutex.Acquire();
             tray.UpdateStatus(acquired ? MultiInstanceState.On : MultiInstanceState.Error);
             TryRaiseMutexBusEvent(acquired ? "On" : "Error");
+        }
+    }
+
+    private void StopAllInstances()
+    {
+        if (_services is null) return;
+        try
+        {
+            var running = _services.GetRequiredService<IRobloxRunningProbe>().GetRunningPlayerPids().Count;
+            if (running == 0)
+            {
+                _log?.LogInformation("Stop-all requested from tray: no Roblox instances running.");
+                return;
+            }
+
+            var confirm = new Modals.StopAllConfirmWindow(running);
+            if (confirm.ShowDialog() == true)
+            {
+                var stopped = _services.GetRequiredService<IRobloxInstanceStopper>().StopAll();
+                _log?.LogInformation("Stop-all from tray: stopped {Stopped} of {Running} instance(s).", stopped, running);
+            }
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Stop-all from tray failed.");
         }
     }
 

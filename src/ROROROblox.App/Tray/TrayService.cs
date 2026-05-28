@@ -29,6 +29,7 @@ internal sealed class TrayService : ITrayService
 
     public event EventHandler? RequestOpenMainWindow;
     public event EventHandler? RequestToggleMutex;
+    public event EventHandler? RequestStopAllInstances;
     public event EventHandler? RequestQuit;
     public event EventHandler? RequestOpenDiagnostics;
     public event EventHandler? RequestOpenLogs;
@@ -70,10 +71,13 @@ internal sealed class TrayService : ITrayService
         _toggleItem.Header = state switch
         {
             MultiInstanceState.On => "Multi-Instance: ON ✓",
-            MultiInstanceState.Error => "Multi-Instance: ERROR (mutex lost)",
+            MultiInstanceState.Error => "Multi-Instance: ERROR — click to reload",
             _ => "Multi-Instance: OFF",
         };
-        _toggleItem.IsEnabled = state != MultiInstanceState.Error;
+        // Error is a one-click reload (re-acquire), not a dead end: on MutexLost the handle is
+        // released (IsHeld == false), so the toggle's Acquire path re-acquires in place — no app
+        // restart needed. Keep it enabled so the user can recover from the tray.
+        _toggleItem.IsEnabled = true;
     }
 
     /// <summary>
@@ -115,6 +119,10 @@ internal sealed class TrayService : ITrayService
         var toggle = new MenuItem { Header = "Multi-Instance: OFF" };
         toggle.Click += (_, _) => RequestToggleMutex?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(toggle);
+
+        var stopAll = new MenuItem { Header = "Stop all Roblox instances" };
+        stopAll.Click += (_, _) => RequestStopAllInstances?.Invoke(this, EventArgs.Empty);
+        menu.Items.Add(stopAll);
 
         menu.Items.Add(new Separator());
 

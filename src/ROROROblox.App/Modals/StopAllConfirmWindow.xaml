@@ -1,0 +1,54 @@
+<Window x:Class="ROROROblox.App.Modals.StopAllConfirmWindow"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Stop all Roblox instances"
+        Height="230" Width="480"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico"
+        Background="{DynamicResource BgBrush}">
+    <!-- Tray "Stop all Roblox instances" confirm. Destructive (force-closes every running client),
+         so it is confirm-gated. Cyan heading + magenta primary per the brand stakes pairing.
+         CenterScreen (no owner) — the tray can fire this with the main window hidden. -->
+    <Grid Margin="32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Stop all Roblox instances?"
+                   FontSize="18" FontWeight="Bold"
+                   Foreground="#17D4FA" />
+
+        <TextBlock Grid.Row="1"
+                   x:Name="BodyText"
+                   TextWrapping="Wrap"
+                   FontSize="12"
+                   Foreground="#FFFFFF"
+                   Opacity="0.85"
+                   Margin="0,12,0,0" />
+
+        <TextBlock Grid.Row="2"
+                   Text="UNSAVED GAME STATE WILL BE LOST"
+                   FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                   FontSize="10"
+                   Foreground="#5A6982"
+                   VerticalAlignment="Bottom"
+                   Margin="0,16,0,0" />
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Cancel" Padding="16,8" IsCancel="True"
+                    Background="#22314A" Foreground="#FFFFFF" BorderThickness="0"
+                    Margin="0,0,8,0"
+                    Click="OnCancelClick" />
+            <Button Content="Stop all" Padding="16,8" IsDefault="True"
+                    Background="#F22F89" Foreground="#FFFFFF" BorderThickness="0"
+                    FontWeight="Bold"
+                    Click="OnStopClick" />
+        </StackPanel>
+    </Grid>
+</Window>
