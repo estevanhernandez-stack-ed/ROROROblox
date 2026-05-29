@@ -103,15 +103,14 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 
 > Avoid "cheat", "exploit", "bypass" — those will trigger reviewer concerns even if irrelevant.
 
-## What's new (release notes for v1.6.0.0)
+## What's new (release notes for v1.7.0.0)
 
 ```
-v1.6.0.0:
-• Move your accounts to another PC — export them to a passphrase-encrypted file, import on the other machine. Offline, no cloud; merges without overwriting.
-• Saved private servers now appear in each account's game dropdown — pick one and that alt launches straight into that server.
-• Cleaner tags — a small "+" to add a tag (no more empty bar) plus a filter box to narrow the account list by tag or name.
-• Follow no longer dumps you on the Roblox home page when a friend isn't in a joinable game — it tells you instead.
-• Fixed launching the wrong account when a Roblox update pops up mid-launch — the account you pick is the one that launches.
+v1.7.0.0:
+• Roblox can update mid-launch and your batch still lands. RoRoRo sends the first client through the update, shows "Roblox is updating — hold on," then launches the rest into the already-updated client — no more wrong account (with a captcha) when an update pops up.
+• Stop all Roblox instances — one click in the tray closes every running Roblox client at once (it asks first).
+• Recover multi-instance from the tray without restarting — if it drops into an error state, the tray reads "ERROR — click to reload" and re-grabs it in place.
+• Faster recovery if Roblox ever renames its multi-instance lock (now config-driven), plus two new abilities for plugin authors.
 ```
 
 (Historical "What's new" blocks for prior releases live in their respective `docs/store/release-notes-*.md` files.)
