@@ -212,6 +212,101 @@ public sealed class RobloxProcessTrackerTests : IDisposable
         Assert.Contains(attachedB, new[] { pidA, pidB });
     }
 
+    /// <summary>Spawn a process that exits immediately, and wait until it has.</summary>
+    private Process SpawnDeadProcess()
+    {
+        var psi = new ProcessStartInfo("cmd.exe", "/c exit")
+        {
+            CreateNoWindow = true,
+            UseShellExecute = false,
+        };
+        var p = Process.Start(psi)!;
+        _spawned.Add(p);
+        p.WaitForExit();
+        return p;
+    }
+
+    private static RobloxProcessTracker NewSeamTracker() => new(
+        log: NullLogger<RobloxProcessTracker>.Instance,
+        attachTimeout: TimeSpan.FromSeconds(2),
+        installerExtendedTimeout: TimeSpan.FromSeconds(5),
+        pollInterval: TimeSpan.FromMilliseconds(50),
+        isInstallerRunning: () => false,
+        candidateProcesses: Array.Empty<Process>);
+
+    [Fact]
+    public void AttachToProcess_ProcessAlreadyExited_FiresProcessExitedSynchronouslyAndDoesNotGhost()
+    {
+        // The 2026-06-12 review's ghost-row bug: EnableRaisingEvents was set BEFORE the Exited
+        // handler attached, so a process that exited in the window (routine — Roblox's
+        // anti-multilaunch bootstrapper kills and respawns the attached pid quickly) raised
+        // Exited to zero subscribers. The row stayed IsRunning forever and LaunchEligibility
+        // excluded the account from batches until app restart.
+        //
+        // Calling the internal AttachToProcess directly with an already-exited handle stages
+        // the race deterministically (both public entry points pre-filter on HasExited, so
+        // only the in-window exit reaches this code in production). Contract: the exit must
+        // be observed BY THE TIME AttachToProcess returns — synchronous synthesis, not a
+        // threadpool coin-flip.
+        using var tracker = NewSeamTracker();
+        var accountId = Guid.NewGuid();
+        var exitedFor = new List<Guid>();
+        tracker.ProcessExited += (_, e) => { lock (exitedFor) exitedFor.Add(e.AccountId); };
+
+        var dead = SpawnDeadProcess();
+        tracker.AttachToProcess(accountId, dead);
+
+        Assert.False(tracker.IsTracking(accountId),
+            "An exit during attach must not leave a permanent ghost 'running' entry.");
+        lock (exitedFor) Assert.Contains(accountId, exitedFor);
+    }
+
+    [Fact]
+    public async Task AttachToProcess_ProcessAlreadyExited_ProcessExitedFiresExactlyOnce()
+    {
+        // The fix delivers the exit two ways (the real Exited callback + the post-attach
+        // HasExited double-check). Consumers must see exactly one ProcessExited — a double
+        // fire would double-stamp session history end times.
+        using var tracker = NewSeamTracker();
+        var accountId = Guid.NewGuid();
+        var exitedCount = 0;
+        tracker.ProcessExited += (_, _) => Interlocked.Increment(ref exitedCount);
+
+        var dead = SpawnDeadProcess();
+        tracker.AttachToProcess(accountId, dead);
+
+        // Give the genuine threadpool Exited callback time to land too, then count.
+        await Task.Delay(500);
+        Assert.Equal(1, exitedCount);
+    }
+
+    [Fact]
+    public async Task LiveProcessExitsAfterAttach_StillFiresProcessExitedAndStopsTracking()
+    {
+        // Regression sanity for the normal path: the reordering/once-guard must not break
+        // ordinary exit delivery for a process that was alive at attach time.
+        var pid = SpawnSleeperPid();
+        using var tracker = new RobloxProcessTracker(
+            log: NullLogger<RobloxProcessTracker>.Instance,
+            attachTimeout: TimeSpan.FromSeconds(2),
+            installerExtendedTimeout: TimeSpan.FromSeconds(5),
+            pollInterval: TimeSpan.FromMilliseconds(50),
+            isInstallerRunning: () => false,
+            candidateProcesses: () => ByIds(pid));
+
+        var accountId = Guid.NewGuid();
+        var exited = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        tracker.ProcessExited += (_, _) => exited.TrySetResult(true);
+
+        await tracker.TrackLaunchAsync(accountId, DateTimeOffset.UtcNow);
+        Assert.True(tracker.IsTracking(accountId));
+
+        Process.GetProcessById(pid).Kill(entireProcessTree: true);
+
+        Assert.True(await exited.Task.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.False(tracker.IsTracking(accountId));
+    }
+
     [Fact]
     public void NullLoggerConvenienceCtor_DoesNotThrow()
     {
