@@ -10,7 +10,13 @@ set -euo pipefail
 red() { printf "\033[31m%s\033[0m\n" "$*" >&2; }
 green() { printf "\033[32m%s\033[0m\n" "$*"; }
 
-staged=$(git diff --cached --name-only --diff-filter=ACM)
+# SCAN_ALL=1 (CI mode): scan every tracked file instead of the staged diff — same rationale
+# as the secret scan's CI twin (hooks are per-machine and bypassable).
+if [ "${SCAN_ALL:-0}" = "1" ]; then
+  staged=$(git ls-files)
+else
+  staged=$(git diff --cached --name-only --diff-filter=ACM)
+fi
 if [ -z "$staged" ]; then
   exit 0
 fi
@@ -34,6 +40,12 @@ allow=(
   ".claude/hooks/README.md"
 )
 
+# Directory prefixes where absolute paths ARE the documentation (review reports cite
+# machine-local file:line evidence).
+allow_prefixes=(
+  "docs/reviews/"
+)
+
 violations=0
 
 while IFS= read -r file; do
@@ -47,6 +59,11 @@ while IFS= read -r file; do
       is_allowed=1
       break
     fi
+  done
+  for prefix in "${allow_prefixes[@]}"; do
+    case "$file" in
+      "$prefix"*) is_allowed=1 ;;
+    esac
   done
   [ "$is_allowed" -eq 1 ] && continue
 

@@ -11,8 +11,12 @@
 
 name: ci
 
+# push scoped to main: pull_request already covers every PR branch commit, and an unscoped
+# push trigger double-ran the full Windows build per commit (push ref != PR merge ref, so the
+# concurrency group never deduped them).
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
@@ -27,8 +31,28 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: '1'
 
 jobs:
+  # CI twin of the per-machine pre-commit hooks (CLAUDE.md: "the pre-commit hook AND CI must
+  # fail loud"). The hooks scan the staged diff on the committing machine; this job scans the
+  # full tracked tree, so a .ROBLOSECURITY cookie or hardcoded user-profile path committed
+  # from a box without the hooks installed (or with --no-verify) still fails the gate.
+  guards:
+    name: secret-scan + local-path guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Secret scan (full tree)
+        run: SCAN_ALL=1 bash .claude/hooks/pre-commit-secret-scan.sh
+
+      - name: Local-path guard (full tree)
+        run: SCAN_ALL=1 bash .claude/hooks/pre-commit-local-path-guard.sh
+
   build-test:
     name: build + full-solution test
+    needs: guards
     runs-on: windows-latest
     timeout-minutes: 20
 
