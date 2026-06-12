@@ -1037,5 +1037,11 @@ public partial class App : Application
             _log?.LogWarning(args.Exception, "Unobserved Task exception (already detached from its Task).");
             args.SetObserved(); // Don't escalate to AppDomain.UnhandledException for a fire-and-forget.
         };
+
+        // Fourth net: exceptions RelayCommand.Execute swallows. These never reach the
+        // dispatcher handler (Execute's catch eats them first), so without this hook a
+        // command body's unguarded await fails with zero trace.
+        ViewModels.RelayCommand.OnExceptionSwallowed = ex =>
+            _log?.LogWarning(ex, "Exception escaped a command handler (swallowed by RelayCommand).");
     }
 }
