@@ -118,6 +118,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _accountTransport = accountTransport;
         _log = log ?? NullLogger<MainViewModel>.Instance;
 
+        // Mirror must exist before any off-thread reader (presence loop, plugin host) can
+        // resolve this VM — the ctor runs on the UI thread, so wiring it here is race-free.
+        _accountsMirror = new ObservableCollectionMirror<AccountSummary>(Accounts);
+
         AddAccountCommand = new RelayCommand(AddAccountAsync, () => !IsBusy);
         LaunchAccountCommand = new RelayCommand(p => LaunchAccountAsync(p as AccountSummary));
         RemoveAccountCommand = new RelayCommand(p => RemoveAccountAsync(p as AccountSummary));
@@ -175,6 +179,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     public ObservableCollection<AccountSummary> Accounts { get; } = [];
+
+    private readonly ObservableCollectionMirror<AccountSummary> _accountsMirror;
+
+    /// <summary>
+    /// Lock-free point-in-time copy of <see cref="Accounts"/> for OFF-UI-THREAD readers —
+    /// the presence poll loop, plugin gRPC adapters, and process-tracker event bridges.
+    /// <see cref="Accounts"/> itself is UI-thread-owned; enumerating it from a threadpool
+    /// thread races a concurrent Add/Remove into "Collection was modified" (the fault that
+    /// silently killed the presence loop — 2026-06-12 review).
+    /// </summary>
+    public IReadOnlyList<AccountSummary> AccountsSnapshot => _accountsMirror.Snapshot;
 
     /// <summary>
     /// Sentinel entry the per-row ComboBox treats as "open the Join-by-link modal."
