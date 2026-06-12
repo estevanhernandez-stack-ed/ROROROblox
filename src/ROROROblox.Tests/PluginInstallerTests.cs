@@ -243,6 +243,36 @@ public class PluginInstallerTests : IDisposable
     }
 
     [Fact]
+    public async Task InstallAsync_HttpBaseUrl_RefusesBeforeAnyFetch()
+    {
+        // The SHA pin is fetched from the SAME origin as the zip, so over cleartext an
+        // on-path attacker swaps both together — the hash check is corruption protection
+        // only. Plugins are EXEs running as the user; the transport must be https, and
+        // the refusal must happen before a single byte is requested.
+        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, (_, _) => Task.CompletedTask, new Version(1, 4, 3, 0));
+
+        var ex = await Assert.ThrowsAsync<PluginInstallerException>(() => installer.InstallAsync(
+            "http://example.com/plugin/v1/", Array.Empty<string>()));
+
+        Assert.Contains("https", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(_http.Requests);
+    }
+
+    [Fact]
+    public async Task InstallAsync_NonAbsoluteOrGarbageUrl_RefusesWithCleanError()
+    {
+        // User pastes something that isn't a URL at all. They should get the installer's
+        // own error type (surfaced as a friendly banner upstream), not a raw UriFormatException.
+        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, (_, _) => Task.CompletedTask, new Version(1, 4, 3, 0));
+
+        var ex = await Assert.ThrowsAsync<PluginInstallerException>(() => installer.InstallAsync(
+            "not a url", Array.Empty<string>()));
+
+        Assert.Contains("https", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(_http.Requests);
+    }
+
+    [Fact]
     public async Task InstallAsync_StopsRunningPluginBeforeTouchingInstallDir()
     {
         // Regression guard: a running plugin process holds its own DLLs locked, so the
