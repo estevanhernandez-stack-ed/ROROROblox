@@ -1039,7 +1039,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Launch every non-expired, non-running account in sequence with a 1.5s gap. The gap gives
+    /// Launch every non-expired, non-running account in sequence with the
+    /// <see cref="InterLaunchThrottle"/> gap (5s as of v1.4.2.0). The gap gives
     /// the tracker time to claim each <c>RobloxPlayerBeta.exe</c> by start time before the next
     /// launch fires (otherwise FIFO matching gets murky).
     /// </summary>
@@ -1313,7 +1314,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Mass-launch every eligible account into the same private server, throttled 1.5 s apart so
+    /// Mass-launch every eligible account into the same private server, throttled
+    /// <see cref="InterLaunchThrottle"/> (5s) apart so
     /// the process tracker can FIFO-claim each <c>RobloxPlayerBeta.exe</c> by start time. The
     /// override target trumps each row's per-account SelectedGame.
     /// </summary>

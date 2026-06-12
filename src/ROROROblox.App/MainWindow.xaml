@@ -1130,7 +1130,7 @@
                                 BorderThickness="1"
                                 FontSize="12"
                                 FontWeight="SemiBold"
-                                ToolTip="Launch every selected account into its own per-row game, throttled 1.5s apart. Use the dot next to each account's status to deselect." />
+                                ToolTip="Launch every selected account into its own per-row game, one at a time about 5 seconds apart — the gap makes sure each window lands on the right account. Use the dot next to each account's status to deselect." />
                         <Button Content="Private server"
                                 Command="{Binding OpenSquadLaunchCommand}"
                                 Padding="14,6"
