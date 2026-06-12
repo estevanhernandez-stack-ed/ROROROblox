@@ -152,6 +152,20 @@ public partial class App : Application
 
         try
         {
+            // Crash-orphan cleanup: a capture interrupted by a crash leaves a fully logged-in
+            // Roblox profile under webview2-data\. The post-capture sweep (CookieCapture)
+            // handles the normal path; this catches whatever a dying msedgewebview2 pinned.
+            // Safe here because no capture can be in flight this early in startup.
+            var webViewData = _services.GetRequiredService<WebView2UserDataDirectory>();
+            await Task.Run(() => webViewData.SweepStale(exclude: null));
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "WebView2 user-data startup sweep threw; ignoring.");
+        }
+
+        try
+        {
             var updateChecker = _services.GetRequiredService<IUpdateChecker>();
             await updateChecker.CheckForUpdatesAsync();
         }
