@@ -96,7 +96,7 @@
                                    FontSize="14" FontWeight="Bold" Foreground="{DynamicResource NavyBrush}" />
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Click Launch As. Or Launch All for every alt at once."
+                        <TextBlock Text="Click Launch As. Or Launch multiple for every selected alt at once."
                                    FontSize="13" FontWeight="SemiBold"
                                    Foreground="{DynamicResource WhiteBrush}" />
                         <TextBlock Text="Multi-Instance is on by default — Roblox windows open side by side without fighting each other for the singleton."

@@ -20,11 +20,12 @@ internal sealed class MainViewModelRunningAccountsAdapter : IRunningAccountsProv
 
     public IReadOnlyList<RunningAccountSnapshot> Snapshot()
     {
-        // ToList() copies under whatever marshalling the caller is on. Accounts is owned
-        // by the UI thread; this method is hit from gRPC threadpool reads, so we're tolerant
-        // of a transient inconsistency (an account flipping IsRunning mid-iteration). The
+        // AccountsSnapshot is the VM's lock-free point-in-time mirror — this method is hit
+        // from gRPC threadpool reads, and enumerating the UI-owned Accounts collection here
+        // would race a concurrent UI-thread Add/Remove into "Collection was modified",
+        // failing the plugin's RPC. Per-row property reads can still tear by a frame; the
         // contract treats the result as a point-in-time snapshot, not a live view.
-        var accounts = _vm.Accounts;
+        var accounts = _vm.AccountsSnapshot;
         var running = new List<RunningAccountSnapshot>(accounts.Count);
         foreach (var a in accounts)
         {

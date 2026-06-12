@@ -90,7 +90,11 @@ public sealed class PresenceService : IPresenceService, IDisposable
     public void Start()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        if (_loopTask is not null) return; // already running
+        // "Already running" must mean RUNNING. A completed task here would mean the loop died
+        // (it shouldn't — RunLoopAsync contains per-tick failures — but if it ever does, the
+        // next Start() call revives it instead of no-opping forever, which is exactly how the
+        // pre-fix loop death became session-permanent).
+        if (_loopTask is { IsCompleted: false }) return;
 
         _timer = new PeriodicTimer(_pollInterval);
         _loopCts = new CancellationTokenSource();
@@ -113,7 +117,22 @@ public sealed class PresenceService : IPresenceService, IDisposable
         {
             while (await timer.WaitForNextTickAsync(ct).ConfigureAwait(false))
             {
-                await PollOnceAsync(ct).ConfigureAwait(false);
+                try
+                {
+                    await PollOnceAsync(ct).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw; // Stop() — handled by the outer catch.
+                }
+                catch (Exception ex)
+                {
+                    // One bad tick must never kill the loop. Before this catch existed, a
+                    // snapshot-provider fault or store throw silently faulted _loopTask and
+                    // presence — the v1.5 ghost-closed fix — was dead for the session with
+                    // no signal and (because of Start()'s already-running guard) no revival.
+                    _log.LogWarning(ex, "Presence poll tick failed; holding last-known state and continuing.");
+                }
             }
         }
         catch (OperationCanceledException)
@@ -168,6 +187,20 @@ public sealed class PresenceService : IPresenceService, IDisposable
         {
             await ApplyJitterAsync(ct).ConfigureAwait(false);
             await PollTargetAsync(target, ct).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // PollTargetAsync handles the EXPECTED failures (401 → session-expired event,
+            // empty list → hold last-known). This catches the unexpected ones — the store
+            // throwing KeyNotFound for an account removed between snapshot and poll, an
+            // accounts.dat read hiccup — so one broken target degrades to hold-last-known
+            // instead of faulting the whole tick through Task.WhenAll.
+            _log.LogWarning(ex,
+                "Presence poll for account {AccountId} failed; holding last-known state.", target.AccountId);
         }
         finally
         {
