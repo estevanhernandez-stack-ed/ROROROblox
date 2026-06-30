@@ -689,14 +689,16 @@
                                 Background="{DynamicResource CyanBrush}"
                                 Foreground="{DynamicResource NavyBrush}"
                                 BorderThickness="0"
-                                FontWeight="SemiBold"
-                                IsEnabled="{Binding IsLaunching, Converter={StaticResource InverseBoolConverter}}">
+                                FontWeight="SemiBold">
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Visibility" Value="Visible" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsRunning}" Value="True">
                                             <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsLaunching}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False" />
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding SessionLimited}" Value="True">
                                             <Setter Property="IsEnabled" Value="False" />
