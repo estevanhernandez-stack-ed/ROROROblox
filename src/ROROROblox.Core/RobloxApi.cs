@@ -66,29 +66,52 @@ public sealed class RobloxApi : IRobloxApi
         var csrfToken = csrfTokens.FirstOrDefault()
             ?? throw new InvalidOperationException("X-CSRF-TOKEN header was empty.");
 
-        // Second POST — exchange cookie + token for ticket.
-        using var secondResponse = await PostAuthTicketAsync(cookie, csrfToken).ConfigureAwait(false);
-        ThrowOnAuthFailure(secondResponse);
-        ThrowOnContentTypeRejection(secondResponse);
-
-        if (!secondResponse.IsSuccessStatusCode)
+        // Second POST — exchange cookie + token for ticket. A 403 carrying a DIFFERENT token is a CSRF
+        // rotation: retry once with the rotated token before declaring the session flagged. A 403 with
+        // the SAME token (or no token) is a genuine forbidden → SessionLimitedException. Never more than
+        // one retry (bot-challenge: don't burn trust).
+        var secondResponse = await PostAuthTicketAsync(cookie, csrfToken).ConfigureAwait(false);
+        try
         {
-            throw new InvalidOperationException(
-                $"Roblox auth-ticket endpoint returned {(int)secondResponse.StatusCode}.");
-        }
+            ThrowOnAuthFailure(secondResponse);          // 401 -> CookieExpiredException
+            ThrowOnContentTypeRejection(secondResponse); // 415 -> helpful InvalidOperationException
 
-        if (!secondResponse.Headers.TryGetValues("RBX-Authentication-Ticket", out var ticketHeaders))
+            if (secondResponse.StatusCode == HttpStatusCode.Forbidden
+                && secondResponse.Headers.TryGetValues("x-csrf-token", out var rotated)
+                && rotated.FirstOrDefault() is { Length: > 0 } rotatedToken
+                && !string.Equals(rotatedToken, csrfToken, StringComparison.Ordinal))
+            {
+                secondResponse.Dispose();
+                secondResponse = await PostAuthTicketAsync(cookie, rotatedToken).ConfigureAwait(false);
+                ThrowOnAuthFailure(secondResponse);
+                ThrowOnContentTypeRejection(secondResponse);
+            }
+
+            if (secondResponse.StatusCode == HttpStatusCode.Forbidden)
+            {
+                // Still forbidden with a valid CSRF token → flagged / soft-locked session.
+                throw new SessionLimitedException();
+            }
+            if (!secondResponse.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException(
+                    $"Roblox auth-ticket endpoint returned {(int)secondResponse.StatusCode}.");
+            }
+            if (!secondResponse.Headers.TryGetValues("RBX-Authentication-Ticket", out var ticketHeaders))
+            {
+                throw new InvalidOperationException("Auth ticket response missing RBX-Authentication-Ticket header.");
+            }
+            var ticket = ticketHeaders.FirstOrDefault();
+            if (string.IsNullOrEmpty(ticket))
+            {
+                throw new InvalidOperationException("RBX-Authentication-Ticket header was empty.");
+            }
+            return new AuthTicket(ticket, DateTimeOffset.UtcNow);
+        }
+        finally
         {
-            throw new InvalidOperationException("Auth ticket response missing RBX-Authentication-Ticket header.");
+            secondResponse.Dispose();
         }
-
-        var ticket = ticketHeaders.FirstOrDefault();
-        if (string.IsNullOrEmpty(ticket))
-        {
-            throw new InvalidOperationException("RBX-Authentication-Ticket header was empty.");
-        }
-
-        return new AuthTicket(ticket, DateTimeOffset.UtcNow);
     }
 
     public async Task<UserProfile> GetUserProfileAsync(string cookie)

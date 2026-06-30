@@ -571,4 +571,45 @@ public class RobloxApiTests
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
             api.GetPresenceAsync(TestCookie, null!));
     }
+
+    // === SessionLimitedException — auth-ticket 403 classification ===
+
+    [Fact]
+    public async Task GetAuthTicketAsync_SecondPost403_SameToken_ThrowsSessionLimited()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-1"))); // handshake
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-1"))); // same token, still forbidden
+
+        await Assert.ThrowsAsync<SessionLimitedException>(() => api.GetAuthTicketAsync(TestCookie));
+        Assert.Equal(2, stub.Requests.Count); // no retry when the token did not rotate
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_SecondPost403_RotatedToken_RetriesOnceThenSucceeds()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-1"))); // handshake
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-2"))); // rotation
+        stub.EnqueueResponse(Response(HttpStatusCode.OK, ("RBX-Authentication-Ticket", "TICKET-OK")));
+
+        var ticket = await api.GetAuthTicketAsync(TestCookie);
+
+        Assert.Equal("TICKET-OK", ticket.Ticket);
+        Assert.Equal(3, stub.Requests.Count);
+        Assert.Contains(stub.Requests[2].Headers,
+            h => h.Key == "X-CSRF-TOKEN" && h.Value.Any(v => v == "tok-2"));
+    }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_RotationRetryStill403_ThrowsSessionLimited()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-1")));
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-2")));
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-3")));
+
+        await Assert.ThrowsAsync<SessionLimitedException>(() => api.GetAuthTicketAsync(TestCookie));
+        Assert.Equal(3, stub.Requests.Count); // exactly one retry, then give up
+    }
 }
