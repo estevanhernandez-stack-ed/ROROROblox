@@ -14,6 +14,7 @@ namespace ROROROblox.App.ViewModels;
 public sealed class AccountSummary : INotifyPropertyChanged
 {
     private bool _sessionExpired;
+    private bool _sessionLimited;
     private bool _isLaunching;
     private string _statusText = string.Empty;
     private FavoriteGame? _selectedGame;
@@ -110,6 +111,24 @@ public sealed class AccountSummary : INotifyPropertyChanged
         set
         {
             if (SetField(ref _sessionExpired, value))
+            {
+                OnPropertyChanged(nameof(StatusDot));
+                OnPropertyChanged(nameof(SecondaryStatusText));
+            }
+        }
+    }
+
+    /// <summary>
+    /// True when Roblox returned HTTP 403 on this account's authenticated requests — a flagged /
+    /// soft-locked session (post bot-challenge), distinct from <see cref="SessionExpired"/> (401 =
+    /// dead cookie). Cleared by a successful presence poll (auto-heal) or a re-capture. Spec §5.
+    /// </summary>
+    public bool SessionLimited
+    {
+        get => _sessionLimited;
+        set
+        {
+            if (SetField(ref _sessionLimited, value))
             {
                 OnPropertyChanged(nameof(StatusDot));
                 OnPropertyChanged(nameof(SecondaryStatusText));
@@ -396,7 +415,9 @@ public sealed class AccountSummary : INotifyPropertyChanged
     /// </summary>
     public string StatusDot => _sessionExpired
         ? "yellow"
-        : (InGame || _presenceState == UserPresenceType.InStudio || _isRunning) ? "green" : "grey";
+        : _sessionLimited
+            ? "magenta"
+            : (InGame || _presenceState == UserPresenceType.InStudio || _isRunning) ? "green" : "grey";
 
     /// <summary>
     /// Human-friendly secondary text shown under the display name. Precedence (v1.5.0 augment rule):
@@ -414,6 +435,12 @@ public sealed class AccountSummary : INotifyPropertyChanged
             if (_sessionExpired)
             {
                 return "Session expired";
+            }
+            // 1b. Limited by Roblox (403). Beats stale presence — this is the fix for the frozen
+            //     "In game" dot masking a failed launch.
+            if (_sessionLimited)
+            {
+                return "Limited by Roblox — re-capture or wait";
             }
             // 2. In a game (presence authoritative for display — this is the ghost fix).
             if (InGame)

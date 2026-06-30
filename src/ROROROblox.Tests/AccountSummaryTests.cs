@@ -269,4 +269,43 @@ public class AccountSummaryTests
         Assert.Equal("In Studio", s.SecondaryStatusText);
         Assert.Equal("green", s.StatusDot);
     }
+
+    // === Task 5: SessionLimited flag — magenta dot + beats stale presence ===
+
+    [Fact]
+    public void StatusDot_SessionLimited_NotExpired_ReturnsMagenta()
+    {
+        var s = NewSummary();
+        s.SessionLimited = true;
+        Assert.Equal("magenta", s.StatusDot);
+    }
+
+    [Fact]
+    public void StatusDot_Expired_BeatsLimited_ReturnsYellow()
+    {
+        var s = NewSummary();
+        s.SessionLimited = true;
+        s.SessionExpired = true;
+        Assert.Equal("yellow", s.StatusDot);
+    }
+
+    [Fact]
+    public void SecondaryStatusText_Limited_BeatsStaleInGame()
+    {
+        var s = NewSummary();
+        s.CurrentGameName = "Pet Sim 99";
+        s.PresenceState = UserPresenceType.InGame;   // stale "in game"
+        s.SessionLimited = true;
+
+        Assert.Equal("Limited by Roblox — re-capture or wait", s.SecondaryStatusText);
+    }
+
+    [Fact]
+    public void SecondaryStatusText_Expired_BeatsLimited()
+    {
+        var s = NewSummary();
+        s.SessionLimited = true;
+        s.SessionExpired = true;
+        Assert.Equal("Session expired", s.SecondaryStatusText);
+    }
 }
