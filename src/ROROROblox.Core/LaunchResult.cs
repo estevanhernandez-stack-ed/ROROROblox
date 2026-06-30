@@ -19,5 +19,6 @@ public abstract record LaunchResult
     /// </summary>
     public sealed record Started(int Pid, DateTimeOffset LaunchedAtUtc) : LaunchResult;
     public sealed record CookieExpired : LaunchResult;
+    public sealed record Limited : LaunchResult;
     public sealed record Failed(string Message) : LaunchResult;
 }

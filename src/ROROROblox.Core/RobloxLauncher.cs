@@ -131,6 +131,10 @@ public sealed class RobloxLauncher : IRobloxLauncher
         {
             return new LaunchResult.CookieExpired();
         }
+        catch (SessionLimitedException)
+        {
+            return new LaunchResult.Limited();
+        }
         catch (Exception ex)
         {
             return new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}");
@@ -238,6 +242,10 @@ public sealed class RobloxLauncher : IRobloxLauncher
         catch (CookieExpiredException)
         {
             return new LaunchResult.CookieExpired();
+        }
+        catch (SessionLimitedException)
+        {
+            return new LaunchResult.Limited();
         }
         catch (Exception ex)
         {

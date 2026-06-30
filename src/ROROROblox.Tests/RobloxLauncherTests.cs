@@ -211,6 +211,19 @@ public class RobloxLauncherTests
     }
 
     [Fact]
+    public async Task LaunchAsync_SessionLimited_ReturnsLimitedResult()
+    {
+        var api = new StubRobloxApi(_ => throw new SessionLimitedException());
+        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
+        var processStarter = new RecordingProcessStarter(_ => 1);
+        var launcher = new RobloxLauncher(api, settings, processStarter);
+
+        var result = await launcher.LaunchAsync(TestCookie);
+
+        Assert.IsType<LaunchResult.Limited>(result);
+    }
+
+    [Fact]
     public async Task LaunchAsync_Win32Exception_ReturnsFailedWithRobloxNotInstalledMessage()
     {
         var (launcher, _, _) = CreateLauncher(
@@ -339,6 +352,19 @@ public class RobloxLauncherTests
         var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(42));
 
         Assert.IsType<LaunchResult.CookieExpired>(result);
+    }
+
+    [Fact]
+    public async Task LaunchAsync_TypedApi_SessionLimited_ReturnsLimitedResult()
+    {
+        var api = new StubRobloxApi(_ => throw new SessionLimitedException());
+        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
+        var processStarter = new RecordingProcessStarter(_ => 1);
+        var launcher = new RobloxLauncher(api, settings, processStarter);
+
+        var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(42));
+
+        Assert.IsType<LaunchResult.Limited>(result);
     }
 
     [Fact]
