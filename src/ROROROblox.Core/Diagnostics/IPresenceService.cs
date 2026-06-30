@@ -28,6 +28,14 @@ public interface IPresenceService
     /// </summary>
     event EventHandler<Guid>? AccountSessionExpired;
 
+    /// <summary>
+    /// Fired (payload = the account id) when an account's presence poll returns HTTP 403
+    /// (<see cref="SessionLimitedException"/>) three times in a row — its session is flagged /
+    /// soft-locked (post bot-challenge), not expired. The ViewModel flips the row to the magenta
+    /// "Limited" state. Reset by a successful poll or a 401. Spec §4.5.
+    /// </summary>
+    event EventHandler<Guid>? AccountSessionLimited;
+
     /// <summary>Start the internal <see cref="System.Threading.PeriodicTimer"/> poll loop.</summary>
     void Start();
 

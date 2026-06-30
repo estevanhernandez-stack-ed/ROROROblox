@@ -355,6 +355,87 @@ public class PresenceServiceTests
         Assert.Equal(accountCount, api.GetPresenceCalls);
     }
 
+    // ---- Task 3: consecutive-403 counter + AccountSessionLimited event ----
+
+    [Fact]
+    public async Task PollOnceAsync_ThreeConsecutive403_RaisesSessionLimitedOnceAtThird()
+    {
+        var accountId = Guid.NewGuid();
+        const long userId = 700;
+        var store = new FakeAccountStore { CookieByAccount = { [accountId] = Cookie } };
+        var api = new FakeRobloxApi { SessionLimitedCookies = { Cookie } };
+        var service = CreateService(api, store, [new PresenceTarget(accountId, userId)]);
+
+        var limited = new List<Guid>();
+        service.AccountSessionLimited += (_, id) => limited.Add(id);
+
+        await service.PollOnceAsync();          // 1
+        await service.PollOnceAsync();          // 2
+        Assert.Empty(limited);                  // not yet
+        await service.PollOnceAsync();          // 3 -> flip
+        var raised = Assert.Single(limited);
+        Assert.Equal(accountId, raised);
+    }
+
+    [Fact]
+    public async Task PollOnceAsync_403sThenSuccess_ResetsCounter()
+    {
+        var accountId = Guid.NewGuid();
+        const long userId = 701;
+        var store = new FakeAccountStore { CookieByAccount = { [accountId] = Cookie } };
+        var api = new FakeRobloxApi { SessionLimitedCookies = { Cookie } };
+        var service = CreateService(api, store, [new PresenceTarget(accountId, userId)]);
+
+        var limited = new List<Guid>();
+        service.AccountSessionLimited += (_, id) => limited.Add(id);
+
+        await service.PollOnceAsync();          // 403 #1
+        await service.PollOnceAsync();          // 403 #2
+
+        // Roblox lifts the flag: presence now succeeds.
+        api.SessionLimitedCookies.Remove(Cookie);
+        api.PresenceByCookie[Cookie] = [new UserPresence(userId, UserPresenceType.OnlineWebsite, null, null, null)];
+        await service.PollOnceAsync();          // success -> counter reset
+
+        api.SessionLimitedCookies.Add(Cookie);
+        api.PresenceByCookie.Remove(Cookie);
+        await service.PollOnceAsync();          // 403 #1 (post-reset)
+        await service.PollOnceAsync();          // 403 #2 (post-reset)
+
+        Assert.Empty(limited);                  // never hit 3-in-a-row
+    }
+
+    [Fact]
+    public async Task PollOnceAsync_401_ResetsLimitedCounter()
+    {
+        var accountId = Guid.NewGuid();
+        const long userId = 702;
+        var store = new FakeAccountStore { CookieByAccount = { [accountId] = Cookie } };
+        var api = new FakeRobloxApi { SessionLimitedCookies = { Cookie } };
+        var service = CreateService(api, store, [new PresenceTarget(accountId, userId)]);
+
+        var limited = new List<Guid>();
+        var expired = new List<Guid>();
+        service.AccountSessionLimited += (_, id) => limited.Add(id);
+        service.AccountSessionExpired += (_, id) => expired.Add(id);
+
+        await service.PollOnceAsync();          // 403 #1
+        await service.PollOnceAsync();          // 403 #2
+
+        // Cookie dies (401) — expired supersedes; Limited counter resets.
+        api.SessionLimitedCookies.Remove(Cookie);
+        api.ThrowCookieExpiredForCookie.Add(Cookie);
+        await service.PollOnceAsync();          // 401 -> AccountSessionExpired, reset
+
+        api.ThrowCookieExpiredForCookie.Remove(Cookie);
+        api.SessionLimitedCookies.Add(Cookie);
+        await service.PollOnceAsync();          // 403 #1 (post-reset)
+        await service.PollOnceAsync();          // 403 #2 (post-reset)
+
+        Assert.Empty(limited);
+        Assert.Single(expired);
+    }
+
     // ---- fakes ----
 
     private sealed class FakeAccountStore : IAccountStore
@@ -401,6 +482,10 @@ public class PresenceServiceTests
         public int GetPresenceCalls { get; private set; }
         public List<string> PresenceCookiesQueried { get; } = [];
 
+        // Task 3: consecutive-403 counter support.
+        public HashSet<string> ThrowCookieExpiredForCookie { get; } = [];
+        public HashSet<string> SessionLimitedCookies { get; } = [];
+
         // Concurrency-cap test gate: when set, every presence call parks on _gate so the test can
         // measure how many run simultaneously before releasing them.
         public bool GateConcurrentCalls { get; set; }
@@ -418,6 +503,9 @@ public class PresenceServiceTests
 
             try
             {
+                if (ThrowCookieExpiredForCookie.Contains(cookie)) throw new CookieExpiredException();
+                if (SessionLimitedCookies.Contains(cookie)) throw new SessionLimitedException();
+
                 if (ThrowExpiredForCookie.Contains(cookie))
                 {
                     throw new CookieExpiredException();
