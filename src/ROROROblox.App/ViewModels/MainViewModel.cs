@@ -123,7 +123,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         RemoveAccountCommand = new RelayCommand(p => RemoveAccountAsync(p as AccountSummary));
         ReauthenticateCommand = new RelayCommand(p => ReauthenticateAsync(p as AccountSummary));
         OpenSettingsCommand = new RelayCommand(OpenSettings);
-        LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !(a.InGame || a.IsRunning)));
+        LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !a.SessionLimited && !(a.InGame || a.IsRunning)));
         StopAccountCommand = new RelayCommand(p => StopAccount(p as AccountSummary));
         OpenDiagnosticsCommand = new RelayCommand(OpenDiagnostics);
         OpenAboutCommand = new RelayCommand(OpenAbout);
@@ -131,7 +131,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OpenFriendFollowCommand = new RelayCommand(p => OpenFriendFollowAsync(p as AccountSummary));
         SetMainCommand = new RelayCommand(p => SetMainAsync(p as AccountSummary));
         ToggleCompactCommand = new RelayCommand(ToggleCompact);
-        StartMainCommand = new RelayCommand(StartMainAsync, () => !IsBusy && Accounts.FirstOrDefault(a => a.IsMain) is { SessionExpired: false, IsRunning: false, InGame: false });
+        StartMainCommand = new RelayCommand(StartMainAsync, () => !IsBusy && Accounts.FirstOrDefault(a => a.IsMain) is { SessionExpired: false, SessionLimited: false, IsRunning: false, InGame: false });
         OpenHistoryCommand = new RelayCommand(OpenHistory);
         OpenPreferencesCommand = new RelayCommand(OpenPreferences);
         OpenPluginsCommand = new RelayCommand(_ => RequestOpenPlugins?.Invoke(this, EventArgs.Empty));
@@ -159,6 +159,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // marshal to the dispatcher just like the process-tracker handlers do.
         _presenceService.AccountPresenceUpdated += OnAccountPresenceUpdated;
         _presenceService.AccountSessionExpired += OnAccountSessionExpired;
+        _presenceService.AccountSessionLimited += OnAccountSessionLimited;
 
         _ = InitializeBloxstrapWarningAsync();
 
@@ -1004,6 +1005,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     summary.SessionExpired = true;
                     summary.StatusText = string.Empty;
                     break;
+                case LaunchResult.Limited:
+                    _log.LogInformation("Account {AccountId} is rate-limited by Roblox (403)", summary.Id);
+                    summary.SessionLimited = true;
+                    summary.PresenceState = UserPresenceType.Offline;  // drop the stale "In game" dot
+                    summary.CurrentGameName = null;
+                    summary.InGameSinceUtc = null;
+                    summary.StatusText = string.Empty;                 // copy comes from SecondaryStatusText
+                    break;
                 case LaunchResult.Failed failed when failed.Message.Contains("Roblox does not appear to be installed", StringComparison.OrdinalIgnoreCase):
                     _log.LogWarning("Roblox not installed at launch time for account {AccountId}", summary.Id);
                     summary.StatusText = "Roblox not installed.";
@@ -1093,7 +1102,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // less error-prone than threading identity through the value structs, and the predicate is
         // the single source of truth in LaunchEligibility.IsBusy.
         return ordered
-            .Where(a => a.IsSelected && !a.SessionExpired && !LaunchEligibility.IsBusy(ToLaunchCandidate(a)) && !a.IsLaunching)
+            .Where(a => a.IsSelected && !a.SessionExpired && !a.SessionLimited
+                        && !LaunchEligibility.IsBusy(ToLaunchCandidate(a)) && !a.IsLaunching)
             .ToList();
     }
 
@@ -1630,6 +1640,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
             if (summary is null) return;
+            // A presence poll landing means Roblox is answering this cookie again — clear Limited.
+            summary.SessionLimited = false;
 
             if (e.PresenceType == UserPresenceType.InGame)
             {
@@ -1685,6 +1697,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
             if (summary is null) return;
             summary.SessionExpired = true;
+            RelayCommand.RaiseCanExecuteChanged();
+        });
+    }
+
+    private void OnAccountSessionLimited(object? sender, Guid accountId)
+    {
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
+            if (summary is null) return;
+            summary.SessionLimited = true;
+            summary.PresenceState = UserPresenceType.Offline;  // clear the frozen "In game"
+            summary.CurrentGameName = null;
+            summary.InGameSinceUtc = null;
             RelayCommand.RaiseCanExecuteChanged();
         });
     }
