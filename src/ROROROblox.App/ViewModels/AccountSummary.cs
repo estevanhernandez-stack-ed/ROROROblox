@@ -408,10 +408,12 @@ public sealed class AccountSummary : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Three-state colored dot: <c>yellow</c> expired / <c>green</c> active (in-game, in Studio, OR
-    /// pid alive) / <c>grey</c> idle. The augment rule (v1.5.0): a row is active if <see cref="InGame"/>
-    /// OR <see cref="IsRunning"/>, so a lost local pid can no longer force the dot grey once presence
-    /// reports in-game. Studio presence also counts as active. Spec §"Components > 2".
+    /// Four-state colored dot: <c>yellow</c> expired / <c>magenta</c> rate-limited
+    /// (<see cref="SessionLimited"/> — beats active/idle, loses to expired) / <c>green</c> active
+    /// (in-game, in Studio, OR pid alive) / <c>grey</c> idle. The augment rule (v1.5.0): a row is
+    /// active if <see cref="InGame"/> OR <see cref="IsRunning"/>, so a lost local pid can no longer
+    /// force the dot grey once presence reports in-game. Studio presence also counts as active.
+    /// Spec §"Components > 2".
     /// </summary>
     public string StatusDot => _sessionExpired
         ? "yellow"
@@ -421,10 +423,11 @@ public sealed class AccountSummary : INotifyPropertyChanged
 
     /// <summary>
     /// Human-friendly secondary text shown under the display name. Precedence (v1.5.0 augment rule):
-    /// session-expired ▸ "In {game} · {age}" (presence) ▸ "In Studio" ▸ "Connecting…" (pid alive,
-    /// first ~60s, no in-game presence yet) ▸ "At Roblox home" (pid alive, not in a game — exited the
-    /// game but stayed in the app) ▸ launch error (StatusText) ▸ "Closed {ago}" (both signals agree
-    /// it's gone) ▸ "Last launched {ago}" ▸ "Ready". Refresh by calling
+    /// session-expired ▸ "Limited by Roblox — re-capture or wait" (<see cref="SessionLimited"/>) ▸
+    /// "In {game} · {age}" (presence) ▸ "In Studio" ▸ "Connecting…" (pid alive, first ~60s, no
+    /// in-game presence yet) ▸ "At Roblox home" (pid alive, not in a game — exited the game but
+    /// stayed in the app) ▸ launch error (StatusText) ▸ "Closed {ago}" (both signals agree it's gone)
+    /// ▸ "Last launched {ago}" ▸ "Ready". Refresh by calling
     /// <see cref="RefreshRelativeTimes"/> from a periodic tick. Spec §"Components > 2".
     /// </summary>
     public string SecondaryStatusText

@@ -475,7 +475,7 @@ public sealed class RobloxApi : IRobloxApi
             request.Content = JsonContent.Create(new PresenceRequest(ids), options: JsonOptions);
             using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
             ThrowOnAuthFailure(response);     // 401 -> CookieExpiredException
-            ThrowOnSessionLimited(response);  // 403 -> SessionLimitedException (NEW)
+            ThrowOnSessionLimited(response);  // 403 -> SessionLimitedException
             if (!response.IsSuccessStatusCode)
             {
                 return [];
