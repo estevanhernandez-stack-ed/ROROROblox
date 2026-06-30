@@ -474,7 +474,8 @@ public sealed class RobloxApi : IRobloxApi
             request.Headers.Add("Cookie", $".ROBLOSECURITY={cookie}");
             request.Content = JsonContent.Create(new PresenceRequest(ids), options: JsonOptions);
             using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
-            ThrowOnAuthFailure(response);
+            ThrowOnAuthFailure(response);     // 401 -> CookieExpiredException
+            ThrowOnSessionLimited(response);  // 403 -> SessionLimitedException (NEW)
             if (!response.IsSuccessStatusCode)
             {
                 return [];
@@ -484,6 +485,10 @@ public sealed class RobloxApi : IRobloxApi
                 .ConfigureAwait(false);
         }
         catch (CookieExpiredException)
+        {
+            throw;
+        }
+        catch (SessionLimitedException)
         {
             throw;
         }
@@ -688,6 +693,14 @@ public sealed class RobloxApi : IRobloxApi
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
             throw new CookieExpiredException();
+        }
+    }
+
+    private static void ThrowOnSessionLimited(HttpResponseMessage response)
+    {
+        if (response.StatusCode == HttpStatusCode.Forbidden)
+        {
+            throw new SessionLimitedException();
         }
     }
 

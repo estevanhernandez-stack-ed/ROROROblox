@@ -572,6 +572,26 @@ public class RobloxApiTests
             api.GetPresenceAsync(TestCookie, null!));
     }
 
+    [Fact]
+    public async Task GetPresenceAsync_403_ThrowsSessionLimited()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden));
+
+        await Assert.ThrowsAsync<SessionLimitedException>(
+            () => api.GetPresenceAsync(TestCookie, new[] { 123L }));
+    }
+
+    [Fact]
+    public async Task GetPresenceAsync_429_ReturnsEmpty_NotThrow()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response((HttpStatusCode)429));
+
+        var result = await api.GetPresenceAsync(TestCookie, new[] { 123L });
+        Assert.Empty(result);
+    }
+
     // === SessionLimitedException — auth-ticket 403 classification ===
 
     [Fact]
