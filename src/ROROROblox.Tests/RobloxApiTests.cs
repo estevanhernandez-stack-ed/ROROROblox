@@ -612,4 +612,16 @@ public class RobloxApiTests
         await Assert.ThrowsAsync<SessionLimitedException>(() => api.GetAuthTicketAsync(TestCookie));
         Assert.Equal(3, stub.Requests.Count); // exactly one retry, then give up
     }
+
+    [Fact]
+    public async Task GetAuthTicketAsync_RotationRetry_Returns401_ThrowsCookieExpired()
+    {
+        var (api, stub) = CreateApi();
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-1")));
+        stub.EnqueueResponse(Response(HttpStatusCode.Forbidden, ("x-csrf-token", "tok-2"))); // rotation
+        stub.EnqueueResponse(Response(HttpStatusCode.Unauthorized));                          // cookie expired mid-retry
+
+        await Assert.ThrowsAsync<CookieExpiredException>(() => api.GetAuthTicketAsync(TestCookie));
+        Assert.Equal(3, stub.Requests.Count);
+    }
 }
