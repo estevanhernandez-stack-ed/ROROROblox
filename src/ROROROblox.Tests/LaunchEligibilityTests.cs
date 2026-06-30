@@ -20,7 +20,7 @@ public class LaunchEligibilityTests
         bool isRunning = false,
         bool isLaunching = false,
         string name = "Alt")
-        => new(isSelected, sessionExpired, inGame, isRunning, isLaunching, name);
+        => new(isSelected, sessionExpired, false, inGame, isRunning, isLaunching, name);
 
     // === Augment rule: InGame but pid lost is still "running" (skipped) ===
 
@@ -217,5 +217,36 @@ public class LaunchEligibilityTests
         var banner = result.PartialBanner(dispatched: 1, verb: "Launch multiple finished");
         Assert.Contains("1 client dispatched", banner);
         Assert.DoesNotContain("clients", banner);
+    }
+}
+
+// ============================================================
+// Task 6: Limited skip-bucket tests
+// ============================================================
+
+public class LaunchEligibilityLimitedTests
+{
+    private static LaunchCandidate Cand(bool selected = true, bool expired = false,
+        bool limited = false, bool inGame = false, bool running = false, bool launching = false)
+        => new(selected, expired, limited, inGame, running, launching, "Alt");
+
+    [Fact]
+    public void Compute_LimitedAccount_GoesToLimitedBucket_NotEligible()
+    {
+        var result = LaunchEligibility.Compute(new[] { Cand(limited: true) });
+
+        Assert.Empty(result.Eligible);
+        Assert.Equal(1, result.Breakdown.Limited);
+        Assert.Equal(0, result.Breakdown.Expired);
+        Assert.Contains("1 limited", result.ZeroEligibleBanner);
+    }
+
+    [Fact]
+    public void Compute_ExpiredBeatsLimited_CountsAsExpired()
+    {
+        var result = LaunchEligibility.Compute(new[] { Cand(expired: true, limited: true) });
+
+        Assert.Equal(1, result.Breakdown.Expired);
+        Assert.Equal(0, result.Breakdown.Limited);
     }
 }

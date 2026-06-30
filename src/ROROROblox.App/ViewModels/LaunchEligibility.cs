@@ -10,6 +10,7 @@ namespace ROROROblox.App.ViewModels;
 internal readonly record struct LaunchCandidate(
     bool IsSelected,
     bool SessionExpired,
+    bool SessionLimited,
     bool InGame,
     bool IsRunning,
     bool IsLaunching,
@@ -21,7 +22,7 @@ internal readonly record struct LaunchCandidate(
 /// Deselected). In-flight launches (<see cref="LaunchCandidate.IsLaunching"/>) are excluded from
 /// eligibility but NOT counted as a skip reason — they aren't something the user needs to act on.
 /// </summary>
-internal readonly record struct LaunchBreakdown(int Running, int Expired, int Deselected);
+internal readonly record struct LaunchBreakdown(int Running, int Expired, int Limited, int Deselected);
 
 /// <summary>
 /// Result of <see cref="LaunchEligibility.Compute"/>: the eligible candidates, the skip-reason
@@ -78,6 +79,7 @@ internal sealed class LaunchEligibilityResult
         var clauses = new List<string>();
         if (Breakdown.Running > 0) clauses.Add($"{Breakdown.Running} already running");
         if (Breakdown.Expired > 0) clauses.Add($"{Breakdown.Expired} expired");
+        if (Breakdown.Limited > 0) clauses.Add($"{Breakdown.Limited} limited");
         if (Breakdown.Deselected > 0) clauses.Add($"{Breakdown.Deselected} deselected");
         return clauses;
     }
@@ -108,6 +110,7 @@ internal static class LaunchEligibility
         var eligible = new List<LaunchCandidate>();
         var running = 0;
         var expired = 0;
+        var limited = 0;
         var deselected = 0;
 
         foreach (var c in candidates)
@@ -123,6 +126,7 @@ internal static class LaunchEligibility
                 expired++;
                 continue;
             }
+            if (c.SessionLimited) { limited++; continue; }   // after expired, before busy
             if (IsBusy(c))
             {
                 running++;
@@ -139,7 +143,7 @@ internal static class LaunchEligibility
         return new LaunchEligibilityResult
         {
             Eligible = eligible,
-            Breakdown = new LaunchBreakdown(running, expired, deselected),
+            Breakdown = new LaunchBreakdown(running, expired, limited, deselected),
         };
     }
 }

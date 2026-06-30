@@ -1078,7 +1078,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <see cref="LaunchEligibility"/>, not here — this is a flat field map only.
     /// </summary>
     private static LaunchCandidate ToLaunchCandidate(AccountSummary a) => new(
-        a.IsSelected, a.SessionExpired, a.InGame, a.IsRunning, a.IsLaunching, a.DisplayName);
+        a.IsSelected, a.SessionExpired, a.SessionLimited, a.InGame, a.IsRunning, a.IsLaunching, a.DisplayName);
 
     /// <summary>
     /// Re-resolve the <see cref="AccountSummary"/> rows for the eligible candidates the helper
