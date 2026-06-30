@@ -18,9 +18,10 @@ internal readonly record struct LaunchCandidate(
 
 /// <summary>
 /// Skip-reason tallies for a launch pass. Each bucket is mutually distinct: an account counts in
-/// exactly one (selected-and-busy → Running; selected-and-expired → Expired; not-selected →
-/// Deselected). In-flight launches (<see cref="LaunchCandidate.IsLaunching"/>) are excluded from
-/// eligibility but NOT counted as a skip reason — they aren't something the user needs to act on.
+/// exactly one (selected-and-busy → Running; selected-and-expired → Expired;
+/// selected-and-limited → Limited; not-selected → Deselected). In-flight launches
+/// (<see cref="LaunchCandidate.IsLaunching"/>) are excluded from eligibility but NOT counted as a
+/// skip reason — they aren't something the user needs to act on.
 /// </summary>
 internal readonly record struct LaunchBreakdown(int Running, int Expired, int Limited, int Deselected);
 
@@ -71,8 +72,8 @@ internal sealed class LaunchEligibilityResult
     }
 
     /// <summary>
-    /// The non-zero skip-reason clauses, in a fixed order: running ▸ expired ▸ deselected. "running"
-    /// uses the "already running" umbrella term (covers in-game AND at-home/open clients).
+    /// The non-zero skip-reason clauses, in a fixed order: running ▸ expired ▸ limited ▸ deselected.
+    /// "running" uses the "already running" umbrella term (covers in-game AND at-home/open clients).
     /// </summary>
     private List<string> NonZeroClauses()
     {

@@ -246,6 +246,7 @@ public class LaunchEligibilityLimitedTests
     {
         var result = LaunchEligibility.Compute(new[] { Cand(expired: true, limited: true) });
 
+        Assert.Empty(result.Eligible);
         Assert.Equal(1, result.Breakdown.Expired);
         Assert.Equal(0, result.Breakdown.Limited);
     }
