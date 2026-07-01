@@ -135,6 +135,26 @@ public class ActivityMonitorTests
     }
 
     [Fact]
+    public void GetSnapshot_Empty_WhenNoAccounts()
+    {
+        var (m, _, _, _, _) = Build();
+        Assert.Empty(m.GetSnapshot());
+    }
+
+    [Fact]
+    public void GetSnapshot_ComputesSinceActivityAgainstClock()
+    {
+        var (m, clock, _, _, _) = Build();
+        var a = Guid.NewGuid();
+        m.OnAccountLaunched(a);               // stamped at 12:00
+        clock.UtcNow = clock.UtcNow.AddMinutes(7);
+
+        var snap = m.GetSnapshot().Single();
+        Assert.Equal(a, snap.AccountId);
+        Assert.Equal(TimeSpan.FromMinutes(7), snap.SinceActivity);
+    }
+
+    [Fact]
     public void Sample_CrossingThreshold_FiresOnceThenLatches()
     {
         var (m, clock, fg, input, res) = Build();
