@@ -37,11 +37,14 @@ public class PluginHostServiceTests
 
     private static PluginUITranslator NoUITranslator() => new(new FakeUIHost());
 
+    private static IActivitySnapshotProvider NoActivity() =>
+        new FakeActivitySnapshotProvider(Array.Empty<AccountActivitySnapshot>());
+
     [Fact]
     public async Task Handshake_AcceptsMatchingContractVersion()
     {
         var registry = new InMemoryRegistry(new[] { MakeInstalled("626labs.test", "host.events.account-launched") });
-        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator());
+        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity());
 
         var response = await service.Handshake(new HandshakeRequest
         {
@@ -58,7 +61,7 @@ public class PluginHostServiceTests
     public async Task Handshake_RejectsContractVersionMismatch()
     {
         var registry = new InMemoryRegistry(new[] { MakeInstalled("626labs.test") });
-        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator());
+        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity());
 
         var response = await service.Handshake(new HandshakeRequest
         {
@@ -74,7 +77,7 @@ public class PluginHostServiceTests
     public async Task Handshake_RejectsUnknownPluginId()
     {
         var registry = new InMemoryRegistry(Array.Empty<InstalledPlugin>());
-        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator());
+        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity());
 
         var response = await service.Handshake(new HandshakeRequest
         {
@@ -92,7 +95,7 @@ public class PluginHostServiceTests
         var registry = new InMemoryRegistry(Array.Empty<InstalledPlugin>());
         var hostState = new FakeHostStateProvider("On");
         var accounts = new FakeRunningAccountsProvider(Array.Empty<RunningAccountSnapshot>());
-        var service = new PluginHostService(registry, "1.4.0", "1.0", hostState, accounts, new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator());
+        var service = new PluginHostService(registry, "1.4.0", "1.0", hostState, accounts, new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity());
 
         var info = await service.GetHostInfo(new Empty(), FakeServerCallContext.Create());
 
@@ -110,7 +113,7 @@ public class PluginHostServiceTests
         {
             new RunningAccountSnapshot("00000000-0000-0000-0000-000000000001", 12345, "Alice", 9999),
         });
-        var service = new PluginHostService(registry, "1.4.0", "1.0", hostState, accounts, new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator());
+        var service = new PluginHostService(registry, "1.4.0", "1.0", hostState, accounts, new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity());
 
         var list = await service.GetRunningAccounts(new Empty(), FakeServerCallContext.Create());
 
@@ -126,7 +129,7 @@ public class PluginHostServiceTests
     {
         var registry = new InMemoryRegistry(Array.Empty<InstalledPlugin>());
         var bus = new InProcessPluginEventBus();
-        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), bus, NoOpLauncher(), NoUITranslator());
+        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), bus, NoOpLauncher(), NoUITranslator(), NoActivity());
 
         var writer = new TestStreamWriter<AccountLaunchedEvent>();
         using var cts = new CancellationTokenSource();
@@ -162,7 +165,8 @@ public class PluginHostServiceTests
             NoAccounts(),
             new InProcessPluginEventBus(),
             fakeLauncher,
-            NoUITranslator());
+            NoUITranslator(),
+            NoActivity());
 
         var accountId = Guid.NewGuid().ToString();
         var result = await service.RequestLaunch(new LaunchRequest
@@ -181,7 +185,7 @@ public class PluginHostServiceTests
         var fake = new FakeLaunchInvoker();
         var service = new PluginHostService(
             new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
-            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator());
+            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator(), NoActivity());
 
         var acct = Guid.NewGuid().ToString();
         var result = await service.RequestLaunchTarget(new LaunchTargetRequest
@@ -204,7 +208,7 @@ public class PluginHostServiceTests
         var fake = new FakeLaunchInvoker();
         var service = new PluginHostService(
             new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
-            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator());
+            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator(), NoActivity());
 
         var acct = Guid.NewGuid().ToString();
         var result = await service.RequestLaunchTarget(new LaunchTargetRequest
@@ -225,7 +229,7 @@ public class PluginHostServiceTests
         var fake = new FakeLaunchInvoker { Current = null };
         var service = new PluginHostService(
             new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
-            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator());
+            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator(), NoActivity());
 
         var result = await service.GetCurrentServer(new Empty(), FakeServerCallContext.Create());
         Assert.False(result.Present);
@@ -237,7 +241,7 @@ public class PluginHostServiceTests
         var fake = new FakeLaunchInvoker { Current = new CurrentServerInfo("https://x", "Pet Sim", 99, 1700000000000) };
         var service = new PluginHostService(
             new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
-            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator());
+            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator(), NoActivity());
 
         var result = await service.GetCurrentServer(new Empty(), FakeServerCallContext.Create());
         Assert.True(result.Present);
@@ -315,6 +319,13 @@ public class PluginHostServiceTests
         private readonly List<RunningAccountSnapshot> _snapshots;
         public FakeRunningAccountsProvider(IEnumerable<RunningAccountSnapshot> snapshots) { _snapshots = snapshots.ToList(); }
         public IReadOnlyList<RunningAccountSnapshot> Snapshot() => _snapshots;
+    }
+
+    private sealed class FakeActivitySnapshotProvider : IActivitySnapshotProvider
+    {
+        private readonly List<AccountActivitySnapshot> _snapshots;
+        public FakeActivitySnapshotProvider(IEnumerable<AccountActivitySnapshot> snapshots) { _snapshots = snapshots.ToList(); }
+        public IReadOnlyList<AccountActivitySnapshot> Snapshot() => _snapshots;
     }
 
     private sealed class FakeUIHost : IPluginUIHost

@@ -49,7 +49,8 @@ public class EndToEndContractTests
             new EmptyAccounts(),
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
-            new PluginUITranslator(new NullUIHost()));
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -118,7 +119,8 @@ public class EndToEndContractTests
             new EmptyAccounts(),
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
-            new PluginUITranslator(new NullUIHost()));
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -183,7 +185,8 @@ public class EndToEndContractTests
             new EmptyAccounts(),
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
-            new PluginUITranslator(uiHost));
+            new PluginUITranslator(uiHost),
+            new StubActivityProvider());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -260,7 +263,8 @@ public class EndToEndContractTests
             new EmptyAccounts(),
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
-            new PluginUITranslator(new NullUIHost()));
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider());
 
         // Production shape: accessor returns null. Header is the only path to a plugin id.
         var interceptor = new CapabilityInterceptor(
@@ -333,7 +337,8 @@ public class EndToEndContractTests
             new EmptyAccounts(),
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
-            new PluginUITranslator(new NullUIHost()));
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => null,

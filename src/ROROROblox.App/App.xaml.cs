@@ -510,7 +510,8 @@ public partial class App : Application
             sp.GetRequiredService<ROROROblox.App.Plugins.IRunningAccountsProvider>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.IPluginEventBus>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.IPluginLaunchInvoker>(),
-            sp.GetRequiredService<ROROROblox.App.Plugins.PluginUITranslator>()));
+            sp.GetRequiredService<ROROROblox.App.Plugins.PluginUITranslator>(),
+            sp.GetRequiredService<ROROROblox.App.Plugins.IActivitySnapshotProvider>()));
 
         // CapabilityInterceptor: per-connection plugin id binding is deferred to v1.5+
         // (the gRPC interceptor sees the call before any plugin-id metadata is bound).
