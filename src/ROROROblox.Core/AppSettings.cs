@@ -161,6 +161,47 @@ public sealed class AppSettings : IAppSettings, IDisposable
         }
     }
 
+    public async Task<bool> GetMuteIdleAlertsAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).MuteIdleAlerts; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetMuteIdleAlertsAsync(bool muted)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with { MuteIdleAlerts = muted }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
+    public async Task<int> GetIdleWarnThresholdMinutesAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var mins = (await LoadAsync().ConfigureAwait(false)).IdleWarnThresholdMinutes;
+            return mins <= 0 ? 15 : mins;   // guard against a bad stored value
+        }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetIdleWarnThresholdMinutesAsync(int minutes)
+    {
+        if (minutes <= 0) minutes = 15;
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with { IdleWarnThresholdMinutes = minutes }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
     private async Task<SettingsBlob> LoadAsync()
     {
         if (!File.Exists(_filePath))
@@ -221,12 +262,15 @@ public sealed class AppSettings : IAppSettings, IDisposable
     }
 
     // SettingsBlob: missing fields decode as defaults (System.Text.Json), so older v1 blobs
-    // without LaunchMainOnStartup or BloxstrapWarningDismissed load cleanly with those
-    // fields false — no migration step.
+    // without LaunchMainOnStartup, BloxstrapWarningDismissed, MuteIdleAlerts, or
+    // IdleWarnThresholdMinutes load cleanly with those fields at their defaults — no
+    // migration step.
     private sealed record SettingsBlob(
         int Version,
         string? DefaultPlaceUrl,
         bool LaunchMainOnStartup = false,
         string? ActiveThemeId = null,
-        bool BloxstrapWarningDismissed = false);
+        bool BloxstrapWarningDismissed = false,
+        bool MuteIdleAlerts = false,
+        int IdleWarnThresholdMinutes = 15);
 }

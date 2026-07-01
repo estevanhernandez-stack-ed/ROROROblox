@@ -179,4 +179,26 @@ public class AppSettingsTests : IDisposable
         await settings.SetBloxstrapWarningDismissedAsync(false);
         Assert.False(await settings.GetBloxstrapWarningDismissedAsync());
     }
+
+    [Fact]
+    public async Task MuteIdleAlerts_DefaultsFalse_RoundTrips()
+    {
+        using var settings = new AppSettings(_filePath);
+
+        Assert.False(await settings.GetMuteIdleAlertsAsync());
+
+        await settings.SetMuteIdleAlertsAsync(true);
+        Assert.True(await settings.GetMuteIdleAlertsAsync());
+    }
+
+    [Fact]
+    public async Task IdleWarnThresholdMinutes_DefaultsFifteen_RoundTrips()
+    {
+        using var settings = new AppSettings(_filePath);
+
+        Assert.Equal(15, await settings.GetIdleWarnThresholdMinutesAsync());
+
+        await settings.SetIdleWarnThresholdMinutesAsync(12);
+        Assert.Equal(12, await settings.GetIdleWarnThresholdMinutesAsync());
+    }
 }
