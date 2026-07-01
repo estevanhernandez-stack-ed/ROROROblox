@@ -123,6 +123,7 @@ public partial class App : Application
         WirePluginEventBus();
         WireActivityMonitor();
         StartPluginHost();
+        await InitializeIdleSettingsAsync();
 
         // Default Multi-Instance ON. Acquire the ROBLOX_singletonEvent mutex at startup so the
         // user can launch alts immediately without clicking the tray toggle first. The tray menu
@@ -376,6 +377,11 @@ public partial class App : Application
             sp.GetRequiredService<ISystemInputClock>(),
             sp.GetRequiredService<IForegroundAccountResolver>(),
             sp.GetRequiredService<IClock>()));
+
+        // v1.8 idle-alert toast presenter — turns a coalesced warn-threshold crossing into one
+        // mutable tray toast. Stateless beyond ITrayService; singleton for consistency with the
+        // rest of the notification-adjacent services.
+        services.AddSingleton<Notifications.IdleAlertPresenter>();
 
         // v1.5.0 presence poller (the ghost fix). Singleton — one poll loop for the process.
         // The snapshot-provider delegate reads live accounts from MainViewModel at POLL time,
@@ -698,6 +704,30 @@ public partial class App : Application
         }
     }
 
+    /// <summary>
+    /// Pushes the cached idle-warn threshold + mute flag from <see cref="IAppSettings"/> into
+    /// <see cref="MainViewModel"/> (which forwards the threshold into
+    /// <see cref="IActivityMonitor.WarnThreshold"/>). Called once at startup after
+    /// <see cref="WireActivityMonitor"/> has started the monitor, and again from
+    /// <see cref="OpenPreferencesFromTray"/> after the Preferences dialog closes so an edited
+    /// threshold/mute takes effect without a restart. Wrapped defensively — a settings-read
+    /// failure must not block startup; idle awareness just falls back to the 15-minute default.
+    /// </summary>
+    private async Task InitializeIdleSettingsAsync()
+    {
+        if (_services is null) return;
+        try
+        {
+            var settings = _services.GetRequiredService<IAppSettings>();
+            var vm = _services.GetRequiredService<MainViewModel>();
+            await vm.InitializeIdleSettingsAsync(settings);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "InitializeIdleSettingsAsync failed; idle awareness stays at defaults.");
+        }
+    }
+
     private void WireMainAvatarTrayPainter()
     {
         if (_services is null) return;
@@ -744,6 +774,12 @@ public partial class App : Application
             if (owner.IsLoaded) window.Owner = owner;
             SurfaceMainWindow(owner);
             window.ShowDialog();
+
+            // v1.8 — the Preferences dialog persists idle-awareness edits (mute + threshold)
+            // immediately on click, mirroring every other toggle in that window. Re-push into
+            // the monitor + VM on close so a changed threshold/mute takes effect without a
+            // restart, regardless of which control the user touched last.
+            _ = InitializeIdleSettingsAsync();
         }
         catch (Exception ex)
         {

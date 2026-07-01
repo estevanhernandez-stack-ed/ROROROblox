@@ -56,6 +56,16 @@ internal partial class PreferencesWindow : Window
             RunOnLoginToggle.IsChecked = SafeIsStartupEnabled();
             LaunchMainToggle.IsChecked = await _settings.GetLaunchMainOnStartupAsync();
 
+            // v1.8 idle awareness — mute toggle + warn-threshold preset (10/12/15/18 minutes).
+            MuteIdleAlertsToggle.IsChecked = await _settings.GetMuteIdleAlertsAsync();
+            var thresholdMinutes = await _settings.GetIdleWarnThresholdMinutesAsync();
+            IdleWarnThresholdPicker.SelectedItem = IdleWarnThresholdPicker.Items
+                .OfType<System.Windows.Controls.ComboBoxItem>()
+                .FirstOrDefault(item => string.Equals((string)item.Tag, thresholdMinutes.ToString(), StringComparison.Ordinal))
+                ?? IdleWarnThresholdPicker.Items
+                .OfType<System.Windows.Controls.ComboBoxItem>()
+                .FirstOrDefault(item => string.Equals((string)item.Tag, "15", StringComparison.Ordinal));
+
             // Populate the theme picker. Built-ins first, then user-supplied JSON files.
             var themes = await _themeStore.ListAsync();
             ThemePicker.ItemsSource = themes;
@@ -168,6 +178,48 @@ internal partial class PreferencesWindow : Window
             _suppressClickHandlers = true;
             LaunchMainToggle.IsChecked = await _settings.GetLaunchMainOnStartupAsync();
             _suppressClickHandlers = false;
+        }
+    }
+
+    private async void OnMuteIdleAlertsToggle(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+        try
+        {
+            await _settings.SetMuteIdleAlertsAsync(MuteIdleAlertsToggle.IsChecked == true);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this,
+                $"Couldn't save preference: {ex.Message}",
+                "Preferences",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            _suppressClickHandlers = true;
+            MuteIdleAlertsToggle.IsChecked = await _settings.GetMuteIdleAlertsAsync();
+            _suppressClickHandlers = false;
+        }
+    }
+
+    private async void OnIdleWarnThresholdChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+        if (IdleWarnThresholdPicker.SelectedItem is not System.Windows.Controls.ComboBoxItem { Tag: string tag }
+            || !int.TryParse(tag, out var minutes))
+        {
+            return;
+        }
+        try
+        {
+            await _settings.SetIdleWarnThresholdMinutesAsync(minutes);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this,
+                $"Couldn't save preference: {ex.Message}",
+                "Preferences",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
         }
     }
 
