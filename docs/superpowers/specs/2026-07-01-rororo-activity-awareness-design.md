@@ -53,7 +53,7 @@ This closes the "foreground but AFK" blind spot that foreground-only would miss 
 
 ## 4. Architecture & components
 
-**`IActivityMonitor` (App layer, DI singleton) — the engine.** One responsibility: hold `last-activity-at` per account and decide when an account crosses the idle warn line.
+**`IActivityMonitor` (`Core/Diagnostics`, DI singleton registered in App's composition root — mirrors `PresenceService`/`RobloxProcessTracker`, keeping it UI-free and testable) — the engine.** One responsibility: hold `last-activity-at` per account and decide when an account crosses the idle warn line.
 
 - **State:** `ConcurrentDictionary<Guid, ActivityRecord>` where `ActivityRecord = { DateTimeOffset LastActivityAt; bool WarnLatched }`.
 - **Sample loop (~1s timer):**
@@ -104,7 +104,7 @@ Additive only — no breaking change to existing plugins.
 - **`PluginHostService.cs`:** implement the RPC by projecting `IActivityMonitor.GetSnapshot()`; `seconds_since_activity` clamped ≥ 0.
 - **`docs/plugins/AUTHOR_GUIDE.md`:** document the new capability (folded into the plan).
 
-**Versioning.** Purely additive, so the Handshake `contract_version` stays **"1.0"** — existing plugins never call the new RPC and keep working. The NuGet package `ROROROblox.PluginContract` bumps **0.1.0 → 0.2.0** (minor/additive); Part B references 0.2.0.
+**Versioning.** Purely additive, so the Handshake `contract_version` stays **"1.0"** — existing plugins never call the new RPC and keep working. The NuGet package `ROROROblox.PluginContract` is already at **0.2.0** (the plugin-system v1.4 work shipped the additive query/command RPCs there), so this additive RPC bumps **0.2.0 → 0.3.0** (minor/additive); Part B references 0.3.0.
 
 ## 8. Error handling & edge cases
 
