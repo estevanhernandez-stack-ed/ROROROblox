@@ -42,4 +42,7 @@ public interface ITrayService : IDisposable
     /// to launch the main account (if eligible) or fall back to surfacing the main window.
     /// </summary>
     event EventHandler RequestActivateMain;
+
+    /// <summary>Show a passive, non-blocking notification (tray balloon). Used for idle warnings.</summary>
+    void ShowToast(string title, string message);
 }

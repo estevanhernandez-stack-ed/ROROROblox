@@ -176,6 +176,12 @@ internal sealed class TrayService : ITrayService
         return new Icon(stream);
     }
 
+    public void ShowToast(string title, string message)
+    {
+        if (_disposed) return;
+        _taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
+    }
+
     public void Dispose()
     {
         if (_disposed)
