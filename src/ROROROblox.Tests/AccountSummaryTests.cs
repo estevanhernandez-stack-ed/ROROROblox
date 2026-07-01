@@ -308,4 +308,63 @@ public class AccountSummaryTests
         s.SessionExpired = true;
         Assert.Equal("Session expired", s.SecondaryStatusText);
     }
+
+    // === Task 7: idle chip fields — SinceActivity / IdleWarn / IdleText / ShowIdleChip ===
+
+    [Fact]
+    public void IdleText_FormatsMinutes()
+    {
+        var s = NewSummary();
+        s.IsRunning = true;
+        s.SinceActivity = TimeSpan.FromMinutes(18);
+        Assert.Equal("idle 18m", s.IdleText);
+    }
+
+    [Fact]
+    public void IdleText_FormatsSecondsUnderAMinute()
+    {
+        var s = NewSummary();
+        s.IsRunning = true;
+        s.SinceActivity = TimeSpan.FromSeconds(45);
+        Assert.Equal("idle 45s", s.IdleText);
+    }
+
+    [Fact]
+    public void IdleText_FormatsHoursAndMinutes()
+    {
+        var s = NewSummary();
+        s.IsRunning = true;
+        s.SinceActivity = TimeSpan.FromMinutes(64);
+        Assert.Equal("idle 1h4m", s.IdleText);
+    }
+
+    [Fact]
+    public void ShowIdleChip_OnlyWhenRunningAndOverOneMinute()
+    {
+        var s = NewSummary();
+        s.SinceActivity = TimeSpan.FromMinutes(5);
+        s.IsRunning = false;
+        Assert.False(s.ShowIdleChip);          // not running
+
+        s.IsRunning = true;
+        s.SinceActivity = TimeSpan.FromSeconds(30);
+        Assert.False(s.ShowIdleChip);          // under 1 min
+
+        s.SinceActivity = TimeSpan.FromMinutes(5);
+        Assert.True(s.ShowIdleChip);
+    }
+
+    [Fact]
+    public void SettingSinceActivity_RaisesIdleTextAndChipChange()
+    {
+        var s = NewSummary();
+        s.IsRunning = true;
+        var raised = new List<string?>();
+        s.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+        s.SinceActivity = TimeSpan.FromMinutes(3);
+
+        Assert.Contains(nameof(AccountSummary.IdleText), raised);
+        Assert.Contains(nameof(AccountSummary.ShowIdleChip), raised);
+    }
 }

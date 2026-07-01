@@ -286,6 +286,18 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
+                            <!-- Idle chip — shows "idle {duration}" once a running account has been
+                                 quiet for at least a minute. Amber when IdleWarn (crossed the warn
+                                 threshold), muted otherwise. Task 7; driven by ActivitySnapshotApplier
+                                 (Task 8) via SinceActivity/IdleWarn. -->
+                            <Border Visibility="{Binding ShowIdleChip, Converter={StaticResource BoolToVisibilityConverter}}"
+                                    Background="Transparent"
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="{Binding IdleText}"
+                                           FontSize="11"
+                                           Foreground="{Binding IdleWarn, Converter={StaticResource IdleChipBrushConverter}}" />
+                            </Border>
                             <!-- Selection toggle for batch launches. Filled cyan = included; hollow = skipped.
                                  Defaults to selected; user toggles to exclude an account from Launch multiple
                                  / Private server runs. Persisted to accounts.dat so the choice sticks. -->
