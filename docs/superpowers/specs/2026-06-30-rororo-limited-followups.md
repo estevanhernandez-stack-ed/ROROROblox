@@ -45,6 +45,24 @@ Follow-a-friend joins bypass the client join-gate; RORORO already supports the p
 
 **The tension (yours to decide, not to build unasked):** manual, user-initiated follow-join is clearly fine. A one-click "get a flagged account in without the verification" edges toward the *spirit* of the no-evade-Roblox-trust-gates wall, even though it breaks none of the letter (no automation, no injection, no captcha auto-solve, no spoofing). Also: it only helps the join-gate flavor (auth-ticket fetch still succeeds), and it does NOT clear the flag. **Decide before scoping.**
 
+## 6. Stable per-account browserTrackerId (launch trust hygiene)
+
+We generate a random 13-digit `browserTrackerId` **per launch** ([`RobloxLauncher`](../../../src/ROROROblox.Core/RobloxLauncher.cs)). A real client keeps a *stable* btid tied to the account; a fresh random one every launch reads as a brand-new, unfamiliar client. **Launch-only** — the btid is a launch-time URL param; a client-driven auto-reconnect does NOT carry it, so this does **not** help reconnect collisions (corrected 2026-06-30). Persist a per-account btid so each account reads as a returning client. Cheap, in our control, **unproven** (Roblox risk inputs aren't public — needs a real test). Healthy accounts already launch fine on the random btid, so this is trust-*reduction* hygiene, not a captcha fix.
+
+## 7. Idle-timeout / synchronized-reconnect + the "stay active" split
+
+**The problem (user-clarified):** accounts idle-time-out at ~20 min; a batch launches together, so their auto-reconnects fire together → a synchronized reconnect wave trips the trust gate (captcha/logout). RoRoRo has **no hook into a running client** (the reconnect is client↔Roblox), so it can't harden or de-stagger the reconnect itself.
+
+**Corrected governance understanding (2026-06-30):** the "no macros" wall is **core-only**. The plugin system already hosts input automation via consent-gated `system.synthesize-keyboard-input` / `system.synthesize-mouse-input` capabilities — `rororo-ur-task` is the precedent (full macro suite, consent-sheet-gated). So keep-active is a **plugin**, not strictly MaCro-only.
+
+**The split (user-confirmed):**
+- **RoRoRo core (this repo) = awareness + notify.** Track per-account **last window-activity / time-since-last-activity** (core already tracks managed windows via the decorator / `RunningRobloxScanner`; this adds last-foreground/last-activity time). Expose it to plugins via a host event/capability. Pure observation — wall-clean, and useful beyond keep-active (feeds detect/surface for the Limited + reconnect story).
+- **New simple keep-active plugin (separate repo, its own /scope) = acting.** A stripped-down `rororo-ur-task`: the minimum is *focus the window + press space (jump)*, per-account, only when idle past a threshold (driven by core's awareness). Declares `system.synthesize-keyboard-input` + window-focus + `host.events.account-launched/exited` + the new awareness capability; consent-gated like ur-task. **Simple-from-step-one UI** (on/off per account + idle threshold) — for users who want keep-active without ur-task's full button set. Power users stay on ur-task and record a focus+space macro.
+
+**RoRoRo's other (imperfect) lever:** de-sync the initial launches so the timeout waves start offset — imperfect (game in-out moves can re-align idle timers) and trades off getting everyone in fast.
+
+**Next step:** brainstorm → scope → spec, split across the core awareness capability (here) and a NEW plugin repo. `rororo-ur-task` is the architectural template (separate EXE, named-pipe host, consent-gated capabilities); `rororo-ur-ocr` (mentioned, not cloned locally) is another family sibling.
+
 ---
 
 ## Related records
