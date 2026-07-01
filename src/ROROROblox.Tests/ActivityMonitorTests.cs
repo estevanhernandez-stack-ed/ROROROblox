@@ -133,4 +133,70 @@ public class ActivityMonitorTests
         m.OnAccountExited(a);
         Assert.Empty(m.GetSnapshot());
     }
+
+    [Fact]
+    public void Sample_CrossingThreshold_FiresOnceThenLatches()
+    {
+        var (m, clock, fg, input, res) = Build();
+        m.WarnThreshold = TimeSpan.FromMinutes(15);
+        var a = Guid.NewGuid();
+        m.OnAccountLaunched(a);               // seeded at 12:00
+
+        var fires = new List<IReadOnlyList<Guid>>();
+        m.WarnThresholdCrossed += (_, batch) => fires.Add(batch);
+
+        clock.UtcNow = clock.UtcNow.AddMinutes(16);
+        m.Sample();                            // crosses -> fires
+        m.Sample();                            // still over, latched -> no fire
+
+        Assert.Single(fires);
+        Assert.Equal(a, Assert.Single(fires[0]));
+    }
+
+    [Fact]
+    public void Sample_ReArmsAfterGoingActiveAgain()
+    {
+        var (m, clock, fg, input, res) = Build();
+        m.WarnThreshold = TimeSpan.FromMinutes(15);
+        var a = Guid.NewGuid();
+        res.Map[1000] = a;
+        m.OnAccountLaunched(a);
+        input.Tick = 5; m.Sample();            // baseline
+
+        var fires = new List<IReadOnlyList<Guid>>();
+        m.WarnThresholdCrossed += (_, batch) => fires.Add(batch);
+
+        clock.UtcNow = clock.UtcNow.AddMinutes(16);
+        m.Sample();                            // fire #1 (latched)
+
+        // becomes active again: foreground + input advance
+        clock.UtcNow = clock.UtcNow.AddMinutes(1);
+        fg.Pid = 1000; input.Tick = 6;
+        m.Sample();                            // stamps -> since resets -> un-latches
+
+        clock.UtcNow = clock.UtcNow.AddMinutes(16);
+        m.Sample();                            // fire #2
+
+        Assert.Equal(2, fires.Count);
+    }
+
+    [Fact]
+    public void Sample_CoalescesMultipleCrossingsIntoOneBatch()
+    {
+        var (m, clock, fg, input, res) = Build();
+        m.WarnThreshold = TimeSpan.FromMinutes(15);
+        var a = Guid.NewGuid();
+        var b = Guid.NewGuid();
+        m.OnAccountLaunched(a);
+        m.OnAccountLaunched(b);
+
+        var fires = new List<IReadOnlyList<Guid>>();
+        m.WarnThresholdCrossed += (_, batch) => fires.Add(batch);
+
+        clock.UtcNow = clock.UtcNow.AddMinutes(16);
+        m.Sample();
+
+        Assert.Single(fires);
+        Assert.Equal(2, fires[0].Count);
+    }
 }
