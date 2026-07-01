@@ -436,6 +436,125 @@ public class PresenceServiceTests
         Assert.Single(expired);
     }
 
+    // ---- 2026-06-12 review: loop survival ----
+    //
+    // The ambient 25s loop is the mechanism behind the v1.5 ghost-closed fix. Before this
+    // round, ANY exception that escaped PollTargetAsync (store throw for a just-removed
+    // account, accounts.dat read hiccup, a snapshot-provider fault) propagated through
+    // Task.WhenAll, faulted _loopTask silently, and Start()'s "already running" guard made
+    // the death permanent for the session. Contract pinned here: one bad target or one bad
+    // tick never kills the cycle, the loop, or its siblings.
+
+    [Fact]
+    public async Task PollOnceAsync_OneTargetStoreThrows_SiblingStillPolled_AndNoThrow()
+    {
+        var goodId = Guid.NewGuid();
+        var removedId = Guid.NewGuid(); // removed from the store between snapshot and poll
+        const long goodUser = 808;
+        const long removedUser = 909;
+        var store = new FakeAccountStore { CookieByAccount = { [goodId] = Cookie } };
+        var api = new FakeRobloxApi
+        {
+            PresenceByCookie = { [Cookie] = [new UserPresence(goodUser, UserPresenceType.OnlineWebsite, null, null, null)] },
+        };
+        var service = CreateService(api, store,
+        [
+            new PresenceTarget(removedId, removedUser),
+            new PresenceTarget(goodId, goodUser),
+        ]);
+
+        var events = new List<AccountPresenceEventArgs>();
+        service.AccountPresenceUpdated += (_, e) => { lock (events) events.Add(e); };
+
+        await service.PollOnceAsync(); // must not throw
+
+        var ev = Assert.Single(events);
+        Assert.Equal(goodId, ev.AccountId);
+    }
+
+    [Fact]
+    public async Task Loop_SnapshotProviderThrows_NextTickStillDelivers()
+    {
+        var accountId = Guid.NewGuid();
+        const long userId = 111;
+        var store = new FakeAccountStore { CookieByAccount = { [accountId] = Cookie } };
+        var api = new FakeRobloxApi
+        {
+            PresenceByCookie = { [Cookie] = [new UserPresence(userId, UserPresenceType.OnlineWebsite, null, null, null)] },
+        };
+
+        // First tick: the snapshot provider faults (the cross-thread ObservableCollection
+        // "Collection was modified" shape). Every later tick returns a real target.
+        var snapshotCalls = 0;
+        IReadOnlyList<PresenceTarget> Snapshot()
+        {
+            if (Interlocked.Increment(ref snapshotCalls) == 1)
+            {
+                throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.");
+            }
+            return [new PresenceTarget(accountId, userId)];
+        }
+
+        using var service = new PresenceService(api, store, Snapshot,
+            NullLogger<PresenceService>.Instance,
+            pollInterval: TimeSpan.FromMilliseconds(50), maxJitter: NoJitter);
+
+        var delivered = new TaskCompletionSource<AccountPresenceEventArgs>(TaskCreationOptions.RunContinuationsAsynchronously);
+        service.AccountPresenceUpdated += (_, e) => delivered.TrySetResult(e);
+
+        service.Start();
+        try
+        {
+            var ev = await delivered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.Equal(accountId, ev.AccountId);
+            Assert.True(snapshotCalls >= 2, "The loop must have survived the faulted first tick.");
+        }
+        finally
+        {
+            service.Stop();
+        }
+    }
+
+    [Fact]
+    public async Task Loop_StoreThrowsOnFirstTick_NextTickStillDelivers()
+    {
+        var brokenId = Guid.NewGuid(); // never in the store — every poll of it throws
+        var goodId = Guid.NewGuid();
+        const long brokenUser = 222;
+        const long goodUser = 333;
+        var store = new FakeAccountStore { CookieByAccount = { [goodId] = Cookie } };
+        var api = new FakeRobloxApi
+        {
+            PresenceByCookie = { [Cookie] = [new UserPresence(goodUser, UserPresenceType.OnlineWebsite, null, null, null)] },
+        };
+
+        // Tick 1 sees only the broken target (store throw). Later ticks see the good one —
+        // an event from it proves the loop outlived the throwing tick.
+        var snapshotCalls = 0;
+        IReadOnlyList<PresenceTarget> Snapshot() =>
+            Interlocked.Increment(ref snapshotCalls) == 1
+                ? [new PresenceTarget(brokenId, brokenUser)]
+                : [new PresenceTarget(goodId, goodUser)];
+
+        using var service = new PresenceService(api, store, Snapshot,
+            NullLogger<PresenceService>.Instance,
+            pollInterval: TimeSpan.FromMilliseconds(50), maxJitter: NoJitter);
+
+        var delivered = new TaskCompletionSource<AccountPresenceEventArgs>(TaskCreationOptions.RunContinuationsAsynchronously);
+        service.AccountPresenceUpdated += (_, e) => delivered.TrySetResult(e);
+
+        service.Start();
+        try
+        {
+            var ev = await delivered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.Equal(goodId, ev.AccountId);
+        }
+        finally
+        {
+            service.Stop();
+        }
+    }
+
     // ---- fakes ----
 
     private sealed class FakeAccountStore : IAccountStore

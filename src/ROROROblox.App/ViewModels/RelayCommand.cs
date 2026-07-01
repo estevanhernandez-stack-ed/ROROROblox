@@ -26,6 +26,15 @@ internal sealed class RelayCommand : ICommand
         _canExecute = canExecute;
     }
 
+    /// <summary>
+    /// Last-chance reporter for exceptions Execute swallows. Wired once at startup
+    /// (App.WireGlobalExceptionHandlers) to log at Warning — not every command body
+    /// catches everything, and a failure with no trace contradicts the "we just have
+    /// evidence afterward" contract of the global nets. Null (e.g. before startup
+    /// wiring) keeps the original swallow-quietly behavior.
+    /// </summary>
+    internal static Action<Exception>? OnExceptionSwallowed { get; set; }
+
     public bool CanExecute(object? parameter) => _canExecute is null || _canExecute(parameter);
 
     public async void Execute(object? parameter)
@@ -34,10 +43,12 @@ internal sealed class RelayCommand : ICommand
         {
             await _execute(parameter).ConfigureAwait(true);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // RelayCommand swallowing is intentional — VM-level catch is the right place; surfacing
-            // here would crash the UI. Concrete commands (Add/Launch/etc.) catch + display modals.
+            // Swallowing is intentional — async void + WPF means a rethrow crashes the app,
+            // and concrete commands (Add/Launch/etc.) catch + display modals for their own
+            // failure modes. But swallowed must not mean invisible: report for the log.
+            try { OnExceptionSwallowed?.Invoke(ex); } catch { }
         }
     }
 

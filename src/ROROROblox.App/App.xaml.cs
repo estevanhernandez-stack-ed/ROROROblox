@@ -152,6 +152,20 @@ public partial class App : Application
 
         try
         {
+            // Crash-orphan cleanup: a capture interrupted by a crash leaves a fully logged-in
+            // Roblox profile under webview2-data\. The post-capture sweep (CookieCapture)
+            // handles the normal path; this catches whatever a dying msedgewebview2 pinned.
+            // Safe here because no capture can be in flight this early in startup.
+            var webViewData = _services.GetRequiredService<WebView2UserDataDirectory>();
+            await Task.Run(() => webViewData.SweepStale(exclude: null));
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "WebView2 user-data startup sweep threw; ignoring.");
+        }
+
+        try
+        {
             var updateChecker = _services.GetRequiredService<IUpdateChecker>();
             await updateChecker.CheckForUpdatesAsync();
         }
@@ -369,7 +383,11 @@ public partial class App : Application
         services.AddSingleton<IPresenceService>(sp => new PresenceService(
             sp.GetRequiredService<IRobloxApi>(),
             sp.GetRequiredService<IAccountStore>(),
-            () => sp.GetRequiredService<MainViewModel>().Accounts
+            // AccountsSnapshot, not Accounts: this delegate fires on the poll loop's threadpool
+            // thread, and enumerating the UI-owned ObservableCollection there races a concurrent
+            // Add/Remove into "Collection was modified" — the fault that silently killed the
+            // presence loop (2026-06-12 review).
+            () => sp.GetRequiredService<MainViewModel>().AccountsSnapshot
                     .Where(a => !a.SessionExpired && a.RobloxUserId is > 0)
                     .Select(a => new PresenceTarget(a.Id, a.RobloxUserId!.Value))
                     .ToList(),
@@ -639,7 +657,8 @@ public partial class App : Application
 
             tracker.ProcessAttached += (_, e) =>
             {
-                var summary = vm.Accounts.FirstOrDefault(a => a.Id == e.AccountId);
+                // AccountsSnapshot: tracker events fire on threadpool continuations.
+                var summary = vm.AccountsSnapshot.FirstOrDefault(a => a.Id == e.AccountId);
                 if (summary is null) return;
                 decorator.Track(e.Pid, summary);
             };
@@ -829,7 +848,8 @@ public partial class App : Application
             {
                 try
                 {
-                    var summary = vm.Accounts.FirstOrDefault(a => a.Id == e.AccountId);
+                    // AccountsSnapshot: tracker events fire on threadpool continuations.
+                    var summary = vm.AccountsSnapshot.FirstOrDefault(a => a.Id == e.AccountId);
                     if (summary is null) return;
                     var snapshot = new ROROROblox.App.Plugins.RunningAccountSnapshot(
                         AccountId: summary.Id.ToString(),
@@ -848,7 +868,8 @@ public partial class App : Application
             {
                 try
                 {
-                    var summary = vm.Accounts.FirstOrDefault(a => a.Id == e.AccountId);
+                    // AccountsSnapshot: tracker events fire on threadpool continuations.
+                    var summary = vm.AccountsSnapshot.FirstOrDefault(a => a.Id == e.AccountId);
                     var snapshot = new ROROROblox.App.Plugins.RunningAccountSnapshot(
                         AccountId: e.AccountId.ToString(),
                         RobloxUserId: summary?.RobloxUserId ?? 0,
@@ -1037,5 +1058,11 @@ public partial class App : Application
             _log?.LogWarning(args.Exception, "Unobserved Task exception (already detached from its Task).");
             args.SetObserved(); // Don't escalate to AppDomain.UnhandledException for a fire-and-forget.
         };
+
+        // Fourth net: exceptions RelayCommand.Execute swallows. These never reach the
+        // dispatcher handler (Execute's catch eats them first), so without this hook a
+        // command body's unguarded await fails with zero trace.
+        ViewModels.RelayCommand.OnExceptionSwallowed = ex =>
+            _log?.LogWarning(ex, "Exception escaped a command handler (swallowed by RelayCommand).");
     }
 }

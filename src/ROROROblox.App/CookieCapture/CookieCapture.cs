@@ -21,12 +21,31 @@ public sealed class CookieCapture : ICookieCapture
     private readonly IRobloxApi _api;
     private readonly WebView2UserDataDirectory _userDataDirectory;
     private readonly ILoggerFactory _loggerFactory;
+    private readonly Func<string, Task<CookieCaptureResult>> _runCaptureAsync;
 
     public CookieCapture(IRobloxApi api, WebView2UserDataDirectory userDataDirectory, ILoggerFactory loggerFactory)
+        : this(api, userDataDirectory, loggerFactory, runCaptureAsync: null) { }
+
+    /// <summary>
+    /// Seam ctor — <paramref name="runCaptureAsync"/> replaces the real CookieCaptureWindow
+    /// so the allocate/run/sweep lifecycle is testable without WPF or a WebView2 runtime.
+    /// </summary>
+    internal CookieCapture(
+        IRobloxApi api,
+        WebView2UserDataDirectory userDataDirectory,
+        ILoggerFactory loggerFactory,
+        Func<string, Task<CookieCaptureResult>>? runCaptureAsync)
     {
         _api = api ?? throw new ArgumentNullException(nameof(api));
         _userDataDirectory = userDataDirectory ?? throw new ArgumentNullException(nameof(userDataDirectory));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+        _runCaptureAsync = runCaptureAsync ?? RunCaptureWindowAsync;
+    }
+
+    private Task<CookieCaptureResult> RunCaptureWindowAsync(string userDataDir)
+    {
+        var window = new CookieCaptureWindow(userDataDir, _api, _loggerFactory.CreateLogger<CookieCaptureWindow>());
+        return window.RunAsync();
     }
 
     public Task<CookieCaptureResult> CaptureAsync()
@@ -42,7 +61,8 @@ public sealed class CookieCapture : ICookieCapture
         return CaptureCoreAsync();
     }
 
-    private async Task<CookieCaptureResult> CaptureCoreAsync()
+    // Internal for tests (paired with the seam ctor): CaptureAsync needs a live WPF dispatcher.
+    internal async Task<CookieCaptureResult> CaptureCoreAsync()
     {
         string userDataDir;
         try
@@ -61,12 +81,20 @@ public sealed class CookieCapture : ICookieCapture
 
         try
         {
-            var window = new CookieCaptureWindow(userDataDir, _api, _loggerFactory.CreateLogger<CookieCaptureWindow>());
-            return await window.RunAsync().ConfigureAwait(true);
+            return await _runCaptureAsync(userDataDir).ConfigureAwait(true);
         }
         catch (Exception ex)
         {
             return new CookieCaptureResult.Failed($"Cookie capture failed to start: {ex.Message}");
+        }
+        finally
+        {
+            // The dir we just used is a fully logged-in Roblox session (.ROBLOSECURITY in
+            // Chromium's cookie store) — a second, unrevoked copy of the crown jewel that
+            // account removal never touches. Wipe it the moment the window closes. Best-effort:
+            // a still-draining msedgewebview2 child can pin files (logged, never thrown), and
+            // the app-start sweep in App.OnStartup catches whatever survives.
+            _userDataDirectory.SweepStale(exclude: null);
         }
     }
 }

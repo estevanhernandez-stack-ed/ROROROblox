@@ -8,7 +8,14 @@ set -euo pipefail
 red() { printf "\033[31m%s\033[0m\n" "$*" >&2; }
 green() { printf "\033[32m%s\033[0m\n" "$*"; }
 
-staged=$(git diff --cached --name-only --diff-filter=ACM)
+# SCAN_ALL=1 (CI mode): scan every tracked file instead of the staged diff. The hook protects
+# this machine's commits; the CI twin protects commits from machines without the hook installed
+# (and --no-verify bypasses). CLAUDE.md: "the pre-commit hook AND CI must fail loud."
+if [ "${SCAN_ALL:-0}" = "1" ]; then
+  staged=$(git ls-files)
+else
+  staged=$(git diff --cached --name-only --diff-filter=ACM)
+fi
 if [ -z "$staged" ]; then
   exit 0
 fi

@@ -38,7 +38,8 @@ internal sealed class MainViewModelLaunchInvokerAdapter : IPluginLaunchInvoker
             return Task.FromResult<(bool, string?, int)>((false, $"accountId '{accountId}' is not a valid GUID.", 0));
         }
 
-        var summary = _vm.Accounts.FirstOrDefault(a => a.Id == id);
+        // AccountsSnapshot: gRPC threadpool thread — never enumerate the UI-owned collection here.
+        var summary = _vm.AccountsSnapshot.FirstOrDefault(a => a.Id == id);
         if (summary is null)
         {
             return Task.FromResult<(bool, string?, int)>((false, $"No saved account with id {id}.", 0));
@@ -86,7 +87,8 @@ internal sealed class MainViewModelLaunchInvokerAdapter : IPluginLaunchInvoker
         if (!argsOk) return (false, argsReason, 0);
 
         var id = Guid.Parse(accountId);
-        var summary = _vm.Accounts.FirstOrDefault(a => a.Id == id);
+        // AccountsSnapshot: gRPC threadpool thread — never enumerate the UI-owned collection here.
+        var summary = _vm.AccountsSnapshot.FirstOrDefault(a => a.Id == id);
         if (summary is null) return (false, $"No saved account with id {id}.", 0);
         if (summary.SessionExpired) return (false, "Account session is expired; re-add the account first.", 0);
         if (summary.IsLaunching) return (false, "Account is already launching.", 0);
