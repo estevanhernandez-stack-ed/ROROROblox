@@ -155,10 +155,12 @@ No client acting (Part B). No stream RPC (pull only). No multi-tier or per-accou
 
 ## 12. Open questions / follow-ups
 
-- **Part B (separate repo):** the keep-active plugin — own brainstorm, templated on `rororo-ur-task`, referencing contract 0.2.0.
+- **Part B (separate repo):** the keep-active plugin — own brainstorm, templated on `rororo-ur-task`, referencing contract 0.3.0.
 - **Warn-threshold default:** 15 minutes is a reasoned starting point, not measured against real per-game timeout behavior. Revisit once there is field data.
 - **Stream RPC:** only if a future plugin genuinely needs sub-second push; additive when it lands.
 - **Launch de-stagger lever:** RORORO's other (imperfect) option to offset the initial timeout waves — tracked separately in followups §7, not in Part A.
+- **Torn-read hardening (from the build's whole-branch review, v1.8.x):** `GetSnapshot()` reads `Record.LastActivityAt` (a multi-field `DateTimeOffset`) cross-thread against `Sample()`'s in-place write. Benign today — a torn read yields a momentarily-wrong `SinceActivity` that self-corrects on the next read and can never corrupt the `ConcurrentDictionary` or cross the wall — but strictly it should store unix-ms as a `long` (`Interlocked.Read`/`Exchange`) or snapshot under a lock.
+- **`ActivityMonitor.Sample()` visibility (v1.8.x):** currently `public` for test access, so a direct caller could bypass the `SafeSample` overlap guard. No production caller exists; tighten to `internal` + `InternalsVisibleTo` later.
 
 ## References
 
