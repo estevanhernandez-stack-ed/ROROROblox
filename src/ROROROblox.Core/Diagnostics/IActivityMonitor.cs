@@ -15,6 +15,15 @@ public interface IActivityMonitor
     void OnAccountExited(Guid accountId);
 
     /// <summary>
+    /// Start the 1s sample timer (2s initial delay). Idempotent -- a second call while already
+    /// running is a no-op. No-op after <see cref="IDisposable.Dispose"/>.
+    /// </summary>
+    void Start();
+
+    /// <summary>Stop the sample timer. Safe to call when not running, or repeatedly.</summary>
+    void Stop();
+
+    /// <summary>
     /// One sample tick: stamp the foreground account if input advanced since the last observed tick,
     /// then evaluate thresholds. The input baseline is captured at construction (not on the first call),
     /// so even the very first <see cref="Sample"/> only stamps when input has genuinely moved since the

@@ -121,6 +121,7 @@ public partial class App : Application
         WireMainAvatarTrayPainter();
         WireRobloxWindowDecorator();
         WirePluginEventBus();
+        WireActivityMonitor();
         StartPluginHost();
 
         // Default Multi-Instance ON. Acquire the ROBLOX_singletonEvent mutex at startup so the
@@ -359,6 +360,22 @@ public partial class App : Application
         services.AddSingleton<IRobloxProcessTracker, RobloxProcessTracker>();
         services.AddSingleton<RobloxWindowDecorator>();
         services.AddSingleton<RunningRobloxScanner>();
+
+        // Activity Monitor (v1.8) — per-account idle detection. Foreground-window + system-input
+        // Win32 probes are read-only (GetForegroundWindow / GetWindowThreadProcessId /
+        // GetLastInputInfo); no focus-stealing, no injection. IForegroundAccountResolver points at
+        // the same IRobloxProcessTracker singleton, so pid->account lookups stay consistent with
+        // the tracker's claimed-pid map.
+        services.AddSingleton<IForegroundWindowProbe, Win32ForegroundWindowProbe>();
+        services.AddSingleton<ISystemInputClock, Win32SystemInputClock>();
+        services.AddSingleton<IClock, SystemClock>();
+        services.AddSingleton<IForegroundAccountResolver>(sp =>
+            (IForegroundAccountResolver)sp.GetRequiredService<IRobloxProcessTracker>());
+        services.AddSingleton<IActivityMonitor>(sp => new ActivityMonitor(
+            sp.GetRequiredService<IForegroundWindowProbe>(),
+            sp.GetRequiredService<ISystemInputClock>(),
+            sp.GetRequiredService<IForegroundAccountResolver>(),
+            sp.GetRequiredService<IClock>()));
 
         // v1.5.0 presence poller (the ghost fix). Singleton — one poll loop for the process.
         // The snapshot-provider delegate reads live accounts from MainViewModel at POLL time,
@@ -648,6 +665,36 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "WireRobloxWindowDecorator failed; window titles stay default.");
+        }
+    }
+
+    /// <summary>
+    /// Seeds <see cref="IActivityMonitor"/> with any already-attached accounts (e.g. re-attached
+    /// by <see cref="RunningRobloxScanner"/> before this runs), subscribes it to
+    /// <see cref="IRobloxProcessTracker"/>'s launch/exit lifecycle, and starts its 1s sample
+    /// timer. Wrapped defensively — a wiring failure here must not block RoRoRo's normal launch;
+    /// worst case is idle-warning simply doesn't fire this session.
+    /// </summary>
+    private void WireActivityMonitor()
+    {
+        if (_services is null) return;
+        try
+        {
+            var tracker = _services.GetRequiredService<IRobloxProcessTracker>();
+            var monitor = _services.GetRequiredService<IActivityMonitor>();
+
+            foreach (var id in tracker.Attached.Keys)
+            {
+                monitor.OnAccountLaunched(id);
+            }
+
+            tracker.ProcessAttached += (_, e) => monitor.OnAccountLaunched(e.AccountId);
+            tracker.ProcessExited += (_, e) => monitor.OnAccountExited(e.AccountId);
+            monitor.Start();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "WireActivityMonitor failed; idle warnings disabled this session.");
         }
     }
 
@@ -996,6 +1043,19 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _log?.LogDebug(ex, "PresenceService.Stop threw on exit; ignoring.");
+            }
+
+            // Stop the activity-monitor sample timer before the provider disposes (same shape
+            // as the presence poller above). _services.Dispose() also disposes it
+            // (ActivityMonitor : IDisposable), but stopping first halts the timer cleanly.
+            try
+            {
+                var monitor = _services.GetService<IActivityMonitor>();
+                monitor?.Stop();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "ActivityMonitor.Stop threw on exit; ignoring.");
             }
         }
 
