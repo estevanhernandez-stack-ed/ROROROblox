@@ -494,6 +494,8 @@ public partial class App : Application
             ROROROblox.App.Plugins.Adapters.MutexHostStateAdapter>();
         services.AddSingleton<ROROROblox.App.Plugins.IRunningAccountsProvider,
             ROROROblox.App.Plugins.Adapters.MainViewModelRunningAccountsAdapter>();
+        services.AddSingleton<ROROROblox.App.Plugins.IActivitySnapshotProvider,
+            ROROROblox.App.Plugins.ActivitySnapshotProvider>();
         services.AddSingleton<ROROROblox.App.Plugins.IPluginLaunchInvoker,
             ROROROblox.App.Plugins.Adapters.MainViewModelLaunchInvokerAdapter>();
         services.AddSingleton<ROROROblox.App.Plugins.IPluginUIHost,
