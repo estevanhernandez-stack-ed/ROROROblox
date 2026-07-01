@@ -327,22 +327,52 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
         return winner;
     }
 
-    private void AttachToProcess(Guid accountId, Process process)
+    // Internal for tests: both public entry points pre-filter on HasExited, so the
+    // exited-during-attach window can only be staged deterministically by calling this directly.
+    internal void AttachToProcess(Guid accountId, Process process)
     {
+        // Exit delivery must be once-only: it can arrive via the genuine Exited callback
+        // AND the post-attach HasExited double-check below; a double fire would double-stamp
+        // session-history end times downstream.
+        var exitHandled = 0;
+        void OnExitedOnce()
+        {
+            if (Interlocked.Exchange(ref exitHandled, 1) == 0)
+            {
+                HandleExited(accountId, process);
+            }
+        }
+
         try
         {
-            process.EnableRaisingEvents = true;
+            // Order is load-bearing:
+            //  1. slot first, so HandleExited always finds the entry to remove;
+            //  2. Exited subscribed BEFORE EnableRaisingEvents — setting it on an
+            //     already-exited process raises immediately, and a raise with zero
+            //     subscribers is simply lost (the ghost-"running"-row bug);
+            //  3. ProcessAttached announced before delivery can begin, so consumers
+            //     never see Exited ahead of Attached for the same attach;
+            //  4. EnableRaisingEvents arms delivery;
+            //  5. HasExited double-check synthesizes the exit if it happened before 4
+            //     took effect — the once-guard makes the two paths converge.
             var slot = new AttachedSlot(process, DateTimeOffset.UtcNow);
-            process.Exited += (_, _) => HandleExited(accountId, process);
             _attachedByAccount[accountId] = slot;
+            process.Exited += (_, _) => OnExitedOnce();
             _log.LogInformation("Attached to RobloxPlayerBeta pid {Pid} for account {AccountId}", process.Id, accountId);
             ProcessAttached?.Invoke(this, new RobloxProcessEventArgs(accountId, process.Id));
+            process.EnableRaisingEvents = true;
+            if (process.HasExited)
+            {
+                OnExitedOnce();
+            }
         }
         catch (Exception ex)
         {
             _log.LogWarning(ex, "Failed to enable raising events on pid {Pid} for account {AccountId}", process.Id, accountId);
-            _claimedPidToAccount.TryRemove(process.Id, out _);
-            process.Dispose();
+            // ProcessAttached may already have been announced — synthesize the exit so
+            // consumers converge on "not running" instead of ghosting, and so the slot,
+            // pid claim, and handle are all released through the one cleanup path.
+            OnExitedOnce();
         }
     }
 

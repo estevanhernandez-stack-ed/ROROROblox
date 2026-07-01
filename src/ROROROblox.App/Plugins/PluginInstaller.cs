@@ -39,6 +39,17 @@ public sealed class PluginInstaller
 
     public async Task<InstalledPlugin> InstallAsync(string baseUrl, IReadOnlyList<string> requireCapabilities)
     {
+        // The zip and its expected SHA come from the same origin, so the hash pin is
+        // corruption protection, not provenance — transport security is what keeps an
+        // on-path attacker from swapping both together. Plugins are EXEs running as the
+        // user; refuse anything but https before a single byte is fetched.
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var parsed)
+            || parsed.Scheme != Uri.UriSchemeHttps)
+        {
+            throw new PluginInstallerException(
+                "Plugin install URLs must start with https:// — check the address and try again.");
+        }
+
         if (!baseUrl.EndsWith("/", StringComparison.Ordinal))
         {
             baseUrl += "/";
