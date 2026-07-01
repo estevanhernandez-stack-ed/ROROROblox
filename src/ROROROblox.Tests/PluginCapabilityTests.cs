@@ -63,4 +63,14 @@ public class PluginCapabilityTests
         Assert.Contains("server", explanation, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Unknown capability", explanation, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void AccountActivity_HasCapabilityConstAndDescription()
+    {
+        Assert.Equal("host.queries.account-activity", PluginCapability.HostQueriesAccountActivity);
+        var desc = PluginCapability.Display(PluginCapability.HostQueriesAccountActivity);
+        Assert.False(string.IsNullOrWhiteSpace(desc));
+        Assert.Contains("idle", desc, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Unknown capability", desc, StringComparison.OrdinalIgnoreCase);
+    }
 }

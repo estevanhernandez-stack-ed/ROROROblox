@@ -102,6 +102,7 @@ Gated by the gRPC interceptor. If you call a method whose required capability is
 | `host.commands.request-launch` | `RequestLaunch(accountId)` — ask RoRoRo to launch an alt |
 | `host.commands.launch-target` | `RequestLaunchTarget(accountId, share_url \| follow_user_id)` — launch an account into a *specific* server: a private-server link, a public place, or by following a friend (NuGet 0.2.0+) |
 | `host.queries.current-server` | `GetCurrentServer()` — read the user's most-recently-launched private-server share link (NuGet 0.2.0+) |
+| `host.queries.account-activity` | `GetAccountActivity()` — pull per-account idle time (NuGet 0.3.0+) |
 | `host.ui.tray-menu` | `AddTrayMenuItem` — contribute a tray-menu entry |
 | `host.ui.row-badge` | `AddRowBadge` — paint a per-account badge in RoRoRo's main window |
 | `host.ui.status-panel` | `AddStatusPanel` — contribute a status panel pane |
@@ -263,6 +264,25 @@ if (current.Present)
 ```
 
 The host owns all link parsing, cookie handling, and the authenticated launch — your plugin only passes links and account ids around. The plaintext account cookie never leaves RoRoRo. These additions are wire-compatible: `contractVersion` stays `"1.0"`; you only need NuGet `0.2.0`.
+
+### Read idle time — drive a keep-active policy without touching the client
+
+`GetAccountActivity()` (NuGet 0.3.0+, capability `host.queries.account-activity`) returns how long each running account has gone without activity. Timestamps only — RoRoRo never reports what a user typed or clicked, only *when* it last saw them do something.
+
+```csharp
+// (NuGet 0.3.0+, capability host.queries.account-activity):
+var activity = await client.GetAccountActivityAsync(new Empty(), callOptions);
+foreach (var item in activity.Items)
+{
+    if (item.SecondsSinceActivity > 900)
+    {
+        // e.g. surface a "been idle 15+ min" badge, or decide whether to nudge the user —
+        // your plugin decides the policy, RoRoRo only reports the clock.
+    }
+}
+```
+
+This capability is consent-gated like every other `host.*` capability — it shows up on the install-time consent sheet with the honest framing above. It is deliberately **read-only telemetry**: RoRoRo doesn't act on your behalf (no auto-relaunch, no auto-input) — that's still your plugin's call, and if it involves synthesizing input, declare the matching `system.*` capability too.
 
 ## Versioning policy (provisional)
 

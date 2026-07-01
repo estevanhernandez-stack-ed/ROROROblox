@@ -16,6 +16,7 @@ public static class PluginCapability
     public const string HostCommandsRequestLaunch = "host.commands.request-launch";
     public const string HostCommandsLaunchTarget = "host.commands.launch-target";
     public const string HostQueriesCurrentServer = "host.queries.current-server";
+    public const string HostQueriesAccountActivity = "host.queries.account-activity";
     public const string HostUITrayMenu = "host.ui.tray-menu";
     public const string HostUIRowBadge = "host.ui.row-badge";
     public const string HostUIStatusPanel = "host.ui.status-panel";
@@ -35,6 +36,7 @@ public static class PluginCapability
         [HostCommandsRequestLaunch] = "Allow the plugin to ask RoRoRo to launch a Roblox account.",
         [HostCommandsLaunchTarget] = "Allow the plugin to launch one of your accounts into a Roblox server from a link or friend it provides.",
         [HostQueriesCurrentServer] = "Allow the plugin to read the private-server link you most recently launched, so it can share it.",
+        [HostQueriesAccountActivity] = "See how long each account has been idle — timestamps only, never what you type or do.",
         [HostUITrayMenu] = "Allow the plugin to add tray menu items.",
         [HostUIRowBadge] = "Allow the plugin to add a badge on each saved-account row.",
         [HostUIStatusPanel] = "Allow the plugin to add a status panel to the main window.",
