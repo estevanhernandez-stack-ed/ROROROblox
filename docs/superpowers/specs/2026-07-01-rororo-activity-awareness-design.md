@@ -168,4 +168,4 @@ No client acting (Part B). No stream RPC (pull only). No multi-tier or per-accou
 - Followups (source of §7): [`docs/superpowers/specs/2026-06-30-rororo-limited-followups.md`](2026-06-30-rororo-limited-followups.md)
 - Plugin system design: [`docs/superpowers/specs/2026-05-09-rororo-plugin-system-design.md`](2026-05-09-rororo-plugin-system-design.md)
 - Plugin author guide: [`docs/plugins/AUTHOR_GUIDE.md`](../../plugins/AUTHOR_GUIDE.md)
-- Template plugin: `C:\Users\estev\Projects\rororo-ur-task` (`ForegroundWatcher.cs`, `PluginClient.cs`, `manifest.json`)
+- Template plugin: `%USERPROFILE%\Projects\rororo-ur-task` (`ForegroundWatcher.cs`, `PluginClient.cs`, `manifest.json`)

@@ -12,7 +12,7 @@
 
 Every task's requirements implicitly include these — copied verbatim from the spec and repo keystone:
 
-- **Build/test with the explicit dotnet host** (bare `dotnet` on PATH is 10.0.202 and fails `global.json`'s 10.0.203 pin): `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe"`.
+- **Build/test with the explicit dotnet host** (bare `dotnet` on PATH is 10.0.202 and fails `global.json`'s 10.0.203 pin): `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe"`.
 - **Solution is `ROROROblox.slnx`** — never the stray `ROROROblox.sln` (`dotnet build` bare errors MSB1011 while both exist).
 - **Wall (core-only, absolute):** the monitor and all core code only *read* — `GetForegroundWindow`, `GetLastInputInfo`, process-tracker lookups. No `SendInput`, no window focus, no input synthesis, no client injection anywhere in this plan. Acting lives only in Part B (a separate plugin repo).
 - **No keystroke hook.** Idle input is measured via `GetLastInputInfo` (timestamp only), never `WH_KEYBOARD_LL`. Core never sees keystroke content.
@@ -100,7 +100,7 @@ public class RobloxProcessTrackerResolverTests
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~RobloxProcessTrackerResolverTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~RobloxProcessTrackerResolverTests"`
 Expected: FAIL — `IForegroundAccountResolver` does not exist / `RobloxProcessTracker` does not implement it.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -136,7 +136,7 @@ public bool TryResolveAccountByPid(int pid, out Guid accountId)
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~RobloxProcessTrackerResolverTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~RobloxProcessTrackerResolverTests"`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -289,7 +289,7 @@ public class ActivityMonitorTests
 
 - [ ] **Step 2: Run to verify they fail**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivityMonitorTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivityMonitorTests"`
 Expected: FAIL — types not defined.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -451,7 +451,7 @@ public sealed class ActivityMonitor : IActivityMonitor
 
 - [ ] **Step 4: Run to verify they pass**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivityMonitorTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivityMonitorTests"`
 Expected: PASS (all four).
 
 - [ ] **Step 5: Commit**
@@ -542,7 +542,7 @@ The `Sample()` implementation in Task 2 already raises `WarnThresholdCrossed`. T
 
 - [ ] **Step 2: Run to verify** — they should PASS immediately (Task 2 implemented the behavior). If any fails, fix `ActivityMonitor.Sample()` threshold logic until green.
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivityMonitorTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivityMonitorTests"`
 Expected: PASS (all seven).
 
 - [ ] **Step 3: Commit**
@@ -587,7 +587,7 @@ git commit -m "test(core): lock ActivityMonitor warn-edge coalesce + re-arm"
 
 - [ ] **Step 2: Run to verify** — PASS immediately.
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivityMonitorTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivityMonitorTests"`
 Expected: PASS (all nine).
 
 - [ ] **Step 3: Commit**
@@ -748,8 +748,8 @@ monitor.Start();
 
 - [ ] **Step 5: Build the solution + run all existing tests**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" build ROROROblox.slnx`
-Then: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" build ROROROblox.slnx`
+Then: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/`
 Expected: build succeeds; all tests green (no regressions).
 
 - [ ] **Step 6: Commit**
@@ -808,7 +808,7 @@ git commit -m "feat(app): wire ActivityMonitor — Win32 probes, 1s timer, launc
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~AppSettingsTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~AppSettingsTests"`
 Expected: FAIL — methods not defined.
 
 - [ ] **Step 3: Implement**
@@ -882,7 +882,7 @@ public async Task SetIdleWarnThresholdMinutesAsync(int minutes)
 
 - [ ] **Step 4: Run to verify it passes**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~AppSettingsTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~AppSettingsTests"`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -998,7 +998,7 @@ public class ConvertersTests
 
 - [ ] **Step 2: Run to verify they fail**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~AccountSummaryTests|FullyQualifiedName~ConvertersTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~AccountSummaryTests|FullyQualifiedName~ConvertersTests"`
 Expected: FAIL — members/converter not defined.
 
 - [ ] **Step 3: Implement the AccountSummary fields**
@@ -1096,8 +1096,8 @@ Register the converter in the window/app resources next to `StatusDotBrushConver
 
 - [ ] **Step 6: Run tests + build**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~AccountSummaryTests|FullyQualifiedName~ConvertersTests"`
-Then: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" build ROROROblox.slnx`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~AccountSummaryTests|FullyQualifiedName~ConvertersTests"`
+Then: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" build ROROROblox.slnx`
 Expected: tests PASS; build succeeds (XAML compiles).
 
 - [ ] **Step 7: Commit**
@@ -1190,7 +1190,7 @@ public class ActivitySnapshotApplierTests
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivitySnapshotApplierTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivitySnapshotApplierTests"`
 Expected: FAIL — `ActivitySnapshotApplier` not defined.
 
 - [ ] **Step 3: Implement**
@@ -1233,7 +1233,7 @@ public static class ActivitySnapshotApplier
 
 - [ ] **Step 4: Run to verify it passes**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivitySnapshotApplierTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivitySnapshotApplierTests"`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1345,7 +1345,7 @@ public class IdleSummaryTests
 
 - [ ] **Step 2: Run to verify they fail**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~IdleAlertPresenterTests|FullyQualifiedName~IdleSummaryTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~IdleAlertPresenterTests|FullyQualifiedName~IdleSummaryTests"`
 Expected: FAIL — `ShowToast` / `IdleAlertPresenter` / `IdleSummary` not defined.
 
 - [ ] **Step 3: Add ShowToast to the tray**
@@ -1410,7 +1410,7 @@ public static class IdleSummary
 
 - [ ] **Step 5: Run to verify they pass**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~IdleAlertPresenterTests|FullyQualifiedName~IdleSummaryTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~IdleAlertPresenterTests|FullyQualifiedName~IdleSummaryTests"`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -1552,8 +1552,8 @@ In the Preferences window, mirror the existing `LaunchMainOnStartup` checkbox fo
 
 - [ ] **Step 5: Build + full test run + manual smoke**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" build ROROROblox.slnx`
-Then: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" build ROROROblox.slnx`
+Then: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/`
 Expected: build succeeds; all tests green. Manual smoke (per spec §9): launch app, run an account, leave it idle, confirm the chip counts up, crosses to amber at threshold, one toast fires (and is silent when muted).
 
 - [ ] **Step 6: Commit**
@@ -1608,12 +1608,12 @@ In `ROROROblox.PluginContract.csproj`:
 
 - [ ] **Step 3: Build the contract project to run codegen**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" build src/ROROROblox.PluginContract/`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" build src/ROROROblox.PluginContract/`
 Expected: PASS — Grpc.Tools regenerates the client/server stubs with `GetAccountActivity` and the new messages.
 
 - [ ] **Step 4: Verify generated types resolve**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" build ROROROblox.slnx`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" build ROROROblox.slnx`
 Expected: PASS (the new generated types compile across the solution). This is the additive-contract proof; no unit test needed at the proto layer — Task 15 exercises it end to end.
 
 - [ ] **Step 5: Commit**
@@ -1680,7 +1680,7 @@ public class RpcMethodCapabilityMapTests
 
 - [ ] **Step 2: Run to verify they fail**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~PluginCapabilityTests|FullyQualifiedName~RpcMethodCapabilityMapTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~PluginCapabilityTests|FullyQualifiedName~RpcMethodCapabilityMapTests"`
 Expected: FAIL.
 
 - [ ] **Step 3: Add the capability const + catalog entry**
@@ -1729,7 +1729,7 @@ Add a row/entry to the capability vocabulary section:
 
 - [ ] **Step 6: Run to verify they pass**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~PluginCapabilityTests|FullyQualifiedName~RpcMethodCapabilityMapTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~PluginCapabilityTests|FullyQualifiedName~RpcMethodCapabilityMapTests"`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -1813,7 +1813,7 @@ public class ActivitySnapshotProviderTests
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivitySnapshotProviderTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivitySnapshotProviderTests"`
 Expected: FAIL — provider not defined.
 
 - [ ] **Step 3: Implement**
@@ -1866,7 +1866,7 @@ public sealed class ActivitySnapshotProvider : IActivitySnapshotProvider
 
 - [ ] **Step 4: Run to verify it passes**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivitySnapshotProviderTests"`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ActivitySnapshotProviderTests"`
 Expected: PASS.
 
 - [ ] **Step 5: Register + commit**
@@ -1927,7 +1927,7 @@ public override Task<AccountActivityList> GetAccountActivity(Empty request, Serv
 
 - [ ] **Step 3: Update all construction sites**
 
-Find them: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" build ROROROblox.slnx` will now fail at each `new PluginHostService(...)`. Update:
+Find them: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" build ROROROblox.slnx` will now fail at each `new PluginHostService(...)`. Update:
 - The composition root (App.xaml.cs / wherever the host service is built): pass `provider.GetRequiredService<IActivitySnapshotProvider>()`.
 - Any other production construction site.
 
@@ -1935,7 +1935,7 @@ Find them: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" build R
 
 - [ ] **Step 4: Build**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" build src/ROROROblox.App/`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" build src/ROROROblox.App/`
 Expected: PASS (production construction sites updated). The harness project may still fail to build until Task 15 — that's expected and fixed there.
 
 - [ ] **Step 5: Commit**
@@ -2084,12 +2084,12 @@ public async Task GetAccountActivity_DeniedWhenCapabilityNotGranted()
 
 Every existing `new PluginHostService(...)` in the harness needs the new `StubActivityProvider()` arg appended (matching the Task 14 ctor order). Build to find them:
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" build src/ROROROblox.PluginTestHarness/`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" build src/ROROROblox.PluginTestHarness/`
 Fix each construction site, then rebuild until it compiles.
 
 - [ ] **Step 3: Run the integration tests**
 
-Run: `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.PluginTestHarness/`
+Run: `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test src/ROROROblox.PluginTestHarness/`
 Expected: PASS (both new tests + all existing).
 
 - [ ] **Step 4: Commit**
@@ -2103,9 +2103,9 @@ git commit -m "test(harness): GetAccountActivity consented + PermissionDenied in
 
 ## Final verification (after all tasks)
 
-- [ ] **Whole solution build:** `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" build ROROROblox.slnx` — green.
-- [ ] **Whole solution tests:** `& "C:\Users\estev\AppData\Local\Microsoft\dotnet\dotnet.exe" test ROROROblox.slnx` — unit + integration green.
-- [ ] **Local-path audit** (per keystone, before any push): grep the diff for hardcoded `c:\Users\<name>\` references in committable code — none.
+- [ ] **Whole solution build:** `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" build ROROROblox.slnx` — green.
+- [ ] **Whole solution tests:** `& "%USERPROFILE%\AppData\Local\Microsoft\dotnet\dotnet.exe" test ROROROblox.slnx` — unit + integration green.
+- [ ] **Local-path audit** (per keystone, before any push): grep the diff for hardcoded absolute user-home path references (`%USERPROFILE%`-style) in committable code — none.
 - [ ] **Wall audit:** grep the new code for `SendInput` / `SetForegroundWindow` / focus / input synthesis — none in core (read-only observation only).
 - [ ] **Manual smoke** (spec §9): run 2 accounts, idle one, watch the chip count up + go amber at threshold, confirm one coalesced toast (silent when muted), confirm the summary strip shows the count.
 
