@@ -565,7 +565,7 @@
                             </TextBlock>
                         </Button>
 
-                        <!-- Re-authenticate (visible when SessionExpired) -->
+                        <!-- Re-authenticate (visible when SessionExpired OR SessionLimited) -->
                         <Button Content="Re-authenticate"
                                 Command="{Binding DataContext.ReauthenticateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
@@ -573,8 +573,21 @@
                                 Background="{DynamicResource RowExpiredAccentBrush}"
                                 Foreground="{DynamicResource NavyBrush}"
                                 BorderThickness="0"
-                                FontWeight="SemiBold"
-                                Visibility="{Binding SessionExpired, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                FontWeight="SemiBold">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SessionExpired}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding SessionLimited}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
 
                         <!-- Friends — opens per-account follow modal. Disabled when expired. -->
                         <Button Content="Friends"
@@ -676,14 +689,20 @@
                                 Background="{DynamicResource CyanBrush}"
                                 Foreground="{DynamicResource NavyBrush}"
                                 BorderThickness="0"
-                                FontWeight="SemiBold"
-                                IsEnabled="{Binding IsLaunching, Converter={StaticResource InverseBoolConverter}}">
+                                FontWeight="SemiBold">
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Visibility" Value="Visible" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsRunning}" Value="True">
                                             <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsLaunching}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding SessionLimited}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False" />
+                                            <Setter Property="ToolTip" Value="Roblox flagged this account. Re-authenticate, or wait for it to cool down." />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>

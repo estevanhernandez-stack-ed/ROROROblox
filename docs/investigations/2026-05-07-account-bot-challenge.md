@@ -12,6 +12,13 @@ Reference screenshots: `Screenshot 2026-05-07 120001.png`, `Screenshot 2026-05-0
 
 ## Findings
 
+**2026-06-30 — Trigger identified + join-path asymmetry (user-reported, during the v1.8 Limited cycle).**
+
+- **The specific trigger for the recurring challenge was a user-initiated "suspicious activity" verification**, not (only) the cluster-launch heuristic. The user reported/flagged the account and went through Roblox's "verify you're human," which put it into a recurring reCAPTCHA state on that account. Consistent with H1 (account-trust gate) — a concrete input that flips the gate.
+- **Re-confirms the gate is a client GAME-JOIN gate (H1):** the challenge does not appear until the client tries to join a game; it does not fire at roblox.com web login. → any RORORO-side "re-auth / re-capture the cookie" recovery is **insufficient for this flavor** — web re-login has no captcha to solve, so a fresh cookie doesn't clear the join-gate flag.
+- **NEW — follow-a-friend joins bypass the gate; cold place-joins don't.** The user can back out of the captcha on a direct place-join and instead join via "join friend" without being challenged. Roblox appears to trust social/follow joins over cold place-launches. RORORO already implements this path (`LaunchTarget.FollowFriend` → `RequestFollowUser`). Caveat: this only helps when the auth-ticket fetch still succeeds (the join-gate flavor); it cannot help an account that 403s at the auth-ticket endpoint itself (fully soft-locked). It gets the account in for the session; it does NOT clear the flag.
+- **Wall note:** manual, user-initiated follow-join is clearly fine. A one-click "skip the verification via friend-join" on flagged accounts edges toward the *spirit* of the no-evade-Roblox-trust-gates wall (breaks none of the letter — no automation/injection/spoofing). Deferred as an open product decision.
+
 **2026-05-07 — Bisect complete.**
 
 - CAPTCHA fires on ELeonDog when launched via the **official Roblox path through Chrome** (Play-button → `roblox-player:` URI handoff) — not just through RORORO.

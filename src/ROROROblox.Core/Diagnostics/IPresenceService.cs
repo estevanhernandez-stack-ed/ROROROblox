@@ -28,6 +28,16 @@ public interface IPresenceService
     /// </summary>
     event EventHandler<Guid>? AccountSessionExpired;
 
+    /// <summary>
+    /// Fired (payload = the account id) when an account's presence poll returns HTTP 403
+    /// (<see cref="SessionLimitedException"/>) and the consecutive-403 count reaches the threshold,
+    /// AND on each subsequent poll while the count remains at or above the threshold — the event
+    /// re-fires continuously until a successful poll or a 401 clears the count (consumers must be
+    /// idempotent). Mirrors the re-fire contract of <see cref="AccountSessionExpired"/>. The ViewModel
+    /// flips the row to the magenta "Limited" state. Spec §4.5.
+    /// </summary>
+    event EventHandler<Guid>? AccountSessionLimited;
+
     /// <summary>Start the internal <see cref="System.Threading.PeriodicTimer"/> poll loop.</summary>
     void Start();
 

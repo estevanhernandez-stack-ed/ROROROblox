@@ -14,6 +14,7 @@ namespace ROROROblox.App.ViewModels;
 public sealed class AccountSummary : INotifyPropertyChanged
 {
     private bool _sessionExpired;
+    private bool _sessionLimited;
     private bool _isLaunching;
     private string _statusText = string.Empty;
     private FavoriteGame? _selectedGame;
@@ -110,6 +111,24 @@ public sealed class AccountSummary : INotifyPropertyChanged
         set
         {
             if (SetField(ref _sessionExpired, value))
+            {
+                OnPropertyChanged(nameof(StatusDot));
+                OnPropertyChanged(nameof(SecondaryStatusText));
+            }
+        }
+    }
+
+    /// <summary>
+    /// True when Roblox returned HTTP 403 on this account's authenticated requests — a flagged /
+    /// soft-locked session (post bot-challenge), distinct from <see cref="SessionExpired"/> (401 =
+    /// dead cookie). Cleared by a successful presence poll (auto-heal) or a re-capture. Spec §5.
+    /// </summary>
+    public bool SessionLimited
+    {
+        get => _sessionLimited;
+        set
+        {
+            if (SetField(ref _sessionLimited, value))
             {
                 OnPropertyChanged(nameof(StatusDot));
                 OnPropertyChanged(nameof(SecondaryStatusText));
@@ -389,21 +408,26 @@ public sealed class AccountSummary : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Three-state colored dot: <c>yellow</c> expired / <c>green</c> active (in-game, in Studio, OR
-    /// pid alive) / <c>grey</c> idle. The augment rule (v1.5.0): a row is active if <see cref="InGame"/>
-    /// OR <see cref="IsRunning"/>, so a lost local pid can no longer force the dot grey once presence
-    /// reports in-game. Studio presence also counts as active. Spec §"Components > 2".
+    /// Four-state colored dot: <c>yellow</c> expired / <c>magenta</c> rate-limited
+    /// (<see cref="SessionLimited"/> — beats active/idle, loses to expired) / <c>green</c> active
+    /// (in-game, in Studio, OR pid alive) / <c>grey</c> idle. The augment rule (v1.5.0): a row is
+    /// active if <see cref="InGame"/> OR <see cref="IsRunning"/>, so a lost local pid can no longer
+    /// force the dot grey once presence reports in-game. Studio presence also counts as active.
+    /// Spec §"Components > 2".
     /// </summary>
     public string StatusDot => _sessionExpired
         ? "yellow"
-        : (InGame || _presenceState == UserPresenceType.InStudio || _isRunning) ? "green" : "grey";
+        : _sessionLimited
+            ? "magenta"
+            : (InGame || _presenceState == UserPresenceType.InStudio || _isRunning) ? "green" : "grey";
 
     /// <summary>
     /// Human-friendly secondary text shown under the display name. Precedence (v1.5.0 augment rule):
-    /// session-expired ▸ "In {game} · {age}" (presence) ▸ "In Studio" ▸ "Connecting…" (pid alive,
-    /// first ~60s, no in-game presence yet) ▸ "At Roblox home" (pid alive, not in a game — exited the
-    /// game but stayed in the app) ▸ launch error (StatusText) ▸ "Closed {ago}" (both signals agree
-    /// it's gone) ▸ "Last launched {ago}" ▸ "Ready". Refresh by calling
+    /// session-expired ▸ "Limited by Roblox — re-capture or wait" (<see cref="SessionLimited"/>) ▸
+    /// "In {game} · {age}" (presence) ▸ "In Studio" ▸ "Connecting…" (pid alive, first ~60s, no
+    /// in-game presence yet) ▸ "At Roblox home" (pid alive, not in a game — exited the game but
+    /// stayed in the app) ▸ launch error (StatusText) ▸ "Closed {ago}" (both signals agree it's gone)
+    /// ▸ "Last launched {ago}" ▸ "Ready". Refresh by calling
     /// <see cref="RefreshRelativeTimes"/> from a periodic tick. Spec §"Components > 2".
     /// </summary>
     public string SecondaryStatusText
@@ -414,6 +438,12 @@ public sealed class AccountSummary : INotifyPropertyChanged
             if (_sessionExpired)
             {
                 return "Session expired";
+            }
+            // 1b. Limited by Roblox (403). Beats stale presence — this is the fix for the frozen
+            //     "In game" dot masking a failed launch.
+            if (_sessionLimited)
+            {
+                return "Limited by Roblox — re-capture or wait";
             }
             // 2. In a game (presence authoritative for display — this is the ghost fix).
             if (InGame)

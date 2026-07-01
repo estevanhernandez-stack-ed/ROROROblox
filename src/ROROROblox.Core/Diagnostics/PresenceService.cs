@@ -56,6 +56,11 @@ public sealed class PresenceService : IPresenceService, IDisposable
     // for an account sitting in the same game don't re-hit GetGameMetadataByPlaceIdAsync.
     private readonly ConcurrentDictionary<long, string> _gameNameCache = new();
 
+    // Consecutive 403 (SessionLimitedException) counter per account. Resets on genuine success or 401.
+    // The event fires once when the count reaches LimitedFlipThreshold. Spec §4.5.
+    private readonly ConcurrentDictionary<Guid, int> _consecutiveLimited = new();
+    private const int LimitedFlipThreshold = 3;
+
     private PeriodicTimer? _timer;
     private CancellationTokenSource? _loopCts;
     private Task? _loopTask;
@@ -86,6 +91,8 @@ public sealed class PresenceService : IPresenceService, IDisposable
     public event EventHandler<AccountPresenceEventArgs>? AccountPresenceUpdated;
 
     public event EventHandler<Guid>? AccountSessionExpired;
+
+    public event EventHandler<Guid>? AccountSessionLimited;
 
     public void Start()
     {
@@ -229,8 +236,20 @@ public sealed class PresenceService : IPresenceService, IDisposable
         {
             // 401 — the cookie died between launches. Flip the row to "Session expired" and do NOT
             // raise a presence event for this account (spec §1 + "Error handling": 401 from presence).
+            // Also resets the consecutive-limited counter (spec §4.5).
+            _consecutiveLimited[target.AccountId] = 0;
             _log.LogDebug("Presence for account {AccountId}: cookie expired (401)", target.AccountId);
             AccountSessionExpired?.Invoke(this, target.AccountId);
+            return;
+        }
+        catch (SessionLimitedException)
+        {
+            var n = _consecutiveLimited.AddOrUpdate(target.AccountId, 1, (_, c) => c + 1);
+            _log.LogDebug("Presence for account {AccountId}: 403 (consecutive {N})", target.AccountId, n);
+            if (n >= LimitedFlipThreshold)
+            {
+                AccountSessionLimited?.Invoke(this, target.AccountId);
+            }
             return;
         }
 
@@ -246,6 +265,9 @@ public sealed class PresenceService : IPresenceService, IDisposable
                 target.AccountId);
             return;
         }
+
+        // Genuine success (non-empty) — Roblox is answering this cookie again; clear any limited streak.
+        _consecutiveLimited[target.AccountId] = 0;
 
         var presence = MatchPresence(presences, target.RobloxUserId);
         var presenceType = presence?.PresenceType ?? UserPresenceType.Offline;

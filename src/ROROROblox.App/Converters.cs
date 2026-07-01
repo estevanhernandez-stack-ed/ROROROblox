@@ -174,6 +174,9 @@ internal sealed class StatusDotBrushConverter : IValueConverter
     private static readonly System.Windows.Media.SolidColorBrush Yellow =
         new(System.Windows.Media.Color.FromRgb(0xF1, 0xB2, 0x32)); // matches RowExpiredAccentBrush
 
+    private static readonly System.Windows.Media.SolidColorBrush Magenta =
+        new(System.Windows.Media.Color.FromRgb(0xF2, 0x2F, 0x89)); // brand magenta — "attention"
+
     private static readonly System.Windows.Media.SolidColorBrush Grey =
         new(System.Windows.Media.Color.FromRgb(0x4A, 0x5C, 0x70));
 
@@ -183,6 +186,7 @@ internal sealed class StatusDotBrushConverter : IValueConverter
         {
             "green" => Green,
             "yellow" => Yellow,
+            "magenta" => Magenta,
             _ => Grey,
         };
     }
