@@ -8,6 +8,17 @@
 
 ---
 
+> ## ⚠️ Banner-correct (2026-06-30, post-build — user-reported)
+>
+> **§1.1's trigger attribution is refined.** The spec framed the 403 as "two accounts reset simultaneously and tripped the captcha." The actual trigger, at least for ItsJustEstePapa, was a **user-initiated "suspicious activity" verification** — the user flagged the account, and Roblox put it into a recurring human-verification (reCAPTCHA) state. The *mechanism* is identical (a flagged session 403s authenticated requests), so the detection + handling design below is unaffected — `SessionLimited` is trigger-agnostic.
+>
+> **Two behavioral facts learned post-build** (see `docs/investigations/2026-05-07-account-bot-challenge.md`, 2026-06-30 entry):
+>
+> 1. **The captcha is a Roblox client GAME-JOIN gate, not a web-login gate.** It fires when the client tries to join a game, not at roblox.com login. So `— re-capture or wait` is only half-right: **re-auth (WebView2 re-login) does NOT clear this flavor** (web login has no captcha). The recovery is to solve the check in the client at join, or wait for auto-heal once trust rebuilds.
+> 2. **Follow-a-friend joins bypass the gate; cold place-joins don't.** Roblox trusts social joins. RORORO already supports this via `LaunchTarget.FollowFriend` (`RequestFollowUser`), so a flagged account can still get in via its Follow target — but only in the join-gate flavor (auth-ticket fetch still succeeds), not when the cookie 403s at the ticket endpoint itself. Whether to surface a one-click "Join via friend" on Limited rows is an OPEN decision (wall tension — see the follow-up scope doc), not built here.
+>
+> The body below remains as originally written per the "banner-correct, don't rewrite" rule (CLAUDE.md).
+
 ## 1. Overview
 
 After a captcha/bot-challenge event (two accounts reset simultaneously and tripped Roblox's
