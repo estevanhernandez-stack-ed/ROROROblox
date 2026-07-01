@@ -104,6 +104,25 @@ public class ActivityMonitorTests
     }
 
     [Fact]
+    public void Sample_FirstSampleAfterIdleLaunch_DoesNotFalselyStamp()
+    {
+        var (m, clock, fg, input, res) = Build();   // FakeInput.Tick defaults to 0 == ctor baseline
+        var a = Guid.NewGuid();
+        res.Map[1000] = a;
+        m.OnAccountLaunched(a);                       // seeded at 12:00
+        var seeded = m.GetSnapshot().Single().LastActivityAt;
+
+        clock.UtcNow = clock.UtcNow.AddMinutes(5);
+        fg.Pid = 1000;                                // A is foreground at the first sample...
+        // input.Tick stays at the construction baseline (0): user has been idle -> no advance
+        m.Sample();
+
+        var after = m.GetSnapshot().Single();
+        Assert.Equal(seeded, after.LastActivityAt);   // NOT re-stamped
+        Assert.True(after.SinceActivity >= TimeSpan.FromMinutes(5));
+    }
+
+    [Fact]
     public void OnAccountExited_DropsRecord()
     {
         var (m, _, _, _, _) = Build();

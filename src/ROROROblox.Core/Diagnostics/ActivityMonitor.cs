@@ -18,7 +18,7 @@ public sealed class ActivityMonitor : IActivityMonitor
     private readonly IClock _clock;
     private readonly ConcurrentDictionary<Guid, Record> _records = new();
 
-    private uint? _lastSeenInputTick;
+    private uint _lastSeenInputTick;
 
     public TimeSpan WarnThreshold { get; set; } = TimeSpan.FromMinutes(15);
 
@@ -34,6 +34,13 @@ public sealed class ActivityMonitor : IActivityMonitor
         _input = input ?? throw new ArgumentNullException(nameof(input));
         _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+
+        // Baseline is captured at construction, not on first Sample(). ISystemInputClock.LastInputTick
+        // (GetLastInputInfo in production) is always a real, nonzero value -- its first *observation*
+        // is not an actual advance. Seeding here means the first Sample() only stamps an account when
+        // input has genuinely moved since the monitor was built, closing the cold-start false positive
+        // where an idle user's foreground account got falsely marked "just active."
+        _lastSeenInputTick = _input.LastInputTick;
     }
 
     public void OnAccountLaunched(Guid accountId)
@@ -46,11 +53,12 @@ public sealed class ActivityMonitor : IActivityMonitor
     {
         var now = _clock.UtcNow;
 
-        // 1. foreground + input stamping. No prior tick recorded yet ("no baseline") counts as
-        // advanced: any observed tick is new information the first time we see it. Only a
-        // *repeated* tick value against a known prior sample means "no input happened."
+        // 1. foreground + input stamping. The baseline was captured at construction, so even the
+        // first Sample() call only counts as "advanced" when input has genuinely moved since the
+        // monitor was built -- a repeated tick (including matching the ctor baseline) means no
+        // input happened, and idle accounts age instead of getting falsely re-stamped.
         var currentTick = _input.LastInputTick;
-        var advanced = _lastSeenInputTick is not { } previousTick || currentTick != previousTick;
+        var advanced = currentTick != _lastSeenInputTick;
         _lastSeenInputTick = currentTick;
 
         if (advanced

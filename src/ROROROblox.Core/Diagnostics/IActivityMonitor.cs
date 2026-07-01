@@ -14,7 +14,12 @@ public interface IActivityMonitor
     void OnAccountLaunched(Guid accountId);
     void OnAccountExited(Guid accountId);
 
-    /// <summary>One sample tick: stamp the foreground account if input advanced, then evaluate thresholds.</summary>
+    /// <summary>
+    /// One sample tick: stamp the foreground account if input advanced since the last observed tick,
+    /// then evaluate thresholds. The input baseline is captured at construction (not on the first call),
+    /// so even the very first <see cref="Sample"/> only stamps when input has genuinely moved since the
+    /// monitor was built -- an idle user never gets falsely marked active on cold start.
+    /// </summary>
     void Sample();
 
     IReadOnlyList<AccountActivity> GetSnapshot();
