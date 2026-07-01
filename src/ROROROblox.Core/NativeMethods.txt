@@ -2,3 +2,7 @@ CreateMutexW
 ReleaseMutex
 CloseHandle
 WaitForSingleObject
+GetForegroundWindow
+GetWindowThreadProcessId
+GetLastInputInfo
+LASTINPUTINFO

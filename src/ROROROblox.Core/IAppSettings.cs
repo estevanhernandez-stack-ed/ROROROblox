@@ -32,4 +32,18 @@ public interface IAppSettings
     /// </summary>
     Task<bool> GetBloxstrapWarningDismissedAsync();
     Task SetBloxstrapWarningDismissedAsync(bool value);
+
+    /// <summary>
+    /// True when the idle-alert toast should stay silent. Defaults to false (alerts on).
+    /// The user opts out via the Preferences dialog.
+    /// </summary>
+    Task<bool> GetMuteIdleAlertsAsync();
+    Task SetMuteIdleAlertsAsync(bool muted);
+
+    /// <summary>
+    /// Minutes of inactivity before the idle-warn line fires. Defaults to 15. A non-positive
+    /// stored or requested value is guarded back to 15 rather than treated as "disabled."
+    /// </summary>
+    Task<int> GetIdleWarnThresholdMinutesAsync();
+    Task SetIdleWarnThresholdMinutesAsync(int minutes);
 }

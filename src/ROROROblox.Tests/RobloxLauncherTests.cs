@@ -439,6 +439,12 @@ public class RobloxLauncherTests
         public bool BloxstrapWarningDismissed { get; set; }
         public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(BloxstrapWarningDismissed);
         public Task SetBloxstrapWarningDismissedAsync(bool value) { BloxstrapWarningDismissed = value; return Task.CompletedTask; }
+        public bool MuteIdleAlerts { get; set; }
+        public Task<bool> GetMuteIdleAlertsAsync() => Task.FromResult(MuteIdleAlerts);
+        public Task SetMuteIdleAlertsAsync(bool muted) { MuteIdleAlerts = muted; return Task.CompletedTask; }
+        public int IdleWarnThresholdMinutes { get; set; } = 15;
+        public Task<int> GetIdleWarnThresholdMinutesAsync() => Task.FromResult(IdleWarnThresholdMinutes <= 0 ? 15 : IdleWarnThresholdMinutes);
+        public Task SetIdleWarnThresholdMinutesAsync(int minutes) { IdleWarnThresholdMinutes = minutes <= 0 ? 15 : minutes; return Task.CompletedTask; }
     }
 
     private sealed class RecordingProcessStarter : IProcessStarter

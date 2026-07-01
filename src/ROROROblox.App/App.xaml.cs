@@ -121,7 +121,9 @@ public partial class App : Application
         WireMainAvatarTrayPainter();
         WireRobloxWindowDecorator();
         WirePluginEventBus();
+        WireActivityMonitor();
         StartPluginHost();
+        await InitializeIdleSettingsAsync();
 
         // Default Multi-Instance ON. Acquire the ROBLOX_singletonEvent mutex at startup so the
         // user can launch alts immediately without clicking the tray toggle first. The tray menu
@@ -374,6 +376,27 @@ public partial class App : Application
         services.AddSingleton<RobloxWindowDecorator>();
         services.AddSingleton<RunningRobloxScanner>();
 
+        // Activity Monitor (v1.8) — per-account idle detection. Foreground-window + system-input
+        // Win32 probes are read-only (GetForegroundWindow / GetWindowThreadProcessId /
+        // GetLastInputInfo); no focus-stealing, no injection. IForegroundAccountResolver points at
+        // the same IRobloxProcessTracker singleton, so pid->account lookups stay consistent with
+        // the tracker's claimed-pid map.
+        services.AddSingleton<IForegroundWindowProbe, Win32ForegroundWindowProbe>();
+        services.AddSingleton<ISystemInputClock, Win32SystemInputClock>();
+        services.AddSingleton<IClock, SystemClock>();
+        services.AddSingleton<IForegroundAccountResolver>(sp =>
+            (IForegroundAccountResolver)sp.GetRequiredService<IRobloxProcessTracker>());
+        services.AddSingleton<IActivityMonitor>(sp => new ActivityMonitor(
+            sp.GetRequiredService<IForegroundWindowProbe>(),
+            sp.GetRequiredService<ISystemInputClock>(),
+            sp.GetRequiredService<IForegroundAccountResolver>(),
+            sp.GetRequiredService<IClock>()));
+
+        // v1.8 idle-alert toast presenter — turns a coalesced warn-threshold crossing into one
+        // mutable tray toast. Stateless beyond ITrayService; singleton for consistency with the
+        // rest of the notification-adjacent services.
+        services.AddSingleton<Notifications.IdleAlertPresenter>();
+
         // v1.5.0 presence poller (the ghost fix). Singleton — one poll loop for the process.
         // The snapshot-provider delegate reads live accounts from MainViewModel at POLL time,
         // never at construction: MainViewModel also depends on IPresenceService, so resolving it
@@ -489,6 +512,8 @@ public partial class App : Application
             ROROROblox.App.Plugins.Adapters.MutexHostStateAdapter>();
         services.AddSingleton<ROROROblox.App.Plugins.IRunningAccountsProvider,
             ROROROblox.App.Plugins.Adapters.MainViewModelRunningAccountsAdapter>();
+        services.AddSingleton<ROROROblox.App.Plugins.IActivitySnapshotProvider,
+            ROROROblox.App.Plugins.ActivitySnapshotProvider>();
         services.AddSingleton<ROROROblox.App.Plugins.IPluginLaunchInvoker,
             ROROROblox.App.Plugins.Adapters.MainViewModelLaunchInvokerAdapter>();
         services.AddSingleton<ROROROblox.App.Plugins.IPluginUIHost,
@@ -503,7 +528,8 @@ public partial class App : Application
             sp.GetRequiredService<ROROROblox.App.Plugins.IRunningAccountsProvider>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.IPluginEventBus>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.IPluginLaunchInvoker>(),
-            sp.GetRequiredService<ROROROblox.App.Plugins.PluginUITranslator>()));
+            sp.GetRequiredService<ROROROblox.App.Plugins.PluginUITranslator>(),
+            sp.GetRequiredService<ROROROblox.App.Plugins.IActivitySnapshotProvider>()));
 
         // CapabilityInterceptor: per-connection plugin id binding is deferred to v1.5+
         // (the gRPC interceptor sees the call before any plugin-id metadata is bound).
@@ -670,6 +696,60 @@ public partial class App : Application
         }
     }
 
+    /// <summary>
+    /// Seeds <see cref="IActivityMonitor"/> with any already-attached accounts (e.g. re-attached
+    /// by <see cref="RunningRobloxScanner"/> before this runs), subscribes it to
+    /// <see cref="IRobloxProcessTracker"/>'s launch/exit lifecycle, and starts its 1s sample
+    /// timer. Wrapped defensively — a wiring failure here must not block RoRoRo's normal launch;
+    /// worst case is idle-warning simply doesn't fire this session.
+    /// </summary>
+    private void WireActivityMonitor()
+    {
+        if (_services is null) return;
+        try
+        {
+            var tracker = _services.GetRequiredService<IRobloxProcessTracker>();
+            var monitor = _services.GetRequiredService<IActivityMonitor>();
+
+            foreach (var id in tracker.Attached.Keys)
+            {
+                monitor.OnAccountLaunched(id);
+            }
+
+            tracker.ProcessAttached += (_, e) => monitor.OnAccountLaunched(e.AccountId);
+            tracker.ProcessExited += (_, e) => monitor.OnAccountExited(e.AccountId);
+            monitor.Start();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "WireActivityMonitor failed; idle warnings disabled this session.");
+        }
+    }
+
+    /// <summary>
+    /// Pushes the cached idle-warn threshold + mute flag from <see cref="IAppSettings"/> into
+    /// <see cref="MainViewModel"/> (which forwards the threshold into
+    /// <see cref="IActivityMonitor.WarnThreshold"/>). Called once at startup after
+    /// <see cref="WireActivityMonitor"/> has started the monitor, and again from
+    /// <see cref="OpenPreferencesFromTray"/> after the Preferences dialog closes so an edited
+    /// threshold/mute takes effect without a restart. Wrapped defensively — a settings-read
+    /// failure must not block startup; idle awareness just falls back to the 15-minute default.
+    /// </summary>
+    private async Task InitializeIdleSettingsAsync()
+    {
+        if (_services is null) return;
+        try
+        {
+            var settings = _services.GetRequiredService<IAppSettings>();
+            var vm = _services.GetRequiredService<MainViewModel>();
+            await vm.InitializeIdleSettingsAsync(settings);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "InitializeIdleSettingsAsync failed; idle awareness stays at defaults.");
+        }
+    }
+
     private void WireMainAvatarTrayPainter()
     {
         if (_services is null) return;
@@ -716,6 +796,12 @@ public partial class App : Application
             if (owner.IsLoaded) window.Owner = owner;
             SurfaceMainWindow(owner);
             window.ShowDialog();
+
+            // v1.8 — the Preferences dialog persists idle-awareness edits (mute + threshold)
+            // immediately on click, mirroring every other toggle in that window. Re-push into
+            // the monitor + VM on close so a changed threshold/mute takes effect without a
+            // restart, regardless of which control the user touched last.
+            _ = InitializeIdleSettingsAsync();
         }
         catch (Exception ex)
         {
@@ -1017,6 +1103,19 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _log?.LogDebug(ex, "PresenceService.Stop threw on exit; ignoring.");
+            }
+
+            // Stop the activity-monitor sample timer before the provider disposes (same shape
+            // as the presence poller above). _services.Dispose() also disposes it
+            // (ActivityMonitor : IDisposable), but stopping first halts the timer cleanly.
+            try
+            {
+                var monitor = _services.GetService<IActivityMonitor>();
+                monitor?.Stop();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "ActivityMonitor.Stop threw on exit; ignoring.");
             }
         }
 

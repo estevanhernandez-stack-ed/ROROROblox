@@ -286,6 +286,18 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
+                            <!-- Idle chip — shows "idle {duration}" once a running account has been
+                                 quiet for at least a minute. Amber when IdleWarn (crossed the warn
+                                 threshold), muted otherwise. Task 7; driven by ActivitySnapshotApplier
+                                 (Task 8) via SinceActivity/IdleWarn. -->
+                            <Border Visibility="{Binding ShowIdleChip, Converter={StaticResource BoolToVisibilityConverter}}"
+                                    Background="Transparent"
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="{Binding IdleText}"
+                                           FontSize="11"
+                                           Foreground="{Binding IdleWarn, Converter={StaticResource IdleChipBrushConverter}}" />
+                            </Border>
                             <!-- Selection toggle for batch launches. Filled cyan = included; hollow = skipped.
                                  Defaults to selected; user toggles to exclude an account from Launch multiple
                                  / Private server runs. Persisted to accounts.dat so the choice sticks. -->
@@ -1204,13 +1216,39 @@
             </StackPanel>
         </Border>
 
-        <!-- Status banner -->
+        <!-- Status banner + idle summary strip. Two independently-collapsing TextBlocks share
+             one Border so the idle strip (v1.8) can show/hide on its own without a Grid row
+             renumber — mirrors how StatusBanner itself shows/hides via StringToVisibilityConverter. -->
         <Border Grid.Row="3" Padding="24,8"
-                Background="{DynamicResource RowBgBrush}"
-                Visibility="{Binding StatusBanner, Converter={StaticResource StringToVisibilityConverter}}">
-            <TextBlock Text="{Binding StatusBanner}"
-                       FontSize="11"
-                       Foreground="{DynamicResource WhiteBrush}" />
+                Background="{DynamicResource RowBgBrush}">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding StatusBanner}" Value="" />
+                                <Condition Binding="{Binding IdleSummaryText}" Value="" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <StackPanel>
+                <TextBlock Text="{Binding StatusBanner}"
+                           FontSize="11"
+                           Foreground="{DynamicResource WhiteBrush}"
+                           Visibility="{Binding StatusBanner, Converter={StaticResource StringToVisibilityConverter}}" />
+                <!-- Passive idle-summary strip (v1.8) — "N accounts idle > Mm". Driven by
+                     ActivitySnapshotApplier + IdleSummary on the 30s ticker; never blocks or
+                     acts on the client, display-only. -->
+                <TextBlock Text="{Binding IdleSummaryText}"
+                           FontSize="11"
+                           Margin="0,2,0,0"
+                           Foreground="{DynamicResource MutedTextBrush}"
+                           Visibility="{Binding IdleSummaryText, Converter={StaticResource StringToVisibilityConverter}}" />
+            </StackPanel>
         </Border>
 
         <!-- Roblox compat banner (drift detection per spec §7.1) -->

@@ -196,3 +196,23 @@ internal sealed class StatusDotBrushConverter : IValueConverter
         throw new NotSupportedException();
     }
 }
+
+/// <summary>
+/// Translate <see cref="ROROROblox.App.ViewModels.AccountSummary.IdleWarn"/> into a SolidColorBrush
+/// for the row's idle chip text — amber when the idle duration has crossed the warn threshold,
+/// muted grey otherwise. Used by the idle chip added in Task 7.
+/// </summary>
+internal sealed class IdleChipBrushConverter : IValueConverter
+{
+    private static readonly System.Windows.Media.SolidColorBrush Amber =
+        new(System.Windows.Media.Color.FromRgb(0xF1, 0xB2, 0x32)); // matches RowExpiredAccentBrush / StatusDot yellow
+
+    private static readonly System.Windows.Media.SolidColorBrush Muted =
+        new(System.Windows.Media.Color.FromRgb(0x8A, 0x93, 0xA0));
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is true ? Amber : Muted;
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}

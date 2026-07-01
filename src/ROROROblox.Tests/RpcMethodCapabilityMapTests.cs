@@ -19,4 +19,8 @@ public class RpcMethodCapabilityMapTests
     [Fact]
     public void ExtractMethodName_PullsTrailingComponent()
         => Assert.Equal("RequestLaunchTarget", RpcMethodCapabilityMap.ExtractMethodName("/rororo.plugin.v1.RoRoRoHost/RequestLaunchTarget"));
+
+    [Fact]
+    public void GetAccountActivity_RequiresActivityCapability()
+        => Assert.Equal(PluginCapability.HostQueriesAccountActivity, RpcMethodCapabilityMap.Required("GetAccountActivity"));
 }

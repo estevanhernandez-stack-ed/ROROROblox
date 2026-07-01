@@ -32,6 +32,8 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private bool _isDropTarget;
     private bool _isAddingTag;
     private bool _isFilteredOut;
+    private TimeSpan? _sinceActivity;
+    private bool _idleWarn;
 
     public AccountSummary(Account account)
     {
@@ -164,7 +166,60 @@ public sealed class AccountSummary : INotifyPropertyChanged
             {
                 OnPropertyChanged(nameof(StatusDot));
                 OnPropertyChanged(nameof(SecondaryStatusText));
+                OnPropertyChanged(nameof(ShowIdleChip));
             }
+        }
+    }
+
+    /// <summary>
+    /// Time elapsed since the last observed activity for this account (input, focus, or other
+    /// liveness signal tracked by the activity monitor), or <see langword="null"/> when unknown /
+    /// not yet sampled. Fed by <c>ActivitySnapshotApplier</c> (Task 8) from the ActivityMonitor
+    /// snapshot on each tick. Drives <see cref="IdleText"/> and <see cref="ShowIdleChip"/>.
+    /// </summary>
+    public TimeSpan? SinceActivity
+    {
+        get => _sinceActivity;
+        set
+        {
+            if (SetField(ref _sinceActivity, value))
+            {
+                OnPropertyChanged(nameof(IdleText));
+                OnPropertyChanged(nameof(ShowIdleChip));
+            }
+        }
+    }
+
+    /// <summary>
+    /// True when this account's idle duration has crossed the warn threshold — drives the amber
+    /// (vs muted) color of the idle chip via <see cref="IdleChipBrushConverter"/>. Set by
+    /// <c>ActivitySnapshotApplier</c> (Task 8); pure display state, never persisted.
+    /// </summary>
+    public bool IdleWarn
+    {
+        get => _idleWarn;
+        set => SetField(ref _idleWarn, value);
+    }
+
+    /// <summary>
+    /// True when the idle chip should render — only while the account is running AND idle for at
+    /// least a minute. A fresh launch or an account that's simply closed never shows the chip.
+    /// </summary>
+    public bool ShowIdleChip =>
+        _isRunning && _sinceActivity is TimeSpan t && t >= TimeSpan.FromMinutes(1);
+
+    /// <summary>
+    /// Human-friendly idle duration for the row chip: seconds under a minute, minutes under an
+    /// hour, "{h}h{m}m" beyond. Empty when <see cref="SinceActivity"/> is unknown.
+    /// </summary>
+    public string IdleText
+    {
+        get
+        {
+            if (_sinceActivity is not TimeSpan t) return string.Empty;
+            if (t < TimeSpan.FromMinutes(1)) return $"idle {(int)t.TotalSeconds}s";
+            if (t < TimeSpan.FromHours(1)) return $"idle {(int)t.TotalMinutes}m";
+            return $"idle {(int)t.TotalHours}h{t.Minutes}m";
         }
     }
 

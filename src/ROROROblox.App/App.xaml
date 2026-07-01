@@ -17,6 +17,7 @@
             <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
             <local:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter" />
             <local:StatusDotBrushConverter x:Key="StatusDotBrushConverter" />
+            <local:IdleChipBrushConverter x:Key="IdleChipBrushConverter" />
             <local:CaptionColorBrushConverter x:Key="CaptionColorBrushConverter" />
             <local:EqualsToCollapseConverter x:Key="EqualsToCollapseConverter" />
 

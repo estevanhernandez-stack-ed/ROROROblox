@@ -23,6 +23,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     private readonly IPluginEventBus _eventBus;
     private readonly IPluginLaunchInvoker _launcher;
     private readonly PluginUITranslator _uiTranslator;
+    private readonly IActivitySnapshotProvider _activityProvider;
 
     public PluginHostService(
         IInstalledPluginsLookup registry,
@@ -32,7 +33,8 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         IRunningAccountsProvider runningAccounts,
         IPluginEventBus eventBus,
         IPluginLaunchInvoker launcher,
-        PluginUITranslator uiTranslator)
+        PluginUITranslator uiTranslator,
+        IActivitySnapshotProvider activityProvider)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _hostVersion = hostVersion ?? throw new ArgumentNullException(nameof(hostVersion));
@@ -42,6 +44,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _launcher = launcher ?? throw new ArgumentNullException(nameof(launcher));
         _uiTranslator = uiTranslator ?? throw new ArgumentNullException(nameof(uiTranslator));
+        _activityProvider = activityProvider ?? throw new ArgumentNullException(nameof(activityProvider));
     }
 
     public override Task<HandshakeResponse> Handshake(HandshakeRequest request, ServerCallContext context)
@@ -98,6 +101,21 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
                 RobloxUserId = snapshot.RobloxUserId,
                 DisplayName = snapshot.DisplayName,
                 ProcessId = snapshot.ProcessId,
+            });
+        }
+        return Task.FromResult(list);
+    }
+
+    public override Task<AccountActivityList> GetAccountActivity(Empty request, ServerCallContext context)
+    {
+        var list = new AccountActivityList();
+        foreach (var a in _activityProvider.Snapshot())
+        {
+            list.Items.Add(new AccountActivity
+            {
+                AccountId = a.AccountId,
+                LastActivityUnixMs = a.LastActivityUnixMs,
+                SecondsSinceActivity = a.SecondsSinceActivity,
             });
         }
         return Task.FromResult(list);

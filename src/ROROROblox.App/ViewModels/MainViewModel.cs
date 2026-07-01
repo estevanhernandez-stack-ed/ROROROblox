@@ -46,6 +46,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly IBloxstrapDetector _bloxstrapDetector;
     private readonly IRobloxUpdateProbe _updateProbe;
     private readonly Core.Transport.IAccountTransport _accountTransport;
+    private readonly IActivityMonitor _activityMonitor;
+    private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
     private readonly ILogger<MainViewModel> _log;
 
     /// <summary>
@@ -74,6 +76,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private bool _isBusy;
     private bool _robloxUpdating;
     private int _liveProcessCount;
+    private string _idleSummaryText = string.Empty;
+    private int _idleWarnThresholdMinutes = 15;
+    private bool _muteIdleAlerts;
 
     public MainViewModel(
         ICookieCapture cookieCapture,
@@ -95,6 +100,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         IBloxstrapDetector bloxstrapDetector,
         IRobloxUpdateProbe updateProbe,
         Core.Transport.IAccountTransport accountTransport,
+        IActivityMonitor activityMonitor,
+        Notifications.IdleAlertPresenter idleAlertPresenter,
         ILogger<MainViewModel>? log = null)
     {
         _cookieCapture = cookieCapture;
@@ -116,6 +123,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _bloxstrapDetector = bloxstrapDetector;
         _updateProbe = updateProbe;
         _accountTransport = accountTransport;
+        _activityMonitor = activityMonitor;
+        _idleAlertPresenter = idleAlertPresenter;
         _log = log ?? NullLogger<MainViewModel>.Instance;
 
         // Mirror must exist before any off-thread reader (presence loop, plugin host) can
@@ -165,6 +174,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _presenceService.AccountSessionExpired += OnAccountSessionExpired;
         _presenceService.AccountSessionLimited += OnAccountSessionLimited;
 
+        // v1.8 idle awareness — coalesced, edge-triggered toast when accounts newly cross the
+        // warn threshold. The monitor itself (Task 5) already runs its own sample timer; this
+        // VM only reacts to the crossing event + refreshes the passive row/banner display below.
+        _activityMonitor.WarnThresholdCrossed += OnActivityWarnCrossed;
+
         _ = InitializeBloxstrapWarningAsync();
 
         // Tick once a minute to keep "5 min ago" / "Running for 12 min" current.
@@ -175,6 +189,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             {
                 summary.RefreshRelativeTimes();
             }
+
+            // v1.8 idle awareness — project the latest ActivityMonitor snapshot onto the rows
+            // (chip text + amber IdleWarn) and refresh the passive summary strip. Runs on the
+            // same 30s cadence as the relative-time refresh above; no separate timer needed.
+            ActivitySnapshotApplier.Apply(Accounts, _activityMonitor.GetSnapshot(),
+                TimeSpan.FromMinutes(_idleWarnThresholdMinutes));
+            IdleSummaryText = IdleSummary.Format(Accounts.Count(a => a.IdleWarn), _idleWarnThresholdMinutes);
         };
         _ticker.Start();
     }
@@ -502,6 +523,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         get => _statusBanner;
         set => SetField(ref _statusBanner, value);
+    }
+
+    /// <summary>
+    /// Passive idle-summary strip text — e.g. "2 accounts idle &gt; 15m". Empty when nothing is
+    /// past the warn threshold (the strip collapses on empty, mirroring StatusBanner). Refreshed
+    /// on the same 30s ticker cadence that drives the row relative-time refresh. v1.8.
+    /// </summary>
+    public string IdleSummaryText
+    {
+        get => _idleSummaryText;
+        private set => SetField(ref _idleSummaryText, value);
     }
 
     /// <summary>
@@ -1730,6 +1762,34 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             summary.InGameSinceUtc = null;
             RelayCommand.RaiseCanExecuteChanged();
         });
+    }
+
+    /// <summary>
+    /// Coalesced, edge-triggered idle-warn crossing from <see cref="IActivityMonitor"/> (v1.8).
+    /// Marshalled to the dispatcher because the monitor's sample timer raises this off its own
+    /// timer thread, mirroring <see cref="OnAccountSessionLimited"/>. The presenter itself owns
+    /// the muted check + message shape; this handler only forwards the coalesced count + the
+    /// cached threshold/mute settings loaded by <see cref="InitializeIdleSettingsAsync"/>.
+    /// </summary>
+    private void OnActivityWarnCrossed(object? sender, IReadOnlyList<Guid> crossed)
+    {
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            _idleAlertPresenter.Notify(crossed.Count, _idleWarnThresholdMinutes, _muteIdleAlerts);
+        });
+    }
+
+    /// <summary>
+    /// Loads the cached idle-awareness settings (mute + warn-threshold minutes) and pushes the
+    /// threshold into <see cref="IActivityMonitor.WarnThreshold"/>. Called once by the composition
+    /// root after the VM is built, and again whenever the Preferences dialog saves a change so the
+    /// monitor + toast copy pick up the new values without a restart. v1.8.
+    /// </summary>
+    public async Task InitializeIdleSettingsAsync(IAppSettings settings)
+    {
+        _idleWarnThresholdMinutes = await settings.GetIdleWarnThresholdMinutesAsync().ConfigureAwait(false);
+        _muteIdleAlerts = await settings.GetMuteIdleAlertsAsync().ConfigureAwait(false);
+        _activityMonitor.WarnThreshold = TimeSpan.FromMinutes(_idleWarnThresholdMinutes);
     }
 
     private void OnProcessAttachFailed(object? sender, RobloxProcessEventArgs e)
