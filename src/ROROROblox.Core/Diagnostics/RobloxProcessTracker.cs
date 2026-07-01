@@ -11,7 +11,7 @@ namespace ROROROblox.Core.Diagnostics;
 /// <c>launchedAtUtc</c>) to the requesting account. FIFO across concurrent launches via a
 /// per-pid claim dictionary.
 /// </summary>
-public sealed class RobloxProcessTracker : IRobloxProcessTracker, IDisposable
+public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAccountResolver, IDisposable
 {
     private const string PlayerProcessName = "RobloxPlayerBeta";
     private const string InstallerProcessName = "RobloxPlayerInstaller";
@@ -79,6 +79,10 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IDisposable
             kvp => new TrackedProcess(kvp.Value.Process.Id, kvp.Value.AttachedAtUtc));
 
     public bool IsTracking(Guid accountId) => _attachedByAccount.ContainsKey(accountId);
+
+    /// <inheritdoc cref="IForegroundAccountResolver.TryResolveAccountByPid"/>
+    public bool TryResolveAccountByPid(int pid, out Guid accountId)
+        => _claimedPidToAccount.TryGetValue(pid, out accountId);
 
     public event EventHandler<RobloxProcessEventArgs>? ProcessAttached;
     public event EventHandler<RobloxProcessEventArgs>? ProcessAttachFailed;
