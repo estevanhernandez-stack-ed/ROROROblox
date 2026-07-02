@@ -11,7 +11,7 @@
     <Identity Name="626LabsLLC.RoRoRoBlox" Publisher="CN=177BCE59-0966-4975-9962-10E36652141F" Version="1.8.0.0" ProcessorArchitecture="x64" />
     <Properties>
         <DisplayName>RORORO</DisplayName>
-        <PublisherDisplayName>626 Labs LLC</PublisherDisplayName>
+        <PublisherDisplayName>626Labs LLC</PublisherDisplayName>
         <Logo>Package\Logos\StoreLogo.png</Logo>
         <!-- Description: surfaces in package metadata + Store listing fallback. Trademark
              disclaimer is required for nominative-use of "Roblox" per Sanduhr Store playbook

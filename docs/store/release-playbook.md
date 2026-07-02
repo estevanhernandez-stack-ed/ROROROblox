@@ -217,6 +217,8 @@ These are the failure modes we hit. Hit one of these again, recognize it, and mo
 | `dev-cert.pfx` password unknown | Password stored only in user-scope env var, not in repo | If lost, regenerate cert (`scripts/generate-dev-cert.ps1`) — sideload users will need to re-import the new `.cer` |
 | Store rejects with trademark complaint | Disclaimer not present on a required surface | Re-check `docs/store/submission-checklist.md` — disclaimer must appear on Store description, copyright field, manifest `<Description>`, About box, README, privacy policy |
 | Stale known-issue paragraph survives across releases | Phase 2 carry-forward without re-verification | `git log <prev-tag>..HEAD --grep='<topic>'` before re-pasting; if dropped, log it in the file preamble Edit log block (v1.3.3.0 → v1.3.4.0 hit this on FPS cap bleed) |
+| Package validation rejects: PublisherDisplayName doesn't match publisher | Identity constant retyped from brand copy ("626 Labs LLC", spaced) instead of copied from Phase 3 — Partner Center's registered name is `626Labs LLC`, no space | Copy the Phase 3 command verbatim, never retype the four identity constants (v1.8.0.0 hit this, 2026-07-02) |
+| Reviewer letter too long for the Notes-for-certification field | Full-defense letter shape (v1.4 style) re-used on a routine release | Deltas stated in full, everything else one line, reference (don't re-litigate) the v1.4 10.2.2 defense — the 1.7.0.0 letter is the model |
 
 ---
 
