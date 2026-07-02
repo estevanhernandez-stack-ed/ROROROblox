@@ -147,11 +147,21 @@ $publishDir = Join-Path $outDir 'publish'
 if (Test-Path $publishDir) { Remove-Item $publishDir -Recurse -Force }
 New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
 
+# Resolve the dotnet host: dotnet-install.ps1 defaults differ per box
+# (%LOCALAPPDATA%\Microsoft\dotnet vs ~\.dotnet); PATH dotnet is the last resort
+# and may fail the global.json SDK pin.
+$dotnetHost = @(
+    (Join-Path $env:LOCALAPPDATA 'Microsoft\dotnet\dotnet.exe'),
+    (Join-Path $env:USERPROFILE  '.dotnet\dotnet.exe')
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $dotnetHost) { $dotnetHost = 'dotnet' }
+Write-Host "[build-msix] dotnet host: $dotnetHost"
+
 # Self-contained: bundles .NET 10 Desktop Runtime into the MSIX. The package grows from
 # ~5MB to ~80MB but installs and launches cleanly on a fresh Win11 box that doesn't have
 # .NET 10 preinstalled. Without this, MSIX launch fails on framework-missing systems —
 # Setup.exe (Velopack) already self-contains; this brings MSIX to parity.
-& "$env:USERPROFILE\.dotnet\dotnet.exe" publish $appProject `
+& $dotnetHost publish $appProject `
     -c $Configuration `
     -r $Runtime `
     --self-contained true `
