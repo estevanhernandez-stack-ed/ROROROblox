@@ -76,28 +76,18 @@ public partial class App : Application
             _log.LogDebug(ex, "Theme apply at startup threw; continuing with default brushes.");
         }
 
-        // Cycle 4 hard-block: if Roblox is already running before RoRoRo started, multi-instance
-        // is broken — every Launch As routes through the existing process which has a bound user
-        // identity, ignoring our auth-ticket hand-off. Show the modal explaining the recovery path
-        // (close both, restart RoRoRo) and exit cleanly. MainWindow never renders; tray never
-        // shows; mutex never acquired against a hostile Roblox.
-        // Placement note: must run AFTER ApplyAtStartup so BgBrush resolves before the modal
-        // paints, but BEFORE mutex.Acquire so we never enter the broken state.
-        var gate = _services.GetRequiredService<StartupGate>();
-        if (!gate.ShouldProceed())
-        {
-            var modal = new Modals.RobloxAlreadyRunningWindow();
-            modal.ShowDialog();
-            Shutdown(0);
-            return;
-        }
-
+        // Acquire-first: resolve the singleton mutex NAME first (unchanged chain), THEN acquire,
+        // THEN gate on the result. The gate's verdict is guaranteed true (mutex held) at the
+        // moment we proceed — no check-then-lose-the-lock race.
+        // Placement note: must run AFTER ApplyAtStartup so BgBrush resolves before either modal
+        // below paints.
+        //
         // Resolve the singleton mutex NAME from remote config (data-only) BEFORE IMutexHolder is
         // first materialized below — write it into the holder the factory reads. 2s-bounded,
         // degrade-safe (valid remote -> last-known-good -> hardcoded default), never throws.
         // No ConfigureAwait(false): this continuation must stay on the UI thread for the
-        // Dispatcher-affined tray/window shows below. async void + await yields the UI thread
-        // (never blocks), so the lines 65-69 GetResult() deadlock cannot recur.
+        // Dispatcher-affined modals/tray/window shows below. async void + await yields the UI
+        // thread (never blocks), so the ApplyAtStartup GetResult() deadlock noted above cannot recur.
         var nameSource = MutexNameSource.Default;
         try
         {
@@ -111,8 +101,39 @@ public partial class App : Application
             _log.LogWarning(ex, "Mutex-name resolve threw; binding the hardcoded default.");
         }
 
-        var tray = _services.GetRequiredService<ITrayService>();
         var mutex = _services.GetRequiredService<IMutexHolder>();
+        var gate = _services.GetRequiredService<StartupGate>();
+
+        var acquired = mutex.Acquire();
+        var verdict = gate.Evaluate(acquired);
+
+        if (verdict is StartupGateResult.Blocked)
+        {
+            // Roblox holds the lock — offer in-place recovery. If recovery succeeds the modal
+            // returns true and we continue holding the mutex; otherwise the user quit.
+            var modal = new Modals.RobloxAlreadyRunningWindow(
+                onCloseForMe: () => TryRecoverMultiInstance(closeRobloxFirst: true),
+                onRetry: () => TryRecoverMultiInstance(closeRobloxFirst: false));
+            var recovered = modal.ShowDialog() == true;
+            if (!recovered)
+            {
+                Shutdown(0);
+                return;
+            }
+            acquired = true; // recovery acquired it
+        }
+        else if (verdict is StartupGateResult.Leftover leftover)
+        {
+            var info = new Modals.LeftoverProcessesWindow(leftover.Windowless, leftover.Windowed);
+            info.ShowDialog();
+            if (info.CleanUpRequested)
+            {
+                CleanUpLeftoverRoblox(leftover.Windowed > 0);
+            }
+            // mutex already held — proceed regardless
+        }
+
+        var tray = _services.GetRequiredService<ITrayService>();
         var mainWindow = _services.GetRequiredService<MainWindow>();
 
         WireTrayEvents(tray, mutex, mainWindow);
@@ -122,19 +143,13 @@ public partial class App : Application
         WireRobloxWindowDecorator();
         WirePluginEventBus();
         WireActivityMonitor();
+        WireContestedWatcher(mainWindow); // Task 8
         StartPluginHost();
         await InitializeIdleSettingsAsync();
 
-        // Default Multi-Instance ON. Acquire the ROBLOX_singletonEvent mutex at startup so the
-        // user can launch alts immediately without clicking the tray toggle first. The tray menu
-        // still lets them toggle OFF for single-instance behavior.
-        var acquired = mutex.Acquire();
         _log.LogInformation(
-            "Mutex acquire at startup: name={Name}, source={Source}, acquired={Acquired}. Multi-instance is {State} (tray icon will reflect).",
-            mutex.MutexName,
-            nameSource,
-            acquired,
-            acquired ? "ON" : "ERROR");
+            "Startup mutex: name={Name}, source={Source}, acquired={Acquired}.",
+            mutex.MutexName, nameSource, acquired);
         tray.UpdateStatus(acquired ? MultiInstanceState.On : MultiInstanceState.Error);
 
         tray.Show();
@@ -423,6 +438,13 @@ public partial class App : Application
         services.AddSingleton<IRobloxRunningProbe, RobloxRunningProbe>();
         services.AddSingleton<IRobloxInstanceStopper, RobloxInstanceStopper>();
         services.AddSingleton<StartupGate>();
+
+        // Runtime contested-mutex watcher (Task 8) — polls only while we don't hold the mutex,
+        // surfacing when the tray-resident Roblox releases it so the runtime banner can offer
+        // in-place recovery without a restart. Registered here so its lifetime matches the other
+        // Diagnostics singletons; wired to the UI in WireContestedWatcher.
+        services.AddSingleton<MutexContestedWatcher>(sp =>
+            new MutexContestedWatcher(sp.GetRequiredService<IMutexHolder>()));
 
         // Cycle 5 RobloxUserId backfill — fire-and-forget worker that resolves and persists
         // any saved account where RobloxUserId is null. Triggered post-MainWindow.Show in
@@ -874,6 +896,86 @@ public partial class App : Application
         }
     }
 
+    /// <summary>Shared multi-instance recovery: optionally close all Roblox first (with the
+    /// unsaved-state confirm when windowed clients exist), then (re-)acquire the mutex. Returns
+    /// whether RoRoRo now holds the lock. Used by the BLOCKED startup modal and the runtime
+    /// banner. Marshals nothing — callers invoke on the UI thread.</summary>
+    internal bool TryRecoverMultiInstance(bool closeRobloxFirst)
+    {
+        if (_services is null) return false;
+        var mutex = _services.GetRequiredService<IMutexHolder>();
+        if (mutex.IsHeld) return true;
+
+        if (closeRobloxFirst)
+        {
+            var probe = _services.GetRequiredService<IRobloxRunningProbe>();
+            var players = probe.GetRunningPlayers();
+            var windowed = players.Count(p => p.HasWindow);
+            if (windowed > 0)
+            {
+                // Live game windows among the processes — confirm before killing.
+                var confirm = new Modals.StopAllConfirmWindow(players.Count);
+                if (confirm.ShowDialog() != true) return mutex.IsHeld; // user cancelled
+            }
+            try { _services.GetRequiredService<IRobloxInstanceStopper>().StopAll(); }
+            catch (Exception ex) { _log?.LogWarning(ex, "Close-for-me StopAll failed; retrying acquire anyway."); }
+        }
+
+        var acquired = mutex.Acquire();
+        var tray = _services.GetRequiredService<ITrayService>();
+        tray.UpdateStatus(acquired ? MultiInstanceState.On : MultiInstanceState.Error);
+        TryRaiseMutexBusEvent(acquired ? "On" : "Error");
+        return acquired;
+    }
+
+    /// <summary>LEFTOVER "Clean up + continue": stop leftover clients, with the unsaved-state
+    /// confirm only when windowed clients exist. The mutex is already held here.</summary>
+    private void CleanUpLeftoverRoblox(bool hasWindowedClients)
+    {
+        if (_services is null) return;
+        try
+        {
+            if (hasWindowedClients)
+            {
+                var count = _services.GetRequiredService<IRobloxRunningProbe>().GetRunningPlayerPids().Count;
+                var confirm = new Modals.StopAllConfirmWindow(count);
+                if (confirm.ShowDialog() != true) return;
+            }
+            _services.GetRequiredService<IRobloxInstanceStopper>().StopAll();
+        }
+        catch (Exception ex) { _log?.LogWarning(ex, "Leftover clean-up failed."); }
+    }
+
+    /// <summary>
+    /// Wires the runtime contested-mutex watcher (Task 4/8): when Roblox grabs the lock while
+    /// RoRoRo is running (tray-resident), <see cref="MutexContestedWatcher.ContestedChanged"/>
+    /// flips the banner on; the banner's two actions re-enter the same
+    /// <see cref="TryRecoverMultiInstance"/> recovery path the startup BLOCKED modal uses, and
+    /// clear the banner on success. The watcher's own timer thread marshals to the UI thread via
+    /// Dispatcher; VM event handlers already run on the UI thread (RelayCommand.Execute), so no
+    /// further marshaling is needed there.
+    /// </summary>
+    private void WireContestedWatcher(MainWindow mainWindow)
+    {
+        if (_services is null) return;
+        var watcher = _services.GetRequiredService<MutexContestedWatcher>();
+        var vm = _services.GetRequiredService<MainViewModel>();
+
+        watcher.ContestedChanged += (_, contested) =>
+            Dispatcher.Invoke(() => vm.SetContested(contested));
+
+        vm.RequestCloseRobloxForMe += () =>
+        {
+            if (TryRecoverMultiInstance(closeRobloxFirst: true)) vm.SetContested(false);
+        };
+        vm.RequestRetryMutex += () =>
+        {
+            if (TryRecoverMultiInstance(closeRobloxFirst: false)) vm.SetContested(false);
+        };
+
+        watcher.Start();
+    }
+
     private void StopAllInstances()
     {
         if (_services is null) return;
@@ -1116,6 +1218,18 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _log?.LogDebug(ex, "ActivityMonitor.Stop threw on exit; ignoring.");
+            }
+
+            // Stop the runtime contested-mutex watcher's poll timer (Task 8) before the provider
+            // disposes. _services.Dispose() also disposes it (MutexContestedWatcher : IDisposable),
+            // but stopping first halts the timer cleanly, same shape as the two stops above.
+            try
+            {
+                _services.GetService<MutexContestedWatcher>()?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "MutexContestedWatcher.Dispose threw on exit; ignoring.");
             }
         }
 

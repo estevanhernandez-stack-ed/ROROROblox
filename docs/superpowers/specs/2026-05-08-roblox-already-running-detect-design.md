@@ -24,6 +24,15 @@
 >
 > The body below remains as originally written, including the framing now known to be wrong, per the "Don't rewrite the canonical spec on drift — banner-correct it" rule from `CLAUDE.md` (pattern v from Vibe Thesis).
 
+> ## ⚠️ Banner-correct #2 (2026-07-02 — superseded by the tray-residence gate)
+>
+> Roblox 0.727 (2026-06-27) made this spec's edge case the common case: Roblox now **stays resident in the system tray** on window-close (a windowless `RobloxPlayerBeta.exe` holding the singleton mutex) and can start itself with Windows. Two of this spec's non-goals no longer hold:
+>
+> - **"No retry / quit-only modal" (§2, §8):** superseded. The modal's close-Roblox → close-RoRoRo → re-open script was wrong advice — quitting Roblox from the tray is sufficient and RoRoRo can re-acquire in place. The reworked gate offers Retry and Close-Roblox-for-me and never requires restarting RoRoRo.
+> - **"No runtime detection" (§2, §8):** superseded. A contested-mutex watcher + main-window banner now covers the post-startup case.
+>
+> The detection signal also changed: process-presence alone no longer blocks (windowless orphans are harmless once RoRoRo holds the mutex); the gate is now **acquire-first** — the mutex verdict decides, the process scan contextualizes. Full design: [`2026-07-02-rororo-tray-residence-gate-design.md`](2026-07-02-rororo-tray-residence-gate-design.md).
+
 ## 1. Overview
 
 When `RobloxPlayerBeta.exe` is running before RoRoRo starts (e.g., the user opened Roblox via Chrome's Discord-deeplink → "Open in Roblox" or via the Start Menu shortcut), every subsequent **Launch As** opens as the same Roblox user — alts launch into the existing logged-in account regardless of which auth-ticket RoRoRo handed off. The roblox-player URI handler routes to the existing process, which already has a user identity bound; the auth-ticket hand-off is effectively ignored.

@@ -18,6 +18,9 @@ public class RobloxInstanceStopperTests
         public FakeProbe(params int[] pids) => _pids = pids;
         public FakeProbe(Exception ex) { _pids = Array.Empty<int>(); _throw = ex; }
         public IReadOnlyList<int> GetRunningPlayerPids() => _throw is null ? _pids : throw _throw;
+
+        public IReadOnlyList<RobloxProcessInfo> GetRunningPlayers()
+            => _throw is null ? _pids.Select(p => new RobloxProcessInfo(p, false)).ToArray() : throw _throw;
     }
 
     [Fact]
