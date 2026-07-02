@@ -86,7 +86,7 @@ public partial class App : Application
         var gate = _services.GetRequiredService<StartupGate>();
         if (!gate.ShouldProceed())
         {
-            var modal = new Modals.RobloxAlreadyRunningWindow();
+            var modal = new Modals.RobloxAlreadyRunningWindow(() => false, () => false);
             modal.ShowDialog();
             Shutdown(0);
             return;

@@ -1,23 +1,44 @@
+using System;
 using System.Windows;
+using ROROROblox.App.ViewModels;
 
 namespace ROROROblox.App.Modals;
 
-/// <summary>
-/// Cycle 4 hard-block modal. Shown by <c>App.OnStartup</c> when <c>StartupGate.ShouldProceed</c>
-/// returns false — i.e., a foreign <c>RobloxPlayerBeta.exe</c> is running at app launch. The
-/// caller owns shutdown sequencing; this window's only job is to display the explanation and
-/// collect the dismissal.
-/// </summary>
+/// <summary>BLOCKED modal — shown when the mutex is held by someone else at startup. Offers
+/// Close-Roblox-for-me and Retry (both re-acquire in place; success closes with DialogResult=true)
+/// plus Quit RoRoRo (DialogResult=false). Never asks the user to restart RoRoRo.</summary>
 internal partial class RobloxAlreadyRunningWindow : Window
 {
-    public RobloxAlreadyRunningWindow()
+    private readonly Func<bool> _onCloseForMe;
+    private readonly Func<bool> _onRetry;
+
+    public RobloxAlreadyRunningWindow(Func<bool> onCloseForMe, Func<bool> onRetry)
     {
+        _onCloseForMe = onCloseForMe;
+        _onRetry = onRetry;
         InitializeComponent();
+    }
+
+    private void OnCloseForMeClick(object sender, RoutedEventArgs e) => TryRecover(_onCloseForMe);
+    private void OnRetryClick(object sender, RoutedEventArgs e) => TryRecover(_onRetry);
+
+    private void TryRecover(Func<bool> recover)
+    {
+        if (recover())
+        {
+            DialogResult = true; // mutex now held — proceed with startup
+            Close();
+        }
+        else
+        {
+            StillLockedTick.Text = MultiInstanceCopy.StillLocked;
+            StillLockedTick.Visibility = Visibility.Visible;
+        }
     }
 
     private void OnQuitClick(object sender, RoutedEventArgs e)
     {
-        DialogResult = true;
+        DialogResult = false;
         Close();
     }
 }
