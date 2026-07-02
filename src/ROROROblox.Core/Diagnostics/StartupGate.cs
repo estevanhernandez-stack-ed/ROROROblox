@@ -23,34 +23,6 @@ public sealed class StartupGate
     }
 
     /// <summary>
-    /// Returns <c>true</c> if RoRoRo should proceed with normal startup (no foreign Roblox
-    /// detected). Returns <c>false</c> if the caller should show the already-running modal
-    /// and shut down. On probe failure, returns <c>true</c> (fail-open) and logs a warning.
-    /// </summary>
-    public bool ShouldProceed()
-    {
-        try
-        {
-            var pids = _probe.GetRunningPlayerPids();
-            if (pids.Count > 0)
-            {
-                _log.LogInformation(
-                    "StartupGate: detected {Count} running RobloxPlayerBeta.exe process(es) at startup; blocking. PIDs: {Pids}",
-                    pids.Count,
-                    string.Join(",", pids));
-                return false;
-            }
-            _log.LogInformation("StartupGate: no RobloxPlayerBeta.exe detected; proceeding to mutex.Acquire.");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _log.LogWarning(ex, "RobloxRunningProbe threw; failing open and proceeding with startup.");
-            return true;
-        }
-    }
-
-    /// <summary>
     /// Acquire-first gate. Caller acquires the mutex first and passes the result. Not acquired →
     /// Blocked. Acquired + no leftover processes → Clean. Acquired + leftovers → Leftover(split).
     /// Fail-open to Clean if the process scan throws (we hold the lock, so proceeding is safe).
