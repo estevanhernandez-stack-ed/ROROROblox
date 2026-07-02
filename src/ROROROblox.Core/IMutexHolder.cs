@@ -16,5 +16,13 @@ public interface IMutexHolder
     bool IsHeld { get; }
     bool Acquire();
     void Release();
+
+    /// <summary>
+    /// Non-acquiring probe: true iff the named mutex currently exists AND this holder does not
+    /// own it (i.e. someone else — the tray-resident Roblox — holds it). Returns false when we
+    /// hold it or when nobody does. Does not acquire, wait, or mutate any handle.
+    /// </summary>
+    bool IsHeldElsewhere();
+
     event EventHandler? MutexLost;
 }

@@ -3,6 +3,7 @@ using System.Timers;
 using Microsoft.Win32.SafeHandles;
 using Windows.Win32;
 using Windows.Win32.Foundation;
+using Windows.Win32.System.Threading;
 using Timer = System.Timers.Timer;
 
 namespace ROROROblox.Core;
@@ -26,6 +27,9 @@ public sealed class MutexHolder : IMutexHolder, IDisposable
 
     private const uint ErrorAlreadyExists = 0xB7;
     private const double WatchdogIntervalMs = 5_000;
+
+    /// <summary>SYNCHRONIZE — the minimal access right needed to probe a mutex's existence via OpenMutex.</summary>
+    private const uint SynchronizeAccess = 0x00100000;
 
     private readonly string _mutexName;
     private readonly object _lock = new();
@@ -144,6 +148,51 @@ public sealed class MutexHolder : IMutexHolder, IDisposable
             }
             _handle.Dispose();
             _handle = null;
+        }
+    }
+
+    /// <summary>
+    /// Non-acquiring probe via Win32 <c>OpenMutex</c>. Never waits, never mutates <see cref="_handle"/>.
+    /// If we already hold the mutex, that's ownership, not contention — return false without touching
+    /// the OS. Otherwise attempt to open the named mutex with only <c>SYNCHRONIZE</c> access: success
+    /// means some other process holds it (elsewhere), and OpenMutex failing (e.g. ERROR_FILE_NOT_FOUND
+    /// when nobody holds it) returns an invalid handle rather than throwing. Any unexpected failure is
+    /// swallowed and treated as "not elsewhere" — fail-safe, so a probe glitch never raises a false
+    /// contested alarm.
+    /// </summary>
+    public bool IsHeldElsewhere()
+    {
+        lock (_lock)
+        {
+            if (_handle is { IsInvalid: false })
+            {
+                return false; // we hold it — not "elsewhere"
+            }
+        }
+
+        SafeFileHandle probe;
+        try
+        {
+            unsafe
+            {
+                probe = PInvoke.OpenMutex(
+                    (SYNCHRONIZATION_ACCESS_RIGHTS)SynchronizeAccess,
+                    bInheritHandle: false,
+                    lpName: _mutexName);
+            }
+        }
+        catch
+        {
+            return false; // probe failure → treat as not contested (fail-safe: no false banner)
+        }
+
+        try
+        {
+            return !probe.IsInvalid; // opened successfully → the mutex exists, held by someone else
+        }
+        finally
+        {
+            probe.Dispose();
         }
     }
 
