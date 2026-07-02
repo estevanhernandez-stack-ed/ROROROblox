@@ -79,7 +79,8 @@ public partial class App : Application
         // Cycle 4 hard-block: if Roblox is already running before RoRoRo started, multi-instance
         // is broken — every Launch As routes through the existing process which has a bound user
         // identity, ignoring our auth-ticket hand-off. Show the modal explaining the recovery path
-        // (close both, restart RoRoRo) and exit cleanly. MainWindow never renders; tray never
+        // (the modal offers close-Roblox-for-me / retry / quit; recovery callbacks are stubbed until
+        // the acquire-first reorder lands) and exit cleanly on quit. MainWindow never renders; tray never
         // shows; mutex never acquired against a hostile Roblox.
         // Placement note: must run AFTER ApplyAtStartup so BgBrush resolves before the modal
         // paints, but BEFORE mutex.Acquire so we never enter the broken state.
