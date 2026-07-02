@@ -105,6 +105,12 @@ public class StartupGateTests
             if (NextThrow is not null) throw NextThrow;
             return NextResult;
         }
+
+        public IReadOnlyList<RobloxProcessInfo> GetRunningPlayers()
+        {
+            if (NextThrow is not null) throw NextThrow;
+            return NextResult.Select(pid => new RobloxProcessInfo(pid, HasWindow: false)).ToArray();
+        }
     }
 
     /// <summary>

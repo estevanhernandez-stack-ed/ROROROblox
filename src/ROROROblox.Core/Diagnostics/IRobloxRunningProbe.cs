@@ -21,4 +21,10 @@ public interface IRobloxRunningProbe
     /// at call time. Empty list = clean (no foreign Roblox detected).
     /// </summary>
     IReadOnlyList<int> GetRunningPlayerPids();
+
+    /// <summary>
+    /// Snapshot of every running RobloxPlayerBeta.exe with a windowed/windowless flag, so the
+    /// startup gate can distinguish harmless orphans (windowless) from live game windows.
+    /// </summary>
+    IReadOnlyList<RobloxProcessInfo> GetRunningPlayers();
 }

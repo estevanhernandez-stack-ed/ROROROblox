@@ -12,12 +12,18 @@ public sealed class RobloxRunningProbe : IRobloxRunningProbe
 {
     private const string PlayerProcessName = "RobloxPlayerBeta";
 
-    public IReadOnlyList<int> GetRunningPlayerPids()
+    public IReadOnlyList<RobloxProcessInfo> GetRunningPlayers()
     {
         var processes = Process.GetProcessesByName(PlayerProcessName);
         try
         {
-            return processes.Select(p => p.Id).ToArray();
+            return processes.Select(p =>
+            {
+                bool hasWindow;
+                try { hasWindow = p.MainWindowHandle != IntPtr.Zero; }
+                catch { hasWindow = false; } // exited mid-scan / access denied → treat as windowless
+                return new RobloxProcessInfo(p.Id, hasWindow);
+            }).ToArray();
         }
         finally
         {
@@ -27,4 +33,7 @@ public sealed class RobloxRunningProbe : IRobloxRunningProbe
             }
         }
     }
+
+    public IReadOnlyList<int> GetRunningPlayerPids()
+        => GetRunningPlayers().Select(p => p.Pid).ToArray();
 }
