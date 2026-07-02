@@ -1216,9 +1216,10 @@
             </StackPanel>
         </Border>
 
-        <!-- Status banner + idle summary strip. Two independently-collapsing TextBlocks share
-             one Border so the idle strip (v1.8) can show/hide on its own without a Grid row
-             renumber — mirrors how StatusBanner itself shows/hides via StringToVisibilityConverter. -->
+        <!-- Status banner + idle summary strip + runtime contested-lock banner. Three
+             independently-collapsing children share one Border so each can show/hide on its
+             own without a Grid row renumber — mirrors how StatusBanner itself shows/hides via
+             StringToVisibilityConverter. -->
         <Border Grid.Row="3" Padding="24,8"
                 Background="{DynamicResource RowBgBrush}">
             <Border.Style>
@@ -1229,6 +1230,7 @@
                             <MultiDataTrigger.Conditions>
                                 <Condition Binding="{Binding StatusBanner}" Value="" />
                                 <Condition Binding="{Binding IdleSummaryText}" Value="" />
+                                <Condition Binding="{Binding ContestedBannerText}" Value="" />
                             </MultiDataTrigger.Conditions>
                             <Setter Property="Visibility" Value="Collapsed" />
                         </MultiDataTrigger>
@@ -1248,6 +1250,21 @@
                            Margin="0,2,0,0"
                            Foreground="{DynamicResource MutedTextBrush}"
                            Visibility="{Binding IdleSummaryText, Converter={StaticResource StringToVisibilityConverter}}" />
+                <!-- Runtime contested-lock banner (tray-residence): shown when Roblox holds the
+                     multi-instance lock post-startup. Same recovery actions as the startup modal. -->
+                <StackPanel Orientation="Vertical" Margin="0,4,0,0"
+                            Visibility="{Binding ContestedBannerText, Converter={StaticResource StringToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ContestedBannerText}"
+                               FontSize="11" TextWrapping="Wrap" Foreground="#F1B232" />
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <Button Content="Close Roblox for me" Command="{Binding CloseRobloxForMeCommand}"
+                                Padding="10,4" Margin="0,0,8,0"
+                                Background="#17D4FA" Foreground="#0F1F31" BorderThickness="0" FontSize="11" />
+                        <Button Content="Retry" Command="{Binding RetryMutexCommand}"
+                                Padding="10,4"
+                                Background="#22314A" Foreground="#FFFFFF" BorderThickness="0" FontSize="11" />
+                    </StackPanel>
+                </StackPanel>
             </StackPanel>
         </Border>
 

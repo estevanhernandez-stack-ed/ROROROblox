@@ -946,10 +946,34 @@ public partial class App : Application
         catch (Exception ex) { _log?.LogWarning(ex, "Leftover clean-up failed."); }
     }
 
-    /// <summary>Stub — Task 8 wires the runtime contested-mutex watcher (banner + recovery
-    /// re-entry) here. Empty so this commit builds standalone.</summary>
+    /// <summary>
+    /// Wires the runtime contested-mutex watcher (Task 4/8): when Roblox grabs the lock while
+    /// RoRoRo is running (tray-resident), <see cref="MutexContestedWatcher.ContestedChanged"/>
+    /// flips the banner on; the banner's two actions re-enter the same
+    /// <see cref="TryRecoverMultiInstance"/> recovery path the startup BLOCKED modal uses, and
+    /// clear the banner on success. The watcher's own timer thread marshals to the UI thread via
+    /// Dispatcher; VM event handlers already run on the UI thread (RelayCommand.Execute), so no
+    /// further marshaling is needed there.
+    /// </summary>
     private void WireContestedWatcher(MainWindow mainWindow)
     {
+        if (_services is null) return;
+        var watcher = _services.GetRequiredService<MutexContestedWatcher>();
+        var vm = _services.GetRequiredService<MainViewModel>();
+
+        watcher.ContestedChanged += (_, contested) =>
+            Dispatcher.Invoke(() => vm.SetContested(contested));
+
+        vm.RequestCloseRobloxForMe += () =>
+        {
+            if (TryRecoverMultiInstance(closeRobloxFirst: true)) vm.SetContested(false);
+        };
+        vm.RequestRetryMutex += () =>
+        {
+            if (TryRecoverMultiInstance(closeRobloxFirst: false)) vm.SetContested(false);
+        };
+
+        watcher.Start();
     }
 
     private void StopAllInstances()
@@ -1194,6 +1218,18 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _log?.LogDebug(ex, "ActivityMonitor.Stop threw on exit; ignoring.");
+            }
+
+            // Stop the runtime contested-mutex watcher's poll timer (Task 8) before the provider
+            // disposes. _services.Dispose() also disposes it (MutexContestedWatcher : IDisposable),
+            // but stopping first halts the timer cleanly, same shape as the two stops above.
+            try
+            {
+                _services.GetService<MutexContestedWatcher>()?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "MutexContestedWatcher.Dispose threw on exit; ignoring.");
             }
         }
 

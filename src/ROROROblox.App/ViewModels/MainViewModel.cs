@@ -2414,6 +2414,30 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    private string _contestedBannerText = string.Empty;
+
+    /// <summary>Runtime banner text — non-empty only when Roblox holds the multi-instance lock
+    /// and RoRoRo doesn't. Empty collapses the strip (mirrors StatusBanner/IdleSummaryText).</summary>
+    public string ContestedBannerText
+    {
+        get => _contestedBannerText;
+        private set => SetField(ref _contestedBannerText, value);
+    }
+
+    public void SetContested(bool contested)
+        => ContestedBannerText = contested ? MultiInstanceCopy.ContestedBanner : string.Empty;
+
+    public event Action? RequestCloseRobloxForMe;
+    public event Action? RequestRetryMutex;
+
+    public ICommand CloseRobloxForMeCommand => _closeRobloxForMeCommand ??=
+        new RelayCommand(_ => RequestCloseRobloxForMe?.Invoke());
+    private RelayCommand? _closeRobloxForMeCommand;
+
+    public ICommand RetryMutexCommand => _retryMutexCommand ??=
+        new RelayCommand(_ => RequestRetryMutex?.Invoke());
+    private RelayCommand? _retryMutexCommand;
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
