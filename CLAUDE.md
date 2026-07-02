@@ -46,7 +46,7 @@ Canonical brand spec lives at `~/.claude/skills/626labs-design/` (globally avail
 | `src/ROROROblox.Core/` | Interfaces + primitives — `IMutexHolder`, `IAccountStore`, `IRobloxApi`, `IRobloxLauncher` (no UI dependencies) |
 | `src/ROROROblox.Tests/` | xUnit unit-test coverage |
 | `src/ROROROblox.PluginTestHarness/` | xUnit integration tests — real named-pipe gRPC (v1.4+) |
-| `src/RORORO.Package/` | MSIX wapproj for Store-signed + self-signed sideload flavors |
+| `scripts/build-msix.ps1` + `scripts/finalize-store-build.ps1` | MSIX packaging (Store-unsigned + self-signed sideload flavors) — no wapproj exists; packing is `makeappx` against `src/ROROROblox.App/Package.appxmanifest` |
 | `roblox-compat.json` (in GitHub Releases) | Remote config — known-good Roblox version range + current mutex name; fetched at app startup |
 | `dev-cert.pfx` | Self-signed sideload cert; **gitignored**, regenerated per dev box (see [`CONTRIBUTING.md`](CONTRIBUTING.md)) |
 
@@ -74,9 +74,9 @@ The full architecture, data flows, error buckets, and decision rationale live in
 | Run unit + integration tests | `dotnet test ROROROblox.slnx` (whole solution) — or scope: `dotnet test src/ROROROblox.Tests/` (unit) + `dotnet test src/ROROROblox.PluginTestHarness/` (integration, v1.4+) |
 | See plugin author guide (v1.4+) | [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR_GUIDE.md) |
 | See v1.4 plugin-system design | [`docs/superpowers/specs/2026-05-09-rororo-plugin-system-design.md`](docs/superpowers/specs/2026-05-09-rororo-plugin-system-design.md) |
-| Build sideload MSIX | `msbuild src/RORORO.Package/RORORO.Package.wapproj /p:AppxPackageSigningEnabled=true /p:PackageCertificateKeyFile=dev-cert.pfx` *(after item 11)* |
-| Build Store-signed MSIX | `dotnet publish src/RORORO.Package -p:GenerateAppxPackageOnBuild=true` *(after item 11)* |
-| Cut a release | Velopack via `vpk pack` against the latest signed MSIX *(after item 10 + 11)* |
+| Build sideload MSIX | `powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertPath dev-cert.pfx -CertPassword <pwd>` → `dist/RORORO-Sideload.msix` (self-signed) |
+| Build Store MSIX | `powershell -ExecutionPolicy Bypass -File scripts/finalize-store-build.ps1 -Version <x.y.z.0> -IdentityName 626LabsLLC.RoRoRoBlox -PublisherCN "CN=177BCE59-0966-4975-9962-10E36652141F" -PublisherDisplayName "626 Labs LLC"` → `dist/RORORO-Store.msix` (unsigned; Partner Center signs). Restore manifest after: `-RestoreManifest` |
+| Cut a release | Push tag `vX.Y.Z.0` → `release.yml` runs tests + `scripts/build-velopack-release.ps1` (`vpk pack`) → DRAFT GitHub Release with Setup.exe + `roblox-compat.json` attached; review + publish the draft. Per-release runbook lives at `docs/store/release-runbook-<version>.md` |
 
 ## Conventions
 
