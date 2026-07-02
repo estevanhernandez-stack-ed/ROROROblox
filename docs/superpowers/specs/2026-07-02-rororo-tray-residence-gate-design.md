@@ -9,6 +9,10 @@
 **Related:** [`2026-06-30-rororo-limited-followups.md`](2026-06-30-rororo-limited-followups.md) §2 (the 0.727 facts), `docs/reviews/2026-06-12-raw-findings.txt` line ~332 (compose stop-all + retry instead of dead-ending)
 ---
 
+> ## ⚠️ Banner-correct (2026-07-02, post-build)
+>
+> One §5 drift from the shipped build: the BLOCKED modal's mono-micro tag `MULTI-INSTANCE NEEDS THE LOCK` was **dropped** — its row was repurposed for the amber still-locked tick (`Still locked — Roblox is still running.`), which carries actual state instead of a static label. Deliberate plan-level trade (Task 6), caught at the whole-branch review. Everything else in §5/§6 shipped char-exact.
+
 ## 1. Problem & context
 
 Roblox 0.727 (installed 2026-06-27) **stays resident in the system tray** when its window closes — a windowless `RobloxPlayerBeta.exe` that keeps holding the singleton mutex (`Local\ROBLOX_singletonEvent`, name from remote config). It can also **start itself with Windows**. Some users can disable that; the product has to help the ones who won't.
