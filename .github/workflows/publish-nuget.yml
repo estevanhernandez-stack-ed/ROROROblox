@@ -16,6 +16,9 @@ jobs:
   publish:
     name: pack + push contract
     runs-on: ubuntu-latest
+    # The nuget.org policy pins GitHub environment "production" — the job must
+    # declare the same environment or the OIDC token exchange 401s.
+    environment: production
     timeout-minutes: 10
     permissions:
       id-token: write   # OIDC token for NuGet Trusted Publishing
