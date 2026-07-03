@@ -209,6 +209,51 @@ public class PluginInstallerTests : IDisposable
     }
 
     [Fact]
+    public async Task InstallAsync_Success_LogsInstallLifecycle()
+    {
+        // Issue #36: install steps were banner-only and vanished on window close.
+        // A successful install must leave the whole story in the host log.
+        const string manifestJson = """{"schemaVersion":1,"id":"626labs.test","name":"Test","version":"0.1.0","contractVersion":"1.0","publisher":"626 Labs","description":"x","capabilities":[]}""";
+        var (zipBytes, sha) = BuildZipWithManifest(manifestJson);
+
+        _http.EnqueueResponse(new HttpResponseMessage(HttpStatusCode.OK)
+            { Content = new StringContent(manifestJson) });
+        _http.EnqueueResponse(new HttpResponseMessage(HttpStatusCode.OK)
+            { Content = new StringContent(sha) });
+        _http.EnqueueResponse(new HttpResponseMessage(HttpStatusCode.OK)
+            { Content = new ByteArrayContent(zipBytes) });
+
+        var log = new CapturingLogger<PluginInstaller>();
+        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, (_, _) => Task.CompletedTask, new Version(1, 4, 3, 0), log);
+        await installer.InstallAsync("https://example.com/plugin/v1/", Array.Empty<string>());
+
+        var lines = log.Snapshot();
+        Assert.Single(lines, l => l.Contains("install starting"));
+        Assert.Single(lines, l => l.Contains("Manifest OK") && l.Contains("626labs.test"));
+        Assert.Single(lines, l => l.Contains("SHA-256 verified"));
+        Assert.Single(lines, l => l.Contains("Install complete") && l.Contains("626labs.test"));
+    }
+
+    [Fact]
+    public async Task InstallAsync_MinHostVersionRefusal_LogsWarning()
+    {
+        const string manifestJson = """{"schemaVersion":1,"id":"626labs.test","name":"Test","version":"0.1.0","contractVersion":"1.0","publisher":"626 Labs","description":"x","capabilities":[],"minHostVersion":"1.4.3"}""";
+
+        _http.EnqueueResponse(new HttpResponseMessage(HttpStatusCode.OK)
+            { Content = new StringContent(manifestJson) });
+
+        var log = new CapturingLogger<PluginInstaller>();
+        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, (_, _) => Task.CompletedTask, new Version(1, 4, 2, 0), log);
+
+        await Assert.ThrowsAsync<PluginInstallerException>(() => installer.InstallAsync(
+            "https://example.com/plugin/v1/", Array.Empty<string>()));
+
+        var line = Assert.Single(log.Snapshot(), l => l.Contains("Install refused"));
+        Assert.Contains("1.4.3", line);
+        Assert.Contains("1.4.2", line);
+    }
+
+    [Fact]
     public async Task InstallAsync_EntrypointPresentInZip_ExecutablePathHonorsIt()
     {
         // Zip ships an EXE named differently from the manifest id. With entrypoint
