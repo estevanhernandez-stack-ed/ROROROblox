@@ -1,0 +1,45 @@
+# Publishes ROROROblox.PluginContract to nuget.org via Trusted Publishing (OIDC).
+# No API key: the nuget.org policy "PluginContract push" trusts THIS workflow file
+# (publish-nuget.yml) in THIS repo to publish as 626labs. Manual trigger only —
+# run it from the Actions tab after bumping <Version> in the contract csproj.
+#
+# The version published is whatever the csproj on the selected ref says.
+# nuget.org versions are immutable: a pushed version can be unlisted but never
+# re-pushed, so --skip-duplicate makes re-runs harmless no-ops.
+
+name: publish-nuget
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: pack + push contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      id-token: write   # OIDC token for NuGet Trusted Publishing
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET (pinned by global.json)
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Pack
+        run: dotnet pack src/ROROROblox.PluginContract/ROROROblox.PluginContract.csproj -c Release -o artifacts/nuget
+
+      - name: NuGet login (Trusted Publishing / OIDC)
+        id: login
+        # Third-party action with id-token (OIDC) access — pinned to a full commit SHA, not the mutable
+        # v1 tag, so a repointed tag can't exfiltrate the publish token. Bump deliberately (track via Dependabot).
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841  # v1.2.0
+        with:
+          user: 626labs
+
+      - name: Push to NuGet.org
+        run: dotnet nuget push "artifacts/nuget/*.nupkg" --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
