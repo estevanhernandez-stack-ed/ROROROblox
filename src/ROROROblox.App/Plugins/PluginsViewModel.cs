@@ -196,14 +196,39 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private Task LaunchPluginAsync(PluginRow? row)
+    internal async Task LaunchPluginAsync(PluginRow? row)
     {
-        if (row is null) return Task.CompletedTask;
-        if (row.IsRunning) return Task.CompletedTask; // belt-and-suspenders — XAML disables the
+        if (row is null) return;
+        if (row.IsRunning) return;                    // belt-and-suspenders — XAML disables the
                                                       // button on IsRunning, but a stale binding
                                                       // shouldn't ever hand us a double-launch.
         try
         {
+            // A plugin with no consent record never met the consent sheet — the sheet
+            // otherwise only runs inside the install-from-URL flow, so a dev-dropped
+            // plugin (files copied into the plugins root by hand) would launch with
+            // zero grants and every gated call would bounce. Show the sheet here on
+            // first Launch instead. An EXISTING record — even one with zero grants —
+            // is a deliberate user decision and never re-prompts.
+            var pluginId = row.Plugin.Manifest.Id;
+            var hasRecord = (await _consentStore.ListAsync().ConfigureAwait(true))
+                .Any(r => r.PluginId == pluginId);
+            if (!hasRecord)
+            {
+                var granted = await _showConsentSheet(row.Plugin.Manifest).ConfigureAwait(true);
+                if (granted is null)
+                {
+                    StatusBanner = $"{row.Name} not started — consent sheet cancelled.";
+                    return;
+                }
+                await _consentStore.GrantAsync(pluginId, granted).ConfigureAwait(true);
+                _registryAdapter.Refresh();
+                await LoadAsync().ConfigureAwait(true);
+                // LoadAsync rebuilt Plugins — re-find the row so IsRunning lands on the
+                // instance the XAML list is actually bound to now.
+                row = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == pluginId) ?? row;
+            }
+
             StatusBanner = $"Launching {row.Name}...";
             _supervisor.Start(row.Plugin);
             row.IsRunning = true;
@@ -213,7 +238,6 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         {
             StatusBanner = $"Launch failed: {ex.Message}";
         }
-        return Task.CompletedTask;
     }
 
     private async Task RevokeAsync(PluginRow? row)
