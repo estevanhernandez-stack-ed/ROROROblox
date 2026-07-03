@@ -2,7 +2,7 @@
 
 > Status sheet for plugins 626 Labs intends to build or has scoped. The plugin system itself is documented in [`AUTHOR_GUIDE.md`](AUTHOR_GUIDE.md). This file is the **idea bench** — what's locked for v1.4, what's backlog, what each plugin demonstrates about the system.
 >
-> **Last updated:** 2026-05-10
+> **Last updated:** 2026-07-02 · Family arc + ship order live in [`../superpowers/specs/2026-07-02-ur-family-arc-design.md`](../superpowers/specs/2026-07-02-ur-family-arc-design.md)
 
 ## Plugin-status criterion
 
@@ -16,9 +16,23 @@ A plugin earns the title by **actually integrating with RoRoRo's runtime knowled
 
 ---
 
+## Shipped — the Ur family (as of 2026-07-02)
+
+The bench produced a product line. Three plugins, one thesis: *the ladder is the story, the bridge is how the family compounds, and trust is the bar every rung clears.*
+
+| Plugin | Repo | State | Rung |
+|---|---|---|---|
+| **Ur Task** | [`rororo-ur-task`](https://github.com/estevanhernandez-stack-ed/rororo-ur-task) | v0.3.1 stable · v0.4.0 at rc1 (window-relative mouse macros, STACK/GRID arranging). v0.3.0 shipped the action bridge — sibling plugins can request `RunMacro` over a named pipe. | 2 — record once, play on any alt |
+| **Ur OCR** | [`Ur-OCR`](https://github.com/estevanhernandez-stack-ed/Ur-OCR) *(rename to `rororo-ur-ocr` planned — csproj + README already use that slug)* | v0.2.0 stable · v0.3.0 at rc1 — bridge client: a screen trigger fires a Ur Task macro. With Ur Task this is the perception→action pair. | 3 — perception→action over the bridge |
+| **Ur AFK** | [`rororo-ur-afk`](https://github.com/estevanhernandez-stack-ed/rororo-ur-afk) | v0.1 merged 2026-07-02, release pending (icon gate + signed artifacts). Needs RoRoRo 1.8's `GetAccountActivity` — shipped same day. | 1 — one toggle, one key ever sent |
+
+---
+
 ## v1.4 ship
 
 ### 1. RoRoRo Ur Task
+
+> **Status (2026-07-02):** shipped as [`rororo-ur-task`](https://github.com/estevanhernandez-stack-ed/rororo-ur-task) — see the Shipped table above. The pitch below is the original v1.4 scoping, kept for history; several details evolved in flight (account binding removed in v0.2 in favor of portable macros; F8/F5 moved to chords in v0.2; the action bridge wasn't scoped here at all).
 
 **Pitch.** TinyTask-shaped record / playback for keyboard + mouse macros, but **aware of which RoRoRo-managed account window it's targeting**. Name plays "RoRoRo + Your Task" off "TinyTask" — ties the plugin to the parent product on first read. Records bind to a Roblox user id (captured from the foreground window at record time); playback refuses to fire unless the foreground window matches that user id. Auto-stops when the bound account's window closes. This is the killer use case — clan members can record a farming sequence on one alt and trust it won't fire keys into the wrong window if focus shifts mid-playback.
 
@@ -55,6 +69,8 @@ A plugin earns the title by **actually integrating with RoRoRo's runtime knowled
 
 ### 2. Session Stats
 
+> **Reframed 2026-07-02 — the family ledger, and the current plugin #4 pick.** Not just uptime chips: the family's memory. Per-account uptime and launches, plus what the hands did (Ur Task playbacks) and what the eyes fired (Ur OCR triggers). Read-only, zero `system.*` capabilities — the safest consent sheet in the family, which is exactly what a rung-1 observer should feel like. Open question before committing: does reading Task/OCR activity need new host event streams, or do siblings publish their own activity over the bridge? See the family arc design doc.
+
 **Pitch.** Status panel + row badges showing live per-account uptime, total launches this session, mutex state, last-launched-at timestamps. Pure observer — useful for clan members tracking farming time, useful for RoRoRo itself as a debugging surface during development.
 
 **Capabilities declared.**
@@ -82,6 +98,8 @@ Demonstrates **all three** event streams + **three** UI surfaces. The richest-co
 Needs `DiscordRichPresence` SDK (or `Discord.GameSDK`) as a NuGet dep. No UI contribution to RoRoRo's window — the presence shows up in Discord, not RoRoRo. Demonstrates external-integration plugin shape.
 
 **Marketing angle.** The strongest viral surface in the backlog — clan members see RoRoRo named in their friends' Discord status without anyone selling it. Aligns with the "brand spreads for free" thesis.
+
+> **Timing note (2026-07-02):** deliberately parked until the 626 Labs Discord server (release-channel plan) stands up — presence should land *with* the server, not before. Second in line behind Session Stats.
 
 ---
 
@@ -117,7 +135,7 @@ Needs `DiscordRichPresence` SDK (or `Discord.GameSDK`) as a NuGet dep. No UI con
 
 ## Cross-cutting notes
 
-**Distribution.** Each plugin lives in its own sibling repo under `github.com/estevanhernandez-stack-ed/rororo-<name>-plugin`. Independent Velopack release pipelines. RoRoRo's installer never bundles plugin code (Store policy 10.2.2).
+**Distribution.** Each plugin lives in its own sibling repo under `github.com/estevanhernandez-stack-ed/rororo-ur-<name>` (the shipped convention; the original `rororo-<name>-plugin` slug never got used). Independent release pipelines. RoRoRo's installer never bundles plugin code (Store policy 10.2.2).
 
 **Signing.** All 626 Labs-authored plugins sign with the 626 Labs LLC code-signing cert — **separate** from RoRoRo's Store cert. SmartScreen surfaces the publisher; cross-contamination is an immediate distribution-trust incident.
 
