@@ -49,8 +49,10 @@ public class PluginsViewModelLaunchConsentTests : IDisposable
         if (Directory.Exists(_tempRoot)) Directory.Delete(_tempRoot, recursive: true);
     }
 
-    private PluginsViewModel BuildVm(Func<PluginManifest, Task<IReadOnlyList<string>?>> showSheet)
-        => new(_registry, _adapter, _consentStore, _installer, _supervisor, showSheet);
+    private PluginsViewModel BuildVm(
+        Func<PluginManifest, Task<IReadOnlyList<string>?>> showSheet,
+        CapturingLogger<PluginsViewModel>? log = null)
+        => new(_registry, _adapter, _consentStore, _installer, _supervisor, showSheet, log);
 
     [Fact]
     public async Task Launch_WithoutConsentRecord_ShowsSheetPersistsGrantAndStarts()
@@ -105,6 +107,39 @@ public class PluginsViewModelLaunchConsentTests : IDisposable
 
         Assert.Equal(0, sheetShown);
         Assert.Single(_starter.Started);
+    }
+
+    [Fact]
+    public async Task Launch_FirstLaunchGrant_LogsConsentOutcome()
+    {
+        // Issue #36 residual: consent decisions must leave durable log evidence — the banner
+        // strings vanish on window close. Grant path logs granted/declared counts + the ids.
+        var log = new CapturingLogger<PluginsViewModel>();
+        var vm = BuildVm(
+            manifest => Task.FromResult<IReadOnlyList<string>?>(new[] { "host.events.account-launched" }),
+            log);
+        await vm.LoadAsync();
+
+        await vm.LaunchPluginAsync(vm.Plugins.Single());
+
+        var line = log.Snapshot().Single(l => l.Contains("Plugin consent: granted"));
+        Assert.Contains("1/2 capabilities", line);
+        Assert.Contains(PluginId, line);
+        Assert.Contains("host.events.account-launched", line);
+    }
+
+    [Fact]
+    public async Task Launch_SheetCancelled_LogsCancelledOutcome()
+    {
+        var log = new CapturingLogger<PluginsViewModel>();
+        var vm = BuildVm(_ => Task.FromResult<IReadOnlyList<string>?>(null), log);
+        await vm.LoadAsync();
+
+        await vm.LaunchPluginAsync(vm.Plugins.Single());
+
+        var line = log.Snapshot().Single(l => l.Contains("Plugin consent: sheet cancelled"));
+        Assert.Contains(PluginId, line);
+        Assert.Contains("first Launch", line);
     }
 
     private sealed class FakeStarter : IPluginProcessStarter

@@ -5,6 +5,8 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.App.Plugins.Adapters;
 using ROROROblox.App.ViewModels;
 
@@ -30,6 +32,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
     private readonly PluginInstaller _installer;
     private readonly PluginProcessSupervisor _supervisor;
     private readonly Func<PluginManifest, Task<IReadOnlyList<string>?>> _showConsentSheet;
+    private readonly ILogger<PluginsViewModel> _log;
 
     private string _installUrlInput = string.Empty;
     private string? _statusBanner;
@@ -43,7 +46,8 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         ConsentStore consentStore,
         PluginInstaller installer,
         PluginProcessSupervisor supervisor,
-        Func<PluginManifest, Task<IReadOnlyList<string>?>> showConsentSheet)
+        Func<PluginManifest, Task<IReadOnlyList<string>?>> showConsentSheet,
+        ILogger<PluginsViewModel>? log = null)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _registryAdapter = registryAdapter ?? throw new ArgumentNullException(nameof(registryAdapter));
@@ -51,6 +55,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         _installer = installer ?? throw new ArgumentNullException(nameof(installer));
         _supervisor = supervisor ?? throw new ArgumentNullException(nameof(supervisor));
         _showConsentSheet = showConsentSheet ?? throw new ArgumentNullException(nameof(showConsentSheet));
+        _log = log ?? NullLogger<PluginsViewModel>.Instance;
 
         InstallFromUrlCommand = new RelayCommand(InstallAsync, () => !IsBusy && !string.IsNullOrWhiteSpace(InstallUrlInput));
         ToggleAutostartCommand = new RelayCommand(p => ToggleAutostartAsync(p as PluginRow));
@@ -130,11 +135,18 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             var granted = await _showConsentSheet(installed.Manifest).ConfigureAwait(true);
             if (granted is null)
             {
+                _log.LogInformation(
+                    "Plugin consent: sheet cancelled for {PluginId} v{Version} during install — install dir rolled back.",
+                    installed.Manifest.Id, installed.Manifest.Version);
                 TryDeleteInstallDir(installed.InstallDir);
                 StatusBanner = "Install cancelled.";
                 return;
             }
 
+            _log.LogInformation(
+                "Plugin consent: granted {GrantedCount}/{DeclaredCount} capabilities to {PluginId} v{Version} at install: [{Granted}].",
+                granted.Count, installed.Manifest.Capabilities.Count, installed.Manifest.Id,
+                installed.Manifest.Version, string.Join(", ", granted));
             await _consentStore.GrantAsync(installed.Manifest.Id, granted).ConfigureAwait(true);
             _registryAdapter.Refresh();
             await LoadAsync().ConfigureAwait(true);
@@ -156,6 +168,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             }
             catch (Exception startEx)
             {
+                _log.LogWarning(startEx, "Plugin {PluginId} installed but post-install start failed.", installed.Manifest.Id);
                 StatusBanner = $"{installed.Manifest.Name} installed — start failed: {startEx.Message}";
             }
 
@@ -169,6 +182,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             {
                 TryDeleteInstallDir(installed.InstallDir);
             }
+            _log.LogWarning(ex, "Plugin install failed (url input); install dir rolled back if present.");
             StatusBanner = $"Install failed: {ex.Message}";
         }
         finally
@@ -186,6 +200,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             await _consentStore.SetAutostartAsync(row.Plugin.Manifest.Id, nextEnabled).ConfigureAwait(true);
             _registryAdapter.Refresh();
             await LoadAsync().ConfigureAwait(true);
+            _log.LogInformation("Plugin {PluginId}: autostart {State}.", row.Plugin.Manifest.Id, nextEnabled ? "enabled" : "disabled");
             StatusBanner = nextEnabled
                 ? $"Autostart enabled for {row.Name}."
                 : $"Autostart disabled for {row.Name}.";
@@ -218,9 +233,15 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
                 var granted = await _showConsentSheet(row.Plugin.Manifest).ConfigureAwait(true);
                 if (granted is null)
                 {
+                    _log.LogInformation(
+                        "Plugin consent: sheet cancelled for {PluginId} on first Launch — not started, nothing persisted.",
+                        pluginId);
                     StatusBanner = $"{row.Name} not started — consent sheet cancelled.";
                     return;
                 }
+                _log.LogInformation(
+                    "Plugin consent: granted {GrantedCount}/{DeclaredCount} capabilities to {PluginId} on first Launch: [{Granted}].",
+                    granted.Count, row.Plugin.Manifest.Capabilities.Count, pluginId, string.Join(", ", granted));
                 await _consentStore.GrantAsync(pluginId, granted).ConfigureAwait(true);
                 _registryAdapter.Refresh();
                 await LoadAsync().ConfigureAwait(true);
@@ -236,6 +257,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         }
         catch (Exception ex)
         {
+            _log.LogWarning(ex, "Plugin {PluginId} launch-from-row failed.", row.Plugin.Manifest.Id);
             StatusBanner = $"Launch failed: {ex.Message}";
         }
     }
@@ -258,10 +280,12 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             TryDeleteInstallDir(row.Plugin.InstallDir);
             _registryAdapter.Refresh();
             await LoadAsync().ConfigureAwait(true);
+            _log.LogInformation("Plugin consent: revoked + removed {PluginId} (consent record deleted, install dir cleaned).", row.Plugin.Manifest.Id);
             StatusBanner = $"{row.Name} removed.";
         }
         catch (Exception ex)
         {
+            _log.LogWarning(ex, "Plugin {PluginId} remove failed.", row.Plugin.Manifest.Id);
             StatusBanner = $"Remove failed: {ex.Message}";
         }
     }
@@ -282,12 +306,14 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         try
         {
             _supervisor.Restart(match.Plugin);
+            _log.LogInformation("Plugin {PluginId}: restarted from exit banner.", match.Plugin.Manifest.Id);
             StatusBanner = $"{match.Name} restarted.";
             _bannerPluginId = null;
             Raise(nameof(BannerIsRestartable));
         }
         catch (Exception ex)
         {
+            _log.LogWarning(ex, "Plugin {PluginId} restart-from-banner failed.", _bannerPluginId);
             StatusBanner = $"Restart failed: {ex.Message}";
         }
         return Task.CompletedTask;

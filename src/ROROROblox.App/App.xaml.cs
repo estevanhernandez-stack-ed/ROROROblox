@@ -617,7 +617,8 @@ public partial class App : Application
                 manifest => ROROROblox.App.Plugins.ConsentSheet.ShowAndAwaitDecisionAsync(owner, manifest);
 
             var vm = new ROROROblox.App.Plugins.PluginsViewModel(
-                registry, registryAdapter, consentStore, installer, supervisor, showSheet);
+                registry, registryAdapter, consentStore, installer, supervisor, showSheet,
+                _services.GetRequiredService<ILogger<ROROROblox.App.Plugins.PluginsViewModel>>());
             var window = new ROROROblox.App.Plugins.PluginsWindow(vm);
             if (owner.IsLoaded) window.Owner = owner;
             SurfaceMainWindow(owner);
