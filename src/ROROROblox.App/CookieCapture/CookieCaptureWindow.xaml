@@ -49,6 +49,16 @@
                                    TextWrapping="Wrap">
                             <Run Text="The embedded browser sometimes loads slowly on first open. If Roblox asks for two-factor verification, that's normal — verify here and your saved login keeps working." />
                         </TextBlock>
+                        <!-- Shown from code-behind after Roblox rejects a captured session cookie
+                             (mid-2FA partial login, or a session Roblox won't honor). -->
+                        <TextBlock x:Name="RejectionHint"
+                                   FontSize="11" FontWeight="SemiBold"
+                                   Foreground="#F22F89"
+                                   Margin="0,6,0,0"
+                                   TextWrapping="Wrap"
+                                   Visibility="Collapsed">
+                            <Run Text="Roblox hasn't accepted this session yet — finish any verification steps. If this stays after you're fully logged in, close this window and try again." />
+                        </TextBlock>
                     </StackPanel>
                 </Border>
             </StackPanel>
