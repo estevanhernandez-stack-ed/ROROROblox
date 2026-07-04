@@ -49,8 +49,10 @@ public class PluginsViewModelLaunchConsentTests : IDisposable
         if (Directory.Exists(_tempRoot)) Directory.Delete(_tempRoot, recursive: true);
     }
 
-    private PluginsViewModel BuildVm(Func<PluginManifest, Task<IReadOnlyList<string>?>> showSheet)
-        => new(_registry, _adapter, _consentStore, _installer, _supervisor, showSheet);
+    private PluginsViewModel BuildVm(
+        Func<PluginManifest, Task<IReadOnlyList<string>?>> showSheet,
+        CapturingLogger<PluginsViewModel>? log = null)
+        => new(_registry, _adapter, _consentStore, _installer, _supervisor, showSheet, log);
 
     [Fact]
     public async Task Launch_WithoutConsentRecord_ShowsSheetPersistsGrantAndStarts()
@@ -105,6 +107,72 @@ public class PluginsViewModelLaunchConsentTests : IDisposable
 
         Assert.Equal(0, sheetShown);
         Assert.Single(_starter.Started);
+    }
+
+    [Fact]
+    public async Task Launch_FirstLaunchGrant_LogsConsentOutcome()
+    {
+        // Issue #36 residual: consent decisions must leave durable log evidence — the banner
+        // strings vanish on window close. Grant path logs granted/declared counts + the ids.
+        var log = new CapturingLogger<PluginsViewModel>();
+        var vm = BuildVm(
+            manifest => Task.FromResult<IReadOnlyList<string>?>(new[] { "host.events.account-launched" }),
+            log);
+        await vm.LoadAsync();
+
+        await vm.LaunchPluginAsync(vm.Plugins.Single());
+
+        var line = log.Snapshot().Single(l => l.Contains("Plugin consent: granted"));
+        Assert.Contains("1/2 capabilities", line);
+        Assert.Contains(PluginId, line);
+        Assert.Contains("host.events.account-launched", line);
+    }
+
+    [Fact]
+    public async Task Launch_SheetCancelled_LogsCancelledOutcome()
+    {
+        var log = new CapturingLogger<PluginsViewModel>();
+        var vm = BuildVm(_ => Task.FromResult<IReadOnlyList<string>?>(null), log);
+        await vm.LoadAsync();
+
+        await vm.LaunchPluginAsync(vm.Plugins.Single());
+
+        var line = log.Snapshot().Single(l => l.Contains("Plugin consent: sheet cancelled"));
+        Assert.Contains(PluginId, line);
+        Assert.Contains("first Launch", line);
+    }
+
+    [Fact]
+    public async Task Revoke_LogsConsentRevocation()
+    {
+        // Revocation is the OTHER half of the consent-evidence story — a grant with no matching
+        // revocation record reads as still-consented in any audit. Pin the revoke log line so a
+        // merge that drops it goes red instead of silently half-breaking the #36 guarantee.
+        await _consentStore.GrantAsync(PluginId, Array.Empty<string>());
+        _adapter.Refresh();
+        var log = new CapturingLogger<PluginsViewModel>();
+        var vm = BuildVm(_ => Task.FromResult<IReadOnlyList<string>?>(Array.Empty<string>()), log);
+        await vm.LoadAsync();
+
+        await vm.RevokeAsync(vm.Plugins.Single());
+
+        var line = log.Snapshot().Single(l => l.Contains("Plugin consent: revoked"));
+        Assert.Contains(PluginId, line);
+    }
+
+    [Fact]
+    public async Task ToggleAutostart_LogsStateChange()
+    {
+        await _consentStore.GrantAsync(PluginId, Array.Empty<string>());
+        _adapter.Refresh();
+        var log = new CapturingLogger<PluginsViewModel>();
+        var vm = BuildVm(_ => Task.FromResult<IReadOnlyList<string>?>(Array.Empty<string>()), log);
+        await vm.LoadAsync();
+
+        await vm.ToggleAutostartAsync(vm.Plugins.Single());
+
+        var line = log.Snapshot().Single(l => l.Contains("autostart"));
+        Assert.Contains(PluginId, line);
     }
 
     private sealed class FakeStarter : IPluginProcessStarter

@@ -1035,7 +1035,26 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
             LaunchTarget target = ResolveLaunchTarget(summary.SelectedGame, overrideTarget);
 
-            var result = await _launcher.LaunchAsync(cookie, target, fpsCap: summary.FpsCap);
+            // Ensure a stable per-account browserTrackerId (v1.8.1 trust hygiene — followups
+            // 2026-06-30 §6): a real client keeps one btid per account, so a fresh random one
+            // per launch reads as a brand-new, unfamiliar client every time. Generate once,
+            // persist, reuse for the account's lifetime. Soft-fail: a persist failure still
+            // launches with the generated value (next launch just regenerates).
+            if (summary.BrowserTrackerId is null)
+            {
+                var generated = Random.Shared.NextInt64(1_000_000_000_000, 9_999_999_999_999);
+                try
+                {
+                    await _accountStore.UpdateBrowserTrackerIdAsync(summary.Id, generated);
+                }
+                catch (Exception ex)
+                {
+                    _log.LogDebug(ex, "BrowserTrackerId persist failed for {AccountId}; using unpersisted value this launch.", summary.Id);
+                }
+                summary.BrowserTrackerId = generated;
+            }
+
+            var result = await _launcher.LaunchAsync(cookie, target, fpsCap: summary.FpsCap, browserTrackerId: summary.BrowserTrackerId);
             switch (result)
             {
                 case LaunchResult.Started started:

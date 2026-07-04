@@ -77,6 +77,18 @@ public interface IAccountStore
     Task UpdateRobloxUserIdAsync(Guid accountId, long userId);
 
     /// <summary>
+    /// Persist the stable per-account <paramref name="browserTrackerId"/> (v1.8.1 trust
+    /// hygiene — followups 2026-06-30 §6). A real Roblox client keeps one browserTrackerId per
+    /// account; generating a fresh random one per launch reads as a brand-new, unfamiliar
+    /// client on every launch. Generated once at first launch (MainViewModel), then reused for
+    /// the account's lifetime. Idempotent — no-op (no disk write, no DPAPI roundtrip) if the
+    /// account already has the same value. Throws <see cref="KeyNotFoundException"/> if no
+    /// account has the given id. NOT exported by account transport — the btid is a
+    /// client-instance identity, so a destination PC generates its own.
+    /// </summary>
+    Task UpdateBrowserTrackerIdAsync(Guid accountId, long browserTrackerId);
+
+    /// <summary>
     /// Persist free-text per-account tags (PS99, RCU, PLAZA…). Granular write mirroring
     /// <see cref="SetCaptionColorAsync"/> — no Save button, the edit is the save. The list is
     /// normalized before persisting: each tag is trimmed, empty/whitespace entries are dropped,

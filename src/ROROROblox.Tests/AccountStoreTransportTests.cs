@@ -53,6 +53,19 @@ public class AccountStoreTransportTests : IDisposable
         Assert.Contains(result.Records, r => r.RobloxUserId == 222L);
     }
 
+    [Fact]
+    public void AccountExportRecord_DoesNotCarryBrowserTrackerId()
+    {
+        // Canary for the v1.8.1 "btid is client-instance identity, not transported" invariant
+        // (followups 2026-06-30 §6). The btid deliberately stays OUT of the export record so a
+        // destination PC generates its own — two machines must never launch the same account
+        // with the same tracker id simultaneously. This is enforced only by omission (the
+        // record simply lacks the field), so the natural instinct when extending transport is
+        // to add it alongside the other per-account fields. This test goes red if someone does.
+        var props = typeof(AccountExportRecord).GetProperties().Select(p => p.Name);
+        Assert.DoesNotContain("BrowserTrackerId", props);
+    }
+
     // ---------- At-rest encryption (item-4 security gate) ----------
 
     [Fact]

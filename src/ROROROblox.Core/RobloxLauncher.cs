@@ -59,7 +59,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         _globalBasicSettings = globalBasicSettings;
     }
 
-    public async Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null)
+    public async Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null)
     {
         if (string.IsNullOrEmpty(cookie))
         {
@@ -98,7 +98,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
                 }
             }
 
-            var result = await ExecuteLaunchAsync(cookie, target).ConfigureAwait(false);
+            var result = await ExecuteLaunchAsync(cookie, target, browserTrackerId).ConfigureAwait(false);
             await Task.Delay(FFlagReadHold).ConfigureAwait(false);
             return result;
         }
@@ -108,7 +108,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
     }
 
-    private async Task<LaunchResult> ExecuteLaunchAsync(string cookie, LaunchTarget target)
+    private async Task<LaunchResult> ExecuteLaunchAsync(string cookie, LaunchTarget target, long? stableBrowserTrackerId)
     {
         // FollowFriend doesn't need place resolution — Roblox follows the user wherever they are.
         // Place / PrivateServer are already concrete. DefaultGame resolves through favorites + settings.
@@ -140,7 +140,9 @@ public sealed class RobloxLauncher : IRobloxLauncher
             return new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}");
         }
 
-        var browserTrackerId = _browserTrackerIdFactory().ToString();
+        // Stable per-account btid when the caller has one persisted (v1.8.1 trust hygiene);
+        // random one-shot fallback preserves the pre-v1.8.1 behavior for callers without it.
+        var browserTrackerId = (stableBrowserTrackerId ?? _browserTrackerIdFactory()).ToString();
         var launchTime = _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
         var placeLauncherUrl = BuildPlaceLauncherUrl(resolved, browserTrackerId);
         var uri = BuildLaunchUri(ticket.Ticket, launchTime, browserTrackerId, placeLauncherUrl);
@@ -161,7 +163,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
     }
 
-    public async Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null)
+    public async Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null, long? browserTrackerId = null)
     {
         if (string.IsNullOrEmpty(cookie))
         {
@@ -222,7 +224,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
                 }
             }
 
-            var result = await ExecuteLegacyLaunchAsync(cookie, resolvedPlaceUrl).ConfigureAwait(false);
+            var result = await ExecuteLegacyLaunchAsync(cookie, resolvedPlaceUrl, browserTrackerId).ConfigureAwait(false);
             await Task.Delay(FFlagReadHold).ConfigureAwait(false);
             return result;
         }
@@ -232,7 +234,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
     }
 
-    private async Task<LaunchResult> ExecuteLegacyLaunchAsync(string cookie, string resolvedPlaceUrl)
+    private async Task<LaunchResult> ExecuteLegacyLaunchAsync(string cookie, string resolvedPlaceUrl, long? stableBrowserTrackerId)
     {
         AuthTicket ticket;
         try
@@ -253,7 +255,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
 
         var launchTime = _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
-        var browserTrackerId = _browserTrackerIdFactory().ToString();
+        var browserTrackerId = (stableBrowserTrackerId ?? _browserTrackerIdFactory()).ToString();
 
         // Normalize: a "public" roblox.com/games/<id>/<slug> URL (what users copy from their browser
         // address bar) is NOT what RobloxPlayerLauncher expects in placelauncherurl. The launcher

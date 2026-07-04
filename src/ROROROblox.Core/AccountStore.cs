@@ -49,7 +49,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             var blob = await LoadAsync().ConfigureAwait(false);
             return blob.Accounts
-                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName, a.RobloxUserId, a.Tags ?? []))
+                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName, a.RobloxUserId, a.Tags ?? [], a.BrowserTrackerId))
                 .ToList();
         }
         finally
@@ -91,7 +91,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 SortOrder: nextSortOrder);
             blob.Accounts.Add(stored);
             await SaveAsync(blob).ConfigureAwait(false);
-            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName, stored.RobloxUserId, stored.Tags ?? []);
+            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName, stored.RobloxUserId, stored.Tags ?? [], stored.BrowserTrackerId);
         }
         finally
         {
@@ -348,6 +348,30 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 return; // idempotent — saves a DPAPI roundtrip on chatty backfill orchestrator passes.
             }
             blob.Accounts[index] = blob.Accounts[index] with { RobloxUserId = userId };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task UpdateBrowserTrackerIdAsync(Guid accountId, long browserTrackerId)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var index = blob.Accounts.FindIndex(a => a.Id == accountId);
+            if (index < 0)
+            {
+                throw new KeyNotFoundException($"Account {accountId} not found.");
+            }
+            if (blob.Accounts[index].BrowserTrackerId == browserTrackerId)
+            {
+                return; // idempotent — mirrors UpdateRobloxUserIdAsync, saves the DPAPI roundtrip.
+            }
+            blob.Accounts[index] = blob.Accounts[index] with { BrowserTrackerId = browserTrackerId };
             await SaveAsync(blob).ConfigureAwait(false);
         }
         finally
@@ -662,7 +686,8 @@ public sealed class AccountStore : IAccountStore, IDisposable
         int? FpsCap = null,
         string? LocalName = null,
         long? RobloxUserId = null,
-        IReadOnlyList<string>? Tags = null);
+        IReadOnlyList<string>? Tags = null,
+        long? BrowserTrackerId = null);
 
     internal sealed record StoredAccountsBlob(
         int Version,

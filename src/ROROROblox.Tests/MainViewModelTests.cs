@@ -25,6 +25,7 @@ namespace ROROROblox.Tests;
 public class MainViewModelTests
 {
     private static (MainViewModel Vm, IAccountStore AccountStore, IRobloxProcessTracker ProcessTracker, string AccountStorePath) Build(
+        IRobloxLauncher? launcher = null,
         ICookieCapture? cookieCapture = null,
         Func<IAccountStore, IAccountStore>? wrapStore = null)
     {
@@ -38,7 +39,7 @@ public class MainViewModelTests
             cookieCapture: cookieCapture ?? new FakeCookieCapture(),
             api: new FakeRobloxApi(),
             accountStore: vmStore,
-            launcher: new FakeRobloxLauncher(),
+            launcher: launcher ?? new FakeRobloxLauncher(),
             compatChecker: new FakeRobloxCompatChecker(),
             settings: new FakeAppSettings(),
             favorites: new FakeFavoriteGameStore(),
@@ -99,6 +100,34 @@ public class MainViewModelTests
         finally { if (File.Exists(path)) File.Delete(path); }
     }
 
+    [Fact]
+    public async Task Launch_GeneratesAndPersistsStableBrowserTrackerId_ThenReuses()
+    {
+        // v1.8.1 trust hygiene: first launch of an account with no persisted btid generates a
+        // 13-digit value, persists it, and passes it to the launcher; the second launch reuses
+        // the exact same value instead of rolling a new one.
+        var launcher = new CapturingRobloxLauncher();
+        var (vm, store, _, path) = Build(launcher);
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.FollowFriend(1));
+            var first = Assert.Single(launcher.BrowserTrackerIds);
+            Assert.NotNull(first);
+            Assert.InRange(first!.Value, 1_000_000_000_000, 9_999_999_999_999);
+            Assert.Equal(first, row.BrowserTrackerId);
+            var persisted = (await store.ListAsync()).Single(a => a.Id == row.Id);
+            Assert.Equal(first, persisted.BrowserTrackerId);
+
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.FollowFriend(1));
+            Assert.Equal(2, launcher.BrowserTrackerIds.Count);
+            Assert.Equal(first, launcher.BrowserTrackerIds[1]);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
     /// <summary>
     /// Seed one account into the store (optionally with a persisted RobloxUserId) and hand back
     /// a detached expired-tagged row for it. Detached because <c>LoadAsync</c> drags in
@@ -119,7 +148,7 @@ public class MainViewModelTests
     [Fact]
     public async Task ReauthenticateAsync_CancelledCapture_KeepsTagAndSurfacesBanner()
     {
-        var (vm, store, _, path) = Build(new StubCookieCapture(new CookieCaptureResult.Cancelled()));
+        var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(new CookieCaptureResult.Cancelled()));
         try
         {
             var row = await SeedExpiredAccountAsync(store, 111);
@@ -136,7 +165,7 @@ public class MainViewModelTests
     [Fact]
     public async Task ReauthenticateAsync_FailedCapture_KeepsTagAndSurfacesBanner()
     {
-        var (vm, store, _, path) = Build(new StubCookieCapture(
+        var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(
             new CookieCaptureResult.Failed("Login was unsuccessful.")));
         try
         {
@@ -154,7 +183,7 @@ public class MainViewModelTests
     [Fact]
     public async Task ReauthenticateAsync_DifferentAccountCookie_RefusesOverwrite()
     {
-        var (vm, store, _, path) = Build(new StubCookieCapture(
+        var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(
             new CookieCaptureResult.Success("intruder-cookie", 999, "SomeOtherUser")));
         try
         {
@@ -174,7 +203,7 @@ public class MainViewModelTests
     [Fact]
     public async Task ReauthenticateAsync_MatchingAccount_ClearsTagAndUpdatesCookie()
     {
-        var (vm, store, _, path) = Build(new StubCookieCapture(
+        var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(
             new CookieCaptureResult.Success("fresh-cookie", 111, "TestAlt")));
         try
         {
@@ -195,7 +224,7 @@ public class MainViewModelTests
         // The RobloxUserId backfill is opportunistic — a failed persist must not fail the
         // reauth itself (tag clears, cookie updates, row userId stays null for the next try).
         var (vm, store, _, path) = Build(
-            new StubCookieCapture(new CookieCaptureResult.Success("fresh-cookie", 222, "TestAlt")),
+            cookieCapture: new StubCookieCapture(new CookieCaptureResult.Success("fresh-cookie", 222, "TestAlt")),
             wrapStore: real => new UserIdPersistThrowingStore(real));
         try
         {
@@ -213,7 +242,7 @@ public class MainViewModelTests
     [Fact]
     public async Task ReauthenticateAsync_UnknownRowUserId_AcceptsAndBackfills()
     {
-        var (vm, store, _, path) = Build(new StubCookieCapture(
+        var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(
             new CookieCaptureResult.Success("fresh-cookie", 222, "TestAlt")));
         try
         {
@@ -256,6 +285,7 @@ public class MainViewModelTests
         public Task UpdateRobloxUserIdAsync(Guid accountId, long userId)
             => throw new IOException("simulated persist failure");
 
+        public Task UpdateBrowserTrackerIdAsync(Guid accountId, long browserTrackerId) => inner.UpdateBrowserTrackerIdAsync(accountId, browserTrackerId);
         public Task<IReadOnlyList<Account>> ListAsync() => inner.ListAsync();
         public Task<Account> AddAsync(string displayName, string avatarUrl, string cookie) => inner.AddAsync(displayName, avatarUrl, cookie);
         public Task RemoveAsync(Guid id) => inner.RemoveAsync(id);
@@ -287,8 +317,27 @@ public class MainViewModelTests
 
     private sealed class FakeRobloxLauncher : IRobloxLauncher
     {
-        public Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null) => throw new NotImplementedException();
-        public Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null) => throw new NotImplementedException();
+        public Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null) => throw new NotImplementedException();
+        public Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null, long? browserTrackerId = null) => throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Records the btid passed to each launch and returns a generic Failed — the failed branch
+    /// only sets row StatusText, so the test stays clear of the Started path's tracker /
+    /// session-history dependencies (throwing fakes).
+    /// </summary>
+    private sealed class CapturingRobloxLauncher : IRobloxLauncher
+    {
+        public List<long?> BrowserTrackerIds { get; } = [];
+
+        public Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null)
+        {
+            BrowserTrackerIds.Add(browserTrackerId);
+            return Task.FromResult<LaunchResult>(new LaunchResult.Failed("test launch refused"));
+        }
+
+        public Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null, long? browserTrackerId = null)
+            => throw new NotImplementedException();
     }
 
     private sealed class FakeRobloxCompatChecker : IRobloxCompatChecker
