@@ -1811,16 +1811,39 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// Presence poll returned 401 for one account (v1.5.0) — the cookie died between launches.
     /// Flip the row to the yellow "Session expired" badge. Marshalled to the dispatcher because
     /// the poller raises this off a threadpool thread. Spec §"Error handling" (401 from presence).
+    ///
+    /// Re-flag race guard (2026-07-03): the decision is made HERE, on the UI thread, where both
+    /// this flip and reauth's tag-clear (<see cref="ReauthenticateAsync"/> sets SessionExpired =
+    /// false as its last act) run — so whichever the dispatcher processes last wins consistently.
+    /// If the account's live cookie generation is past the one this poll captured at start, a
+    /// reauth replaced the cookie mid-poll and this 401 is stale — drop it rather than clobber a
+    /// session the user just refreshed. reauth's UpdateCookieAsync bumps the generation before its
+    /// tag-clear, so a suppressed flip can never resurrect the expired badge.
     /// </summary>
-    private void OnAccountSessionExpired(object? sender, Guid accountId)
+    private void OnAccountSessionExpired(object? sender, AccountSessionExpiredEventArgs e)
+        => Application.Current?.Dispatcher.Invoke(() => ApplySessionExpired(e.AccountId, e.PolledCookieGeneration));
+
+    /// <summary>
+    /// UI-thread body of the 401 handler (internal for tests — <see cref="OnAccountSessionExpired"/>
+    /// marshals to it). Runs the re-flag-race guard then flips the row. Must run on the UI thread so
+    /// the generation read + flip are serialized against reauth's cookie-update + tag-clear.
+    /// </summary>
+    internal void ApplySessionExpired(Guid accountId, int polledCookieGeneration)
     {
-        Application.Current?.Dispatcher.Invoke(() =>
+        var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
+        if (summary is null) return;
+
+        var currentGeneration = _accountStore.GetCookieGeneration(accountId);
+        if (currentGeneration != polledCookieGeneration)
         {
-            var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
-            if (summary is null) return;
-            summary.SessionExpired = true;
-            RelayCommand.RaiseCanExecuteChanged();
-        });
+            _log.LogDebug(
+                "Presence 401 for {AccountId} dropped — cookie was re-authed since the poll started (gen {Polled} -> {Current}).",
+                accountId, polledCookieGeneration, currentGeneration);
+            return;
+        }
+
+        summary.SessionExpired = true;
+        RelayCommand.RaiseCanExecuteChanged();
     }
 
     private void OnAccountSessionLimited(object? sender, Guid accountId)

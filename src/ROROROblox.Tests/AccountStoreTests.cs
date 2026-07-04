@@ -119,6 +119,21 @@ public class AccountStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task GetCookieGeneration_BumpsOnEachCookieUpdate_StartsAtZero()
+    {
+        using var store = new AccountStore(_filePath);
+        var added = await store.AddAsync("TestUser", "https://x", "c0");
+        Assert.Equal(0, store.GetCookieGeneration(added.Id)); // fresh account, never updated
+        Assert.Equal(0, store.GetCookieGeneration(Guid.NewGuid())); // unknown id
+
+        await store.UpdateCookieAsync(added.Id, "c1");
+        Assert.Equal(1, store.GetCookieGeneration(added.Id));
+
+        await store.UpdateCookieAsync(added.Id, "c2");
+        Assert.Equal(2, store.GetCookieGeneration(added.Id));
+    }
+
+    [Fact]
     public async Task UpdateBrowserTrackerIdAsync_PersistsAndRoundTrips()
     {
         using var store = new AccountStore(_filePath);
