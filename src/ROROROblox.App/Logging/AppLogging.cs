@@ -29,6 +29,11 @@ internal static class AppLogging
 
         var serilogLogger = new LoggerConfiguration()
             .MinimumLevel.Debug()
+            // Framework namespaces flood the file at DBG — HttpClientFactory alone writes a
+            // handler-cleanup pair every 10s (~90% of a 15 MB day). Warning+ keeps real
+            // framework failures visible; app namespaces (ROROROblox.*) stay at Debug.
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("System", LogEventLevel.Warning)
             .Enrich.WithProperty("App", "ROROROblox")
             .WriteTo.File(
                 path: LogFilePath,

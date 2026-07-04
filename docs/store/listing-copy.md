@@ -103,14 +103,14 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 
 > Avoid "cheat", "exploit", "bypass" — those will trigger reviewer concerns even if irrelevant.
 
-## What's new (release notes for v1.7.0.0)
+## What's new (release notes for v1.8.0.0)
 
 ```
-v1.7.0.0:
-• Roblox can update mid-launch and your batch still lands. RoRoRo sends the first client through the update, shows "Roblox is updating — hold on," then launches the rest into the already-updated client — no more wrong account (with a captcha) when an update pops up.
-• Stop all Roblox instances — one click in the tray closes every running Roblox client at once (it asks first).
-• Recover multi-instance from the tray without restarting — if it drops into an error state, the tray reads "ERROR — click to reload" and re-grabs it in place.
-• Faster recovery if Roblox ever renames its multi-instance lock (now config-driven), plus two new abilities for plugin authors.
+v1.8.0.0:
+• Roblox hiding in your system tray can't block multi-instance anymore. RoRoRo checks the lock itself and, if a hidden Roblox holds it, offers "Close Roblox for me" or Retry — you never restart RoRoRo. Leftover Roblox processes from an earlier session are explained instead of blocking you.
+• If Roblox soft-locks one of your accounts, its row now says "Limited by Roblox" instead of silently failing — and RoRoRo rests that account until Roblox lifts the flag.
+• See how long each account has been idle: a per-row idle timer, an adjustable warning before Roblox's ~20-minute disconnect, and a tray heads-up you can mute.
+• Plugins can now ask for idle times with your permission — timestamps only, never what you type.
 ```
 
 (Historical "What's new" blocks for prior releases live in their respective `docs/store/release-notes-*.md` files.)

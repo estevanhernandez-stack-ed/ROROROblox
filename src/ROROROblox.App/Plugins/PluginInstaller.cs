@@ -2,6 +2,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Security.Cryptography;
+using Microsoft.Extensions.Logging;
 
 namespace ROROROblox.App.Plugins;
 
@@ -19,6 +20,7 @@ public sealed class PluginInstaller
     private readonly string _pluginsRoot;
     private readonly Func<string, string, Task> _stopRunningPluginAsync;
     private readonly Version _hostVersion;
+    private readonly ILogger<PluginInstaller>? _log;
 
     /// <param name="stopRunningPluginAsync">
     /// Invoked with (pluginId, installDir) just before the install dir is wiped + re-extracted,
@@ -29,12 +31,13 @@ public sealed class PluginInstaller
     /// The running RoRoRo's assembly version. Compared against <c>manifest.minHostVersion</c>
     /// to refuse installs that need a newer host than the user is on.
     /// </param>
-    public PluginInstaller(HttpClient http, string pluginsRoot, Func<string, string, Task> stopRunningPluginAsync, Version hostVersion)
+    public PluginInstaller(HttpClient http, string pluginsRoot, Func<string, string, Task> stopRunningPluginAsync, Version hostVersion, ILogger<PluginInstaller>? log = null)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
         _pluginsRoot = pluginsRoot ?? throw new ArgumentNullException(nameof(pluginsRoot));
         _stopRunningPluginAsync = stopRunningPluginAsync ?? throw new ArgumentNullException(nameof(stopRunningPluginAsync));
         _hostVersion = hostVersion ?? throw new ArgumentNullException(nameof(hostVersion));
+        _log = log;
     }
 
     public async Task<InstalledPlugin> InstallAsync(string baseUrl, IReadOnlyList<string> requireCapabilities)
@@ -56,6 +59,7 @@ public sealed class PluginInstaller
         }
 
         // 1. Fetch manifest, parse, sanity-check required capabilities.
+        _log?.LogInformation("Plugin install starting from {BaseUrl}.", baseUrl);
         var manifestJson = await GetStringAsync(new Uri(baseUrl + "manifest.json")).ConfigureAwait(false);
         PluginManifest manifest;
         try
@@ -89,10 +93,16 @@ public sealed class PluginInstaller
             }
             if (_hostVersion < minVersion)
             {
+                _log?.LogWarning(
+                    "Install refused: {PluginId} v{PluginVersion} requires host {MinHostVersion}, running {HostVersion}.",
+                    manifest.Id, manifest.Version, manifest.MinHostVersion, _hostVersion);
                 throw new PluginInstallerException(
                     $"This plugin requires RoRoRo {manifest.MinHostVersion} or newer. You're running {_hostVersion}. Update RoRoRo and try again.");
             }
         }
+        _log?.LogInformation(
+            "Manifest OK: {PluginId} v{PluginVersion} (minHost {MinHostVersion}, host {HostVersion}).",
+            manifest.Id, manifest.Version, manifest.MinHostVersion ?? "none", _hostVersion);
 
         // 2. Fetch SHA256, fetch zip, verify.
         var expectedSha = (await GetStringAsync(new Uri(baseUrl + "manifest.sha256")).ConfigureAwait(false))
@@ -101,9 +111,14 @@ public sealed class PluginInstaller
         var actualSha = Convert.ToHexString(SHA256.HashData(zipBytes)).ToLowerInvariant();
         if (!string.Equals(actualSha, expectedSha, StringComparison.Ordinal))
         {
+            _log?.LogError(
+                "Install failed: plugin.zip SHA-256 mismatch for {PluginId} (expected {Expected}, got {Actual}).",
+                manifest.Id, expectedSha, actualSha);
             throw new PluginInstallerException(
                 $"Plugin zip SHA256 mismatch. Expected {expectedSha}, got {actualSha}.");
         }
+        _log?.LogInformation(
+            "plugin.zip SHA-256 verified for {PluginId} ({Bytes} bytes).", manifest.Id, zipBytes.Length);
 
         // 3. Stop everything running out of the install dir before we touch it. A live
         // plugin process — tracked OR an orphan from a prior RoRoRo session — holds its
@@ -158,12 +173,18 @@ public sealed class PluginInstaller
             var entrypointPath = Path.Combine(installDir, manifest.Entrypoint);
             if (!File.Exists(entrypointPath))
             {
+                _log?.LogError(
+                    "Install failed: declared entrypoint {Entrypoint} missing from unpacked zip for {PluginId}.",
+                    manifest.Entrypoint, manifest.Id);
                 try { Directory.Delete(installDir, recursive: true); } catch { }
                 throw new PluginInstallerException(
                     $"Plugin manifest declares entrypoint '{manifest.Entrypoint}' but that file is not present in the unpacked zip.");
             }
         }
 
+        _log?.LogInformation(
+            "Install complete: {PluginId} v{PluginVersion} -> {InstallDir}.",
+            manifest.Id, manifest.Version, installDir);
         return new InstalledPlugin
         {
             Manifest = manifest,
