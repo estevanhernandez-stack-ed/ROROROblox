@@ -1,8 +1,11 @@
+using Microsoft.Extensions.Logging;
+
 namespace ROROROblox.App.Plugins;
 
 public sealed class PluginProcessSupervisor
 {
     private readonly IPluginProcessStarter _starter;
+    private readonly ILogger<PluginProcessSupervisor>? _log;
     private readonly Dictionary<string, int> _pidByPluginId = new(StringComparer.Ordinal);
     private readonly object _lock = new();
 
@@ -14,9 +17,10 @@ public sealed class PluginProcessSupervisor
     /// </summary>
     public event Action<string, int>? PluginExited;
 
-    public PluginProcessSupervisor(IPluginProcessStarter starter)
+    public PluginProcessSupervisor(IPluginProcessStarter starter, ILogger<PluginProcessSupervisor>? log = null)
     {
         _starter = starter ?? throw new ArgumentNullException(nameof(starter));
+        _log = log;
         _starter.ProcessExited += OnProcessExited;
     }
 
@@ -36,6 +40,7 @@ public sealed class PluginProcessSupervisor
 
     public void Restart(InstalledPlugin plugin)
     {
+        _log?.LogInformation("Restarting plugin {PluginId}.", plugin.Manifest.Id);
         Stop(plugin.Manifest.Id);
         StartOne(plugin);
     }
@@ -82,7 +87,14 @@ public sealed class PluginProcessSupervisor
         Stop(pluginId);
 
         // Sweep for anything else running out of the dir — orphans the PID map never knew.
-        foreach (var pid in _starter.FindRunningUnder(installDir))
+        var orphans = _starter.FindRunningUnder(installDir);
+        if (orphans.Count > 0)
+        {
+            _log?.LogWarning(
+                "Killing {Count} orphan process(es) running under {InstallDir} (pids: {Pids}).",
+                orphans.Count, installDir, string.Join(", ", orphans));
+        }
+        foreach (var pid in orphans)
         {
             _starter.Kill(pid);
         }
@@ -99,6 +111,9 @@ public sealed class PluginProcessSupervisor
         // actionable message instead of letting the caller hit a bare "access denied".
         if (_starter.FindRunningUnder(installDir).Count > 0)
         {
+            _log?.LogError(
+                "Plugin {PluginId} process(es) under {InstallDir} still running after 5s kill wait; refusing dir wipe.",
+                pluginId, installDir);
             throw new TimeoutException(
                 $"A '{pluginId}' process is still running and won't exit — close it, then try again.");
         }
@@ -116,6 +131,7 @@ public sealed class PluginProcessSupervisor
         {
             if (_pidByPluginId.TryGetValue(pluginId, out var pid))
             {
+                _log?.LogInformation("Stopping plugin {PluginId} (pid {Pid}).", pluginId, pid);
                 _starter.Kill(pid);
                 _pidByPluginId.Remove(pluginId);
             }

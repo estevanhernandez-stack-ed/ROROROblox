@@ -1234,7 +1234,28 @@ public partial class App : Application
         }
 
         _singleInstance?.Dispose();
-        _services?.Dispose();
+
+        // The container holds IAsyncDisposable-only singletons (PluginHostStartupService),
+        // and a sync Dispose() throws InvalidOperationException for those — the repeated
+        // "type only implements IAsyncDisposable" lines in the shutdown log. DisposeAsync
+        // off the dispatcher with a bounded wait, same shape as the StopAsync call above.
+        if (_services is not null)
+        {
+            try
+            {
+                var disposed = Task.Run(() => _services.DisposeAsync().AsTask())
+                    .Wait(TimeSpan.FromSeconds(2));
+                if (!disposed)
+                {
+                    _log?.LogDebug("ServiceProvider.DisposeAsync did not complete within 2s; abandoning.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "ServiceProvider.DisposeAsync threw on exit; ignoring.");
+            }
+        }
+
         AppLogging.Shutdown();
         base.OnExit(e);
     }
