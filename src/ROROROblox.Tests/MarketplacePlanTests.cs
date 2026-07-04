@@ -93,4 +93,29 @@ public class MarketplacePlanTests
 
         Assert.IsType<PluginUpdateState.UpToDate>(Assert.Single(view.Installed).Update);
     }
+
+    [Fact]
+    public void Build_ThreePartVsFourPartSameRelease_UpToDate()
+    {
+        // "1.0.0" installed vs "1.0.0.0" in the catalog is the SAME release — no spurious badge.
+        var view = MarketplacePlan.Build([Installed("a.b", "1.0.0")], [Entry("a.b", "1.0.0.0")], new Version(1, 8, 0, 0));
+
+        Assert.IsType<PluginUpdateState.UpToDate>(Assert.Single(view.Installed).Update);
+    }
+
+    [Fact]
+    public void Build_CatalogOlderThanInstalled_UpToDate_NoDowngradePrompt()
+    {
+        var view = MarketplacePlan.Build([Installed("a.b", "1.3.0")], [Entry("a.b", "1.0.0")], new Version(1, 8, 0, 0));
+
+        Assert.IsType<PluginUpdateState.UpToDate>(Assert.Single(view.Installed).Update);
+    }
+
+    [Fact]
+    public void Build_UnparseableMinHostVersion_FailsOpenInstallable()
+    {
+        var view = MarketplacePlan.Build([], [Entry("a.b", "1.0.0", minHost: "garbage")], new Version(1, 8, 0, 0));
+
+        Assert.True(Assert.Single(view.Available).Installable);
+    }
 }

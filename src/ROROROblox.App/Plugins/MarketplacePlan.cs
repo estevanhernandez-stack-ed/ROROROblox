@@ -84,9 +84,18 @@ internal static class MarketplacePlan
     // the numeric head, so "1.4.3-beta" is treated as "1.4.3".
     private static bool TryParseVersion(string input, out Version version)
     {
+        version = null!;
         var head = input;
         var dash = head.IndexOf('-');
         if (dash >= 0) head = head[..dash];
-        return Version.TryParse(head, out version!);
+        if (!Version.TryParse(head, out var raw))
+        {
+            return false;
+        }
+        // Version.TryParse leaves omitted components at -1; normalize to a fixed 4-part shape so a
+        // 3-part manifest version ("1.0.0") and a 4-part catalog version ("1.0.0.0") for the same
+        // release compare equal instead of firing a spurious "update available" badge.
+        version = new Version(raw.Major, raw.Minor, Math.Max(raw.Build, 0), Math.Max(raw.Revision, 0));
+        return true;
     }
 }
