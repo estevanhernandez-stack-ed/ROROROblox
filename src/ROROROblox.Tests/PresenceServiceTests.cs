@@ -199,7 +199,7 @@ public class PresenceServiceTests
         var presenceEvents = new List<AccountPresenceEventArgs>();
         var expiredIds = new List<Guid>();
         service.AccountPresenceUpdated += (_, e) => presenceEvents.Add(e);
-        service.AccountSessionExpired += (_, id) => expiredIds.Add(id);
+        service.AccountSessionExpired += (_, e) => expiredIds.Add(e.AccountId);
 
         await service.PollOnceAsync();
 
@@ -207,6 +207,33 @@ public class PresenceServiceTests
         Assert.Empty(presenceEvents);
         var raisedId = Assert.Single(expiredIds);
         Assert.Equal(accountId, raisedId);
+    }
+
+    [Fact]
+    public async Task PollOnceAsync_CookieExpired_CarriesPolledCookieGeneration()
+    {
+        // The 401 event must carry the cookie generation as it was when the poll STARTED — that
+        // token is what lets the ViewModel drop a stale 401 after a mid-poll reauth (the re-flag
+        // race, 2026-07-03). The suppression decision itself lives in the ViewModel (UI thread);
+        // here we only pin that the poller stamps the event with the right generation.
+        var accountId = Guid.NewGuid();
+        const long userId = 305;
+        var store = new FakeAccountStore
+        {
+            CookieByAccount = { [accountId] = Cookie },
+            CookieGeneration = { [accountId] = 7 },
+        };
+        var api = new FakeRobloxApi { ThrowExpiredForCookie = { Cookie } };
+        var service = CreateService(api, store, [new PresenceTarget(accountId, userId)]);
+
+        var events = new List<AccountSessionExpiredEventArgs>();
+        service.AccountSessionExpired += (_, e) => events.Add(e);
+
+        await service.PollOnceAsync();
+
+        var ev = Assert.Single(events);
+        Assert.Equal(accountId, ev.AccountId);
+        Assert.Equal(7, ev.PolledCookieGeneration);
     }
 
     [Fact]
@@ -222,7 +249,7 @@ public class PresenceServiceTests
         var presenceEvents = new List<AccountPresenceEventArgs>();
         var expiredIds = new List<Guid>();
         service.AccountPresenceUpdated += (_, e) => presenceEvents.Add(e);
-        service.AccountSessionExpired += (_, id) => expiredIds.Add(id);
+        service.AccountSessionExpired += (_, e) => expiredIds.Add(e.AccountId);
 
         await service.PollOnceAsync();
 
@@ -248,7 +275,7 @@ public class PresenceServiceTests
         var presenceEvents = new List<AccountPresenceEventArgs>();
         var expiredIds = new List<Guid>();
         service.AccountPresenceUpdated += (_, e) => presenceEvents.Add(e);
-        service.AccountSessionExpired += (_, id) => expiredIds.Add(id);
+        service.AccountSessionExpired += (_, e) => expiredIds.Add(e.AccountId);
 
         await service.PollOnceAsync();
 
@@ -417,7 +444,7 @@ public class PresenceServiceTests
         var limited = new List<Guid>();
         var expired = new List<Guid>();
         service.AccountSessionLimited += (_, id) => limited.Add(id);
-        service.AccountSessionExpired += (_, id) => expired.Add(id);
+        service.AccountSessionExpired += (_, e) => expired.Add(e.AccountId);
 
         await service.PollOnceAsync();          // 403 #1
         await service.PollOnceAsync();          // 403 #2
@@ -560,6 +587,15 @@ public class PresenceServiceTests
     private sealed class FakeAccountStore : IAccountStore
     {
         public Dictionary<Guid, string> CookieByAccount { get; } = [];
+
+        /// <summary>
+        /// Per-account cookie generation the poll captures at start and the ViewModel compares at
+        /// flip time. Tests set it to model "a reauth bumped the generation while the poll was in
+        /// flight" (the re-flag race). Defaults to 0.
+        /// </summary>
+        public Dictionary<Guid, int> CookieGeneration { get; } = [];
+
+        public int GetCookieGeneration(Guid id) => CookieGeneration.TryGetValue(id, out var v) ? v : 0;
 
         public Task<string> RetrieveCookieAsync(Guid id) =>
             CookieByAccount.TryGetValue(id, out var c)

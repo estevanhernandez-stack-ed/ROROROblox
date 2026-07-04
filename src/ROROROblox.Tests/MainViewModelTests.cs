@@ -128,6 +128,46 @@ public class MainViewModelTests
         finally { if (File.Exists(path)) File.Delete(path); }
     }
 
+    [Fact]
+    public async Task ApplySessionExpired_CookieReauthedSincePoll_DropsTheFlip()
+    {
+        // The re-flag race (2026-07-03): a presence poll started before a reauth, its stale 401
+        // arrives after the reauth cleared the tag. The poll captured cookie generation 0; the
+        // reauth bumped it to 1 (UpdateCookieAsync). ApplySessionExpired must drop the flip so
+        // the just-refreshed row does NOT snap back to "Session expired."
+        var (vm, store, _, path) = Build();
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added) { SessionExpired = false };
+            vm.Accounts.Add(row);
+            await store.UpdateCookieAsync(added.Id, "fresh-cookie-from-reauth"); // bumps generation 0 -> 1
+
+            vm.ApplySessionExpired(added.Id, polledCookieGeneration: 0);
+
+            Assert.False(row.SessionExpired); // stale 401 dropped
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ApplySessionExpired_GenerationUnchanged_FlipsToExpired()
+    {
+        // Genuine expiry (no reauth since the poll started): generations match, so the flip lands.
+        var (vm, store, _, path) = Build();
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added) { SessionExpired = false };
+            vm.Accounts.Add(row);
+
+            vm.ApplySessionExpired(added.Id, polledCookieGeneration: store.GetCookieGeneration(added.Id));
+
+            Assert.True(row.SessionExpired);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
     /// <summary>
     /// Seed one account into the store (optionally with a persisted RobloxUserId) and hand back
     /// a detached expired-tagged row for it. Detached because <c>LoadAsync</c> drags in
@@ -286,6 +326,7 @@ public class MainViewModelTests
             => throw new IOException("simulated persist failure");
 
         public Task UpdateBrowserTrackerIdAsync(Guid accountId, long browserTrackerId) => inner.UpdateBrowserTrackerIdAsync(accountId, browserTrackerId);
+        public int GetCookieGeneration(Guid id) => inner.GetCookieGeneration(id);
         public Task<IReadOnlyList<Account>> ListAsync() => inner.ListAsync();
         public Task<Account> AddAsync(string displayName, string avatarUrl, string cookie) => inner.AddAsync(displayName, avatarUrl, cookie);
         public Task RemoveAsync(Guid id) => inner.RemoveAsync(id);
@@ -397,7 +438,7 @@ public class MainViewModelTests
     private sealed class FakePresenceService : IPresenceService
     {
         public event EventHandler<AccountPresenceEventArgs>? AccountPresenceUpdated { add { } remove { } }
-        public event EventHandler<Guid>? AccountSessionExpired { add { } remove { } }
+        public event EventHandler<AccountSessionExpiredEventArgs>? AccountSessionExpired { add { } remove { } }
         public event EventHandler<Guid>? AccountSessionLimited { add { } remove { } }
 
         public void Start() => throw new NotImplementedException();
