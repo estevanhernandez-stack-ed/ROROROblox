@@ -23,6 +23,12 @@ public sealed class AccountStore : IAccountStore, IDisposable
 
     private readonly string _filePath;
     private readonly SemaphoreSlim _gate = new(initialCount: 1, maxCount: 1);
+    // In-memory, per-account monotonic counter bumped every time an account's cookie is replaced
+    // (reauth). Not persisted — it only needs to be stable within a single app run so a presence
+    // poll that started before a reauth can tell its stale 401 apart from a genuine expiry
+    // (the reauth re-flag race, 2026-07-03). Concurrent because the poll loop reads it off the
+    // threadpool while the store gate serializes the bump.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, int> _cookieGeneration = new();
     private bool _disposed;
 
     public AccountStore() : this(DefaultPath()) { }
@@ -281,6 +287,9 @@ public sealed class AccountStore : IAccountStore, IDisposable
         }
     }
 
+    public int GetCookieGeneration(Guid id) =>
+        _cookieGeneration.TryGetValue(id, out var v) ? v : 0;
+
     public async Task UpdateCookieAsync(Guid id, string newCookie)
     {
         if (string.IsNullOrEmpty(newCookie))
@@ -299,6 +308,9 @@ public sealed class AccountStore : IAccountStore, IDisposable
             }
             blob.Accounts[index] = blob.Accounts[index] with { Cookie = newCookie };
             await SaveAsync(blob).ConfigureAwait(false);
+            // Bump AFTER the save commits so a reader that observes the new generation is
+            // guaranteed the new cookie is already on disk (reauth re-flag race guard).
+            _cookieGeneration.AddOrUpdate(id, 1, (_, v) => v + 1);
         }
         finally
         {

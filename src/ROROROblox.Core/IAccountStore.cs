@@ -14,6 +14,18 @@ public interface IAccountStore
     Task RemoveAsync(Guid id);
     Task<string> RetrieveCookieAsync(Guid id);
     Task UpdateCookieAsync(Guid id, string newCookie);
+
+    /// <summary>
+    /// Current value of the per-account cookie generation — an in-memory monotonic counter bumped
+    /// each time <see cref="UpdateCookieAsync"/> replaces this account's cookie (i.e. on reauth).
+    /// A presence poll captures this at poll-start and carries it on
+    /// <see cref="IPresenceService.AccountSessionExpired"/>; the ViewModel compares it against the
+    /// live value when applying the flip, so a stale 401 from a poll that started BEFORE a reauth
+    /// can't re-flag a just-refreshed account (the re-flag race, 2026-07-03). Not persisted —
+    /// resets to 0 per app run, which is sufficient since a poll can't span a restart. Returns 0
+    /// for an account whose cookie has never been updated this run.
+    /// </summary>
+    int GetCookieGeneration(Guid id);
     Task TouchLastLaunchedAsync(Guid id);
 
     /// <summary>

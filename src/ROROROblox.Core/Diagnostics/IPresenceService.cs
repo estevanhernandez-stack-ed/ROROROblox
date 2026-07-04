@@ -20,13 +20,19 @@ public interface IPresenceService
     event EventHandler<AccountPresenceEventArgs>? AccountPresenceUpdated;
 
     /// <summary>
-    /// Fired (payload = the account id) when a poll for that account returns 401 /
-    /// <see cref="CookieExpiredException"/> — its cookie died between launches. The ViewModel flips
-    /// the row to the yellow "Session expired" badge. On a 401, <see cref="AccountPresenceUpdated"/>
-    /// is NOT raised for that account — the two signals are mutually exclusive per poll. Spec §1
-    /// (Concurrency / rate limits) + "Error handling / edge cases" (401 from presence).
+    /// Fired when a poll for that account returns 401 / <see cref="CookieExpiredException"/> — its
+    /// cookie died between launches. The ViewModel flips the row to the yellow "Session expired"
+    /// badge. On a 401, <see cref="AccountPresenceUpdated"/> is NOT raised for that account — the two
+    /// signals are mutually exclusive per poll. Spec §1 (Concurrency / rate limits) + "Error handling
+    /// / edge cases" (401 from presence).
+    ///
+    /// The payload carries the <see cref="IAccountStore.GetCookieGeneration"/> captured at poll-start
+    /// so the ViewModel can suppress the flip when a reauth replaced the cookie while this poll was in
+    /// flight — the stale-401 re-flag race (2026-07-03). The comparison MUST happen where the row's
+    /// expired flag is mutated (the UI thread), so the token travels on the event rather than being
+    /// resolved inside the poll.
     /// </summary>
-    event EventHandler<Guid>? AccountSessionExpired;
+    event EventHandler<AccountSessionExpiredEventArgs>? AccountSessionExpired;
 
     /// <summary>
     /// Fired (payload = the account id) when an account's presence poll returns HTTP 403
@@ -68,6 +74,24 @@ public interface IPresenceService
 /// Roblox user id. Accounts without a resolved <see cref="RobloxUserId"/> aren't poll targets.
 /// </summary>
 public sealed record PresenceTarget(Guid AccountId, long RobloxUserId);
+
+/// <summary>
+/// Payload for <see cref="IPresenceService.AccountSessionExpired"/>.
+/// <see cref="PolledCookieGeneration"/> is the <see cref="IAccountStore.GetCookieGeneration"/>
+/// value captured when this poll read the cookie; the ViewModel compares it against the live
+/// generation at flip-apply time to drop a 401 made stale by a mid-poll reauth.
+/// </summary>
+public sealed class AccountSessionExpiredEventArgs : EventArgs
+{
+    public AccountSessionExpiredEventArgs(Guid accountId, int polledCookieGeneration)
+    {
+        AccountId = accountId;
+        PolledCookieGeneration = polledCookieGeneration;
+    }
+
+    public Guid AccountId { get; }
+    public int PolledCookieGeneration { get; }
+}
 
 /// <summary>
 /// Payload for <see cref="IPresenceService.AccountPresenceUpdated"/>. <see cref="GameName"/> is
