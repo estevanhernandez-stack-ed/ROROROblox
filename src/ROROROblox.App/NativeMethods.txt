@@ -9,3 +9,4 @@ GetCurrentThreadId
 SetWindowTextW
 DwmSetWindowAttribute
 DWMWINDOWATTRIBUTE
+GetCurrentPackageFullName

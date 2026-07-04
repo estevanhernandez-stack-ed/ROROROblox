@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using ROROROblox.App.Distribution;
 using ROROROblox.App.Plugins.Adapters;
 using ROROROblox.App.ViewModels;
 
@@ -33,6 +34,9 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
     private readonly PluginProcessSupervisor _supervisor;
     private readonly Func<PluginManifest, Task<IReadOnlyList<string>?>> _showConsentSheet;
     private readonly ILogger<PluginsViewModel> _log;
+    private readonly IDistributionMode _distributionMode;
+    private readonly PluginCatalogClient _catalogClient;
+    private readonly Version _hostVersion;
 
     private string _installUrlInput = string.Empty;
     private string? _statusBanner;
@@ -47,6 +51,9 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         PluginInstaller installer,
         PluginProcessSupervisor supervisor,
         Func<PluginManifest, Task<IReadOnlyList<string>?>> showConsentSheet,
+        IDistributionMode distributionMode,
+        PluginCatalogClient catalogClient,
+        Version hostVersion,
         ILogger<PluginsViewModel>? log = null)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
@@ -55,7 +62,12 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         _installer = installer ?? throw new ArgumentNullException(nameof(installer));
         _supervisor = supervisor ?? throw new ArgumentNullException(nameof(supervisor));
         _showConsentSheet = showConsentSheet ?? throw new ArgumentNullException(nameof(showConsentSheet));
+        _distributionMode = distributionMode ?? throw new ArgumentNullException(nameof(distributionMode));
+        _catalogClient = catalogClient ?? throw new ArgumentNullException(nameof(catalogClient));
+        _hostVersion = hostVersion ?? throw new ArgumentNullException(nameof(hostVersion));
         _log = log ?? NullLogger<PluginsViewModel>.Instance;
+        UpdatePluginCommand = new RelayCommand(p => UpdatePluginAsync(p as PluginRow), _ => !IsBusy);
+        InstallFromCatalogCommand = new RelayCommand(p => InstallFromCatalogAsync(p as AvailablePluginRow), _ => !IsBusy);
 
         InstallFromUrlCommand = new RelayCommand(InstallAsync, () => !IsBusy && !string.IsNullOrWhiteSpace(InstallUrlInput));
         ToggleAutostartCommand = new RelayCommand(p => ToggleAutostartAsync(p as PluginRow));
@@ -69,6 +81,19 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public ObservableCollection<PluginRow> Plugins { get; } = new();
+
+    /// <summary>Not-installed catalog plugins. Always empty in a packaged (Store/sideload) build.</summary>
+    public ObservableCollection<AvailablePluginRow> Available { get; } = new();
+
+    /// <summary>
+    /// The marketplace (catalog fetch, Available section, update badges) is active ONLY when
+    /// unpackaged. In a packaged MSIX build this is false and the window stays the paste-URL-only
+    /// surface that policy 10.2.2 was certified against. See the design doc §2.
+    /// </summary>
+    public bool MarketplaceEnabled => !_distributionMode.IsPackaged;
+
+    public ICommand UpdatePluginCommand { get; }
+    public ICommand InstallFromCatalogCommand { get; }
 
     public string InstallUrlInput
     {
@@ -112,10 +137,32 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
     {
         var installed = await _registry.ScanAsync().ConfigureAwait(true);
         var running = _supervisor.RunningPids;
-        Plugins.Clear();
-        foreach (var p in installed)
+
+        // Fetch the catalog ONLY when unpackaged — the packaged build must never read a curated list
+        // from a server (policy 10.2.2). MarketplacePlan then joins installed + catalog + host version.
+        IReadOnlyList<PluginCatalogEntry> catalog = [];
+        if (MarketplaceEnabled)
         {
-            Plugins.Add(new PluginRow(p, isRunning: running.ContainsKey(p.Manifest.Id)));
+            using var catalogTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+            catalog = await _catalogClient.FetchAsync(catalogTimeout.Token).ConfigureAwait(true);
+        }
+        var view = MarketplacePlan.Build(installed, catalog, _hostVersion);
+
+        Plugins.Clear();
+        foreach (var iv in view.Installed)
+        {
+            var row = new PluginRow(iv.Plugin, isRunning: running.ContainsKey(iv.Plugin.Manifest.Id));
+            if (iv.Update is PluginUpdateState.UpdateAvailable upd)
+            {
+                row.SetUpdateAvailable($"Update available ({upd.FromVersion} → {upd.ToVersion})", iv.UpdateInstallUrl);
+            }
+            Plugins.Add(row);
+        }
+
+        Available.Clear();
+        foreach (var av in view.Available)
+        {
+            Available.Add(new AvailablePluginRow(av));
         }
     }
 
@@ -194,6 +241,47 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         {
             IsBusy = false;
         }
+    }
+
+    private async Task UpdatePluginAsync(PluginRow? row)
+    {
+        if (row?.UpdateInstallUrl is not { } url) return;
+        var wasRunning = _supervisor.RunningPids.ContainsKey(row.Plugin.Manifest.Id);
+        IsBusy = true;
+        StatusBanner = null;
+        try
+        {
+            // The installer stops any running instance out of the plugin's dir before re-extracting,
+            // then unpacks the new version. Same SHA-verified path as a fresh install.
+            var updated = await _installer.InstallAsync(url, Array.Empty<string>()).ConfigureAwait(true);
+            _log.LogInformation("Plugin {PluginId} updated to v{Version}.", updated.Manifest.Id, updated.Manifest.Version);
+            _registryAdapter.Refresh();
+            await LoadAsync().ConfigureAwait(true);
+            if (wasRunning)
+            {
+                _supervisor.Start(updated); // relaunch on the new version, only if it was running before
+                var newRow = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == updated.Manifest.Id);
+                if (newRow is not null) newRow.IsRunning = true;
+            }
+            StatusBanner = $"{updated.Manifest.Name} updated to {updated.Manifest.Version}.";
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning("Plugin update failed (url input): {ExceptionType}.", ex.GetType().Name);
+            StatusBanner = $"Update failed: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task InstallFromCatalogAsync(AvailablePluginRow? row)
+    {
+        if (row is null) return;
+        // Reuse the exact URL-install path (consent sheet included) — the catalog just pre-fills the URL.
+        InstallUrlInput = row.InstallUrl;
+        await InstallAsync().ConfigureAwait(true);
     }
 
     internal async Task ToggleAutostartAsync(PluginRow? row)
@@ -421,5 +509,49 @@ internal sealed class PluginRow : INotifyPropertyChanged
         ? "1 capability"
         : $"{CapabilityCount} capabilities";
 
+    private bool _updateAvailable;
+    /// <summary>True when the catalog lists a newer version than the installed one. Drives the
+    /// update badge + Update button in the window.</summary>
+    public bool UpdateAvailable
+    {
+        get => _updateAvailable;
+        private set { if (_updateAvailable != value) { _updateAvailable = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UpdateAvailable))); } }
+    }
+
+    /// <summary>"Update available (0.1.0 → 0.2.0)" — the badge text. Empty when up to date.</summary>
+    public string UpdateLabel { get; private set; } = string.Empty;
+
+    /// <summary>The catalog installUrl to update from. Null when no update is available.</summary>
+    public string? UpdateInstallUrl { get; private set; }
+
+    internal void SetUpdateAvailable(string label, string? installUrl)
+    {
+        UpdateLabel = label;
+        UpdateInstallUrl = installUrl;
+        UpdateAvailable = true;
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
+}
+
+/// <summary>
+/// A catalog plugin the user does NOT have installed — the Available section's row. Wraps
+/// <see cref="AvailablePluginView"/> so XAML binds friendly names.
+/// </summary>
+internal sealed class AvailablePluginRow
+{
+    private readonly AvailablePluginView _view;
+
+    public AvailablePluginRow(AvailablePluginView view) => _view = view ?? throw new ArgumentNullException(nameof(view));
+
+    public string Id => _view.Entry.Id;
+    public string Name => _view.Entry.Name;
+    public string Publisher => _view.Entry.Publisher;
+    public string Description => _view.Entry.Description;
+    public string Version => _view.Entry.LatestVersion;
+    public string InstallUrl => _view.Entry.InstallUrl;
+    public bool Installable => _view.Installable;
+
+    /// <summary>"Install" when installable, else the reason it isn't.</summary>
+    public string ActionLabel => Installable ? "Install" : $"Needs RoRoRo {_view.Entry.MinHostVersion}+";
 }

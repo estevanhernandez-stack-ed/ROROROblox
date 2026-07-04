@@ -1,0 +1,28 @@
+[
+  {
+    "id": "626labs.ur-task",
+    "name": "RoRoRo Ur Task",
+    "description": "Per-window-aware macro recording for RoRoRo-managed alts. Record once, play on any alt — round-robin assignments, keep-alive, window-relative mouse macros, and an action bridge for sibling plugins.",
+    "publisher": "626 Labs LLC",
+    "latestVersion": "0.4.1",
+    "installUrl": "https://github.com/estevanhernandez-stack-ed/rororo-ur-task/releases/latest/download/",
+    "minHostVersion": "1.4.3"
+  },
+  {
+    "id": "626labs.ur-ocr",
+    "name": "RoRoRo Ur OCR",
+    "description": "Watches user-defined screen regions for text or color triggers and fires keybinds when they match. Pairs with Ur Task over the action bridge for perception-to-action.",
+    "publisher": "626 Labs LLC",
+    "latestVersion": "0.4.0",
+    "installUrl": "https://github.com/estevanhernandez-stack-ed/Ur-OCR/releases/latest/download/"
+  },
+  {
+    "id": "626labs.ur-afk",
+    "name": "RoRoRo Ur AFK",
+    "description": "Keeps idle Roblox accounts alive — focuses each and taps space before the ~20-minute idle timeout. One toggle, one key ever sent.",
+    "publisher": "626 Labs LLC",
+    "latestVersion": "0.1.1",
+    "installUrl": "https://github.com/estevanhernandez-stack-ed/rororo-ur-afk/releases/latest/download/",
+    "minHostVersion": "1.8.0.0"
+  }
+]
