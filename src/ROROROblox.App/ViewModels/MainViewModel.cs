@@ -1551,9 +1551,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             }
         }
 
-        // Pass the store + account id, not the plaintext cookie — the window retrieves the cookie
-        // fresh per refresh into a short-lived local instead of holding it for its whole lifetime.
-        var window = new FriendFollowWindow(_api, _accountStore, summary.Id, userId, summary.DisplayName)
+        // Build the picker's friend sources: the opened row is always a source (and always the
+        // launcher); the main is added as the default source when present and distinct, so main's
+        // friends show first (alts usually have empty lists). The window retrieves each source's
+        // cookie fresh per refresh — never holds plaintext for its lifetime.
+        var rowSource = new FriendSource(summary.Id, userId, summary.DisplayName, summary.IsMain);
+        var mainSource = await TryResolveMainFriendSourceAsync(summary);
+        var (sources, defaultIndex) = FriendSourcePlan.Build(rowSource, mainSource);
+
+        var window = new FriendFollowWindow(_api, _accountStore, sources, defaultIndex, summary.Id)
         {
             Owner = Application.Current.MainWindow,
         };
