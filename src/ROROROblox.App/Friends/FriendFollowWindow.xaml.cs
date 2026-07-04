@@ -110,11 +110,14 @@ internal partial class FriendFollowWindow : Window
         StatusText.Text = "Loading friends...";
         FriendsList.Children.Clear();
         RefreshButton.IsEnabled = false;
+        SourceSwitchButton.IsEnabled = false;
+        // Captured above the try so the catch blocks below name the account this fetch was
+        // actually for, even if the user switches sources again while this call is in flight.
+        var source = CurrentSource;
         try
         {
             // Fetch the plaintext cookie fresh per refresh into a local that falls out of scope
             // after the API calls below — we never retain it on the window for the modal's lifetime.
-            var source = CurrentSource;
             var cookie = await _accountStore.RetrieveCookieAsync(source.AccountId);
 
             var friends = await _api.GetFriendsAsync(cookie, source.RobloxUserId);
@@ -189,8 +192,8 @@ internal partial class FriendFollowWindow : Window
         catch (CookieExpiredException)
         {
             StatusText.Text = _sources.Count > 1
-                ? $"{CurrentSource.DisplayName}'s session expired — re-authenticate it, or switch to the other account's friends."
-                : $"{CurrentSource.DisplayName}'s session expired — close this and re-authenticate the account first.";
+                ? $"{source.DisplayName}'s session expired — re-authenticate it, or switch to the other account's friends."
+                : $"{source.DisplayName}'s session expired — close this and re-authenticate the account first.";
         }
         catch (AccountStoreCorruptException)
         {
@@ -203,6 +206,7 @@ internal partial class FriendFollowWindow : Window
         finally
         {
             RefreshButton.IsEnabled = true;
+            SourceSwitchButton.IsEnabled = true;
         }
     }
 
