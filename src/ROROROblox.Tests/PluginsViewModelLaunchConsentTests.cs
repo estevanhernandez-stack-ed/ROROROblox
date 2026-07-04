@@ -1,5 +1,6 @@
 using System.IO;
 using System.Net.Http;
+using ROROROblox.App.Distribution;
 using ROROROblox.App.Plugins;
 using ROROROblox.App.Plugins.Adapters;
 
@@ -52,7 +53,11 @@ public class PluginsViewModelLaunchConsentTests : IDisposable
     private PluginsViewModel BuildVm(
         Func<PluginManifest, Task<IReadOnlyList<string>?>> showSheet,
         CapturingLogger<PluginsViewModel>? log = null)
-        => new(_registry, _adapter, _consentStore, _installer, _supervisor, showSheet, log);
+        => new(_registry, _adapter, _consentStore, _installer, _supervisor, showSheet,
+            new FakeDistributionMode(isPackaged: false),
+            new PluginCatalogClient(_ => Task.FromResult("[]")),
+            new Version(1, 8, 0, 0),
+            log);
 
     [Fact]
     public async Task Launch_WithoutConsentRecord_ShowsSheetPersistsGrantAndStarts()
@@ -190,5 +195,13 @@ public class PluginsViewModelLaunchConsentTests : IDisposable
         public void Kill(int pid) => ProcessExited?.Invoke(pid);
 
         public IReadOnlyList<int> FindRunningUnder(string dirPath) => Array.Empty<int>();
+    }
+
+    // Deterministic stand-in for Win32DistributionMode — these tests exercise the launch/consent
+    // path, not the marketplace gate, so always-unpackaged keeps them independent of the real
+    // package-identity probe (which would otherwise vary by how the test host itself is running).
+    private sealed class FakeDistributionMode(bool isPackaged) : IDistributionMode
+    {
+        public bool IsPackaged => isPackaged;
     }
 }
