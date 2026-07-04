@@ -1,5 +1,7 @@
 # RoRoRo v1.8.0.0 — Release Runbook
 
+> **⚠️ The recurring release loop is [`release-playbook.md`](release-playbook.md) — read it FIRST.** This runbook was written before consulting it (a process miss, caught mid-release 2026-07-02) and duplicates phases the playbook already owns, with two errors the playbook would have prevented: the spaced `PublisherDisplayName` (Partner Center rejected the package — the playbook Phase 3 identity constants are verbatim, `626Labs LLC` no space) and the skipped Phase 4 sideload build. This file stays as the v1.8-specific record (scope decision, compat values, links); for future releases the playbook governs, and a per-version runbook should hold only what's version-specific.
+>
 > **Status:** DRAFT — for review before execution. Written 2026-07-02, after PR #32 (tray-residence gate) merged to `main` (`d4ea9da`).
 > **What v1.8.0.0 bundles:** three merged branches since v1.7.1.0 — **#30 Limited-session handling**, **#31 activity awareness** (the consent-gated `GetAccountActivity` plugin query), **#32 tray-residence gate + runtime lock awareness**.
 > **Current state:** app `1.7.1.0` (latest tag `v1.7.1.0`), `PluginContract` at `0.3.0` (unpublished), `roblox-compat.json` known-good max `0.722.0.7221024`.
@@ -84,7 +86,7 @@ Use the **fuller [reviewer-letter-1.4.0.0.md](reviewer-letter-1.4.0.0.md) shape*
 
 CLAUDE.md's "Common tasks" table points MSIX builds at `src/RORORO.Package/RORORO.Package.wapproj` — **that project doesn't exist**. Correct the two rows to the real scripts:
 - Sideload → `powershell -File scripts/build-msix.ps1 -Sideload -CertPath dev-cert.pfx -CertPassword <pwd>`
-- Store → `powershell -File scripts/finalize-store-build.ps1 -Version 1.8.0.0 -IdentityName 626LabsLLC.RoRoRoBlox -PublisherCN "CN=177BCE59-0966-4975-9962-10E36652141F" -PublisherDisplayName "626 Labs LLC"`
+- Store → `powershell -File scripts/finalize-store-build.ps1 -Version 1.8.0.0 -IdentityName 626LabsLLC.RoRoRoBlox -PublisherCN "CN=177BCE59-0966-4975-9962-10E36652141F" -PublisherDisplayName "626Labs LLC"`
 
 ---
 
@@ -112,7 +114,7 @@ powershell -ExecutionPolicy Bypass -File scripts/finalize-store-build.ps1 `
   -Version 1.8.0.0 `
   -IdentityName "626LabsLLC.RoRoRoBlox" `
   -PublisherCN "CN=177BCE59-0966-4975-9962-10E36652141F" `
-  -PublisherDisplayName "626 Labs LLC"
+  -PublisherDisplayName "626Labs LLC"
 ```
 
 Produces `dist/RORORO-Store.msix` — **unsigned** (Partner Center signs on upload). Then roll the manifest back before the sideload build:
