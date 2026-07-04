@@ -66,8 +66,8 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         _catalogClient = catalogClient ?? throw new ArgumentNullException(nameof(catalogClient));
         _hostVersion = hostVersion ?? throw new ArgumentNullException(nameof(hostVersion));
         _log = log ?? NullLogger<PluginsViewModel>.Instance;
-        UpdatePluginCommand = new RelayCommand(p => UpdatePluginAsync(p as PluginRow));
-        InstallFromCatalogCommand = new RelayCommand(p => InstallFromCatalogAsync(p as AvailablePluginRow));
+        UpdatePluginCommand = new RelayCommand(p => UpdatePluginAsync(p as PluginRow), _ => !IsBusy);
+        InstallFromCatalogCommand = new RelayCommand(p => InstallFromCatalogAsync(p as AvailablePluginRow), _ => !IsBusy);
 
         InstallFromUrlCommand = new RelayCommand(InstallAsync, () => !IsBusy && !string.IsNullOrWhiteSpace(InstallUrlInput));
         ToggleAutostartCommand = new RelayCommand(p => ToggleAutostartAsync(p as PluginRow));
@@ -140,9 +140,12 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
 
         // Fetch the catalog ONLY when unpackaged — the packaged build must never read a curated list
         // from a server (policy 10.2.2). MarketplacePlan then joins installed + catalog + host version.
-        IReadOnlyList<PluginCatalogEntry> catalog = MarketplaceEnabled
-            ? await _catalogClient.FetchAsync().ConfigureAwait(true)
-            : [];
+        IReadOnlyList<PluginCatalogEntry> catalog = [];
+        if (MarketplaceEnabled)
+        {
+            using var catalogTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+            catalog = await _catalogClient.FetchAsync(catalogTimeout.Token).ConfigureAwait(true);
+        }
         var view = MarketplacePlan.Build(installed, catalog, _hostVersion);
 
         Plugins.Clear();
@@ -243,6 +246,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
     private async Task UpdatePluginAsync(PluginRow? row)
     {
         if (row?.UpdateInstallUrl is not { } url) return;
+        var wasRunning = _supervisor.RunningPids.ContainsKey(row.Plugin.Manifest.Id);
         IsBusy = true;
         StatusBanner = null;
         try
@@ -253,9 +257,12 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             _log.LogInformation("Plugin {PluginId} updated to v{Version}.", updated.Manifest.Id, updated.Manifest.Version);
             _registryAdapter.Refresh();
             await LoadAsync().ConfigureAwait(true);
-            _supervisor.Start(updated); // relaunch on the new version
-            var newRow = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == updated.Manifest.Id);
-            if (newRow is not null) newRow.IsRunning = true;
+            if (wasRunning)
+            {
+                _supervisor.Start(updated); // relaunch on the new version, only if it was running before
+                var newRow = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == updated.Manifest.Id);
+                if (newRow is not null) newRow.IsRunning = true;
+            }
             StatusBanner = $"{updated.Manifest.Name} updated to {updated.Manifest.Version}.";
         }
         catch (Exception ex)
