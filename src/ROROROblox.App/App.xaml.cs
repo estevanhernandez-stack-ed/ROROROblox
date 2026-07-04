@@ -617,6 +617,10 @@ public partial class App : Application
                 manifest => ROROROblox.App.Plugins.ConsentSheet.ShowAndAwaitDecisionAsync(owner, manifest);
 
             var catalogHttp = _services.GetRequiredService<IHttpClientFactory>().CreateClient();
+            catalogHttp.DefaultRequestHeaders.UserAgent.Clear();
+            var catalogVersion = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            catalogHttp.DefaultRequestHeaders.UserAgent.Add(
+                new System.Net.Http.Headers.ProductInfoHeaderValue("RORORO", catalogVersion));
             var catalogClient = new ROROROblox.App.Plugins.PluginCatalogClient(
                 catalogHttp,
                 "https://github.com/estevanhernandez-stack-ed/ROROROblox/releases/latest/download/plugins-catalog.json");
