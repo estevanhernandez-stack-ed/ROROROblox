@@ -182,7 +182,12 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             {
                 TryDeleteInstallDir(installed.InstallDir);
             }
-            _log.LogWarning(ex, "Plugin install failed (url input); install dir rolled back if present.");
+            // Log the exception TYPE only, never the message — the installer builds messages by
+            // interpolating the pasted URL ("GET {uri} returned {status}."), and a signed/SAS
+            // URL carries a secret in its query string. The support log is user-zipped, so the
+            // full message must not land there; the user still sees ex.Message in the ephemeral
+            // on-screen banner below.
+            _log.LogWarning("Plugin install failed (url input): {ExceptionType}; install dir rolled back if present.", ex.GetType().Name);
             StatusBanner = $"Install failed: {ex.Message}";
         }
         finally
@@ -191,7 +196,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private async Task ToggleAutostartAsync(PluginRow? row)
+    internal async Task ToggleAutostartAsync(PluginRow? row)
     {
         if (row is null) return;
         try
@@ -262,7 +267,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private async Task RevokeAsync(PluginRow? row)
+    internal async Task RevokeAsync(PluginRow? row)
     {
         if (row is null) return;
         try

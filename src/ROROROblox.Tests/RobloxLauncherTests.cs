@@ -274,7 +274,12 @@ public class RobloxLauncherTests
             startResult: 1);
 
         await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(920587237), browserTrackerId: 7777777777777);
+        // The btid rides TWICE in a launch URI: the outer +browsertrackerid: segment AND the
+        // browserTrackerId= query param embedded in the (escaped) placelauncherurl. Assert both
+        // so a regression that reverts one source to the random factory — leaving a single URI
+        // carrying two different tracker ids — fails the test.
         Assert.Contains("+browsertrackerid:7777777777777", processStarter.LastUri);
+        Assert.Contains("browserTrackerId%3D7777777777777", processStarter.LastUri);
 
         await launcher.LaunchAsync(TestCookie, placeUrl: TestPlaceUrl, browserTrackerId: 8888888888888);
         Assert.Contains("+browsertrackerid:8888888888888", processStarter.LastUri);
