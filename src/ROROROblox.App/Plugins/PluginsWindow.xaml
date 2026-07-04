@@ -179,7 +179,8 @@
                 CornerRadius="8">
             <Grid>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding Plugins}" Margin="8">
+                  <StackPanel Margin="8">
+                    <ItemsControl ItemsSource="{Binding Plugins}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type plugins:PluginRow}">
                                 <Border Background="{DynamicResource RowBgBrush}"
@@ -225,6 +226,18 @@
                                                            FontSize="10"
                                                            Foreground="{DynamicResource CyanBrush}" />
                                             </Border>
+
+                                            <Border Background="{DynamicResource MagentaBrush}"
+                                                    CornerRadius="4"
+                                                    Padding="6,2"
+                                                    HorizontalAlignment="Left"
+                                                    Margin="0,6,0,0"
+                                                    Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <TextBlock Text="{Binding UpdateLabel}"
+                                                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                                           FontSize="10"
+                                                           Foreground="{DynamicResource WhiteBrush}" />
+                                            </Border>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1"
@@ -265,12 +278,90 @@
                                                     HorizontalAlignment="Right"
                                                     Command="{Binding DataContext.RevokeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}" />
+                                            <Button Content="Update"
+                                                    Margin="0,8,0,0"
+                                                    Padding="12,4"
+                                                    Style="{StaticResource CyanCtaButton}"
+                                                    FontSize="11"
+                                                    HorizontalAlignment="Right"
+                                                    Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                    Command="{Binding DataContext.UpdatePluginCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" />
                                         </StackPanel>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+
+                    <!-- Available (marketplace) — present only when unpackaged. Bound to a VM
+                         collection that is always empty in a packaged (Store/sideload) build, and
+                         the whole block collapses on MarketplaceEnabled so nothing paints there. -->
+                    <StackPanel Visibility="{Binding MarketplaceEnabled, Converter={StaticResource BoolToVisibilityConverter}}"
+                                Margin="0,8,0,0">
+                        <!-- ZeroToVisibilityConverter ignores its ConverterParameter (ignores
+                             the parameter entirely, only checks value==0); there's no invert mode,
+                             so binding it here would show the header when Available is EMPTY and
+                             hide it once entries land, backwards from intent. Fallback per brief:
+                             no Visibility binding at all, the header just shows whenever this
+                             whole block is visible (MarketplaceEnabled), which is also the correct
+                             behavior for the "empty until plugins catalog ships" period. -->
+                        <TextBlock Text="AVAILABLE"
+                                   FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource MutedTextBrush}"
+                                   Margin="0,8,0,6" />
+                        <ItemsControl ItemsSource="{Binding Available}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type plugins:AvailablePluginRow}">
+                                    <Border Background="{DynamicResource RowBgBrush}"
+                                            CornerRadius="8"
+                                            Padding="14,12"
+                                            Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Name}"
+                                                               FontSize="14" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource WhiteBrush}" />
+                                                    <TextBlock Text="{Binding Version}"
+                                                               Margin="8,2,0,0"
+                                                               FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                                               FontSize="10"
+                                                               Foreground="{DynamicResource MutedTextBrush}"
+                                                               VerticalAlignment="Center" />
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Publisher}"
+                                                           FontSize="11"
+                                                           Foreground="{DynamicResource MutedTextBrush}"
+                                                           Margin="0,2,0,0" />
+                                                <TextBlock Text="{Binding Description}"
+                                                           FontSize="11"
+                                                           Foreground="{DynamicResource MutedTextBrush}"
+                                                           TextWrapping="Wrap"
+                                                           Opacity="0.85"
+                                                           Margin="0,4,0,0" />
+                                            </StackPanel>
+                                            <Button Grid.Column="1"
+                                                    Content="{Binding ActionLabel}"
+                                                    Padding="14,6"
+                                                    VerticalAlignment="Top"
+                                                    Style="{StaticResource CyanCtaButton}"
+                                                    FontSize="11"
+                                                    IsEnabled="{Binding Installable}"
+                                                    Command="{Binding DataContext.InstallFromCatalogCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                  </StackPanel>
                 </ScrollViewer>
 
                 <StackPanel HorizontalAlignment="Center"
