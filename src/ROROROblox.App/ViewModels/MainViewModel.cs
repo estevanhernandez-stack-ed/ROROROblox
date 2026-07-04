@@ -1447,6 +1447,51 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Resolve the MAIN account as a friends-list source for a picker opened on <paramref name="openedRow"/>.
+    /// Returns null when there's no main, the main IS the opened row, or the main's RobloxUserId can't be
+    /// resolved (missing/corrupt cookie, expired session, or profile-fetch failure) — every one of which
+    /// collapses the picker to single-source. Resolves + persists the main's userId on demand (soft-fail),
+    /// mirroring the opened-row resolution in <see cref="OpenFriendFollowAsync"/>.
+    /// </summary>
+    internal async Task<FriendSource?> TryResolveMainFriendSourceAsync(AccountSummary openedRow)
+    {
+        var main = MainAccount;
+        if (main is null || main.Id == openedRow.Id)
+        {
+            return null;
+        }
+
+        long userId = main.RobloxUserId ?? 0;
+        if (userId <= 0)
+        {
+            try
+            {
+                var cookie = await _accountStore.RetrieveCookieAsync(main.Id);
+                var profile = await _api.GetUserProfileAsync(cookie);
+                userId = profile.UserId;
+                main.RobloxUserId = userId;
+                try
+                {
+                    await _accountStore.UpdateRobloxUserIdAsync(main.Id, userId);
+                }
+                catch (Exception persistEx)
+                {
+                    _log.LogDebug(persistEx, "Couldn't persist main RobloxUserId {AccountId} (Friends modal).", main.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Any failure (missing/corrupt cookie, expired session, fetch) collapses to single-source —
+                // the user can still browse the opened account's own friends.
+                _log.LogDebug(ex, "Couldn't resolve main's userId for Friends modal {AccountId}; single-source fallback.", main.Id);
+                return null;
+            }
+        }
+
+        return new FriendSource(main.Id, userId, main.DisplayName, IsMain: true);
+    }
+
+    /// <summary>
     /// Open the Friends modal for one account. Resolves the Roblox userId on first open
     /// (cached on <see cref="AccountSummary"/> for subsequent opens). After the modal closes,
     /// if the user picked a friend to follow, fire the launch with that target.
