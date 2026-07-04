@@ -83,8 +83,11 @@ Changes:
 - A **two-state toggle** at the top of the window: `[Main]'s friends` / `[This account]'s friends`.
   Switching source re-runs `RefreshAsync` against the selected identity's cookie + userId.
 - **When the browsed list belongs to a different account than the launcher** (the two-source case,
-  browsing main's friends from an alt's row), the window **header names both roles** so the split is
-  never ambiguous: *"Browsing [Main]'s friends · [Alt] will follow."* In the single-source case (no
+  browsing main's friends from an alt's row), the window header names both roles so the split is never
+  ambiguous, and the copy is **action-first** so nothing reads as automatic — the user still picks a
+  friend and clicks Follow, exactly as today. Header list label: *"[Main]'s friends"*; the hint under
+  the toggle reads *"Follow one to launch [Alt] into their server."* (Not "will follow" — nothing is
+  pulled in automatically; the Follow button click is the only trigger.) In the single-source case (no
   main, or the browsed list is the launcher's own), the header is just the account name, as today.
 - A one-line **friends-only caveat** near the list: following works into public servers; a
   friends-only server the launching account isn't a friend of will land at home.
