@@ -90,7 +90,7 @@ public sealed class PresenceService : IPresenceService, IDisposable
 
     public event EventHandler<AccountPresenceEventArgs>? AccountPresenceUpdated;
 
-    public event EventHandler<Guid>? AccountSessionExpired;
+    public event EventHandler<AccountSessionExpiredEventArgs>? AccountSessionExpired;
 
     public event EventHandler<Guid>? AccountSessionLimited;
 
@@ -225,7 +225,15 @@ public sealed class PresenceService : IPresenceService, IDisposable
     private async Task PollTargetAsync(PresenceTarget target, CancellationToken ct)
     {
         // Cookie is used only in-memory for the HTTPS call and is NEVER logged (CLAUDE.md DPAPI
-        // rule). Log only the account id + resolved presence type.
+        // rule). Log only the account id + resolved presence type. Capture the cookie generation
+        // BEFORE the network call so a 401 can be tagged with "the cookie as it was when this poll
+        // started" — the ViewModel drops the flip if a reauth bumped the generation since then
+        // (the stale-401 re-flag race, 2026-07-03). This ordering is deliberate and load-bearing:
+        // capturing AFTER the read would let a reauth that landed mid-poll be seen as the polled
+        // generation, reopening the wrong-flip. The only cost of capturing first is a one-cycle,
+        // self-healing false-negative (a fresh cookie that is itself instantly dead isn't flagged
+        // until the next tick) — the safe direction.
+        var polledCookieGeneration = _accountStore.GetCookieGeneration(target.AccountId);
         IReadOnlyList<UserPresence> presences;
         try
         {
@@ -234,12 +242,13 @@ public sealed class PresenceService : IPresenceService, IDisposable
         }
         catch (CookieExpiredException)
         {
-            // 401 — the cookie died between launches. Flip the row to "Session expired" and do NOT
-            // raise a presence event for this account (spec §1 + "Error handling": 401 from presence).
-            // Also resets the consecutive-limited counter (spec §4.5).
+            // 401 — the cookie the poll ran with is dead. Flip the row to "Session expired" and do
+            // NOT raise a presence event for this account (spec §1 + "Error handling": 401 from
+            // presence). Also resets the consecutive-limited counter (spec §4.5). The generation
+            // token rides along so the ViewModel can suppress a flip made stale by a mid-poll reauth.
             _consecutiveLimited[target.AccountId] = 0;
             _log.LogDebug("Presence for account {AccountId}: cookie expired (401)", target.AccountId);
-            AccountSessionExpired?.Invoke(this, target.AccountId);
+            AccountSessionExpired?.Invoke(this, new AccountSessionExpiredEventArgs(target.AccountId, polledCookieGeneration));
             return;
         }
         catch (SessionLimitedException)

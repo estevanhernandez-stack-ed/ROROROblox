@@ -17,8 +17,9 @@ internal partial class FriendFollowWindow : Window
 {
     private readonly IRobloxApi _api;
     private readonly IAccountStore _accountStore;
-    private readonly Guid _accountId;
-    private readonly long _accountUserId;
+    private readonly IReadOnlyList<FriendSource> _sources;
+    private readonly Guid _launcherAccountId;
+    private int _currentSourceIndex;
 
     /// <summary>The friend the user picked — null if the user closed without following.</summary>
     public LaunchTarget.FollowFriend? SelectedTarget { get; private set; }
@@ -33,25 +34,73 @@ internal partial class FriendFollowWindow : Window
     /// <summary>The picked friend's display name — for the caller's status messaging.</summary>
     public string? SelectedFriendName { get; private set; }
 
-    public FriendFollowWindow(IRobloxApi api, IAccountStore accountStore, Guid accountId, long accountUserId, string accountDisplayName)
+    public FriendFollowWindow(
+        IRobloxApi api,
+        IAccountStore accountStore,
+        IReadOnlyList<FriendSource> sources,
+        int defaultSourceIndex,
+        Guid launcherAccountId)
     {
-        if (accountId == Guid.Empty)
+        if (sources is null || sources.Count == 0)
         {
-            throw new ArgumentException("Account id must not be empty.", nameof(accountId));
+            throw new ArgumentException("At least one friend source is required.", nameof(sources));
         }
-        if (accountUserId <= 0)
+        if (defaultSourceIndex < 0 || defaultSourceIndex >= sources.Count)
         {
-            throw new ArgumentOutOfRangeException(nameof(accountUserId));
+            throw new ArgumentOutOfRangeException(nameof(defaultSourceIndex));
         }
 
         _api = api ?? throw new ArgumentNullException(nameof(api));
         _accountStore = accountStore ?? throw new ArgumentNullException(nameof(accountStore));
-        _accountId = accountId;
-        _accountUserId = accountUserId;
+        _sources = sources;
+        _currentSourceIndex = defaultSourceIndex;
+        _launcherAccountId = launcherAccountId;
+
         InitializeComponent();
-        Title = $"ROROROblox -- Friends -- {accountDisplayName}";
-        AccountTitle.Text = accountDisplayName;
+
+        if (_sources.Count > 1)
+        {
+            SourceSwitchButton.Visibility = Visibility.Visible;
+        }
+        UpdateSourceChrome();
         Loaded += async (_, _) => await RefreshAsync();
+    }
+
+    private FriendSource CurrentSource => _sources[_currentSourceIndex];
+
+    /// <summary>Refresh title, source-switch label, and the launcher hint for the current source.</summary>
+    private void UpdateSourceChrome()
+    {
+        var current = CurrentSource;
+        Title = $"ROROROblox -- Friends -- {current.DisplayName}";
+        AccountTitle.Text = current.DisplayName;
+
+        if (_sources.Count > 1)
+        {
+            var other = _sources[(_currentSourceIndex + 1) % _sources.Count];
+            SourceSwitchButton.Content = $"View {other.DisplayName}'s friends";
+        }
+
+        // When you're browsing a list that isn't the launching account's own, name the launcher so
+        // it's clear which account the Follow button will actually start. Action-first — the button
+        // is the only trigger; nothing auto-joins.
+        if (current.AccountId != _launcherAccountId)
+        {
+            var launcherName = _sources.First(s => s.AccountId == _launcherAccountId).DisplayName;
+            LauncherHint.Text = $"Follow one to launch {launcherName} into their server.";
+            LauncherHint.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            LauncherHint.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private async void OnSourceSwitchClick(object sender, RoutedEventArgs e)
+    {
+        _currentSourceIndex = (_currentSourceIndex + 1) % _sources.Count;
+        UpdateSourceChrome();
+        await RefreshAsync();
     }
 
     private async void OnRefreshClick(object sender, RoutedEventArgs e) => await RefreshAsync();
@@ -61,13 +110,17 @@ internal partial class FriendFollowWindow : Window
         StatusText.Text = "Loading friends...";
         FriendsList.Children.Clear();
         RefreshButton.IsEnabled = false;
+        SourceSwitchButton.IsEnabled = false;
+        // Captured above the try so the catch blocks below name the account this fetch was
+        // actually for, even if the user switches sources again while this call is in flight.
+        var source = CurrentSource;
         try
         {
             // Fetch the plaintext cookie fresh per refresh into a local that falls out of scope
             // after the API calls below — we never retain it on the window for the modal's lifetime.
-            var cookie = await _accountStore.RetrieveCookieAsync(_accountId);
+            var cookie = await _accountStore.RetrieveCookieAsync(source.AccountId);
 
-            var friends = await _api.GetFriendsAsync(cookie, _accountUserId);
+            var friends = await _api.GetFriendsAsync(cookie, source.RobloxUserId);
             if (friends.Count == 0)
             {
                 StatusText.Text = "No friends visible. Either this account has none, or its privacy filter is hiding them.";
@@ -138,7 +191,9 @@ internal partial class FriendFollowWindow : Window
         }
         catch (CookieExpiredException)
         {
-            StatusText.Text = "Session expired — close this and re-authenticate the account first.";
+            StatusText.Text = _sources.Count > 1
+                ? $"{source.DisplayName}'s session expired — re-authenticate it, or switch to the other account's friends."
+                : $"{source.DisplayName}'s session expired — close this and re-authenticate the account first.";
         }
         catch (AccountStoreCorruptException)
         {
@@ -151,6 +206,7 @@ internal partial class FriendFollowWindow : Window
         finally
         {
             RefreshButton.IsEnabled = true;
+            SourceSwitchButton.IsEnabled = true;
         }
     }
 

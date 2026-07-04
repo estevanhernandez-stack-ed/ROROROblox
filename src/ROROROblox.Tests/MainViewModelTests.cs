@@ -1,3 +1,4 @@
+using ROROROblox.App.Friends;
 using ROROROblox.App.Notifications;
 using ROROROblox.App.Startup;
 using ROROROblox.App.Theming;
@@ -27,7 +28,8 @@ public class MainViewModelTests
     private static (MainViewModel Vm, IAccountStore AccountStore, IRobloxProcessTracker ProcessTracker, string AccountStorePath) Build(
         IRobloxLauncher? launcher = null,
         ICookieCapture? cookieCapture = null,
-        Func<IAccountStore, IAccountStore>? wrapStore = null)
+        Func<IAccountStore, IAccountStore>? wrapStore = null,
+        IRobloxApi? api = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
@@ -37,7 +39,7 @@ public class MainViewModelTests
 
         var vm = new MainViewModel(
             cookieCapture: cookieCapture ?? new FakeCookieCapture(),
-            api: new FakeRobloxApi(),
+            api: api ?? new FakeRobloxApi(),
             accountStore: vmStore,
             launcher: launcher ?? new FakeRobloxLauncher(),
             compatChecker: new FakeRobloxCompatChecker(),
@@ -124,6 +126,46 @@ public class MainViewModelTests
             await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.FollowFriend(1));
             Assert.Equal(2, launcher.BrowserTrackerIds.Count);
             Assert.Equal(first, launcher.BrowserTrackerIds[1]);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ApplySessionExpired_CookieReauthedSincePoll_DropsTheFlip()
+    {
+        // The re-flag race (2026-07-03): a presence poll started before a reauth, its stale 401
+        // arrives after the reauth cleared the tag. The poll captured cookie generation 0; the
+        // reauth bumped it to 1 (UpdateCookieAsync). ApplySessionExpired must drop the flip so
+        // the just-refreshed row does NOT snap back to "Session expired."
+        var (vm, store, _, path) = Build();
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added) { SessionExpired = false };
+            vm.Accounts.Add(row);
+            await store.UpdateCookieAsync(added.Id, "fresh-cookie-from-reauth"); // bumps generation 0 -> 1
+
+            vm.ApplySessionExpired(added.Id, polledCookieGeneration: 0);
+
+            Assert.False(row.SessionExpired); // stale 401 dropped
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ApplySessionExpired_GenerationUnchanged_FlipsToExpired()
+    {
+        // Genuine expiry (no reauth since the poll started): generations match, so the flip lands.
+        var (vm, store, _, path) = Build();
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added) { SessionExpired = false };
+            vm.Accounts.Add(row);
+
+            vm.ApplySessionExpired(added.Id, polledCookieGeneration: store.GetCookieGeneration(added.Id));
+
+            Assert.True(row.SessionExpired);
         }
         finally { if (File.Exists(path)) File.Delete(path); }
     }
@@ -259,6 +301,103 @@ public class MainViewModelTests
         finally { if (File.Exists(path)) File.Delete(path); }
     }
 
+    [Fact]
+    public async Task TryResolveMainFriendSource_MainCachedUserId_ReturnsMainSource()
+    {
+        var (vm, store, _, path) = Build();
+        try
+        {
+            var mainAcc = await store.AddAsync("MainGuy", "", "maincookie"); // first add auto-promotes to main
+            var mainRow = new AccountSummary(mainAcc) { RobloxUserId = 200 };  // cached → no api call
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "altcookie"));
+            vm.Accounts.Add(mainRow);
+            vm.Accounts.Add(alt);
+
+            var source = await vm.TryResolveMainFriendSourceAsync(alt);
+
+            Assert.NotNull(source);
+            Assert.Equal(mainRow.Id, source!.AccountId);
+            Assert.Equal(200, source.RobloxUserId);
+            Assert.True(source.IsMain);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task TryResolveMainFriendSource_NoMain_ReturnsNull()
+    {
+        var (vm, store, _, path) = Build();
+        try
+        {
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { RobloxUserId = 100 };
+            alt.IsMain = false; // no account is main in the VM's view
+            vm.Accounts.Add(alt);
+
+            var source = await vm.TryResolveMainFriendSourceAsync(alt);
+
+            Assert.Null(source);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task TryResolveMainFriendSource_MainIsOpenedRow_ReturnsNull()
+    {
+        var (vm, store, _, path) = Build();
+        try
+        {
+            var mainRow = new AccountSummary(await store.AddAsync("MainGuy", "", "c")) { RobloxUserId = 200 };
+            vm.Accounts.Add(mainRow); // mainRow.IsMain is true (first add)
+
+            var source = await vm.TryResolveMainFriendSourceAsync(mainRow); // opened on main's own row
+
+            Assert.Null(source);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task TryResolveMainFriendSource_MainUserIdUnresolved_ResolvesAndPersists()
+    {
+        var api = new StubProfileApi(_ => new UserProfile(200, "mainuser", "MainGuy"));
+        var (vm, store, _, path) = Build(api: api);
+        try
+        {
+            var mainRow = new AccountSummary(await store.AddAsync("MainGuy", "", "maincookie")); // RobloxUserId null
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "altcookie"));
+            vm.Accounts.Add(mainRow);
+            vm.Accounts.Add(alt);
+
+            var source = await vm.TryResolveMainFriendSourceAsync(alt);
+
+            Assert.NotNull(source);
+            Assert.Equal(200, source!.RobloxUserId);
+            Assert.Equal(200, mainRow.RobloxUserId);
+            var persisted = (await store.ListAsync()).Single(a => a.Id == mainRow.Id);
+            Assert.Equal(200, persisted.RobloxUserId);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task TryResolveMainFriendSource_MainResolveThrows_ReturnsNull()
+    {
+        var api = new StubProfileApi(_ => throw new CookieExpiredException());
+        var (vm, store, _, path) = Build(api: api);
+        try
+        {
+            var mainRow = new AccountSummary(await store.AddAsync("MainGuy", "", "maincookie")); // RobloxUserId null
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "altcookie"));
+            vm.Accounts.Add(mainRow);
+            vm.Accounts.Add(alt);
+
+            var source = await vm.TryResolveMainFriendSourceAsync(alt);
+
+            Assert.Null(source); // fallback to single-source
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
     // ---- fakes ----
     // Only members MainViewModel's constructor touches (event subscriptions + the
     // InitializeBloxstrapWarningAsync fire-and-forget read) are implemented for real; everything
@@ -286,6 +425,7 @@ public class MainViewModelTests
             => throw new IOException("simulated persist failure");
 
         public Task UpdateBrowserTrackerIdAsync(Guid accountId, long browserTrackerId) => inner.UpdateBrowserTrackerIdAsync(accountId, browserTrackerId);
+        public int GetCookieGeneration(Guid id) => inner.GetCookieGeneration(id);
         public Task<IReadOnlyList<Account>> ListAsync() => inner.ListAsync();
         public Task<Account> AddAsync(string displayName, string avatarUrl, string cookie) => inner.AddAsync(displayName, avatarUrl, cookie);
         public Task RemoveAsync(Guid id) => inner.RemoveAsync(id);
@@ -307,6 +447,22 @@ public class MainViewModelTests
     {
         public Task<AuthTicket> GetAuthTicketAsync(string cookie) => throw new NotImplementedException();
         public Task<UserProfile> GetUserProfileAsync(string cookie) => throw new NotImplementedException();
+        public Task<string> GetAvatarHeadshotUrlAsync(long userId) => throw new NotImplementedException();
+        public Task<GameMetadata?> GetGameMetadataByPlaceIdAsync(long placeId) => throw new NotImplementedException();
+        public Task<IReadOnlyList<GameSearchResult>> SearchGamesAsync(string query) => throw new NotImplementedException();
+        public Task<IReadOnlyList<Friend>> GetFriendsAsync(string cookie, long userId) => throw new NotImplementedException();
+        public Task<IReadOnlyList<UserPresence>> GetPresenceAsync(string cookie, IEnumerable<long> userIds) => throw new NotImplementedException();
+        public Task<ShareLinkResolution?> ResolveShareLinkAsync(string cookie, string code, string linkType) => throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// IRobloxApi double whose GetUserProfileAsync runs a supplied delegate (return a profile or
+    /// throw). Every other member throws — the main-source resolution only calls GetUserProfileAsync.
+    /// </summary>
+    private sealed class StubProfileApi(Func<string, UserProfile> getProfile) : IRobloxApi
+    {
+        public Task<UserProfile> GetUserProfileAsync(string cookie) => Task.FromResult(getProfile(cookie));
+        public Task<AuthTicket> GetAuthTicketAsync(string cookie) => throw new NotImplementedException();
         public Task<string> GetAvatarHeadshotUrlAsync(long userId) => throw new NotImplementedException();
         public Task<GameMetadata?> GetGameMetadataByPlaceIdAsync(long placeId) => throw new NotImplementedException();
         public Task<IReadOnlyList<GameSearchResult>> SearchGamesAsync(string query) => throw new NotImplementedException();
@@ -397,7 +553,7 @@ public class MainViewModelTests
     private sealed class FakePresenceService : IPresenceService
     {
         public event EventHandler<AccountPresenceEventArgs>? AccountPresenceUpdated { add { } remove { } }
-        public event EventHandler<Guid>? AccountSessionExpired { add { } remove { } }
+        public event EventHandler<AccountSessionExpiredEventArgs>? AccountSessionExpired { add { } remove { } }
         public event EventHandler<Guid>? AccountSessionLimited { add { } remove { } }
 
         public void Start() => throw new NotImplementedException();

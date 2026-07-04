@@ -1447,6 +1447,51 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Resolve the MAIN account as a friends-list source for a picker opened on <paramref name="openedRow"/>.
+    /// Returns null when there's no main, the main IS the opened row, or the main's RobloxUserId can't be
+    /// resolved (missing/corrupt cookie, expired session, or profile-fetch failure) — every one of which
+    /// collapses the picker to single-source. Resolves + persists the main's userId on demand (soft-fail),
+    /// mirroring the opened-row resolution in <see cref="OpenFriendFollowAsync"/>.
+    /// </summary>
+    internal async Task<FriendSource?> TryResolveMainFriendSourceAsync(AccountSummary openedRow)
+    {
+        var main = MainAccount;
+        if (main is null || main.Id == openedRow.Id)
+        {
+            return null;
+        }
+
+        long userId = main.RobloxUserId ?? 0;
+        if (userId <= 0)
+        {
+            try
+            {
+                var cookie = await _accountStore.RetrieveCookieAsync(main.Id);
+                var profile = await _api.GetUserProfileAsync(cookie);
+                userId = profile.UserId;
+                main.RobloxUserId = userId;
+                try
+                {
+                    await _accountStore.UpdateRobloxUserIdAsync(main.Id, userId);
+                }
+                catch (Exception persistEx)
+                {
+                    _log.LogDebug(persistEx, "Couldn't persist main RobloxUserId {AccountId} (Friends modal).", main.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Any failure (missing/corrupt cookie, expired session, fetch) collapses to single-source —
+                // the user can still browse the opened account's own friends.
+                _log.LogDebug(ex, "Couldn't resolve main's userId for Friends modal {AccountId}; single-source fallback.", main.Id);
+                return null;
+            }
+        }
+
+        return new FriendSource(main.Id, userId, main.DisplayName, IsMain: true);
+    }
+
+    /// <summary>
     /// Open the Friends modal for one account. Resolves the Roblox userId on first open
     /// (cached on <see cref="AccountSummary"/> for subsequent opens). After the modal closes,
     /// if the user picked a friend to follow, fire the launch with that target.
@@ -1506,9 +1551,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             }
         }
 
-        // Pass the store + account id, not the plaintext cookie — the window retrieves the cookie
-        // fresh per refresh into a short-lived local instead of holding it for its whole lifetime.
-        var window = new FriendFollowWindow(_api, _accountStore, summary.Id, userId, summary.DisplayName)
+        // Build the picker's friend sources: the opened row is always a source (and always the
+        // launcher); the main is added as the default source when present and distinct, so main's
+        // friends show first (alts usually have empty lists). The window retrieves each source's
+        // cookie fresh per refresh — never holds plaintext for its lifetime.
+        var rowSource = new FriendSource(summary.Id, userId, summary.DisplayName, summary.IsMain);
+        var mainSource = await TryResolveMainFriendSourceAsync(summary);
+        var (sources, defaultIndex) = FriendSourcePlan.Build(rowSource, mainSource);
+
+        var window = new FriendFollowWindow(_api, _accountStore, sources, defaultIndex, summary.Id)
         {
             Owner = Application.Current.MainWindow,
         };
@@ -1760,16 +1811,39 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// Presence poll returned 401 for one account (v1.5.0) — the cookie died between launches.
     /// Flip the row to the yellow "Session expired" badge. Marshalled to the dispatcher because
     /// the poller raises this off a threadpool thread. Spec §"Error handling" (401 from presence).
+    ///
+    /// Re-flag race guard (2026-07-03): the decision is made HERE, on the UI thread, where both
+    /// this flip and reauth's tag-clear (<see cref="ReauthenticateAsync"/> sets SessionExpired =
+    /// false as its last act) run — so whichever the dispatcher processes last wins consistently.
+    /// If the account's live cookie generation is past the one this poll captured at start, a
+    /// reauth replaced the cookie mid-poll and this 401 is stale — drop it rather than clobber a
+    /// session the user just refreshed. reauth's UpdateCookieAsync bumps the generation before its
+    /// tag-clear, so a suppressed flip can never resurrect the expired badge.
     /// </summary>
-    private void OnAccountSessionExpired(object? sender, Guid accountId)
+    private void OnAccountSessionExpired(object? sender, AccountSessionExpiredEventArgs e)
+        => Application.Current?.Dispatcher.Invoke(() => ApplySessionExpired(e.AccountId, e.PolledCookieGeneration));
+
+    /// <summary>
+    /// UI-thread body of the 401 handler (internal for tests — <see cref="OnAccountSessionExpired"/>
+    /// marshals to it). Runs the re-flag-race guard then flips the row. Must run on the UI thread so
+    /// the generation read + flip are serialized against reauth's cookie-update + tag-clear.
+    /// </summary>
+    internal void ApplySessionExpired(Guid accountId, int polledCookieGeneration)
     {
-        Application.Current?.Dispatcher.Invoke(() =>
+        var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
+        if (summary is null) return;
+
+        var currentGeneration = _accountStore.GetCookieGeneration(accountId);
+        if (currentGeneration != polledCookieGeneration)
         {
-            var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
-            if (summary is null) return;
-            summary.SessionExpired = true;
-            RelayCommand.RaiseCanExecuteChanged();
-        });
+            _log.LogDebug(
+                "Presence 401 for {AccountId} dropped — cookie was re-authed since the poll started (gen {Polled} -> {Current}).",
+                accountId, polledCookieGeneration, currentGeneration);
+            return;
+        }
+
+        summary.SessionExpired = true;
+        RelayCommand.RaiseCanExecuteChanged();
     }
 
     private void OnAccountSessionLimited(object? sender, Guid accountId)
