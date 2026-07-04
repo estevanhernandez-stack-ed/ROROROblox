@@ -134,7 +134,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         AddAccountCommand = new RelayCommand(AddAccountAsync, () => !IsBusy);
         LaunchAccountCommand = new RelayCommand(p => LaunchAccountAsync(p as AccountSummary));
         RemoveAccountCommand = new RelayCommand(p => RemoveAccountAsync(p as AccountSummary));
-        ReauthenticateCommand = new RelayCommand(p => ReauthenticateAsync(p as AccountSummary));
+        // !IsBusy gate matches AddAccountCommand: the capture window is modeless, so without it
+        // a second capture can start while one is open — each capture's user-data-dir sweep
+        // would then delete files under the other's LIVE WebView2 profile.
+        ReauthenticateCommand = new RelayCommand(p => ReauthenticateAsync(p as AccountSummary), _ => !IsBusy);
         OpenSettingsCommand = new RelayCommand(OpenSettings);
         LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !a.SessionLimited && !(a.InGame || a.IsRunning)));
         StopAccountCommand = new RelayCommand(p => StopAccount(p as AccountSummary));
@@ -1883,7 +1886,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         StatusBanner = $"Removed {summary.DisplayName}.";
     }
 
-    private async Task ReauthenticateAsync(AccountSummary? summary)
+    // Internal for MainViewModelTests (same pattern as LaunchAccountForPluginAsync) — the
+    // RelayCommand wrapper discards the Task, so tests drive the branches directly.
+    internal async Task ReauthenticateAsync(AccountSummary? summary)
     {
         if (summary is null)
         {
@@ -1894,13 +1899,31 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         try
         {
             var captured = await _cookieCapture.CaptureAsync();
-            if (captured is not CookieCaptureResult.Success success)
+            switch (captured)
             {
-                if (captured is CookieCaptureResult.Failed failed
-                    && failed.Message.Contains("WebView2", StringComparison.OrdinalIgnoreCase))
-                {
+                case CookieCaptureResult.Cancelled:
+                    // Pre-fix this returned silently and the user was left guessing why the tag
+                    // stayed — the 2FA reauth bug's visible half (followups 2026-06-30 §1).
+                    // Copy stays state-neutral: the Re-authenticate button also shows on
+                    // SessionLimited rows, where "still expired" would be the wrong diagnosis.
+                    StatusBanner = $"Re-authentication cancelled — {summary.RenderName}'s saved session is unchanged.";
+                    return;
+                case CookieCaptureResult.Failed failed when failed.Message.Contains("WebView2", StringComparison.OrdinalIgnoreCase):
                     ShowWebView2NotInstalledModal();
-                }
+                    return;
+                case CookieCaptureResult.Failed failed:
+                    StatusBanner = $"Re-authentication didn't complete: {failed.Message}";
+                    return;
+            }
+
+            var success = (CookieCaptureResult.Success)captured;
+
+            // Identity guard: the capture window is a fresh profile — nothing stops the user
+            // logging into a different account. Overwriting this row's cookie with another
+            // account's session would silently corrupt the row, so refuse and say why.
+            if (summary.RobloxUserId is long knownUserId && knownUserId != success.UserId)
+            {
+                StatusBanner = $"That login was a different account (@{success.Username}) — {summary.RenderName} is unchanged.";
                 return;
             }
 
@@ -1916,6 +1939,22 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             }
 
             await _accountStore.UpdateCookieAsync(summary.Id, success.Cookie);
+
+            // Opportunistic RobloxUserId persist for pre-backfill rows (mirrors the other
+            // opportunistic call sites) — soft-fail, the reauth itself already succeeded.
+            if (summary.RobloxUserId is null)
+            {
+                try
+                {
+                    await _accountStore.UpdateRobloxUserIdAsync(summary.Id, success.UserId);
+                    summary.RobloxUserId = success.UserId;
+                }
+                catch (Exception ex)
+                {
+                    _log.LogDebug(ex, "RobloxUserId persist failed during reauth for {AccountId}.", summary.Id);
+                }
+            }
+
             _log.LogInformation("Re-authenticated account {AccountId}", summary.Id);
             summary.SessionExpired = false;
             summary.StatusText = "Re-authenticated.";

@@ -10,6 +10,26 @@ This is a parking lot, not a design. It exists so the next session picks up with
 
 ## 1. Reauth tag doesn't clear after enabling 2FA (concrete bug)
 
+> **STATUS 2026-07-03 — fixed on `fix/reauth-2fa-tag`.** Root cause was sharper than hypothesis (a):
+> the capture window validates the cookie via `GetUserProfileAsync` before returning Success, and on
+> `CookieExpiredException` it closed itself mid-flow with a silent `Failed` — with 2FA, a
+> not-yet-valid cookie at the challenge step tripped the capture, the window slammed shut while the
+> user was mid-challenge, and `ReauthenticateAsync` silently swallowed the non-Success result. Fix:
+> (1) capture window re-arms and stays open on a rejected/failed validation (debounced per
+> rejected cookie value; immediate one-shot re-read closes the swallowed-nav-event race; closing
+> the window after a rejection returns `Failed` with the reason instead of `Cancelled`; in-window
+> hint appears on first rejection), (2) reauth surfaces Cancelled/Failed via StatusBanner
+> (state-neutral copy — the button also shows on Limited rows), (3) identity guard refuses a
+> wrong-account cookie overwrite, (4) opportunistic RobloxUserId backfill on reauth (soft-fail).
+> Live 2FA repro still wanted to confirm the mechanism end-to-end. Follow-ups parked from the
+> two review rounds: (a) extract `TryCaptureAsync`'s decision chain into a testable core (seam
+> precedent: CookieCaptureSweepTests); (b) pre-existing — the `Contains("WebView2")` substring
+> routing to the install-runtime modal misfires on messages embedding `webview2-data` paths or
+> `CoreWebView2` exception text — route on a typed result instead; (c) residual edge, accepted:
+> same-value cookie turning valid while its ONLY post-login nav event was swallowed mid-probe
+> and the page then stays quiescent → manual close (window hint says so, close returns the
+> reason).
+
 **Symptom (user-reported 2026-06-30):** an account showed the reauth / "Session expired" tag after 2FA was enabled on the Roblox account. The user completed the re-auth (WebView2 re-login), but the tag did not clear.
 
 **Not from the Limited work** — this is the pre-existing `SessionExpired` / re-auth flow, and it reproduced on the *shipped* build (not the `feat/limited-session-handling` branch). Enabling 2FA server-side invalidates existing Roblox sessions, which is why it went expired.

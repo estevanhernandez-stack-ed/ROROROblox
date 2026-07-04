@@ -25,17 +25,20 @@ namespace ROROROblox.Tests;
 public class MainViewModelTests
 {
     private static (MainViewModel Vm, IAccountStore AccountStore, IRobloxProcessTracker ProcessTracker, string AccountStorePath) Build(
-        IRobloxLauncher? launcher = null)
+        IRobloxLauncher? launcher = null,
+        ICookieCapture? cookieCapture = null,
+        Func<IAccountStore, IAccountStore>? wrapStore = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
+        var vmStore = wrapStore?.Invoke(accountStore) ?? (IAccountStore)accountStore;
         var processTracker = new FakeRobloxProcessTracker();
         var windowDecorator = new RobloxWindowDecorator();
 
         var vm = new MainViewModel(
-            cookieCapture: new FakeCookieCapture(),
+            cookieCapture: cookieCapture ?? new FakeCookieCapture(),
             api: new FakeRobloxApi(),
-            accountStore: accountStore,
+            accountStore: vmStore,
             launcher: launcher ?? new FakeRobloxLauncher(),
             compatChecker: new FakeRobloxCompatChecker(),
             settings: new FakeAppSettings(),
@@ -125,6 +128,137 @@ public class MainViewModelTests
         finally { if (File.Exists(path)) File.Delete(path); }
     }
 
+    /// <summary>
+    /// Seed one account into the store (optionally with a persisted RobloxUserId) and hand back
+    /// a detached expired-tagged row for it. Detached because <c>LoadAsync</c> drags in
+    /// <c>ReloadGamesAsync</c> (throwing fakes); <c>ReauthenticateAsync</c> only touches the row
+    /// it's given plus the store, so a detached row exercises the real branch under test.
+    /// </summary>
+    private static async Task<AccountSummary> SeedExpiredAccountAsync(
+        IAccountStore store, long? robloxUserId, string cookie = "original-cookie")
+    {
+        var added = await store.AddAsync("TestAlt", "", cookie);
+        if (robloxUserId is long id)
+        {
+            await store.UpdateRobloxUserIdAsync(added.Id, id);
+        }
+        return new AccountSummary(added with { RobloxUserId = robloxUserId }) { SessionExpired = true };
+    }
+
+    [Fact]
+    public async Task ReauthenticateAsync_CancelledCapture_KeepsTagAndSurfacesBanner()
+    {
+        var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(new CookieCaptureResult.Cancelled()));
+        try
+        {
+            var row = await SeedExpiredAccountAsync(store, 111);
+
+            await vm.ReauthenticateAsync(row);
+
+            Assert.True(row.SessionExpired);
+            Assert.Equal("Re-authentication cancelled — TestAlt's saved session is unchanged.", vm.StatusBanner);
+            Assert.Equal("original-cookie", await store.RetrieveCookieAsync(row.Id));
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ReauthenticateAsync_FailedCapture_KeepsTagAndSurfacesBanner()
+    {
+        var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(
+            new CookieCaptureResult.Failed("Login was unsuccessful.")));
+        try
+        {
+            var row = await SeedExpiredAccountAsync(store, 111);
+
+            await vm.ReauthenticateAsync(row);
+
+            Assert.True(row.SessionExpired);
+            Assert.Equal("Re-authentication didn't complete: Login was unsuccessful.", vm.StatusBanner);
+            Assert.Equal("original-cookie", await store.RetrieveCookieAsync(row.Id));
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ReauthenticateAsync_DifferentAccountCookie_RefusesOverwrite()
+    {
+        var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(
+            new CookieCaptureResult.Success("intruder-cookie", 999, "SomeOtherUser")));
+        try
+        {
+            var row = await SeedExpiredAccountAsync(store, 111);
+
+            await vm.ReauthenticateAsync(row);
+
+            Assert.True(row.SessionExpired);
+            Assert.Equal(
+                "That login was a different account (@SomeOtherUser) — TestAlt is unchanged.",
+                vm.StatusBanner);
+            Assert.Equal("original-cookie", await store.RetrieveCookieAsync(row.Id));
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ReauthenticateAsync_MatchingAccount_ClearsTagAndUpdatesCookie()
+    {
+        var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(
+            new CookieCaptureResult.Success("fresh-cookie", 111, "TestAlt")));
+        try
+        {
+            var row = await SeedExpiredAccountAsync(store, 111);
+
+            await vm.ReauthenticateAsync(row);
+
+            Assert.False(row.SessionExpired);
+            Assert.Equal("Re-authenticated.", row.StatusText);
+            Assert.Equal("fresh-cookie", await store.RetrieveCookieAsync(row.Id));
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ReauthenticateAsync_BackfillPersistFails_ReauthStillSucceeds()
+    {
+        // The RobloxUserId backfill is opportunistic — a failed persist must not fail the
+        // reauth itself (tag clears, cookie updates, row userId stays null for the next try).
+        var (vm, store, _, path) = Build(
+            cookieCapture: new StubCookieCapture(new CookieCaptureResult.Success("fresh-cookie", 222, "TestAlt")),
+            wrapStore: real => new UserIdPersistThrowingStore(real));
+        try
+        {
+            var row = await SeedExpiredAccountAsync(store, robloxUserId: null);
+
+            await vm.ReauthenticateAsync(row);
+
+            Assert.False(row.SessionExpired);
+            Assert.Equal("fresh-cookie", await store.RetrieveCookieAsync(row.Id));
+            Assert.Null(row.RobloxUserId);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ReauthenticateAsync_UnknownRowUserId_AcceptsAndBackfills()
+    {
+        var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(
+            new CookieCaptureResult.Success("fresh-cookie", 222, "TestAlt")));
+        try
+        {
+            var row = await SeedExpiredAccountAsync(store, robloxUserId: null);
+
+            await vm.ReauthenticateAsync(row);
+
+            Assert.False(row.SessionExpired);
+            Assert.Equal(222, row.RobloxUserId);
+            Assert.Equal("fresh-cookie", await store.RetrieveCookieAsync(row.Id));
+            var persisted = (await store.ListAsync()).Single(a => a.Id == row.Id);
+            Assert.Equal(222, persisted.RobloxUserId);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
     // ---- fakes ----
     // Only members MainViewModel's constructor touches (event subscriptions + the
     // InitializeBloxstrapWarningAsync fire-and-forget read) are implemented for real; everything
@@ -133,6 +267,40 @@ public class MainViewModelTests
     private sealed class FakeCookieCapture : ICookieCapture
     {
         public Task<CookieCaptureResult> CaptureAsync() => throw new NotImplementedException();
+    }
+
+    /// <summary>Capture double returning a canned result — drives the ReauthenticateAsync branches.</summary>
+    private sealed class StubCookieCapture(CookieCaptureResult result) : ICookieCapture
+    {
+        public Task<CookieCaptureResult> CaptureAsync() => Task.FromResult(result);
+    }
+
+    /// <summary>
+    /// Delegates every member to the real store except <see cref="UpdateRobloxUserIdAsync"/>,
+    /// which throws — pins ReauthenticateAsync's soft-fail contract for the opportunistic
+    /// backfill persist.
+    /// </summary>
+    private sealed class UserIdPersistThrowingStore(IAccountStore inner) : IAccountStore
+    {
+        public Task UpdateRobloxUserIdAsync(Guid accountId, long userId)
+            => throw new IOException("simulated persist failure");
+
+        public Task UpdateBrowserTrackerIdAsync(Guid accountId, long browserTrackerId) => inner.UpdateBrowserTrackerIdAsync(accountId, browserTrackerId);
+        public Task<IReadOnlyList<Account>> ListAsync() => inner.ListAsync();
+        public Task<Account> AddAsync(string displayName, string avatarUrl, string cookie) => inner.AddAsync(displayName, avatarUrl, cookie);
+        public Task RemoveAsync(Guid id) => inner.RemoveAsync(id);
+        public Task<string> RetrieveCookieAsync(Guid id) => inner.RetrieveCookieAsync(id);
+        public Task UpdateCookieAsync(Guid id, string newCookie) => inner.UpdateCookieAsync(id, newCookie);
+        public Task TouchLastLaunchedAsync(Guid id) => inner.TouchLastLaunchedAsync(id);
+        public Task SetMainAsync(Guid id) => inner.SetMainAsync(id);
+        public Task UpdateSortOrderAsync(IReadOnlyList<Guid> idsInOrder) => inner.UpdateSortOrderAsync(idsInOrder);
+        public Task SetSelectedAsync(Guid id, bool isSelected) => inner.SetSelectedAsync(id, isSelected);
+        public Task SetCaptionColorAsync(Guid id, string? hex) => inner.SetCaptionColorAsync(id, hex);
+        public Task SetFpsCapAsync(Guid id, int? fps) => inner.SetFpsCapAsync(id, fps);
+        public Task UpdateLocalNameAsync(Guid accountId, string? localName) => inner.UpdateLocalNameAsync(accountId, localName);
+        public Task SetTagsAsync(Guid id, IReadOnlyList<string> tags) => inner.SetTagsAsync(id, tags);
+        public Task<AccountExportResult> ExportAccountsAsync(IEnumerable<Guid> ids) => inner.ExportAccountsAsync(ids);
+        public Task<ImportMergeResult> ImportMergeAsync(IReadOnlyList<AccountExportRecord> records) => inner.ImportMergeAsync(records);
     }
 
     private sealed class FakeRobloxApi : IRobloxApi
