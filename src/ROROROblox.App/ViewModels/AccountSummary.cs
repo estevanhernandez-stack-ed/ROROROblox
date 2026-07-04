@@ -47,6 +47,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
         _fpsCap = account.FpsCap;
         _localName = account.LocalName;
         RobloxUserId = account.RobloxUserId;
+        BrowserTrackerId = account.BrowserTrackerId;
         // Seed tags from the persisted record BEFORE any CollectionChanged subscriber is attached
         // (MainViewModel subscribes after construction), so loading existing tags never triggers a
         // redundant persist back to the store.
@@ -106,6 +107,14 @@ public sealed class AccountSummary : INotifyPropertyChanged
     /// Null = not yet resolved (brand-new account before first backfill, or cookie retrieval failed).
     /// </summary>
     public long? RobloxUserId { get; set; }
+
+    /// <summary>
+    /// Stable per-account browserTrackerId (v1.8.1 trust hygiene — followups 2026-06-30 §6).
+    /// Seeded from the persisted <see cref="Account.BrowserTrackerId"/>; null until the
+    /// account's first launch generates and persists one (MainViewModel launch path). Not a
+    /// UI-bound property — no INPC needed.
+    /// </summary>
+    public long? BrowserTrackerId { get; set; }
 
     public bool SessionExpired
     {

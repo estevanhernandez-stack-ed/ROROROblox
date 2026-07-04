@@ -215,6 +215,7 @@ public class AccountUserIdBackfillServiceTests
         }
 
         // Unused by AccountUserIdBackfillService — throw to surface accidental use.
+        public Task UpdateBrowserTrackerIdAsync(Guid accountId, long browserTrackerId) => throw new NotImplementedException();
         public Task<Account> AddAsync(string displayName, string avatarUrl, string cookie) => throw new NotImplementedException();
         public Task RemoveAsync(Guid id) => throw new NotImplementedException();
         public Task UpdateCookieAsync(Guid id, string newCookie) => throw new NotImplementedException();

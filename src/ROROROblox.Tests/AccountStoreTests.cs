@@ -119,6 +119,29 @@ public class AccountStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task UpdateBrowserTrackerIdAsync_PersistsAndRoundTrips()
+    {
+        using var store = new AccountStore(_filePath);
+        var added = await store.AddAsync("TestUser", "https://x", "c");
+        Assert.Null(added.BrowserTrackerId);
+
+        await store.UpdateBrowserTrackerIdAsync(added.Id, 1234567890123);
+
+        var listed = (await store.ListAsync()).Single(a => a.Id == added.Id);
+        Assert.Equal(1234567890123, listed.BrowserTrackerId);
+    }
+
+    [Fact]
+    public async Task UpdateBrowserTrackerIdAsync_ThrowsKeyNotFound_ForUnknownId()
+    {
+        using var store = new AccountStore(_filePath);
+        await store.AddAsync("TestUser", "https://x", "c");
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => store.UpdateBrowserTrackerIdAsync(Guid.NewGuid(), 1));
+    }
+
+    [Fact]
     public async Task TouchLastLaunchedAsync_StampsTheLastLaunchedField()
     {
         using var store = new AccountStore(_filePath);

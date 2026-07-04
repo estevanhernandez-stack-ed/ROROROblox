@@ -14,13 +14,15 @@ public interface IRobloxLauncher
     /// favorites store + app settings; <see cref="LaunchTarget.Place"/> targets a specific public
     /// place; <see cref="LaunchTarget.PrivateServer"/> targets a VIP server with placeId +
     /// accessCode; <see cref="LaunchTarget.FollowFriend"/> follows a friend's userId.
+    /// <paramref name="browserTrackerId"/> is the account's stable persisted tracker id
+    /// (v1.8.1 trust hygiene); null falls back to a random one-shot value.
     /// </summary>
-    Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null);
+    Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null);
 
     /// <summary>
     /// Legacy string-based overload. Pasted URLs run through <see cref="LaunchTarget.FromUrl"/>
     /// — a private-server share URL becomes a <see cref="LaunchTarget.PrivateServer"/> automatically.
     /// Null/empty placeUrl falls back to <see cref="LaunchTarget.DefaultGame"/>.
     /// </summary>
-    Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null);
+    Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null, long? browserTrackerId = null);
 }

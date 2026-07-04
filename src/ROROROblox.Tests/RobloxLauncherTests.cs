@@ -264,6 +264,38 @@ public class RobloxLauncherTests
     }
 
     [Fact]
+    public async Task LaunchAsync_StableBrowserTrackerId_WinsOverRandomFactory()
+    {
+        // v1.8.1 trust hygiene: a caller-supplied stable btid must reach the launch URI
+        // verbatim on BOTH overloads — the random per-launch factory is the fallback only.
+        var (launcher, _, processStarter) = CreateLauncher(
+            ticket: "T",
+            defaultPlaceUrl: TestPlaceUrl,
+            startResult: 1);
+
+        await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(920587237), browserTrackerId: 7777777777777);
+        Assert.Contains("+browsertrackerid:7777777777777", processStarter.LastUri);
+
+        await launcher.LaunchAsync(TestCookie, placeUrl: TestPlaceUrl, browserTrackerId: 8888888888888);
+        Assert.Contains("+browsertrackerid:8888888888888", processStarter.LastUri);
+    }
+
+    [Fact]
+    public async Task LaunchAsync_NullBrowserTrackerId_FallsBackToFactory()
+    {
+        var (launcher, _, processStarter) = CreateLauncher(
+            ticket: "T",
+            defaultPlaceUrl: TestPlaceUrl,
+            startResult: 1);
+
+        await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(920587237));
+
+        // The public ctor's factory produces a 13-digit value — presence is enough here;
+        // the exact-value path is covered by the stable-btid test above.
+        Assert.Matches(@"\+browsertrackerid:\d{13}\+", processStarter.LastUri);
+    }
+
+    [Fact]
     public void Constructor_RejectsNullDependencies()
     {
         var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket("T", DateTimeOffset.UtcNow)));

@@ -18,4 +18,5 @@ public sealed record Account(
     int? FpsCap = null,
     string? LocalName = null,
     long? RobloxUserId = null,
-    IReadOnlyList<string>? Tags = null);
+    IReadOnlyList<string>? Tags = null,
+    long? BrowserTrackerId = null);
