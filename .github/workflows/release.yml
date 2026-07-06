@@ -145,6 +145,11 @@ jobs:
           # at startup for the version-drift banner + the config-driven mutex name; a missing asset
           # means the app silently falls back (drift banner never fires, mutex name = hardcoded default).
           gh release upload '${{ steps.ver.outputs.tag }}' roblox-compat.json --clobber
+          # plugins-catalog.json rides the same way: the marketplace (unpackaged builds only) fetches
+          # releases/latest/download/plugins-catalog.json. Missing asset = 404 = empty Available
+          # section (fail-safe dark), but a release that BECOMES latest without it would un-light
+          # the marketplace for everyone — so every release carries the current catalog.
+          gh release upload '${{ steps.ver.outputs.tag }}' docs/store/plugins-catalog.json --clobber
 
       - name: Summary
         shell: pwsh

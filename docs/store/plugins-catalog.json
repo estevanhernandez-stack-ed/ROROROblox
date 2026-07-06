@@ -4,7 +4,7 @@
     "name": "RoRoRo Ur Task",
     "description": "Per-window-aware macro recording for RoRoRo-managed alts. Record once, play on any alt — round-robin assignments, keep-alive, window-relative mouse macros, and an action bridge for sibling plugins.",
     "publisher": "626 Labs LLC",
-    "latestVersion": "0.4.1",
+    "latestVersion": "0.5.0",
     "installUrl": "https://github.com/estevanhernandez-stack-ed/rororo-ur-task/releases/latest/download/",
     "minHostVersion": "1.4.3"
   },
