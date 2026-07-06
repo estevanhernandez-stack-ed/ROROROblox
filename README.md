@@ -9,10 +9,10 @@ _Multi-launcher for Windows — run multiple Roblox clients on Windows, signed i
 [![Latest release](https://img.shields.io/github/v/release/estevanhernandez-stack-ed/RORORO?color=17d4fa&label=release&style=flat-square)](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases)
 [![Stars](https://img.shields.io/github/stars/estevanhernandez-stack-ed/RORORO?color=f22f89&style=flat-square)](https://github.com/estevanhernandez-stack-ed/ROROROblox/stargazers)
 [![License: MIT](https://img.shields.io/badge/license-MIT-17d4fa?style=flat-square)](#license)
-[![Platform: Windows 11](https://img.shields.io/badge/platform-Windows%2011-f22f89?style=flat-square)](https://www.microsoft.com/windows/windows-11)
+[![Platform: Windows 11 · 10](https://img.shields.io/badge/platform-Windows%2011%20·%2010-f22f89?style=flat-square)](https://www.microsoft.com/windows/windows-11)
 [![Stack: .NET 10 LTS](https://img.shields.io/badge/.NET-10%20LTS-17d4fa?style=flat-square)](https://dotnet.microsoft.com/)
 
-**Windows 11** · **.NET 10 LTS** · **WPF**
+**Windows 11** · **Windows 10 22H2** (direct download) · **.NET 10 LTS** · **WPF**
 
 </div>
 
@@ -59,6 +59,8 @@ If you'd rather skip the Store account flow, or want to install on a PC without 
 3. RORORO installs to your user profile, lands in the Start Menu, and auto-updates from this Releases page going forward — no second SmartScreen prompt on later versions.
 
 A 30-second video walkthrough is linked from each Release page.
+
+**On Windows 10?** This is your path — the Store version needs Windows 11, but `Setup.exe` runs on Windows 10 22H2. If Roblox login asks for Microsoft's WebView2, the app hands you the install link — free, one click, then try again. Best-effort support: we test on it, but Windows 10 left Microsoft's support lifecycle in October 2025, so consider the Windows 11 upgrade when you can.
 
 > Prefer MSIX? `RORORO-Sideload.msix` + `dev-cert.cer` are also attached to each release — same app, slightly more setup (you import the cert once into Trusted People, then double-click the MSIX). Use whichever flow you trust more.
 
