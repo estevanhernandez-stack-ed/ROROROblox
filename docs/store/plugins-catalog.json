@@ -21,7 +21,7 @@
     "name": "RoRoRo Ur AFK",
     "description": "Keeps idle Roblox accounts alive — focuses each and taps space before the ~20-minute idle timeout. One toggle, one key ever sent.",
     "publisher": "626 Labs LLC",
-    "latestVersion": "0.1.1",
+    "latestVersion": "0.5.0",
     "installUrl": "https://github.com/estevanhernandez-stack-ed/rororo-ur-afk/releases/latest/download/",
     "minHostVersion": "1.8.0.0"
   }
