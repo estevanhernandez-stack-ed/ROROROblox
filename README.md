@@ -60,7 +60,7 @@ If you'd rather skip the Store account flow, or want to install on a PC without 
 
 A 30-second video walkthrough is linked from each Release page.
 
-**On Windows 10?** This is your path — the Store version needs Windows 11, but `Setup.exe` runs on Windows 10 22H2. If Roblox login asks for Microsoft's WebView2, the app hands you the install link — free, one click, then try again. Best-effort support: we test on it, but Windows 10 left Microsoft's support lifecycle in October 2025, so consider the Windows 11 upgrade when you can.
+**On Windows 10?** This is your path — the Store version needs Windows 11, but `Setup.exe` runs on **Windows 10 22H2, fully updated**. Run Windows Update first: a Windows 10 that's behind on updates can't start modern .NET apps and RoRoRo won't launch (that's the #1 thing to check if it doesn't open). If Roblox login asks for Microsoft's WebView2, the app hands you the free installer — one click, then try again. Best-effort support: the app installs, runs, and manages accounts on a fully-updated Windows 10 22H2; multi-instance uses the exact same code as Windows 11. Windows 10 left Microsoft's support lifecycle in October 2025, so plan the Windows 11 upgrade when you can.
 
 > Prefer MSIX? `RORORO-Sideload.msix` + `dev-cert.cer` are also attached to each release — same app, slightly more setup (you import the cert once into Trusted People, then double-click the MSIX). Use whichever flow you trust more.
 
