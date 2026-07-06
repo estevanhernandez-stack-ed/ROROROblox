@@ -84,6 +84,11 @@ message RunningAccount {
   int64 roblox_user_id = 2;    // UID-aware: which Roblox user this account is
   string display_name = 3;
   int32 process_id = 4;
+  // Game identity from the host's presence tracking (0.4.0). 0 / empty when
+  // unknown — presence can lag a fresh launch; plugins must treat that as
+  // "no game info", never as a game named "".
+  int64 place_id = 5;
+  string place_name = 6;
 }
 
 message SubscriptionRequest {
@@ -96,6 +101,11 @@ message AccountLaunchedEvent {
   string display_name = 3;
   int32 process_id = 4;
   int64 launched_at_unix_ms = 5;
+  // Game identity from the host's presence tracking (0.4.0). Often still
+  // 0 / empty at launch time (presence lags the process attach) — plugins
+  // wanting fresh identity should re-query GetRunningAccounts.
+  int64 place_id = 6;
+  string place_name = 7;
 }
 
 message AccountExitedEvent {

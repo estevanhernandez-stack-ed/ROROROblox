@@ -34,7 +34,9 @@ internal sealed class MainViewModelRunningAccountsAdapter : IRunningAccountsProv
                 AccountId: a.Id.ToString(),
                 RobloxUserId: a.RobloxUserId ?? 0,
                 DisplayName: a.RenderName,
-                ProcessId: a.RunningPid ?? 0));
+                ProcessId: a.RunningPid ?? 0,
+                PlaceId: a.CurrentPlaceId ?? 0,
+                PlaceName: a.CurrentGameName ?? string.Empty));
         }
         return running;
     }

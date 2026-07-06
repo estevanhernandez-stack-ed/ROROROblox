@@ -1055,7 +1055,9 @@ public partial class App : Application
                         AccountId: summary.Id.ToString(),
                         RobloxUserId: summary.RobloxUserId ?? 0,
                         DisplayName: summary.RenderName,
-                        ProcessId: e.Pid);
+                        ProcessId: e.Pid,
+                        PlaceId: summary.CurrentPlaceId ?? 0,
+                        PlaceName: summary.CurrentGameName ?? string.Empty);
                     bus.RaiseAccountLaunched(snapshot);
                 }
                 catch (Exception ex)
