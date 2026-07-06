@@ -6,8 +6,8 @@
 
 _Multi-launcher for Windows — run multiple Roblox clients on Windows, signed in as different saved accounts._
 
-[![Latest release](https://img.shields.io/github/v/release/estevanhernandez-stack-ed/RORORO?color=17d4fa&label=release&style=flat-square)](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases)
-[![Stars](https://img.shields.io/github/stars/estevanhernandez-stack-ed/RORORO?color=f22f89&style=flat-square)](https://github.com/estevanhernandez-stack-ed/ROROROblox/stargazers)
+[![Latest release](https://img.shields.io/github/v/release/estevanhernandez-stack-ed/ROROROblox?color=17d4fa&label=release&style=flat-square)](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases)
+[![Stars](https://img.shields.io/github/stars/estevanhernandez-stack-ed/ROROROblox?color=f22f89&style=flat-square)](https://github.com/estevanhernandez-stack-ed/ROROROblox/stargazers)
 [![License: MIT](https://img.shields.io/badge/license-MIT-17d4fa?style=flat-square)](#license)
 [![Platform: Windows 11](https://img.shields.io/badge/platform-Windows%2011-f22f89?style=flat-square)](https://www.microsoft.com/windows/windows-11)
 [![Stack: .NET 10 LTS](https://img.shields.io/badge/.NET-10%20LTS-17d4fa?style=flat-square)](https://dotnet.microsoft.com/)
