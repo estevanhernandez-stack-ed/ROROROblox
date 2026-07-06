@@ -20,25 +20,31 @@ _Multi-launcher for Windows — run multiple Roblox clients on Windows, signed i
 
 ---
 
-## What's new in v1.4
+## The plugin family
 
-**Plugin system.** RoRoRo now hosts a per-user named-pipe gRPC server on startup. Plugins are separately distributed Windows EXEs that connect, declare what they do in a manifest, ask consent for each capability, and contribute UI back to RoRoRo (tray menu items, per-account row badges, status panels). Right-click the tray icon → **Plugins…** to install one from a GitHub release URL.
+RoRoRo is a launcher with an ecosystem. Plugins are separately distributed Windows apps on a gRPC contract — each one declares its capabilities up front, shows you a consent sheet before it gets any of them, and installs SHA-256-verified. Three are live:
 
-Why this exists: macro / AFK-defeat features can't ship inside the Microsoft Store binary (Store policy 10.2.2 forbids dynamic inclusion of code that changes described functionality). Plugins live outside the Store-listed RoRoRo, communicate via gRPC, and stay sideload-only — keeps RoRoRo in the Store while still letting the clan run automation.
+| Plugin | What it does | Version |
+|---|---|---|
+| [**RoRoRo Ur Task**](https://github.com/estevanhernandez-stack-ed/rororo-ur-task) | Per-window-aware macro recording. Record once, play on any alt — round-robin assignments, keep-alive, window-relative mouse macros, an action bridge for sibling plugins. | ![latest release](https://img.shields.io/github/v/release/estevanhernandez-stack-ed/rororo-ur-task?color=17d4fa&label=&style=flat-square) |
+| [**RoRoRo Ur OCR**](https://github.com/estevanhernandez-stack-ed/Ur-OCR) | Watches screen regions for text or color triggers and fires keybinds when they match. Pairs with Ur Task for perception-to-action. | ![latest release](https://img.shields.io/github/v/release/estevanhernandez-stack-ed/Ur-OCR?color=17d4fa&label=&style=flat-square) |
+| [**RoRoRo Ur AFK**](https://github.com/estevanhernandez-stack-ed/rororo-ur-afk) | Keeps idle accounts alive — focuses each and taps space before the ~20-minute idle timeout. One toggle, one key ever sent. | ![latest release](https://img.shields.io/github/v/release/estevanhernandez-stack-ed/rororo-ur-afk?color=17d4fa&label=&style=flat-square) |
 
-No plugins ship with v1.4. The first one — auto-keys, the AFK-defeat cycler — lands in a sibling repo (`rororo-autokeys-plugin`) in a follow-up sprint. Until then the Plugins window shows an empty state and waits.
+**Browse and install from the [plugin marketplace →](https://626labs.dev/rororo-plugins.html)** — live versions, install links, and what each plugin does, refreshed automatically whenever one ships. Direct-download builds (v1.9+) also carry the marketplace inside the app: **Plugins → Available**.
 
-If you're a builder thinking about writing one: see [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR_GUIDE.md). The contract is `ROROROblox.PluginContract` on NuGet — bundle it, implement the gRPC client, ship a `manifest.json` + `manifest.sha256` + `plugin.zip` GitHub release.
+Building your own? Start at [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR_GUIDE.md). The contract is `ROROROblox.PluginContract` on NuGet — bundle it, implement the gRPC client, ship a `manifest.json` + `manifest.sha256` + `plugin.zip` GitHub release.
 
 ---
 
-## What's new in v1.3
+## What's new in v1.9
 
-**Local rename overlay.** Right-click any saved game, saved private server, or account row → **Rename…** to set a per-user nickname. The Roblox-side name stays untouched; just the row in RORORO carries your local name. Reset any time via the popup's **Reset to original** link or the right-click **Reset name** action. Renames survive re-adding the same game/server, survive Roblox-side display-name refreshes, and roundtrip cleanly through DPAPI on accounts.
+**The in-app plugin marketplace.** The Plugins window on direct-download builds now has an **Available** section fed by a remote catalog — browse, install, and get **update badges** when an installed plugin falls behind its latest release. Installs stay SHA-256-verified against each plugin's own manifest; the catalog carries metadata and an install URL, never code.
 
-**Default-game widget.** A quick-switch dropdown lives in the toolbar between **Games** and **Launch multiple**. Click for the saved-games list — pick one, that's your new default. Right-click a row for the four-item action menu (Set as default · Rename… · Reset name · Remove). When zero games are saved, the widget shows a one-click "Add a game" entry instead.
+Why unpackaged-only: the Microsoft Store edition can't ship downloadable-code surfaces (Store policy 10.2.2), so Store users get the same catalog through the [web marketplace](https://626labs.dev/rororo-plugins.html) instead.
 
-Both features are local-only. No new network calls, no manifest changes, no schema migration. Older RORORO builds reading a v1.3 file will just ignore the new field.
+Also in v1.9: the Store build's OS floor drops to **Windows 10 22H2** (previously the Store edition was Windows 11-only).
+
+Version-by-version history lives on the [Releases page](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases).
 
 ---
 
@@ -157,7 +163,7 @@ powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertP
 
 ## Roadmap
 
-**Shipped in v1.1**
+**Shipped**
 - [x] Multi-instance via singleton-mutex hold
 - [x] DPAPI-encrypted account vault
 - [x] Per-account *Launch As* via documented authentication-ticket flow
@@ -167,9 +173,11 @@ powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertP
 - [x] Sideload MSIX with self-signed cert
 - [x] Squad Launch + Friend Follow surfaces
 - [x] Join-by-link entry per saved account (with optional **Save to my library** toggle, v1.3.x — saves the pasted game or private server to your library for next time)
+- [x] Microsoft Store listing ([live](https://apps.microsoft.com/detail/9NMJCS390KWB))
+- [x] Plugin host — named-pipe gRPC, consent sheets, SHA-verified installs (v1.4)
+- [x] Plugin marketplace — in-app (direct builds, v1.9) + [on the web](https://626labs.dev/rororo-plugins.html)
 
 **Up next**
-- [ ] Microsoft Store submission (cert + listing + Partner Center upload)
 - [ ] **Arm64 (AArch64) build target.** Partner Center flagged that future Windows on Arm devices will not support AArch32; current MSIX is x64-only. Add an Arm64 build flavor + manifest variant so customers on Arm devices can install. Track for v1.1.1 or v1.2.
 - [ ] **About-box version pulls from manifest, not `Assembly.GetName().Version`.** Currently shows `v1.0.0` because the .NET-default assembly version was never overridden; the MSIX manifest's `<Identity Version>` is the source of truth. Pivot to `Package.Current.Id.Version` at runtime. See [`docs/store/next-revision-followups.md`](docs/store/next-revision-followups.md) §3.
 - [ ] **Add Account WebView2 white-screen affordance.** Sometimes the embedded login page renders blank on first load and the user has to refresh; add a visible reload hint. See [`docs/store/next-revision-followups.md`](docs/store/next-revision-followups.md) §1.
