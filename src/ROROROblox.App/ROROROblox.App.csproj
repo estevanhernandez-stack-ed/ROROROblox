@@ -44,6 +44,12 @@
          Keep in sync with <Identity Version> in Package.appxmanifest. The script
          scripts/finalize-store-build.ps1 patches both atomically on every release. -->
     <Version>1.9.0.0</Version>
+    <!-- Embed the app icon in the exe so Explorer, taskbar, and Velopack-created
+         shortcuts show the RoRoRo mark instead of a generic icon. Committed here and
+         also regenerated identically by scripts/build-velopack-release.ps1 at pack
+         time (same PNG sources). Missing this was the "Install Partially Succeeded"
+         blank-shortcut-icon on direct-download installs. -->
+    <ApplicationIcon>Package\Logos\AppIcon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <!-- Expose internals (PluginRow, PluginsViewModel) to the test project so VM-level
