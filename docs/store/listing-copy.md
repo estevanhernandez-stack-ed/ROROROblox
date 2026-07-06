@@ -103,14 +103,19 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 
 > Avoid "cheat", "exploit", "bypass" — those will trigger reviewer concerns even if irrelevant.
 
-## What's new (release notes for v1.8.0.0)
+## What's new (release notes for v1.9.0.0)
+
+> Store field only. Do NOT mention the plugin marketplace here — it's hidden in the
+> Store (packaged) build, so advertising it would confuse Store users and invite
+> reviewer questions. The Windows 10 line leads because it's the headline of this
+> submission (min OS dropped from Windows 11 to Windows 10 22H2).
 
 ```
-v1.8.0.0:
-• Roblox hiding in your system tray can't block multi-instance anymore. RoRoRo checks the lock itself and, if a hidden Roblox holds it, offers "Close Roblox for me" or Retry — you never restart RoRoRo. Leftover Roblox processes from an earlier session are explained instead of blocking you.
-• If Roblox soft-locks one of your accounts, its row now says "Limited by Roblox" instead of silently failing — and RoRoRo rests that account until Roblox lifts the flag.
-• See how long each account has been idle: a per-row idle timer, an adjustable warning before Roblox's ~20-minute disconnect, and a tray heads-up you can mute.
-• Plugins can now ask for idle times with your permission — timestamps only, never what you type.
+v1.9.0.0:
+• Now runs on Windows 10. RoRoRo works on Windows 10 22H2 (fully updated), not just Windows 11 — install it right from the Store.
+• Launch an alt straight into your main's friend's game. The friends picker can now browse your main account's friends, not just each account's own list.
+• Fixed the "needs re-login" tag that wouldn't clear even after you re-logged in. Re-login now tells you how it went every time, including when Roblox asks for two-factor verification mid-login.
+• Smoother multi-instance recovery and a quieter diagnostics log under the hood.
 ```
 
 (Historical "What's new" blocks for prior releases live in their respective `docs/store/release-notes-*.md` files.)
