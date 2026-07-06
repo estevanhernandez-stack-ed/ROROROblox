@@ -20,4 +20,6 @@ public sealed record RunningAccountSnapshot(
     string AccountId,
     long RobloxUserId,
     string DisplayName,
-    int ProcessId);
+    int ProcessId,
+    long PlaceId = 0,
+    string PlaceName = "");

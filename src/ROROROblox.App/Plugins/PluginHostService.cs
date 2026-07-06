@@ -101,6 +101,8 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
                 RobloxUserId = snapshot.RobloxUserId,
                 DisplayName = snapshot.DisplayName,
                 ProcessId = snapshot.ProcessId,
+                PlaceId = snapshot.PlaceId,
+                PlaceName = snapshot.PlaceName,
             });
         }
         return Task.FromResult(list);
@@ -159,6 +161,8 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
                 DisplayName = s.DisplayName,
                 ProcessId = s.ProcessId,
                 LaunchedAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                PlaceId = s.PlaceId,
+                PlaceName = s.PlaceName,
             });
         }
 

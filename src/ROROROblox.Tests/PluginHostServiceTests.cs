@@ -111,7 +111,8 @@ public class PluginHostServiceTests
         var hostState = new FakeHostStateProvider("Off");
         var accounts = new FakeRunningAccountsProvider(new[]
         {
-            new RunningAccountSnapshot("00000000-0000-0000-0000-000000000001", 12345, "Alice", 9999),
+            new RunningAccountSnapshot("00000000-0000-0000-0000-000000000001", 12345, "Alice", 9999,
+                PlaceId: 606849621, PlaceName: "Pet Simulator"),
         });
         var service = new PluginHostService(registry, "1.4.0", "1.0", hostState, accounts, new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity());
 
@@ -122,6 +123,30 @@ public class PluginHostServiceTests
         Assert.Equal(12345L, account.RobloxUserId);
         Assert.Equal("Alice", account.DisplayName);
         Assert.Equal(9999, account.ProcessId);
+        Assert.Equal(606849621L, account.PlaceId);
+        Assert.Equal("Pet Simulator", account.PlaceName);
+    }
+
+    [Fact]
+    public async Task GetRunningAccounts_NoGameInfo_DefaultsToZeroAndEmpty()
+    {
+        // Presence can lag a fresh launch — snapshots built before the presence
+        // consumer fills CurrentPlaceId must surface as 0/"" (proto defaults),
+        // which plugins treat as "no game info".
+        var accounts = new FakeRunningAccountsProvider(new[]
+        {
+            new RunningAccountSnapshot("00000000-0000-0000-0000-000000000002", 777, "Bob", 1234),
+        });
+        var service = new PluginHostService(
+            new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
+            new FakeHostStateProvider("Off"), accounts, new InProcessPluginEventBus(),
+            NoOpLauncher(), NoUITranslator(), NoActivity());
+
+        var list = await service.GetRunningAccounts(new Empty(), FakeServerCallContext.Create());
+
+        var account = Assert.Single(list.Accounts);
+        Assert.Equal(0L, account.PlaceId);
+        Assert.Equal(string.Empty, account.PlaceName);
     }
 
     [Fact]
@@ -139,7 +164,8 @@ public class PluginHostServiceTests
         // Give the subscription a tick to attach the event handler.
         await Task.Delay(20);
         bus.RaiseAccountLaunched(new RunningAccountSnapshot(
-            "00000000-0000-0000-0000-000000000001", 12345, "Alice", 9999));
+            "00000000-0000-0000-0000-000000000001", 12345, "Alice", 9999,
+            PlaceId: 606849621, PlaceName: "Pet Simulator"));
 
         // Wait for the event to flow through the channel.
         await writer.WaitForAtLeastAsync(1, TimeSpan.FromSeconds(2));
@@ -152,6 +178,8 @@ public class PluginHostServiceTests
         Assert.Equal(12345L, evt.RobloxUserId);
         Assert.Equal("Alice", evt.DisplayName);
         Assert.Equal(9999, evt.ProcessId);
+        Assert.Equal(606849621L, evt.PlaceId);
+        Assert.Equal("Pet Simulator", evt.PlaceName);
     }
 
     [Fact]
