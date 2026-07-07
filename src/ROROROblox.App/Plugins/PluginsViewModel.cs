@@ -229,12 +229,18 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             {
                 TryDeleteInstallDir(installed.InstallDir);
             }
-            // Log the exception TYPE only, never the message — the installer builds messages by
-            // interpolating the pasted URL ("GET {uri} returned {status}."), and a signed/SAS
-            // URL carries a secret in its query string. The support log is user-zipped, so the
-            // full message must not land there; the user still sees ex.Message in the ephemeral
-            // on-screen banner below.
-            _log.LogWarning("Plugin install failed (url input): {ExceptionType}; install dir rolled back if present.", ex.GetType().Name);
+            // Log the exception type + a URL-REDACTED message. The installer builds some
+            // messages by interpolating the pasted URL ("GET {uri} returned {status}"), and a
+            // signed/SAS URL carries a secret in its query string — so scrub http(s) URLs before
+            // logging. That keeps the actual diagnostic reason (SHA256 mismatch, minHostVersion,
+            // HTTP status, extraction / access-denied, missing entrypoint) in the support log
+            // while the secret stays out. Previously only the type was logged, which named the
+            // failure class but never the cause — a failed install was effectively undiagnosable
+            // from the log, which is exactly the hole a real user fell into.
+            var safeReason = System.Text.RegularExpressions.Regex.Replace(
+                ex.Message, @"https?://\S+", "<url>");
+            _log.LogWarning("Plugin install failed: {ExceptionType}: {Reason}; install dir rolled back if present.",
+                ex.GetType().Name, safeReason);
             StatusBanner = $"Install failed: {ex.Message}";
         }
         finally
