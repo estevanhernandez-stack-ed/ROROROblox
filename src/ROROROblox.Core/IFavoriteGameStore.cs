@@ -41,9 +41,11 @@ public interface IFavoriteGameStore
     Task UpdateLocalNameAsync(long placeId, string? localName);
 
     /// <summary>
-    /// Fired after <see cref="SetDefaultAsync"/> mutates state and persists. Lets the
+    /// Fired after <see cref="SetDefaultAsync"/> / <see cref="ClearDefaultAsync"/> (or a
+    /// default-removing <see cref="RemoveAsync"/>) mutates state and persists. Lets the
     /// default-game widget react without a manual re-fetch. Subscribers should expect to be
-    /// invoked on whatever thread <see cref="SetDefaultAsync"/> ran on. v1.3.x.
+    /// invoked on whatever thread the mutation ran on. Mirrors
+    /// <see cref="IPrivateServerStore.DefaultChanged"/>. v1.3.x.
     /// </summary>
     event EventHandler? DefaultChanged;
 }

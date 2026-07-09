@@ -118,9 +118,10 @@ public sealed class RobloxLauncher : IRobloxLauncher
 
         if (resolved is null)
         {
-            // Defensive guard, not fully dead: the true no-default terminal case now resolves to
-            // LaunchTarget.Home (see ResolveDefaultAsync), but LaunchTarget.FromUrl(settingsUrl)
-            // can still return null for an unparseable legacy settings value. Belt-and-suspenders.
+            // Defensive guard, not fully dead: ResolveDefaultAsync (the DefaultGame path) now always
+            // returns non-null (falls back to LaunchTarget.Home per spec §5). This still catches null
+            // from explicit-selection callers upstream (JoinByLinkWindow, MainViewModel) that resolve
+            // a pasted/typed URL via LaunchTarget.FromUrl before reaching ExecuteLaunchAsync.
             return new LaunchResult.Failed(
                 "No default Roblox game configured. Add one in Games (header button), or pass an explicit target.");
         }
@@ -298,17 +299,10 @@ public sealed class RobloxLauncher : IRobloxLauncher
             }
         }
 
-        var defaultUrl = await _settings.GetDefaultPlaceUrlAsync().ConfigureAwait(false);
-        if (string.IsNullOrEmpty(defaultUrl))
-        {
-            // No favorite default and no legacy settings URL — open Roblox home (signed in) rather
-            // than hard-failing. Encourages, doesn't require, a default game.
-            return new LaunchTarget.Home();
-        }
-
-        // The settings field can hold any of the historical shapes (URL, bare id, PlaceLauncher form).
-        // FromUrl handles all of them.
-        return LaunchTarget.FromUrl(defaultUrl);
+        // No favorite default -> open Roblox home (signed in). The legacy settings DefaultPlaceUrl is
+        // vestigial per spec §5 and intentionally ignored by resolution; a user sets a real default game
+        // to launch straight into it. Encourages, doesn't require, a default.
+        return new LaunchTarget.Home();
     }
 
     /// <summary>

@@ -350,18 +350,25 @@ public class RobloxLauncherTests
     }
 
     [Fact]
-    public async Task LaunchAsync_TypedApi_DefaultGame_FallsBackToSettings()
+    public async Task LaunchAsync_TypedApi_NoFavoriteDefault_IgnoresLegacySettingsUrl_ResolvesToHome()
     {
+        // Spec §5: the legacy settings DefaultPlaceUrl is vestigial and must be ignored by resolution.
+        // No favorite default is configured (CreateLauncher wires favorites: null), but a legacy
+        // settings value IS present — resolution must not fall back to it; it must resolve to Home.
         var (launcher, _, processStarter) = CreateLauncher(
             ticket: "TKT",
-            defaultPlaceUrl: "920587237", // bare numeric — FromUrl resolves to Place(920587237)
+            defaultPlaceUrl: "920587237", // legacy settings default present — must be ignored
             startResult: 1);
 
         var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.DefaultGame());
 
         Assert.IsType<LaunchResult.Started>(result);
-        Assert.Contains(Uri.EscapeDataString("placeId=920587237"), processStarter.LastUri);
-        Assert.Contains(Uri.EscapeDataString("request=RequestGame"), processStarter.LastUri);
+        // launchmode:app is a top-level, unescaped segment (mirrors LaunchAsync_UriIncludesAllRequiredSegments) —
+        // NOT inside the escaped placelauncherurl payload, so plain string match, not Uri.EscapeDataString.
+        Assert.Contains("launchmode:app", processStarter.LastUri);
+        Assert.DoesNotContain("placelauncherurl", processStarter.LastUri);
+        // The legacy settings place id must never surface in the launch URI.
+        Assert.DoesNotContain(Uri.EscapeDataString("placeId=920587237"), processStarter.LastUri);
     }
 
     [Fact]
