@@ -118,6 +118,9 @@ public sealed class RobloxLauncher : IRobloxLauncher
 
         if (resolved is null)
         {
+            // Defensive guard, not fully dead: the true no-default terminal case now resolves to
+            // LaunchTarget.Home (see ResolveDefaultAsync), but LaunchTarget.FromUrl(settingsUrl)
+            // can still return null for an unparseable legacy settings value. Belt-and-suspenders.
             return new LaunchResult.Failed(
                 "No default Roblox game configured. Add one in Games (header button), or pass an explicit target.");
         }
@@ -144,8 +147,11 @@ public sealed class RobloxLauncher : IRobloxLauncher
         // random one-shot fallback preserves the pre-v1.8.1 behavior for callers without it.
         var browserTrackerId = (stableBrowserTrackerId ?? _browserTrackerIdFactory()).ToString();
         var launchTime = _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
-        var placeLauncherUrl = BuildPlaceLauncherUrl(resolved, browserTrackerId);
-        var uri = BuildLaunchUri(ticket.Ticket, launchTime, browserTrackerId, placeLauncherUrl);
+        // Home skips place resolution entirely — no placelauncherurl, no BuildLaunchUri (which
+        // hardcodes launchmode:play and requires a non-empty placeUrl).
+        var uri = resolved is LaunchTarget.Home
+            ? BuildAppLaunchUri(ticket.Ticket, launchTime, browserTrackerId)
+            : BuildLaunchUri(ticket.Ticket, launchTime, browserTrackerId, BuildPlaceLauncherUrl(resolved, browserTrackerId));
 
         try
         {
@@ -295,7 +301,9 @@ public sealed class RobloxLauncher : IRobloxLauncher
         var defaultUrl = await _settings.GetDefaultPlaceUrlAsync().ConfigureAwait(false);
         if (string.IsNullOrEmpty(defaultUrl))
         {
-            return null;
+            // No favorite default and no legacy settings URL — open Roblox home (signed in) rather
+            // than hard-failing. Encourages, doesn't require, a default game.
+            return new LaunchTarget.Home();
         }
 
         // The settings field can hold any of the historical shapes (URL, bare id, PlaceLauncher form).
@@ -345,6 +353,13 @@ public sealed class RobloxLauncher : IRobloxLauncher
                 throw new InvalidOperationException(
                     "DefaultGame must be resolved before building the placelauncherurl. " +
                     "Did you forget to call ResolveDefaultAsync?"),
+
+            // Home has no placelauncherurl at all — it must never reach this method. Defensive
+            // mirror of the DefaultGame throw arm above; callers branch on LaunchTarget.Home in
+            // ExecuteLaunchAsync and route to BuildAppLaunchUri instead.
+            LaunchTarget.Home =>
+                throw new InvalidOperationException(
+                    "Home has no placelauncherurl; build with BuildAppLaunchUri."),
 
             _ => throw new ArgumentException(
                 $"Unsupported or invalid LaunchTarget: {target}", nameof(target)),
@@ -459,6 +474,33 @@ public sealed class RobloxLauncher : IRobloxLauncher
         uri.Append("+gameinfo:").Append(ticket);
         uri.Append("+launchtime:").Append(launchTime);
         uri.Append("+placelauncherurl:").Append(Uri.EscapeDataString(placeUrl));
+        uri.Append("+browsertrackerid:").Append(browserTrackerId);
+        uri.Append("+robloxLocale:en_us+gameLocale:en_us");
+        return uri.ToString();
+    }
+
+    /// <summary>
+    /// Pure URI construction for <see cref="LaunchTarget.Home"/> -- opens Roblox at home,
+    /// authenticated (still carries the auth ticket via <c>gameinfo:</c>), joining nothing.
+    /// No <c>placelauncherurl</c> segment and <c>launchmode:app</c> instead of <c>play</c> --
+    /// distinct from <see cref="BuildLaunchUri"/>, not a variant of it. Public for snapshot testing.
+    /// </summary>
+    public static string BuildAppLaunchUri(string ticket, long launchTime, string browserTrackerId)
+    {
+        if (string.IsNullOrEmpty(ticket))
+        {
+            throw new ArgumentException("Ticket must not be empty.", nameof(ticket));
+        }
+        if (string.IsNullOrEmpty(browserTrackerId))
+        {
+            throw new ArgumentException("Browser tracker id must not be empty.", nameof(browserTrackerId));
+        }
+
+        var uri = new StringBuilder();
+        uri.Append("roblox-player:1");
+        uri.Append("+launchmode:app");                       // home, not a game join
+        uri.Append("+gameinfo:").Append(ticket);              // still authenticated
+        uri.Append("+launchtime:").Append(launchTime);
         uri.Append("+browsertrackerid:").Append(browserTrackerId);
         uri.Append("+robloxLocale:en_us+gameLocale:en_us");
         return uri.ToString();

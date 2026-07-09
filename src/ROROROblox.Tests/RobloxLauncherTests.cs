@@ -365,17 +365,41 @@ public class RobloxLauncherTests
     }
 
     [Fact]
-    public async Task LaunchAsync_TypedApi_DefaultGame_WithoutAnyDefault_ReturnsFailed()
+    public async Task LaunchAsync_TypedApi_DefaultGame_WithNoDefaultAnywhere_LaunchesHome()
     {
-        var (launcher, _, _) = CreateLauncher(
-            ticket: "TKT",
-            defaultPlaceUrl: null,
-            startResult: 1);
-
+        var (launcher, _, processStarter) = CreateLauncher(ticket: "TKT", defaultPlaceUrl: null, startResult: 1);
         var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.DefaultGame());
 
-        var failed = Assert.IsType<LaunchResult.Failed>(result);
-        Assert.Contains("default", failed.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.IsType<LaunchResult.Started>(result);
+        // launchmode:app is a top-level, unescaped segment (mirrors LaunchAsync_UriIncludesAllRequiredSegments) —
+        // NOT inside the escaped placelauncherurl payload, so plain string match, not Uri.EscapeDataString.
+        Assert.Contains("launchmode:app", processStarter.LastUri);
+        Assert.DoesNotContain("placelauncherurl", processStarter.LastUri);
+    }
+
+    [Fact]
+    public void BuildAppLaunchUri_HasAppLaunchmode_NoPlaceLauncherUrl()
+    {
+        var uri = RobloxLauncher.BuildAppLaunchUri(
+            ticket: "TKT-HOME", launchTime: 1714780000000, browserTrackerId: "1234567890123");
+
+        Assert.Contains("launchmode:app", uri);
+        Assert.Contains("gameinfo:TKT-HOME", uri);
+        Assert.Contains("browsertrackerid:1234567890123", uri);
+        Assert.DoesNotContain("placelauncherurl", uri);
+        Assert.DoesNotContain("launchmode:play", uri);
+    }
+
+    [Fact]
+    public async Task LaunchAsync_TypedApi_Home_BuildsAppLaunchUri()
+    {
+        var (launcher, _, processStarter) = CreateLauncher(ticket: "TKT", defaultPlaceUrl: null, startResult: 1);
+        var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Home());
+
+        Assert.IsType<LaunchResult.Started>(result);
+        Assert.Contains("launchmode:app", processStarter.LastUri);
+        Assert.DoesNotContain("placelauncherurl", processStarter.LastUri);
+        Assert.DoesNotContain("RequestGame", processStarter.LastUri);
     }
 
     [Fact]

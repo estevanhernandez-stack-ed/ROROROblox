@@ -12,6 +12,8 @@ namespace ROROROblox.Core;
 ///   <item><see cref="FollowFriend"/> -> <c>request=RequestFollowUser&amp;userId={X}</c>. Roblox does the
 ///   permission check server-side; works for public AND private servers if your friend's privacy +
 ///   server allowlist permit it.</item>
+///   <item><see cref="Home"/> -> <c>launchmode:app</c>, no <c>placelauncherurl</c>. The "no default
+///   game" resolution target — opens Roblox at home, authenticated, joining nothing.</item>
 /// </list>
 /// </summary>
 public abstract record LaunchTarget
@@ -20,6 +22,10 @@ public abstract record LaunchTarget
 
     /// <summary>Resolve from default favorite or app settings — original Launch As behavior.</summary>
     public sealed record DefaultGame() : LaunchTarget;
+
+    /// <summary>Open Roblox at home, authenticated as the launching account, joining nothing —
+    /// <c>launchmode:app</c>, no <c>placelauncherurl</c>. The "no default game" resolution target.</summary>
+    public sealed record Home() : LaunchTarget;
 
     /// <summary>Public server, specific place. Used by the Games dialog.</summary>
     public sealed record Place(long PlaceId) : LaunchTarget;
