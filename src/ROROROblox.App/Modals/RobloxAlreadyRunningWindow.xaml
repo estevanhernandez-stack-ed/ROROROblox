@@ -3,7 +3,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Roblox is already running"
-        Height="360" Width="520"
+        Height="440" Width="560"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico"
@@ -54,16 +54,24 @@
                    Text="Roblox can start itself with Windows. You can turn that off in Roblox's tray settings — but you don't have to; RoRoRo will catch it here either way."
                    TextWrapping="Wrap" FontSize="11" Foreground="#8A93A0" Margin="0,12,0,0" />
 
-        <!-- Still-locked tick (hidden until a failed retry) -->
-        <TextBlock Grid.Row="4" x:Name="StillLockedTick"
-                   FontFamily="JetBrains Mono, Cascadia Mono, Consolas" FontSize="10"
-                   Foreground="#F1B232" Margin="0,12,0,0" Visibility="Collapsed" />
+        <!-- Bottom-of-body notes: still-locked tick (hidden until a failed retry) + the
+             Start-anyway explanation -->
+        <StackPanel Grid.Row="4" VerticalAlignment="Bottom">
+            <TextBlock x:Name="StillLockedTick"
+                       FontFamily="JetBrains Mono, Cascadia Mono, Consolas" FontSize="10"
+                       Foreground="#F1B232" Margin="0,12,0,0" Visibility="Collapsed" />
+            <TextBlock Text="Already have another copy of RoRoRo or a compatible tool holding the lock? Start anyway — multi-instance keeps working, and RoRoRo will show a banner while it doesn't hold the lock."
+                       TextWrapping="Wrap" FontSize="11" Foreground="#8A93A0" Margin="0,12,0,0" />
+        </StackPanel>
 
-        <!-- Three actions -->
+        <!-- Four actions -->
         <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button Content="Quit RoRoRo" Padding="16,8" IsCancel="True"
                     Background="#22314A" Foreground="#FFFFFF" BorderThickness="0"
                     Margin="0,0,8,0" Click="OnQuitClick" />
+            <Button Content="Start anyway" Padding="16,8"
+                    Background="#22314A" Foreground="#FFFFFF" BorderThickness="0"
+                    Margin="0,0,8,0" Click="OnStartAnywayClick" />
             <Button Content="Retry" Padding="16,8"
                     Background="#22314A" Foreground="#FFFFFF" BorderThickness="0"
                     Margin="0,0,8,0" Click="OnRetryClick" />

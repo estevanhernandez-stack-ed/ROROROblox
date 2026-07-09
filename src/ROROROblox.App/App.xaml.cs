@@ -107,20 +107,24 @@ public partial class App : Application
         var acquired = mutex.Acquire();
         var verdict = gate.Evaluate(acquired);
 
+        var startedWithoutMutex = false;
         if (verdict is StartupGateResult.Blocked)
         {
-            // Roblox holds the lock — offer in-place recovery. If recovery succeeds the modal
-            // returns true and we continue holding the mutex; otherwise the user quit.
+            // The mutex is held by someone else — offer in-place recovery (Close Roblox / Retry,
+            // which re-acquire) plus Start anyway (proceed without owning it — a benign squatter
+            // holds it, so multi-instance already works) and Quit. See the start-anyway design note.
             var modal = new Modals.RobloxAlreadyRunningWindow(
                 onCloseForMe: () => TryRecoverMultiInstance(closeRobloxFirst: true),
                 onRetry: () => TryRecoverMultiInstance(closeRobloxFirst: false));
-            var recovered = modal.ShowDialog() == true;
-            if (!recovered)
+            modal.ShowDialog();
+            var (proceed, holdsMutex) = AppLifecycle.BlockedStartupDecision.Resolve(modal.Outcome);
+            if (!proceed)
             {
                 Shutdown(0);
                 return;
             }
-            acquired = true; // recovery acquired it
+            acquired = holdsMutex;              // Recovered holds it; Start anyway does not
+            startedWithoutMutex = !holdsMutex;  // borrowed start — the contested watcher will banner it
         }
         else if (verdict is StartupGateResult.Leftover leftover)
         {
@@ -150,7 +154,12 @@ public partial class App : Application
         _log.LogInformation(
             "Startup mutex: name={Name}, source={Source}, acquired={Acquired}.",
             mutex.MutexName, nameSource, acquired);
-        tray.UpdateStatus(acquired ? MultiInstanceState.On : MultiInstanceState.Error);
+        // Borrowed start (Start anyway): we don't hold the lock, but it's not an error — Off is the
+        // honest tray state; the contested watcher's banner carries the nuance.
+        tray.UpdateStatus(
+            startedWithoutMutex ? MultiInstanceState.Off
+            : acquired ? MultiInstanceState.On
+            : MultiInstanceState.Error);
 
         tray.Show();
         _singleInstance.StartListening(mainWindow);
