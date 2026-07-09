@@ -536,6 +536,10 @@ public partial class App : Application
             ROROROblox.App.Plugins.Adapters.MainViewModelRunningAccountsAdapter>();
         services.AddSingleton<ROROROblox.App.Plugins.IActivitySnapshotProvider,
             ROROROblox.App.Plugins.ActivitySnapshotProvider>();
+        services.AddSingleton<ROROROblox.App.Plugins.IAccountActivityMarker>(sp =>
+            new ROROROblox.App.Plugins.AccountActivityMarker(
+                sp.GetRequiredService<IActivityMonitor>(),
+                sp.GetRequiredService<IClock>()));
         services.AddSingleton<ROROROblox.App.Plugins.IPluginLaunchInvoker,
             ROROROblox.App.Plugins.Adapters.MainViewModelLaunchInvokerAdapter>();
         services.AddSingleton<ROROROblox.App.Plugins.IPluginUIHost,
@@ -551,7 +555,8 @@ public partial class App : Application
             sp.GetRequiredService<ROROROblox.App.Plugins.IPluginEventBus>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.IPluginLaunchInvoker>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.PluginUITranslator>(),
-            sp.GetRequiredService<ROROROblox.App.Plugins.IActivitySnapshotProvider>()));
+            sp.GetRequiredService<ROROROblox.App.Plugins.IActivitySnapshotProvider>(),
+            sp.GetRequiredService<ROROROblox.App.Plugins.IAccountActivityMarker>()));
 
         // CapabilityInterceptor: per-connection plugin id binding is deferred to v1.5+
         // (the gRPC interceptor sees the call before any plugin-id metadata is bound).

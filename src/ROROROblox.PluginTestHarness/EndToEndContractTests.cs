@@ -50,7 +50,8 @@ public class EndToEndContractTests
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
-            new StubActivityProvider());
+            new StubActivityProvider(),
+            new StubActivityMarker());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -120,7 +121,8 @@ public class EndToEndContractTests
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
-            new StubActivityProvider());
+            new StubActivityProvider(),
+            new StubActivityMarker());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -187,7 +189,8 @@ public class EndToEndContractTests
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
             new StubActivityProvider(
-                new AccountActivitySnapshot(accountId, 1_700_000_000_000, 300)));
+                new AccountActivitySnapshot(accountId, 1_700_000_000_000, 300)),
+            new StubActivityMarker());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -253,7 +256,8 @@ public class EndToEndContractTests
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
-            new StubActivityProvider());
+            new StubActivityProvider(),
+            new StubActivityMarker());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -316,7 +320,8 @@ public class EndToEndContractTests
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
             new PluginUITranslator(uiHost),
-            new StubActivityProvider());
+            new StubActivityProvider(),
+            new StubActivityMarker());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -394,7 +399,8 @@ public class EndToEndContractTests
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
-            new StubActivityProvider());
+            new StubActivityProvider(),
+            new StubActivityMarker());
 
         // Production shape: accessor returns null. Header is the only path to a plugin id.
         var interceptor = new CapabilityInterceptor(
@@ -468,7 +474,8 @@ public class EndToEndContractTests
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
-            new StubActivityProvider());
+            new StubActivityProvider(),
+            new StubActivityMarker());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => null,

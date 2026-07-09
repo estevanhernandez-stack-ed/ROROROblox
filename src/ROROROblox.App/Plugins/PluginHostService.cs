@@ -24,6 +24,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     private readonly IPluginLaunchInvoker _launcher;
     private readonly PluginUITranslator _uiTranslator;
     private readonly IActivitySnapshotProvider _activityProvider;
+    private readonly IAccountActivityMarker _activityMarker;
 
     public PluginHostService(
         IInstalledPluginsLookup registry,
@@ -34,7 +35,8 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         IPluginEventBus eventBus,
         IPluginLaunchInvoker launcher,
         PluginUITranslator uiTranslator,
-        IActivitySnapshotProvider activityProvider)
+        IActivitySnapshotProvider activityProvider,
+        IAccountActivityMarker activityMarker)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _hostVersion = hostVersion ?? throw new ArgumentNullException(nameof(hostVersion));
@@ -45,6 +47,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         _launcher = launcher ?? throw new ArgumentNullException(nameof(launcher));
         _uiTranslator = uiTranslator ?? throw new ArgumentNullException(nameof(uiTranslator));
         _activityProvider = activityProvider ?? throw new ArgumentNullException(nameof(activityProvider));
+        _activityMarker = activityMarker ?? throw new ArgumentNullException(nameof(activityMarker));
     }
 
     public override Task<HandshakeResponse> Handshake(HandshakeRequest request, ServerCallContext context)
@@ -121,6 +124,23 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
             });
         }
         return Task.FromResult(list);
+    }
+
+    // =====================================================================
+    // MarkAccountActive (activity-crediting-fix plan, task 3).
+    //
+    // Fire-and-forget stamp: a consented plugin tells the host it kept an
+    // account's window active (e.g. a keep-alive tap it synthesized). The
+    // handler is a pass-through to IAccountActivityMarker — no input
+    // sensing, no reasoning about what the plugin did, just a dictionary
+    // stamp. Capability gate (host.commands.mark-account-active) is
+    // enforced upstream by CapabilityInterceptor via RpcMethodCapabilityMap.
+    // =====================================================================
+
+    public override Task<Empty> MarkAccountActive(MarkAccountActiveRequest request, ServerCallContext context)
+    {
+        _activityMarker.Mark(request.AccountId);
+        return Task.FromResult(new Empty());
     }
 
     // =====================================================================
