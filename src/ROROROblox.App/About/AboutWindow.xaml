@@ -10,12 +10,14 @@
         Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
 
     <Window.Resources>
-        <SolidColorBrush x:Key="CyanBrightBrush" Color="#5CE6FF" />
-        <SolidColorBrush x:Key="CyanDimBrush" Color="#0FA8C9" />
-        <SolidColorBrush x:Key="CyanShadowBrush" Color="#0A7A92" />
-        <SolidColorBrush x:Key="MagentaDimBrush" Color="#C21F6C" />
-        <SolidColorBrush x:Key="MagentaShadowBrush" Color="#8A154C" />
-        <SolidColorBrush x:Key="NavySoftBrush" Color="#192E44" />
+        <SolidColorBrush x:Key="CyanBrightBrush" Color="#6CEAFD" />
+        <SolidColorBrush x:Key="CyanDimBrush" Color="#12BFE3" />
+        <SolidColorBrush x:Key="CyanShadowBrush" Color="#0D94B8" />
+        <SolidColorBrush x:Key="MagentaDimBrush" Color="#F22F89" />
+        <SolidColorBrush x:Key="MagentaShadowBrush" Color="#B81F66" />
+        <SolidColorBrush x:Key="NavySoftBrush" Color="#0F1F31" />
+        <SolidColorBrush x:Key="TealBrush" Color="#2EE6C9" />
+        <SolidColorBrush x:Key="TealDeepBrush" Color="#1A9F8B" />
     </Window.Resources>
 
     <Grid Margin="32,28">
@@ -30,12 +32,12 @@
         <StackPanel Grid.Row="0" Orientation="Horizontal">
             <!-- Direction C iso voxel stack (Canvas, 64x64). Painter's order: bottom -> middle -> top. -->
             <Canvas Width="64" Height="64" Margin="0,0,18,0" Background="{StaticResource NavySoftBrush}">
-                <!-- Bottom block (cyan) -->
-                <Polygon Fill="{DynamicResource CyanBrush}"
+                <!-- Bottom block (teal) -->
+                <Polygon Fill="{StaticResource TealBrush}"
                          Points="16,36.5 32,30.5 48,36.5 32,42.5" />
-                <Polygon Fill="{StaticResource CyanShadowBrush}"
+                <Polygon Fill="{StaticResource TealDeepBrush}"
                          Points="16,36.5 32,42.5 32,51.5 16,45.5" />
-                <Polygon Fill="{StaticResource CyanDimBrush}"
+                <Polygon Fill="{StaticResource TealBrush}"
                          Points="32,42.5 48,36.5 48,45.5 32,51.5" />
                 <!-- Middle block (magenta) -->
                 <Polygon Fill="{DynamicResource MagentaBrush}"
@@ -49,7 +51,7 @@
                          Points="16,18.5 32,12.5 48,18.5 32,24.5" />
                 <Polygon Fill="{StaticResource CyanShadowBrush}"
                          Points="16,18.5 32,24.5 32,33.5 16,27.5" />
-                <Polygon Fill="{DynamicResource CyanBrush}"
+                <Polygon Fill="{StaticResource CyanDimBrush}"
                          Points="32,24.5 48,18.5 48,27.5 32,33.5" />
             </Canvas>
 

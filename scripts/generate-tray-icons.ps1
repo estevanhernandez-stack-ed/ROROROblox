@@ -24,15 +24,16 @@ if (-not (Test-Path $resourcesDir)) {
 }
 
 # ----- Brand tokens -----------------------------------------------------------
-$navy        = [System.Drawing.Color]::FromArgb(255, 25, 46, 68)
+$navy        = [System.Drawing.Color]::FromArgb(255, 15, 31, 49)
 $navyDeep    = [System.Drawing.Color]::FromArgb(255, 15, 31, 49)
 $cyan        = [System.Drawing.Color]::FromArgb(255, 23, 212, 250)
-$cyanBright  = [System.Drawing.Color]::FromArgb(255, 92, 230, 255)
-$cyanDim     = [System.Drawing.Color]::FromArgb(255, 15, 168, 201)
-$cyanShadow  = [System.Drawing.Color]::FromArgb(255, 10, 122, 146)
+$cyanBright  = [System.Drawing.Color]::FromArgb(255, 108, 234, 253)
+$cyanDim     = [System.Drawing.Color]::FromArgb(255, 18, 191, 227)
+$cyanShadow  = [System.Drawing.Color]::FromArgb(255, 13, 148, 184)
 $magenta     = [System.Drawing.Color]::FromArgb(255, 242, 47, 137)
-$magentaDim  = [System.Drawing.Color]::FromArgb(255, 194, 31, 108)
-$magentaShdw = [System.Drawing.Color]::FromArgb(255, 138, 21, 76)
+$magentaDim  = [System.Drawing.Color]::FromArgb(255, 184, 31, 102)
+$teal        = [System.Drawing.Color]::FromArgb(255, 46, 230, 201)
+$tealDeep    = [System.Drawing.Color]::FromArgb(255, 26, 159, 139)
 $slate       = [System.Drawing.Color]::FromArgb(255, 90, 105, 130)
 
 # ----- Iso voxel rendering (matches generate-store-assets.ps1 geometry) -------
@@ -90,9 +91,9 @@ function Draw-VoxelStack {
     $blockX = $cx - $bw / 2
     $stackTop = $cy - $stackH / 2
 
-    Draw-Block $gfx $blockX ($stackTop + 2 * $bh) $bw $bd $bh $cyan $cyanShadow $cyanDim
-    Draw-Block $gfx $blockX ($stackTop + $bh)     $bw $bd $bh $magenta $magentaShdw $magentaDim
-    Draw-Block $gfx $blockX $stackTop             $bw $bd $bh $cyanBright $cyanShadow $cyan
+    Draw-Block $gfx $blockX ($stackTop + 2 * $bh) $bw $bd $bh $teal $tealDeep $teal
+    Draw-Block $gfx $blockX ($stackTop + $bh)     $bw $bd $bh $magenta $magentaDim $magenta
+    Draw-Block $gfx $blockX $stackTop             $bw $bd $bh $cyanBright $cyanShadow $cyanDim
 }
 
 # ----- ICO writer -------------------------------------------------------------
