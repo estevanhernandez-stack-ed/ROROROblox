@@ -482,6 +482,9 @@ public class RobloxLauncherTests
         public int IdleWarnThresholdMinutes { get; set; } = 15;
         public Task<int> GetIdleWarnThresholdMinutesAsync() => Task.FromResult(IdleWarnThresholdMinutes <= 0 ? 15 : IdleWarnThresholdMinutes);
         public Task SetIdleWarnThresholdMinutesAsync(int minutes) { IdleWarnThresholdMinutes = minutes <= 0 ? 15 : minutes; return Task.CompletedTask; }
+        public bool CarefulSquadLaunch { get; set; }
+        public Task<bool> GetCarefulSquadLaunchAsync() => Task.FromResult(CarefulSquadLaunch);
+        public Task SetCarefulSquadLaunchAsync(bool careful) { CarefulSquadLaunch = careful; return Task.CompletedTask; }
     }
 
     private sealed class RecordingProcessStarter : IProcessStarter

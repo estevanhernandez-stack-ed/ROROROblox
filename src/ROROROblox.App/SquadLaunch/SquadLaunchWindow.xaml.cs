@@ -15,10 +15,12 @@ internal partial class SquadLaunchWindow : Window
 {
     private readonly IPrivateServerStore _store;
     private readonly IRobloxApi _api;
+    private readonly IAppSettings _settings;
     private readonly Func<string, Task<LaunchTarget?>> _resolveShareUrl;
     private readonly int _eligibleAccountCount;
     private readonly int _runningAccountCount;
     private readonly int _expiredAccountCount;
+    private bool _suppressClickHandlers; // true while we set the initial check state.
 
     /// <summary>The target the user picked — null if the user closed without launching.</summary>
     public LaunchTarget.PrivateServer? SelectedTarget { get; private set; }
@@ -26,6 +28,7 @@ internal partial class SquadLaunchWindow : Window
     public SquadLaunchWindow(
         IPrivateServerStore store,
         IRobloxApi api,
+        IAppSettings settings,
         Func<string, Task<LaunchTarget?>> resolveShareUrl,
         int eligibleAccountCount,
         int runningAccountCount,
@@ -33,6 +36,7 @@ internal partial class SquadLaunchWindow : Window
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _api = api ?? throw new ArgumentNullException(nameof(api));
+        _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _resolveShareUrl = resolveShareUrl ?? throw new ArgumentNullException(nameof(resolveShareUrl));
         _eligibleAccountCount = eligibleAccountCount;
         _runningAccountCount = runningAccountCount;
@@ -44,7 +48,32 @@ internal partial class SquadLaunchWindow : Window
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
         EligibilityText.Text = BuildEligibilityText();
+        _suppressClickHandlers = true;
+        try
+        {
+            CarefulModeToggle.IsChecked = await _settings.GetCarefulSquadLaunchAsync();
+        }
+        finally
+        {
+            _suppressClickHandlers = false;
+        }
         await RenderListAsync();
+    }
+
+    private async void OnCarefulModeToggle(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+        try
+        {
+            await _settings.SetCarefulSquadLaunchAsync(CarefulModeToggle.IsChecked == true);
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Couldn't save preference: {ex.Message}";
+            _suppressClickHandlers = true;
+            CarefulModeToggle.IsChecked = await _settings.GetCarefulSquadLaunchAsync();
+            _suppressClickHandlers = false;
+        }
     }
 
     private string BuildEligibilityText()

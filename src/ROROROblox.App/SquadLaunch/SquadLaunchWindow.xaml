@@ -19,6 +19,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0">
@@ -83,7 +84,16 @@
                    Margin="0,12,0,0"
                    TextWrapping="Wrap" />
 
-        <Grid Grid.Row="4" Margin="0,12,0,0">
+        <CheckBox Grid.Row="4" x:Name="CarefulModeToggle"
+                  Margin="0,10,0,0"
+                  Foreground="{DynamicResource WhiteBrush}"
+                  FontSize="12"
+                  Click="OnCarefulModeToggle"
+                  ToolTip="Waits for each account to fully land in the game before launching the next. Slower, but no two accounts are ever joining at the same time — which is what triggers Roblox's verification prompts.">
+            <TextBlock Text="Careful mode — land accounts one at a time" TextWrapping="Wrap" />
+        </CheckBox>
+
+        <Grid Grid.Row="5" Margin="0,12,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />

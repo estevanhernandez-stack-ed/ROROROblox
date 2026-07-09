@@ -1366,7 +1366,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var running = breakdown.Breakdown.Running;
         var expired = breakdown.Breakdown.Expired;
 
-        var window = new SquadLaunchWindow(_privateServerStore, _api, url => ResolveShareUrlAsync(url), eligible, running, expired)
+        var window = new SquadLaunchWindow(_privateServerStore, _api, _settings, url => ResolveShareUrlAsync(url), eligible, running, expired)
         {
             Owner = Application.Current.MainWindow,
         };

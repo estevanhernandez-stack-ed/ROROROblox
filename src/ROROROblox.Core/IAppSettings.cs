@@ -46,4 +46,12 @@ public interface IAppSettings
     /// </summary>
     Task<int> GetIdleWarnThresholdMinutesAsync();
     Task SetIdleWarnThresholdMinutesAsync(int minutes);
+
+    /// <summary>
+    /// True when Squad Launch should wait for each account to fully land in the game before
+    /// dispatching the next. Defaults to false (fire all at once). The user opts in via the
+    /// Squad Launch checkbox.
+    /// </summary>
+    Task<bool> GetCarefulSquadLaunchAsync();
+    Task SetCarefulSquadLaunchAsync(bool careful);
 }

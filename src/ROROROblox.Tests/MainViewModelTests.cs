@@ -520,6 +520,8 @@ public class MainViewModelTests
         public Task SetMuteIdleAlertsAsync(bool muted) => throw new NotImplementedException();
         public Task<int> GetIdleWarnThresholdMinutesAsync() => throw new NotImplementedException();
         public Task SetIdleWarnThresholdMinutesAsync(int minutes) => throw new NotImplementedException();
+        public Task<bool> GetCarefulSquadLaunchAsync() => throw new NotImplementedException();
+        public Task SetCarefulSquadLaunchAsync(bool careful) => throw new NotImplementedException();
     }
 
     private sealed class FakeFavoriteGameStore : IFavoriteGameStore
