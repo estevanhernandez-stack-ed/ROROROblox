@@ -188,6 +188,19 @@ internal partial class SettingsWindow : Window
         }
     }
 
+    private async void OnClearDefaultClick(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await _favorites.ClearDefaultAsync();
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Couldn't clear the default: {ex.Message}";
+        }
+    }
+
     private async void OnSetDefaultServerClick(object sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.Tag is not Guid id)
