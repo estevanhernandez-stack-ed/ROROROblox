@@ -27,13 +27,15 @@ The launch engine already supports a private-server default: `MainViewModel.Reso
    - Rationale: no cross-store mutual-exclusion footgun, no shared-identity wrinkle, the game-default machinery is untouched. Simpler than a unified "one default target."
 2. **Set-default lives in the Library**, as a **"Set default" button + DEFAULT badge** on the Saved private servers rows — a near-exact mirror of the games' existing control in the same file.
 3. **Squad Launch pre-selects the default server** — it sorts to the top and is visually highlighted so it's the obvious one to launch; no auto-fire, no new button. If no default is set, today's behavior (manual pick) is unchanged.
-4. **Bounded Library cleanup rides along:** fix the fixed-proportion dead-space layout, the clipped (non-wrapping) header, and refresh the header copy for both defaults. No add-flow redesign, no unified list, no tabs (those were explicitly deferred).
+4. **The default is unsettable.** The row that IS default shows a **Clear default** affordance (in place of the hidden Set-default button), returning to the zero-default state (manual pick). So a user can set → switch → or clear, and the default is never a one-way trap.
+5. **Themed via the pack, not hardcoded.** Every new visual (DEFAULT badge, default-row border, Squad Launch highlight) uses existing `DynamicResource` theme tokens — no hardcoded hex — so custom themes restyle it. Verified against the `626labs:design` skill / theme resource dictionaries before implementation; if any genuinely new token is needed, it's registered in the theme pack (the same dictionaries the game DEFAULT badge already draws from), so it's not a theming blind spot.
+6. **Bounded Library cleanup rides along:** fix the fixed-proportion dead-space layout, the clipped (non-wrapping) header, and refresh the header copy for both defaults. No add-flow redesign, no unified list, no tabs (those were explicitly deferred).
 
 ## 3. Non-goals
 
 - No unified "single default target." Game and server defaults are independent.
-- No explicit "unset default server" control in v1 — mirror games (the Set-default button hides on the row that IS default; the default clears when that server is removed). A dedicated un-set is a future nicety, not this cycle.
 - No auto-promotion when the default server is removed (unlike games, which promote index 0). Removing the default server leaves **zero** default — surprising a user by blasting all alts into some *other* server is worse than no default.
+- No hardcoded colors in the new UI — everything through theme tokens (see §2.5).
 - No redesign of the add flow (Search + Add-by-URL stay as they are), no unified games+servers list, no tabs.
 - No change to the game-default behavior or storage.
 
@@ -45,8 +47,9 @@ Three touch points: **Core store**, **Library UI (`SettingsWindow`)**, **Squad L
 
 - **`SavedPrivateServer`** gains `bool IsDefault = false` as a new record field. Additive + defaulted false → old `private-servers.json` blobs without the field deserialize to `IsDefault = false` (back-compat, no migration).
 - **`IPrivateServerStore`** gains, mirroring `IFavoriteGameStore`:
-  - `Task SetDefaultAsync(Guid id)` — mark this server default, clear the flag on all others (single-store mutual exclusion, exactly one `IsDefault == true` after). Throws `KeyNotFoundException` if `id` isn't present. No-op short-circuit if it's already the default (skip write AND skip the event, so subscribers treat every event as a real change).
-  - `event EventHandler? DefaultChanged` — fired **outside the gate** after `SetDefaultAsync` (or a default-clearing `RemoveAsync`) mutates + persists, so subscribers can re-enter the store without deadlocking. Mirrors `IFavoriteGameStore.DefaultChanged`.
+  - `Task SetDefaultAsync(Guid id)` — mark this server default, clear the flag on all others (single-store mutual exclusion, at most one `IsDefault == true` after). Throws `KeyNotFoundException` if `id` isn't present. No-op short-circuit if it's already the default (skip write AND skip the event, so subscribers treat every event as a real change).
+  - `Task ClearDefaultAsync()` — clear the flag on every server, returning to the zero-default state (backs the **Clear default** button + `RemoveAsync` of the default). No-op short-circuit if nothing is currently default (no write, no event).
+  - `event EventHandler? DefaultChanged` — fired **outside the gate** after `SetDefaultAsync` / `ClearDefaultAsync` (or a default-clearing `RemoveAsync`) mutates + persists, so subscribers can re-enter the store without deadlocking. Mirrors `IFavoriteGameStore.DefaultChanged`.
 - **`PrivateServerStore`** implements `SetDefaultAsync` by mirroring `FavoriteGameStore.SetDefaultAsync` (SemaphoreSlim gate → `LoadAsync` → existence check → already-default short-circuit → `for` loop setting `IsDefault = (row.Id == id)` on every row → `SaveAsync` → fire `DefaultChanged` outside the gate).
 - **`PrivateServerStore.RemoveAsync`** (exists): when the removed server was the default, the default simply becomes zero (no promotion). If it was the default, fire `DefaultChanged` after save so Squad Launch's pre-selection recomputes. (Removing a non-default server needs no event.)
 - **Every record copy/construct site must carry `IsDefault`.** Audited (`PrivateServerStore.cs`): two mutators already use `with { … }` and preserve it automatically (`UpdateLocalNameAsync` :173, `TouchLastLaunchedAsync` :193 — no change needed). **Two sites full-reconstruct the record and MUST be updated:** `AddAsync` (:106) — on **replace** (same placeId+code) it must **preserve the existing row's `IsDefault`** (mirroring `FavoriteGameStore`'s IsDefault-preserve-on-re-add), and set `false` for a genuinely new row; the **legacy-migration** path (:245) sets `IsDefault: false`. Missing either silently drops a server's default on re-add or on legacy load.
@@ -55,9 +58,10 @@ Three touch points: **Core store**, **Library UI (`SettingsWindow`)**, **Squad L
 
 **Set-default control (the feature):** the `SavedPrivateServer` `DataTemplate` gains, mirroring the `FavoriteGame` template:
 - A **DEFAULT badge** next to the name (cyan `#17d4fa` fill, navy text — same as games, for cross-section consistency), shown when `IsDefault`. It sits alongside the existing magenta **PRIVATE** badge (a row can show both PRIVATE + DEFAULT).
-- A **"Set default"** button in the row's action group (left of Rename), `Visibility` collapsed when `IsDefault` (mirrors the game row's inverse-bool visibility). `Click="OnSetDefaultServerClick"`, `Tag="{Binding Id}"`.
+- A **"Set default"** button in the row's action group (left of Rename), `Visibility` collapsed when `IsDefault`. **In its place on the default row, a "Clear default" button** (`Visibility` visible only when `IsDefault`) → returns to zero-default. (This is the one place the server UI diverges from games, which have no un-set — servers allow zero default, so they get the Clear affordance.)
 - The row `Border` gets a **cyan border** when `IsDefault` (mirrors the game default's `DataTrigger`).
-- Code-behind `OnSetDefaultServerClick(sender, e)` → `await _servers.SetDefaultAsync((Guid)tag)` → reload the servers list. Mirrors `OnSetDefaultClick` for games line-for-line.
+- Code-behind `OnSetDefaultServerClick` → `await _servers.SetDefaultAsync((Guid)tag)`; `OnClearDefaultServerClick` → `await _servers.ClearDefaultAsync()`; both reload the servers list. `OnSetDefaultServerClick` mirrors `OnSetDefaultClick` for games.
+- **Theming:** the DEFAULT badge fill (`CyanBrush`), navy text (`NavyBrush`), and the default-row border (`CyanBrush`) are all existing `DynamicResource` theme tokens — the same ones the game DEFAULT badge already uses — so custom themes restyle them for free. No hardcoded hex. Confirm against the `626labs:design` skill during implementation; no new token is expected (reuse the game-default set).
 
 **Layout fix (the cleanup):** the current grid gives the games list a fixed `2*` height and the servers list a fixed `*`, so both always claim a 2:1 slice regardless of content — the dead gap. Replace with **one shared `ScrollViewer`** holding a `StackPanel` of: Saved games header → games `ItemsControl` (content-height) → Saved private servers header → servers `ItemsControl` (content-height). The fixed chrome (title, search, add-by-URL, status, Close) stays outside the scroll. Result: with one game + one server the sections sit directly under each other; the scroll region takes remaining height and only scrolls on overflow. Empty states render inline under their section header (not centered-overlaid in a fixed region).
 
@@ -93,6 +97,7 @@ Three touch points: **Core store**, **Library UI (`SettingsWindow`)**, **Squad L
 - `SetDefaultAsync` sets exactly one `IsDefault`; setting a second clears the first (mutual exclusion).
 - Already-default → no-op (no event fired — assert via an event counter).
 - `SetDefaultAsync` on an unknown id → `KeyNotFoundException`.
+- `ClearDefaultAsync` from a set-default state → zero defaults, `DefaultChanged` fires; from an already-zero state → no-op (no event). Round-trip set → clear → set works.
 - `RemoveAsync` of the default → default becomes zero, no promotion; `DefaultChanged` fires. `RemoveAsync` of a non-default → default unchanged, no `DefaultChanged`.
 - Persistence round-trips `IsDefault` through JSON; loading a legacy blob without the field yields `IsDefault = false`.
 - Rename (`UpdateLocalNameAsync`) preserves `IsDefault`.
