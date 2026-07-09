@@ -310,10 +310,7 @@
             <RowDefinition Height="Auto" />  <!-- Search results -->
             <RowDefinition Height="Auto" />  <!-- Or paste URL -->
             <RowDefinition Height="Auto" />  <!-- Add status -->
-            <RowDefinition Height="Auto" />  <!-- Saved games header -->
-            <RowDefinition Height="2*" />    <!-- Saved games list -->
-            <RowDefinition Height="Auto" />  <!-- Saved servers header -->
-            <RowDefinition Height="*" />     <!-- Saved servers list -->
+            <RowDefinition Height="*" />     <!-- Shared scroll: games + servers -->
             <RowDefinition Height="Auto" />  <!-- Footer -->
         </Grid.RowDefinitions>
 
@@ -329,10 +326,11 @@
                            FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource WhiteBrush}" />
             </StackPanel>
-            <TextBlock Text="Saved games + private servers. The game marked DEFAULT is what Launch As uses. Click Rename on any row to give it a custom name (Roblox-side names stay untouched)."
+            <TextBlock Text="Saved games and private servers. The game marked DEFAULT is what Launch As uses; the private server marked DEFAULT is pre-selected when you launch all accounts to a server. Rename any row to give it a custom name (Roblox-side names stay untouched)."
                        FontSize="11"
                        Foreground="{DynamicResource MutedTextBrush}"
-                       Margin="0,4,0,0" />
+                       Margin="0,4,0,0"
+                       TextWrapping="Wrap" />
         </StackPanel>
 
         <Grid Grid.Row="1" Margin="0,20,0,0">
@@ -403,59 +401,46 @@
                    Margin="0,8,0,0"
                    TextWrapping="Wrap" />
 
-        <TextBlock Grid.Row="5"
-                   Text="Saved games"
-                   FontSize="12" FontWeight="SemiBold"
-                   Foreground="{DynamicResource MutedTextBrush}"
-                   Margin="0,20,0,8" />
-
-        <ScrollViewer Grid.Row="6" VerticalScrollBarVisibility="Visible">
-            <Grid>
+        <!-- v1.3.x — saved private servers section lives in this shared scroll too. Add path
+             stays in Squad Launch sheet ("Add by URL" pasting + auto-launch); this surface
+             manages existing entries. -->
+        <ScrollViewer Grid.Row="5" VerticalScrollBarVisibility="Auto" Margin="0,20,0,0">
+            <StackPanel>
+                <TextBlock Text="Saved games"
+                           FontSize="12" FontWeight="SemiBold"
+                           Foreground="{DynamicResource MutedTextBrush}"
+                           Margin="0,0,0,8" />
                 <ItemsControl x:Name="FavoritesList" />
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
-                            x:Name="EmptyState">
+                <StackPanel x:Name="EmptyState" Margin="0,4,0,0">
                     <TextBlock Text="No saved games yet."
                                FontSize="13"
-                               Foreground="{DynamicResource MutedTextBrush}"
-                               HorizontalAlignment="Center" />
+                               Foreground="{DynamicResource MutedTextBrush}" />
                     <TextBlock Text="Search above or paste a Roblox game URL to add your first one."
                                FontSize="11"
                                Foreground="{DynamicResource MutedTextBrush}"
-                               HorizontalAlignment="Center"
                                Margin="0,4,0,0"
                                Opacity="0.7" />
                 </StackPanel>
-            </Grid>
-        </ScrollViewer>
 
-        <!-- v1.3.x — saved private servers section. Add path stays in Squad Launch sheet
-             ("Add by URL" pasting + auto-launch); this surface manages existing entries. -->
-        <TextBlock Grid.Row="7"
-                   Text="Saved private servers"
-                   FontSize="12" FontWeight="SemiBold"
-                   Foreground="{DynamicResource MutedTextBrush}"
-                   Margin="0,16,0,8" />
-
-        <ScrollViewer Grid.Row="8" VerticalScrollBarVisibility="Visible">
-            <Grid>
+                <TextBlock Text="Saved private servers"
+                           FontSize="12" FontWeight="SemiBold"
+                           Foreground="{DynamicResource MutedTextBrush}"
+                           Margin="0,16,0,8" />
                 <ItemsControl x:Name="ServersList" />
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
-                            x:Name="ServersEmptyState">
+                <StackPanel x:Name="ServersEmptyState" Margin="0,4,0,0">
                     <TextBlock Text="No saved private servers."
                                FontSize="13"
-                               Foreground="{DynamicResource MutedTextBrush}"
-                               HorizontalAlignment="Center" />
+                               Foreground="{DynamicResource MutedTextBrush}" />
                     <TextBlock Text="Use the Private server toolbar button to add one."
                                FontSize="11"
                                Foreground="{DynamicResource MutedTextBrush}"
-                               HorizontalAlignment="Center"
                                Margin="0,4,0,0"
                                Opacity="0.7" />
                 </StackPanel>
-            </Grid>
+            </StackPanel>
         </ScrollViewer>
 
-        <Button Grid.Row="9" Content="Close" Padding="16,8"
+        <Button Grid.Row="6" Content="Close" Padding="16,8"
                 HorizontalAlignment="Right" Margin="0,12,0,0"
                 Background="{DynamicResource NavyBrush}"
                 Foreground="{DynamicResource WhiteBrush}"
