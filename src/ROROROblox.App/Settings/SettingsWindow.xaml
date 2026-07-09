@@ -256,7 +256,7 @@
                                 BorderThickness="1"
                                 FontSize="11"
                                 ToolTip="Pre-select this server when you launch all accounts to a private server."
-                                Visibility="{Binding IsDefault, Converter={StaticResource InverseBoolConverter}}" />
+                                Style="{StaticResource InverseBoolToVisibilityStyle}" />
                         <Button Content="Clear default"
                                 Click="OnClearDefaultServerClick"
                                 Padding="10,6" Margin="0,0,8,0"
