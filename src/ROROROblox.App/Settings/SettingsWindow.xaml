@@ -11,6 +11,19 @@
         Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
 
     <Window.Resources>
+        <!-- MUST be defined BEFORE the DataTemplates that consume it: StaticResource resolves
+             in document order, and a forward reference inside the same ResourceDictionary throws
+             "Cannot find resource" at template-APPLY time — invisible to builds and unit tests,
+             fatal on the first rendered row (live-crash caught 2026-07-09). -->
+        <Style x:Key="InverseBoolToVisibilityStyle" TargetType="UIElement">
+            <Setter Property="Visibility" Value="Visible" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDefault}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <DataTemplate DataType="{x:Type core:GameSearchResult}">
             <Border Margin="0,0,0,6" Padding="10,8" CornerRadius="6"
                     Background="{DynamicResource RowBgBrush}">
@@ -296,14 +309,6 @@
             </Border>
         </DataTemplate>
 
-        <Style x:Key="InverseBoolToVisibilityStyle" TargetType="UIElement">
-            <Setter Property="Visibility" Value="Visible" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsDefault}" Value="True">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
     </Window.Resources>
 
     <Grid Margin="32,24">

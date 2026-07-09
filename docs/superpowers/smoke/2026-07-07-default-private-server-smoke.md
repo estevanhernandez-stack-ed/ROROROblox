@@ -9,6 +9,7 @@ The store + ordering logic is unit-tested; the two windows are manual-smoke by h
 - [ ] Build + run the dev build; have 2+ saved private servers and 1+ saved game.
 
 ## Library (Games button → RoRoRo / Library)
+- [ ] **0. Search + add still work in the reworked window:** search a game by name → results render (this exact path crashed on a XAML resource-order bug, fixed 2026-07-09) → add one; paste-a-URL add works too.
 - [ ] **1. Set default:** server row → **Set default** → cyan DEFAULT badge appears next to PRIVATE, row gets a cyan border, its Set-default button becomes **Clear default**.
 - [ ] **2. Switch:** Set default on a second server → badge + border MOVE (exactly one default).
 - [ ] **3. Clear:** **Clear default** → no badge anywhere; button flips back to Set default on all rows.
