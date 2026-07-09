@@ -19,6 +19,7 @@ public class ActivitySnapshotProviderTests
         public void Sample() { }
         public void Start() { }
         public void Stop() { }
+        public void MarkActive(Guid accountId, DateTimeOffset nowUtc) { }
         public IReadOnlyList<AccountActivity> GetSnapshot() => Items;
     }
 
