@@ -166,6 +166,7 @@ public class JoinByLinkSaveTests
         public Task<FavoriteGame?> GetDefaultAsync() => throw new NotImplementedException();
         public Task RemoveAsync(long placeId) => throw new NotImplementedException();
         public Task SetDefaultAsync(long placeId) => throw new NotImplementedException();
+        public Task ClearDefaultAsync() => Task.CompletedTask;
         public Task UpdateLocalNameAsync(long placeId, string? localName) => throw new NotImplementedException();
         public event EventHandler? DefaultChanged { add { } remove { } }
     }

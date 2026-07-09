@@ -124,6 +124,7 @@ public sealed class FavoriteGameStore : IFavoriteGameStore, IDisposable
 
     public async Task RemoveAsync(long placeId)
     {
+        bool removedDefault = false;
         await _gate.WaitAsync().ConfigureAwait(false);
         try
         {
@@ -134,20 +135,21 @@ public sealed class FavoriteGameStore : IFavoriteGameStore, IDisposable
                 return;
             }
 
-            var wasDefault = blob.Favorites[index].IsDefault;
+            removedDefault = blob.Favorites[index].IsDefault;
             blob.Favorites.RemoveAt(index);
-
-            // If the default was just removed and there are others, promote the first remaining.
-            if (wasDefault && blob.Favorites.Count > 0)
-            {
-                blob.Favorites[0] = blob.Favorites[0] with { IsDefault = true };
-            }
 
             await SaveAsync(blob).ConfigureAwait(false);
         }
         finally
         {
             _gate.Release();
+        }
+
+        if (removedDefault)
+        {
+            // Zero-default is the intended post-state (no auto-promotion — spec §3); the event
+            // just tells subscribers the default changed.
+            DefaultChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -187,6 +189,37 @@ public sealed class FavoriteGameStore : IFavoriteGameStore, IDisposable
         if (changed)
         {
             // Fire outside the gate so subscribers can re-enter the store without deadlocking.
+            DefaultChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public async Task ClearDefaultAsync()
+    {
+        bool changed = false;
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            if (!blob.Favorites.Any(f => f.IsDefault))
+            {
+                return; // zero-default already -> no write, no event
+            }
+
+            for (var i = 0; i < blob.Favorites.Count; i++)
+            {
+                blob.Favorites[i] = blob.Favorites[i] with { IsDefault = false };
+            }
+
+            await SaveAsync(blob).ConfigureAwait(false);
+            changed = true;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+
+        if (changed)
+        {
             DefaultChanged?.Invoke(this, EventArgs.Empty);
         }
     }

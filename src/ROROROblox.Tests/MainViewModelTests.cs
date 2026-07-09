@@ -532,6 +532,7 @@ public class MainViewModelTests
         public Task<FavoriteGame> AddAsync(long placeId, long universeId, string name, string thumbnailUrl) => throw new NotImplementedException();
         public Task RemoveAsync(long placeId) => throw new NotImplementedException();
         public Task SetDefaultAsync(long placeId) => throw new NotImplementedException();
+        public Task ClearDefaultAsync() => Task.CompletedTask;
         public Task UpdateLocalNameAsync(long placeId, string? localName) => throw new NotImplementedException();
     }
 
