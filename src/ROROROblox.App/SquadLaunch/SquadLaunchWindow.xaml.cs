@@ -85,8 +85,8 @@ internal partial class SquadLaunchWindow : Window
             return;
         }
 
-        // Most-recently-launched first; ties fall back to addedAt.
-        var sorted = servers.OrderByDescending(s => s.LastLaunchedAt ?? s.AddedAt);
+        // Default server first (pre-selected), then most-recently-launched. Pure + unit-tested.
+        var sorted = SquadLaunchOrdering.Order(servers);
         foreach (var server in sorted)
         {
             SavedServersList.Children.Add(BuildServerRow(server));
@@ -102,6 +102,11 @@ internal partial class SquadLaunchWindow : Window
             Padding = new Thickness(14, 12, 14, 12),
             Margin = new Thickness(0, 0, 0, 8),
         };
+        if (server.IsDefault)
+        {
+            row.BorderBrush = (Brush)FindResource("CyanBrush");
+            row.BorderThickness = new Thickness(1);
+        }
         var grid = new Grid();
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -113,13 +118,33 @@ internal partial class SquadLaunchWindow : Window
         var renderName = !string.IsNullOrEmpty(server.RenderName)
             ? server.RenderName
             : $"Place {server.PlaceId}";
-        info.Children.Add(new TextBlock
+        var nameRow = new StackPanel { Orientation = Orientation.Horizontal };
+        nameRow.Children.Add(new TextBlock
         {
             Text = renderName,
             FontSize = 13,
             FontWeight = FontWeights.SemiBold,
             Foreground = (Brush)FindResource("WhiteBrush"),
         });
+        if (server.IsDefault)
+        {
+            var badge = new Border
+            {
+                Background = (Brush)FindResource("CyanBrush"),
+                CornerRadius = new CornerRadius(3),
+                Margin = new Thickness(8, 1, 0, 0),
+                Padding = new Thickness(6, 1, 6, 1),
+                Child = new TextBlock
+                {
+                    Text = "DEFAULT",
+                    FontSize = 9,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = (Brush)FindResource("NavyBrush"),
+                },
+            };
+            nameRow.Children.Add(badge);
+        }
+        info.Children.Add(nameRow);
 
         var subtitle = string.IsNullOrEmpty(server.PlaceName)
             ? $"Place {server.PlaceId}"
