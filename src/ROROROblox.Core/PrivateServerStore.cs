@@ -113,7 +113,8 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
                 ThumbnailUrl: thumbnailUrl ?? string.Empty,
                 AddedAt: existingIndex >= 0 ? blob.Servers[existingIndex].AddedAt : DateTimeOffset.UtcNow,
                 LastLaunchedAt: existingIndex >= 0 ? blob.Servers[existingIndex].LastLaunchedAt : null,
-                LocalName: preservedLocalName);
+                LocalName: preservedLocalName,
+                IsDefault: existingIndex >= 0 && blob.Servers[existingIndex].IsDefault);
 
             if (existingIndex >= 0)
             {
@@ -252,7 +253,8 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
                     ThumbnailUrl: s.ThumbnailUrl ?? string.Empty,
                     AddedAt: s.AddedAt,
                     LastLaunchedAt: s.LastLaunchedAt,
-                    LocalName: s.LocalName));
+                    LocalName: s.LocalName,
+                    IsDefault: s.IsDefault));
             }
             return new PrivateServersBlob(Version: 1, Servers: migrated);
         }
@@ -305,5 +307,6 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
         string? ThumbnailUrl,
         DateTimeOffset AddedAt,
         DateTimeOffset? LastLaunchedAt,
-        string? LocalName = null);
+        string? LocalName = null,
+        bool IsDefault = false);
 }

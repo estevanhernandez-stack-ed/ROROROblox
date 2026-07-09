@@ -303,4 +303,31 @@ public class PrivateServerStoreTests : IDisposable
         Assert.Equal("My Squad", reAdded.LocalName);
         Assert.Equal("Roblox-Renamed", reAdded.Name);
     }
+
+    // ---------- v1.4.x — IsDefault field ----------
+
+    [Fact]
+    public async Task Add_NewServer_IsDefaultFalse()
+    {
+        using var store = new PrivateServerStore(_tempPath);
+        var added = await store.AddAsync(1, "code-a", PrivateServerCodeKind.LinkCode, "A", "Place A", "");
+        Assert.False(added.IsDefault);
+    }
+
+    [Fact]
+    public async Task Load_LegacyBlobWithoutIsDefault_DefaultsFalse()
+    {
+        // A legacy-shaped row: accessCode field, no isDefault property anywhere.
+        var legacyJson = """
+            {"version":1,"servers":[{"id":"7e5c9a51-0e6f-4b7e-9a2f-111111111111","placeId":42,
+            "accessCode":"legacy-code","name":"Old","placeName":"Old Place","thumbnailUrl":"",
+            "addedAt":"2026-01-01T00:00:00+00:00"}]}
+            """;
+        await File.WriteAllTextAsync(_tempPath, legacyJson);
+
+        using var store = new PrivateServerStore(_tempPath);
+        var list = await store.ListAsync();
+        Assert.Single(list);
+        Assert.False(list[0].IsDefault);
+    }
 }
