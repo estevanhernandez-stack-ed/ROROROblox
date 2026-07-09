@@ -184,20 +184,30 @@
                                 </Style>
                             </MenuItem.Style>
                         </MenuItem>
-                        <!-- Trust-aware squad launch (v1.9.0) — IsCheckable="False" deliberately:
+                        <!-- Trust-aware squad launch (v1.9.0) — IsCheckable deliberately omitted:
                              a checkable MenuItem self-toggles IsChecked on click before Command
                              fires, which would race the OneWay VM binding on the very next
-                             PropertyChanged and risk a double-flip / desync. IsChecked alone still
-                             renders the check glyph regardless of IsCheckable, so the OneWay
-                             binding to JoinViaFriend is the single source of truth and the click
-                             is 100% owned by ToggleJoinViaFriendCommand. -->
-                        <MenuItem Header="Join via friend (challenge-prone account)"
-                                  IsCheckable="False"
-                                  IsChecked="{Binding JoinViaFriend, Mode=OneWay}"
-                                  Command="{Binding PlacementTarget.DataContext.ToggleJoinViaFriendCommand,
+                             PropertyChanged and risk a double-flip / desync. WPF-UI's themed
+                             MenuItem only shows the check glyph when IsCheckable="True" (its
+                             CheckBoxIconBorder is Collapsed otherwise), so IsChecked alone never
+                             renders here. The check state is instead driven through the Header
+                             text via a DataTrigger — deterministic, no template dependency, and
+                             the click stays 100% owned by ToggleJoinViaFriendCommand. -->
+                        <MenuItem Command="{Binding PlacementTarget.DataContext.ToggleJoinViaFriendCommand,
                                                     RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                   CommandParameter="{Binding}"
-                                  ToolTip="Squad launches route this account into the server by following a squad member who's already in — Roblox's verification prompts hit direct joins, not follows. Requires friendship with your squad." />
+                                  ToolTip="Squad launches route this account into the server by following a squad member who's already in — Roblox's verification prompts hit direct joins, not follows. Requires friendship with your squad.">
+                            <MenuItem.Style>
+                                <Style TargetType="MenuItem">
+                                    <Setter Property="Header" Value="Join via friend (challenge-prone account)" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding JoinViaFriend}" Value="True">
+                                            <Setter Property="Header" Value="✓ Join via friend (challenge-prone account)" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </MenuItem.Style>
+                        </MenuItem>
                     </ContextMenu>
                 </Border.ContextMenu>
 
