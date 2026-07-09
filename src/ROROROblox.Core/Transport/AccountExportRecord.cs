@@ -18,6 +18,10 @@ namespace ROROROblox.Core.Transport;
 /// <param name="IsMain">Whether this was the user's "main" account.</param>
 /// <param name="SortOrder">Top-to-bottom row order.</param>
 /// <param name="IsSelected">Whether the account is included in batch launches.</param>
+/// <param name="JoinViaFriend">
+/// Whether this account is challenge-prone on direct joins and should be routed into squads via
+/// friend-follow instead. Trust-aware squad launch (task 1, 2026-07-09).
+/// </param>
 public sealed record AccountExportRecord(
     string DisplayName,
     string AvatarUrl,
@@ -29,4 +33,5 @@ public sealed record AccountExportRecord(
     string? LocalName,
     bool IsMain,
     int SortOrder,
-    bool IsSelected);
+    bool IsSelected,
+    bool JoinViaFriend = false);

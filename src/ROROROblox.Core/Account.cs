@@ -19,4 +19,5 @@ public sealed record Account(
     string? LocalName = null,
     long? RobloxUserId = null,
     IReadOnlyList<string>? Tags = null,
-    long? BrowserTrackerId = null);
+    long? BrowserTrackerId = null,
+    bool JoinViaFriend = false);
