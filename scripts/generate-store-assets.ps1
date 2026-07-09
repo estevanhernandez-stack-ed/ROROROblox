@@ -1,7 +1,7 @@
 # ROROROblox -- generate Store-bound logo assets.
 #
-# Direction C: isometric voxel stack -- three blocks (cyan-bright top, magenta middle, cyan
-# bottom) on navy. Reads "stack of clients" without infringing on Roblox marks. Programmatic
+# Direction C: isometric voxel stack -- three blocks (cyan-bright top, magenta middle, teal
+# bottom) on navy -- family palette, matches 626labs-hub/Design/rororo-family/rororo-host.svg. Reads "stack of clients" without infringing on Roblox marks. Programmatic
 # rendering -- no external image source, reproducible from this script alone.
 #
 # Tagline: "Multi-Roblox Instant Generator." (the brand-corporate "Imagine Something Else."
@@ -32,15 +32,16 @@ if (-not (Test-Path $logosDir)) {
 }
 
 # ----- Brand tokens -----------------------------------------------------------
-$navy        = [System.Drawing.Color]::FromArgb(255, 25, 46, 68)    # #192E44 (logo bg)
+$navy        = [System.Drawing.Color]::FromArgb(255, 15, 31, 49)    # #0F1F31 (logo bg, brand navy)
 $navyDeep    = [System.Drawing.Color]::FromArgb(255, 15, 31, 49)    # #0F1F31 (page bg)
 $cyan        = [System.Drawing.Color]::FromArgb(255, 23, 212, 250)  # #17D4FA
-$cyanBright  = [System.Drawing.Color]::FromArgb(255, 92, 230, 255)  # #5CE6FF
-$cyanDim     = [System.Drawing.Color]::FromArgb(255, 15, 168, 201)  # #0FA8C9
-$cyanShadow  = [System.Drawing.Color]::FromArgb(255, 10, 122, 146)  # #0A7A92
+$cyanBright  = [System.Drawing.Color]::FromArgb(255, 108, 234, 253)  # #6CEAFD
+$cyanDim     = [System.Drawing.Color]::FromArgb(255, 18, 191, 227)  # #12BFE3
+$cyanShadow  = [System.Drawing.Color]::FromArgb(255, 13, 148, 184)  # #0D94B8
 $magenta     = [System.Drawing.Color]::FromArgb(255, 242, 47, 137)  # #F22F89
-$magentaDim  = [System.Drawing.Color]::FromArgb(255, 194, 31, 108)  # #C21F6C
-$magentaShdw = [System.Drawing.Color]::FromArgb(255, 138, 21, 76)   # #8A154C
+$magentaDim  = [System.Drawing.Color]::FromArgb(255, 184, 31, 102)  # #B81F66
+$teal        = [System.Drawing.Color]::FromArgb(255, 46, 230, 201)  # #2EE6C9
+$tealDeep    = [System.Drawing.Color]::FromArgb(255, 26, 159, 139)  # #1A9F8B
 $mutedText   = [System.Drawing.Color]::FromArgb(255, 154, 168, 184) # #9AA8B8
 
 # ----- Font selection ---------------------------------------------------------
@@ -127,12 +128,12 @@ function Draw-VoxelStack {
     $blockX = $cx - $bw / 2
     $stackTop = $cy - $stackH / 2
 
-    # Bottom block first (drawn first = painter's algorithm, lowest z behind).
-    Draw-Block $gfx $blockX ($stackTop + 2 * $bh) $bw $bd $bh $cyan $cyanShadow $cyanDim
+    # Bottom block first (drawn first = painter's algorithm, lowest z behind). Teal.
+    Draw-Block $gfx $blockX ($stackTop + 2 * $bh) $bw $bd $bh $teal $tealDeep $teal
     # Middle (magenta).
-    Draw-Block $gfx $blockX ($stackTop + $bh)     $bw $bd $bh $magenta $magentaShdw $magentaDim
+    Draw-Block $gfx $blockX ($stackTop + $bh)     $bw $bd $bh $magenta $magentaDim $magenta
     # Top (bright cyan -- the "active" block).
-    Draw-Block $gfx $blockX $stackTop             $bw $bd $bh $cyanBright $cyanShadow $cyan
+    Draw-Block $gfx $blockX $stackTop             $bw $bd $bh $cyanBright $cyanShadow $cyanDim
 }
 
 # ----- Asset canvas helpers ---------------------------------------------------
