@@ -132,6 +132,9 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Style trigger, NOT a bool->Visibility converter binding: InverseBoolConverter
+                             returns bool, WPF silently drops it for a Visibility DP, and the button stayed
+                             visible on the default row (shipped bug, fixed alongside the server row's). -->
                         <Button Content="Set default"
                                 Tag="{Binding PlaceId}"
                                 Click="OnSetDefaultClick"
@@ -141,7 +144,7 @@
                                 BorderBrush="{DynamicResource DividerBrush}"
                                 BorderThickness="1"
                                 FontSize="11"
-                                Visibility="{Binding IsDefault, Converter={StaticResource InverseBoolConverter}}" />
+                                Style="{StaticResource InverseBoolToVisibilityStyle}" />
                         <!-- v1.3.x — visible Rename button. Right-click context menu still works
                              for users who find that first; this is the discoverable surface. -->
                         <Button Content="Rename"
