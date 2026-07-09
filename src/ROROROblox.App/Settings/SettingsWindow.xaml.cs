@@ -188,6 +188,37 @@ internal partial class SettingsWindow : Window
         }
     }
 
+    private async void OnSetDefaultServerClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not Guid id)
+        {
+            return;
+        }
+
+        try
+        {
+            await _servers.SetDefaultAsync(id);
+            await ReloadServersAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Couldn't set default server: {ex.Message}";
+        }
+    }
+
+    private async void OnClearDefaultServerClick(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await _servers.ClearDefaultAsync();
+            await ReloadServersAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Couldn't clear the default server: {ex.Message}";
+        }
+    }
+
     private async void OnRemoveClick(object sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.Tag is not long placeId)
