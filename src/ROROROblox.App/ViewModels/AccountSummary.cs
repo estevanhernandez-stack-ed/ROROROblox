@@ -34,6 +34,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private bool _isFilteredOut;
     private TimeSpan? _sinceActivity;
     private bool _idleWarn;
+    private bool _joinViaFriend;
 
     public AccountSummary(Account account)
     {
@@ -343,6 +344,18 @@ public sealed class AccountSummary : INotifyPropertyChanged
     {
         get => _isSelected;
         set => SetField(ref _isSelected, value);
+    }
+
+    /// <summary>
+    /// Whether this account joins a batch launch's game via friend-follow (join-via-friend) instead
+    /// of a direct launch — trust-aware squad launch (v1.9.0). Defaults to false (direct). Read by
+    /// <see cref="SquadLaunchPlan.Build"/> to split a batch into its direct and flagged sub-batches.
+    /// Persistence + UI wiring land in Task 4 — this property is plumbing only for now.
+    /// </summary>
+    public bool JoinViaFriend
+    {
+        get => _joinViaFriend;
+        set => SetField(ref _joinViaFriend, value);
     }
 
     /// <summary>
