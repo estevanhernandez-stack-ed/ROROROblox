@@ -34,6 +34,10 @@ service RoRoRoHost {
   // Query surface (additive, NuGet 0.3.0): per-account idle awareness.
   rpc GetAccountActivity(Empty) returns (AccountActivityList);
 
+  // Command surface (additive, NuGet 0.5.0): a keep-alive plugin credits an account as
+  // active after it acts on that account's window (idle heuristic can't see plugin input).
+  rpc MarkAccountActive(MarkAccountActiveRequest) returns (Empty);
+
   // UI surface (v1: tray menu, row badge, status panel)
   rpc AddTrayMenuItem(MenuItemSpec) returns (UIHandle);
   rpc AddRowBadge(RowBadgeSpec) returns (UIHandle);
@@ -158,6 +162,10 @@ message AccountActivity {
 
 message AccountActivityList {
   repeated AccountActivity items = 1;
+}
+
+message MarkAccountActiveRequest {
+  string account_id = 1;
 }
 
 message UIHandle {
