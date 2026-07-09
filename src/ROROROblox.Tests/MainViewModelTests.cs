@@ -569,12 +569,16 @@ public class MainViewModelTests
 
     private sealed class FakePrivateServerStore : IPrivateServerStore
     {
+        public event EventHandler? DefaultChanged;
+
         public Task<IReadOnlyList<SavedPrivateServer>> ListAsync() => throw new NotImplementedException();
         public Task<SavedPrivateServer?> GetAsync(Guid id) => throw new NotImplementedException();
         public Task<SavedPrivateServer> AddAsync(long placeId, string code, PrivateServerCodeKind codeKind, string name, string placeName, string thumbnailUrl) => throw new NotImplementedException();
         public Task RemoveAsync(Guid id) => throw new NotImplementedException();
         public Task TouchLastLaunchedAsync(Guid id) => throw new NotImplementedException();
         public Task UpdateLocalNameAsync(Guid serverId, string? localName) => throw new NotImplementedException();
+        public Task SetDefaultAsync(Guid id) => throw new NotImplementedException();
+        public Task ClearDefaultAsync() => throw new NotImplementedException();
     }
 
     private sealed class FakeSessionHistoryStore : ISessionHistoryStore

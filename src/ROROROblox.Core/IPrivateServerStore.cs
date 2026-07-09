@@ -40,4 +40,26 @@ public interface IPrivateServerStore
     /// v1.3.x.
     /// </summary>
     Task UpdateLocalNameAsync(Guid serverId, string? localName);
+
+    /// <summary>
+    /// Mark this server the default (clears the flag on every other server — at most one
+    /// default). Throws <see cref="KeyNotFoundException"/> if no server has this id. No-op
+    /// (no write, no event) when it's already the default.
+    /// </summary>
+    Task SetDefaultAsync(Guid id);
+
+    /// <summary>
+    /// Clear the default flag on every server, returning to the zero-default state. No-op
+    /// (no write, no event) when nothing is default. Zero-default is legal: Squad Launch
+    /// falls back to manual pick.
+    /// </summary>
+    Task ClearDefaultAsync();
+
+    /// <summary>
+    /// Fired after <see cref="SetDefaultAsync"/> / <see cref="ClearDefaultAsync"/> (or a
+    /// default-removing <see cref="RemoveAsync"/>) mutates state and persists. Fired outside
+    /// the store gate so subscribers can re-enter the store without deadlocking. Mirrors
+    /// <see cref="IFavoriteGameStore.DefaultChanged"/>.
+    /// </summary>
+    event EventHandler? DefaultChanged;
 }

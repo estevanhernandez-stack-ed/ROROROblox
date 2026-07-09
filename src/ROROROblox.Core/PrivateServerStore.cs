@@ -23,6 +23,8 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
     private readonly SemaphoreSlim _gate = new(initialCount: 1, maxCount: 1);
     private bool _disposed;
 
+    public event EventHandler? DefaultChanged;
+
     public PrivateServerStore() : this(DefaultPath()) { }
 
     public PrivateServerStore(string filePath)
@@ -136,6 +138,7 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
 
     public async Task RemoveAsync(Guid id)
     {
+        bool removedDefault = false;
         await _gate.WaitAsync().ConfigureAwait(false);
         try
         {
@@ -145,12 +148,20 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
             {
                 return;
             }
+            removedDefault = blob.Servers[idx].IsDefault;
             blob.Servers.RemoveAt(idx);
             await SaveAsync(blob).ConfigureAwait(false);
         }
         finally
         {
             _gate.Release();
+        }
+
+        if (removedDefault)
+        {
+            // Zero-default is the intended post-state (no auto-promotion — spec §3); the event
+            // just tells subscribers the default changed.
+            DefaultChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -177,6 +188,76 @@ public sealed class PrivateServerStore : IPrivateServerStore, IDisposable
         finally
         {
             _gate.Release();
+        }
+    }
+
+    public async Task SetDefaultAsync(Guid id)
+    {
+        bool changed = false;
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            if (!blob.Servers.Any(s => s.Id == id))
+            {
+                throw new KeyNotFoundException($"Private server {id} not found.");
+            }
+
+            // No-op short-circuit: already the default -> skip the write AND the event, so
+            // subscribers treat each event as a real change (mirrors FavoriteGameStore).
+            if (blob.Servers.Any(s => s.Id == id && s.IsDefault))
+            {
+                return;
+            }
+
+            for (var i = 0; i < blob.Servers.Count; i++)
+            {
+                blob.Servers[i] = blob.Servers[i] with { IsDefault = blob.Servers[i].Id == id };
+            }
+
+            await SaveAsync(blob).ConfigureAwait(false);
+            changed = true;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+
+        if (changed)
+        {
+            // Outside the gate so subscribers can re-enter the store without deadlocking.
+            DefaultChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public async Task ClearDefaultAsync()
+    {
+        bool changed = false;
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            if (!blob.Servers.Any(s => s.IsDefault))
+            {
+                return; // zero-default already -> no write, no event
+            }
+
+            for (var i = 0; i < blob.Servers.Count; i++)
+            {
+                blob.Servers[i] = blob.Servers[i] with { IsDefault = false };
+            }
+
+            await SaveAsync(blob).ConfigureAwait(false);
+            changed = true;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+
+        if (changed)
+        {
+            DefaultChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 

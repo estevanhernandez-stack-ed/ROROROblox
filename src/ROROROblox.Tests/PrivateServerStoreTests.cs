@@ -330,4 +330,112 @@ public class PrivateServerStoreTests : IDisposable
         Assert.Single(list);
         Assert.False(list[0].IsDefault);
     }
+
+    [Fact]
+    public async Task Add_ReplaceExisting_PreservesIsDefault()
+    {
+        using var store = new PrivateServerStore(_tempPath);
+        var first = await store.AddAsync(100, "code", PrivateServerCodeKind.LinkCode, "Original", "Place", "");
+        await store.SetDefaultAsync(first.Id);
+
+        // Re-add same (placeId, code) pair with a different display name.
+        var reAdded = await store.AddAsync(100, "code", PrivateServerCodeKind.LinkCode, "Roblox-Renamed", "Place", "");
+
+        Assert.Equal(first.Id, reAdded.Id); // existing replace semantics preserved
+        Assert.True(reAdded.IsDefault);
+        Assert.Equal("Roblox-Renamed", reAdded.Name);
+    }
+
+    [Fact]
+    public async Task IsDefault_RoundTripsThroughJson()
+    {
+        Guid id;
+        using (var first = new PrivateServerStore(_tempPath))
+        {
+            var added = await first.AddAsync(100, "code", PrivateServerCodeKind.LinkCode, "Squad VIP", "Adopt Me", "");
+            id = added.Id;
+            await first.SetDefaultAsync(id);
+        }
+
+        using var second = new PrivateServerStore(_tempPath);
+        var list = await second.ListAsync();
+
+        Assert.Single(list);
+        Assert.Equal(id, list[0].Id);
+        Assert.True(list[0].IsDefault);
+    }
+
+    [Fact]
+    public async Task SetDefault_MutualExclusion_ExactlyOneDefault()
+    {
+        using var store = new PrivateServerStore(_tempPath);
+        var a = await store.AddAsync(1, "a", PrivateServerCodeKind.LinkCode, "A", "P", "");
+        var b = await store.AddAsync(2, "b", PrivateServerCodeKind.LinkCode, "B", "P", "");
+        await store.SetDefaultAsync(a.Id);
+        await store.SetDefaultAsync(b.Id);
+        var list = await store.ListAsync();
+        Assert.Equal(b.Id, Assert.Single(list, s => s.IsDefault).Id);
+    }
+
+    [Fact]
+    public async Task SetDefault_AlreadyDefault_NoOpNoEvent()
+    {
+        using var store = new PrivateServerStore(_tempPath);
+        var a = await store.AddAsync(1, "a", PrivateServerCodeKind.LinkCode, "A", "P", "");
+        var fires = 0;
+        store.DefaultChanged += (_, _) => fires++;
+        await store.SetDefaultAsync(a.Id);
+        await store.SetDefaultAsync(a.Id); // second call: already default
+        Assert.Equal(1, fires);
+    }
+
+    [Fact]
+    public async Task SetDefault_UnknownId_Throws()
+    {
+        using var store = new PrivateServerStore(_tempPath);
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => store.SetDefaultAsync(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task ClearDefault_RemovesDefault_FiresOnce_NoOpWhenNone()
+    {
+        using var store = new PrivateServerStore(_tempPath);
+        var a = await store.AddAsync(1, "a", PrivateServerCodeKind.LinkCode, "A", "P", "");
+        var fires = 0;
+        store.DefaultChanged += (_, _) => fires++;
+        await store.ClearDefaultAsync();          // nothing default yet -> no-op, no event
+        Assert.Equal(0, fires);
+        await store.SetDefaultAsync(a.Id);        // fires (1)
+        await store.ClearDefaultAsync();          // fires (2)
+        Assert.Equal(2, fires);
+        Assert.DoesNotContain((await store.ListAsync()), s => s.IsDefault);
+        await store.SetDefaultAsync(a.Id);        // set -> clear -> set round-trip works
+        Assert.True(Assert.Single(await store.ListAsync()).IsDefault);
+    }
+
+    [Fact]
+    public async Task Remove_DefaultServer_ZeroDefault_FiresEvent()
+    {
+        using var store = new PrivateServerStore(_tempPath);
+        var a = await store.AddAsync(1, "a", PrivateServerCodeKind.LinkCode, "A", "P", "");
+        var b = await store.AddAsync(2, "b", PrivateServerCodeKind.LinkCode, "B", "P", "");
+        await store.SetDefaultAsync(a.Id);
+        var fires = 0;
+        store.DefaultChanged += (_, _) => fires++;
+        await store.RemoveAsync(a.Id);            // removed the default -> event, zero default
+        Assert.Equal(1, fires);
+        Assert.DoesNotContain((await store.ListAsync()), s => s.IsDefault);
+        await store.RemoveAsync(b.Id);            // b was never default -> no event
+        Assert.Equal(1, fires);
+    }
+
+    [Fact]
+    public async Task Rename_PreservesIsDefault()
+    {
+        using var store = new PrivateServerStore(_tempPath);
+        var a = await store.AddAsync(1, "a", PrivateServerCodeKind.LinkCode, "A", "P", "");
+        await store.SetDefaultAsync(a.Id);
+        await store.UpdateLocalNameAsync(a.Id, "My clan server");
+        Assert.True(Assert.Single(await store.ListAsync()).IsDefault);
+    }
 }
