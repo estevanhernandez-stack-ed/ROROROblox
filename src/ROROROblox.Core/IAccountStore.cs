@@ -122,6 +122,8 @@ public interface IAccountStore
     /// records carry plaintext cookies; the caller (transport service) encrypts them immediately
     /// and they are never logged.
     /// </summary>
+    Task<AccountExportResult> ExportAccountsAsync(IEnumerable<Guid> ids);
+
     /// <summary>
     /// Per-account "route this account into squads via friend-follow" preference (the account is
     /// challenge-prone on direct joins). Silent no-op on unknown id + no-op-write avoidance,
@@ -129,8 +131,6 @@ public interface IAccountStore
     /// launch (task 1, 2026-07-09).
     /// </summary>
     Task SetJoinViaFriendAsync(Guid id, bool joinViaFriend);
-
-    Task<AccountExportResult> ExportAccountsAsync(IEnumerable<Guid> ids);
 
     /// <summary>
     /// Merge import for account transport (v1.6.0 — spec §1). Non-destructive: merge by Roblox
