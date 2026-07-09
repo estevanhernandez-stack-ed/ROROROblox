@@ -1253,6 +1253,18 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
             await WaitForPreWarmAsync(first).ConfigureAwait(true);
 
+            if (waitForLanding)
+            {
+                // Careful mode: #1's install-pending pre-warm only waited for attach, not for it
+                // to land in-game — without this wait #2 could release into the same mid-join
+                // window careful mode exists to avoid.
+                var firstLanded = await WaitForLandingAsync(first).ConfigureAwait(true);
+                if (!firstLanded)
+                {
+                    StatusBanner = $"{first.DisplayName} didn't land within {(int)AnchorGate.MaxWait.TotalSeconds}s — continuing.";
+                }
+            }
+
             // Release the REST through the existing throttled loop. #1 is already up.
             await ReleaseBatchAsync(targets, overrideTarget, launchingBanner, startIndex: 1, waitForLanding).ConfigureAwait(true);
             return;
@@ -1383,7 +1395,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             await LaunchAccountAsync(summary, overrideTarget).ConfigureAwait(true);
             if (waitForLanding)
             {
-                await WaitForLandingAsync(summary).ConfigureAwait(true); // careful mode: serialize joins
+                // careful mode: serialize joins
+                var landed = await WaitForLandingAsync(summary).ConfigureAwait(true);
+                if (!landed)
+                {
+                    StatusBanner = $"{summary.DisplayName} didn't land within {(int)AnchorGate.MaxWait.TotalSeconds}s — continuing.";
+                }
             }
             if (idx < targets.Count - 1)
             {
@@ -1506,12 +1523,29 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     StatusBanner = plan.Direct.Count == 0
                         ? "No direct-join accounts to anchor on — flagged accounts joining directly."
                         : "No squad member landed in time — flagged accounts joining directly.";
-                    await ReleaseBatchAsync(
-                        plan.Flagged,
-                        overrideTarget: target,
-                        launchingBanner: (summary, n, total) => $"Joining private server (direct fallback): {summary.DisplayName} ({n} of {total})...",
-                        startIndex: 0,
-                        waitForLanding: careful);
+                    if (plan.Direct.Count == 0)
+                    {
+                        // No Phase 1 ran, so no anchor was ever possible and the pre-warm gate
+                        // never fired for this squad. Route the all-flagged fallback through
+                        // DispatchBatchAsync so an install-pending update still serializes #1
+                        // instead of firing every flagged client at once via ReleaseBatchAsync.
+                        await DispatchBatchAsync(
+                            plan.Flagged,
+                            overrideTarget: target,
+                            launchingBanner: (summary, n, total) => $"Joining private server (direct fallback): {summary.DisplayName} ({n} of {total})...",
+                            waitForLanding: careful);
+                    }
+                    else
+                    {
+                        // Anchor timed out, but Phase 1 already ran the pre-warm decision for the
+                        // direct batch — no need to re-gate here.
+                        await ReleaseBatchAsync(
+                            plan.Flagged,
+                            overrideTarget: target,
+                            launchingBanner: (summary, n, total) => $"Joining private server (direct fallback): {summary.DisplayName} ({n} of {total})...",
+                            startIndex: 0,
+                            waitForLanding: careful);
+                    }
                 }
             }
 
