@@ -3,6 +3,7 @@ using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.App.Plugins;
+using ROROROblox.Core.Diagnostics;
 using ROROROblox.PluginContract;
 
 namespace ROROROblox.PluginTestHarness;
@@ -50,7 +51,8 @@ public class EndToEndContractTests
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
-            new StubActivityProvider());
+            new StubActivityProvider(),
+            new StubActivityMarker());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -120,7 +122,8 @@ public class EndToEndContractTests
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
-            new StubActivityProvider());
+            new StubActivityProvider(),
+            new StubActivityMarker());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -187,7 +190,8 @@ public class EndToEndContractTests
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
             new StubActivityProvider(
-                new AccountActivitySnapshot(accountId, 1_700_000_000_000, 300)));
+                new AccountActivitySnapshot(accountId, 1_700_000_000_000, 300)),
+            new StubActivityMarker());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -253,7 +257,8 @@ public class EndToEndContractTests
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
-            new StubActivityProvider());
+            new StubActivityProvider(),
+            new StubActivityMarker());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -273,6 +278,424 @@ public class EndToEndContractTests
             var ex = await Assert.ThrowsAsync<RpcException>(async () =>
                 await client.GetAccountActivityAsync(new Empty()));
             Assert.Equal(StatusCode.PermissionDenied, ex.StatusCode);
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    /// <summary>
+    /// The honest end-to-end proof for the activity-crediting-fix plan: a REAL
+    /// <see cref="ActivityMonitor"/> (fake probes + a mutable fake clock, same shape as
+    /// ActivityMonitorTests) is wired through a REAL <see cref="AccountActivityMarker"/>
+    /// into PluginHostService, and a REAL <see cref="ActivitySnapshotProvider"/> reads the
+    /// SAME monitor instance. The account is launched and aged past the warn threshold,
+    /// then the plugin calls MarkAccountActive over the real named-pipe gRPC pipe, then
+    /// GetAccountActivity over the same pipe -- proving the full path RPC -> interceptor
+    /// -> handler -> marker -> monitor -> snapshot without a single stub in the middle.
+    /// </summary>
+    [Fact]
+    public async Task MarkAccountActive_GrantedPlugin_CreditsRealMonitor_VisibleInSubsequentSnapshot()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+        var accountId = Guid.NewGuid();
+
+        var clock = new FakeClock();
+        var monitor = new ActivityMonitor(
+            new NoOpForegroundProbe(), new NoOpInputClock(), new NoOpForegroundAccountResolver(), clock)
+        {
+            WarnThreshold = TimeSpan.FromMinutes(15),
+        };
+        monitor.OnAccountLaunched(accountId);
+        clock.UtcNow = clock.UtcNow.AddMinutes(20); // age it well past the warn threshold
+
+        var marker = new AccountActivityMarker(monitor, clock);
+        var provider = new ActivitySnapshotProvider(monitor);
+
+        var registry = new SingleInstalledPluginLookup(new InstalledPlugin
+        {
+            Manifest = new PluginManifest
+            {
+                SchemaVersion = 1,
+                Id = "626labs.test",
+                Name = "Test",
+                Version = "1.0",
+                ContractVersion = "1.0",
+                Publisher = "626",
+                Description = "x",
+                Capabilities = new[]
+                {
+                    PluginCapability.HostCommandsMarkAccountActive,
+                    PluginCapability.HostQueriesAccountActivity,
+                },
+            },
+            InstallDir = Path.GetTempPath(),
+            Consent = new ConsentRecord
+            {
+                PluginId = "626labs.test",
+                GrantedCapabilities = new[]
+                {
+                    PluginCapability.HostCommandsMarkAccountActive,
+                    PluginCapability.HostQueriesAccountActivity,
+                },
+                AutostartEnabled = false,
+            },
+        });
+
+        var hostService = new PluginHostService(
+            registry, "1.4.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            new InProcessPluginEventBus(),
+            new NoOpLauncher(),
+            new PluginUITranslator(new NullUIHost()),
+            provider,
+            marker);
+
+        var interceptor = new CapabilityInterceptor(
+            currentPluginAccessor: () => "626labs.test",
+            consentLookup: id => new[]
+            {
+                PluginCapability.HostCommandsMarkAccountActive,
+                PluginCapability.HostQueriesAccountActivity,
+            });
+
+        var startup = new PluginHostStartupService(
+            hostService, interceptor,
+            NullLogger<PluginHostStartupService>.Instance,
+            pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+
+            await client.MarkAccountActiveAsync(new MarkAccountActiveRequest
+            {
+                AccountId = accountId.ToString(),
+            });
+
+            var resp = await client.GetAccountActivityAsync(new Empty());
+
+            var item = Assert.Single(resp.Items);
+            Assert.Equal(accountId.ToString(), item.AccountId);
+            Assert.True(item.SecondsSinceActivity < 5,
+                $"expected freshly-credited activity (<5s), got {item.SecondsSinceActivity}s");
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task MarkAccountActive_DeniedWhenCapabilityNotGranted()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+
+        var registry = new SingleInstalledPluginLookup(new InstalledPlugin
+        {
+            Manifest = new PluginManifest
+            {
+                SchemaVersion = 1,
+                Id = "626labs.test",
+                Name = "Test",
+                Version = "1.0",
+                ContractVersion = "1.0",
+                Publisher = "626",
+                Description = "x",
+                // Plugin only declares (and consents to) the events capability.
+                // host.commands.mark-account-active is required by MarkAccountActive and is NOT granted.
+                Capabilities = new[] { "host.events.account-launched" },
+            },
+            InstallDir = Path.GetTempPath(),
+            Consent = new ConsentRecord
+            {
+                PluginId = "626labs.test",
+                GrantedCapabilities = new[] { "host.events.account-launched" },
+                AutostartEnabled = false,
+            },
+        });
+
+        var hostService = new PluginHostService(
+            registry, "1.4.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            new InProcessPluginEventBus(),
+            new NoOpLauncher(),
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider(),
+            new StubActivityMarker());
+
+        var interceptor = new CapabilityInterceptor(
+            currentPluginAccessor: () => "626labs.test",
+            consentLookup: id => new[] { "host.events.account-launched" });
+
+        var startup = new PluginHostStartupService(
+            hostService, interceptor,
+            NullLogger<PluginHostStartupService>.Instance,
+            pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+
+            var ex = await Assert.ThrowsAsync<RpcException>(async () =>
+                await client.MarkAccountActiveAsync(new MarkAccountActiveRequest
+                {
+                    AccountId = Guid.NewGuid().ToString(),
+                }));
+            Assert.Equal(StatusCode.PermissionDenied, ex.StatusCode);
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    /// <summary>
+    /// Mirrors <see cref="RequestLaunch_ProductionAccessor_FailsPreconditionWhenNoHeader"/> for
+    /// MarkAccountActive: production wiring (accessor returns null), no x-plugin-id header on the
+    /// call, gated method must reject with FailedPrecondition before ever reaching the marker.
+    /// </summary>
+    [Fact]
+    public async Task MarkAccountActive_ProductionAccessor_FailsPreconditionWhenNoHeader()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+        var marker = new StubActivityMarker();
+
+        var registry = new SingleInstalledPluginLookup(new InstalledPlugin
+        {
+            Manifest = new PluginManifest
+            {
+                SchemaVersion = 1,
+                Id = "626labs.test",
+                Name = "Test",
+                Version = "1.0",
+                ContractVersion = "1.0",
+                Publisher = "626",
+                Description = "x",
+                Capabilities = new[] { PluginCapability.HostCommandsMarkAccountActive },
+            },
+            InstallDir = Path.GetTempPath(),
+            Consent = new ConsentRecord
+            {
+                PluginId = "626labs.test",
+                GrantedCapabilities = new[] { PluginCapability.HostCommandsMarkAccountActive },
+                AutostartEnabled = false,
+            },
+        });
+
+        var hostService = new PluginHostService(
+            registry, "1.4.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            new InProcessPluginEventBus(),
+            new NoOpLauncher(),
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider(),
+            marker);
+
+        // Production shape: accessor returns null. Header is the only path to a plugin id.
+        var interceptor = new CapabilityInterceptor(
+            currentPluginAccessor: () => null,
+            consentLookup: id => new[] { PluginCapability.HostCommandsMarkAccountActive });
+
+        var startup = new PluginHostStartupService(
+            hostService, interceptor,
+            NullLogger<PluginHostStartupService>.Instance,
+            pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+
+            // Deliberately NO x-plugin-id header.
+            var ex = await Assert.ThrowsAsync<RpcException>(async () =>
+                await client.MarkAccountActiveAsync(new MarkAccountActiveRequest
+                {
+                    AccountId = Guid.NewGuid().ToString(),
+                }));
+            Assert.Equal(StatusCode.FailedPrecondition, ex.StatusCode);
+            Assert.Empty(marker.MarkedAccountIds); // never reached the handler
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    /// <summary>
+    /// Companion to <see cref="MarkAccountActive_ProductionAccessor_FailsPreconditionWhenNoHeader"/>:
+    /// same production-shape wiring (accessor returns null), but the client sends the
+    /// x-plugin-id header. The interceptor resolves the plugin id from the header and lets
+    /// the call through to the marker.
+    /// </summary>
+    [Fact]
+    public async Task MarkAccountActive_ProductionAccessor_ResolvesPluginIdFromHeader()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+        var accountId = Guid.NewGuid().ToString();
+        var marker = new StubActivityMarker();
+
+        var registry = new SingleInstalledPluginLookup(new InstalledPlugin
+        {
+            Manifest = new PluginManifest
+            {
+                SchemaVersion = 1,
+                Id = "626labs.test",
+                Name = "Test",
+                Version = "1.0",
+                ContractVersion = "1.0",
+                Publisher = "626",
+                Description = "x",
+                Capabilities = new[] { PluginCapability.HostCommandsMarkAccountActive },
+            },
+            InstallDir = Path.GetTempPath(),
+            Consent = new ConsentRecord
+            {
+                PluginId = "626labs.test",
+                GrantedCapabilities = new[] { PluginCapability.HostCommandsMarkAccountActive },
+                AutostartEnabled = false,
+            },
+        });
+
+        var hostService = new PluginHostService(
+            registry, "1.4.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            new InProcessPluginEventBus(),
+            new NoOpLauncher(),
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider(),
+            marker);
+
+        var interceptor = new CapabilityInterceptor(
+            currentPluginAccessor: () => null,
+            consentLookup: id => new[] { PluginCapability.HostCommandsMarkAccountActive });
+
+        var startup = new PluginHostStartupService(
+            hostService, interceptor,
+            NullLogger<PluginHostStartupService>.Instance,
+            pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+
+            var headers = new Metadata { { "x-plugin-id", "626labs.test" } };
+            await client.MarkAccountActiveAsync(
+                new MarkAccountActiveRequest { AccountId = accountId },
+                headers: headers);
+
+            // The interceptor resolved the plugin id from the header and let the call
+            // through to the marker -- if the header path were broken we'd get
+            // RpcException(FailedPrecondition) before ever reaching it.
+            var marked = Assert.Single(marker.MarkedAccountIds);
+            Assert.Equal(accountId, marked);
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    /// <summary>
+    /// Proves <see cref="AccountActivityMarker"/>'s defensive parse end-to-end: an unparseable
+    /// account id must not throw across the RPC boundary, and must leave the monitor untouched
+    /// so a subsequent GetAccountActivity is unaffected.
+    /// </summary>
+    [Fact]
+    public async Task MarkAccountActive_UnparseableAccountId_IsNoOpAndDoesNotThrow()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+
+        var clock = new FakeClock();
+        var monitor = new ActivityMonitor(
+            new NoOpForegroundProbe(), new NoOpInputClock(), new NoOpForegroundAccountResolver(), clock);
+        var marker = new AccountActivityMarker(monitor, clock);
+        var provider = new ActivitySnapshotProvider(monitor);
+
+        var registry = new SingleInstalledPluginLookup(new InstalledPlugin
+        {
+            Manifest = new PluginManifest
+            {
+                SchemaVersion = 1,
+                Id = "626labs.test",
+                Name = "Test",
+                Version = "1.0",
+                ContractVersion = "1.0",
+                Publisher = "626",
+                Description = "x",
+                Capabilities = new[]
+                {
+                    PluginCapability.HostCommandsMarkAccountActive,
+                    PluginCapability.HostQueriesAccountActivity,
+                },
+            },
+            InstallDir = Path.GetTempPath(),
+            Consent = new ConsentRecord
+            {
+                PluginId = "626labs.test",
+                GrantedCapabilities = new[]
+                {
+                    PluginCapability.HostCommandsMarkAccountActive,
+                    PluginCapability.HostQueriesAccountActivity,
+                },
+                AutostartEnabled = false,
+            },
+        });
+
+        var hostService = new PluginHostService(
+            registry, "1.4.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            new InProcessPluginEventBus(),
+            new NoOpLauncher(),
+            new PluginUITranslator(new NullUIHost()),
+            provider,
+            marker);
+
+        var interceptor = new CapabilityInterceptor(
+            currentPluginAccessor: () => "626labs.test",
+            consentLookup: id => new[]
+            {
+                PluginCapability.HostCommandsMarkAccountActive,
+                PluginCapability.HostQueriesAccountActivity,
+            });
+
+        var startup = new PluginHostStartupService(
+            hostService, interceptor,
+            NullLogger<PluginHostStartupService>.Instance,
+            pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+
+            // Must not throw despite the unparseable id.
+            await client.MarkAccountActiveAsync(new MarkAccountActiveRequest
+            {
+                AccountId = "not-a-guid",
+            });
+
+            var resp = await client.GetAccountActivityAsync(new Empty());
+            Assert.Empty(resp.Items); // nothing was ever launched/tracked; the bad id touched nothing
         }
         finally
         {
@@ -316,7 +739,8 @@ public class EndToEndContractTests
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
             new PluginUITranslator(uiHost),
-            new StubActivityProvider());
+            new StubActivityProvider(),
+            new StubActivityMarker());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -394,7 +818,8 @@ public class EndToEndContractTests
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
-            new StubActivityProvider());
+            new StubActivityProvider(),
+            new StubActivityMarker());
 
         // Production shape: accessor returns null. Header is the only path to a plugin id.
         var interceptor = new CapabilityInterceptor(
@@ -468,7 +893,8 @@ public class EndToEndContractTests
             new InProcessPluginEventBus(),
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
-            new StubActivityProvider());
+            new StubActivityProvider(),
+            new StubActivityMarker());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => null,
@@ -539,6 +965,35 @@ public class EndToEndContractTests
                 },
             },
         });
+    }
+
+    // ---- ActivityMonitor fakes for the real-monitor round-trip tests. Same shape as
+    // ROROROblox.Tests.ActivityMonitorTests's private fakes (they can't be shared across
+    // assemblies), pared down to what MarkAccountActive's path actually exercises: a
+    // mutable clock, plus no-op foreground/input/resolver since Sample() is never called here.
+
+    private sealed class FakeClock : IClock
+    {
+        public DateTimeOffset UtcNow { get; set; } = new(2026, 7, 1, 12, 0, 0, TimeSpan.Zero);
+    }
+
+    private sealed class NoOpForegroundProbe : IForegroundWindowProbe
+    {
+        public bool TryGetForegroundPid(out int pid) { pid = 0; return false; }
+    }
+
+    private sealed class NoOpInputClock : ISystemInputClock
+    {
+        public uint LastInputTick => 0;
+    }
+
+    private sealed class NoOpForegroundAccountResolver : IForegroundAccountResolver
+    {
+        public bool TryResolveAccountByPid(int pid, out Guid accountId)
+        {
+            accountId = Guid.Empty;
+            return false;
+        }
     }
 
     private sealed class SingleInstalledPluginLookup : IInstalledPluginsLookup

@@ -638,6 +638,7 @@ public class MainViewModelTests
         public void Start() => throw new NotImplementedException();
         public void Stop() => throw new NotImplementedException();
         public void Sample() => throw new NotImplementedException();
+        public void MarkActive(Guid accountId, DateTimeOffset nowUtc) => throw new NotImplementedException();
         public IReadOnlyList<AccountActivity> GetSnapshot() => throw new NotImplementedException();
     }
 

@@ -130,6 +130,16 @@ public sealed class ActivityMonitor : IActivityMonitor, IDisposable
         }
     }
 
+    public void MarkActive(Guid accountId, DateTimeOffset nowUtc)
+    {
+        if (_records.TryGetValue(accountId, out var rec))
+        {
+            rec.LastActivityAt = nowUtc;
+            rec.WarnLatched = false; // re-arm — mirrors Sample()'s else-if re-arm branch
+        }
+        // Untracked id → no-op (account not launched / already exited).
+    }
+
     public IReadOnlyList<AccountActivity> GetSnapshot()
     {
         var now = _clock.UtcNow;

@@ -31,5 +31,15 @@ public interface IActivityMonitor
     /// </summary>
     void Sample();
 
+    /// <summary>
+    /// Directly credit an account as active as of <paramref name="nowUtc"/> — the path a
+    /// keep-alive plugin uses after it synthesizes input into that account's window (the
+    /// foreground/global-input heuristic in Sample() can't attribute plugin-directed input to
+    /// the right window). Stamps LastActivityAt and re-arms the warn latch. No-op for an
+    /// untracked account. The core never infers this — the plugin declares it via the
+    /// consent-gated MarkAccountActive RPC.
+    /// </summary>
+    void MarkActive(Guid accountId, DateTimeOffset nowUtc);
+
     IReadOnlyList<AccountActivity> GetSnapshot();
 }

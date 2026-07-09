@@ -219,4 +219,43 @@ public class ActivityMonitorTests
         Assert.Single(fires);
         Assert.Equal(2, fires[0].Count);
     }
+
+    [Fact]
+    public void MarkActive_StampsTrackedAccount()
+    {
+        var (m, clock, _, _, _) = Build();
+        var id = Guid.NewGuid();
+        m.OnAccountLaunched(id);
+        clock.UtcNow = clock.UtcNow.AddMinutes(30); // age it well past threshold
+        m.MarkActive(id, clock.UtcNow);
+        var snap = m.GetSnapshot().Single(a => a.AccountId == id);
+        Assert.True(snap.SinceActivity < TimeSpan.FromSeconds(1)); // freshly stamped
+    }
+
+    [Fact]
+    public void MarkActive_ReArmsLatchedAccount()
+    {
+        var (m, clock, _, _, _) = Build();
+        m.WarnThreshold = TimeSpan.FromMinutes(15);
+        var crossed = new List<IReadOnlyList<Guid>>();
+        m.WarnThresholdCrossed += (_, ids) => crossed.Add(ids);
+        var id = Guid.NewGuid();
+        m.OnAccountLaunched(id);
+        clock.UtcNow = clock.UtcNow.AddMinutes(20);
+        m.Sample();                              // latches (crossed once)
+        Assert.Contains(crossed, list => list.Contains(id));
+        m.MarkActive(id, clock.UtcNow);          // re-arm: stamp + clear latch
+        crossed.Clear();
+        clock.UtcNow = clock.UtcNow.AddMinutes(20);
+        m.Sample();                              // must be able to cross AGAIN
+        Assert.Contains(crossed, list => list.Contains(id));
+    }
+
+    [Fact]
+    public void MarkActive_UntrackedId_NoOp()
+    {
+        var (m, clock, _, _, _) = Build();
+        m.MarkActive(Guid.NewGuid(), clock.UtcNow); // must not throw
+        Assert.Empty(m.GetSnapshot());
+    }
 }
