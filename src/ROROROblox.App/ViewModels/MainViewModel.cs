@@ -161,6 +161,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         RenameItemCommand = new RelayCommand(p => _ = RenameItemAsync(BuildRenameTarget(p)));
         ResetItemNameCommand = new RelayCommand(p => _ = ResetItemNameAsync(BuildRenameTarget(p)));
         RemoveGameCommand = new RelayCommand(p => _ = RemoveGameAsync(p as FavoriteGame));
+        ToggleJoinViaFriendCommand = new RelayCommand(p => _ = ToggleJoinViaFriendAsync(p as AccountSummary));
 
         // Subscribe to favorites' default-changed event so the widget readout updates without a
         // manual re-fetch. Fires after SetDefaultAsync mutates + persists, on real change only.
@@ -374,6 +375,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand RenameItemCommand { get; }
     public ICommand ResetItemNameCommand { get; }
     public ICommand RemoveGameCommand { get; }
+
+    /// <summary>
+    /// Flips an account row's <see cref="AccountSummary.JoinViaFriend"/> preference and persists
+    /// it — the account row's context-menu checkbox (trust-aware squad launch, v1.9.0). Parameter
+    /// is the row's <see cref="AccountSummary"/>. See <see cref="ToggleJoinViaFriendAsync"/>.
+    /// </summary>
+    public ICommand ToggleJoinViaFriendCommand { get; }
 
     /// <summary>
     /// Saved games for the default-game widget dropdown. Same content as
@@ -2036,6 +2044,33 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Flip an account row's join-via-friend preference (route batch launches through a friend
+    /// follow instead of a direct join — trust-aware squad launch, v1.9.0) and persist it.
+    /// Optimistic: the row flips immediately so the context-menu checkbox reflects the click
+    /// without waiting on disk; on persist failure the flip is reverted and the failure surfaces
+    /// via <see cref="StatusBanner"/> rather than leaving the UI silently out of sync with disk.
+    /// </summary>
+    internal async Task ToggleJoinViaFriendAsync(AccountSummary? summary)
+    {
+        if (summary is null)
+        {
+            return;
+        }
+
+        var next = !summary.JoinViaFriend;
+        summary.JoinViaFriend = next;
+        try
+        {
+            await _accountStore.SetJoinViaFriendAsync(summary.Id, next);
+        }
+        catch (Exception ex)
+        {
+            summary.JoinViaFriend = !next; // revert on persist failure
+            StatusBanner = $"Couldn't save join-via-friend: {ex.Message}";
         }
     }
 

@@ -46,6 +46,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
         _isSelected = account.IsSelected;
         _captionColorHex = account.CaptionColorHex;
         _fpsCap = account.FpsCap;
+        _joinViaFriend = account.JoinViaFriend;
         _localName = account.LocalName;
         RobloxUserId = account.RobloxUserId;
         BrowserTrackerId = account.BrowserTrackerId;
@@ -350,7 +351,8 @@ public sealed class AccountSummary : INotifyPropertyChanged
     /// Whether this account joins a batch launch's game via friend-follow (join-via-friend) instead
     /// of a direct launch — trust-aware squad launch (v1.9.0). Defaults to false (direct). Read by
     /// <see cref="SquadLaunchPlan.Build"/> to split a batch into its direct and flagged sub-batches.
-    /// Persistence + UI wiring land in Task 4 — this property is plumbing only for now.
+    /// Seeded from <see cref="Account.JoinViaFriend"/> at construction; flipped + persisted via
+    /// <see cref="MainViewModel.ToggleJoinViaFriendCommand"/> (the account row's context menu).
     /// </summary>
     public bool JoinViaFriend
     {

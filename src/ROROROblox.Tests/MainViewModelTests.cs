@@ -398,6 +398,77 @@ public class MainViewModelTests
         finally { if (File.Exists(path)) File.Delete(path); }
     }
 
+    // ---- Task 4: trust-aware squad launch — Join-via-friend toggle ----
+
+    [Fact]
+    public async Task ToggleJoinViaFriendAsync_FlipsSummaryAndPersists()
+    {
+        var (vm, store, _, path) = Build();
+        try
+        {
+            var row = new AccountSummary(await store.AddAsync("Alt", "", "cookie"));
+            Assert.False(row.JoinViaFriend);
+
+            await vm.ToggleJoinViaFriendAsync(row);
+
+            Assert.True(row.JoinViaFriend);
+            var persisted = (await store.ListAsync()).Single(a => a.Id == row.Id);
+            Assert.True(persisted.JoinViaFriend);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ToggleJoinViaFriendAsync_Twice_RoundTrips()
+    {
+        var (vm, store, _, path) = Build();
+        try
+        {
+            var row = new AccountSummary(await store.AddAsync("Alt", "", "cookie"));
+
+            await vm.ToggleJoinViaFriendAsync(row);
+            await vm.ToggleJoinViaFriendAsync(row);
+
+            Assert.False(row.JoinViaFriend);
+            var persisted = (await store.ListAsync()).Single(a => a.Id == row.Id);
+            Assert.False(persisted.JoinViaFriend);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ToggleJoinViaFriendAsync_StoreThrows_RevertsAndSetsStatusBanner()
+    {
+        var (vm, store, _, path) = Build(wrapStore: inner => new JoinViaFriendThrowingStore(inner));
+        try
+        {
+            var row = new AccountSummary(await store.AddAsync("Alt", "", "cookie"));
+
+            await vm.ToggleJoinViaFriendAsync(row);
+
+            Assert.False(row.JoinViaFriend); // reverted
+            Assert.Contains("Couldn't save join-via-friend", vm.StatusBanner);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task AccountSummary_ConstructedFromFlaggedAccount_CarriesJoinViaFriend()
+    {
+        var (_, store, _, path) = Build();
+        try
+        {
+            var added = await store.AddAsync("Alt", "", "cookie");
+            await store.SetJoinViaFriendAsync(added.Id, true);
+            var flagged = (await store.ListAsync()).Single(a => a.Id == added.Id);
+
+            var row = new AccountSummary(flagged);
+
+            Assert.True(row.JoinViaFriend);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
     // ---- fakes ----
     // Only members MainViewModel's constructor touches (event subscriptions + the
     // InitializeBloxstrapWarningAsync fire-and-forget read) are implemented for real; everything
@@ -436,6 +507,36 @@ public class MainViewModelTests
         public Task UpdateSortOrderAsync(IReadOnlyList<Guid> idsInOrder) => inner.UpdateSortOrderAsync(idsInOrder);
         public Task SetSelectedAsync(Guid id, bool isSelected) => inner.SetSelectedAsync(id, isSelected);
         public Task SetJoinViaFriendAsync(Guid id, bool joinViaFriend) => inner.SetJoinViaFriendAsync(id, joinViaFriend);
+        public Task SetCaptionColorAsync(Guid id, string? hex) => inner.SetCaptionColorAsync(id, hex);
+        public Task SetFpsCapAsync(Guid id, int? fps) => inner.SetFpsCapAsync(id, fps);
+        public Task UpdateLocalNameAsync(Guid accountId, string? localName) => inner.UpdateLocalNameAsync(accountId, localName);
+        public Task SetTagsAsync(Guid id, IReadOnlyList<string> tags) => inner.SetTagsAsync(id, tags);
+        public Task<AccountExportResult> ExportAccountsAsync(IEnumerable<Guid> ids) => inner.ExportAccountsAsync(ids);
+        public Task<ImportMergeResult> ImportMergeAsync(IReadOnlyList<AccountExportRecord> records) => inner.ImportMergeAsync(records);
+    }
+
+    /// <summary>
+    /// Delegates every member to the real store except <see cref="SetJoinViaFriendAsync"/>, which
+    /// throws — pins <see cref="MainViewModel.ToggleJoinViaFriendAsync"/>'s revert-on-persist-
+    /// failure contract (Task 4, trust-aware squad launch).
+    /// </summary>
+    private sealed class JoinViaFriendThrowingStore(IAccountStore inner) : IAccountStore
+    {
+        public Task SetJoinViaFriendAsync(Guid id, bool joinViaFriend)
+            => throw new IOException("simulated persist failure");
+
+        public Task UpdateRobloxUserIdAsync(Guid accountId, long userId) => inner.UpdateRobloxUserIdAsync(accountId, userId);
+        public Task UpdateBrowserTrackerIdAsync(Guid accountId, long browserTrackerId) => inner.UpdateBrowserTrackerIdAsync(accountId, browserTrackerId);
+        public int GetCookieGeneration(Guid id) => inner.GetCookieGeneration(id);
+        public Task<IReadOnlyList<Account>> ListAsync() => inner.ListAsync();
+        public Task<Account> AddAsync(string displayName, string avatarUrl, string cookie) => inner.AddAsync(displayName, avatarUrl, cookie);
+        public Task RemoveAsync(Guid id) => inner.RemoveAsync(id);
+        public Task<string> RetrieveCookieAsync(Guid id) => inner.RetrieveCookieAsync(id);
+        public Task UpdateCookieAsync(Guid id, string newCookie) => inner.UpdateCookieAsync(id, newCookie);
+        public Task TouchLastLaunchedAsync(Guid id) => inner.TouchLastLaunchedAsync(id);
+        public Task SetMainAsync(Guid id) => inner.SetMainAsync(id);
+        public Task UpdateSortOrderAsync(IReadOnlyList<Guid> idsInOrder) => inner.UpdateSortOrderAsync(idsInOrder);
+        public Task SetSelectedAsync(Guid id, bool isSelected) => inner.SetSelectedAsync(id, isSelected);
         public Task SetCaptionColorAsync(Guid id, string? hex) => inner.SetCaptionColorAsync(id, hex);
         public Task SetFpsCapAsync(Guid id, int? fps) => inner.SetFpsCapAsync(id, fps);
         public Task UpdateLocalNameAsync(Guid accountId, string? localName) => inner.UpdateLocalNameAsync(accountId, localName);
