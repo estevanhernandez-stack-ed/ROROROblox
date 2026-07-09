@@ -173,6 +173,16 @@
             <Border Margin="0,0,0,8" Padding="14,10"
                     CornerRadius="8"
                     Background="{DynamicResource RowBgBrush}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDefault}" Value="True">
+                                <Setter Property="BorderBrush" Value="{DynamicResource CyanBrush}" />
+                                <Setter Property="BorderThickness" Value="1" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 <Border.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Rename…"
@@ -220,6 +230,13 @@
                                            FontSize="9" FontWeight="Bold"
                                            Foreground="{DynamicResource WhiteBrush}" />
                             </Border>
+                            <Border Background="{DynamicResource CyanBrush}" CornerRadius="3"
+                                    Margin="6,2,0,0" Padding="6,1"
+                                    Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="DEFAULT"
+                                           FontSize="9" FontWeight="Bold"
+                                           Foreground="{DynamicResource NavyBrush}" />
+                            </Border>
                         </StackPanel>
                         <TextBlock Text="{Binding PlaceName}"
                                    FontSize="11"
@@ -229,6 +246,27 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="Set default"
+                                Tag="{Binding Id}"
+                                Click="OnSetDefaultServerClick"
+                                Padding="10,6" Margin="0,0,8,0"
+                                Background="{DynamicResource NavyBrush}"
+                                Foreground="{DynamicResource MutedTextBrush}"
+                                BorderBrush="{DynamicResource DividerBrush}"
+                                BorderThickness="1"
+                                FontSize="11"
+                                ToolTip="Pre-select this server when you launch all accounts to a private server."
+                                Visibility="{Binding IsDefault, Converter={StaticResource InverseBoolConverter}}" />
+                        <Button Content="Clear default"
+                                Click="OnClearDefaultServerClick"
+                                Padding="10,6" Margin="0,0,8,0"
+                                Background="{DynamicResource NavyBrush}"
+                                Foreground="{DynamicResource MutedTextBrush}"
+                                BorderBrush="{DynamicResource DividerBrush}"
+                                BorderThickness="1"
+                                FontSize="11"
+                                ToolTip="Stop pre-selecting this server. You'll pick one each time again."
+                                Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisibilityConverter}}" />
                         <!-- v1.3.x — visible Rename button. Spec §10 — Library is the discoverable
                              home for renaming saved private servers; right-click works too. -->
                         <Button Content="Rename"
