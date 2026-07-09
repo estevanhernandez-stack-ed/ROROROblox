@@ -392,8 +392,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     private FavoriteGame? _currentDefaultGame;
-    /// <summary>The currently-default <see cref="FavoriteGame"/>, or null when no games saved.
-    /// One-way bound on the widget popup ListBox to highlight the current default. v1.3.x.</summary>
+    /// <summary>The currently-default <see cref="FavoriteGame"/>, or null when no game is
+    /// marked default (games may still exist -- null is a legitimate "launches open Roblox
+    /// home" state, not just the empty-library case). One-way bound on the widget popup
+    /// ListBox to highlight the current default. v1.3.x.</summary>
     public FavoriteGame? CurrentDefaultGame
     {
         get => _currentDefaultGame;
@@ -402,17 +404,29 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             if (SetField(ref _currentDefaultGame, value))
             {
                 OnPropertyChanged(nameof(DefaultGameDisplay));
+                OnPropertyChanged(nameof(DefaultGameTooltip));
             }
         }
     }
 
     /// <summary>
     /// What the widget shows in its toolbar readout. Reads <see cref="FavoriteGame.LocalName"/>
-    /// when set, falling back to <see cref="FavoriteGame.Name"/>, then to a muted placeholder
-    /// when no games are saved. v1.3.x.
+    /// when set, falling back to <see cref="FavoriteGame.Name"/>, then to "Roblox home" when no
+    /// game is marked default -- a real state (Task 3), not just an empty-library placeholder.
     /// </summary>
     public string DefaultGameDisplay =>
-        _currentDefaultGame?.LocalName ?? _currentDefaultGame?.Name ?? "No saved games yet";
+        _currentDefaultGame?.LocalName ?? _currentDefaultGame?.Name ?? "Roblox home";
+
+    /// <summary>
+    /// Tooltip for the default-game widget ToggleButton. Coupled to <see cref="CurrentDefaultGame"/>
+    /// so it flips in lockstep with <see cref="DefaultGameDisplay"/> -- explains the home-launch
+    /// behavior when no default is set, nudging the user toward the Library instead of leaving
+    /// the null state unexplained. v1.9 (Task 3).
+    /// </summary>
+    public string DefaultGameTooltip =>
+        _currentDefaultGame is null
+            ? "Launches open Roblox at home. Set a default game in the Library to launch straight into it."
+            : "The default game Launch As uses when no per-row pick is set. Click to change.";
 
     private bool _isCompact;
     /// <summary>True when the main window is in compact (collapsed) mode. Drives the bottom-bar
@@ -655,9 +669,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // setting the default game, not for one-off launches.
         AvailableGames.Add(JoinByLinkSentinel);
 
-        // Default-game candidates exclude PS entries + the sentinel — the default is a game.
-        var defaultGame = AvailableGames.FirstOrDefault(g => g.IsDefault && !IsJoinByLinkSentinel(g) && !g.IsPrivateServer)
-                          ?? AvailableGames.FirstOrDefault(g => !IsJoinByLinkSentinel(g) && !g.IsPrivateServer);
+        // Default is the game explicitly marked default — no silent first-game fallback.
+        // Null is a real state: no default -> Launch As opens Roblox home.
+        var defaultGame = AvailableGames.FirstOrDefault(g => g.IsDefault && !IsJoinByLinkSentinel(g) && !g.IsPrivateServer);
         foreach (var account in Accounts)
         {
             account.SelectedGame = FindMatchingEntry(account.SelectedGame) ?? defaultGame;
