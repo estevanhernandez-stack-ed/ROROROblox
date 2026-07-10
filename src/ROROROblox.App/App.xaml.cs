@@ -28,6 +28,14 @@ public partial class App : Application
     private ILogger<App>? _log;
 
     /// <summary>
+    /// The plugin-host listener's bind task, set by <see cref="StartPluginHostListener"/> and
+    /// awaited by <see cref="StartPluginAutostart"/>. Null when the host failed to start, in
+    /// which case autostart is skipped: a plugin process that can't reach the pipe would fail
+    /// its first handshake anyway.
+    /// </summary>
+    private Task? _pluginHostListening;
+
+    /// <summary>
     /// True after the user explicitly Quits via the tray menu. MainWindow's Closing handler
     /// (item 9) checks this to decide between "minimize to tray" and "actually exit."
     /// </summary>
@@ -107,6 +115,14 @@ public partial class App : Application
         var acquired = mutex.Acquire();
         var verdict = gate.Evaluate(acquired);
 
+        // Bind the plugin-host pipe BEFORE the gate's modals. Both modals below block OnStartup
+        // in a nested message loop, and the leftover modal fires whenever stale Roblox clients
+        // exist — the exact condition an agent is trying to recover from. Binding here means the
+        // pipe is reachable while the dialog waits for a human. Multi-instance state is already
+        // resolved (mutex.Acquire above), so a plugin reading GetHostInfo sees the truth.
+        // Autostart is deliberately deferred until after the gate — see StartPluginAutostart.
+        StartPluginHostListener();
+
         var startedWithoutMutex = false;
         if (verdict is StartupGateResult.Blocked)
         {
@@ -148,7 +164,9 @@ public partial class App : Application
         WirePluginEventBus();
         WireActivityMonitor();
         WireContestedWatcher(mainWindow); // Task 8
-        StartPluginHost();
+        // The gate has been answered by now (both modal branches above are blocking), so it is
+        // safe to let plugin processes launch. The pipe they handshake against bound earlier.
+        StartPluginAutostart();
         await InitializeIdleSettingsAsync();
 
         _log.LogInformation(
@@ -1109,38 +1127,68 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Starts the gRPC plugin host (Kestrel + named pipe) in the background. The plugin
-    /// host failing must NOT break RoRoRo's normal launch — fully-broken plugin host =
-    /// RoRoRo still launches without plugin support.
+    /// Binds the gRPC plugin host (Kestrel + named pipe). Runs BEFORE the startup gate's
+    /// modals, deliberately.
+    ///
+    /// <para>The gate's modals are shown with <c>ShowDialog()</c>, which pumps a nested message
+    /// loop and blocks the rest of OnStartup until the user answers. When leftover Roblox
+    /// processes exist the leftover modal is always up, so binding the pipe after the gate meant
+    /// the pipe never bound until a human clicked a button. That is exactly the state an internet
+    /// outage leaves behind — dead clients still running — which is precisely when an agent needs
+    /// to reach RoRoRo to clear and relaunch them. Binding first makes the host reachable while
+    /// the dialog waits.</para>
+    ///
+    /// <para>Autostart is NOT kicked here. See <see cref="StartPluginAutostart"/> — no plugin
+    /// process may launch until the user has answered the gate.</para>
+    ///
+    /// <para>The plugin host failing must NOT break RoRoRo's normal launch — a fully-broken
+    /// plugin host still leaves RoRoRo launching, without plugin support.</para>
     /// </summary>
-    private void StartPluginHost()
+    private void StartPluginHostListener()
     {
         if (_services is null) return;
         try
         {
             var pluginHost = _services.GetRequiredService<ROROROblox.App.Plugins.PluginHostStartupService>();
             // Fire-and-forget: StartAsync's first await yields after Kestrel's bind, so
-            // App.OnStartup doesn't block on it. Failures inside StartAsync are caught
-            // by ContinueWith so they show up as a debug log instead of an unobserved task.
-            //
-            // After Kestrel is listening, kick off autostart for any plugin whose consent
-            // record has AutostartEnabled=true. Ordering matters — plugin processes handshake
-            // immediately on launch, so the gRPC server has to be up first or the first
-            // call fails with "pipe not found".
-            _ = pluginHost.StartAsync(CancellationToken.None).ContinueWith(t =>
+            // OnStartup doesn't block on it. The continuation observes a faulted task so a
+            // bind failure surfaces as a debug log rather than an unobserved exception.
+            _pluginHostListening = pluginHost.StartAsync(CancellationToken.None);
+            _ = _pluginHostListening.ContinueWith(t =>
             {
                 if (t.IsFaulted)
                 {
                     _log?.LogDebug(t.Exception, "PluginHostStartupService.StartAsync threw; plugins disabled this session.");
-                    return;
                 }
-                _ = Task.Run(StartPluginAutostartAsync);
             }, TaskScheduler.Default);
         }
         catch (Exception ex)
         {
+            _pluginHostListening = null;
             _log?.LogDebug(ex, "Resolving PluginHostStartupService threw; plugins disabled this session.");
         }
+    }
+
+    /// <summary>
+    /// Launches autostart-enabled plugin processes, once the startup gate has been answered.
+    ///
+    /// <para>Split from <see cref="StartPluginHostListener"/> so the pipe can bind while a gate
+    /// modal is still up without any plugin acting on the user's machine first. A leftover-processes
+    /// modal that the user answers with "Clean up + continue" stops Roblox clients — a keep-alive
+    /// or macro plugin racing that teardown is not a state worth allowing.</para>
+    ///
+    /// <para>Ordering still matters within the plugin path: plugin processes handshake immediately
+    /// on launch, so the gRPC server has to be listening first or that first call fails with
+    /// "pipe not found". Hence the continuation off the bind task rather than a bare call.</para>
+    /// </summary>
+    private void StartPluginAutostart()
+    {
+        if (_pluginHostListening is null) return; // never bound; nothing to handshake against
+        _ = _pluginHostListening.ContinueWith(t =>
+        {
+            if (t.IsFaulted) return; // already logged by the bind continuation
+            _ = Task.Run(StartPluginAutostartAsync);
+        }, TaskScheduler.Default);
     }
 
     /// <summary>

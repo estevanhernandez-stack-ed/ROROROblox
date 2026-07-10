@@ -234,28 +234,37 @@ renumbering). Existing plugins compiled against 0.5.0 keep working. The handshak
 
 ## Tests
 
-**Unit (`ROROROblox.Tests`)**
+### Unit (`ROROROblox.Tests`) — shipped for Gaps 1 and 4
 
-- Capability-map exhaustiveness: every `RoRoRoHost` method has an entry. This test fails today
-  if anyone adds an rpc and forgets the map.
-- Unknown method name → interceptor denies.
-- `StopAccounts` dispatches to `IRobloxInstanceStopper`; empty `account_ids` means all.
+- Capability-map exhaustiveness: every `RoRoRoHost` method has an entry. Goes red the moment
+  anyone adds an rpc and forgets the map.
+- Unknown method name → interceptor denies, on both the unary and server-streaming paths, and
+  never reaches the handler.
+- `StopAccounts` dispatches to `IPluginAccountStopper`; empty `account_ids` means every tracked
+  account; an untracked id reports as failed without failing the batch; duplicates stop once.
+
+### Unit — pending for Gaps 2 and 3
+
 - `PublishStatus` stamps `plugin_id` from the header and ignores a client-supplied value.
 - `GetPluginStatus` returns the latest entry per plugin.
 
-**Harness (`ROROROblox.PluginTestHarness`, real named pipe)**
+### Harness (`ROROROblox.PluginTestHarness`, real named pipe)
 
-- `StopAccounts` denied without `host.commands.stop-accounts`.
-- `ListPlugins` denied without `host.queries.plugins`.
-- Plugin A's `PublishStatus` cannot overwrite plugin B's entry.
-- An rpc absent from the capability map is refused, not allowed.
+- `StopAccounts` denied without `host.commands.stop-accounts`. **Shipped.**
+- The capability map covers every host method, asserted before Kestrel binds. **Shipped.**
+- `ListPlugins` denied without `host.queries.plugins`. *Pending.*
+- Plugin A's `PublishStatus` cannot overwrite plugin B's entry. *Pending.*
 
-**vibe-access**
+### vibe-access
 
-Re-run `scan` → `map` → `verify`. The manifest grows from 16 to 20 affordances; every new one
-must land `pass` before this is done. The stop affordance is `act` and destructive — its
-manifest description must say "force-closes real Roblox clients" the way `request-launch`
-already says "launches a real Roblox client — do not call casually."
+Re-run `scan` → `map` → `verify` after each gap lands. The manifest went 16 → **17** with
+`stop-accounts` (run `b9972f14`, 17/17); Gaps 2 and 3 would take it to 20. The stop affordance is
+`act` and destructive, and its manifest description says so — the way `request-launch` already
+says "launches a real Roblox client — do not call casually."
+
+Because `PluginHostStartupService.StartAsync` now calls `AssertExhaustive()` before Kestrel
+binds, a pipe that comes up at all is a pipe whose every rpc has a capability-map entry. The
+verify run's ability to connect is itself part of the proof.
 
 ## Explicitly out of scope
 
@@ -283,32 +292,60 @@ already-running clients, re-establishing account↔PID tracking across an app re
 restart the orphans are tracked again, and `StopAccounts` can target them by account. The blunt
 `StopAll()` path stays for genuinely unattributable processes.
 
-### Blocking hazard: the startup modal blocks the plugin host
+### Blocking hazard: the startup gate blocked the plugin host (FIXED 2026-07-10)
 
-Decision 2's restart path has a defect that lands squarely on the recovery scenario, confirmed
-by direct observation on 2026-07-10 while re-verifying the agent-access layer.
+Decision 2's restart path had a defect landing squarely on the recovery scenario, confirmed by
+direct observation while re-verifying the agent-access layer.
 
-`App.OnStartup` shows `LeftoverProcessesWindow` via **`ShowDialog()`** (blocking, nested message
-loop) at line ~132. `StartPluginHost()` runs at line ~151. Therefore: **when leftover Roblox
-processes exist, the plugin-host pipe never binds until a human dismisses the modal.** The app
-log freezes at `StartupGate: mutex acquired with N windowed leftover Roblox process(es)` and no
-agent can connect.
+Both startup-gate modals — `RobloxAlreadyRunningWindow` (BLOCKED) and `LeftoverProcessesWindow`
+(LEFTOVER) — are shown with **`ShowDialog()`**, which pumps a nested message loop and blocks the
+rest of `OnStartup`. `StartPluginHost()` ran *after* them. Therefore: **whenever a gate modal
+fired, the plugin-host pipe never bound until a human clicked a button.** The app log froze at
+the `StartupGate` line and every agent connection timed out.
 
 That is exactly the condition this design exists to recover from. Restart RoRoRo after an outage —
-the zombies are still running — and the agent is locked out of the pipe by a dialog. (The XAML
-comment on that window claims it is *"Non-blocking"*. The call site is `ShowDialog()`. The comment
-is wrong.)
+dead clients still running, so the gate always fires — and the agent is locked out by a dialog.
 
-Two candidate fixes, recommendation first:
+To be precise about a claim made earlier in this document's history: the modal's code comment
+reads *"Informational (non-blocking) modal"*, meaning it is not a hard **gate** on RoRoRo
+proceeding (the mutex is already held). It is not a claim about the calling thread. The comment
+is not wrong; the ordering was.
 
-1. **Split `StartPluginHost()`.** Bind Kestrel to the pipe *before* the startup gate, and defer
-   plugin autostart until *after* the gate resolves. The agent can connect and observe while the
-   modal is up; no plugin starts macroing before the user has answered it.
-2. **Make the modal actually non-blocking** — `Show()` plus a callback for `CleanUpRequested`,
-   matching what its own comment already claims.
+**Fix shipped:** `StartPluginHost()` split into two.
 
-Fix 1 is narrower and directly serves the recovery path. Neither is in scope for the stop rpc,
-but the recovery story is not real until one of them ships. Tracked as a follow-up.
+- `StartPluginHostListener()` binds Kestrel to the pipe immediately after `mutex.Acquire()` and
+  `gate.Evaluate()`, *before* either modal. Multi-instance state is already resolved at that
+  point, so a plugin calling `GetHostInfo` during the modal reads the truth.
+- `StartPluginAutostart()` runs after the gate is answered and the wiring completes. No plugin
+  process may launch before the user decides. This matters concretely: "Clean up + continue"
+  stops Roblox clients, and a keep-alive or macro plugin racing that teardown is not a state
+  worth allowing.
+
+Verified live against the real GUI app on a box with a running Roblox client (the BLOCKED
+verdict, the harder case):
+
+```text
+07:44:05.877  StartupGate: mutex not acquired — Roblox holds the lock; blocking.
+07:44:06.251  PluginHost gRPC server listening on \\.\pipe\rororo-plugin-host   (+374 ms)
+07:46:11.361  Plugin autostart: registry scan found 1 plugin(s), 1 autostart-enabled.  (+125.5 s)
+```
+
+The pipe bound 374 ms after the verdict while the modal blocked startup, and a vibe-access cold
+verify drove all 17 affordances through it — 17/17 gates held, `GetHostInfo` honestly reporting
+`multi-instance Off`. Autostart fired only when the modal was dismissed 125 seconds later. The
+box had one autostart-enabled plugin installed (`626labs.ur-task`), which under the old ordering
+would have launched while the gate sat unanswered.
+
+### Adjacent findings (not fixed here)
+
+1. **The destructive action is the Enter-key default.** On `RobloxAlreadyRunningWindow`, "Close
+   Roblox for me" carries `IsDefault="True"`. A reflexive Enter on a modal that appears at
+   startup force-closes the user's running Roblox clients. "Retry" or "Start anyway" would be
+   safer defaults; the destructive action should require a deliberate click.
+2. **Plugin processes are orphaned on exit.** `PluginProcessSupervisor` is not `IDisposable` and
+   `OnExit` never calls `StopAll()`. It stops the gRPC host (Kestrel) but leaves autostarted
+   plugin processes running after RoRoRo exits. Observed: `626labs.ur-task.exe` survived its
+   parent. The supervisor already has `StopAll()`; nothing calls it at shutdown.
 
 ## Open questions
 
