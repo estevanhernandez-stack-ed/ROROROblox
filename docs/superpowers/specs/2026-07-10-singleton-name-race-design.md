@@ -114,15 +114,39 @@ a real `MutexHolder` (peer tool):
 
 868 unit + 16 harness tests pass.
 
+## CreateEvent mechanism — confirmed (2026-07-10)
+
+The "Roblox skips enforcement because its `CreateEvent` fails" step was inferred in the first pass.
+It has now been exercised directly, though not instrumented inside Roblox.
+
+Setup: RoRoRo holds the Event name (owns a Mutex under `…singletonEvent`), then Roblox is launched
+`--launch-to-tray`. Observed and held stable for 12 s:
+
+- `…singletonEvent` **stayed a Mutex** (RoRoRo's) — Roblox's `CreateEvent` failed.
+- `…singletonMutex` **was never created** — normally-started Roblox owns both, so Roblox tries
+  `CreateEvent` first and, on failure, short-circuits its whole singleton setup (skips the Mutex too).
+- Roblox ran to tray anyway. Multi-instance is the side effect of Roblox losing the Event race.
+
+So the Event is the single gate; the `…singletonMutex` is downstream of it and irrelevant to the
+mechanism. RoRoRo squatting only the Event is provably sufficient. (Roblox's internal branch is still
+not instrumented — this is behavior observed from the outside, not a read of Roblox's code.)
+
+## Seamless takeover — built
+
+The every-cold-boot BLOCKED modal is fixed, not just noted. When the gate is `Blocked` and the only
+thing holding the Event is **windowless tray clients**, RoRoRo takes over silently: close them,
+reclaim the name (bounded-poll), and relaunch a tray client alongside itself. No modal. A windowed
+(in-game) client still routes to the confirming modal — the `SeamlessTakeover.WindowlessOnly` gate is
+the whole safety story. Implemented in `App.TrySeamlessTakeoverAsync`; verified live (Event flipped
+from Roblox's to RoRoRo's in ~660 ms, no modal, tray client relaunched). See the
+`feat(startup): seamless takeover` commit.
+
 ## Not addressed
 
 - **The name is still hardcoded.** `MutexHolder.DefaultMutexName` is a constant and the remote-config
   swap remains unbuilt — see the banner atop the canonical spec. If Roblox renames the object, this
   still needs a binary release. Nothing here changes that.
-- **Roblox's side is inferred.** That Roblox skips single-instance enforcement *because* its
-  `CreateEvent` fails is the only explanation consistent with the product working, but it has not been
-  instrumented. The type mismatch and the error codes are measured; Roblox's internal branch is not.
-- **The BLOCKED modal still fires on every cold boot** for users with Roblox-on-startup. That is
-  correct behavior given the name race, but it is a UX cost worth a separate look — "mutex-only
-  background mode," where RoRoRo takes the name at login before Roblox can, is the obvious answer and
-  is already noted as a v2 idea in the competitive doc.
+- **Login-race pre-emption not built.** Seamless takeover closes-and-reclaims *when RoRoRo starts*.
+  The stronger "RoRoRo grabs the Event at login before Roblox's tray client" (no close needed at all)
+  was considered and set aside — it adds a startup entry and a race against Roblox's autostart. The
+  takeover path handles the same goal without either cost.
