@@ -776,6 +776,108 @@ public class EndToEndContractTests
     }
 
     /// <summary>
+    /// Regression guard for the vibe-access verify finding (run f7ebdbd1): UpdateUI and
+    /// RemoveUI accepted a bogus UIHandle from a caller that never created any UI. Handle
+    /// ownership is the ONLY gate on these two RPCs (the capability map deliberately leaves
+    /// them ungated), so over the real pipe: a bogus handle must refuse with
+    /// PermissionDenied, an owned handle must work, and a removed handle must refuse on
+    /// second use.
+    /// </summary>
+    [Fact]
+    public async Task UpdateUI_RemoveUI_RefuseForeignHandle_HonorOwnedHandle()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+        var uiHost = new RecordingUIHost();
+
+        var registry = new SingleInstalledPluginLookup(new InstalledPlugin
+        {
+            Manifest = new PluginManifest
+            {
+                SchemaVersion = 1,
+                Id = "626labs.test",
+                Name = "Test",
+                Version = "1.0",
+                ContractVersion = "1.0",
+                Publisher = "626",
+                Description = "x",
+                Capabilities = new[] { PluginCapability.HostUITrayMenu },
+            },
+            InstallDir = Path.GetTempPath(),
+            Consent = new ConsentRecord
+            {
+                PluginId = "626labs.test",
+                GrantedCapabilities = new[] { PluginCapability.HostUITrayMenu },
+                AutostartEnabled = false,
+            },
+        });
+
+        var hostService = new PluginHostService(
+            registry, "1.4.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            new InProcessPluginEventBus(),
+            new NoOpLauncher(),
+            new PluginUITranslator(uiHost),
+            new StubActivityProvider(),
+            new StubActivityMarker());
+
+        // Production shape: accessor returns null; the x-plugin-id header is the identity.
+        var interceptor = new CapabilityInterceptor(
+            currentPluginAccessor: () => null,
+            consentLookup: id => new[] { PluginCapability.HostUITrayMenu });
+
+        var startup = new PluginHostStartupService(
+            hostService, interceptor,
+            NullLogger<PluginHostStartupService>.Instance,
+            pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+            var headers = new Metadata { { "x-plugin-id", "626labs.test" } };
+
+            // Bogus handle from a caller that owns nothing — the verify driver's exact call.
+            var updateEx = await Assert.ThrowsAsync<RpcException>(async () =>
+                await client.UpdateUIAsync(new UIUpdate
+                {
+                    Handle = new UIHandle { Id = "va-bogus-handle" },
+                    MenuItem = new MenuItemSpec { Label = "x" },
+                }, headers: headers));
+            Assert.Equal(StatusCode.PermissionDenied, updateEx.StatusCode);
+
+            var removeEx = await Assert.ThrowsAsync<RpcException>(async () =>
+                await client.RemoveUIAsync(new UIHandle { Id = "va-bogus-handle" }, headers: headers));
+            Assert.Equal(StatusCode.PermissionDenied, removeEx.StatusCode);
+            Assert.Empty(uiHost.RemovedHandles);
+
+            // Owned handle: create, update, remove — all honored.
+            var handle = await client.AddTrayMenuItemAsync(
+                new MenuItemSpec { Label = "mine", Tooltip = "t", Enabled = true }, headers: headers);
+
+            await client.UpdateUIAsync(new UIUpdate
+            {
+                Handle = handle,
+                MenuItem = new MenuItemSpec { Label = "renamed" },
+            }, headers: headers);
+
+            await client.RemoveUIAsync(handle, headers: headers);
+            Assert.Equal(handle.Id, Assert.Single(uiHost.RemovedHandles));
+
+            // Removed handle no longer exists — second remove refuses.
+            var goneEx = await Assert.ThrowsAsync<RpcException>(async () =>
+                await client.RemoveUIAsync(handle, headers: headers));
+            Assert.Equal(StatusCode.PermissionDenied, goneEx.StatusCode);
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    /// <summary>
     /// Regression guard for bug #3 (fixed at 652c43a). Production wiring at
     /// App.xaml.cs:426 passes <c>currentPluginAccessor: () =&gt; null</c> and depends
     /// entirely on the <c>x-plugin-id</c> request header to resolve the calling plugin.

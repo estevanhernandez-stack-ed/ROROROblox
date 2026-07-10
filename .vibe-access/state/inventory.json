@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "app": "ROROROblox",
+  "adapter": "agnostic:dotnet-wpf-desktop",
+  "generatedAt": "2026-07-10T03:27:16.778Z",
+  "routes": [
+    {
+      "name": "Handshake",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/Handshake",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:16",
+      "auth": "none"
+    },
+    {
+      "name": "GetHostInfo",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/GetHostInfo",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:19",
+      "auth": "none"
+    },
+    {
+      "name": "GetRunningAccounts",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/GetRunningAccounts",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:20",
+      "auth": "none"
+    },
+    {
+      "name": "SubscribeAccountLaunched",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/SubscribeAccountLaunched",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:23",
+      "auth": "session"
+    },
+    {
+      "name": "SubscribeAccountExited",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/SubscribeAccountExited",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:24",
+      "auth": "session"
+    },
+    {
+      "name": "SubscribeMutexStateChanged",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/SubscribeMutexStateChanged",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:25",
+      "auth": "session"
+    },
+    {
+      "name": "RequestLaunch",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/RequestLaunch",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:28",
+      "auth": "session"
+    },
+    {
+      "name": "RequestLaunchTarget",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/RequestLaunchTarget",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:31",
+      "auth": "session"
+    },
+    {
+      "name": "GetCurrentServer",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/GetCurrentServer",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:33",
+      "auth": "session"
+    },
+    {
+      "name": "GetAccountActivity",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/GetAccountActivity",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:35",
+      "auth": "session"
+    },
+    {
+      "name": "MarkAccountActive",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/MarkAccountActive",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:39",
+      "auth": "session"
+    },
+    {
+      "name": "AddTrayMenuItem",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/AddTrayMenuItem",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:42",
+      "auth": "session"
+    },
+    {
+      "name": "AddRowBadge",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/AddRowBadge",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:43",
+      "auth": "session"
+    },
+    {
+      "name": "AddStatusPanel",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/AddStatusPanel",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:44",
+      "auth": "session"
+    },
+    {
+      "name": "UpdateUI",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/UpdateUI",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:45",
+      "auth": "session"
+    },
+    {
+      "name": "RemoveUI",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/RemoveUI",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:46",
+      "auth": "session"
+    }
+  ],
+  "unmapped": [
+    {
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:51",
+      "reason": "reverse-direction: Plugin.OnUIInteraction is implemented by the plugin and called by the host — not an agent-callable host affordance"
+    },
+    {
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:52",
+      "reason": "reverse-direction: Plugin.OnConsentChanged is implemented by the plugin and called by the host — not an agent-callable host affordance"
+    },
+    {
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:53",
+      "reason": "reverse-direction: Plugin.OnShutdown is implemented by the plugin and called by the host — not an agent-callable host affordance"
+    }
+  ]
+}

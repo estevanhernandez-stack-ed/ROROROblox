@@ -69,13 +69,29 @@ public sealed class PluginUITranslator
     }
 
     /// <summary>
-    /// Removes a UI element. Silently no-ops when the caller does not own the
-    /// handle — preventing cross-plugin handle hijacking. v1 does not surface
-    /// a permission-denied error to the plugin because the gRPC interceptor
-    /// already enforces capability gating on RemoveUI; this is belt-and-braces.
+    /// True when <paramref name="pluginId"/> created the handle and it is still live.
+    /// Ownership is the ONLY gate on UpdateUI/RemoveUI — the capability map deliberately
+    /// leaves both ungated (RpcMethodCapabilityMap maps them to null), so the service
+    /// layer must refuse on false rather than assume the interceptor covered it.
     /// </summary>
-    public void RemoveUI(string pluginId, UIHandle handle)
+    public bool OwnsHandle(string pluginId, string handleId)
     {
+        if (string.IsNullOrEmpty(pluginId) || string.IsNullOrEmpty(handleId)) return false;
+        lock (_lock)
+        {
+            return _ownerByHandle.TryGetValue(handleId, out var owner) && owner == pluginId;
+        }
+    }
+
+    /// <summary>
+    /// Removes a UI element. Returns false — removing nothing — when the handle is
+    /// unknown or the caller does not own it, so the service layer can refuse the RPC.
+    /// One outcome for both cases: callers must not be able to probe which handle
+    /// ids exist.
+    /// </summary>
+    public bool RemoveUI(string pluginId, UIHandle handle)
+    {
+        if (string.IsNullOrEmpty(pluginId) || string.IsNullOrEmpty(handle.Id)) return false;
         bool ownerMatches;
         lock (_lock)
         {
@@ -83,5 +99,6 @@ public sealed class PluginUITranslator
             if (ownerMatches) _ownerByHandle.Remove(handle.Id);
         }
         if (ownerMatches) _host.Remove(handle.Id);
+        return ownerMatches;
     }
 }
