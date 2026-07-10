@@ -40,12 +40,16 @@
                    VerticalAlignment="Bottom"
                    Margin="0,16,0,0" />
 
+        <!-- Cancel is the Enter-key default. A confirmation whose default IS the destructive action
+             offers no protection against a reflexive Enter — the entire point of the confirm. "Stop
+             all" keeps its magenta prominence (it is what the user came here to do) but requires a
+             deliberate click. Guarded by ModalDefaultButtonSafetyTests. -->
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Content="Cancel" Padding="16,8" IsCancel="True"
+            <Button Content="Cancel" Padding="16,8" IsCancel="True" IsDefault="True"
                     Background="#22314A" Foreground="#FFFFFF" BorderThickness="0"
                     Margin="0,0,8,0"
                     Click="OnCancelClick" />
-            <Button Content="Stop all" Padding="16,8" IsDefault="True"
+            <Button Content="Stop all" Padding="16,8"
                     Background="#F22F89" Foreground="#FFFFFF" BorderThickness="0"
                     FontWeight="Bold"
                     Click="OnStopClick" />

@@ -1255,6 +1255,31 @@ public partial class App : Application
         // process exit reclaim the pipe handle; OnExit must always finish promptly.
         if (_services is not null)
         {
+            // Stop plugin PROCESSES before the host they speak to. Nothing used to: the supervisor
+            // is not IDisposable and no shutdown path called StopAll(), so whether an autostarted
+            // plugin outlived RoRoRo depended entirely on the plugin. A well-behaved one notices
+            // the pipe drop and exits on its own (626labs.ur-task self-exits in ~0.2s). One that
+            // doesn't watch the pipe simply lingers — which is why StopByInstallDirAsync has to
+            // sweep for "a plugin process that outlived the RoRoRo session that launched it"
+            // before it can wipe an install dir.
+            //
+            // Teardown shouldn't be contingent on third-party goodwill. StopAll kills the tracked
+            // process trees (the starter passes entireProcessTree). There is no graceful path to
+            // take first: Plugin.OnShutdown exists in the contract but nothing has ever called it —
+            // no per-plugin gRPC client is wired. When that lands, it belongs here, ahead of the kill.
+            //
+            // Ordering: plugins first, then Kestrel. Killing them first means their open streams
+            // are gone before the host drains, rather than the host yanking the pipe out from
+            // under processes that are about to die anyway.
+            try
+            {
+                _services.GetService<ROROROblox.App.Plugins.PluginProcessSupervisor>()?.StopAll();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "PluginProcessSupervisor.StopAll threw on exit; plugin processes may be orphaned.");
+            }
+
             try
             {
                 var pluginHost = _services.GetService<ROROROblox.App.Plugins.PluginHostStartupService>();

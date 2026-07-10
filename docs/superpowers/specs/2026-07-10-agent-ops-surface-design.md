@@ -336,16 +336,51 @@ verify drove all 17 affordances through it — 17/17 gates held, `GetHostInfo` h
 box had one autostart-enabled plugin installed (`626labs.ur-task`), which under the old ordering
 would have launched while the gate sat unanswered.
 
-### Adjacent findings (not fixed here)
+### Adjacent findings (both FIXED 2026-07-10)
 
-1. **The destructive action is the Enter-key default.** On `RobloxAlreadyRunningWindow`, "Close
-   Roblox for me" carries `IsDefault="True"`. A reflexive Enter on a modal that appears at
-   startup force-closes the user's running Roblox clients. "Retry" or "Start anyway" would be
-   safer defaults; the destructive action should require a deliberate click.
-2. **Plugin processes are orphaned on exit.** `PluginProcessSupervisor` is not `IDisposable` and
-   `OnExit` never calls `StopAll()`. It stops the gRPC host (Kestrel) but leaves autostarted
-   plugin processes running after RoRoRo exits. Observed: `626labs.ur-task.exe` survived its
-   parent. The supervisor already has `StopAll()`; nothing calls it at shutdown.
+**1. The destructive action was the Enter-key default.**
+
+`RobloxAlreadyRunningWindow` carried `IsDefault="True"` on "Close Roblox for me". That modal
+appears unprompted at startup, and a reflexive Enter — the reflex every Windows user has for a
+dialog they didn't ask for — force-closed every running Roblox client and any unsaved in-game
+progress with it. `StopAllConfirmWindow` had the same shape: a confirmation whose default was
+the very thing it existed to confirm, which is no confirmation at all.
+
+Fixed: **Retry** is now the primary and the Enter default on the BLOCKED modal, matching that
+modal's own step 3 ("Quit Roblox — then hit Retry"). It is non-destructive and idempotent: on
+failure it just reveals the still-locked tick. **Cancel** is now the default on
+`StopAllConfirmWindow`. Both destructive buttons remain clearly available, just off the Enter key.
+
+Guarded by `ModalDefaultButtonSafetyTests`, which parses the shipped XAML and asserts that no
+destructive button carries `IsDefault`, that each modal has exactly one default, and that each
+default is the safe action. Reintroducing the old markup turns the suite red.
+
+**2. Plugin-process teardown depended on the plugin.**
+
+`PluginProcessSupervisor` is not `IDisposable`, and no shutdown path called its `StopAll()`.
+`OnExit` stopped Kestrel and left plugin processes to fend for themselves.
+
+Correcting an earlier claim in this document: it asserted that `626labs.ur-task.exe` was
+*observed* outliving its parent. It was not. That was inferred from the missing `StopAll()` call
+and never checked. Measured directly afterward: with RoRoRo hard-killed so `OnExit` never runs,
+`626labs.ur-task.exe` **self-exits in ~0.2 s** — it notices the pipe drop and leaves.
+
+The real defect is narrower and still worth fixing: whether a plugin outlives the host was
+entirely up to the plugin. A plugin that doesn't watch the pipe lingers, which is precisely why
+`StopByInstallDirAsync` must sweep for *"a plugin process that outlived the RoRoRo session that
+launched it"* before it can wipe an install dir — orphans hold their DLLs locked and break the
+re-extract.
+
+Fixed: `OnExit` now calls `supervisor.StopAll()` before stopping the gRPC host, killing the
+tracked process trees. Teardown no longer rests on third-party goodwill. There is no graceful
+step to take first — `Plugin.OnShutdown` exists in the contract but nothing has ever called it,
+and no per-plugin gRPC client is wired. When that lands it belongs ahead of the kill.
+
+Not covered end-to-end by an automated test: `Application.ShutdownMode` is `OnExplicitShutdown`
+and the only graceful quit is the tray menu, which resisted UI automation through the Windows 11
+overflow flyout. The teardown semantics are covered by `PluginProcessSupervisorTests`
+(kills every tracked process, clears state, idempotent, no-op when nothing started — the last
+matters because `OnExit` also runs when the user quits at the startup gate, before autostart).
 
 ## Open questions
 
