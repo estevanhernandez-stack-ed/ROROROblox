@@ -43,7 +43,7 @@
                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16"
                             Background="{DynamicResource NavyBrush}" ClipToBounds="True"
                             VerticalAlignment="Center">
-                        <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" />
+                        <Image Source="{Binding AvatarDisplaySource}" Stretch="UniformToFill" />
                     </Border>
 
                     <StackPanel Grid.Column="1" Margin="10,0,10,0" VerticalAlignment="Center">
@@ -264,7 +264,7 @@
                         <Border Width="44" Height="44" CornerRadius="22"
                                 Background="{DynamicResource NavyBrush}" ClipToBounds="True"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" />
+                            <Image Source="{Binding AvatarDisplaySource}" Stretch="UniformToFill" />
                         </Border>
                     </Grid>
 
@@ -422,7 +422,7 @@
                                                     ClipToBounds="True"
                                                     VerticalAlignment="Center"
                                                     Margin="0,0,5,0">
-                                                <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" />
+                                                <Image Source="{Binding AvatarDisplaySource}" Stretch="UniformToFill" />
                                             </Border>
                                             <TextBlock Text="{Binding RenderName}"
                                                        FontSize="10"

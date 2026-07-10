@@ -48,6 +48,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly Core.Transport.IAccountTransport _accountTransport;
     private readonly IActivityMonitor _activityMonitor;
     private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
+    private readonly Core.StreamerMode.IStreamerIdentityProvider? _streamerIdentity;
     private readonly ILogger<MainViewModel> _log;
 
     /// <summary>
@@ -102,6 +103,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         Core.Transport.IAccountTransport accountTransport,
         IActivityMonitor activityMonitor,
         Notifications.IdleAlertPresenter idleAlertPresenter,
+        Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
         ILogger<MainViewModel>? log = null)
     {
         _cookieCapture = cookieCapture;
@@ -125,6 +127,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _accountTransport = accountTransport;
         _activityMonitor = activityMonitor;
         _idleAlertPresenter = idleAlertPresenter;
+        _streamerIdentity = streamerIdentity;
         _log = log ?? NullLogger<MainViewModel>.Instance;
 
         // Mirror must exist before any off-thread reader (presence loop, plugin host) can
@@ -608,6 +611,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         try
         {
             var accounts = await _accountStore.ListAsync();
+            // Detach the streamer-identity subscription before discarding the old rows — the
+            // provider is a long-lived app singleton, so a row left subscribed to its Changed
+            // event would stay rooted forever (one leaked AccountSummary per reload).
+            foreach (var stale in Accounts)
+            {
+                stale.DetachIdentityProvider();
+            }
             Accounts.Clear();
             // Manual SortOrder wins when set; among rows that share a SortOrder (typical: every
             // account at 0 because the user has never reordered), fall back to most-recently-
@@ -2111,6 +2121,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
         var wasMain = summary.IsMain;
         await _accountStore.RemoveAsync(summary.Id);
+        // Unhook the streamer-identity subscription before dropping the row — see the matching
+        // comment in LoadAsync for why this row would otherwise leak.
+        summary.DetachIdentityProvider();
         Accounts.Remove(summary);
 
         // Store auto-promotes a new main when the previous one was just removed; mirror that
@@ -2264,11 +2277,19 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// (initial load + Add Account) so a freshly-added account persists tag edits just like a loaded
     /// one. Tags are seeded in the AccountSummary constructor BEFORE this subscribe, so wiring
     /// CollectionChanged here never fires a redundant persist for the rows loaded from disk.
+    /// Also attaches the streamer-identity singleton (v1.10) so the row's
+    /// <see cref="AccountSummary.RenderName"/>/<see cref="AccountSummary.AvatarDisplaySource"/>
+    /// flip to fake values while the mode is active — no-op when the provider wasn't resolved
+    /// (e.g. the VM-level test harness, which doesn't pass one).
     /// </summary>
     private void WireAccountSummary(AccountSummary summary)
     {
         summary.PropertyChanged += OnAccountSummaryPropertyChanged;
         summary.Tags.CollectionChanged += (_, _) => OnAccountTagsChanged(summary);
+        if (_streamerIdentity is not null)
+        {
+            summary.AttachIdentityProvider(_streamerIdentity);
+        }
     }
 
     /// <summary>
@@ -2559,6 +2580,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // The store's load already failed; renaming + creating-empty is the recovery path.
             // For v1 we let the next AddAsync naturally overwrite the corrupt file via the
             // atomic-write path. The accounts list stays empty.
+            foreach (var stale in Accounts)
+            {
+                stale.DetachIdentityProvider();
+            }
             Accounts.Clear();
             StatusBanner = "Started fresh. Add accounts to begin.";
         }
