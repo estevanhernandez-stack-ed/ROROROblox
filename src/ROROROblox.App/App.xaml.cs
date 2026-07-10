@@ -140,20 +140,31 @@ public partial class App : Application
         }
         else if (verdict is StartupGateResult.Blocked)
         {
-            // Roblox holds the name (as its Event) — offer in-place recovery (Retry / Close Roblox,
-            // which re-attempt the name) plus Start anyway and Quit. See the start-anyway design note.
-            var modal = new Modals.RobloxAlreadyRunningWindow(
-                onCloseForMe: () => TryRecoverMultiInstanceAsync(closeRobloxFirst: true),
-                onRetry: () => TryRecoverMultiInstanceAsync(closeRobloxFirst: false));
-            modal.ShowDialog();
-            var (proceed, holdsMutex) = AppLifecycle.BlockedStartupDecision.Resolve(modal.Outcome);
-            if (!proceed)
+            // Roblox holds the name (as its Event). If the ONLY thing holding it is a windowless
+            // tray client — the Windows-startup --launch-to-tray process — take it over silently:
+            // it has no game window, so nothing is lost. Only a windowed (in-game) client, which
+            // may have unsaved progress, falls through to the confirming modal.
+            if (await TrySeamlessTakeoverAsync())
             {
-                Shutdown(0);
-                return;
+                acquired = true; // we now own the Event; a tray client was put back alongside us
             }
-            acquired = holdsMutex;              // Recovered holds it; Start anyway does not
-            startedWithoutMutex = !holdsMutex;  // borrowed start — the contested watcher will banner it
+            else
+            {
+                // In-game client present, or takeover couldn't reclaim — offer in-place recovery
+                // (Retry / Close Roblox, which re-attempt the name) plus Start anyway and Quit.
+                var modal = new Modals.RobloxAlreadyRunningWindow(
+                    onCloseForMe: () => TryRecoverMultiInstanceAsync(closeRobloxFirst: true),
+                    onRetry: () => TryRecoverMultiInstanceAsync(closeRobloxFirst: false));
+                modal.ShowDialog();
+                var (proceed, holdsMutex) = AppLifecycle.BlockedStartupDecision.Resolve(modal.Outcome);
+                if (!proceed)
+                {
+                    Shutdown(0);
+                    return;
+                }
+                acquired = holdsMutex;              // Recovered holds it; Start anyway does not
+                startedWithoutMutex = !holdsMutex;  // borrowed start — the contested watcher will banner it
+            }
         }
         else if (verdict is StartupGateResult.Leftover leftover)
         {
@@ -477,6 +488,8 @@ public partial class App : Application
         // services in Core; consumed by App.OnStartup before mutex.Acquire.
         services.AddSingleton<IRobloxRunningProbe, RobloxRunningProbe>();
         services.AddSingleton<IRobloxInstanceStopper, RobloxInstanceStopper>();
+        services.AddSingleton<IRobloxTrayLauncher>(sp =>
+            new RobloxTrayLauncher(sp.GetService<ILogger<RobloxTrayLauncher>>()));
         services.AddSingleton<StartupGate>();
 
         // Runtime contested-mutex watcher (Task 8) — polls only while we don't hold the mutex,
@@ -959,6 +972,79 @@ public partial class App : Application
     /// <summary>How long Retry keeps re-attempting the singleton name before giving up.</summary>
     private static readonly TimeSpan RecoveryWindow = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan RecoveryInterval = TimeSpan.FromMilliseconds(150);
+
+    /// <summary>
+    /// Seamless takeover: when Roblox holds the singleton Event but ONLY via windowless tray
+    /// clients, close them, reclaim the name, and put a tray client back — no modal. Returns true
+    /// when RoRoRo now owns the Event; false means the caller should fall through to the BLOCKED
+    /// modal (an in-game client is present, or the reclaim failed).
+    ///
+    /// <para>The windowless-only gate (<see cref="SeamlessTakeover.WindowlessOnly"/>) is the whole
+    /// safety story: a windowed client may be mid-game, so it is never closed without the confirming
+    /// modal. A tray client has nothing to lose, so closing it silently is safe — and it is exactly
+    /// what makes RoRoRo coexist with Roblox-on-startup instead of blocking on every launch.</para>
+    /// </summary>
+    private async Task<bool> TrySeamlessTakeoverAsync()
+    {
+        if (_services is null) return false;
+
+        IReadOnlyList<RobloxProcessInfo> players;
+        try
+        {
+            players = _services.GetRequiredService<IRobloxRunningProbe>().GetRunningPlayers();
+        }
+        catch (Exception ex)
+        {
+            // Can't tell windowed from windowless — be conservative and let the modal handle it.
+            _log?.LogDebug(ex, "Seamless takeover: player scan threw; deferring to the modal.");
+            return false;
+        }
+
+        if (!SeamlessTakeover.WindowlessOnly(players))
+        {
+            return false; // in-game client (or nothing) — not eligible for a silent close
+        }
+
+        _log?.LogInformation(
+            "Seamless takeover: {Count} windowless tray Roblox client(s) hold the Event; closing and reclaiming.",
+            players.Count);
+
+        try { _services.GetRequiredService<IRobloxInstanceStopper>().StopAll(); }
+        catch (Exception ex) { _log?.LogWarning(ex, "Seamless takeover: StopAll failed; still attempting to acquire."); }
+
+        var mutex = _services.GetRequiredService<IMutexHolder>();
+        var outcome = await mutex
+            .TryAcquireWithRetryAsync(RecoveryWindow, RecoveryInterval)
+            .ConfigureAwait(true);
+
+        if (outcome != MutexAcquireOutcome.Acquired)
+        {
+            _log?.LogInformation(
+                "Seamless takeover: could not reclaim the name after closing tray clients ({Outcome}); deferring to the modal.",
+                outcome);
+            return false;
+        }
+
+        // Preserve the user's Roblox-at-startup intent: put a tray client back. It finds our Event,
+        // fails CreateEvent, and runs to tray in multi-instance mode alongside us. Best-effort — a
+        // failure here does not undo the takeover.
+        try
+        {
+            if (_services.GetRequiredService<IRobloxTrayLauncher>().RelaunchToTray())
+            {
+                _log?.LogInformation("Seamless takeover: relaunched Roblox to tray alongside RoRoRo.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Seamless takeover: tray relaunch failed; RoRoRo holds the Event regardless.");
+        }
+
+        var tray = _services.GetRequiredService<ITrayService>();
+        tray.UpdateStatus(MultiInstanceState.On);
+        TryRaiseMutexBusEvent("On");
+        return true;
+    }
 
     /// <summary>Shared multi-instance recovery: optionally close all Roblox first (with the
     /// unsaved-state confirm when windowed clients exist), then re-attempt the singleton name.
