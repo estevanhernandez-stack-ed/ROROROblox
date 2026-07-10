@@ -615,6 +615,7 @@ public class PresenceServiceTests
         public Task SetCaptionColorAsync(Guid id, string? hex) => throw new NotImplementedException();
         public Task SetFpsCapAsync(Guid id, int? fps) => throw new NotImplementedException();
         public Task UpdateLocalNameAsync(Guid accountId, string? localName) => throw new NotImplementedException();
+        public Task UpdateStreamerIdentityAsync(Guid accountId, string fakeName, string fakeAvatarId) => throw new NotImplementedException();
         public Task UpdateRobloxUserIdAsync(Guid accountId, long userId) => throw new NotImplementedException();
         public Task UpdateBrowserTrackerIdAsync(Guid accountId, long browserTrackerId) => throw new NotImplementedException();
         public Task SetTagsAsync(Guid id, IReadOnlyList<string> tags) => throw new NotImplementedException();

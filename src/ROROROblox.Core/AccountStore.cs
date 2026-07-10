@@ -55,7 +55,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             var blob = await LoadAsync().ConfigureAwait(false);
             return blob.Accounts
-                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName, a.RobloxUserId, a.Tags ?? [], a.BrowserTrackerId, a.JoinViaFriend))
+                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName, a.RobloxUserId, a.Tags ?? [], a.BrowserTrackerId, a.JoinViaFriend, a.StreamerName, a.StreamerAvatarId))
                 .ToList();
         }
         finally
@@ -98,7 +98,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 JoinViaFriend: false); // a fresh account is never flagged
             blob.Accounts.Add(stored);
             await SaveAsync(blob).ConfigureAwait(false);
-            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName, stored.RobloxUserId, stored.Tags ?? [], stored.BrowserTrackerId, JoinViaFriend: false);
+            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName, stored.RobloxUserId, stored.Tags ?? [], stored.BrowserTrackerId, JoinViaFriend: false, StreamerName: stored.StreamerName, StreamerAvatarId: stored.StreamerAvatarId);
         }
         finally
         {
@@ -361,6 +361,31 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 return; // no-op write avoidance — saves a DPAPI roundtrip on chatty rename UIs.
             }
             blob.Accounts[index] = blob.Accounts[index] with { LocalName = normalized };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task UpdateStreamerIdentityAsync(Guid accountId, string fakeName, string fakeAvatarId)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var index = blob.Accounts.FindIndex(a => a.Id == accountId);
+            if (index < 0)
+            {
+                throw new KeyNotFoundException($"Account {accountId} not found.");
+            }
+            var cur = blob.Accounts[index];
+            if (cur.StreamerName == fakeName && cur.StreamerAvatarId == fakeAvatarId)
+            {
+                return; // no-op write avoidance — saves a DPAPI roundtrip on chatty identity refreshes.
+            }
+            blob.Accounts[index] = cur with { StreamerName = fakeName, StreamerAvatarId = fakeAvatarId };
             await SaveAsync(blob).ConfigureAwait(false);
         }
         finally
@@ -727,7 +752,9 @@ public sealed class AccountStore : IAccountStore, IDisposable
         long? RobloxUserId = null,
         IReadOnlyList<string>? Tags = null,
         long? BrowserTrackerId = null,
-        bool JoinViaFriend = false);
+        bool JoinViaFriend = false,
+        string? StreamerName = null,
+        string? StreamerAvatarId = null);
 
     internal sealed record StoredAccountsBlob(
         int Version,
