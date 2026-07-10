@@ -135,15 +135,16 @@ internal sealed class RobloxWindowDecorator : IDisposable
             {
                 return; // window not up yet; try next tick
             }
-            // Resolve fresh from the AccountSummary every tick so user-picked color/name
-            // changes propagate without explicit re-tracking. RenderName is the real
-            // local-name-or-DisplayName fallback; the identity provider substitutes the fake
-            // name when streamer mode is active (no-op passthrough when inactive or unattached
-            // — see IStreamerIdentityProvider.ForAccount).
-            var shown = _identity is not null
-                ? _identity.ForAccount(target.Summary.Id, target.Summary.RenderName, target.Summary.AvatarUrl).Name
-                : target.Summary.RenderName;
-            ApplyTitle(hwnd, $"Roblox - {shown}");
+            // Resolve fresh from the AccountSummary every tick so user-picked color/name changes
+            // propagate without explicit re-tracking. Go through RobloxWindowTitle so the startup
+            // scanner (RunningRobloxScanner) reads back the exact same name to re-attach — pass the
+            // REAL render name (LocalName ?? DisplayName), NOT Summary.RenderName, which is itself
+            // provider-aware and would double-resolve. The provider substitutes the fake name when
+            // streamer mode is active; null/inactive passes the real name through.
+            ApplyTitle(hwnd, RobloxWindowTitle.Format(
+                _identity, target.Summary.Id,
+                target.Summary.LocalName ?? target.Summary.DisplayName,
+                target.Summary.AvatarUrl));
             ApplyCaptionColor(hwnd, ResolveCaptionColor(target.Summary));
         }
         catch (ArgumentException)
