@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "adapter": "agnostic:dotnet-wpf-desktop",
+  "appName": "ROROROblox",
+  "baseUrls": {
+    "dev": "npipe://./pipe/rororo-plugin-host"
+  },
+  "devRunCommand": "dotnet run --project src/ROROROblox.App",
+  "discoveryRoute": null,
+  "authModelNote": "gRPC over per-user named pipe (ACL'd to the current Windows user, no network exposure). Capability-based consent per plugin via DPAPI ConsentStore; capabilities enforced by CapabilityInterceptor. Saved account cookies are DPAPI-encrypted (accounts.dat) and never cross the plugin surface in plaintext.",
+  "capturedAt": "2026-07-09"
+}

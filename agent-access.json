@@ -1,0 +1,412 @@
+{
+  "schemaVersion": 1,
+  "app": "ROROROblox",
+  "adapter": "agnostic:dotnet-wpf-desktop",
+  "generatedAt": "2026-07-10T03:56:59.525Z",
+  "baseUrls": {
+    "dev": "npipe://./pipe/rororo-plugin-host"
+  },
+  "discoveryRoute": null,
+  "affordances": [
+    {
+      "id": "handshake",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/Handshake",
+      "tier": "prod-safe",
+      "kind": "act",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/Handshake"
+      },
+      "input": null,
+      "output": null,
+      "auth": "none",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:16",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "answered per contract with rejection: 'Plugin vibe-access-verify is not installed.'"
+      },
+      "overrides": {
+        "description": "Bootstrap call — must be the first rpc on a new pipe connection. Send plugin_id, manifest SHA-256, contract version, and declared capabilities; the host accepts or rejects. Every session-auth affordance requires this first, plus the x-plugin-id metadata header on each subsequent call."
+      }
+    },
+    {
+      "id": "get-host-info",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/GetHostInfo",
+      "tier": "prod-safe",
+      "kind": "read",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/GetHostInfo"
+      },
+      "input": null,
+      "output": null,
+      "auth": "none",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:19",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "host 1.9.0, multi-instance On"
+      },
+      "overrides": {
+        "description": "Read RoRoRo's version and multi-instance state (On / Off / Error). Free read — no handshake or consent required; the per-user pipe ACL is the only gate."
+      }
+    },
+    {
+      "id": "get-running-accounts",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/GetRunningAccounts",
+      "tier": "prod-safe",
+      "kind": "read",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/GetRunningAccounts"
+      },
+      "input": null,
+      "output": null,
+      "auth": "none",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:20",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "0 running account(s)"
+      },
+      "overrides": {
+        "description": "Read the running Roblox clients RoRoRo launched: account id (Guid), Roblox user id, display name, PID, and place id/name from presence tracking (0 / empty means unknown — treat as no game info, never a game named \"\"). Free read — no handshake or consent required."
+      }
+    },
+    {
+      "id": "subscribe-account-launched",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/SubscribeAccountLaunched",
+      "tier": "prod-safe",
+      "kind": "read",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/SubscribeAccountLaunched"
+      },
+      "input": null,
+      "output": null,
+      "auth": "session",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:23",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "auth-gate-held (PermissionDenied: host.events.account-launched not granted)"
+      },
+      "overrides": {
+        "description": "Server-streaming subscription: one event per account launch (ids, display name, PID, timestamp). Place identity often lags at launch time — re-query get-running-accounts for fresh identity. Requires consent to capability host.events.account-launched."
+      }
+    },
+    {
+      "id": "subscribe-account-exited",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/SubscribeAccountExited",
+      "tier": "prod-safe",
+      "kind": "read",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/SubscribeAccountExited"
+      },
+      "input": null,
+      "output": null,
+      "auth": "session",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:24",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "auth-gate-held (PermissionDenied: host.events.account-exited not granted)"
+      },
+      "overrides": {
+        "description": "Server-streaming subscription: one event per account exit (account id, Roblox user id, PID, exit timestamp). Requires consent to capability host.events.account-exited."
+      }
+    },
+    {
+      "id": "subscribe-mutex-state-changed",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/SubscribeMutexStateChanged",
+      "tier": "prod-safe",
+      "kind": "read",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/SubscribeMutexStateChanged"
+      },
+      "input": null,
+      "output": null,
+      "auth": "session",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:25",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "auth-gate-held (PermissionDenied: host.events.mutex-state-changed not granted)"
+      },
+      "overrides": {
+        "description": "Server-streaming subscription: multi-instance mutex state transitions (On / Off / Error). Requires consent to capability host.events.mutex-state-changed."
+      }
+    },
+    {
+      "id": "request-launch",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/RequestLaunch",
+      "tier": "prod-safe",
+      "kind": "act",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/RequestLaunch"
+      },
+      "input": null,
+      "output": null,
+      "auth": "session",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:28",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "auth-gate-held (PermissionDenied: host.commands.request-launch not granted)"
+      },
+      "overrides": {
+        "description": "Command RoRoRo to launch a saved account by account_id. The cookie → auth-ticket → roblox-player: pipeline runs entirely host-side; no credentials ever cross the pipe. Returns ok / failure_reason / PID. Launches a real Roblox client — do not call casually. Requires consent to capability host.commands.request-launch."
+      }
+    },
+    {
+      "id": "request-launch-target",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/RequestLaunchTarget",
+      "tier": "prod-safe",
+      "kind": "act",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/RequestLaunchTarget"
+      },
+      "input": null,
+      "output": null,
+      "auth": "session",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:31",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "auth-gate-held (PermissionDenied: host.commands.launch-target not granted)"
+      },
+      "overrides": {
+        "description": "Launch a saved account into a specific server: pass a share_url (private-server share link, PlaceLauncher accessCode URL, roblox.com/share token, public game URL, or bare place id) or follow_user_id to follow a friend (Roblox permission-checks the follow). Launches a real Roblox client. Requires consent to capability host.commands.launch-target."
+      }
+    },
+    {
+      "id": "get-current-server",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/GetCurrentServer",
+      "tier": "prod-safe",
+      "kind": "read",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/GetCurrentServer"
+      },
+      "input": null,
+      "output": null,
+      "auth": "session",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:33",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "auth-gate-held (PermissionDenied: host.queries.current-server not granted)"
+      },
+      "overrides": {
+        "description": "Read the most recently launched private server: ready-to-share URL, place name/id, launch timestamp. present=false when no private server has been launched this session. Requires consent to capability host.queries.current-server."
+      }
+    },
+    {
+      "id": "get-account-activity",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/GetAccountActivity",
+      "tier": "prod-safe",
+      "kind": "read",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/GetAccountActivity"
+      },
+      "input": null,
+      "output": null,
+      "auth": "session",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:35",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "auth-gate-held (PermissionDenied: host.queries.account-activity not granted)"
+      },
+      "overrides": {
+        "description": "Read per-account idle state: last-activity timestamp and seconds since, per running account. Timestamps only — never input contents. Requires consent to capability host.queries.account-activity."
+      }
+    },
+    {
+      "id": "mark-account-active",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/MarkAccountActive",
+      "tier": "prod-safe",
+      "kind": "act",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/MarkAccountActive"
+      },
+      "input": null,
+      "output": null,
+      "auth": "session",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:39",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "auth-gate-held (PermissionDenied: host.commands.mark-account-active not granted)"
+      },
+      "overrides": {
+        "description": "Credit an account as active after the plugin acts on its window — the host's idle heuristic can't see plugin-synthesized input, so keep-alive plugins call this to stop idle warnings from misfiring. Requires consent to capability host.commands.mark-account-active."
+      }
+    },
+    {
+      "id": "add-tray-menu-item",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/AddTrayMenuItem",
+      "tier": "prod-safe",
+      "kind": "act",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/AddTrayMenuItem"
+      },
+      "input": null,
+      "output": null,
+      "auth": "session",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:42",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "auth-gate-held (PermissionDenied: host.ui.tray-menu not granted)"
+      },
+      "overrides": {
+        "description": "Add an item to RoRoRo's tray menu (label, tooltip, enabled). Returns an opaque UIHandle for update-ui / remove-ui; clicks stream back via the plugin's OnUIInteraction callback. Requires consent to capability host.ui.tray-menu."
+      }
+    },
+    {
+      "id": "add-row-badge",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/AddRowBadge",
+      "tier": "prod-safe",
+      "kind": "act",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/AddRowBadge"
+      },
+      "input": null,
+      "output": null,
+      "auth": "session",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:43",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "auth-gate-held (PermissionDenied: host.ui.row-badge not granted)"
+      },
+      "overrides": {
+        "description": "Add a badge to each saved-account row (text, optional hex color — defaults to brand cyan, tooltip). Returns a UIHandle. Requires consent to capability host.ui.row-badge."
+      }
+    },
+    {
+      "id": "add-status-panel",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/AddStatusPanel",
+      "tier": "prod-safe",
+      "kind": "act",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/AddStatusPanel"
+      },
+      "input": null,
+      "output": null,
+      "auth": "session",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:44",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "auth-gate-held (PermissionDenied: host.ui.status-panel not granted)"
+      },
+      "overrides": {
+        "description": "Add a status panel to the main window (title + basic-markdown body: bold, italic, lists). Returns a UIHandle. Requires consent to capability host.ui.status-panel."
+      }
+    },
+    {
+      "id": "update-ui",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/UpdateUI",
+      "tier": "prod-safe",
+      "kind": "act",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/UpdateUI"
+      },
+      "input": null,
+      "output": null,
+      "auth": "session",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:45",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "handle-gate-held (PermissionDenied: UI handle 'va-bogus-handle' is not owned by plugin 'vibe-access-verify')"
+      },
+      "overrides": {
+        "description": "Update a UI element this plugin created, addressed by UIHandle (menu item, row badge, or status panel spec). No capability entry — gated downstream by handle ownership: only the creating plugin's handles are accepted."
+      }
+    },
+    {
+      "id": "remove-ui",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/RemoveUI",
+      "tier": "prod-safe",
+      "kind": "act",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/RemoveUI"
+      },
+      "input": null,
+      "output": null,
+      "auth": "session",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:46",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T04:38:53.234Z",
+        "runId": "34cf3714",
+        "detail": "handle-gate-held (PermissionDenied: UI handle 'va-bogus-handle' is not owned by plugin 'vibe-access-verify')"
+      },
+      "overrides": {
+        "description": "Remove a UI element this plugin created, addressed by UIHandle. Gated downstream by handle ownership."
+      }
+    }
+  ]
+}
