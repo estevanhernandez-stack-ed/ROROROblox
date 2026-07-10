@@ -638,13 +638,31 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _presenceService.Start();
     }
 
+    private readonly SemaphoreSlim _reloadGamesGate = new(1, 1);
+
     /// <summary>
     /// Reload <see cref="AvailableGames"/> from the favorites store and re-sync each account's
     /// <see cref="AccountSummary.SelectedGame"/> -- preserve current selection if still present,
     /// else fall back to the favorites default. Called on initial load + after the Games dialog
-    /// closes (since the user may have added / removed / set-default'd a game).
+    /// closes (since the user may have added / removed / set-default'd a game). Serialized: the
+    /// DefaultChanged handler fires a fire-and-forget reload that must not race an explicit one --
+    /// two concurrent AvailableGames/WidgetGames rebuilds corrupt the collection (NRE mid-rebuild),
+    /// which bites off-thread in unit tests where there is no UI dispatcher to serialize them.
     /// </summary>
     public async Task ReloadGamesAsync()
+    {
+        await _reloadGamesGate.WaitAsync();
+        try
+        {
+            await ReloadGamesCoreAsync();
+        }
+        finally
+        {
+            _reloadGamesGate.Release();
+        }
+    }
+
+    private async Task ReloadGamesCoreAsync()
     {
         var games = await _favorites.ListAsync();
         var privateServers = await _privateServerStore.ListAsync();
