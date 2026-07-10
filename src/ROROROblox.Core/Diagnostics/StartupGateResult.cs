@@ -12,7 +12,18 @@ public abstract record StartupGateResult
     /// still be playing.</summary>
     public sealed record Leftover(int Windowless, int Windowed) : StartupGateResult;
 
-    /// <summary>Mutex NOT acquired — someone else (the tray-resident Roblox) holds it. Block and
-    /// offer recovery.</summary>
+    /// <summary>Name NOT won because ROBLOX holds it (as its Event). Multi-instance is genuinely
+    /// off until every Roblox process exits. Block and offer recovery.</summary>
     public sealed record Blocked : StartupGateResult;
+
+    /// <summary>
+    /// The singleton name is held by another RoRoRo or a compatible multi-instance tool — it exists
+    /// as a Mutex, not as Roblox's Event. Roblox is still locked out of its own singleton, so
+    /// multi-instance WORKS and there is nothing for the user to recover from. Proceed without
+    /// owning the handle; the contested watcher banners the fact that we don't hold it.
+    ///
+    /// <para>Distinct from <see cref="Blocked"/> deliberately: blocking here threw a modal dialog
+    /// at the user for a state that is entirely fine.</para>
+    /// </summary>
+    public sealed record SharedLock : StartupGateResult;
 }

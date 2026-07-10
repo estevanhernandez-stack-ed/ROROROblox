@@ -13,11 +13,16 @@ namespace ROROROblox.Core;
 /// <c>System.Threading.Mutex</c>'s named-mutex surface is intentionally avoided — we need
 /// explicit handle lifetime control across Acquire / Release / Dispose, including the watchdog
 /// that fires <see cref="IMutexHolder.MutexLost"/> when an external close invalidates our handle.
+///
+/// <para><b>It is a name race, not a lock.</b> Roblox creates an <i>Event</i> under this name;
+/// RoRoRo creates a <i>Mutex</i>. Whoever creates it first wins, and the loser's create fails
+/// because the object already exists under a different type. Winning is what disables Roblox's
+/// single-instance enforcement. See <see cref="MutexAcquireOutcome"/>.</para>
 /// </summary>
 public sealed class MutexHolder : IMutexHolder, IDisposable
 {
     /// <summary>
-    /// Production name. Roblox checks this object on launch; holding it allows multi-instance.
+    /// Production name. Roblox checks this object on launch; winning it allows multi-instance.
     /// Lives in the Local kernel namespace (per-logon-session).
     /// </summary>
     public const string DefaultMutexName = @"Local\ROBLOX_singletonEvent";
@@ -25,10 +30,23 @@ public sealed class MutexHolder : IMutexHolder, IDisposable
     /// <summary>Win32 <c>CreateMutex</c> caps <c>lpName</c> at MAX_PATH characters.</summary>
     private const int MaxNameLength = 260;
 
+    /// <summary>
+    /// <c>ERROR_ALREADY_EXISTS</c>. CreateMutex returns a VALID handle plus this code when a Mutex
+    /// of the same name already exists — i.e. another process created it the way we do. Roblox
+    /// never lands here: it creates an Event, so we get <see cref="ErrorInvalidHandle"/> instead.
+    /// </summary>
     private const uint ErrorAlreadyExists = 0xB7;
+
+    /// <summary>
+    /// <c>ERROR_INVALID_HANDLE</c>. CreateMutex fails with this when the name already exists as a
+    /// kernel object of a DIFFERENT type — precisely what Roblox's <c>ROBLOX_singletonEvent</c> is.
+    /// This, not ERROR_ALREADY_EXISTS, is the code the Roblox case actually hits.
+    /// </summary>
+    private const uint ErrorInvalidHandle = 0x6;
+
     private const double WatchdogIntervalMs = 5_000;
 
-    /// <summary>SYNCHRONIZE — the minimal access right needed to probe a mutex's existence via OpenMutex.</summary>
+    /// <summary>SYNCHRONIZE — the minimal access right needed to probe an object's existence via OpenMutex / OpenEvent.</summary>
     private const uint SynchronizeAccess = 0x00100000;
 
     private readonly string _mutexName;
@@ -88,14 +106,21 @@ public sealed class MutexHolder : IMutexHolder, IDisposable
 
     public event EventHandler? MutexLost;
 
-    public bool Acquire()
+    public bool Acquire() => TryAcquire() == MutexAcquireOutcome.Acquired;
+
+    /// <summary>
+    /// One attempt on the singleton name, reporting who owns it when we lose. See
+    /// <see cref="MutexAcquireOutcome"/> — the two failure modes call for opposite user-facing
+    /// behavior, and returning a bare false is what conflated them.
+    /// </summary>
+    public MutexAcquireOutcome TryAcquire()
     {
         lock (_lock)
         {
             ThrowIfDisposed();
             if (_handle is { IsInvalid: false })
             {
-                return true;
+                return MutexAcquireOutcome.Acquired;
             }
 
             SafeFileHandle handle;
@@ -111,20 +136,27 @@ public sealed class MutexHolder : IMutexHolder, IDisposable
             if (handle.IsInvalid)
             {
                 handle.Dispose();
-                return false;
+                // ERROR_INVALID_HANDLE => the name is taken by a non-mutex object. In production
+                // that object is Roblox's Event, and no amount of retrying wins it back until
+                // every Roblox process exits and its last handle closes.
+                return lastError == ErrorInvalidHandle
+                    ? MutexAcquireOutcome.HeldByRoblox
+                    : MutexAcquireOutcome.Failed;
             }
 
             if (lastError == ErrorAlreadyExists)
             {
-                // Another process already holds the named mutex — `bInitialOwner: true` was ignored.
-                // Drop our handle and report acquisition failure.
+                // A Mutex of this name already exists, so its creator squats the name the same way
+                // we do: another RoRoRo, or a compatible multi-instance tool. `bInitialOwner: true`
+                // was ignored and the handle we got back is to THEIR object. Drop it — we don't own
+                // the name — but multi-instance still works, because Roblox lost the name to them.
                 handle.Dispose();
-                return false;
+                return MutexAcquireOutcome.HeldByCompatibleTool;
             }
 
             _handle = handle;
             _watchdog.Start();
-            return true;
+            return MutexAcquireOutcome.Acquired;
         }
     }
 
@@ -152,13 +184,17 @@ public sealed class MutexHolder : IMutexHolder, IDisposable
     }
 
     /// <summary>
-    /// Non-acquiring probe via Win32 <c>OpenMutex</c>. Never waits, never mutates <see cref="_handle"/>.
-    /// If we already hold the mutex, that's ownership, not contention — return false without touching
-    /// the OS. Otherwise attempt to open the named mutex with only <c>SYNCHRONIZE</c> access: success
-    /// means some other process holds it (elsewhere), and OpenMutex failing (e.g. ERROR_FILE_NOT_FOUND
-    /// when nobody holds it) returns an invalid handle rather than throwing. Any unexpected failure is
-    /// swallowed and treated as "not elsewhere" — fail-safe, so a probe glitch never raises a false
-    /// contested alarm.
+    /// Non-acquiring probe. Never waits, never mutates <see cref="_handle"/>. If we already hold the
+    /// name, that's ownership, not contention — return false without touching the OS.
+    ///
+    /// <para>Probes BOTH object types. Opening only as a Mutex was a real bug: Roblox's
+    /// <c>ROBLOX_singletonEvent</c> is an Event, so <c>OpenMutex</c> fails it with
+    /// ERROR_INVALID_HANDLE and this returned false — meaning the contested banner never fired in
+    /// the one case it exists for. The old unit tests all held the name with another
+    /// <see cref="MutexHolder"/>, which is the compatible-tool case, so they passed throughout.</para>
+    ///
+    /// <para>Any unexpected failure is swallowed and treated as "not elsewhere" — fail-safe, so a
+    /// probe glitch never raises a false contested alarm.</para>
     /// </summary>
     public bool IsHeldElsewhere()
     {
@@ -170,9 +206,15 @@ public sealed class MutexHolder : IMutexHolder, IDisposable
             }
         }
 
-        SafeFileHandle probe;
+        return ExistsAsMutex() || ExistsAsEvent();
+    }
+
+    /// <summary>A compatible tool (or another RoRoRo) squatting the name the way we do.</summary>
+    private bool ExistsAsMutex()
+    {
         try
         {
+            SafeFileHandle probe;
             unsafe
             {
                 probe = PInvoke.OpenMutex(
@@ -180,19 +222,38 @@ public sealed class MutexHolder : IMutexHolder, IDisposable
                     bInheritHandle: false,
                     lpName: _mutexName);
             }
+            using (probe)
+            {
+                return !probe.IsInvalid;
+            }
         }
         catch
         {
-            return false; // probe failure → treat as not contested (fail-safe: no false banner)
+            return false;
         }
+    }
 
+    /// <summary>Roblox itself: the singleton is an Event, and OpenMutex is blind to it.</summary>
+    private bool ExistsAsEvent()
+    {
         try
         {
-            return !probe.IsInvalid; // opened successfully → the mutex exists, held by someone else
+            SafeFileHandle probe;
+            unsafe
+            {
+                probe = PInvoke.OpenEvent(
+                    (SYNCHRONIZATION_ACCESS_RIGHTS)SynchronizeAccess,
+                    bInheritHandle: false,
+                    lpName: _mutexName);
+            }
+            using (probe)
+            {
+                return !probe.IsInvalid;
+            }
         }
-        finally
+        catch
         {
-            probe.Dispose();
+            return false;
         }
     }
 

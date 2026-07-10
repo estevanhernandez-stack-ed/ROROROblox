@@ -1,51 +1,65 @@
 using System;
+using System.Threading.Tasks;
 using System.Windows;
 using ROROROblox.App.AppLifecycle;
 using ROROROblox.App.ViewModels;
 
 namespace ROROROblox.App.Modals;
 
-/// <summary>BLOCKED modal — shown when the mutex is held by someone else at startup. Offers
-/// Close-Roblox-for-me and Retry (both re-acquire in place; success sets <see cref="Outcome"/> to
-/// Recovered), Start anyway (proceed without the mutex — a benign squatter holds it), and Quit
-/// RoRoRo. Read <see cref="Outcome"/> after ShowDialog; never asks the user to restart RoRoRo.</summary>
+/// <summary>BLOCKED modal — shown when Roblox holds the singleton name at startup. Offers Retry and
+/// Close-Roblox-for-me (both re-attempt the name; success sets <see cref="Outcome"/> to Recovered),
+/// Start anyway (proceed without owning it), and Quit RoRoRo. Read <see cref="Outcome"/> after
+/// ShowDialog; never asks the user to restart RoRoRo itself.
+///
+/// <para>Recovery is asynchronous because it polls: the singleton object only dies once its last
+/// handle closes, so a freshly-quit Roblox needs a beat. The action buttons are disabled for the
+/// duration — a second Retry press mid-poll would race the first.</para></summary>
 internal partial class RobloxAlreadyRunningWindow : Window
 {
-    private readonly Func<bool> _onCloseForMe;
-    private readonly Func<bool> _onRetry;
+    private readonly Func<Task<bool>> _onCloseForMe;
+    private readonly Func<Task<bool>> _onRetry;
 
     /// <summary>The user's choice. Defaults to <see cref="BlockedModalOutcome.Quit"/> (fail closed)
     /// so a closed-without-choosing window is treated as Quit.</summary>
     public BlockedModalOutcome Outcome { get; private set; } = BlockedModalOutcome.Quit;
 
-    public RobloxAlreadyRunningWindow(Func<bool> onCloseForMe, Func<bool> onRetry)
+    public RobloxAlreadyRunningWindow(Func<Task<bool>> onCloseForMe, Func<Task<bool>> onRetry)
     {
         _onCloseForMe = onCloseForMe;
         _onRetry = onRetry;
         InitializeComponent();
     }
 
-    private void OnCloseForMeClick(object sender, RoutedEventArgs e) => TryRecover(_onCloseForMe);
-    private void OnRetryClick(object sender, RoutedEventArgs e) => TryRecover(_onRetry);
+    private async void OnCloseForMeClick(object sender, RoutedEventArgs e) => await TryRecoverAsync(_onCloseForMe);
+    private async void OnRetryClick(object sender, RoutedEventArgs e) => await TryRecoverAsync(_onRetry);
 
-    private void TryRecover(Func<bool> recover)
+    private async Task TryRecoverAsync(Func<Task<bool>> recover)
     {
-        if (recover())
+        ActionButtons.IsEnabled = false;
+        try
         {
-            Outcome = BlockedModalOutcome.Recovered;
-            DialogResult = true; // mutex now held — proceed with startup
-            Close();
-        }
-        else
-        {
+            if (await recover())
+            {
+                Outcome = BlockedModalOutcome.Recovered;
+                DialogResult = true; // the name is ours (or a peer tool's) — proceed with startup
+                Close();
+                return;
+            }
+
             StillLockedTick.Text = MultiInstanceCopy.StillLocked;
             StillLockedTick.Visibility = Visibility.Visible;
+        }
+        finally
+        {
+            // The window is already closing on the success path; re-enabling is harmless there and
+            // necessary on the failure path so the user can try another action.
+            ActionButtons.IsEnabled = true;
         }
     }
 
     private void OnStartAnywayClick(object sender, RoutedEventArgs e)
     {
-        // Proceed without owning the mutex. Correct when a benign squatter (another RoRoRo / tool)
+        // Proceed without owning the name. Correct when a benign squatter (another RoRoRo / tool)
         // holds it — multi-instance already works. The runtime contested watcher banners the state.
         Outcome = BlockedModalOutcome.StartAnyway;
         DialogResult = true;

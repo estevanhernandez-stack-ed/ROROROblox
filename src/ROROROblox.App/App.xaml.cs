@@ -112,8 +112,13 @@ public partial class App : Application
         var mutex = _services.GetRequiredService<IMutexHolder>();
         var gate = _services.GetRequiredService<StartupGate>();
 
-        var acquired = mutex.Acquire();
-        var verdict = gate.Evaluate(acquired);
+        // TryAcquire, not Acquire: the gate needs to know WHY we lost the name. Roblox holding it
+        // (as an Event) means multi-instance is genuinely off; a compatible tool holding it (as a
+        // Mutex) means Roblox already lost its singleton and everything works. Same bool, opposite
+        // user experience. See MutexAcquireOutcome.
+        var acquireOutcome = mutex.TryAcquire();
+        var acquired = acquireOutcome == MutexAcquireOutcome.Acquired;
+        var verdict = gate.Evaluate(acquireOutcome);
 
         // Bind the plugin-host pipe BEFORE the gate's modals. Both modals below block OnStartup
         // in a nested message loop, and the leftover modal fires whenever stale Roblox clients
@@ -124,14 +129,22 @@ public partial class App : Application
         StartPluginHostListener();
 
         var startedWithoutMutex = false;
-        if (verdict is StartupGateResult.Blocked)
+        if (verdict is StartupGateResult.SharedLock)
         {
-            // The mutex is held by someone else — offer in-place recovery (Close Roblox / Retry,
-            // which re-acquire) plus Start anyway (proceed without owning it — a benign squatter
-            // holds it, so multi-instance already works) and Quit. See the start-anyway design note.
+            // Another RoRoRo or a compatible tool squats the name as a Mutex. Roblox therefore lost
+            // its own singleton and multi-instance works — there is nothing to recover from, so no
+            // modal. Proceed exactly as "Start anyway" would; the contested watcher banners the fact
+            // that we don't hold the handle.
+            startedWithoutMutex = true;
+            _log.LogInformation("Singleton name held by a compatible tool; starting without the handle (multi-instance still works).");
+        }
+        else if (verdict is StartupGateResult.Blocked)
+        {
+            // Roblox holds the name (as its Event) — offer in-place recovery (Retry / Close Roblox,
+            // which re-attempt the name) plus Start anyway and Quit. See the start-anyway design note.
             var modal = new Modals.RobloxAlreadyRunningWindow(
-                onCloseForMe: () => TryRecoverMultiInstance(closeRobloxFirst: true),
-                onRetry: () => TryRecoverMultiInstance(closeRobloxFirst: false));
+                onCloseForMe: () => TryRecoverMultiInstanceAsync(closeRobloxFirst: true),
+                onRetry: () => TryRecoverMultiInstanceAsync(closeRobloxFirst: false));
             modal.ShowDialog();
             var (proceed, holdsMutex) = AppLifecycle.BlockedStartupDecision.Resolve(modal.Outcome);
             if (!proceed)
@@ -943,11 +956,25 @@ public partial class App : Application
         }
     }
 
+    /// <summary>How long Retry keeps re-attempting the singleton name before giving up.</summary>
+    private static readonly TimeSpan RecoveryWindow = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan RecoveryInterval = TimeSpan.FromMilliseconds(150);
+
     /// <summary>Shared multi-instance recovery: optionally close all Roblox first (with the
-    /// unsaved-state confirm when windowed clients exist), then (re-)acquire the mutex. Returns
-    /// whether RoRoRo now holds the lock. Used by the BLOCKED startup modal and the runtime
-    /// banner. Marshals nothing — callers invoke on the UI thread.</summary>
-    internal bool TryRecoverMultiInstance(bool closeRobloxFirst)
+    /// unsaved-state confirm when windowed clients exist), then re-attempt the singleton name.
+    /// Returns whether RoRoRo may proceed with multi-instance working. Used by the BLOCKED startup
+    /// modal and the runtime banner.
+    ///
+    /// <para><b>Why this polls.</b> The named kernel object dies only when its LAST handle closes,
+    /// and a just-quit (or just-killed) RobloxPlayerBeta takes a beat to tear down. The old code
+    /// made one instantaneous attempt, which is why "quit Roblox from the tray, then hit Retry"
+    /// so often failed the first press and worked the second. A bounded poll absorbs the lag.</para>
+    ///
+    /// <para>Returns true for <see cref="MutexAcquireOutcome.HeldByCompatibleTool"/> too: we don't
+    /// own the handle, but Roblox lost its singleton to that tool, so multi-instance works and
+    /// there is nothing left to recover.</para>
+    /// </summary>
+    internal async Task<bool> TryRecoverMultiInstanceAsync(bool closeRobloxFirst)
     {
         if (_services is null) return false;
         var mutex = _services.GetRequiredService<IMutexHolder>();
@@ -968,11 +995,27 @@ public partial class App : Application
             catch (Exception ex) { _log?.LogWarning(ex, "Close-for-me StopAll failed; retrying acquire anyway."); }
         }
 
-        var acquired = mutex.Acquire();
+        var outcome = await mutex
+            .TryAcquireWithRetryAsync(RecoveryWindow, RecoveryInterval)
+            .ConfigureAwait(true); // continue on the UI thread — tray + modal touch it below
+
+        var state = outcome switch
+        {
+            MutexAcquireOutcome.Acquired => MultiInstanceState.On,
+            // A peer tool holds the name: multi-instance works, we just don't own the handle.
+            // "Off" (not "Error") is the honest tray state — same as a Start-anyway launch.
+            MutexAcquireOutcome.HeldByCompatibleTool => MultiInstanceState.Off,
+            _ => MultiInstanceState.Error,
+        };
+
         var tray = _services.GetRequiredService<ITrayService>();
-        tray.UpdateStatus(acquired ? MultiInstanceState.On : MultiInstanceState.Error);
-        TryRaiseMutexBusEvent(acquired ? "On" : "Error");
-        return acquired;
+        tray.UpdateStatus(state);
+        TryRaiseMutexBusEvent(state.ToString());
+
+        _log?.LogInformation("Multi-instance recovery finished: {Outcome} (closeRobloxFirst={CloseFirst}).",
+            outcome, closeRobloxFirst);
+
+        return outcome is MutexAcquireOutcome.Acquired or MutexAcquireOutcome.HeldByCompatibleTool;
     }
 
     /// <summary>LEFTOVER "Clean up + continue": stop leftover clients, with the unsaved-state
@@ -1011,13 +1054,16 @@ public partial class App : Application
         watcher.ContestedChanged += (_, contested) =>
             Dispatcher.Invoke(() => vm.SetContested(contested));
 
-        vm.RequestCloseRobloxForMe += () =>
+        // async void by necessity — these are fire-and-forget VM events raised on the UI thread.
+        // TryRecoverMultiInstanceAsync polls for up to RecoveryWindow, so awaiting keeps the banner
+        // responsive instead of freezing the window while Roblox's handles drain.
+        vm.RequestCloseRobloxForMe += async () =>
         {
-            if (TryRecoverMultiInstance(closeRobloxFirst: true)) vm.SetContested(false);
+            if (await TryRecoverMultiInstanceAsync(closeRobloxFirst: true)) vm.SetContested(false);
         };
-        vm.RequestRetryMutex += () =>
+        vm.RequestRetryMutex += async () =>
         {
-            if (TryRecoverMultiInstance(closeRobloxFirst: false)) vm.SetContested(false);
+            if (await TryRecoverMultiInstanceAsync(closeRobloxFirst: false)) vm.SetContested(false);
         };
 
         watcher.Start();

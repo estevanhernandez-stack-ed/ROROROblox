@@ -67,7 +67,7 @@ public class ModalDefaultButtonSafetyTests
     [InlineData("StopAllConfirmWindow.xaml")]
     [InlineData("LeftoverProcessesWindow.xaml")]
     public void EachModal_HasExactlyOneDefaultButton(string modalFile)
-        => Assert.Single(Buttons(modalFile).Where(IsDefault));
+        => Assert.Single(Buttons(modalFile), IsDefault);
 
     private static bool IsDefault(XElement button)
         => string.Equals((string?)button.Attribute("IsDefault"), "True", StringComparison.OrdinalIgnoreCase);

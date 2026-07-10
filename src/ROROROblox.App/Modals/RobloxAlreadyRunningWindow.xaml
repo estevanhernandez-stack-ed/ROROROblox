@@ -77,7 +77,7 @@
              unsaved in-game progress. It must NOT be IsDefault: this modal appears at startup, and
              a reflexive Enter on a dialog you didn't expect should never destroy state. It stays
              clearly available, just not on the Enter key. Guarded by ModalDefaultButtonSafetyTests. -->
-        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+        <StackPanel Grid.Row="5" x:Name="ActionButtons" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button Content="Quit RoRoRo" Padding="16,8" IsCancel="True"
                     Background="#22314A" Foreground="#FFFFFF" BorderThickness="0"
                     Margin="0,0,8,0" Click="OnQuitClick" />
