@@ -16,6 +16,7 @@ public static class PluginCapability
     public const string HostCommandsRequestLaunch = "host.commands.request-launch";
     public const string HostCommandsLaunchTarget = "host.commands.launch-target";
     public const string HostCommandsMarkAccountActive = "host.commands.mark-account-active";
+    public const string HostCommandsStopAccounts = "host.commands.stop-accounts";
     public const string HostQueriesCurrentServer = "host.queries.current-server";
     public const string HostQueriesAccountActivity = "host.queries.account-activity";
     public const string HostUITrayMenu = "host.ui.tray-menu";
@@ -37,6 +38,7 @@ public static class PluginCapability
         [HostCommandsRequestLaunch] = "Allow the plugin to ask RoRoRo to launch a Roblox account.",
         [HostCommandsLaunchTarget] = "Allow the plugin to launch one of your accounts into a Roblox server from a link or friend it provides.",
         [HostCommandsMarkAccountActive] = "Let this plugin tell RoRoRo an account is still active (so idle warnings don't misfire). It cannot see what you type or do — only mark an account active.",
+        [HostCommandsStopAccounts] = "Allow the plugin to close Roblox clients that RoRoRo launched. Any unsaved in-game progress in those clients is lost.",
         [HostQueriesCurrentServer] = "Allow the plugin to read the private-server link you most recently launched, so it can share it.",
         [HostQueriesAccountActivity] = "See how long each account has been idle — timestamps only, never what you type or do.",
         [HostUITrayMenu] = "Allow the plugin to add tray menu items.",

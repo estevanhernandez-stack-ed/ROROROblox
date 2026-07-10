@@ -42,11 +42,13 @@ public class PluginHostServiceTests
 
     private static IAccountActivityMarker NoActivityMarker() => new FakeActivityMarker();
 
+    private static IPluginAccountStopper NoStopper() => new FakeAccountStopper();
+
     [Fact]
     public async Task Handshake_AcceptsMatchingContractVersion()
     {
         var registry = new InMemoryRegistry(new[] { MakeInstalled("626labs.test", "host.events.account-launched") });
-        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker());
+        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
 
         var response = await service.Handshake(new HandshakeRequest
         {
@@ -63,7 +65,7 @@ public class PluginHostServiceTests
     public async Task Handshake_RejectsContractVersionMismatch()
     {
         var registry = new InMemoryRegistry(new[] { MakeInstalled("626labs.test") });
-        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker());
+        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
 
         var response = await service.Handshake(new HandshakeRequest
         {
@@ -79,7 +81,7 @@ public class PluginHostServiceTests
     public async Task Handshake_RejectsUnknownPluginId()
     {
         var registry = new InMemoryRegistry(Array.Empty<InstalledPlugin>());
-        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker());
+        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
 
         var response = await service.Handshake(new HandshakeRequest
         {
@@ -97,7 +99,7 @@ public class PluginHostServiceTests
         var registry = new InMemoryRegistry(Array.Empty<InstalledPlugin>());
         var hostState = new FakeHostStateProvider("On");
         var accounts = new FakeRunningAccountsProvider(Array.Empty<RunningAccountSnapshot>());
-        var service = new PluginHostService(registry, "1.4.0", "1.0", hostState, accounts, new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker());
+        var service = new PluginHostService(registry, "1.4.0", "1.0", hostState, accounts, new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
 
         var info = await service.GetHostInfo(new Empty(), FakeServerCallContext.Create());
 
@@ -116,7 +118,7 @@ public class PluginHostServiceTests
             new RunningAccountSnapshot("00000000-0000-0000-0000-000000000001", 12345, "Alice", 9999,
                 PlaceId: 606849621, PlaceName: "Pet Simulator"),
         });
-        var service = new PluginHostService(registry, "1.4.0", "1.0", hostState, accounts, new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker());
+        var service = new PluginHostService(registry, "1.4.0", "1.0", hostState, accounts, new InProcessPluginEventBus(), NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
 
         var list = await service.GetRunningAccounts(new Empty(), FakeServerCallContext.Create());
 
@@ -142,7 +144,7 @@ public class PluginHostServiceTests
         var service = new PluginHostService(
             new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
             new FakeHostStateProvider("Off"), accounts, new InProcessPluginEventBus(),
-            NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker());
+            NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
 
         var list = await service.GetRunningAccounts(new Empty(), FakeServerCallContext.Create());
 
@@ -156,7 +158,7 @@ public class PluginHostServiceTests
     {
         var registry = new InMemoryRegistry(Array.Empty<InstalledPlugin>());
         var bus = new InProcessPluginEventBus();
-        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), bus, NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker());
+        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), bus, NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
 
         var writer = new TestStreamWriter<AccountLaunchedEvent>();
         using var cts = new CancellationTokenSource();
@@ -196,7 +198,7 @@ public class PluginHostServiceTests
             new InProcessPluginEventBus(),
             fakeLauncher,
             NoUITranslator(),
-            NoActivity(), NoActivityMarker());
+            NoActivity(), NoActivityMarker(), NoStopper());
 
         var accountId = Guid.NewGuid().ToString();
         var result = await service.RequestLaunch(new LaunchRequest
@@ -215,7 +217,7 @@ public class PluginHostServiceTests
         var fake = new FakeLaunchInvoker();
         var service = new PluginHostService(
             new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
-            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator(), NoActivity(), NoActivityMarker());
+            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
 
         var acct = Guid.NewGuid().ToString();
         var result = await service.RequestLaunchTarget(new LaunchTargetRequest
@@ -238,7 +240,7 @@ public class PluginHostServiceTests
         var fake = new FakeLaunchInvoker();
         var service = new PluginHostService(
             new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
-            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator(), NoActivity(), NoActivityMarker());
+            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
 
         var acct = Guid.NewGuid().ToString();
         var result = await service.RequestLaunchTarget(new LaunchTargetRequest
@@ -259,7 +261,7 @@ public class PluginHostServiceTests
         var fake = new FakeLaunchInvoker { Current = null };
         var service = new PluginHostService(
             new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
-            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator(), NoActivity(), NoActivityMarker());
+            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
 
         var result = await service.GetCurrentServer(new Empty(), FakeServerCallContext.Create());
         Assert.False(result.Present);
@@ -271,7 +273,7 @@ public class PluginHostServiceTests
         var fake = new FakeLaunchInvoker { Current = new CurrentServerInfo("https://x", "Pet Sim", 99, 1700000000000) };
         var service = new PluginHostService(
             new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
-            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator(), NoActivity(), NoActivityMarker());
+            HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), fake, NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
 
         var result = await service.GetCurrentServer(new Empty(), FakeServerCallContext.Create());
         Assert.True(result.Present);
@@ -293,7 +295,7 @@ public class PluginHostServiceTests
     private static PluginHostService ServiceWithUI(PluginUITranslator translator) => new(
         new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
         HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(),
-        translator, NoActivity(), NoActivityMarker());
+        translator, NoActivity(), NoActivityMarker(), NoStopper());
 
     [Fact]
     public async Task UpdateUI_UnknownHandle_ThrowsPermissionDenied()
@@ -413,6 +415,108 @@ public class PluginHostServiceTests
         await service.RemoveUI(handle, FakeServerCallContext.CreateForPlugin("626labs.a"));
 
         Assert.Equal(handle.Id, Assert.Single(host.Removed));
+    }
+
+    // =====================================================================
+    // StopAccounts (agent-ops surface). Empty request means every tracked
+    // account; an untracked id reports as failed rather than failing the batch.
+    // =====================================================================
+
+    private static PluginHostService ServiceWithStopper(IPluginAccountStopper stopper) => new(
+        new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
+        HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(),
+        NoUITranslator(), NoActivity(), NoActivityMarker(), stopper);
+
+    [Fact]
+    public async Task StopAccounts_EmptyRequest_StopsEveryTrackedAccount()
+    {
+        var a = Guid.NewGuid().ToString();
+        var b = Guid.NewGuid().ToString();
+        var stopper = new FakeAccountStopper { Tracked = { a, b } };
+        var service = ServiceWithStopper(stopper);
+
+        var result = await service.StopAccounts(new StopAccountsRequest(), FakeServerCallContext.Create());
+
+        Assert.Equal(2, result.StoppedCount);
+        Assert.Empty(result.FailedAccountIds);
+        // TrackedAccountIds order is unspecified (backed by a set) — compare as a set.
+        Assert.Equal(new HashSet<string> { a, b }, stopper.Stopped.ToHashSet());
+    }
+
+    [Fact]
+    public async Task StopAccounts_ExplicitIds_StopsOnlyThose()
+    {
+        var a = Guid.NewGuid().ToString();
+        var b = Guid.NewGuid().ToString();
+        var stopper = new FakeAccountStopper { Tracked = { a, b } };
+        var service = ServiceWithStopper(stopper);
+
+        var request = new StopAccountsRequest();
+        request.AccountIds.Add(a);
+        var result = await service.StopAccounts(request, FakeServerCallContext.Create());
+
+        Assert.Equal(1, result.StoppedCount);
+        Assert.Equal(a, Assert.Single(stopper.Stopped));
+    }
+
+    [Fact]
+    public async Task StopAccounts_UntrackedId_ReportsFailedWithoutFailingBatch()
+    {
+        var tracked = Guid.NewGuid().ToString();
+        var untracked = Guid.NewGuid().ToString();
+        var stopper = new FakeAccountStopper { Tracked = { tracked } };
+        var service = ServiceWithStopper(stopper);
+
+        var request = new StopAccountsRequest();
+        request.AccountIds.Add(untracked);
+        request.AccountIds.Add(tracked);
+        var result = await service.StopAccounts(request, FakeServerCallContext.Create());
+
+        Assert.Equal(1, result.StoppedCount);
+        Assert.Equal(untracked, Assert.Single(result.FailedAccountIds));
+        Assert.Equal(tracked, Assert.Single(stopper.Stopped));
+    }
+
+    [Fact]
+    public async Task StopAccounts_DuplicateIds_StopOnce()
+    {
+        var a = Guid.NewGuid().ToString();
+        var stopper = new FakeAccountStopper { Tracked = { a } };
+        var service = ServiceWithStopper(stopper);
+
+        var request = new StopAccountsRequest();
+        request.AccountIds.Add(a);
+        request.AccountIds.Add(a);
+        var result = await service.StopAccounts(request, FakeServerCallContext.Create());
+
+        Assert.Equal(1, result.StoppedCount);
+        Assert.Single(stopper.Stopped);
+    }
+
+    [Fact]
+    public async Task StopAccounts_NothingTracked_IsNoOp()
+    {
+        var stopper = new FakeAccountStopper();
+        var service = ServiceWithStopper(stopper);
+
+        var result = await service.StopAccounts(new StopAccountsRequest(), FakeServerCallContext.Create());
+
+        Assert.Equal(0, result.StoppedCount);
+        Assert.Empty(result.FailedAccountIds);
+        Assert.Empty(stopper.Stopped);
+    }
+
+    private sealed class FakeAccountStopper : IPluginAccountStopper
+    {
+        public HashSet<string> Tracked { get; } = new(StringComparer.Ordinal);
+        public List<string> Stopped { get; } = new();
+        public IReadOnlyList<string> TrackedAccountIds => Tracked.ToList();
+        public bool StopAccount(string accountId)
+        {
+            if (!Tracked.Contains(accountId)) return false;
+            Stopped.Add(accountId);
+            return true;
+        }
     }
 
     /// <summary>UI host fake that issues real, unique handle ids (FakeUIHost returns

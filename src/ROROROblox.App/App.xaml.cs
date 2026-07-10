@@ -554,6 +554,8 @@ public partial class App : Application
         services.AddSingleton<ROROROblox.App.Plugins.IPluginUIHost,
             ROROROblox.App.Plugins.Adapters.WpfPluginUIHost>();
         services.AddSingleton<ROROROblox.App.Plugins.PluginUITranslator>();
+        services.AddSingleton<ROROROblox.App.Plugins.IPluginAccountStopper,
+            ROROROblox.App.Plugins.Adapters.ProcessTrackerAccountStopper>();
 
         services.AddSingleton(sp => new ROROROblox.App.Plugins.PluginHostService(
             sp.GetRequiredService<ROROROblox.App.Plugins.IInstalledPluginsLookup>(),
@@ -565,7 +567,8 @@ public partial class App : Application
             sp.GetRequiredService<ROROROblox.App.Plugins.IPluginLaunchInvoker>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.PluginUITranslator>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.IActivitySnapshotProvider>(),
-            sp.GetRequiredService<ROROROblox.App.Plugins.IAccountActivityMarker>()));
+            sp.GetRequiredService<ROROROblox.App.Plugins.IAccountActivityMarker>(),
+            sp.GetRequiredService<ROROROblox.App.Plugins.IPluginAccountStopper>()));
 
         // CapabilityInterceptor: per-connection plugin id binding is deferred to v1.5+
         // (the gRPC interceptor sees the call before any plugin-id metadata is bound).

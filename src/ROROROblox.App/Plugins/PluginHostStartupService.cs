@@ -44,6 +44,11 @@ public sealed class PluginHostStartupService : IHostedService, IAsyncDisposable
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
+        // Refuse to serve a surface we can't gate. An rpc added to plugin_contract.proto
+        // without an RpcMethodCapabilityMap entry would otherwise reach plugins ungated —
+        // the bug class behind PR #60. Crash here instead, loudly, before the pipe binds.
+        RpcMethodCapabilityMap.AssertExhaustive();
+
         var builder = WebApplication.CreateSlimBuilder();
 
         // Register the singletons gRPC will resolve.
