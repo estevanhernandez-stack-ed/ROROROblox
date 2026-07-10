@@ -516,6 +516,9 @@ public class RobloxLauncherTests
         public bool CarefulSquadLaunch { get; set; }
         public Task<bool> GetCarefulSquadLaunchAsync() => Task.FromResult(CarefulSquadLaunch);
         public Task SetCarefulSquadLaunchAsync(bool careful) { CarefulSquadLaunch = careful; return Task.CompletedTask; }
+        public bool StreamerMode { get; set; }
+        public Task<bool> GetStreamerModeAsync() => Task.FromResult(StreamerMode);
+        public Task SetStreamerModeAsync(bool enabled) { StreamerMode = enabled; return Task.CompletedTask; }
     }
 
     private sealed class RecordingProcessStarter : IProcessStarter
