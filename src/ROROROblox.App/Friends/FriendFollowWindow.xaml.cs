@@ -288,6 +288,10 @@ internal partial class FriendFollowWindow : Window
         // AvatarDisplaySource, Task 7). ForFriend internally no-ops to the real values when the
         // provider is null/inactive, so this is a straight swap-in with no behavior change when
         // streamer mode is off. friend.DisplayName/AvatarUrl themselves are never mutated.
+        // realName covers the empty-DisplayName fallback (uses friend.Username) — it's only ever
+        // passed to ForFriend as the "real" value, which returns the FAKE name while active, so an
+        // empty-display-name friend still shows a fake name (never the raw username) on screen.
+        var active = _streamerIdentity?.IsActive == true;
         var realName = FriendName(friend);
         var display = _streamerIdentity?.ForFriend(friend.UserId, realName, friend.AvatarUrl)
                       ?? new DisplayIdentity(realName, friend.AvatarUrl);
@@ -343,12 +347,25 @@ internal partial class FriendFollowWindow : Window
             FontWeight = FontWeights.SemiBold,
             Foreground = (Brush)FindResource("WhiteBrush"),
         });
-        var secondary = string.IsNullOrEmpty(friend.Username) ? string.Empty : $"@{friend.Username}";
-        if (!string.IsNullOrEmpty(presence?.LastLocation))
+        // Secondary line = real @username (+ current location). A friend's @username is often MORE
+        // identifying than their display name and there's no fake handle to substitute for it, so
+        // while streamer mode is active the whole line is suppressed — friend.Username never enters
+        // the visual tree. Re-evaluates on provider.Changed because the enclosing row is rebuilt by
+        // RenderRows on every Changed, so toggling mid-session hides/shows it live.
+        string secondary;
+        if (active)
         {
-            secondary = string.IsNullOrEmpty(secondary)
-                ? presence.LastLocation
-                : $"{secondary}  ·  {presence.LastLocation}";
+            secondary = string.Empty;
+        }
+        else
+        {
+            secondary = string.IsNullOrEmpty(friend.Username) ? string.Empty : $"@{friend.Username}";
+            if (!string.IsNullOrEmpty(presence?.LastLocation))
+            {
+                secondary = string.IsNullOrEmpty(secondary)
+                    ? presence.LastLocation
+                    : $"{secondary}  ·  {presence.LastLocation}";
+            }
         }
         info.Children.Add(new TextBlock
         {
