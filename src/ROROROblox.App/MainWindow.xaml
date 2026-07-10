@@ -939,7 +939,7 @@
                                       BorderBrush="{DynamicResource CyanBrush}"
                                       BorderThickness="1"
                                       Cursor="Hand"
-                                      ToolTip="The default game Launch As uses when no per-row pick is set. Click to change."
+                                      ToolTip="{Binding DefaultGameTooltip}"
                                       IsChecked="{Binding IsDefaultGameDropdownOpen, Mode=TwoWay}">
                             <ToggleButton.Style>
                                 <Style TargetType="ToggleButton">

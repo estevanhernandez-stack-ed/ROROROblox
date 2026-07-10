@@ -1,9 +1,9 @@
 namespace ROROROblox.Core;
 
 /// <summary>
-/// Persistent list of saved Roblox games. Exactly one is marked default at any time
+/// Persistent list of saved Roblox games. Zero or one is marked default
 /// (the launch target when no explicit place URL is passed). Adding the first favorite
-/// auto-sets it default; removing the current default auto-promotes the next.
+/// auto-sets it default; removing the current default leaves no default; launches open Roblox home until you set one.
 /// </summary>
 public interface IFavoriteGameStore
 {
@@ -27,6 +27,12 @@ public interface IFavoriteGameStore
     Task SetDefaultAsync(long placeId);
 
     /// <summary>
+    /// Clear the default flag on every game, returning to the zero-default state. No-op (no write,
+    /// no event) when nothing is default. Zero-default is legal: Launch As opens Roblox home.
+    /// </summary>
+    Task ClearDefaultAsync();
+
+    /// <summary>
     /// Set the per-user local nickname override. <paramref name="localName"/> is normalized:
     /// null / empty / whitespace all collapse to <c>null</c> (effective reset). The Roblox-side
     /// <see cref="FavoriteGame.Name"/> is never touched. Throws <see cref="KeyNotFoundException"/>
@@ -35,9 +41,11 @@ public interface IFavoriteGameStore
     Task UpdateLocalNameAsync(long placeId, string? localName);
 
     /// <summary>
-    /// Fired after <see cref="SetDefaultAsync"/> mutates state and persists. Lets the
+    /// Fired after <see cref="SetDefaultAsync"/> / <see cref="ClearDefaultAsync"/> (or a
+    /// default-removing <see cref="RemoveAsync"/>) mutates state and persists. Lets the
     /// default-game widget react without a manual re-fetch. Subscribers should expect to be
-    /// invoked on whatever thread <see cref="SetDefaultAsync"/> ran on. v1.3.x.
+    /// invoked on whatever thread the mutation ran on. Mirrors
+    /// <see cref="IPrivateServerStore.DefaultChanged"/>. v1.3.x.
     /// </summary>
     event EventHandler? DefaultChanged;
 }

@@ -98,17 +98,23 @@ public class FavoriteGameStoreTests : IDisposable
     }
 
     [Fact]
-    public async Task RemoveAsync_OfDefault_PromotesNext()
+    public async Task RemoveAsync_OfDefault_LeavesZeroDefault_FiresEvent()
     {
         using var store = new FavoriteGameStore(_filePath);
         await store.AddAsync(111, 1, "First", "https://1");
         await store.AddAsync(222, 2, "Second", "https://2");
 
+        var fires = 0;
+        store.DefaultChanged += (_, _) => fires++;
+
         await store.RemoveAsync(111);
 
-        var defaults = await store.GetDefaultAsync();
-        Assert.NotNull(defaults);
-        Assert.Equal(222, defaults!.PlaceId);
+        Assert.Equal(1, fires);
+        Assert.Null(await store.GetDefaultAsync());
+
+        await store.RemoveAsync(222);
+
+        Assert.Equal(1, fires);
     }
 
     [Fact]
@@ -123,6 +129,26 @@ public class FavoriteGameStoreTests : IDisposable
         Assert.Empty(list);
         var defaults = await store.GetDefaultAsync();
         Assert.Null(defaults);
+    }
+
+    [Fact]
+    public async Task ClearDefaultAsync_RemovesDefault_FiresOnce_NoOpWhenNone()
+    {
+        using var store = new FavoriteGameStore(_filePath);
+        await store.AddAsync(111, 1, "A", "https://1");
+        var fires = 0;
+        store.DefaultChanged += (_, _) => fires++;
+
+        await store.ClearDefaultAsync();
+
+        Assert.Equal(1, fires);
+        Assert.Null(await store.GetDefaultAsync());
+
+        await store.ClearDefaultAsync();
+
+        Assert.Equal(1, fires);
+        await store.SetDefaultAsync(111);
+        Assert.NotNull(await store.GetDefaultAsync());
     }
 
     [Fact]

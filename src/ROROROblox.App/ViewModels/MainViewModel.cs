@@ -400,8 +400,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     private FavoriteGame? _currentDefaultGame;
-    /// <summary>The currently-default <see cref="FavoriteGame"/>, or null when no games saved.
-    /// One-way bound on the widget popup ListBox to highlight the current default. v1.3.x.</summary>
+    /// <summary>The currently-default <see cref="FavoriteGame"/>, or null when no game is
+    /// marked default (games may still exist -- null is a legitimate "launches open Roblox
+    /// home" state, not just the empty-library case). One-way bound on the widget popup
+    /// ListBox to highlight the current default. v1.3.x.</summary>
     public FavoriteGame? CurrentDefaultGame
     {
         get => _currentDefaultGame;
@@ -410,17 +412,29 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             if (SetField(ref _currentDefaultGame, value))
             {
                 OnPropertyChanged(nameof(DefaultGameDisplay));
+                OnPropertyChanged(nameof(DefaultGameTooltip));
             }
         }
     }
 
     /// <summary>
     /// What the widget shows in its toolbar readout. Reads <see cref="FavoriteGame.LocalName"/>
-    /// when set, falling back to <see cref="FavoriteGame.Name"/>, then to a muted placeholder
-    /// when no games are saved. v1.3.x.
+    /// when set, falling back to <see cref="FavoriteGame.Name"/>, then to "Roblox home" when no
+    /// game is marked default -- a real state (Task 3), not just an empty-library placeholder.
     /// </summary>
     public string DefaultGameDisplay =>
-        _currentDefaultGame?.LocalName ?? _currentDefaultGame?.Name ?? "No saved games yet";
+        _currentDefaultGame?.LocalName ?? _currentDefaultGame?.Name ?? "Roblox home";
+
+    /// <summary>
+    /// Tooltip for the default-game widget ToggleButton. Coupled to <see cref="CurrentDefaultGame"/>
+    /// so it flips in lockstep with <see cref="DefaultGameDisplay"/> -- explains the home-launch
+    /// behavior when no default is set, nudging the user toward the Library instead of leaving
+    /// the null state unexplained. v1.9 (Task 3).
+    /// </summary>
+    public string DefaultGameTooltip =>
+        _currentDefaultGame is null
+            ? "Launches open Roblox at home. Set a default game in the Library to launch straight into it."
+            : "The default game Launch As uses when no per-row pick is set. Click to change.";
 
     private bool _isCompact;
     /// <summary>True when the main window is in compact (collapsed) mode. Drives the bottom-bar
@@ -632,13 +646,31 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _presenceService.Start();
     }
 
+    private readonly SemaphoreSlim _reloadGamesGate = new(1, 1);
+
     /// <summary>
     /// Reload <see cref="AvailableGames"/> from the favorites store and re-sync each account's
     /// <see cref="AccountSummary.SelectedGame"/> -- preserve current selection if still present,
     /// else fall back to the favorites default. Called on initial load + after the Games dialog
-    /// closes (since the user may have added / removed / set-default'd a game).
+    /// closes (since the user may have added / removed / set-default'd a game). Serialized: the
+    /// DefaultChanged handler fires a fire-and-forget reload that must not race an explicit one --
+    /// two concurrent AvailableGames/WidgetGames rebuilds corrupt the collection (NRE mid-rebuild),
+    /// which bites off-thread in unit tests where there is no UI dispatcher to serialize them.
     /// </summary>
     public async Task ReloadGamesAsync()
+    {
+        await _reloadGamesGate.WaitAsync();
+        try
+        {
+            await ReloadGamesCoreAsync();
+        }
+        finally
+        {
+            _reloadGamesGate.Release();
+        }
+    }
+
+    private async Task ReloadGamesCoreAsync()
     {
         var games = await _favorites.ListAsync();
         var privateServers = await _privateServerStore.ListAsync();
@@ -663,9 +695,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // setting the default game, not for one-off launches.
         AvailableGames.Add(JoinByLinkSentinel);
 
-        // Default-game candidates exclude PS entries + the sentinel — the default is a game.
-        var defaultGame = AvailableGames.FirstOrDefault(g => g.IsDefault && !IsJoinByLinkSentinel(g) && !g.IsPrivateServer)
-                          ?? AvailableGames.FirstOrDefault(g => !IsJoinByLinkSentinel(g) && !g.IsPrivateServer);
+        // Default is the game explicitly marked default — no silent first-game fallback.
+        // Null is a real state: no default -> Launch As opens Roblox home.
+        var defaultGame = AvailableGames.FirstOrDefault(g => g.IsDefault && !IsJoinByLinkSentinel(g) && !g.IsPrivateServer);
         foreach (var account in Accounts)
         {
             account.SelectedGame = FindMatchingEntry(account.SelectedGame) ?? defaultGame;
@@ -2561,10 +2593,24 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OnFavoritesDefaultChanged(object? sender, EventArgs e)
     {
-        // The store has already mutated + persisted; just refresh our cached view of "what's
-        // the current default" so the widget readout flips. ReloadGamesAsync also re-syncs
-        // each account's SelectedGame to the new default — keeps row pickers in lockstep.
-        _ = ReloadGamesAsync();
+        // The store has already mutated + persisted; refresh our cached "current default" so the
+        // widget readout flips, and re-sync each account's SelectedGame to keep row pickers in
+        // lockstep. DefaultChanged fires on the store's lock thread — off the UI thread when
+        // Clear/Set/RemoveAsync was awaited with ConfigureAwait(false) — but ReloadGamesAsync
+        // mutates the UI-bound AvailableGames/WidgetGames collections. A cross-thread mutation
+        // throws ("CollectionView does not support changes from a thread different from the
+        // Dispatcher thread") and leaves the row pickers half-rendered (the dropdown-ghost bug),
+        // so marshal onto the UI thread the same way every other store-event handler here does.
+        // CheckAccess keeps the direct call for the UI-thread and no-dispatcher (unit-test) cases.
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+        {
+            _ = ReloadGamesAsync();
+        }
+        else
+        {
+            dispatcher.Invoke(() => _ = ReloadGamesAsync());
+        }
     }
 
     private async Task RemoveGameAsync(FavoriteGame? game)

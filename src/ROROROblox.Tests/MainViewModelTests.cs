@@ -29,7 +29,8 @@ public class MainViewModelTests
         IRobloxLauncher? launcher = null,
         ICookieCapture? cookieCapture = null,
         Func<IAccountStore, IAccountStore>? wrapStore = null,
-        IRobloxApi? api = null)
+        IRobloxApi? api = null,
+        IFavoriteGameStore? favorites = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
@@ -44,7 +45,7 @@ public class MainViewModelTests
             launcher: launcher ?? new FakeRobloxLauncher(),
             compatChecker: new FakeRobloxCompatChecker(),
             settings: new FakeAppSettings(),
-            favorites: new FakeFavoriteGameStore(),
+            favorites: favorites ?? new FakeFavoriteGameStore(),
             processTracker: processTracker,
             presenceService: new FakePresenceService(),
             diagnostics: new FakeDiagnosticsCollector(),
@@ -128,6 +129,50 @@ public class MainViewModelTests
             Assert.Equal(first, launcher.BrowserTrackerIds[1]);
         }
         finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ReloadGames_NoDefaultMarked_LeavesCurrentDefaultNull_NoFirstGameFallback()
+    {
+        // Task 3: zero-default is a legitimate state -- ReloadGamesAsync must not silently pick
+        // AvailableGames.FirstOrDefault() as a stand-in default. Real FavoriteGameStore (not the
+        // throwing FakeFavoriteGameStore) so AddAsync's real auto-default-on-first-add and
+        // ClearDefaultAsync's real clear both exercise the actual store contract.
+        var favoritesPath = Path.Combine(Path.GetTempPath(), $"rororo-mvm-favorites-test-{Guid.NewGuid():N}.json");
+        var favorites = new FavoriteGameStore(favoritesPath);
+        var (vm, _, _, path) = Build(favorites: favorites);
+        try
+        {
+            await favorites.AddAsync(111, 1, "A", "");     // first add auto-defaults...
+            await favorites.ClearDefaultAsync();            // ...cleared -> games exist, none default
+            await vm.ReloadGamesAsync();
+            Assert.Null(vm.CurrentDefaultGame);             // NO silent first-game fallback
+            Assert.Equal("Roblox home", vm.DefaultGameDisplay);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(favoritesPath)) File.Delete(favoritesPath);
+        }
+    }
+
+    [Fact]
+    public async Task DefaultGameDisplay_WithDefault_ShowsGameName()
+    {
+        var favoritesPath = Path.Combine(Path.GetTempPath(), $"rororo-mvm-favorites-test-{Guid.NewGuid():N}.json");
+        var favorites = new FavoriteGameStore(favoritesPath);
+        var (vm, _, _, path) = Build(favorites: favorites);
+        try
+        {
+            await favorites.AddAsync(111, 1, "Pet Sim 99", "");
+            await vm.ReloadGamesAsync();
+            Assert.Equal("Pet Sim 99", vm.DefaultGameDisplay);
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(favoritesPath)) File.Delete(favoritesPath);
+        }
     }
 
     [Fact]
@@ -636,6 +681,7 @@ public class MainViewModelTests
         public Task<FavoriteGame> AddAsync(long placeId, long universeId, string name, string thumbnailUrl) => throw new NotImplementedException();
         public Task RemoveAsync(long placeId) => throw new NotImplementedException();
         public Task SetDefaultAsync(long placeId) => throw new NotImplementedException();
+        public Task ClearDefaultAsync() => Task.CompletedTask;
         public Task UpdateLocalNameAsync(long placeId, string? localName) => throw new NotImplementedException();
     }
 
@@ -675,7 +721,9 @@ public class MainViewModelTests
     {
         public event EventHandler? DefaultChanged;
 
-        public Task<IReadOnlyList<SavedPrivateServer>> ListAsync() => throw new NotImplementedException();
+        // Task 3: ReloadGamesAsync always calls this (games + PS entries merge into one
+        // dropdown); empty-but-real is enough since none of these tests save a PS entry.
+        public Task<IReadOnlyList<SavedPrivateServer>> ListAsync() => Task.FromResult<IReadOnlyList<SavedPrivateServer>>([]);
         public Task<SavedPrivateServer?> GetAsync(Guid id) => throw new NotImplementedException();
         public Task<SavedPrivateServer> AddAsync(long placeId, string code, PrivateServerCodeKind codeKind, string name, string placeName, string thumbnailUrl) => throw new NotImplementedException();
         public Task RemoveAsync(Guid id) => throw new NotImplementedException();
