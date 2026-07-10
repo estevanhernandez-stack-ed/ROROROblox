@@ -23,16 +23,38 @@ public sealed class StartupGate
     }
 
     /// <summary>
-    /// Acquire-first gate. Caller acquires the mutex first and passes the result. Not acquired →
-    /// Blocked. Acquired + no leftover processes → Clean. Acquired + leftovers → Leftover(split).
-    /// Fail-open to Clean if the process scan throws (we hold the lock, so proceeding is safe).
+    /// Acquire-first gate. The caller attempts the singleton name first and passes the outcome.
+    ///
+    /// <list type="bullet">
+    ///   <item>Roblox holds it (its Event) → <see cref="StartupGateResult.Blocked"/>. Multi-instance
+    ///   is genuinely unavailable; offer recovery.</item>
+    ///   <item>A compatible tool holds it (a Mutex) → <see cref="StartupGateResult.SharedLock"/>.
+    ///   Roblox lost its own singleton, so multi-instance works. Do NOT block.</item>
+    ///   <item>Acquired, no leftovers → Clean. Acquired with leftovers → Leftover(split).</item>
+    /// </list>
+    ///
+    /// Fails open to Clean if the process scan throws (we hold the name, so proceeding is safe).
     /// </summary>
-    public StartupGateResult Evaluate(bool mutexAcquired)
+    public StartupGateResult Evaluate(MutexAcquireOutcome outcome)
     {
-        if (!mutexAcquired)
+        switch (outcome)
         {
-            _log.LogInformation("StartupGate: mutex not acquired — Roblox holds the lock; blocking.");
-            return new StartupGateResult.Blocked();
+            case MutexAcquireOutcome.HeldByRoblox:
+                _log.LogInformation(
+                    "StartupGate: singleton name held by Roblox (as an event); multi-instance unavailable. Blocking.");
+                return new StartupGateResult.Blocked();
+
+            case MutexAcquireOutcome.HeldByCompatibleTool:
+                // Held as a MUTEX, so its creator squats the name the way we do. Roblox therefore
+                // lost its own singleton and multi-instance still works — nothing to recover from.
+                _log.LogInformation(
+                    "StartupGate: singleton name held by another RoRoRo or compatible tool (a mutex, not Roblox's event); multi-instance still works. Proceeding without the handle.");
+                return new StartupGateResult.SharedLock();
+
+            case MutexAcquireOutcome.Failed:
+                _log.LogWarning(
+                    "StartupGate: CreateMutex failed for an unrecognized reason; blocking (conservative).");
+                return new StartupGateResult.Blocked();
         }
 
         try
@@ -40,21 +62,25 @@ public sealed class StartupGate
             var players = _probe.GetRunningPlayers();
             if (players.Count == 0)
             {
-                _log.LogInformation("StartupGate: mutex acquired, no leftover Roblox processes; clean start.");
+                _log.LogInformation("StartupGate: singleton name acquired, no leftover Roblox processes; clean start.");
                 return new StartupGateResult.Clean();
             }
 
             var windowed = players.Count(p => p.HasWindow);
             var windowless = players.Count - windowed;
             _log.LogInformation(
-                "StartupGate: mutex acquired with {Windowless} windowless + {Windowed} windowed leftover Roblox process(es); informational.",
+                "StartupGate: singleton name acquired with {Windowless} windowless + {Windowed} windowed leftover Roblox process(es); informational.",
                 windowless, windowed);
             return new StartupGateResult.Leftover(windowless, windowed);
         }
         catch (Exception ex)
         {
-            _log.LogWarning(ex, "StartupGate: process scan threw after mutex acquired; proceeding (we hold the lock).");
+            _log.LogWarning(ex, "StartupGate: process scan threw after acquiring the name; proceeding (we hold it).");
             return new StartupGateResult.Clean();
         }
     }
+
+    /// <summary>Back-compat shim for callers that only know acquired/not.</summary>
+    public StartupGateResult Evaluate(bool mutexAcquired)
+        => Evaluate(mutexAcquired ? MutexAcquireOutcome.Acquired : MutexAcquireOutcome.HeldByRoblox);
 }

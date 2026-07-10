@@ -10,9 +10,12 @@
         Background="{DynamicResource BgBrush}">
     <!-- BLOCKED startup modal. Pre-empts MainWindow when RobloxPlayerBeta.exe is already holding
          the multi-instance mutex at app launch — often a tray-resident, windowless Roblox process
-         (spec §5/§6). Offers in-place recovery (Close Roblox for me / Retry) before falling back
+         (spec §5/§6). Offers in-place recovery (Retry / Close Roblox for me) before falling back
          to Quit RoRoRo; never tells the user to restart RoRoRo itself. WindowStartupLocation is
-         CenterScreen (not CenterOwner) because there is no owner at this point in startup. -->
+         CenterScreen (not CenterOwner) because there is no owner at this point in startup.
+
+         Retry is the primary and the Enter default — see the button block below for why the
+         destructive action deliberately is not. -->
     <Grid Margin="32">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -64,20 +67,29 @@
                        TextWrapping="Wrap" FontSize="11" Foreground="#8A93A0" Margin="0,12,0,0" />
         </StackPanel>
 
-        <!-- Four actions -->
-        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+        <!-- Four actions.
+
+             Retry is the primary AND the Enter-key default, matching step 3 above ("Quit Roblox —
+             then hit Retry"). It is non-destructive: it re-acquires in place, and on failure just
+             reveals the still-locked tick.
+
+             "Close Roblox for me" force-closes the user's running Roblox clients, losing any
+             unsaved in-game progress. It must NOT be IsDefault: this modal appears at startup, and
+             a reflexive Enter on a dialog you didn't expect should never destroy state. It stays
+             clearly available, just not on the Enter key. Guarded by ModalDefaultButtonSafetyTests. -->
+        <StackPanel Grid.Row="5" x:Name="ActionButtons" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button Content="Quit RoRoRo" Padding="16,8" IsCancel="True"
                     Background="#22314A" Foreground="#FFFFFF" BorderThickness="0"
                     Margin="0,0,8,0" Click="OnQuitClick" />
             <Button Content="Start anyway" Padding="16,8"
                     Background="#22314A" Foreground="#FFFFFF" BorderThickness="0"
                     Margin="0,0,8,0" Click="OnStartAnywayClick" />
-            <Button Content="Retry" Padding="16,8"
+            <Button Content="Close Roblox for me" Padding="16,8"
                     Background="#22314A" Foreground="#FFFFFF" BorderThickness="0"
-                    Margin="0,0,8,0" Click="OnRetryClick" />
-            <Button Content="Close Roblox for me" Padding="16,8" IsDefault="True"
+                    Margin="0,0,8,0" Click="OnCloseForMeClick" />
+            <Button Content="Retry" Padding="16,8" IsDefault="True"
                     Background="#17D4FA" Foreground="#0F1F31" BorderThickness="0"
-                    FontWeight="Bold" Click="OnCloseForMeClick" />
+                    FontWeight="Bold" Click="OnRetryClick" />
         </StackPanel>
     </Grid>
 </Window>

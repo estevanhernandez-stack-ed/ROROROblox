@@ -48,10 +48,20 @@ public sealed class CapabilityInterceptor : Interceptor
     private void EnforceCapability(ServerCallContext context)
     {
         var methodName = RpcMethodCapabilityMap.ExtractMethodName(context.Method);
-        var required = RpcMethodCapabilityMap.Required(methodName);
+
+        // Fail closed. A method absent from the map is UNKNOWN, not ungated — treating the
+        // two the same is how UpdateUI/RemoveUI shipped without a gate. An rpc added to the
+        // .proto but forgotten in the map now gets denied here (and RpcMethodCapabilityMap
+        // .AssertExhaustive() refuses to let the host start at all).
+        if (!RpcMethodCapabilityMap.TryGetRequired(methodName, out var required))
+        {
+            throw new RpcException(new Status(StatusCode.PermissionDenied,
+                $"Method '{methodName}' is not a recognized RoRoRoHost method."));
+        }
+
         if (required is null)
         {
-            return; // ungated method
+            return; // known and deliberately ungated (bootstrap, free read, ownership-gated)
         }
 
         // v1.4 contract: plugin sends "x-plugin-id" request metadata header on every call

@@ -38,6 +38,17 @@ service RoRoRoHost {
   // active after it acts on that account's window (idle heuristic can't see plugin input).
   rpc MarkAccountActive(MarkAccountActiveRequest) returns (Empty);
 
+  // Command surface (additive, NuGet 0.6.0): stop Roblox clients RoRoRo tracks, per account.
+  // Graceful close (CloseMainWindow) first, hard kill only as fallback — the same sequence the
+  // main window's per-account close button uses. Never touches an untracked process: clients
+  // RoRoRo did not launch (or could not re-attach to) are the startup leftover gate's problem,
+  // not this rpc's.
+  //
+  // stopped_count means the stop was ISSUED, not that the client is gone — process exit is
+  // asynchronous. A caller relaunching an account must poll GetRunningAccounts until the
+  // account disappears, or it will race the dying client.
+  rpc StopAccounts(StopAccountsRequest) returns (StopAccountsResult);
+
   // UI surface (v1: tray menu, row badge, status panel)
   rpc AddTrayMenuItem(MenuItemSpec) returns (UIHandle);
   rpc AddRowBadge(RowBadgeSpec) returns (UIHandle);
@@ -166,6 +177,19 @@ message AccountActivityList {
 
 message MarkAccountActiveRequest {
   string account_id = 1;
+}
+
+message StopAccountsRequest {
+  // Empty = every account RoRoRo is currently tracking a client for.
+  // Otherwise, only these accounts. Ids RoRoRo isn't tracking come back in
+  // failed_account_ids rather than failing the whole call.
+  repeated string account_ids = 1;
+}
+
+message StopAccountsResult {
+  int32 stopped_count = 1;
+  // Unknown id, no tracked client, or the close+kill sequence failed.
+  repeated string failed_account_ids = 2;
 }
 
 message UIHandle {

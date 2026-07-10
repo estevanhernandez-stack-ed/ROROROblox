@@ -52,7 +52,8 @@ public class EndToEndContractTests
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
             new StubActivityProvider(),
-            new StubActivityMarker());
+            new StubActivityMarker(),
+            new StubAccountStopper());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -123,7 +124,8 @@ public class EndToEndContractTests
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
             new StubActivityProvider(),
-            new StubActivityMarker());
+            new StubActivityMarker(),
+            new StubAccountStopper());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -191,7 +193,8 @@ public class EndToEndContractTests
             new PluginUITranslator(new NullUIHost()),
             new StubActivityProvider(
                 new AccountActivitySnapshot(accountId, 1_700_000_000_000, 300)),
-            new StubActivityMarker());
+            new StubActivityMarker(),
+            new StubAccountStopper());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -258,7 +261,8 @@ public class EndToEndContractTests
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
             new StubActivityProvider(),
-            new StubActivityMarker());
+            new StubActivityMarker(),
+            new StubAccountStopper());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -352,7 +356,8 @@ public class EndToEndContractTests
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
             provider,
-            marker);
+            marker,
+            new StubAccountStopper());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -429,7 +434,8 @@ public class EndToEndContractTests
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
             new StubActivityProvider(),
-            new StubActivityMarker());
+            new StubActivityMarker(),
+            new StubAccountStopper());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -501,7 +507,8 @@ public class EndToEndContractTests
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
             new StubActivityProvider(),
-            marker);
+            marker,
+            new StubAccountStopper());
 
         // Production shape: accessor returns null. Header is the only path to a plugin id.
         var interceptor = new CapabilityInterceptor(
@@ -578,7 +585,8 @@ public class EndToEndContractTests
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
             new StubActivityProvider(),
-            marker);
+            marker,
+            new StubAccountStopper());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => null,
@@ -667,7 +675,8 @@ public class EndToEndContractTests
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
             provider,
-            marker);
+            marker,
+            new StubAccountStopper());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -740,7 +749,8 @@ public class EndToEndContractTests
             new NoOpLauncher(),
             new PluginUITranslator(uiHost),
             new StubActivityProvider(),
-            new StubActivityMarker());
+            new StubActivityMarker(),
+            new StubAccountStopper());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => "626labs.test",
@@ -774,6 +784,159 @@ public class EndToEndContractTests
             await startup.DisposeAsync();
         }
     }
+
+    /// <summary>
+    /// StopAccounts over the real pipe: denied without consent, honored with it, and an
+    /// untracked account id reports as failed rather than throwing. The recovery half of
+    /// the agent-ops surface — an agent clears dead clients before relaunching them.
+    /// </summary>
+    [Fact]
+    public async Task StopAccounts_DeniedWhenCapabilityNotGranted()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+        var stopper = new StubAccountStopper { Tracked = { Guid.NewGuid().ToString() } };
+
+        var registry = new SingleInstalledPluginLookup(new InstalledPlugin
+        {
+            Manifest = new PluginManifest
+            {
+                SchemaVersion = 1,
+                Id = "626labs.test",
+                Name = "Test",
+                Version = "1.0",
+                ContractVersion = "1.0",
+                Publisher = "626",
+                Description = "x",
+                // host.commands.stop-accounts is required by StopAccounts and is NOT granted.
+                Capabilities = new[] { "host.events.account-launched" },
+            },
+            InstallDir = Path.GetTempPath(),
+            Consent = new ConsentRecord
+            {
+                PluginId = "626labs.test",
+                GrantedCapabilities = new[] { "host.events.account-launched" },
+                AutostartEnabled = false,
+            },
+        });
+
+        var hostService = new PluginHostService(
+            registry, "1.4.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            new InProcessPluginEventBus(),
+            new NoOpLauncher(),
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider(),
+            new StubActivityMarker(),
+            stopper);
+
+        var interceptor = new CapabilityInterceptor(
+            currentPluginAccessor: () => "626labs.test",
+            consentLookup: id => new[] { "host.events.account-launched" });
+
+        var startup = new PluginHostStartupService(
+            hostService, interceptor,
+            NullLogger<PluginHostStartupService>.Instance,
+            pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+
+            var ex = await Assert.ThrowsAsync<RpcException>(async () =>
+                await client.StopAccountsAsync(new StopAccountsRequest()));
+            Assert.Equal(StatusCode.PermissionDenied, ex.StatusCode);
+            Assert.Empty(stopper.Stopped); // never reached the handler
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task StopAccounts_GrantedPlugin_StopsTrackedAndReportsUntracked()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+        var tracked = Guid.NewGuid().ToString();
+        var untracked = Guid.NewGuid().ToString();
+        var stopper = new StubAccountStopper { Tracked = { tracked } };
+
+        var registry = new SingleInstalledPluginLookup(new InstalledPlugin
+        {
+            Manifest = new PluginManifest
+            {
+                SchemaVersion = 1,
+                Id = "626labs.test",
+                Name = "Test",
+                Version = "1.0",
+                ContractVersion = "1.0",
+                Publisher = "626",
+                Description = "x",
+                Capabilities = new[] { PluginCapability.HostCommandsStopAccounts },
+            },
+            InstallDir = Path.GetTempPath(),
+            Consent = new ConsentRecord
+            {
+                PluginId = "626labs.test",
+                GrantedCapabilities = new[] { PluginCapability.HostCommandsStopAccounts },
+                AutostartEnabled = false,
+            },
+        });
+
+        var hostService = new PluginHostService(
+            registry, "1.4.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            new InProcessPluginEventBus(),
+            new NoOpLauncher(),
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider(),
+            new StubActivityMarker(),
+            stopper);
+
+        var interceptor = new CapabilityInterceptor(
+            currentPluginAccessor: () => "626labs.test",
+            consentLookup: id => new[] { PluginCapability.HostCommandsStopAccounts });
+
+        var startup = new PluginHostStartupService(
+            hostService, interceptor,
+            NullLogger<PluginHostStartupService>.Instance,
+            pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+
+            var request = new StopAccountsRequest();
+            request.AccountIds.Add(untracked);
+            request.AccountIds.Add(tracked);
+            var result = await client.StopAccountsAsync(request);
+
+            Assert.Equal(1, result.StoppedCount);
+            Assert.Equal(untracked, Assert.Single(result.FailedAccountIds));
+            Assert.Equal(tracked, Assert.Single(stopper.Stopped));
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    /// <summary>
+    /// The capability map must cover every RoRoRoHost method, or the host refuses to start.
+    /// This is the guard that would have caught the UpdateUI/RemoveUI fail-open before ship:
+    /// PluginHostStartupService.StartAsync calls AssertExhaustive() before binding the pipe.
+    /// </summary>
+    [Fact]
+    public void CapabilityMap_CoversEveryHostMethod()
+        => RpcMethodCapabilityMap.AssertExhaustive();
 
     /// <summary>
     /// Regression guard for the vibe-access verify finding (run f7ebdbd1): UpdateUI and
@@ -819,7 +982,8 @@ public class EndToEndContractTests
             new NoOpLauncher(),
             new PluginUITranslator(uiHost),
             new StubActivityProvider(),
-            new StubActivityMarker());
+            new StubActivityMarker(),
+            new StubAccountStopper());
 
         // Production shape: accessor returns null; the x-plugin-id header is the identity.
         var interceptor = new CapabilityInterceptor(
@@ -921,7 +1085,8 @@ public class EndToEndContractTests
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
             new StubActivityProvider(),
-            new StubActivityMarker());
+            new StubActivityMarker(),
+            new StubAccountStopper());
 
         // Production shape: accessor returns null. Header is the only path to a plugin id.
         var interceptor = new CapabilityInterceptor(
@@ -996,7 +1161,8 @@ public class EndToEndContractTests
             new NoOpLauncher(),
             new PluginUITranslator(new NullUIHost()),
             new StubActivityProvider(),
-            new StubActivityMarker());
+            new StubActivityMarker(),
+            new StubAccountStopper());
 
         var interceptor = new CapabilityInterceptor(
             currentPluginAccessor: () => null,
@@ -1128,6 +1294,19 @@ public class EndToEndContractTests
 
         public Task<CurrentServerInfo?> GetCurrentServerAsync()
             => Task.FromResult<CurrentServerInfo?>(null);
+    }
+
+    private sealed class StubAccountStopper : IPluginAccountStopper
+    {
+        public HashSet<string> Tracked { get; } = new(StringComparer.Ordinal);
+        public List<string> Stopped { get; } = new();
+        public IReadOnlyList<string> TrackedAccountIds => Tracked.ToList();
+        public bool StopAccount(string accountId)
+        {
+            if (!Tracked.Contains(accountId)) return false;
+            Stopped.Add(accountId);
+            return true;
+        }
     }
 
     private sealed class NullUIHost : IPluginUIHost

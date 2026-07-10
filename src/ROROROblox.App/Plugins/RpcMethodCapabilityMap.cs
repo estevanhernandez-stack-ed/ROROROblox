@@ -6,6 +6,14 @@ namespace ROROROblox.App.Plugins;
 /// map for every call: a null value means the method is bootstrap or read-free
 /// or downstream-gated; a non-null value means the calling plugin must hold
 /// that capability in its consent record.
+///
+/// <para><b>Absence is not permission.</b> A method missing from this map is
+/// <em>unknown</em>, not ungated — <see cref="CapabilityInterceptor"/> denies it.
+/// That distinction is why <see cref="IsKnown"/> exists alongside
+/// <see cref="Required"/>: <c>Required</c> returning null is ambiguous on its own,
+/// and reading it as "no capability needed" is exactly how UpdateUI and RemoveUI
+/// shipped ungated (PR #60). <see cref="AssertExhaustive"/> makes the failure
+/// mode a startup crash instead of a silent hole.</para>
 /// </summary>
 public static class RpcMethodCapabilityMap
 {
@@ -22,6 +30,7 @@ public static class RpcMethodCapabilityMap
         ["GetCurrentServer"] = PluginCapability.HostQueriesCurrentServer,
         ["GetAccountActivity"] = PluginCapability.HostQueriesAccountActivity,
         ["MarkAccountActive"] = PluginCapability.HostCommandsMarkAccountActive,
+        ["StopAccounts"] = PluginCapability.HostCommandsStopAccounts,
         ["AddTrayMenuItem"] = PluginCapability.HostUITrayMenu,
         ["AddRowBadge"] = PluginCapability.HostUIRowBadge,
         ["AddStatusPanel"] = PluginCapability.HostUIStatusPanel,
@@ -29,12 +38,53 @@ public static class RpcMethodCapabilityMap
         ["RemoveUI"] = null,                     // gated by handle ownership downstream
     };
 
+    /// <summary>
+    /// The capability <paramref name="methodName"/> requires, or null when it is ungated.
+    /// Also returns null for an UNKNOWN method — callers must check <see cref="IsKnown"/>
+    /// first, or use <see cref="TryGetRequired"/>, which collapses the ambiguity.
+    /// </summary>
     public static string? Required(string methodName)
     {
         return Map.TryGetValue(methodName, out var cap) ? cap : null;
     }
 
+    /// <summary>
+    /// True when the method appears in the map at all, gated or not. False means the
+    /// method is unrecognized and must be denied.
+    /// </summary>
     public static bool IsKnown(string methodName) => Map.ContainsKey(methodName);
+
+    /// <summary>
+    /// Unambiguous lookup. Returns false when the method is unknown (deny). Returns true
+    /// when it is known, with <paramref name="capability"/> set to the required capability
+    /// or null when the method is deliberately ungated.
+    /// </summary>
+    public static bool TryGetRequired(string methodName, out string? capability)
+        => Map.TryGetValue(methodName, out capability);
+
+    /// <summary>
+    /// Every method on the RoRoRoHost service must have an entry here. Called at host
+    /// startup so a method added to the .proto but forgotten in this map crashes the app
+    /// instead of shipping ungated.
+    /// </summary>
+    public static void AssertExhaustive()
+    {
+        var service = PluginContract.PluginContractReflection.Descriptor.Services
+            .FirstOrDefault(s => s.Name == "RoRoRoHost")
+            ?? throw new InvalidOperationException("RoRoRoHost service not found in the generated descriptor.");
+
+        var missing = service.Methods
+            .Select(m => m.Name)
+            .Where(name => !Map.ContainsKey(name))
+            .ToList();
+
+        if (missing.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"RpcMethodCapabilityMap is missing entries for: {string.Join(", ", missing)}. " +
+                "Every RoRoRoHost method needs an entry — use null for a deliberately ungated method.");
+        }
+    }
 
     /// <summary>
     /// Extract the trailing method name from a full Grpc method path

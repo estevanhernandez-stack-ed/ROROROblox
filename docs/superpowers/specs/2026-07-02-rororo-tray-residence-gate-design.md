@@ -9,6 +9,39 @@
 **Related:** [`2026-06-30-rororo-limited-followups.md`](2026-06-30-rororo-limited-followups.md) §2 (the 0.727 facts), `docs/reviews/2026-06-12-raw-findings.txt` line ~332 (compose stop-all + retry instead of dead-ending)
 ---
 
+> ## ⚠️ Banner-correct (2026-07-10) — the mutex model in this spec is wrong
+>
+> **Originally proposed** (§Design, "Acquire-first"): *"`MutexHolder.Acquire()` already fail-fasts
+> (`CreateMutex` + `ERROR_ALREADY_EXISTS` → `false`, no waiting), so the primitive exists… Retry
+> becomes trivially correct — just call `Acquire()` again."*
+>
+> **Actually true (measured 2026-07-10):** `Local\ROBLOX_singletonEvent` is an **Event**, created by
+> Roblox. RoRoRo creates a **Mutex** of the same name. It is a name race between two different
+> kernel object types, not a lock anybody holds. The Roblox case therefore **never reaches**
+> `ERROR_ALREADY_EXISTS` — `CreateMutex` fails earlier with `ERROR_INVALID_HANDLE` (6) because the
+> name is taken by an incompatible type. `ERROR_ALREADY_EXISTS` (183) means something else entirely:
+> another RoRoRo or a compatible tool squats the name as a Mutex, in which case **multi-instance
+> still works** and blocking the user was wrong.
+>
+> **Consequences this spec did not anticipate:**
+>
+> 1. Retry was **not** trivially correct. The kernel object outlives the process until its last
+>    handle closes, so a single instantaneous `Acquire()` right after quitting Roblox loses. This is
+>    the mechanical cause of the long-standing "press Retry twice" behavior.
+> 2. `IsHeldElsewhere()` probed with `OpenMutex`, which cannot see an Event, so the runtime contested
+>    banner this spec introduced **never fired against real Roblox**. Its tests held the name with
+>    another `MutexHolder` (a Mutex), i.e. only the compatible-tool case.
+> 3. The tray client takes the Event at **process start**, not at game launch — so with
+>    Roblox-on-startup, RoRoRo can never win the name on a cold boot.
+>
+> Fixed in [`2026-07-10-singleton-name-race-design.md`](2026-07-10-singleton-name-race-design.md):
+> typed `MutexAcquireOutcome`, an outcome-routed gate (compatible tool → no modal), a both-types
+> probe, and a bounded-poll Retry.
+>
+> Do **not** rewrite the prose below — this banner is the correction (pattern v).
+
+---
+
 > ## ⚠️ Banner-correct (2026-07-02, post-build)
 >
 > One §5 drift from the shipped build: the BLOCKED modal's mono-micro tag `MULTI-INSTANCE NEEDS THE LOCK` was **dropped** — its row was repurposed for the amber still-locked tick (`Still locked — Roblox is still running.`), which carries actual state instead of a static label. Deliberate plan-level trade (Task 6), caught at the whole-branch review. Everything else in §5/§6 shipped char-exact.

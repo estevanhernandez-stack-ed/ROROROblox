@@ -7,6 +7,30 @@
 
 ---
 
+> **BUILD-REALITY CORRECTION (2026-07-10) — it is a name race, not a held mutex.**
+>
+> **Originally proposed** (the technical core, item 1): *"Hold the named mutex `ROBLOX_singletonEvent`
+> so subsequent Roblox launches don't see themselves as the singleton."*
+>
+> **Actually true (measured 2026-07-10):** `Local\ROBLOX_singletonEvent` is an **Event**, created by
+> Roblox. RoRoRo creates a **Mutex** under the same name. Windows gives a name to exactly one object,
+> so whoever creates it first wins and the loser's create fails *because the name is taken by an
+> incompatible object type*. RoRoRo does not hold a lock Roblox wants — it **squats the name**, so
+> Roblox's own `CreateEvent` fails and Roblox never installs its single-instance enforcement.
+>
+> **Consequence:** `CreateMutex` failing with `ERROR_INVALID_HANDLE` (6) means **Roblox** owns the
+> name and multi-instance is genuinely off. Failing with `ERROR_ALREADY_EXISTS` (183) means another
+> RoRoRo or a compatible tool owns it as a Mutex — Roblox already lost, so **multi-instance still
+> works**. Those two were conflated into a bare `false` for the life of the product.
+>
+> Corrected implementation and full measurements in
+> [`2026-07-10-singleton-name-race-design.md`](2026-07-10-singleton-name-race-design.md). Roblox's own
+> branch (that it skips enforcement because `CreateEvent` failed) is inferred, not instrumented.
+>
+> Do **not** rewrite the prose below — this banner is the correction (pattern v).
+
+---
+
 > **BUILD-REALITY CORRECTION (2026-05-28) — the mutex name is NOT remote-config-driven.**
 >
 > **Originally proposed** (§7.1, and echoed in CLAUDE.md): *"The known-compatible-range and current mutex name live in a remote config file fetched at app startup, not baked into the binary... when Roblox renames the mutex, we publish an updated config + Velopack release within hours."*

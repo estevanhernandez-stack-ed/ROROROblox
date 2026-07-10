@@ -82,53 +82,60 @@
       "auth": "session"
     },
     {
+      "name": "StopAccounts",
+      "method": "POST",
+      "path": "/rororo.plugin.v1.RoRoRoHost/StopAccounts",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:50",
+      "auth": "session"
+    },
+    {
       "name": "AddTrayMenuItem",
       "method": "POST",
       "path": "/rororo.plugin.v1.RoRoRoHost/AddTrayMenuItem",
-      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:42",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:53",
       "auth": "session"
     },
     {
       "name": "AddRowBadge",
       "method": "POST",
       "path": "/rororo.plugin.v1.RoRoRoHost/AddRowBadge",
-      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:43",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:54",
       "auth": "session"
     },
     {
       "name": "AddStatusPanel",
       "method": "POST",
       "path": "/rororo.plugin.v1.RoRoRoHost/AddStatusPanel",
-      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:44",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:55",
       "auth": "session"
     },
     {
       "name": "UpdateUI",
       "method": "POST",
       "path": "/rororo.plugin.v1.RoRoRoHost/UpdateUI",
-      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:45",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:56",
       "auth": "session"
     },
     {
       "name": "RemoveUI",
       "method": "POST",
       "path": "/rororo.plugin.v1.RoRoRoHost/RemoveUI",
-      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:46",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:57",
       "auth": "session"
     }
   ],
   "unmapped": [
     {
-      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:51",
-      "reason": "reverse-direction: Plugin.OnUIInteraction is implemented by the plugin and called by the host — not an agent-callable host affordance"
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:62",
+      "reason": "reverse-direction: Plugin.OnUIInteraction is implemented by the plugin and called by the host, not an agent-callable host affordance"
     },
     {
-      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:52",
-      "reason": "reverse-direction: Plugin.OnConsentChanged is implemented by the plugin and called by the host — not an agent-callable host affordance"
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:63",
+      "reason": "reverse-direction: Plugin.OnConsentChanged is implemented by the plugin and called by the host, not an agent-callable host affordance"
     },
     {
-      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:53",
-      "reason": "reverse-direction: Plugin.OnShutdown is implemented by the plugin and called by the host — not an agent-callable host affordance"
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:64",
+      "reason": "reverse-direction: Plugin.OnShutdown is implemented by the plugin and called by the host, not an agent-callable host affordance"
     }
   ]
 }

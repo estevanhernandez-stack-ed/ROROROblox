@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "app": "ROROROblox",
   "adapter": "agnostic:dotnet-wpf-desktop",
-  "generatedAt": "2026-07-10T03:56:59.525Z",
+  "generatedAt": "2026-07-10T12:19:03.861Z",
   "baseUrls": {
     "dev": "npipe://./pipe/rororo-plugin-host"
   },
@@ -10,7 +10,7 @@
   "affordances": [
     {
       "id": "handshake",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/Handshake",
+      "description": "Bootstrap call — must be the first rpc on a new pipe connection. Send plugin_id, manifest SHA-256, contract version, and declared capabilities; the host accepts or rejects. Every session-auth affordance requires this first, plus the x-plugin-id metadata header on each subsequent call.",
       "tier": "prod-safe",
       "kind": "act",
       "transport": {
@@ -25,9 +25,9 @@
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
-        "detail": "answered per contract with rejection: 'Plugin vibe-access-verify is not installed.'"
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
+        "detail": "answered per contract with rejection: \"Plugin vibe-access-verify is not installed.\""
       },
       "overrides": {
         "description": "Bootstrap call — must be the first rpc on a new pipe connection. Send plugin_id, manifest SHA-256, contract version, and declared capabilities; the host accepts or rejects. Every session-auth affordance requires this first, plus the x-plugin-id metadata header on each subsequent call."
@@ -35,7 +35,7 @@
     },
     {
       "id": "get-host-info",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/GetHostInfo",
+      "description": "Read RoRoRo's version and multi-instance state (On / Off / Error). Free read — no handshake or consent required; the per-user pipe ACL is the only gate.",
       "tier": "prod-safe",
       "kind": "read",
       "transport": {
@@ -50,8 +50,8 @@
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
         "detail": "host 1.9.0, multi-instance On"
       },
       "overrides": {
@@ -60,7 +60,7 @@
     },
     {
       "id": "get-running-accounts",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/GetRunningAccounts",
+      "description": "Read the running Roblox clients RoRoRo launched: account id (Guid), Roblox user id, display name, PID, and place id/name from presence tracking (0 / empty means unknown — treat as no game info, never a game named \"\"). Free read — no handshake or consent required.",
       "tier": "prod-safe",
       "kind": "read",
       "transport": {
@@ -75,8 +75,8 @@
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
         "detail": "0 running account(s)"
       },
       "overrides": {
@@ -85,7 +85,7 @@
     },
     {
       "id": "subscribe-account-launched",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/SubscribeAccountLaunched",
+      "description": "Server-streaming subscription: one event per account launch (ids, display name, PID, timestamp). Place identity often lags at launch time — re-query get-running-accounts for fresh identity. Requires consent to capability host.events.account-launched.",
       "tier": "prod-safe",
       "kind": "read",
       "transport": {
@@ -100,9 +100,9 @@
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
-        "detail": "auth-gate-held (PermissionDenied: host.events.account-launched not granted)"
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
+        "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.events.account-launched'.)"
       },
       "overrides": {
         "description": "Server-streaming subscription: one event per account launch (ids, display name, PID, timestamp). Place identity often lags at launch time — re-query get-running-accounts for fresh identity. Requires consent to capability host.events.account-launched."
@@ -110,7 +110,7 @@
     },
     {
       "id": "subscribe-account-exited",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/SubscribeAccountExited",
+      "description": "Server-streaming subscription: one event per account exit (account id, Roblox user id, PID, exit timestamp). Requires consent to capability host.events.account-exited.",
       "tier": "prod-safe",
       "kind": "read",
       "transport": {
@@ -125,9 +125,9 @@
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
-        "detail": "auth-gate-held (PermissionDenied: host.events.account-exited not granted)"
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
+        "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.events.account-exited'.)"
       },
       "overrides": {
         "description": "Server-streaming subscription: one event per account exit (account id, Roblox user id, PID, exit timestamp). Requires consent to capability host.events.account-exited."
@@ -135,7 +135,7 @@
     },
     {
       "id": "subscribe-mutex-state-changed",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/SubscribeMutexStateChanged",
+      "description": "Server-streaming subscription: multi-instance mutex state transitions (On / Off / Error). Requires consent to capability host.events.mutex-state-changed.",
       "tier": "prod-safe",
       "kind": "read",
       "transport": {
@@ -150,9 +150,9 @@
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
-        "detail": "auth-gate-held (PermissionDenied: host.events.mutex-state-changed not granted)"
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
+        "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.events.mutex-state-changed'.)"
       },
       "overrides": {
         "description": "Server-streaming subscription: multi-instance mutex state transitions (On / Off / Error). Requires consent to capability host.events.mutex-state-changed."
@@ -160,7 +160,7 @@
     },
     {
       "id": "request-launch",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/RequestLaunch",
+      "description": "Command RoRoRo to launch a saved account by account_id. The cookie → auth-ticket → roblox-player: pipeline runs entirely host-side; no credentials ever cross the pipe. Returns ok / failure_reason / PID. Launches a real Roblox client — do not call casually. Requires consent to capability host.commands.request-launch.",
       "tier": "prod-safe",
       "kind": "act",
       "transport": {
@@ -175,9 +175,9 @@
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
-        "detail": "auth-gate-held (PermissionDenied: host.commands.request-launch not granted)"
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
+        "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.commands.request-launch'.)"
       },
       "overrides": {
         "description": "Command RoRoRo to launch a saved account by account_id. The cookie → auth-ticket → roblox-player: pipeline runs entirely host-side; no credentials ever cross the pipe. Returns ok / failure_reason / PID. Launches a real Roblox client — do not call casually. Requires consent to capability host.commands.request-launch."
@@ -185,7 +185,7 @@
     },
     {
       "id": "request-launch-target",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/RequestLaunchTarget",
+      "description": "Launch a saved account into a specific server: pass a share_url (private-server share link, PlaceLauncher accessCode URL, roblox.com/share token, public game URL, or bare place id) or follow_user_id to follow a friend (Roblox permission-checks the follow). Launches a real Roblox client. Requires consent to capability host.commands.launch-target.",
       "tier": "prod-safe",
       "kind": "act",
       "transport": {
@@ -200,9 +200,9 @@
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
-        "detail": "auth-gate-held (PermissionDenied: host.commands.launch-target not granted)"
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
+        "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.commands.launch-target'.)"
       },
       "overrides": {
         "description": "Launch a saved account into a specific server: pass a share_url (private-server share link, PlaceLauncher accessCode URL, roblox.com/share token, public game URL, or bare place id) or follow_user_id to follow a friend (Roblox permission-checks the follow). Launches a real Roblox client. Requires consent to capability host.commands.launch-target."
@@ -210,7 +210,7 @@
     },
     {
       "id": "get-current-server",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/GetCurrentServer",
+      "description": "Read the most recently launched private server: ready-to-share URL, place name/id, launch timestamp. present=false when no private server has been launched this session. Requires consent to capability host.queries.current-server.",
       "tier": "prod-safe",
       "kind": "read",
       "transport": {
@@ -225,9 +225,9 @@
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
-        "detail": "auth-gate-held (PermissionDenied: host.queries.current-server not granted)"
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
+        "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.queries.current-server'.)"
       },
       "overrides": {
         "description": "Read the most recently launched private server: ready-to-share URL, place name/id, launch timestamp. present=false when no private server has been launched this session. Requires consent to capability host.queries.current-server."
@@ -235,7 +235,7 @@
     },
     {
       "id": "get-account-activity",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/GetAccountActivity",
+      "description": "Read per-account idle state: last-activity timestamp and seconds since, per running account. Timestamps only — never input contents. Requires consent to capability host.queries.account-activity.",
       "tier": "prod-safe",
       "kind": "read",
       "transport": {
@@ -250,9 +250,9 @@
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
-        "detail": "auth-gate-held (PermissionDenied: host.queries.account-activity not granted)"
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
+        "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.queries.account-activity'.)"
       },
       "overrides": {
         "description": "Read per-account idle state: last-activity timestamp and seconds since, per running account. Timestamps only — never input contents. Requires consent to capability host.queries.account-activity."
@@ -260,7 +260,7 @@
     },
     {
       "id": "mark-account-active",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/MarkAccountActive",
+      "description": "Credit an account as active after the plugin acts on its window — the host's idle heuristic can't see plugin-synthesized input, so keep-alive plugins call this to stop idle warnings from misfiring. Requires consent to capability host.commands.mark-account-active.",
       "tier": "prod-safe",
       "kind": "act",
       "transport": {
@@ -275,17 +275,42 @@
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
-        "detail": "auth-gate-held (PermissionDenied: host.commands.mark-account-active not granted)"
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
+        "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.commands.mark-account-active'.)"
       },
       "overrides": {
         "description": "Credit an account as active after the plugin acts on its window — the host's idle heuristic can't see plugin-synthesized input, so keep-alive plugins call this to stop idle warnings from misfiring. Requires consent to capability host.commands.mark-account-active."
       }
     },
     {
+      "id": "stop-accounts",
+      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/StopAccounts",
+      "tier": "prod-safe",
+      "kind": "act",
+      "transport": {
+        "type": "http",
+        "method": "POST",
+        "path": "/rororo.plugin.v1.RoRoRoHost/StopAccounts"
+      },
+      "input": null,
+      "output": null,
+      "auth": "session",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:50",
+      "origin": "existing",
+      "verified": {
+        "status": "pass",
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
+        "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.commands.stop-accounts'.)"
+      },
+      "overrides": {
+        "description": "Close Roblox clients RoRoRo launched, by account. Empty account_ids means EVERY tracked account. Graceful close (CloseMainWindow) first, hard kill only as fallback; untracked processes are unreachable. DESTRUCTIVE - closes real Roblox clients and any unsaved in-game progress is lost. stopped_count means the stop was issued, not that the client exited: poll get-running-accounts until the account disappears before relaunching it. Requires consent to capability host.commands.stop-accounts."
+      }
+    },
+    {
       "id": "add-tray-menu-item",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/AddTrayMenuItem",
+      "description": "Add an item to RoRoRo's tray menu (label, tooltip, enabled). Returns an opaque UIHandle for update-ui / remove-ui; clicks stream back via the plugin's OnUIInteraction callback. Requires consent to capability host.ui.tray-menu.",
       "tier": "prod-safe",
       "kind": "act",
       "transport": {
@@ -296,13 +321,13 @@
       "input": null,
       "output": null,
       "auth": "session",
-      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:42",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:53",
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
-        "detail": "auth-gate-held (PermissionDenied: host.ui.tray-menu not granted)"
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
+        "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.ui.tray-menu'.)"
       },
       "overrides": {
         "description": "Add an item to RoRoRo's tray menu (label, tooltip, enabled). Returns an opaque UIHandle for update-ui / remove-ui; clicks stream back via the plugin's OnUIInteraction callback. Requires consent to capability host.ui.tray-menu."
@@ -310,7 +335,7 @@
     },
     {
       "id": "add-row-badge",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/AddRowBadge",
+      "description": "Add a badge to each saved-account row (text, optional hex color — defaults to brand cyan, tooltip). Returns a UIHandle. Requires consent to capability host.ui.row-badge.",
       "tier": "prod-safe",
       "kind": "act",
       "transport": {
@@ -321,13 +346,13 @@
       "input": null,
       "output": null,
       "auth": "session",
-      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:43",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:54",
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
-        "detail": "auth-gate-held (PermissionDenied: host.ui.row-badge not granted)"
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
+        "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.ui.row-badge'.)"
       },
       "overrides": {
         "description": "Add a badge to each saved-account row (text, optional hex color — defaults to brand cyan, tooltip). Returns a UIHandle. Requires consent to capability host.ui.row-badge."
@@ -335,7 +360,7 @@
     },
     {
       "id": "add-status-panel",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/AddStatusPanel",
+      "description": "Add a status panel to the main window (title + basic-markdown body: bold, italic, lists). Returns a UIHandle. Requires consent to capability host.ui.status-panel.",
       "tier": "prod-safe",
       "kind": "act",
       "transport": {
@@ -346,13 +371,13 @@
       "input": null,
       "output": null,
       "auth": "session",
-      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:44",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:55",
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
-        "detail": "auth-gate-held (PermissionDenied: host.ui.status-panel not granted)"
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
+        "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.ui.status-panel'.)"
       },
       "overrides": {
         "description": "Add a status panel to the main window (title + basic-markdown body: bold, italic, lists). Returns a UIHandle. Requires consent to capability host.ui.status-panel."
@@ -360,7 +385,7 @@
     },
     {
       "id": "update-ui",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/UpdateUI",
+      "description": "Update a UI element this plugin created, addressed by UIHandle (menu item, row badge, or status panel spec). No capability entry — gated downstream by handle ownership: only the creating plugin's handles are accepted.",
       "tier": "prod-safe",
       "kind": "act",
       "transport": {
@@ -371,13 +396,13 @@
       "input": null,
       "output": null,
       "auth": "session",
-      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:45",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:56",
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
-        "detail": "handle-gate-held (PermissionDenied: UI handle 'va-bogus-handle' is not owned by plugin 'vibe-access-verify')"
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
+        "detail": "handle-gate-held (PermissionDenied: UI handle 'va-bogus-handle' is not owned by plugin 'vibe-access-verify'.)"
       },
       "overrides": {
         "description": "Update a UI element this plugin created, addressed by UIHandle (menu item, row badge, or status panel spec). No capability entry — gated downstream by handle ownership: only the creating plugin's handles are accepted."
@@ -385,7 +410,7 @@
     },
     {
       "id": "remove-ui",
-      "description": "Act: POST /rororo.plugin.v1.RoRoRoHost/RemoveUI",
+      "description": "Remove a UI element this plugin created, addressed by UIHandle. Gated downstream by handle ownership.",
       "tier": "prod-safe",
       "kind": "act",
       "transport": {
@@ -396,13 +421,13 @@
       "input": null,
       "output": null,
       "auth": "session",
-      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:46",
+      "sourceRef": "src/ROROROblox.PluginContract/Protos/plugin_contract.proto:57",
       "origin": "existing",
       "verified": {
         "status": "pass",
-        "at": "2026-07-10T04:38:53.234Z",
-        "runId": "34cf3714",
-        "detail": "handle-gate-held (PermissionDenied: UI handle 'va-bogus-handle' is not owned by plugin 'vibe-access-verify')"
+        "at": "2026-07-10T12:19:55.964Z",
+        "runId": "b9972f14",
+        "detail": "handle-gate-held (PermissionDenied: UI handle 'va-bogus-handle' is not owned by plugin 'vibe-access-verify'.)"
       },
       "overrides": {
         "description": "Remove a UI element this plugin created, addressed by UIHandle. Gated downstream by handle ownership."

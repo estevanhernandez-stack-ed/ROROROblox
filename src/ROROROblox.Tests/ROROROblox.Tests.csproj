@@ -23,4 +23,16 @@
     <ProjectReference Include="..\ROROROblox.App\ROROROblox.App.csproj" />
   </ItemGroup>
 
+  <!-- Modal XAML copied next to the test binary so ModalDefaultButtonSafetyTests can assert that
+       no destructive button is the Enter-key default. Instantiating a WPF Window in a test needs an
+       STA dispatcher; parsing the shipped markup checks the same property with none of that. -->
+  <ItemGroup>
+    <None Include="..\ROROROblox.App\Modals\RobloxAlreadyRunningWindow.xaml"
+          Link="Modals\RobloxAlreadyRunningWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\ROROROblox.App\Modals\StopAllConfirmWindow.xaml"
+          Link="Modals\StopAllConfirmWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\ROROROblox.App\Modals\LeftoverProcessesWindow.xaml"
+          Link="Modals\LeftoverProcessesWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

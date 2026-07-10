@@ -25,6 +25,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     private readonly PluginUITranslator _uiTranslator;
     private readonly IActivitySnapshotProvider _activityProvider;
     private readonly IAccountActivityMarker _activityMarker;
+    private readonly IPluginAccountStopper _accountStopper;
 
     public PluginHostService(
         IInstalledPluginsLookup registry,
@@ -36,7 +37,8 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         IPluginLaunchInvoker launcher,
         PluginUITranslator uiTranslator,
         IActivitySnapshotProvider activityProvider,
-        IAccountActivityMarker activityMarker)
+        IAccountActivityMarker activityMarker,
+        IPluginAccountStopper accountStopper)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _hostVersion = hostVersion ?? throw new ArgumentNullException(nameof(hostVersion));
@@ -48,6 +50,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         _uiTranslator = uiTranslator ?? throw new ArgumentNullException(nameof(uiTranslator));
         _activityProvider = activityProvider ?? throw new ArgumentNullException(nameof(activityProvider));
         _activityMarker = activityMarker ?? throw new ArgumentNullException(nameof(activityMarker));
+        _accountStopper = accountStopper ?? throw new ArgumentNullException(nameof(accountStopper));
     }
 
     public override Task<HandshakeResponse> Handshake(HandshakeRequest request, ServerCallContext context)
@@ -141,6 +144,38 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     {
         _activityMarker.Mark(request.AccountId);
         return Task.FromResult(new Empty());
+    }
+
+    // =====================================================================
+    // StopAccounts (agent-ops surface, NuGet 0.6.0).
+    //
+    // Per-account close of the clients RoRoRo tracks — the recovery half of
+    // "the internet dropped, put my accounts back". An empty account_ids means
+    // every tracked account; an id we don't track lands in failed_account_ids
+    // rather than failing the batch, so a partial recovery still reports what
+    // it managed. Untracked processes are unreachable from here by design.
+    // Capability gate (host.commands.stop-accounts) is enforced upstream.
+    // =====================================================================
+
+    public override Task<StopAccountsResult> StopAccounts(StopAccountsRequest request, ServerCallContext context)
+    {
+        var targets = request.AccountIds.Count > 0
+            ? request.AccountIds.Distinct(StringComparer.Ordinal).ToList()
+            : _accountStopper.TrackedAccountIds.ToList();
+
+        var result = new StopAccountsResult();
+        foreach (var accountId in targets)
+        {
+            if (_accountStopper.StopAccount(accountId))
+            {
+                result.StoppedCount++;
+            }
+            else
+            {
+                result.FailedAccountIds.Add(accountId);
+            }
+        }
+        return Task.FromResult(result);
     }
 
     // =====================================================================

@@ -28,6 +28,14 @@ public partial class App : Application
     private ILogger<App>? _log;
 
     /// <summary>
+    /// The plugin-host listener's bind task, set by <see cref="StartPluginHostListener"/> and
+    /// awaited by <see cref="StartPluginAutostart"/>. Null when the host failed to start, in
+    /// which case autostart is skipped: a plugin process that can't reach the pipe would fail
+    /// its first handshake anyway.
+    /// </summary>
+    private Task? _pluginHostListening;
+
+    /// <summary>
     /// True after the user explicitly Quits via the tray menu. MainWindow's Closing handler
     /// (item 9) checks this to decide between "minimize to tray" and "actually exit."
     /// </summary>
@@ -104,27 +112,59 @@ public partial class App : Application
         var mutex = _services.GetRequiredService<IMutexHolder>();
         var gate = _services.GetRequiredService<StartupGate>();
 
-        var acquired = mutex.Acquire();
-        var verdict = gate.Evaluate(acquired);
+        // TryAcquire, not Acquire: the gate needs to know WHY we lost the name. Roblox holding it
+        // (as an Event) means multi-instance is genuinely off; a compatible tool holding it (as a
+        // Mutex) means Roblox already lost its singleton and everything works. Same bool, opposite
+        // user experience. See MutexAcquireOutcome.
+        var acquireOutcome = mutex.TryAcquire();
+        var acquired = acquireOutcome == MutexAcquireOutcome.Acquired;
+        var verdict = gate.Evaluate(acquireOutcome);
+
+        // Bind the plugin-host pipe BEFORE the gate's modals. Both modals below block OnStartup
+        // in a nested message loop, and the leftover modal fires whenever stale Roblox clients
+        // exist — the exact condition an agent is trying to recover from. Binding here means the
+        // pipe is reachable while the dialog waits for a human. Multi-instance state is already
+        // resolved (mutex.Acquire above), so a plugin reading GetHostInfo sees the truth.
+        // Autostart is deliberately deferred until after the gate — see StartPluginAutostart.
+        StartPluginHostListener();
 
         var startedWithoutMutex = false;
-        if (verdict is StartupGateResult.Blocked)
+        if (verdict is StartupGateResult.SharedLock)
         {
-            // The mutex is held by someone else — offer in-place recovery (Close Roblox / Retry,
-            // which re-acquire) plus Start anyway (proceed without owning it — a benign squatter
-            // holds it, so multi-instance already works) and Quit. See the start-anyway design note.
-            var modal = new Modals.RobloxAlreadyRunningWindow(
-                onCloseForMe: () => TryRecoverMultiInstance(closeRobloxFirst: true),
-                onRetry: () => TryRecoverMultiInstance(closeRobloxFirst: false));
-            modal.ShowDialog();
-            var (proceed, holdsMutex) = AppLifecycle.BlockedStartupDecision.Resolve(modal.Outcome);
-            if (!proceed)
+            // Another RoRoRo or a compatible tool squats the name as a Mutex. Roblox therefore lost
+            // its own singleton and multi-instance works — there is nothing to recover from, so no
+            // modal. Proceed exactly as "Start anyway" would; the contested watcher banners the fact
+            // that we don't hold the handle.
+            startedWithoutMutex = true;
+            _log.LogInformation("Singleton name held by a compatible tool; starting without the handle (multi-instance still works).");
+        }
+        else if (verdict is StartupGateResult.Blocked)
+        {
+            // Roblox holds the name (as its Event). If the ONLY thing holding it is a windowless
+            // tray client — the Windows-startup --launch-to-tray process — take it over silently:
+            // it has no game window, so nothing is lost. Only a windowed (in-game) client, which
+            // may have unsaved progress, falls through to the confirming modal.
+            if (await TrySeamlessTakeoverAsync())
             {
-                Shutdown(0);
-                return;
+                acquired = true; // we now own the Event; a tray client was put back alongside us
             }
-            acquired = holdsMutex;              // Recovered holds it; Start anyway does not
-            startedWithoutMutex = !holdsMutex;  // borrowed start — the contested watcher will banner it
+            else
+            {
+                // In-game client present, or takeover couldn't reclaim — offer in-place recovery
+                // (Retry / Close Roblox, which re-attempt the name) plus Start anyway and Quit.
+                var modal = new Modals.RobloxAlreadyRunningWindow(
+                    onCloseForMe: () => TryRecoverMultiInstanceAsync(closeRobloxFirst: true),
+                    onRetry: () => TryRecoverMultiInstanceAsync(closeRobloxFirst: false));
+                modal.ShowDialog();
+                var (proceed, holdsMutex) = AppLifecycle.BlockedStartupDecision.Resolve(modal.Outcome);
+                if (!proceed)
+                {
+                    Shutdown(0);
+                    return;
+                }
+                acquired = holdsMutex;              // Recovered holds it; Start anyway does not
+                startedWithoutMutex = !holdsMutex;  // borrowed start — the contested watcher will banner it
+            }
         }
         else if (verdict is StartupGateResult.Leftover leftover)
         {
@@ -148,7 +188,9 @@ public partial class App : Application
         WirePluginEventBus();
         WireActivityMonitor();
         WireContestedWatcher(mainWindow); // Task 8
-        StartPluginHost();
+        // The gate has been answered by now (both modal branches above are blocking), so it is
+        // safe to let plugin processes launch. The pipe they handshake against bound earlier.
+        StartPluginAutostart();
         await InitializeIdleSettingsAsync();
 
         _log.LogInformation(
@@ -446,6 +488,8 @@ public partial class App : Application
         // services in Core; consumed by App.OnStartup before mutex.Acquire.
         services.AddSingleton<IRobloxRunningProbe, RobloxRunningProbe>();
         services.AddSingleton<IRobloxInstanceStopper, RobloxInstanceStopper>();
+        services.AddSingleton<IRobloxTrayLauncher>(sp =>
+            new RobloxTrayLauncher(sp.GetService<ILogger<RobloxTrayLauncher>>()));
         services.AddSingleton<StartupGate>();
 
         // Runtime contested-mutex watcher (Task 8) — polls only while we don't hold the mutex,
@@ -554,6 +598,8 @@ public partial class App : Application
         services.AddSingleton<ROROROblox.App.Plugins.IPluginUIHost,
             ROROROblox.App.Plugins.Adapters.WpfPluginUIHost>();
         services.AddSingleton<ROROROblox.App.Plugins.PluginUITranslator>();
+        services.AddSingleton<ROROROblox.App.Plugins.IPluginAccountStopper,
+            ROROROblox.App.Plugins.Adapters.ProcessTrackerAccountStopper>();
 
         services.AddSingleton(sp => new ROROROblox.App.Plugins.PluginHostService(
             sp.GetRequiredService<ROROROblox.App.Plugins.IInstalledPluginsLookup>(),
@@ -565,7 +611,8 @@ public partial class App : Application
             sp.GetRequiredService<ROROROblox.App.Plugins.IPluginLaunchInvoker>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.PluginUITranslator>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.IActivitySnapshotProvider>(),
-            sp.GetRequiredService<ROROROblox.App.Plugins.IAccountActivityMarker>()));
+            sp.GetRequiredService<ROROROblox.App.Plugins.IAccountActivityMarker>(),
+            sp.GetRequiredService<ROROROblox.App.Plugins.IPluginAccountStopper>()));
 
         // CapabilityInterceptor: per-connection plugin id binding is deferred to v1.5+
         // (the gRPC interceptor sees the call before any plugin-id metadata is bound).
@@ -922,11 +969,98 @@ public partial class App : Application
         }
     }
 
+    /// <summary>How long Retry keeps re-attempting the singleton name before giving up.</summary>
+    private static readonly TimeSpan RecoveryWindow = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan RecoveryInterval = TimeSpan.FromMilliseconds(150);
+
+    /// <summary>
+    /// Seamless takeover: when Roblox holds the singleton Event but ONLY via windowless tray
+    /// clients, close them, reclaim the name, and put a tray client back — no modal. Returns true
+    /// when RoRoRo now owns the Event; false means the caller should fall through to the BLOCKED
+    /// modal (an in-game client is present, or the reclaim failed).
+    ///
+    /// <para>The windowless-only gate (<see cref="SeamlessTakeover.WindowlessOnly"/>) is the whole
+    /// safety story: a windowed client may be mid-game, so it is never closed without the confirming
+    /// modal. A tray client has nothing to lose, so closing it silently is safe — and it is exactly
+    /// what makes RoRoRo coexist with Roblox-on-startup instead of blocking on every launch.</para>
+    /// </summary>
+    private async Task<bool> TrySeamlessTakeoverAsync()
+    {
+        if (_services is null) return false;
+
+        IReadOnlyList<RobloxProcessInfo> players;
+        try
+        {
+            players = _services.GetRequiredService<IRobloxRunningProbe>().GetRunningPlayers();
+        }
+        catch (Exception ex)
+        {
+            // Can't tell windowed from windowless — be conservative and let the modal handle it.
+            _log?.LogDebug(ex, "Seamless takeover: player scan threw; deferring to the modal.");
+            return false;
+        }
+
+        if (!SeamlessTakeover.WindowlessOnly(players))
+        {
+            return false; // in-game client (or nothing) — not eligible for a silent close
+        }
+
+        _log?.LogInformation(
+            "Seamless takeover: {Count} windowless tray Roblox client(s) hold the Event; closing and reclaiming.",
+            players.Count);
+
+        try { _services.GetRequiredService<IRobloxInstanceStopper>().StopAll(); }
+        catch (Exception ex) { _log?.LogWarning(ex, "Seamless takeover: StopAll failed; still attempting to acquire."); }
+
+        var mutex = _services.GetRequiredService<IMutexHolder>();
+        var outcome = await mutex
+            .TryAcquireWithRetryAsync(RecoveryWindow, RecoveryInterval)
+            .ConfigureAwait(true);
+
+        if (outcome != MutexAcquireOutcome.Acquired)
+        {
+            _log?.LogInformation(
+                "Seamless takeover: could not reclaim the name after closing tray clients ({Outcome}); deferring to the modal.",
+                outcome);
+            return false;
+        }
+
+        // Preserve the user's Roblox-at-startup intent: put a tray client back. It finds our Event,
+        // fails CreateEvent, and runs to tray in multi-instance mode alongside us. Best-effort — a
+        // failure here does not undo the takeover.
+        try
+        {
+            if (_services.GetRequiredService<IRobloxTrayLauncher>().RelaunchToTray())
+            {
+                _log?.LogInformation("Seamless takeover: relaunched Roblox to tray alongside RoRoRo.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Seamless takeover: tray relaunch failed; RoRoRo holds the Event regardless.");
+        }
+
+        var tray = _services.GetRequiredService<ITrayService>();
+        tray.UpdateStatus(MultiInstanceState.On);
+        TryRaiseMutexBusEvent("On");
+        return true;
+    }
+
     /// <summary>Shared multi-instance recovery: optionally close all Roblox first (with the
-    /// unsaved-state confirm when windowed clients exist), then (re-)acquire the mutex. Returns
-    /// whether RoRoRo now holds the lock. Used by the BLOCKED startup modal and the runtime
-    /// banner. Marshals nothing — callers invoke on the UI thread.</summary>
-    internal bool TryRecoverMultiInstance(bool closeRobloxFirst)
+    /// unsaved-state confirm when windowed clients exist), then re-attempt the singleton name.
+    /// Returns whether RoRoRo may proceed with multi-instance working. Used by the BLOCKED startup
+    /// modal and the runtime banner.
+    ///
+    /// <para><b>Why this polls.</b> The named kernel object dies only when its LAST handle closes,
+    /// and a just-quit (or just-killed) RobloxPlayerBeta takes a beat to tear down. The old code
+    /// made one instantaneous attempt, which is why "quit Roblox from the tray, then hit Retry"
+    /// so often failed the first press and worked the second. A bounded poll absorbs the lag.</para>
+    ///
+    /// <para>Returns true for <see cref="MutexAcquireOutcome.HeldByCompatibleTool"/> too: we don't
+    /// own the handle, but Roblox lost its singleton to that tool, so multi-instance works and
+    /// there is nothing left to recover.</para>
+    /// </summary>
+    internal async Task<bool> TryRecoverMultiInstanceAsync(bool closeRobloxFirst)
     {
         if (_services is null) return false;
         var mutex = _services.GetRequiredService<IMutexHolder>();
@@ -947,11 +1081,27 @@ public partial class App : Application
             catch (Exception ex) { _log?.LogWarning(ex, "Close-for-me StopAll failed; retrying acquire anyway."); }
         }
 
-        var acquired = mutex.Acquire();
+        var outcome = await mutex
+            .TryAcquireWithRetryAsync(RecoveryWindow, RecoveryInterval)
+            .ConfigureAwait(true); // continue on the UI thread — tray + modal touch it below
+
+        var state = outcome switch
+        {
+            MutexAcquireOutcome.Acquired => MultiInstanceState.On,
+            // A peer tool holds the name: multi-instance works, we just don't own the handle.
+            // "Off" (not "Error") is the honest tray state — same as a Start-anyway launch.
+            MutexAcquireOutcome.HeldByCompatibleTool => MultiInstanceState.Off,
+            _ => MultiInstanceState.Error,
+        };
+
         var tray = _services.GetRequiredService<ITrayService>();
-        tray.UpdateStatus(acquired ? MultiInstanceState.On : MultiInstanceState.Error);
-        TryRaiseMutexBusEvent(acquired ? "On" : "Error");
-        return acquired;
+        tray.UpdateStatus(state);
+        TryRaiseMutexBusEvent(state.ToString());
+
+        _log?.LogInformation("Multi-instance recovery finished: {Outcome} (closeRobloxFirst={CloseFirst}).",
+            outcome, closeRobloxFirst);
+
+        return outcome is MutexAcquireOutcome.Acquired or MutexAcquireOutcome.HeldByCompatibleTool;
     }
 
     /// <summary>LEFTOVER "Clean up + continue": stop leftover clients, with the unsaved-state
@@ -990,13 +1140,16 @@ public partial class App : Application
         watcher.ContestedChanged += (_, contested) =>
             Dispatcher.Invoke(() => vm.SetContested(contested));
 
-        vm.RequestCloseRobloxForMe += () =>
+        // async void by necessity — these are fire-and-forget VM events raised on the UI thread.
+        // TryRecoverMultiInstanceAsync polls for up to RecoveryWindow, so awaiting keeps the banner
+        // responsive instead of freezing the window while Roblox's handles drain.
+        vm.RequestCloseRobloxForMe += async () =>
         {
-            if (TryRecoverMultiInstance(closeRobloxFirst: true)) vm.SetContested(false);
+            if (await TryRecoverMultiInstanceAsync(closeRobloxFirst: true)) vm.SetContested(false);
         };
-        vm.RequestRetryMutex += () =>
+        vm.RequestRetryMutex += async () =>
         {
-            if (TryRecoverMultiInstance(closeRobloxFirst: false)) vm.SetContested(false);
+            if (await TryRecoverMultiInstanceAsync(closeRobloxFirst: false)) vm.SetContested(false);
         };
 
         watcher.Start();
@@ -1106,38 +1259,68 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Starts the gRPC plugin host (Kestrel + named pipe) in the background. The plugin
-    /// host failing must NOT break RoRoRo's normal launch — fully-broken plugin host =
-    /// RoRoRo still launches without plugin support.
+    /// Binds the gRPC plugin host (Kestrel + named pipe). Runs BEFORE the startup gate's
+    /// modals, deliberately.
+    ///
+    /// <para>The gate's modals are shown with <c>ShowDialog()</c>, which pumps a nested message
+    /// loop and blocks the rest of OnStartup until the user answers. When leftover Roblox
+    /// processes exist the leftover modal is always up, so binding the pipe after the gate meant
+    /// the pipe never bound until a human clicked a button. That is exactly the state an internet
+    /// outage leaves behind — dead clients still running — which is precisely when an agent needs
+    /// to reach RoRoRo to clear and relaunch them. Binding first makes the host reachable while
+    /// the dialog waits.</para>
+    ///
+    /// <para>Autostart is NOT kicked here. See <see cref="StartPluginAutostart"/> — no plugin
+    /// process may launch until the user has answered the gate.</para>
+    ///
+    /// <para>The plugin host failing must NOT break RoRoRo's normal launch — a fully-broken
+    /// plugin host still leaves RoRoRo launching, without plugin support.</para>
     /// </summary>
-    private void StartPluginHost()
+    private void StartPluginHostListener()
     {
         if (_services is null) return;
         try
         {
             var pluginHost = _services.GetRequiredService<ROROROblox.App.Plugins.PluginHostStartupService>();
             // Fire-and-forget: StartAsync's first await yields after Kestrel's bind, so
-            // App.OnStartup doesn't block on it. Failures inside StartAsync are caught
-            // by ContinueWith so they show up as a debug log instead of an unobserved task.
-            //
-            // After Kestrel is listening, kick off autostart for any plugin whose consent
-            // record has AutostartEnabled=true. Ordering matters — plugin processes handshake
-            // immediately on launch, so the gRPC server has to be up first or the first
-            // call fails with "pipe not found".
-            _ = pluginHost.StartAsync(CancellationToken.None).ContinueWith(t =>
+            // OnStartup doesn't block on it. The continuation observes a faulted task so a
+            // bind failure surfaces as a debug log rather than an unobserved exception.
+            _pluginHostListening = pluginHost.StartAsync(CancellationToken.None);
+            _ = _pluginHostListening.ContinueWith(t =>
             {
                 if (t.IsFaulted)
                 {
                     _log?.LogDebug(t.Exception, "PluginHostStartupService.StartAsync threw; plugins disabled this session.");
-                    return;
                 }
-                _ = Task.Run(StartPluginAutostartAsync);
             }, TaskScheduler.Default);
         }
         catch (Exception ex)
         {
+            _pluginHostListening = null;
             _log?.LogDebug(ex, "Resolving PluginHostStartupService threw; plugins disabled this session.");
         }
+    }
+
+    /// <summary>
+    /// Launches autostart-enabled plugin processes, once the startup gate has been answered.
+    ///
+    /// <para>Split from <see cref="StartPluginHostListener"/> so the pipe can bind while a gate
+    /// modal is still up without any plugin acting on the user's machine first. A leftover-processes
+    /// modal that the user answers with "Clean up + continue" stops Roblox clients — a keep-alive
+    /// or macro plugin racing that teardown is not a state worth allowing.</para>
+    ///
+    /// <para>Ordering still matters within the plugin path: plugin processes handshake immediately
+    /// on launch, so the gRPC server has to be listening first or that first call fails with
+    /// "pipe not found". Hence the continuation off the bind task rather than a bare call.</para>
+    /// </summary>
+    private void StartPluginAutostart()
+    {
+        if (_pluginHostListening is null) return; // never bound; nothing to handshake against
+        _ = _pluginHostListening.ContinueWith(t =>
+        {
+            if (t.IsFaulted) return; // already logged by the bind continuation
+            _ = Task.Run(StartPluginAutostartAsync);
+        }, TaskScheduler.Default);
     }
 
     /// <summary>
@@ -1204,6 +1387,31 @@ public partial class App : Application
         // process exit reclaim the pipe handle; OnExit must always finish promptly.
         if (_services is not null)
         {
+            // Stop plugin PROCESSES before the host they speak to. Nothing used to: the supervisor
+            // is not IDisposable and no shutdown path called StopAll(), so whether an autostarted
+            // plugin outlived RoRoRo depended entirely on the plugin. A well-behaved one notices
+            // the pipe drop and exits on its own (626labs.ur-task self-exits in ~0.2s). One that
+            // doesn't watch the pipe simply lingers — which is why StopByInstallDirAsync has to
+            // sweep for "a plugin process that outlived the RoRoRo session that launched it"
+            // before it can wipe an install dir.
+            //
+            // Teardown shouldn't be contingent on third-party goodwill. StopAll kills the tracked
+            // process trees (the starter passes entireProcessTree). There is no graceful path to
+            // take first: Plugin.OnShutdown exists in the contract but nothing has ever called it —
+            // no per-plugin gRPC client is wired. When that lands, it belongs here, ahead of the kill.
+            //
+            // Ordering: plugins first, then Kestrel. Killing them first means their open streams
+            // are gone before the host drains, rather than the host yanking the pipe out from
+            // under processes that are about to die anyway.
+            try
+            {
+                _services.GetService<ROROROblox.App.Plugins.PluginProcessSupervisor>()?.StopAll();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "PluginProcessSupervisor.StopAll threw on exit; plugin processes may be orphaned.");
+            }
+
             try
             {
                 var pluginHost = _services.GetService<ROROROblox.App.Plugins.PluginHostStartupService>();

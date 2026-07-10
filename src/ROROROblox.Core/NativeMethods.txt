@@ -1,5 +1,6 @@
 CreateMutexW
 OpenMutexW
+OpenEventW
 ReleaseMutex
 CloseHandle
 WaitForSingleObject

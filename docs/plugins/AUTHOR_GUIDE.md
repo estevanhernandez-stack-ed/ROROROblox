@@ -103,12 +103,23 @@ Gated by the gRPC interceptor. If you call a method whose required capability is
 | `host.commands.launch-target` | `RequestLaunchTarget(accountId, share_url \| follow_user_id)` — launch an account into a *specific* server: a private-server link, a public place, or by following a friend (NuGet 0.2.0+) |
 | `host.queries.current-server` | `GetCurrentServer()` — read the user's most-recently-launched private-server share link (NuGet 0.2.0+) |
 | `host.queries.account-activity` | `GetAccountActivity()` — pull per-account idle time (NuGet 0.3.0+) |
+| `host.commands.mark-account-active` | `MarkAccountActive(accountId)` — tell RoRoRo an account is still active after you act on its window, so idle warnings don't misfire (NuGet 0.5.0+) |
+| `host.commands.stop-accounts` | `StopAccounts(accountIds)` — close Roblox clients RoRoRo launched. Graceful close, hard kill as fallback. Destructive: unsaved in-game progress is lost (NuGet 0.6.0+) |
 | `host.ui.tray-menu` | `AddTrayMenuItem` — contribute a tray-menu entry |
 | `host.ui.row-badge` | `AddRowBadge` — paint a per-account badge in RoRoRo's main window |
 | `host.ui.status-panel` | `AddStatusPanel` — contribute a status panel pane |
 
-The following are **ungated** — every plugin can call them after handshake:
+The following need **no capability** — every plugin can call them after handshake:
 `Handshake`, `GetHostInfo`, `GetRunningAccounts`, `UpdateUI`, `RemoveUI`.
+
+`UpdateUI` and `RemoveUI` are ungated by *capability*, but they are **not unguarded**: they
+only accept a `UIHandle` your plugin created. Passing a handle you don't own — or one that was
+never issued — throws `PermissionDenied`. Both cases return the identical error, so you cannot
+probe which handle ids exist. Handles you removed stop working immediately.
+
+**Absence from this list is not permission.** Any rpc missing from the capability map is
+rejected with `PermissionDenied`, and RoRoRo refuses to start if the map doesn't cover every
+method on the service. There is no "forgot to gate it" path.
 
 ### `system.*` — what you do locally on the user's machine
 

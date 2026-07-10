@@ -71,6 +71,40 @@ public class PluginProcessSupervisorTests : IDisposable
         supervisor.StopAll();
 
         Assert.Equal(2, fake.KilledPids.Count);
+        Assert.Empty(supervisor.RunningPids);
+    }
+
+    /// <summary>
+    /// App.OnExit calls StopAll() unconditionally so autostarted plugins don't outlive RoRoRo.
+    /// That path also runs when the user quits at the startup gate, before autostart ever fired —
+    /// so StopAll on a supervisor that started nothing must be a silent no-op, not a throw on the
+    /// exit path.
+    /// </summary>
+    [Fact]
+    public void StopAll_WhenNothingStarted_IsNoOp()
+    {
+        var fake = new FakeProcessStarter();
+        var supervisor = new PluginProcessSupervisor(fake);
+
+        supervisor.StopAll();
+
+        Assert.Empty(fake.KilledPids);
+        Assert.Empty(supervisor.RunningPids);
+    }
+
+    /// <summary>Exit calls StopAll after other teardown may already have stopped plugins.</summary>
+    [Fact]
+    public void StopAll_IsIdempotent()
+    {
+        var fake = new FakeProcessStarter();
+        var supervisor = new PluginProcessSupervisor(fake);
+        supervisor.StartAutostart(new[] { MakePlugin("626labs.a", autostart: true) });
+
+        supervisor.StopAll();
+        supervisor.StopAll();
+
+        Assert.Single(fake.KilledPids); // not killed twice
+        Assert.Empty(supervisor.RunningPids);
     }
 
     [Fact]
