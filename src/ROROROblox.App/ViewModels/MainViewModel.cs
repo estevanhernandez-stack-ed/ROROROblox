@@ -161,6 +161,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         RenameItemCommand = new RelayCommand(p => _ = RenameItemAsync(BuildRenameTarget(p)));
         ResetItemNameCommand = new RelayCommand(p => _ = ResetItemNameAsync(BuildRenameTarget(p)));
         RemoveGameCommand = new RelayCommand(p => _ = RemoveGameAsync(p as FavoriteGame));
+        ToggleJoinViaFriendCommand = new RelayCommand(p => _ = ToggleJoinViaFriendAsync(p as AccountSummary));
 
         // Subscribe to favorites' default-changed event so the widget readout updates without a
         // manual re-fetch. Fires after SetDefaultAsync mutates + persists, on real change only.
@@ -374,6 +375,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand RenameItemCommand { get; }
     public ICommand ResetItemNameCommand { get; }
     public ICommand RemoveGameCommand { get; }
+
+    /// <summary>
+    /// Flips an account row's <see cref="AccountSummary.JoinViaFriend"/> preference and persists
+    /// it — the account row's context-menu checkbox (trust-aware squad launch, v1.9.0). Parameter
+    /// is the row's <see cref="AccountSummary"/>. See <see cref="ToggleJoinViaFriendAsync"/>.
+    /// </summary>
+    public ICommand ToggleJoinViaFriendCommand { get; }
 
     /// <summary>
     /// Saved games for the default-game widget dropdown. Same content as
@@ -1223,8 +1231,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     private async Task DispatchBatchAsync(
         IReadOnlyList<AccountSummary> targets,
-        LaunchTarget.PrivateServer? overrideTarget,
-        Func<AccountSummary, int, int, string> launchingBanner)
+        LaunchTarget? overrideTarget,
+        Func<AccountSummary, int, int, string> launchingBanner,
+        bool waitForLanding = false)
     {
         if (targets.Count == 0)
         {
@@ -1244,13 +1253,25 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
             await WaitForPreWarmAsync(first).ConfigureAwait(true);
 
+            if (waitForLanding)
+            {
+                // Careful mode: #1's install-pending pre-warm only waited for attach, not for it
+                // to land in-game — without this wait #2 could release into the same mid-join
+                // window careful mode exists to avoid.
+                var firstLanded = await WaitForLandingAsync(first).ConfigureAwait(true);
+                if (!firstLanded)
+                {
+                    StatusBanner = $"{first.DisplayName} didn't land within {(int)AnchorGate.MaxWait.TotalSeconds}s — continuing.";
+                }
+            }
+
             // Release the REST through the existing throttled loop. #1 is already up.
-            await ReleaseBatchAsync(targets, overrideTarget, launchingBanner, startIndex: 1).ConfigureAwait(true);
+            await ReleaseBatchAsync(targets, overrideTarget, launchingBanner, startIndex: 1, waitForLanding).ConfigureAwait(true);
             return;
         }
 
         // --- Normal path: strap-handled OR no update pending OR a single-account batch. ---
-        await ReleaseBatchAsync(targets, overrideTarget, launchingBanner, startIndex: 0).ConfigureAwait(true);
+        await ReleaseBatchAsync(targets, overrideTarget, launchingBanner, startIndex: 0, waitForLanding).ConfigureAwait(true);
     }
 
     /// <summary>
@@ -1328,22 +1349,59 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Careful-mode / anchor wait: poll the summary's presence-fed InGame flag until it lands or
+    /// the AnchorGate deadline passes. Presence is the existing 25s pipeline — no new Roblox
+    /// calls. Timeout falls through (never strands the batch); the caller narrates the fallback.
+    /// </summary>
+    private async Task<bool> WaitForLandingAsync(AccountSummary summary)
+    {
+        var deadline = DateTime.UtcNow + AnchorGate.MaxWait;
+        while (true)
+        {
+            if (AnchorGate.WaitComplete(summary.InGame))
+            {
+                return true;
+            }
+            if (AnchorGate.WaitExpired(DateTime.UtcNow, deadline))
+            {
+                _log.LogWarning("Landing wait for {Account} hit the {Cap}s cap; continuing.",
+                    summary.DisplayName, (int)AnchorGate.MaxWait.TotalSeconds);
+                return false;
+            }
+            await Task.Delay(PreWarmPollInterval).ConfigureAwait(true);
+        }
+    }
+
+    /// <summary>
     /// The throttled launch loop, factored out of Launch-multiple / Private-server so the pre-warm
     /// path can release the tail of the batch through the SAME loop (with the SAME 5s throttle and
     /// "(n of total)" banner) after #1 is up. <paramref name="startIndex"/> skips the already-warmed
-    /// first account; the throttle is applied between every dispatched client.
+    /// first account; the throttle is applied between every dispatched client. <paramref
+    /// name="waitForLanding"/> (careful mode, v1.9.0) serializes each join behind an
+    /// <see cref="AnchorGate"/>-bounded wait for that account's presence-fed InGame flag before
+    /// moving on — a trust-aware throttle beyond the fixed 5s inter-launch gap.
     /// </summary>
     private async Task ReleaseBatchAsync(
         IReadOnlyList<AccountSummary> targets,
-        LaunchTarget.PrivateServer? overrideTarget,
+        LaunchTarget? overrideTarget,
         Func<AccountSummary, int, int, string> launchingBanner,
-        int startIndex)
+        int startIndex,
+        bool waitForLanding = false)
     {
         for (var idx = startIndex; idx < targets.Count; idx++)
         {
             var summary = targets[idx];
             StatusBanner = launchingBanner(summary, idx + 1, targets.Count);
             await LaunchAccountAsync(summary, overrideTarget).ConfigureAwait(true);
+            if (waitForLanding)
+            {
+                // careful mode: serialize joins
+                var landed = await WaitForLandingAsync(summary).ConfigureAwait(true);
+                if (!landed)
+                {
+                    StatusBanner = $"{summary.DisplayName} didn't land within {(int)AnchorGate.MaxWait.TotalSeconds}s — continuing.";
+                }
+            }
             if (idx < targets.Count - 1)
             {
                 await Task.Delay(InterLaunchThrottle).ConfigureAwait(true);
@@ -1366,7 +1424,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var running = breakdown.Breakdown.Running;
         var expired = breakdown.Breakdown.Expired;
 
-        var window = new SquadLaunchWindow(_privateServerStore, _api, url => ResolveShareUrlAsync(url), eligible, running, expired)
+        var window = new SquadLaunchWindow(_privateServerStore, _api, _settings, url => ResolveShareUrlAsync(url), eligible, running, expired)
         {
             Owner = Application.Current.MainWindow,
         };
@@ -1382,6 +1440,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <see cref="InterLaunchThrottle"/> (5s) apart so
     /// the process tracker can FIFO-claim each <c>RobloxPlayerBeta.exe</c> by start time. The
     /// override target trumps each row's per-account SelectedGame.
+    /// <para>
+    /// v1.9.0 trust-aware squad launch: <see cref="SquadLaunchPlan.Build"/> splits the eligible batch
+    /// into <c>Direct</c> (dispatched straight into <paramref name="target"/>, unchanged from pre-v1.9)
+    /// and <c>Flagged</c> (<see cref="AccountSummary.JoinViaFriend"/> accounts, which instead follow a
+    /// landed direct-batch anchor via <see cref="LaunchTarget.FollowFriend"/> — spec §"Trust-aware squad
+    /// launch"). Zero flagged accounts collapses to exactly the pre-v1.9 single dispatch. Careful mode
+    /// (<see cref="IAppSettings.GetCarefulSquadLaunchAsync"/>) threads <c>waitForLanding</c> through
+    /// every dispatch path so joins serialize on presence instead of firing on the fixed throttle alone.
+    /// </para>
     /// </summary>
     private async Task SquadLaunchAsync(LaunchTarget.PrivateServer target)
     {
@@ -1396,18 +1463,92 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             var summaries = Accounts.ToList();
             var result = LaunchEligibility.Compute(summaries.Select(ToLaunchCandidate));
             var targets = MatchEligible(summaries, result.Eligible);
-            _log.LogInformation("PrivateServer: placeId={PlaceId}, {Count} eligible, {Running} running, {Expired} expired, {Deselected} deselected",
-                target.PlaceId, targets.Count, result.Breakdown.Running, result.Breakdown.Expired, result.Breakdown.Deselected);
+            var careful = await _settings.GetCarefulSquadLaunchAsync();
+            var plan = SquadLaunchPlan.Build(targets);
+            _log.LogInformation(
+                "PrivateServer: placeId={PlaceId}, {Count} eligible ({Direct} direct, {Flagged} join-via-friend), careful={Careful}, {Running} running, {Expired} expired, {Deselected} deselected",
+                target.PlaceId, targets.Count, plan.Direct.Count, plan.Flagged.Count, careful,
+                result.Breakdown.Running, result.Breakdown.Expired, result.Breakdown.Deselected);
             if (targets.Count == 0)
             {
                 StatusBanner = result.ZeroEligibleBanner;
                 return;
             }
 
-            await DispatchBatchAsync(
-                targets,
-                overrideTarget: target,
-                launchingBanner: (summary, n, total) => $"Joining private server: {summary.DisplayName} ({n} of {total})...");
+            // Phase 1 — direct batch (byte-identical to today when nothing is flagged + careful off).
+            if (plan.Direct.Count > 0)
+            {
+                await DispatchBatchAsync(
+                    plan.Direct,
+                    overrideTarget: target,
+                    launchingBanner: (summary, n, total) => $"Joining private server: {summary.DisplayName} ({n} of {total})...",
+                    waitForLanding: careful);
+            }
+
+            if (plan.Flagged.Count > 0)
+            {
+                // Phase 2 — anchor: first direct-batch account that is InGame with a known userId.
+                AccountSummary? anchor = null;
+                if (plan.Direct.Count > 0)
+                {
+                    StatusBanner = "Waiting for a squad member to land (for join-via-friend accounts)...";
+                    var deadline = DateTime.UtcNow + AnchorGate.MaxWait;
+                    while (anchor is null && !AnchorGate.WaitExpired(DateTime.UtcNow, deadline))
+                    {
+                        anchor = AnchorGate.PickAnchor(plan.Direct);
+                        if (anchor is null)
+                        {
+                            await Task.Delay(PreWarmPollInterval).ConfigureAwait(true);
+                        }
+                    }
+                }
+
+                if (anchor is { RobloxUserId: { } anchorUserId })
+                {
+                    // Phase 3 — flagged accounts follow the anchor into the same server.
+                    _log.LogInformation("Join-via-friend: {Count} account(s) following anchor {Anchor} (userId {UserId}).",
+                        plan.Flagged.Count, anchor.DisplayName, anchorUserId);
+                    await ReleaseBatchAsync(
+                        plan.Flagged,
+                        overrideTarget: new LaunchTarget.FollowFriend(anchorUserId),
+                        launchingBanner: (summary, n, total) => $"{summary.DisplayName} joining via {anchor.DisplayName} ({n} of {total})...",
+                        startIndex: 0,
+                        waitForLanding: careful);
+                }
+                else
+                {
+                    // Fallback — never strand: flagged accounts go direct with the standard throttle.
+                    _log.LogWarning("Join-via-friend: no anchor landed within {Cap}s (direct batch: {Direct}); falling back to direct joins for {Count} flagged account(s).",
+                        (int)AnchorGate.MaxWait.TotalSeconds, plan.Direct.Count, plan.Flagged.Count);
+                    StatusBanner = plan.Direct.Count == 0
+                        ? "No direct-join accounts to anchor on — flagged accounts joining directly."
+                        : "No squad member landed in time — flagged accounts joining directly.";
+                    if (plan.Direct.Count == 0)
+                    {
+                        // No Phase 1 ran, so no anchor was ever possible and the pre-warm gate
+                        // never fired for this squad. Route the all-flagged fallback through
+                        // DispatchBatchAsync so an install-pending update still serializes #1
+                        // instead of firing every flagged client at once via ReleaseBatchAsync.
+                        await DispatchBatchAsync(
+                            plan.Flagged,
+                            overrideTarget: target,
+                            launchingBanner: (summary, n, total) => $"Joining private server (direct fallback): {summary.DisplayName} ({n} of {total})...",
+                            waitForLanding: careful);
+                    }
+                    else
+                    {
+                        // Anchor timed out, but Phase 1 already ran the pre-warm decision for the
+                        // direct batch — no need to re-gate here.
+                        await ReleaseBatchAsync(
+                            plan.Flagged,
+                            overrideTarget: target,
+                            launchingBanner: (summary, n, total) => $"Joining private server (direct fallback): {summary.DisplayName} ({n} of {total})...",
+                            startIndex: 0,
+                            waitForLanding: careful);
+                    }
+                }
+            }
+
             StatusBanner = result.PartialBanner(targets.Count, "Private server launch finished");
         }
         finally
@@ -2036,6 +2177,33 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Flip an account row's join-via-friend preference (route batch launches through a friend
+    /// follow instead of a direct join — trust-aware squad launch, v1.9.0) and persist it.
+    /// Optimistic: the row flips immediately so the context-menu checkbox reflects the click
+    /// without waiting on disk; on persist failure the flip is reverted and the failure surfaces
+    /// via <see cref="StatusBanner"/> rather than leaving the UI silently out of sync with disk.
+    /// </summary>
+    internal async Task ToggleJoinViaFriendAsync(AccountSummary? summary)
+    {
+        if (summary is null)
+        {
+            return;
+        }
+
+        var next = !summary.JoinViaFriend;
+        summary.JoinViaFriend = next;
+        try
+        {
+            await _accountStore.SetJoinViaFriendAsync(summary.Id, next);
+        }
+        catch (Exception ex)
+        {
+            summary.JoinViaFriend = !next; // revert on persist failure
+            StatusBanner = $"Couldn't save join-via-friend: {ex.Message}";
         }
     }
 

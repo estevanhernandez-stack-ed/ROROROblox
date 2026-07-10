@@ -172,6 +172,25 @@ public class AccountStoreTransportTests : IDisposable
         Assert.Empty(result.SkippedNoUserId); // unknown id isn't a "no userId" skip
     }
 
+    [Fact]
+    public async Task ExportImport_CarriesJoinViaFriend()
+    {
+        using var storeA = new AccountStore(PathFor("a.dat"));
+        var acct = await storeA.AddAsync("Alpha", "https://avatar/a", "FAKE-COOKIE-alpha-AAAA");
+        await storeA.UpdateRobloxUserIdAsync(acct.Id, 111L);
+        await storeA.SetJoinViaFriendAsync(acct.Id, true);
+
+        var result = await storeA.ExportAccountsAsync(new[] { acct.Id });
+        var record = Assert.Single(result.Records);
+        Assert.True(record.JoinViaFriend);
+
+        using var storeB = new AccountStore(PathFor("b.dat"));
+        await storeB.ImportMergeAsync(result.Records);
+
+        var imported = Assert.Single(await storeB.ListAsync());
+        Assert.True(imported.JoinViaFriend);
+    }
+
     // ---------- ImportMergeAsync ----------
 
     [Fact]

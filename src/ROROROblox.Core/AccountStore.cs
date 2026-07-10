@@ -55,7 +55,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             var blob = await LoadAsync().ConfigureAwait(false);
             return blob.Accounts
-                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName, a.RobloxUserId, a.Tags ?? [], a.BrowserTrackerId))
+                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName, a.RobloxUserId, a.Tags ?? [], a.BrowserTrackerId, a.JoinViaFriend))
                 .ToList();
         }
         finally
@@ -94,10 +94,11 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 CreatedAt: DateTimeOffset.UtcNow,
                 LastLaunchedAt: null,
                 IsMain: promoteAsMain,
-                SortOrder: nextSortOrder);
+                SortOrder: nextSortOrder,
+                JoinViaFriend: false); // a fresh account is never flagged
             blob.Accounts.Add(stored);
             await SaveAsync(blob).ConfigureAwait(false);
-            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName, stored.RobloxUserId, stored.Tags ?? [], stored.BrowserTrackerId);
+            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName, stored.RobloxUserId, stored.Tags ?? [], stored.BrowserTrackerId, JoinViaFriend: false);
         }
         finally
         {
@@ -176,6 +177,30 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 return; // no-op write avoidance — saves a DPAPI roundtrip on chatty toggles.
             }
             blob.Accounts[idx] = blob.Accounts[idx] with { IsSelected = isSelected };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task SetJoinViaFriendAsync(Guid id, bool joinViaFriend)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var idx = blob.Accounts.FindIndex(a => a.Id == id);
+            if (idx < 0)
+            {
+                return;
+            }
+            if (blob.Accounts[idx].JoinViaFriend == joinViaFriend)
+            {
+                return; // no-op write avoidance — saves a DPAPI roundtrip on chatty toggles.
+            }
+            blob.Accounts[idx] = blob.Accounts[idx] with { JoinViaFriend = joinViaFriend };
             await SaveAsync(blob).ConfigureAwait(false);
         }
         finally
@@ -535,7 +560,8 @@ public sealed class AccountStore : IAccountStore, IDisposable
                     LocalName: stored.LocalName,
                     IsMain: stored.IsMain,
                     SortOrder: stored.SortOrder,
-                    IsSelected: stored.IsSelected));
+                    IsSelected: stored.IsSelected,
+                    JoinViaFriend: stored.JoinViaFriend));
             }
 
             return new AccountExportResult(records, skipped);
@@ -590,7 +616,8 @@ public sealed class AccountStore : IAccountStore, IDisposable
                     FpsCap: record.FpsCap,
                     LocalName: record.LocalName,
                     RobloxUserId: record.RobloxUserId,
-                    Tags: record.Tags is { Count: > 0 } ? record.Tags : null));
+                    Tags: record.Tags is { Count: > 0 } ? record.Tags : null,
+                    JoinViaFriend: record.JoinViaFriend));
                 imported++;
             }
 
@@ -699,7 +726,8 @@ public sealed class AccountStore : IAccountStore, IDisposable
         string? LocalName = null,
         long? RobloxUserId = null,
         IReadOnlyList<string>? Tags = null,
-        long? BrowserTrackerId = null);
+        long? BrowserTrackerId = null,
+        bool JoinViaFriend = false);
 
     internal sealed record StoredAccountsBlob(
         int Version,

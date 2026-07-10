@@ -201,4 +201,19 @@ public class AppSettingsTests : IDisposable
         await settings.SetIdleWarnThresholdMinutesAsync(12);
         Assert.Equal(12, await settings.GetIdleWarnThresholdMinutesAsync());
     }
+
+    [Fact]
+    public async Task CarefulSquadLaunch_DefaultsFalse_RoundTripsAcrossInstances()
+    {
+        {
+            using var first = new AppSettings(_filePath);
+            Assert.False(await first.GetCarefulSquadLaunchAsync());
+
+            await first.SetCarefulSquadLaunchAsync(true);
+            Assert.True(await first.GetCarefulSquadLaunchAsync());
+        }
+
+        using var second = new AppSettings(_filePath);
+        Assert.True(await second.GetCarefulSquadLaunchAsync());
+    }
 }

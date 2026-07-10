@@ -125,6 +125,14 @@ public interface IAccountStore
     Task<AccountExportResult> ExportAccountsAsync(IEnumerable<Guid> ids);
 
     /// <summary>
+    /// Per-account "route this account into squads via friend-follow" preference (the account is
+    /// challenge-prone on direct joins). Silent no-op on unknown id + no-op-write avoidance,
+    /// matching <see cref="SetSelectedAsync"/>'s chatty-toggle convention. Trust-aware squad
+    /// launch (task 1, 2026-07-09).
+    /// </summary>
+    Task SetJoinViaFriendAsync(Guid id, bool joinViaFriend);
+
+    /// <summary>
     /// Merge import for account transport (v1.6.0 — spec §1). Non-destructive: merge by Roblox
     /// userId. Each record whose userId is NOT already present among local accounts is added (new
     /// Guid, CreatedAt=now, all fields incl. RobloxUserId, cookie DPAPI-encrypted). Records whose

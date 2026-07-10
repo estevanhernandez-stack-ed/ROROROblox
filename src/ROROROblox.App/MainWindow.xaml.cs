@@ -30,6 +30,13 @@ internal partial class MainWindow : FluentWindow
     {
         DataContext = viewModel;
         InitializeComponent();
+        // Guarantee the ContextMenu binding proxy carries the VM even if the resource-level
+        // Data="{Binding}" inheritance context ever fails to capture it. Context menus live in a
+        // separate popup tree and reach VM commands only through this proxy (see BindingProxy.cs).
+        if (Resources["VmProxy"] is BindingProxy vmProxy)
+        {
+            vmProxy.Data = viewModel;
+        }
         Loaded += OnLoaded;
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
