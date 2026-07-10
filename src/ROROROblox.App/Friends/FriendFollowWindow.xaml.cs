@@ -228,9 +228,13 @@ internal partial class FriendFollowWindow : Window
         catch (CookieExpiredException)
         {
             _hasData = false;
+            // Mask the account name — this visible status message must not leak the real name while
+            // streamer mode is active (a cookie expiring mid-session is exactly when this modal is
+            // likely open on stream). ChromeName returns the fake name when active, real when not.
+            var name = ChromeName(source);
             StatusText.Text = _sources.Count > 1
-                ? $"{source.DisplayName}'s session expired — re-authenticate it, or switch to the other account's friends."
-                : $"{source.DisplayName}'s session expired — close this and re-authenticate the account first.";
+                ? $"{name}'s session expired — re-authenticate it, or switch to the other account's friends."
+                : $"{name}'s session expired — close this and re-authenticate the account first.";
         }
         catch (AccountStoreCorruptException)
         {
