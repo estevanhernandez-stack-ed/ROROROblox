@@ -281,6 +281,153 @@ public class PluginHostServiceTests
         Assert.Equal(1700000000000, result.LastLaunchedAtUnixMs);
     }
 
+    // =====================================================================
+    // UpdateUI / RemoveUI ownership refusal (verify run f7ebdbd1 finding:
+    // both accepted a bogus handle from an unconsented caller). Ownership is
+    // the ONLY gate on these two RPCs — the capability map deliberately
+    // leaves them ungated — so an unknown or foreign handle must refuse with
+    // PermissionDenied, and the same status for both cases so callers can't
+    // probe which handle ids exist.
+    // =====================================================================
+
+    private static PluginHostService ServiceWithUI(PluginUITranslator translator) => new(
+        new InMemoryRegistry(Array.Empty<InstalledPlugin>()), "1.4.0", "1.0",
+        HostStateOff(), NoAccounts(), new InProcessPluginEventBus(), NoOpLauncher(),
+        translator, NoActivity(), NoActivityMarker());
+
+    [Fact]
+    public async Task UpdateUI_UnknownHandle_ThrowsPermissionDenied()
+    {
+        var service = ServiceWithUI(new PluginUITranslator(new SequencedUIHost()));
+
+        var ex = await Assert.ThrowsAsync<RpcException>(() => service.UpdateUI(new UIUpdate
+        {
+            Handle = new UIHandle { Id = "never-issued" },
+            MenuItem = new MenuItemSpec { Label = "x" },
+        }, FakeServerCallContext.CreateForPlugin("626labs.a")));
+
+        Assert.Equal(StatusCode.PermissionDenied, ex.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateUI_ForeignHandle_ThrowsPermissionDenied()
+    {
+        var translator = new PluginUITranslator(new SequencedUIHost());
+        var service = ServiceWithUI(translator);
+        var handle = await service.AddTrayMenuItem(
+            new MenuItemSpec { Label = "mine" }, FakeServerCallContext.CreateForPlugin("626labs.a"));
+
+        var ex = await Assert.ThrowsAsync<RpcException>(() => service.UpdateUI(new UIUpdate
+        {
+            Handle = handle,
+            MenuItem = new MenuItemSpec { Label = "hijacked" },
+        }, FakeServerCallContext.CreateForPlugin("626labs.b")));
+
+        Assert.Equal(StatusCode.PermissionDenied, ex.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateUI_MissingHeader_ThrowsPermissionDenied()
+    {
+        var translator = new PluginUITranslator(new SequencedUIHost());
+        var service = ServiceWithUI(translator);
+        var handle = await service.AddTrayMenuItem(
+            new MenuItemSpec { Label = "mine" }, FakeServerCallContext.CreateForPlugin("626labs.a"));
+
+        var ex = await Assert.ThrowsAsync<RpcException>(() => service.UpdateUI(new UIUpdate
+        {
+            Handle = handle,
+            MenuItem = new MenuItemSpec { Label = "x" },
+        }, FakeServerCallContext.Create())); // no x-plugin-id header
+
+        Assert.Equal(StatusCode.PermissionDenied, ex.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateUI_NoHandle_ThrowsPermissionDenied()
+    {
+        var service = ServiceWithUI(new PluginUITranslator(new SequencedUIHost()));
+
+        var ex = await Assert.ThrowsAsync<RpcException>(() => service.UpdateUI(
+            new UIUpdate { MenuItem = new MenuItemSpec { Label = "x" } }, // Handle never set
+            FakeServerCallContext.CreateForPlugin("626labs.a")));
+
+        Assert.Equal(StatusCode.PermissionDenied, ex.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateUI_OwnedHandle_Succeeds()
+    {
+        var translator = new PluginUITranslator(new SequencedUIHost());
+        var service = ServiceWithUI(translator);
+        var handle = await service.AddTrayMenuItem(
+            new MenuItemSpec { Label = "mine" }, FakeServerCallContext.CreateForPlugin("626labs.a"));
+
+        var result = await service.UpdateUI(new UIUpdate
+        {
+            Handle = handle,
+            MenuItem = new MenuItemSpec { Label = "renamed" },
+        }, FakeServerCallContext.CreateForPlugin("626labs.a"));
+
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task RemoveUI_UnknownHandle_ThrowsPermissionDenied()
+    {
+        var host = new SequencedUIHost();
+        var service = ServiceWithUI(new PluginUITranslator(host));
+
+        var ex = await Assert.ThrowsAsync<RpcException>(() => service.RemoveUI(
+            new UIHandle { Id = "never-issued" }, FakeServerCallContext.CreateForPlugin("626labs.a")));
+
+        Assert.Equal(StatusCode.PermissionDenied, ex.StatusCode);
+        Assert.Empty(host.Removed);
+    }
+
+    [Fact]
+    public async Task RemoveUI_ForeignHandle_ThrowsPermissionDenied_AndRemovesNothing()
+    {
+        var host = new SequencedUIHost();
+        var translator = new PluginUITranslator(host);
+        var service = ServiceWithUI(translator);
+        var handle = await service.AddTrayMenuItem(
+            new MenuItemSpec { Label = "mine" }, FakeServerCallContext.CreateForPlugin("626labs.a"));
+
+        var ex = await Assert.ThrowsAsync<RpcException>(() => service.RemoveUI(
+            handle, FakeServerCallContext.CreateForPlugin("626labs.b")));
+
+        Assert.Equal(StatusCode.PermissionDenied, ex.StatusCode);
+        Assert.Empty(host.Removed);
+    }
+
+    [Fact]
+    public async Task RemoveUI_OwnedHandle_RemovesOnHost()
+    {
+        var host = new SequencedUIHost();
+        var translator = new PluginUITranslator(host);
+        var service = ServiceWithUI(translator);
+        var handle = await service.AddTrayMenuItem(
+            new MenuItemSpec { Label = "mine" }, FakeServerCallContext.CreateForPlugin("626labs.a"));
+
+        await service.RemoveUI(handle, FakeServerCallContext.CreateForPlugin("626labs.a"));
+
+        Assert.Equal(handle.Id, Assert.Single(host.Removed));
+    }
+
+    /// <summary>UI host fake that issues real, unique handle ids (FakeUIHost returns
+    /// string.Empty for every handle, which would collide in the ownership map).</summary>
+    private sealed class SequencedUIHost : IPluginUIHost
+    {
+        public List<string> Removed { get; } = new();
+        private int _next = 1;
+        public string AddTrayMenuItem(string p, string l, string? t, bool e, Action c) => $"handle-{_next++}";
+        public string AddRowBadge(string p, string t, string? c, string? tt) => $"handle-{_next++}";
+        public string AddStatusPanel(string p, string t, string b) => $"handle-{_next++}";
+        public void Update(string h, string l) { }
+        public void Remove(string h) => Removed.Add(h);
+    }
+
     private sealed class FakeLaunchInvoker : IPluginLaunchInvoker
     {
         public List<string> Invocations { get; } = new();

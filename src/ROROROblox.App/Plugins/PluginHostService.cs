@@ -357,17 +357,33 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
 
     public override Task<Empty> UpdateUI(UIUpdate request, ServerCallContext context)
     {
-        // v1: UpdateUI is an ungated no-op stub. The capability map does not gate
-        // it; future work will plumb the spec-typed update through to IPluginUIHost.
+        // Ownership is the ONLY gate on UpdateUI (the capability map leaves it
+        // ungated), so an unknown or foreign handle must refuse here. Same status
+        // for both cases: callers must not be able to probe which handle ids exist.
+        // Dispatching the spec-typed update through to IPluginUIHost is still
+        // future work — an owned handle gets an acknowledged no-op.
+        var pluginId = ResolveCurrentPluginId(context);
+        var handleId = request.Handle?.Id ?? string.Empty;
+        if (!_uiTranslator.OwnsHandle(pluginId, handleId))
+        {
+            throw HandleNotOwned(pluginId, handleId);
+        }
         return Task.FromResult(new Empty());
     }
 
     public override Task<Empty> RemoveUI(UIHandle request, ServerCallContext context)
     {
         var pluginId = ResolveCurrentPluginId(context);
-        _uiTranslator.RemoveUI(pluginId, request);
+        if (!_uiTranslator.RemoveUI(pluginId, request))
+        {
+            throw HandleNotOwned(pluginId, request.Id);
+        }
         return Task.FromResult(new Empty());
     }
+
+    private static RpcException HandleNotOwned(string pluginId, string handleId) =>
+        new(new Status(StatusCode.PermissionDenied,
+            $"UI handle '{handleId}' is not owned by plugin '{pluginId}'."));
 
     private static string ResolveCurrentPluginId(ServerCallContext context)
     {

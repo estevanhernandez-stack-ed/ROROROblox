@@ -30,8 +30,9 @@ public class PluginUITranslatorTests
         var translator = new PluginUITranslator(host);
         var handle = translator.AddTrayMenuItem("626labs.test", new MenuItemSpec { Label = "x" });
 
-        translator.RemoveUI("626labs.test", handle);
+        var removed = translator.RemoveUI("626labs.test", handle);
 
+        Assert.True(removed);
         Assert.Single(host.RemovedHandles);
         Assert.Equal(handle.Id, host.RemovedHandles[0]);
     }
@@ -43,9 +44,47 @@ public class PluginUITranslatorTests
         var translator = new PluginUITranslator(host);
         var handle = translator.AddTrayMenuItem("626labs.a", new MenuItemSpec { Label = "x" });
 
-        translator.RemoveUI("626labs.b", handle); // wrong owner
+        var removed = translator.RemoveUI("626labs.b", handle); // wrong owner
 
+        Assert.False(removed);
         Assert.Empty(host.RemovedHandles);
+    }
+
+    [Fact]
+    public void RemoveUI_ReturnsFalseForUnknownHandle()
+    {
+        var host = new FakePluginUIHost();
+        var translator = new PluginUITranslator(host);
+
+        var removed = translator.RemoveUI("626labs.test", new UIHandle { Id = "never-issued" });
+
+        Assert.False(removed);
+        Assert.Empty(host.RemovedHandles);
+    }
+
+    [Fact]
+    public void OwnsHandle_TrueOnlyForCreator()
+    {
+        var host = new FakePluginUIHost();
+        var translator = new PluginUITranslator(host);
+        var handle = translator.AddTrayMenuItem("626labs.a", new MenuItemSpec { Label = "x" });
+
+        Assert.True(translator.OwnsHandle("626labs.a", handle.Id));
+        Assert.False(translator.OwnsHandle("626labs.b", handle.Id));
+        Assert.False(translator.OwnsHandle("626labs.a", "never-issued"));
+        Assert.False(translator.OwnsHandle("", handle.Id));
+    }
+
+    [Fact]
+    public void OwnsHandle_FalseAfterRemove()
+    {
+        var host = new FakePluginUIHost();
+        var translator = new PluginUITranslator(host);
+        var handle = translator.AddTrayMenuItem("626labs.a", new MenuItemSpec { Label = "x" });
+
+        translator.RemoveUI("626labs.a", handle);
+
+        Assert.False(translator.OwnsHandle("626labs.a", handle.Id));
     }
 
     private sealed class FakePluginUIHost : IPluginUIHost
