@@ -6,8 +6,10 @@ Covers every path of `StartupGate` + the BLOCKED modal + the runtime contested b
 
 ## The dev build under test
 
+Run from the repo root (relative path):
+
 ```
-C:\Users\estev\Projects\ROROROblox\src\ROROROblox.App\bin\Debug\net10.0-windows\ROROROblox.App.exe
+.\src\ROROROblox.App\bin\Debug\net10.0-windows\ROROROblox.App.exe
 ```
 
 ## Helper commands (PowerShell)
