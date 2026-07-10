@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Hardcodet.Wpf.TaskbarNotification;
 using ROROROblox.Core;
+using ROROROblox.Core.StreamerMode;
 
 namespace ROROROblox.App.Tray;
 
@@ -16,8 +17,10 @@ internal sealed class TrayService : ITrayService
 {
     private const string IconResourceBase = "/ROROROblox.App;component/Tray/Resources/";
 
+    private readonly IStreamerIdentityProvider _streamerIdentity;
     private readonly TaskbarIcon _taskbarIcon;
     private readonly MenuItem _toggleItem;
+    private readonly MenuItem _streamerModeItem;
 
     // When the avatar painter sets these, UpdateStatus uses them in place of the resource ICOs.
     // Per-state so the cyan/grey/magenta ring still reflects mutex status.
@@ -38,16 +41,22 @@ internal sealed class TrayService : ITrayService
     public event EventHandler? RequestOpenHistory;
     public event EventHandler? RequestOpenPlugins;
 
-    public TrayService()
+    public TrayService(IStreamerIdentityProvider streamerIdentity)
     {
+        _streamerIdentity = streamerIdentity;
         _taskbarIcon = new TaskbarIcon();
         // Double-click is the user's "do the thing" gesture — App.xaml.cs decides whether
         // that means "launch main" or "surface the window" based on whether a main is set.
         _taskbarIcon.TrayMouseDoubleClick += (_, _) => RequestActivateMain?.Invoke(this, EventArgs.Empty);
 
-        var (toggle, menu) = BuildContextMenu();
+        var (toggle, streamerMode, menu) = BuildContextMenu();
         _toggleItem = toggle;
+        _streamerModeItem = streamerMode;
         _taskbarIcon.ContextMenu = menu;
+
+        // Streamer mode (v1.10) can also be flipped from the main-window switch or the plugin
+        // host — keep the tray checkmark in lockstep regardless of which surface toggled it.
+        _streamerIdentity.Changed += OnStreamerModeChanged;
 
         UpdateStatus(MultiInstanceState.Off);
     }
@@ -112,13 +121,21 @@ internal sealed class TrayService : ITrayService
         return custom ?? LoadIcon(state);
     }
 
-    private (MenuItem toggle, ContextMenu menu) BuildContextMenu()
+    private (MenuItem toggle, MenuItem streamerMode, ContextMenu menu) BuildContextMenu()
     {
         var menu = new ContextMenu();
 
         var toggle = new MenuItem { Header = "Multi-Instance: OFF" };
         toggle.Click += (_, _) => RequestToggleMutex?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(toggle);
+
+        // Streamer mode (v1.10) — fake-name/avatar substitution for on-stream safety. Checkable
+        // so the tray reflects state at a glance; Click reads the CURRENT provider state (not the
+        // checkbox's own auto-toggled IsChecked) to decide the new value, then OnStreamerModeChanged
+        // resyncs IsChecked once the provider's Changed event confirms the flip landed.
+        var streamerMode = new MenuItem { Header = "Streamer mode", IsCheckable = true, IsChecked = _streamerIdentity.IsActive };
+        streamerMode.Click += (_, _) => _ = _streamerIdentity.SetActiveAsync(!_streamerIdentity.IsActive);
+        menu.Items.Add(streamerMode);
 
         var stopAll = new MenuItem { Header = "Stop all Roblox instances" };
         stopAll.Click += (_, _) => RequestStopAllInstances?.Invoke(this, EventArgs.Empty);
@@ -158,7 +175,21 @@ internal sealed class TrayService : ITrayService
         quit.Click += (_, _) => RequestQuit?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(quit);
 
-        return (toggle, menu);
+        return (toggle, streamerMode, menu);
+    }
+
+    /// <summary>
+    /// Keeps the tray checkmark in sync when streamer mode flips from a surface other than this
+    /// menu item (the main-window switch, a plugin, or this same click landing asynchronously).
+    /// The provider's <c>Changed</c> event can fire off the UI thread (its <c>SetActiveAsync</c>
+    /// awaits a settings write with <c>ConfigureAwait(false)</c>), and <see cref="MenuItem"/> is a
+    /// WPF DependencyObject — direct property writes from a non-UI thread throw, so this marshals
+    /// via the dispatcher (same pattern as <c>tray.UpdateStatus</c> callers elsewhere in App.xaml.cs).
+    /// </summary>
+    private void OnStreamerModeChanged(object? sender, EventArgs e)
+    {
+        if (_disposed) return;
+        Application.Current?.Dispatcher.Invoke(() => _streamerModeItem.IsChecked = _streamerIdentity.IsActive);
     }
 
     private static Icon LoadIcon(MultiInstanceState state)
@@ -189,6 +220,7 @@ internal sealed class TrayService : ITrayService
             return;
         }
         _disposed = true;
+        _streamerIdentity.Changed -= OnStreamerModeChanged;
         _customOn?.Dispose();
         _customOff?.Dispose();
         _customError?.Dispose();

@@ -166,6 +166,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         RemoveGameCommand = new RelayCommand(p => _ = RemoveGameAsync(p as FavoriteGame));
         ToggleJoinViaFriendCommand = new RelayCommand(p => _ = ToggleJoinViaFriendAsync(p as AccountSummary));
 
+        // Streamer mode (v1.10) — main-window switch + reroll controls (Task 10). No-ops when
+        // _streamerIdentity is null (VM-level test harness, which doesn't pass one).
+        RerollAllCommand = new RelayCommand(RerollAllIdentitiesAsync);
+        RerollAccountCommand = new RelayCommand(p => RerollAccountAsync(p));
+
         // Subscribe to favorites' default-changed event so the widget readout updates without a
         // manual re-fetch. Fires after SetDefaultAsync mutates + persists, on real change only.
         _favorites.DefaultChanged += OnFavoritesDefaultChanged;
@@ -185,6 +190,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // warn threshold. The monitor itself (Task 5) already runs its own sample timer; this
         // VM only reacts to the crossing event + refreshes the passive row/banner display below.
         _activityMonitor.WarnThresholdCrossed += OnActivityWarnCrossed;
+
+        // Streamer mode (v1.10, Task 10) — keep the main-window switch (and the tray checkmark,
+        // via its own subscription) in sync when the mode flips from either surface. Mirrors
+        // AccountSummary.OnIdentityChanged's un-marshaled OnPropertyChanged call: WPF's binding
+        // engine auto-dispatches PropertyChanged notifications to the owning thread, so no manual
+        // Dispatcher.Invoke is needed here (unlike TrayService's direct MenuItem property write).
+        if (_streamerIdentity is not null)
+        {
+            _streamerIdentity.Changed += OnStreamerIdentityChanged;
+        }
 
         _ = InitializeBloxstrapWarningAsync();
 
@@ -385,6 +400,35 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// is the row's <see cref="AccountSummary"/>. See <see cref="ToggleJoinViaFriendAsync"/>.
     /// </summary>
     public ICommand ToggleJoinViaFriendCommand { get; }
+
+    /// <summary>
+    /// True when streamer mode is active — bound two-way to the main-window <c>ui:ToggleSwitch</c>
+    /// (Task 10). Get reads straight through to <see cref="Core.StreamerMode.IStreamerIdentityProvider.IsActive"/>;
+    /// set fire-and-forgets <see cref="Core.StreamerMode.IStreamerIdentityProvider.SetActiveAsync"/> and relies on
+    /// <see cref="OnStreamerIdentityChanged"/> to raise the change notification once the provider
+    /// confirms the flip (keeps the switch and the tray checkbox as two views of one source of
+    /// truth instead of an optimistic local flag that could drift). False (and a no-op set) when
+    /// no provider was resolved — the VM-level test harness doesn't pass one.
+    /// </summary>
+    public bool StreamerModeOn
+    {
+        get => _streamerIdentity?.IsActive ?? false;
+        set
+        {
+            if (_streamerIdentity is null) return;
+            _ = _streamerIdentity.SetActiveAsync(value);
+        }
+    }
+
+    /// <summary>Reroll every streamer-mode fake identity (accounts + lazily-met friends) at once — the "Reroll all identities" button. Task 10.</summary>
+    public ICommand RerollAllCommand { get; }
+
+    /// <summary>
+    /// Reroll a single account's streamer-mode fake identity — the per-row context-menu "reroll"
+    /// affordance. Parameter is the row's <see cref="AccountSummary.Id"/> (a <see cref="Guid"/>),
+    /// not the whole row. Task 10.
+    /// </summary>
+    public ICommand RerollAccountCommand { get; }
 
     /// <summary>
     /// Saved games for the default-game widget dropdown. Same content as
@@ -2291,6 +2335,29 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             summary.AttachIdentityProvider(_streamerIdentity);
         }
     }
+
+    /// <summary>
+    /// The streamer-identity provider flipped active/inactive or reassigned identities — refresh
+    /// <see cref="StreamerModeOn"/> so the main-window switch stays in sync whether the flip came
+    /// from this window, the tray checkbox, or a plugin. Task 10.
+    /// </summary>
+    private void OnStreamerIdentityChanged(object? sender, EventArgs e)
+        => OnPropertyChanged(nameof(StreamerModeOn));
+
+    /// <summary>"Reroll all identities" button body — reassigns every streamer-mode fake identity at once. Task 10.</summary>
+    private Task RerollAllIdentitiesAsync()
+        => _streamerIdentity?.RerollAllAsync() ?? Task.CompletedTask;
+
+    /// <summary>
+    /// Per-row context-menu "reroll" body. <paramref name="parameter"/> is the row's account id
+    /// (a boxed <see cref="Guid"/>, per <see cref="RerollAccountCommand"/>'s CommandParameter
+    /// binding) — NOT the <see cref="AccountSummary"/> itself, so a stale/removed row can't be
+    /// rerolled through a dangling reference. Task 10.
+    /// </summary>
+    private Task RerollAccountAsync(object? parameter)
+        => _streamerIdentity is not null && parameter is Guid accountId
+            ? _streamerIdentity.RerollAsync($"account:{accountId}")
+            : Task.CompletedTask;
 
     /// <summary>
     /// A row's tag collection changed (add/remove) — persist the whole normalized list. Mirrors the
