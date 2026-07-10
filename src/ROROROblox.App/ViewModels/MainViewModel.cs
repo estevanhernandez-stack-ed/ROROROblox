@@ -1786,7 +1786,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var mainSource = await TryResolveMainFriendSourceAsync(summary);
         var (sources, defaultIndex) = FriendSourcePlan.Build(rowSource, mainSource);
 
-        var window = new FriendFollowWindow(_api, _accountStore, sources, defaultIndex, summary.Id)
+        var window = new FriendFollowWindow(_api, _accountStore, sources, defaultIndex, summary.Id, _streamerIdentity)
         {
             Owner = Application.Current.MainWindow,
         };
