@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using ROROROblox.Core;
+using ROROROblox.Core.StreamerMode;
 
 namespace ROROROblox.App.History;
 
@@ -10,22 +11,56 @@ internal partial class SessionHistoryWindow : Window
     private readonly ISessionHistoryStore _store;
     private readonly IFavoriteGameStore _favorites;
     private readonly IRobloxApi _api;
+    private readonly IStreamerIdentityProvider? _streamerIdentity;
     private HashSet<long> _knownPlaceIds = new();
+    // Cached last-fetched rows so a streamer-mode toggle (provider.Changed) can re-render with
+    // fresh fake/real identities WITHOUT re-hitting disk (same pattern as FriendFollowWindow's
+    // _inGame/_online/_offline cache). _hasData guards OnStreamerIdentityChanged from rebuilding
+    // over a not-yet-loaded/empty state.
+    private IReadOnlyList<LaunchSession> _rows = [];
+    private bool _hasData;
 
-    public SessionHistoryWindow(ISessionHistoryStore store, IFavoriteGameStore favorites, IRobloxApi api)
+    public SessionHistoryWindow(
+        ISessionHistoryStore store, IFavoriteGameStore favorites, IRobloxApi api,
+        IStreamerIdentityProvider? streamerIdentity = null)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _favorites = favorites ?? throw new ArgumentNullException(nameof(favorites));
         _api = api ?? throw new ArgumentNullException(nameof(api));
+        _streamerIdentity = streamerIdentity;
         InitializeComponent();
         Loaded += OnLoaded;
+
+        // Streamer mode can be toggled (or rerolled) while this modal is open — re-render the
+        // already-fetched rows with the new fake/real identities instead of forcing a reload.
+        // Unsubscribe on Closed so a discarded window never keeps this instance rooted via the
+        // provider's Changed event (same leak concern AccountSummary.DetachIdentityProvider
+        // guards against for account rows, and FriendFollowWindow mirrors for its own modal).
+        if (_streamerIdentity is not null)
+        {
+            _streamerIdentity.Changed += OnStreamerIdentityChanged;
+        }
+        Closed += (_, _) =>
+        {
+            if (_streamerIdentity is not null)
+            {
+                _streamerIdentity.Changed -= OnStreamerIdentityChanged;
+            }
+        };
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e) => await ReloadAsync();
 
+    private void OnStreamerIdentityChanged(object? sender, EventArgs e)
+    {
+        if (_hasData)
+        {
+            RenderRows();
+        }
+    }
+
     private async Task ReloadAsync()
     {
-        HistoryList.Children.Clear();
         IReadOnlyList<LaunchSession> rows;
         try
         {
@@ -48,7 +83,22 @@ internal partial class SessionHistoryWindow : Window
             _knownPlaceIds = [];
         }
 
-        if (rows.Count == 0)
+        _rows = rows;
+        _hasData = true;
+        RenderRows();
+    }
+
+    /// <summary>
+    /// (Re)build the visible rows from the cached <see cref="_rows"/> + <see cref="_knownPlaceIds"/>
+    /// — no disk call. Called after a successful <see cref="ReloadAsync"/> fetch AND from
+    /// <see cref="OnStreamerIdentityChanged"/> so a streamer-mode flip (or reroll) while this window
+    /// is open re-renders with the current fake/real identities instantly.
+    /// </summary>
+    private void RenderRows()
+    {
+        HistoryList.Children.Clear();
+
+        if (_rows.Count == 0)
         {
             EmptyState.Visibility = Visibility.Visible;
             return;
@@ -61,7 +111,7 @@ internal partial class SessionHistoryWindow : Window
         var yesterday = today.AddDays(-1);
         string? lastBucket = null;
 
-        foreach (var row in rows)
+        foreach (var row in _rows)
         {
             var local = row.LaunchedAtUtc.ToLocalTime().Date;
             var bucket = local == today ? "Today"
@@ -87,6 +137,16 @@ internal partial class SessionHistoryWindow : Window
 
     private Border BuildRow(LaunchSession row)
     {
+        // Streamer-mode-aware display identity (mirrors AccountSummary.RenderName /
+        // AvatarDisplaySource and FriendFollowWindow's per-row ForFriend/ForAccount calls). One
+        // tray-click into history must not show the real roster while streamer mode is active —
+        // ForAccount internally no-ops to the real values when the provider is null/inactive, so
+        // this is a straight swap-in with no behavior change when streamer mode is off. The
+        // persisted LaunchSession row itself (AccountDisplayName/AccountAvatarUrl) is never
+        // mutated — only what reaches this visible row.
+        var display = _streamerIdentity?.ForAccount(row.AccountId, row.AccountDisplayName, row.AccountAvatarUrl ?? string.Empty)
+                      ?? new DisplayIdentity(row.AccountDisplayName, row.AccountAvatarUrl ?? string.Empty);
+
         var border = new Border
         {
             Margin = new Thickness(0, 0, 0, 6),
@@ -99,7 +159,8 @@ internal partial class SessionHistoryWindow : Window
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        // Avatar circle.
+        // Avatar circle. display.AvatarSource is either the real AvatarUrl (http) or a fake
+        // pack:// resource URI (streamer mode active) — both are valid absolute Uris for BitmapImage.
         var avatarBorder = new Border
         {
             Width = 32,
@@ -109,13 +170,13 @@ internal partial class SessionHistoryWindow : Window
             ClipToBounds = true,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        if (!string.IsNullOrEmpty(row.AccountAvatarUrl))
+        if (!string.IsNullOrEmpty(display.AvatarSource))
         {
             try
             {
                 avatarBorder.Child = new System.Windows.Controls.Image
                 {
-                    Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(row.AccountAvatarUrl)),
+                    Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(display.AvatarSource)),
                     Stretch = Stretch.UniformToFill,
                 };
             }
@@ -132,7 +193,7 @@ internal partial class SessionHistoryWindow : Window
         var nameLine = new StackPanel { Orientation = Orientation.Horizontal };
         nameLine.Children.Add(new TextBlock
         {
-            Text = row.AccountDisplayName,
+            Text = display.Name,
             FontSize = 13,
             FontWeight = FontWeights.SemiBold,
             Foreground = (Brush)FindResource("WhiteBrush"),

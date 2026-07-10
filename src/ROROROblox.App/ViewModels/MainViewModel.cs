@@ -1040,9 +1040,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         Accounts.Insert(0, summary);
         _log.LogInformation("Added account {AccountId} ({Username}, userId {UserId}, isMain={IsMain})",
             account.Id, captured.Username, captured.UserId, account.IsMain);
+        // Streamer-mode-aware: summary is already wired to the identity provider above, so
+        // RenderName returns the fake per-account name while active — same masking as every
+        // other visible surface (spec streamer-mode leak fix). The WebView login itself already
+        // showed the real Roblox account, but this StatusBanner is a RORORO-owned surface and
+        // must not re-print the real name once masking is live.
         StatusBanner = account.IsMain
-            ? $"Added {captured.Username}. Marked as main — change it any time."
-            : $"Added {captured.Username}.";
+            ? $"Added {summary.RenderName}. Marked as main — change it any time."
+            : $"Added {summary.RenderName}.";
         OnPropertyChanged(nameof(MainAccount));
         OnPropertyChanged(nameof(CompactEmptyKind));
         RelayCommand.RaiseCanExecuteChanged();
@@ -1236,7 +1241,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             await DispatchBatchAsync(
                 targets,
                 overrideTarget: null,
-                launchingBanner: (summary, n, total) => $"Launching {summary.DisplayName} ({n} of {total})...");
+                launchingBanner: (summary, n, total) => $"Launching {summary.RenderName} ({n} of {total})...");
             StatusBanner = result.PartialBanner(targets.Count, "Launch multiple finished");
         }
         finally
@@ -1347,7 +1352,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 var firstLanded = await WaitForLandingAsync(first).ConfigureAwait(true);
                 if (!firstLanded)
                 {
-                    StatusBanner = $"{first.DisplayName} didn't land within {(int)AnchorGate.MaxWait.TotalSeconds}s — continuing.";
+                    StatusBanner = $"{first.RenderName} didn't land within {(int)AnchorGate.MaxWait.TotalSeconds}s — continuing.";
                 }
             }
 
@@ -1485,7 +1490,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 var landed = await WaitForLandingAsync(summary).ConfigureAwait(true);
                 if (!landed)
                 {
-                    StatusBanner = $"{summary.DisplayName} didn't land within {(int)AnchorGate.MaxWait.TotalSeconds}s — continuing.";
+                    StatusBanner = $"{summary.RenderName} didn't land within {(int)AnchorGate.MaxWait.TotalSeconds}s — continuing.";
                 }
             }
             if (idx < targets.Count - 1)
@@ -1567,7 +1572,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 await DispatchBatchAsync(
                     plan.Direct,
                     overrideTarget: target,
-                    launchingBanner: (summary, n, total) => $"Joining private server: {summary.DisplayName} ({n} of {total})...",
+                    launchingBanner: (summary, n, total) => $"Joining private server: {summary.RenderName} ({n} of {total})...",
                     waitForLanding: careful);
             }
 
@@ -1597,7 +1602,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     await ReleaseBatchAsync(
                         plan.Flagged,
                         overrideTarget: new LaunchTarget.FollowFriend(anchorUserId),
-                        launchingBanner: (summary, n, total) => $"{summary.DisplayName} joining via {anchor.DisplayName} ({n} of {total})...",
+                        launchingBanner: (summary, n, total) => $"{summary.RenderName} joining via {anchor.RenderName} ({n} of {total})...",
                         startIndex: 0,
                         waitForLanding: careful);
                 }
@@ -1618,7 +1623,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                         await DispatchBatchAsync(
                             plan.Flagged,
                             overrideTarget: target,
-                            launchingBanner: (summary, n, total) => $"Joining private server (direct fallback): {summary.DisplayName} ({n} of {total})...",
+                            launchingBanner: (summary, n, total) => $"Joining private server (direct fallback): {summary.RenderName} ({n} of {total})...",
                             waitForLanding: careful);
                     }
                     else
@@ -1628,7 +1633,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                         await ReleaseBatchAsync(
                             plan.Flagged,
                             overrideTarget: target,
-                            launchingBanner: (summary, n, total) => $"Joining private server (direct fallback): {summary.DisplayName} ({n} of {total})...",
+                            launchingBanner: (summary, n, total) => $"Joining private server (direct fallback): {summary.RenderName} ({n} of {total})...",
                             startIndex: 0,
                             waitForLanding: careful);
                     }
@@ -1654,7 +1659,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         if (summary is null) return;
 
-        var window = new JoinByLinkWindow(_api, url => ResolveShareUrlAsync(url), summary.DisplayName)
+        var window = new JoinByLinkWindow(_api, url => ResolveShareUrlAsync(url), summary.RenderName)
         {
             Owner = Application.Current.MainWindow,
         };
@@ -1767,7 +1772,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             catch (CookieExpiredException)
             {
                 summary.SessionExpired = true;
-                StatusBanner = $"{summary.DisplayName}'s session expired — re-authenticate first.";
+                StatusBanner = $"{summary.RenderName}'s session expired — re-authenticate first.";
                 return;
             }
             catch (Exception ex)
@@ -2154,7 +2159,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
 
         var confirm = MessageBox.Show(
-            $"Remove {summary.DisplayName}?\nYou'll need to log in again to add it back.",
+            $"Remove {summary.RenderName}?\nYou'll need to log in again to add it back.",
             "Remove Account",
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
@@ -2164,6 +2169,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
 
         var wasMain = summary.IsMain;
+        // Captured BEFORE DetachIdentityProvider — RenderName falls back to the real name once
+        // the row's identity subscription is torn down (no provider attached = no masking), so
+        // reading it after Detach would silently re-leak the real name in the "Removed ..." banner
+        // below even though this line looks identical to every other RenderName call site.
+        var removedName = summary.RenderName;
         await _accountStore.RemoveAsync(summary.Id);
         // Unhook the streamer-identity subscription before dropping the row — see the matching
         // comment in LoadAsync for why this row would otherwise leak.
@@ -2187,7 +2197,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CompactRows));
         OnPropertyChanged(nameof(HasCompactRows));
         RelayCommand.RaiseCanExecuteChanged();
-        StatusBanner = $"Removed {summary.DisplayName}.";
+        StatusBanner = $"Removed {removedName}.";
     }
 
     // Internal for MainViewModelTests (same pattern as LaunchAccountForPluginAsync) — the
@@ -2356,7 +2366,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     private Task RerollAccountAsync(object? parameter)
         => _streamerIdentity is not null && parameter is Guid accountId
-            ? _streamerIdentity.RerollAsync($"account:{accountId}")
+            ? _streamerIdentity.RerollAsync(Core.StreamerMode.StreamerIdentityProvider.AccountKey(accountId))
             : Task.CompletedTask;
 
     /// <summary>
@@ -2477,7 +2487,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         if (ReferenceEquals(source, target)) return;
         if (source.SessionExpired)
         {
-            StatusBanner = $"{source.DisplayName} has an expired session — re-authenticate first.";
+            StatusBanner = $"{source.RenderName} has an expired session — re-authenticate first.";
             return;
         }
         if (target.RobloxUserId is not long targetUserId || targetUserId <= 0)
@@ -2485,7 +2495,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // RobloxUserId is cached lazily (validation pass + cookie capture). If it's never
             // landed, we don't have a userId to route to. Surface the gap rather than fail
             // silently inside the launcher.
-            StatusBanner = $"Couldn't follow {target.DisplayName} — Roblox userId not yet known. " +
+            StatusBanner = $"Couldn't follow {target.RenderName} — Roblox userId not yet known. " +
                            "Try Re-authenticating that account, or wait a moment after login.";
             return;
         }
@@ -2496,13 +2506,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // source to the Roblox home page.
         var targetPresence = new UserPresence(
             targetUserId, target.PresenceState, target.CurrentPlaceId, GameJobId: null, LastLocation: null);
-        var decision = EvaluateFollow(targetPresence, target.DisplayName);
+        var decision = EvaluateFollow(targetPresence, target.RenderName);
         if (!decision.CanFollow)
         {
             StatusBanner = decision.BlockedMessage!; // non-null whenever CanFollow is false (see FollowDecision.Block)
             return;
         }
-        StatusBanner = $"Following {target.DisplayName} from {source.DisplayName}...";
+        StatusBanner = $"Following {target.RenderName} from {source.RenderName}...";
         var follow = new LaunchTarget.FollowFriend(targetUserId);
         await LaunchAccountAsync(source, overrideTarget: follow);
     }
@@ -2556,7 +2566,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OpenHistory()
     {
-        var window = new SessionHistoryWindow(_sessionHistory, _favorites, _api)
+        var window = new SessionHistoryWindow(_sessionHistory, _favorites, _api, _streamerIdentity)
         {
             Owner = Application.Current.MainWindow,
         };
@@ -2605,7 +2615,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CompactEmptyKind));
         StatusBanner = newMainId == Guid.Empty
             ? "Main account cleared."
-            : $"{summary.DisplayName} is now your main.";
+            : $"{summary.RenderName} is now your main.";
         RelayCommand.RaiseCanExecuteChanged();
     }
 
@@ -2676,8 +2686,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             new RenameTarget(RenameTargetKind.PrivateServer, psId, psEntry.Name, psEntry.LocalName),
         FavoriteGame game when game.PlaceId > 0 =>
             new RenameTarget(RenameTargetKind.Game, game.PlaceId, game.Name, game.LocalName),
+        // RenameTarget.OriginalName is shown verbatim in RenameWindow's "ROBLOX NAME — ..." reference
+        // line — a visible surface the review's explicit list didn't name, but the same masking rule
+        // applies: RenderName (streamer-mode-aware) instead of the raw DisplayName.
         AccountSummary account =>
-            new RenameTarget(RenameTargetKind.Account, account.Id, account.DisplayName, account.LocalName),
+            new RenameTarget(RenameTargetKind.Account, account.Id, account.RenderName, account.LocalName),
         SavedPrivateServer server =>
             new RenameTarget(RenameTargetKind.PrivateServer, server.Id, server.Name, server.LocalName),
         _ => null,

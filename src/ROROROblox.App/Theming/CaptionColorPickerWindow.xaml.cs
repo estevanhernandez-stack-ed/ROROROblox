@@ -38,7 +38,7 @@ internal partial class CaptionColorPickerWindow : Window
         _summary = summary ?? throw new ArgumentNullException(nameof(summary));
         _onApplied = onApplied;
         InitializeComponent();
-        HeaderText.Text = $"Title-bar color for {_summary.DisplayName}";
+        HeaderText.Text = $"Title-bar color for {_summary.RenderName}";
         HexInput.Text = _summary.CaptionColorHex ?? string.Empty;
         BuildSwatches();
     }

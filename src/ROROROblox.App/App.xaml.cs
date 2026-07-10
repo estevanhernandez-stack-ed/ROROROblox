@@ -332,7 +332,7 @@ public partial class App : Application
                 {
                     _log?.LogInformation("Main {AccountId} ({Name}) already running — skipping auto-launch.", main.Id, main.DisplayName);
                     Dispatcher.Invoke(() =>
-                        vm.StatusBanner = $"{main.DisplayName} is already running — skipped auto-launch.");
+                        vm.StatusBanner = $"{main.RenderName} is already running — skipped auto-launch.");
                 }
                 else if (scan.AnyRobloxRunning)
                 {
@@ -742,7 +742,12 @@ public partial class App : Application
             var store = _services.GetRequiredService<ISessionHistoryStore>();
             var favorites = _services.GetRequiredService<IFavoriteGameStore>();
             var api = _services.GetRequiredService<IRobloxApi>();
-            var window = new History.SessionHistoryWindow(store, favorites, api);
+            // Same streamer-identity singleton MainViewModel.OpenHistory threads through — the tray
+            // entry point is the OTHER way to open this window, and without this it would show the
+            // real roster even while streamer mode is active (the exact "one tray-click reveals the
+            // whole real roster" leak).
+            var streamerIdentity = _services.GetRequiredService<ROROROblox.Core.StreamerMode.IStreamerIdentityProvider>();
+            var window = new History.SessionHistoryWindow(store, favorites, api, streamerIdentity);
             if (owner.IsLoaded) window.Owner = owner;
             SurfaceMainWindow(owner);
             window.ShowDialog();
