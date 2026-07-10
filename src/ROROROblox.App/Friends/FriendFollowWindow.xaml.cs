@@ -98,6 +98,12 @@ internal partial class FriendFollowWindow : Window
 
     private void OnStreamerIdentityChanged(object? sender, EventArgs e)
     {
+        // Chrome (window title + header + switch button + launcher hint) is always valid to
+        // re-render — it doesn't depend on a completed fetch, so refresh it unconditionally so a
+        // mid-session toggle masks/unmasks the account name in the title bar live.
+        UpdateSourceChrome();
+        // Friend rows only exist once a fetch produced data; _hasData guards a rebuild over a
+        // "Loading…"/error state.
         if (_hasData)
         {
             RenderRows();
@@ -106,17 +112,31 @@ internal partial class FriendFollowWindow : Window
 
     private FriendSource CurrentSource => _sources[_currentSourceIndex];
 
+    /// <summary>
+    /// Streamer-mode-aware account name for the modal chrome (window title, header, source-switch
+    /// button, launcher hint). Routes through the same <see cref="IStreamerIdentityProvider.ForAccount"/>
+    /// keyed on the account's <see cref="Guid"/> as the account rows (Task 7) and Roblox window titles
+    /// (Task 8), so an active streamer mode shows the FAKE account name here too — consistent with what
+    /// that account shows on its main-window row. FriendSource carries only the raw Roblox DisplayName
+    /// (no LocalName), so that's the real fallback; ForAccount ignores it while active (returns the
+    /// mapped fake name) and returns it verbatim when inactive — identical to the prior behavior.
+    /// The avatar arg is unused here (we only read .Name), so it's empty.
+    /// </summary>
+    private string ChromeName(FriendSource source)
+        => _streamerIdentity?.ForAccount(source.AccountId, source.DisplayName, string.Empty).Name
+           ?? source.DisplayName;
+
     /// <summary>Refresh title, source-switch label, and the launcher hint for the current source.</summary>
     private void UpdateSourceChrome()
     {
         var current = CurrentSource;
-        Title = $"ROROROblox -- Friends -- {current.DisplayName}";
-        AccountTitle.Text = current.DisplayName;
+        Title = $"ROROROblox -- Friends -- {ChromeName(current)}";
+        AccountTitle.Text = ChromeName(current);
 
         if (_sources.Count > 1)
         {
             var other = _sources[(_currentSourceIndex + 1) % _sources.Count];
-            SourceSwitchButton.Content = $"View {other.DisplayName}'s friends";
+            SourceSwitchButton.Content = $"View {ChromeName(other)}'s friends";
         }
 
         // When you're browsing a list that isn't the launching account's own, name the launcher so
@@ -124,7 +144,7 @@ internal partial class FriendFollowWindow : Window
         // is the only trigger; nothing auto-joins.
         if (current.AccountId != _launcherAccountId)
         {
-            var launcherName = _sources.First(s => s.AccountId == _launcherAccountId).DisplayName;
+            var launcherName = ChromeName(_sources.First(s => s.AccountId == _launcherAccountId));
             LauncherHint.Text = $"Follow one to launch {launcherName} into their server.";
             LauncherHint.Visibility = Visibility.Visible;
         }
