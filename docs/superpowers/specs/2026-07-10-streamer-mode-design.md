@@ -38,7 +38,21 @@ UI copy and this spec say so plainly, so the feature does not over-promise "full
 it delivers is: your screen no longer reveals *which accounts you own and what they're really
 called* in one glance.
 
-## Architecture — one identity indirection (approach A)
+**Two further scope lines, stated so they're deliberate rather than discovered live (added after the
+whole-branch review):**
+
+- **The plugin boundary is not masked.** The plugin gRPC surface (`GetRunningAccounts`,
+  `GetAccountActivity`, the account events) returns real display names and Roblox user ids to
+  installed plugins, unaffected by streamer mode. That is correct: the plugin boundary has its own
+  per-capability consent model, and a plugin runs in its own process. But a plugin that draws its
+  **own** overlay/dashboard on the streamer's screen (say an idle monitor showing "RealAlt idle 5m")
+  is outside streamer mode's reach — RoRoRo can't mask another process's window. If that becomes a
+  real exposure, the fix belongs in the plugin (a streamer-mode-aware capability), not here.
+- **The account-add / re-auth login is Roblox's own UI.** Adding or re-authenticating an account
+  shows the real Roblox login WebView, which inherently displays the real identity. Streamer mode
+  does not (and can't) mask that, and the confirmation messages tied to a just-completed login are
+  left unmasked deliberately (masking a name the login page just showed is theater). Adding accounts
+  is an off-stream action.
 
 Privacy features fail in a specific way: a single forgotten surface leaks, and the streamer *thinks*
 they're safe. So the masking is centralized, not scattered.
