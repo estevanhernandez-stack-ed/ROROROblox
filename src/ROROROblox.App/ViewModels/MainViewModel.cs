@@ -2407,10 +2407,24 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OnFavoritesDefaultChanged(object? sender, EventArgs e)
     {
-        // The store has already mutated + persisted; just refresh our cached view of "what's
-        // the current default" so the widget readout flips. ReloadGamesAsync also re-syncs
-        // each account's SelectedGame to the new default — keeps row pickers in lockstep.
-        _ = ReloadGamesAsync();
+        // The store has already mutated + persisted; refresh our cached "current default" so the
+        // widget readout flips, and re-sync each account's SelectedGame to keep row pickers in
+        // lockstep. DefaultChanged fires on the store's lock thread — off the UI thread when
+        // Clear/Set/RemoveAsync was awaited with ConfigureAwait(false) — but ReloadGamesAsync
+        // mutates the UI-bound AvailableGames/WidgetGames collections. A cross-thread mutation
+        // throws ("CollectionView does not support changes from a thread different from the
+        // Dispatcher thread") and leaves the row pickers half-rendered (the dropdown-ghost bug),
+        // so marshal onto the UI thread the same way every other store-event handler here does.
+        // CheckAccess keeps the direct call for the UI-thread and no-dispatcher (unit-test) cases.
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+        {
+            _ = ReloadGamesAsync();
+        }
+        else
+        {
+            dispatcher.Invoke(() => _ = ReloadGamesAsync());
+        }
     }
 
     private async Task RemoveGameAsync(FavoriteGame? game)
