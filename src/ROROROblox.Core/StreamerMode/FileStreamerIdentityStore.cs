@@ -41,15 +41,32 @@ public sealed class FileStreamerIdentityStore : IStreamerIdentityStore
         await _gate.WaitAsync().ConfigureAwait(false);
         try
         {
-            var map = File.Exists(_path)
-                ? (JsonSerializer.Deserialize<Dictionary<string, StreamerIdentity>>(
-                       await File.ReadAllTextAsync(_path).ConfigureAwait(false))
-                   ?? new Dictionary<string, StreamerIdentity>())
-                : new Dictionary<string, StreamerIdentity>();
+            var map = await ReadExistingOrEmptyAsync().ConfigureAwait(false);
             map[key] = identity;
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
             await File.WriteAllTextAsync(_path, JsonSerializer.Serialize(map)).ConfigureAwait(false);
         }
         finally { _gate.Release(); }
+    }
+
+    /// <summary>
+    /// Read-merge base for <see cref="SaveAsync"/>. Symmetric with <see cref="LoadAllAsync"/>:
+    /// a missing, corrupt, or partial file degrades to a fresh empty map so a garbage
+    /// streamer-identities.dat gets overwritten cleanly instead of throwing forever.
+    /// Caller holds the gate.
+    /// </summary>
+    private async Task<Dictionary<string, StreamerIdentity>> ReadExistingOrEmptyAsync()
+    {
+        if (!File.Exists(_path)) return new Dictionary<string, StreamerIdentity>();
+        try
+        {
+            var json = await File.ReadAllTextAsync(_path).ConfigureAwait(false);
+            return JsonSerializer.Deserialize<Dictionary<string, StreamerIdentity>>(json)
+                   ?? new Dictionary<string, StreamerIdentity>();
+        }
+        catch
+        {
+            return new Dictionary<string, StreamerIdentity>(); // corrupt/partial file → start fresh
+        }
     }
 }

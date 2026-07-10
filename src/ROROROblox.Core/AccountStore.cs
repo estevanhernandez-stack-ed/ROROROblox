@@ -586,7 +586,9 @@ public sealed class AccountStore : IAccountStore, IDisposable
                     IsMain: stored.IsMain,
                     SortOrder: stored.SortOrder,
                     IsSelected: stored.IsSelected,
-                    JoinViaFriend: stored.JoinViaFriend));
+                    JoinViaFriend: stored.JoinViaFriend,
+                    StreamerName: stored.StreamerName,
+                    StreamerAvatarId: stored.StreamerAvatarId));
             }
 
             return new AccountExportResult(records, skipped);
@@ -642,7 +644,9 @@ public sealed class AccountStore : IAccountStore, IDisposable
                     LocalName: record.LocalName,
                     RobloxUserId: record.RobloxUserId,
                     Tags: record.Tags is { Count: > 0 } ? record.Tags : null,
-                    JoinViaFriend: record.JoinViaFriend));
+                    JoinViaFriend: record.JoinViaFriend,
+                    StreamerName: record.StreamerName,
+                    StreamerAvatarId: record.StreamerAvatarId));
                 imported++;
             }
 

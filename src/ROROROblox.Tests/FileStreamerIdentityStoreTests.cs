@@ -35,5 +35,21 @@ public class FileStreamerIdentityStoreTests : IDisposable
         Assert.Equal("B", loaded["friend:1"].FakeName);
     }
 
+    [Fact]
+    public async Task Save_OverGarbageFile_RecoversToFreshMap()
+    {
+        // A corrupt/partial streamer-identities.dat must not brick the save path forever — SaveAsync
+        // degrades to a fresh empty map, then writes cleanly (symmetric with LoadAllAsync).
+        await File.WriteAllTextAsync(_path, "{ this is not valid json ]]]");
+
+        var store = new FileStreamerIdentityStore(_path);
+        await store.SaveAsync("friend:99", new StreamerIdentity("Recovered", "gecko"));
+
+        var loaded = await store.LoadAllAsync();
+        Assert.Single(loaded);
+        Assert.Equal("Recovered", loaded["friend:99"].FakeName);
+        Assert.Equal("gecko", loaded["friend:99"].FakeAvatarId);
+    }
+
     public void Dispose() { try { File.Delete(_path); } catch { } }
 }
