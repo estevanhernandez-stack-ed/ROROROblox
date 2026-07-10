@@ -4,6 +4,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:vm="clr-namespace:ROROROblox.App.ViewModels"
+                 xmlns:app="clr-namespace:ROROROblox.App"
                  Title="RoRoRo"
                  Height="600" Width="900"
                  MinHeight="400" MinWidth="860"
@@ -16,6 +17,13 @@
                  WindowCornerPreference="Default">
 
     <ui:FluentWindow.Resources>
+        <!-- Carries the window's DataContext (the ViewModel) into ContextMenus, which live in a
+             separate popup tree and can't reach the VM via RelativeSource AncestorType=Window.
+             Context-menu items bind commands as {Binding Data.SomeCommand, Source={StaticResource VmProxy}}.
+             See BindingProxy.cs for why the old PlacementTarget.DataContext.SomeCommand bindings
+             silently resolved to null. -->
+        <app:BindingProxy x:Key="VmProxy" Data="{Binding}" />
+
         <!-- Themed brushes are now app-level (App.xaml). The ThemeService mutates them in
              place so every {StaticResource} reference re-renders on theme change. -->
 
@@ -166,42 +174,37 @@
                 <Border.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Rename…"
-                                  Command="{Binding PlacementTarget.DataContext.RenameItemCommand,
-                                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                  CommandParameter="{Binding}" />
+                                  Command="{Binding Data.RenameItemCommand, Source={StaticResource VmProxy}}"
+                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
                         <MenuItem Header="Reset name"
-                                  Command="{Binding PlacementTarget.DataContext.ResetItemNameCommand,
-                                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                  CommandParameter="{Binding}">
+                                  Command="{Binding Data.ResetItemNameCommand, Source={StaticResource VmProxy}}"
+                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
                             <MenuItem.Style>
                                 <Style TargetType="MenuItem">
                                     <Setter Property="IsEnabled" Value="True" />
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding LocalName}" Value="{x:Null}">
+                                        <DataTrigger Binding="{Binding PlacementTarget.DataContext.LocalName, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Value="{x:Null}">
                                             <Setter Property="IsEnabled" Value="False" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </MenuItem.Style>
                         </MenuItem>
-                        <!-- Trust-aware squad launch (v1.9.0) — IsCheckable deliberately omitted:
-                             a checkable MenuItem self-toggles IsChecked on click before Command
-                             fires, which would race the OneWay VM binding on the very next
-                             PropertyChanged and risk a double-flip / desync. WPF-UI's themed
-                             MenuItem only shows the check glyph when IsCheckable="True" (its
-                             CheckBoxIconBorder is Collapsed otherwise), so IsChecked alone never
-                             renders here. The check state is instead driven through the Header
-                             text via a DataTrigger — deterministic, no template dependency, and
-                             the click stays 100% owned by ToggleJoinViaFriendCommand. -->
-                        <MenuItem Command="{Binding PlacementTarget.DataContext.ToggleJoinViaFriendCommand,
-                                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                  CommandParameter="{Binding}"
+                        <!-- Trust-aware squad launch (v1.9.0). Command reaches the VM via VmProxy —
+                             a ContextMenu lives in its own popup tree, and PlacementTarget.DataContext
+                             here is the row's AccountSummary, which has no VM commands (the old
+                             PlacementTarget.DataContext.ToggleJoinViaFriendCommand silently bound null).
+                             IsCheckable is deliberately omitted — WPF-UI's themed MenuItem only shows a
+                             check glyph when IsCheckable="True", so the check state is driven through the
+                             Header text via a DataTrigger on the row's JoinViaFriend instead. -->
+                        <MenuItem Command="{Binding Data.ToggleJoinViaFriendCommand, Source={StaticResource VmProxy}}"
+                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                   ToolTip="Squad launches route this account into the server by following a squad member who's already in — Roblox's verification prompts hit direct joins, not follows. Requires friendship with your squad.">
                             <MenuItem.Style>
                                 <Style TargetType="MenuItem">
                                     <Setter Property="Header" Value="Join via friend (challenge-prone account)" />
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding JoinViaFriend}" Value="True">
+                                        <DataTrigger Binding="{Binding PlacementTarget.DataContext.JoinViaFriend, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Value="True">
                                             <Setter Property="Header" Value="✓ Join via friend (challenge-prone account)" />
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -658,18 +661,16 @@
                                             <Setter.Value>
                                                 <ContextMenu>
                                                     <MenuItem Header="Rename…"
-                                                              Command="{Binding PlacementTarget.DataContext.RenameItemCommand,
-                                                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                              CommandParameter="{Binding}" />
+                                                              Command="{Binding Data.RenameItemCommand, Source={StaticResource VmProxy}}"
+                                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
                                                     <MenuItem Header="Reset name"
-                                                              Command="{Binding PlacementTarget.DataContext.ResetItemNameCommand,
-                                                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                              CommandParameter="{Binding}">
+                                                              Command="{Binding Data.ResetItemNameCommand, Source={StaticResource VmProxy}}"
+                                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
                                                         <MenuItem.Style>
                                                             <Style TargetType="MenuItem">
                                                                 <Setter Property="IsEnabled" Value="True" />
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding LocalName}" Value="{x:Null}">
+                                                                    <DataTrigger Binding="{Binding PlacementTarget.DataContext.LocalName, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Value="{x:Null}">
                                                                         <Setter Property="IsEnabled" Value="False" />
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
@@ -1078,23 +1079,20 @@
                                                     <Button.ContextMenu>
                                                         <ContextMenu>
                                                             <MenuItem Header="Set as default"
-                                                                      Command="{Binding PlacementTarget.DataContext.SetDefaultGameCommand,
-                                                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding}" />
+                                                                      Command="{Binding Data.SetDefaultGameCommand, Source={StaticResource VmProxy}}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
                                                             <Separator />
                                                             <MenuItem Header="Rename…"
-                                                                      Command="{Binding PlacementTarget.DataContext.RenameItemCommand,
-                                                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding}" />
+                                                                      Command="{Binding Data.RenameItemCommand, Source={StaticResource VmProxy}}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
                                                             <MenuItem Header="Reset name"
-                                                                      Command="{Binding PlacementTarget.DataContext.ResetItemNameCommand,
-                                                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding}">
+                                                                      Command="{Binding Data.ResetItemNameCommand, Source={StaticResource VmProxy}}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
                                                                 <MenuItem.Style>
                                                                     <Style TargetType="MenuItem">
                                                                         <Setter Property="IsEnabled" Value="True" />
                                                                         <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding LocalName}" Value="{x:Null}">
+                                                                            <DataTrigger Binding="{Binding PlacementTarget.DataContext.LocalName, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Value="{x:Null}">
                                                                                 <Setter Property="IsEnabled" Value="False" />
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
@@ -1103,9 +1101,8 @@
                                                             </MenuItem>
                                                             <Separator />
                                                             <MenuItem Header="Remove"
-                                                                      Command="{Binding PlacementTarget.DataContext.RemoveGameCommand,
-                                                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding}" />
+                                                                      Command="{Binding Data.RemoveGameCommand, Source={StaticResource VmProxy}}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
                                                         </ContextMenu>
                                                     </Button.ContextMenu>
                                                     <Grid>
