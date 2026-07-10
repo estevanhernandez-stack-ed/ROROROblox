@@ -82,13 +82,22 @@ public sealed class StreamerIdentityProvider : IStreamerIdentityProvider
 
     public async Task RerollAllAsync()
     {
-        List<string> keys;
-        lock (_lock) { keys = _map.Keys.ToList(); _map.Clear(); }
-        foreach (var key in keys)
+        // Reassign every key atomically under ONE lock, keeping all keys present in _map the whole
+        // time (no empty/partial window). A concurrent Resolve for a rerolled key returns the
+        // already-reassigned value instead of lazily reassigning + persisting a competing identity.
+        List<(string key, StreamerIdentity id, Guid? accountId)> updates;
+        lock (_lock)
         {
-            StreamerIdentity id; lock (_lock) { id = MakeFresh(); _map[key] = id; }
-            await Persist(key, id, TryAccountId(key)).ConfigureAwait(false);
+            updates = new List<(string, StreamerIdentity, Guid?)>(_map.Count);
+            foreach (var key in _map.Keys.ToList())
+            {
+                var id = MakeFresh();  // reads _map.Values; we overwrite _map[key] below so the next MakeFresh sees this pick and stays unique
+                _map[key] = id;
+                updates.Add((key, id, TryAccountId(key)));
+            }
         }
+        foreach (var (key, id, accountId) in updates)
+            await Persist(key, id, accountId).ConfigureAwait(false);
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
