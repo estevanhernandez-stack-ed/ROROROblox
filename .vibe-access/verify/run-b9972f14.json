@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "runId": "b9972f14",
+  "startedAt": "2026-07-10T12:19:55.964Z",
+  "baseUrl": "npipe://./pipe/rororo-plugin-host",
+  "forced": false,
+  "results": [
+    {
+      "affordanceId": "handshake",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "answered per contract with rejection: \"Plugin vibe-access-verify is not installed.\""
+    },
+    {
+      "affordanceId": "get-host-info",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "host 1.9.0, multi-instance On"
+    },
+    {
+      "affordanceId": "get-running-accounts",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "0 running account(s)"
+    },
+    {
+      "affordanceId": "subscribe-account-launched",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.events.account-launched'.)"
+    },
+    {
+      "affordanceId": "subscribe-account-exited",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.events.account-exited'.)"
+    },
+    {
+      "affordanceId": "subscribe-mutex-state-changed",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.events.mutex-state-changed'.)"
+    },
+    {
+      "affordanceId": "request-launch",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.commands.request-launch'.)"
+    },
+    {
+      "affordanceId": "request-launch-target",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.commands.launch-target'.)"
+    },
+    {
+      "affordanceId": "get-current-server",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.queries.current-server'.)"
+    },
+    {
+      "affordanceId": "get-account-activity",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.queries.account-activity'.)"
+    },
+    {
+      "affordanceId": "mark-account-active",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.commands.mark-account-active'.)"
+    },
+    {
+      "affordanceId": "stop-accounts",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.commands.stop-accounts'.)"
+    },
+    {
+      "affordanceId": "add-tray-menu-item",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.ui.tray-menu'.)"
+    },
+    {
+      "affordanceId": "add-row-badge",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.ui.row-badge'.)"
+    },
+    {
+      "affordanceId": "add-status-panel",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "auth-gate-held (PermissionDenied: Plugin 'vibe-access-verify' has not been granted 'host.ui.status-panel'.)"
+    },
+    {
+      "affordanceId": "update-ui",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "handle-gate-held (PermissionDenied: UI handle 'va-bogus-handle' is not owned by plugin 'vibe-access-verify'.)"
+    },
+    {
+      "affordanceId": "remove-ui",
+      "status": "pass",
+      "httpStatus": null,
+      "detail": "handle-gate-held (PermissionDenied: UI handle 'va-bogus-handle' is not owned by plugin 'vibe-access-verify'.)"
+    }
+  ]
+}
