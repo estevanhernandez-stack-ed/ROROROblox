@@ -1,4 +1,4 @@
-# Notes for certification — reviewer letter (v1.11.0.0)
+# Notes for certification — reviewer letter (v1.11.1.0)
 
 > Paste the block between the `---` markers below into Partner Center → your app →
 > **Submission options** → **Notes for certification**.
@@ -16,7 +16,7 @@
 ```text
 Hello reviewer,
 
-Thank you for your time on v1.11.0.0. This update spans two release
+Thank you for your time on v1.11.1.0. This update spans two release
 trains since the approved v1.9.0.0; the notable changes are below.
 Everything else is unchanged from that approved submission.
 
@@ -104,13 +104,13 @@ Estevan Hernandez
 
 ## Pre-submission sanity check (v1.11-specific)
 
-- [ ] `Package.appxmanifest` Version = `1.11.0.0` (4th component zero)
+- [ ] `Package.appxmanifest` Version = `1.11.1.0` (4th component zero)
 - [ ] `PublisherDisplayName` = `626Labs LLC` (NO space in 626Labs — the spaced form fails Partner Center validation)
 - [ ] `TargetDeviceFamily MinVersion` still `10.0.19045.0` (Windows 10 22H2)
 - [ ] Grep source for `SetWindowsHookEx` / `RegisterRawInputDevices` → zero hits
 - [ ] Inspect the `.msix`: no plugin EXE inside; marketplace UI absent on a packaged install. (The 12 avatar PNGs are WPF `<Resource>` items embedded in ROROROblox.App.dll — like the tray icons — so they will NOT appear as loose files in the package; that's correct, not a missing asset.)
 - [ ] This letter's block pasted into Notes for certification
-- [ ] Public "What's new in this version" filled from `listing-copy.md` v1.11.0.0 block (streamer mode leads; **no marketplace mention**)
+- [ ] Public "What's new in this version" filled from `listing-copy.md` v1.11.1.0 block (streamer mode leads; **no marketplace mention**)
 
 ## Source
 

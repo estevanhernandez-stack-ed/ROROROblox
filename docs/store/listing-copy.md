@@ -103,7 +103,7 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 
 > Avoid "cheat", "exploit", "bypass" — those will trigger reviewer concerns even if irrelevant.
 
-## What's new (release notes for v1.11.0.0)
+## What's new (release notes for v1.11.1.0)
 
 > Store field only. Do NOT mention the plugin marketplace here — it's hidden in the
 > Store (packaged) build, so advertising it would confuse Store users and invite
@@ -111,7 +111,7 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 > submission and privacy-positive framing reads well in review.
 
 ```
-v1.11.0.0:
+v1.11.1.0:
 • Streamer mode: one flip disguises your whole account list with silly stand-in names and avatars, so you can stream or screen-share RoRoRo without showing your alts. Reroll any disguise; flip it off and everything comes back. Doesn't change what shows inside Roblox.
 • Twelve hand-drawn disguise avatars, made for RoRoRo.
 • The "Roblox is already running" popup is mostly gone: if Roblox is only sitting in your system tray, RoRoRo now starts cleanly on its own. You're still asked first whenever an actual game window is open.

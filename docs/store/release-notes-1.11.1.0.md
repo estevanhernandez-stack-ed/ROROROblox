@@ -1,4 +1,4 @@
-# Release notes — v1.11.0.0 (Store candidate)
+# Release notes — v1.11.1.0 (Store candidate)
 
 > Paste the block between the `---` markers below into the GitHub Release body.
 > **Bundles three merged PRs since v1.10.0.0** (#63 streamer mode, #64 portable
@@ -35,7 +35,7 @@ If you run RoRoRo from the portable zip, the taskbar icon could show up as a bla
 
 ## Download
 
-[**rororo-win-Setup.exe**](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases/download/v1.11.0.0/rororo-win-Setup.exe) — single click, installs to your user profile. Installing over an older version keeps your saved accounts.
+[**rororo-win-Setup.exe**](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases/download/v1.11.1.0/rororo-win-Setup.exe) — single click, installs to your user profile. Installing over an older version keeps your saved accounts.
 
 ## Compatibility
 
