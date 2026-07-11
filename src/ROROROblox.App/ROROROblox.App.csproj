@@ -80,11 +80,13 @@
                       LogicalName="ROROROblox.App.Themes.AGENT_PROMPT.md" />
   </ItemGroup>
 
-  <!-- Streamer-mode banked avatar tiles (Task 9). INTERIM art: generated programmatically
-       by scripts/generate-streamer-avatars.ps1 (on-brand navy/cyan/magenta tiles, Segoe UI
-       Emoji glyph per id) so StreamerAvatarPool's pack uris resolve instead of showing
-       broken-image boxes. A final polish pass through the 626labs-design skill is still
-       pending before the Store RC; do not treat these as final brand assets. -->
+  <!-- Streamer-mode banked avatar tiles — FINAL brand art (2026-07-10 design pass through
+       the 626labs-design skill). Twelve flat-vector characters on the brand duo (cyan
+       #17d4fa + magenta #f22f89, navy field), drawn circle-crop-safe because every display
+       surface clips them to a circle. Vector sources live in StreamerMode\Avatars\sources\
+       (*.svg, rendered at 256px via headless Chromium); edit the SVG and re-render rather
+       than touching the PNGs. The glob only matches this folder's PNGs, so sources\ stays
+       out of the resource stream. -->
   <ItemGroup>
     <Resource Include="StreamerMode\Avatars\*.png" />
   </ItemGroup>

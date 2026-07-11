@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#192e44"/>
+      <stop offset="100%" stop-color="#0f1f31"/>
+    </radialGradient>
+  </defs>
+
+  <!-- full-bleed background -->
+  <rect width="256" height="256" fill="url(#bg)"/>
+
+  <!-- glow disc -->
+  <circle cx="128" cy="128" r="105" fill="#17d4fa" opacity="0.08"/>
+
+  <!-- star dots (outer atmosphere) -->
+  <circle cx="30" cy="42" r="2.5" fill="#f4f7fb" opacity="0.85"/>
+  <circle cx="224" cy="52" r="2" fill="#17d4fa" opacity="0.9"/>
+  <circle cx="40" cy="214" r="2" fill="#f22f89" opacity="0.9"/>
+  <circle cx="218" cy="206" r="2.5" fill="#f4f7fb" opacity="0.7"/>
+
+  <!-- steam wisps -->
+  <g stroke="#17d4fa" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.45">
+    <path d="M124,46 C118,36 128,28 120,16"/>
+    <path d="M144,36 C138,28 146,20 140,10"/>
+  </g>
+
+  <!-- bowl back rim (inside of bowl) -->
+  <ellipse cx="128" cy="128" rx="64" ry="16" fill="#c21f6b" stroke="#0f1f31" stroke-width="6"/>
+
+  <!-- noodle mound base -->
+  <path d="M84,130 C84,104 100,92 128,92 C156,92 172,104 172,130 L172,142 L84,142 Z"
+        fill="#17d4fa" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- wavy strand gaps carved across the mound face -->
+  <g stroke="#0f1f31" stroke-width="5" fill="none" stroke-linecap="round">
+    <path d="M92,122 Q101,115 110,122 Q119,129 128,122 Q137,115 146,122 Q155,129 163,122"/>
+    <path d="M99,113 Q107,107 115,113 Q123,119 131,113 Q139,107 147,113 Q155,119 161,113"/>
+  </g>
+
+  <!-- chopsticks planted in the pile (drawn before the top loops so they emerge from inside it) -->
+  <g stroke-linecap="round" fill="none">
+    <path d="M152,104 L166,58" stroke="#0f1f31" stroke-width="24"/>
+    <path d="M163,106 L180,70" stroke="#0f1f31" stroke-width="24"/>
+    <path d="M152,104 L166,58" stroke="#f22f89" stroke-width="12"/>
+    <path d="M163,106 L180,70" stroke="#f22f89" stroke-width="12"/>
+  </g>
+
+  <!-- noodle loops piled on top: overlapping outlined lobes read as separate strands -->
+  <circle cx="100" cy="100" r="15" fill="#17d4fa" stroke="#0f1f31" stroke-width="6"/>
+  <circle cx="127" cy="90" r="17" fill="#17d4fa" stroke="#0f1f31" stroke-width="6"/>
+  <circle cx="153" cy="102" r="16" fill="#17d4fa" stroke="#0f1f31" stroke-width="6"/>
+
+  <!-- bowl body -->
+  <path d="M64,128 A64,16 0 0,0 192,128 C190,168 166,196 128,196 C90,196 66,168 64,128 Z"
+        fill="#f22f89" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- bowl foot -->
+  <rect x="104" y="195" width="48" height="13" rx="6" fill="#c21f6b" stroke="#0f1f31" stroke-width="6"/>
+
+  <!-- cresting noodle wave: strands lift out of the pile, arc left, one drapes over the front rim -->
+  <path d="M136,94 C132,52 88,46 70,74 C63,86 66,102 72,114 C78,126 72,140 76,154"
+        fill="none" stroke="#0f1f31" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M120,98 C118,68 94,62 82,84 C78,93 82,100 89,103"
+        fill="none" stroke="#0f1f31" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M136,94 C132,52 88,46 70,74 C63,86 66,102 72,114 C78,126 72,140 76,154"
+        fill="none" stroke="#17d4fa" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M120,98 C118,68 94,62 82,84 C78,93 82,100 89,103"
+        fill="none" stroke="#17d4fa" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- narutomaki fishcake nested in the curl of the wave -->
+  <circle cx="103" cy="93" r="12" fill="#f4f7fb" stroke="#0f1f31" stroke-width="6"/>
+  <path d="M108,87.5 C100.5,86.5 97,93 100,98 C102.5,102 107.5,101 108.8,97 C109.8,94 107,91.5 104.3,93"
+        fill="none" stroke="#f22f89" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- face -->
+  <ellipse cx="106" cy="160" rx="10" ry="11" fill="#f4f7fb" stroke="#0f1f31" stroke-width="6"/>
+  <ellipse cx="150" cy="160" rx="10" ry="11" fill="#f4f7fb" stroke="#0f1f31" stroke-width="6"/>
+  <circle cx="108.5" cy="161" r="4.5" fill="#0f1f31"/>
+  <circle cx="147.5" cy="161" r="4.5" fill="#0f1f31"/>
+  <circle cx="110" cy="158.5" r="1.7" fill="#f4f7fb"/>
+  <circle cx="149" cy="158.5" r="1.7" fill="#f4f7fb"/>
+  <path d="M113,172 Q128,186 143,172" fill="none" stroke="#0f1f31" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="98" cy="176" r="6" fill="#c21f6b"/>
+  <circle cx="158" cy="176" r="6" fill="#c21f6b"/>
+</svg>

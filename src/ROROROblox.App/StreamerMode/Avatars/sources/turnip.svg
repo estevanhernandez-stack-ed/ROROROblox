@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#192e44"/>
+      <stop offset="100%" stop-color="#0f1f31"/>
+    </radialGradient>
+  </defs>
+  <!-- full-bleed background -->
+  <rect width="256" height="256" fill="url(#bg)"/>
+  <!-- soft cyan glow disc behind character -->
+  <circle cx="128" cy="134" r="105" fill="#17d4fa" opacity="0.08"/>
+  <!-- tiny star dots (outer background) -->
+  <circle cx="36" cy="46" r="2.5" fill="#f4f7fb" opacity="0.8"/>
+  <circle cx="218" cy="38" r="2" fill="#17d4fa" opacity="0.9"/>
+  <circle cx="228" cy="204" r="2.5" fill="#f22f89" opacity="0.85"/>
+  <circle cx="26" cy="196" r="2" fill="#f4f7fb" opacity="0.6"/>
+  <!-- sprout antenna: stem + two leaves -->
+  <g stroke="#0ea8c9" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M128 102 L128 76" fill="none"/>
+    <path d="M126 78 Q101 74 95 55 Q110 46 122 59 Q127 67 126 78 Z" fill="#17d4fa"/>
+    <path d="M130 78 Q155 74 161 55 Q146 46 134 59 Q129 67 130 78 Z" fill="#17d4fa"/>
+  </g>
+  <!-- turnip body: round bulb tapering to a root point -->
+  <path d="M73 148 C73 115 98 95 128 95 C158 95 183 115 183 148 C183 177 163 197 145 206 C137 210 133 215 128 220 C123 215 119 210 111 206 C93 197 73 177 73 148 Z"
+        fill="#f22f89" stroke="#c21f6b" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- bulb highlight -->
+  <path d="M152 110 Q164 116 169 127" fill="none" stroke="#f4f7fb" stroke-width="6" stroke-linecap="round" opacity="0.45"/>
+  <!-- cyan cheek accents -->
+  <circle cx="90" cy="162" r="7" fill="#17d4fa"/>
+  <circle cx="166" cy="162" r="7" fill="#17d4fa"/>
+  <!-- wide delighted eyes -->
+  <circle cx="106" cy="138" r="14" fill="#f4f7fb" stroke="#0f1f31" stroke-width="6"/>
+  <circle cx="150" cy="138" r="14" fill="#f4f7fb" stroke="#0f1f31" stroke-width="6"/>
+  <circle cx="108" cy="136" r="7" fill="#0f1f31"/>
+  <circle cx="152" cy="136" r="7" fill="#0f1f31"/>
+  <circle cx="110.5" cy="133.5" r="2.5" fill="#f4f7fb"/>
+  <circle cx="154.5" cy="133.5" r="2.5" fill="#f4f7fb"/>
+  <!-- open delighted smile with tongue -->
+  <path d="M108 160 Q128 190 148 160 Z" fill="#0f1f31" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M120 167 Q128 175 136 167 Z" fill="#f22f89"/>
+</svg>

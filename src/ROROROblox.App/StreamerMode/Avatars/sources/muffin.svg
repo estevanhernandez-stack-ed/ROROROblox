@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#192e44"/>
+      <stop offset="100%" stop-color="#0f1f31"/>
+    </radialGradient>
+    <clipPath id="mouthClip">
+      <path d="M 108 124 Q 128 152 148 124 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- full-bleed background -->
+  <rect x="0" y="0" width="256" height="256" fill="url(#bg)"/>
+
+  <!-- soft magenta glow disc behind character -->
+  <circle cx="128" cy="130" r="105" fill="#f22f89" opacity="0.08"/>
+
+  <!-- tiny star dots, outer background -->
+  <circle cx="32" cy="38" r="2.5" fill="#f4f7fb" opacity="0.85"/>
+  <circle cx="222" cy="50" r="2" fill="#17d4fa" opacity="0.9"/>
+  <circle cx="34" cy="204" r="2.5" fill="#17d4fa" opacity="0.9"/>
+  <circle cx="218" cy="212" r="2" fill="#f4f7fb" opacity="0.8"/>
+
+  <!-- burst ticks: proud pop energy above the dome -->
+  <g stroke="#17d4fa" stroke-width="6" stroke-linecap="round">
+    <line x1="128" y1="48" x2="128" y2="36"/>
+    <line x1="92" y1="54" x2="82" y2="42"/>
+    <line x1="164" y1="54" x2="174" y2="42"/>
+  </g>
+
+  <!-- flying crumb bits -->
+  <circle cx="58" cy="72" r="4" fill="#17d4fa"/>
+  <circle cx="200" cy="64" r="3.5" fill="#17d4fa"/>
+
+  <!-- muffin dome (cyan, bursting wide over the wrapper) -->
+  <path d="M 64 150
+           C 52 142 52 116 62 102
+           C 70 74 96 58 128 58
+           C 160 58 186 74 194 102
+           C 204 116 204 142 192 150
+           C 178 162 148 168 128 168
+           C 108 168 78 162 64 150 Z"
+        fill="#17d4fa" stroke="#0f1f31" stroke-width="6"
+        stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- crumb-dot freckles -->
+  <g fill="#0ea8c9">
+    <circle cx="84" cy="90" r="3"/>
+    <circle cx="98" cy="74" r="2.5"/>
+    <circle cx="128" cy="68" r="3"/>
+    <circle cx="158" cy="74" r="2.5"/>
+    <circle cx="172" cy="90" r="3"/>
+    <circle cx="70" cy="120" r="2.5"/>
+    <circle cx="186" cy="120" r="2.5"/>
+  </g>
+
+  <!-- cheeks -->
+  <ellipse cx="89" cy="119" rx="9" ry="6" fill="#f22f89"/>
+  <ellipse cx="167" cy="119" rx="9" ry="6" fill="#f22f89"/>
+
+  <!-- eyes -->
+  <circle cx="104" cy="103" r="11" fill="#f4f7fb" stroke="#0f1f31" stroke-width="6"/>
+  <circle cx="152" cy="103" r="11" fill="#f4f7fb" stroke="#0f1f31" stroke-width="6"/>
+  <circle cx="105" cy="103" r="4.5" fill="#0f1f31"/>
+  <circle cx="153" cy="103" r="4.5" fill="#0f1f31"/>
+  <circle cx="107" cy="101" r="1.8" fill="#f4f7fb"/>
+  <circle cx="155" cy="101" r="1.8" fill="#f4f7fb"/>
+
+  <!-- big open smile with tongue -->
+  <path d="M 108 124 Q 128 152 148 124 Z" fill="#0f1f31" stroke="#0f1f31"
+        stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <ellipse cx="128" cy="136" rx="9" ry="5" fill="#f22f89" clip-path="url(#mouthClip)"/>
+
+  <!-- pleated wrapper (magenta cup, zigzag rim in front of the dome) -->
+  <path d="M 84 160 L 95 150 L 106 164 L 117 150 L 128 164 L 139 150
+           L 150 164 L 161 150 L 172 160 L 160 210 L 96 210 Z"
+        fill="#f22f89" stroke="#0f1f31" stroke-width="6"
+        stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- pleat shading stripes -->
+  <g fill="#c21f6b">
+    <path d="M 100 169 L 112 169 L 116 205 L 107 205 Z"/>
+    <path d="M 122 169 L 134 169 L 132 205 L 124 205 Z"/>
+    <path d="M 144 169 L 156 169 L 148 205 L 140 205 Z"/>
+  </g>
+</svg>
