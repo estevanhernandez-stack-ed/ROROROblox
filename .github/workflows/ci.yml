@@ -73,3 +73,31 @@ jobs:
 
       - name: Test (full solution -- unit + integration harness)
         run: dotnet test ROROROblox.slnx --configuration Release --no-build --logger "console;verbosity=minimal"
+
+  # Native Arm64 coverage for the Store's arm64 MSIX flavor. Same full-solution suite,
+  # executed on Arm silicon so the managed surface (DPAPI, named-pipe gRPC harness, Win32
+  # P/Invoke declarations) is proven on the architecture we ship — the only Arm64 testing
+  # this project gets, since no dev box in the estate is Windows-on-Arm.
+  build-test-arm64:
+    name: build + full-solution test (arm64)
+    needs: guards
+    runs-on: windows-11-arm
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore ROROROblox.slnx
+
+      - name: Build (full solution)
+        run: dotnet build ROROROblox.slnx --configuration Release --no-restore
+
+      - name: Test (full solution -- unit + integration harness)
+        run: dotnet test ROROROblox.slnx --configuration Release --no-build --logger "console;verbosity=minimal"

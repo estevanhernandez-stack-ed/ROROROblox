@@ -39,7 +39,13 @@ param(
 
     [string]$RepoRoot,
     [switch]$RestoreManifest,
-    [switch]$DryRun
+    [switch]$DryRun,
+
+    # x64 (default) or arm64. Passed through to build-msix.ps1, which stamps the staged
+    # manifest's ProcessorArchitecture and suffixes the artifact name for arm64. A full
+    # Store submission uploads BOTH packages (same version) in one submission.
+    [ValidateSet('x64', 'arm64')]
+    [string]$Architecture = 'x64'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -140,8 +146,8 @@ Write-Host ''
 
 # Run the Store build (unsigned -- Partner Center signs after upload).
 $buildScript = Join-Path $RepoRoot 'scripts\build-msix.ps1'
-Write-Host '[finalize] Running scripts/build-msix.ps1 -Store...' -ForegroundColor Cyan
-& powershell -ExecutionPolicy Bypass -File $buildScript -Store
+Write-Host "[finalize] Running scripts/build-msix.ps1 -Store -Runtime win-$Architecture..." -ForegroundColor Cyan
+& powershell -ExecutionPolicy Bypass -File $buildScript -Store -Runtime "win-$Architecture"
 $buildExit = $LASTEXITCODE
 
 # Optional rollback so the committed manifest stays as a placeholder.
@@ -155,8 +161,9 @@ if ($buildExit -ne 0) {
     exit $buildExit
 }
 
-# Report the artefact.
-$msixPath = Join-Path $RepoRoot 'dist\RORORO-Store.msix'
+# Report the artefact (x64 keeps the historical un-suffixed name).
+$archSuffix = if ($Architecture -eq 'x64') { '' } else { "-$Architecture" }
+$msixPath = Join-Path $RepoRoot "dist\RORORO-Store$archSuffix.msix"
 if (Test-Path $msixPath) {
     $info = Get-Item $msixPath
     Write-Host ''

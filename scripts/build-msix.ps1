@@ -29,12 +29,17 @@ param(
 
     [string]$Configuration = 'Release',
 
+    # win-x64 (default) or win-arm64. The staged AppxManifest's ProcessorArchitecture is
+    # stamped from this, so one committed manifest serves both flavors. Partner Center
+    # accepts both packages in a single submission and serves the right one per device.
+    [ValidateSet('win-x64', 'win-arm64')]
     [string]$Runtime = 'win-x64',
 
     [switch]$AllowPlaceholders
 )
 
 $ErrorActionPreference = 'Stop'
+$architecture = $Runtime -replace '^win-', ''
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $appProject = Join-Path $repoRoot 'src/ROROROblox.App/ROROROblox.App.csproj'
 $logosDir = Join-Path $repoRoot 'src/ROROROblox.App/Package/Logos'
@@ -180,14 +185,32 @@ New-Item -ItemType Directory -Path $stagingDir -Force | Out-Null
 Copy-Item -Path "$publishDir\*" -Destination $stagingDir -Recurse -Force
 
 # Copy manifest + logos into the staging tree at the paths the manifest references.
-Copy-Item -Path $manifestPath -Destination (Join-Path $stagingDir 'AppxManifest.xml') -Force
+# The staged manifest's ProcessorArchitecture is stamped from -Runtime so the committed
+# file (x64) never needs hand-editing for the arm64 flavor.
+$stagedManifestPath = Join-Path $stagingDir 'AppxManifest.xml'
+[xml]$stagedManifest = Get-Content $manifestPath -Raw
+$beforeArch = $stagedManifest.Package.Identity.ProcessorArchitecture
+$stagedManifest.Package.Identity.ProcessorArchitecture = $architecture
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+$writerSettings = New-Object System.Xml.XmlWriterSettings
+$writerSettings.Indent = $true
+$writerSettings.IndentChars = '    '
+$writerSettings.Encoding = $utf8NoBom
+$archWriter = [System.Xml.XmlWriter]::Create($stagedManifestPath, $writerSettings)
+try { $stagedManifest.Save($archWriter) } finally { $archWriter.Close() }
+if ($beforeArch -ne $architecture) {
+    Write-Host "[build-msix] Staged manifest ProcessorArchitecture: $beforeArch -> $architecture" -ForegroundColor Cyan
+}
 $stagingLogosDir = Join-Path $stagingDir 'Package\Logos'
 New-Item -ItemType Directory -Path $stagingLogosDir -Force | Out-Null
 Copy-Item -Path "$logosDir\*" -Destination $stagingLogosDir -Force
 
 # === Pack. ===
+# x64 keeps the historical un-suffixed name so existing flows and docs stay valid;
+# arm64 gets an explicit suffix (RORORO-Store-arm64.msix).
 $flavor = if ($Sideload) { 'Sideload' } else { 'Store' }
-$msixPath = Join-Path $outDir "RORORO-$flavor.msix"
+$archSuffix = if ($architecture -eq 'x64') { '' } else { "-$architecture" }
+$msixPath = Join-Path $outDir "RORORO-$flavor$archSuffix.msix"
 if (Test-Path $msixPath) { Remove-Item $msixPath -Force }
 
 $makeAppx = Get-MakeAppxPath
