@@ -103,19 +103,20 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 
 > Avoid "cheat", "exploit", "bypass" — those will trigger reviewer concerns even if irrelevant.
 
-## What's new (release notes for v1.9.0.0)
+## What's new (release notes for v1.11.0.0)
 
 > Store field only. Do NOT mention the plugin marketplace here — it's hidden in the
 > Store (packaged) build, so advertising it would confuse Store users and invite
-> reviewer questions. The Windows 10 line leads because it's the headline of this
-> submission (min OS dropped from Windows 11 to Windows 10 22H2).
+> reviewer questions. Streamer mode leads — it's the headline feature of this
+> submission and privacy-positive framing reads well in review.
 
 ```
-v1.9.0.0:
-• Now runs on Windows 10. RoRoRo works on Windows 10 22H2 (fully updated), not just Windows 11 — install it right from the Store.
-• Launch an alt straight into your main's friend's game. The friends picker can now browse your main account's friends, not just each account's own list.
-• Fixed the "needs re-login" tag that wouldn't clear even after you re-logged in. Re-login now tells you how it went every time, including when Roblox asks for two-factor verification mid-login.
-• Smoother multi-instance recovery and a quieter diagnostics log under the hood.
+v1.11.0.0:
+• Streamer mode: one flip disguises your whole account list with silly stand-in names and avatars, so you can stream or screen-share RoRoRo without showing your alts. Reroll any disguise; flip it off and everything comes back. Doesn't change what shows inside Roblox.
+• Twelve hand-drawn disguise avatars, made for RoRoRo.
+• The "Roblox is already running" popup is mostly gone: if Roblox is only sitting in your system tray, RoRoRo now starts cleanly on its own. You're still asked first whenever an actual game window is open.
+• Squad launch got a careful mode that waits for each account to land before launching the next, with per-account follow settings.
+• Set a default private server and a default game; launching with none set opens the Roblox home page.
 ```
 
 (Historical "What's new" blocks for prior releases live in their respective `docs/store/release-notes-*.md` files.)
