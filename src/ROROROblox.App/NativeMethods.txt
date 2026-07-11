@@ -10,3 +10,4 @@ SetWindowTextW
 DwmSetWindowAttribute
 DWMWINDOWATTRIBUTE
 GetCurrentPackageFullName
+SetCurrentProcessExplicitAppUserModelID
