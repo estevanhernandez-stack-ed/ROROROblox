@@ -54,4 +54,11 @@ public interface IAppSettings
     /// </summary>
     Task<bool> GetCarefulSquadLaunchAsync();
     Task SetCarefulSquadLaunchAsync(bool careful);
+
+    /// <summary>
+    /// True when streamer mode is on — the account manager shows fake identities instead of real
+    /// names/avatars. Sticky across launches (a streamer wants it reliably on). Defaults to false.
+    /// </summary>
+    Task<bool> GetStreamerModeAsync();
+    Task SetStreamerModeAsync(bool enabled);
 }

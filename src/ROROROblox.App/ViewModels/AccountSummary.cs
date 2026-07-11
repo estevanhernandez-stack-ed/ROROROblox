@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using ROROROblox.Core;
+using ROROROblox.Core.StreamerMode;
 
 namespace ROROROblox.App.ViewModels;
 
@@ -35,6 +36,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private TimeSpan? _sinceActivity;
     private bool _idleWarn;
     private bool _joinViaFriend;
+    private IStreamerIdentityProvider? _identity;
 
     public AccountSummary(Account account)
     {
@@ -85,8 +87,65 @@ public sealed class AccountSummary : INotifyPropertyChanged
 
     /// <summary>
     /// What the UI should show wherever it used to show <see cref="DisplayName"/>. v1.3.x.
+    /// Streamer-mode-aware (v1.10 — see <see cref="AttachIdentityProvider"/>): when the attached
+    /// <see cref="IStreamerIdentityProvider"/> is active, returns the fake per-account name instead
+    /// of the real <see cref="LocalName"/>/<see cref="DisplayName"/>. Falls back to the real value
+    /// when no provider is attached or the mode is inactive — <see cref="DisplayName"/> itself is
+    /// never mutated, since the provider needs the real value to pass through.
     /// </summary>
-    public string RenderName => _localName ?? DisplayName;
+    public string RenderName =>
+        _identity is { } p ? p.ForAccount(Id, _localName ?? DisplayName, AvatarUrl).Name
+                            : (_localName ?? DisplayName);
+
+    /// <summary>
+    /// What the UI should show wherever it used to show <see cref="AvatarUrl"/>. Streamer-mode-aware
+    /// counterpart to <see cref="RenderName"/>: a fake (<c>pack://</c>) avatar source when the
+    /// attached provider is active, else the real <see cref="AvatarUrl"/> verbatim. v1.10.
+    /// </summary>
+    public string AvatarDisplaySource =>
+        _identity is { } p ? p.ForAccount(Id, _localName ?? DisplayName, AvatarUrl).AvatarSource
+                            : AvatarUrl;
+
+    /// <summary>
+    /// Wire this row to the app-wide streamer-identity singleton so <see cref="RenderName"/> and
+    /// <see cref="AvatarDisplaySource"/> flip to fake values while the mode is active. Called by
+    /// <see cref="MainViewModel"/> right after construction (see <c>WireAccountSummary</c>).
+    /// Idempotent against re-attach (e.g. accidental double-wire) — always unsubscribes any prior
+    /// provider first so a row is never subscribed to two providers' <see cref="IStreamerIdentityProvider.Changed"/>
+    /// at once.
+    /// </summary>
+    public void AttachIdentityProvider(IStreamerIdentityProvider provider)
+    {
+        if (_identity is not null)
+        {
+            _identity.Changed -= OnIdentityChanged;
+        }
+        _identity = provider;
+        provider.Changed += OnIdentityChanged;
+    }
+
+    /// <summary>
+    /// Unsubscribe from the streamer-identity provider's <see cref="IStreamerIdentityProvider.Changed"/>
+    /// event. <see cref="IStreamerIdentityProvider"/> is a long-lived app singleton — without this,
+    /// a discarded row (removed account, or a full reload's <c>Accounts.Clear()</c>) would stay
+    /// rooted forever via the provider's event, leaking one <see cref="AccountSummary"/> per
+    /// discarded row for the life of the process. <see cref="MainViewModel"/> calls this at every
+    /// point a row leaves <c>Accounts</c>. Safe to call even when never attached.
+    /// </summary>
+    public void DetachIdentityProvider()
+    {
+        if (_identity is not null)
+        {
+            _identity.Changed -= OnIdentityChanged;
+            _identity = null;
+        }
+    }
+
+    private void OnIdentityChanged(object? sender, EventArgs e)
+    {
+        OnPropertyChanged(nameof(RenderName));
+        OnPropertyChanged(nameof(AvatarDisplaySource));
+    }
 
     private bool _isMain;
     /// <summary>

@@ -4,6 +4,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
+using ROROROblox.Core.StreamerMode;
 
 namespace ROROROblox.App.Friends;
 
@@ -19,7 +20,17 @@ internal partial class FriendFollowWindow : Window
     private readonly IAccountStore _accountStore;
     private readonly IReadOnlyList<FriendSource> _sources;
     private readonly Guid _launcherAccountId;
+    private readonly IStreamerIdentityProvider? _streamerIdentity;
     private int _currentSourceIndex;
+
+    // Cached last-fetched groupings so a streamer-mode toggle (provider.Changed) can re-render
+    // the rows with fresh fake/real identities WITHOUT re-hitting the network. Populated by
+    // RefreshAsync; consumed by RenderRows(). _hasData guards OnStreamerIdentityChanged from
+    // rebuilding over a "Loading..."/error state that never produced real data.
+    private List<(Friend Friend, UserPresence Presence)> _inGame = new();
+    private List<(Friend Friend, UserPresence? Presence)> _online = new();
+    private List<Friend> _offline = new();
+    private bool _hasData;
 
     /// <summary>The friend the user picked — null if the user closed without following.</summary>
     public LaunchTarget.FollowFriend? SelectedTarget { get; private set; }
@@ -39,7 +50,8 @@ internal partial class FriendFollowWindow : Window
         IAccountStore accountStore,
         IReadOnlyList<FriendSource> sources,
         int defaultSourceIndex,
-        Guid launcherAccountId)
+        Guid launcherAccountId,
+        IStreamerIdentityProvider? streamerIdentity = null)
     {
         if (sources is null || sources.Count == 0)
         {
@@ -55,6 +67,7 @@ internal partial class FriendFollowWindow : Window
         _sources = sources;
         _currentSourceIndex = defaultSourceIndex;
         _launcherAccountId = launcherAccountId;
+        _streamerIdentity = streamerIdentity;
 
         InitializeComponent();
 
@@ -64,21 +77,66 @@ internal partial class FriendFollowWindow : Window
         }
         UpdateSourceChrome();
         Loaded += async (_, _) => await RefreshAsync();
+
+        // Streamer mode can be toggled (or rerolled) while this modal is open — re-render the
+        // already-fetched rows with the new fake/real identities instead of forcing a Refresh
+        // click. Unsubscribe on Closed so a discarded modal never keeps this instance rooted via
+        // the provider's Changed event (same leak concern AccountSummary.DetachIdentityProvider
+        // guards against for account rows — Task 7).
+        if (_streamerIdentity is not null)
+        {
+            _streamerIdentity.Changed += OnStreamerIdentityChanged;
+        }
+        Closed += (_, _) =>
+        {
+            if (_streamerIdentity is not null)
+            {
+                _streamerIdentity.Changed -= OnStreamerIdentityChanged;
+            }
+        };
+    }
+
+    private void OnStreamerIdentityChanged(object? sender, EventArgs e)
+    {
+        // Chrome (window title + header + switch button + launcher hint) is always valid to
+        // re-render — it doesn't depend on a completed fetch, so refresh it unconditionally so a
+        // mid-session toggle masks/unmasks the account name in the title bar live.
+        UpdateSourceChrome();
+        // Friend rows only exist once a fetch produced data; _hasData guards a rebuild over a
+        // "Loading…"/error state.
+        if (_hasData)
+        {
+            RenderRows();
+        }
     }
 
     private FriendSource CurrentSource => _sources[_currentSourceIndex];
+
+    /// <summary>
+    /// Streamer-mode-aware account name for the modal chrome (window title, header, source-switch
+    /// button, launcher hint). Routes through the same <see cref="IStreamerIdentityProvider.ForAccount"/>
+    /// keyed on the account's <see cref="Guid"/> as the account rows (Task 7) and Roblox window titles
+    /// (Task 8), so an active streamer mode shows the FAKE account name here too — consistent with what
+    /// that account shows on its main-window row. FriendSource carries only the raw Roblox DisplayName
+    /// (no LocalName), so that's the real fallback; ForAccount ignores it while active (returns the
+    /// mapped fake name) and returns it verbatim when inactive — identical to the prior behavior.
+    /// The avatar arg is unused here (we only read .Name), so it's empty.
+    /// </summary>
+    private string ChromeName(FriendSource source)
+        => _streamerIdentity?.ForAccount(source.AccountId, source.DisplayName, string.Empty).Name
+           ?? source.DisplayName;
 
     /// <summary>Refresh title, source-switch label, and the launcher hint for the current source.</summary>
     private void UpdateSourceChrome()
     {
         var current = CurrentSource;
-        Title = $"ROROROblox -- Friends -- {current.DisplayName}";
-        AccountTitle.Text = current.DisplayName;
+        Title = $"ROROROblox -- Friends -- {ChromeName(current)}";
+        AccountTitle.Text = ChromeName(current);
 
         if (_sources.Count > 1)
         {
             var other = _sources[(_currentSourceIndex + 1) % _sources.Count];
-            SourceSwitchButton.Content = $"View {other.DisplayName}'s friends";
+            SourceSwitchButton.Content = $"View {ChromeName(other)}'s friends";
         }
 
         // When you're browsing a list that isn't the launching account's own, name the launcher so
@@ -86,7 +144,7 @@ internal partial class FriendFollowWindow : Window
         // is the only trigger; nothing auto-joins.
         if (current.AccountId != _launcherAccountId)
         {
-            var launcherName = _sources.First(s => s.AccountId == _launcherAccountId).DisplayName;
+            var launcherName = ChromeName(_sources.First(s => s.AccountId == _launcherAccountId));
             LauncherHint.Text = $"Follow one to launch {launcherName} into their server.";
             LauncherHint.Visibility = Visibility.Visible;
         }
@@ -123,6 +181,7 @@ internal partial class FriendFollowWindow : Window
             var friends = await _api.GetFriendsAsync(cookie, source.RobloxUserId);
             if (friends.Count == 0)
             {
+                _hasData = false;
                 StatusText.Text = "No friends visible. Either this account has none, or its privacy filter is hiding them.";
                 return;
             }
@@ -157,56 +216,81 @@ internal partial class FriendFollowWindow : Window
             online.Sort((a, b) => string.Compare(a.Friend.DisplayName, b.Friend.DisplayName, StringComparison.OrdinalIgnoreCase));
             offline.Sort((a, b) => string.Compare(a.DisplayName, b.DisplayName, StringComparison.OrdinalIgnoreCase));
 
-            if (inGame.Count > 0)
-            {
-                AddSectionHeader("In game", inGame.Count, isAccent: true);
-                foreach (var (f, p) in inGame)
-                {
-                    // A friend can be InGame yet expose no joinable place (join/visibility privacy
-                    // off) — the same land-at-home guard FollowAltAsync uses gates the button here so
-                    // we never offer a Follow that silently bounces to the Roblox home page.
-                    var followable = MainViewModel.EvaluateFollow(p, FriendName(f)).CanFollow;
-                    FriendsList.Children.Add(BuildFriendRow(f, p, isFollowable: followable));
-                }
-            }
-            if (online.Count > 0)
-            {
-                AddSectionHeader("Online", online.Count, isAccent: false);
-                foreach (var (f, p) in online)
-                {
-                    FriendsList.Children.Add(BuildFriendRow(f, p, isFollowable: false));
-                }
-            }
-            if (offline.Count > 0)
-            {
-                AddSectionHeader("Offline", offline.Count, isAccent: false);
-                foreach (var f in offline)
-                {
-                    FriendsList.Children.Add(BuildFriendRow(f, null, isFollowable: false));
-                }
-            }
+            _inGame = inGame;
+            _online = online;
+            _offline = offline;
+            _hasData = true;
+            RenderRows();
 
             StatusText.Text = $"{friends.Count} {(friends.Count == 1 ? "friend" : "friends")} · " +
                               $"{inGame.Count} in game · {online.Count} online · {offline.Count} offline";
         }
         catch (CookieExpiredException)
         {
+            _hasData = false;
+            // Mask the account name — this visible status message must not leak the real name while
+            // streamer mode is active (a cookie expiring mid-session is exactly when this modal is
+            // likely open on stream). ChromeName returns the fake name when active, real when not.
+            var name = ChromeName(source);
             StatusText.Text = _sources.Count > 1
-                ? $"{source.DisplayName}'s session expired — re-authenticate it, or switch to the other account's friends."
-                : $"{source.DisplayName}'s session expired — close this and re-authenticate the account first.";
+                ? $"{name}'s session expired — re-authenticate it, or switch to the other account's friends."
+                : $"{name}'s session expired — close this and re-authenticate the account first.";
         }
         catch (AccountStoreCorruptException)
         {
+            _hasData = false;
             StatusText.Text = "Couldn't read this account's saved session — close this and re-add the account.";
         }
         catch (Exception ex)
         {
+            _hasData = false;
             StatusText.Text = $"Couldn't load friends: {ex.Message}";
         }
         finally
         {
             RefreshButton.IsEnabled = true;
             SourceSwitchButton.IsEnabled = true;
+        }
+    }
+
+    /// <summary>
+    /// (Re)build the visible rows from the cached <see cref="_inGame"/>/<see cref="_online"/>/
+    /// <see cref="_offline"/> groupings — no network call. Called after a successful
+    /// <see cref="RefreshAsync"/> fetch AND from <see cref="OnStreamerIdentityChanged"/> so a
+    /// streamer-mode flip (or reroll) while this modal is open re-renders with the current
+    /// fake/real identities instantly.
+    /// </summary>
+    private void RenderRows()
+    {
+        FriendsList.Children.Clear();
+
+        if (_inGame.Count > 0)
+        {
+            AddSectionHeader("In game", _inGame.Count, isAccent: true);
+            foreach (var (f, p) in _inGame)
+            {
+                // A friend can be InGame yet expose no joinable place (join/visibility privacy
+                // off) — the same land-at-home guard FollowAltAsync uses gates the button here so
+                // we never offer a Follow that silently bounces to the Roblox home page.
+                var followable = MainViewModel.EvaluateFollow(p, FriendName(f)).CanFollow;
+                FriendsList.Children.Add(BuildFriendRow(f, p, isFollowable: followable));
+            }
+        }
+        if (_online.Count > 0)
+        {
+            AddSectionHeader("Online", _online.Count, isAccent: false);
+            foreach (var (f, p) in _online)
+            {
+                FriendsList.Children.Add(BuildFriendRow(f, p, isFollowable: false));
+            }
+        }
+        if (_offline.Count > 0)
+        {
+            AddSectionHeader("Offline", _offline.Count, isAccent: false);
+            foreach (var f in _offline)
+            {
+                FriendsList.Children.Add(BuildFriendRow(f, null, isFollowable: false));
+            }
         }
     }
 
@@ -224,6 +308,18 @@ internal partial class FriendFollowWindow : Window
 
     private Border BuildFriendRow(Friend friend, UserPresence? presence, bool isFollowable)
     {
+        // Streamer-mode-aware display identity (Task 11 — mirrors AccountSummary.RenderName /
+        // AvatarDisplaySource, Task 7). ForFriend internally no-ops to the real values when the
+        // provider is null/inactive, so this is a straight swap-in with no behavior change when
+        // streamer mode is off. friend.DisplayName/AvatarUrl themselves are never mutated.
+        // realName covers the empty-DisplayName fallback (uses friend.Username) — it's only ever
+        // passed to ForFriend as the "real" value, which returns the FAKE name while active, so an
+        // empty-display-name friend still shows a fake name (never the raw username) on screen.
+        var active = _streamerIdentity?.IsActive == true;
+        var realName = FriendName(friend);
+        var display = _streamerIdentity?.ForFriend(friend.UserId, realName, friend.AvatarUrl)
+                      ?? new DisplayIdentity(realName, friend.AvatarUrl);
+
         var row = new Border
         {
             Background = (Brush)FindResource("RowBgBrush"),
@@ -236,7 +332,9 @@ internal partial class FriendFollowWindow : Window
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        // Avatar (best-effort — leave blank circle if URL fetch fails).
+        // Avatar (best-effort — leave blank circle if the source fetch fails). display.AvatarSource
+        // is either the real AvatarUrl (http) or a fake pack:// resource URI (streamer mode active) —
+        // both are valid absolute Uris for BitmapImage.
         var avatar = new Border
         {
             Width = 36,
@@ -247,11 +345,11 @@ internal partial class FriendFollowWindow : Window
             VerticalAlignment = VerticalAlignment.Center,
             ClipToBounds = true,
         };
-        if (!string.IsNullOrEmpty(friend.AvatarUrl))
+        if (!string.IsNullOrEmpty(display.AvatarSource))
         {
             try
             {
-                avatar.Background = new ImageBrush(new BitmapImage(new Uri(friend.AvatarUrl, UriKind.Absolute)))
+                avatar.Background = new ImageBrush(new BitmapImage(new Uri(display.AvatarSource, UriKind.Absolute)))
                 {
                     Stretch = Stretch.UniformToFill,
                 };
@@ -268,17 +366,30 @@ internal partial class FriendFollowWindow : Window
         var info = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         info.Children.Add(new TextBlock
         {
-            Text = string.IsNullOrEmpty(friend.DisplayName) ? friend.Username : friend.DisplayName,
+            Text = display.Name,
             FontSize = 13,
             FontWeight = FontWeights.SemiBold,
             Foreground = (Brush)FindResource("WhiteBrush"),
         });
-        var secondary = string.IsNullOrEmpty(friend.Username) ? string.Empty : $"@{friend.Username}";
-        if (!string.IsNullOrEmpty(presence?.LastLocation))
+        // Secondary line = real @username (+ current location). A friend's @username is often MORE
+        // identifying than their display name and there's no fake handle to substitute for it, so
+        // while streamer mode is active the whole line is suppressed — friend.Username never enters
+        // the visual tree. Re-evaluates on provider.Changed because the enclosing row is rebuilt by
+        // RenderRows on every Changed, so toggling mid-session hides/shows it live.
+        string secondary;
+        if (active)
         {
-            secondary = string.IsNullOrEmpty(secondary)
-                ? presence.LastLocation
-                : $"{secondary}  ·  {presence.LastLocation}";
+            secondary = string.Empty;
+        }
+        else
+        {
+            secondary = string.IsNullOrEmpty(friend.Username) ? string.Empty : $"@{friend.Username}";
+            if (!string.IsNullOrEmpty(presence?.LastLocation))
+            {
+                secondary = string.IsNullOrEmpty(secondary)
+                    ? presence.LastLocation
+                    : $"{secondary}  ·  {presence.LastLocation}";
+            }
         }
         info.Children.Add(new TextBlock
         {
@@ -304,7 +415,7 @@ internal partial class FriendFollowWindow : Window
                 FontSize = 11,
                 ToolTip = "Launch this account into the server your friend is in.",
             };
-            followBtn.Click += (_, _) => OnFollowClick(friend, presence);
+            followBtn.Click += (_, _) => OnFollowClick(friend, presence, display.Name);
             Grid.SetColumn(followBtn, 2);
             grid.Children.Add(followBtn);
         }
@@ -331,11 +442,15 @@ internal partial class FriendFollowWindow : Window
     private static string FriendName(Friend friend) =>
         string.IsNullOrEmpty(friend.DisplayName) ? friend.Username : friend.DisplayName;
 
-    private void OnFollowClick(Friend friend, UserPresence? presence)
+    private void OnFollowClick(Friend friend, UserPresence? presence, string displayName)
     {
         SelectedTarget = new LaunchTarget.FollowFriend(friend.UserId);
         SelectedPresence = presence;
-        SelectedFriendName = FriendName(friend);
+        // Caller (MainViewModel.OpenFriendFollowAsync) only uses this for its own StatusBanner
+        // messaging (e.g. a blocked-follow reason) — never for the Roblox API call itself, which
+        // goes by friend.UserId. Passing the streamer-mode-aware display name keeps that banner
+        // from re-leaking the real name the picker just finished hiding.
+        SelectedFriendName = displayName;
         DialogResult = true;
         Close();
     }

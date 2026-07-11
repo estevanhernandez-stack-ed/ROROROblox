@@ -22,6 +22,8 @@ namespace ROROROblox.Core.Transport;
 /// Whether this account is challenge-prone on direct joins and should be routed into squads via
 /// friend-follow instead. Trust-aware squad launch (task 1, 2026-07-09).
 /// </param>
+/// <param name="StreamerName">Account-side fake streamer display name, or null. Cosmetic, not a secret — travels with the bundle like <see cref="LocalName"/>.</param>
+/// <param name="StreamerAvatarId">Account-side fake streamer avatar id, or null. Cosmetic, not a secret — travels with the bundle like <see cref="LocalName"/>.</param>
 public sealed record AccountExportRecord(
     string DisplayName,
     string AvatarUrl,
@@ -34,4 +36,6 @@ public sealed record AccountExportRecord(
     bool IsMain,
     int SortOrder,
     bool IsSelected,
-    bool JoinViaFriend = false);
+    bool JoinViaFriend = false,
+    string? StreamerName = null,
+    string? StreamerAvatarId = null);

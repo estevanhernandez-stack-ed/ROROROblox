@@ -43,7 +43,7 @@
                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16"
                             Background="{DynamicResource NavyBrush}" ClipToBounds="True"
                             VerticalAlignment="Center">
-                        <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" />
+                        <Image Source="{Binding AvatarDisplaySource}" Stretch="UniformToFill" />
                     </Border>
 
                     <StackPanel Grid.Column="1" Margin="10,0,10,0" VerticalAlignment="Center">
@@ -211,6 +211,16 @@
                                 </Style>
                             </MenuItem.Style>
                         </MenuItem>
+
+                        <Separator />
+
+                        <!-- Streamer mode (v1.10, Task 10) — per-row reroll. CommandParameter binds
+                             straight to the row's Id (a Guid), not the AccountSummary itself, so
+                             RerollAccountCommand can't hold a dangling row reference. -->
+                        <MenuItem Header="🎲 Reroll identity"
+                                  Command="{Binding Data.RerollAccountCommand, Source={StaticResource VmProxy}}"
+                                  CommandParameter="{Binding PlacementTarget.DataContext.Id, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                  ToolTip="Assign this account a fresh fake name and avatar for streamer mode." />
                     </ContextMenu>
                 </Border.ContextMenu>
 
@@ -264,7 +274,7 @@
                         <Border Width="44" Height="44" CornerRadius="22"
                                 Background="{DynamicResource NavyBrush}" ClipToBounds="True"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" />
+                            <Image Source="{Binding AvatarDisplaySource}" Stretch="UniformToFill" />
                         </Border>
                     </Grid>
 
@@ -422,7 +432,7 @@
                                                     ClipToBounds="True"
                                                     VerticalAlignment="Center"
                                                     Margin="0,0,5,0">
-                                                <Image Source="{Binding AvatarUrl}" Stretch="UniformToFill" />
+                                                <Image Source="{Binding AvatarDisplaySource}" Stretch="UniformToFill" />
                                             </Border>
                                             <TextBlock Text="{Binding RenderName}"
                                                        FontSize="10"
@@ -819,6 +829,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <!-- Row 1: title block (left) + primary actions (right). -->
@@ -1193,6 +1204,44 @@
                                 FontWeight="SemiBold"
                                 ToolTip="Send every selected account into the same Roblox private server. Use the dot next to each account's status to deselect." />
                     </StackPanel>
+                </Grid>
+
+                <!-- Row 3: streamer mode (v1.10, Task 10) — switch + reroll-all + the scope-boundary
+                     copy that matters most: this hides names/avatars/links in RoRoRo's OWN UI,
+                     it does not touch anything Roblox itself shows. -->
+                <Grid Grid.Row="2" Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <ui:ToggleSwitch Grid.Column="0"
+                                      Content="Streamer mode"
+                                      IsChecked="{Binding StreamerModeOn, Mode=TwoWay}"
+                                      VerticalAlignment="Center"
+                                      ToolTip="Hides names, avatars, and share links in RoRoRo. Doesn't change what shows inside Roblox." />
+
+                    <Button Grid.Column="1"
+                            Content="Reroll all identities"
+                            Command="{Binding RerollAllCommand}"
+                            Padding="10,6" Margin="14,0,0,0"
+                            Background="{DynamicResource NavyBrush}"
+                            Foreground="{DynamicResource MutedTextBrush}"
+                            BorderBrush="{DynamicResource DividerBrush}"
+                            BorderThickness="1"
+                            FontSize="11"
+                            ToolTip="Assign every fake name and avatar a fresh pick." />
+
+                    <TextBlock Grid.Column="2"
+                               Text="Hides names, avatars, and share links in RoRoRo. Doesn't change what shows inside Roblox."
+                               FontSize="10"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Right"
+                               TextWrapping="Wrap"
+                               MaxWidth="380"
+                               Margin="14,0,0,0" />
                 </Grid>
             </Grid>
         </Border>

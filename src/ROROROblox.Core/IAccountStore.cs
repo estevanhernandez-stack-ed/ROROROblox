@@ -75,6 +75,17 @@ public interface IAccountStore
     Task UpdateLocalNameAsync(Guid accountId, string? localName);
 
     /// <summary>
+    /// Persist the account-side fake streamer identity — the display name and avatar id a
+    /// streaming user wants shown in place of the real Roblox identity while streamer mode is on.
+    /// Rides the DPAPI blob because it lives on <see cref="Account"/> (not a secret, but keeping
+    /// it alongside the rest of the per-account setup avoids a second store for account-owned
+    /// data). Idempotent — no-op (no disk write, no DPAPI roundtrip) if the account already has
+    /// the same values persisted, mirroring <see cref="UpdateLocalNameAsync"/>. Throws
+    /// <see cref="KeyNotFoundException"/> if no account has the given <paramref name="accountId"/>.
+    /// </summary>
+    Task UpdateStreamerIdentityAsync(Guid accountId, string fakeName, string fakeAvatarId);
+
+    /// <summary>
     /// Persist the resolved Roblox <paramref name="userId"/> for the saved account identified
     /// by <paramref name="accountId"/>. Idempotent — no-op (no disk write, no DPAPI roundtrip)
     /// if the account already has the same <paramref name="userId"/> persisted. Throws

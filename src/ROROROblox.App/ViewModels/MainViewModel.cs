@@ -48,6 +48,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly Core.Transport.IAccountTransport _accountTransport;
     private readonly IActivityMonitor _activityMonitor;
     private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
+    private readonly Core.StreamerMode.IStreamerIdentityProvider? _streamerIdentity;
     private readonly ILogger<MainViewModel> _log;
 
     /// <summary>
@@ -102,6 +103,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         Core.Transport.IAccountTransport accountTransport,
         IActivityMonitor activityMonitor,
         Notifications.IdleAlertPresenter idleAlertPresenter,
+        Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
         ILogger<MainViewModel>? log = null)
     {
         _cookieCapture = cookieCapture;
@@ -125,6 +127,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _accountTransport = accountTransport;
         _activityMonitor = activityMonitor;
         _idleAlertPresenter = idleAlertPresenter;
+        _streamerIdentity = streamerIdentity;
         _log = log ?? NullLogger<MainViewModel>.Instance;
 
         // Mirror must exist before any off-thread reader (presence loop, plugin host) can
@@ -163,6 +166,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         RemoveGameCommand = new RelayCommand(p => _ = RemoveGameAsync(p as FavoriteGame));
         ToggleJoinViaFriendCommand = new RelayCommand(p => _ = ToggleJoinViaFriendAsync(p as AccountSummary));
 
+        // Streamer mode (v1.10) — main-window switch + reroll controls (Task 10). No-ops when
+        // _streamerIdentity is null (VM-level test harness, which doesn't pass one).
+        RerollAllCommand = new RelayCommand(RerollAllIdentitiesAsync);
+        RerollAccountCommand = new RelayCommand(p => RerollAccountAsync(p));
+
         // Subscribe to favorites' default-changed event so the widget readout updates without a
         // manual re-fetch. Fires after SetDefaultAsync mutates + persists, on real change only.
         _favorites.DefaultChanged += OnFavoritesDefaultChanged;
@@ -182,6 +190,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // warn threshold. The monitor itself (Task 5) already runs its own sample timer; this
         // VM only reacts to the crossing event + refreshes the passive row/banner display below.
         _activityMonitor.WarnThresholdCrossed += OnActivityWarnCrossed;
+
+        // Streamer mode (v1.10, Task 10) — keep the main-window switch (and the tray checkmark,
+        // via its own subscription) in sync when the mode flips from either surface. Mirrors
+        // AccountSummary.OnIdentityChanged's un-marshaled OnPropertyChanged call: WPF's binding
+        // engine auto-dispatches PropertyChanged notifications to the owning thread, so no manual
+        // Dispatcher.Invoke is needed here (unlike TrayService's direct MenuItem property write).
+        if (_streamerIdentity is not null)
+        {
+            _streamerIdentity.Changed += OnStreamerIdentityChanged;
+        }
 
         _ = InitializeBloxstrapWarningAsync();
 
@@ -382,6 +400,35 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// is the row's <see cref="AccountSummary"/>. See <see cref="ToggleJoinViaFriendAsync"/>.
     /// </summary>
     public ICommand ToggleJoinViaFriendCommand { get; }
+
+    /// <summary>
+    /// True when streamer mode is active — bound two-way to the main-window <c>ui:ToggleSwitch</c>
+    /// (Task 10). Get reads straight through to <see cref="Core.StreamerMode.IStreamerIdentityProvider.IsActive"/>;
+    /// set fire-and-forgets <see cref="Core.StreamerMode.IStreamerIdentityProvider.SetActiveAsync"/> and relies on
+    /// <see cref="OnStreamerIdentityChanged"/> to raise the change notification once the provider
+    /// confirms the flip (keeps the switch and the tray checkbox as two views of one source of
+    /// truth instead of an optimistic local flag that could drift). False (and a no-op set) when
+    /// no provider was resolved — the VM-level test harness doesn't pass one.
+    /// </summary>
+    public bool StreamerModeOn
+    {
+        get => _streamerIdentity?.IsActive ?? false;
+        set
+        {
+            if (_streamerIdentity is null) return;
+            _ = _streamerIdentity.SetActiveAsync(value);
+        }
+    }
+
+    /// <summary>Reroll every streamer-mode fake identity (accounts + lazily-met friends) at once — the "Reroll all identities" button. Task 10.</summary>
+    public ICommand RerollAllCommand { get; }
+
+    /// <summary>
+    /// Reroll a single account's streamer-mode fake identity — the per-row context-menu "reroll"
+    /// affordance. Parameter is the row's <see cref="AccountSummary.Id"/> (a <see cref="Guid"/>),
+    /// not the whole row. Task 10.
+    /// </summary>
+    public ICommand RerollAccountCommand { get; }
 
     /// <summary>
     /// Saved games for the default-game widget dropdown. Same content as
@@ -608,6 +655,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         try
         {
             var accounts = await _accountStore.ListAsync();
+            // Detach the streamer-identity subscription before discarding the old rows — the
+            // provider is a long-lived app singleton, so a row left subscribed to its Changed
+            // event would stay rooted forever (one leaked AccountSummary per reload).
+            foreach (var stale in Accounts)
+            {
+                stale.DetachIdentityProvider();
+            }
             Accounts.Clear();
             // Manual SortOrder wins when set; among rows that share a SortOrder (typical: every
             // account at 0 because the user has never reordered), fall back to most-recently-
@@ -986,9 +1040,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         Accounts.Insert(0, summary);
         _log.LogInformation("Added account {AccountId} ({Username}, userId {UserId}, isMain={IsMain})",
             account.Id, captured.Username, captured.UserId, account.IsMain);
+        // Streamer-mode-aware: summary is already wired to the identity provider above, so
+        // RenderName returns the fake per-account name while active — same masking as every
+        // other visible surface (spec streamer-mode leak fix). The WebView login itself already
+        // showed the real Roblox account, but this StatusBanner is a RORORO-owned surface and
+        // must not re-print the real name once masking is live.
         StatusBanner = account.IsMain
-            ? $"Added {captured.Username}. Marked as main — change it any time."
-            : $"Added {captured.Username}.";
+            ? $"Added {summary.RenderName}. Marked as main — change it any time."
+            : $"Added {summary.RenderName}.";
         OnPropertyChanged(nameof(MainAccount));
         OnPropertyChanged(nameof(CompactEmptyKind));
         RelayCommand.RaiseCanExecuteChanged();
@@ -1182,7 +1241,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             await DispatchBatchAsync(
                 targets,
                 overrideTarget: null,
-                launchingBanner: (summary, n, total) => $"Launching {summary.DisplayName} ({n} of {total})...");
+                launchingBanner: (summary, n, total) => $"Launching {summary.RenderName} ({n} of {total})...");
             StatusBanner = result.PartialBanner(targets.Count, "Launch multiple finished");
         }
         finally
@@ -1293,7 +1352,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 var firstLanded = await WaitForLandingAsync(first).ConfigureAwait(true);
                 if (!firstLanded)
                 {
-                    StatusBanner = $"{first.DisplayName} didn't land within {(int)AnchorGate.MaxWait.TotalSeconds}s — continuing.";
+                    StatusBanner = $"{first.RenderName} didn't land within {(int)AnchorGate.MaxWait.TotalSeconds}s — continuing.";
                 }
             }
 
@@ -1431,7 +1490,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 var landed = await WaitForLandingAsync(summary).ConfigureAwait(true);
                 if (!landed)
                 {
-                    StatusBanner = $"{summary.DisplayName} didn't land within {(int)AnchorGate.MaxWait.TotalSeconds}s — continuing.";
+                    StatusBanner = $"{summary.RenderName} didn't land within {(int)AnchorGate.MaxWait.TotalSeconds}s — continuing.";
                 }
             }
             if (idx < targets.Count - 1)
@@ -1513,7 +1572,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 await DispatchBatchAsync(
                     plan.Direct,
                     overrideTarget: target,
-                    launchingBanner: (summary, n, total) => $"Joining private server: {summary.DisplayName} ({n} of {total})...",
+                    launchingBanner: (summary, n, total) => $"Joining private server: {summary.RenderName} ({n} of {total})...",
                     waitForLanding: careful);
             }
 
@@ -1543,7 +1602,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     await ReleaseBatchAsync(
                         plan.Flagged,
                         overrideTarget: new LaunchTarget.FollowFriend(anchorUserId),
-                        launchingBanner: (summary, n, total) => $"{summary.DisplayName} joining via {anchor.DisplayName} ({n} of {total})...",
+                        launchingBanner: (summary, n, total) => $"{summary.RenderName} joining via {anchor.RenderName} ({n} of {total})...",
                         startIndex: 0,
                         waitForLanding: careful);
                 }
@@ -1564,7 +1623,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                         await DispatchBatchAsync(
                             plan.Flagged,
                             overrideTarget: target,
-                            launchingBanner: (summary, n, total) => $"Joining private server (direct fallback): {summary.DisplayName} ({n} of {total})...",
+                            launchingBanner: (summary, n, total) => $"Joining private server (direct fallback): {summary.RenderName} ({n} of {total})...",
                             waitForLanding: careful);
                     }
                     else
@@ -1574,7 +1633,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                         await ReleaseBatchAsync(
                             plan.Flagged,
                             overrideTarget: target,
-                            launchingBanner: (summary, n, total) => $"Joining private server (direct fallback): {summary.DisplayName} ({n} of {total})...",
+                            launchingBanner: (summary, n, total) => $"Joining private server (direct fallback): {summary.RenderName} ({n} of {total})...",
                             startIndex: 0,
                             waitForLanding: careful);
                     }
@@ -1600,7 +1659,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         if (summary is null) return;
 
-        var window = new JoinByLinkWindow(_api, url => ResolveShareUrlAsync(url), summary.DisplayName)
+        var window = new JoinByLinkWindow(_api, url => ResolveShareUrlAsync(url), summary.RenderName)
         {
             Owner = Application.Current.MainWindow,
         };
@@ -1713,7 +1772,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             catch (CookieExpiredException)
             {
                 summary.SessionExpired = true;
-                StatusBanner = $"{summary.DisplayName}'s session expired — re-authenticate first.";
+                StatusBanner = $"{summary.RenderName}'s session expired — re-authenticate first.";
                 return;
             }
             catch (Exception ex)
@@ -1732,7 +1791,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var mainSource = await TryResolveMainFriendSourceAsync(summary);
         var (sources, defaultIndex) = FriendSourcePlan.Build(rowSource, mainSource);
 
-        var window = new FriendFollowWindow(_api, _accountStore, sources, defaultIndex, summary.Id)
+        var window = new FriendFollowWindow(_api, _accountStore, sources, defaultIndex, summary.Id, _streamerIdentity)
         {
             Owner = Application.Current.MainWindow,
         };
@@ -2100,7 +2159,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
 
         var confirm = MessageBox.Show(
-            $"Remove {summary.DisplayName}?\nYou'll need to log in again to add it back.",
+            $"Remove {summary.RenderName}?\nYou'll need to log in again to add it back.",
             "Remove Account",
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
@@ -2110,7 +2169,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
 
         var wasMain = summary.IsMain;
+        // Captured BEFORE DetachIdentityProvider — RenderName falls back to the real name once
+        // the row's identity subscription is torn down (no provider attached = no masking), so
+        // reading it after Detach would silently re-leak the real name in the "Removed ..." banner
+        // below even though this line looks identical to every other RenderName call site.
+        var removedName = summary.RenderName;
         await _accountStore.RemoveAsync(summary.Id);
+        // Unhook the streamer-identity subscription before dropping the row — see the matching
+        // comment in LoadAsync for why this row would otherwise leak.
+        summary.DetachIdentityProvider();
         Accounts.Remove(summary);
 
         // Store auto-promotes a new main when the previous one was just removed; mirror that
@@ -2130,7 +2197,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CompactRows));
         OnPropertyChanged(nameof(HasCompactRows));
         RelayCommand.RaiseCanExecuteChanged();
-        StatusBanner = $"Removed {summary.DisplayName}.";
+        StatusBanner = $"Removed {removedName}.";
     }
 
     // Internal for MainViewModelTests (same pattern as LaunchAccountForPluginAsync) — the
@@ -2264,12 +2331,43 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// (initial load + Add Account) so a freshly-added account persists tag edits just like a loaded
     /// one. Tags are seeded in the AccountSummary constructor BEFORE this subscribe, so wiring
     /// CollectionChanged here never fires a redundant persist for the rows loaded from disk.
+    /// Also attaches the streamer-identity singleton (v1.10) so the row's
+    /// <see cref="AccountSummary.RenderName"/>/<see cref="AccountSummary.AvatarDisplaySource"/>
+    /// flip to fake values while the mode is active — no-op when the provider wasn't resolved
+    /// (e.g. the VM-level test harness, which doesn't pass one).
     /// </summary>
     private void WireAccountSummary(AccountSummary summary)
     {
         summary.PropertyChanged += OnAccountSummaryPropertyChanged;
         summary.Tags.CollectionChanged += (_, _) => OnAccountTagsChanged(summary);
+        if (_streamerIdentity is not null)
+        {
+            summary.AttachIdentityProvider(_streamerIdentity);
+        }
     }
+
+    /// <summary>
+    /// The streamer-identity provider flipped active/inactive or reassigned identities — refresh
+    /// <see cref="StreamerModeOn"/> so the main-window switch stays in sync whether the flip came
+    /// from this window, the tray checkbox, or a plugin. Task 10.
+    /// </summary>
+    private void OnStreamerIdentityChanged(object? sender, EventArgs e)
+        => OnPropertyChanged(nameof(StreamerModeOn));
+
+    /// <summary>"Reroll all identities" button body — reassigns every streamer-mode fake identity at once. Task 10.</summary>
+    private Task RerollAllIdentitiesAsync()
+        => _streamerIdentity?.RerollAllAsync() ?? Task.CompletedTask;
+
+    /// <summary>
+    /// Per-row context-menu "reroll" body. <paramref name="parameter"/> is the row's account id
+    /// (a boxed <see cref="Guid"/>, per <see cref="RerollAccountCommand"/>'s CommandParameter
+    /// binding) — NOT the <see cref="AccountSummary"/> itself, so a stale/removed row can't be
+    /// rerolled through a dangling reference. Task 10.
+    /// </summary>
+    private Task RerollAccountAsync(object? parameter)
+        => _streamerIdentity is not null && parameter is Guid accountId
+            ? _streamerIdentity.RerollAsync(Core.StreamerMode.StreamerIdentityProvider.AccountKey(accountId))
+            : Task.CompletedTask;
 
     /// <summary>
     /// A row's tag collection changed (add/remove) — persist the whole normalized list. Mirrors the
@@ -2389,7 +2487,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         if (ReferenceEquals(source, target)) return;
         if (source.SessionExpired)
         {
-            StatusBanner = $"{source.DisplayName} has an expired session — re-authenticate first.";
+            StatusBanner = $"{source.RenderName} has an expired session — re-authenticate first.";
             return;
         }
         if (target.RobloxUserId is not long targetUserId || targetUserId <= 0)
@@ -2397,7 +2495,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // RobloxUserId is cached lazily (validation pass + cookie capture). If it's never
             // landed, we don't have a userId to route to. Surface the gap rather than fail
             // silently inside the launcher.
-            StatusBanner = $"Couldn't follow {target.DisplayName} — Roblox userId not yet known. " +
+            StatusBanner = $"Couldn't follow {target.RenderName} — Roblox userId not yet known. " +
                            "Try Re-authenticating that account, or wait a moment after login.";
             return;
         }
@@ -2408,13 +2506,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // source to the Roblox home page.
         var targetPresence = new UserPresence(
             targetUserId, target.PresenceState, target.CurrentPlaceId, GameJobId: null, LastLocation: null);
-        var decision = EvaluateFollow(targetPresence, target.DisplayName);
+        var decision = EvaluateFollow(targetPresence, target.RenderName);
         if (!decision.CanFollow)
         {
             StatusBanner = decision.BlockedMessage!; // non-null whenever CanFollow is false (see FollowDecision.Block)
             return;
         }
-        StatusBanner = $"Following {target.DisplayName} from {source.DisplayName}...";
+        StatusBanner = $"Following {target.RenderName} from {source.RenderName}...";
         var follow = new LaunchTarget.FollowFriend(targetUserId);
         await LaunchAccountAsync(source, overrideTarget: follow);
     }
@@ -2468,7 +2566,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OpenHistory()
     {
-        var window = new SessionHistoryWindow(_sessionHistory, _favorites, _api)
+        var window = new SessionHistoryWindow(_sessionHistory, _favorites, _api, _streamerIdentity)
         {
             Owner = Application.Current.MainWindow,
         };
@@ -2517,7 +2615,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CompactEmptyKind));
         StatusBanner = newMainId == Guid.Empty
             ? "Main account cleared."
-            : $"{summary.DisplayName} is now your main.";
+            : $"{summary.RenderName} is now your main.";
         RelayCommand.RaiseCanExecuteChanged();
     }
 
@@ -2559,6 +2657,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // The store's load already failed; renaming + creating-empty is the recovery path.
             // For v1 we let the next AddAsync naturally overwrite the corrupt file via the
             // atomic-write path. The accounts list stays empty.
+            foreach (var stale in Accounts)
+            {
+                stale.DetachIdentityProvider();
+            }
             Accounts.Clear();
             StatusBanner = "Started fresh. Add accounts to begin.";
         }
@@ -2584,8 +2686,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             new RenameTarget(RenameTargetKind.PrivateServer, psId, psEntry.Name, psEntry.LocalName),
         FavoriteGame game when game.PlaceId > 0 =>
             new RenameTarget(RenameTargetKind.Game, game.PlaceId, game.Name, game.LocalName),
+        // RenameTarget.OriginalName is shown verbatim in RenameWindow's "ROBLOX NAME — ..." reference
+        // line — a visible surface the review's explicit list didn't name, but the same masking rule
+        // applies: RenderName (streamer-mode-aware) instead of the raw DisplayName.
         AccountSummary account =>
-            new RenameTarget(RenameTargetKind.Account, account.Id, account.DisplayName, account.LocalName),
+            new RenameTarget(RenameTargetKind.Account, account.Id, account.RenderName, account.LocalName),
         SavedPrivateServer server =>
             new RenameTarget(RenameTargetKind.PrivateServer, server.Id, server.Name, server.LocalName),
         _ => null,

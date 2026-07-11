@@ -220,6 +220,24 @@ public sealed class AppSettings : IAppSettings, IDisposable
         finally { _gate.Release(); }
     }
 
+    public async Task<bool> GetStreamerModeAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).StreamerMode; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetStreamerModeAsync(bool enabled)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with { StreamerMode = enabled }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
     private async Task<SettingsBlob> LoadAsync()
     {
         if (!File.Exists(_filePath))
@@ -281,8 +299,8 @@ public sealed class AppSettings : IAppSettings, IDisposable
 
     // SettingsBlob: missing fields decode as defaults (System.Text.Json), so older v1 blobs
     // without LaunchMainOnStartup, BloxstrapWarningDismissed, MuteIdleAlerts,
-    // IdleWarnThresholdMinutes, or CarefulSquadLaunch load cleanly with those fields at their
-    // defaults — no migration step.
+    // IdleWarnThresholdMinutes, CarefulSquadLaunch, or StreamerMode load cleanly with those
+    // fields at their defaults — no migration step.
     private sealed record SettingsBlob(
         int Version,
         string? DefaultPlaceUrl,
@@ -291,5 +309,6 @@ public sealed class AppSettings : IAppSettings, IDisposable
         bool BloxstrapWarningDismissed = false,
         bool MuteIdleAlerts = false,
         int IdleWarnThresholdMinutes = 15,
-        bool CarefulSquadLaunch = false);
+        bool CarefulSquadLaunch = false,
+        bool StreamerMode = false);
 }

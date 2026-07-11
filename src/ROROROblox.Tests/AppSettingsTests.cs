@@ -216,4 +216,19 @@ public class AppSettingsTests : IDisposable
         using var second = new AppSettings(_filePath);
         Assert.True(await second.GetCarefulSquadLaunchAsync());
     }
+
+    [Fact]
+    public async Task StreamerMode_DefaultsFalse_ThenPersists()
+    {
+        {
+            using var first = new AppSettings(_filePath);
+            Assert.False(await first.GetStreamerModeAsync());
+
+            await first.SetStreamerModeAsync(true);
+            Assert.True(await first.GetStreamerModeAsync());
+        }
+
+        using var second = new AppSettings(_filePath);
+        Assert.True(await second.GetStreamerModeAsync());
+    }
 }

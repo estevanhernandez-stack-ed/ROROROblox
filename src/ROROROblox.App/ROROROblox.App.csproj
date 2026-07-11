@@ -80,4 +80,13 @@
                       LogicalName="ROROROblox.App.Themes.AGENT_PROMPT.md" />
   </ItemGroup>
 
+  <!-- Streamer-mode banked avatar tiles (Task 9). INTERIM art: generated programmatically
+       by scripts/generate-streamer-avatars.ps1 (on-brand navy/cyan/magenta tiles, Segoe UI
+       Emoji glyph per id) so StreamerAvatarPool's pack uris resolve instead of showing
+       broken-image boxes. A final polish pass through the 626labs-design skill is still
+       pending before the Store RC; do not treat these as final brand assets. -->
+  <ItemGroup>
+    <Resource Include="StreamerMode\Avatars\*.png" />
+  </ItemGroup>
+
 </Project>

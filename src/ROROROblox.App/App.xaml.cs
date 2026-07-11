@@ -192,6 +192,7 @@ public partial class App : Application
         // safe to let plugin processes launch. The pipe they handshake against bound earlier.
         StartPluginAutostart();
         await InitializeIdleSettingsAsync();
+        await InitializeStreamerModeAsync();
 
         _log.LogInformation(
             "Startup mutex: name={Name}, source={Source}, acquired={Acquired}.",
@@ -331,7 +332,7 @@ public partial class App : Application
                 {
                     _log?.LogInformation("Main {AccountId} ({Name}) already running — skipping auto-launch.", main.Id, main.DisplayName);
                     Dispatcher.Invoke(() =>
-                        vm.StatusBanner = $"{main.DisplayName} is already running — skipped auto-launch.");
+                        vm.StatusBanner = $"{main.RenderName} is already running — skipped auto-launch.");
                 }
                 else if (scan.AnyRobloxRunning)
                 {
@@ -375,6 +376,37 @@ public partial class App : Application
         services.AddSingleton<IThemeStore>(_ => new ThemeStore());
         services.AddSingleton<ThemeService>();
         services.AddSingleton<IAccountStore>(_ => new AccountStore());
+
+        // Streamer mode (v1.9) — fake-name/avatar substitution for on-stream safety. Pools are
+        // stateless generators; the friend-identity store persists lazily-assigned friend
+        // identities to disk (accounts persist through IAccountStore instead, via persistAccount
+        // below). persistAccount is wrapped so a disk failure from the provider's fire-and-forget
+        // lazy-assignment persist (see StreamerIdentityProvider.Resolve) logs instead of becoming
+        // an unobserved Task exception.
+        services.AddSingleton<ROROROblox.Core.StreamerMode.IStreamerNamePool>(_ => new ROROROblox.Core.StreamerMode.StreamerNamePool());
+        services.AddSingleton<ROROROblox.Core.StreamerMode.IStreamerAvatarPool>(_ => new ROROROblox.Core.StreamerMode.StreamerAvatarPool());
+        services.AddSingleton<ROROROblox.Core.StreamerMode.IStreamerIdentityStore>(_ => new ROROROblox.Core.StreamerMode.FileStreamerIdentityStore());
+        services.AddSingleton<ROROROblox.Core.StreamerMode.IStreamerIdentityProvider>(sp =>
+        {
+            var store = sp.GetRequiredService<IAccountStore>();
+            var logger = sp.GetRequiredService<ILogger<App>>();
+            return new ROROROblox.Core.StreamerMode.StreamerIdentityProvider(
+                sp.GetRequiredService<ROROROblox.Core.StreamerMode.IStreamerNamePool>(),
+                sp.GetRequiredService<ROROROblox.Core.StreamerMode.IStreamerAvatarPool>(),
+                sp.GetRequiredService<ROROROblox.Core.StreamerMode.IStreamerIdentityStore>(),
+                sp.GetRequiredService<IAppSettings>(),
+                persistAccount: async (id, identity) =>
+                {
+                    try
+                    {
+                        await store.UpdateStreamerIdentityAsync(id, identity.FakeName, identity.FakeAvatarId);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "Failed to persist streamer identity for {AccountId}", id);
+                    }
+                });
+        });
 
         // v1.6.0 account transport (item 5). Pure-crypto bundle service (PBKDF2 + AES-256-GCM);
         // stateless, so a singleton is fine. The export/import dialogs consume this + IAccountStore.
@@ -710,7 +742,12 @@ public partial class App : Application
             var store = _services.GetRequiredService<ISessionHistoryStore>();
             var favorites = _services.GetRequiredService<IFavoriteGameStore>();
             var api = _services.GetRequiredService<IRobloxApi>();
-            var window = new History.SessionHistoryWindow(store, favorites, api);
+            // Same streamer-identity singleton MainViewModel.OpenHistory threads through — the tray
+            // entry point is the OTHER way to open this window, and without this it would show the
+            // real roster even while streamer mode is active (the exact "one tray-click reveals the
+            // whole real roster" leak).
+            var streamerIdentity = _services.GetRequiredService<ROROROblox.Core.StreamerMode.IStreamerIdentityProvider>();
+            var window = new History.SessionHistoryWindow(store, favorites, api, streamerIdentity);
             if (owner.IsLoaded) window.Owner = owner;
             SurfaceMainWindow(owner);
             window.ShowDialog();
@@ -842,6 +879,36 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "InitializeIdleSettingsAsync failed; idle awareness stays at defaults.");
+        }
+    }
+
+    /// <summary>
+    /// Streamer mode (v1.9) — seed the identity provider with every saved account's persisted
+    /// fake identity before the provider is ever consulted. Reads accounts directly from
+    /// <see cref="IAccountStore"/> rather than <see cref="MainViewModel.AccountsSnapshot"/>: the
+    /// VM's own load is kicked off by MainWindow's Loaded handler and isn't guaranteed to have
+    /// completed by this point, while the store read here is independent and authoritative.
+    /// Guarded like every other OnStartup init step — a seeding failure must not block startup;
+    /// worst case, identities lazily reassign (and re-persist) the first time streamer mode
+    /// resolves an account that missed the seed.
+    /// </summary>
+    private async Task InitializeStreamerModeAsync()
+    {
+        if (_services is null) return;
+        try
+        {
+            var accountStore = _services.GetRequiredService<IAccountStore>();
+            var provider = _services.GetRequiredService<ROROROblox.Core.StreamerMode.IStreamerIdentityProvider>();
+            var accounts = await accountStore.ListAsync();
+            var seed = accounts
+                .Where(a => !string.IsNullOrEmpty(a.StreamerName))
+                .Select(a => (a.Id, new ROROROblox.Core.StreamerMode.StreamerIdentity(a.StreamerName!, a.StreamerAvatarId ?? "noodle")))
+                .ToList();
+            await provider.InitializeAsync(seed);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Streamer-mode identity provider seed failed; identities will lazily assign on first resolve.");
         }
     }
 

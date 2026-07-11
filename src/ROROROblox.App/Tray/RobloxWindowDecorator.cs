@@ -4,6 +4,7 @@ using System.Windows.Media;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.App.ViewModels;
+using ROROROblox.Core.StreamerMode;
 
 namespace ROROROblox.App.Tray;
 
@@ -11,12 +12,18 @@ namespace ROROROblox.App.Tray;
 /// Repaints foreign Roblox windows so each account's RobloxPlayerBeta is visually distinct in
 /// the taskbar. Two ops, both via Win32 against the foreign process's main HWND:
 /// <list type="bullet">
-///   <item><c>SetWindowText</c> — title becomes <c>"Roblox - {DisplayName}"</c>.</item>
+///   <item><c>SetWindowText</c> — title becomes <c>"Roblox - {shown}"</c>, where <c>shown</c> is
+///   resolved through <see cref="IStreamerIdentityProvider"/> (v1.10): the account's real
+///   <see cref="AccountSummary.RenderName"/> when streamer mode is inactive, a fake per-account
+///   name when active. Keeps the on-stream taskbar/alt-tab surface from leaking a real
+///   display/local name.</item>
 ///   <item><c>DwmSetWindowAttribute(DWMWA_CAPTION_COLOR)</c> — title bar tinted per account
 ///   (Windows 11 / Mica only; older Windows silently no-ops).</item>
 /// </list>
 /// We re-apply on a 1.5s timer because Roblox sometimes renames its own window on focus or
-/// game-state changes; the user's customization wins on the next tick.
+/// game-state changes; the user's customization wins on the next tick. We also re-apply
+/// immediately whenever <see cref="IStreamerIdentityProvider.Changed"/> fires (toggle or reroll)
+/// so open windows re-title live instead of waiting up to 1.5s.
 /// </summary>
 internal sealed class RobloxWindowDecorator : IDisposable
 {
@@ -45,16 +52,26 @@ internal sealed class RobloxWindowDecorator : IDisposable
     private readonly System.Threading.Timer _reapplyTimer;
     private readonly System.Collections.Concurrent.ConcurrentDictionary<int, DecoratedTarget> _targets = new();
     private readonly ILogger<RobloxWindowDecorator> _log;
+    private readonly IStreamerIdentityProvider? _identity;
     private bool _disposed;
 
-    public RobloxWindowDecorator(ILogger<RobloxWindowDecorator>? log = null)
+    public RobloxWindowDecorator(IStreamerIdentityProvider? identity = null, ILogger<RobloxWindowDecorator>? log = null)
     {
+        _identity = identity;
         _log = log ?? NullLogger<RobloxWindowDecorator>.Instance;
+        // Re-title every open window the instant streamer mode toggles or rerolls, instead of
+        // making the user wait for the next 1.5s tick.
+        if (_identity is not null)
+        {
+            _identity.Changed += OnIdentityChanged;
+        }
         // Re-apply every 1.5s — cheap (a couple Win32 calls per running Roblox), defeats
         // Roblox's own occasional title rewrites on game state changes.
         _reapplyTimer = new System.Threading.Timer(_ => ReapplyAll(), null,
             TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(1500));
     }
+
+    private void OnIdentityChanged(object? sender, EventArgs e) => ReapplyAll();
 
     /// <summary>
     /// Start decorating the Roblox process for this account. Polls for a non-zero
@@ -118,9 +135,16 @@ internal sealed class RobloxWindowDecorator : IDisposable
             {
                 return; // window not up yet; try next tick
             }
-            // Resolve fresh from the AccountSummary every tick so user-picked color/name
-            // changes propagate without explicit re-tracking.
-            ApplyTitle(hwnd, $"Roblox - {target.Summary.DisplayName}");
+            // Resolve fresh from the AccountSummary every tick so user-picked color/name changes
+            // propagate without explicit re-tracking. Go through RobloxWindowTitle so the startup
+            // scanner (RunningRobloxScanner) reads back the exact same name to re-attach — pass the
+            // REAL render name (LocalName ?? DisplayName), NOT Summary.RenderName, which is itself
+            // provider-aware and would double-resolve. The provider substitutes the fake name when
+            // streamer mode is active; null/inactive passes the real name through.
+            ApplyTitle(hwnd, RobloxWindowTitle.Format(
+                _identity, target.Summary.Id,
+                target.Summary.LocalName ?? target.Summary.DisplayName,
+                target.Summary.AvatarUrl));
             ApplyCaptionColor(hwnd, ResolveCaptionColor(target.Summary));
         }
         catch (ArgumentException)
@@ -198,6 +222,10 @@ internal sealed class RobloxWindowDecorator : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+        if (_identity is not null)
+        {
+            _identity.Changed -= OnIdentityChanged;
+        }
         _reapplyTimer.Dispose();
         _targets.Clear();
     }

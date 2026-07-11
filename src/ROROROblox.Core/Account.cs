@@ -20,4 +20,6 @@ public sealed record Account(
     long? RobloxUserId = null,
     IReadOnlyList<string>? Tags = null,
     long? BrowserTrackerId = null,
-    bool JoinViaFriend = false);
+    bool JoinViaFriend = false,
+    string? StreamerName = null,
+    string? StreamerAvatarId = null);
