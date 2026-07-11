@@ -40,7 +40,11 @@ public sealed class DiagnosticsCollector : IDiagnosticsCollector
 
     public async Task<DiagnosticsSnapshot> CollectAsync(CancellationToken ct = default)
     {
-        var appVersion = typeof(DiagnosticsCollector).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        // The release version lives on the entry assembly (ROROROblox.App.exe, set via the
+        // csproj <Version>). This Core assembly is deliberately unversioned, so reading it
+        // reported a permanent 1.0.0 in the System-health panel.
+        var appVersion = (System.Reflection.Assembly.GetEntryAssembly() ?? typeof(DiagnosticsCollector).Assembly)
+            .GetName().Version?.ToString(3) ?? "0.0.0";
 
         var dotnet = RuntimeInformation.FrameworkDescription;
         var osVersion = RuntimeInformation.OSDescription;
