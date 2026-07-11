@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#192e44"/>
+      <stop offset="100%" stop-color="#0f1f31"/>
+    </radialGradient>
+  </defs>
+
+  <!-- full-bleed background -->
+  <rect x="0" y="0" width="256" height="256" fill="url(#bg)"/>
+
+  <!-- soft cyan glow disc (counter-accent behind the magenta body) -->
+  <circle cx="128" cy="132" r="105" fill="#17d4fa" fill-opacity="0.08"/>
+
+  <!-- star dots -->
+  <circle cx="34" cy="48" r="2.5" fill="#f4f7fb" opacity="0.8"/>
+  <circle cx="222" cy="40" r="2" fill="#17d4fa" opacity="0.9"/>
+  <circle cx="230" cy="200" r="2.5" fill="#f4f7fb" opacity="0.6"/>
+  <circle cx="42" cy="214" r="2" fill="#17d4fa" opacity="0.7"/>
+
+  <!-- cyan sprouts (behind body): potato-sprout nubs at odd angles, not a crown -->
+  <!-- top sprout: stem + two small leaves, off-center on the big top lump -->
+  <path d="M146 94 Q148 78 154 68" stroke="#0ea8c9" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M154 68 Q146 52 134 52 Q138 66 152 72 Z" fill="#17d4fa" stroke="#0ea8c9" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M154 68 Q160 53 171 55 Q167 67 155 72 Z" fill="#17d4fa" stroke="#0ea8c9" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- left sprout nub -->
+  <path d="M60 120 Q46 112 42 98 Q58 100 66 112 Z" fill="#17d4fa" stroke="#0ea8c9" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- right sprout nub off the right knob -->
+  <path d="M194 110 Q202 97 214 97 Q210 109 197 115 Z" fill="#17d4fa" stroke="#0ea8c9" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- potato body: darker magenta, oblong wider-than-tall, distinct silhouette lumps -->
+  <path d="M46 138
+           C42 120 56 104 76 102
+           C84 88 104 86 112 98
+           C118 88 138 84 150 92
+           C160 90 178 94 188 106
+           C202 110 212 122 210 136
+           C216 146 210 160 198 164
+           C200 176 188 187 172 185
+           C158 194 130 195 114 187
+           C100 193 78 189 70 177
+           C58 176 50 166 52 154
+           C44 150 41 144 46 138 Z"
+        fill="#c21f6b" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- brighter-magenta highlight lobe along the upper-left body (flat, no gradient) -->
+  <ellipse cx="100" cy="106" rx="30" ry="8" fill="#f22f89" transform="rotate(-14 100 106)"/>
+  <ellipse cx="148" cy="98" rx="9" ry="5" fill="#f22f89" transform="rotate(-6 148 98)"/>
+
+  <!-- potato eyes: navy sprouting-dimple ovals scattered on the body (THE identity marker) -->
+  <ellipse cx="72" cy="124" rx="8" ry="5" fill="#0f1f31" transform="rotate(-24 72 124)"/>
+  <ellipse cx="178" cy="112" rx="8" ry="5" fill="#0f1f31" transform="rotate(16 178 112)"/>
+  <ellipse cx="102" cy="177" rx="7.5" ry="4.5" fill="#0f1f31" transform="rotate(10 102 177)"/>
+  <ellipse cx="168" cy="170" rx="7.5" ry="4.5" fill="#0f1f31" transform="rotate(-14 168 170)"/>
+  <ellipse cx="197" cy="142" rx="5.5" ry="3.2" fill="#0f1f31" transform="rotate(-30 197 142)"/>
+
+  <!-- rosy cheeks: brighter magenta blush dots -->
+  <ellipse cx="86" cy="148" rx="11" ry="7" fill="#f22f89"/>
+  <ellipse cx="172" cy="148" rx="11" ry="7" fill="#f22f89"/>
+
+  <!-- eyes: white with navy pupils + glints -->
+  <circle cx="106" cy="128" r="9.5" fill="#f4f7fb"/>
+  <circle cx="152" cy="128" r="9.5" fill="#f4f7fb"/>
+  <circle cx="108" cy="129" r="4.5" fill="#0f1f31"/>
+  <circle cx="150" cy="129" r="4.5" fill="#0f1f31"/>
+  <circle cx="106.5" cy="126.5" r="1.6" fill="#f4f7fb"/>
+  <circle cx="148.5" cy="126.5" r="1.6" fill="#f4f7fb"/>
+
+  <!-- blissful open smile + brighter-magenta tongue -->
+  <path d="M102 148 Q129 156 156 148 Q152 176 129 178 Q106 176 102 148 Z"
+        fill="#0f1f31" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round"/>
+  <ellipse cx="129" cy="168" rx="11" ry="6" fill="#f22f89"/>
+</svg>

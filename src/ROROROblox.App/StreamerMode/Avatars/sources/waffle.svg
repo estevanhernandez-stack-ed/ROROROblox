@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#192e44"/>
+      <stop offset="100%" stop-color="#0f1f31"/>
+    </radialGradient>
+    <clipPath id="mouthClip">
+      <path d="M 94 147 Q 128 189 162 147 Q 128 157 94 147 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- full-bleed background -->
+  <rect width="256" height="256" fill="url(#bg)"/>
+
+  <!-- soft magenta glow disc -->
+  <circle cx="128" cy="128" r="105" fill="#f22f89" opacity="0.08"/>
+
+  <!-- star dots (outer atmosphere) -->
+  <circle cx="30" cy="40" r="2.5" fill="#f4f7fb" opacity="0.9"/>
+  <circle cx="200" cy="28" r="2" fill="#f22f89" opacity="0.85"/>
+  <circle cx="224" cy="60" r="2" fill="#17d4fa" opacity="0.9"/>
+  <circle cx="34" cy="210" r="2" fill="#17d4fa" opacity="0.8"/>
+  <circle cx="218" cy="216" r="2.5" fill="#f4f7fb" opacity="0.8"/>
+
+  <!-- arms (behind body): outline layer then fill layer -->
+  <path d="M 68 126 L 46 102" stroke="#0ea8c9" stroke-width="22" stroke-linecap="round" fill="none"/>
+  <path d="M 188 150 L 206 162" stroke="#0ea8c9" stroke-width="22" stroke-linecap="round" fill="none"/>
+  <path d="M 68 126 L 46 102" stroke="#17d4fa" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <path d="M 188 150 L 206 162" stroke="#17d4fa" stroke-width="10" stroke-linecap="round" fill="none"/>
+
+  <!-- feet (behind body) -->
+  <rect x="86" y="196" width="26" height="18" rx="9" fill="#17d4fa" stroke="#0ea8c9" stroke-width="6" stroke-linejoin="round"/>
+  <rect x="144" y="196" width="26" height="18" rx="9" fill="#17d4fa" stroke="#0ea8c9" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- waffle body -->
+  <rect x="60" y="62" width="136" height="136" rx="18" fill="#17d4fa" stroke="#0ea8c9" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- deep-pocket shading -->
+  <rect x="70" y="160" width="26" height="26" rx="8" fill="#0ea8c9" opacity="0.3"/>
+  <rect x="160" y="160" width="26" height="26" rx="8" fill="#0ea8c9" opacity="0.3"/>
+
+  <!-- waffle grid -->
+  <path d="M 105 68 V 192 M 151 68 V 192 M 66 107 H 190 M 66 152 H 190" stroke="#0ea8c9" stroke-width="6" stroke-linecap="round" fill="none"/>
+
+  <!-- syrup scarf: band across the top, drips, and a tail draped down the right -->
+  <path d="M 62 72
+           Q 62 58 76 58
+           L 180 58
+           Q 194 58 194 72
+           L 194 120
+           Q 194 132 185 132
+           Q 176 132 176 120
+           L 176 90
+           Q 176 84 170 84
+           L 158 84
+           L 158 90
+           Q 158 98 149 98
+           Q 140 98 140 90
+           Q 140 84 134 84
+           L 122 84
+           L 122 88
+           Q 122 96 114 96
+           Q 106 96 106 90
+           Q 106 84 100 84
+           L 92 84
+           L 92 90
+           Q 92 100 85 100
+           Q 78 100 78 92
+           Q 78 84 72 84
+           L 70 84
+           Q 62 84 62 76
+           Z"
+        fill="#f22f89" stroke="#c21f6b" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- cheeks -->
+  <circle cx="84" cy="142" r="6" fill="#f22f89"/>
+  <circle cx="170" cy="142" r="6" fill="#f22f89"/>
+
+  <!-- eyes: mismatched sizes for the goofy look -->
+  <circle cx="101" cy="121" r="12" fill="#f4f7fb" stroke="#0f1f31" stroke-width="6"/>
+  <circle cx="153" cy="122" r="10" fill="#f4f7fb" stroke="#0f1f31" stroke-width="6"/>
+  <circle cx="105" cy="123" r="5" fill="#0f1f31"/>
+  <circle cx="150" cy="124" r="4.5" fill="#0f1f31"/>
+  <circle cx="103.4" cy="121.4" r="1.6" fill="#f4f7fb"/>
+  <circle cx="148.6" cy="122.6" r="1.4" fill="#f4f7fb"/>
+
+  <!-- goofy grin + tongue -->
+  <path d="M 94 147 Q 128 189 162 147 Q 128 157 94 147 Z" fill="#0f1f31" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round"/>
+  <ellipse cx="128" cy="168" rx="13" ry="9" fill="#f22f89" clip-path="url(#mouthClip)"/>
+</svg>

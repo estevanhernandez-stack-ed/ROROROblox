@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#192e44"/>
+      <stop offset="100%" stop-color="#0f1f31"/>
+    </radialGradient>
+    <clipPath id="eyeL"><circle cx="99" cy="95" r="13"/></clipPath>
+    <clipPath id="eyeR"><circle cx="133" cy="93" r="13"/></clipPath>
+  </defs>
+
+  <!-- full-bleed background -->
+  <rect x="0" y="0" width="256" height="256" fill="url(#bg)"/>
+
+  <!-- magenta glow disc behind character -->
+  <circle cx="128" cy="128" r="105" fill="#f22f89" fill-opacity="0.08"/>
+
+  <!-- star dots (outer atmosphere) -->
+  <circle cx="34" cy="36" r="2.5" fill="#f4f7fb" fill-opacity="0.8"/>
+  <circle cx="218" cy="52" r="2" fill="#17d4fa" fill-opacity="0.9"/>
+  <circle cx="226" cy="196" r="2.5" fill="#f22f89" fill-opacity="0.8"/>
+  <circle cx="44" cy="210" r="2" fill="#f4f7fb" fill-opacity="0.7"/>
+
+  <!-- duck body silhouette (head + body + tail curl), facing left -->
+  <path d="M 76 110
+           C 72 78, 90 54, 118 54
+           C 146 54, 164 76, 162 102
+           C 161 116, 154 128, 144 135
+           C 160 131, 180 128, 194 120
+           C 200 116, 203 122, 199 128
+           C 193 142, 189 152, 191 164
+           C 191 186, 166 204, 132 204
+           C 98 204, 74 188, 72 164
+           C 71 146, 72 126, 76 110 Z"
+        fill="#17d4fa" stroke="#0ea8c9" stroke-width="6"
+        stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- wing swoosh -->
+  <path d="M 148 165 C 166 158, 172 174, 156 184"
+        fill="none" stroke="#0ea8c9" stroke-width="6"
+        stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- sailor collar -->
+  <path d="M 74 126 C 96 148, 136 148, 152 128
+           L 160 140 C 138 166, 92 166, 66 138 Z"
+        fill="#f4f7fb" stroke="#0f1f31" stroke-width="6"
+        stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- neckerchief knot + tail -->
+  <path d="M 80 159 L 90 159 L 85 172 Z"
+        fill="#f22f89" stroke="#c21f6b" stroke-width="5"
+        stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="85" cy="151" r="7" fill="#f22f89" stroke="#c21f6b" stroke-width="5"/>
+
+  <!-- beak -->
+  <path d="M 82 96
+           C 64 90, 48 98, 48 109
+           C 48 120, 64 127, 82 121
+           C 88 118, 88 99, 82 96 Z"
+        fill="#f22f89" stroke="#c21f6b" stroke-width="6"
+        stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- smug beak seam -->
+  <path d="M 52 109 C 60 115, 72 115, 80 109"
+        fill="none" stroke="#c21f6b" stroke-width="5"
+        stroke-linecap="round"/>
+
+  <!-- left eye (half-lidded) -->
+  <g clip-path="url(#eyeL)">
+    <circle cx="99" cy="95" r="13" fill="#f4f7fb"/>
+    <circle cx="96" cy="99" r="6.5" fill="#0f1f31"/>
+    <circle cx="98" cy="96" r="2" fill="#f4f7fb"/>
+    <rect x="84" y="80" width="30" height="11" fill="#17d4fa"/>
+    <path d="M 84 91 L 114 91" stroke="#0ea8c9" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- right eye (half-lidded) -->
+  <g clip-path="url(#eyeR)">
+    <circle cx="133" cy="93" r="13" fill="#f4f7fb"/>
+    <circle cx="130" cy="97" r="6.5" fill="#0f1f31"/>
+    <circle cx="132" cy="94" r="2" fill="#f4f7fb"/>
+    <rect x="118" y="78" width="30" height="11" fill="#17d4fa"/>
+    <path d="M 118 89 L 148 89" stroke="#0ea8c9" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- cheek accent -->
+  <ellipse cx="148" cy="116" rx="8" ry="5.5" fill="#f22f89"/>
+</svg>

@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#192e44"/>
+      <stop offset="100%" stop-color="#0f1f31"/>
+    </radialGradient>
+  </defs>
+
+  <!-- full-bleed background -->
+  <rect width="256" height="256" fill="url(#bg)"/>
+
+  <!-- soft magenta glow disc -->
+  <circle cx="128" cy="128" r="105" fill="#f22f89" opacity="0.08"/>
+
+  <!-- star dots (outer atmosphere) -->
+  <circle cx="34" cy="44" r="2.5" fill="#f4f7fb" opacity="0.7"/>
+  <circle cx="224" cy="40" r="2.5" fill="#17d4fa"/>
+  <circle cx="38" cy="214" r="2" fill="#17d4fa" opacity="0.7"/>
+  <circle cx="224" cy="204" r="2.5" fill="#f4f7fb" opacity="0.6"/>
+
+  <!-- leafy plume: three distinct pointed leaf lobes fanned back like a cape -->
+  <!-- underlobe (darker magenta), then two bright lobes above -->
+  <path d="M 122 72 C 100 84, 76 88, 56 82 C 64 66, 98 60, 122 64 Z"
+        fill="#c21f6b" stroke="#c21f6b" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M 124 70 C 104 66, 82 62, 68 50 C 88 38, 116 50, 126 62 Z"
+        fill="#f22f89" stroke="#c21f6b" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M 128 66 C 122 54, 114 44, 100 36 C 118 30, 134 46, 136 62 Z"
+        fill="#f22f89" stroke="#c21f6b" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- raised heroic arm: pale capsule with cyan outline, emerges from the side -->
+  <line x1="152" y1="118" x2="180" y2="96" stroke="#17d4fa" stroke-width="20" stroke-linecap="round"/>
+  <line x1="152" y1="118" x2="180" y2="96" stroke="#bfeffb" stroke-width="8" stroke-linecap="round"/>
+  <!-- solid fist: same pale fill as the body, cyan outline -->
+  <circle cx="186" cy="90" r="12" fill="#bfeffb" stroke="#17d4fa" stroke-width="6"/>
+
+  <!-- parsnip body: long, pointy, heroic taper — pale cream-cyan so it reads parsnip -->
+  <path d="M 96 96 C 94 74, 110 62, 128 62 C 146 62, 162 74, 160 96 C 158 126, 148 158, 138 182 C 134 192, 130 198, 126 202 C 121 192, 112 170, 106 148 C 100 128, 97 112, 96 96 Z"
+        fill="#bfeffb" stroke="#17d4fa" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- root ridges (cyan, carries the brand hue) -->
+  <g stroke="#17d4fa" stroke-width="6" stroke-linecap="round" fill="none">
+    <path d="M 112 152 Q 126 159 140 152"/>
+    <path d="M 116 174 Q 127 180 135 173"/>
+  </g>
+
+  <!-- determined eyebrows -->
+  <g stroke="#0f1f31" stroke-width="6" stroke-linecap="round" fill="none">
+    <path d="M 102 86 L 122 92"/>
+    <path d="M 154 86 L 134 92"/>
+  </g>
+
+  <!-- eyes -->
+  <ellipse cx="112" cy="103" rx="9" ry="10" fill="#f4f7fb"/>
+  <ellipse cx="144" cy="103" rx="9" ry="10" fill="#f4f7fb"/>
+  <circle cx="114" cy="104" r="4" fill="#0f1f31"/>
+  <circle cx="146" cy="104" r="4" fill="#0f1f31"/>
+  <circle cx="115.5" cy="102" r="1.3" fill="#f4f7fb"/>
+  <circle cx="147.5" cy="102" r="1.3" fill="#f4f7fb"/>
+
+  <!-- cheek accents -->
+  <ellipse cx="103" cy="116" rx="5.5" ry="4" fill="#f22f89" opacity="0.85"/>
+  <ellipse cx="152" cy="116" rx="5.5" ry="4" fill="#f22f89" opacity="0.85"/>
+
+  <!-- determined grin -->
+  <path d="M 106 124 C 114 138, 142 138, 150 122 C 147 136, 138 142, 127 142 C 116 142, 109 134, 106 124 Z"
+        fill="#0f1f31" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M 111 127 C 118 134, 138 134, 145 125 C 143 130, 136 133.5, 127 133.5 C 118 133.5, 113 131, 111 127 Z"
+        fill="#f4f7fb"/>
+</svg>

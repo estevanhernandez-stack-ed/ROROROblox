@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.42" r="0.75">
+      <stop offset="0" stop-color="#192e44"/>
+      <stop offset="1" stop-color="#0f1f31"/>
+    </radialGradient>
+    <clipPath id="mouthClip">
+      <path d="M104 132 Q127 146 150 129 Q149 158 127 165 Q106 158 104 132 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- full-bleed background -->
+  <rect width="256" height="256" fill="url(#bg)"/>
+
+  <!-- magenta glow disc behind character -->
+  <circle cx="128" cy="128" r="105" fill="#f22f89" opacity="0.08"/>
+
+  <!-- star dots (outer background) -->
+  <circle cx="34" cy="40" r="2.5" fill="#f4f7fb" opacity="0.7"/>
+  <circle cx="222" cy="58" r="2" fill="#17d4fa" opacity="0.85"/>
+  <circle cx="212" cy="212" r="2.5" fill="#f22f89" opacity="0.75"/>
+  <circle cx="42" cy="208" r="2" fill="#f4f7fb" opacity="0.6"/>
+
+  <!-- character: elongated bumpy pickle, rakish lean -->
+  <g transform="rotate(-17 128 130)">
+    <!-- stem nub at top end (behind body) -->
+    <rect x="126" y="34" width="20" height="24" rx="8"
+          fill="#0ea8c9" stroke="#0f1f31" stroke-width="6"
+          stroke-linejoin="round"/>
+
+    <!-- body: 2.6:1 capsule with gentle banana bow, wart bumps ON the contour -->
+    <path d="M109 76
+             C 108 52, 122 44, 136 44
+             C 152 44, 164 54, 165 78
+             C 164 86, 162 93, 159 100
+             a 9.5 9.5 0 0 1 -1 18
+             C 157 126, 156 132, 155 140
+             a 9.5 9.5 0 0 1 -1 18
+             C 154 170, 156 181, 158 190
+             C 158 206, 148 214, 133 214
+             C 118 214, 108 206, 107 192
+             C 105 182, 99 172, 95 160
+             a 9.5 9.5 0 0 1 -2 -18
+             C 91 130, 90 118, 92 106
+             a 9.5 9.5 0 0 1 1 -18
+             C 94 82, 100 77, 109 76 Z"
+          fill="#17d4fa" stroke="#0f1f31" stroke-width="6"
+          stroke-linejoin="round" stroke-linecap="round"/>
+
+    <!-- interior wart spots (texture at full size) -->
+    <circle cx="140" cy="70" r="3.5" fill="#0ea8c9"/>
+    <circle cx="104" cy="96" r="3" fill="#0ea8c9"/>
+    <circle cx="146" cy="150" r="3" fill="#0ea8c9"/>
+    <circle cx="112" cy="176" r="3.5" fill="#0ea8c9"/>
+    <circle cx="135" cy="190" r="4" fill="#0ea8c9"/>
+
+    <!-- soft highlight -->
+    <ellipse cx="124" cy="58" rx="7" ry="3.5" fill="#f4f7fb" opacity="0.4"/>
+
+    <!-- raised eyebrow (left) -->
+    <path d="M104 88 Q113 78 121 86" fill="none" stroke="#0f1f31" stroke-width="6"
+          stroke-linecap="round"/>
+    <!-- relaxed eyebrow (right) -->
+    <path d="M132 98 Q140 94 148 98" fill="none" stroke="#0f1f31" stroke-width="6"
+          stroke-linecap="round"/>
+
+    <!-- eyes -->
+    <ellipse cx="108" cy="111" rx="8.5" ry="10" fill="#f4f7fb"/>
+    <ellipse cx="139" cy="110" rx="8" ry="9.5" fill="#f4f7fb"/>
+    <circle cx="110.5" cy="113" r="4" fill="#0f1f31"/>
+    <circle cx="141.5" cy="112" r="3.8" fill="#0f1f31"/>
+    <circle cx="111.6" cy="111.4" r="1.2" fill="#f4f7fb"/>
+    <circle cx="142.6" cy="110.6" r="1.2" fill="#f4f7fb"/>
+
+    <!-- cheeks (solid brand magenta, no opacity) -->
+    <ellipse cx="98" cy="127" rx="5.5" ry="4.5" fill="#f22f89"/>
+    <ellipse cx="149" cy="124" rx="5.5" ry="4.5" fill="#f22f89"/>
+
+    <!-- big goofy grin -->
+    <path d="M104 132 Q127 146 150 129 Q149 158 127 165 Q106 158 104 132 Z" fill="#0f1f31"/>
+    <g clip-path="url(#mouthClip)">
+      <path d="M104 132 Q127 146 150 129 L150 139 Q127 156 104 143 Z" fill="#f4f7fb"/>
+      <ellipse cx="129" cy="163" rx="13" ry="9" fill="#f22f89"/>
+    </g>
+    <path d="M104 132 Q127 146 150 129 Q149 158 127 165 Q106 158 104 132 Z"
+          fill="none" stroke="#0f1f31" stroke-width="6"
+          stroke-linejoin="round" stroke-linecap="round"/>
+  </g>
+</svg>

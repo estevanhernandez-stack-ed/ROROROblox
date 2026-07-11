@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#192e44"/>
+      <stop offset="100%" stop-color="#0f1f31"/>
+    </radialGradient>
+  </defs>
+
+  <!-- full-bleed background -->
+  <rect x="0" y="0" width="256" height="256" fill="url(#bg)"/>
+
+  <!-- soft cyan glow disc behind the character -->
+  <circle cx="128" cy="128" r="105" fill="#17d4fa" opacity="0.08"/>
+
+  <!-- tiny star dots (outside safe zone) -->
+  <circle cx="34" cy="52" r="2.5" fill="#f4f7fb" opacity="0.8"/>
+  <circle cx="224" cy="44" r="2" fill="#17d4fa" opacity="0.8"/>
+  <circle cx="28" cy="196" r="2" fill="#17d4fa" opacity="0.7"/>
+  <circle cx="218" cy="214" r="2.5" fill="#f4f7fb" opacity="0.7"/>
+
+  <!-- torso: little navy suit -->
+  <rect x="98" y="174" width="60" height="32" rx="10" fill="#223c58" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- cube head: magenta -->
+  <rect x="76" y="80" width="104" height="100" rx="12" fill="#f22f89" stroke="#c21f6b" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- top hat: navy crown, cyan band, navy brim -->
+  <rect x="94" y="40" width="68" height="38" rx="6" fill="#223c58" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round"/>
+  <rect x="97" y="58" width="62" height="14" fill="#17d4fa"/>
+  <rect x="80" y="72" width="96" height="12" rx="6" fill="#223c58" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- eyebrows: left relaxed, right raised (monocle side) -->
+  <path d="M 89 103 Q 101 97 113 102" fill="none" stroke="#0f1f31" stroke-width="6" stroke-linecap="round"/>
+  <path d="M 143 96 Q 155 90 167 96" fill="none" stroke="#0f1f31" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- eyes -->
+  <ellipse cx="101" cy="122" rx="12" ry="14" fill="#f4f7fb"/>
+  <circle cx="104" cy="124" r="5.5" fill="#0f1f31"/>
+  <circle cx="106" cy="121" r="1.8" fill="#f4f7fb"/>
+  <ellipse cx="156" cy="122" rx="12" ry="14" fill="#f4f7fb"/>
+  <circle cx="159" cy="124" r="5.5" fill="#0f1f31"/>
+  <circle cx="161" cy="121" r="1.8" fill="#f4f7fb"/>
+
+  <!-- monocle: cyan rim + faint glass sheen + chain dots -->
+  <circle cx="156" cy="122" r="19" fill="none" stroke="#17d4fa" stroke-width="6"/>
+  <circle cx="156" cy="122" r="16" fill="#f4f7fb" opacity="0.12"/>
+  <circle cx="170" cy="143" r="2.2" fill="#17d4fa"/>
+  <circle cx="174" cy="153" r="2.2" fill="#17d4fa"/>
+  <circle cx="175" cy="163" r="2.2" fill="#17d4fa"/>
+  <circle cx="173" cy="173" r="2.2" fill="#17d4fa"/>
+
+  <!-- cheek accents: darker magenta blush on the magenta face -->
+  <ellipse cx="93" cy="147" rx="8" ry="5" fill="#c21f6b" opacity="0.75"/>
+  <ellipse cx="165" cy="148" rx="7" ry="4.5" fill="#c21f6b" opacity="0.75"/>
+
+  <!-- faint smirk -->
+  <path d="M 108 153 Q 130 162 150 150" fill="none" stroke="#0f1f31" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- bow tie: cyan -->
+  <polygon points="104,184 104,202 126,193" fill="#17d4fa"/>
+  <polygon points="152,184 152,202 130,193" fill="#17d4fa"/>
+  <circle cx="128" cy="193" r="6" fill="#0ea8c9"/>
+</svg>

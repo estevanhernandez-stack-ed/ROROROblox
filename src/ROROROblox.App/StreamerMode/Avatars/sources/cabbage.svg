@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#192e44"/>
+      <stop offset="100%" stop-color="#0f1f31"/>
+    </radialGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#bg)"/>
+  <circle cx="128" cy="130" r="105" fill="#17d4fa" opacity="0.08"/>
+  <circle cx="34" cy="44" r="2" fill="#f4f7fb" opacity="0.9"/>
+  <circle cx="220" cy="38" r="1.8" fill="#17d4fa" opacity="0.9"/>
+  <circle cx="26" cy="152" r="1.7" fill="#f4f7fb" opacity="0.7"/>
+  <circle cx="226" cy="192" r="2.2" fill="#f22f89" opacity="0.85"/>
+  <g stroke="#0f1f31" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <!-- back crown leaf: wavy scalloped tips behind the head (dark magenta for depth) -->
+    <path d="M78 110 C70 78 88 52 112 46 Q116 38 127 44 Q133 34 143 44 Q154 38 155 50 C178 56 190 82 184 110 Z" fill="#c21f6b"/>
+    <!-- cyan underside peeking at the crown's center tip -->
+    <path d="M127 44 Q133 34 143 44 Q137 49 127 44 Z" fill="#17d4fa"/>
+    <!-- inner head: cyan face core -->
+    <circle cx="128" cy="116" r="54" fill="#17d4fa"/>
+    <!-- top wrap leaf over the head, scalloped bottom edge -->
+    <path d="M85 84 A54 54 0 0 1 171 84 Q162 96 150 88 Q138 98 128 88 Q118 98 106 88 Q94 96 85 84 Z" fill="#f22f89"/>
+    <!-- left collar leaf: wavy inner edge, curled tip -->
+    <path d="M120 198 C94 200 66 190 56 168 C44 148 42 120 52 100 Q42 90 50 80 Q62 72 68 86 Q78 88 78 102 Q88 108 86 122 C82 146 96 166 120 174 Z" fill="#f22f89"/>
+    <!-- right collar leaf -->
+    <path d="M136 198 C162 200 190 190 200 168 C212 148 214 120 204 100 Q214 90 206 80 Q194 72 188 86 Q178 88 178 102 Q168 108 170 122 C174 146 160 166 136 174 Z" fill="#f22f89"/>
+    <!-- cyan undersides where the collar tips curl back -->
+    <path d="M52 100 Q42 90 50 80 Q57 76 63 80 Q53 86 52 100 Z" fill="#17d4fa"/>
+    <path d="M204 100 Q214 90 206 80 Q199 76 193 80 Q203 86 204 100 Z" fill="#17d4fa"/>
+    <!-- bottom collar leaf: bases overlap, wavy top edge -->
+    <path d="M68 180 Q80 156 96 162 Q112 150 128 160 Q144 150 160 162 Q176 156 188 180 C180 196 158 204 128 204 C98 204 76 196 68 180 Z" fill="#f22f89"/>
+  </g>
+  <!-- vein ribs: one center rib per outer leaf plus short branches (dark magenta on magenta leaves) -->
+  <g fill="none" stroke="#c21f6b" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M106 190 C84 178 68 156 62 126"/>
+    <path d="M66 144 Q76 140 84 134"/>
+    <path d="M63 118 Q72 112 78 106"/>
+    <path d="M150 190 C172 178 188 156 194 126"/>
+    <path d="M190 144 Q180 140 172 134"/>
+    <path d="M193 118 Q184 112 178 106"/>
+    <path d="M128 200 L128 166"/>
+    <path d="M128 186 Q116 180 108 172"/>
+    <path d="M128 186 Q140 180 148 172"/>
+  </g>
+  <!-- face: kept from the approved version -->
+  <g stroke="#0f1f31" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M100 101 L114 104" fill="none"/>
+    <path d="M142 104 L156 101" fill="none"/>
+    <ellipse cx="107" cy="120" rx="11" ry="13" fill="#f4f7fb"/>
+    <ellipse cx="149" cy="120" rx="11" ry="13" fill="#f4f7fb"/>
+  </g>
+  <circle cx="110" cy="123" r="5" fill="#0f1f31"/>
+  <circle cx="152" cy="123" r="5" fill="#0f1f31"/>
+  <circle cx="112" cy="120" r="2" fill="#f4f7fb"/>
+  <circle cx="154" cy="120" r="2" fill="#f4f7fb"/>
+  <ellipse cx="97" cy="141" rx="7" ry="4.5" fill="#f22f89"/>
+  <ellipse cx="159" cy="141" rx="7" ry="4.5" fill="#f22f89"/>
+  <path d="M108 139 Q128 155 148 139 Q128 146 108 139 Z" fill="#0f1f31" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

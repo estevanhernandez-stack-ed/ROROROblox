@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%">
+      <stop offset="0%" stop-color="#192e44"/>
+      <stop offset="100%" stop-color="#0f1f31"/>
+    </radialGradient>
+  </defs>
+
+  <!-- full-bleed background -->
+  <rect x="0" y="0" width="256" height="256" fill="url(#bg)"/>
+
+  <!-- soft magenta glow disc behind character -->
+  <circle cx="128" cy="130" r="105" fill="#f22f89" opacity="0.08"/>
+
+  <!-- star dots (outer atmosphere) -->
+  <circle cx="38" cy="46" r="2.5" fill="#f4f7fb" opacity="0.7"/>
+  <circle cx="214" cy="34" r="2" fill="#17d4fa" opacity="0.8"/>
+  <circle cx="228" cy="198" r="2.5" fill="#f4f7fb" opacity="0.6"/>
+  <circle cx="34" cy="206" r="2" fill="#f22f89" opacity="0.7"/>
+
+  <!-- ground shadow -->
+  <ellipse cx="128" cy="193" rx="54" ry="7" fill="#0f1f31" opacity="0.55"/>
+
+  <!-- antenna: navy stalk + magenta cap (identity accent) -->
+  <line x1="128" y1="66" x2="128" y2="52" stroke="#0f1f31" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="128" cy="46" r="10" fill="#f22f89" stroke="#0f1f31" stroke-width="6"/>
+
+  <!-- stubby arms (behind body so joints hide) -->
+  <rect x="62" y="114" width="20" height="28" rx="9" fill="#17d4fa" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round"/>
+  <rect x="174" y="114" width="20" height="28" rx="9" fill="#17d4fa" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- chunky feet (behind body so joints hide) -->
+  <rect x="92" y="156" width="28" height="34" rx="10" fill="#17d4fa" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round"/>
+  <rect x="136" y="156" width="28" height="34" rx="10" fill="#17d4fa" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- blocky body: one big soft-cornered block, heavy navy contour -->
+  <rect x="76" y="62" width="104" height="104" rx="20" fill="#17d4fa" stroke="#0f1f31" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- fake-pixel interior clusters: darker-cyan shading blocks (no stroke) -->
+  <rect x="146" y="148" width="13" height="13" rx="3" fill="#0ea8c9"/>
+  <rect x="161" y="151" width="8" height="8" rx="2" fill="#0ea8c9"/>
+  <rect x="86" y="150" width="10" height="10" rx="3" fill="#0ea8c9"/>
+
+  <!-- fake-pixel highlight glints (top-left) -->
+  <rect x="88" y="74" width="12" height="12" rx="3" fill="#f4f7fb" opacity="0.4"/>
+  <rect x="103" y="77" width="7" height="7" rx="2" fill="#f4f7fb" opacity="0.3"/>
+
+  <!-- round kawaii eyes: white with navy pupils biased right (mischief) + glints -->
+  <circle cx="108" cy="112" r="15" fill="#f4f7fb" stroke="#0f1f31" stroke-width="6"/>
+  <circle cx="148" cy="112" r="15" fill="#f4f7fb" stroke="#0f1f31" stroke-width="6"/>
+  <circle cx="111" cy="114" r="6" fill="#0f1f31"/>
+  <circle cx="151" cy="114" r="6" fill="#0f1f31"/>
+  <circle cx="113.5" cy="110.5" r="2.5" fill="#f4f7fb"/>
+  <circle cx="153.5" cy="110.5" r="2.5" fill="#f4f7fb"/>
+
+  <!-- magenta cheek accents -->
+  <ellipse cx="92" cy="140" rx="8" ry="6" fill="#f22f89"/>
+  <ellipse cx="164" cy="140" rx="8" ry="6" fill="#f22f89"/>
+
+  <!-- open grin: navy semicircle with one white tooth + magenta tongue -->
+  <path d="M112 138 h32 a16 16 0 0 1 -32 0 Z" fill="#0f1f31"/>
+  <ellipse cx="128" cy="149" rx="6.5" ry="4.5" fill="#f22f89"/>
+  <rect x="116" y="138" width="9" height="7" rx="2" fill="#f4f7fb"/>
+</svg>
