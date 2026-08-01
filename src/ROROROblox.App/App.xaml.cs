@@ -46,7 +46,8 @@ public partial class App : Application
         base.OnStartup(e);
 
         // Configure logging FIRST — every other failure mode below benefits from a written record.
-        _loggerFactory = AppLogging.Configure();
+        var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        _loggerFactory = AppLogging.Configure(version);
         _log = _loggerFactory.CreateLogger<App>();
         WireGlobalExceptionHandlers();
 
@@ -55,7 +56,6 @@ public partial class App : Application
         // and is unaffected. One-time class handler — covers windows opened later too.
         WindowTheming.RegisterGlobalDarkTitleBar();
 
-        var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
         _log.LogInformation("ROROROblox starting (v{Version}, OS {Os})", version, Environment.OSVersion);
 
         _singleInstance = new SingleInstanceGuard("ROROROblox-app-singleton");
