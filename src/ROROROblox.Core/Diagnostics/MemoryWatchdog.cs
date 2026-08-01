@@ -1,0 +1,164 @@
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+
+namespace ROROROblox.Core.Diagnostics;
+
+/// <summary>
+/// Samples private bytes per tracked account, estimates a linear growth rate, and projects time
+/// to machine RAM exhaustion. Mirrors <see cref="ActivityMonitor"/>'s shape deliberately:
+/// injected probes, Interlocked-guarded timer, public Sample() seam, latch/re-arm edges.
+/// </summary>
+public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
+{
+    /// <summary>Below this, no slope is claimed. A 30s sample yields a confident, wrong projection.</summary>
+    public static readonly TimeSpan MinimumObservation = TimeSpan.FromMinutes(10);
+
+    private static readonly TimeSpan SampleInterval = TimeSpan.FromSeconds(30);
+
+    private sealed class Record
+    {
+        public int Pid;
+        public long BaselineBytes;
+        public DateTimeOffset BaselineAt;
+        public long LastBytes;
+        public bool LastReadOk;
+        public bool CapLatched;
+        public bool ProjectionLatched;
+    }
+
+    private readonly IProcessMemoryProbe _process;
+    private readonly ISystemMemoryProbe _system;
+    private readonly IClock _clock;
+    private readonly ConcurrentDictionary<Guid, Record> _records = new();
+
+    private Timer? _timer;
+    private int _sampling;
+    private bool _disposed;
+    private MemoryPressureSnapshot _last;
+
+    public long CapBytes { get; set; }
+    public long ReserveBytes { get; set; }
+    public int ProjectionWarnMinutes { get; set; } = 120;
+
+    public event EventHandler<MemoryPressureSnapshot>? PressureCrossed;
+
+    public MemoryWatchdog(IProcessMemoryProbe process, ISystemMemoryProbe system, IClock clock)
+    {
+        _process = process ?? throw new ArgumentNullException(nameof(process));
+        _system = system ?? throw new ArgumentNullException(nameof(system));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+    }
+
+    public void OnAccountLaunched(Guid accountId, int pid) => ResetBaseline(accountId, pid);
+
+    public void OnAccountExited(Guid accountId) => _records.TryRemove(accountId, out _);
+
+    public void ResetBaseline(Guid accountId, int pid)
+        => _records[accountId] = new Record
+        {
+            Pid = pid,
+            BaselineBytes = 0,
+            BaselineAt = _clock.UtcNow,
+            LastBytes = 0,
+            LastReadOk = false,
+            CapLatched = false,
+            ProjectionLatched = false,
+        };
+
+    public void Start()
+    {
+        if (_disposed) return;
+        _timer ??= new Timer(_ => SafeSample(), null, SampleInterval, SampleInterval);
+    }
+
+    public void Stop()
+    {
+        _timer?.Dispose();
+        _timer = null;
+    }
+
+    private void SafeSample()
+    {
+        if (Interlocked.Exchange(ref _sampling, 1) == 1) return;
+        try { Sample(); }
+        catch { /* never let a sample tick crash the timer thread */ }
+        finally { Interlocked.Exchange(ref _sampling, 0); }
+    }
+
+    public void Sample()
+    {
+        var now = _clock.UtcNow;
+        var accounts = new List<AccountMemory>(_records.Count);
+        double aggregateGrowth = 0;
+
+        foreach (var kv in _records)
+        {
+            var rec = kv.Value;
+
+            if (!_process.TryReadPrivateBytes(rec.Pid, out var bytes))
+            {
+                // UNKNOWN. Keep the record for the next tick; contribute NOTHING to the aggregate.
+                rec.LastReadOk = false;
+                accounts.Add(new AccountMemory(kv.Key, rec.LastBytes, 0, 0, false, false, ReadOk: false));
+                continue;
+            }
+
+            rec.LastReadOk = true;
+            rec.LastBytes = bytes;
+
+            // First successful reading seeds the baseline.
+            if (rec.BaselineBytes == 0)
+            {
+                rec.BaselineBytes = bytes;
+                rec.BaselineAt = now;
+            }
+            else if (bytes < rec.BaselineBytes)
+            {
+                // Ratchet: a teleport freed memory. Without this, one drop poisons the slope forever.
+                rec.BaselineBytes = bytes;
+                rec.BaselineAt = now;
+            }
+
+            var elapsed = now - rec.BaselineAt;
+            if (elapsed < TimeSpan.Zero) elapsed = TimeSpan.Zero; // clock skew
+
+            double growth = 0;
+            if (elapsed >= MinimumObservation)
+            {
+                growth = (bytes - rec.BaselineBytes) / elapsed.TotalHours;
+                if (growth < 0) growth = 0;
+                aggregateGrowth += growth;
+            }
+
+            accounts.Add(new AccountMemory(kv.Key, bytes, growth, 0, false, false, ReadOk: true));
+        }
+
+        var systemOk = _system.TryRead(out _, out var available);
+        var hasProjection = systemOk && aggregateGrowth > 0;
+        var minutes = 0;
+        if (hasProjection)
+        {
+            var availableForClients = Math.Max(0, available - ReserveBytes);
+            minutes = (int)(availableForClients / aggregateGrowth * 60);
+        }
+
+        _last = new MemoryPressureSnapshot(
+            AvailableBytes: systemOk ? available : 0,
+            AggregateGrowthBytesPerHour: aggregateGrowth,
+            MinutesToCeiling: minutes,
+            HasProjection: hasProjection,
+            TargetAccountId: null,
+            Accounts: accounts);
+    }
+
+    public MemoryPressureSnapshot GetSnapshot() => _last;
+
+    public void Dispose()
+    {
+        _disposed = true;
+        Stop();
+    }
+}
