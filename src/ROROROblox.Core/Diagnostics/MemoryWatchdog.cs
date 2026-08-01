@@ -214,19 +214,48 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
 
         // Per-tick logging is banned: AppLogging's own comment records HttpClientFactory at 10s
         // consuming ~90% of a 15 MB day. The 15-minute summary carries the same information at
-        // 1/30th the volume, and is what puts the memory CURVE in a user's log file.
+        // 1/30th the volume, and is what puts the memory CURVE in a user's log file. The aggregate
+        // fields alone can't answer "which of my 3 clients is the one ballooning" -- that requires
+        // the per-account payload appended below, not just machine-wide totals.
         if (now - _lastSummaryAt >= SummaryInterval)
         {
             _lastSummaryAt = now;
             _log.LogInformation(
-                "memory: {Count} client(s), aggregate {GrowthMbPerHr:F0} MB/hr, available {AvailableMb} MB, projection {Minutes} min (valid={Valid})",
-                accounts.Count, aggregateGrowth / (1024 * 1024), (systemOk ? available : 0) / (1024 * 1024), minutes, hasProjection);
+                "memory: {Count} client(s), aggregate {GrowthMbPerHr:F0} MB/hr, available {AvailableMb} MB, projection {Minutes} min (valid={Valid}) {Accounts}",
+                accounts.Count, aggregateGrowth / (1024 * 1024), (systemOk ? available : 0) / (1024 * 1024), minutes, hasProjection,
+                FormatAccountPayload(accounts));
         }
 
         if (crossed)
         {
             PressureCrossed?.Invoke(this, _last);
         }
+    }
+
+    /// <summary>
+    /// Compact per-account breakdown appended to the 15-minute summary line. This is the piece
+    /// that lets a reader reconstruct "which of my N clients grew from 2 GB to 6 GB" -- the
+    /// aggregate fields on the summary describe the machine, not any one client. Format:
+    /// <c>[shortId:mbMB/mbPerHrph, ...]</c> for a fresh reading, <c>[shortId:mbMB(stale), ...]</c>
+    /// for a tick where the pid was unreadable -- LastBytes is a last-known-good carried forward,
+    /// never a fresh sample, and must read as visibly different from one or it becomes a false
+    /// data point in the exact artifact this task exists to build.
+    /// </summary>
+    private static string FormatAccountPayload(List<AccountMemory> accounts)
+    {
+        if (accounts.Count == 0) return "[]";
+
+        var parts = new string[accounts.Count];
+        for (var i = 0; i < accounts.Count; i++)
+        {
+            var a = accounts[i];
+            var shortId = a.AccountId.ToString("N")[..8];
+            var mb = a.PrivateBytes / (1024 * 1024);
+            parts[i] = a.ReadOk
+                ? $"{shortId}:{mb}MB/{a.GrowthBytesPerHour / (1024 * 1024):F0}ph"
+                : $"{shortId}:{mb}MB(stale)";
+        }
+        return "[" + string.Join(", ", parts) + "]";
     }
 
     public MemoryPressureSnapshot GetSnapshot() => _last;
