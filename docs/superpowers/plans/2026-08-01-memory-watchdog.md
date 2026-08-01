@@ -1438,7 +1438,9 @@ private void ApplyMemory(MemoryPressureSnapshot snap, bool warned)
         }
 
         var gb = a.PrivateBytes / 1024d / 1024d / 1024d;
-        var warn = warned && (a.OverCap || snap.HasProjection && snap.MinutesToCeiling < ProjectionWarnMinutes);
+        // `warned` already means a trigger latched this sample — do not re-derive the
+        // threshold here. The watchdog owns that decision; the ViewModel only renders it.
+        var warn = warned;
 
         // Only append a countdown when the projection is real. Never render a number
         // derived from arithmetic we could not complete.
