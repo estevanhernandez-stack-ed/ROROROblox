@@ -61,6 +61,21 @@
                                            FontSize="8" FontWeight="Bold"
                                            Foreground="{DynamicResource WhiteBrush}" />
                             </Border>
+                            <!-- Memory chip (compact mode) — same MemoryText/MemoryWarning + shared
+                                 converters as the full row template (below). Compact rows are the
+                                 exact unattended/parked-on-a-second-monitor scenario the watchdog
+                                 exists for, so this can't be full-row-only: without it, a compact
+                                 user gets no chip, no Recycle, and only a tray icon Windows 11
+                                 hides by default. Collapses entirely via StringToVisibilityConverter
+                                 when there's no reading yet. -->
+                            <Border Visibility="{Binding MemoryText, Converter={StaticResource StringToVisibilityConverter}}"
+                                    Background="Transparent"
+                                    Margin="6,0,0,0"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="{Binding MemoryText}"
+                                           FontSize="9"
+                                           Foreground="{Binding MemoryWarning, Converter={StaticResource IdleChipBrushConverter}}" />
+                            </Border>
                         </StackPanel>
                         <TextBlock FontSize="10" Foreground="{DynamicResource MutedTextBrush}"
                                    Margin="0,2,0,0"
@@ -106,18 +121,49 @@
                         </ItemsControl>
                     </StackPanel>
 
-                    <Button Grid.Column="2"
-                            Content="Stop"
-                            Command="{Binding DataContext.StopAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                            CommandParameter="{Binding}"
-                            Padding="10,4"
-                            Background="{DynamicResource MagentaBrush}"
-                            Foreground="{DynamicResource WhiteBrush}"
-                            BorderThickness="0"
-                            FontSize="10"
-                            FontWeight="SemiBold"
-                            ToolTip="Close the Roblox window for this account."
-                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <!-- Recycle (compact mode) — same RecycleAccountCommand + MemoryWarning
+                             trigger as the full row template. Icon-only (not "Recycle" as text):
+                             a full-width labeled button is too heavy for a single-line compact
+                             row, but the one-click remedy still needs to exist here — a compact
+                             user who never opens the full window otherwise has no way to act on
+                             the warning short of Stop. -->
+                        <Button Content="&#x21BB;"
+                                Command="{Binding DataContext.RecycleAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                Padding="7,3" Margin="0,0,6,0"
+                                Background="{DynamicResource RowExpiredAccentBrush}"
+                                Foreground="{DynamicResource NavyBrush}"
+                                BorderThickness="0"
+                                FontSize="11"
+                                FontWeight="Bold"
+                                ToolTip="Recycle — close and relaunch this client into the same game/server to reclaim leaked memory.">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding MemoryWarning}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsLaunching}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button Content="Stop"
+                                Command="{Binding DataContext.StopAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                Padding="10,4"
+                                Background="{DynamicResource MagentaBrush}"
+                                Foreground="{DynamicResource WhiteBrush}"
+                                BorderThickness="0"
+                                FontSize="10"
+                                FontWeight="SemiBold"
+                                ToolTip="Close the Roblox window for this account."
+                                Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    </StackPanel>
                 </Grid>
             </Border>
         </DataTemplate>
