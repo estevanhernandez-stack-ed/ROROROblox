@@ -1,5 +1,40 @@
 # Memory Watchdog + Warning System Implementation Plan
 
+> ## ⚠️ EXECUTED 2026-08-01 — this plan was WRONG in four places
+>
+> All ten tasks shipped on `feat/memory-watchdog`. Every implementation was correct on the first
+> pass. **Every defect the reviews caught was in this document, not in the code written from it.**
+> Corrected here rather than rewritten in place, so the mistakes stay legible.
+>
+> 1. **Task 6's Step 3 logging snippet defeats Task 6's own stated purpose.** It logs `accounts.Count`
+>    and the *summed* growth rate and never iterates `accounts` — so with three clients the log reads
+>    "3 clients, 920 MB/hr total" and you cannot tell which one is ballooning. The whole justification
+>    for the task was "a user's log should contain the curve"; the snippet emits a scalar. It passed
+>    both cadence tests. **Shipped code carries a per-client payload inside the same single 15-minute
+>    call**, with unreadable accounts tagged `(stale)` so a stale last-known-good is never mistaken for
+>    a fresh reading.
+> 2. **Task 8's step list never wired anything.** Its own Interfaces block declared it consumes
+>    `IMemoryWatchdog.PressureCrossed`; steps 1-6 never subscribed to it, and no later task closed the
+>    loop. The tray warning surface, the balloon, `RequestFocusAccount`, and `RecycleAccountCommand`
+>    all shipped **built but unreachable, with every test green** — a client could leak to the cap and
+>    the user would never see a warning or a way to fix it. Shipped code wires all of it, marshals the
+>    tray writes to the UI thread (`PressureCrossed` is raised from a `Timer` callback), and clears the
+>    warning via `MemoryPressureEvaluator.IsClear` — the plan never specified that the edge-triggered
+>    warning needs a way to turn *off*.
+> 3. **Task 10's contract version was stale on arrival.** This plan says bump 0.4.0 → 0.5.0; the
+>    contract was already at **0.6.0** by execution time, so following it literally would have been a
+>    rollback. Shipped as **0.7.0**. The proto sketch below also shows `SubscribeMemoryPressure(Empty)`
+>    — shipped as `SubscriptionRequest`, matching the three pre-existing subscription rpcs. Free to fix
+>    then, a breaking major bump to fix later.
+> 4. **Several supplied tests could not fail.** Task 3's ratchet and clamp tests, Task 4's target and
+>    coalescing coverage, Task 5's persistence gap, and Task 9's watchdog test were each satisfied
+>    regardless of whether the behaviour they named existed. All replaced with discriminating versions,
+>    each proven by deliberately breaking the production code and confirming RED.
+>
+> **The transferable lesson:** a reviewer that only checks "does the code match the brief" would have
+> passed every one of these. Ask instead whether the output satisfies the *purpose*, and for every
+> test name the production change that would make it fail.
+>
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Detect Roblox client memory growth per account, project time to machine RAM exhaustion, warn the user before the wall, and offer one-click recycle back into the same game.

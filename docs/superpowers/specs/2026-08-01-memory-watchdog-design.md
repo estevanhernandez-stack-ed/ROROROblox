@@ -9,14 +9,20 @@
 > 0.5.0. The 0.5.0 number was correct when this doc was written; the version sequence just
 > moved on. No other part of the design changed.
 >
-> **Two more deviations in the "Plugin contract 0.5.0" section below (task 10, decided by
-> Este before implementation, not discovered during it):**
+> **Two more deviations in the "Plugin contract 0.5.0" section below (task 10, directed in the
+> implementation dispatch, not discovered during it):**
 > 1. The section's proto sketch (`rpc OnMemoryPressure(AccountMemorySnapshot) returns
 >    (Empty)`) was a plugin-side push callback, like `Plugin.OnUIInteraction`. Shipped
->    instead as `rpc SubscribeMemoryPressure(Empty) returns (stream AccountMemorySnapshot)`
->    on the `RoRoRoHost` service — the same server-streaming shape as
+>    instead as `rpc SubscribeMemoryPressure(SubscriptionRequest) returns (stream
+>    AccountMemorySnapshot)` on the `RoRoRoHost` service — the same server-streaming shape as
 >    `SubscribeAccountLaunched` / `SubscribeAccountExited` / `SubscribeMutexStateChanged`.
 >    Consistency with the three existing subscriptions won over the sketch.
+>
+>    *(Amended after review: the dispatch originally specified `Empty` as the request type.
+>    The review pointed out that the other three subscriptions all take `SubscriptionRequest`,
+>    and that the rpc was brand new in the same commit — so nobody had built against it and the
+>    swap was wire-identical and free right then, whereas adding a filter later would have been
+>    a breaking signature change. Changed before the version was published.)*
 > 2. `IPluginEventBus.MemoryPressure` carries `ROROROblox.Core.Diagnostics.AccountMemory`
 >    (already proto-free), not a proto `AccountMemorySnapshot` or a new bespoke bus record.
 >    `RunningAccountSnapshot` exists specifically to decouple the bus from the proto
