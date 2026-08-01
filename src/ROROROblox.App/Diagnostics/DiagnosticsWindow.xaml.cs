@@ -74,7 +74,7 @@ internal partial class DiagnosticsWindow : Window
             // trustworthy sample (same precedent as MemoryWatchdog's own log payload).
             AddSection("Per-Account Memory", s.AccountMemory.Select(a => (
                 Label: a.AccountId.ToString("N")[..8],
-                Value: a.ReadOk ? FormatGb(a.PrivateBytes) : $"{FormatGb(a.PrivateBytes)} (stale)")));
+                Value: a.ReadOk ? FormatGb(a.PrivateBytes) : $"{FormatGb(a.PrivateBytes)}(stale)")));
         }
         AddSection("Paths", new[]
         {
@@ -243,7 +243,7 @@ internal partial class DiagnosticsWindow : Window
                 foreach (var a in snapshot.AccountMemory)
                 {
                     var shortId = a.AccountId.ToString("N")[..8];
-                    var suffix = a.ReadOk ? string.Empty : " (stale)";
+                    var suffix = a.ReadOk ? string.Empty : "(stale)";
                     writer.WriteLine($"  {shortId}: {FormatGb(a.PrivateBytes)}{suffix}");
                 }
             }

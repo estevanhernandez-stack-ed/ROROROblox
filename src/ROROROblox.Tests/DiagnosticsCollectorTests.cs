@@ -45,7 +45,11 @@ public class DiagnosticsCollectorTests
     [Fact]
     public async Task Collect_ProbeFails_ReportsZeroRatherThanAGuess()
     {
-        var collector = BuildCollector(new FakeSystemMemoryProbe { Ok = false });
+        // Bogus non-zero out-params on the failure path: if the collector ever stopped gating on
+        // TryRead's bool return and just copied whatever the out-params held, this test would
+        // catch it (999999/888888 leaking through) instead of silently passing on a fake that
+        // happens to zero its own out-params on failure too.
+        var collector = BuildCollector(new FakeSystemMemoryProbe { Ok = false, Total = 999_999, Available = 888_888 });
 
         var snap = await collector.CollectAsync();
 
@@ -80,20 +84,22 @@ public class DiagnosticsCollectorTests
     }
 
     [Fact]
-    public async Task Collect_WatchdogHasNoSampleYet_ReportsEmptyAccountListNotNull()
+    public async Task Collect_WatchdogGetSnapshotThrows_StillReturnsCompleteSnapshotWithEmptyAccountMemory()
     {
-        // GetSnapshot() before the first Sample() returns a non-null, zero-length Accounts list
-        // (pinned by a Task 7 test) — DiagnosticsCollector must pass that straight through rather
-        // than defensively re-wrapping or nulling it.
-        var collector = BuildCollector(memoryWatchdog: new FakeMemoryWatchdog
-        {
-            Snapshot = new MemoryPressureSnapshot(0, 0, 0, false, null, []),
-        });
+        // Pins the class's stated promise -- "a clean snapshot is always produceable even on a
+        // busted machine" -- specifically for the new watchdog read. A busted IMemoryWatchdog
+        // (GetSnapshot throwing, not just returning an empty result) must not blow up the whole
+        // collector: AccountMemory degrades to empty-not-null and every other field still comes
+        // back populated, exactly like the existing account-store/registry probes above it.
+        var collector = BuildCollector(memoryWatchdog: new FakeMemoryWatchdog { ThrowOnGetSnapshot = true });
 
         var snap = await collector.CollectAsync();
 
         Assert.NotNull(snap.AccountMemory);
         Assert.Empty(snap.AccountMemory);
+        // Not just "didn't throw" -- prove the rest of the snapshot is still real, not a
+        // half-built object abandoned mid-construction by a caught exception.
+        Assert.Equal(34_359_738_368, snap.TotalPhysicalMemoryBytes);
     }
 
     // ---- fakes ----
@@ -103,10 +109,14 @@ public class DiagnosticsCollectorTests
         public bool Ok = true;
         public long Total = 34_359_738_368;  // 32 GB
         public long Available = 21_474_836_480;  // 20 GB
+
+        // Out-params are copied unconditionally, even when Ok is false, so a test can set bogus
+        // non-zero values on the failure path to prove the collector actually gates on the
+        // returned bool rather than trusting whatever the out-params contain.
         public bool TryRead(out long total, out long available)
         {
-            total = Ok ? Total : 0;
-            available = Ok ? Available : 0;
+            total = Total;
+            available = Available;
             return Ok;
         }
     }
@@ -114,6 +124,7 @@ public class DiagnosticsCollectorTests
     private sealed class FakeMemoryWatchdog : IMemoryWatchdog
     {
         public MemoryPressureSnapshot Snapshot = new(0, 0, 0, false, null, []);
+        public bool ThrowOnGetSnapshot;
 
         public long CapBytes { get; set; }
         public long ReserveBytes { get; set; }
@@ -127,7 +138,9 @@ public class DiagnosticsCollectorTests
         public void Start() => throw new NotImplementedException();
         public void Stop() => throw new NotImplementedException();
         public void Sample() => throw new NotImplementedException();
-        public MemoryPressureSnapshot GetSnapshot() => Snapshot;
+
+        public MemoryPressureSnapshot GetSnapshot() =>
+            ThrowOnGetSnapshot ? throw new InvalidOperationException("watchdog is busted") : Snapshot;
     }
 
     private sealed class FakeRobloxProcessTracker : IRobloxProcessTracker
