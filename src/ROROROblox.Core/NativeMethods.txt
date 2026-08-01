@@ -8,3 +8,5 @@ GetForegroundWindow
 GetWindowThreadProcessId
 GetLastInputInfo
 LASTINPUTINFO
+GlobalMemoryStatusEx
+MEMORYSTATUSEX
