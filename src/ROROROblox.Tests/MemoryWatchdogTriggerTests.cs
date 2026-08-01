@@ -384,6 +384,38 @@ public class MemoryWatchdogTriggerTests
     }
 
     [Fact]
+    public void CapDisabledAfterLatching_ReArmsSoLaterEnabledCrossingFiresAgain()
+    {
+        // CapBytes is a public settable auto-property -- exercising the setter mid-run here is
+        // the same public surface a future Preferences UI would use, not a reach-around of the
+        // real API. Not reachable in shipped code today (CapBytes is assigned once at startup),
+        // but a deferred Preferences UI would make it runtime-mutable, and a user who latches a
+        // warning then disables the cap must not land in a latch that can never re-arm.
+        var clock = new FakeClock();
+        var proc = new FakeProcessMemory();
+        var wd = new MemoryWatchdog(proc, new FakeSystemMemory(), clock) { CapBytes = 2640L * 1024 * 1024 };
+        var fires = 0;
+        wd.PressureCrossed += (_, _) => fires++;
+
+        var id = Guid.NewGuid();
+        proc.Readings[10] = 2000L * 1024 * 1024;
+        wd.OnAccountLaunched(id, 10);
+        wd.Sample();
+
+        proc.Readings[10] = 2900L * 1024 * 1024; // crosses
+        wd.Sample();
+        Assert.Equal(1, fires);
+
+        wd.CapBytes = 0; // user disables the cap via (future) Preferences -- known clear
+        wd.Sample();     // same reading, but overCap is now false; must re-arm
+
+        wd.CapBytes = 2640L * 1024 * 1024; // user re-enables the cap
+        proc.Readings[10] = 2900L * 1024 * 1024; // genuine crossing again
+        wd.Sample();
+        Assert.Equal(2, fires);
+    }
+
+    [Fact]
     public void ProjectionOscillatesAcrossThreshold_FiresExactlyOnce()
     {
         // Live smoke test: the projection axis crossed at 85 min, cleared, crossed again at

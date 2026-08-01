@@ -217,15 +217,25 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
                 _log.LogWarning("memory cap crossed: account {AccountId} at {Mb} MB (cap {CapMb} MB)",
                     a.AccountId, a.PrivateBytes / (1024 * 1024), CapBytes / (1024 * 1024));
             }
-            // Re-arm ONLY on a KNOWN clear (a.ReadOk) AND a MEANINGFUL retreat (below
-            // CapReArmFactor of the cap, not just the bare inverse of `overCap`) -- an
-            // unreadable pid (a.ReadOk false, the routine "process mid-teardown" case) is
-            // UNKNOWN, not clear, and must not re-arm the latch (final-branch review IMPORTANT
-            // 3). A bare `!overCap` re-arm is a SEPARATE bug: real client memory oscillates
-            // 13-25 MB, so a value parked one byte under the cap re-arms and the very next tick
-            // re-crosses -- one account measured live crossed four times in eight minutes on
-            // that bug. CapReArmFactor requires a real retreat before the latch resets.
-            else if (a.ReadOk && a.PrivateBytes < CapBytes * CapReArmFactor) { rec.CapLatched = false; }
+            // Re-arm on a KNOWN clear. Two paths, mirroring the projection axis:
+            //   - CapBytes == 0: the cap trigger is disabled (a supported user setting meaning
+            //     "no cap"). Nothing to flap around, so no deadband applies and the latch must
+            //     clear. CapBytes is set once at startup today, but a Preferences UI making it
+            //     runtime-mutable is already on this feature's deferred list -- without this
+            //     clause, a user who latches a warning and then disables the cap lands in a
+            //     latch that can never re-arm, because the re-arm threshold collapses to
+            //     `PrivateBytes < 0` (always false for a non-negative long).
+            //   - Below the deadband: genuine retreat past the 5% margin, not just the bare
+            //     inverse of `overCap`. Real client memory oscillates 13-25 MB, so a value
+            //     parked one byte under the cap re-arms and the very next tick re-crosses -- one
+            //     account measured live crossed four times in eight minutes on that bug.
+            // The a.ReadOk guard still excludes the UNKNOWN case (unreadable pid, the routine
+            // "process mid-teardown" case) -- must never re-arm on that (final-branch review
+            // IMPORTANT 3).
+            else if (a.ReadOk && (CapBytes <= 0 || a.PrivateBytes < CapBytes * CapReArmFactor))
+            {
+                rec.CapLatched = false;
+            }
 
             var overProjection = hasProjection && minutes < ProjectionWarnMinutes;
             if (overProjection && !rec.ProjectionLatched)
