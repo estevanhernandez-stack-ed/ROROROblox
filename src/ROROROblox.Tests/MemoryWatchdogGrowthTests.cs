@@ -94,9 +94,24 @@ public class MemoryWatchdogGrowthTests
         proc.Readings[10] = 2 * Gb;  // teleport freed memory
         wd.Sample();
 
-        // Baseline ratcheted to 2 GB and the window restarted, so no slope is claimed yet.
+        // Baseline ratcheted to 2 GB. Right after a ratchet, bytes == BaselineBytes by
+        // construction, so growth is 0 regardless of whether the window also restarted —
+        // this assertion alone does not discriminate the window-restart behaviour.
         var acct = Assert.Single(wd.GetSnapshot().Accounts);
         Assert.Equal(0, acct.GrowthBytesPerHour, precision: 0);
+
+        // Discriminator: advance LESS than MinimumObservation past the ratchet, with bytes grown.
+        // If the window genuinely restarted at the ratchet (BaselineAt reset to the ratchet's
+        // `now`), elapsed-since-ratchet is 5 minutes -- under the 10-minute floor -- so growth
+        // must still read 0. If BaselineAt were NOT reset by the ratchet, elapsed would instead be
+        // measured from the original launch an hour+ ago (already past the floor), and this
+        // sample would wrongly report a nonzero slope before the post-ratchet window is satisfied.
+        clock.Advance(TimeSpan.FromMinutes(5));
+        proc.Readings[10] = 2 * Gb + Gb / 2; // grew since the ratchet, but window still unmet
+        wd.Sample();
+
+        var acctAfterPartialWindow = Assert.Single(wd.GetSnapshot().Accounts);
+        Assert.Equal(0, acctAfterPartialWindow.GrowthBytesPerHour, precision: 0);
     }
 
     [Fact]
@@ -139,8 +154,16 @@ public class MemoryWatchdogGrowthTests
     }
 
     [Fact]
-    public void NegativeElapsed_ClampsInsteadOfProducingNegativeGrowth()
+    public void NegativeElapsed_NeverProducesNegativeGrowth()
     {
+        // NOTE: this does NOT isolate the elapsed-clamp specifically. With MinimumObservation as a
+        // fixed positive 10-minute floor, a negative elapsed already fails the
+        // `elapsed >= MinimumObservation` gate on its own (whether or not it was first clamped to
+        // zero) -- growth simply stays at its 0 default. So this test cannot distinguish "clamp
+        // implemented" from "clamp absent"; it only asserts the outward behaviour, that clock skew
+        // never yields negative growth, by whatever mechanism produces it. The clamp itself is kept
+        // in MemoryWatchdog.cs as defense-in-depth (see the comment there) even though it is
+        // currently unreachable in its effect.
         var (wd, clock, proc, _) = Build();
         var id = Guid.NewGuid();
         proc.Readings[10] = 2 * Gb;

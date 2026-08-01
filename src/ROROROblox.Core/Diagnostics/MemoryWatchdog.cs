@@ -123,7 +123,14 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
             }
 
             var elapsed = now - rec.BaselineAt;
-            if (elapsed < TimeSpan.Zero) elapsed = TimeSpan.Zero; // clock skew
+            // Clock-skew guard: clamp a negative elapsed to zero. Defense-in-depth, not currently
+            // load-bearing -- MinimumObservation is a fixed positive 10-minute floor, so a clamped
+            // TimeSpan.Zero never clears the `elapsed >= MinimumObservation` gate below, meaning
+            // negative elapsed can never reach the growth math regardless of this line. Kept per
+            // spec (mirrors ActivityMonitor.GetSnapshot's clock-skew clamp) and to protect any
+            // future code that reads `elapsed` before the gate, or if the gate's ordering/threshold
+            // changes. Do not remove as dead code.
+            if (elapsed < TimeSpan.Zero) elapsed = TimeSpan.Zero;
 
             double growth = 0;
             if (elapsed >= MinimumObservation)
