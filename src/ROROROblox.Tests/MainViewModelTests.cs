@@ -59,6 +59,7 @@ public class MainViewModelTests
             updateProbe: new FakeRobloxUpdateProbe(),
             accountTransport: new FakeAccountTransport(),
             activityMonitor: new FakeActivityMonitor(),
+            memoryWatchdog: new FakeMemoryWatchdog(),
             idleAlertPresenter: new IdleAlertPresenter(new FakeTrayService()));
 
         // MainViewModel never disposes the window decorator (App.xaml.cs's DI container owns
@@ -804,6 +805,23 @@ public class MainViewModelTests
         public void Sample() => throw new NotImplementedException();
         public void MarkActive(Guid accountId, DateTimeOffset nowUtc) => throw new NotImplementedException();
         public IReadOnlyList<AccountActivity> GetSnapshot() => throw new NotImplementedException();
+    }
+
+    private sealed class FakeMemoryWatchdog : IMemoryWatchdog
+    {
+        public long CapBytes { get; set; }
+        public long ReserveBytes { get; set; }
+        public int ProjectionWarnMinutes { get; set; }
+
+        public event EventHandler<MemoryPressureSnapshot>? PressureCrossed { add { } remove { } }
+
+        public void OnAccountLaunched(Guid accountId, int pid) => throw new NotImplementedException();
+        public void OnAccountExited(Guid accountId) => throw new NotImplementedException();
+        public void ResetBaseline(Guid accountId, int pid) => throw new NotImplementedException();
+        public void Start() => throw new NotImplementedException();
+        public void Stop() => throw new NotImplementedException();
+        public void Sample() => throw new NotImplementedException();
+        public MemoryPressureSnapshot GetSnapshot() => throw new NotImplementedException();
     }
 
     private sealed class FakeTrayService : ITrayService

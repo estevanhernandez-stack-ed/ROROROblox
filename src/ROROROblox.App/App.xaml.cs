@@ -187,6 +187,7 @@ public partial class App : Application
         WireRobloxWindowDecorator();
         WirePluginEventBus();
         WireActivityMonitor();
+        await WireMemoryWatchdogAsync();
         WireContestedWatcher(mainWindow); // Task 8
         // The gate has been answered by now (both modal branches above are blocking), so it is
         // safe to let plugin processes launch. The pipe they handshake against bound earlier.
@@ -524,6 +525,15 @@ public partial class App : Application
             new RobloxTrayLauncher(sp.GetService<ILogger<RobloxTrayLauncher>>()));
         services.AddSingleton<StartupGate>();
 
+        // Memory watchdog (v1.11, Task 7) — samples per-account private bytes + projects time
+        // to machine RAM exhaustion. IClock is already registered above (Activity Monitor).
+        // Singleton so WireRobloxWindowDecorator's launch/exit bookkeeping and MainViewModel's
+        // chip painting share the SAME instance. Started conditionally by WireMemoryWatchdogAsync
+        // once the enabled flag + derived defaults are read from IAppSettings.
+        services.AddSingleton<IProcessMemoryProbe, ProcessMemoryProbe>();
+        services.AddSingleton<ISystemMemoryProbe, SystemMemoryProbe>();
+        services.AddSingleton<IMemoryWatchdog, MemoryWatchdog>();
+
         // Runtime contested-mutex watcher (Task 8) — polls only while we don't hold the mutex,
         // surfacing when the tray-resident Roblox releases it so the runtime banner can offer
         // in-place recovery without a restart. Registered here so its lifetime matches the other
@@ -803,6 +813,14 @@ public partial class App : Application
     /// player process attaches to an account, push the title text + per-account caption color
     /// onto its main HWND (re-applied every 1.5s by the decorator's own timer to defeat
     /// Roblox's occasional self-rename). Untrack on exit so we don't leak entries.
+    /// <para>
+    /// Also the single place the memory watchdog (Task 7) learns about launches/exits —
+    /// <see cref="IMemoryWatchdog.OnAccountLaunched"/>/<see cref="IMemoryWatchdog.OnAccountExited"/>
+    /// fire right alongside <c>decorator.Track</c>/<c>Untrack</c> so ALL per-account process
+    /// bookkeeping stays in one call site instead of a second parallel subscription. Cheap
+    /// dictionary ops even when the watchdog's sample timer was never started (disabled in
+    /// settings) — see <see cref="WireMemoryWatchdogAsync"/>.
+    /// </para>
     /// </summary>
     private void WireRobloxWindowDecorator()
     {
@@ -812,6 +830,7 @@ public partial class App : Application
             var tracker = _services.GetRequiredService<IRobloxProcessTracker>();
             var decorator = _services.GetRequiredService<RobloxWindowDecorator>();
             var vm = _services.GetRequiredService<MainViewModel>();
+            var watchdog = _services.GetRequiredService<IMemoryWatchdog>();
 
             tracker.ProcessAttached += (_, e) =>
             {
@@ -819,8 +838,13 @@ public partial class App : Application
                 var summary = vm.AccountsSnapshot.FirstOrDefault(a => a.Id == e.AccountId);
                 if (summary is null) return;
                 decorator.Track(e.Pid, summary);
+                watchdog.OnAccountLaunched(e.AccountId, e.Pid);
             };
-            tracker.ProcessExited += (_, e) => decorator.Untrack(e.Pid);
+            tracker.ProcessExited += (_, e) =>
+            {
+                decorator.Untrack(e.Pid);
+                watchdog.OnAccountExited(e.AccountId);
+            };
         }
         catch (Exception ex)
         {
@@ -855,6 +879,59 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "WireActivityMonitor failed; idle warnings disabled this session.");
+        }
+    }
+
+    /// <summary>
+    /// Memory watchdog (v1.11, Task 7) — reads the enabled flag + reserve/cap/projection settings
+    /// from <see cref="IAppSettings"/> and starts <see cref="IMemoryWatchdog"/>'s sample timer.
+    /// <para>
+    /// <b>Derive ONCE, never re-derive over an explicit value.</b> <c>MemoryReserveMb</c>/
+    /// <c>MemoryCapMb</c> are <c>int?</c>: <see langword="null"/> means the user never touched the
+    /// setting (derive from installed RAM via <see cref="MemoryDefaults"/>), any value — including
+    /// <c>0</c> for the cap — is a deliberate user choice that must be honoured verbatim (<c>0</c>
+    /// disables the cap trigger; see <see cref="MemoryDefaults.CapMb"/> doc). The pattern is
+    /// <c>settings.Value ?? MemoryDefaults.XMb(total)</c>, converted MB -&gt; bytes with
+    /// <c>* 1024L * 1024L</c>.
+    /// </para>
+    /// <para>
+    /// <see cref="IMemoryWatchdog.OnAccountLaunched"/>/<c>OnAccountExited</c> bookkeeping is wired
+    /// separately, in <see cref="WireRobloxWindowDecorator"/>, at the same
+    /// <see cref="IRobloxProcessTracker.ProcessAttached"/>/<c>ProcessExited</c> call sites the
+    /// decorator uses — this method only owns settings + <see cref="IMemoryWatchdog.Start"/>.
+    /// </para>
+    /// <para>
+    /// <c>MemoryWatchdogEnabled == false</c> returns before <c>Start()</c> — no timer, no sampling,
+    /// no cost. Wrapped defensively like every other Wire*/Initialize* startup step: a watchdog
+    /// wiring failure must never block a user from launching Roblox.
+    /// </para>
+    /// </summary>
+    private async Task WireMemoryWatchdogAsync()
+    {
+        if (_services is null) return;
+        try
+        {
+            var settings = _services.GetRequiredService<IAppSettings>();
+            if (!await settings.GetMemoryWatchdogEnabledAsync().ConfigureAwait(true))
+            {
+                return;
+            }
+
+            var watchdog = _services.GetRequiredService<IMemoryWatchdog>();
+            var systemProbe = _services.GetRequiredService<ISystemMemoryProbe>();
+            systemProbe.TryRead(out var totalPhysicalBytes, out _);
+
+            var reserveMb = await settings.GetMemoryReserveMbAsync().ConfigureAwait(true);
+            var capMb = await settings.GetMemoryCapMbAsync().ConfigureAwait(true);
+            watchdog.ReserveBytes = (reserveMb ?? MemoryDefaults.ReserveMb(totalPhysicalBytes)) * 1024L * 1024L;
+            watchdog.CapBytes = (capMb ?? MemoryDefaults.CapMb(totalPhysicalBytes)) * 1024L * 1024L;
+            watchdog.ProjectionWarnMinutes = await settings.GetProjectionWarnMinutesAsync().ConfigureAwait(true);
+
+            watchdog.Start();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Memory watchdog wiring failed; continuing without it.");
         }
     }
 

@@ -35,6 +35,8 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private bool _isFilteredOut;
     private TimeSpan? _sinceActivity;
     private bool _idleWarn;
+    private string? _memoryText;
+    private bool _memoryWarning;
     private bool _joinViaFriend;
     private IStreamerIdentityProvider? _identity;
 
@@ -291,6 +293,31 @@ public sealed class AccountSummary : INotifyPropertyChanged
             if (t < TimeSpan.FromHours(1)) return $"idle {(int)t.TotalMinutes}m";
             return $"idle {(int)t.TotalHours}h{t.Minutes}m";
         }
+    }
+
+    /// <summary>
+    /// Formatted per-account memory chip text ("2.3 GB", "▲ 2.3 GB · ~45 min"), or
+    /// <see langword="null"/> to render nothing — either the watchdog has no reading yet this
+    /// session, or the last sample's pid read failed (never show a stale/zero figure). Produced by
+    /// <see cref="MemoryChipFormatter.Format"/> from <c>MainViewModel.ApplyMemory</c> (Task 7);
+    /// pure display state, never persisted.
+    /// </summary>
+    public string? MemoryText
+    {
+        get => _memoryText;
+        set => SetField(ref _memoryText, value);
+    }
+
+    /// <summary>
+    /// True when the current <see cref="MemoryText"/> reflects a latched pressure crossing (cap or
+    /// projection) from <see cref="ROROROblox.Core.Diagnostics.IMemoryWatchdog.PressureCrossed"/> —
+    /// drives the amber (vs muted) color of the memory chip, matching <see cref="IdleWarn"/>'s
+    /// pattern. Pure display state, never persisted.
+    /// </summary>
+    public bool MemoryWarning
+    {
+        get => _memoryWarning;
+        set => SetField(ref _memoryWarning, value);
     }
 
     public int? RunningPid

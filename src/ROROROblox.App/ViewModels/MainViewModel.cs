@@ -47,6 +47,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly IRobloxUpdateProbe _updateProbe;
     private readonly Core.Transport.IAccountTransport _accountTransport;
     private readonly IActivityMonitor _activityMonitor;
+    private readonly IMemoryWatchdog _memoryWatchdog;
     private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
     private readonly Core.StreamerMode.IStreamerIdentityProvider? _streamerIdentity;
     private readonly ILogger<MainViewModel> _log;
@@ -102,6 +103,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         IRobloxUpdateProbe updateProbe,
         Core.Transport.IAccountTransport accountTransport,
         IActivityMonitor activityMonitor,
+        IMemoryWatchdog memoryWatchdog,
         Notifications.IdleAlertPresenter idleAlertPresenter,
         Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
         ILogger<MainViewModel>? log = null)
@@ -126,6 +128,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _updateProbe = updateProbe;
         _accountTransport = accountTransport;
         _activityMonitor = activityMonitor;
+        _memoryWatchdog = memoryWatchdog;
         _idleAlertPresenter = idleAlertPresenter;
         _streamerIdentity = streamerIdentity;
         _log = log ?? NullLogger<MainViewModel>.Instance;
@@ -191,6 +194,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // VM only reacts to the crossing event + refreshes the passive row/banner display below.
         _activityMonitor.WarnThresholdCrossed += OnActivityWarnCrossed;
 
+        // Memory watchdog (v1.11, Task 7) — a coalesced, edge-triggered crossing (cap or
+        // projection, latched per account) paints the warned chip immediately instead of waiting
+        // for the next 30s tick. Fires off the watchdog's own sample timer thread, so marshal to
+        // the dispatcher like every other cross-thread event above.
+        _memoryWatchdog.PressureCrossed += (_, snap) =>
+            Application.Current?.Dispatcher.Invoke(() => ApplyMemory(snap, warned: true));
+
         // Streamer mode (v1.10, Task 10) — keep the main-window switch (and the tray checkmark,
         // via its own subscription) in sync when the mode flips from either surface. Mirrors
         // AccountSummary.OnIdentityChanged's un-marshaled OnPropertyChanged call: WPF's binding
@@ -218,6 +228,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             ActivitySnapshotApplier.Apply(Accounts, _activityMonitor.GetSnapshot(),
                 TimeSpan.FromMinutes(_idleWarnThresholdMinutes));
             IdleSummaryText = IdleSummary.Format(Accounts.Count(a => a.IdleWarn), _idleWarnThresholdMinutes);
+
+            // Memory watchdog (Task 7) — repaint from the latest snapshot on the same 30s cadence
+            // as the idle chips above. warned: false here — this is a passive refresh (bytes only),
+            // not a fresh pressure crossing; PressureCrossed (subscribed in the ctor) is what flips
+            // a row's chip to the warned "▲" state.
+            RefreshMemoryChips();
         };
         _ticker.Start();
     }
@@ -2105,6 +2121,37 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             _idleAlertPresenter.Notify(crossed.Count, _idleWarnThresholdMinutes, _muteIdleAlerts);
         });
+    }
+
+    /// <summary>
+    /// Passive 30s repaint of every row's memory chip from the watchdog's last completed sample —
+    /// bytes only, never a warned "▲" (that only flips via <see cref="IMemoryWatchdog.PressureCrossed"/>,
+    /// subscribed in the ctor). Task 7.
+    /// </summary>
+    private void RefreshMemoryChips() => ApplyMemory(_memoryWatchdog.GetSnapshot(), warned: false);
+
+    /// <summary>
+    /// Projects a <see cref="MemoryPressureSnapshot"/> onto the visible rows via
+    /// <see cref="MemoryChipFormatter.Format"/>. <paramref name="warned"/> is the watchdog's own
+    /// coalesced edge-triggered verdict for THIS sample (true only when <see cref="IMemoryWatchdog.PressureCrossed"/>
+    /// just fired) — the ViewModel never re-derives the cap/projection threshold itself, it only
+    /// renders what the watchdog already decided. A row with no matching account in the snapshot
+    /// (not yet launched, or launched after the last sample) is left untouched. Task 7.
+    /// </summary>
+    private void ApplyMemory(MemoryPressureSnapshot snapshot, bool warned)
+    {
+        // Accounts is null on a default(MemoryPressureSnapshot) — the watchdog's own 30s sample
+        // timer and this VM's 30s UI ticker both start independently at startup, so the very first
+        // tick here can race ahead of the watchdog's first Sample(). `?? []` makes that race a
+        // no-op repaint instead of a NullReferenceException.
+        foreach (var account in snapshot.Accounts ?? [])
+        {
+            var row = Accounts.FirstOrDefault(r => r.Id == account.AccountId);
+            if (row is null) continue;
+
+            row.MemoryText = MemoryChipFormatter.Format(account, warned, snapshot.HasProjection, snapshot.MinutesToCeiling);
+            row.MemoryWarning = warned && account.ReadOk;
+        }
     }
 
     /// <summary>
