@@ -17,13 +17,9 @@ public sealed class RobloxRunningProbe : IRobloxRunningProbe
         var processes = Process.GetProcessesByName(PlayerProcessName);
         try
         {
-            return processes.Select(p =>
-            {
-                bool hasWindow;
-                try { hasWindow = p.MainWindowHandle != IntPtr.Zero; }
-                catch { hasWindow = false; } // exited mid-scan / access denied → treat as windowless
-                return new RobloxProcessInfo(p.Id, hasWindow);
-            }).ToArray();
+            return processes
+                .Select(p => new RobloxProcessInfo(p.Id, ReadHasWindow(() => p.MainWindowHandle)))
+                .ToArray();
         }
         finally
         {
@@ -32,6 +28,27 @@ public sealed class RobloxRunningProbe : IRobloxRunningProbe
                 p.Dispose();
             }
         }
+    }
+
+    /// <summary>
+    /// Classify one process as windowed or windowless from its main-window handle.
+    ///
+    /// <para><b>Fails CLOSED.</b> A read we cannot complete — exited mid-scan, access denied across
+    /// an integrity boundary, any transient failure — reports <c>true</c> (windowed). This flag is
+    /// not cosmetic: <see cref="SeamlessTakeover.WindowlessOnly"/> closes every client it is handed
+    /// <b>with no confirming modal</b>, so "windowless" is the destructive answer and must never be
+    /// the one we guess. An unknown process may be mid-game with unsaved progress; treating it as
+    /// windowed costs at worst an unnecessary confirmation prompt, while the reverse costs the user
+    /// their session.</para>
+    ///
+    /// <para>Public so the failure branch can be unit tested — <see cref="Process.MainWindowHandle"/>
+    /// cannot be provoked into throwing from a test against a real process, which is why this
+    /// enumeration was previously covered only by manual smoke and the inverted default survived.</para>
+    /// </summary>
+    public static bool ReadHasWindow(Func<IntPtr> readMainWindowHandle)
+    {
+        try { return readMainWindowHandle() != IntPtr.Zero; }
+        catch { return true; } // unknown → assume windowed; never silently close what we couldn't read
     }
 
     public IReadOnlyList<int> GetRunningPlayerPids()
