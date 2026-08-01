@@ -70,12 +70,8 @@
     <Resource Include="Tray\Resources\tray-on-titlebar.png" />
     <Resource Include="Tray\Resources\tray-off-titlebar.png" />
     <Resource Include="Tray\Resources\tray-error-titlebar.png" />
-    <!-- Task 8 (memory watchdog) — TrayService.cs already references "tray-warn.ico" by filename
-         (Application.GetResourceStream, a runtime lookup, so its absence doesn't fail THIS build).
-         Once 626labs-design produces the asset pair, drop them in Tray\Resources\ and uncomment:
     <Resource Include="Tray\Resources\tray-warn.ico" />
     <Resource Include="Tray\Resources\tray-warn-titlebar.png" />
-         Adding either <Resource> line before the file exists WILL fail the build (MSB3030). -->
   </ItemGroup>
 
   <!-- Embed the source-of-truth agent prompt so the in-app theme builder reads the same
