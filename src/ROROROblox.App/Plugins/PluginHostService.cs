@@ -321,7 +321,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     // =====================================================================
 
     public override async Task SubscribeMemoryPressure(
-        Empty request,
+        SubscriptionRequest request,
         IServerStreamWriter<AccountMemorySnapshot> responseStream,
         ServerCallContext context)
     {

@@ -208,7 +208,7 @@ public class PluginHostServiceTests
         var writer = new TestStreamWriter<AccountMemorySnapshot>();
         using var cts = new CancellationTokenSource();
         var ctx = FakeServerCallContext.Create("/rororo.plugin.v1.RoRoRoHost/SubscribeMemoryPressure", cts.Token);
-        var streamTask = service.SubscribeMemoryPressure(new Empty(), writer, ctx);
+        var streamTask = service.SubscribeMemoryPressure(new SubscriptionRequest(), writer, ctx);
 
         // Give the subscription a tick to attach the event handler.
         await Task.Delay(20);

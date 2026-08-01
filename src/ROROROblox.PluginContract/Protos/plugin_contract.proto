@@ -30,7 +30,7 @@ service RoRoRoHost {
   // continuous telemetry feed. Pairs naturally with StopAccounts + RequestLaunch/
   // RequestLaunchTarget: a plugin can recycle the fattest client and relaunch it back
   // into the same server. See AUTHOR_GUIDE.md's "React to memory pressure" recipe.
-  rpc SubscribeMemoryPressure(Empty) returns (stream AccountMemorySnapshot);
+  rpc SubscribeMemoryPressure(SubscriptionRequest) returns (stream AccountMemorySnapshot);
 
   // Command surface
   rpc RequestLaunch(LaunchRequest) returns (LaunchResult);

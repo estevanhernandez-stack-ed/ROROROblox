@@ -301,7 +301,7 @@ This capability is consent-gated like every other `host.*` capability — it sho
 Roblox clients leak memory over time — RoRoRo's watchdog samples every tracked account and, when one crosses a threshold (over an absolute cap, or projected to exhaust the machine's RAM), fires a stream item for **every** account it's tracking, not just the one that tripped the crossing (NuGet 0.7.0+, capability `host.events.memory-pressure`).
 
 ```csharp
-using var stream = client.SubscribeMemoryPressure(new Empty(), headers);
+using var stream = client.SubscribeMemoryPressure(new SubscriptionRequest(), headers);
 await foreach (var snap in stream.ResponseStream.ReadAllAsync())
 {
     if (!snap.OverCap && !snap.IsTarget) continue; // not the account to act on

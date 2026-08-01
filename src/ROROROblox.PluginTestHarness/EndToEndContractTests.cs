@@ -995,9 +995,13 @@ public class EndToEndContractTests
             var client = new RoRoRoHost.RoRoRoHostClient(channel);
             var headers = new Metadata { { "x-plugin-id", "626labs.test" } };
 
-            using var call = client.SubscribeMemoryPressure(new Empty(), headers: headers);
+            using var call = client.SubscribeMemoryPressure(new SubscriptionRequest(), headers: headers);
+            // .WaitAsync guards against a future capability-gate regression hanging CI instead
+            // of failing it: if SubscribeMemoryPressure ever stops being denied, MoveNext blocks
+            // forever waiting for an event nobody raises, rather than throwing. Matches the
+            // pattern its sibling (ReceivesRaisedSnapshot, below) already uses.
             var ex = await Assert.ThrowsAsync<RpcException>(async () =>
-                await call.ResponseStream.MoveNext(CancellationToken.None));
+                await call.ResponseStream.MoveNext(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(5)));
             Assert.Equal(StatusCode.PermissionDenied, ex.StatusCode);
         }
         finally
@@ -1073,7 +1077,7 @@ public class EndToEndContractTests
             var client = new RoRoRoHost.RoRoRoHostClient(channel);
             var headers = new Metadata { { "x-plugin-id", "626labs.test" } };
 
-            using var call = client.SubscribeMemoryPressure(new Empty(), headers: headers);
+            using var call = client.SubscribeMemoryPressure(new SubscriptionRequest(), headers: headers);
 
             var accountId = Guid.NewGuid();
             // Give the server a tick to attach the bus handler before raising -- same
