@@ -767,6 +767,96 @@ public class MainViewModelTests
         finally { if (File.Exists(path)) File.Delete(path); }
     }
 
+    [Fact]
+    public async Task ApplyMemory_ProjectionIsMachineWide_CapIsScopedPerRow()
+    {
+        // Closes a coverage gap flagged in the final-branch re-review (2026-08-01, residual 3):
+        // the C1 test above always uses HasProjection: false, so ApplyMemory's
+        // `|| projectionWarned` term has zero coverage — deleting it leaves all 982 tests green
+        // while silently killing the Recycle button for the projection axis, the feature's
+        // headline "~N min to ceiling" warning. There was also no test proving a cap breach on
+        // ONE row leaves a SECOND row unwarned (the per-row cap-scoping half of C1 was asserted
+        // by reading the code, not by a test). One test, two cases, same two rows, closes both.
+        var watchdog = new FakeMemoryWatchdogWithProjectionMinutes { ProjectionWarnMinutes = 120 };
+        var (vm, store, _, path) = Build(memoryWatchdog: watchdog);
+        try
+        {
+            var addedA = await store.AddAsync("RowA", "", "cookie");
+            var addedB = await store.AddAsync("RowB", "", "cookie");
+            var rowA = new AccountSummary(addedA);
+            var rowB = new AccountSummary(addedB);
+            vm.Accounts.Add(rowA);
+            vm.Accounts.Add(rowB);
+
+            // Case 1: projection crossed (machine-wide, 30 min < the 120-min threshold above);
+            // only rowA is over cap. Discriminator for `|| projectionWarned`: BOTH rows must
+            // warn — the machine is what runs out, not any one client — so rowB (never over
+            // cap) warning true is the assertion that would go RED if projectionWarned were
+            // dropped from the OR.
+            var projectionSnapshot = new MemoryPressureSnapshot(
+                AvailableBytes: 1_000_000_000,
+                AggregateGrowthBytesPerHour: 500_000_000,
+                MinutesToCeiling: 30,
+                HasProjection: true,
+                TargetAccountId: rowA.Id,
+                Accounts:
+                [
+                    new AccountMemory(rowA.Id, 6L * 1024 * 1024 * 1024, 500_000_000, 30, OverCap: true, IsTarget: true, ReadOk: true),
+                    new AccountMemory(rowB.Id, 1L * 1024 * 1024 * 1024, 0, 30, OverCap: false, IsTarget: false, ReadOk: true),
+                ]);
+
+            vm.ApplyMemory(projectionSnapshot);
+            Assert.True(rowA.MemoryWarning);
+            Assert.True(rowB.MemoryWarning); // discriminator: proves `|| projectionWarned` fires
+
+            // Case 2: no projection at all, same OverCap pattern. Discriminator for
+            // `account.OverCap ||`: only rowA (the over-cap one) may warn now — rowB going
+            // false is the assertion that would go RED if the cap term were dropped from the OR
+            // (leaving warned derived from projectionWarned alone, which is machine-wide and
+            // would paint every row regardless of its own cap state).
+            var capOnlySnapshot = new MemoryPressureSnapshot(
+                AvailableBytes: 1_000_000_000,
+                AggregateGrowthBytesPerHour: 0,
+                MinutesToCeiling: 0,
+                HasProjection: false,
+                TargetAccountId: rowA.Id,
+                Accounts:
+                [
+                    new AccountMemory(rowA.Id, 6L * 1024 * 1024 * 1024, 0, 0, OverCap: true, IsTarget: true, ReadOk: true),
+                    new AccountMemory(rowB.Id, 1L * 1024 * 1024 * 1024, 0, 0, OverCap: false, IsTarget: false, ReadOk: true),
+                ]);
+
+            vm.ApplyMemory(capOnlySnapshot);
+            Assert.True(rowA.MemoryWarning);
+            Assert.False(rowB.MemoryWarning); // discriminator: proves cap scoping is per-row
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    /// <summary>
+    /// The shared <see cref="FakeMemoryWatchdog"/> below throws on most members and hardcodes
+    /// nothing settable pre-construction in a way this test needs — this double just needs a
+    /// real, settable <see cref="ProjectionWarnMinutes"/> (the shared fake's auto-property
+    /// defaults to 0, which would make every projection comparison in <c>ApplyMemory</c>
+    /// trivially false) plus enough of the surface not to throw during
+    /// <see cref="MainViewModel"/> construction (ctor only subscribes to
+    /// <see cref="PressureCrossed"/>, which this never raises).
+    /// </summary>
+    private sealed class FakeMemoryWatchdogWithProjectionMinutes : IMemoryWatchdog
+    {
+        public long CapBytes { get; set; }
+        public long ReserveBytes { get; set; }
+        public int ProjectionWarnMinutes { get; set; }
+        public event EventHandler<MemoryPressureSnapshot>? PressureCrossed { add { } remove { } }
+        public void OnAccountLaunched(Guid accountId, int pid) { }
+        public void OnAccountExited(Guid accountId, int pid) { }
+        public void ResetBaseline(Guid accountId, int pid) { }
+        public void Start() { }
+        public void Stop() { }
+        public void Sample() { }
+        public MemoryPressureSnapshot GetSnapshot() => new(0, 0, 0, false, null, []);
+    }
+
     private sealed class FakeRobloxCompatChecker : IRobloxCompatChecker
     {
         public Task<CompatCheckResult> CheckAsync() => throw new NotImplementedException();

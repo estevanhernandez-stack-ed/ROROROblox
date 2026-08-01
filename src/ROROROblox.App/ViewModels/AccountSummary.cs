@@ -309,10 +309,23 @@ public sealed class AccountSummary : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// True when the current <see cref="MemoryText"/> reflects a latched pressure crossing (cap or
-    /// projection) from <see cref="ROROROblox.Core.Diagnostics.IMemoryWatchdog.PressureCrossed"/> —
-    /// drives the amber (vs muted) color of the memory chip, matching <see cref="IdleWarn"/>'s
-    /// pattern. Pure display state, never persisted.
+    /// True when this account is currently over its private-bytes cap OR the machine-wide
+    /// projection is under its warn threshold — CONDITION-derived from the latest
+    /// <see cref="ROROROblox.Core.Diagnostics.MemoryPressureSnapshot"/> every time
+    /// <c>MainViewModel.ApplyMemory</c> runs (both on a fresh
+    /// <see cref="ROROROblox.Core.Diagnostics.IMemoryWatchdog.PressureCrossed"/> AND on the
+    /// passive 30s ticker refresh), NOT latched to "did a crossing just fire" — a stale
+    /// edge-derived version of this flag was CRITICAL 1 in the final-branch review (2026-08-01):
+    /// it painted true only from <c>PressureCrossed</c> and got wiped back to false by the very
+    /// next passive tick even while the account was still over cap.
+    /// <para>
+    /// Drives the amber (vs muted) color of the memory chip, matching <see cref="IdleWarn"/>'s
+    /// pattern — AND is the Recycle button's SOLE visibility trigger
+    /// (<c>MainWindow.xaml</c>'s <c>MemoryWarning == True</c> DataTrigger). That second role is
+    /// what made the CRITICAL 1 bug a Critical rather than a cosmetic display glitch: the button
+    /// disappeared along with the chip color, taking the one-click remedy with it. Pure display
+    /// state, never persisted.
+    /// </para>
     /// </summary>
     public bool MemoryWarning
     {

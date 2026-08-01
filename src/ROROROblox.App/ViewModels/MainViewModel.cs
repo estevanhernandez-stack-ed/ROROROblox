@@ -261,9 +261,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             IdleSummaryText = IdleSummary.Format(Accounts.Count(a => a.IdleWarn), _idleWarnThresholdMinutes);
 
             // Memory watchdog (Task 7) — repaint from the latest snapshot on the same 30s cadence
-            // as the idle chips above. warned: false here — this is a passive refresh (bytes only),
-            // not a fresh pressure crossing; PressureCrossed (subscribed in the ctor) is what flips
-            // a row's chip to the warned "▲" state.
+            // as the idle chips above. ApplyMemory (called by RefreshMemoryChips) recomputes
+            // MemoryWarning from the snapshot's own condition every call — cap/projection state,
+            // not "did PressureCrossed just fire" — so a row that's still over cap/projection
+            // stays warned across this passive refresh instead of being wiped back to false
+            // (final-branch review CRITICAL 1, 2026-08-01).
             RefreshMemoryChips();
 
             // Task 8 — PressureCrossed is edge-triggered (fires ON a crossing, stays silent while
