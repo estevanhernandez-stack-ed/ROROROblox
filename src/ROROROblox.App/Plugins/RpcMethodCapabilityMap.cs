@@ -25,6 +25,7 @@ public static class RpcMethodCapabilityMap
         ["SubscribeAccountLaunched"] = PluginCapability.HostEventsAccountLaunched,
         ["SubscribeAccountExited"] = PluginCapability.HostEventsAccountExited,
         ["SubscribeMutexStateChanged"] = PluginCapability.HostEventsMutexStateChanged,
+        ["SubscribeMemoryPressure"] = PluginCapability.HostEventsMemoryPressure,
         ["RequestLaunch"] = PluginCapability.HostCommandsRequestLaunch,
         ["RequestLaunchTarget"] = PluginCapability.HostCommandsLaunchTarget,
         ["GetCurrentServer"] = PluginCapability.HostQueriesCurrentServer,

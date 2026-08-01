@@ -1,5 +1,35 @@
 # RoRoRo memory watchdog + warning system — design
 
+> **Banner correction (2026-08-01, task 10):** this doc's Scope section says "plugin contract
+> 0.5.0 exposing memory pressure to plugins." By the time task 10 landed, two unrelated
+> additive bumps had already shipped on `ROROROblox.PluginContract` between this spec's
+> writing and implementation — `host.commands.mark-account-active` at 0.5.0 and
+> `host.commands.stop-accounts` at 0.6.0 — so the memory-pressure capability
+> (`host.events.memory-pressure`, rpc `SubscribeMemoryPressure`) shipped at **0.7.0**, not
+> 0.5.0. The 0.5.0 number was correct when this doc was written; the version sequence just
+> moved on. No other part of the design changed.
+>
+> **Two more deviations in the "Plugin contract 0.5.0" section below (task 10, decided by
+> Este before implementation, not discovered during it):**
+> 1. The section's proto sketch (`rpc OnMemoryPressure(AccountMemorySnapshot) returns
+>    (Empty)`) was a plugin-side push callback, like `Plugin.OnUIInteraction`. Shipped
+>    instead as `rpc SubscribeMemoryPressure(Empty) returns (stream AccountMemorySnapshot)`
+>    on the `RoRoRoHost` service — the same server-streaming shape as
+>    `SubscribeAccountLaunched` / `SubscribeAccountExited` / `SubscribeMutexStateChanged`.
+>    Consistency with the three existing subscriptions won over the sketch.
+> 2. `IPluginEventBus.MemoryPressure` carries `ROROROblox.Core.Diagnostics.AccountMemory`
+>    (already proto-free), not a proto `AccountMemorySnapshot` or a new bespoke bus record.
+>    `RunningAccountSnapshot` exists specifically to decouple the bus from the proto
+>    runtime; `AccountMemory` already has no proto dependency, so wrapping it again would
+>    just be a second name for the same shape. `PluginHostService.SubscribeMemoryPressure`
+>    maps it onto the wire message the same way the other three subscriptions do.
+>
+> The proto message shape itself (`account_id` / `private_bytes` / `growth_mb_per_hr` /
+> `mins_to_ceiling` / `over_cap` / `is_target`) shipped exactly as sketched, plus one
+> additive field the sketch didn't have: `bool read_ok = 7` — see the proto's own comment
+> for why a stale reading needed an explicit flag rather than silently reusing
+> `private_bytes`.
+
 **Date:** 2026-08-01
 **Status:** Approved design, not yet planned or implemented.
 **Driver:** [`docs/investigations/2026-08-01-long-session-window-death.md`](../../investigations/2026-08-01-long-session-window-death.md)

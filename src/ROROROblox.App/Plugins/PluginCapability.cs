@@ -13,6 +13,7 @@ public static class PluginCapability
     public const string HostEventsAccountLaunched = "host.events.account-launched";
     public const string HostEventsAccountExited = "host.events.account-exited";
     public const string HostEventsMutexStateChanged = "host.events.mutex-state-changed";
+    public const string HostEventsMemoryPressure = "host.events.memory-pressure";
     public const string HostCommandsRequestLaunch = "host.commands.request-launch";
     public const string HostCommandsLaunchTarget = "host.commands.launch-target";
     public const string HostCommandsMarkAccountActive = "host.commands.mark-account-active";
@@ -35,6 +36,7 @@ public static class PluginCapability
         [HostEventsAccountLaunched] = "Notify the plugin when an account launches.",
         [HostEventsAccountExited] = "Notify the plugin when an account exits.",
         [HostEventsMutexStateChanged] = "Notify the plugin when multi-instance state changes.",
+        [HostEventsMemoryPressure] = "Notify the plugin when an account's memory use gets high enough to risk the machine running out of RAM.",
         [HostCommandsRequestLaunch] = "Allow the plugin to ask RoRoRo to launch a Roblox account.",
         [HostCommandsLaunchTarget] = "Allow the plugin to launch one of your accounts into a Roblox server from a link or friend it provides.",
         [HostCommandsMarkAccountActive] = "Let this plugin tell RoRoRo an account is still active (so idle warnings don't misfire). It cannot see what you type or do — only mark an account active.",

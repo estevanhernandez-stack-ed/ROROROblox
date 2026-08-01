@@ -1423,8 +1423,9 @@ public partial class App : Application
 
     /// <summary>
     /// Bridges existing App-layer events into the plugin event bus so subscribed plugins
-    /// see them via the SubscribeAccountLaunched / SubscribeAccountExited / SubscribeMutexStateChanged
-    /// gRPC streams. Wrapped in try/catch — a wiring failure must not block App startup.
+    /// see them via the SubscribeAccountLaunched / SubscribeAccountExited /
+    /// SubscribeMutexStateChanged / SubscribeMemoryPressure gRPC streams. Wrapped in
+    /// try/catch — a wiring failure must not block App startup.
     /// </summary>
     private void WirePluginEventBus()
     {
@@ -1436,6 +1437,28 @@ public partial class App : Application
             var bus = _services.GetRequiredService<ROROROblox.App.Plugins.IPluginEventBus>()
                 as ROROROblox.App.Plugins.InProcessPluginEventBus;
             if (bus is null) return;
+
+            // Memory pressure (Task 10): forward every tracked account on the snapshot the
+            // watchdog fires with, not just the target -- WireMemoryWarningTray (separate
+            // subscriber, untouched by this change) only cares about the fattest client for
+            // the tray balloon, but a plugin driving an automated recycle-and-macro-back flow
+            // needs the full per-account picture (over_cap / is_target / read_ok) to decide
+            // what to act on.
+            var watchdog = _services.GetRequiredService<IMemoryWatchdog>();
+            watchdog.PressureCrossed += (_, snap) =>
+            {
+                try
+                {
+                    foreach (var account in snap.Accounts)
+                    {
+                        bus.RaiseMemoryPressure(account);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _log?.LogDebug(ex, "Plugin bus MemoryPressure bridge threw; ignoring.");
+                }
+            };
 
             tracker.ProcessAttached += (_, e) =>
             {

@@ -1,3 +1,5 @@
+using ROROROblox.Core.Diagnostics;
+
 namespace ROROROblox.App.Plugins;
 
 /// <summary>
@@ -14,6 +16,7 @@ public sealed class InProcessPluginEventBus : IPluginEventBus
     public event Action<RunningAccountSnapshot>? AccountLaunched;
     public event Action<RunningAccountSnapshot, long>? AccountExited;
     public event Action<string>? MutexStateChanged;
+    public event Action<AccountMemory>? MemoryPressure;
 
     public void RaiseAccountLaunched(RunningAccountSnapshot snapshot)
         => AccountLaunched?.Invoke(snapshot);
@@ -23,4 +26,7 @@ public sealed class InProcessPluginEventBus : IPluginEventBus
 
     public void RaiseMutexStateChanged(string state)
         => MutexStateChanged?.Invoke(state);
+
+    public void RaiseMemoryPressure(AccountMemory snapshot)
+        => MemoryPressure?.Invoke(snapshot);
 }
