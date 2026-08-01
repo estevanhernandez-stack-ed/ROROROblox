@@ -31,4 +31,13 @@ public class MemoryDefaultsTests
         Assert.Equal(1024, MemoryDefaults.ReserveMb(0));
         Assert.Equal(4096, MemoryDefaults.CapMb(0));
     }
+
+    [Fact]
+    public void NegativeTotal_FallsBackToConservativeDefaults()
+    {
+        // Pins the guard's shape as "<= 0", not "== 0" — a negative total is still an
+        // unreadable/failed probe read, not a value to derive from.
+        Assert.Equal(1024, MemoryDefaults.ReserveMb(-1));
+        Assert.Equal(4096, MemoryDefaults.CapMb(-1));
+    }
 }

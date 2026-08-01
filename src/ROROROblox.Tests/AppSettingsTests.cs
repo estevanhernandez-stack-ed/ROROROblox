@@ -231,4 +231,71 @@ public class AppSettingsTests : IDisposable
         using var second = new AppSettings(_filePath);
         Assert.True(await second.GetStreamerModeAsync());
     }
+
+    [Fact]
+    public async Task MemoryWatchdogEnabled_DefaultsTrue_ThenPersists()
+    {
+        {
+            using var first = new AppSettings(_filePath);
+            Assert.True(await first.GetMemoryWatchdogEnabledAsync());
+
+            await first.SetMemoryWatchdogEnabledAsync(false);
+            Assert.False(await first.GetMemoryWatchdogEnabledAsync());
+        }
+
+        using var second = new AppSettings(_filePath);
+        Assert.False(await second.GetMemoryWatchdogEnabledAsync());
+    }
+
+    [Fact]
+    public async Task ProjectionWarnMinutes_DefaultsOneTwenty_ThenPersists()
+    {
+        {
+            using var first = new AppSettings(_filePath);
+            Assert.Equal(120, await first.GetProjectionWarnMinutesAsync());
+
+            await first.SetProjectionWarnMinutesAsync(45);
+            Assert.Equal(45, await first.GetProjectionWarnMinutesAsync());
+        }
+
+        using var second = new AppSettings(_filePath);
+        Assert.Equal(45, await second.GetProjectionWarnMinutesAsync());
+    }
+
+    [Fact]
+    public async Task MemoryReserveMb_DefaultsNull_ThenPersists()
+    {
+        {
+            using var first = new AppSettings(_filePath);
+            Assert.Null(await first.GetMemoryReserveMbAsync());
+
+            await first.SetMemoryReserveMbAsync(1536);
+            Assert.Equal(1536, await first.GetMemoryReserveMbAsync());
+        }
+
+        using var second = new AppSettings(_filePath);
+        Assert.Equal(1536, await second.GetMemoryReserveMbAsync());
+    }
+
+    /// <summary>
+    /// The one that matters most: MemoryCapMb == 0 is a deliberate user choice ("disable the cap
+    /// trigger") and must survive a save/load cycle as 0, never silently reverting to null
+    /// ("never set" -> re-derive). Proves both states are distinguishable, not just that one of
+    /// them happens to survive.
+    /// </summary>
+    [Fact]
+    public async Task MemoryCapMb_ZeroRoundTripsDistinctlyFromNull()
+    {
+        {
+            using var first = new AppSettings(_filePath);
+            Assert.Null(await first.GetMemoryCapMbAsync());   // untouched instance: null, not 0
+
+            await first.SetMemoryCapMbAsync(0);
+            Assert.Equal(0, await first.GetMemoryCapMbAsync());
+        }
+
+        using var second = new AppSettings(_filePath);
+        Assert.Equal(0, await second.GetMemoryCapMbAsync());   // fresh instance after reload: 0, not null
+        Assert.NotNull(await second.GetMemoryCapMbAsync());
+    }
 }
