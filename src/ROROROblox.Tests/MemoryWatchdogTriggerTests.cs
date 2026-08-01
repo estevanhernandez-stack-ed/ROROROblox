@@ -481,4 +481,65 @@ public class MemoryWatchdogTriggerTests
         wd.Sample();
         Assert.Equal(2, fires);
     }
+
+    [Fact]
+    public void ProjectionPlateausToZeroGrowth_ReArmsSoLaterCrossingFiresAgain()
+    {
+        // Coordinator-caught bug in the first hysteresis pass: `hasProjection = systemOk &&
+        // aggregateGrowth > 0`, so the instant growth plateaus to zero, `minutes` is forced to
+        // 0 by the code above. The literal re-arm formula `minutes > ProjectionWarnMinutes *
+        // ProjectionReArmFactor` can then NEVER be true on a plateau -- a latched account would
+        // stay latched forever, and a later GENUINE crossing would silently not re-fire. That is
+        // a missed warning, strictly worse than the spurious re-fires the deadband exists to
+        // prevent. The fix adds a second, narrower re-arm path: `aggregateGrowth <= 0` is a
+        // KNOWN clear (flat/shrinking, unambiguously healthy, no deadband needed since there's
+        // no threshold to flap around) -- distinct from `systemOk == false`, which stays UNKNOWN
+        // and must not re-arm (final-branch review IMPORTANT 3, untouched by this test).
+        const double Gb = 1024.0 * 1024 * 1024;
+        var clock = new FakeClock();
+        var proc = new FakeProcessMemory();
+        var sys = new FakeSystemMemory();
+        var wd = new MemoryWatchdog(proc, sys, clock)
+        {
+            CapBytes = 0, // isolate the projection trigger
+            ReserveBytes = 0,
+            ProjectionWarnMinutes = 120,
+        };
+        var fires = 0;
+        wd.PressureCrossed += (_, _) => fires++;
+
+        var id = Guid.NewGuid();
+        var baseline = (long)(2 * Gb);
+        proc.Readings[10] = baseline;
+        wd.OnAccountLaunched(id, 10);
+        wd.Sample(); // seeds baseline; elapsed 0 -> no projection yet
+
+        const double growthPerHour = 1 * Gb;
+
+        // 15 min in: minutes ~= 100 -- crosses (< 120).
+        clock.Advance(TimeSpan.FromMinutes(15));
+        proc.Readings[10] = (long)(baseline + growthPerHour * (15.0 / 60));
+        sys.Available = (long)(growthPerHour * 100 / 60);
+        wd.Sample();
+        Assert.Equal(1, fires);
+
+        // 30 min in: bytes settle back to EXACTLY the baseline (not below it -- that would
+        // ratchet and reset elapsed, muddying what this test isolates). growth = (bytes -
+        // baseline) / elapsed = 0 exactly. hasProjection goes false; systemOk stays true. This
+        // is the "known clear" plateau, not the "unknown" system-read-failure case.
+        clock.Advance(TimeSpan.FromMinutes(15));
+        proc.Readings[10] = baseline;
+        wd.Sample();
+        Assert.False(wd.GetSnapshot().HasProjection);
+        Assert.Equal(1, fires); // the plateau itself must not fire
+
+        // 45 min in: growth resumes from the SAME baseline/baselineAt (no ratchet happened
+        // above) -- a genuine fresh crossing. If the plateau tick above failed to re-arm the
+        // latch, this must NOT fire; the whole point of this test is that it DOES.
+        clock.Advance(TimeSpan.FromMinutes(15));
+        proc.Readings[10] = (long)(baseline + growthPerHour * (45.0 / 60));
+        sys.Available = (long)(growthPerHour * 90 / 60); // minutes ~= 90 -- crosses again
+        wd.Sample();
+        Assert.Equal(2, fires);
+    }
 }

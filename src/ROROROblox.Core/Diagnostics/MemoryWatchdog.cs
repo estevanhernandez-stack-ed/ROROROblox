@@ -236,16 +236,26 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
                     "memory projection crossed: account {AccountId}, {Minutes} min to ceiling (aggregate {GrowthMbPerHr:F0} MB/hr, available {AvailableMb} MB, target {TargetAccountId})",
                     a.AccountId, minutes, aggregateGrowth / (1024 * 1024), (systemOk ? available : 0) / (1024 * 1024), target);
             }
-            // Re-arm ONLY on a KNOWN clear (systemOk) AND a MEANINGFUL recovery (minutes past
-            // ProjectionReArmFactor of the warn threshold, not just the bare inverse of
-            // `overProjection`) -- a failed GlobalMemoryStatusEx read is UNKNOWN, not clear, and
-            // must not clear every account's projection latch machine-wide. The spec's
-            // failure-mode table says a failed availPhys read must SKIP projection evaluation;
-            // clearing the latch is evaluating it (final-branch review IMPORTANT 3). Bare
-            // `!overProjection` is a SEPARATE bug: the projection axis flapped live -- crossed at
-            // 85 min, cleared, crossed again at 113 min eleven minutes later. ProjectionReArmFactor
-            // requires the countdown to genuinely recover before the latch resets.
-            else if (systemOk && minutes > ProjectionWarnMinutes * ProjectionReArmFactor) { rec.ProjectionLatched = false; }
+            // Re-arm on a KNOWN clear (systemOk) via one of TWO distinct, deliberately separate
+            // paths -- conflating them was a review-caught bug (the fix below corrects it):
+            //   - aggregateGrowth <= 0: flat or shrinking. The machine cannot exhaust; this is
+            //     unambiguously healthy, not a value hovering near a threshold, so no deadband
+            //     applies -- there is nothing to flap around. Without this clause, `minutes` is
+            //     forced to 0 whenever `hasProjection` is false (see `hasProjection` above), so
+            //     `minutes > ProjectionWarnMinutes * ProjectionReArmFactor` can NEVER be true on
+            //     a plateau and a latched account would stay latched forever -- a MISSED warning
+            //     on the next genuine crossing, strictly worse than the spurious re-fires the
+            //     deadband exists to prevent.
+            //   - minutes past ProjectionReArmFactor of the warn threshold: genuine recovery
+            //     past the 15% margin, not just the bare inverse of `overProjection`.
+            // `systemOk` still gates the UNKNOWN case (failed GlobalMemoryStatusEx read) out of
+            // both paths -- a failed availPhys read must SKIP projection evaluation, and clearing
+            // the latch on an unknown read is evaluating it (final-branch review IMPORTANT 3).
+            else if (systemOk && (aggregateGrowth <= 0
+                                   || minutes > ProjectionWarnMinutes * ProjectionReArmFactor))
+            {
+                rec.ProjectionLatched = false;
+            }
 
             accounts[i] = a with { OverCap = overCap, IsTarget = target == a.AccountId, MinutesToCeiling = minutes };
         }
