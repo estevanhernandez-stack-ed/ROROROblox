@@ -61,4 +61,36 @@ public interface IAppSettings
     /// </summary>
     Task<bool> GetStreamerModeAsync();
     Task SetStreamerModeAsync(bool enabled);
+
+    /// <summary>
+    /// True when the memory watchdog should sample and react to system/process memory pressure.
+    /// Defaults to true. The user opts out via the Preferences dialog.
+    /// </summary>
+    Task<bool> GetMemoryWatchdogEnabledAsync();
+    Task SetMemoryWatchdogEnabledAsync(bool enabled);
+
+    /// <summary>
+    /// MB of physical memory the watchdog reserves for the system before triggering. <c>null</c>
+    /// means the user has never set this — the composition root derives it from installed RAM via
+    /// <see cref="Diagnostics.MemoryDefaults.ReserveMb"/>. A non-null value is a deliberate user
+    /// override and must never be silently re-derived over.
+    /// </summary>
+    Task<int?> GetMemoryReserveMbAsync();
+    Task SetMemoryReserveMbAsync(int? reserveMb);
+
+    /// <summary>
+    /// Per-client MB cap the watchdog enforces. <c>null</c> means the user has never set this —
+    /// derived from installed RAM via <see cref="Diagnostics.MemoryDefaults.CapMb"/>. <c>0</c> is a
+    /// distinct, meaningful user choice: it disables the cap trigger entirely, which is why this is
+    /// nullable rather than sentinel-zero — zero and unset must stay distinguishable.
+    /// </summary>
+    Task<int?> GetMemoryCapMbAsync();
+    Task SetMemoryCapMbAsync(int? capMb);
+
+    /// <summary>
+    /// Minutes of projected time-to-cap below which the watchdog surfaces a warning. Defaults to
+    /// 120. Not hardware-derived — this is a UX pacing knob, not a hardware constraint.
+    /// </summary>
+    Task<int> GetProjectionWarnMinutesAsync();
+    Task SetProjectionWarnMinutesAsync(int minutes);
 }

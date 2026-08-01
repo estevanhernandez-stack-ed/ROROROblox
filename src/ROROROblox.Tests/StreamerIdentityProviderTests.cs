@@ -175,6 +175,14 @@ public class StreamerIdentityProviderTests
         public Task SetIdleWarnThresholdMinutesAsync(int m) => throw new NotImplementedException();
         public Task<bool> GetCarefulSquadLaunchAsync() => throw new NotImplementedException();
         public Task SetCarefulSquadLaunchAsync(bool c) => throw new NotImplementedException();
+        public Task<bool> GetMemoryWatchdogEnabledAsync() => throw new NotImplementedException();
+        public Task SetMemoryWatchdogEnabledAsync(bool e) => throw new NotImplementedException();
+        public Task<int?> GetMemoryReserveMbAsync() => throw new NotImplementedException();
+        public Task SetMemoryReserveMbAsync(int? r) => throw new NotImplementedException();
+        public Task<int?> GetMemoryCapMbAsync() => throw new NotImplementedException();
+        public Task SetMemoryCapMbAsync(int? c) => throw new NotImplementedException();
+        public Task<int> GetProjectionWarnMinutesAsync() => throw new NotImplementedException();
+        public Task SetProjectionWarnMinutesAsync(int m) => throw new NotImplementedException();
     }
 
     private sealed class InMemoryIdentityStore : IStreamerIdentityStore

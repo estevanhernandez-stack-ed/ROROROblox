@@ -672,6 +672,14 @@ public class MainViewModelTests
         public Task SetCarefulSquadLaunchAsync(bool careful) => throw new NotImplementedException();
         public Task<bool> GetStreamerModeAsync() => throw new NotImplementedException();
         public Task SetStreamerModeAsync(bool enabled) => throw new NotImplementedException();
+        public Task<bool> GetMemoryWatchdogEnabledAsync() => throw new NotImplementedException();
+        public Task SetMemoryWatchdogEnabledAsync(bool enabled) => throw new NotImplementedException();
+        public Task<int?> GetMemoryReserveMbAsync() => throw new NotImplementedException();
+        public Task SetMemoryReserveMbAsync(int? reserveMb) => throw new NotImplementedException();
+        public Task<int?> GetMemoryCapMbAsync() => throw new NotImplementedException();
+        public Task SetMemoryCapMbAsync(int? capMb) => throw new NotImplementedException();
+        public Task<int> GetProjectionWarnMinutesAsync() => throw new NotImplementedException();
+        public Task SetProjectionWarnMinutesAsync(int minutes) => throw new NotImplementedException();
     }
 
     private sealed class FakeFavoriteGameStore : IFavoriteGameStore
