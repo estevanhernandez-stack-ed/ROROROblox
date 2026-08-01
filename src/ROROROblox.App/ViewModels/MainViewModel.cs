@@ -2140,16 +2140,18 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     private void ApplyMemory(MemoryPressureSnapshot snapshot, bool warned)
     {
-        // Accounts is null on a default(MemoryPressureSnapshot) — the watchdog's own 30s sample
-        // timer and this VM's 30s UI ticker both start independently at startup, so the very first
-        // tick here can race ahead of the watchdog's first Sample(). `?? []` makes that race a
-        // no-op repaint instead of a NullReferenceException.
-        foreach (var account in snapshot.Accounts ?? [])
+        // snapshot.Accounts is guaranteed non-null (even pre-first-sample) by
+        // MemoryWatchdog.GetSnapshot()'s seeded field default — no null-guard needed here.
+        foreach (var account in snapshot.Accounts)
         {
             var row = Accounts.FirstOrDefault(r => r.Id == account.AccountId);
             if (row is null) continue;
 
             row.MemoryText = MemoryChipFormatter.Format(account, warned, snapshot.HasProjection, snapshot.MinutesToCeiling);
+            // `&& account.ReadOk` deviates from the brief's `warned` (unconditional) — deliberate:
+            // MemoryText is already null (chip collapsed) whenever ReadOk is false, so this is
+            // behaviorally inert today, but MemoryWarning shouldn't independently claim "warned"
+            // for a reading the formatter just refused to render.
             row.MemoryWarning = warned && account.ReadOk;
         }
     }

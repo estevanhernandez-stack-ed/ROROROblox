@@ -41,7 +41,13 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
     private Timer? _timer;
     private int _sampling;
     private bool _disposed;
-    private MemoryPressureSnapshot _last;
+
+    // Seeded (not default) so GetSnapshot() can NEVER hand out a null Accounts before the first
+    // Sample() completes. A bare `default(MemoryPressureSnapshot)` leaves Accounts null — every
+    // consumer of GetSnapshot() (Task 7's MainViewModel today, System Health reporting later)
+    // would otherwise inherit that trap silently, since the interface signature carries no `?`
+    // and no warning. Fixing it here, once, beats every call site re-guarding with `?? []`.
+    private MemoryPressureSnapshot _last = new(0, 0, 0, false, null, []);
     private DateTimeOffset _lastSummaryAt = DateTimeOffset.MinValue;
 
     public long CapBytes { get; set; }
@@ -258,6 +264,11 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
         return "[" + string.Join(", ", parts) + "]";
     }
 
+    /// <summary>
+    /// Safe to call before the first <see cref="Sample"/> completes — returns an empty snapshot
+    /// (<c>Accounts</c> is a non-null, zero-length list; <c>HasProjection</c> false) rather than
+    /// a default struct with a null <c>Accounts</c>. Callers never need a null-check.
+    /// </summary>
     public MemoryPressureSnapshot GetSnapshot() => _last;
 
     public void Dispose()
