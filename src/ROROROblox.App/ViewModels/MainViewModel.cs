@@ -48,6 +48,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly Core.Transport.IAccountTransport _accountTransport;
     private readonly IActivityMonitor _activityMonitor;
     private readonly IMemoryWatchdog _memoryWatchdog;
+    private readonly IRobloxInstanceStopper _instanceStopper;
+    private readonly AccountRecycler _accountRecycler;
     private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
     private readonly Core.StreamerMode.IStreamerIdentityProvider? _streamerIdentity;
     private readonly ILogger<MainViewModel> _log;
@@ -104,6 +106,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         Core.Transport.IAccountTransport accountTransport,
         IActivityMonitor activityMonitor,
         IMemoryWatchdog memoryWatchdog,
+        IRobloxInstanceStopper instanceStopper,
         Notifications.IdleAlertPresenter idleAlertPresenter,
         Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
         ILogger<MainViewModel>? log = null)
@@ -129,9 +132,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _accountTransport = accountTransport;
         _activityMonitor = activityMonitor;
         _memoryWatchdog = memoryWatchdog;
+        _instanceStopper = instanceStopper;
         _idleAlertPresenter = idleAlertPresenter;
         _streamerIdentity = streamerIdentity;
         _log = log ?? NullLogger<MainViewModel>.Instance;
+
+        // AccountRecycler (Task 8) is built here, not injected — its LaunchDelegate needs to call
+        // back into THIS instance's own launch path (LaunchForRecycleAsync) so a recycle raises
+        // AccountLaunched on the plugin bus exactly like any other launch, with no new wiring.
+        // Capturing the method group is safe mid-constructor: the delegate isn't INVOKED until
+        // later, well after construction finishes.
+        _accountRecycler = new AccountRecycler(_instanceStopper, LaunchForRecycleAsync, _memoryWatchdog, _log);
 
         // Mirror must exist before any off-thread reader (presence loop, plugin host) can
         // resolve this VM — the ctor runs on the UI thread, so wiring it here is race-free.
@@ -147,6 +158,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OpenSettingsCommand = new RelayCommand(OpenSettings);
         LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !a.SessionLimited && !(a.InGame || a.IsRunning)));
         StopAccountCommand = new RelayCommand(p => StopAccount(p as AccountSummary));
+        RecycleAccountCommand = new RelayCommand(p => _ = RecycleAccountAsync(p as AccountSummary));
         OpenDiagnosticsCommand = new RelayCommand(OpenDiagnostics);
         OpenAboutCommand = new RelayCommand(OpenAbout);
         OpenSquadLaunchCommand = new RelayCommand(OpenSquadLaunchAsync, () => !IsBusy && Accounts.Count > 0);
@@ -390,6 +402,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand OpenSettingsCommand { get; }
     public ICommand LaunchAllCommand { get; }
     public ICommand StopAccountCommand { get; }
+    /// <summary>
+    /// One-click remedy for the tray memory warning (Task 8) — stop the account's client and
+    /// relaunch it into the SAME <see cref="LaunchTarget"/>, via <see cref="AccountRecycler"/>.
+    /// </summary>
+    public ICommand RecycleAccountCommand { get; }
     public ICommand OpenDiagnosticsCommand { get; }
     public ICommand OpenAboutCommand { get; }
     public ICommand OpenSquadLaunchCommand { get; }
@@ -1076,11 +1093,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <summary>Plugin-host seam: read-only access to the saved private-server store.</summary>
     internal IPrivateServerStore PrivateServerStoreForPlugin => _privateServerStore;
 
-    private async Task LaunchAccountAsync(AccountSummary? summary, LaunchTarget? overrideTarget = null)
+    /// <summary>
+    /// Returns the launcher pid (<c>RobloxPlayerLauncher.exe</c>, from <see cref="LaunchResult.Started"/>)
+    /// on success, 0 otherwise. Fire-and-forget from every OTHER caller's POV — the real player
+    /// pid arrives later via <see cref="IRobloxProcessTracker.ProcessAttached"/> — but Task 8's
+    /// <see cref="AccountRecycler"/> needs a definitive success/failure signal synchronously to
+    /// decide whether it's safe to reset the memory-watchdog baseline, so this reports it directly
+    /// rather than making the caller reverse-engineer success from mutated <see cref="AccountSummary"/>
+    /// state.
+    /// </summary>
+    private async Task<int> LaunchAccountAsync(AccountSummary? summary, LaunchTarget? overrideTarget = null)
     {
         if (summary is null)
         {
-            return;
+            return 0;
         }
 
         summary.IsLaunching = true;
@@ -1099,7 +1125,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             catch (AccountStoreCorruptException)
             {
                 ShowDpapiCorruptModal();
-                return;
+                return 0;
             }
 
             _log.LogInformation("Launch dispatch: id={Id} name={Name} robloxUserId={RobloxUserId} cookieFp={CookieFp}",
@@ -1178,17 +1204,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     summary.SessionExpired = false;
                     summary.StatusText = string.Empty;
                     summary.LastClosedAtUtc = null;
+                    // Task 8: remembered so a later Recycle relaunches into the SAME target
+                    // rather than re-resolving from the row's (possibly since-changed) picker.
+                    summary.LastLaunchTarget = target;
                     _log.LogInformation("Launcher pid {Pid} for {AccountId}; tracking RobloxPlayerBeta", started.Pid, summary.Id);
                     await RecordSessionStartAsync(summary, target, started.LaunchedAtUtc);
                     // Fire-and-forget: tracker watches for the player process. UI updates flow back
                     // through ProcessAttached / ProcessAttachFailed events.
                     _ = _processTracker.TrackLaunchAsync(summary.Id, started.LaunchedAtUtc);
-                    break;
+                    return started.Pid;
                 case LaunchResult.CookieExpired:
                     _log.LogInformation("Cookie expired for account {AccountId}", summary.Id);
                     summary.SessionExpired = true;
                     summary.StatusText = string.Empty;
-                    break;
+                    return 0;
                 case LaunchResult.Limited:
                     _log.LogInformation("Account {AccountId} is rate-limited by Roblox (403)", summary.Id);
                     summary.SessionLimited = true;
@@ -1196,16 +1225,18 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     summary.CurrentGameName = null;
                     summary.InGameSinceUtc = null;
                     summary.StatusText = string.Empty;                 // copy comes from SecondaryStatusText
-                    break;
+                    return 0;
                 case LaunchResult.Failed failed when failed.Message.Contains("Roblox does not appear to be installed", StringComparison.OrdinalIgnoreCase):
                     _log.LogWarning("Roblox not installed at launch time for account {AccountId}", summary.Id);
                     summary.StatusText = "Roblox not installed.";
                     ShowRobloxNotInstalledModal();
-                    break;
+                    return 0;
                 case LaunchResult.Failed failed:
                     _log.LogWarning("Launch failed for account {AccountId}: {Message}", summary.Id, failed.Message);
                     summary.StatusText = failed.Message;
-                    break;
+                    return 0;
+                default:
+                    return 0;
             }
         }
         finally
@@ -1214,6 +1245,57 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CompactRows));
             OnPropertyChanged(nameof(HasCompactRows));
         }
+    }
+
+    /// <summary>
+    /// <see cref="AccountRecycler.LaunchDelegate"/> implementation — runs the SAME launch path
+    /// every other caller uses (<see cref="LaunchAccountAsync"/>, via the plugin-host seam), so a
+    /// recycle raises <c>AccountLaunched</c> on the plugin bus exactly like a normal launch. Returns
+    /// 0 (never throws) if the account id no longer resolves to a row — the account may have been
+    /// removed between the warning firing and the user clicking Recycle.
+    /// </summary>
+    private Task<int> LaunchForRecycleAsync(Guid accountId, LaunchTarget target, CancellationToken ct)
+    {
+        // AccountsSnapshot: safe off the UI thread too, matching every other id->summary lookup
+        // in this file's plugin-adjacent seams (MainViewModelLaunchInvokerAdapter et al.).
+        var summary = AccountsSnapshot.FirstOrDefault(a => a.Id == accountId);
+        return summary is null ? Task.FromResult(0) : LaunchAccountAsync(summary, overrideTarget: target);
+    }
+
+    /// <summary>
+    /// One-click remedy for the tray memory warning (Task 8): stop the account's client and
+    /// relaunch into the SAME <see cref="LaunchTarget"/> it was running, via <see cref="AccountRecycler"/>.
+    /// Process exit is the only guaranteed reclaim of Roblox's leaked memory on Windows — this is
+    /// the actual fix the warning points at, not a workaround. Falls back to
+    /// <see cref="ResolveLaunchTarget"/>'s normal resolution when the account has no recorded
+    /// <see cref="AccountSummary.LastLaunchTarget"/> yet (e.g. never finished a tracked launch
+    /// this session). Internal (not private) so tests can await the sequence directly, mirroring
+    /// <see cref="LaunchAccountForPluginAsync"/>.
+    /// </summary>
+    internal async Task<bool> RecycleAccountAsync(AccountSummary? summary)
+    {
+        if (summary is null) return false;
+
+        var target = summary.LastLaunchTarget ?? ResolveLaunchTarget(summary.SelectedGame, overrideTarget: null);
+
+        // Spec log table: pre-recycle private bytes + the target being restored, never a cookie.
+        // AccountMemory is a struct, so a plain FirstOrDefault() can't return null on a miss —
+        // project through a nullable Select first so "no reading yet" stays distinguishable from
+        // a genuine (impossible-in-practice) 0-byte reading.
+        long? preRecycleBytes = _memoryWatchdog.GetSnapshot().Accounts
+            .Where(a => a.AccountId == summary.Id && a.ReadOk)
+            .Select(a => (long?)a.PrivateBytes)
+            .FirstOrDefault();
+        _log.LogInformation(
+            "Recycle requested for account {AccountId} ({DisplayName}): pre-recycle private bytes={PreBytes}, target={Target}",
+            summary.Id, summary.DisplayName, preRecycleBytes, target.GetType().Name);
+
+        var ok = await _accountRecycler.RecycleAsync(summary.Id, target).ConfigureAwait(true);
+        if (!ok)
+        {
+            StatusBanner = $"Couldn't recycle {summary.RenderName} — relaunch failed.";
+        }
+        return ok;
     }
 
     /// <summary>

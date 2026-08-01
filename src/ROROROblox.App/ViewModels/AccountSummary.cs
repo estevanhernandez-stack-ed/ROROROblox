@@ -326,6 +326,14 @@ public sealed class AccountSummary : INotifyPropertyChanged
         set => SetField(ref _runningPid, value);
     }
 
+    /// <summary>
+    /// The <see cref="LaunchTarget"/> the CURRENTLY-launched (or most recently launched) session
+    /// used. Set on every successful <see cref="LaunchResult.Started"/> (Task 8's recycle needs
+    /// to relaunch into the SAME target, not a re-resolved one — the row's <c>SelectedGame</c>
+    /// picker may have changed since the account was launched). Pure runtime state, never persisted.
+    /// </summary>
+    public LaunchTarget? LastLaunchTarget { get; set; }
+
     public DateTimeOffset? RunningSinceUtc
     {
         get => _runningSinceUtc;

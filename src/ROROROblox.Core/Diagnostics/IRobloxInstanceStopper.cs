@@ -13,4 +13,12 @@ public interface IRobloxInstanceStopper
     /// to 0 rather than throwing.
     /// </summary>
     int StopAll();
+
+    /// <summary>
+    /// Force-closes the single RobloxPlayerBeta.exe currently tracked for <paramref name="accountId"/>
+    /// (the memory-watchdog Recycle action, Task 8). Reuses the same kill + bounded exit-wait
+    /// budget as <see cref="StopAll"/>, scoped to one pid. Returns false (never throws) if the
+    /// account has no tracked process — there is nothing to stop, which is not an error.
+    /// </summary>
+    bool StopAccount(Guid accountId);
 }

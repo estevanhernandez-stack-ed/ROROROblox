@@ -163,6 +163,69 @@ public class RobloxInstanceStopperTests
         Assert.Equal(1, count); // wedge on exit is logged, not thrown — the kill itself succeeded
     }
 
+    private sealed class FakeTracker : IRobloxProcessTracker
+    {
+        private readonly Dictionary<Guid, TrackedProcess> _attached = new();
+        public void Attach(Guid accountId, int pid) => _attached[accountId] = new TrackedProcess(pid, DateTimeOffset.UtcNow);
+        public IReadOnlyDictionary<Guid, TrackedProcess> Attached => _attached;
+
+        public Task TrackLaunchAsync(Guid accountId, DateTimeOffset launchedAtUtc, CancellationToken ct = default) => throw new NotImplementedException();
+        public bool AttachExisting(Guid accountId, int pid) => throw new NotImplementedException();
+        public bool IsTracking(Guid accountId) => _attached.ContainsKey(accountId);
+        public bool RequestClose(Guid accountId) => throw new NotImplementedException();
+        public bool Kill(Guid accountId) => throw new NotImplementedException();
+        public event EventHandler<RobloxProcessEventArgs>? ProcessAttached { add { } remove { } }
+        public event EventHandler<RobloxProcessEventArgs>? ProcessAttachFailed { add { } remove { } }
+        public event EventHandler<RobloxProcessEventArgs>? ProcessExited { add { } remove { } }
+    }
+
+    [Fact]
+    public void StopAccount_KillsAndWaitsOnlyTheTrackedPid_ForThatAccount()
+    {
+        var tracker = new FakeTracker();
+        tracker.Attach(Guid.NewGuid(), 111); // unrelated account -- must NOT be touched
+        var accountId = Guid.NewGuid();
+        tracker.Attach(accountId, 909);
+
+        var killed = new List<int>();
+        var waited = new List<int>();
+        var stopper = new RobloxInstanceStopper(
+            new FakeProbe(),
+            tracker: tracker,
+            killByPid: killed.Add,
+            waitForExitByPid: (pid, _) => { waited.Add(pid); return true; });
+
+        var ok = stopper.StopAccount(accountId);
+
+        Assert.True(ok);
+        Assert.Equal(new[] { 909 }, killed);
+        Assert.Equal(new[] { 909 }, waited);
+    }
+
+    [Fact]
+    public void StopAccount_ReturnsFalse_WhenAccountHasNoTrackedProcess()
+    {
+        var tracker = new FakeTracker();
+        var killed = new List<int>();
+        var stopper = new RobloxInstanceStopper(
+            new FakeProbe(), tracker: tracker, killByPid: killed.Add, waitForExitByPid: (_, _) => true);
+
+        var ok = stopper.StopAccount(Guid.NewGuid());
+
+        Assert.False(ok);
+        Assert.Empty(killed);
+    }
+
+    [Fact]
+    public void StopAccount_ReturnsFalse_WhenNoTrackerWired()
+    {
+        // Defensive default: constructing without a tracker (the fake-seam StopAll tests above
+        // never pass one) must degrade to "nothing to stop", not throw.
+        var stopper = new RobloxInstanceStopper(new FakeProbe(), killByPid: _ => { }, waitForExitByPid: (_, _) => true);
+
+        Assert.False(stopper.StopAccount(Guid.NewGuid()));
+    }
+
     [Fact]
     public void StopAll_RealProcess_KillAndWaitPathRunsEndToEnd()
     {

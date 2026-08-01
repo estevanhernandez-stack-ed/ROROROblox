@@ -20,6 +20,7 @@ public sealed class RobloxInstanceStopper : IRobloxInstanceStopper
     private const int ExitWaitBudgetMs = 3000;
 
     private readonly IRobloxRunningProbe _probe;
+    private readonly IRobloxProcessTracker? _tracker;
     private readonly Action<int> _killByPid;
     private readonly Func<int, TimeSpan, bool> _waitForExitByPid;
     private readonly int _exitWaitBudgetMs;
@@ -27,12 +28,18 @@ public sealed class RobloxInstanceStopper : IRobloxInstanceStopper
 
     public RobloxInstanceStopper(
         IRobloxRunningProbe probe,
+        IRobloxProcessTracker? tracker = null,
         Action<int>? killByPid = null,
         ILogger<RobloxInstanceStopper>? log = null,
         Func<int, TimeSpan, bool>? waitForExitByPid = null,
         int? exitWaitBudgetMs = null)
     {
         _probe = probe ?? throw new ArgumentNullException(nameof(probe));
+        // Optional: StopAll (the probe-driven "kill everything" lane) never needed a pid->account
+        // map. StopAccount (Task 8's Recycle) does, so it resolves through this DI-registered
+        // singleton when present; a caller that never invokes StopAccount (e.g. the existing
+        // fake-seam StopAll tests) doesn't need to supply one.
+        _tracker = tracker;
         _killByPid = killByPid ?? KillByPid;
         _waitForExitByPid = waitForExitByPid ?? WaitForExitByPid;
         _exitWaitBudgetMs = exitWaitBudgetMs ?? ExitWaitBudgetMs;
@@ -104,6 +111,44 @@ public sealed class RobloxInstanceStopper : IRobloxInstanceStopper
             _log.LogInformation("StopAll: signalled {Stopped}/{Total} Roblox instance(s); all probed pids waited for exit.", killed, pids.Count);
         }
         return killed;
+    }
+
+    public bool StopAccount(Guid accountId)
+    {
+        if (_tracker is null)
+        {
+            _log.LogWarning("StopAccount: no process tracker wired; cannot resolve a pid for account {AccountId}.", accountId);
+            return false;
+        }
+
+        if (!_tracker.Attached.TryGetValue(accountId, out var tracked))
+        {
+            _log.LogInformation("StopAccount: account {AccountId} has no tracked process; nothing to stop.", accountId);
+            return false;
+        }
+
+        var pid = tracked.Pid;
+        try
+        {
+            _killByPid(pid);
+        }
+        catch (Exception ex)
+        {
+            // Same race StopAll degrades: ERROR_ACCESS_DENIED on a process already mid-teardown
+            // is expected, not fatal — it still holds the mutex object until it finishes dying,
+            // so the wait below runs regardless of whether the kill call itself succeeded.
+            _log.LogWarning(ex, "StopAccount: kill failed for account {AccountId} pid {Pid}; still waiting for exit.", accountId, pid);
+        }
+
+        if (!_waitForExitByPid(pid, TimeSpan.FromMilliseconds(_exitWaitBudgetMs)))
+        {
+            _log.LogWarning(
+                "StopAccount: account {AccountId} pid {Pid} had not finished exiting within the {Budget} ms wait budget.",
+                accountId, pid, _exitWaitBudgetMs);
+        }
+
+        _log.LogInformation("StopAccount: signalled account {AccountId} pid {Pid}.", accountId, pid);
+        return true;
     }
 
     private static void KillByPid(int pid)

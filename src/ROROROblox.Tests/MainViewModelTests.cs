@@ -30,7 +30,9 @@ public class MainViewModelTests
         ICookieCapture? cookieCapture = null,
         Func<IAccountStore, IAccountStore>? wrapStore = null,
         IRobloxApi? api = null,
-        IFavoriteGameStore? favorites = null)
+        IFavoriteGameStore? favorites = null,
+        IRobloxInstanceStopper? instanceStopper = null,
+        IMemoryWatchdog? memoryWatchdog = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
@@ -59,7 +61,8 @@ public class MainViewModelTests
             updateProbe: new FakeRobloxUpdateProbe(),
             accountTransport: new FakeAccountTransport(),
             activityMonitor: new FakeActivityMonitor(),
-            memoryWatchdog: new FakeMemoryWatchdog(),
+            memoryWatchdog: memoryWatchdog ?? new FakeMemoryWatchdog(),
+            instanceStopper: instanceStopper ?? new FakeRobloxInstanceStopper(),
             idleAlertPresenter: new IdleAlertPresenter(new FakeTrayService()));
 
         // MainViewModel never disposes the window decorator (App.xaml.cs's DI container owns
@@ -646,6 +649,83 @@ public class MainViewModelTests
             => throw new NotImplementedException();
     }
 
+    /// <summary>
+    /// Records <see cref="ResetBaseline"/> calls and returns a settable snapshot — the shared
+    /// <see cref="FakeMemoryWatchdog"/> below throws on both (deliberately, for tests that never
+    /// touch memory-watchdog behavior), so Task 8's recycle tests need a capable double instead.
+    /// </summary>
+    private sealed class SpyMemoryWatchdog : IMemoryWatchdog
+    {
+        public readonly List<(Guid Id, int Pid)> Resets = new();
+        public MemoryPressureSnapshot Snapshot = new(0, 0, 0, false, null, []);
+        public long CapBytes { get; set; }
+        public long ReserveBytes { get; set; }
+        public int ProjectionWarnMinutes { get; set; }
+        public event EventHandler<MemoryPressureSnapshot>? PressureCrossed { add { } remove { } }
+        public void OnAccountLaunched(Guid accountId, int pid) { }
+        public void OnAccountExited(Guid accountId) { }
+        public void ResetBaseline(Guid accountId, int pid) => Resets.Add((accountId, pid));
+        public void Start() { }
+        public void Stop() { }
+        public void Sample() { }
+        public MemoryPressureSnapshot GetSnapshot() => Snapshot;
+    }
+
+    [Fact]
+    public async Task RecycleAccountCommand_StopsThenRelaunchesIntoTheAccountsLastLaunchTarget()
+    {
+        // MainViewModel-level companion to AccountRecyclerTests: that Core-level suite proves
+        // AccountRecycler forwards whatever target it's GIVEN correctly, but not that MainViewModel
+        // computes/passes the RIGHT target. A wiring bug (e.g. always resolving DefaultGame instead
+        // of reading AccountSummary.LastLaunchTarget) would pass every AccountRecycler test and
+        // still send the user back to square one -- only a MainViewModel-level assertion on target
+        // IDENTITY closes that gap.
+        var launcher = new RecordingSuccessLauncher();
+        var stopper = new FakeRobloxInstanceStopper();
+        var watchdog = new SpyMemoryWatchdog();
+        var (vm, store, _, path) = Build(launcher, instanceStopper: stopper, memoryWatchdog: watchdog);
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+
+            var originalTarget = new LaunchTarget.Place(PlaceId: 555666777);
+            await vm.LaunchAccountForPluginAsync(row, originalTarget);
+            Assert.Same(originalTarget, row.LastLaunchTarget);
+
+            var ok = await vm.RecycleAccountAsync(row);
+
+            Assert.True(ok);
+            Assert.Equal(row.Id, Assert.Single(stopper.StoppedAccountIds));
+            Assert.Equal(2, launcher.Launches.Count); // original launch, then the recycle relaunch
+            Assert.Same(originalTarget, launcher.Launches[1]); // the SAME target -- not re-resolved
+            Assert.Single(watchdog.Resets);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task RecycleAccountCommand_FallsBackToResolvedTarget_WhenAccountNeverLaunchedThisSession()
+    {
+        var launcher = new RecordingSuccessLauncher();
+        var (vm, store, _, path) = Build(launcher, memoryWatchdog: new SpyMemoryWatchdog());
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+            Assert.Null(row.LastLaunchTarget);
+
+            var ok = await vm.RecycleAccountAsync(row);
+
+            Assert.True(ok);
+            var target = Assert.Single(launcher.Launches);
+            Assert.IsType<LaunchTarget.DefaultGame>(target); // no SelectedGame on the row -> default
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
     private sealed class FakeRobloxCompatChecker : IRobloxCompatChecker
     {
         public Task<CompatCheckResult> CheckAsync() => throw new NotImplementedException();
@@ -706,11 +786,42 @@ public class MainViewModelTests
         public event EventHandler<RobloxProcessEventArgs>? ProcessAttachFailed { add { } remove { } }
         public event EventHandler<RobloxProcessEventArgs>? ProcessExited { add { } remove { } }
 
-        public Task TrackLaunchAsync(Guid accountId, DateTimeOffset launchedAtUtc, CancellationToken ct = default) => throw new NotImplementedException();
+        // Fire-and-forget from LaunchAccountAsync's Started case (`_ = _processTracker.TrackLaunchAsync(...)`,
+        // not awaited) -- a synchronous throw here would still surface (the call itself throws
+        // before returning a Task), so this must complete cleanly for any test that exercises the
+        // Started/success path (e.g. the Task 8 recycle tests below).
+        public Task TrackLaunchAsync(Guid accountId, DateTimeOffset launchedAtUtc, CancellationToken ct = default) => Task.CompletedTask;
         public bool AttachExisting(Guid accountId, int pid) => throw new NotImplementedException();
         public bool IsTracking(Guid accountId) => throw new NotImplementedException();
         public bool RequestClose(Guid accountId) => throw new NotImplementedException();
         public bool Kill(Guid accountId) => throw new NotImplementedException();
+    }
+
+    private sealed class FakeRobloxInstanceStopper : IRobloxInstanceStopper
+    {
+        public readonly List<Guid> StoppedAccountIds = new();
+        public int StopAll() => 0;
+        public bool StopAccount(Guid accountId) { StoppedAccountIds.Add(accountId); return true; }
+    }
+
+    /// <summary>
+    /// Always succeeds with an incrementing pid and records the exact <see cref="LaunchTarget"/>
+    /// instance passed for each account — Task 8's recycle test needs to assert the SAME target
+    /// reaches the launcher, not merely that a launch happened.
+    /// </summary>
+    private sealed class RecordingSuccessLauncher : IRobloxLauncher
+    {
+        private int _nextPid = 5000;
+        public readonly List<LaunchTarget> Launches = new();
+
+        public Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null)
+        {
+            Launches.Add(target);
+            return Task.FromResult<LaunchResult>(new LaunchResult.Started(_nextPid++, DateTimeOffset.UtcNow));
+        }
+
+        public Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null, long? browserTrackerId = null)
+            => throw new NotImplementedException();
     }
 
     private sealed class FakePresenceService : IPresenceService
@@ -841,5 +952,8 @@ public class MainViewModelTests
         public event EventHandler? RequestOpenHistory { add { } remove { } }
         public event EventHandler? RequestOpenPlugins { add { } remove { } }
         public event EventHandler? RequestActivateMain { add { } remove { } }
+        public void SetMemoryWarning(bool active) { }
+        public void ShowMemoryWarning(string title, string message, Guid accountId) { }
+        public event EventHandler<Guid>? RequestFocusAccount { add { } remove { } }
     }
 }
