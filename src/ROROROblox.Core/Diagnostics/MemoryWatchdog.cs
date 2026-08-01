@@ -152,13 +152,44 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
             minutes = (int)(availableForClients / aggregateGrowth * 60);
         }
 
+        // Target = fattest client with a valid reading. The projection describes the machine;
+        // the user needs to know which account to act on.
+        Guid? target = accounts
+            .Where(a => a.ReadOk)
+            .OrderByDescending(a => a.PrivateBytes)
+            .Select(a => (Guid?)a.AccountId)
+            .FirstOrDefault();
+
+        // Edge-triggered evaluation. Latch per account so one crossing = one warning.
+        var crossed = false;
+        for (var i = 0; i < accounts.Count; i++)
+        {
+            var a = accounts[i];
+            if (!_records.TryGetValue(a.AccountId, out var rec)) continue;
+
+            var overCap = CapBytes > 0 && a.ReadOk && a.PrivateBytes > CapBytes;
+            if (overCap && !rec.CapLatched) { rec.CapLatched = true; crossed = true; }
+            else if (!overCap) { rec.CapLatched = false; }
+
+            var overProjection = hasProjection && minutes < ProjectionWarnMinutes;
+            if (overProjection && !rec.ProjectionLatched) { rec.ProjectionLatched = true; crossed = true; }
+            else if (!overProjection) { rec.ProjectionLatched = false; }
+
+            accounts[i] = a with { OverCap = overCap, IsTarget = target == a.AccountId, MinutesToCeiling = minutes };
+        }
+
         _last = new MemoryPressureSnapshot(
             AvailableBytes: systemOk ? available : 0,
             AggregateGrowthBytesPerHour: aggregateGrowth,
             MinutesToCeiling: minutes,
             HasProjection: hasProjection,
-            TargetAccountId: null,
+            TargetAccountId: target,
             Accounts: accounts);
+
+        if (crossed)
+        {
+            PressureCrossed?.Invoke(this, _last);
+        }
     }
 
     public MemoryPressureSnapshot GetSnapshot() => _last;
