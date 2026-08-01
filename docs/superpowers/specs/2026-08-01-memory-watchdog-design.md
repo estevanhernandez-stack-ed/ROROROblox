@@ -216,6 +216,52 @@ rpc OnMemoryPressure(AccountMemorySnapshot) returns (Empty);
   machine, and the consent model does not get a silent exception carved into it.
 - `docs/plugins/AUTHOR_GUIDE.md` gains a recipe: subscribe to pressure → recycle → macro back.
 
+## Logging
+
+**The point of this section: a user's log file should contain the memory curve.** The reason the
+2026-08-01 investigation cost a morning is that we had no curve — we had a symptom and had to derive
+the mechanism from arithmetic and a Discord message. Every future report of this shape should arrive
+with the evidence already in the file.
+
+| Event | Level | Cadence | Content |
+| --- | --- | --- | --- |
+| Periodic summary | Information | **every 15 min** | One line, all live clients: private bytes, growth MB/hr, projected minutes, available RAM. ~96 lines/day, ~20 KB. Reconstructs the full curve retroactively. |
+| Cap crossed | Warning | once per latched crossing | Account, private bytes, the cap it crossed. |
+| Projection crossed | Warning | once per latched crossing | Projected minutes, aggregate growth, available RAM, target account. |
+| Recycle invoked | Information | per action | Account, pre-recycle private bytes, the `LaunchTarget` being restored, whether it was user-clicked or (future) automatic. |
+| Recycle completed / failed | Information / Warning | per action | New pid on success; the failure reason on failure. |
+| Unreadable pid | Debug | per occurrence | Pid + account, so an access-denied pattern is visible rather than silent. |
+
+**Do not log every 30s tick.** `AppLogging`'s own comment records that HttpClientFactory writing
+every 10s consumed ~90% of a 15 MB day; a per-tick memory line per client would repeat that mistake.
+The 15-minute summary carries the same information at 1/30th the volume.
+
+## Log versioning — required fix, not optional
+
+The app version currently reaches the log on **exactly one line**: the startup banner at
+`App.xaml.cs:58` (which reads `typeof(App).Assembly` and is correct — the historical "stuck at an
+early version" bug was System Health reading the unversioned Core assembly, fixed in `4a19cd5`).
+
+That is not sufficient here. The sink rolls daily and at 25 MB, and a 20-30 hour session spans a day
+boundary by definition — so the file that covers the failure is a **rolled file containing no
+startup banner and therefore no version at all.** Support receives an unattributable log.
+
+Two changes to `AppLogging.Configure()`:
+
+1. Take the app version as a parameter, and `.Enrich.WithProperty("Version", version)`.
+2. **Add `{Version}` to the `outputTemplate`.** Enrichment alone is invisible to the file sink —
+   note that the existing `.Enrich.WithProperty("App", "ROROROblox")` is not in the template and
+   consequently never appears in the log today. Every line must carry the version so any fragment of
+   any rolled file is self-attributing.
+
+This also disambiguates the two-binaries case: a Store install and a dev build can both be present
+on one machine, and a versionless log makes it guesswork which one produced it.
+
+**Related retention caveat, worth verifying during implementation:** `retainedFileCountLimit: 14`
+counts **files, not days**. With `rollOnFileSizeLimit: true`, a heavy day can consume several files,
+so the real retention window may be well under 14 days — exactly when we are asking users for logs
+after a multi-day session. Confirm the effective window and raise the count if it is short.
+
 ## Testing
 
 xUnit, every probe injected. **No test touches a real process or reads real system memory.**
@@ -234,6 +280,11 @@ xUnit, every probe injected. **No test touches a real process or reads real syst
 - **Derived defaults:** reserve clamps at both ends (16 GB → 1024 floor not hit, 8 GB → floor hit,
   128 GB → 4096 ceiling hit); cap floors at 4096 on small machines; **an explicit user override is
   never overwritten by re-derivation.**
+- **Logging cadence:** the 15-minute summary emits on schedule and not per 30s tick; threshold
+  warnings emit once per latched crossing and not repeatedly while the condition holds.
+- **Log versioning:** `AppLogging.Configure(version)` puts the version in the rendered output, not
+  merely in enrichment — assert against rendered text, since the existing `App` property proves
+  enrichment alone never reaches the file.
 
 ## Open items for the implementation plan
 
