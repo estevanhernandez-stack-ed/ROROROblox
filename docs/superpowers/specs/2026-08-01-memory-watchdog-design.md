@@ -62,7 +62,7 @@ the other.
 | Component | Responsibility | Depends on |
 | --- | --- | --- |
 | `IProcessMemoryProbe` | Private bytes for a pid. Prod impl reads `Process.PrivateMemorySize64`. | — |
-| `ISystemMemoryProbe` | Machine-wide available physical RAM. Prod impl calls `GlobalMemoryStatusEx` (add to `NativeMethods.txt` for CsWin32). | — |
+| `ISystemMemoryProbe` | Machine-wide **available and total** physical RAM. Prod impl calls `GlobalMemoryStatusEx` (add to `NativeMethods.txt` for CsWin32). Total is needed to derive defaults — see Settings. | — |
 | `MemoryWatchdog` | Sampling, growth estimation, dual-trigger evaluation, latching, target selection. | both probes, `IClock` |
 | `AccountMemory` | Per-account record: private bytes, growth rate, projected minutes, over-cap flag. | — |
 | `MemoryPressureSnapshot` | Aggregate: available bytes, total growth, projected minutes, target account. | — |
@@ -157,14 +157,38 @@ that already exist.
 
 ## Settings
 
-Added to `AppSettings` / `IAppSettings`:
+**Defaults are derived from total physical RAM, not shipped as absolutes.** We do not know our
+users' hardware — the clan is non-technical Windows users on machines ranging from 16 GB to 64 GB,
+and no fixed number is correct across that range. A 2 GB reserve is 12.5% of a 16 GB box and 3% of a
+64 GB one; an 8 GB per-client cap is unreachable on a 16 GB machine (the box dies long first) and
+unremarkable on 64 GB. A fixed default would be wrong for most people, silently.
+
+Added to `AppSettings` / `IAppSettings`. Each is user-overridable; the derivation is only the
+default when unset.
 
 | Key | Default | Meaning |
 | --- | --- | --- |
 | `MemoryWatchdogEnabled` | `true` | Master switch. Off = no sampling, no timer. |
-| `MemoryCapMb` | `8192` | Per-client absolute cap. `0` disables the cap trigger. |
-| `ProjectionWarnMinutes` | `120` | Fire when projected time-to-ceiling drops below this. |
-| `MemoryReserveMb` | `2048` | Headroom withheld from `availPhys` so we warn before the floor. |
+| `MemoryReserveMb` | `clamp(8% of totalPhys, 1024, 4096)` | Headroom withheld from `availPhys` so we warn before the floor. 16 GB → ~1.3 GB, 32 GB → ~2.6 GB, 64 GB → 4 GB (clamped). |
+| `MemoryCapMb` | `max(35% of totalPhys, 4096)` | Per-client runaway cap — "no single client should own a third of the machine." `0` disables the cap trigger. |
+| `ProjectionWarnMinutes` | `120` | Fire when projected time-to-ceiling drops below this. The only genuinely rig-independent default: two hours of notice is two hours of notice on any machine. |
+
+Derivation runs once at startup against `ISystemMemoryProbe.TotalPhysicalBytes` and is recomputed if
+the setting is reset to unset. It is not re-derived per tick — a user override must stick.
+
+## Rig visibility
+
+`DiagnosticsSnapshot` currently reports OS, .NET, Roblox version, WebView2, account count, and live
+process count — **but not RAM.** Add:
+
+- `TotalPhysicalMemoryBytes`
+- `AvailablePhysicalMemoryBytes` (at capture time)
+- Per-account private bytes and growth rate for live clients
+
+This matters beyond cosmetics. Users already paste System Health for support, so the next report of
+"my windows closed on their own" arrives with the rig and the memory curve **already attached**,
+instead of costing a day of investigation to establish what a single number would have told us.
+Self-reporting also beats asking: non-technical users misstate their own specs routinely.
 
 ## Plugin contract 0.5.0
 
@@ -207,6 +231,9 @@ xUnit, every probe injected. **No test touches a real process or reads real syst
 - Account exit drops the record.
 - Recycle resets baseline and clears both latches.
 - `availPhys` read failure skips projection but still evaluates the cap.
+- **Derived defaults:** reserve clamps at both ends (16 GB → 1024 floor not hit, 8 GB → floor hit,
+  128 GB → 4096 ceiling hit); cap floors at 4096 on small machines; **an explicit user override is
+  never overwritten by re-derivation.**
 
 ## Open items for the implementation plan
 
