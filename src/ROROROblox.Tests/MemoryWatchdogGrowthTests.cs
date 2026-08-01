@@ -147,10 +147,36 @@ public class MemoryWatchdogGrowthTests
         wd.OnAccountLaunched(id, pid: 10);
         wd.Sample();
 
-        wd.OnAccountExited(id);
+        wd.OnAccountExited(id, pid: 10);
         wd.Sample();
 
         Assert.Empty(wd.GetSnapshot().Accounts);
+    }
+
+    [Fact]
+    public void AccountExited_SupersededPid_DoesNotRemoveTheCurrentRecord()
+    {
+        // IMPORTANT 5 (final-branch review, 2026-08-01): ProcessExited fires from Process.Exited
+        // on an unordered threadpool thread. A Recycle replaces the record twice (stop old pid,
+        // launch new pid) -- if the OLD pid's delayed exit callback arrives after the NEW pid's
+        // OnAccountLaunched, a pid-blind OnAccountExited would remove the FRESH record and the
+        // watchdog goes silently blind on that account for the rest of the session.
+        var (wd, _, proc, _) = Build();
+        var id = Guid.NewGuid();
+        proc.Readings[10] = 2 * Gb;
+        wd.OnAccountLaunched(id, pid: 10); // original launch
+        wd.Sample();
+
+        proc.Readings[20] = 3 * Gb;
+        wd.OnAccountLaunched(id, pid: 20); // recycle: superseded to a new pid
+        wd.Sample();
+
+        // Discriminator: the OLD pid's late exit callback must be a no-op against the current
+        // (new-pid) record, not a removal.
+        wd.OnAccountExited(id, pid: 10);
+        wd.Sample();
+
+        Assert.Single(wd.GetSnapshot().Accounts, a => a.AccountId == id);
     }
 
     [Fact]

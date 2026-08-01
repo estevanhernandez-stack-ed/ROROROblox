@@ -64,7 +64,10 @@ public interface IAppSettings
 
     /// <summary>
     /// True when the memory watchdog should sample and react to system/process memory pressure.
-    /// Defaults to true. The user opts out via the Preferences dialog.
+    /// Defaults to true. File-only today — there is no Preferences dialog wiring for this or the
+    /// three memory settings below it (corrected 2026-08-01, final-branch review finding 6; a
+    /// prior version of this comment claimed a Preferences-dialog opt-out that does not exist).
+    /// Editable only by hand-editing <c>settings.json</c> until that UI ships.
     /// </summary>
     Task<bool> GetMemoryWatchdogEnabledAsync();
     Task SetMemoryWatchdogEnabledAsync(bool enabled);
@@ -73,7 +76,8 @@ public interface IAppSettings
     /// MB of physical memory the watchdog reserves for the system before triggering. <c>null</c>
     /// means the user has never set this — the composition root derives it from installed RAM via
     /// <see cref="Diagnostics.MemoryDefaults.ReserveMb"/>. A non-null value is a deliberate user
-    /// override and must never be silently re-derived over.
+    /// override and must never be silently re-derived over. File-only today — no Preferences
+    /// dialog wiring exists yet (see <see cref="GetMemoryWatchdogEnabledAsync"/>).
     /// </summary>
     Task<int?> GetMemoryReserveMbAsync();
     Task SetMemoryReserveMbAsync(int? reserveMb);
@@ -82,14 +86,16 @@ public interface IAppSettings
     /// Per-client MB cap the watchdog enforces. <c>null</c> means the user has never set this —
     /// derived from installed RAM via <see cref="Diagnostics.MemoryDefaults.CapMb"/>. <c>0</c> is a
     /// distinct, meaningful user choice: it disables the cap trigger entirely, which is why this is
-    /// nullable rather than sentinel-zero — zero and unset must stay distinguishable.
+    /// nullable rather than sentinel-zero — zero and unset must stay distinguishable. File-only
+    /// today — no Preferences dialog wiring exists yet (see <see cref="GetMemoryWatchdogEnabledAsync"/>).
     /// </summary>
     Task<int?> GetMemoryCapMbAsync();
     Task SetMemoryCapMbAsync(int? capMb);
 
     /// <summary>
     /// Minutes of projected time-to-cap below which the watchdog surfaces a warning. Defaults to
-    /// 120. Not hardware-derived — this is a UX pacing knob, not a hardware constraint.
+    /// 120. Not hardware-derived — this is a UX pacing knob, not a hardware constraint. File-only
+    /// today — no Preferences dialog wiring exists yet (see <see cref="GetMemoryWatchdogEnabledAsync"/>).
     /// </summary>
     Task<int> GetProjectionWarnMinutesAsync();
     Task SetProjectionWarnMinutesAsync(int minutes);

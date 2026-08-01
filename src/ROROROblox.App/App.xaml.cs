@@ -861,7 +861,7 @@ public partial class App : Application
             tracker.ProcessExited += (_, e) =>
             {
                 decorator.Untrack(e.Pid);
-                watchdog.OnAccountExited(e.AccountId);
+                watchdog.OnAccountExited(e.AccountId, e.Pid);
             };
         }
         catch (Exception ex)

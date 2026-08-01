@@ -34,7 +34,11 @@ public sealed class AccountRecycler
 
     public async Task<bool> RecycleAsync(Guid accountId, LaunchTarget target, CancellationToken ct = default)
     {
-        _log.LogInformation("Recycling account {AccountId} into {Target} (user-initiated).", accountId, target);
+        // target.GetType().Name, never {Target} itself: LaunchTarget.PrivateServer is a positional
+        // record carrying a joinable-server Code, and Serilog's default (non-@) rendering calls the
+        // compiler-generated record ToString(), which would write the code verbatim into
+        // rororoblox-.log — a log file DiagnosticsWindow packs into user-shared support bundles.
+        _log.LogInformation("Recycling account {AccountId} into {Target} (user-initiated).", accountId, target.GetType().Name);
         _stopper.StopAccount(accountId);
 
         var pid = await _launch(accountId, target, ct).ConfigureAwait(false);

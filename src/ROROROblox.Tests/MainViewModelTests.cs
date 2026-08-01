@@ -666,7 +666,7 @@ public class MainViewModelTests
         public int ProjectionWarnMinutes { get; set; }
         public event EventHandler<MemoryPressureSnapshot>? PressureCrossed { add { } remove { } }
         public void OnAccountLaunched(Guid accountId, int pid) { }
-        public void OnAccountExited(Guid accountId) { }
+        public void OnAccountExited(Guid accountId, int pid) { }
         public void ResetBaseline(Guid accountId, int pid) => Resets.Add((accountId, pid));
         public void Start() { }
         public void Stop() { }
@@ -725,6 +725,44 @@ public class MainViewModelTests
             Assert.True(ok);
             var target = Assert.Single(launcher.Launches);
             Assert.IsType<LaunchTarget.DefaultGame>(target); // no SelectedGame on the row -> default
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ApplyMemory_CalledTwiceWithUnchangedPressure_MemoryWarningStaysTrue()
+    {
+        // CRITICAL 1 (final-branch review, 2026-08-01): MemoryWarning must be CONDITION-derived
+        // from the snapshot, not edge-derived from "did this call originate from a
+        // PressureCrossed event." The prior shape painted MemoryWarning=true only when called
+        // with warned:true (from PressureCrossed) and unconditionally wiped it to false on the
+        // very next passive 30s-ticker call (warned:false) — even with the account still over
+        // cap. The Recycle button is bound solely to MemoryWarning, so it would appear and then
+        // erase itself within one 30s tick. This calls the SAME apply path twice — once
+        // simulating the crossing, once simulating the passive refresh — with an unchanged
+        // over-cap snapshot, and asserts the row is still warned after the second call.
+        var (vm, store, _, path) = Build();
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+
+            var overCapSnapshot = new MemoryPressureSnapshot(
+                AvailableBytes: 1_000_000_000,
+                AggregateGrowthBytesPerHour: 0,
+                MinutesToCeiling: 0,
+                HasProjection: false,
+                TargetAccountId: row.Id,
+                Accounts: [new AccountMemory(row.Id, 6L * 1024 * 1024 * 1024, 0, 0, OverCap: true, IsTarget: true, ReadOk: true)]);
+
+            vm.ApplyMemory(overCapSnapshot); // simulates the PressureCrossed-triggered apply
+            Assert.True(row.MemoryWarning);
+
+            // Discriminator: an unchanged, still-over-cap snapshot must NOT clear the warning on
+            // a second call, the way the old "warned: false" passive-refresh path did.
+            vm.ApplyMemory(overCapSnapshot); // simulates the next 30s ticker's passive refresh
+            Assert.True(row.MemoryWarning);
         }
         finally { if (File.Exists(path)) File.Delete(path); }
     }
@@ -930,7 +968,7 @@ public class MainViewModelTests
         public event EventHandler<MemoryPressureSnapshot>? PressureCrossed { add { } remove { } }
 
         public void OnAccountLaunched(Guid accountId, int pid) => throw new NotImplementedException();
-        public void OnAccountExited(Guid accountId) => throw new NotImplementedException();
+        public void OnAccountExited(Guid accountId, int pid) => throw new NotImplementedException();
         public void ResetBaseline(Guid accountId, int pid) => throw new NotImplementedException();
         public void Start() => throw new NotImplementedException();
         public void Stop() => throw new NotImplementedException();

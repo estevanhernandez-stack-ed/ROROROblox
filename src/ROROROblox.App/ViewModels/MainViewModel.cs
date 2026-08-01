@@ -215,9 +215,22 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // Memory watchdog (v1.11, Task 7) — a coalesced, edge-triggered crossing (cap or
         // projection, latched per account) paints the warned chip immediately instead of waiting
         // for the next 30s tick. Fires off the watchdog's own sample timer thread, so marshal to
-        // the dispatcher like every other cross-thread event above.
+        // the dispatcher like every other cross-thread event above. Wrapped in try/catch — this is
+        // the FIRST subscriber in the chain (tray + plugin-bus subscribers follow in App.xaml.cs,
+        // both already guarded), so an unhandled throw here (e.g. a TaskCanceledException from
+        // Dispatcher.Invoke during shutdown) would abort the whole multicast delegate and starve
+        // every subscriber behind it of the crossing.
         _memoryWatchdog.PressureCrossed += (_, snap) =>
-            Application.Current?.Dispatcher.Invoke(() => ApplyMemory(snap, warned: true));
+        {
+            try
+            {
+                Application.Current?.Dispatcher.Invoke(() => ApplyMemory(snap));
+            }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "Memory-warning VM apply threw; the row chip may not have refreshed for this crossing.");
+            }
+        };
 
         // Streamer mode (v1.10, Task 10) — keep the main-window switch (and the tray checkmark,
         // via its own subscription) in sync when the mode flips from either surface. Mirrors
@@ -2249,35 +2262,50 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Passive 30s repaint of every row's memory chip from the watchdog's last completed sample —
-    /// bytes only, never a warned "▲" (that only flips via <see cref="IMemoryWatchdog.PressureCrossed"/>,
-    /// subscribed in the ctor). Task 7.
+    /// Passive 30s repaint of every row's memory chip from the watchdog's last completed sample.
+    /// Task 7.
     /// </summary>
-    private void RefreshMemoryChips() => ApplyMemory(_memoryWatchdog.GetSnapshot(), warned: false);
+    private void RefreshMemoryChips() => ApplyMemory(_memoryWatchdog.GetSnapshot());
 
     /// <summary>
     /// Projects a <see cref="MemoryPressureSnapshot"/> onto the visible rows via
-    /// <see cref="MemoryChipFormatter.Format"/>. <paramref name="warned"/> is the watchdog's own
-    /// coalesced edge-triggered verdict for THIS sample (true only when <see cref="IMemoryWatchdog.PressureCrossed"/>
-    /// just fired) — the ViewModel never re-derives the cap/projection threshold itself, it only
-    /// renders what the watchdog already decided. A row with no matching account in the snapshot
-    /// (not yet launched, or launched after the last sample) is left untouched. Task 7.
+    /// <see cref="MemoryChipFormatter.Format"/>. <c>MemoryWarning</c> (and therefore the chip's
+    /// "▲" and the Recycle button's visibility, see <c>MainWindow.xaml</c>'s
+    /// <c>MemoryWarning</c> DataTrigger) is CONDITION-derived from this snapshot every time this
+    /// runs — never edge-derived from "did a crossing just fire." <see cref="IMemoryWatchdog.PressureCrossed"/>
+    /// is edge-triggered (fires once per latch), but the passive 30s ticker
+    /// (<see cref="RefreshMemoryChips"/>) calls this same method with <c>warned</c> nowhere in
+    /// sight — if MemoryWarning depended on which caller invoked this, the ticker's very next tick
+    /// would silently erase a warning (and the Recycle button with it) while the underlying
+    /// pressure condition still holds. Fixed 2026-08-01 (final-branch review CRITICAL 1) — the
+    /// prior "warned: true only from PressureCrossed, warned: false from the ticker" shape did
+    /// exactly that.
+    /// <para>
+    /// <c>account.OverCap</c> scopes the cap axis to the account that is actually over cap
+    /// (deliberately per-row, unlike the old unconditional <c>warned: true</c> which painted every
+    /// row the moment ANY one account crossed). The projection axis is machine-wide by design —
+    /// <see cref="MemoryPressureSnapshot.MinutesToCeiling"/> describes the whole machine's runway,
+    /// not any one client's — so every readable row shares that half of the verdict.
+    /// </para>
+    /// A row with no matching account in the snapshot (not yet launched, or launched after the
+    /// last sample) is left untouched. Task 7.
     /// </summary>
-    private void ApplyMemory(MemoryPressureSnapshot snapshot, bool warned)
+    internal void ApplyMemory(MemoryPressureSnapshot snapshot)
     {
         // snapshot.Accounts is guaranteed non-null (even pre-first-sample) by
         // MemoryWatchdog.GetSnapshot()'s seeded field default — no null-guard needed here.
+        var projectionWarned = snapshot.HasProjection
+            && snapshot.MinutesToCeiling < _memoryWatchdog.ProjectionWarnMinutes;
+
         foreach (var account in snapshot.Accounts)
         {
             var row = Accounts.FirstOrDefault(r => r.Id == account.AccountId);
             if (row is null) continue;
 
+            var warned = account.ReadOk && (account.OverCap || projectionWarned);
+
             row.MemoryText = MemoryChipFormatter.Format(account, warned, snapshot.HasProjection, snapshot.MinutesToCeiling);
-            // `&& account.ReadOk` deviates from the brief's `warned` (unconditional) — deliberate:
-            // MemoryText is already null (chip collapsed) whenever ReadOk is false, so this is
-            // behaviorally inert today, but MemoryWarning shouldn't independently claim "warned"
-            // for a reading the formatter just refused to render.
-            row.MemoryWarning = warned && account.ReadOk;
+            row.MemoryWarning = warned;
         }
     }
 

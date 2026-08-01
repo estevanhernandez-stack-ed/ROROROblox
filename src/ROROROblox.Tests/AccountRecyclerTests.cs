@@ -36,12 +36,12 @@ public class AccountRecyclerTests
         public int ProjectionWarnMinutes { get; set; }
         public event EventHandler<MemoryPressureSnapshot>? PressureCrossed { add { } remove { } }
         public void OnAccountLaunched(Guid accountId, int pid) { }
-        public void OnAccountExited(Guid accountId) { }
+        public void OnAccountExited(Guid accountId, int pid) { }
         public void ResetBaseline(Guid accountId, int pid) => Resets.Add((accountId, pid));
         public void Start() { }
         public void Stop() { }
         public void Sample() { }
-        public MemoryPressureSnapshot GetSnapshot() => default;
+        public MemoryPressureSnapshot GetSnapshot() => new(0, 0, 0, false, null, []);
     }
 
     [Fact]
@@ -90,5 +90,24 @@ public class AccountRecyclerTests
 
         Assert.False(ok);
         Assert.Empty(watchdog.Resets); // a stale baseline is worse than none
+    }
+
+    [Fact]
+    public async Task Recycle_DoesNotLogThePrivateServerCode()
+    {
+        // CRITICAL 2 (final-branch review, 2026-08-01): the old `{Target}` log parameter rendered
+        // via Serilog's default (non-@) ToString() path, and LaunchTarget.PrivateServer is a
+        // positional record carrying a joinable-server Code -- a credential -- so the code landed
+        // verbatim in rororoblox-.log, a file DiagnosticsWindow packs into user-shared support
+        // bundles. Discriminator: assert the sentinel code never appears in ANY captured log line.
+        const string sentinelCode = "SENTINEL-JOINABLE-CODE-DO-NOT-LOG-9f2a";
+        var id = Guid.NewGuid();
+        var target = new LaunchTarget.PrivateServer(PlaceId: 8737899170, Code: sentinelCode, Kind: PrivateServerCodeKind.LinkCode);
+        var log = new CapturingLogger<AccountRecycler>();
+        var recycler = new AccountRecycler(new FakeStopper(), new RecordingLauncher().LaunchAsync, new SpyWatchdog(), log);
+
+        await recycler.RecycleAsync(id, target);
+
+        Assert.DoesNotContain(log.Snapshot(), line => line.Contains(sentinelCode));
     }
 }

@@ -67,7 +67,16 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
 
     public void OnAccountLaunched(Guid accountId, int pid) => ResetBaseline(accountId, pid);
 
-    public void OnAccountExited(Guid accountId) => _records.TryRemove(accountId, out _);
+    public void OnAccountExited(Guid accountId, int pid)
+    {
+        // pid-aware removal (final-branch review IMPORTANT 5): only drop the record if it's still
+        // pinned to THIS pid. A late exit callback for a pid a Recycle has already superseded must
+        // not remove the fresh record the new launch just installed.
+        if (_records.TryGetValue(accountId, out var rec) && rec.Pid == pid)
+        {
+            _records.TryRemove(accountId, out _);
+        }
+    }
 
     public void ResetBaseline(Guid accountId, int pid)
         => _records[accountId] = new Record
@@ -194,7 +203,12 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
                 _log.LogWarning("memory cap crossed: account {AccountId} at {Mb} MB (cap {CapMb} MB)",
                     a.AccountId, a.PrivateBytes / (1024 * 1024), CapBytes / (1024 * 1024));
             }
-            else if (!overCap) { rec.CapLatched = false; }
+            // Re-arm ONLY on a KNOWN clear (a.ReadOk && !overCap) -- an unreadable pid (a.ReadOk
+            // false, the routine "process mid-teardown" case) is UNKNOWN, not clear, and must not
+            // re-arm the latch. TryReadPrivateBytes fails often enough in normal operation that
+            // without this guard, an over-cap client with a flaky read re-crosses and re-balloons
+            // every 60s for hours on an unattended 20+-hour session (final-branch review IMPORTANT 3).
+            else if (a.ReadOk && !overCap) { rec.CapLatched = false; }
 
             var overProjection = hasProjection && minutes < ProjectionWarnMinutes;
             if (overProjection && !rec.ProjectionLatched)
@@ -205,7 +219,12 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
                     "memory projection crossed: account {AccountId}, {Minutes} min to ceiling (aggregate {GrowthMbPerHr:F0} MB/hr, available {AvailableMb} MB, target {TargetAccountId})",
                     a.AccountId, minutes, aggregateGrowth / (1024 * 1024), (systemOk ? available : 0) / (1024 * 1024), target);
             }
-            else if (!overProjection) { rec.ProjectionLatched = false; }
+            // Re-arm ONLY on a KNOWN clear (systemOk && !overProjection) -- a failed
+            // GlobalMemoryStatusEx read is UNKNOWN, not clear, and must not clear every account's
+            // projection latch machine-wide. The spec's failure-mode table says a failed
+            // availPhys read must SKIP projection evaluation; clearing the latch is evaluating it
+            // (final-branch review IMPORTANT 3).
+            else if (systemOk && !overProjection) { rec.ProjectionLatched = false; }
 
             accounts[i] = a with { OverCap = overCap, IsTarget = target == a.AccountId, MinutesToCeiling = minutes };
         }

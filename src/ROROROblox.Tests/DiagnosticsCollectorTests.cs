@@ -133,7 +133,7 @@ public class DiagnosticsCollectorTests
         public event EventHandler<MemoryPressureSnapshot>? PressureCrossed { add { } remove { } }
 
         public void OnAccountLaunched(Guid accountId, int pid) => throw new NotImplementedException();
-        public void OnAccountExited(Guid accountId) => throw new NotImplementedException();
+        public void OnAccountExited(Guid accountId, int pid) => throw new NotImplementedException();
         public void ResetBaseline(Guid accountId, int pid) => throw new NotImplementedException();
         public void Start() => throw new NotImplementedException();
         public void Stop() => throw new NotImplementedException();
