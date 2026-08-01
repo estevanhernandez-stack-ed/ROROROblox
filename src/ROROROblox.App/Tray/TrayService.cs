@@ -2,6 +2,8 @@ using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
 using Hardcodet.Wpf.TaskbarNotification;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.Core;
 using ROROROblox.Core.StreamerMode;
 
@@ -18,6 +20,7 @@ internal sealed class TrayService : ITrayService
     private const string IconResourceBase = "/ROROROblox.App;component/Tray/Resources/";
 
     private readonly IStreamerIdentityProvider _streamerIdentity;
+    private readonly ILogger<TrayService> _log;
     private readonly TaskbarIcon _taskbarIcon;
     private readonly MenuItem _toggleItem;
     private readonly MenuItem _streamerModeItem;
@@ -49,9 +52,10 @@ internal sealed class TrayService : ITrayService
     public event EventHandler? RequestOpenPlugins;
     public event EventHandler<Guid>? RequestFocusAccount;
 
-    public TrayService(IStreamerIdentityProvider streamerIdentity)
+    public TrayService(IStreamerIdentityProvider streamerIdentity, ILogger<TrayService>? log = null)
     {
         _streamerIdentity = streamerIdentity;
+        _log = log ?? NullLogger<TrayService>.Instance;
         _taskbarIcon = new TaskbarIcon();
         // Double-click is the user's "do the thing" gesture — App.xaml.cs decides whether
         // that means "launch main" or "surface the window" based on whether a main is set.
@@ -132,19 +136,35 @@ internal sealed class TrayService : ITrayService
     /// <summary>
     /// Toggle the memory-pressure warning badge (Task 8). Independent of <see cref="UpdateStatus"/> —
     /// see the doc on <see cref="ITrayService.SetMemoryWarning"/> for why the two must never merge.
+    /// <para>
+    /// <b>Thread-safety:</b> <c>IMemoryWatchdog.PressureCrossed</c> — the event this method
+    /// is wired to (App.xaml.cs's <c>WireMemoryWarningTray</c>) — fires from
+    /// <c>MemoryWatchdog.Sample()</c>, which runs on the watchdog's own <see cref="System.Threading.Timer"/>
+    /// callback, NOT the UI thread. <c>_taskbarIcon.Icon</c> is a WPF-hosted property, so this
+    /// marshals via <c>Application.Current.Dispatcher.Invoke</c> the same way
+    /// <see cref="OnStreamerModeChanged"/> already does for its own cross-thread caller.
+    /// </para>
     /// </summary>
     public void SetMemoryWarning(bool active)
     {
-        if (_memoryWarningActive == active) return;
-        _memoryWarningActive = active;
-        _taskbarIcon.Icon = ResolveIconForState(_currentState);
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            if (_disposed) return;
+            if (_memoryWarningActive == active) return;
+            _memoryWarningActive = active;
+            _taskbarIcon.Icon = ResolveIconForState(_currentState);
+        });
     }
 
+    /// <summary>See <see cref="SetMemoryWarning"/>'s thread-safety note — same marshaling reason.</summary>
     public void ShowMemoryWarning(string title, string message, Guid accountId)
     {
-        if (_disposed) return;
-        _lastMemoryWarningAccountId = accountId;
-        _taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Warning);
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            if (_disposed) return;
+            _lastMemoryWarningAccountId = accountId;
+            _taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Warning);
+        });
     }
 
     private Icon ResolveIconForState(MultiInstanceState state)
@@ -153,7 +173,18 @@ internal sealed class TrayService : ITrayService
         // warning must never erase the ON/ERROR state the user needs during a real mutex problem.
         if (_memoryWarningActive && state != MultiInstanceState.Error)
         {
-            return LoadIcon(WarnIconFilename);
+            try
+            {
+                return LoadIcon(WarnIconFilename);
+            }
+            catch (Exception ex)
+            {
+                // tray-warn.ico isn't in the tree yet (626labs-design asset still pending) --
+                // degrade to whatever's currently showing rather than crash the one code path
+                // that only runs when a user is already in trouble.
+                _log.LogWarning(ex, "Memory-warning tray icon unavailable; keeping the current icon.");
+                return _taskbarIcon.Icon ?? LoadIcon(StateIconFilename(state));
+            }
         }
 
         var custom = state switch

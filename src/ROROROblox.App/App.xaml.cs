@@ -188,6 +188,7 @@ public partial class App : Application
         WirePluginEventBus();
         WireActivityMonitor();
         await WireMemoryWatchdogAsync();
+        WireMemoryWarningTray(); // Task 8 — closes the loop WireMemoryWatchdogAsync doesn't own
         WireContestedWatcher(mainWindow); // Task 8
         // The gate has been answered by now (both modal branches above are blocking), so it is
         // safe to let plugin processes launch. The pipe they handshake against bound earlier.
@@ -692,6 +693,21 @@ public partial class App : Application
         tray.RequestActivateMain += (_, _) => ActivateMainFromTray(mainWindow);
         tray.RequestOpenHistory += (_, _) => OpenHistoryFromTray(mainWindow);
         tray.RequestOpenPlugins += (_, _) => OpenPluginsFromTray(mainWindow);
+        // Task 8 — the whole reason ShowMemoryWarning carries an accountId: a balloon click that
+        // goes nowhere wastes it. TrayBalloonTipClicked is a WPF-originated UI event (unlike
+        // PressureCrossed), so no dispatcher marshaling is needed here.
+        tray.RequestFocusAccount += (_, accountId) =>
+        {
+            try
+            {
+                SurfaceMainWindow(mainWindow);
+                mainWindow.FocusAccountRow(accountId);
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "RequestFocusAccount handling threw; window surfaced (if it got that far) but the row may not be highlighted.");
+            }
+        };
     }
 
     private void WireMainViewModelEvents(MainWindow mainWindow)
@@ -932,6 +948,70 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogWarning(ex, "Memory watchdog wiring failed; continuing without it.");
+        }
+    }
+
+    /// <summary>
+    /// Bridges <see cref="IMemoryWatchdog.PressureCrossed"/> to the tray warning badge + balloon
+    /// (Task 8). Deliberately its own Wire* method — <see cref="WireMemoryWatchdogAsync"/> only
+    /// owns settings + <see cref="IMemoryWatchdog.Start"/>, matching that method's own doc note
+    /// that <c>OnAccountLaunched</c>/<c>OnAccountExited</c> bookkeeping lives elsewhere too.
+    /// <para>
+    /// <see cref="IMemoryWatchdog.PressureCrossed"/> fires from <c>MemoryWatchdog.Sample()</c>,
+    /// which runs on the watchdog's own <see cref="System.Threading.Timer"/> callback — NOT the UI
+    /// thread. <see cref="TrayService.SetMemoryWarning"/>/<see cref="TrayService.ShowMemoryWarning"/>
+    /// marshal internally, so this handler doesn't need to; it still wraps in try/catch because an
+    /// unhandled exception on a threadpool timer callback takes the whole process down, and this is
+    /// the one code path that only runs when a user is already in trouble.
+    /// </para>
+    /// <para>
+    /// Only ever calls <c>SetMemoryWarning(true)</c> here — edge-triggered, once per latched
+    /// crossing, matching <c>ShowMemoryWarning</c>'s own contract. Clearing back to <c>false</c> is
+    /// NOT this method's job: <see cref="MainViewModel"/>'s existing 30s ticker re-evaluates
+    /// <see cref="MemoryPressureEvaluator.IsClear"/> against the watchdog's latest snapshot and
+    /// clears the badge once the warning condition actually recedes.
+    /// </para>
+    /// </summary>
+    private void WireMemoryWarningTray()
+    {
+        if (_services is null) return;
+        try
+        {
+            var watchdog = _services.GetRequiredService<IMemoryWatchdog>();
+            var tray = _services.GetRequiredService<ITrayService>();
+            var vm = _services.GetRequiredService<MainViewModel>();
+
+            watchdog.PressureCrossed += (_, snap) =>
+            {
+                try
+                {
+                    tray.SetMemoryWarning(true);
+
+                    if (snap.TargetAccountId is not { } targetId)
+                    {
+                        // Shouldn't happen alongside a crossing -- Sample() only crosses an
+                        // account it could actually read a byte count for -- but degrade to
+                        // "badge only, no balloon" rather than guess at an account to name.
+                        _log?.LogDebug("PressureCrossed fired with no TargetAccountId; badge set, balloon skipped.");
+                        return;
+                    }
+
+                    // AccountsSnapshot: this handler runs on the watchdog's timer thread.
+                    var name = vm.AccountsSnapshot.FirstOrDefault(a => a.Id == targetId)?.RenderName ?? "An account";
+                    tray.ShowMemoryWarning(
+                        "RoRoRo — memory warning",
+                        $"{name} is using a lot of memory. Click to jump to it, then hit Recycle to close and relaunch into the same game.",
+                        targetId);
+                }
+                catch (Exception ex)
+                {
+                    _log?.LogWarning(ex, "Memory-warning tray bridge threw; the warning may not have surfaced for this crossing.");
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Memory-warning tray wiring failed; the tray badge/balloon won't fire this session.");
         }
     }
 

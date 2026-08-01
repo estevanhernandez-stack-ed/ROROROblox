@@ -50,6 +50,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly IMemoryWatchdog _memoryWatchdog;
     private readonly IRobloxInstanceStopper _instanceStopper;
     private readonly AccountRecycler _accountRecycler;
+    private readonly ITrayService _tray;
     private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
     private readonly Core.StreamerMode.IStreamerIdentityProvider? _streamerIdentity;
     private readonly ILogger<MainViewModel> _log;
@@ -73,6 +74,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly Dictionary<Guid, AppStorageDefender> _defendersByAccountId = new();
     private readonly object _defendersLock = new();
     private readonly DispatcherTimer _ticker;
+
+    /// <summary>The one row currently highlighted via <see cref="SetFocusedAccount"/> (Task 8), if any.</summary>
+    private Guid? _focusedAccountId;
 
     private string _statusBanner = string.Empty;
     private string? _robloxCompatBanner;
@@ -107,6 +111,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         IActivityMonitor activityMonitor,
         IMemoryWatchdog memoryWatchdog,
         IRobloxInstanceStopper instanceStopper,
+        ITrayService tray,
         Notifications.IdleAlertPresenter idleAlertPresenter,
         Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
         ILogger<MainViewModel>? log = null)
@@ -133,6 +138,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _activityMonitor = activityMonitor;
         _memoryWatchdog = memoryWatchdog;
         _instanceStopper = instanceStopper;
+        _tray = tray;
         _idleAlertPresenter = idleAlertPresenter;
         _streamerIdentity = streamerIdentity;
         _log = log ?? NullLogger<MainViewModel>.Instance;
@@ -246,6 +252,18 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // not a fresh pressure crossing; PressureCrossed (subscribed in the ctor) is what flips
             // a row's chip to the warned "▲" state.
             RefreshMemoryChips();
+
+            // Task 8 — PressureCrossed is edge-triggered (fires ON a crossing, stays silent while
+            // it holds), so nothing else ever notices when pressure recedes: without this, the tray
+            // badge would stay warned until restart even after the user recycles the fat client and
+            // memory is fine again. Piggyback the clear-check on this same 30s cadence rather than
+            // stand up a second timer. SetMemoryWarning(false) is idempotent when already off
+            // (TrayService short-circuits on no state change), so it's safe to call unconditionally
+            // every tick — no need to track "was it warned" here too.
+            if (MemoryPressureEvaluator.IsClear(_memoryWatchdog.GetSnapshot(), _memoryWatchdog.ProjectionWarnMinutes))
+            {
+                _tray.SetMemoryWarning(false);
+            }
         };
         _ticker.Start();
     }
@@ -1296,6 +1314,31 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             StatusBanner = $"Couldn't recycle {summary.RenderName} — relaunch failed.";
         }
         return ok;
+    }
+
+    /// <summary>
+    /// Highlights one row — Task 8's tray memory-warning balloon click
+    /// (<see cref="ITrayService.RequestFocusAccount"/>) wired from <c>App.xaml.cs</c>. Clears the
+    /// previous highlight first so at most one row is ever flagged at a time. A no-op (previous
+    /// highlight still clears) if the id no longer resolves to a saved row.
+    /// </summary>
+    internal void SetFocusedAccount(Guid accountId)
+    {
+        if (_focusedAccountId is { } previousId)
+        {
+            var previousRow = Accounts.FirstOrDefault(a => a.Id == previousId);
+            if (previousRow is not null)
+            {
+                previousRow.IsFocused = false;
+            }
+        }
+
+        _focusedAccountId = accountId;
+        var row = Accounts.FirstOrDefault(a => a.Id == accountId);
+        if (row is not null)
+        {
+            row.IsFocused = true;
+        }
     }
 
     /// <summary>

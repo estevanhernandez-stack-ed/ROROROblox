@@ -326,6 +326,19 @@ public sealed class AccountSummary : INotifyPropertyChanged
         set => SetField(ref _runningPid, value);
     }
 
+    private bool _isFocused;
+
+    /// <summary>
+    /// True for the ONE row currently highlighted after the user clicks a tray memory-warning
+    /// balloon (Task 8's <c>ITrayService.RequestFocusAccount</c>, via
+    /// <c>MainViewModel.SetFocusedAccount</c>). Pure display state, never persisted.
+    /// </summary>
+    public bool IsFocused
+    {
+        get => _isFocused;
+        set => SetField(ref _isFocused, value);
+    }
+
     /// <summary>
     /// The <see cref="LaunchTarget"/> the CURRENTLY-launched (or most recently launched) session
     /// used. Set on every successful <see cref="LaunchResult.Started"/> (Task 8's recycle needs

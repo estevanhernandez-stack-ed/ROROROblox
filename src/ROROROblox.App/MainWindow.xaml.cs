@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Threading;
 using ROROROblox.App.About;
 using ROROROblox.App.Theming;
 using ROROROblox.App.Tray;
@@ -108,6 +109,31 @@ internal partial class MainWindow : FluentWindow
                 welcome.ShowDialog();
             }
         }
+    }
+
+    /// <summary>
+    /// Task 8 — a tray memory-warning balloon click (<c>ITrayService.RequestFocusAccount</c>, via
+    /// <c>App.xaml.cs</c>) lands here. Highlights the row through the VM (drives
+    /// <see cref="AccountSummary.IsFocused"/>'s XAML trigger) and best-effort scrolls it into view.
+    /// Deferred to <see cref="DispatcherPriority.Background"/> so a container that hasn't been
+    /// generated yet this layout pass gets one more chance before we give up on the scroll — the
+    /// highlight itself doesn't need this, since it's driven by data binding, not the visual tree.
+    /// </summary>
+    public void FocusAccountRow(Guid accountId)
+    {
+        if (DataContext is not MainViewModel vm) return;
+        vm.SetFocusedAccount(accountId);
+
+        var row = vm.Accounts.FirstOrDefault(a => a.Id == accountId);
+        if (row is null) return;
+
+        Dispatcher.InvokeAsync(() =>
+        {
+            if (AccountsItemsControl.ItemContainerGenerator.ContainerFromItem(row) is FrameworkElement container)
+            {
+                container.BringIntoView();
+            }
+        }, DispatcherPriority.Background);
     }
 
     /// <summary>

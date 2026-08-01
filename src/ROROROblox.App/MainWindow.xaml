@@ -163,6 +163,14 @@
                                 <Setter Property="BorderBrush" Value="{DynamicResource RowExpiredAccentBrush}" />
                                 <Setter Property="BorderThickness" Value="1" />
                             </DataTrigger>
+                            <!-- Task 8 — highlights the row a tray memory-warning balloon click
+                                 (RequestFocusAccount -> MainWindow.FocusAccountRow -> IsFocused)
+                                 points at. Listed after SessionExpired so it wins the border if a
+                                 focused row also happens to be expired. -->
+                            <DataTrigger Binding="{Binding IsFocused}" Value="True">
+                                <Setter Property="BorderBrush" Value="{DynamicResource CyanBrush}" />
+                                <Setter Property="BorderThickness" Value="2" />
+                            </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
@@ -764,6 +772,37 @@
                                         <DataTrigger Binding="{Binding SessionLimited}" Value="True">
                                             <Setter Property="IsEnabled" Value="False" />
                                             <Setter Property="ToolTip" Value="Roblox flagged this account. Re-authenticate, or wait for it to cool down." />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <!-- Recycle (Task 8, memory watchdog) — one-click stop+relaunch remedy for
+                             a memory-warned row. MemoryWarning is the SAME amber flag driving the
+                             memory chip above (Task 7) and the RowExpiredAccentBrush/amber pairing
+                             used by Re-authenticate below — same "this row needs an action" visual
+                             language, so the button appears exactly where/when the fix applies and
+                             disappears once the watchdog reports clear. -->
+                        <Button Content="Recycle"
+                                Command="{Binding DataContext.RecycleAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                Padding="12,6" Margin="0,0,8,0"
+                                Background="{DynamicResource RowExpiredAccentBrush}"
+                                Foreground="{DynamicResource NavyBrush}"
+                                BorderThickness="0"
+                                FontWeight="SemiBold"
+                                FontSize="11"
+                                ToolTip="Close and relaunch this client into the same game/server — the only guaranteed way to reclaim memory Roblox has leaked.">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding MemoryWarning}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsLaunching}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -1435,7 +1474,7 @@
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
                 <Grid Grid.IsSharedSizeScope="True">
-                    <ItemsControl ItemsSource="{Binding Accounts}" />
+                    <ItemsControl x:Name="AccountsItemsControl" ItemsSource="{Binding Accounts}" />
 
                     <!-- Empty state -->
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"

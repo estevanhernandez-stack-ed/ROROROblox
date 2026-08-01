@@ -32,13 +32,15 @@ public class MainViewModelTests
         IRobloxApi? api = null,
         IFavoriteGameStore? favorites = null,
         IRobloxInstanceStopper? instanceStopper = null,
-        IMemoryWatchdog? memoryWatchdog = null)
+        IMemoryWatchdog? memoryWatchdog = null,
+        ITrayService? tray = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
         var vmStore = wrapStore?.Invoke(accountStore) ?? (IAccountStore)accountStore;
         var processTracker = new FakeRobloxProcessTracker();
         var windowDecorator = new RobloxWindowDecorator();
+        var trayService = tray ?? new FakeTrayService();
 
         var vm = new MainViewModel(
             cookieCapture: cookieCapture ?? new FakeCookieCapture(),
@@ -63,7 +65,8 @@ public class MainViewModelTests
             activityMonitor: new FakeActivityMonitor(),
             memoryWatchdog: memoryWatchdog ?? new FakeMemoryWatchdog(),
             instanceStopper: instanceStopper ?? new FakeRobloxInstanceStopper(),
-            idleAlertPresenter: new IdleAlertPresenter(new FakeTrayService()));
+            tray: trayService,
+            idleAlertPresenter: new IdleAlertPresenter(trayService));
 
         // MainViewModel never disposes the window decorator (App.xaml.cs's DI container owns
         // that lifetime in production); its ctor starts a real 1.5s reapply Timer that would
