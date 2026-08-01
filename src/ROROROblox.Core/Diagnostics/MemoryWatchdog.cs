@@ -149,7 +149,12 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
         if (hasProjection)
         {
             var availableForClients = Math.Max(0, available - ReserveBytes);
-            minutes = (int)(availableForClients / aggregateGrowth * 60);
+            // Compute in double first: a very small positive aggregateGrowth against a large
+            // availableForClients can exceed int.MaxValue, and narrowing an out-of-range double to
+            // int is unspecified in C# (lands negative on the CLR). Clamp before casting so
+            // MinutesToCeiling can never surface a negative countdown to the UI (Task 7).
+            var minutesRaw = availableForClients / aggregateGrowth * 60;
+            minutes = (int)Math.Clamp(minutesRaw, 0, int.MaxValue);
         }
 
         // Target = fattest client with a valid reading. The projection describes the machine;

@@ -159,6 +159,57 @@ public class MemoryWatchdogTriggerTests
     }
 
     [Fact]
+    public void Target_ExcludesUnreadableAccount_EvenIfItWasTheFattest()
+    {
+        var clock = new FakeClock();
+        var proc = new FakeProcessMemory();
+        var wd = new MemoryWatchdog(proc, new FakeSystemMemory(), clock);
+
+        var big = Guid.NewGuid();
+        var small = Guid.NewGuid();
+        proc.Readings[10] = 6 * Gb;   // big — currently the fattest, readable
+        proc.Readings[20] = 1 * Gb;   // small — readable throughout
+        wd.OnAccountLaunched(big, 10);
+        wd.OnAccountLaunched(small, 20);
+        wd.Sample();
+
+        // big goes unreadable. AccountMemory still reports its last-known-good 6 GB as
+        // PrivateBytes (rec.LastBytes), so if the .Where(a => a.ReadOk) filter were dropped,
+        // ordering-by-bytes alone would still pick big as the target.
+        proc.Readings[10] = null;
+        wd.Sample();
+
+        Assert.Equal(small, wd.GetSnapshot().TargetAccountId);
+        Assert.False(wd.GetSnapshot().Accounts.Single(a => a.AccountId == big).IsTarget);
+        Assert.True(wd.GetSnapshot().Accounts.Single(a => a.AccountId == small).IsTarget);
+    }
+
+    [Fact]
+    public void PressureCrossed_FiresOnceWhenTwoAccountsCrossOnSameSample()
+    {
+        var clock = new FakeClock();
+        var proc = new FakeProcessMemory();
+        var wd = new MemoryWatchdog(proc, new FakeSystemMemory(), clock) { CapBytes = 3 * Gb };
+        var fires = 0;
+        wd.PressureCrossed += (_, _) => fires++;
+
+        var a1 = Guid.NewGuid();
+        var a2 = Guid.NewGuid();
+        proc.Readings[10] = 1 * Gb;
+        proc.Readings[20] = 1 * Gb;
+        wd.OnAccountLaunched(a1, 10);
+        wd.OnAccountLaunched(a2, 20);
+        wd.Sample();
+        Assert.Equal(0, fires);
+
+        proc.Readings[10] = 5 * Gb; // both cross the cap on the same tick
+        proc.Readings[20] = 6 * Gb;
+        wd.Sample();
+
+        Assert.Equal(1, fires); // must coalesce into a single event, not fire per account
+    }
+
+    [Fact]
     public void SystemReadFails_SkipsProjectionButStillEvaluatesCap()
     {
         var clock = new FakeClock();
