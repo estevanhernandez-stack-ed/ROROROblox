@@ -569,7 +569,9 @@ public partial class App : Application
             sp.GetRequiredService<IRobloxProcessTracker>(),
             sp.GetRequiredService<IMutexHolder>(),
             AppLogging.LogDirectory,
-            dataDir));
+            dataDir,
+            sp.GetRequiredService<ISystemMemoryProbe>(),
+            sp.GetRequiredService<IMemoryWatchdog>()));
 
         // ViewModel + Window.
         services.AddSingleton<MainViewModel>();

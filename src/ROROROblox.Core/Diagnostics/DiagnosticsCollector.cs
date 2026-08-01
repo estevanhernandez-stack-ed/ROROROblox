@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -23,19 +24,25 @@ public sealed class DiagnosticsCollector : IDiagnosticsCollector
     private readonly IMutexHolder _mutexHolder;
     private readonly string _logDirectory;
     private readonly string _dataDirectory;
+    private readonly ISystemMemoryProbe _systemMemoryProbe;
+    private readonly IMemoryWatchdog _memoryWatchdog;
 
     public DiagnosticsCollector(
         IAccountStore accountStore,
         IRobloxProcessTracker processTracker,
         IMutexHolder mutexHolder,
         string logDirectory,
-        string dataDirectory)
+        string dataDirectory,
+        ISystemMemoryProbe systemMemoryProbe,
+        IMemoryWatchdog memoryWatchdog)
     {
         _accountStore = accountStore ?? throw new ArgumentNullException(nameof(accountStore));
         _processTracker = processTracker ?? throw new ArgumentNullException(nameof(processTracker));
         _mutexHolder = mutexHolder ?? throw new ArgumentNullException(nameof(mutexHolder));
         _logDirectory = logDirectory ?? string.Empty;
         _dataDirectory = dataDirectory ?? string.Empty;
+        _systemMemoryProbe = systemMemoryProbe ?? throw new ArgumentNullException(nameof(systemMemoryProbe));
+        _memoryWatchdog = memoryWatchdog ?? throw new ArgumentNullException(nameof(memoryWatchdog));
     }
 
     public async Task<DiagnosticsSnapshot> CollectAsync(CancellationToken ct = default)
@@ -63,6 +70,38 @@ public sealed class DiagnosticsCollector : IDiagnosticsCollector
             // Couldn't open the account store (DPAPI corrupt etc.) — leave count at 0.
         }
 
+        long totalMemory = 0;
+        long availableMemory = 0;
+        try
+        {
+            if (_systemMemoryProbe.TryRead(out var total, out var available))
+            {
+                totalMemory = total;
+                availableMemory = available;
+            }
+            // Probe returned false: leave both at zero. A guessed RAM figure in a support
+            // bundle is worse than a blank one — it sends the next investigation down a wrong
+            // path with false confidence.
+        }
+        catch
+        {
+            // Same discipline as the account store above — never let a probe failure surface
+            // as an exception out of a "clean snapshot always producible" collector.
+        }
+
+        IReadOnlyList<AccountMemory> accountMemory = [];
+        try
+        {
+            // Safe to call before the watchdog's first Sample() completes — GetSnapshot() never
+            // hands back a null Accounts list (pinned by a Task 7 test), so no defensive
+            // null-check is needed here.
+            accountMemory = _memoryWatchdog.GetSnapshot().Accounts;
+        }
+        catch
+        {
+            // Leave empty — same best-effort discipline as every other probe in this method.
+        }
+
         return new DiagnosticsSnapshot(
             AppVersion: appVersion,
             DotNetVersion: dotnet,
@@ -76,7 +115,10 @@ public sealed class DiagnosticsCollector : IDiagnosticsCollector
             MultiInstanceState: _mutexHolder.IsHeld ? "ON" : "OFF",
             LogDirectory: _logDirectory,
             DataDirectory: _dataDirectory,
-            CapturedAtUtc: DateTimeOffset.UtcNow);
+            CapturedAtUtc: DateTimeOffset.UtcNow,
+            TotalPhysicalMemoryBytes: totalMemory,
+            AvailablePhysicalMemoryBytes: availableMemory,
+            AccountMemory: accountMemory);
     }
 
     private static string? TryGetRobloxVersion()

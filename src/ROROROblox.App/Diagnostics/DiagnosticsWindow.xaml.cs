@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -60,12 +61,29 @@ internal partial class DiagnosticsWindow : Window
             ("Installed", s.WebView2Installed ? "yes" : "no"),
             ("Version", s.WebView2Version),
         });
+        AddSection("Memory", new[]
+        {
+            ("Installed RAM", FormatGb(s.TotalPhysicalMemoryBytes)),
+            ("Available RAM", FormatGb(s.AvailablePhysicalMemoryBytes)),
+        });
+        if (s.AccountMemory.Count > 0)
+        {
+            // Label is the account's short id only — no display names, no local names, no
+            // cookies. This artifact gets pasted into Discord. A ReadOk-false reading carries a
+            // stale last-known-good byte figure; tag it "(stale)" so it never reads as a fresh,
+            // trustworthy sample (same precedent as MemoryWatchdog's own log payload).
+            AddSection("Per-Account Memory", s.AccountMemory.Select(a => (
+                Label: a.AccountId.ToString("N")[..8],
+                Value: a.ReadOk ? FormatGb(a.PrivateBytes) : $"{FormatGb(a.PrivateBytes)} (stale)")));
+        }
         AddSection("Paths", new[]
         {
             ("Logs", s.LogDirectory),
             ("Data", s.DataDirectory),
         });
     }
+
+    private static string FormatGb(long bytes) => $"{bytes / 1024d / 1024d / 1024d:F1} GB";
 
     private void AddSection(string title, IEnumerable<(string label, string value)> rows)
     {
@@ -214,6 +232,21 @@ internal partial class DiagnosticsWindow : Window
             writer.WriteLine();
             writer.WriteLine($"WebView2 installed: {(snapshot.WebView2Installed ? "yes" : "no")}");
             writer.WriteLine($"WebView2 version  : {snapshot.WebView2Version}");
+            writer.WriteLine();
+            writer.WriteLine($"Installed RAM     : {FormatGb(snapshot.TotalPhysicalMemoryBytes)}");
+            writer.WriteLine($"Available RAM     : {FormatGb(snapshot.AvailablePhysicalMemoryBytes)}");
+            if (snapshot.AccountMemory.Count > 0)
+            {
+                writer.WriteLine("Per-account memory:");
+                // Short id only — no display names, no local names, no cookies. This bundle
+                // gets pasted into Discord.
+                foreach (var a in snapshot.AccountMemory)
+                {
+                    var shortId = a.AccountId.ToString("N")[..8];
+                    var suffix = a.ReadOk ? string.Empty : " (stale)";
+                    writer.WriteLine($"  {shortId}: {FormatGb(a.PrivateBytes)}{suffix}");
+                }
+            }
             writer.WriteLine();
             writer.WriteLine($"Logs path         : {snapshot.LogDirectory}");
             writer.WriteLine($"Data path         : {snapshot.DataDirectory}");
