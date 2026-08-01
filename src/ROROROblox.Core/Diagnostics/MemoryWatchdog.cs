@@ -3,6 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ROROROblox.Core.Diagnostics;
 
@@ -17,6 +19,7 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
     public static readonly TimeSpan MinimumObservation = TimeSpan.FromMinutes(10);
 
     private static readonly TimeSpan SampleInterval = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan SummaryInterval = TimeSpan.FromMinutes(15);
 
     private sealed class Record
     {
@@ -32,12 +35,14 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
     private readonly IProcessMemoryProbe _process;
     private readonly ISystemMemoryProbe _system;
     private readonly IClock _clock;
+    private readonly ILogger<MemoryWatchdog> _log;
     private readonly ConcurrentDictionary<Guid, Record> _records = new();
 
     private Timer? _timer;
     private int _sampling;
     private bool _disposed;
     private MemoryPressureSnapshot _last;
+    private DateTimeOffset _lastSummaryAt = DateTimeOffset.MinValue;
 
     public long CapBytes { get; set; }
     public long ReserveBytes { get; set; }
@@ -45,11 +50,13 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
 
     public event EventHandler<MemoryPressureSnapshot>? PressureCrossed;
 
-    public MemoryWatchdog(IProcessMemoryProbe process, ISystemMemoryProbe system, IClock clock)
+    public MemoryWatchdog(IProcessMemoryProbe process, ISystemMemoryProbe system, IClock clock,
+        ILogger<MemoryWatchdog>? log = null)
     {
         _process = process ?? throw new ArgumentNullException(nameof(process));
         _system = system ?? throw new ArgumentNullException(nameof(system));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _log = log ?? NullLogger<MemoryWatchdog>.Instance;
     }
 
     public void OnAccountLaunched(Guid accountId, int pid) => ResetBaseline(accountId, pid);
@@ -103,6 +110,7 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
                 // UNKNOWN. Keep the record for the next tick; contribute NOTHING to the aggregate.
                 rec.LastReadOk = false;
                 accounts.Add(new AccountMemory(kv.Key, rec.LastBytes, 0, 0, false, false, ReadOk: false));
+                _log.LogDebug("memory: pid {Pid} for account {AccountId} unreadable this tick; excluded from aggregate", rec.Pid, kv.Key);
                 continue;
             }
 
@@ -173,11 +181,24 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
             if (!_records.TryGetValue(a.AccountId, out var rec)) continue;
 
             var overCap = CapBytes > 0 && a.ReadOk && a.PrivateBytes > CapBytes;
-            if (overCap && !rec.CapLatched) { rec.CapLatched = true; crossed = true; }
+            if (overCap && !rec.CapLatched)
+            {
+                rec.CapLatched = true;
+                crossed = true;
+                _log.LogWarning("memory cap crossed: account {AccountId} at {Mb} MB (cap {CapMb} MB)",
+                    a.AccountId, a.PrivateBytes / (1024 * 1024), CapBytes / (1024 * 1024));
+            }
             else if (!overCap) { rec.CapLatched = false; }
 
             var overProjection = hasProjection && minutes < ProjectionWarnMinutes;
-            if (overProjection && !rec.ProjectionLatched) { rec.ProjectionLatched = true; crossed = true; }
+            if (overProjection && !rec.ProjectionLatched)
+            {
+                rec.ProjectionLatched = true;
+                crossed = true;
+                _log.LogWarning(
+                    "memory projection crossed: account {AccountId}, {Minutes} min to ceiling (aggregate {GrowthMbPerHr:F0} MB/hr, available {AvailableMb} MB, target {TargetAccountId})",
+                    a.AccountId, minutes, aggregateGrowth / (1024 * 1024), (systemOk ? available : 0) / (1024 * 1024), target);
+            }
             else if (!overProjection) { rec.ProjectionLatched = false; }
 
             accounts[i] = a with { OverCap = overCap, IsTarget = target == a.AccountId, MinutesToCeiling = minutes };
@@ -190,6 +211,17 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
             HasProjection: hasProjection,
             TargetAccountId: target,
             Accounts: accounts);
+
+        // Per-tick logging is banned: AppLogging's own comment records HttpClientFactory at 10s
+        // consuming ~90% of a 15 MB day. The 15-minute summary carries the same information at
+        // 1/30th the volume, and is what puts the memory CURVE in a user's log file.
+        if (now - _lastSummaryAt >= SummaryInterval)
+        {
+            _lastSummaryAt = now;
+            _log.LogInformation(
+                "memory: {Count} client(s), aggregate {GrowthMbPerHr:F0} MB/hr, available {AvailableMb} MB, projection {Minutes} min (valid={Valid})",
+                accounts.Count, aggregateGrowth / (1024 * 1024), (systemOk ? available : 0) / (1024 * 1024), minutes, hasProjection);
+        }
 
         if (crossed)
         {
