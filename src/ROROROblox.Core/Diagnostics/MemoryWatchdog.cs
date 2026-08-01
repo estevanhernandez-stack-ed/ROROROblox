@@ -21,6 +21,20 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
     private static readonly TimeSpan SampleInterval = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan SummaryInterval = TimeSpan.FromMinutes(15);
 
+    /// <summary>
+    /// Cap re-arm deadband. Real client memory oscillates ~13-25 MB (measured live), so a bare
+    /// `!overCap` re-arm turns an account parked near the cap into a fresh balloon every few
+    /// minutes. Re-arming at 95% of the cap is ~5x the observed amplitude, while still re-arming
+    /// promptly after a real Recycle (which drops a client by roughly a gigabyte).
+    /// </summary>
+    private const double CapReArmFactor = 0.95;
+
+    /// <summary>
+    /// Projection re-arm deadband. Same reasoning, opposite direction: a HIGHER minutes-to-ceiling
+    /// is healthier, so recovery must clear the threshold by 15% before the latch re-arms.
+    /// </summary>
+    private const double ProjectionReArmFactor = 1.15;
+
     private sealed class Record
     {
         public int Pid;
@@ -203,12 +217,15 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
                 _log.LogWarning("memory cap crossed: account {AccountId} at {Mb} MB (cap {CapMb} MB)",
                     a.AccountId, a.PrivateBytes / (1024 * 1024), CapBytes / (1024 * 1024));
             }
-            // Re-arm ONLY on a KNOWN clear (a.ReadOk && !overCap) -- an unreadable pid (a.ReadOk
-            // false, the routine "process mid-teardown" case) is UNKNOWN, not clear, and must not
-            // re-arm the latch. TryReadPrivateBytes fails often enough in normal operation that
-            // without this guard, an over-cap client with a flaky read re-crosses and re-balloons
-            // every 60s for hours on an unattended 20+-hour session (final-branch review IMPORTANT 3).
-            else if (a.ReadOk && !overCap) { rec.CapLatched = false; }
+            // Re-arm ONLY on a KNOWN clear (a.ReadOk) AND a MEANINGFUL retreat (below
+            // CapReArmFactor of the cap, not just the bare inverse of `overCap`) -- an
+            // unreadable pid (a.ReadOk false, the routine "process mid-teardown" case) is
+            // UNKNOWN, not clear, and must not re-arm the latch (final-branch review IMPORTANT
+            // 3). A bare `!overCap` re-arm is a SEPARATE bug: real client memory oscillates
+            // 13-25 MB, so a value parked one byte under the cap re-arms and the very next tick
+            // re-crosses -- one account measured live crossed four times in eight minutes on
+            // that bug. CapReArmFactor requires a real retreat before the latch resets.
+            else if (a.ReadOk && a.PrivateBytes < CapBytes * CapReArmFactor) { rec.CapLatched = false; }
 
             var overProjection = hasProjection && minutes < ProjectionWarnMinutes;
             if (overProjection && !rec.ProjectionLatched)
@@ -219,12 +236,16 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
                     "memory projection crossed: account {AccountId}, {Minutes} min to ceiling (aggregate {GrowthMbPerHr:F0} MB/hr, available {AvailableMb} MB, target {TargetAccountId})",
                     a.AccountId, minutes, aggregateGrowth / (1024 * 1024), (systemOk ? available : 0) / (1024 * 1024), target);
             }
-            // Re-arm ONLY on a KNOWN clear (systemOk && !overProjection) -- a failed
-            // GlobalMemoryStatusEx read is UNKNOWN, not clear, and must not clear every account's
-            // projection latch machine-wide. The spec's failure-mode table says a failed
-            // availPhys read must SKIP projection evaluation; clearing the latch is evaluating it
-            // (final-branch review IMPORTANT 3).
-            else if (systemOk && !overProjection) { rec.ProjectionLatched = false; }
+            // Re-arm ONLY on a KNOWN clear (systemOk) AND a MEANINGFUL recovery (minutes past
+            // ProjectionReArmFactor of the warn threshold, not just the bare inverse of
+            // `overProjection`) -- a failed GlobalMemoryStatusEx read is UNKNOWN, not clear, and
+            // must not clear every account's projection latch machine-wide. The spec's
+            // failure-mode table says a failed availPhys read must SKIP projection evaluation;
+            // clearing the latch is evaluating it (final-branch review IMPORTANT 3). Bare
+            // `!overProjection` is a SEPARATE bug: the projection axis flapped live -- crossed at
+            // 85 min, cleared, crossed again at 113 min eleven minutes later. ProjectionReArmFactor
+            // requires the countdown to genuinely recover before the latch resets.
+            else if (systemOk && minutes > ProjectionWarnMinutes * ProjectionReArmFactor) { rec.ProjectionLatched = false; }
 
             accounts[i] = a with { OverCap = overCap, IsTarget = target == a.AccountId, MinutesToCeiling = minutes };
         }

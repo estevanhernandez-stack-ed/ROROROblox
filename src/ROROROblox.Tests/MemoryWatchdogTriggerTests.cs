@@ -322,4 +322,163 @@ public class MemoryWatchdogTriggerTests
         wd.Sample();
         Assert.Equal(1, fires);
     }
+
+    [Fact]
+    public void CapOscillatesAcrossBoundary_FiresExactlyOnce()
+    {
+        // Live smoke test: one account crossed the cap FOUR times in eight minutes -- 2657,
+        // 2643, 2642, 2653 MB against a 2640 MB cap, with small dips (13-25 MB, real client
+        // oscillation amplitude) between each crossing. A bare `!overCap` re-arm treats every
+        // one of those dips as "cleared" and re-fires on the very next tick -- this is the
+        // sequence that produces the four-balloons-in-eight-minutes bug. CapReArmFactor (0.95)
+        // means none of these dips (all comfortably above 2640*0.95 = 2508 MB) re-arm the latch.
+        var clock = new FakeClock();
+        var proc = new FakeProcessMemory();
+        var wd = new MemoryWatchdog(proc, new FakeSystemMemory(), clock) { CapBytes = 2640L * 1024 * 1024 };
+        var fires = 0;
+        wd.PressureCrossed += (_, _) => fires++;
+
+        var id = Guid.NewGuid();
+        proc.Readings[10] = 2000L * 1024 * 1024; // under cap -- seeds baseline
+        wd.OnAccountLaunched(id, 10);
+        wd.Sample();
+        Assert.Equal(0, fires);
+
+        long Mb(long mb) => mb * 1024 * 1024;
+        foreach (var reading in new[] { 2657L, 2635L, 2643L, 2638L, 2642L, 2625L, 2653L })
+        {
+            proc.Readings[10] = Mb(reading);
+            wd.Sample();
+        }
+
+        Assert.Equal(1, fires); // must not have re-fired on any of the small dips
+    }
+
+    [Fact]
+    public void CapDropsWellBelowDeadband_ReArmsSoLaterCrossingFiresAgain()
+    {
+        // The guard against over-correcting: a genuine Recycle (~2900 MB -> ~1700 MB, well past
+        // the 2508 MB deadband for a 2640 MB cap) must still re-arm the latch, or a real second
+        // crossing would silently go unreported.
+        var clock = new FakeClock();
+        var proc = new FakeProcessMemory();
+        var wd = new MemoryWatchdog(proc, new FakeSystemMemory(), clock) { CapBytes = 2640L * 1024 * 1024 };
+        var fires = 0;
+        wd.PressureCrossed += (_, _) => fires++;
+
+        var id = Guid.NewGuid();
+        proc.Readings[10] = 2000L * 1024 * 1024;
+        wd.OnAccountLaunched(id, 10);
+        wd.Sample();
+
+        proc.Readings[10] = 2900L * 1024 * 1024; // crosses
+        wd.Sample();
+        Assert.Equal(1, fires);
+
+        proc.Readings[10] = 1700L * 1024 * 1024; // Recycle: well below deadband -- re-arms
+        wd.Sample();
+
+        proc.Readings[10] = 2900L * 1024 * 1024; // genuine second crossing
+        wd.Sample();
+        Assert.Equal(2, fires);
+    }
+
+    [Fact]
+    public void ProjectionOscillatesAcrossThreshold_FiresExactlyOnce()
+    {
+        // Live smoke test: the projection axis crossed at 85 min, cleared, crossed again at
+        // 113 min eleven minutes later. ProjectionReArmFactor (1.15) means recovery must clear
+        // the 120-min warn threshold by 15% (138 min) before the latch re-arms, so a value
+        // hovering just above the raw threshold does not re-fire every tick.
+        const double Gb = 1024.0 * 1024 * 1024;
+        var clock = new FakeClock();
+        var proc = new FakeProcessMemory();
+        var sys = new FakeSystemMemory();
+        var wd = new MemoryWatchdog(proc, sys, clock)
+        {
+            CapBytes = 0, // isolate the projection trigger
+            ReserveBytes = 0,
+            ProjectionWarnMinutes = 120,
+        };
+        var fires = 0;
+        wd.PressureCrossed += (_, _) => fires++;
+
+        var id = Guid.NewGuid();
+        var baseline = (long)(2 * Gb);
+        proc.Readings[10] = baseline;
+        wd.OnAccountLaunched(id, 10);
+        wd.Sample(); // seeds baseline; elapsed 0 -> no projection yet
+        Assert.Equal(0, fires);
+
+        const double growthPerHour = 1 * Gb; // held exactly constant via baseline + rate*elapsed below
+
+        // 15 min in: minutes ~= 100 -- crosses (< 120).
+        clock.Advance(TimeSpan.FromMinutes(15));
+        proc.Readings[10] = (long)(baseline + growthPerHour * (15.0 / 60));
+        sys.Available = (long)(growthPerHour * 100 / 60);
+        wd.Sample();
+        Assert.Equal(1, fires);
+        Assert.True(wd.GetSnapshot().MinutesToCeiling < 120);
+
+        // 30 min in: minutes ~= 130 -- clears the raw `< 120` condition but stays inside the
+        // 138-min deadband. Must NOT re-arm.
+        clock.Advance(TimeSpan.FromMinutes(15));
+        proc.Readings[10] = (long)(baseline + growthPerHour * (30.0 / 60));
+        sys.Available = (long)(growthPerHour * 130 / 60);
+        wd.Sample();
+        Assert.Equal(1, fires);
+
+        // 45 min in: minutes ~= 110 -- flaps back under the warn threshold. Latch was never
+        // cleared, so this must NOT re-fire either.
+        clock.Advance(TimeSpan.FromMinutes(15));
+        proc.Readings[10] = (long)(baseline + growthPerHour * (45.0 / 60));
+        sys.Available = (long)(growthPerHour * 110 / 60);
+        wd.Sample();
+        Assert.Equal(1, fires);
+    }
+
+    [Fact]
+    public void ProjectionRecoversPastDeadband_ReArmsSoLaterCrossingFiresAgain()
+    {
+        const double Gb = 1024.0 * 1024 * 1024;
+        var clock = new FakeClock();
+        var proc = new FakeProcessMemory();
+        var sys = new FakeSystemMemory();
+        var wd = new MemoryWatchdog(proc, sys, clock)
+        {
+            CapBytes = 0,
+            ReserveBytes = 0,
+            ProjectionWarnMinutes = 120,
+        };
+        var fires = 0;
+        wd.PressureCrossed += (_, _) => fires++;
+
+        var id = Guid.NewGuid();
+        var baseline = (long)(2 * Gb);
+        proc.Readings[10] = baseline;
+        wd.OnAccountLaunched(id, 10);
+        wd.Sample();
+
+        const double growthPerHour = 1 * Gb;
+
+        clock.Advance(TimeSpan.FromMinutes(15));
+        proc.Readings[10] = (long)(baseline + growthPerHour * (15.0 / 60));
+        sys.Available = (long)(growthPerHour * 100 / 60); // minutes ~= 100 -- crosses
+        wd.Sample();
+        Assert.Equal(1, fires);
+
+        // Genuine recovery: minutes climbs to ~150, well past the 138-min deadband -> re-arms.
+        clock.Advance(TimeSpan.FromMinutes(15));
+        proc.Readings[10] = (long)(baseline + growthPerHour * (30.0 / 60));
+        sys.Available = (long)(growthPerHour * 150 / 60);
+        wd.Sample();
+        Assert.Equal(1, fires); // re-arming itself must not fire
+
+        // Later genuine crossing must fire again.
+        clock.Advance(TimeSpan.FromMinutes(15));
+        proc.Readings[10] = (long)(baseline + growthPerHour * (45.0 / 60));
+        sys.Available = (long)(growthPerHour * 90 / 60); // minutes ~= 90 -- crosses again
+        wd.Sample();
+        Assert.Equal(2, fires);
+    }
 }
