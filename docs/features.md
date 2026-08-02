@@ -6,7 +6,7 @@
 >
 > **Version attribution.** Best-effort from tags, release runbooks, and commit history. There is no v1.2.x or v1.3.0.0 tag — those dev cycles folded into the first published v1.3 tag (`v1.3.1.0`).
 
-**Current shipped version: `v1.11.1.0`** (tagged 2026-07-10, Store resubmission candidate). Headline: streamer mode. Store ID `9NMJCS390KWB`, listed as "RORORO."
+**Current shipped version: `v1.12.0.0`** (tagged 2026-08-01, Store candidate). Headline: the memory watchdog. Store ID `9NMJCS390KWB`, listed as "RORORO."
 
 ## Version timeline (quick map)
 
@@ -23,7 +23,7 @@
 | v1.9 | In-app plugin marketplace, friends-from-main picker, Win10 22H2 Store floor |
 | v1.10 | Trust-aware Squad Launch (3-phase + careful mode), seamless singleton takeover, default private server, launch-to-home, plugin agent-ops (MarkAccountActive, StopAccounts) |
 | v1.11 / v1.11.1 | Streamer mode (98-name pool, 12 avatars, reveal-only server links), portable-build taskbar identity, real-version diagnostics fix |
-| post-v1.11.1 (untagged) | Arm64 Store MSIX flavor + native Arm64 CI lane (merged, not yet released) |
+| v1.12 | Memory watchdog: per-account memory, RAM-exhaustion warning, one-click Recycle, stray cleanup, contract 0.7.0 memory-pressure capability. Also Arm64 Store MSIX flavor + native Arm64 CI lane (merged post-v1.11.1, first shipped here). |
 
 ## Multi-instance core
 
@@ -130,10 +130,16 @@
 | Resilient presence poll | One failed cycle no longer kills status updates for the session. | v1.7.1 | `PresenceService.cs` |
 | WebView2-missing affordance | Detects missing runtime, hands the user Microsoft's installer. | v1.1 | `src/ROROROblox.App/Modals/WebView2NotInstalledWindow.*` |
 | Roblox-not-installed modal | Friendly Download / "I have Bloxstrap" paths. | v1.1 | `src/ROROROblox.App/Modals/RobloxNotInstalledWindow.*` |
+| Memory watchdog | Samples each launched client's private bytes every 30s; dual triggers (per-client cap + machine-wide RAM-exhaustion projection) with latch hysteresis so a client oscillating at a threshold can't spam warnings. Thresholds derive from installed RAM. | v1.12 | `src/ROROROblox.Core/Diagnostics/MemoryWatchdog.cs`, `MemoryDefaults.cs` |
+| Memory warning surfaces | Amber row chip + tray icon state + balloon; chip and Recycle also present in compact mode. | v1.12 | `MainWindow.xaml`, `Tray/TrayService.cs` |
+| One-click Recycle | Stops one account's client and relaunches it into the same `LaunchTarget`; resets the watchdog baseline. Process exit is the only reclaim Windows offers for the Roblox leak. | v1.12 | `src/ROROROblox.Core/Diagnostics/AccountRecycler.cs` |
+| Stray cleanup | Closes only the windowless leftovers Roblox abandons on exit; never touches a client with a game window. | v1.12 | `RobloxInstanceStopper.StopWindowless`, `Modals/LeftoverProcessesWindow.*` |
+| Fail-closed window probe | An unreadable `MainWindowHandle` now reports *windowed*, so a live game is never mistaken for an orphan and silently closed. | v1.12 (#68) | `src/ROROROblox.Core/Diagnostics/RobloxRunningProbe.cs` |
+| Memory curve in the log | One Information line every 15 minutes with each client's bytes + growth rate — the artifact that makes a "my windows closed" report diagnosable. Version now stamped on every log line. | v1.12 | `MemoryWatchdog.cs`, `Logging/AppLogging.cs` |
+| RAM in System health | Total/available RAM + per-account memory in the diagnostics panel and support bundle. | v1.12 | `src/ROROROblox.Core/Diagnostics/DiagnosticsCollector.cs` |
 
 ## In-flight / queued (not shipped — keep OFF the hub page)
 
-- **Arm64 Store MSIX flavor** — merged post-v1.11.1.0 tag, not yet in a published release.
 - **Account groups** — named "launch these together" sets; spec approved, unbuilt (`docs/superpowers/specs/2026-07-09-account-groups-design.md`).
 - **Account stats: uptime + per-game play time** — presence-driven recording; spec approved, unbuilt (`…account-stats-uptime-design.md`).
 - **Themed window chrome** — WPF-UI FluentWindow/TitleBar across main + modals; spec approved, unbuilt (`…themed-window-chrome-design.md`).

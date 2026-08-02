@@ -22,6 +22,8 @@ description: Multi-launcher for Windows. Run multiple Roblox clients side by sid
 
 Holds the Roblox singleton mutex so additional clients open instead of stealing focus. Uses Roblox's documented authentication-ticket flow for per-account launches. Encrypts saved cookies with the Windows Data Protection API tied to your Windows user — `accounts.dat` copied to another PC won't decrypt.
 
+Watches memory on long sessions. The Roblox client uses more RAM the longer it runs, and enough clients will eventually fill your PC — that's what closes alt windows overnight. RORORO shows what each client is using, warns before your machine runs out, and gives you one click to close and reopen a heavy account right back into the same game.
+
 No DevTools. No registry edits. No telemetry. The Roblox client launches unmodified.
 
 ## Install it

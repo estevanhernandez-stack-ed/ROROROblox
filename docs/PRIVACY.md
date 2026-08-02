@@ -114,8 +114,27 @@ The Diagnostics window (Help → Diagnostics) lets you save a bundle for filing 
 - Roblox client version + WebView2 version (as detected from your system).
 - RORORO version + Windows version.
 - A list of saved account display names + IDs (no cookies, no avatars).
+- *(v1.12+)* Your PC's total and currently-available RAM, and the memory each running Roblox client is using. See [Memory monitoring](#memory-monitoring-v112-and-later) below.
 
 **No cookie values are ever in the bundle.** You can inspect the bundle before sharing it with anyone — the bundle is a `.zip` file you save to a location of your choice; RORORO does not auto-upload it.
+
+**One thing to know before you share a bundle.** The log files inside it were written by Windows applications, and Windows error messages routinely quote full file paths — and a Windows user-profile path contains your account name. We don't put your name anywhere ourselves, but we can't promise it never turns up inside an operating-system error string. If you're posting a bundle somewhere public, open the `.zip` and have a look first.
+
+---
+
+## Memory monitoring (v1.12 and later)
+
+RoRoRo v1.12 added a memory watchdog. The Roblox client uses more memory the longer it runs, and several clients at once will eventually fill your PC — which is what was killing people's alt windows on long sessions. RoRoRo now watches for that and warns you before it happens.
+
+Here is exactly what that involves:
+
+- **What it reads.** For each Roblox client *that RoRoRo launched*, it reads the private-bytes counter — a number Windows already publishes about every running process. It's the same figure Task Manager shows in its Memory column. RoRoRo also reads your PC's total and available RAM. It samples this about every 30 seconds.
+- **What it does not read.** RoRoRo does **not** read the contents of the Roblox client's memory. It does not attach a debugger, inject code, hook the client, or call any memory-reading API. It reads one number per process. The source is open — the entire memory-reading surface is a single line in [`ProcessMemoryProbe.cs`](https://github.com/estevanhernandez-stack-ed/ROROROblox/blob/main/src/ROROROblox.Core/Diagnostics/ProcessMemoryProbe.cs).
+- **Where it goes.** On screen, and into your local log file — one line every 15 minutes recording what each client was using. That log stays on your PC like every other log. **Nothing about your memory use is transmitted anywhere.** There is no endpoint to send it to.
+- **Why the log line exists.** When someone reports "my windows closed on their own," that line is what lets us tell whether the machine ran out of memory. It's the difference between diagnosing a report in minutes and guessing.
+- **What it can do about it.** Nothing on its own. RoRoRo warns you; *you* click Recycle to close and reopen a client. It never closes a client with an open game window without asking.
+
+If a plugin asks for the memory-pressure capability, it receives these same figures — account identifier and memory numbers, no credentials — and only after you grant that capability on the consent sheet, like every other capability.
 
 ---
 
