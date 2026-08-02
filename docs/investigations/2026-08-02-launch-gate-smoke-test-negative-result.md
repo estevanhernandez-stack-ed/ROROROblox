@@ -228,3 +228,100 @@ Roblox client update — **no such update occurred.**
    this version. `GlobalBasicSettings_<N>.xml`'s `FramerateCap` remains the working lever,
    consistent with the 2026-05 finding. **We cannot say when this started** — finding 1
    hid it from us until today.
+
+---
+
+# Addendum — measured 2026-08-02 16:12–16:22
+
+Four measurement runs on the live app. These change the diagnosis and point at a fix.
+
+## Finding D — the first new pid is frequently not the client
+
+`WaitForNewClientAsync` takes the **first** new `RobloxPlayerBeta` pid the probe returns
+and treats it as "our client arrived." Observed across runs, that pid often is not.
+
+| Run | First new pid | Real client | Gap |
+|---|---|---|---|
+| 16:12 | 60464 — exited, never got a window | 5692 (2462 MB, window) | 0.023 s |
+| 16:20 | 15932 — 26 MB, no window, survived | 50828 (2511 MB, window) | **5.92 s** |
+
+In the 16:20 run the gate would have latched pid 15932 at +0 s, held its 1 s settle, and
+released **roughly five seconds before the real client process even started.**
+
+The 26 MB windowless signature also appears when a client is *closed* — pids 62912, 38584,
+58388 and 15932 all match it. So the probe can hand the gate a pid produced by the user
+closing a different window, entirely unrelated to the launch in flight.
+
+No unit test could have caught this: every test probe in the suite returns exactly one
+well-behaved pid that appears once and stays. The author of the measurement script (me)
+made the identical mistake twice before noticing.
+
+## Finding E — the settle grace is off by 2–3x, confirmed three times
+
+Process start → client reads its config, from the client's own logs:
+
+| Run | Interval |
+|---|---|
+| 15:41 este | 2.25 s |
+| 15:41 CElCPapa | 3.25 s |
+| 16:17 este | 1.98 s |
+
+`SettleGrace` is 1 s.
+
+## Finding F — the client rewrites the shared file for ~12 s after launch
+
+This is the one that reframes the bug. Watching
+`%LOCALAPPDATA%\Roblox\GlobalBasicSettings_13.xml` across a single launch:
+
+```
+change #1  16:20:58.362  (+0 s)      <- ours, pre-Process.Start
+change #2  16:21:00.052  (+1.69 s)   <- client
+change #3  16:21:03.879  (+5.52 s)   <- client
+change #4  16:21:06.944  (+8.58 s)   <- client
+change #5  16:21:10.423  (+12.06 s)  <- client
+(then silent for the remaining 48 s of the observation window)
+```
+
+**A starting client does not read this file once — it re-persists its own value
+repeatedly for about twelve seconds.** So the race runs in both directions:
+
+- our write for account B lands before A's client reads → A gets B's cap (the original bug), and
+- our write for account B lands during A's writeback window → **A's client overwrites it,
+  and B reads A's cap.**
+
+It also explains the 15:41 symptom exactly. Este read 20 before it could keep 9999, then
+faithfully wrote 20 back. Everything converged on 20.
+
+**The writes stop.** Twelve seconds of contention, then quiet. That quiet is the fix.
+
+## The fix this points to
+
+Stop inferring the safe moment from pids and fixed delays. **Anchor on the file itself
+going quiet.** After a launch, watch `GlobalBasicSettings_<N>.xml` and wait until it has
+been unmodified for a short debounce (~2 s). That single condition covers the client's
+read *and* its writeback storm, needs no pid heuristics, and self-tunes to machine speed —
+a slow cold start simply stays noisy longer.
+
+Pair it with the free correctness win: **the race only exists when consecutive launches
+want different caps.** If every account shares a value, the file already holds it and
+there is nothing to protect — launch at full speed. Most users set one cap, so most users
+pay nothing, and the ~12 s per-launch cost lands only on the configuration that actually
+needs it.
+
+Sequence per launch, when caps differ: write cap → launch → wait for the file to go quiet
+→ next launch.
+
+### What still needs proving
+
+The debounce design is sound on one run's data. Before building it:
+
+- Reproduce the quiet window with **differing** caps, which is the case that matters and
+  the case no run so far has exercised (every run used matching values, so no write could
+  be distinguished from another by content).
+- Confirm 12 s is typical rather than lucky — cold start, a busy machine, and a
+  three-account sequence.
+- Confirm a fully-started client stays quiet, so the debounce cannot be defeated by an
+  older client writing during a later launch.
+
+If the quiet window turns out not to exist under load, the honest answer is a single
+global cap rather than per-account, and the feature gets retired rather than patched.
