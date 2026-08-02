@@ -15,6 +15,7 @@ public class AccountRecyclerTests
         public readonly List<Guid> Stopped = new();
         public int StopAll() => 0;
         public bool StopAccount(Guid accountId) { Stopped.Add(accountId); return true; }
+        public int StopWindowless() => 0;
     }
 
     private sealed class RecordingLauncher

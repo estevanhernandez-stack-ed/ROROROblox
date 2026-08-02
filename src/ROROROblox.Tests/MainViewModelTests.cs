@@ -933,6 +933,7 @@ public class MainViewModelTests
         public readonly List<Guid> StoppedAccountIds = new();
         public int StopAll() => 0;
         public bool StopAccount(Guid accountId) { StoppedAccountIds.Add(accountId); return true; }
+        public int StopWindowless() => 0;
     }
 
     /// <summary>

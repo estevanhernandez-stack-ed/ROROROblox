@@ -59,6 +59,39 @@ public sealed class RobloxInstanceStopper : IRobloxInstanceStopper
             return 0;
         }
 
+        return KillAndWaitAll(pids, "StopAll");
+    }
+
+    public int StopWindowless()
+    {
+        IReadOnlyList<RobloxProcessInfo> players;
+        try
+        {
+            players = _probe.GetRunningPlayers();
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "StopWindowless: running-process scan failed; stopped nothing.");
+            return 0;
+        }
+
+        // The safety-critical filter. RobloxRunningProbe.ReadHasWindow fails CLOSED — a process
+        // it could not classify comes back HasWindow == true — so restricting to !HasWindow here
+        // is the entire justification for the LEFTOVER modal's "Clear strays" button skipping a
+        // confirmation prompt. Never loosen this to anything but an explicit HasWindow == false.
+        var pids = players.Where(p => !p.HasWindow).Select(p => p.Pid).ToArray();
+
+        return KillAndWaitAll(pids, "StopWindowless");
+    }
+
+    /// <summary>
+    /// Shared kill-and-wait teardown for <see cref="StopAll"/> and <see cref="StopWindowless"/>:
+    /// best-effort kill of every pid (one failure doesn't abort the rest), then a bounded wait
+    /// for exit across all of them sharing a single deadline. <paramref name="label"/> only
+    /// affects the log lines so each caller's Information/Warning output stays attributable.
+    /// </summary>
+    private int KillAndWaitAll(IReadOnlyList<int> pids, string label)
+    {
         var killed = 0;
         foreach (var pid in pids)
         {
@@ -76,7 +109,7 @@ public sealed class RobloxInstanceStopper : IRobloxInstanceStopper
                 // status is set, which happens after teardown begins). That pid is dying, still
                 // holds the singleton mutex object, and MUST be waited on below — so the wait
                 // set is every probed pid, not just the cleanly-killed ones.
-                _log.LogWarning(ex, "StopAll: kill failed for pid {Pid}; continuing (will still wait for exit).", pid);
+                _log.LogWarning(ex, "{Label}: kill failed for pid {Pid}; continuing (will still wait for exit).", label, pid);
             }
         }
 
@@ -105,10 +138,10 @@ public sealed class RobloxInstanceStopper : IRobloxInstanceStopper
             if (stillExiting > 0)
             {
                 _log.LogWarning(
-                    "StopAll: {Count} process(es) had not finished exiting within the {Budget} ms wait budget.",
-                    stillExiting, _exitWaitBudgetMs);
+                    "{Label}: {Count} process(es) had not finished exiting within the {Budget} ms wait budget.",
+                    label, stillExiting, _exitWaitBudgetMs);
             }
-            _log.LogInformation("StopAll: signalled {Stopped}/{Total} Roblox instance(s); all probed pids waited for exit.", killed, pids.Count);
+            _log.LogInformation("{Label}: signalled {Stopped}/{Total} Roblox instance(s); all probed pids waited for exit.", label, killed, pids.Count);
         }
         return killed;
     }

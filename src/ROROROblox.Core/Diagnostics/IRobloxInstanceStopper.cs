@@ -21,4 +21,15 @@ public interface IRobloxInstanceStopper
     /// account has no tracked process — there is nothing to stop, which is not an error.
     /// </summary>
     bool StopAccount(Guid accountId);
+
+    /// <summary>
+    /// Force-closes every running RobloxPlayerBeta.exe the running probe reports as windowless —
+    /// the LEFTOVER modal's "Clear strays" action. A windowed client is never touched by this
+    /// method, no matter what: <see cref="RobloxRunningProbe.ReadHasWindow"/> fails CLOSED, so a
+    /// process this call cannot stop is, by construction, one the probe could positively classify
+    /// as having a window. Reuses the same kill + bounded exit-wait budget as <see cref="StopAll"/>.
+    /// Degrade-safe: a probe failure resolves to 0, and a single kill failure never aborts the rest.
+    /// Returns the count actually stopped.
+    /// </summary>
+    int StopWindowless();
 }

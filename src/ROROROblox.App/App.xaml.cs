@@ -170,9 +170,14 @@ public partial class App : Application
         {
             var info = new Modals.LeftoverProcessesWindow(leftover.Windowless, leftover.Windowed);
             info.ShowDialog();
-            if (info.CleanUpRequested)
+            switch (info.Action)
             {
-                CleanUpLeftoverRoblox(leftover.Windowed > 0);
+                case Modals.LeftoverCleanupAction.StopAll:
+                    CleanUpLeftoverRoblox(leftover.Windowed > 0);
+                    break;
+                case Modals.LeftoverCleanupAction.ClearStrays:
+                    ClearLeftoverStrays();
+                    break;
             }
             // mutex already held — proceed regardless
         }
@@ -1346,6 +1351,22 @@ public partial class App : Application
             _services.GetRequiredService<IRobloxInstanceStopper>().StopAll();
         }
         catch (Exception ex) { _log?.LogWarning(ex, "Leftover clean-up failed."); }
+    }
+
+    /// <summary>
+    /// LEFTOVER modal's "Clear strays" action: stops only the windowless orphans and leaves any
+    /// windowed clients running untouched — no confirmation, because a windowless orphan has
+    /// nothing to lose (same reasoning as <see cref="SeamlessTakeover.WindowlessOnly"/>).
+    /// </summary>
+    private void ClearLeftoverStrays()
+    {
+        if (_services is null) return;
+        try
+        {
+            var stopped = _services.GetRequiredService<IRobloxInstanceStopper>().StopWindowless();
+            _log?.LogInformation("Leftover clean-up: cleared {Stopped} windowless stray Roblox process(es).", stopped);
+        }
+        catch (Exception ex) { _log?.LogWarning(ex, "Leftover stray clean-up failed."); }
     }
 
     /// <summary>
