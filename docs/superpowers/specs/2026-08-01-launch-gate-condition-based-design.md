@@ -1,0 +1,83 @@
+# Condition-based launch gate — per-account settings must survive close-together launches
+
+**Date:** 2026-08-01
+**Status:** Approved design. Fixes a defect shipping in v1.12.0.0 and earlier.
+**Severity:** Silent wrong behavior — no error, no log, the user's configured value simply does not apply.
+
+## The bug, observed live
+
+Two accounts launched roughly one second apart on 2026-08-01:
+
+- `estehernandez` — FPS configured **Unlimited** (`FpsPresets.Unlimited = 9999`)
+- `CElCPapa` — FPS configured **20**
+
+`estehernandez` ran at **20**. Confirmed by the user in-client, and `GlobalBasicSettings_13.xml` held `FramerateCap = 20` afterwards. The account's configured value was silently discarded.
+
+This is not a don't-write default: `Unlimited` is a real value RoRoRo writes. The second account's write landed before the first client had read the file.
+
+## Root cause: the hold is anchored to the wrong event
+
+`RobloxLauncher` serializes launches behind `_launchGate` and holds for `FFlagReadHold` (250 ms) so the launched client can read its settings before the next write:
+
+```csharp
+var result = await ExecuteLaunchAsync(cookie, target, browserTrackerId);
+await Task.Delay(FFlagReadHold);          // 250 ms, measured from here
+```
+
+`ExecuteLaunchAsync` ends at `Process.Start` on a `roblox-player:` URI. **That returns when Windows accepts the protocol-handler invocation** — not when `RobloxPlayerBeta` exists, and nowhere near when it has read `GlobalBasicSettings`.
+
+Between those moments: the shell resolves the protocol handler, the Roblox bootstrapper starts, it may run an update check, and only then does the real client process start and read its settings. That gap is **seconds, unbounded, and variable** with cold start, disk speed, and machine load.
+
+**So no fixed delay is correct.** 250 ms was too small; 3 s would be a larger guess that still fails on a cold start. The constant is anchored to an event with an unbounded gap after it. This is the case for condition-based waiting rather than a timeout.
+
+**Blast radius.** Both settings writers share the problem — `ClientAppSettings.json` (FFlags) and `GlobalBasicSettings_<N>.xml` (the user-facing settings file) are each machine-global and read once at client startup. **Squad Launch is the feature that launches accounts simultaneously**, so it is the worst affected, and it fails silently. Any future per-account setting written to either file inherits this race — which is a standing tax on the whole design direction, not a one-off.
+
+## Design
+
+`RobloxLauncher` gains an optional `IRobloxRunningProbe`, matching how `IClientAppSettingsWriter` and `IGlobalBasicSettingsWriter` are already injected (nullable, feature-degrades when absent). Inside the existing `_launchGate`:
+
+1. **Snapshot** `GetRunningPlayerPids()` before writing settings.
+2. Write per-account settings — **unchanged**.
+3. `ExecuteLaunchAsync` — **unchanged**.
+4. **If the launch started and a probe is available**, poll until a pid appears that was not in the snapshot, then wait a short settle grace. Otherwise fall back to the existing fixed `FFlagReadHold`.
+5. Release the gate.
+
+### Constants
+
+| Name | Value | Reasoning |
+| --- | --- | --- |
+| `NewClientPollInterval` | 250 ms | Cheap — `Process.GetProcessesByName` over a handful of processes. Fast enough that detection latency is not the bottleneck. |
+| `NewClientWaitTimeout` | 30 s | Ceiling for a cold start with a bootstrapper update. On expiry, release anyway and degrade to today's behavior rather than hanging. |
+| `SettleGrace` | 1 s | The remaining guess — but anchored to *the client process existing* rather than *Windows accepting a URI*. That re-anchoring is the fix; the residual second is small and bounded where the old 250 ms was measured against an unbounded gap. |
+| `FFlagReadHold` | 250 ms | Retained unchanged as the no-probe fallback. |
+
+### Why these five properties matter
+
+- **Wait only on success.** A `Failed`, `CookieExpired`, or `Limited` result releases the gate immediately. Failures stay fast; a user without Roblox installed does not eat a 30 s timeout on every click.
+- **Hard ceiling.** A launch that never produces a client must not hang Squad Launch. Timeout degrades to current behavior.
+- **Snapshot-diffing handles orphans.** Roblox leaves windowless `RobloxPlayerBeta` processes behind on exit (three were present on the test machine 45 minutes after quitting). They are in the snapshot, so they cannot be mistaken for the new client.
+- **Delays go through the injected `TimeProvider`**, which `RobloxLauncher` already holds. Tests drive time with a fake and run instantly. **This is what makes a race testable at all** — without it the tests would sleep and stay flaky.
+- **No behavior change when the probe is absent.** Existing call sites and tests that construct `RobloxLauncher` without a probe keep today's semantics exactly.
+
+## Testing
+
+xUnit, fake `TimeProvider`, fake `IRobloxRunningProbe`. No test sleeps or launches anything.
+
+- A new pid appearing releases the gate; assert the wait ended on detection, not on timeout.
+- No new pid ever appearing releases the gate at the timeout — asserted as a timeout, not a hang.
+- A failed launch never waits at all.
+- Pre-existing pids (including windowless orphans) do not count as the new client.
+- Absent probe falls back to `FFlagReadHold` with unchanged behavior.
+- **The end-to-end property:** two sequential launches with different per-account FPS values each write *and retain* their own value — the second write must not land before the first client is detected. This is the test that would have caught the shipped bug; the others are scaffolding around it.
+
+Each test must name the production change that would make it fail. A race-condition test that passes against the broken code is worse than none.
+
+## Out of scope
+
+- **Waiting for the client's main window** instead of process existence. Strictly stronger evidence that settings were read, but adds 10-20 s per launch. Revisit only if the settle grace proves insufficient in the field.
+- **Making the settings files non-shared.** Not ours to change; they are Roblox's, machine-global by design.
+- **Per-account graphics quality.** Separate feature, justified on performance rather than memory grounds — see `docs/investigations/2026-08-01-graphics-quality-memory-negative-result.md`. It depends on this fix landing first, since it would ride the same shared-file path and inherit the same race.
+
+## Consequence accepted
+
+Squad Launch gets slower — each launch now waits for its client to appear rather than firing at 250 ms intervals. Six accounts move from near-instant to roughly 15-30 s of staggered launching. **Accepted deliberately:** today it is fast and silently wrong, and a per-account setting that does not apply is worse than a slower launch that does.
