@@ -47,6 +47,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly IRobloxUpdateProbe _updateProbe;
     private readonly Core.Transport.IAccountTransport _accountTransport;
     private readonly IActivityMonitor _activityMonitor;
+    private readonly IMemoryWatchdog _memoryWatchdog;
+    private readonly IRobloxInstanceStopper _instanceStopper;
+    private readonly AccountRecycler _accountRecycler;
+    private readonly ITrayService _tray;
     private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
     private readonly Core.StreamerMode.IStreamerIdentityProvider? _streamerIdentity;
     private readonly ILogger<MainViewModel> _log;
@@ -70,6 +74,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly Dictionary<Guid, AppStorageDefender> _defendersByAccountId = new();
     private readonly object _defendersLock = new();
     private readonly DispatcherTimer _ticker;
+
+    /// <summary>The one row currently highlighted via <see cref="SetFocusedAccount"/> (Task 8), if any.</summary>
+    private Guid? _focusedAccountId;
 
     private string _statusBanner = string.Empty;
     private string? _robloxCompatBanner;
@@ -102,6 +109,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         IRobloxUpdateProbe updateProbe,
         Core.Transport.IAccountTransport accountTransport,
         IActivityMonitor activityMonitor,
+        IMemoryWatchdog memoryWatchdog,
+        IRobloxInstanceStopper instanceStopper,
+        ITrayService tray,
         Notifications.IdleAlertPresenter idleAlertPresenter,
         Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
         ILogger<MainViewModel>? log = null)
@@ -126,9 +136,19 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _updateProbe = updateProbe;
         _accountTransport = accountTransport;
         _activityMonitor = activityMonitor;
+        _memoryWatchdog = memoryWatchdog;
+        _instanceStopper = instanceStopper;
+        _tray = tray;
         _idleAlertPresenter = idleAlertPresenter;
         _streamerIdentity = streamerIdentity;
         _log = log ?? NullLogger<MainViewModel>.Instance;
+
+        // AccountRecycler (Task 8) is built here, not injected — its LaunchDelegate needs to call
+        // back into THIS instance's own launch path (LaunchForRecycleAsync) so a recycle raises
+        // AccountLaunched on the plugin bus exactly like any other launch, with no new wiring.
+        // Capturing the method group is safe mid-constructor: the delegate isn't INVOKED until
+        // later, well after construction finishes.
+        _accountRecycler = new AccountRecycler(_instanceStopper, LaunchForRecycleAsync, _memoryWatchdog, _log);
 
         // Mirror must exist before any off-thread reader (presence loop, plugin host) can
         // resolve this VM — the ctor runs on the UI thread, so wiring it here is race-free.
@@ -144,6 +164,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OpenSettingsCommand = new RelayCommand(OpenSettings);
         LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !a.SessionLimited && !(a.InGame || a.IsRunning)));
         StopAccountCommand = new RelayCommand(p => StopAccount(p as AccountSummary));
+        RecycleAccountCommand = new RelayCommand(p => _ = RecycleAccountAsync(p as AccountSummary));
         OpenDiagnosticsCommand = new RelayCommand(OpenDiagnostics);
         OpenAboutCommand = new RelayCommand(OpenAbout);
         OpenSquadLaunchCommand = new RelayCommand(OpenSquadLaunchAsync, () => !IsBusy && Accounts.Count > 0);
@@ -191,6 +212,26 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // VM only reacts to the crossing event + refreshes the passive row/banner display below.
         _activityMonitor.WarnThresholdCrossed += OnActivityWarnCrossed;
 
+        // Memory watchdog (v1.11, Task 7) — a coalesced, edge-triggered crossing (cap or
+        // projection, latched per account) paints the warned chip immediately instead of waiting
+        // for the next 30s tick. Fires off the watchdog's own sample timer thread, so marshal to
+        // the dispatcher like every other cross-thread event above. Wrapped in try/catch — this is
+        // the FIRST subscriber in the chain (tray + plugin-bus subscribers follow in App.xaml.cs,
+        // both already guarded), so an unhandled throw here (e.g. a TaskCanceledException from
+        // Dispatcher.Invoke during shutdown) would abort the whole multicast delegate and starve
+        // every subscriber behind it of the crossing.
+        _memoryWatchdog.PressureCrossed += (_, snap) =>
+        {
+            try
+            {
+                Application.Current?.Dispatcher.Invoke(() => ApplyMemory(snap));
+            }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "Memory-warning VM apply threw; the row chip may not have refreshed for this crossing.");
+            }
+        };
+
         // Streamer mode (v1.10, Task 10) — keep the main-window switch (and the tray checkmark,
         // via its own subscription) in sync when the mode flips from either surface. Mirrors
         // AccountSummary.OnIdentityChanged's un-marshaled OnPropertyChanged call: WPF's binding
@@ -218,6 +259,26 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             ActivitySnapshotApplier.Apply(Accounts, _activityMonitor.GetSnapshot(),
                 TimeSpan.FromMinutes(_idleWarnThresholdMinutes));
             IdleSummaryText = IdleSummary.Format(Accounts.Count(a => a.IdleWarn), _idleWarnThresholdMinutes);
+
+            // Memory watchdog (Task 7) — repaint from the latest snapshot on the same 30s cadence
+            // as the idle chips above. ApplyMemory (called by RefreshMemoryChips) recomputes
+            // MemoryWarning from the snapshot's own condition every call — cap/projection state,
+            // not "did PressureCrossed just fire" — so a row that's still over cap/projection
+            // stays warned across this passive refresh instead of being wiped back to false
+            // (final-branch review CRITICAL 1, 2026-08-01).
+            RefreshMemoryChips();
+
+            // Task 8 — PressureCrossed is edge-triggered (fires ON a crossing, stays silent while
+            // it holds), so nothing else ever notices when pressure recedes: without this, the tray
+            // badge would stay warned until restart even after the user recycles the fat client and
+            // memory is fine again. Piggyback the clear-check on this same 30s cadence rather than
+            // stand up a second timer. SetMemoryWarning(false) is idempotent when already off
+            // (TrayService short-circuits on no state change), so it's safe to call unconditionally
+            // every tick — no need to track "was it warned" here too.
+            if (MemoryPressureEvaluator.IsClear(_memoryWatchdog.GetSnapshot(), _memoryWatchdog.ProjectionWarnMinutes))
+            {
+                _tray.SetMemoryWarning(false);
+            }
         };
         _ticker.Start();
     }
@@ -374,6 +435,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand OpenSettingsCommand { get; }
     public ICommand LaunchAllCommand { get; }
     public ICommand StopAccountCommand { get; }
+    /// <summary>
+    /// One-click remedy for the tray memory warning (Task 8) — stop the account's client and
+    /// relaunch it into the SAME <see cref="LaunchTarget"/>, via <see cref="AccountRecycler"/>.
+    /// </summary>
+    public ICommand RecycleAccountCommand { get; }
     public ICommand OpenDiagnosticsCommand { get; }
     public ICommand OpenAboutCommand { get; }
     public ICommand OpenSquadLaunchCommand { get; }
@@ -1060,11 +1126,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <summary>Plugin-host seam: read-only access to the saved private-server store.</summary>
     internal IPrivateServerStore PrivateServerStoreForPlugin => _privateServerStore;
 
-    private async Task LaunchAccountAsync(AccountSummary? summary, LaunchTarget? overrideTarget = null)
+    /// <summary>
+    /// Returns the launcher pid (<c>RobloxPlayerLauncher.exe</c>, from <see cref="LaunchResult.Started"/>)
+    /// on success, 0 otherwise. Fire-and-forget from every OTHER caller's POV — the real player
+    /// pid arrives later via <see cref="IRobloxProcessTracker.ProcessAttached"/> — but Task 8's
+    /// <see cref="AccountRecycler"/> needs a definitive success/failure signal synchronously to
+    /// decide whether it's safe to reset the memory-watchdog baseline, so this reports it directly
+    /// rather than making the caller reverse-engineer success from mutated <see cref="AccountSummary"/>
+    /// state.
+    /// </summary>
+    private async Task<int> LaunchAccountAsync(AccountSummary? summary, LaunchTarget? overrideTarget = null)
     {
         if (summary is null)
         {
-            return;
+            return 0;
         }
 
         summary.IsLaunching = true;
@@ -1083,7 +1158,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             catch (AccountStoreCorruptException)
             {
                 ShowDpapiCorruptModal();
-                return;
+                return 0;
             }
 
             _log.LogInformation("Launch dispatch: id={Id} name={Name} robloxUserId={RobloxUserId} cookieFp={CookieFp}",
@@ -1162,17 +1237,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     summary.SessionExpired = false;
                     summary.StatusText = string.Empty;
                     summary.LastClosedAtUtc = null;
+                    // Task 8: remembered so a later Recycle relaunches into the SAME target
+                    // rather than re-resolving from the row's (possibly since-changed) picker.
+                    summary.LastLaunchTarget = target;
                     _log.LogInformation("Launcher pid {Pid} for {AccountId}; tracking RobloxPlayerBeta", started.Pid, summary.Id);
                     await RecordSessionStartAsync(summary, target, started.LaunchedAtUtc);
                     // Fire-and-forget: tracker watches for the player process. UI updates flow back
                     // through ProcessAttached / ProcessAttachFailed events.
                     _ = _processTracker.TrackLaunchAsync(summary.Id, started.LaunchedAtUtc);
-                    break;
+                    return started.Pid;
                 case LaunchResult.CookieExpired:
                     _log.LogInformation("Cookie expired for account {AccountId}", summary.Id);
                     summary.SessionExpired = true;
                     summary.StatusText = string.Empty;
-                    break;
+                    return 0;
                 case LaunchResult.Limited:
                     _log.LogInformation("Account {AccountId} is rate-limited by Roblox (403)", summary.Id);
                     summary.SessionLimited = true;
@@ -1180,16 +1258,18 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     summary.CurrentGameName = null;
                     summary.InGameSinceUtc = null;
                     summary.StatusText = string.Empty;                 // copy comes from SecondaryStatusText
-                    break;
+                    return 0;
                 case LaunchResult.Failed failed when failed.Message.Contains("Roblox does not appear to be installed", StringComparison.OrdinalIgnoreCase):
                     _log.LogWarning("Roblox not installed at launch time for account {AccountId}", summary.Id);
                     summary.StatusText = "Roblox not installed.";
                     ShowRobloxNotInstalledModal();
-                    break;
+                    return 0;
                 case LaunchResult.Failed failed:
                     _log.LogWarning("Launch failed for account {AccountId}: {Message}", summary.Id, failed.Message);
                     summary.StatusText = failed.Message;
-                    break;
+                    return 0;
+                default:
+                    return 0;
             }
         }
         finally
@@ -1197,6 +1277,82 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             summary.IsLaunching = false;
             OnPropertyChanged(nameof(CompactRows));
             OnPropertyChanged(nameof(HasCompactRows));
+        }
+    }
+
+    /// <summary>
+    /// <see cref="AccountRecycler.LaunchDelegate"/> implementation — runs the SAME launch path
+    /// every other caller uses (<see cref="LaunchAccountAsync"/>, via the plugin-host seam), so a
+    /// recycle raises <c>AccountLaunched</c> on the plugin bus exactly like a normal launch. Returns
+    /// 0 (never throws) if the account id no longer resolves to a row — the account may have been
+    /// removed between the warning firing and the user clicking Recycle.
+    /// </summary>
+    private Task<int> LaunchForRecycleAsync(Guid accountId, LaunchTarget target, CancellationToken ct)
+    {
+        // AccountsSnapshot: safe off the UI thread too, matching every other id->summary lookup
+        // in this file's plugin-adjacent seams (MainViewModelLaunchInvokerAdapter et al.).
+        var summary = AccountsSnapshot.FirstOrDefault(a => a.Id == accountId);
+        return summary is null ? Task.FromResult(0) : LaunchAccountAsync(summary, overrideTarget: target);
+    }
+
+    /// <summary>
+    /// One-click remedy for the tray memory warning (Task 8): stop the account's client and
+    /// relaunch into the SAME <see cref="LaunchTarget"/> it was running, via <see cref="AccountRecycler"/>.
+    /// Process exit is the only guaranteed reclaim of Roblox's leaked memory on Windows — this is
+    /// the actual fix the warning points at, not a workaround. Falls back to
+    /// <see cref="ResolveLaunchTarget"/>'s normal resolution when the account has no recorded
+    /// <see cref="AccountSummary.LastLaunchTarget"/> yet (e.g. never finished a tracked launch
+    /// this session). Internal (not private) so tests can await the sequence directly, mirroring
+    /// <see cref="LaunchAccountForPluginAsync"/>.
+    /// </summary>
+    internal async Task<bool> RecycleAccountAsync(AccountSummary? summary)
+    {
+        if (summary is null) return false;
+
+        var target = summary.LastLaunchTarget ?? ResolveLaunchTarget(summary.SelectedGame, overrideTarget: null);
+
+        // Spec log table: pre-recycle private bytes + the target being restored, never a cookie.
+        // AccountMemory is a struct, so a plain FirstOrDefault() can't return null on a miss —
+        // project through a nullable Select first so "no reading yet" stays distinguishable from
+        // a genuine (impossible-in-practice) 0-byte reading.
+        long? preRecycleBytes = _memoryWatchdog.GetSnapshot().Accounts
+            .Where(a => a.AccountId == summary.Id && a.ReadOk)
+            .Select(a => (long?)a.PrivateBytes)
+            .FirstOrDefault();
+        _log.LogInformation(
+            "Recycle requested for account {AccountId} ({DisplayName}): pre-recycle private bytes={PreBytes}, target={Target}",
+            summary.Id, summary.DisplayName, preRecycleBytes, target.GetType().Name);
+
+        var ok = await _accountRecycler.RecycleAsync(summary.Id, target).ConfigureAwait(true);
+        if (!ok)
+        {
+            StatusBanner = $"Couldn't recycle {summary.RenderName} — relaunch failed.";
+        }
+        return ok;
+    }
+
+    /// <summary>
+    /// Highlights one row — Task 8's tray memory-warning balloon click
+    /// (<see cref="ITrayService.RequestFocusAccount"/>) wired from <c>App.xaml.cs</c>. Clears the
+    /// previous highlight first so at most one row is ever flagged at a time. A no-op (previous
+    /// highlight still clears) if the id no longer resolves to a saved row.
+    /// </summary>
+    internal void SetFocusedAccount(Guid accountId)
+    {
+        if (_focusedAccountId is { } previousId)
+        {
+            var previousRow = Accounts.FirstOrDefault(a => a.Id == previousId);
+            if (previousRow is not null)
+            {
+                previousRow.IsFocused = false;
+            }
+        }
+
+        _focusedAccountId = accountId;
+        var row = Accounts.FirstOrDefault(a => a.Id == accountId);
+        if (row is not null)
+        {
+            row.IsFocused = true;
         }
     }
 
@@ -2105,6 +2261,54 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             _idleAlertPresenter.Notify(crossed.Count, _idleWarnThresholdMinutes, _muteIdleAlerts);
         });
+    }
+
+    /// <summary>
+    /// Passive 30s repaint of every row's memory chip from the watchdog's last completed sample.
+    /// Task 7.
+    /// </summary>
+    private void RefreshMemoryChips() => ApplyMemory(_memoryWatchdog.GetSnapshot());
+
+    /// <summary>
+    /// Projects a <see cref="MemoryPressureSnapshot"/> onto the visible rows via
+    /// <see cref="MemoryChipFormatter.Format"/>. <c>MemoryWarning</c> (and therefore the chip's
+    /// "▲" and the Recycle button's visibility, see <c>MainWindow.xaml</c>'s
+    /// <c>MemoryWarning</c> DataTrigger) is CONDITION-derived from this snapshot every time this
+    /// runs — never edge-derived from "did a crossing just fire." <see cref="IMemoryWatchdog.PressureCrossed"/>
+    /// is edge-triggered (fires once per latch), but the passive 30s ticker
+    /// (<see cref="RefreshMemoryChips"/>) calls this same method with <c>warned</c> nowhere in
+    /// sight — if MemoryWarning depended on which caller invoked this, the ticker's very next tick
+    /// would silently erase a warning (and the Recycle button with it) while the underlying
+    /// pressure condition still holds. Fixed 2026-08-01 (final-branch review CRITICAL 1) — the
+    /// prior "warned: true only from PressureCrossed, warned: false from the ticker" shape did
+    /// exactly that.
+    /// <para>
+    /// <c>account.OverCap</c> scopes the cap axis to the account that is actually over cap
+    /// (deliberately per-row, unlike the old unconditional <c>warned: true</c> which painted every
+    /// row the moment ANY one account crossed). The projection axis is machine-wide by design —
+    /// <see cref="MemoryPressureSnapshot.MinutesToCeiling"/> describes the whole machine's runway,
+    /// not any one client's — so every readable row shares that half of the verdict.
+    /// </para>
+    /// A row with no matching account in the snapshot (not yet launched, or launched after the
+    /// last sample) is left untouched. Task 7.
+    /// </summary>
+    internal void ApplyMemory(MemoryPressureSnapshot snapshot)
+    {
+        // snapshot.Accounts is guaranteed non-null (even pre-first-sample) by
+        // MemoryWatchdog.GetSnapshot()'s seeded field default — no null-guard needed here.
+        var projectionWarned = snapshot.HasProjection
+            && snapshot.MinutesToCeiling < _memoryWatchdog.ProjectionWarnMinutes;
+
+        foreach (var account in snapshot.Accounts)
+        {
+            var row = Accounts.FirstOrDefault(r => r.Id == account.AccountId);
+            if (row is null) continue;
+
+            var warned = account.ReadOk && (account.OverCap || projectionWarned);
+
+            row.MemoryText = MemoryChipFormatter.Format(account, warned, snapshot.HasProjection, snapshot.MinutesToCeiling);
+            row.MemoryWarning = warned;
+        }
     }
 
     /// <summary>

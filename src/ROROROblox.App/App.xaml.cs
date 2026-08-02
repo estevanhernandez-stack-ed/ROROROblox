@@ -46,7 +46,8 @@ public partial class App : Application
         base.OnStartup(e);
 
         // Configure logging FIRST — every other failure mode below benefits from a written record.
-        _loggerFactory = AppLogging.Configure();
+        var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        _loggerFactory = AppLogging.Configure(version);
         _log = _loggerFactory.CreateLogger<App>();
         WireGlobalExceptionHandlers();
 
@@ -55,7 +56,6 @@ public partial class App : Application
         // and is unaffected. One-time class handler — covers windows opened later too.
         WindowTheming.RegisterGlobalDarkTitleBar();
 
-        var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
         _log.LogInformation("ROROROblox starting (v{Version}, OS {Os})", version, Environment.OSVersion);
 
         _singleInstance = new SingleInstanceGuard("ROROROblox-app-singleton");
@@ -170,9 +170,14 @@ public partial class App : Application
         {
             var info = new Modals.LeftoverProcessesWindow(leftover.Windowless, leftover.Windowed);
             info.ShowDialog();
-            if (info.CleanUpRequested)
+            switch (info.Action)
             {
-                CleanUpLeftoverRoblox(leftover.Windowed > 0);
+                case Modals.LeftoverCleanupAction.StopAll:
+                    CleanUpLeftoverRoblox(leftover.Windowed > 0);
+                    break;
+                case Modals.LeftoverCleanupAction.ClearStrays:
+                    ClearLeftoverStrays();
+                    break;
             }
             // mutex already held — proceed regardless
         }
@@ -187,6 +192,8 @@ public partial class App : Application
         WireRobloxWindowDecorator();
         WirePluginEventBus();
         WireActivityMonitor();
+        await WireMemoryWatchdogAsync();
+        WireMemoryWarningTray(); // Task 8 — closes the loop WireMemoryWatchdogAsync doesn't own
         WireContestedWatcher(mainWindow); // Task 8
         // The gate has been answered by now (both modal branches above are blocking), so it is
         // safe to let plugin processes launch. The pipe they handshake against bound earlier.
@@ -524,6 +531,15 @@ public partial class App : Application
             new RobloxTrayLauncher(sp.GetService<ILogger<RobloxTrayLauncher>>()));
         services.AddSingleton<StartupGate>();
 
+        // Memory watchdog (v1.11, Task 7) — samples per-account private bytes + projects time
+        // to machine RAM exhaustion. IClock is already registered above (Activity Monitor).
+        // Singleton so WireRobloxWindowDecorator's launch/exit bookkeeping and MainViewModel's
+        // chip painting share the SAME instance. Started conditionally by WireMemoryWatchdogAsync
+        // once the enabled flag + derived defaults are read from IAppSettings.
+        services.AddSingleton<IProcessMemoryProbe, ProcessMemoryProbe>();
+        services.AddSingleton<ISystemMemoryProbe, SystemMemoryProbe>();
+        services.AddSingleton<IMemoryWatchdog, MemoryWatchdog>();
+
         // Runtime contested-mutex watcher (Task 8) — polls only while we don't hold the mutex,
         // surfacing when the tray-resident Roblox releases it so the runtime banner can offer
         // in-place recovery without a restart. Registered here so its lifetime matches the other
@@ -558,7 +574,9 @@ public partial class App : Application
             sp.GetRequiredService<IRobloxProcessTracker>(),
             sp.GetRequiredService<IMutexHolder>(),
             AppLogging.LogDirectory,
-            dataDir));
+            dataDir,
+            sp.GetRequiredService<ISystemMemoryProbe>(),
+            sp.GetRequiredService<IMemoryWatchdog>()));
 
         // ViewModel + Window.
         services.AddSingleton<MainViewModel>();
@@ -682,6 +700,21 @@ public partial class App : Application
         tray.RequestActivateMain += (_, _) => ActivateMainFromTray(mainWindow);
         tray.RequestOpenHistory += (_, _) => OpenHistoryFromTray(mainWindow);
         tray.RequestOpenPlugins += (_, _) => OpenPluginsFromTray(mainWindow);
+        // Task 8 — the whole reason ShowMemoryWarning carries an accountId: a balloon click that
+        // goes nowhere wastes it. TrayBalloonTipClicked is a WPF-originated UI event (unlike
+        // PressureCrossed), so no dispatcher marshaling is needed here.
+        tray.RequestFocusAccount += (_, accountId) =>
+        {
+            try
+            {
+                SurfaceMainWindow(mainWindow);
+                mainWindow.FocusAccountRow(accountId);
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "RequestFocusAccount handling threw; window surfaced (if it got that far) but the row may not be highlighted.");
+            }
+        };
     }
 
     private void WireMainViewModelEvents(MainWindow mainWindow)
@@ -803,6 +836,14 @@ public partial class App : Application
     /// player process attaches to an account, push the title text + per-account caption color
     /// onto its main HWND (re-applied every 1.5s by the decorator's own timer to defeat
     /// Roblox's occasional self-rename). Untrack on exit so we don't leak entries.
+    /// <para>
+    /// Also the single place the memory watchdog (Task 7) learns about launches/exits —
+    /// <see cref="IMemoryWatchdog.OnAccountLaunched"/>/<see cref="IMemoryWatchdog.OnAccountExited"/>
+    /// fire right alongside <c>decorator.Track</c>/<c>Untrack</c> so ALL per-account process
+    /// bookkeeping stays in one call site instead of a second parallel subscription. Cheap
+    /// dictionary ops even when the watchdog's sample timer was never started (disabled in
+    /// settings) — see <see cref="WireMemoryWatchdogAsync"/>.
+    /// </para>
     /// </summary>
     private void WireRobloxWindowDecorator()
     {
@@ -812,6 +853,7 @@ public partial class App : Application
             var tracker = _services.GetRequiredService<IRobloxProcessTracker>();
             var decorator = _services.GetRequiredService<RobloxWindowDecorator>();
             var vm = _services.GetRequiredService<MainViewModel>();
+            var watchdog = _services.GetRequiredService<IMemoryWatchdog>();
 
             tracker.ProcessAttached += (_, e) =>
             {
@@ -819,8 +861,13 @@ public partial class App : Application
                 var summary = vm.AccountsSnapshot.FirstOrDefault(a => a.Id == e.AccountId);
                 if (summary is null) return;
                 decorator.Track(e.Pid, summary);
+                watchdog.OnAccountLaunched(e.AccountId, e.Pid);
             };
-            tracker.ProcessExited += (_, e) => decorator.Untrack(e.Pid);
+            tracker.ProcessExited += (_, e) =>
+            {
+                decorator.Untrack(e.Pid);
+                watchdog.OnAccountExited(e.AccountId, e.Pid);
+            };
         }
         catch (Exception ex)
         {
@@ -855,6 +902,123 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "WireActivityMonitor failed; idle warnings disabled this session.");
+        }
+    }
+
+    /// <summary>
+    /// Memory watchdog (v1.11, Task 7) — reads the enabled flag + reserve/cap/projection settings
+    /// from <see cref="IAppSettings"/> and starts <see cref="IMemoryWatchdog"/>'s sample timer.
+    /// <para>
+    /// <b>Derive ONCE, never re-derive over an explicit value.</b> <c>MemoryReserveMb</c>/
+    /// <c>MemoryCapMb</c> are <c>int?</c>: <see langword="null"/> means the user never touched the
+    /// setting (derive from installed RAM via <see cref="MemoryDefaults"/>), any value — including
+    /// <c>0</c> for the cap — is a deliberate user choice that must be honoured verbatim (<c>0</c>
+    /// disables the cap trigger; see <see cref="MemoryDefaults.CapMb"/> doc). The pattern is
+    /// <c>settings.Value ?? MemoryDefaults.XMb(total)</c>, converted MB -&gt; bytes with
+    /// <c>* 1024L * 1024L</c>.
+    /// </para>
+    /// <para>
+    /// <see cref="IMemoryWatchdog.OnAccountLaunched"/>/<c>OnAccountExited</c> bookkeeping is wired
+    /// separately, in <see cref="WireRobloxWindowDecorator"/>, at the same
+    /// <see cref="IRobloxProcessTracker.ProcessAttached"/>/<c>ProcessExited</c> call sites the
+    /// decorator uses — this method only owns settings + <see cref="IMemoryWatchdog.Start"/>.
+    /// </para>
+    /// <para>
+    /// <c>MemoryWatchdogEnabled == false</c> returns before <c>Start()</c> — no timer, no sampling,
+    /// no cost. Wrapped defensively like every other Wire*/Initialize* startup step: a watchdog
+    /// wiring failure must never block a user from launching Roblox.
+    /// </para>
+    /// </summary>
+    private async Task WireMemoryWatchdogAsync()
+    {
+        if (_services is null) return;
+        try
+        {
+            var settings = _services.GetRequiredService<IAppSettings>();
+            if (!await settings.GetMemoryWatchdogEnabledAsync().ConfigureAwait(true))
+            {
+                return;
+            }
+
+            var watchdog = _services.GetRequiredService<IMemoryWatchdog>();
+            var systemProbe = _services.GetRequiredService<ISystemMemoryProbe>();
+            systemProbe.TryRead(out var totalPhysicalBytes, out _);
+
+            var reserveMb = await settings.GetMemoryReserveMbAsync().ConfigureAwait(true);
+            var capMb = await settings.GetMemoryCapMbAsync().ConfigureAwait(true);
+            watchdog.ReserveBytes = (reserveMb ?? MemoryDefaults.ReserveMb(totalPhysicalBytes)) * 1024L * 1024L;
+            watchdog.CapBytes = (capMb ?? MemoryDefaults.CapMb(totalPhysicalBytes)) * 1024L * 1024L;
+            watchdog.ProjectionWarnMinutes = await settings.GetProjectionWarnMinutesAsync().ConfigureAwait(true);
+
+            watchdog.Start();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Memory watchdog wiring failed; continuing without it.");
+        }
+    }
+
+    /// <summary>
+    /// Bridges <see cref="IMemoryWatchdog.PressureCrossed"/> to the tray warning badge + balloon
+    /// (Task 8). Deliberately its own Wire* method — <see cref="WireMemoryWatchdogAsync"/> only
+    /// owns settings + <see cref="IMemoryWatchdog.Start"/>, matching that method's own doc note
+    /// that <c>OnAccountLaunched</c>/<c>OnAccountExited</c> bookkeeping lives elsewhere too.
+    /// <para>
+    /// <see cref="IMemoryWatchdog.PressureCrossed"/> fires from <c>MemoryWatchdog.Sample()</c>,
+    /// which runs on the watchdog's own <see cref="System.Threading.Timer"/> callback — NOT the UI
+    /// thread. <see cref="TrayService.SetMemoryWarning"/>/<see cref="TrayService.ShowMemoryWarning"/>
+    /// marshal internally, so this handler doesn't need to; it still wraps in try/catch because an
+    /// unhandled exception on a threadpool timer callback takes the whole process down, and this is
+    /// the one code path that only runs when a user is already in trouble.
+    /// </para>
+    /// <para>
+    /// Only ever calls <c>SetMemoryWarning(true)</c> here — edge-triggered, once per latched
+    /// crossing, matching <c>ShowMemoryWarning</c>'s own contract. Clearing back to <c>false</c> is
+    /// NOT this method's job: <see cref="MainViewModel"/>'s existing 30s ticker re-evaluates
+    /// <see cref="MemoryPressureEvaluator.IsClear"/> against the watchdog's latest snapshot and
+    /// clears the badge once the warning condition actually recedes.
+    /// </para>
+    /// </summary>
+    private void WireMemoryWarningTray()
+    {
+        if (_services is null) return;
+        try
+        {
+            var watchdog = _services.GetRequiredService<IMemoryWatchdog>();
+            var tray = _services.GetRequiredService<ITrayService>();
+            var vm = _services.GetRequiredService<MainViewModel>();
+
+            watchdog.PressureCrossed += (_, snap) =>
+            {
+                try
+                {
+                    tray.SetMemoryWarning(true);
+
+                    if (snap.TargetAccountId is not { } targetId)
+                    {
+                        // Shouldn't happen alongside a crossing -- Sample() only crosses an
+                        // account it could actually read a byte count for -- but degrade to
+                        // "badge only, no balloon" rather than guess at an account to name.
+                        _log?.LogDebug("PressureCrossed fired with no TargetAccountId; badge set, balloon skipped.");
+                        return;
+                    }
+
+                    // AccountsSnapshot: this handler runs on the watchdog's timer thread.
+                    var name = vm.AccountsSnapshot.FirstOrDefault(a => a.Id == targetId)?.RenderName ?? "An account";
+                    tray.ShowMemoryWarning(
+                        "RoRoRo — memory warning",
+                        $"{name} is using a lot of memory. Click to jump to it, then hit Recycle to close and relaunch into the same game.",
+                        targetId);
+                }
+                catch (Exception ex)
+                {
+                    _log?.LogWarning(ex, "Memory-warning tray bridge threw; the warning may not have surfaced for this crossing.");
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Memory-warning tray wiring failed; the tray badge/balloon won't fire this session.");
         }
     }
 
@@ -1190,6 +1354,22 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// LEFTOVER modal's "Clear strays" action: stops only the windowless orphans and leaves any
+    /// windowed clients running untouched — no confirmation, because a windowless orphan has
+    /// nothing to lose (same reasoning as <see cref="SeamlessTakeover.WindowlessOnly"/>).
+    /// </summary>
+    private void ClearLeftoverStrays()
+    {
+        if (_services is null) return;
+        try
+        {
+            var stopped = _services.GetRequiredService<IRobloxInstanceStopper>().StopWindowless();
+            _log?.LogInformation("Leftover clean-up: cleared {Stopped} windowless stray Roblox process(es).", stopped);
+        }
+        catch (Exception ex) { _log?.LogWarning(ex, "Leftover stray clean-up failed."); }
+    }
+
+    /// <summary>
     /// Wires the runtime contested-mutex watcher (Task 4/8): when Roblox grabs the lock while
     /// RoRoRo is running (tray-resident), <see cref="MutexContestedWatcher.ContestedChanged"/>
     /// flips the banner on; the banner's two actions re-enter the same
@@ -1264,8 +1444,9 @@ public partial class App : Application
 
     /// <summary>
     /// Bridges existing App-layer events into the plugin event bus so subscribed plugins
-    /// see them via the SubscribeAccountLaunched / SubscribeAccountExited / SubscribeMutexStateChanged
-    /// gRPC streams. Wrapped in try/catch — a wiring failure must not block App startup.
+    /// see them via the SubscribeAccountLaunched / SubscribeAccountExited /
+    /// SubscribeMutexStateChanged / SubscribeMemoryPressure gRPC streams. Wrapped in
+    /// try/catch — a wiring failure must not block App startup.
     /// </summary>
     private void WirePluginEventBus()
     {
@@ -1277,6 +1458,28 @@ public partial class App : Application
             var bus = _services.GetRequiredService<ROROROblox.App.Plugins.IPluginEventBus>()
                 as ROROROblox.App.Plugins.InProcessPluginEventBus;
             if (bus is null) return;
+
+            // Memory pressure (Task 10): forward every tracked account on the snapshot the
+            // watchdog fires with, not just the target -- WireMemoryWarningTray (separate
+            // subscriber, untouched by this change) only cares about the fattest client for
+            // the tray balloon, but a plugin driving an automated recycle-and-macro-back flow
+            // needs the full per-account picture (over_cap / is_target / read_ok) to decide
+            // what to act on.
+            var watchdog = _services.GetRequiredService<IMemoryWatchdog>();
+            watchdog.PressureCrossed += (_, snap) =>
+            {
+                try
+                {
+                    foreach (var account in snap.Accounts)
+                    {
+                        bus.RaiseMemoryPressure(account);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _log?.LogDebug(ex, "Plugin bus MemoryPressure bridge threw; ignoring.");
+                }
+            };
 
             tracker.ProcessAttached += (_, e) =>
             {

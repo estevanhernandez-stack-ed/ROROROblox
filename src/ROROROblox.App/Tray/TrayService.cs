@@ -2,6 +2,8 @@ using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
 using Hardcodet.Wpf.TaskbarNotification;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.Core;
 using ROROROblox.Core.StreamerMode;
 
@@ -18,6 +20,7 @@ internal sealed class TrayService : ITrayService
     private const string IconResourceBase = "/ROROROblox.App;component/Tray/Resources/";
 
     private readonly IStreamerIdentityProvider _streamerIdentity;
+    private readonly ILogger<TrayService> _log;
     private readonly TaskbarIcon _taskbarIcon;
     private readonly MenuItem _toggleItem;
     private readonly MenuItem _streamerModeItem;
@@ -30,6 +33,13 @@ internal sealed class TrayService : ITrayService
     private MultiInstanceState _currentState = MultiInstanceState.Off;
     private bool _disposed;
 
+    // Memory-warning overlay (Task 8) — deliberately independent of _currentState/UpdateStatus.
+    // _lastMemoryWarningAccountId is remembered so a balloon click can replay the account id on
+    // RequestFocusAccount; Windows' TrayBalloonTipClicked carries no payload of its own. Cleared
+    // by ShowToast so a click on an unrelated (idle-alert) balloon never fires a stale account.
+    private bool _memoryWarningActive;
+    private Guid? _lastMemoryWarningAccountId;
+
     public event EventHandler? RequestOpenMainWindow;
     public event EventHandler? RequestToggleMutex;
     public event EventHandler? RequestStopAllInstances;
@@ -40,14 +50,27 @@ internal sealed class TrayService : ITrayService
     public event EventHandler? RequestActivateMain;
     public event EventHandler? RequestOpenHistory;
     public event EventHandler? RequestOpenPlugins;
+    public event EventHandler<Guid>? RequestFocusAccount;
 
-    public TrayService(IStreamerIdentityProvider streamerIdentity)
+    public TrayService(IStreamerIdentityProvider streamerIdentity, ILogger<TrayService>? log = null)
     {
         _streamerIdentity = streamerIdentity;
+        _log = log ?? NullLogger<TrayService>.Instance;
         _taskbarIcon = new TaskbarIcon();
         // Double-click is the user's "do the thing" gesture — App.xaml.cs decides whether
         // that means "launch main" or "surface the window" based on whether a main is set.
         _taskbarIcon.TrayMouseDoubleClick += (_, _) => RequestActivateMain?.Invoke(this, EventArgs.Empty);
+
+        // Balloon click -> RequestFocusAccount, but only when the balloon on screen was a memory
+        // warning (ShowToast clears _lastMemoryWarningAccountId, so a click on an idle-alert toast
+        // is correctly a no-op here).
+        _taskbarIcon.TrayBalloonTipClicked += (_, _) =>
+        {
+            if (_lastMemoryWarningAccountId is { } accountId)
+            {
+                RequestFocusAccount?.Invoke(this, accountId);
+            }
+        };
 
         var (toggle, streamerMode, menu) = BuildContextMenu();
         _toggleItem = toggle;
@@ -110,15 +133,67 @@ internal sealed class TrayService : ITrayService
         _taskbarIcon.Icon = ResolveIconForState(_currentState);
     }
 
+    /// <summary>
+    /// Toggle the memory-pressure warning badge (Task 8). Independent of <see cref="UpdateStatus"/> —
+    /// see the doc on <see cref="ITrayService.SetMemoryWarning"/> for why the two must never merge.
+    /// <para>
+    /// <b>Thread-safety:</b> <c>IMemoryWatchdog.PressureCrossed</c> — the event this method
+    /// is wired to (App.xaml.cs's <c>WireMemoryWarningTray</c>) — fires from
+    /// <c>MemoryWatchdog.Sample()</c>, which runs on the watchdog's own <see cref="System.Threading.Timer"/>
+    /// callback, NOT the UI thread. <c>_taskbarIcon.Icon</c> is a WPF-hosted property, so this
+    /// marshals via <c>Application.Current.Dispatcher.Invoke</c> the same way
+    /// <see cref="OnStreamerModeChanged"/> already does for its own cross-thread caller.
+    /// </para>
+    /// </summary>
+    public void SetMemoryWarning(bool active)
+    {
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            if (_disposed) return;
+            if (_memoryWarningActive == active) return;
+            _memoryWarningActive = active;
+            _taskbarIcon.Icon = ResolveIconForState(_currentState);
+        });
+    }
+
+    /// <summary>See <see cref="SetMemoryWarning"/>'s thread-safety note — same marshaling reason.</summary>
+    public void ShowMemoryWarning(string title, string message, Guid accountId)
+    {
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            if (_disposed) return;
+            _lastMemoryWarningAccountId = accountId;
+            _taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Warning);
+        });
+    }
+
     private Icon ResolveIconForState(MultiInstanceState state)
     {
+        // Mutex ERROR is the more urgent failure and always wins the tray slot — a memory
+        // warning must never erase the ON/ERROR state the user needs during a real mutex problem.
+        if (_memoryWarningActive && state != MultiInstanceState.Error)
+        {
+            try
+            {
+                return LoadIcon(WarnIconFilename);
+            }
+            catch (Exception ex)
+            {
+                // tray-warn.ico isn't in the tree yet (626labs-design asset still pending) --
+                // degrade to whatever's currently showing rather than crash the one code path
+                // that only runs when a user is already in trouble.
+                _log.LogWarning(ex, "Memory-warning tray icon unavailable; keeping the current icon.");
+                return _taskbarIcon.Icon ?? LoadIcon(StateIconFilename(state));
+            }
+        }
+
         var custom = state switch
         {
             MultiInstanceState.On => _customOn,
             MultiInstanceState.Error => _customError,
             _ => _customOff,
         };
-        return custom ?? LoadIcon(state);
+        return custom ?? LoadIcon(StateIconFilename(state));
     }
 
     private (MenuItem toggle, MenuItem streamerMode, ContextMenu menu) BuildContextMenu()
@@ -192,15 +267,21 @@ internal sealed class TrayService : ITrayService
         Application.Current?.Dispatcher.Invoke(() => _streamerModeItem.IsChecked = _streamerIdentity.IsActive);
     }
 
-    private static Icon LoadIcon(MultiInstanceState state)
-    {
-        var filename = state switch
-        {
-            MultiInstanceState.On => "tray-on.ico",
-            MultiInstanceState.Error => "tray-error.ico",
-            _ => "tray-off.ico",
-        };
+    // Task 8: the memory-warning ring. Not yet in the csproj's <Resource> list — see the comment
+    // there. Application.GetResourceStream is a runtime lookup, so referencing this filename here
+    // compiles and builds fine today; it only throws InvalidOperationException if SetMemoryWarning(true)
+    // is actually invoked before the real asset + csproj <Resource> line are added.
+    private const string WarnIconFilename = "tray-warn.ico";
 
+    private static string StateIconFilename(MultiInstanceState state) => state switch
+    {
+        MultiInstanceState.On => "tray-on.ico",
+        MultiInstanceState.Error => "tray-error.ico",
+        _ => "tray-off.ico",
+    };
+
+    private static Icon LoadIcon(string filename)
+    {
         var resource = Application.GetResourceStream(new Uri(IconResourceBase + filename, UriKind.Relative))
             ?? throw new InvalidOperationException($"Tray icon resource not found: {filename}");
         using var stream = resource.Stream;
@@ -210,6 +291,9 @@ internal sealed class TrayService : ITrayService
     public void ShowToast(string title, string message)
     {
         if (_disposed) return;
+        // This balloon isn't about any one account — clear so a click doesn't replay a stale
+        // memory-warning account id via RequestFocusAccount.
+        _lastMemoryWarningAccountId = null;
         _taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
     }
 

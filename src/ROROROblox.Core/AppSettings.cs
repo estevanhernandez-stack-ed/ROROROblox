@@ -238,6 +238,78 @@ public sealed class AppSettings : IAppSettings, IDisposable
         finally { _gate.Release(); }
     }
 
+    public async Task<bool> GetMemoryWatchdogEnabledAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).MemoryWatchdogEnabled; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetMemoryWatchdogEnabledAsync(bool enabled)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with { MemoryWatchdogEnabled = enabled }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
+    public async Task<int?> GetMemoryReserveMbAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).MemoryReserveMb; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetMemoryReserveMbAsync(int? reserveMb)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with { MemoryReserveMb = reserveMb }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
+    public async Task<int?> GetMemoryCapMbAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).MemoryCapMb; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetMemoryCapMbAsync(int? capMb)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with { MemoryCapMb = capMb }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
+    public async Task<int> GetProjectionWarnMinutesAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).ProjectionWarnMinutes; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetProjectionWarnMinutesAsync(int minutes)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with { ProjectionWarnMinutes = minutes }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
     private async Task<SettingsBlob> LoadAsync()
     {
         if (!File.Exists(_filePath))
@@ -299,8 +371,11 @@ public sealed class AppSettings : IAppSettings, IDisposable
 
     // SettingsBlob: missing fields decode as defaults (System.Text.Json), so older v1 blobs
     // without LaunchMainOnStartup, BloxstrapWarningDismissed, MuteIdleAlerts,
-    // IdleWarnThresholdMinutes, CarefulSquadLaunch, or StreamerMode load cleanly with those
-    // fields at their defaults — no migration step.
+    // IdleWarnThresholdMinutes, CarefulSquadLaunch, StreamerMode, MemoryWatchdogEnabled,
+    // MemoryReserveMb, MemoryCapMb, or ProjectionWarnMinutes load cleanly with those fields at
+    // their defaults — no migration step. MemoryReserveMb/MemoryCapMb default to null ("never
+    // set" — the composition root derives from installed RAM); they are NOT sentinel-zero because
+    // 0 is a real, distinct user choice for MemoryCapMb (disable the cap trigger).
     private sealed record SettingsBlob(
         int Version,
         string? DefaultPlaceUrl,
@@ -310,5 +385,9 @@ public sealed class AppSettings : IAppSettings, IDisposable
         bool MuteIdleAlerts = false,
         int IdleWarnThresholdMinutes = 15,
         bool CarefulSquadLaunch = false,
-        bool StreamerMode = false);
+        bool StreamerMode = false,
+        bool MemoryWatchdogEnabled = true,
+        int? MemoryReserveMb = null,
+        int? MemoryCapMb = null,
+        int ProjectionWarnMinutes = 120);
 }

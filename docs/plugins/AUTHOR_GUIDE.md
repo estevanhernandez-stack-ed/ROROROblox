@@ -105,6 +105,7 @@ Gated by the gRPC interceptor. If you call a method whose required capability is
 | `host.queries.account-activity` | `GetAccountActivity()` — pull per-account idle time (NuGet 0.3.0+) |
 | `host.commands.mark-account-active` | `MarkAccountActive(accountId)` — tell RoRoRo an account is still active after you act on its window, so idle warnings don't misfire (NuGet 0.5.0+) |
 | `host.commands.stop-accounts` | `StopAccounts(accountIds)` — close Roblox clients RoRoRo launched. Graceful close, hard kill as fallback. Destructive: unsaved in-game progress is lost (NuGet 0.6.0+) |
+| `host.events.memory-pressure` | `SubscribeMemoryPressure` (server-streaming) — memory-watchdog crossings, per tracked account (NuGet 0.7.0+) |
 | `host.ui.tray-menu` | `AddTrayMenuItem` — contribute a tray-menu entry |
 | `host.ui.row-badge` | `AddRowBadge` — paint a per-account badge in RoRoRo's main window |
 | `host.ui.status-panel` | `AddStatusPanel` — contribute a status panel pane |
@@ -294,6 +295,44 @@ foreach (var item in activity.Items)
 ```
 
 This capability is consent-gated like every other `host.*` capability — it shows up on the install-time consent sheet with the honest framing above. It is deliberately **read-only telemetry**: RoRoRo doesn't act on your behalf (no auto-relaunch, no auto-input) — that's still your plugin's call, and if it involves synthesizing input, declare the matching `system.*` capability too.
+
+### React to memory pressure — recycle a fat client, then macro back to where it was
+
+Roblox clients leak memory over time — RoRoRo's watchdog samples every tracked account and, when one crosses a threshold (over an absolute cap, or projected to exhaust the machine's RAM), fires a stream item for **every** account it's tracking, not just the one that tripped the crossing (NuGet 0.7.0+, capability `host.events.memory-pressure`).
+
+```csharp
+using var stream = client.SubscribeMemoryPressure(new SubscriptionRequest(), headers);
+await foreach (var snap in stream.ResponseStream.ReadAllAsync())
+{
+    if (!snap.OverCap && !snap.IsTarget) continue; // not the account to act on
+
+    // snap.ReadOk == false means private_bytes is a STALE last-known-good figure, not a
+    // fresh sample — over_cap and is_target are always false in that case too, so the
+    // guard above already filters it out. Never branch on private_bytes alone.
+    Console.WriteLine($"{snap.AccountId} is at {snap.PrivateBytes / 1024 / 1024} MB " +
+        $"({snap.GrowthMbPerHr:F0} MB/hr growth), {snap.MinsToCeiling} min to ceiling.");
+
+    // 1. Recycle: close the fat client (graceful close, hard kill as fallback).
+    var stopped = await client.StopAccountsAsync(new StopAccountsRequest
+    {
+        AccountIds = { snap.AccountId },
+    }, callOptions);
+    if (stopped.FailedAccountIds.Contains(snap.AccountId)) continue;
+
+    // 2. Relaunch — plain default launch, or back into the specific server it was in via
+    //    RequestLaunchTarget if you captured the share URL from GetCurrentServer earlier.
+    var launch = await client.RequestLaunchAsync(new LaunchRequest
+    {
+        AccountId = snap.AccountId,
+    }, callOptions);
+
+    // 3. Macro back to the event spot — your plugin's own automation, not RoRoRo's. This
+    //    is where a portable macro (e.g. RoRoRo Ur Task) drives the freshly-launched
+    //    client from spawn back to wherever the player was standing before the recycle.
+}
+```
+
+`mins_to_ceiling` is `0` when there's no valid projection (not enough observation time yet, flat growth, or a failed system-memory read this tick) — **never** read `0` as "zero minutes left, act now." Gate your reaction on `over_cap` / `is_target`, and treat `mins_to_ceiling` as informational context once you're already acting.
 
 ## Versioning policy (provisional)
 

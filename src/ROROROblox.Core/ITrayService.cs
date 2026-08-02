@@ -45,4 +45,27 @@ public interface ITrayService : IDisposable
 
     /// <summary>Show a passive, non-blocking notification (tray balloon). Used for idle warnings.</summary>
     void ShowToast(string title, string message);
+
+    /// <summary>
+    /// Memory-pressure warning overlay (Task 8). Deliberately SEPARATE from <see cref="UpdateStatus"/> —
+    /// <see cref="MultiInstanceState"/> answers "is multi-instance working", an unrelated axis.
+    /// Folding memory pressure into it would erase the ON/ERROR state the user needs during a
+    /// real mutex problem, which is the more urgent failure. A mutex ERROR icon always wins the
+    /// tray slot; the warning badge only paints over the ON/OFF icons.
+    /// </summary>
+    void SetMemoryWarning(bool active);
+
+    /// <summary>
+    /// Balloon for a newly-crossed memory threshold. Fires once per latched crossing.
+    /// <para>
+    /// Deviation from the task brief's literal <c>(string title, string message)</c> signature:
+    /// a Windows balloon-click event carries no payload of its own, so <paramref name="accountId"/>
+    /// is remembered here and replayed on <see cref="RequestFocusAccount"/> when the user clicks —
+    /// there is no other channel for the click handler to learn which account the balloon was about.
+    /// </para>
+    /// </summary>
+    void ShowMemoryWarning(string title, string message, Guid accountId);
+
+    /// <summary>Fired when the user clicks a memory-warning balloon — carries the target account.</summary>
+    event EventHandler<Guid> RequestFocusAccount;
 }

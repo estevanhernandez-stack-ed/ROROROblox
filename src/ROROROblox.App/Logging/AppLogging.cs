@@ -14,18 +14,24 @@ namespace ROROROblox.App.Logging;
 /// </summary>
 internal static class AppLogging
 {
-    public static string LogDirectory { get; } = Path.Combine(
+    private static string _logDirectory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "ROROROblox",
         "logs");
 
-    public static string LogFilePath { get; } = Path.Combine(LogDirectory, "rororoblox-.log");
+    public static string LogDirectory => _logDirectory;
+
+    public static string LogFilePath => Path.Combine(_logDirectory, "rororoblox-.log");
 
     private static SerilogLoggerFactory? _factory;
 
-    public static ILoggerFactory Configure()
+    public static ILoggerFactory Configure(string version, string? logDirectoryOverride = null)
     {
-        Directory.CreateDirectory(LogDirectory);
+        if (!string.IsNullOrWhiteSpace(logDirectoryOverride))
+        {
+            _logDirectory = logDirectoryOverride;
+        }
+        Directory.CreateDirectory(_logDirectory);
 
         var serilogLogger = new LoggerConfiguration()
             .MinimumLevel.Debug()
@@ -35,14 +41,16 @@ internal static class AppLogging
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
             .MinimumLevel.Override("System", LogEventLevel.Warning)
             .Enrich.WithProperty("App", "ROROROblox")
+            .Enrich.WithProperty("Version", version)
             .WriteTo.File(
                 path: LogFilePath,
                 rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 14,
+                retainedFileCountLimit: 30,
                 fileSizeLimitBytes: 25 * 1024 * 1024,
                 rollOnFileSizeLimit: true,
                 shared: true,
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}",
+                // {Version} MUST be in the template. Enrichment alone never reaches the file sink.
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] v{Version} {SourceContext} {Message:lj}{NewLine}{Exception}",
                 restrictedToMinimumLevel: LogEventLevel.Debug)
             .CreateLogger();
 

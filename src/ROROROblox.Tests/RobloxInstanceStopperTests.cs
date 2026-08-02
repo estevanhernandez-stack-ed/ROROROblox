@@ -28,6 +28,20 @@ public class RobloxInstanceStopperTests
             => _throw is null ? _pids.Select(p => new RobloxProcessInfo(p, false)).ToArray() : throw _throw;
     }
 
+    /// <summary>Fake probe that lets a test control HasWindow per-pid, for
+    /// <see cref="RobloxInstanceStopper.StopWindowless"/> coverage — <see cref="FakeProbe"/> above
+    /// only ever reports windowless (false), which can't express a mixed set.</summary>
+    private sealed class FakeProbeWithWindows : IRobloxRunningProbe
+    {
+        private readonly IReadOnlyList<RobloxProcessInfo> _players;
+        private readonly Exception? _throw;
+        public FakeProbeWithWindows(params RobloxProcessInfo[] players) => _players = players;
+        public FakeProbeWithWindows(Exception ex) { _players = Array.Empty<RobloxProcessInfo>(); _throw = ex; }
+        public IReadOnlyList<int> GetRunningPlayerPids()
+            => _throw is null ? _players.Select(p => p.Pid).ToArray() : throw _throw;
+        public IReadOnlyList<RobloxProcessInfo> GetRunningPlayers() => _throw is null ? _players : throw _throw;
+    }
+
     [Fact]
     public void StopAll_StopsEveryRunningPid()
     {
@@ -161,6 +175,175 @@ public class RobloxInstanceStopperTests
         var count = stopper.StopAll();
 
         Assert.Equal(1, count); // wedge on exit is logged, not thrown — the kill itself succeeded
+    }
+
+    // --- StopWindowless: the stray-only cleanup behind the modal's "Clear strays" button.
+    // Reuses StopAll's kill-and-wait teardown budget, scoped to the subset of pids the probe
+    // reported as HasWindow == false. Safety depends entirely on RobloxRunningProbe.ReadHasWindow
+    // failing CLOSED (8ba5b3f): an unreadable process reports HasWindow == true, so it is
+    // classified as windowed here and never touched by this path.
+
+    [Fact]
+    public void StopWindowless_StopsOnlyTheWindowlessPids_InAMixedSet()
+    {
+        var killed = new List<int>();
+        var stopper = new RobloxInstanceStopper(
+            new FakeProbeWithWindows(
+                new RobloxProcessInfo(101, false),
+                new RobloxProcessInfo(202, true),
+                new RobloxProcessInfo(303, false)),
+            killByPid: killed.Add, waitForExitByPid: (_, _) => true);
+
+        var count = stopper.StopWindowless();
+
+        Assert.Equal(2, count);
+        Assert.Equal(new[] { 101, 303 }, killed);
+    }
+
+    [Fact]
+    public void StopWindowless_AProcessReportedAsWindowed_IsNeverStopped()
+    {
+        // The safety property this whole feature rests on, stated directly: given the fail-closed
+        // probe, HasWindow == true is the signal that protects an unreadable live client (it could
+        // be mid-game with unsaved progress). If this test goes red, a process the probe called
+        // "windowed" got killed anyway — the no-confirmation justification for this button no
+        // longer holds, and that is a data-loss bug, not a style nit.
+        var killed = new List<int>();
+        var stopper = new RobloxInstanceStopper(
+            new FakeProbeWithWindows(
+                new RobloxProcessInfo(101, false),
+                new RobloxProcessInfo(202, true),
+                new RobloxProcessInfo(303, false)),
+            killByPid: killed.Add, waitForExitByPid: (_, _) => true);
+
+        stopper.StopWindowless();
+
+        Assert.DoesNotContain(202, killed);
+    }
+
+    [Fact]
+    public void StopWindowless_ReturnsZero_WhenEveryProcessHasAWindow()
+    {
+        var killed = new List<int>();
+        var stopper = new RobloxInstanceStopper(
+            new FakeProbeWithWindows(
+                new RobloxProcessInfo(101, true),
+                new RobloxProcessInfo(202, true)),
+            killByPid: killed.Add, waitForExitByPid: (_, _) => true);
+
+        var count = stopper.StopWindowless();
+
+        Assert.Equal(0, count);
+        Assert.Empty(killed);
+    }
+
+    [Fact]
+    public void StopWindowless_ReturnsZero_WhenNoneRunning()
+    {
+        var killed = new List<int>();
+        var stopper = new RobloxInstanceStopper(
+            new FakeProbeWithWindows(), killByPid: killed.Add, waitForExitByPid: (_, _) => true);
+
+        var count = stopper.StopWindowless();
+
+        Assert.Equal(0, count);
+        Assert.Empty(killed);
+    }
+
+    [Fact]
+    public void StopWindowless_ContinuesStoppingSurvivors_WhenOneWindowlessKillThrows()
+    {
+        var killed = new List<int>();
+        Action<int> killer = pid =>
+        {
+            if (pid == 202) throw new InvalidOperationException("access denied");
+            killed.Add(pid);
+        };
+        var stopper = new RobloxInstanceStopper(
+            new FakeProbeWithWindows(
+                new RobloxProcessInfo(101, false),
+                new RobloxProcessInfo(202, false),
+                new RobloxProcessInfo(303, false)),
+            killByPid: killer, waitForExitByPid: (_, _) => true);
+
+        var count = stopper.StopWindowless();
+
+        Assert.Equal(2, count);              // 101 + 303 stopped; 202 failed but did not abort the loop
+        Assert.Equal(new[] { 101, 303 }, killed);
+    }
+
+    [Fact]
+    public void StopWindowless_NeverThrows_WhenProbeThrows()
+    {
+        var stopper = new RobloxInstanceStopper(
+            new FakeProbeWithWindows(new IOException("scan failed")), killByPid: _ => { }, waitForExitByPid: (_, _) => true);
+
+        var count = stopper.StopWindowless();
+
+        Assert.Equal(0, count);
+    }
+
+    private sealed class FakeTracker : IRobloxProcessTracker
+    {
+        private readonly Dictionary<Guid, TrackedProcess> _attached = new();
+        public void Attach(Guid accountId, int pid) => _attached[accountId] = new TrackedProcess(pid, DateTimeOffset.UtcNow);
+        public IReadOnlyDictionary<Guid, TrackedProcess> Attached => _attached;
+
+        public Task TrackLaunchAsync(Guid accountId, DateTimeOffset launchedAtUtc, CancellationToken ct = default) => throw new NotImplementedException();
+        public bool AttachExisting(Guid accountId, int pid) => throw new NotImplementedException();
+        public bool IsTracking(Guid accountId) => _attached.ContainsKey(accountId);
+        public bool RequestClose(Guid accountId) => throw new NotImplementedException();
+        public bool Kill(Guid accountId) => throw new NotImplementedException();
+        public event EventHandler<RobloxProcessEventArgs>? ProcessAttached { add { } remove { } }
+        public event EventHandler<RobloxProcessEventArgs>? ProcessAttachFailed { add { } remove { } }
+        public event EventHandler<RobloxProcessEventArgs>? ProcessExited { add { } remove { } }
+    }
+
+    [Fact]
+    public void StopAccount_KillsAndWaitsOnlyTheTrackedPid_ForThatAccount()
+    {
+        var tracker = new FakeTracker();
+        tracker.Attach(Guid.NewGuid(), 111); // unrelated account -- must NOT be touched
+        var accountId = Guid.NewGuid();
+        tracker.Attach(accountId, 909);
+
+        var killed = new List<int>();
+        var waited = new List<int>();
+        var stopper = new RobloxInstanceStopper(
+            new FakeProbe(),
+            tracker: tracker,
+            killByPid: killed.Add,
+            waitForExitByPid: (pid, _) => { waited.Add(pid); return true; });
+
+        var ok = stopper.StopAccount(accountId);
+
+        Assert.True(ok);
+        Assert.Equal(new[] { 909 }, killed);
+        Assert.Equal(new[] { 909 }, waited);
+    }
+
+    [Fact]
+    public void StopAccount_ReturnsFalse_WhenAccountHasNoTrackedProcess()
+    {
+        var tracker = new FakeTracker();
+        var killed = new List<int>();
+        var stopper = new RobloxInstanceStopper(
+            new FakeProbe(), tracker: tracker, killByPid: killed.Add, waitForExitByPid: (_, _) => true);
+
+        var ok = stopper.StopAccount(Guid.NewGuid());
+
+        Assert.False(ok);
+        Assert.Empty(killed);
+    }
+
+    [Fact]
+    public void StopAccount_ReturnsFalse_WhenNoTrackerWired()
+    {
+        // Defensive default: constructing without a tracker (the fake-seam StopAll tests above
+        // never pass one) must degrade to "nothing to stop", not throw.
+        var stopper = new RobloxInstanceStopper(new FakeProbe(), killByPid: _ => { }, waitForExitByPid: (_, _) => true);
+
+        Assert.False(stopper.StopAccount(Guid.NewGuid()));
     }
 
     [Fact]

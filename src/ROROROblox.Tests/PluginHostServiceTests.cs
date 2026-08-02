@@ -1,5 +1,6 @@
 using Grpc.Core;
 using ROROROblox.App.Plugins;
+using ROROROblox.Core.Diagnostics;
 using ROROROblox.PluginContract;
 
 namespace ROROROblox.Tests;
@@ -184,6 +185,83 @@ public class PluginHostServiceTests
         Assert.Equal(9999, evt.ProcessId);
         Assert.Equal(606849621L, evt.PlaceId);
         Assert.Equal("Pet Simulator", evt.PlaceName);
+    }
+
+    /// <summary>
+    /// Wire-shape proof for the memory-pressure stream (memory-watchdog plan, task 10):
+    /// two AccountMemory records raised on the bus -- one a fresh, over-cap, target
+    /// reading, one a stale unreadable one -- and asserts every proto field the mapping
+    /// produces. Catches three distinct regressions a looser test would miss: (1) the
+    /// growth_mb_per_hr unit conversion (source is bytes/hour, wire is MB/hour -- a
+    /// forgotten /1024/1024 would fail the exact-value assert), (2) read_ok not carried
+    /// through (a stale account silently reporting read_ok=true would slip past a test
+    /// that only checked the fresh account), and (3) over_cap/is_target not staying false
+    /// for the stale account (the proto comment promises this is always the case).
+    /// </summary>
+    [Fact]
+    public async Task SubscribeMemoryPressure_FansOutEvents_ToSubscriber()
+    {
+        var registry = new InMemoryRegistry(Array.Empty<InstalledPlugin>());
+        var bus = new InProcessPluginEventBus();
+        var service = new PluginHostService(registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), bus, NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
+
+        var writer = new TestStreamWriter<AccountMemorySnapshot>();
+        using var cts = new CancellationTokenSource();
+        var ctx = FakeServerCallContext.Create("/rororo.plugin.v1.RoRoRoHost/SubscribeMemoryPressure", cts.Token);
+        var streamTask = service.SubscribeMemoryPressure(new SubscriptionRequest(), writer, ctx);
+
+        // Give the subscription a tick to attach the event handler.
+        await Task.Delay(20);
+
+        var freshId = Guid.Parse("00000000-0000-0000-0000-000000000003");
+        var staleId = Guid.Parse("00000000-0000-0000-0000-000000000004");
+
+        // Fresh reading: 2 GiB private bytes, growing 320 MiB/hr, over the cap, and the
+        // selected recycle target.
+        bus.RaiseMemoryPressure(new AccountMemory(
+            AccountId: freshId,
+            PrivateBytes: 2L * 1024 * 1024 * 1024,
+            GrowthBytesPerHour: 320.0 * 1024 * 1024,
+            MinutesToCeiling: 45,
+            OverCap: true,
+            IsTarget: true,
+            ReadOk: true));
+
+        // Stale reading: process unreadable this tick. Last-known-good bytes carried
+        // forward; the source (MemoryWatchdog.Sample) never lets over_cap/is_target be
+        // true for an unreadable account, so both stay false here too.
+        bus.RaiseMemoryPressure(new AccountMemory(
+            AccountId: staleId,
+            PrivateBytes: 1L * 1024 * 1024 * 1024,
+            GrowthBytesPerHour: 0,
+            MinutesToCeiling: 45, // aggregate projection, still valid machine-wide
+            OverCap: false,
+            IsTarget: false,
+            ReadOk: false));
+
+        await writer.WaitForAtLeastAsync(2, TimeSpan.FromSeconds(2));
+
+        cts.Cancel();
+        await streamTask; // should complete cleanly on cancel
+
+        Assert.Equal(2, writer.Written.Count);
+
+        var fresh = writer.Written[0];
+        Assert.Equal(freshId.ToString(), fresh.AccountId);
+        Assert.Equal(2UL * 1024 * 1024 * 1024, fresh.PrivateBytes);
+        Assert.Equal(320.0, fresh.GrowthMbPerHr, precision: 6);
+        Assert.Equal(45u, fresh.MinsToCeiling);
+        Assert.True(fresh.OverCap);
+        Assert.True(fresh.IsTarget);
+        Assert.True(fresh.ReadOk);
+
+        var stale = writer.Written[1];
+        Assert.Equal(staleId.ToString(), stale.AccountId);
+        Assert.Equal(1UL * 1024 * 1024 * 1024, stale.PrivateBytes); // last-known-good, not zeroed
+        Assert.Equal(0.0, stale.GrowthMbPerHr);
+        Assert.False(stale.OverCap);
+        Assert.False(stale.IsTarget);
+        Assert.False(stale.ReadOk); // the flag a plugin must check before trusting PrivateBytes
     }
 
     [Fact]

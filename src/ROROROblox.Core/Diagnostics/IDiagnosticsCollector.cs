@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace ROROROblox.Core.Diagnostics;
 
 /// <summary>
@@ -23,4 +25,7 @@ public sealed record DiagnosticsSnapshot(
     string MultiInstanceState,
     string LogDirectory,
     string DataDirectory,
-    DateTimeOffset CapturedAtUtc);
+    DateTimeOffset CapturedAtUtc,
+    long TotalPhysicalMemoryBytes,
+    long AvailablePhysicalMemoryBytes,
+    IReadOnlyList<AccountMemory> AccountMemory);

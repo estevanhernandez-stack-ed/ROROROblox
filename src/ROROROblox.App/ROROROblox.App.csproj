@@ -70,6 +70,8 @@
     <Resource Include="Tray\Resources\tray-on-titlebar.png" />
     <Resource Include="Tray\Resources\tray-off-titlebar.png" />
     <Resource Include="Tray\Resources\tray-error-titlebar.png" />
+    <Resource Include="Tray\Resources\tray-warn.ico" />
+    <Resource Include="Tray\Resources\tray-warn-titlebar.png" />
   </ItemGroup>
 
   <!-- Embed the source-of-truth agent prompt so the in-app theme builder reads the same

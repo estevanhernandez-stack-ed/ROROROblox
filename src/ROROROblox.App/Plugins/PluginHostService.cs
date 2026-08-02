@@ -309,6 +309,58 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     }
 
     // =====================================================================
+    // SubscribeMemoryPressure (memory-watchdog plan, task 10).
+    //
+    // Same shape as the three streams above. One AccountMemorySnapshot per tracked
+    // account per crossing -- private_bytes stays a stale last-known-good figure (not
+    // zeroed) when read_ok is false, matching MemoryWatchdog's own internal convention
+    // (see MemoryWatchdog.FormatAccountPayload's "(stale)" tag); the plugin decides
+    // whether a stale reading is still useful, but it can never mistake it for fresh.
+    // Capability gate (host.events.memory-pressure) is enforced upstream by
+    // CapabilityInterceptor via RpcMethodCapabilityMap.
+    // =====================================================================
+
+    public override async Task SubscribeMemoryPressure(
+        SubscriptionRequest request,
+        IServerStreamWriter<AccountMemorySnapshot> responseStream,
+        ServerCallContext context)
+    {
+        var channel = Channel.CreateBounded<AccountMemorySnapshot>(
+            new BoundedChannelOptions(64)
+            {
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleReader = true,
+                SingleWriter = false,
+            });
+
+        void Handler(ROROROblox.Core.Diagnostics.AccountMemory a) => channel.Writer.TryWrite(new AccountMemorySnapshot
+        {
+            AccountId = a.AccountId.ToString(),
+            PrivateBytes = (ulong)a.PrivateBytes,
+            GrowthMbPerHr = a.GrowthBytesPerHour / (1024.0 * 1024.0),
+            MinsToCeiling = (uint)a.MinutesToCeiling,
+            OverCap = a.OverCap,
+            IsTarget = a.IsTarget,
+            ReadOk = a.ReadOk,
+        });
+
+        _eventBus.MemoryPressure += Handler;
+        try
+        {
+            await foreach (var evt in channel.Reader.ReadAllAsync(context.CancellationToken).ConfigureAwait(false))
+            {
+                await responseStream.WriteAsync(evt).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) { /* clean stream end on caller disconnect */ }
+        finally
+        {
+            _eventBus.MemoryPressure -= Handler;
+            channel.Writer.TryComplete();
+        }
+    }
+
+    // =====================================================================
     // Command surface (item 13 / plan task 15).
     //
     // RequestLaunch is the plugin-side trigger for the launch pipeline. The

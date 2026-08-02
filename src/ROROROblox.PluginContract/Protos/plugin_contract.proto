@@ -24,6 +24,14 @@ service RoRoRoHost {
   rpc SubscribeAccountExited(SubscriptionRequest) returns (stream AccountExitedEvent);
   rpc SubscribeMutexStateChanged(SubscriptionRequest) returns (stream MutexStateEvent);
 
+  // Server-streaming events (additive, NuGet 0.7.0): memory-pressure crossings from the
+  // host's memory watchdog. One stream item per tracked account whenever the watchdog
+  // latches a new crossing (a cap breach or a projection-to-ceiling warning) -- not a
+  // continuous telemetry feed. Pairs naturally with StopAccounts + RequestLaunch/
+  // RequestLaunchTarget: a plugin can recycle the fattest client and relaunch it back
+  // into the same server. See AUTHOR_GUIDE.md's "React to memory pressure" recipe.
+  rpc SubscribeMemoryPressure(SubscriptionRequest) returns (stream AccountMemorySnapshot);
+
   // Command surface
   rpc RequestLaunch(LaunchRequest) returns (LaunchResult);
 
@@ -132,6 +140,35 @@ message AccountExitedEvent {
 
 message MutexStateEvent {
   string state = 1;  // "On" / "Off" / "Error"
+}
+
+// One tracked account's memory reading at the moment the host's watchdog latched a
+// pressure crossing (NuGet 0.7.0). Every account the watchdog is tracking is included
+// on each crossing, not just the one that tripped the latch -- read is_target / over_cap
+// per-item to see which account(s) are actually the problem.
+message AccountMemorySnapshot {
+  string account_id       = 1;
+  uint64 private_bytes    = 2;
+  double growth_mb_per_hr = 3;
+
+  // Minutes until the machine is projected to hit its RAM ceiling at current growth.
+  // 0 means "no valid projection" (not enough observation time yet, growth is flat, or
+  // the system-memory read failed this tick) -- NEVER read 0 as "zero minutes left, act
+  // now". If your plugin needs to distinguish "no projection" from "imminent", treat any
+  // is_target/over_cap signal as the actionable trigger and use this field only when it
+  // is non-zero.
+  uint32 mins_to_ceiling  = 4;
+  bool   over_cap         = 5;
+  bool   is_target        = 6;   // fattest client with a valid reading, at fire time
+
+  // False when the host could not read this account's process memory THIS tick (the
+  // process may have exited, be elevated, or the read may have simply failed). When
+  // false, private_bytes is a last-known-good figure carried forward from an earlier
+  // successful read, NOT a fresh sample -- do not act on it as current. over_cap and
+  // is_target are always false when read_ok is false: the host itself doesn't trust an
+  // unreadable account enough to flag it as over-cap or select it as the recycle target,
+  // and a plugin shouldn't either.
+  bool   read_ok          = 7;
 }
 
 message LaunchRequest {

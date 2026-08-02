@@ -30,13 +30,17 @@ public class MainViewModelTests
         ICookieCapture? cookieCapture = null,
         Func<IAccountStore, IAccountStore>? wrapStore = null,
         IRobloxApi? api = null,
-        IFavoriteGameStore? favorites = null)
+        IFavoriteGameStore? favorites = null,
+        IRobloxInstanceStopper? instanceStopper = null,
+        IMemoryWatchdog? memoryWatchdog = null,
+        ITrayService? tray = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
         var vmStore = wrapStore?.Invoke(accountStore) ?? (IAccountStore)accountStore;
         var processTracker = new FakeRobloxProcessTracker();
         var windowDecorator = new RobloxWindowDecorator();
+        var trayService = tray ?? new FakeTrayService();
 
         var vm = new MainViewModel(
             cookieCapture: cookieCapture ?? new FakeCookieCapture(),
@@ -59,7 +63,10 @@ public class MainViewModelTests
             updateProbe: new FakeRobloxUpdateProbe(),
             accountTransport: new FakeAccountTransport(),
             activityMonitor: new FakeActivityMonitor(),
-            idleAlertPresenter: new IdleAlertPresenter(new FakeTrayService()));
+            memoryWatchdog: memoryWatchdog ?? new FakeMemoryWatchdog(),
+            instanceStopper: instanceStopper ?? new FakeRobloxInstanceStopper(),
+            tray: trayService,
+            idleAlertPresenter: new IdleAlertPresenter(trayService));
 
         // MainViewModel never disposes the window decorator (App.xaml.cs's DI container owns
         // that lifetime in production); its ctor starts a real 1.5s reapply Timer that would
@@ -645,6 +652,211 @@ public class MainViewModelTests
             => throw new NotImplementedException();
     }
 
+    /// <summary>
+    /// Records <see cref="ResetBaseline"/> calls and returns a settable snapshot — the shared
+    /// <see cref="FakeMemoryWatchdog"/> below throws on both (deliberately, for tests that never
+    /// touch memory-watchdog behavior), so Task 8's recycle tests need a capable double instead.
+    /// </summary>
+    private sealed class SpyMemoryWatchdog : IMemoryWatchdog
+    {
+        public readonly List<(Guid Id, int Pid)> Resets = new();
+        public MemoryPressureSnapshot Snapshot = new(0, 0, 0, false, null, []);
+        public long CapBytes { get; set; }
+        public long ReserveBytes { get; set; }
+        public int ProjectionWarnMinutes { get; set; }
+        public event EventHandler<MemoryPressureSnapshot>? PressureCrossed { add { } remove { } }
+        public void OnAccountLaunched(Guid accountId, int pid) { }
+        public void OnAccountExited(Guid accountId, int pid) { }
+        public void ResetBaseline(Guid accountId, int pid) => Resets.Add((accountId, pid));
+        public void Start() { }
+        public void Stop() { }
+        public void Sample() { }
+        public MemoryPressureSnapshot GetSnapshot() => Snapshot;
+    }
+
+    [Fact]
+    public async Task RecycleAccountCommand_StopsThenRelaunchesIntoTheAccountsLastLaunchTarget()
+    {
+        // MainViewModel-level companion to AccountRecyclerTests: that Core-level suite proves
+        // AccountRecycler forwards whatever target it's GIVEN correctly, but not that MainViewModel
+        // computes/passes the RIGHT target. A wiring bug (e.g. always resolving DefaultGame instead
+        // of reading AccountSummary.LastLaunchTarget) would pass every AccountRecycler test and
+        // still send the user back to square one -- only a MainViewModel-level assertion on target
+        // IDENTITY closes that gap.
+        var launcher = new RecordingSuccessLauncher();
+        var stopper = new FakeRobloxInstanceStopper();
+        var watchdog = new SpyMemoryWatchdog();
+        var (vm, store, _, path) = Build(launcher, instanceStopper: stopper, memoryWatchdog: watchdog);
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+
+            var originalTarget = new LaunchTarget.Place(PlaceId: 555666777);
+            await vm.LaunchAccountForPluginAsync(row, originalTarget);
+            Assert.Same(originalTarget, row.LastLaunchTarget);
+
+            var ok = await vm.RecycleAccountAsync(row);
+
+            Assert.True(ok);
+            Assert.Equal(row.Id, Assert.Single(stopper.StoppedAccountIds));
+            Assert.Equal(2, launcher.Launches.Count); // original launch, then the recycle relaunch
+            Assert.Same(originalTarget, launcher.Launches[1]); // the SAME target -- not re-resolved
+            Assert.Single(watchdog.Resets);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task RecycleAccountCommand_FallsBackToResolvedTarget_WhenAccountNeverLaunchedThisSession()
+    {
+        var launcher = new RecordingSuccessLauncher();
+        var (vm, store, _, path) = Build(launcher, memoryWatchdog: new SpyMemoryWatchdog());
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+            Assert.Null(row.LastLaunchTarget);
+
+            var ok = await vm.RecycleAccountAsync(row);
+
+            Assert.True(ok);
+            var target = Assert.Single(launcher.Launches);
+            Assert.IsType<LaunchTarget.DefaultGame>(target); // no SelectedGame on the row -> default
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ApplyMemory_CalledTwiceWithUnchangedPressure_MemoryWarningStaysTrue()
+    {
+        // CRITICAL 1 (final-branch review, 2026-08-01): MemoryWarning must be CONDITION-derived
+        // from the snapshot, not edge-derived from "did this call originate from a
+        // PressureCrossed event." The prior shape painted MemoryWarning=true only when called
+        // with warned:true (from PressureCrossed) and unconditionally wiped it to false on the
+        // very next passive 30s-ticker call (warned:false) — even with the account still over
+        // cap. The Recycle button is bound solely to MemoryWarning, so it would appear and then
+        // erase itself within one 30s tick. This calls the SAME apply path twice — once
+        // simulating the crossing, once simulating the passive refresh — with an unchanged
+        // over-cap snapshot, and asserts the row is still warned after the second call.
+        var (vm, store, _, path) = Build();
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+
+            var overCapSnapshot = new MemoryPressureSnapshot(
+                AvailableBytes: 1_000_000_000,
+                AggregateGrowthBytesPerHour: 0,
+                MinutesToCeiling: 0,
+                HasProjection: false,
+                TargetAccountId: row.Id,
+                Accounts: [new AccountMemory(row.Id, 6L * 1024 * 1024 * 1024, 0, 0, OverCap: true, IsTarget: true, ReadOk: true)]);
+
+            vm.ApplyMemory(overCapSnapshot); // simulates the PressureCrossed-triggered apply
+            Assert.True(row.MemoryWarning);
+
+            // Discriminator: an unchanged, still-over-cap snapshot must NOT clear the warning on
+            // a second call, the way the old "warned: false" passive-refresh path did.
+            vm.ApplyMemory(overCapSnapshot); // simulates the next 30s ticker's passive refresh
+            Assert.True(row.MemoryWarning);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ApplyMemory_ProjectionIsMachineWide_CapIsScopedPerRow()
+    {
+        // Closes a coverage gap flagged in the final-branch re-review (2026-08-01, residual 3):
+        // the C1 test above always uses HasProjection: false, so ApplyMemory's
+        // `|| projectionWarned` term has zero coverage — deleting it leaves all 982 tests green
+        // while silently killing the Recycle button for the projection axis, the feature's
+        // headline "~N min to ceiling" warning. There was also no test proving a cap breach on
+        // ONE row leaves a SECOND row unwarned (the per-row cap-scoping half of C1 was asserted
+        // by reading the code, not by a test). One test, two cases, same two rows, closes both.
+        var watchdog = new FakeMemoryWatchdogWithProjectionMinutes { ProjectionWarnMinutes = 120 };
+        var (vm, store, _, path) = Build(memoryWatchdog: watchdog);
+        try
+        {
+            var addedA = await store.AddAsync("RowA", "", "cookie");
+            var addedB = await store.AddAsync("RowB", "", "cookie");
+            var rowA = new AccountSummary(addedA);
+            var rowB = new AccountSummary(addedB);
+            vm.Accounts.Add(rowA);
+            vm.Accounts.Add(rowB);
+
+            // Case 1: projection crossed (machine-wide, 30 min < the 120-min threshold above);
+            // only rowA is over cap. Discriminator for `|| projectionWarned`: BOTH rows must
+            // warn — the machine is what runs out, not any one client — so rowB (never over
+            // cap) warning true is the assertion that would go RED if projectionWarned were
+            // dropped from the OR.
+            var projectionSnapshot = new MemoryPressureSnapshot(
+                AvailableBytes: 1_000_000_000,
+                AggregateGrowthBytesPerHour: 500_000_000,
+                MinutesToCeiling: 30,
+                HasProjection: true,
+                TargetAccountId: rowA.Id,
+                Accounts:
+                [
+                    new AccountMemory(rowA.Id, 6L * 1024 * 1024 * 1024, 500_000_000, 30, OverCap: true, IsTarget: true, ReadOk: true),
+                    new AccountMemory(rowB.Id, 1L * 1024 * 1024 * 1024, 0, 30, OverCap: false, IsTarget: false, ReadOk: true),
+                ]);
+
+            vm.ApplyMemory(projectionSnapshot);
+            Assert.True(rowA.MemoryWarning);
+            Assert.True(rowB.MemoryWarning); // discriminator: proves `|| projectionWarned` fires
+
+            // Case 2: no projection at all, same OverCap pattern. Discriminator for
+            // `account.OverCap ||`: only rowA (the over-cap one) may warn now — rowB going
+            // false is the assertion that would go RED if the cap term were dropped from the OR
+            // (leaving warned derived from projectionWarned alone, which is machine-wide and
+            // would paint every row regardless of its own cap state).
+            var capOnlySnapshot = new MemoryPressureSnapshot(
+                AvailableBytes: 1_000_000_000,
+                AggregateGrowthBytesPerHour: 0,
+                MinutesToCeiling: 0,
+                HasProjection: false,
+                TargetAccountId: rowA.Id,
+                Accounts:
+                [
+                    new AccountMemory(rowA.Id, 6L * 1024 * 1024 * 1024, 0, 0, OverCap: true, IsTarget: true, ReadOk: true),
+                    new AccountMemory(rowB.Id, 1L * 1024 * 1024 * 1024, 0, 0, OverCap: false, IsTarget: false, ReadOk: true),
+                ]);
+
+            vm.ApplyMemory(capOnlySnapshot);
+            Assert.True(rowA.MemoryWarning);
+            Assert.False(rowB.MemoryWarning); // discriminator: proves cap scoping is per-row
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    /// <summary>
+    /// The shared <see cref="FakeMemoryWatchdog"/> below throws on most members and hardcodes
+    /// nothing settable pre-construction in a way this test needs — this double just needs a
+    /// real, settable <see cref="ProjectionWarnMinutes"/> (the shared fake's auto-property
+    /// defaults to 0, which would make every projection comparison in <c>ApplyMemory</c>
+    /// trivially false) plus enough of the surface not to throw during
+    /// <see cref="MainViewModel"/> construction (ctor only subscribes to
+    /// <see cref="PressureCrossed"/>, which this never raises).
+    /// </summary>
+    private sealed class FakeMemoryWatchdogWithProjectionMinutes : IMemoryWatchdog
+    {
+        public long CapBytes { get; set; }
+        public long ReserveBytes { get; set; }
+        public int ProjectionWarnMinutes { get; set; }
+        public event EventHandler<MemoryPressureSnapshot>? PressureCrossed { add { } remove { } }
+        public void OnAccountLaunched(Guid accountId, int pid) { }
+        public void OnAccountExited(Guid accountId, int pid) { }
+        public void ResetBaseline(Guid accountId, int pid) { }
+        public void Start() { }
+        public void Stop() { }
+        public void Sample() { }
+        public MemoryPressureSnapshot GetSnapshot() => new(0, 0, 0, false, null, []);
+    }
+
     private sealed class FakeRobloxCompatChecker : IRobloxCompatChecker
     {
         public Task<CompatCheckResult> CheckAsync() => throw new NotImplementedException();
@@ -672,6 +884,14 @@ public class MainViewModelTests
         public Task SetCarefulSquadLaunchAsync(bool careful) => throw new NotImplementedException();
         public Task<bool> GetStreamerModeAsync() => throw new NotImplementedException();
         public Task SetStreamerModeAsync(bool enabled) => throw new NotImplementedException();
+        public Task<bool> GetMemoryWatchdogEnabledAsync() => throw new NotImplementedException();
+        public Task SetMemoryWatchdogEnabledAsync(bool enabled) => throw new NotImplementedException();
+        public Task<int?> GetMemoryReserveMbAsync() => throw new NotImplementedException();
+        public Task SetMemoryReserveMbAsync(int? reserveMb) => throw new NotImplementedException();
+        public Task<int?> GetMemoryCapMbAsync() => throw new NotImplementedException();
+        public Task SetMemoryCapMbAsync(int? capMb) => throw new NotImplementedException();
+        public Task<int> GetProjectionWarnMinutesAsync() => throw new NotImplementedException();
+        public Task SetProjectionWarnMinutesAsync(int minutes) => throw new NotImplementedException();
     }
 
     private sealed class FakeFavoriteGameStore : IFavoriteGameStore
@@ -697,11 +917,43 @@ public class MainViewModelTests
         public event EventHandler<RobloxProcessEventArgs>? ProcessAttachFailed { add { } remove { } }
         public event EventHandler<RobloxProcessEventArgs>? ProcessExited { add { } remove { } }
 
-        public Task TrackLaunchAsync(Guid accountId, DateTimeOffset launchedAtUtc, CancellationToken ct = default) => throw new NotImplementedException();
+        // Fire-and-forget from LaunchAccountAsync's Started case (`_ = _processTracker.TrackLaunchAsync(...)`,
+        // not awaited) -- a synchronous throw here would still surface (the call itself throws
+        // before returning a Task), so this must complete cleanly for any test that exercises the
+        // Started/success path (e.g. the Task 8 recycle tests below).
+        public Task TrackLaunchAsync(Guid accountId, DateTimeOffset launchedAtUtc, CancellationToken ct = default) => Task.CompletedTask;
         public bool AttachExisting(Guid accountId, int pid) => throw new NotImplementedException();
         public bool IsTracking(Guid accountId) => throw new NotImplementedException();
         public bool RequestClose(Guid accountId) => throw new NotImplementedException();
         public bool Kill(Guid accountId) => throw new NotImplementedException();
+    }
+
+    private sealed class FakeRobloxInstanceStopper : IRobloxInstanceStopper
+    {
+        public readonly List<Guid> StoppedAccountIds = new();
+        public int StopAll() => 0;
+        public bool StopAccount(Guid accountId) { StoppedAccountIds.Add(accountId); return true; }
+        public int StopWindowless() => 0;
+    }
+
+    /// <summary>
+    /// Always succeeds with an incrementing pid and records the exact <see cref="LaunchTarget"/>
+    /// instance passed for each account — Task 8's recycle test needs to assert the SAME target
+    /// reaches the launcher, not merely that a launch happened.
+    /// </summary>
+    private sealed class RecordingSuccessLauncher : IRobloxLauncher
+    {
+        private int _nextPid = 5000;
+        public readonly List<LaunchTarget> Launches = new();
+
+        public Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null)
+        {
+            Launches.Add(target);
+            return Task.FromResult<LaunchResult>(new LaunchResult.Started(_nextPid++, DateTimeOffset.UtcNow));
+        }
+
+        public Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null, long? browserTrackerId = null)
+            => throw new NotImplementedException();
     }
 
     private sealed class FakePresenceService : IPresenceService
@@ -798,6 +1050,23 @@ public class MainViewModelTests
         public IReadOnlyList<AccountActivity> GetSnapshot() => throw new NotImplementedException();
     }
 
+    private sealed class FakeMemoryWatchdog : IMemoryWatchdog
+    {
+        public long CapBytes { get; set; }
+        public long ReserveBytes { get; set; }
+        public int ProjectionWarnMinutes { get; set; }
+
+        public event EventHandler<MemoryPressureSnapshot>? PressureCrossed { add { } remove { } }
+
+        public void OnAccountLaunched(Guid accountId, int pid) => throw new NotImplementedException();
+        public void OnAccountExited(Guid accountId, int pid) => throw new NotImplementedException();
+        public void ResetBaseline(Guid accountId, int pid) => throw new NotImplementedException();
+        public void Start() => throw new NotImplementedException();
+        public void Stop() => throw new NotImplementedException();
+        public void Sample() => throw new NotImplementedException();
+        public MemoryPressureSnapshot GetSnapshot() => throw new NotImplementedException();
+    }
+
     private sealed class FakeTrayService : ITrayService
     {
         public void Show() { }
@@ -815,5 +1084,8 @@ public class MainViewModelTests
         public event EventHandler? RequestOpenHistory { add { } remove { } }
         public event EventHandler? RequestOpenPlugins { add { } remove { } }
         public event EventHandler? RequestActivateMain { add { } remove { } }
+        public void SetMemoryWarning(bool active) { }
+        public void ShowMemoryWarning(string title, string message, Guid accountId) { }
+        public event EventHandler<Guid>? RequestFocusAccount { add { } remove { } }
     }
 }

@@ -20,6 +20,7 @@ public sealed class RobloxInstanceStopper : IRobloxInstanceStopper
     private const int ExitWaitBudgetMs = 3000;
 
     private readonly IRobloxRunningProbe _probe;
+    private readonly IRobloxProcessTracker? _tracker;
     private readonly Action<int> _killByPid;
     private readonly Func<int, TimeSpan, bool> _waitForExitByPid;
     private readonly int _exitWaitBudgetMs;
@@ -27,12 +28,18 @@ public sealed class RobloxInstanceStopper : IRobloxInstanceStopper
 
     public RobloxInstanceStopper(
         IRobloxRunningProbe probe,
+        IRobloxProcessTracker? tracker = null,
         Action<int>? killByPid = null,
         ILogger<RobloxInstanceStopper>? log = null,
         Func<int, TimeSpan, bool>? waitForExitByPid = null,
         int? exitWaitBudgetMs = null)
     {
         _probe = probe ?? throw new ArgumentNullException(nameof(probe));
+        // Optional: StopAll (the probe-driven "kill everything" lane) never needed a pid->account
+        // map. StopAccount (Task 8's Recycle) does, so it resolves through this DI-registered
+        // singleton when present; a caller that never invokes StopAccount (e.g. the existing
+        // fake-seam StopAll tests) doesn't need to supply one.
+        _tracker = tracker;
         _killByPid = killByPid ?? KillByPid;
         _waitForExitByPid = waitForExitByPid ?? WaitForExitByPid;
         _exitWaitBudgetMs = exitWaitBudgetMs ?? ExitWaitBudgetMs;
@@ -52,6 +59,39 @@ public sealed class RobloxInstanceStopper : IRobloxInstanceStopper
             return 0;
         }
 
+        return KillAndWaitAll(pids, "StopAll");
+    }
+
+    public int StopWindowless()
+    {
+        IReadOnlyList<RobloxProcessInfo> players;
+        try
+        {
+            players = _probe.GetRunningPlayers();
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "StopWindowless: running-process scan failed; stopped nothing.");
+            return 0;
+        }
+
+        // The safety-critical filter. RobloxRunningProbe.ReadHasWindow fails CLOSED — a process
+        // it could not classify comes back HasWindow == true — so restricting to !HasWindow here
+        // is the entire justification for the LEFTOVER modal's "Clear strays" button skipping a
+        // confirmation prompt. Never loosen this to anything but an explicit HasWindow == false.
+        var pids = players.Where(p => !p.HasWindow).Select(p => p.Pid).ToArray();
+
+        return KillAndWaitAll(pids, "StopWindowless");
+    }
+
+    /// <summary>
+    /// Shared kill-and-wait teardown for <see cref="StopAll"/> and <see cref="StopWindowless"/>:
+    /// best-effort kill of every pid (one failure doesn't abort the rest), then a bounded wait
+    /// for exit across all of them sharing a single deadline. <paramref name="label"/> only
+    /// affects the log lines so each caller's Information/Warning output stays attributable.
+    /// </summary>
+    private int KillAndWaitAll(IReadOnlyList<int> pids, string label)
+    {
         var killed = 0;
         foreach (var pid in pids)
         {
@@ -69,7 +109,7 @@ public sealed class RobloxInstanceStopper : IRobloxInstanceStopper
                 // status is set, which happens after teardown begins). That pid is dying, still
                 // holds the singleton mutex object, and MUST be waited on below — so the wait
                 // set is every probed pid, not just the cleanly-killed ones.
-                _log.LogWarning(ex, "StopAll: kill failed for pid {Pid}; continuing (will still wait for exit).", pid);
+                _log.LogWarning(ex, "{Label}: kill failed for pid {Pid}; continuing (will still wait for exit).", label, pid);
             }
         }
 
@@ -98,12 +138,50 @@ public sealed class RobloxInstanceStopper : IRobloxInstanceStopper
             if (stillExiting > 0)
             {
                 _log.LogWarning(
-                    "StopAll: {Count} process(es) had not finished exiting within the {Budget} ms wait budget.",
-                    stillExiting, _exitWaitBudgetMs);
+                    "{Label}: {Count} process(es) had not finished exiting within the {Budget} ms wait budget.",
+                    label, stillExiting, _exitWaitBudgetMs);
             }
-            _log.LogInformation("StopAll: signalled {Stopped}/{Total} Roblox instance(s); all probed pids waited for exit.", killed, pids.Count);
+            _log.LogInformation("{Label}: signalled {Stopped}/{Total} Roblox instance(s); all probed pids waited for exit.", label, killed, pids.Count);
         }
         return killed;
+    }
+
+    public bool StopAccount(Guid accountId)
+    {
+        if (_tracker is null)
+        {
+            _log.LogWarning("StopAccount: no process tracker wired; cannot resolve a pid for account {AccountId}.", accountId);
+            return false;
+        }
+
+        if (!_tracker.Attached.TryGetValue(accountId, out var tracked))
+        {
+            _log.LogInformation("StopAccount: account {AccountId} has no tracked process; nothing to stop.", accountId);
+            return false;
+        }
+
+        var pid = tracked.Pid;
+        try
+        {
+            _killByPid(pid);
+        }
+        catch (Exception ex)
+        {
+            // Same race StopAll degrades: ERROR_ACCESS_DENIED on a process already mid-teardown
+            // is expected, not fatal — it still holds the mutex object until it finishes dying,
+            // so the wait below runs regardless of whether the kill call itself succeeded.
+            _log.LogWarning(ex, "StopAccount: kill failed for account {AccountId} pid {Pid}; still waiting for exit.", accountId, pid);
+        }
+
+        if (!_waitForExitByPid(pid, TimeSpan.FromMilliseconds(_exitWaitBudgetMs)))
+        {
+            _log.LogWarning(
+                "StopAccount: account {AccountId} pid {Pid} had not finished exiting within the {Budget} ms wait budget.",
+                accountId, pid, _exitWaitBudgetMs);
+        }
+
+        _log.LogInformation("StopAccount: signalled account {AccountId} pid {Pid}.", accountId, pid);
+        return true;
     }
 
     private static void KillByPid(int pid)

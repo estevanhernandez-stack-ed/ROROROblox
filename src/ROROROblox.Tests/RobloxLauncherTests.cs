@@ -519,6 +519,18 @@ public class RobloxLauncherTests
         public bool StreamerMode { get; set; }
         public Task<bool> GetStreamerModeAsync() => Task.FromResult(StreamerMode);
         public Task SetStreamerModeAsync(bool enabled) { StreamerMode = enabled; return Task.CompletedTask; }
+        public bool MemoryWatchdogEnabled { get; set; } = true;
+        public Task<bool> GetMemoryWatchdogEnabledAsync() => Task.FromResult(MemoryWatchdogEnabled);
+        public Task SetMemoryWatchdogEnabledAsync(bool enabled) { MemoryWatchdogEnabled = enabled; return Task.CompletedTask; }
+        public int? MemoryReserveMb { get; set; }
+        public Task<int?> GetMemoryReserveMbAsync() => Task.FromResult(MemoryReserveMb);
+        public Task SetMemoryReserveMbAsync(int? reserveMb) { MemoryReserveMb = reserveMb; return Task.CompletedTask; }
+        public int? MemoryCapMb { get; set; }
+        public Task<int?> GetMemoryCapMbAsync() => Task.FromResult(MemoryCapMb);
+        public Task SetMemoryCapMbAsync(int? capMb) { MemoryCapMb = capMb; return Task.CompletedTask; }
+        public int ProjectionWarnMinutes { get; set; } = 120;
+        public Task<int> GetProjectionWarnMinutesAsync() => Task.FromResult(ProjectionWarnMinutes);
+        public Task SetProjectionWarnMinutesAsync(int minutes) { ProjectionWarnMinutes = minutes; return Task.CompletedTask; }
     }
 
     private sealed class RecordingProcessStarter : IProcessStarter

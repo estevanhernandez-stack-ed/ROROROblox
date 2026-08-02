@@ -167,6 +167,15 @@
                         Closing X minimizes to tray; right-click the tray icon for Preferences, History,
                         Diagnostics, or Quit.
                     </TextBlock>
+                    <TextBlock FontSize="11"
+                               Foreground="{DynamicResource MutedTextBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,4,0,0">
+                        <Run Text="Windows hides new tray icons by default, so RoRoRo's icon may not show right away." />
+                        <Run Text=" Click the " />
+                        <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="^" />
+                        <Run Text=" in the system tray and drag RoRoRo out to keep it visible." />
+                    </TextBlock>
                 </StackPanel>
             </Border>
         </StackPanel>

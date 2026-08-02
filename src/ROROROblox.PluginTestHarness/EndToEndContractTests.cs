@@ -930,6 +930,189 @@ public class EndToEndContractTests
     }
 
     /// <summary>
+    /// Guards the known EndToEndContractTests blindspot documented across this file's other
+    /// Production* tests: a naive test wires <c>currentPluginAccessor</c> to a fixed plugin id,
+    /// which never exercises the header-resolution path production actually uses. This test
+    /// mirrors production (App.xaml.cs wires <c>currentPluginAccessor: () =&gt; null</c>) and
+    /// sends the x-plugin-id header the CapabilityInterceptor reads to resolve the plugin,
+    /// then asserts the gate for the NEW host.events.memory-pressure capability specifically —
+    /// the plugin declares/consents to a different capability, never memory-pressure, and the
+    /// server-streaming call must be denied before the client reads a single item.
+    /// </summary>
+    [Fact]
+    public async Task SubscribeMemoryPressure_ProductionAccessor_DeniedWhenCapabilityNotGranted()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+
+        var registry = new SingleInstalledPluginLookup(new InstalledPlugin
+        {
+            Manifest = new PluginManifest
+            {
+                SchemaVersion = 1,
+                Id = "626labs.test",
+                Name = "Test",
+                Version = "1.0",
+                ContractVersion = "1.0",
+                Publisher = "626",
+                Description = "x",
+                // host.events.memory-pressure is required by SubscribeMemoryPressure and is NOT granted.
+                Capabilities = new[] { "host.events.account-launched" },
+            },
+            InstallDir = Path.GetTempPath(),
+            Consent = new ConsentRecord
+            {
+                PluginId = "626labs.test",
+                GrantedCapabilities = new[] { "host.events.account-launched" },
+                AutostartEnabled = false,
+            },
+        });
+
+        var hostService = new PluginHostService(
+            registry, "1.4.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            new InProcessPluginEventBus(),
+            new NoOpLauncher(),
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider(),
+            new StubActivityMarker(),
+            new StubAccountStopper());
+
+        // Production shape: accessor returns null. Header is the only path to a plugin id.
+        var interceptor = new CapabilityInterceptor(
+            currentPluginAccessor: () => null,
+            consentLookup: id => new[] { "host.events.account-launched" });
+
+        var startup = new PluginHostStartupService(
+            hostService, interceptor,
+            NullLogger<PluginHostStartupService>.Instance,
+            pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+            var headers = new Metadata { { "x-plugin-id", "626labs.test" } };
+
+            using var call = client.SubscribeMemoryPressure(new SubscriptionRequest(), headers: headers);
+            // .WaitAsync guards against a future capability-gate regression hanging CI instead
+            // of failing it: if SubscribeMemoryPressure ever stops being denied, MoveNext blocks
+            // forever waiting for an event nobody raises, rather than throwing. Matches the
+            // pattern its sibling (ReceivesRaisedSnapshot, below) already uses.
+            var ex = await Assert.ThrowsAsync<RpcException>(async () =>
+                await call.ResponseStream.MoveNext(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.Equal(StatusCode.PermissionDenied, ex.StatusCode);
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    /// <summary>
+    /// Companion to <see cref="SubscribeMemoryPressure_ProductionAccessor_DeniedWhenCapabilityNotGranted"/>:
+    /// same production-shape wiring (accessor returns null, plugin id resolved from the
+    /// x-plugin-id header), but this plugin holds host.events.memory-pressure. Proves the
+    /// FULL path over a real named-pipe gRPC connection: App-layer raises on
+    /// <see cref="IPluginEventBus.MemoryPressure"/> -&gt; PluginHostService.SubscribeMemoryPressure
+    /// maps <see cref="AccountMemory"/> onto the wire message -&gt; the client reads it off
+    /// <c>ResponseStream</c>. No stub short-circuits the mapping, unlike the in-process unit
+    /// test in ROROROblox.Tests, which exercises the same mapping without the header path.
+    /// </summary>
+    [Fact]
+    public async Task SubscribeMemoryPressure_ProductionAccessor_ReceivesRaisedSnapshot()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+        var bus = new InProcessPluginEventBus();
+
+        var registry = new SingleInstalledPluginLookup(new InstalledPlugin
+        {
+            Manifest = new PluginManifest
+            {
+                SchemaVersion = 1,
+                Id = "626labs.test",
+                Name = "Test",
+                Version = "1.0",
+                ContractVersion = "1.0",
+                Publisher = "626",
+                Description = "x",
+                Capabilities = new[] { PluginCapability.HostEventsMemoryPressure },
+            },
+            InstallDir = Path.GetTempPath(),
+            Consent = new ConsentRecord
+            {
+                PluginId = "626labs.test",
+                GrantedCapabilities = new[] { PluginCapability.HostEventsMemoryPressure },
+                AutostartEnabled = false,
+            },
+        });
+
+        var hostService = new PluginHostService(
+            registry, "1.4.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            bus,
+            new NoOpLauncher(),
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider(),
+            new StubActivityMarker(),
+            new StubAccountStopper());
+
+        // Production shape: accessor returns null. Header is the only path to a plugin id.
+        var interceptor = new CapabilityInterceptor(
+            currentPluginAccessor: () => null,
+            consentLookup: id => new[] { PluginCapability.HostEventsMemoryPressure });
+
+        var startup = new PluginHostStartupService(
+            hostService, interceptor,
+            NullLogger<PluginHostStartupService>.Instance,
+            pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+            var headers = new Metadata { { "x-plugin-id", "626labs.test" } };
+
+            using var call = client.SubscribeMemoryPressure(new SubscriptionRequest(), headers: headers);
+
+            var accountId = Guid.NewGuid();
+            // Give the server a tick to attach the bus handler before raising -- same
+            // shape as the in-process fan-out test's Task.Delay(20), just over the real pipe.
+            await Task.Delay(50);
+            bus.RaiseMemoryPressure(new AccountMemory(
+                AccountId: accountId,
+                PrivateBytes: 3L * 1024 * 1024 * 1024,
+                GrowthBytesPerHour: 512.0 * 1024 * 1024,
+                MinutesToCeiling: 30,
+                OverCap: true,
+                IsTarget: true,
+                ReadOk: true));
+
+            var moved = await call.ResponseStream.MoveNext(CancellationToken.None)
+                .WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.True(moved);
+
+            var evt = call.ResponseStream.Current;
+            Assert.Equal(accountId.ToString(), evt.AccountId);
+            Assert.Equal(3UL * 1024 * 1024 * 1024, evt.PrivateBytes);
+            Assert.Equal(512.0, evt.GrowthMbPerHr, precision: 6);
+            Assert.Equal(30u, evt.MinsToCeiling);
+            Assert.True(evt.OverCap);
+            Assert.True(evt.IsTarget);
+            Assert.True(evt.ReadOk);
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    /// <summary>
     /// The capability map must cover every RoRoRoHost method, or the host refuses to start.
     /// This is the guard that would have caught the UpdateUI/RemoveUI fail-open before ship:
     /// PluginHostStartupService.StartAsync calls AssertExhaustive() before binding the pipe.

@@ -27,6 +27,9 @@ public class IdleAlertPresenterTests
         public event System.EventHandler? RequestActivateMain { add { } remove { } }
         public event System.EventHandler? RequestOpenHistory { add { } remove { } }
         public event System.EventHandler? RequestOpenPlugins { add { } remove { } }
+        public void SetMemoryWarning(bool active) { }
+        public void ShowMemoryWarning(string title, string message, System.Guid accountId) { }
+        public event System.EventHandler<System.Guid>? RequestFocusAccount { add { } remove { } }
     }
 
     [Fact]

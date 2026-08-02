@@ -35,6 +35,8 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private bool _isFilteredOut;
     private TimeSpan? _sinceActivity;
     private bool _idleWarn;
+    private string? _memoryText;
+    private bool _memoryWarning;
     private bool _joinViaFriend;
     private IStreamerIdentityProvider? _identity;
 
@@ -293,11 +295,70 @@ public sealed class AccountSummary : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Formatted per-account memory chip text ("2.3 GB", "▲ 2.3 GB · ~45 min"), or
+    /// <see langword="null"/> to render nothing — either the watchdog has no reading yet this
+    /// session, or the last sample's pid read failed (never show a stale/zero figure). Produced by
+    /// <see cref="MemoryChipFormatter.Format"/> from <c>MainViewModel.ApplyMemory</c> (Task 7);
+    /// pure display state, never persisted.
+    /// </summary>
+    public string? MemoryText
+    {
+        get => _memoryText;
+        set => SetField(ref _memoryText, value);
+    }
+
+    /// <summary>
+    /// True when this account is currently over its private-bytes cap OR the machine-wide
+    /// projection is under its warn threshold — CONDITION-derived from the latest
+    /// <see cref="ROROROblox.Core.Diagnostics.MemoryPressureSnapshot"/> every time
+    /// <c>MainViewModel.ApplyMemory</c> runs (both on a fresh
+    /// <see cref="ROROROblox.Core.Diagnostics.IMemoryWatchdog.PressureCrossed"/> AND on the
+    /// passive 30s ticker refresh), NOT latched to "did a crossing just fire" — a stale
+    /// edge-derived version of this flag was CRITICAL 1 in the final-branch review (2026-08-01):
+    /// it painted true only from <c>PressureCrossed</c> and got wiped back to false by the very
+    /// next passive tick even while the account was still over cap.
+    /// <para>
+    /// Drives the amber (vs muted) color of the memory chip, matching <see cref="IdleWarn"/>'s
+    /// pattern — AND is the Recycle button's SOLE visibility trigger
+    /// (<c>MainWindow.xaml</c>'s <c>MemoryWarning == True</c> DataTrigger). That second role is
+    /// what made the CRITICAL 1 bug a Critical rather than a cosmetic display glitch: the button
+    /// disappeared along with the chip color, taking the one-click remedy with it. Pure display
+    /// state, never persisted.
+    /// </para>
+    /// </summary>
+    public bool MemoryWarning
+    {
+        get => _memoryWarning;
+        set => SetField(ref _memoryWarning, value);
+    }
+
     public int? RunningPid
     {
         get => _runningPid;
         set => SetField(ref _runningPid, value);
     }
+
+    private bool _isFocused;
+
+    /// <summary>
+    /// True for the ONE row currently highlighted after the user clicks a tray memory-warning
+    /// balloon (Task 8's <c>ITrayService.RequestFocusAccount</c>, via
+    /// <c>MainViewModel.SetFocusedAccount</c>). Pure display state, never persisted.
+    /// </summary>
+    public bool IsFocused
+    {
+        get => _isFocused;
+        set => SetField(ref _isFocused, value);
+    }
+
+    /// <summary>
+    /// The <see cref="LaunchTarget"/> the CURRENTLY-launched (or most recently launched) session
+    /// used. Set on every successful <see cref="LaunchResult.Started"/> (Task 8's recycle needs
+    /// to relaunch into the SAME target, not a re-resolved one — the row's <c>SelectedGame</c>
+    /// picker may have changed since the account was launched). Pure runtime state, never persisted.
+    /// </summary>
+    public LaunchTarget? LastLaunchTarget { get; set; }
 
     public DateTimeOffset? RunningSinceUtc
     {
