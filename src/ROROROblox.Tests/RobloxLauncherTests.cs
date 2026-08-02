@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
@@ -555,6 +557,60 @@ public class RobloxLauncherTests
         Assert.Equal(999, started.Pid);
     }
 
+    // === DI wiring (production registration shape) ===
+
+    /// <summary>
+    /// The gate logic above can be fully correct and fully unit-tested while the shipped app still
+    /// runs the old fixed-delay path on every launch, if nothing ever hands the real
+    /// <c>RobloxLauncher</c> a live probe -- that is exactly how the 2026-08-01 wrong-FPS-cap bug
+    /// shipped: the wait primitive existed, both launch sites called it, and the object graph the
+    /// app actually builds still resolved a null probe. This test exercises a REAL
+    /// <see cref="IServiceProvider"/> built with the same registration shape App.xaml.cs's
+    /// ConfigureServices uses for <c>IRobloxLauncher</c> -- an explicit factory that passes
+    /// <c>sp.GetRequiredService&lt;IRobloxRunningProbe&gt;()</c> -- rather than hand-constructing a
+    /// <see cref="RobloxLauncher"/> directly the way every other test in this file does. It does not
+    /// call App.xaml.cs's ConfigureServices itself (that method also constructs real
+    /// AppSettings/FavoriteGameStore/RobloxRunningProbe instances that touch disk and live Win32
+    /// process state -- out of scope for a fast, deterministic unit test); it mirrors the one
+    /// registration line this task changed. A regression to the bare
+    /// <c>AddSingleton&lt;IRobloxLauncher, RobloxLauncher&gt;()</c> form would NOT fail this test
+    /// (verified empirically -- see task-3-report.md -- the built-in container still auto-resolves a
+    /// registered optional ctor parameter), but a factory that drops or hardcodes
+    /// <c>runningProbe: null</c> -- the actual shape of the historical bug -- does.
+    /// </summary>
+    [Fact]
+    public void ProductionDiRegistration_ThreadsTheLiveRunningProbeIntoTheLauncher()
+    {
+        var services = new ServiceCollection();
+        var probe = new CountingProbe();
+        services.AddSingleton<IRobloxApi>(
+            new StubRobloxApi(_ => Task.FromResult(new AuthTicket("T", DateTimeOffset.UtcNow))));
+        services.AddSingleton<IAppSettings>(new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl });
+        services.AddSingleton<IProcessStarter>(new RecordingProcessStarter(_ => 1));
+        services.AddSingleton<IRobloxRunningProbe>(probe);
+
+        // Mirrors src/ROROROblox.App/App.xaml.cs's IRobloxLauncher registration verbatim in shape.
+        services.AddSingleton<IRobloxLauncher>(sp => new RobloxLauncher(
+            sp.GetRequiredService<IRobloxApi>(),
+            sp.GetRequiredService<IAppSettings>(),
+            sp.GetRequiredService<IProcessStarter>(),
+            favorites: sp.GetService<IFavoriteGameStore>(),
+            clientAppSettings: sp.GetService<IClientAppSettingsWriter>(),
+            globalBasicSettings: sp.GetService<IGlobalBasicSettingsWriter>(),
+            runningProbe: sp.GetRequiredService<IRobloxRunningProbe>()));
+
+        using var provider = services.BuildServiceProvider();
+        var launcher = provider.GetRequiredService<IRobloxLauncher>();
+
+        var field = typeof(RobloxLauncher).GetField("_runningProbe", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.NotNull(field);
+        var wiredProbe = field!.GetValue(launcher);
+
+        // Same instance, not merely non-null -- proves the SAME singleton StartupGate resolves is
+        // the one the launcher got, not a second instance from a duplicate registration.
+        Assert.Same(probe, wiredProbe);
+    }
+
     // === Helpers ===
 
     private static (RobloxLauncher, InMemoryAppSettings, RecordingProcessStarter) CreateLauncher(
@@ -562,7 +618,8 @@ public class RobloxLauncherTests
         string? defaultPlaceUrl,
         int startResult = 1,
         Exception? startThrows = null,
-        IClientAppSettingsWriter? clientAppSettings = null)
+        IClientAppSettingsWriter? clientAppSettings = null,
+        IRobloxRunningProbe? runningProbe = null)
     {
         var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket(ticket, DateTimeOffset.UtcNow)));
         var settings = new InMemoryAppSettings { DefaultPlaceUrl = defaultPlaceUrl };
@@ -571,7 +628,9 @@ public class RobloxLauncherTests
             if (startThrows is not null) throw startThrows;
             return startResult;
         });
-        var launcher = new RobloxLauncher(api, settings, processStarter, favorites: null, clientAppSettings: clientAppSettings);
+        var launcher = new RobloxLauncher(
+            api, settings, processStarter,
+            favorites: null, clientAppSettings: clientAppSettings, runningProbe: runningProbe);
         return (launcher, settings, processStarter);
     }
 
@@ -680,5 +739,48 @@ public class RobloxLauncherTests
             if (fps.HasValue) writeOrder.Add(fps.Value);
             return Task.CompletedTask;
         }
+    }
+
+    /// <summary>
+    /// Reports a new pid only after <paramref name="callsBeforeAppearing"/> polls, and appends a
+    /// sentinel to the shared timeline when it does. Lets a test assert that the client appeared
+    /// BETWEEN the two settings writes rather than after both.
+    /// </summary>
+    private sealed class AppearAfterProbe(List<int> timeline, int callsBeforeAppearing) : IRobloxRunningProbe
+    {
+        private int _calls;
+        public IReadOnlyList<int> GetRunningPlayerPids()
+        {
+            _calls++;
+            if (_calls < callsBeforeAppearing) return Array.Empty<int>();
+            if (_calls == callsBeforeAppearing) timeline.Add(-1);   // -1 == "client appeared"
+            return new[] { 999 };
+        }
+        public IReadOnlyList<RobloxProcessInfo> GetRunningPlayers() => Array.Empty<RobloxProcessInfo>();
+    }
+
+    [Fact]
+    public async Task TwoSequentialLaunches_SecondWriteHappensOnlyAfterTheFirstClientAppears()
+    {
+        // The shipped bug (observed 2026-08-01): account A configured Unlimited (9999) launched
+        // ~1s before account B configured 20. A ran at 20, because B's write landed before A's
+        // client had read the file. The old hold was 250ms measured from Process.Start returning
+        // on a protocol URI — before RobloxPlayerBeta even exists.
+        var timeline = new List<int>();
+        var writer = new RecordingWriter(timeline);
+        var probe = new AppearAfterProbe(timeline, callsBeforeAppearing: 2);
+        var (launcher, _, _) = CreateLauncher(
+            ticket: "T",
+            defaultPlaceUrl: TestPlaceUrl,
+            startResult: 1,
+            clientAppSettings: writer,
+            runningProbe: probe);
+
+        await launcher.LaunchAsync("cookie-a", placeUrl: null, fpsCap: 9999);
+        await launcher.LaunchAsync("cookie-b", placeUrl: null, fpsCap: 20);
+
+        // Ordering is the assertion, not merely that both values were written:
+        //   9999 written -> client appeared (-1) -> 20 written
+        Assert.Equal(new[] { 9999, -1, 20 }, timeline);
     }
 }

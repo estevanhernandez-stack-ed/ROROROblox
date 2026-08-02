@@ -462,7 +462,25 @@ public partial class App : Application
 
         services.AddSingleton<IClientAppSettingsWriter, ClientAppSettingsWriter>();
         services.AddSingleton<IGlobalBasicSettingsWriter, GlobalBasicSettingsWriter>();
-        services.AddSingleton<IRobloxLauncher, RobloxLauncher>();
+
+        // Explicit factory (2026-08-02, launch-gate condition-based fix, Task 3) rather than bare
+        // AddSingleton<IRobloxLauncher, RobloxLauncher>(): the bare form DOES still auto-resolve
+        // IRobloxRunningProbe from DI today (verified empirically — the built-in container fills a
+        // registered optional ctor parameter before falling back to its default), but that's an
+        // implicit property of constructor-selection, not a guarantee anyone reading this line would
+        // see. Spelling it out means a future edit that adds another RobloxLauncher constructor, or
+        // that reorders/removes the probe registration, fails loudly here instead of silently
+        // reverting to the fixed-delay path — which is exactly how the 2026-08-01 wrong-FPS-cap bug
+        // shipped (the gate logic existed; nothing wired it to a live probe). Reuses the SAME
+        // IRobloxRunningProbe singleton StartupGate already resolves — do not register a second one.
+        services.AddSingleton<IRobloxLauncher>(sp => new RobloxLauncher(
+            sp.GetRequiredService<IRobloxApi>(),
+            sp.GetRequiredService<IAppSettings>(),
+            sp.GetRequiredService<IProcessStarter>(),
+            favorites: sp.GetService<IFavoriteGameStore>(),
+            clientAppSettings: sp.GetService<IClientAppSettingsWriter>(),
+            globalBasicSettings: sp.GetService<IGlobalBasicSettingsWriter>(),
+            runningProbe: sp.GetRequiredService<IRobloxRunningProbe>()));
 
         // Per-capture WebView2 user-data dir manager. Each Add Account gets a fresh GUID dir
         // under %LOCALAPPDATA%\ROROROblox\webview2-data\<guid>\; siblings are best-effort swept
