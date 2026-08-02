@@ -532,7 +532,12 @@ public sealed class RobloxLauncher : IRobloxLauncher
     /// <summary>
     /// Hold until a RobloxPlayerBeta pid appears that was not in <paramref name="before"/>, then
     /// wait <see cref="SettleGrace"/>. Bounded by <see cref="NewClientWaitTimeout"/>.
-    /// Probe exceptions are swallowed — a probe glitch must degrade to the timeout, never abort a launch.
+    /// Probe exceptions are swallowed, but only around the pid-enumeration step — a probe
+    /// glitch must degrade to the next poll, never abort a launch. Cancellation is NOT
+    /// swallowed by that catch: a canceled <paramref name="ct"/> propagates as
+    /// <see cref="OperationCanceledException"/> from either <c>Task.Delay</c> call, including
+    /// the <see cref="SettleGrace"/> hold after a client was already found. Callers that wire
+    /// this into a launch path must decide how a cancellation there should surface.
     /// </summary>
     internal static async Task<NewClientWaitOutcome> WaitForNewClientAsync(
         IRobloxRunningProbe probe,
@@ -544,20 +549,30 @@ public sealed class RobloxLauncher : IRobloxLauncher
 
         while (timeProvider.GetUtcNow() < deadline)
         {
+            var found = false;
             try
             {
                 foreach (var pid in probe.GetRunningPlayerPids())
                 {
                     if (!before.Contains(pid))
                     {
-                        await Task.Delay(SettleGrace, timeProvider, ct).ConfigureAwait(false);
-                        return NewClientWaitOutcome.Detected;
+                        found = true;
+                        break;
                     }
                 }
             }
-            catch
+            catch (Exception)
             {
                 // Probe glitch -> treat as "not yet". Never let it escape into the launch path.
+            }
+
+            if (found)
+            {
+                // Deliberately outside the try above (2026-08-02 review, approved drift from the
+                // original plan text): the settle hold must not be caught by the probe's glitch
+                // handler. A probe exception here would be a lie -- we already found the client.
+                await Task.Delay(SettleGrace, timeProvider, ct).ConfigureAwait(false);
+                return NewClientWaitOutcome.Detected;
             }
 
             await Task.Delay(NewClientPollInterval, timeProvider, ct).ConfigureAwait(false);

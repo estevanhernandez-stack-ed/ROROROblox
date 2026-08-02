@@ -18,6 +18,16 @@ namespace ROROROblox.Tests;
 /// </summary>
 public class RobloxLauncherGateTests
 {
+    /// <summary>
+    /// Real-time bound on every awaited <c>wait</c> task in this file. The fake clock never
+    /// drives a Task.Delay's *continuation* forward on its own — see the comment on
+    /// <see cref="AdvancePastPollAsync"/> — so any regression that leaves a timer unarmed turns
+    /// an assertion failure into an indefinite hang with no default xUnit timeout. Bounding the
+    /// await converts that failure mode into a red TimeoutException instead: no test in this
+    /// file may fail by hanging.
+    /// </summary>
+    private static readonly TimeSpan TestWaitBound = TimeSpan.FromSeconds(2);
+
     /// <summary>Returns a scripted sequence of pid snapshots, one per call.</summary>
     private sealed class ScriptedProbe : IRobloxRunningProbe
     {
@@ -40,6 +50,7 @@ public class RobloxLauncherGateTests
         var clock = new FakeTimeProvider();
         // before: {100}. Then still {100}. Then {100, 555} — the new client.
         var probe = new ScriptedProbe(new[] { 100 }, new[] { 100 }, new[] { 100, 555 });
+        var startedAt = clock.GetUtcNow();
 
         var wait = RobloxLauncher.WaitForNewClientAsync(
             probe, before: new HashSet<int> { 100 }, clock, CancellationToken.None);
@@ -54,10 +65,25 @@ public class RobloxLauncherGateTests
         // its next await (and arm the next timer against the still-advancing clock) first.
         await AdvancePastPollAsync(clock, probe, expectAtLeastCalls: 2);
         await AdvancePastPollAsync(clock, probe, expectAtLeastCalls: 3);
+
+        // Prove SettleGrace is load-bearing, not decorative: the 3rd probe call just found the
+        // match, but the gate must still be holding -- if the production code returned Detected
+        // immediately on match (SettleGrace await deleted/skipped), `wait` would already be
+        // complete here, before we've advanced the clock past it.
+        Assert.False(wait.IsCompleted,
+            "gate released before SettleGrace elapsed -- the settle-grace wait appears to be missing or skipped");
+
         clock.Advance(RobloxLauncher.SettleGrace);
 
-        var outcome = await wait;
+        var outcome = await wait.WaitAsync(TestWaitBound);
+        var elapsed = clock.GetUtcNow() - startedAt;
+
         Assert.Equal(NewClientWaitOutcome.Detected, outcome);
+        // Prove "without waiting the full timeout": the released elapsed time is exactly the
+        // two polls + the settle grace (1.5s of fake time), nowhere near the 30s ceiling.
+        Assert.Equal(RobloxLauncher.NewClientPollInterval + RobloxLauncher.NewClientPollInterval + RobloxLauncher.SettleGrace, elapsed);
+        Assert.True(elapsed < RobloxLauncher.NewClientWaitTimeout,
+            $"gate consumed {elapsed} of fake time -- expected release well before the {RobloxLauncher.NewClientWaitTimeout} timeout");
     }
 
     /// <summary>
@@ -65,6 +91,9 @@ public class RobloxLauncherGateTests
     /// been called at least <paramref name="expectAtLeastCalls"/> times — i.e. until the poll
     /// loop's queued continuation has actually run and reached its next await point. See the
     /// comment at the call site for why a bare Advance() isn't enough for a multi-iteration wait.
+    /// Asserts progress explicitly rather than giving up silently: if the 50-yield budget is
+    /// exhausted without the probe being called again, that is a red failure pointing at exactly
+    /// this line, not a downstream hang or a confusing assertion failure two lines later.
     /// </summary>
     private static async Task AdvancePastPollAsync(FakeTimeProvider clock, ScriptedProbe probe, int expectAtLeastCalls)
     {
@@ -73,6 +102,9 @@ public class RobloxLauncherGateTests
         {
             await Task.Yield();
         }
+
+        Assert.True(probe.Calls >= expectAtLeastCalls,
+            $"poll loop did not reach call {expectAtLeastCalls} (stuck at {probe.Calls}) -- gate is not polling");
     }
 
     [Fact]
@@ -86,7 +118,7 @@ public class RobloxLauncherGateTests
 
         clock.Advance(RobloxLauncher.NewClientWaitTimeout + TimeSpan.FromSeconds(1));
 
-        var outcome = await wait;
+        var outcome = await wait.WaitAsync(TestWaitBound);
         Assert.Equal(NewClientWaitOutcome.TimedOut, outcome);
     }
 
@@ -103,7 +135,7 @@ public class RobloxLauncherGateTests
 
         clock.Advance(RobloxLauncher.NewClientWaitTimeout + TimeSpan.FromSeconds(1));
 
-        Assert.Equal(NewClientWaitOutcome.TimedOut, await wait);
+        Assert.Equal(NewClientWaitOutcome.TimedOut, await wait.WaitAsync(TestWaitBound));
     }
 
     [Fact]
@@ -117,12 +149,28 @@ public class RobloxLauncherGateTests
 
         clock.Advance(RobloxLauncher.NewClientWaitTimeout + TimeSpan.FromSeconds(1));
 
-        Assert.Equal(NewClientWaitOutcome.TimedOut, await wait);
+        Assert.Equal(NewClientWaitOutcome.TimedOut, await wait.WaitAsync(TestWaitBound));
     }
 
     private sealed class ThrowingProbe : IRobloxRunningProbe
     {
         public IReadOnlyList<int> GetRunningPlayerPids() => throw new InvalidOperationException("probe blew up");
         public IReadOnlyList<RobloxProcessInfo> GetRunningPlayers() => throw new NotSupportedException();
+    }
+
+    [Fact]
+    public async Task Cancellation_PropagatesAsOperationCanceledException()
+    {
+        // Contract for Task 2: cancellation is NOT one of the two NewClientWaitOutcome values --
+        // it throws, same as any other Task.Delay(..., ct). Pinning this so Task 2's launch-path
+        // wiring knows a canceled wait surfaces as an exception, not a TimedOut outcome.
+        var clock = new FakeTimeProvider();
+        var probe = new ScriptedProbe(new[] { 100 });   // never matches -- forces the poll-delay path
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            RobloxLauncher.WaitForNewClientAsync(probe, before: new HashSet<int> { 100 }, clock, cts.Token)
+                .WaitAsync(TestWaitBound));
     }
 }
