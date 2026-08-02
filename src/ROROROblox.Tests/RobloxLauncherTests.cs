@@ -459,206 +459,144 @@ public class RobloxLauncherTests
             launcher.LaunchAsync(TestCookie, target: null!));
     }
 
-    // === Condition-based wait gate (probe threading) ===
+    // === Settling the FPS cap before launch (Task 3: settingsProbe threading) ===
 
-    /// <summary>Counts probe calls and never reports a new pid, so any wait runs to its ceiling.</summary>
-    private sealed class CountingProbe : IRobloxRunningProbe
+    /// <summary>Settings probe whose reported cap the test controls.</summary>
+    private sealed class StubSettingsProbe : IGlobalBasicSettingsProbe
     {
-        public int Calls { get; private set; }
-        public IReadOnlyList<int> GetRunningPlayerPids() { Calls++; return Array.Empty<int>(); }
-        public IReadOnlyList<RobloxProcessInfo> GetRunningPlayers() => Array.Empty<RobloxProcessInfo>();
+        public int? Cap { get; set; }
+        public int ReadCalls { get; private set; }
+        public int? ReadFramerateCap() { ReadCalls++; return Cap; }
+        public DateTimeOffset? GetLastWriteTimeUtc() => DateTimeOffset.UnixEpoch;
     }
 
-    [Theory]
-    [InlineData(true)]   // typed-target overload -- the ONLY path production code calls (MainViewModel.cs
-                          // -- Squad Launch). Fix wave, 2026-08-02 review finding 2: prior to this, only
-                          // the legacy overload below was covered, so a regression that moved
-                          // SnapshotBeforePids() back above GetAuthTicketAsync in ExecuteLaunchAsync (the
-                          // typed path) -- undoing a deviation two reviewers confirmed was correct -- would
-                          // have snapshotted even on this CookieExpired result and stayed green.
-    [InlineData(false)]  // legacy placeUrl overload -- back-compat only, no production caller.
-    public async Task LaunchAsync_CookieExpired_NeverWaitsForAClient(bool useTypedApi)
+    /// <summary>Records every FramerateCap write in order.</summary>
+    private sealed class RecordingGlobalBasicWriter : IGlobalBasicSettingsWriter
     {
-        // Only a successful launch produces a client to wait for. If a non-Started result waited,
-        // a user without Roblox installed would eat the full 30s ceiling on every click.
-        var api = new StubRobloxApi(_ => throw new CookieExpiredException());
-        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
-        var processStarter = new RecordingProcessStarter(_ => 1);
-        var probe = new CountingProbe();
-        var launcher = new RobloxLauncher(api, settings, processStarter, runningProbe: probe);
-
-        // Bounded per this file's established real-time-ceiling pattern (e.g. :505, :557 as of fix
-        // round 1) -- a regression that made this path wait after all fails red instead of hanging
-        // the suite for 31s.
-        var result = useTypedApi
-            ? await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(42)).WaitAsync(TimeSpan.FromSeconds(5))
-            : await launcher.LaunchAsync(TestCookie).WaitAsync(TimeSpan.FromSeconds(5));
-
-        Assert.IsType<LaunchResult.CookieExpired>(result);
-        Assert.Equal(0, probe.Calls);   // never even snapshotted, let alone waited
-    }
-
-    [Fact]
-    public async Task LaunchAsync_WithoutAProbe_StillCompletes_UnchangedBehaviour()
-    {
-        // The no-probe path must behave exactly as it did before this change, so every existing
-        // call site and test that constructs a launcher without a probe keeps working.
-        var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket("ticket", DateTimeOffset.UtcNow)));
-        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
-        var processStarter = new RecordingProcessStarter(_ => 4242);
-        var launcher = new RobloxLauncher(api, settings, processStarter);   // no probe
-
-        // Real-time ceiling per the established RobloxLauncherGateTests pattern: if a regression
-        // made the no-probe path fall into WaitForNewClientAsync anyway (e.g. an inverted null
-        // guard), the null probe's exceptions are swallowed internally and it would silently run to
-        // the real 30s+1s ceiling instead of the ~250ms this path should take -- turning what should
-        // be a fast test into a slow false-pass. Bounding the await converts that into a fast red
-        // TimeoutException instead.
-        var result = await launcher.LaunchAsync(TestCookie).WaitAsync(TimeSpan.FromSeconds(5));
-
-        var started = Assert.IsType<LaunchResult.Started>(result);
-        Assert.Equal(4242, started.Pid);
-    }
-
-    [Theory]
-    [InlineData(true)]   // typed-target overload -- the ONLY path production code calls (MainViewModel.cs
-                          // -- Squad Launch, the exact call site the 2026-08-01 wrong-FPS-cap bug was
-                          // observed on). Prior to this fix-round, no test drove this overload with a
-                          // probe at all -- deleting the gate wiring entirely would have shipped clean.
-    [InlineData(false)]  // legacy placeUrl overload -- back-compat only, no production caller.
-    public async Task LaunchAsync_WithProbeAndStartedResult_ActuallyPollsForTheClient(bool useTypedApi)
-    {
-        // Positive-path proof that the launcher wiring calls WaitForNewClientAsync when a probe is
-        // present and the launch succeeds, on BOTH overloads independently -- each [InlineData] run
-        // constructs its own launcher/probe and asserts on its own probe.Calls, so a break confined to
-        // one overload's HoldForNewClientAsync call site fails that iteration specifically rather than
-        // only proving the shared helper works in isolation. Neither of the other probe tests exercises
-        // this at all: one asserts zero probe calls on a non-Started result, the other asserts unchanged
-        // behaviour with no probe at all. Without this test, deleting the WaitForNewClientAsync call and
-        // always falling through to the old Task.Delay(FFlagReadHold) -- even with a probe present --
-        // would leave both other tests green.
-        var clock = new FakeTimeProvider();
-        var probe = new CountingProbe();
-        var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket("T", DateTimeOffset.UtcNow)));
-        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
-        var processStarter = new RecordingProcessStarter(_ => 999);
-        var launcher = new RobloxLauncher(
-            api, settings, processStarter, clock, () => 1_000_000_000_000,
-            favorites: null, clientAppSettings: null, globalBasicSettings: null, runningProbe: probe);
-
-        var launchTask = useTypedApi
-            ? launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(42))
-            : launcher.LaunchAsync(TestCookie);
-
-        // Drive the fake clock past several poll intervals to prove the gate is actually polling
-        // (not skipping straight past to the old fixed 250ms hold). CountingProbe never reports a
-        // new pid, so this only terminates once we advance past the full 30s ceiling below.
-        for (var i = 0; i < 5; i++)
+        public List<int?> Writes { get; } = new();
+        public Task WriteFramerateCapAsync(int? fps, CancellationToken ct = default)
         {
-            clock.Advance(RobloxLauncher.NewClientPollInterval);
-            for (var pump = 0; pump < 50 && probe.Calls < i + 2; pump++)
-            {
-                await Task.Yield();
-            }
+            Writes.Add(fps);
+            return Task.CompletedTask;
         }
-        Assert.True(probe.Calls >= 2,
-            $"launcher did not poll the probe (stuck at {probe.Calls} calls) -- WaitForNewClientAsync does not appear to be wired into LaunchAsync (useTypedApi={useTypedApi})");
-
-        clock.Advance(RobloxLauncher.NewClientWaitTimeout);
-
-        var result = await launchTask.WaitAsync(TimeSpan.FromSeconds(5));
-        var started = Assert.IsType<LaunchResult.Started>(result);
-        Assert.Equal(999, started.Pid);
     }
 
     /// <summary>
-    /// Throws on its first call (the pre-launch snapshot), then reports a pid that was ALREADY
-    /// running before the launch on every call after — i.e. never a legitimately new client.
-    /// Models a probe hiccuping exactly once while a pre-existing (hand-started, or leftover from
-    /// an earlier session) Roblox client is already up.
+    /// Reports <paramref name="before"/> on its first call (SettleAsync's fast-path pre-check) and
+    /// <paramref name="after"/> on every call thereafter (the post-write confirm read) -- models "the
+    /// write landed" deterministically, by call count rather than by wall-clock timing.
+    /// <para>
+    /// Not driven by a real-time pump loop: <see cref="GetLastWriteTimeUtc"/>, like
+    /// <c>StubSettingsProbe</c>, always reports <see cref="DateTimeOffset.UnixEpoch"/> -- decades
+    /// stale against a <c>FakeTimeProvider</c>'s 2000-01-01 default -- so BOTH of
+    /// <c>FpsCapSettler</c>'s quiet-waits credit "already quiet" on their very first check and
+    /// return without ever awaiting a real <c>Task.Delay</c>. That means the entire settle (write +
+    /// both quiet-waits + confirm-read) resolves within one synchronous continuation chain, with no
+    /// suspension point at which a test could intervene between the write and the confirm read --
+    /// confirmed empirically: a clock-pumping version of this test observed all
+    /// <see cref="FpsCapSettler.MaxWriteAttempts"/> writes land before the pump loop's first
+    /// iteration ever ran. Flipping by call count sidesteps that race instead of fighting it.
+    /// </para>
     /// </summary>
-    private sealed class ThrowsOnceThenReportsExistingPidProbe : IRobloxRunningProbe
+    private sealed class FlipAfterFirstReadProbe : IGlobalBasicSettingsProbe
     {
-        public int Calls { get; private set; }
-        public IReadOnlyList<int> GetRunningPlayerPids()
-        {
-            Calls++;
-            if (Calls == 1) throw new InvalidOperationException("probe blew up on snapshot");
-            return new[] { 999 };
-        }
-        public IReadOnlyList<RobloxProcessInfo> GetRunningPlayers() => Array.Empty<RobloxProcessInfo>();
+        private readonly int _before;
+        private readonly int _after;
+        public int ReadCalls { get; private set; }
+        public FlipAfterFirstReadProbe(int before, int after) { _before = before; _after = after; }
+        public int? ReadFramerateCap() { ReadCalls++; return ReadCalls == 1 ? _before : _after; }
+        public DateTimeOffset? GetLastWriteTimeUtc() => DateTimeOffset.UnixEpoch;
     }
 
     [Fact]
-    public async Task LaunchAsync_ProbeThrowsOnSnapshot_DegradesToTheFixedHold_NotAnEmptySetFalseDetect()
+    public async Task LaunchAsync_WhenTheFileAlreadyHoldsTheCap_WritesNothingAndDoesNotWait()
     {
-        // Fix wave (2026-08-02 review, finding 1): SafeGetPids used to swallow the snapshot
-        // exception and return Array.Empty<int>(), building an EMPTY "before" set --
-        // indistinguishable from the legitimate "nothing is running yet" case. A pre-existing
-        // client would then satisfy WaitForNewClientAsync's very first poll (absent from the
-        // empty before-set) and release the gate after just SettleGrace (1s) instead of the safe
-        // fixed-hold fallback -- reaching the exact 2026-08-01 wrong-FPS-cap bug through a
-        // swallowed exception rather than through the timing gap the rest of this fix wave closed.
-        //
-        // This test pins the fixed-hold branch's signature: exactly one probe call (the throwing
-        // snapshot; the fixed-delay branch never touches the probe again) and exactly 250ms
-        // elapsed (the FFlagReadHold fallback, a single un-polled Task.Delay).
-        //
-        // Mutation check performed by hand: reverting SnapshotBeforePids to catch-and-return-empty
-        // (the pre-fix SafeGetPids shape) makes this probe's 2nd call happen inside
-        // WaitForNewClientAsync's poll loop, which reports pid 999 -- absent from the empty
-        // before-set -- so `found` goes true on the very first poll. The launch then takes
-        // SettleGrace (1000ms) with 2 probe calls instead of 250ms with 1, and both assertions
-        // below go red.
-        var clock = new FakeTimeProvider();
-        var probe = new ThrowsOnceThenReportsExistingPidProbe();
-        var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket("T", DateTimeOffset.UtcNow)));
-        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
-        var processStarter = new RecordingProcessStarter(_ => 777);
-        var launcher = new RobloxLauncher(
-            api, settings, processStarter, clock, () => 1_000_000_000_000,
-            favorites: null, clientAppSettings: null, globalBasicSettings: null, runningProbe: probe);
+        var probe = new StubSettingsProbe { Cap = 20 };
+        var gbs = new RecordingGlobalBasicWriter();
+        var (launcher, _, _) = CreateLauncher(
+            ticket: "T",
+            defaultPlaceUrl: TestPlaceUrl,
+            startResult: 1,
+            globalBasicSettings: gbs,
+            settingsProbe: probe);
 
-        var startedAt = clock.GetUtcNow();
-        var launchTask = launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(42));
-
-        // The fixed-hold branch is a single un-polled Task.Delay(FFlagReadHold) -- one Advance
-        // past it is sufficient, same pattern as the single-pending-delay cases elsewhere in this
-        // file (e.g. TwoSequentialLaunches_SecondWriteHappensOnlyAfterTheFirstClientAppears).
-        clock.Advance(TimeSpan.FromMilliseconds(250));
-        var result = await launchTask.WaitAsync(TimeSpan.FromSeconds(5));
-        var elapsed = clock.GetUtcNow() - startedAt;
+        var result = await launcher
+            .LaunchAsync(TestCookie, new LaunchTarget.Place(42), fpsCap: 20)
+            .WaitAsync(TimeSpan.FromSeconds(5));
 
         Assert.IsType<LaunchResult.Started>(result);
-        Assert.Equal(TimeSpan.FromMilliseconds(250), elapsed);
-        Assert.Equal(1, probe.Calls);   // snapshot only -- the fixed-hold branch never calls the probe again
+        Assert.Empty(gbs.Writes);          // fast path: nothing written
+        Assert.Equal(1, probe.ReadCalls);  // and nothing waited for
+    }
+
+    [Fact]
+    public async Task LaunchAsync_WhenTheCapDiffers_WritesItBeforeStartingTheProcess()
+    {
+        // Probe reports the old value on the fast-path pre-check, then the new value on the
+        // post-write confirm, so the settle succeeds on attempt 1 with exactly one write. See
+        // FlipAfterFirstReadProbe's remarks for why this is deterministic-by-construction rather
+        // than driven by a fake-clock pump loop (the loop this test originally used never actually
+        // ran: given this fixture's IGlobalBasicSettingsProbe, both of FpsCapSettler's quiet-waits
+        // resolve without a single real await, so all 3 write attempts landed before the loop's
+        // first iteration and the test failed with [20, 20, 20] instead of [20]).
+        var probe = new FlipAfterFirstReadProbe(before: 9999, after: 20);
+        var gbs = new RecordingGlobalBasicWriter();
+        var clock = new FakeTimeProvider();
+        var starter = new OrderRecordingStarter(gbs);
+        var (launcher, _, _) = CreateLauncher(
+            ticket: "T",
+            defaultPlaceUrl: TestPlaceUrl,
+            startResult: 1,
+            globalBasicSettings: gbs,
+            settingsProbe: probe,
+            processStarter: starter,
+            timeProvider: clock);
+
+        var result = await launcher
+            .LaunchAsync(TestCookie, new LaunchTarget.Place(42), fpsCap: 20)
+            .WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.IsType<LaunchResult.Started>(result);
+        Assert.Equal(new int?[] { 20 }, gbs.Writes);
+        // The whole point: the cap is on disk before the client exists.
+        Assert.True(starter.WriteCountAtStart == 1,
+            $"expected the cap written before Process.Start, saw {starter.WriteCountAtStart} writes at start");
+    }
+
+    /// <summary>Captures how many cap writes had happened at the moment Process.Start was called.</summary>
+    private sealed class OrderRecordingStarter : IProcessStarter
+    {
+        private readonly RecordingGlobalBasicWriter _writer;
+        public int WriteCountAtStart { get; private set; } = -1;
+        public OrderRecordingStarter(RecordingGlobalBasicWriter writer) => _writer = writer;
+        public int StartViaShell(string fileNameOrUri)
+        {
+            WriteCountAtStart = _writer.Writes.Count;
+            return 1;
+        }
     }
 
     // === DI wiring (production registration shape) ===
 
     /// <summary>
-    /// The gate logic above can be fully correct and fully unit-tested while the shipped app still
-    /// runs the old fixed-delay path on every launch, if nothing ever hands the real
-    /// <c>RobloxLauncher</c> a live probe -- that is exactly how the 2026-08-01 wrong-FPS-cap bug
-    /// shipped: the wait primitive existed, both launch sites called it, and the object graph the
-    /// app actually builds still resolved a null probe.
+    /// The settle logic above can be fully correct and fully unit-tested while the shipped app
+    /// still writes the cap with no probe wired at all, if nothing ever hands the real
+    /// <c>RobloxLauncher</c> a live <see cref="IGlobalBasicSettingsProbe"/> -- that is exactly how
+    /// the 2026-08-01 wrong-FPS-cap bug shipped once before: the mechanism existed, both launch
+    /// sites called it, and the object graph the app actually builds still resolved a null
+    /// dependency.
     ///
-    /// Fix round 1, finding 3: the first version of this test mirrored the registration shape in a
-    /// second, hand-written copy of the factory -- so it verified that the code INSIDE THE TEST BODY
-    /// wires a probe, not that App.xaml.cs's actual registration does. Deleting the real registration
-    /// (or hardcoding `runningProbe: null` there) would not have failed it.
-    ///
-    /// This version calls the REAL <see cref="App.ConfigureServices"/> (made <c>internal</c> for this
+    /// This test calls the REAL <see cref="App.ConfigureServices"/> (made <c>internal</c> for this
     /// purpose -- <c>InternalsVisibleTo("ROROROblox.Tests")</c> already existed in
     /// ROROROblox.App.csproj) against a real <see cref="ServiceCollection"/>, then uses
-    /// <see cref="ServiceCollectionServiceExtensions"/>'s <c>Replace</c> to swap the four
-    /// side-effecting descriptors (<see cref="IRobloxApi"/>, <see cref="IAppSettings"/>,
-    /// <see cref="IProcessStarter"/>, <see cref="IRobloxRunningProbe"/>) for test doubles BEFORE
-    /// building the provider or resolving anything -- so nothing in this test ever constructs the
-    /// real <c>RobloxApi</c> (would need a working HttpClient), <c>AppSettings</c>/<c>ProcessStarter</c>
-    /// (Win32/OS calls), or <c>RobloxRunningProbe</c> (live process enumeration). Every OTHER
-    /// registration ConfigureServices makes is either a parameterless <c>AddSingleton&lt;T,U&gt;</c> or
-    /// a factory lambda -- both deferred to resolve time -- and DI is lazy, so resolving only
+    /// <see cref="ServiceCollectionServiceExtensions"/>'s <c>Replace</c> to swap the side-effecting
+    /// descriptors (<see cref="IRobloxApi"/>, <see cref="IAppSettings"/>, <see cref="IProcessStarter"/>,
+    /// <see cref="IGlobalBasicSettingsProbe"/>) for test doubles BEFORE building the provider or
+    /// resolving anything -- so nothing in this test ever constructs the real <c>RobloxApi</c>
+    /// (would need a working HttpClient), <c>AppSettings</c>/<c>ProcessStarter</c> (Win32/OS calls),
+    /// or <c>GlobalBasicSettingsProbe</c> (live file reads). Every OTHER registration
+    /// ConfigureServices makes is either a parameterless <c>AddSingleton&lt;T,U&gt;</c> or a factory
+    /// lambda -- both deferred to resolve time -- and DI is lazy, so resolving only
     /// <see cref="IRobloxLauncher"/> constructs only its own transitive dependency chain, not the
     /// whole app graph (no <c>MainViewModel</c>, no <c>MainWindow</c>, nothing WPF-affined). The
     /// remaining chain members that DO get constructed for real --
@@ -669,7 +607,7 @@ public class RobloxLauncherTests
     /// ConfigureServices would otherwise register.
     /// </summary>
     [Fact]
-    public void ProductionDiRegistration_ThreadsTheLiveRunningProbeIntoTheLauncher()
+    public void ProductionDiRegistration_ThreadsTheLiveSettingsProbeIntoTheLauncher()
     {
         var services = new ServiceCollection();
         // Fully qualified (not `using ROROROblox.App;` + `App.ConfigureServices`): the namespace
@@ -678,23 +616,23 @@ public class RobloxLauncherTests
         // ROROROblox.App" -- it tried to resolve App.ConfigureServices as a nested namespace path).
         global::ROROROblox.App.App.ConfigureServices(services, NullLoggerFactory.Instance);
 
-        var probe = new CountingProbe();
+        var probe = new StubSettingsProbe { Cap = 20 };
         services.Replace(ServiceDescriptor.Singleton<IRobloxApi>(
             new StubRobloxApi(_ => Task.FromResult(new AuthTicket("T", DateTimeOffset.UtcNow)))));
         services.Replace(ServiceDescriptor.Singleton<IAppSettings>(
             new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl }));
         services.Replace(ServiceDescriptor.Singleton<IProcessStarter>(new RecordingProcessStarter(_ => 1)));
-        services.Replace(ServiceDescriptor.Singleton<IRobloxRunningProbe>(probe));
+        services.Replace(ServiceDescriptor.Singleton<IGlobalBasicSettingsProbe>(probe));
 
         using var provider = services.BuildServiceProvider();
         var launcher = provider.GetRequiredService<IRobloxLauncher>();
 
-        var field = typeof(RobloxLauncher).GetField("_runningProbe", BindingFlags.NonPublic | BindingFlags.Instance);
+        var field = typeof(RobloxLauncher).GetField("_settingsProbe", BindingFlags.NonPublic | BindingFlags.Instance);
         Assert.NotNull(field);
         var wiredProbe = field!.GetValue(launcher);
 
-        // Same instance, not merely non-null -- proves the SAME singleton StartupGate resolves is
-        // the one the launcher got, not a second instance from a duplicate registration.
+        // Same instance, not merely non-null -- proves the SAME singleton the DI container resolves
+        // is the one the launcher got, not a second instance from a duplicate registration.
         Assert.Same(probe, wiredProbe);
     }
 
@@ -706,29 +644,37 @@ public class RobloxLauncherTests
         int startResult = 1,
         Exception? startThrows = null,
         IClientAppSettingsWriter? clientAppSettings = null,
-        IRobloxRunningProbe? runningProbe = null,
+        IGlobalBasicSettingsWriter? globalBasicSettings = null,
+        IGlobalBasicSettingsProbe? settingsProbe = null,
+        IProcessStarter? processStarter = null,
         TimeProvider? timeProvider = null)
     {
         var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket(ticket, DateTimeOffset.UtcNow)));
         var settings = new InMemoryAppSettings { DefaultPlaceUrl = defaultPlaceUrl };
-        var processStarter = new RecordingProcessStarter(_ =>
+        var recordingStarter = new RecordingProcessStarter(_ =>
         {
             if (startThrows is not null) throw startThrows;
             return startResult;
         });
+        // Callers driving the write-before-launch ordering assertion (OrderRecordingStarter) supply
+        // their own IProcessStarter and discard this method's returned RecordingProcessStarter --
+        // recordingStarter is still built unconditionally so every pre-existing call site (none of
+        // which pass processStarter) keeps its return-tuple shape and behaviour unchanged.
+        var starterToUse = processStarter ?? recordingStarter;
         // timeProvider is null for every pre-existing call site (unchanged behaviour: the public
         // ctor, real TimeProvider.System). Callers that need a FakeTimeProvider -- to avoid paying
-        // real wall-clock time for NewClientPollInterval/SettleGrace/NewClientWaitTimeout -- pass one
-        // explicitly and get routed through the internal test ctor, same pattern already used by
-        // LaunchAsync_WithProbeAndStartedResult_ActuallyPollsForTheClient below.
+        // real wall-clock time for FpsCapSettler's quiet-wait constants -- pass one explicitly and
+        // get routed through the internal test ctor.
         var launcher = timeProvider is null
             ? new RobloxLauncher(
-                api, settings, processStarter,
-                favorites: null, clientAppSettings: clientAppSettings, runningProbe: runningProbe)
+                api, settings, starterToUse,
+                favorites: null, clientAppSettings: clientAppSettings,
+                globalBasicSettings: globalBasicSettings, settingsProbe: settingsProbe)
             : new RobloxLauncher(
-                api, settings, processStarter, timeProvider, () => 1_000_000_000_000,
-                favorites: null, clientAppSettings: clientAppSettings, runningProbe: runningProbe);
-        return (launcher, settings, processStarter);
+                api, settings, starterToUse, timeProvider, () => 1_000_000_000_000,
+                favorites: null, clientAppSettings: clientAppSettings,
+                globalBasicSettings: globalBasicSettings, settingsProbe: settingsProbe);
+        return (launcher, settings, recordingStarter);
     }
 
     private sealed class StubRobloxApi : IRobloxApi
@@ -838,79 +784,4 @@ public class RobloxLauncherTests
         }
     }
 
-    /// <summary>
-    /// Reports a new pid only after <paramref name="callsBeforeAppearing"/> polls, and appends a
-    /// sentinel to the shared timeline when it does. Lets a test assert that the client appeared
-    /// BETWEEN the two settings writes rather than after both.
-    /// </summary>
-    private sealed class AppearAfterProbe(List<int> timeline, int callsBeforeAppearing) : IRobloxRunningProbe
-    {
-        private int _calls;
-        public IReadOnlyList<int> GetRunningPlayerPids()
-        {
-            _calls++;
-            if (_calls < callsBeforeAppearing) return Array.Empty<int>();
-            if (_calls == callsBeforeAppearing) timeline.Add(-1);   // -1 == "client appeared"
-            return new[] { 999 };
-        }
-        public IReadOnlyList<RobloxProcessInfo> GetRunningPlayers() => Array.Empty<RobloxProcessInfo>();
-    }
-
-    [Fact]
-    public async Task TwoSequentialLaunches_SecondWriteHappensOnlyAfterTheFirstClientAppears()
-    {
-        // The shipped bug (observed 2026-08-01): account A configured Unlimited (9999) launched
-        // ~1s before account B configured 20. A ran at 20, because B's write landed before A's
-        // client had read the file. The old hold was 250ms measured from Process.Start returning
-        // on a protocol URI — before RobloxPlayerBeta even exists.
-        //
-        // Drives a FakeTimeProvider, not real time (fix round 1, finding 1). The original version
-        // of this test drove real TimeProvider.System via CreateLauncher's default and cost ~30s
-        // of real wall time: launch B's SnapshotBeforePids captures {999} (launch A's now-running
-        // client), so launch B's own wait never sees a "new" pid and runs to the full
-        // NewClientWaitTimeout. Driving a fake clock makes that ceiling free. Bounded by
-        // `.WaitAsync(TimeSpan.FromSeconds(5))` per the established real-time-ceiling pattern
-        // used by this file's other probe-threading tests (:503, :555 as of fix round 1) — a
-        // regression that made the wait unbounded fails red instead of hanging the suite.
-        //
-        // Drives the TYPED overload (fix round 1, finding 2). `LaunchAsync(cookie, LaunchTarget, ...)`
-        // is the only overload production code calls (MainViewModel.cs -- Squad Launch, the exact
-        // call site the bug was observed on); the legacy placeUrl overload driven by the first
-        // draft of this test is back-compat-only and was never the path the bug lived on.
-        var clock = new FakeTimeProvider();
-        var timeline = new List<int>();
-        var writer = new RecordingWriter(timeline);
-        var probe = new AppearAfterProbe(timeline, callsBeforeAppearing: 2);
-        var (launcher, _, _) = CreateLauncher(
-            ticket: "T",
-            defaultPlaceUrl: TestPlaceUrl,
-            startResult: 1,
-            clientAppSettings: writer,
-            runningProbe: probe,
-            timeProvider: clock);
-
-        // Launch A: the probe's 2nd-ever call (its 1st call inside WaitForNewClientAsync's poll
-        // loop -- the 1st call overall is the pre-launch SnapshotBeforePids) matches
-        // callsBeforeAppearing, so it finds pid 999 on the very first poll iteration. Everything up
-        // to and including that match happens synchronously (StubRobloxApi/RecordingWriter/
-        // AppearAfterProbe never truly suspend), so by the time this line returns, the only
-        // pending await is the SettleGrace delay -- no intermediate poll/pump needed.
-        var launchA = launcher.LaunchAsync("cookie-a", new LaunchTarget.Place(920587237), fpsCap: 9999);
-        clock.Advance(RobloxLauncher.SettleGrace);
-        await launchA.WaitAsync(TimeSpan.FromSeconds(5));
-
-        // Launch B: SnapshotBeforePids now returns {999} (launch A's client, already running), so
-        // no pid this probe ever reports can look "new" again -- the wait runs to the full ceiling
-        // and TimesOut. That's fine: this test asserts on WRITE ORDER relative to the client's
-        // appearance, not on how launch B's own wait resolves. One Advance() past the deadline is
-        // enough (unlike the multi-iteration case in RobloxLauncherGateTests.cs, there's exactly
-        // one pending poll delay at this point, so no pump-between-advances is needed).
-        var launchB = launcher.LaunchAsync("cookie-b", new LaunchTarget.Place(920587237), fpsCap: 20);
-        clock.Advance(RobloxLauncher.NewClientWaitTimeout + TimeSpan.FromSeconds(1));
-        await launchB.WaitAsync(TimeSpan.FromSeconds(5));
-
-        // Ordering is the assertion, not merely that both values were written:
-        //   9999 written -> client appeared (-1) -> 20 written
-        Assert.Equal(new[] { 9999, -1, 20 }, timeline);
-    }
 }
