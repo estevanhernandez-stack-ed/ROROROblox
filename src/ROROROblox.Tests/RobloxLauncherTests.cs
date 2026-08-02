@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using ROROROblox.Core;
@@ -486,26 +487,36 @@ public class RobloxLauncherTests
     /// <paramref name="after"/> on every call thereafter (the post-write confirm read) -- models "the
     /// write landed" deterministically, by call count rather than by wall-clock timing.
     /// <para>
-    /// Not driven by a real-time pump loop: <see cref="GetLastWriteTimeUtc"/>, like
-    /// <c>StubSettingsProbe</c>, always reports <see cref="DateTimeOffset.UnixEpoch"/> -- decades
-    /// stale against a <c>FakeTimeProvider</c>'s 2000-01-01 default -- so BOTH of
-    /// <c>FpsCapSettler</c>'s quiet-waits credit "already quiet" on their very first check and
-    /// return without ever awaiting a real <c>Task.Delay</c>. That means the entire settle (write +
-    /// both quiet-waits + confirm-read) resolves within one synchronous continuation chain, with no
-    /// suspension point at which a test could intervene between the write and the confirm read --
-    /// confirmed empirically: a clock-pumping version of this test observed all
-    /// <see cref="FpsCapSettler.MaxWriteAttempts"/> writes land before the pump loop's first
-    /// iteration ever ran. Flipping by call count sidesteps that race instead of fighting it.
+    /// <see cref="GetLastWriteTimeUtc"/> reports a FIXED but RECENT instant (the caller supplies it
+    /// -- the ordering test below passes the fake clock's own start time) rather than
+    /// <see cref="DateTimeOffset.UnixEpoch"/>. That distinction matters: an epoch mtime is decades
+    /// stale against a <c>FakeTimeProvider</c>'s 2000-01-01 default, so <c>FpsCapSettler</c>'s
+    /// pre-write quiet-wait credits "already quiet" on its very first check and never awaits a real
+    /// <c>Task.Delay</c> -- which means dropping the <c>await</c> on <c>ApplyFpsCapAsync</c> at the
+    /// call site is invisible to a test built on that probe (confirmed empirically: an
+    /// epoch-mtime version of this fixture let all <see cref="FpsCapSettler.MaxWriteAttempts"/>
+    /// writes land inside one synchronous continuation chain, before any pump loop's first
+    /// iteration ever ran, dropped-await or not). A fixed RECENT mtime makes the pre-write
+    /// quiet-wait a genuine suspension point on the fake clock -- the test must
+    /// <c>clock.Advance</c> past <see cref="FpsCapSettler.QuietDebounce"/> for it to release --
+    /// which is exactly the happens-before edge a dropped <c>await</c> would break (fix round 1,
+    /// escalated from Minor: see the report for the mutation proof both ways).
     /// </para>
     /// </summary>
     private sealed class FlipAfterFirstReadProbe : IGlobalBasicSettingsProbe
     {
         private readonly int _before;
         private readonly int _after;
+        private readonly DateTimeOffset _lastWriteTimeUtc;
         public int ReadCalls { get; private set; }
-        public FlipAfterFirstReadProbe(int before, int after) { _before = before; _after = after; }
+        public FlipAfterFirstReadProbe(int before, int after, DateTimeOffset lastWriteTimeUtc)
+        {
+            _before = before;
+            _after = after;
+            _lastWriteTimeUtc = lastWriteTimeUtc;
+        }
         public int? ReadFramerateCap() { ReadCalls++; return ReadCalls == 1 ? _before : _after; }
-        public DateTimeOffset? GetLastWriteTimeUtc() => DateTimeOffset.UnixEpoch;
+        public DateTimeOffset? GetLastWriteTimeUtc() => _lastWriteTimeUtc;
     }
 
     [Fact]
@@ -533,15 +544,19 @@ public class RobloxLauncherTests
     public async Task LaunchAsync_WhenTheCapDiffers_WritesItBeforeStartingTheProcess()
     {
         // Probe reports the old value on the fast-path pre-check, then the new value on the
-        // post-write confirm, so the settle succeeds on attempt 1 with exactly one write. See
-        // FlipAfterFirstReadProbe's remarks for why this is deterministic-by-construction rather
-        // than driven by a fake-clock pump loop (the loop this test originally used never actually
-        // ran: given this fixture's IGlobalBasicSettingsProbe, both of FpsCapSettler's quiet-waits
-        // resolve without a single real await, so all 3 write attempts landed before the loop's
-        // first iteration and the test failed with [20, 20, 20] instead of [20]).
-        var probe = new FlipAfterFirstReadProbe(before: 9999, after: 20);
-        var gbs = new RecordingGlobalBasicWriter();
+        // post-write confirm, so the settle succeeds on attempt 1 with exactly one write. The
+        // mtime it reports is a FIXED but RECENT instant (the fake clock's own start time, captured
+        // before any Advance) -- not UnixEpoch -- so the pre-write quiet-wait is a genuine
+        // suspension point on the fake clock that this test must drive forward. See
+        // FlipAfterFirstReadProbe's remarks: fix round 1 escalated this from Minor because an
+        // epoch-mtime version of this test could not fail when the production `await` on
+        // ApplyFpsCapAsync was dropped -- SettleAsync resolved in one synchronous continuation chain
+        // either way, so the write always landed before Process.Start regardless of whether the
+        // call site actually awaited it.
         var clock = new FakeTimeProvider();
+        var recentMtime = clock.GetUtcNow();   // "just written", not decades stale
+        var probe = new FlipAfterFirstReadProbe(before: 9999, after: 20, lastWriteTimeUtc: recentMtime);
+        var gbs = new RecordingGlobalBasicWriter();
         var starter = new OrderRecordingStarter(gbs);
         var (launcher, _, _) = CreateLauncher(
             ticket: "T",
@@ -552,15 +567,73 @@ public class RobloxLauncherTests
             processStarter: starter,
             timeProvider: clock);
 
-        var result = await launcher
-            .LaunchAsync(TestCookie, new LaunchTarget.Place(42), fpsCap: 20)
-            .WaitAsync(TimeSpan.FromSeconds(5));
+        var task = launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(42), fpsCap: 20);
+
+        // Drive the fake clock past QuietDebounce so the pre-write quiet-wait releases. Pumped
+        // between advances so the poll loop's continuation actually reaches its next await and
+        // arms a fresh timer against the still-advancing clock -- a bare loop of Advance() calls
+        // with no yields would race the continuation (same reasoning the retired
+        // RobloxLauncherGateTests.AdvancePastPollAsync documented for the pid-based gate this
+        // mechanism replaced). Bounded at 60 iterations of QuietPollInterval (6s of fake time) for
+        // margin over the 5s QuietDebounce; the loop exits the moment the write lands.
+        for (var i = 0; i < 60 && gbs.Writes.Count == 0; i++)
+        {
+            clock.Advance(FpsCapSettler.QuietPollInterval);
+            await Task.Yield();
+        }
+
+        var result = await task.WaitAsync(TimeSpan.FromSeconds(5));
 
         Assert.IsType<LaunchResult.Started>(result);
         Assert.Equal(new int?[] { 20 }, gbs.Writes);
         // The whole point: the cap is on disk before the client exists.
         Assert.True(starter.WriteCountAtStart == 1,
             $"expected the cap written before Process.Start, saw {starter.WriteCountAtStart} writes at start");
+    }
+
+    /// <summary>
+    /// Captures every log entry, keyed by level and formatted message. Fakes duplicated per-file so
+    /// each test file stands alone -- see Task 3 / MemoryWatchdogLoggingTests.cs for the same pattern.
+    /// </summary>
+    private sealed class CapturingLogger<T> : ILogger<T>
+    {
+        public readonly List<(LogLevel Level, string Message)> Entries = new();
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? ex,
+            Func<TState, Exception?, string> formatter)
+            => Entries.Add((logLevel, formatter(state, ex)));
+    }
+
+    [Fact]
+    public async Task LaunchAsync_WithWriterButNoProbe_StillWritesButLogsALoudWarning()
+    {
+        // Not reachable in the shipped app (App.xaml.cs always resolves IGlobalBasicSettingsProbe
+        // alongside IGlobalBasicSettingsWriter via GetRequiredService), but a future caller who
+        // wires a writer without a probe -- a second registration, a plugin host, an integration
+        // harness -- must get a LOUD degrade, not the silent one that shipped the 2026-08-01
+        // wrong-cap bug. Fix round 1, Important: this branch existed and was exercised by the two
+        // tests above (both of which also pass a probe) but had no test proving the no-probe path
+        // itself, nor that the degrade is visible anywhere.
+        var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket("T", DateTimeOffset.UtcNow)));
+        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
+        var processStarter = new RecordingProcessStarter(_ => 1);
+        var gbs = new RecordingGlobalBasicWriter();
+        var log = new CapturingLogger<RobloxLauncher>();
+        var launcher = new RobloxLauncher(
+            api, settings, processStarter,
+            favorites: null, clientAppSettings: null,
+            globalBasicSettings: gbs, settingsProbe: null, logger: log);
+
+        var result = await launcher
+            .LaunchAsync(TestCookie, new LaunchTarget.Place(42), fpsCap: 20)
+            .WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.IsType<LaunchResult.Started>(result);
+        Assert.Equal(new int?[] { 20 }, gbs.Writes);   // the write itself still happens
+        Assert.Contains(log.Entries, e =>
+            e.Level == LogLevel.Warning &&
+            e.Message.Contains("No IGlobalBasicSettingsProbe wired", StringComparison.Ordinal));
     }
 
     /// <summary>Captures how many cap writes had happened at the moment Process.Start was called.</summary>

@@ -120,7 +120,17 @@ public sealed class RobloxLauncher : IRobloxLauncher
 
         if (_settingsProbe is null)
         {
-            // No probe wired (test call sites). Preserve the old behaviour exactly: write and move on.
+            // No probe wired. Not reachable in the shipped app today (App.xaml.cs always resolves
+            // IGlobalBasicSettingsProbe via GetRequiredService alongside the writer) -- but a future
+            // caller that constructs a launcher with a writer and no probe (a second registration, a
+            // plugin host, an integration harness) must not silently land back on the exact
+            // write-and-hope behaviour that shipped the 2026-08-01 wrong-cap bug. Attempt the write
+            // (doing something beats doing nothing) but say loudly that the confirm-and-retry
+            // protection is absent, so this degrade is visible in a support bundle instead of
+            // discovered the same way the original bug was.
+            _log.LogWarning(
+                "No IGlobalBasicSettingsProbe wired; writing FPS cap {Cap} without confirming it survives " +
+                "a close-together launch.", fpsCap);
             try
             {
                 await _globalBasicSettings.WriteFramerateCapAsync(fpsCap).ConfigureAwait(false);
