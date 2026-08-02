@@ -103,20 +103,22 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 
 > Avoid "cheat", "exploit", "bypass" — those will trigger reviewer concerns even if irrelevant.
 
-## What's new (release notes for v1.11.1.0)
+## What's new (release notes for v1.12.0.0)
 
 > Store field only. Do NOT mention the plugin marketplace here — it's hidden in the
 > Store (packaged) build, so advertising it would confuse Store users and invite
-> reviewer questions. Streamer mode leads — it's the headline feature of this
-> submission and privacy-positive framing reads well in review.
+> reviewer questions. The memory watchdog leads: it solves a problem users actually
+> reported, and "we watch for it and give you one click to fix it" is a clean
+> user-benefit framing. Keep it about the user's machine filling up — do not
+> editorialise about the Roblox client, which reads as blame-shifting to a reviewer.
 
 ```
-v1.11.1.0:
-• Streamer mode: one flip disguises your whole account list with silly stand-in names and avatars, so you can stream or screen-share RoRoRo without showing your alts. Reroll any disguise; flip it off and everything comes back. Doesn't change what shows inside Roblox.
-• Twelve hand-drawn disguise avatars, made for RoRoRo.
-• The "Roblox is already running" popup is mostly gone: if Roblox is only sitting in your system tray, RoRoRo now starts cleanly on its own. You're still asked first whenever an actual game window is open.
-• Squad launch got a careful mode that waits for each account to land before launching the next, with per-account follow settings.
-• Set a default private server and a default game; launching with none set opens the Roblox home page.
+v1.12.0.0:
+• Long sessions used to end with alt windows closing on their own. The cause is memory: each Roblox client slowly uses more the longer it runs, and several at once will fill your machine. RoRoRo now shows what each one is using and warns you before you run out.
+• Recycle: one click closes a heavy account and reopens it right back into the same game or private server. Memory drops to a fresh start, your other accounts keep running.
+• Thresholds set themselves from how much RAM your PC has, so a 16 GB laptop and a 64 GB desktop each get sensible numbers with nothing to configure.
+• Clear strays: Roblox leaves invisible leftover processes behind when a client closes. RoRoRo can now tidy up just those, and never touches a game you have open.
+• Safer cleanup: when RoRoRo can't tell whether a Roblox process is a leftover or a game you're playing, it now assumes you're playing and asks first.
 ```
 
 (Historical "What's new" blocks for prior releases live in their respective `docs/store/release-notes-*.md` files.)
