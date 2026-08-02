@@ -239,6 +239,80 @@ public class MainViewModelTests
         return new AccountSummary(added with { RobloxUserId = robloxUserId }) { SessionExpired = true };
     }
 
+    /// <summary>A display row carrying just the FPS cap — everything else is irrelevant here.</summary>
+    private static AccountSummary RowWithCap(int? fpsCap) => new(new Account(
+        Guid.NewGuid(),
+        DisplayName: "acct",
+        AvatarUrl: "",
+        CreatedAt: DateTimeOffset.UtcNow,
+        LastLaunchedAt: null,
+        FpsCap: fpsCap));
+
+    [Fact]
+    public void FpsCapWarning_IsEmpty_WhenEveryAccountSharesOneCap()
+    {
+        var (vm, _, _, path) = Build(new CapturingRobloxLauncher());
+        try
+        {
+            vm.Accounts.Add(RowWithCap(20));
+            vm.Accounts.Add(RowWithCap(20));
+
+            vm.RefreshFpsCapWarning();
+
+            Assert.Equal(string.Empty, vm.FpsCapWarningText);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public void FpsCapWarning_IsEmpty_ForASingleAccount()
+    {
+        var (vm, _, _, path) = Build(new CapturingRobloxLauncher());
+        try
+        {
+            vm.Accounts.Add(RowWithCap(20));
+
+            vm.RefreshFpsCapWarning();
+
+            Assert.Equal(string.Empty, vm.FpsCapWarningText);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public void FpsCapWarning_Appears_WhenTwoAccountsHaveDifferentCaps()
+    {
+        var (vm, _, _, path) = Build(new CapturingRobloxLauncher());
+        try
+        {
+            vm.Accounts.Add(RowWithCap(20));
+            vm.Accounts.Add(RowWithCap(9999));
+
+            vm.RefreshFpsCapWarning();
+
+            Assert.Equal(MultiInstanceCopy.FpsCapMismatchBanner, vm.FpsCapWarningText);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public void FpsCapWarning_TreatsUnsetAsItsOwnValue()
+    {
+        // One account capped and one left alone is still a mismatch: the capped account's write
+        // and the uncapped account's client contend over the same shared file.
+        var (vm, _, _, path) = Build(new CapturingRobloxLauncher());
+        try
+        {
+            vm.Accounts.Add(RowWithCap(20));
+            vm.Accounts.Add(RowWithCap(null));
+
+            vm.RefreshFpsCapWarning();
+
+            Assert.Equal(MultiInstanceCopy.FpsCapMismatchBanner, vm.FpsCapWarningText);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
     [Fact]
     public async Task ReauthenticateAsync_CancelledCapture_KeepsTagAndSurfacesBanner()
     {

@@ -750,6 +750,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // Re-apply any active filter against the freshly-loaded rows so a reload (e.g. after the
         // Games dialog closes) doesn't surface filtered-out rows. No-op when the filter is empty.
         ApplyFilter();
+        RefreshFpsCapWarning();
 
         await ReloadGamesAsync();
         OnPropertyChanged(nameof(MainAccount));
@@ -1104,6 +1105,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
         WireAccountSummary(summary);
         Accounts.Insert(0, summary);
+        RefreshFpsCapWarning();
         _log.LogInformation("Added account {AccountId} ({Username}, userId {UserId}, isMain={IsMain})",
             account.Id, captured.Username, captured.UserId, account.IsMain);
         // Streamer-mode-aware: summary is already wired to the identity provider above, so
@@ -2383,6 +2385,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // comment in LoadAsync for why this row would otherwise leak.
         summary.DetachIdentityProvider();
         Accounts.Remove(summary);
+        RefreshFpsCapWarning();
 
         // Store auto-promotes a new main when the previous one was just removed; mirror that
         // promotion onto the in-memory AccountSummary list so the MAIN pill flips immediately.
@@ -2654,6 +2657,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         if (row is null) return;
         row.FpsCap = newValue;
+        RefreshFpsCapWarning();
         try
         {
             await _accountStore.SetFpsCapAsync(row.Id, newValue);
@@ -2866,6 +2870,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 stale.DetachIdentityProvider();
             }
             Accounts.Clear();
+            RefreshFpsCapWarning();
             StatusBanner = "Started fresh. Add accounts to begin.";
         }
         else
@@ -3081,6 +3086,29 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     public void SetContested(bool contested)
         => ContestedBannerText = contested ? MultiInstanceCopy.ContestedBanner : string.Empty;
+
+    private string _fpsCapWarningText = string.Empty;
+
+    /// <summary>
+    /// Non-empty when the accounts on screen do not all share one FPS cap — see
+    /// <see cref="MultiInstanceCopy.FpsCapMismatchBanner"/>. Display only; it does not gate
+    /// launching. The user chose this trade, so do not make them re-confirm it.
+    /// </summary>
+    public string FpsCapWarningText
+    {
+        get => _fpsCapWarningText;
+        private set => SetField(ref _fpsCapWarningText, value);
+    }
+
+    /// <summary>
+    /// Recompute the mismatch warning. "Unset" counts as its own distinct value: a capped account
+    /// and an uncapped one still contend over the same shared file.
+    /// </summary>
+    internal void RefreshFpsCapWarning()
+    {
+        var distinct = Accounts.Select(a => a.FpsCap).Distinct().Count();
+        FpsCapWarningText = distinct > 1 ? MultiInstanceCopy.FpsCapMismatchBanner : string.Empty;
+    }
 
     public event Action? RequestCloseRobloxForMe;
     public event Action? RequestRetryMutex;

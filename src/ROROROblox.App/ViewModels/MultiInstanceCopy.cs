@@ -10,4 +10,15 @@ public static class MultiInstanceCopy
 
     /// <summary>Tick shown in the BLOCKED modal after a Retry that still failed.</summary>
     public const string StillLocked = "Still locked — Roblox is still running.";
+
+    /// <summary>
+    /// Shown when the accounts on screen do not all share one FPS cap. Roblox keeps a single
+    /// settings file per install, so a differing cap forces RoRoRo to wait for each client to
+    /// finish loading before starting the next. Quotes 15 seconds deliberately: the measured
+    /// settle is 9-12 s plus the confirm window, and a user told 10 who waits 14 assumes a hang.
+    /// </summary>
+    public const string FpsCapMismatchBanner =
+        "Different FPS caps will slow your launches. Roblox keeps one shared settings file for "
+        + "every client, so RoRoRo waits for each account to finish loading before starting the "
+        + "next — about 15 seconds each. Set every account to the same cap to launch at full speed.";
 }
