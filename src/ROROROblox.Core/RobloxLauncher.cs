@@ -33,6 +33,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
     private readonly Func<long> _browserTrackerIdFactory;
     private readonly IClientAppSettingsWriter? _clientAppSettings;
     private readonly IGlobalBasicSettingsWriter? _globalBasicSettings;
+    private readonly IRobloxRunningProbe? _runningProbe;
     private readonly SemaphoreSlim _launchGate = new(initialCount: 1, maxCount: 1);
     private static readonly TimeSpan FFlagReadHold = TimeSpan.FromMilliseconds(250);
 
@@ -60,10 +61,11 @@ public sealed class RobloxLauncher : IRobloxLauncher
         IProcessStarter processStarter,
         IFavoriteGameStore? favorites = null,
         IClientAppSettingsWriter? clientAppSettings = null,
-        IGlobalBasicSettingsWriter? globalBasicSettings = null)
+        IGlobalBasicSettingsWriter? globalBasicSettings = null,
+        IRobloxRunningProbe? runningProbe = null)
         : this(api, settings, processStarter, TimeProvider.System,
               () => Random.Shared.NextInt64(1_000_000_000_000, 9_999_999_999_999),
-              favorites, clientAppSettings, globalBasicSettings)
+              favorites, clientAppSettings, globalBasicSettings, runningProbe)
     {
     }
 
@@ -76,7 +78,8 @@ public sealed class RobloxLauncher : IRobloxLauncher
         Func<long> browserTrackerIdFactory,
         IFavoriteGameStore? favorites = null,
         IClientAppSettingsWriter? clientAppSettings = null,
-        IGlobalBasicSettingsWriter? globalBasicSettings = null)
+        IGlobalBasicSettingsWriter? globalBasicSettings = null,
+        IRobloxRunningProbe? runningProbe = null)
     {
         _api = api ?? throw new ArgumentNullException(nameof(api));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -86,6 +89,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         _favorites = favorites;
         _clientAppSettings = clientAppSettings;
         _globalBasicSettings = globalBasicSettings;
+        _runningProbe = runningProbe;
     }
 
     public async Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null)
@@ -127,8 +131,20 @@ public sealed class RobloxLauncher : IRobloxLauncher
                 }
             }
 
-            var result = await ExecuteLaunchAsync(cookie, target, browserTrackerId).ConfigureAwait(false);
-            await Task.Delay(FFlagReadHold).ConfigureAwait(false);
+            var (result, beforePids) = await ExecuteLaunchAsync(cookie, target, browserTrackerId).ConfigureAwait(false);
+
+            // Only a successful launch produces a client to wait for. Failed / CookieExpired / Limited
+            // release immediately — a user without Roblox installed must not eat the ceiling every click.
+            if (result is LaunchResult.Started && _runningProbe is not null)
+            {
+                await WaitForNewClientAsync(_runningProbe, beforePids!, _timeProvider, CancellationToken.None)
+                    .ConfigureAwait(false);
+            }
+            else if (result is LaunchResult.Started)
+            {
+                await Task.Delay(FFlagReadHold, _timeProvider).ConfigureAwait(false);
+            }
+
             return result;
         }
         finally
@@ -137,7 +153,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
     }
 
-    private async Task<LaunchResult> ExecuteLaunchAsync(string cookie, LaunchTarget target, long? stableBrowserTrackerId)
+    private async Task<(LaunchResult Result, IReadOnlySet<int>? BeforePids)> ExecuteLaunchAsync(string cookie, LaunchTarget target, long? stableBrowserTrackerId)
     {
         // FollowFriend doesn't need place resolution — Roblox follows the user wherever they are.
         // Place / PrivateServer are already concrete. DefaultGame resolves through favorites + settings.
@@ -151,8 +167,8 @@ public sealed class RobloxLauncher : IRobloxLauncher
             // returns non-null (falls back to LaunchTarget.Home per spec §5). This still catches null
             // from explicit-selection callers upstream (JoinByLinkWindow, MainViewModel) that resolve
             // a pasted/typed URL via LaunchTarget.FromUrl before reaching ExecuteLaunchAsync.
-            return new LaunchResult.Failed(
-                "No default Roblox game configured. Add one in Games (header button), or pass an explicit target.");
+            return (new LaunchResult.Failed(
+                "No default Roblox game configured. Add one in Games (header button), or pass an explicit target."), null);
         }
 
         AuthTicket ticket;
@@ -162,15 +178,15 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
         catch (CookieExpiredException)
         {
-            return new LaunchResult.CookieExpired();
+            return (new LaunchResult.CookieExpired(), null);
         }
         catch (SessionLimitedException)
         {
-            return new LaunchResult.Limited();
+            return (new LaunchResult.Limited(), null);
         }
         catch (Exception ex)
         {
-            return new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}");
+            return (new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}"), null);
         }
 
         // Stable per-account btid when the caller has one persisted (v1.8.1 trust hygiene);
@@ -183,19 +199,27 @@ public sealed class RobloxLauncher : IRobloxLauncher
             ? BuildAppLaunchUri(ticket.Ticket, launchTime, browserTrackerId)
             : BuildLaunchUri(ticket.Ticket, launchTime, browserTrackerId, BuildPlaceLauncherUrl(resolved, browserTrackerId));
 
+        // Snapshot immediately before Process.Start, not any earlier — a probe call has no reason to
+        // happen at all on a launch that never reaches this point (CookieExpired / Limited / resolution
+        // failure), and this is the tightest possible window before the client we're about to start
+        // could exist, so pre-existing windowless orphans can never be mistaken for it.
+        IReadOnlySet<int>? beforePids = _runningProbe is null
+            ? null
+            : new HashSet<int>(SafeGetPids(_runningProbe));
+
         try
         {
             var launchedAtUtc = _timeProvider.GetUtcNow();
             var pid = _processStarter.StartViaShell(uri);
-            return new LaunchResult.Started(pid, launchedAtUtc);
+            return (new LaunchResult.Started(pid, launchedAtUtc), beforePids);
         }
         catch (Win32Exception)
         {
-            return new LaunchResult.Failed(RobloxNotInstalledMessage);
+            return (new LaunchResult.Failed(RobloxNotInstalledMessage), beforePids);
         }
         catch (Exception ex)
         {
-            return new LaunchResult.Failed($"Process.Start failed: {ex.Message}");
+            return (new LaunchResult.Failed($"Process.Start failed: {ex.Message}"), beforePids);
         }
     }
 
@@ -260,8 +284,20 @@ public sealed class RobloxLauncher : IRobloxLauncher
                 }
             }
 
-            var result = await ExecuteLegacyLaunchAsync(cookie, resolvedPlaceUrl, browserTrackerId).ConfigureAwait(false);
-            await Task.Delay(FFlagReadHold).ConfigureAwait(false);
+            var (result, beforePids) = await ExecuteLegacyLaunchAsync(cookie, resolvedPlaceUrl, browserTrackerId).ConfigureAwait(false);
+
+            // Only a successful launch produces a client to wait for. Failed / CookieExpired / Limited
+            // release immediately — a user without Roblox installed must not eat the ceiling every click.
+            if (result is LaunchResult.Started && _runningProbe is not null)
+            {
+                await WaitForNewClientAsync(_runningProbe, beforePids!, _timeProvider, CancellationToken.None)
+                    .ConfigureAwait(false);
+            }
+            else if (result is LaunchResult.Started)
+            {
+                await Task.Delay(FFlagReadHold, _timeProvider).ConfigureAwait(false);
+            }
+
             return result;
         }
         finally
@@ -270,7 +306,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
     }
 
-    private async Task<LaunchResult> ExecuteLegacyLaunchAsync(string cookie, string resolvedPlaceUrl, long? stableBrowserTrackerId)
+    private async Task<(LaunchResult Result, IReadOnlySet<int>? BeforePids)> ExecuteLegacyLaunchAsync(string cookie, string resolvedPlaceUrl, long? stableBrowserTrackerId)
     {
         AuthTicket ticket;
         try
@@ -279,15 +315,15 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
         catch (CookieExpiredException)
         {
-            return new LaunchResult.CookieExpired();
+            return (new LaunchResult.CookieExpired(), null);
         }
         catch (SessionLimitedException)
         {
-            return new LaunchResult.Limited();
+            return (new LaunchResult.Limited(), null);
         }
         catch (Exception ex)
         {
-            return new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}");
+            return (new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}"), null);
         }
 
         var launchTime = _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
@@ -301,19 +337,27 @@ public sealed class RobloxLauncher : IRobloxLauncher
         var normalizedPlaceUrl = NormalizeToPlaceLauncherUrl(resolvedPlaceUrl, browserTrackerId);
         var uri = BuildLaunchUri(ticket.Ticket, launchTime, browserTrackerId, normalizedPlaceUrl);
 
+        // Snapshot immediately before Process.Start, not any earlier — a probe call has no reason to
+        // happen at all on a launch that never reaches this point (CookieExpired / Limited), and this
+        // is the tightest possible window before the client we're about to start could exist, so
+        // pre-existing windowless orphans can never be mistaken for it.
+        IReadOnlySet<int>? beforePids = _runningProbe is null
+            ? null
+            : new HashSet<int>(SafeGetPids(_runningProbe));
+
         try
         {
             var launchedAtUtc = _timeProvider.GetUtcNow();
             var pid = _processStarter.StartViaShell(uri);
-            return new LaunchResult.Started(pid, launchedAtUtc);
+            return (new LaunchResult.Started(pid, launchedAtUtc), beforePids);
         }
         catch (Win32Exception)
         {
-            return new LaunchResult.Failed(RobloxNotInstalledMessage);
+            return (new LaunchResult.Failed(RobloxNotInstalledMessage), beforePids);
         }
         catch (Exception ex)
         {
-            return new LaunchResult.Failed($"Process.Start failed: {ex.Message}");
+            return (new LaunchResult.Failed($"Process.Start failed: {ex.Message}"), beforePids);
         }
     }
 
@@ -579,5 +623,11 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
 
         return NewClientWaitOutcome.TimedOut;
+    }
+
+    private static IReadOnlyList<int> SafeGetPids(IRobloxRunningProbe probe)
+    {
+        try { return probe.GetRunningPlayerPids(); }
+        catch { return Array.Empty<int>(); }
     }
 }

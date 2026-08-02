@@ -1,5 +1,7 @@
 using System.ComponentModel;
+using Microsoft.Extensions.Time.Testing;
 using ROROROblox.Core;
+using ROROROblox.Core.Diagnostics;
 
 namespace ROROROblox.Tests;
 
@@ -451,6 +453,96 @@ public class RobloxLauncherTests
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
             launcher.LaunchAsync(TestCookie, target: null!));
+    }
+
+    // === Condition-based wait gate (probe threading) ===
+
+    /// <summary>Counts probe calls and never reports a new pid, so any wait runs to its ceiling.</summary>
+    private sealed class CountingProbe : IRobloxRunningProbe
+    {
+        public int Calls { get; private set; }
+        public IReadOnlyList<int> GetRunningPlayerPids() { Calls++; return Array.Empty<int>(); }
+        public IReadOnlyList<RobloxProcessInfo> GetRunningPlayers() => Array.Empty<RobloxProcessInfo>();
+    }
+
+    [Fact]
+    public async Task LaunchAsync_CookieExpired_NeverWaitsForAClient()
+    {
+        // Only a successful launch produces a client to wait for. If a non-Started result waited,
+        // a user without Roblox installed would eat the full 30s ceiling on every click.
+        var api = new StubRobloxApi(_ => throw new CookieExpiredException());
+        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
+        var processStarter = new RecordingProcessStarter(_ => 1);
+        var probe = new CountingProbe();
+        var launcher = new RobloxLauncher(api, settings, processStarter, runningProbe: probe);
+
+        var result = await launcher.LaunchAsync(TestCookie);
+
+        Assert.IsType<LaunchResult.CookieExpired>(result);
+        Assert.Equal(0, probe.Calls);   // never even snapshotted, let alone waited
+    }
+
+    [Fact]
+    public async Task LaunchAsync_WithoutAProbe_StillCompletes_UnchangedBehaviour()
+    {
+        // The no-probe path must behave exactly as it did before this change, so every existing
+        // call site and test that constructs a launcher without a probe keeps working.
+        var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket("ticket", DateTimeOffset.UtcNow)));
+        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
+        var processStarter = new RecordingProcessStarter(_ => 4242);
+        var launcher = new RobloxLauncher(api, settings, processStarter);   // no probe
+
+        // Real-time ceiling per the established RobloxLauncherGateTests pattern: if a regression
+        // made the no-probe path fall into WaitForNewClientAsync anyway (e.g. an inverted null
+        // guard), the null probe's exceptions are swallowed internally and it would silently run to
+        // the real 30s+1s ceiling instead of the ~250ms this path should take -- turning what should
+        // be a fast test into a slow false-pass. Bounding the await converts that into a fast red
+        // TimeoutException instead.
+        var result = await launcher.LaunchAsync(TestCookie).WaitAsync(TimeSpan.FromSeconds(5));
+
+        var started = Assert.IsType<LaunchResult.Started>(result);
+        Assert.Equal(4242, started.Pid);
+    }
+
+    [Fact]
+    public async Task LaunchAsync_WithProbeAndStartedResult_ActuallyPollsForTheClient()
+    {
+        // Positive-path proof that the launcher wiring calls WaitForNewClientAsync when a probe is
+        // present and the launch succeeds. Neither test above exercises this: one asserts zero probe
+        // calls on a non-Started result, the other asserts unchanged behaviour with no probe at all.
+        // Without this test, deleting the WaitForNewClientAsync call and always falling through to the
+        // old Task.Delay(FFlagReadHold) -- even with a probe present -- would leave both other tests
+        // green.
+        var clock = new FakeTimeProvider();
+        var probe = new CountingProbe();
+        var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket("T", DateTimeOffset.UtcNow)));
+        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
+        var processStarter = new RecordingProcessStarter(_ => 999);
+        var launcher = new RobloxLauncher(
+            api, settings, processStarter, clock, () => 1_000_000_000_000,
+            favorites: null, clientAppSettings: null, globalBasicSettings: null, runningProbe: probe);
+
+        var launchTask = launcher.LaunchAsync(TestCookie);
+
+        // Drive the fake clock past several poll intervals to prove the gate is actually polling
+        // (not skipping straight past to the old fixed 250ms hold). CountingProbe never reports a
+        // new pid, so this only terminates once we advance past the full 30s ceiling below.
+        for (var i = 0; i < 5; i++)
+        {
+            clock.Advance(RobloxLauncher.NewClientPollInterval);
+            for (var pump = 0; pump < 50 && probe.Calls < i + 2; pump++)
+            {
+                await Task.Yield();
+            }
+        }
+        Assert.True(probe.Calls >= 2,
+            $"launcher did not poll the probe (stuck at {probe.Calls} calls) -- WaitForNewClientAsync does not appear to be wired into LaunchAsync");
+
+        clock.Advance(RobloxLauncher.NewClientWaitTimeout);
+
+        var result = await launchTask.WaitAsync(TimeSpan.FromSeconds(5));
+        var started = Assert.IsType<LaunchResult.Started>(result);
+        Assert.Equal(999, started.Pid);
     }
 
     // === Helpers ===
