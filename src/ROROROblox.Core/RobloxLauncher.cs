@@ -1,8 +1,19 @@
 using System.ComponentModel;
 using System.Text;
 using System.Text.RegularExpressions;
+using ROROROblox.Core.Diagnostics;
 
 namespace ROROROblox.Core;
+
+/// <summary>Why <see cref="RobloxLauncher.WaitForNewClientAsync"/> returned.</summary>
+public enum NewClientWaitOutcome
+{
+    /// <summary>A RobloxPlayerBeta pid appeared that was not in the pre-launch snapshot.</summary>
+    Detected,
+
+    /// <summary>No new pid within the ceiling. Gate released anyway — never hang the queue.</summary>
+    TimedOut,
+}
 
 /// <summary>
 /// Implements <see cref="IRobloxLauncher"/>. Coordinates ticket fetch + URI build + process spawn.
@@ -22,8 +33,36 @@ public sealed class RobloxLauncher : IRobloxLauncher
     private readonly Func<long> _browserTrackerIdFactory;
     private readonly IClientAppSettingsWriter? _clientAppSettings;
     private readonly IGlobalBasicSettingsWriter? _globalBasicSettings;
+    private readonly IRobloxRunningProbe? _runningProbe;
     private readonly SemaphoreSlim _launchGate = new(initialCount: 1, maxCount: 1);
     private static readonly TimeSpan FFlagReadHold = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>
+    /// How often to re-check for the launched client. NOT a bare process-name enumeration:
+    /// <see cref="IRobloxRunningProbe.GetRunningPlayerPids"/> routes through
+    /// <c>RobloxRunningProbe.GetRunningPlayers()</c>, which reads <c>MainWindowHandle</c> per
+    /// process — a top-level window sweep this gate does not need. Over a full
+    /// <see cref="NewClientWaitTimeout"/> wait that is ~120 of those sweeps. Fine for today's poll
+    /// count; not "cheap" in the sense a reader would assume from that word alone (fix wave,
+    /// 2026-08-02 review finding 4 — narrowing the probe to skip the window read is a follow-up,
+    /// not this change).
+    /// </summary>
+    internal static readonly TimeSpan NewClientPollInterval = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>
+    /// Ceiling on waiting for a launched client to appear. Covers a cold start with a bootstrapper
+    /// update. On expiry we release anyway and degrade to the old fixed-delay behaviour — a launch
+    /// that never produces a client must never hang Squad Launch.
+    /// </summary>
+    internal static readonly TimeSpan NewClientWaitTimeout = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Breathing room after the client process appears, before the next launch is allowed to
+    /// overwrite the shared settings files. Still an estimate — but anchored to THE CLIENT PROCESS
+    /// EXISTING rather than to Windows accepting a URI. That re-anchoring is the fix; the old 250ms
+    /// was measured against an unbounded gap (shell -> bootstrapper -> maybe an update -> client).
+    /// </summary>
+    internal static readonly TimeSpan SettleGrace = TimeSpan.FromSeconds(1);
 
     public RobloxLauncher(
         IRobloxApi api,
@@ -31,10 +70,11 @@ public sealed class RobloxLauncher : IRobloxLauncher
         IProcessStarter processStarter,
         IFavoriteGameStore? favorites = null,
         IClientAppSettingsWriter? clientAppSettings = null,
-        IGlobalBasicSettingsWriter? globalBasicSettings = null)
+        IGlobalBasicSettingsWriter? globalBasicSettings = null,
+        IRobloxRunningProbe? runningProbe = null)
         : this(api, settings, processStarter, TimeProvider.System,
               () => Random.Shared.NextInt64(1_000_000_000_000, 9_999_999_999_999),
-              favorites, clientAppSettings, globalBasicSettings)
+              favorites, clientAppSettings, globalBasicSettings, runningProbe)
     {
     }
 
@@ -47,7 +87,8 @@ public sealed class RobloxLauncher : IRobloxLauncher
         Func<long> browserTrackerIdFactory,
         IFavoriteGameStore? favorites = null,
         IClientAppSettingsWriter? clientAppSettings = null,
-        IGlobalBasicSettingsWriter? globalBasicSettings = null)
+        IGlobalBasicSettingsWriter? globalBasicSettings = null,
+        IRobloxRunningProbe? runningProbe = null)
     {
         _api = api ?? throw new ArgumentNullException(nameof(api));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -57,6 +98,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         _favorites = favorites;
         _clientAppSettings = clientAppSettings;
         _globalBasicSettings = globalBasicSettings;
+        _runningProbe = runningProbe;
     }
 
     public async Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null)
@@ -98,8 +140,8 @@ public sealed class RobloxLauncher : IRobloxLauncher
                 }
             }
 
-            var result = await ExecuteLaunchAsync(cookie, target, browserTrackerId).ConfigureAwait(false);
-            await Task.Delay(FFlagReadHold).ConfigureAwait(false);
+            var (result, beforePids) = await ExecuteLaunchAsync(cookie, target, browserTrackerId).ConfigureAwait(false);
+            await HoldForNewClientAsync(result, beforePids).ConfigureAwait(false);
             return result;
         }
         finally
@@ -108,7 +150,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
     }
 
-    private async Task<LaunchResult> ExecuteLaunchAsync(string cookie, LaunchTarget target, long? stableBrowserTrackerId)
+    private async Task<(LaunchResult Result, IReadOnlySet<int>? BeforePids)> ExecuteLaunchAsync(string cookie, LaunchTarget target, long? stableBrowserTrackerId)
     {
         // FollowFriend doesn't need place resolution — Roblox follows the user wherever they are.
         // Place / PrivateServer are already concrete. DefaultGame resolves through favorites + settings.
@@ -122,8 +164,8 @@ public sealed class RobloxLauncher : IRobloxLauncher
             // returns non-null (falls back to LaunchTarget.Home per spec §5). This still catches null
             // from explicit-selection callers upstream (JoinByLinkWindow, MainViewModel) that resolve
             // a pasted/typed URL via LaunchTarget.FromUrl before reaching ExecuteLaunchAsync.
-            return new LaunchResult.Failed(
-                "No default Roblox game configured. Add one in Games (header button), or pass an explicit target.");
+            return (new LaunchResult.Failed(
+                "No default Roblox game configured. Add one in Games (header button), or pass an explicit target."), null);
         }
 
         AuthTicket ticket;
@@ -133,15 +175,15 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
         catch (CookieExpiredException)
         {
-            return new LaunchResult.CookieExpired();
+            return (new LaunchResult.CookieExpired(), null);
         }
         catch (SessionLimitedException)
         {
-            return new LaunchResult.Limited();
+            return (new LaunchResult.Limited(), null);
         }
         catch (Exception ex)
         {
-            return new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}");
+            return (new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}"), null);
         }
 
         // Stable per-account btid when the caller has one persisted (v1.8.1 trust hygiene);
@@ -154,19 +196,29 @@ public sealed class RobloxLauncher : IRobloxLauncher
             ? BuildAppLaunchUri(ticket.Ticket, launchTime, browserTrackerId)
             : BuildLaunchUri(ticket.Ticket, launchTime, browserTrackerId, BuildPlaceLauncherUrl(resolved, browserTrackerId));
 
+        // Snapshot immediately before Process.Start, not any earlier -- in particular, AFTER the
+        // GetAuthTicketAsync network round-trip above, not before it. The brief's original plan had
+        // this snapshot at the top of the public LaunchAsync method, ahead of that round-trip; a
+        // Roblox client that appeared during the round-trip (user double-clicked the desktop icon,
+        // a bootstrapper finished) would then be absent from `before` and get false-detected as
+        // ours, releasing the gate early -- the exact bug class this task exists to kill. A probe
+        // call also has no reason to happen at all on a launch that never reaches this point
+        // (CookieExpired / Limited / resolution failure).
+        IReadOnlySet<int>? beforePids = SnapshotBeforePids();
+
         try
         {
             var launchedAtUtc = _timeProvider.GetUtcNow();
             var pid = _processStarter.StartViaShell(uri);
-            return new LaunchResult.Started(pid, launchedAtUtc);
+            return (new LaunchResult.Started(pid, launchedAtUtc), beforePids);
         }
         catch (Win32Exception)
         {
-            return new LaunchResult.Failed(RobloxNotInstalledMessage);
+            return (new LaunchResult.Failed(RobloxNotInstalledMessage), beforePids);
         }
         catch (Exception ex)
         {
-            return new LaunchResult.Failed($"Process.Start failed: {ex.Message}");
+            return (new LaunchResult.Failed($"Process.Start failed: {ex.Message}"), beforePids);
         }
     }
 
@@ -231,8 +283,8 @@ public sealed class RobloxLauncher : IRobloxLauncher
                 }
             }
 
-            var result = await ExecuteLegacyLaunchAsync(cookie, resolvedPlaceUrl, browserTrackerId).ConfigureAwait(false);
-            await Task.Delay(FFlagReadHold).ConfigureAwait(false);
+            var (result, beforePids) = await ExecuteLegacyLaunchAsync(cookie, resolvedPlaceUrl, browserTrackerId).ConfigureAwait(false);
+            await HoldForNewClientAsync(result, beforePids).ConfigureAwait(false);
             return result;
         }
         finally
@@ -241,7 +293,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
     }
 
-    private async Task<LaunchResult> ExecuteLegacyLaunchAsync(string cookie, string resolvedPlaceUrl, long? stableBrowserTrackerId)
+    private async Task<(LaunchResult Result, IReadOnlySet<int>? BeforePids)> ExecuteLegacyLaunchAsync(string cookie, string resolvedPlaceUrl, long? stableBrowserTrackerId)
     {
         AuthTicket ticket;
         try
@@ -250,15 +302,15 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
         catch (CookieExpiredException)
         {
-            return new LaunchResult.CookieExpired();
+            return (new LaunchResult.CookieExpired(), null);
         }
         catch (SessionLimitedException)
         {
-            return new LaunchResult.Limited();
+            return (new LaunchResult.Limited(), null);
         }
         catch (Exception ex)
         {
-            return new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}");
+            return (new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}"), null);
         }
 
         var launchTime = _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
@@ -272,19 +324,24 @@ public sealed class RobloxLauncher : IRobloxLauncher
         var normalizedPlaceUrl = NormalizeToPlaceLauncherUrl(resolvedPlaceUrl, browserTrackerId);
         var uri = BuildLaunchUri(ticket.Ticket, launchTime, browserTrackerId, normalizedPlaceUrl);
 
+        // Snapshot immediately before Process.Start, not any earlier -- see the comment on the
+        // matching snapshot line in ExecuteLaunchAsync for why (must be AFTER the ticket round-trip,
+        // not before it).
+        IReadOnlySet<int>? beforePids = SnapshotBeforePids();
+
         try
         {
             var launchedAtUtc = _timeProvider.GetUtcNow();
             var pid = _processStarter.StartViaShell(uri);
-            return new LaunchResult.Started(pid, launchedAtUtc);
+            return (new LaunchResult.Started(pid, launchedAtUtc), beforePids);
         }
         catch (Win32Exception)
         {
-            return new LaunchResult.Failed(RobloxNotInstalledMessage);
+            return (new LaunchResult.Failed(RobloxNotInstalledMessage), beforePids);
         }
         catch (Exception ex)
         {
-            return new LaunchResult.Failed($"Process.Start failed: {ex.Message}");
+            return (new LaunchResult.Failed($"Process.Start failed: {ex.Message}"), beforePids);
         }
     }
 
@@ -498,5 +555,121 @@ public sealed class RobloxLauncher : IRobloxLauncher
         uri.Append("+browsertrackerid:").Append(browserTrackerId);
         uri.Append("+robloxLocale:en_us+gameLocale:en_us");
         return uri.ToString();
+    }
+
+    /// <summary>
+    /// Hold until a RobloxPlayerBeta pid appears that was not in <paramref name="before"/>, then
+    /// wait <see cref="SettleGrace"/>. Bounded by <see cref="NewClientWaitTimeout"/>.
+    /// Probe exceptions are swallowed, but only around the pid-enumeration step — a probe
+    /// glitch must degrade to the next poll, never abort a launch. Cancellation is NOT
+    /// swallowed by that catch: a canceled <paramref name="ct"/> propagates as
+    /// <see cref="OperationCanceledException"/> from either <c>Task.Delay</c> call, including
+    /// the <see cref="SettleGrace"/> hold after a client was already found. Callers that wire
+    /// this into a launch path must decide how a cancellation there should surface.
+    /// </summary>
+    internal static async Task<NewClientWaitOutcome> WaitForNewClientAsync(
+        IRobloxRunningProbe probe,
+        IReadOnlySet<int> before,
+        TimeProvider timeProvider,
+        CancellationToken ct)
+    {
+        var deadline = timeProvider.GetUtcNow() + NewClientWaitTimeout;
+
+        while (timeProvider.GetUtcNow() < deadline)
+        {
+            var found = false;
+            try
+            {
+                foreach (var pid in probe.GetRunningPlayerPids())
+                {
+                    if (!before.Contains(pid))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // Probe glitch -> treat as "not yet". Never let it escape into the launch path.
+            }
+
+            if (found)
+            {
+                // Deliberately outside the try above (2026-08-02 review, approved drift from the
+                // original plan text): the settle hold must not be caught by the probe's glitch
+                // handler. A probe exception here would be a lie -- we already found the client.
+                await Task.Delay(SettleGrace, timeProvider, ct).ConfigureAwait(false);
+                return NewClientWaitOutcome.Detected;
+            }
+
+            await Task.Delay(NewClientPollInterval, timeProvider, ct).ConfigureAwait(false);
+        }
+
+        return NewClientWaitOutcome.TimedOut;
+    }
+
+    /// <summary>
+    /// Single definition of the post-launch hold, shared by both <see cref="LaunchAsync(string, LaunchTarget, int?, long?)"/>
+    /// and <see cref="LaunchAsync(string, string?, int?, long?)"/> (2026-08-02 review: the brief's plan
+    /// text called for this block duplicated "at both sites" -- escalated and approved as a drift to
+    /// extract instead, so there is one definition of the hold behaviour, not two).
+    /// </summary>
+    private async Task HoldForNewClientAsync(LaunchResult result, IReadOnlySet<int>? beforePids)
+    {
+        // Only a successful launch produces a client to wait for. Failed / CookieExpired / Limited
+        // release immediately -- a user without Roblox installed must not eat the ceiling every click.
+        if (result is not LaunchResult.Started)
+        {
+            return;
+        }
+
+        // Pattern-match on beforePids itself rather than guarding on _runningProbe and dereferencing
+        // beforePids! -- the invariant that beforePids is non-null whenever a probe was wired lives
+        // in ExecuteLaunchAsync/ExecuteLegacyLaunchAsync (the snapshot happens right before
+        // Process.Start), not here, and the compiler cannot check it across methods. If a future edit
+        // ever added a Started early-return before that snapshot line, a _runningProbe-is-not-null
+        // guard here would still fire, dereference a null beforePids!, and NRE inside
+        // WaitForNewClientAsync's own catch (Exception) -- producing not a crash but a silent 30s
+        // stall on every launch with no diagnostic. Guarding on beforePids directly makes that
+        // failure mode structurally impossible: no probe call happens without a snapshot to pair it
+        // with. Same behaviour today (beforePids is non-null exactly when _runningProbe is non-null,
+        // by construction), self-evident tomorrow.
+        if (beforePids is { } pids && _runningProbe is { } probe)
+        {
+            await WaitForNewClientAsync(probe, pids, _timeProvider, CancellationToken.None).ConfigureAwait(false);
+        }
+        else
+        {
+            await Task.Delay(FFlagReadHold, _timeProvider).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Single definition of the pre-launch pid snapshot, shared by <see cref="ExecuteLaunchAsync"/>
+    /// and <see cref="ExecuteLegacyLaunchAsync"/>. Null when no probe is wired -- the no-probe path
+    /// is a deliberate no-op, not a degraded snapshot. Also null when a wired probe throws during
+    /// the snapshot: an unknown "before" set is NOT the same thing as a legitimate empty one (fix
+    /// wave, 2026-08-02 review finding 1). A probe glitch here must degrade to
+    /// <c>HoldForNewClientAsync</c>'s fixed-delay fallback branch -- the same behaviour as no probe
+    /// at all -- rather than build an empty snapshot that lets a pre-existing (or already-running,
+    /// same-machine) client false-detect as "new" on <see cref="WaitForNewClientAsync"/>'s very
+    /// first poll and release the gate before the real new client has read its settings.
+    /// </summary>
+    private IReadOnlySet<int>? SnapshotBeforePids()
+    {
+        if (_runningProbe is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return new HashSet<int>(_runningProbe.GetRunningPlayerPids());
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 }

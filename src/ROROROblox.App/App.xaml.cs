@@ -364,7 +364,15 @@ public partial class App : Application
         }
     }
 
-    private static void ConfigureServices(IServiceCollection services, ILoggerFactory loggerFactory)
+    // internal (not private), fix round 1 finding 3: RobloxLauncherTests.cs's
+    // ProductionDiRegistration_ThreadsTheLiveRunningProbeIntoTheLauncher calls this directly —
+    // via the pre-existing InternalsVisibleTo("ROROROblox.Tests") in ROROROblox.App.csproj — so it
+    // exercises the REAL composition root instead of a hand-mirrored copy of one registration line.
+    // Every registration in this method is lazy (parameterless AddSingleton<T,U>, or a factory
+    // lambda evaluated at resolve time, never at registration time) except the two path-string
+    // computations below (DefaultPluginsRoot, consentPath, dataDir) — none of which touch disk;
+    // verified by inspection before making this change.
+    internal static void ConfigureServices(IServiceCollection services, ILoggerFactory loggerFactory)
     {
         services.AddSingleton(loggerFactory);
         services.AddLogging();
@@ -462,7 +470,30 @@ public partial class App : Application
 
         services.AddSingleton<IClientAppSettingsWriter, ClientAppSettingsWriter>();
         services.AddSingleton<IGlobalBasicSettingsWriter, GlobalBasicSettingsWriter>();
-        services.AddSingleton<IRobloxLauncher, RobloxLauncher>();
+
+        // Explicit factory (2026-08-02, launch-gate condition-based fix, Task 3) rather than bare
+        // AddSingleton<IRobloxLauncher, RobloxLauncher>(): the bare form DOES still auto-resolve
+        // IRobloxRunningProbe from DI today (verified empirically — the built-in container fills a
+        // registered optional ctor parameter before falling back to its default), but that's an
+        // implicit property of constructor-selection, not a guarantee anyone reading this line would
+        // see. Spelling it out means removing the probe registration below fails loudly here
+        // (GetRequiredService throws at resolve time) instead of silently reverting to the
+        // fixed-delay path — which is exactly how the 2026-08-01 wrong-FPS-cap bug shipped (the
+        // gate logic existed; nothing wired it to a live probe). Same for a future edit that adds a
+        // second RobloxLauncher constructor — the compiler forces this call site to disambiguate.
+        // It does NOT protect against every drift: a new *optional* constructor parameter added to
+        // the existing constructor takes its default here silently, with nothing failing (fix wave,
+        // 2026-08-02 review finding 4 — narrowed this comment's claim to what it actually covers).
+        // Reuses the SAME IRobloxRunningProbe singleton StartupGate already resolves — do not
+        // register a second one.
+        services.AddSingleton<IRobloxLauncher>(sp => new RobloxLauncher(
+            sp.GetRequiredService<IRobloxApi>(),
+            sp.GetRequiredService<IAppSettings>(),
+            sp.GetRequiredService<IProcessStarter>(),
+            favorites: sp.GetService<IFavoriteGameStore>(),
+            clientAppSettings: sp.GetService<IClientAppSettingsWriter>(),
+            globalBasicSettings: sp.GetService<IGlobalBasicSettingsWriter>(),
+            runningProbe: sp.GetRequiredService<IRobloxRunningProbe>()));
 
         // Per-capture WebView2 user-data dir manager. Each Add Account gets a fresh GUID dir
         // under %LOCALAPPDATA%\ROROROblox\webview2-data\<guid>\; siblings are best-effort swept
