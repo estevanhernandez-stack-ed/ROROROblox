@@ -4,6 +4,40 @@
 **Status:** Approved design. Fixes a defect shipping in v1.12.0.0 and earlier.
 **Severity:** Silent wrong behavior — no error, no log, the user's configured value simply does not apply.
 
+> ## 🛑 SUPERSEDED (2026-08-02) — this design targets the wrong writer; do not build from it
+>
+> **This document's central premise is wrong.** It assumes the thing that overwrites a
+> per-account FPS cap is *the next launch*, and designs a gate to hold that next launch
+> until the previous client has started. Measurement on 2026-08-02 showed the competing
+> writer is **the previous client itself**, which re-persists its own value to the shared
+> `GlobalBasicSettings_<N>.xml` repeatedly for roughly nine seconds after it starts.
+>
+> The decisive run: our write for the second account survived **170 milliseconds** before
+> the first account's client wrote its own value back over it. The second client then read
+> the first account's cap. No fixed delay, and no gate on the next launch, survives that —
+> the opponent is not the thing being gated.
+>
+> Consequently the mechanism this spec describes (`WaitForNewClientAsync`, `SettleGrace`,
+> the pid-difference probe) **does not fix the bug it was written for**, and was measured
+> not to. Two further defects in it, also measured:
+>
+> - The first new `RobloxPlayerBeta` pid is frequently not the client. Gaps of 0.023 s and
+>   5.92 s were observed between the first new pid and the real one, and the same 26 MB
+>   windowless signature appears when a client is *closed* — so the probe can be handed a
+>   pid from an unrelated window closing.
+> - `SettleGrace` (1 s) is 2–3× short of the measured process-start → config-read interval
+>   (1.98 s, 2.25 s, 3.25 s).
+>
+> **Replacement design:** `docs/superpowers/specs/2026-08-02-settings-quiet-window-design.md`
+> — anchor on the settings file going quiet, not on pids or delays.
+>
+> **Evidence:** `docs/investigations/2026-08-02-launch-gate-smoke-test-negative-result.md`
+>
+> This document is kept intact because its *diagnosis* of the original 2026-08-01 symptom is
+> accurate and its reasoning about `Process.Start` returning early is correct and still
+> load-bearing. Only its conclusion about who the competing writer is turned out wrong.
+> The two drift notes below concern the implementation that shipped from it and remain valid.
+>
 > ## ⚠️ Banner-correct (2026-08-02) — two drifts between this design and what shipped
 >
 > **1. Snapshot placement moved, deliberately, and the new placement is better.**
