@@ -144,6 +144,7 @@
 - **Account stats: uptime + per-game play time** — presence-driven recording; spec approved, unbuilt (`…account-stats-uptime-design.md`).
 - **Themed window chrome** — WPF-UI FluentWindow/TitleBar across main + modals; spec approved, unbuilt (`…themed-window-chrome-design.md`).
 - **In-app updater download+apply** — deferred v1.8 → v1.9 → still check-only.
+- **Ruled out (measured, do not re-propose):** per-account graphics quality as a memory lever — max→min quality moved client RAM by 0.9% on a live rig; the slider is GPU-side, not asset residency. See `docs/investigations/2026-08-01-graphics-quality-memory-negative-result.md`.
 - **Backlog:** About-box version from MSIX manifest; WebView2 white-screen reload hint; `NeedsReverification` vs `SessionExpired`; per-cookie encryption envelope; per-account WebView2 profiles; crash-report opt-in; winget manifest; heuristic mutex-rename auto-detection.
 - **Vision:** AI connector (MCP — Claude drives RoRoRo) + PetSim knowledge base (`docs/vision/2026-07-04-ai-connector-and-knowledge-base.md`); Ur Reset plugin (auto-relaunch stuck accounts).
 
