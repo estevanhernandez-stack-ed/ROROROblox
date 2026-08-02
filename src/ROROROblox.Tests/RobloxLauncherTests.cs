@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
@@ -564,40 +566,50 @@ public class RobloxLauncherTests
     /// runs the old fixed-delay path on every launch, if nothing ever hands the real
     /// <c>RobloxLauncher</c> a live probe -- that is exactly how the 2026-08-01 wrong-FPS-cap bug
     /// shipped: the wait primitive existed, both launch sites called it, and the object graph the
-    /// app actually builds still resolved a null probe. This test exercises a REAL
-    /// <see cref="IServiceProvider"/> built with the same registration shape App.xaml.cs's
-    /// ConfigureServices uses for <c>IRobloxLauncher</c> -- an explicit factory that passes
-    /// <c>sp.GetRequiredService&lt;IRobloxRunningProbe&gt;()</c> -- rather than hand-constructing a
-    /// <see cref="RobloxLauncher"/> directly the way every other test in this file does. It does not
-    /// call App.xaml.cs's ConfigureServices itself (that method also constructs real
-    /// AppSettings/FavoriteGameStore/RobloxRunningProbe instances that touch disk and live Win32
-    /// process state -- out of scope for a fast, deterministic unit test); it mirrors the one
-    /// registration line this task changed. A regression to the bare
-    /// <c>AddSingleton&lt;IRobloxLauncher, RobloxLauncher&gt;()</c> form would NOT fail this test
-    /// (verified empirically -- see task-3-report.md -- the built-in container still auto-resolves a
-    /// registered optional ctor parameter), but a factory that drops or hardcodes
-    /// <c>runningProbe: null</c> -- the actual shape of the historical bug -- does.
+    /// app actually builds still resolved a null probe.
+    ///
+    /// Fix round 1, finding 3: the first version of this test mirrored the registration shape in a
+    /// second, hand-written copy of the factory -- so it verified that the code INSIDE THE TEST BODY
+    /// wires a probe, not that App.xaml.cs's actual registration does. Deleting the real registration
+    /// (or hardcoding `runningProbe: null` there) would not have failed it.
+    ///
+    /// This version calls the REAL <see cref="App.ConfigureServices"/> (made <c>internal</c> for this
+    /// purpose -- <c>InternalsVisibleTo("ROROROblox.Tests")</c> already existed in
+    /// ROROROblox.App.csproj) against a real <see cref="ServiceCollection"/>, then uses
+    /// <see cref="ServiceCollectionServiceExtensions"/>'s <c>Replace</c> to swap the four
+    /// side-effecting descriptors (<see cref="IRobloxApi"/>, <see cref="IAppSettings"/>,
+    /// <see cref="IProcessStarter"/>, <see cref="IRobloxRunningProbe"/>) for test doubles BEFORE
+    /// building the provider or resolving anything -- so nothing in this test ever constructs the
+    /// real <c>RobloxApi</c> (would need a working HttpClient), <c>AppSettings</c>/<c>ProcessStarter</c>
+    /// (Win32/OS calls), or <c>RobloxRunningProbe</c> (live process enumeration). Every OTHER
+    /// registration ConfigureServices makes is either a parameterless <c>AddSingleton&lt;T,U&gt;</c> or
+    /// a factory lambda -- both deferred to resolve time -- and DI is lazy, so resolving only
+    /// <see cref="IRobloxLauncher"/> constructs only its own transitive dependency chain, not the
+    /// whole app graph (no <c>MainViewModel</c>, no <c>MainWindow</c>, nothing WPF-affined). The
+    /// remaining chain members that DO get constructed for real --
+    /// <see cref="IFavoriteGameStore"/>/<see cref="IClientAppSettingsWriter"/>/
+    /// <see cref="IGlobalBasicSettingsWriter"/> -- were confirmed to do no I/O in their constructors
+    /// (all disk access lives in their async methods, never called here) before this test was written.
+    /// A throwaway <see cref="NullLoggerFactory"/> stands in for the real file-backed one
+    /// ConfigureServices would otherwise register.
     /// </summary>
     [Fact]
     public void ProductionDiRegistration_ThreadsTheLiveRunningProbeIntoTheLauncher()
     {
         var services = new ServiceCollection();
-        var probe = new CountingProbe();
-        services.AddSingleton<IRobloxApi>(
-            new StubRobloxApi(_ => Task.FromResult(new AuthTicket("T", DateTimeOffset.UtcNow))));
-        services.AddSingleton<IAppSettings>(new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl });
-        services.AddSingleton<IProcessStarter>(new RecordingProcessStarter(_ => 1));
-        services.AddSingleton<IRobloxRunningProbe>(probe);
+        // Fully qualified (not `using ROROROblox.App;` + `App.ConfigureServices`): the namespace
+        // ROROROblox.App and the class ROROROblox.App.App share a name, and the bare form is
+        // ambiguous to the compiler (CS0234, "ConfigureServices does not exist in the namespace
+        // ROROROblox.App" -- it tried to resolve App.ConfigureServices as a nested namespace path).
+        global::ROROROblox.App.App.ConfigureServices(services, NullLoggerFactory.Instance);
 
-        // Mirrors src/ROROROblox.App/App.xaml.cs's IRobloxLauncher registration verbatim in shape.
-        services.AddSingleton<IRobloxLauncher>(sp => new RobloxLauncher(
-            sp.GetRequiredService<IRobloxApi>(),
-            sp.GetRequiredService<IAppSettings>(),
-            sp.GetRequiredService<IProcessStarter>(),
-            favorites: sp.GetService<IFavoriteGameStore>(),
-            clientAppSettings: sp.GetService<IClientAppSettingsWriter>(),
-            globalBasicSettings: sp.GetService<IGlobalBasicSettingsWriter>(),
-            runningProbe: sp.GetRequiredService<IRobloxRunningProbe>()));
+        var probe = new CountingProbe();
+        services.Replace(ServiceDescriptor.Singleton<IRobloxApi>(
+            new StubRobloxApi(_ => Task.FromResult(new AuthTicket("T", DateTimeOffset.UtcNow)))));
+        services.Replace(ServiceDescriptor.Singleton<IAppSettings>(
+            new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl }));
+        services.Replace(ServiceDescriptor.Singleton<IProcessStarter>(new RecordingProcessStarter(_ => 1)));
+        services.Replace(ServiceDescriptor.Singleton<IRobloxRunningProbe>(probe));
 
         using var provider = services.BuildServiceProvider();
         var launcher = provider.GetRequiredService<IRobloxLauncher>();
@@ -619,7 +631,8 @@ public class RobloxLauncherTests
         int startResult = 1,
         Exception? startThrows = null,
         IClientAppSettingsWriter? clientAppSettings = null,
-        IRobloxRunningProbe? runningProbe = null)
+        IRobloxRunningProbe? runningProbe = null,
+        TimeProvider? timeProvider = null)
     {
         var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket(ticket, DateTimeOffset.UtcNow)));
         var settings = new InMemoryAppSettings { DefaultPlaceUrl = defaultPlaceUrl };
@@ -628,9 +641,18 @@ public class RobloxLauncherTests
             if (startThrows is not null) throw startThrows;
             return startResult;
         });
-        var launcher = new RobloxLauncher(
-            api, settings, processStarter,
-            favorites: null, clientAppSettings: clientAppSettings, runningProbe: runningProbe);
+        // timeProvider is null for every pre-existing call site (unchanged behaviour: the public
+        // ctor, real TimeProvider.System). Callers that need a FakeTimeProvider -- to avoid paying
+        // real wall-clock time for NewClientPollInterval/SettleGrace/NewClientWaitTimeout -- pass one
+        // explicitly and get routed through the internal test ctor, same pattern already used by
+        // LaunchAsync_WithProbeAndStartedResult_ActuallyPollsForTheClient below.
+        var launcher = timeProvider is null
+            ? new RobloxLauncher(
+                api, settings, processStarter,
+                favorites: null, clientAppSettings: clientAppSettings, runningProbe: runningProbe)
+            : new RobloxLauncher(
+                api, settings, processStarter, timeProvider, () => 1_000_000_000_000,
+                favorites: null, clientAppSettings: clientAppSettings, runningProbe: runningProbe);
         return (launcher, settings, processStarter);
     }
 
@@ -766,6 +788,21 @@ public class RobloxLauncherTests
         // ~1s before account B configured 20. A ran at 20, because B's write landed before A's
         // client had read the file. The old hold was 250ms measured from Process.Start returning
         // on a protocol URI — before RobloxPlayerBeta even exists.
+        //
+        // Drives a FakeTimeProvider, not real time (fix round 1, finding 1). The original version
+        // of this test drove real TimeProvider.System via CreateLauncher's default and cost ~30s
+        // of real wall time: launch B's SnapshotBeforePids captures {999} (launch A's now-running
+        // client), so launch B's own wait never sees a "new" pid and runs to the full
+        // NewClientWaitTimeout. Driving a fake clock makes that ceiling free. Bounded by
+        // `.WaitAsync(TimeSpan.FromSeconds(5))` per the established real-time-ceiling pattern
+        // used by this file's other probe-threading tests (:503, :555 as of fix round 1) — a
+        // regression that made the wait unbounded fails red instead of hanging the suite.
+        //
+        // Drives the TYPED overload (fix round 1, finding 2). `LaunchAsync(cookie, LaunchTarget, ...)`
+        // is the only overload production code calls (MainViewModel.cs -- Squad Launch, the exact
+        // call site the bug was observed on); the legacy placeUrl overload driven by the first
+        // draft of this test is back-compat-only and was never the path the bug lived on.
+        var clock = new FakeTimeProvider();
         var timeline = new List<int>();
         var writer = new RecordingWriter(timeline);
         var probe = new AppearAfterProbe(timeline, callsBeforeAppearing: 2);
@@ -774,10 +811,28 @@ public class RobloxLauncherTests
             defaultPlaceUrl: TestPlaceUrl,
             startResult: 1,
             clientAppSettings: writer,
-            runningProbe: probe);
+            runningProbe: probe,
+            timeProvider: clock);
 
-        await launcher.LaunchAsync("cookie-a", placeUrl: null, fpsCap: 9999);
-        await launcher.LaunchAsync("cookie-b", placeUrl: null, fpsCap: 20);
+        // Launch A: the probe's 2nd-ever call (its 1st call inside WaitForNewClientAsync's poll
+        // loop -- the 1st call overall is the pre-launch SnapshotBeforePids) matches
+        // callsBeforeAppearing, so it finds pid 999 on the very first poll iteration. Everything up
+        // to and including that match happens synchronously (StubRobloxApi/RecordingWriter/
+        // AppearAfterProbe never truly suspend), so by the time this line returns, the only
+        // pending await is the SettleGrace delay -- no intermediate poll/pump needed.
+        var launchA = launcher.LaunchAsync("cookie-a", new LaunchTarget.Place(920587237), fpsCap: 9999);
+        clock.Advance(RobloxLauncher.SettleGrace);
+        await launchA.WaitAsync(TimeSpan.FromSeconds(5));
+
+        // Launch B: SnapshotBeforePids now returns {999} (launch A's client, already running), so
+        // no pid this probe ever reports can look "new" again -- the wait runs to the full ceiling
+        // and TimesOut. That's fine: this test asserts on WRITE ORDER relative to the client's
+        // appearance, not on how launch B's own wait resolves. One Advance() past the deadline is
+        // enough (unlike the multi-iteration case in RobloxLauncherGateTests.cs, there's exactly
+        // one pending poll delay at this point, so no pump-between-advances is needed).
+        var launchB = launcher.LaunchAsync("cookie-b", new LaunchTarget.Place(920587237), fpsCap: 20);
+        clock.Advance(RobloxLauncher.NewClientWaitTimeout + TimeSpan.FromSeconds(1));
+        await launchB.WaitAsync(TimeSpan.FromSeconds(5));
 
         // Ordering is the assertion, not merely that both values were written:
         //   9999 written -> client appeared (-1) -> 20 written

@@ -364,7 +364,15 @@ public partial class App : Application
         }
     }
 
-    private static void ConfigureServices(IServiceCollection services, ILoggerFactory loggerFactory)
+    // internal (not private), fix round 1 finding 3: RobloxLauncherTests.cs's
+    // ProductionDiRegistration_ThreadsTheLiveRunningProbeIntoTheLauncher calls this directly —
+    // via the pre-existing InternalsVisibleTo("ROROROblox.Tests") in ROROROblox.App.csproj — so it
+    // exercises the REAL composition root instead of a hand-mirrored copy of one registration line.
+    // Every registration in this method is lazy (parameterless AddSingleton<T,U>, or a factory
+    // lambda evaluated at resolve time, never at registration time) except the two path-string
+    // computations below (DefaultPluginsRoot, consentPath, dataDir) — none of which touch disk;
+    // verified by inspection before making this change.
+    internal static void ConfigureServices(IServiceCollection services, ILoggerFactory loggerFactory)
     {
         services.AddSingleton(loggerFactory);
         services.AddLogging();
