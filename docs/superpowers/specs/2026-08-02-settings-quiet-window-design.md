@@ -1,5 +1,15 @@
 # Settings quiet window — make per-account FPS caps survive close-together launches
 
+> **Banner correction (2026-08-02, Task 4):** §"The warning" proposed the banner scoped to
+> "once per launch set when caps differ, not per account" — implying it tracks whichever
+> accounts are queued for the next launch. What shipped (`MainViewModel.FpsCapWarningText` /
+> `RefreshFpsCapWarning()`) instead computes the mismatch over the **entire visible account
+> roster** (`Accounts`), recomputed on load, add, remove, and cap-change — there is no
+> "launch set" selection concept wired to it. Consequence: a user with ten accounts split
+> across two caps sees the warning even on a launch that only touches accounts sharing one
+> cap. Simpler to build and correct in the common case (most users set one cap roster-wide);
+> narrowing it to an actual launch selection is a future refinement if it proves noisy.
+
 **Date:** 2026-08-02
 **Status:** Approved design.
 **Supersedes:** `2026-08-01-launch-gate-condition-based-design.md` (targets the wrong writer).
