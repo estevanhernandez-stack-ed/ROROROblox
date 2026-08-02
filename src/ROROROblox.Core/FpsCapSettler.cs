@@ -8,10 +8,14 @@ public enum FpsCapSettleOutcome
     /// <summary>The file already held this cap. Nothing written, nothing waited for.</summary>
     AlreadySet,
 
-    /// <summary>Written, and confirmed still present after the confirm window.</summary>
+    /// <summary>Written, and confirmed still present after a full quiet window post-write.</summary>
     Settled,
 
-    /// <summary>Every attempt was overwritten. Launching anyway, with a cap that may be wrong.</summary>
+    /// <summary>
+    /// Gave up — either every attempt was overwritten, or the overall settle budget
+    /// (<see cref="FpsCapSettler.SettleTimeout"/>) ran out first. Launching anyway, with a cap
+    /// that may be wrong.
+    /// </summary>
     Exhausted,
 
     /// <summary>The writer failed. Degraded, non-blocking — the launch proceeds.</summary>
@@ -28,33 +32,51 @@ public enum FpsCapSettleOutcome
 /// decisive run our write survived 170 milliseconds.
 /// </para>
 /// <para>
-/// Correctness here comes from <em>confirming</em> the write, not from <see cref="QuietDebounce"/>
-/// being the right length. If the debounce is too short we notice the clobber and retry; the cost
-/// is latency, not a wrong cap. Guessing exactly this class of constant is what produced the
-/// previous design's 1-second settle grace.
+/// Correctness comes from <em>re-confirming</em> the write, not from any single constant being
+/// right. After writing, we wait for the file to go quiet a SECOND time — a fresh
+/// <see cref="QuietDebounce"/> window seeded from the moment of our own write — before
+/// re-reading. That means a clobber landing anywhere across that whole window gets caught and
+/// retried, not just one landing inside a short fixed pause immediately after the write.
+/// <see cref="MaxWriteAttempts"/> and <see cref="SettleTimeout"/> both bound how long we keep
+/// trying; once either is exhausted we launch anyway with whatever is currently on disk
+/// (<see cref="FpsCapSettleOutcome.Exhausted"/>) rather than block the launch.
 /// </para>
 /// </summary>
 public static class FpsCapSettler
 {
     /// <summary>
     /// How long the file must be unmodified before we call it quiet. Must exceed the largest gap
-    /// observed BETWEEN a client's own writes (3.25 s on 2026-08-02) with margin.
+    /// observed BETWEEN a client's own writes (3.25 s on 2026-08-02) with margin. Not
+    /// correctness-critical on its own — a too-short debounce costs a retry, not a wrong cap,
+    /// because every write is re-confirmed against a fresh quiet-wait (see class remarks).
     /// </summary>
     internal static readonly TimeSpan QuietDebounce = TimeSpan.FromSeconds(5);
 
     /// <summary>
-    /// How long to wait before re-reading to confirm our write survived. The observed clobber
-    /// arrived 170 ms after our write; 1 s covers that with headroom.
+    /// Ceiling on a SINGLE quiet-wait call. A quiet-wait started early in a settle attempt can
+    /// still run up to this long; in practice <see cref="SettleTimeout"/> is the tighter bound
+    /// for calls started later, since it caps the whole attempt, not just one wait.
     /// </summary>
-    internal static readonly TimeSpan WriteConfirmWindow = TimeSpan.FromSeconds(1);
-
-    /// <summary>Ceiling on waiting for quiet. A contended file must never block a launch forever.</summary>
     internal static readonly TimeSpan QuietWaitTimeout = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Ceiling on the ENTIRE settle call — every quiet-wait and write across every retry,
+    /// combined. Without this, a permanently busy file could run
+    /// <see cref="MaxWriteAttempts"/> attempts of two <see cref="QuietWaitTimeout"/>-bounded
+    /// waits each — as much as 3 x (30 s + 30 s) = 180 s — before giving up. That reads to a
+    /// user clicking Launch as a hang, not a slow launch, so this budget dominates in practice:
+    /// the real worst case is ~<see cref="SettleTimeout"/>, plus negligible read/write overhead.
+    /// </summary>
+    internal static readonly TimeSpan SettleTimeout = TimeSpan.FromSeconds(20);
 
     /// <summary>How often to re-check the file's last-write time.</summary>
     internal static readonly TimeSpan QuietPollInterval = TimeSpan.FromMilliseconds(100);
 
-    /// <summary>Bounds the worst case at roughly 3 x (QuietDebounce + WriteConfirmWindow).</summary>
+    /// <summary>
+    /// Backstop cap on retries. <see cref="SettleTimeout"/> is what actually governs worst-case
+    /// wall time in practice — this exists so a file that keeps going quiet and being
+    /// immediately re-clobbered can't loop forever within that budget.
+    /// </summary>
     internal const int MaxWriteAttempts = 3;
 
     public static async Task<FpsCapSettleOutcome> SettleAsync(
@@ -75,15 +97,20 @@ public static class FpsCapSettler
             return FpsCapSettleOutcome.AlreadySet;
         }
 
+        var overallDeadline = timeProvider.GetUtcNow() + SettleTimeout;
+        var attemptsMade = 0;
+
         for (var attempt = 1; attempt <= MaxWriteAttempts; attempt++)
         {
-            var wentQuiet = await WaitForQuietAsync(probe, timeProvider, ct).ConfigureAwait(false);
-            if (!wentQuiet)
+            if (timeProvider.GetUtcNow() >= overallDeadline)
             {
-                logger.LogInformation(
-                    "Settings file never went quiet within {Timeout}; writing FPS cap {Cap} anyway (attempt {Attempt}).",
-                    QuietWaitTimeout, desiredCap, attempt);
+                break;
             }
+
+            attemptsMade = attempt;
+
+            await WaitForQuietAsync(probe, timeProvider, overallDeadline, "pre-write", logger, ct)
+                .ConfigureAwait(false);
 
             try
             {
@@ -97,7 +124,11 @@ public static class FpsCapSettler
                 return FpsCapSettleOutcome.WriteFailed;
             }
 
-            await Task.Delay(WriteConfirmWindow, timeProvider, ct).ConfigureAwait(false);
+            // Re-confirm across a FULL fresh quiet window, not a short fixed pause. A clobber
+            // landing anywhere in this window gets caught here, not just one landing in the first
+            // second — see class remarks for why a short fixed pause is a false floor.
+            await WaitForQuietAsync(probe, timeProvider, overallDeadline, "post-write", logger, ct)
+                .ConfigureAwait(false);
 
             if (probe.ReadFramerateCap() == desiredCap)
             {
@@ -105,37 +136,54 @@ public static class FpsCapSettler
             }
 
             logger.LogWarning(
-                "FPS cap {Cap} was overwritten within {Window} (attempt {Attempt} of {Max}) — a client is still settling.",
-                desiredCap, WriteConfirmWindow, attempt, MaxWriteAttempts);
+                "FPS cap {Cap} was overwritten after the write (attempt {Attempt} of {Max}) — a client is still settling.",
+                desiredCap, attempt, MaxWriteAttempts);
         }
 
-        // Out of attempts. Launch anyway: a contended settings file must never abort a launch.
-        // This is the ONLY path where the original wrong-cap bug can still reach a user, so it is
-        // logged at Error to make it impossible to miss in a support bundle.
+        // Out of attempts, or out of budget: launch anyway. A contended settings file must never
+        // abort a launch. This is the ONLY path where the original wrong-cap bug can still reach
+        // a user, so it is logged at Error to make it impossible to miss in a support bundle.
         logger.LogError(
-            "Gave up applying FPS cap {Cap} after {Max} attempts; this client may run the wrong cap.",
-            desiredCap, MaxWriteAttempts);
+            "Gave up applying FPS cap {Cap} after {Attempts} attempt(s) within the {Budget} settle budget; this client may run the wrong cap.",
+            desiredCap, attemptsMade, SettleTimeout);
         return FpsCapSettleOutcome.Exhausted;
     }
 
     /// <summary>
-    /// Block until the settings file has been unmodified for <see cref="QuietDebounce"/>.
-    /// Returns false if <see cref="QuietWaitTimeout"/> elapses first — the caller proceeds anyway.
+    /// Block until the settings file has been unmodified for <see cref="QuietDebounce"/>, bounded
+    /// by whichever comes sooner: <see cref="QuietWaitTimeout"/> after this call started, or the
+    /// caller's <paramref name="overallDeadline"/>. Logs the outcome on BOTH branches — settled or
+    /// timed out — with the actually-measured elapsed time, never the constant.
+    /// <para>
+    /// Seeds its "quiet since" baseline from the file's last-observed write time rather than from
+    /// "now". A file that has genuinely been untouched for longer than <see cref="QuietDebounce"/>
+    /// already — the common case, since Roblox writes this file on session exit and the first
+    /// launch of a session often finds no Roblox process running at all — is credited as already
+    /// quiet and this returns immediately instead of paying a flat debounce it did not need.
+    /// </para>
     /// </summary>
-    private static async Task<bool> WaitForQuietAsync(
+    private static async Task WaitForQuietAsync(
         IGlobalBasicSettingsProbe probe,
         TimeProvider timeProvider,
+        DateTimeOffset overallDeadline,
+        string phase,
+        ILogger logger,
         CancellationToken ct)
     {
-        var deadline = timeProvider.GetUtcNow() + QuietWaitTimeout;
+        var start = timeProvider.GetUtcNow();
+        var perCallDeadline = start + QuietWaitTimeout;
+        var deadline = perCallDeadline < overallDeadline ? perCallDeadline : overallDeadline;
+
         var lastSeen = probe.GetLastWriteTimeUtc();
-        var quietSince = timeProvider.GetUtcNow();
+        var quietSince = lastSeen ?? start;
 
         while (timeProvider.GetUtcNow() < deadline)
         {
             if (timeProvider.GetUtcNow() - quietSince >= QuietDebounce)
             {
-                return true;
+                logger.LogInformation(
+                    "Quiet wait ({Phase}) settled after {Elapsed}.", phase, timeProvider.GetUtcNow() - start);
+                return;
             }
 
             await Task.Delay(QuietPollInterval, timeProvider, ct).ConfigureAwait(false);
@@ -148,6 +196,7 @@ public static class FpsCapSettler
             }
         }
 
-        return false;
+        logger.LogInformation(
+            "Quiet wait ({Phase}) timed out after {Elapsed} without settling.", phase, timeProvider.GetUtcNow() - start);
     }
 }

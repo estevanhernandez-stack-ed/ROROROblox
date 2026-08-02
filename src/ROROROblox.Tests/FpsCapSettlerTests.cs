@@ -13,6 +13,14 @@ public sealed class FpsCapSettlerTests
 {
     private static readonly TimeSpan TestBound = TimeSpan.FromSeconds(5);
 
+    /// <summary>
+    /// Generous pump budget for tests that let the slow path run to completion. SettleTimeout
+    /// (20s) is the real ceiling on any single settle call regardless of how many quiet-waits or
+    /// retries it takes internally, so advancing a little past it is always enough headroom and
+    /// never needs re-deriving per test.
+    /// </summary>
+    private static readonly TimeSpan SlowPathBudget = FpsCapSettler.SettleTimeout + TimeSpan.FromSeconds(2);
+
     /// <summary>Scripted read side. Each ReadFramerateCap() pops the next scripted value.</summary>
     private sealed class FakeProbe : IGlobalBasicSettingsProbe
     {
@@ -31,15 +39,32 @@ public sealed class FpsCapSettlerTests
         public DateTimeOffset? GetLastWriteTimeUtc() => Mtime;
     }
 
+    /// <summary>
+    /// A real write touches the settings file's last-write time. Wiring that through here matters
+    /// now that FpsCapSettler re-confirms with a second quiet-wait after writing (see class
+    /// remarks on FpsCapSettler): without this, the fake's mtime would never move on our own
+    /// write, and the post-write wait would trivially credit a stale mtime instead of genuinely
+    /// re-arming its debounce the way it does against the real file.
+    /// </summary>
     private sealed class RecordingWriter : IGlobalBasicSettingsWriter
     {
+        private readonly FakeProbe _probe;
+        private readonly TimeProvider _clock;
+
         public List<int?> Writes { get; } = new();
         public Exception? Throw { get; set; }
+
+        public RecordingWriter(FakeProbe probe, TimeProvider clock)
+        {
+            _probe = probe;
+            _clock = clock;
+        }
 
         public Task WriteFramerateCapAsync(int? fps, CancellationToken ct = default)
         {
             if (Throw is not null) { throw Throw; }
             Writes.Add(fps);
+            _probe.Mtime = _clock.GetUtcNow();
             return Task.CompletedTask;
         }
     }
@@ -64,11 +89,11 @@ public sealed class FpsCapSettlerTests
     public async Task FileAlreadyHoldsTheCap_WritesNothingAndReturnsImmediately()
     {
         var probe = new FakeProbe(20);
-        var writer = new RecordingWriter();
         // FakeTimeProvider()'s parameterless ctor starts at 2000-01-01, not DateTimeOffset.UnixEpoch.
         // Pin it to UnixEpoch explicitly so it agrees with FakeProbe.Mtime's default below and the
         // "no time passed" assertion is checking something real, not an unrelated ctor default.
         var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var writer = new RecordingWriter(probe, clock);
 
         var outcome = await FpsCapSettler
             .SettleAsync(probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None)
@@ -85,17 +110,19 @@ public sealed class FpsCapSettlerTests
     public async Task QuietFileThenSurvivingWrite_Settles()
     {
         // read 1: current cap is 9999 (not ours) -> take the slow path
-        // read 2: after the confirm window, our 20 is still there -> settled
+        // read 2: after the post-write quiet window, our 20 is still there -> settled
         var probe = new FakeProbe(9999, 20);
-        var writer = new RecordingWriter();
-        var clock = new FakeTimeProvider();
+        // Pinned to UnixEpoch to match FakeProbe.Mtime's default -- otherwise FakeTimeProvider's
+        // real 2000-01-01 start would be ~30 years past any epoch mtime, and the pre-write wait
+        // would credit "already quiet" on its very first check instead of genuinely polling
+        // through the debounce, silently skipping the behavior this test exists to exercise.
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var writer = new RecordingWriter(probe, clock);
 
         var task = FpsCapSettler.SettleAsync(
             probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None);
 
-        await AdvanceAsync(clock,
-            FpsCapSettler.QuietDebounce + FpsCapSettler.WriteConfirmWindow + TimeSpan.FromSeconds(1),
-            FpsCapSettler.QuietPollInterval);
+        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval);
 
         var outcome = await task.WaitAsync(TestBound);
 
@@ -110,15 +137,13 @@ public sealed class FpsCapSettlerTests
         // read 2: 9999 again -> our write was clobbered, retry
         // read 3: 20 -> survived
         var probe = new FakeProbe(9999, 9999, 20);
-        var writer = new RecordingWriter();
-        var clock = new FakeTimeProvider();
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var writer = new RecordingWriter(probe, clock);
 
         var task = FpsCapSettler.SettleAsync(
             probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None);
 
-        await AdvanceAsync(clock,
-            (FpsCapSettler.QuietDebounce + FpsCapSettler.WriteConfirmWindow) * 3,
-            FpsCapSettler.QuietPollInterval);
+        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval);
 
         var outcome = await task.WaitAsync(TestBound);
 
@@ -130,16 +155,15 @@ public sealed class FpsCapSettlerTests
     public async Task NeverSurvives_ExhaustsAttemptsAndStillReturns()
     {
         // Always reads back someone else's value: every attempt is clobbered.
-        var probe = new FakeProbe(9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999);
-        var writer = new RecordingWriter();
-        var clock = new FakeTimeProvider();
+        // 1 entry read + 1 re-read per attempt (MaxWriteAttempts = 3) = 4 consumed.
+        var probe = new FakeProbe(9999, 9999, 9999, 9999);
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var writer = new RecordingWriter(probe, clock);
 
         var task = FpsCapSettler.SettleAsync(
             probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None);
 
-        await AdvanceAsync(clock,
-            (FpsCapSettler.QuietDebounce + FpsCapSettler.WriteConfirmWindow) * (FpsCapSettler.MaxWriteAttempts + 2),
-            FpsCapSettler.QuietPollInterval);
+        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval);
 
         var outcome = await task.WaitAsync(TestBound);
 
@@ -152,15 +176,13 @@ public sealed class FpsCapSettlerTests
     public async Task WriterThrows_DegradesToWriteFailedRatherThanEscaping()
     {
         var probe = new FakeProbe(9999);
-        var writer = new RecordingWriter { Throw = new GlobalBasicSettingsWriteException("disk on fire") };
-        var clock = new FakeTimeProvider();
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var writer = new RecordingWriter(probe, clock) { Throw = new GlobalBasicSettingsWriteException("disk on fire") };
 
         var task = FpsCapSettler.SettleAsync(
             probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None);
 
-        await AdvanceAsync(clock,
-            FpsCapSettler.QuietDebounce + TimeSpan.FromSeconds(1),
-            FpsCapSettler.QuietPollInterval);
+        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval);
 
         var outcome = await task.WaitAsync(TestBound);
 
@@ -171,16 +193,15 @@ public sealed class FpsCapSettlerTests
     public async Task FileKeepsChanging_QuietWaitTimesOutButStillWritesAndReturns()
     {
         var probe = new FakeProbe(9999, 20);
-        var writer = new RecordingWriter();
-        var clock = new FakeTimeProvider();
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var writer = new RecordingWriter(probe, clock);
 
         var task = FpsCapSettler.SettleAsync(
             probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None);
 
-        // Keep bumping the mtime so the file never goes quiet, past the timeout.
+        // Keep bumping the mtime so the file never goes quiet, past the overall settle budget.
         var elapsed = TimeSpan.Zero;
-        var budget = FpsCapSettler.QuietWaitTimeout + FpsCapSettler.WriteConfirmWindow + TimeSpan.FromSeconds(2);
-        while (elapsed < budget)
+        while (elapsed < SlowPathBudget)
         {
             probe.Mtime = probe.Mtime!.Value + TimeSpan.FromMilliseconds(50);
             clock.Advance(FpsCapSettler.QuietPollInterval);
@@ -190,8 +211,48 @@ public sealed class FpsCapSettlerTests
 
         var outcome = await task.WaitAsync(TestBound);
 
-        // A contended file must not block the launch forever.
+        // A contended file must not block the launch forever. The scripted re-read (20) still
+        // matches on the one attempt this budget allows, regardless of how noisy the mtime looked.
         Assert.Equal(FpsCapSettleOutcome.Settled, outcome);
         Assert.Single(writer.Writes);
+    }
+
+    [Fact]
+    public async Task PermanentlyBusyFile_ExhaustsWithinTheOverallBudget_NotThreeFullTimeouts()
+    {
+        // Every quiet-wait times out (mtime never stops moving) AND every re-read comes back
+        // wrong (never our value): the worst case for both dimensions at once. Before
+        // SettleTimeout existed, this could run MaxWriteAttempts x (two QuietWaitTimeout-bounded
+        // waits) = 3 x 60s = 180s. With the overall deadline, one attempt consumes the entire
+        // budget and the second attempt's own top-of-loop check refuses to start.
+        var probe = new FakeProbe(9999, 9999, 9999, 9999, 9999);
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var writer = new RecordingWriter(probe, clock);
+
+        var task = FpsCapSettler.SettleAsync(
+            probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None);
+
+        var pumpBudget = FpsCapSettler.SettleTimeout + TimeSpan.FromSeconds(3);
+        var elapsed = TimeSpan.Zero;
+        while (elapsed < pumpBudget && !task.IsCompleted)
+        {
+            probe.Mtime = probe.Mtime!.Value + TimeSpan.FromMilliseconds(50);
+            clock.Advance(FpsCapSettler.QuietPollInterval);
+            elapsed += FpsCapSettler.QuietPollInterval;
+            for (var i = 0; i < 8; i++) { await Task.Yield(); }
+        }
+
+        var outcome = await task.WaitAsync(TestBound);
+
+        Assert.Equal(FpsCapSettleOutcome.Exhausted, outcome);
+        // Only the first attempt ever got to start -- the second attempt's top-of-loop deadline
+        // check refuses before doing any work.
+        Assert.Single(writer.Writes);
+        // The regression this guards: the old unbounded design could run ~93-180s here. The fake
+        // clock is the source of truth for how much simulated time SettleAsync actually consumed.
+        var settleElapsed = clock.GetUtcNow() - DateTimeOffset.UnixEpoch;
+        Assert.True(
+            settleElapsed <= FpsCapSettler.SettleTimeout + TimeSpan.FromSeconds(1),
+            $"Settle consumed {settleElapsed}, expected at most {FpsCapSettler.SettleTimeout} + 1s slack.");
     }
 }
