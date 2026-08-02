@@ -325,3 +325,71 @@ The debounce design is sound on one run's data. Before building it:
 
 If the quiet window turns out not to exist under load, the honest answer is a single
 global cap rather than per-account, and the feature gets retired rather than patched.
+
+---
+
+# Decisive run — 2026-08-02 16:27, differing caps
+
+First run where writes are attributable **by content**: este = 9999 (unlimited),
+CElCPapa = 20. Launched close together, este first.
+
+```
++  0.00s  WRITE  cap=9999      <- ours, for este
++  0.24s  PID    64968         <- este's client starts
++  2.80s  WRITE  cap=20        <- ours, for CElCPapa
++  2.97s  WRITE  cap=9999      <- este's client writes ITS value back, 170ms later
++  3.04s  PID    11240         <- CElCPapa's client starts, reads 9999
++  5.88s  WRITE  cap=9999
++  5.93s  WRITE  cap=9999
++  9.18s  WRITE  cap=9999
+           (silent for the remaining ~80s of the window)
+```
+
+Observed result: **both clients uncapped.** Este ran its own correct value; CElCPapa —
+configured 20 — ran este's.
+
+## What this settles
+
+**1. The competing writer is the previous client, not the next launch.** Our write for
+CElCPapa survived **170 milliseconds**. No fixed delay, and no amount of tuning one,
+survives that. The launch gate was built to win a race against the next `LaunchAsync`;
+the actual opponent is a client that keeps writing for nine seconds after it starts.
+That is why PR #70 could be correct in every detail and still not fix the bug.
+
+**2. The bug is non-deterministic in both directions.** At 15:41 the second account's
+value won and the first lost. Here the first won and the second lost. Whichever client
+happens to read last gets whatever is in the file at that instant. A user can see the
+symptom either way round, which also means bug reports about it will look inconsistent.
+
+**3. Launch order does not determine client start order.** Este was launched first;
+Este's client did start first this run — but in the user's report of an earlier attempt,
+CElCPapa's window opened first despite launching second. `Process.Start` on a
+`roblox-player:` URI returns once Windows accepts the URI; everything downstream runs on
+Roblox's schedule. RoRoRo's semaphore serializes *our* work and nothing else. Any design
+reasoning in terms of "the first client" or "the second client" is unsound.
+
+**4. The quiet window is real and is the anchor.** Writes stopped at +9.18s and the file
+stayed untouched for the remaining ~80 seconds. Had CElCPapa's 20 been written after that
+quiet, no writer remained to clobber it.
+
+## The fix, now measured rather than reasoned
+
+- **Write cap → launch → wait for `GlobalBasicSettings_<N>.xml` to go quiet (~2s
+  debounce) → next launch.** One condition covers the read and the writeback storm, and it
+  self-tunes: a slow cold start simply stays noisy longer.
+- **Only serialize when consecutive caps differ.** If the file already holds the right
+  value there is nothing to protect. Most users set one cap and pay nothing.
+- **Retire the pid-based gate.** It aims at the wrong event, and its first-new-pid
+  heuristic is a coin flip regardless (gaps of 0.023s and 5.92s measured between the first
+  new pid and the real client; the 26 MB windowless signature also appears when a client
+  is *closed*).
+
+## Cost, and the product question
+
+~10 seconds per account, and only when consecutive caps differ. An eight-account squad
+launch with mixed caps costs over a minute of staggering.
+
+That is a real price for a feature whose value is unclear, and it deserves an explicit
+decision rather than an implementation. **One global cap for all clients** removes the
+race entirely, costs nothing, and may be what multi-instance users actually want. Per-account
+caps should survive only if someone genuinely needs different values simultaneously.
