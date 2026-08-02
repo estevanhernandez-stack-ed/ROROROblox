@@ -140,6 +140,9 @@
 
 ## In-flight / queued (not shipped — keep OFF the hub page)
 
+- **Rejoin-after-death** — when a client dies (RAM exhaustion, crash), relaunch it into the server it was in. Closes the loop on the v1.12 memory work and is the automated-reconnect piece. Depends on server-instance targeting.
+- **Regroup ("send my others here")** — row action: pick an account, send the rest of the roster to its current server. Recovery when a squad scatters. Depends on server-instance targeting.
+- **Plugin: live server identity** — `host.queries.current-server` today exposes only the last private-server link. Extend to live job IDs so a plugin can coordinate a roster itself. Contract bump. Depends on server-instance targeting.
 - **Account groups** — named "launch these together" sets; spec approved, unbuilt (`docs/superpowers/specs/2026-07-09-account-groups-design.md`).
 - **Account stats: uptime + per-game play time** — presence-driven recording; spec approved, unbuilt (`…account-stats-uptime-design.md`).
 - **Themed window chrome** — WPF-UI FluentWindow/TitleBar across main + modals; spec approved, unbuilt (`…themed-window-chrome-design.md`).
