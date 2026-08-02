@@ -476,11 +476,16 @@ public partial class App : Application
         // IRobloxRunningProbe from DI today (verified empirically — the built-in container fills a
         // registered optional ctor parameter before falling back to its default), but that's an
         // implicit property of constructor-selection, not a guarantee anyone reading this line would
-        // see. Spelling it out means a future edit that adds another RobloxLauncher constructor, or
-        // that reorders/removes the probe registration, fails loudly here instead of silently
-        // reverting to the fixed-delay path — which is exactly how the 2026-08-01 wrong-FPS-cap bug
-        // shipped (the gate logic existed; nothing wired it to a live probe). Reuses the SAME
-        // IRobloxRunningProbe singleton StartupGate already resolves — do not register a second one.
+        // see. Spelling it out means removing the probe registration below fails loudly here
+        // (GetRequiredService throws at resolve time) instead of silently reverting to the
+        // fixed-delay path — which is exactly how the 2026-08-01 wrong-FPS-cap bug shipped (the
+        // gate logic existed; nothing wired it to a live probe). Same for a future edit that adds a
+        // second RobloxLauncher constructor — the compiler forces this call site to disambiguate.
+        // It does NOT protect against every drift: a new *optional* constructor parameter added to
+        // the existing constructor takes its default here silently, with nothing failing (fix wave,
+        // 2026-08-02 review finding 4 — narrowed this comment's claim to what it actually covers).
+        // Reuses the SAME IRobloxRunningProbe singleton StartupGate already resolves — do not
+        // register a second one.
         services.AddSingleton<IRobloxLauncher>(sp => new RobloxLauncher(
             sp.GetRequiredService<IRobloxApi>(),
             sp.GetRequiredService<IAppSettings>(),

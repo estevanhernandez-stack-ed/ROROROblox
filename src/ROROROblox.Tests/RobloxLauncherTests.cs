@@ -469,8 +469,15 @@ public class RobloxLauncherTests
         public IReadOnlyList<RobloxProcessInfo> GetRunningPlayers() => Array.Empty<RobloxProcessInfo>();
     }
 
-    [Fact]
-    public async Task LaunchAsync_CookieExpired_NeverWaitsForAClient()
+    [Theory]
+    [InlineData(true)]   // typed-target overload -- the ONLY path production code calls (MainViewModel.cs
+                          // -- Squad Launch). Fix wave, 2026-08-02 review finding 2: prior to this, only
+                          // the legacy overload below was covered, so a regression that moved
+                          // SnapshotBeforePids() back above GetAuthTicketAsync in ExecuteLaunchAsync (the
+                          // typed path) -- undoing a deviation two reviewers confirmed was correct -- would
+                          // have snapshotted even on this CookieExpired result and stayed green.
+    [InlineData(false)]  // legacy placeUrl overload -- back-compat only, no production caller.
+    public async Task LaunchAsync_CookieExpired_NeverWaitsForAClient(bool useTypedApi)
     {
         // Only a successful launch produces a client to wait for. If a non-Started result waited,
         // a user without Roblox installed would eat the full 30s ceiling on every click.
@@ -480,7 +487,12 @@ public class RobloxLauncherTests
         var probe = new CountingProbe();
         var launcher = new RobloxLauncher(api, settings, processStarter, runningProbe: probe);
 
-        var result = await launcher.LaunchAsync(TestCookie);
+        // Bounded per this file's established real-time-ceiling pattern (e.g. :505, :557 as of fix
+        // round 1) -- a regression that made this path wait after all fails red instead of hanging
+        // the suite for 31s.
+        var result = useTypedApi
+            ? await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(42)).WaitAsync(TimeSpan.FromSeconds(5))
+            : await launcher.LaunchAsync(TestCookie).WaitAsync(TimeSpan.FromSeconds(5));
 
         Assert.IsType<LaunchResult.CookieExpired>(result);
         Assert.Equal(0, probe.Calls);   // never even snapshotted, let alone waited
@@ -557,6 +569,69 @@ public class RobloxLauncherTests
         var result = await launchTask.WaitAsync(TimeSpan.FromSeconds(5));
         var started = Assert.IsType<LaunchResult.Started>(result);
         Assert.Equal(999, started.Pid);
+    }
+
+    /// <summary>
+    /// Throws on its first call (the pre-launch snapshot), then reports a pid that was ALREADY
+    /// running before the launch on every call after — i.e. never a legitimately new client.
+    /// Models a probe hiccuping exactly once while a pre-existing (hand-started, or leftover from
+    /// an earlier session) Roblox client is already up.
+    /// </summary>
+    private sealed class ThrowsOnceThenReportsExistingPidProbe : IRobloxRunningProbe
+    {
+        public int Calls { get; private set; }
+        public IReadOnlyList<int> GetRunningPlayerPids()
+        {
+            Calls++;
+            if (Calls == 1) throw new InvalidOperationException("probe blew up on snapshot");
+            return new[] { 999 };
+        }
+        public IReadOnlyList<RobloxProcessInfo> GetRunningPlayers() => Array.Empty<RobloxProcessInfo>();
+    }
+
+    [Fact]
+    public async Task LaunchAsync_ProbeThrowsOnSnapshot_DegradesToTheFixedHold_NotAnEmptySetFalseDetect()
+    {
+        // Fix wave (2026-08-02 review, finding 1): SafeGetPids used to swallow the snapshot
+        // exception and return Array.Empty<int>(), building an EMPTY "before" set --
+        // indistinguishable from the legitimate "nothing is running yet" case. A pre-existing
+        // client would then satisfy WaitForNewClientAsync's very first poll (absent from the
+        // empty before-set) and release the gate after just SettleGrace (1s) instead of the safe
+        // fixed-hold fallback -- reaching the exact 2026-08-01 wrong-FPS-cap bug through a
+        // swallowed exception rather than through the timing gap the rest of this fix wave closed.
+        //
+        // This test pins the fixed-hold branch's signature: exactly one probe call (the throwing
+        // snapshot; the fixed-delay branch never touches the probe again) and exactly 250ms
+        // elapsed (the FFlagReadHold fallback, a single un-polled Task.Delay).
+        //
+        // Mutation check performed by hand: reverting SnapshotBeforePids to catch-and-return-empty
+        // (the pre-fix SafeGetPids shape) makes this probe's 2nd call happen inside
+        // WaitForNewClientAsync's poll loop, which reports pid 999 -- absent from the empty
+        // before-set -- so `found` goes true on the very first poll. The launch then takes
+        // SettleGrace (1000ms) with 2 probe calls instead of 250ms with 1, and both assertions
+        // below go red.
+        var clock = new FakeTimeProvider();
+        var probe = new ThrowsOnceThenReportsExistingPidProbe();
+        var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket("T", DateTimeOffset.UtcNow)));
+        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
+        var processStarter = new RecordingProcessStarter(_ => 777);
+        var launcher = new RobloxLauncher(
+            api, settings, processStarter, clock, () => 1_000_000_000_000,
+            favorites: null, clientAppSettings: null, globalBasicSettings: null, runningProbe: probe);
+
+        var startedAt = clock.GetUtcNow();
+        var launchTask = launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(42));
+
+        // The fixed-hold branch is a single un-polled Task.Delay(FFlagReadHold) -- one Advance
+        // past it is sufficient, same pattern as the single-pending-delay cases elsewhere in this
+        // file (e.g. TwoSequentialLaunches_SecondWriteHappensOnlyAfterTheFirstClientAppears).
+        clock.Advance(TimeSpan.FromMilliseconds(250));
+        var result = await launchTask.WaitAsync(TimeSpan.FromSeconds(5));
+        var elapsed = clock.GetUtcNow() - startedAt;
+
+        Assert.IsType<LaunchResult.Started>(result);
+        Assert.Equal(TimeSpan.FromMilliseconds(250), elapsed);
+        Assert.Equal(1, probe.Calls);   // snapshot only -- the fixed-hold branch never calls the probe again
     }
 
     // === DI wiring (production registration shape) ===

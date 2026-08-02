@@ -4,6 +4,38 @@
 **Status:** Approved design. Fixes a defect shipping in v1.12.0.0 and earlier.
 **Severity:** Silent wrong behavior — no error, no log, the user's configured value simply does not apply.
 
+> ## ⚠️ Banner-correct (2026-08-02) — two drifts between this design and what shipped
+>
+> **1. Snapshot placement moved, deliberately, and the new placement is better.**
+>
+> **Originally proposed** (§Design, step 1): *"Snapshot `GetRunningPlayerPids()` before writing
+> settings."* — i.e. at the top of the launch flow, ahead of the auth-ticket network round-trip.
+>
+> **Actually built:** the snapshot happens in `ExecuteLaunchAsync` / `ExecuteLegacyLaunchAsync`,
+> immediately before `Process.Start`, **after** `GetAuthTicketAsync` returns
+> (`RobloxLauncher.cs:198`, `:321`). This is not settling for a worse implementation — it closes a
+> hole the original plan had: `GetAuthTicketAsync` is a network round-trip with unbounded latency.
+> A Roblox client that appeared *during* that call (user double-clicked the desktop icon, an
+> unrelated bootstrapper finished) would be absent from a "before" set captured ahead of it, and
+> would then false-detect as the launch's own new client on `WaitForNewClientAsync`'s first poll —
+> releasing the gate before the real client exists. Snapshotting after the round-trip, right before
+> the URI actually fires, closes that window. Approved by two reviewers during the build; see the
+> in-code comment at `RobloxLauncher.cs:190-197` for the full reasoning.
+>
+> **2. "No behavior change when the probe is absent" does not hold for non-`Started` results.**
+>
+> **Originally proposed** (§"Why these five properties matter"): *"No behavior change when the
+> probe is absent. Existing call sites and tests that construct `RobloxLauncher` without a probe
+> keep today's semantics exactly."*
+>
+> **Actually built:** `Failed`, `CookieExpired`, and `Limited` results release the gate immediately
+> and never hold — not even the old fixed 250 ms `FFlagReadHold` — regardless of whether a probe is
+> wired. Accepted on the grounds that a failed launch produces no client to protect, so holding for
+> one serves no purpose. **This has zero production reach**: the shipped app always constructs
+> `RobloxLauncher` with a live probe (`App.xaml.cs`'s `IRobloxLauncher` factory), so the "probe
+> absent" case is test-only. Flagged here so a future reader comparing this doc to
+> `HoldForNewClientAsync` doesn't read the discrepancy as a bug.
+
 ## The bug, observed live
 
 Two accounts launched roughly one second apart on 2026-08-01:

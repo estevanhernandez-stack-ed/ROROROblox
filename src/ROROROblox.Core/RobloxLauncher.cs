@@ -37,7 +37,16 @@ public sealed class RobloxLauncher : IRobloxLauncher
     private readonly SemaphoreSlim _launchGate = new(initialCount: 1, maxCount: 1);
     private static readonly TimeSpan FFlagReadHold = TimeSpan.FromMilliseconds(250);
 
-    /// <summary>How often to re-check for the launched client. Cheap — a process-name enumeration.</summary>
+    /// <summary>
+    /// How often to re-check for the launched client. NOT a bare process-name enumeration:
+    /// <see cref="IRobloxRunningProbe.GetRunningPlayerPids"/> routes through
+    /// <c>RobloxRunningProbe.GetRunningPlayers()</c>, which reads <c>MainWindowHandle</c> per
+    /// process — a top-level window sweep this gate does not need. Over a full
+    /// <see cref="NewClientWaitTimeout"/> wait that is ~120 of those sweeps. Fine for today's poll
+    /// count; not "cheap" in the sense a reader would assume from that word alone (fix wave,
+    /// 2026-08-02 review finding 4 — narrowing the probe to skip the window read is a follow-up,
+    /// not this change).
+    /// </summary>
     internal static readonly TimeSpan NewClientPollInterval = TimeSpan.FromMilliseconds(250);
 
     /// <summary>
@@ -600,12 +609,6 @@ public sealed class RobloxLauncher : IRobloxLauncher
         return NewClientWaitOutcome.TimedOut;
     }
 
-    private static IReadOnlyList<int> SafeGetPids(IRobloxRunningProbe probe)
-    {
-        try { return probe.GetRunningPlayerPids(); }
-        catch { return Array.Empty<int>(); }
-    }
-
     /// <summary>
     /// Single definition of the post-launch hold, shared by both <see cref="LaunchAsync(string, LaunchTarget, int?, long?)"/>
     /// and <see cref="LaunchAsync(string, string?, int?, long?)"/> (2026-08-02 review: the brief's plan
@@ -645,8 +648,28 @@ public sealed class RobloxLauncher : IRobloxLauncher
     /// <summary>
     /// Single definition of the pre-launch pid snapshot, shared by <see cref="ExecuteLaunchAsync"/>
     /// and <see cref="ExecuteLegacyLaunchAsync"/>. Null when no probe is wired -- the no-probe path
-    /// is a deliberate no-op, not a degraded snapshot.
+    /// is a deliberate no-op, not a degraded snapshot. Also null when a wired probe throws during
+    /// the snapshot: an unknown "before" set is NOT the same thing as a legitimate empty one (fix
+    /// wave, 2026-08-02 review finding 1). A probe glitch here must degrade to
+    /// <c>HoldForNewClientAsync</c>'s fixed-delay fallback branch -- the same behaviour as no probe
+    /// at all -- rather than build an empty snapshot that lets a pre-existing (or already-running,
+    /// same-machine) client false-detect as "new" on <see cref="WaitForNewClientAsync"/>'s very
+    /// first poll and release the gate before the real new client has read its settings.
     /// </summary>
     private IReadOnlySet<int>? SnapshotBeforePids()
-        => _runningProbe is null ? null : new HashSet<int>(SafeGetPids(_runningProbe));
+    {
+        if (_runningProbe is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return new HashSet<int>(_runningProbe.GetRunningPlayerPids());
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
 }
