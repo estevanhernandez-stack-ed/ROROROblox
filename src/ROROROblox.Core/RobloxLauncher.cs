@@ -132,19 +132,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
             }
 
             var (result, beforePids) = await ExecuteLaunchAsync(cookie, target, browserTrackerId).ConfigureAwait(false);
-
-            // Only a successful launch produces a client to wait for. Failed / CookieExpired / Limited
-            // release immediately — a user without Roblox installed must not eat the ceiling every click.
-            if (result is LaunchResult.Started && _runningProbe is not null)
-            {
-                await WaitForNewClientAsync(_runningProbe, beforePids!, _timeProvider, CancellationToken.None)
-                    .ConfigureAwait(false);
-            }
-            else if (result is LaunchResult.Started)
-            {
-                await Task.Delay(FFlagReadHold, _timeProvider).ConfigureAwait(false);
-            }
-
+            await HoldForNewClientAsync(result, beforePids).ConfigureAwait(false);
             return result;
         }
         finally
@@ -199,13 +187,15 @@ public sealed class RobloxLauncher : IRobloxLauncher
             ? BuildAppLaunchUri(ticket.Ticket, launchTime, browserTrackerId)
             : BuildLaunchUri(ticket.Ticket, launchTime, browserTrackerId, BuildPlaceLauncherUrl(resolved, browserTrackerId));
 
-        // Snapshot immediately before Process.Start, not any earlier — a probe call has no reason to
-        // happen at all on a launch that never reaches this point (CookieExpired / Limited / resolution
-        // failure), and this is the tightest possible window before the client we're about to start
-        // could exist, so pre-existing windowless orphans can never be mistaken for it.
-        IReadOnlySet<int>? beforePids = _runningProbe is null
-            ? null
-            : new HashSet<int>(SafeGetPids(_runningProbe));
+        // Snapshot immediately before Process.Start, not any earlier -- in particular, AFTER the
+        // GetAuthTicketAsync network round-trip above, not before it. The brief's original plan had
+        // this snapshot at the top of the public LaunchAsync method, ahead of that round-trip; a
+        // Roblox client that appeared during the round-trip (user double-clicked the desktop icon,
+        // a bootstrapper finished) would then be absent from `before` and get false-detected as
+        // ours, releasing the gate early -- the exact bug class this task exists to kill. A probe
+        // call also has no reason to happen at all on a launch that never reaches this point
+        // (CookieExpired / Limited / resolution failure).
+        IReadOnlySet<int>? beforePids = SnapshotBeforePids();
 
         try
         {
@@ -285,19 +275,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
             }
 
             var (result, beforePids) = await ExecuteLegacyLaunchAsync(cookie, resolvedPlaceUrl, browserTrackerId).ConfigureAwait(false);
-
-            // Only a successful launch produces a client to wait for. Failed / CookieExpired / Limited
-            // release immediately — a user without Roblox installed must not eat the ceiling every click.
-            if (result is LaunchResult.Started && _runningProbe is not null)
-            {
-                await WaitForNewClientAsync(_runningProbe, beforePids!, _timeProvider, CancellationToken.None)
-                    .ConfigureAwait(false);
-            }
-            else if (result is LaunchResult.Started)
-            {
-                await Task.Delay(FFlagReadHold, _timeProvider).ConfigureAwait(false);
-            }
-
+            await HoldForNewClientAsync(result, beforePids).ConfigureAwait(false);
             return result;
         }
         finally
@@ -337,13 +315,10 @@ public sealed class RobloxLauncher : IRobloxLauncher
         var normalizedPlaceUrl = NormalizeToPlaceLauncherUrl(resolvedPlaceUrl, browserTrackerId);
         var uri = BuildLaunchUri(ticket.Ticket, launchTime, browserTrackerId, normalizedPlaceUrl);
 
-        // Snapshot immediately before Process.Start, not any earlier — a probe call has no reason to
-        // happen at all on a launch that never reaches this point (CookieExpired / Limited), and this
-        // is the tightest possible window before the client we're about to start could exist, so
-        // pre-existing windowless orphans can never be mistaken for it.
-        IReadOnlySet<int>? beforePids = _runningProbe is null
-            ? null
-            : new HashSet<int>(SafeGetPids(_runningProbe));
+        // Snapshot immediately before Process.Start, not any earlier -- see the comment on the
+        // matching snapshot line in ExecuteLaunchAsync for why (must be AFTER the ticket round-trip,
+        // not before it).
+        IReadOnlySet<int>? beforePids = SnapshotBeforePids();
 
         try
         {
@@ -630,4 +605,48 @@ public sealed class RobloxLauncher : IRobloxLauncher
         try { return probe.GetRunningPlayerPids(); }
         catch { return Array.Empty<int>(); }
     }
+
+    /// <summary>
+    /// Single definition of the post-launch hold, shared by both <see cref="LaunchAsync(string, LaunchTarget, int?, long?)"/>
+    /// and <see cref="LaunchAsync(string, string?, int?, long?)"/> (2026-08-02 review: the brief's plan
+    /// text called for this block duplicated "at both sites" -- escalated and approved as a drift to
+    /// extract instead, so there is one definition of the hold behaviour, not two).
+    /// </summary>
+    private async Task HoldForNewClientAsync(LaunchResult result, IReadOnlySet<int>? beforePids)
+    {
+        // Only a successful launch produces a client to wait for. Failed / CookieExpired / Limited
+        // release immediately -- a user without Roblox installed must not eat the ceiling every click.
+        if (result is not LaunchResult.Started)
+        {
+            return;
+        }
+
+        // Pattern-match on beforePids itself rather than guarding on _runningProbe and dereferencing
+        // beforePids! -- the invariant that beforePids is non-null whenever a probe was wired lives
+        // in ExecuteLaunchAsync/ExecuteLegacyLaunchAsync (the snapshot happens right before
+        // Process.Start), not here, and the compiler cannot check it across methods. If a future edit
+        // ever added a Started early-return before that snapshot line, a _runningProbe-is-not-null
+        // guard here would still fire, dereference a null beforePids!, and NRE inside
+        // WaitForNewClientAsync's own catch (Exception) -- producing not a crash but a silent 30s
+        // stall on every launch with no diagnostic. Guarding on beforePids directly makes that
+        // failure mode structurally impossible: no probe call happens without a snapshot to pair it
+        // with. Same behaviour today (beforePids is non-null exactly when _runningProbe is non-null,
+        // by construction), self-evident tomorrow.
+        if (beforePids is { } pids && _runningProbe is { } probe)
+        {
+            await WaitForNewClientAsync(probe, pids, _timeProvider, CancellationToken.None).ConfigureAwait(false);
+        }
+        else
+        {
+            await Task.Delay(FFlagReadHold, _timeProvider).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Single definition of the pre-launch pid snapshot, shared by <see cref="ExecuteLaunchAsync"/>
+    /// and <see cref="ExecuteLegacyLaunchAsync"/>. Null when no probe is wired -- the no-probe path
+    /// is a deliberate no-op, not a degraded snapshot.
+    /// </summary>
+    private IReadOnlySet<int>? SnapshotBeforePids()
+        => _runningProbe is null ? null : new HashSet<int>(SafeGetPids(_runningProbe));
 }

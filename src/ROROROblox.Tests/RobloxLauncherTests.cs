@@ -504,15 +504,23 @@ public class RobloxLauncherTests
         Assert.Equal(4242, started.Pid);
     }
 
-    [Fact]
-    public async Task LaunchAsync_WithProbeAndStartedResult_ActuallyPollsForTheClient()
+    [Theory]
+    [InlineData(true)]   // typed-target overload -- the ONLY path production code calls (MainViewModel.cs
+                          // -- Squad Launch, the exact call site the 2026-08-01 wrong-FPS-cap bug was
+                          // observed on). Prior to this fix-round, no test drove this overload with a
+                          // probe at all -- deleting the gate wiring entirely would have shipped clean.
+    [InlineData(false)]  // legacy placeUrl overload -- back-compat only, no production caller.
+    public async Task LaunchAsync_WithProbeAndStartedResult_ActuallyPollsForTheClient(bool useTypedApi)
     {
         // Positive-path proof that the launcher wiring calls WaitForNewClientAsync when a probe is
-        // present and the launch succeeds. Neither test above exercises this: one asserts zero probe
-        // calls on a non-Started result, the other asserts unchanged behaviour with no probe at all.
-        // Without this test, deleting the WaitForNewClientAsync call and always falling through to the
-        // old Task.Delay(FFlagReadHold) -- even with a probe present -- would leave both other tests
-        // green.
+        // present and the launch succeeds, on BOTH overloads independently -- each [InlineData] run
+        // constructs its own launcher/probe and asserts on its own probe.Calls, so a break confined to
+        // one overload's HoldForNewClientAsync call site fails that iteration specifically rather than
+        // only proving the shared helper works in isolation. Neither of the other probe tests exercises
+        // this at all: one asserts zero probe calls on a non-Started result, the other asserts unchanged
+        // behaviour with no probe at all. Without this test, deleting the WaitForNewClientAsync call and
+        // always falling through to the old Task.Delay(FFlagReadHold) -- even with a probe present --
+        // would leave both other tests green.
         var clock = new FakeTimeProvider();
         var probe = new CountingProbe();
         var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket("T", DateTimeOffset.UtcNow)));
@@ -522,7 +530,9 @@ public class RobloxLauncherTests
             api, settings, processStarter, clock, () => 1_000_000_000_000,
             favorites: null, clientAppSettings: null, globalBasicSettings: null, runningProbe: probe);
 
-        var launchTask = launcher.LaunchAsync(TestCookie);
+        var launchTask = useTypedApi
+            ? launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(42))
+            : launcher.LaunchAsync(TestCookie);
 
         // Drive the fake clock past several poll intervals to prove the gate is actually polling
         // (not skipping straight past to the old fixed 250ms hold). CountingProbe never reports a
@@ -536,7 +546,7 @@ public class RobloxLauncherTests
             }
         }
         Assert.True(probe.Calls >= 2,
-            $"launcher did not poll the probe (stuck at {probe.Calls} calls) -- WaitForNewClientAsync does not appear to be wired into LaunchAsync");
+            $"launcher did not poll the probe (stuck at {probe.Calls} calls) -- WaitForNewClientAsync does not appear to be wired into LaunchAsync (useTypedApi={useTypedApi})");
 
         clock.Advance(RobloxLauncher.NewClientWaitTimeout);
 
