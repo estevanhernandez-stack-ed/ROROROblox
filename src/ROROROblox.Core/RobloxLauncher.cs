@@ -1,8 +1,19 @@
 using System.ComponentModel;
 using System.Text;
 using System.Text.RegularExpressions;
+using ROROROblox.Core.Diagnostics;
 
 namespace ROROROblox.Core;
+
+/// <summary>Why <see cref="RobloxLauncher.WaitForNewClientAsync"/> returned.</summary>
+public enum NewClientWaitOutcome
+{
+    /// <summary>A RobloxPlayerBeta pid appeared that was not in the pre-launch snapshot.</summary>
+    Detected,
+
+    /// <summary>No new pid within the ceiling. Gate released anyway — never hang the queue.</summary>
+    TimedOut,
+}
 
 /// <summary>
 /// Implements <see cref="IRobloxLauncher"/>. Coordinates ticket fetch + URI build + process spawn.
@@ -24,6 +35,24 @@ public sealed class RobloxLauncher : IRobloxLauncher
     private readonly IGlobalBasicSettingsWriter? _globalBasicSettings;
     private readonly SemaphoreSlim _launchGate = new(initialCount: 1, maxCount: 1);
     private static readonly TimeSpan FFlagReadHold = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>How often to re-check for the launched client. Cheap — a process-name enumeration.</summary>
+    internal static readonly TimeSpan NewClientPollInterval = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>
+    /// Ceiling on waiting for a launched client to appear. Covers a cold start with a bootstrapper
+    /// update. On expiry we release anyway and degrade to the old fixed-delay behaviour — a launch
+    /// that never produces a client must never hang Squad Launch.
+    /// </summary>
+    internal static readonly TimeSpan NewClientWaitTimeout = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Breathing room after the client process appears, before the next launch is allowed to
+    /// overwrite the shared settings files. Still an estimate — but anchored to THE CLIENT PROCESS
+    /// EXISTING rather than to Windows accepting a URI. That re-anchoring is the fix; the old 250ms
+    /// was measured against an unbounded gap (shell -> bootstrapper -> maybe an update -> client).
+    /// </summary>
+    internal static readonly TimeSpan SettleGrace = TimeSpan.FromSeconds(1);
 
     public RobloxLauncher(
         IRobloxApi api,
@@ -498,5 +527,42 @@ public sealed class RobloxLauncher : IRobloxLauncher
         uri.Append("+browsertrackerid:").Append(browserTrackerId);
         uri.Append("+robloxLocale:en_us+gameLocale:en_us");
         return uri.ToString();
+    }
+
+    /// <summary>
+    /// Hold until a RobloxPlayerBeta pid appears that was not in <paramref name="before"/>, then
+    /// wait <see cref="SettleGrace"/>. Bounded by <see cref="NewClientWaitTimeout"/>.
+    /// Probe exceptions are swallowed — a probe glitch must degrade to the timeout, never abort a launch.
+    /// </summary>
+    internal static async Task<NewClientWaitOutcome> WaitForNewClientAsync(
+        IRobloxRunningProbe probe,
+        IReadOnlySet<int> before,
+        TimeProvider timeProvider,
+        CancellationToken ct)
+    {
+        var deadline = timeProvider.GetUtcNow() + NewClientWaitTimeout;
+
+        while (timeProvider.GetUtcNow() < deadline)
+        {
+            try
+            {
+                foreach (var pid in probe.GetRunningPlayerPids())
+                {
+                    if (!before.Contains(pid))
+                    {
+                        await Task.Delay(SettleGrace, timeProvider, ct).ConfigureAwait(false);
+                        return NewClientWaitOutcome.Detected;
+                    }
+                }
+            }
+            catch
+            {
+                // Probe glitch -> treat as "not yet". Never let it escape into the launch path.
+            }
+
+            await Task.Delay(NewClientPollInterval, timeProvider, ct).ConfigureAwait(false);
+        }
+
+        return NewClientWaitOutcome.TimedOut;
     }
 }
