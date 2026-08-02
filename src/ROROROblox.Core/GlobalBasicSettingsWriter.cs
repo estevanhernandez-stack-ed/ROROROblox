@@ -1,5 +1,4 @@
 using System.IO;
-using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace ROROROblox.Core;
@@ -18,11 +17,6 @@ namespace ROROROblox.Core;
 public sealed class GlobalBasicSettingsWriter : IGlobalBasicSettingsWriter
 {
     private const string FramerateCapName = "FramerateCap";
-
-    // Match GlobalBasicSettings_<digits>.xml — exclude the _Studio variant which is for Roblox Studio.
-    private static readonly Regex SettingsFileRegex = new(
-        @"^GlobalBasicSettings_(\d+)\.xml$",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     private readonly string _robloxAppDataRoot;
 
@@ -45,7 +39,7 @@ public sealed class GlobalBasicSettingsWriter : IGlobalBasicSettingsWriter
             return;
         }
 
-        var path = ResolveActiveSettingsFile();
+        var path = GlobalBasicSettingsFile.Resolve(_robloxAppDataRoot)?.FullName;
         if (path is null)
         {
             throw new GlobalBasicSettingsWriteException(
@@ -122,28 +116,4 @@ public sealed class GlobalBasicSettingsWriter : IGlobalBasicSettingsWriter
     private static string DefaultRobloxAppDataRoot() => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "Roblox");
-
-    /// <summary>
-    /// Resolve the active settings file: highest-numbered <c>GlobalBasicSettings_&lt;N&gt;.xml</c>
-    /// (skipping <c>_Studio</c> variants). Returns null if the directory doesn't exist or
-    /// contains no matching file.
-    /// </summary>
-    private string? ResolveActiveSettingsFile()
-    {
-        if (!Directory.Exists(_robloxAppDataRoot)) return null;
-
-        (string Path, int Version)? best = null;
-        foreach (var file in Directory.EnumerateFiles(_robloxAppDataRoot, "GlobalBasicSettings_*.xml"))
-        {
-            var name = Path.GetFileName(file);
-            var match = SettingsFileRegex.Match(name);
-            if (!match.Success) continue; // skips _Studio variants — they have non-numeric tail
-            if (!int.TryParse(match.Groups[1].Value, out var version)) continue;
-            if (best is null || version > best.Value.Version)
-            {
-                best = (file, version);
-            }
-        }
-        return best?.Path;
-    }
 }
