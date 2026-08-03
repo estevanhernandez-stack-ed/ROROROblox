@@ -1195,11 +1195,27 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// A clan member clicked Join in Discord. Private servers get a warning first: Roblox checks
     /// permission server-side, so someone not on that server's list gets bounced, and saying so up
     /// front beats a mystery failure. <paramref name="confirm"/> is injected so the decision is
-    /// testable without showing a window. Called from two inbound paths — the in-client Discord
-    /// Join button (<see cref="DiscordPresenceService.JoinRequested"/>) and the <c>roblox-rororo:</c>
-    /// URI relay (<c>App.JoinRequested</c>), the latter of which can arrive on the single-instance
-    /// pipe thread rather than the UI thread — so this method touches nothing that assumes a
-    /// dispatcher context beyond what <see cref="LaunchAccountAsync"/> already tolerates.
+    /// testable without showing a window.
+    /// <para>
+    /// <b>Must be called on the UI thread</b> — it reads the UI-bound <see cref="Accounts"/>
+    /// collection, sets <see cref="StatusBanner"/>, and reaches <see cref="LaunchAccountAsync"/>,
+    /// none of which tolerate a foreign thread. The two inbound paths differ on whether that's
+    /// already true by the time they raise:
+    /// <list type="bullet">
+    ///   <item><c>App.JoinRequested</c> (the <c>roblox-rororo:</c> URI relay + cold start) is safe
+    ///   as-is — <c>SingleInstanceGuard</c> raises its relay inside <c>mainWindow.Dispatcher.Invoke</c>,
+    ///   and the cold-start path runs from <c>OnStartup</c>, itself on the UI thread. No extra
+    ///   dispatch needed at the call site.</item>
+    ///   <item><see cref="DiscordPresenceService.JoinRequested"/> (the in-client Join button) is
+    ///   NOT marshaled anywhere in its chain — Lachee's <c>OnJoin</c> fires on its own background
+    ///   RPC thread, <c>LacheeDiscordRpcClientAdapter.SafeInvoke</c> only try/catches, and
+    ///   <c>DiscordPresenceService.OnJoinRequested</c> forwards synchronously on that same thread.
+    ///   Whoever subscribes this path MUST marshal onto the UI thread (e.g.
+    ///   <c>Application.Current.Dispatcher.Invoke</c>) before calling this method — this is the
+    ///   steady-state Join path (RoRoRo already running, Discord connected), so skipping the
+    ///   dispatch here is not a rare-edge risk, it's the common crash.</item>
+    /// </list>
+    /// </para>
     /// </summary>
     internal async Task<bool> HandleDiscordJoinAsync(LaunchTarget target, Func<string, bool> confirm)
     {
@@ -1211,12 +1227,25 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             return false;
         }
 
-        var row = Accounts.FirstOrDefault(a => !a.SessionExpired && !a.IsRunning)
-                  ?? Accounts.FirstOrDefault(a => !a.SessionExpired);
+        // Idle-first, then any non-expired account — but never a row mid-launch (IsLaunching),
+        // so an inbound join can't double-launch a row that's already in flight. When nothing is
+        // idle, the fallback CAN land on an already-running account: Roblox enforces one session
+        // per account server-side, so this takes over (kicks) that account's live session rather
+        // than silently failing. Accepted tradeoff — the plan chose "join always finds a seat"
+        // over "join can be a no-op" — but it must not be a SILENT takeover, hence the distinct
+        // banner below.
+        var row = Accounts.FirstOrDefault(a => !a.SessionExpired && !a.IsRunning && !a.IsLaunching)
+                  ?? Accounts.FirstOrDefault(a => !a.SessionExpired && !a.IsLaunching);
         if (row is null)
         {
             StatusBanner = "Nothing to join with — add an account first.";
             return false;
+        }
+
+        var takingOverRunningAccount = row.IsRunning;
+        if (takingOverRunningAccount)
+        {
+            StatusBanner = $"Joining via {row.RenderName} — this takes over that account's running session.";
         }
 
         await LaunchAccountAsync(row, overrideTarget: target).ConfigureAwait(true);

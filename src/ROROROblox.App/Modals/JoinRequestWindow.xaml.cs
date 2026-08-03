@@ -28,9 +28,19 @@ internal partial class JoinRequestWindow : Window
     /// <paramref name="owner"/> param, so it isn't itself a <c>Func&lt;string, bool&gt;</c> —
     /// wrap it in a lambda closing over the owner window to match what
     /// <c>HandleDiscordJoinAsync</c> expects: <c>msg =&gt; JoinRequestWindow.Confirm(owner, msg)</c>.
-    /// Must run on the UI thread — both inbound-join paths already marshal onto it before a
-    /// subscriber sees the event (see <c>App.JoinRequested</c>'s remarks), so this does not
-    /// re-dispatch itself.
+    /// <para>
+    /// <b>Must run on the UI thread — this constructs and shows a WPF <see cref="Window"/>, so it
+    /// throws if called off it.</b> It does NOT re-dispatch itself, so the caller is on the hook.
+    /// The two inbound-join paths are NOT equally safe here: <c>App.JoinRequested</c> (the
+    /// <c>roblox-rororo:</c> URI relay + cold start) already arrives on the UI thread — see that
+    /// event's remarks — so a subscriber wiring THIS delegate for that path needs no extra
+    /// dispatch. <c>DiscordPresenceService.JoinRequested</c> (the in-client Join button) does NOT
+    /// arrive on the UI thread — it fires on Lachee's background RPC thread with nothing in its
+    /// chain that marshals — so a subscriber wiring this delegate for THAT path must wrap the call
+    /// in <c>Application.Current.Dispatcher.Invoke</c> (or post via <c>InvokeAsync</c>) before
+    /// reaching <c>HandleDiscordJoinAsync</c>, which is what ultimately calls back into this
+    /// method for a private-server target.
+    /// </para>
     /// </summary>
     public static bool Confirm(Window? owner, string message)
     {
