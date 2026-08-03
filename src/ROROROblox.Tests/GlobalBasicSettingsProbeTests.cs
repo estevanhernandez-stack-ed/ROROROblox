@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using ROROROblox.Core;
 using Xunit;
 
@@ -74,6 +76,52 @@ public sealed class GlobalBasicSettingsProbeTests : IDisposable
         var probe = new GlobalBasicSettingsProbe(_root);
 
         Assert.Null(probe.ReadFramerateCap());
+    }
+
+    /// <summary>
+    /// Fix 2: <c>GlobalBasicSettingsFile.Resolve</c> hits the filesystem
+    /// (<c>Directory.Exists</c> + <c>Directory.EnumerateFiles</c>) and can throw on its own --
+    /// e.g. <c>UnauthorizedAccessException</c> when a Roblox installer recreates
+    /// <c>%LOCALAPPDATA%\Roblox</c> mid-Squad-Launch, or a TOCTOU race between the <c>Exists</c>
+    /// check and the lazy enumeration. Both methods promise <c>null</c> for "missing, locked, or
+    /// malformed"; a <c>Resolve</c> call sitting outside the <c>try</c> broke that promise and let
+    /// the exception escape into the launch path -- an 8-account Squad Launch aborting at account
+    /// 3 rather than degrading. Deny list/read access on a real directory to force
+    /// <see cref="UnauthorizedAccessException"/> out of <c>EnumerateFiles</c> deterministically
+    /// (an existing directory is required so <c>Directory.Exists</c> returns true and the
+    /// enumeration itself is what throws -- a nonexistent root never reaches this code path).
+    /// </summary>
+    [Fact]
+    public void ReadFramerateCap_ReturnsNullRatherThanThrowing_WhenTheDirectoryIsUnreadable()
+    {
+        var locked = Path.Combine(_root, "locked");
+        Directory.CreateDirectory(locked);
+
+        var dirInfo = new DirectoryInfo(locked);
+        var security = dirInfo.GetAccessControl();
+        var identity = WindowsIdentity.GetCurrent().User!;
+        var denyRule = new FileSystemAccessRule(
+            identity,
+            FileSystemRights.ListDirectory | FileSystemRights.ReadData,
+            AccessControlType.Deny);
+        security.AddAccessRule(denyRule);
+        dirInfo.SetAccessControl(security);
+
+        try
+        {
+            var probe = new GlobalBasicSettingsProbe(locked);
+
+            Assert.Null(probe.ReadFramerateCap());
+            Assert.Null(probe.GetLastWriteTimeUtc());
+        }
+        finally
+        {
+            // Deny ACEs block Directory.Delete's own enumeration too -- restore access before
+            // Dispose() tries the recursive delete, or teardown throws the same exception class
+            // this test exists to prove doesn't escape the probe.
+            security.RemoveAccessRule(denyRule);
+            dirInfo.SetAccessControl(security);
+        }
     }
 
     [Fact]

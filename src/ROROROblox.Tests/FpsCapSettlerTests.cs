@@ -70,6 +70,47 @@ public sealed class FpsCapSettlerTests
     }
 
     /// <summary>
+    /// Fix 4: <see cref="FakeProbe"/> scripts reads by CALL COUNT, never by time, and
+    /// <see cref="RecordingWriter"/> only moves the mtime on OUR OWN write. Neither can express "a
+    /// competing client's write lands at a specific fake-clock instant partway through the
+    /// post-write quiet wait" -- which is exactly why deleting the post-write
+    /// <c>WaitForQuietAsync</c> call left every one of the seven pre-existing tests green. This
+    /// probe holds live, mutable <see cref="Cap"/> / <see cref="Mtime"/> state instead of a script,
+    /// so a test can change either mid-wait and the settle call -- polling the SAME
+    /// <see cref="FakeTimeProvider"/> the test drives -- has to actually observe it.
+    /// </summary>
+    private sealed class TimeAwareProbe : IGlobalBasicSettingsProbe
+    {
+        public int? Cap { get; set; }
+        public DateTimeOffset? Mtime { get; set; }
+        public int ReadCalls { get; private set; }
+        public int? ReadFramerateCap() { ReadCalls++; return Cap; }
+        public DateTimeOffset? GetLastWriteTimeUtc() => Mtime;
+    }
+
+    /// <summary>Writes through to a <see cref="TimeAwareProbe"/>, stamping its own write's mtime.</summary>
+    private sealed class TimeAwareWriter : IGlobalBasicSettingsWriter
+    {
+        private readonly TimeAwareProbe _probe;
+        private readonly TimeProvider _clock;
+        public List<int?> Writes { get; } = new();
+
+        public TimeAwareWriter(TimeAwareProbe probe, TimeProvider clock)
+        {
+            _probe = probe;
+            _clock = clock;
+        }
+
+        public Task WriteFramerateCapAsync(int? fps, CancellationToken ct = default)
+        {
+            Writes.Add(fps);
+            _probe.Cap = fps;
+            _probe.Mtime = _clock.GetUtcNow();
+            return Task.CompletedTask;
+        }
+    }
+
+    /// <summary>
     /// Advance the fake clock, yielding between steps so each awaiting continuation gets to arm
     /// its next timer before the clock moves again. Advancing in one jump can leave a later timer
     /// armed against a clock that has stopped moving — a permanent stall, not a slow test.
@@ -151,6 +192,76 @@ public sealed class FpsCapSettlerTests
         Assert.Equal(2, writer.Writes.Count);
     }
 
+    /// <summary>
+    /// Fix 4: the branch none of the other six tests can exercise -- a competing write landing
+    /// INSIDE the post-write quiet wait, at a scripted fake-clock instant rather than a scripted
+    /// call count. Also exercises the pre-write "instant-credit" branch (mtime already older than
+    /// <see cref="FpsCapSettler.QuietDebounce"/> when the wait starts) twice: once on attempt 1
+    /// (mtime seeded stale on purpose) and once on attempt 2 (mtime is naturally stale by then,
+    /// since the clobber landed several seconds before the retry begins) -- the common production
+    /// path (Roblox writes this file on session exit; the first launch of a session usually finds
+    /// no Roblox process running at all), which the epoch-pinned <see cref="FakeProbe"/> fixture
+    /// used everywhere else can't express either, since its mtime always starts exactly at the
+    /// clock's own start.
+    /// <para>
+    /// Proven by mutation (see the fix report): deleting the post-write <c>WaitForQuietAsync</c>
+    /// call in <c>FpsCapSettler.SettleAsync</c> turns this test red; restoring it turns it green.
+    /// None of the other six tests in this file move on that mutation at all.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task PostWriteQuietWait_CompetingWriteLandsInsideTheWindow_ForcesARetry()
+    {
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var probe = new TimeAwareProbe
+        {
+            Cap = 9999,
+            // Already stale relative to the clock's start -- the pre-write instant-credit branch.
+            Mtime = DateTimeOffset.UnixEpoch - TimeSpan.FromSeconds(30),
+        };
+        var writer = new TimeAwareWriter(probe, clock);
+
+        var task = FpsCapSettler.SettleAsync(
+            probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None);
+
+        // Fast-path check (mismatch) + pre-write instant-credit wait + attempt 1's write all
+        // resolve without the clock needing to move.
+        for (var i = 0; i < 20 && writer.Writes.Count == 0; i++) { await Task.Yield(); }
+        Assert.Equal(1, writer.Writes.Count);
+
+        var clobbered = false;
+        var elapsed = TimeSpan.Zero;
+        while (elapsed < SlowPathBudget && !task.IsCompleted)
+        {
+            // Land the clobber partway through attempt 1's post-write debounce window -- a
+            // competing client's write at a specific FAKE-CLOCK INSTANT, which only a time-aware
+            // probe (not a call-count script) can model. Landing at debounce-minus-2s means the
+            // wait must have already been watching for at least 3s and has 2s of "quiet" credit
+            // that this clobber invalidates -- if the wait were not genuinely time-driven, this
+            // would land after it already returned and be invisible.
+            if (!clobbered && elapsed >= FpsCapSettler.QuietDebounce - TimeSpan.FromSeconds(2))
+            {
+                probe.Cap = 9999;
+                probe.Mtime = clock.GetUtcNow();
+                clobbered = true;
+            }
+
+            clock.Advance(FpsCapSettler.QuietPollInterval);
+            elapsed += FpsCapSettler.QuietPollInterval;
+            for (var i = 0; i < 8; i++) { await Task.Yield(); }
+        }
+
+        Assert.True(clobbered, "test setup bug: the clobber injection point was never reached");
+
+        var outcome = await task.WaitAsync(TestBound);
+
+        Assert.Equal(FpsCapSettleOutcome.Settled, outcome);
+        // The clobber landing mid-window must force a genuine retry -- two writes, not one. A
+        // settler that trusted the read right after the write (Fix 1's bug) or that never watched
+        // for the mid-window clobber at all would settle on attempt 1 with a single write.
+        Assert.Equal(new int?[] { 20, 20 }, writer.Writes);
+    }
+
     [Fact]
     public async Task NeverSurvives_ExhaustsAttemptsAndStillReturns()
     {
@@ -211,9 +322,15 @@ public sealed class FpsCapSettlerTests
 
         var outcome = await task.WaitAsync(TestBound);
 
-        // A contended file must not block the launch forever. The scripted re-read (20) still
-        // matches on the one attempt this budget allows, regardless of how noisy the mtime looked.
-        Assert.Equal(FpsCapSettleOutcome.Settled, outcome);
+        // The pre-write wait burns almost the entire overall budget without ever going quiet, so
+        // the post-write wait starts with the deadline already passed and returns instantly --
+        // without ever having watched the file for a clobber. The scripted re-read (20) happens
+        // to match, but a read microseconds after our own write is not a confirmation: this is
+        // the exact shape of the original wrong-cap bug (fix 1), so it must NOT report Settled.
+        // With the budget exhausted, the top-of-loop deadline check refuses a second attempt and
+        // this falls straight to Exhausted -- correctly loud (LogError) instead of a false-clean
+        // Settled that would have hidden a real clobber from a support bundle.
+        Assert.Equal(FpsCapSettleOutcome.Exhausted, outcome);
         Assert.Single(writer.Writes);
     }
 

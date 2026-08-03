@@ -10,6 +10,31 @@
 > cap. Simpler to build and correct in the common case (most users set one cap roster-wide);
 > narrowing it to an actual launch selection is a future refinement if it proves noisy.
 
+<!-- -->
+
+> **Banner correction (2026-08-02, final fix wave):** §Sequence step 3c and §Constants both
+> describe a design that did not ship. As proposed: write, then wait a fixed `WriteConfirmWindow`
+> (1 s), then re-read once — worst case `3 × (QuietDebounce + WriteConfirmWindow)` = 18 s. As
+> built: after writing, wait for the file to go quiet a **second full time** — a fresh
+> `QuietDebounce` (5 s) window seeded from the moment of the write, not a flat 1 s pause — before
+> re-reading (`FpsCapSettler.WaitForQuietAsync`, called both pre- and post-write). There is no
+> `WriteConfirmWindow` constant in the shipped code. The real worst-case bound is `SettleTimeout`
+> = 20 s (`FpsCapSettler.cs`), not the 18 s this doc claims.
+>
+> **Why the change:** `WriteConfirmWindow = 1 s` was itself found to be *the defect* — shorter
+> than the `QuietDebounce` it was meant to backstop, so a clobber landing between 1 s and 5 s after
+> the write was invisible to it. Worse, a first cut of the fix could hit `SettleTimeout` mid-wait
+> and return `Settled` on an unconfirmed read (a read taken microseconds after the write, with no
+> window for a clobber to have landed) — same bug, different shape, caught in the final review pass
+> before merge. Replacing the fixed window with a second full quiet-wait removes the guesswork:
+> being wrong about `QuietDebounce`'s length now costs latency (another retry), never correctness,
+> which is the property §Sequence's own "verify, do not trust the constant" framing was reaching
+> for but didn't quite land on `WriteConfirmWindow` itself.
+>
+> The rest of this document — the bug narrative, the fast-path rationale, the pid-gate postmortem,
+> the logging plan — is unchanged and still accurate. Only §Sequence step 3c and the
+> `WriteConfirmWindow` row + worst-case line in §Constants describe the superseded design.
+
 **Date:** 2026-08-02
 **Status:** Approved design.
 **Supersedes:** `2026-08-01-launch-gate-condition-based-design.md` (targets the wrong writer).

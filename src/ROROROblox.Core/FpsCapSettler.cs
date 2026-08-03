@@ -127,10 +127,16 @@ public static class FpsCapSettler
             // Re-confirm across a FULL fresh quiet window, not a short fixed pause. A clobber
             // landing anywhere in this window gets caught here, not just one landing in the first
             // second — see class remarks for why a short fixed pause is a false floor.
-            await WaitForQuietAsync(probe, timeProvider, overallDeadline, "post-write", logger, ct)
+            //
+            // The confirmation only counts if the wait actually OBSERVED quiet. If it instead ran
+            // out the overall budget, the read below happens moments after our own write with no
+            // window for a still-settling previous client to have clobbered it — that is not a
+            // confirmation, it's an unproven read that happens to match. Trusting it here is the
+            // exact shape of the original wrong-cap bug, just with a green `Settled` on top of it.
+            var postWriteQuiet = await WaitForQuietAsync(probe, timeProvider, overallDeadline, "post-write", logger, ct)
                 .ConfigureAwait(false);
 
-            if (probe.ReadFramerateCap() == desiredCap)
+            if (postWriteQuiet && probe.ReadFramerateCap() == desiredCap)
             {
                 return FpsCapSettleOutcome.Settled;
             }
@@ -161,8 +167,15 @@ public static class FpsCapSettler
     /// launch of a session often finds no Roblox process running at all — is credited as already
     /// quiet and this returns immediately instead of paying a flat debounce it did not need.
     /// </para>
+    /// <para>
+    /// Returns <see langword="true"/> only when quiet was actually observed, and
+    /// <see langword="false"/> when the call gave up at <paramref name="overallDeadline"/> (or its
+    /// own <see cref="QuietWaitTimeout"/>) without ever seeing it. Callers that treat a
+    /// post-write call of this as a confirmation MUST check the return value — a timeout is not a
+    /// confirmation, it's the absence of one.
+    /// </para>
     /// </summary>
-    private static async Task WaitForQuietAsync(
+    private static async Task<bool> WaitForQuietAsync(
         IGlobalBasicSettingsProbe probe,
         TimeProvider timeProvider,
         DateTimeOffset overallDeadline,
@@ -183,7 +196,7 @@ public static class FpsCapSettler
             {
                 logger.LogInformation(
                     "Quiet wait ({Phase}) settled after {Elapsed}.", phase, timeProvider.GetUtcNow() - start);
-                return;
+                return true;
             }
 
             await Task.Delay(QuietPollInterval, timeProvider, ct).ConfigureAwait(false);
@@ -198,5 +211,6 @@ public static class FpsCapSettler
 
         logger.LogInformation(
             "Quiet wait ({Phase}) timed out after {Elapsed} without settling.", phase, timeProvider.GetUtcNow() - start);
+        return false;
     }
 }
