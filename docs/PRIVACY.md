@@ -17,7 +17,7 @@ permalink: /privacy/
 
 - **Your Roblox password is never seen by RORORO.** Login happens inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame.
 - **Roblox session cookies are stored locally only**, encrypted with the Windows Data Protection API (DPAPI), tied to your Windows user account. Copying the file to another PC won't work — *unless you deliberately export your accounts* (Account export, v1.6), which re-encrypts them under a passphrase you choose into a file you save where you want. No cloud, no upload.
-- **No telemetry. No analytics. No third-party tracking.** RORORO makes network calls only to Roblox-owned endpoints (during launch and avatar fetching) and to GitHub Releases (for auto-update checks).
+- **No telemetry. No analytics. No third-party tracking.** RORORO makes network calls to Roblox-owned endpoints while it runs, not just at launch, including a presence heartbeat about every 25 seconds per saved account, and to GitHub Releases (for auto-update checks and the compatibility feed).
 - **No data leaves your PC** except the Roblox-side calls described below — the same calls Roblox.com would make from your browser — and, if you choose to use it, a passphrase-encrypted account-export file that you save yourself (never auto-uploaded).
 - **You can delete everything** by uninstalling the app. The Store-installed MSIX automatically removes the encrypted vault on uninstall.
 
@@ -58,6 +58,7 @@ RORORO initiates HTTPS connections **only** to:
 | `auth.roblox.com` | During *Launch As* | Roblox's documented authentication-ticket endpoint — exchanges the saved cookie for a one-time launch ticket. The same endpoint Bloxstrap and other launchers use. |
 | `users.roblox.com` | When listing accounts | Public account metadata (display name, ID). Used to confirm the saved cookie still maps to a real account. |
 | `thumbnails.roblox.com` | When listing accounts | Public avatar imagery. |
+| `presence.roblox.com` and related Roblox endpoints (games, friends, universes) | Continuously while RORORO is running, including a presence heartbeat about every 25 seconds per saved account | Keeps each saved account's online status, game details, and friends list current. The same kind of ongoing call the Roblox website makes while you're signed in there. |
 | `api.github.com` | At app startup | Velopack auto-update checks against the public RORORO GitHub Releases. |
 | `objects.githubusercontent.com` | When applying an update **or** installing a plugin (v1.4+) | Velopack downloads update packages from GitHub Releases; plugin installs download from the GitHub release URL you paste into Plugins → Install. |
 | `github.com` (Releases) | At app startup | Fetches `roblox-compat.json` (current known-good Roblox version + mutex name) from `releases/latest/download/`. Used so we can ship config updates within hours when Roblox renames the singleton mutex. Signed (ECDSA P-256/SHA-256) as of the first release built after this signing change lands — the app verifies the raw bytes against a pinned public key before trusting anything the feed returns; a missing or invalid signature is treated as no update available, never a crash and never a fallback to unverified content. |
