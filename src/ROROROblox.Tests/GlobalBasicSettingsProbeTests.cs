@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using ROROROblox.Core;
@@ -109,6 +110,16 @@ public sealed class GlobalBasicSettingsProbeTests : IDisposable
 
         try
         {
+            // Precondition, not the thing under test: `locked` is an EMPTY directory, so if the
+            // Deny ACE didn't actually take effect (elevated token with SeBackupPrivilege, a
+            // redirected TEMP on a non-ACL filesystem, group policy stripping the ACE), Resolve()
+            // would return null simply because no GlobalBasicSettings_*.xml file exists there --
+            // and both Assert.Null calls below would pass while proving nothing about the bug this
+            // test exists to catch. Fail loud here instead of passing vacuously: if this environment
+            // can't reproduce UnauthorizedAccessException out of EnumerateFiles, it can't exercise
+            // Fix 2 either, and that has to be visible as a failure, not a silent green.
+            Assert.Throws<UnauthorizedAccessException>(() => Directory.EnumerateFiles(locked).ToList());
+
             var probe = new GlobalBasicSettingsProbe(locked);
 
             Assert.Null(probe.ReadFramerateCap());

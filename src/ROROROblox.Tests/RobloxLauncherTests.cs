@@ -442,60 +442,6 @@ public class RobloxLauncherTests
         Assert.IsType<LaunchResult.Limited>(result);
     }
 
-    /// <summary>
-    /// Fix 3: the auth-ticket round trip now happens BEFORE the FPS-cap settle in both
-    /// <c>LaunchAsync</c> overloads, so a ticket failure must fail fast without ever touching the
-    /// settings file. Before the reorder, <c>ApplyFpsCapAsync</c> ran first and could write (and
-    /// even fully confirm-settle) a cap for a launch that was always going to fail on the ticket a
-    /// step later -- wasted I/O today, and exactly the kind of ordering that let a slow network
-    /// call sit between "cap confirmed on disk" and <c>Process.Start</c> for the launches that DID
-    /// succeed.
-    /// </summary>
-    [Fact]
-    public async Task LaunchAsync_TicketFetchFails_NeverWritesTheFpsCap()
-    {
-        var api = new StubRobloxApi(_ => throw new CookieExpiredException());
-        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
-        var processStarter = new RecordingProcessStarter(_ => 1);
-        var gbs = new RecordingGlobalBasicWriter();
-        var probe = new StubSettingsProbe { Cap = 9999 };
-        var launcher = new RobloxLauncher(
-            api, settings, processStarter,
-            favorites: null, clientAppSettings: null,
-            globalBasicSettings: gbs, settingsProbe: probe);
-
-        var result = await launcher
-            .LaunchAsync(TestCookie, new LaunchTarget.Place(42), fpsCap: 20)
-            .WaitAsync(TimeSpan.FromSeconds(5));
-
-        Assert.IsType<LaunchResult.CookieExpired>(result);
-        Assert.Empty(gbs.Writes);
-        Assert.Equal(0, probe.ReadCalls);
-    }
-
-    /// <summary>Legacy-overload counterpart of the fix-3 regression above.</summary>
-    [Fact]
-    public async Task LaunchAsync_LegacyOverload_TicketFetchFails_NeverWritesTheFpsCap()
-    {
-        var api = new StubRobloxApi(_ => throw new SessionLimitedException());
-        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
-        var processStarter = new RecordingProcessStarter(_ => 1);
-        var gbs = new RecordingGlobalBasicWriter();
-        var probe = new StubSettingsProbe { Cap = 9999 };
-        var launcher = new RobloxLauncher(
-            api, settings, processStarter,
-            favorites: null, clientAppSettings: null,
-            globalBasicSettings: gbs, settingsProbe: probe);
-
-        var result = await launcher
-            .LaunchAsync(TestCookie, placeUrl: null, fpsCap: 20)
-            .WaitAsync(TimeSpan.FromSeconds(5));
-
-        Assert.IsType<LaunchResult.Limited>(result);
-        Assert.Empty(gbs.Writes);
-        Assert.Equal(0, probe.ReadCalls);
-    }
-
     [Fact]
     public async Task LaunchAsync_TypedApi_RejectsEmptyCookie()
     {

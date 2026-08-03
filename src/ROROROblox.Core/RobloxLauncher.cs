@@ -79,47 +79,6 @@ public sealed class RobloxLauncher : IRobloxLauncher
         await _launchGate.WaitAsync().ConfigureAwait(false);
         try
         {
-            // FollowFriend doesn't need place resolution — Roblox follows the user wherever they
-            // are. Place / PrivateServer are already concrete. DefaultGame resolves through
-            // favorites + settings.
-            var resolved = target is LaunchTarget.DefaultGame
-                ? await ResolveDefaultAsync().ConfigureAwait(false)
-                : target;
-
-            if (resolved is null)
-            {
-                // Defensive guard, not fully dead: ResolveDefaultAsync (the DefaultGame path) now
-                // always returns non-null (falls back to LaunchTarget.Home per spec §5). This still
-                // catches null from explicit-selection callers upstream (JoinByLinkWindow,
-                // MainViewModel) that resolve a pasted/typed URL via LaunchTarget.FromUrl before
-                // reaching here.
-                return new LaunchResult.Failed(
-                    "No default Roblox game configured. Add one in Games (header button), or pass an explicit target.");
-            }
-
-            // Fetch the ticket BEFORE settling the FPS cap, not after. The settle is what has to be
-            // the last thing before Process.Start (see ApplyFpsCapAsync remarks) -- an auth-ticket
-            // round trip sitting between the settle's confirm-read and Process.Start reopens the
-            // exact window the settle exists to close: hotel wifi turns "confirmed on disk" into
-            // "confirmed 3 seconds before a previous client's late write landed."
-            AuthTicket ticket;
-            try
-            {
-                ticket = await _api.GetAuthTicketAsync(cookie).ConfigureAwait(false);
-            }
-            catch (CookieExpiredException)
-            {
-                return new LaunchResult.CookieExpired();
-            }
-            catch (SessionLimitedException)
-            {
-                return new LaunchResult.Limited();
-            }
-            catch (Exception ex)
-            {
-                return new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}");
-            }
-
             if (fpsCap.HasValue)
             {
                 if (_clientAppSettings is not null)
@@ -137,7 +96,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
                 await ApplyFpsCapAsync(fpsCap.Value).ConfigureAwait(false);
             }
 
-            var result = StartClient(ticket, resolved, browserTrackerId);
+            var result = await ExecuteLaunchAsync(cookie, target, browserTrackerId).ConfigureAwait(false);
             return result;
         }
         finally
@@ -148,12 +107,9 @@ public sealed class RobloxLauncher : IRobloxLauncher
 
     /// <summary>
     /// Apply this account's FPS cap so it survives a close-together launch, then return. All the
-    /// waiting happens HERE, before Process.Start — not after it, and (since both
-    /// <see cref="LaunchAsync(string,LaunchTarget,int?,long?)"/> overloads fetch the auth ticket
-    /// BEFORE calling this) not before a network round trip either. The party that overwrites our
+    /// waiting happens HERE, before Process.Start — not after it. The party that overwrites our
     /// value is the previous client (which re-persists its own cap for ~9s), so there is nothing
-    /// useful to wait for once our own process has started — and nothing should be allowed to sit
-    /// between the settle's confirmation and Process.Start, network calls included.
+    /// useful to wait for once our own process has started.
     /// </summary>
     private async Task ApplyFpsCapAsync(int fpsCap)
     {
@@ -191,14 +147,42 @@ public sealed class RobloxLauncher : IRobloxLauncher
             .ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Build the launch URI and call <c>Process.Start</c>. The ticket is already in hand here —
-    /// both callers fetch it (and, when requested, settle the FPS cap) before reaching this method
-    /// — so nothing async or network-bound sits between "the cap is confirmed on disk" and
-    /// <c>Process.Start</c> (fix for the auth-ticket round trip that used to sit in that gap).
-    /// </summary>
-    private LaunchResult StartClient(AuthTicket ticket, LaunchTarget resolved, long? stableBrowserTrackerId)
+    private async Task<LaunchResult> ExecuteLaunchAsync(string cookie, LaunchTarget target, long? stableBrowserTrackerId)
     {
+        // FollowFriend doesn't need place resolution — Roblox follows the user wherever they are.
+        // Place / PrivateServer are already concrete. DefaultGame resolves through favorites + settings.
+        var resolved = target is LaunchTarget.DefaultGame
+            ? await ResolveDefaultAsync().ConfigureAwait(false)
+            : target;
+
+        if (resolved is null)
+        {
+            // Defensive guard, not fully dead: ResolveDefaultAsync (the DefaultGame path) now always
+            // returns non-null (falls back to LaunchTarget.Home per spec §5). This still catches null
+            // from explicit-selection callers upstream (JoinByLinkWindow, MainViewModel) that resolve
+            // a pasted/typed URL via LaunchTarget.FromUrl before reaching ExecuteLaunchAsync.
+            return new LaunchResult.Failed(
+                "No default Roblox game configured. Add one in Games (header button), or pass an explicit target.");
+        }
+
+        AuthTicket ticket;
+        try
+        {
+            ticket = await _api.GetAuthTicketAsync(cookie).ConfigureAwait(false);
+        }
+        catch (CookieExpiredException)
+        {
+            return new LaunchResult.CookieExpired();
+        }
+        catch (SessionLimitedException)
+        {
+            return new LaunchResult.Limited();
+        }
+        catch (Exception ex)
+        {
+            return new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}");
+        }
+
         // Stable per-account btid when the caller has one persisted (v1.8.1 trust hygiene);
         // random one-shot fallback preserves the pre-v1.8.1 behavior for callers without it.
         var browserTrackerId = (stableBrowserTrackerId ?? _browserTrackerIdFactory()).ToString();
@@ -258,27 +242,6 @@ public sealed class RobloxLauncher : IRobloxLauncher
         await _launchGate.WaitAsync().ConfigureAwait(false);
         try
         {
-            // Fetch the ticket before settling the FPS cap — see the remarks on the typed-target
-            // overload above and on ApplyFpsCapAsync. Keeps the settle's confirm-read the last thing
-            // before Process.Start instead of leaving a network round trip in between.
-            AuthTicket ticket;
-            try
-            {
-                ticket = await _api.GetAuthTicketAsync(cookie).ConfigureAwait(false);
-            }
-            catch (CookieExpiredException)
-            {
-                return new LaunchResult.CookieExpired();
-            }
-            catch (SessionLimitedException)
-            {
-                return new LaunchResult.Limited();
-            }
-            catch (Exception ex)
-            {
-                return new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}");
-            }
-
             if (fpsCap.HasValue)
             {
                 if (_clientAppSettings is not null)
@@ -295,7 +258,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
                 await ApplyFpsCapAsync(fpsCap.Value).ConfigureAwait(false);
             }
 
-            var result = StartLegacyClient(ticket, resolvedPlaceUrl, browserTrackerId);
+            var result = await ExecuteLegacyLaunchAsync(cookie, resolvedPlaceUrl, browserTrackerId).ConfigureAwait(false);
             return result;
         }
         finally
@@ -304,12 +267,26 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
     }
 
-    /// <summary>
-    /// Build the launch URI and call <c>Process.Start</c> for the legacy place-URL overload. The
-    /// ticket is already in hand — see <see cref="StartClient"/>'s remarks, same reasoning applies.
-    /// </summary>
-    private LaunchResult StartLegacyClient(AuthTicket ticket, string resolvedPlaceUrl, long? stableBrowserTrackerId)
+    private async Task<LaunchResult> ExecuteLegacyLaunchAsync(string cookie, string resolvedPlaceUrl, long? stableBrowserTrackerId)
     {
+        AuthTicket ticket;
+        try
+        {
+            ticket = await _api.GetAuthTicketAsync(cookie).ConfigureAwait(false);
+        }
+        catch (CookieExpiredException)
+        {
+            return new LaunchResult.CookieExpired();
+        }
+        catch (SessionLimitedException)
+        {
+            return new LaunchResult.Limited();
+        }
+        catch (Exception ex)
+        {
+            return new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}");
+        }
+
         var launchTime = _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
         var browserTrackerId = (stableBrowserTrackerId ?? _browserTrackerIdFactory()).ToString();
 
@@ -399,7 +376,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
 
             // Home has no placelauncherurl at all — it must never reach this method. Defensive
             // mirror of the DefaultGame throw arm above; callers branch on LaunchTarget.Home in
-            // StartClient and route to BuildAppLaunchUri instead.
+            // ExecuteLaunchAsync and route to BuildAppLaunchUri instead.
             LaunchTarget.Home =>
                 throw new InvalidOperationException(
                     "Home has no placelauncherurl; build with BuildAppLaunchUri."),

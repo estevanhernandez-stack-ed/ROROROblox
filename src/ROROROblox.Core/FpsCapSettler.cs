@@ -136,14 +136,30 @@ public static class FpsCapSettler
             var postWriteQuiet = await WaitForQuietAsync(probe, timeProvider, overallDeadline, "post-write", logger, ct)
                 .ConfigureAwait(false);
 
-            if (postWriteQuiet && probe.ReadFramerateCap() == desiredCap)
+            if (postWriteQuiet)
             {
-                return FpsCapSettleOutcome.Settled;
-            }
+                if (probe.ReadFramerateCap() == desiredCap)
+                {
+                    return FpsCapSettleOutcome.Settled;
+                }
 
-            logger.LogWarning(
-                "FPS cap {Cap} was overwritten after the write (attempt {Attempt} of {Max}) — a client is still settling.",
-                desiredCap, attempt, MaxWriteAttempts);
+                // A GENUINE clobber: the file went quiet after our write, and the value it went
+                // quiet holding is not ours. Something else wrote in between.
+                logger.LogWarning(
+                    "FPS cap {Cap} was overwritten after the write (attempt {Attempt} of {Max}) — a client is still settling.",
+                    desiredCap, attempt, MaxWriteAttempts);
+            }
+            else
+            {
+                // NOT a confirmed clobber: the post-write wait timed out before ever observing
+                // quiet, so nothing is known about whether our write survived. Log this distinctly
+                // from the genuine-overwrite case above, or support-bundle triage chases a clobber
+                // that may not exist.
+                logger.LogWarning(
+                    "FPS cap {Cap} could not be confirmed (attempt {Attempt} of {Max}) — the post-write quiet " +
+                    "wait timed out before the file ever went quiet, so whether the write survived is unknown.",
+                    desiredCap, attempt, MaxWriteAttempts);
+            }
         }
 
         // Out of attempts, or out of budget: launch anyway. A contended settings file must never
