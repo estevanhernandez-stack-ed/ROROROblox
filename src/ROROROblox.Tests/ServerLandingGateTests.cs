@@ -112,29 +112,85 @@ public class ServerLandingGateTests
     }
 
     [Fact]
-    public void ComposeRecycleMiss_NeverLanded_SaysSoRatherThanClaimingTheWrongServer()
+    public void ComposeRecycleMiss_NeverLanded_NeverTellsThemToRecycleAgain()
     {
+        // Field-verified 2026-08-02: a full server does NOT reject — Roblox queues you ("server
+        // full, waiting in line 1 of 7") and lets you in as spots open. So "not in the game yet"
+        // routinely means "standing in line," and recycling forfeits that place. Telling the user
+        // to recycle here is advice that actively costs them the thing they are waiting for.
         var banner = ServerLandingReport.ComposeRecycleMiss("Alt3", ServerLandingOutcome.NeverLanded);
 
         Assert.Contains("Alt3", banner);
         Assert.DoesNotContain("different server", banner);
+        Assert.DoesNotContain("Recycle again", banner);
+        Assert.Contains("line", banner);   // names the queue, so "still loading" isn't the only read
     }
 
     [Fact]
-    public void ComposeSquadMiss_ReportsWhoDidNotMakeIt()
+    public void ComposeRecycleMiss_LandedElsewhere_StillOffersRecycle()
     {
-        // "We are all together" is the entire point of Squad Launch, so a partial miss is the
-        // headline, not a footnote.
-        var banner = ServerLandingReport.ComposeSquadMiss(["Alt3", "Alt5"], totalVerified: 6);
+        // In a game, wrong server: nothing is queued, nothing is lost by restarting. Recycle IS
+        // the retry here, so keep pointing at it.
+        var banner = ServerLandingReport.ComposeRecycleMiss("Alt3", ServerLandingOutcome.LandedElsewhere);
 
-        Assert.Contains("2 of 6", banner);
+        Assert.Contains("different server", banner);
+        Assert.Contains("Recycle", banner);
+    }
+
+    [Fact]
+    public void ComposeSquadMiss_AccountsStillQueuing_SendsThemToTheRobloxWindowNotToRecycle()
+    {
+        // The 2026-08-02 run: one spot free, eight accounts, seven left in Roblox's queue. The
+        // banner was right about the count and wrong about the remedy.
+        var banner = ServerLandingReport.ComposeSquadMiss(
+            landedElsewhere: [], notInYet: ["Alt2", "Alt3"], totalVerified: 8);
+
+        Assert.Contains("2 of 8", banner);
+        Assert.Contains("Alt2", banner);
+        Assert.Contains("line", banner);
+        Assert.DoesNotContain("Recycle those rows", banner);
+    }
+
+    [Fact]
+    public void ComposeSquadMiss_AccountsInADifferentServer_OffersRecycle()
+    {
+        var banner = ServerLandingReport.ComposeSquadMiss(
+            landedElsewhere: ["Alt3"], notInYet: [], totalVerified: 6);
+
+        Assert.Contains("1 of 6", banner);
         Assert.Contains("Alt3", banner);
-        Assert.Contains("Alt5", banner);
+        Assert.Contains("Recycle", banner);
+    }
+
+    [Fact]
+    public void ComposeSquadMiss_MixedOutcomes_KeepsTheTwoRemediesApart()
+    {
+        // Recycle helps one group and hurts the other — they cannot share a sentence.
+        var banner = ServerLandingReport.ComposeSquadMiss(
+            landedElsewhere: ["Alt3"], notInYet: ["Alt7"], totalVerified: 8);
+
+        Assert.Contains("Alt3", banner);
+        Assert.Contains("Alt7", banner);
+        Assert.Contains("line", banner);
+        Assert.Contains("Recycle", banner);
+    }
+
+    [Fact]
+    public void ComposeSquadMiss_LongRosters_ShowFourNamesAndCountTheRest()
+    {
+        // A banner is one line. The COUNT stays exact — truncating the names must never make a
+        // partial miss read as a smaller one.
+        var banner = ServerLandingReport.ComposeSquadMiss(
+            landedElsewhere: [], notInYet: ["A", "B", "C", "D", "E", "F", "G"], totalVerified: 8);
+
+        Assert.Contains("7 of 8", banner);
+        Assert.Contains("+3 more", banner);
+        Assert.DoesNotContain("G", banner);
     }
 
     [Fact]
     public void ComposeSquadMiss_EveryoneLanded_SaysNothing()
     {
-        Assert.Null(ServerLandingReport.ComposeSquadMiss([], totalVerified: 6));
+        Assert.Null(ServerLandingReport.ComposeSquadMiss([], [], totalVerified: 6));
     }
 }

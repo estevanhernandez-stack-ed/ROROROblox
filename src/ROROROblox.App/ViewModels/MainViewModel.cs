@@ -2050,15 +2050,22 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             (summary, outcome: await AwaitServerLandingAsync(summary, requested, launchedAtUtc).ConfigureAwait(true))))
             .ConfigureAwait(true);
 
-        var missed = outcomes
-            .Where(o => o.outcome is ServerLandingOutcome.LandedElsewhere or ServerLandingOutcome.NeverLanded)
+        // Split by outcome, not by "missed": one group should recycle and the other must not.
+        // A queued account is one spot away from where it wants to be; recycling throws that away.
+        var elsewhere = outcomes
+            .Where(o => o.outcome is ServerLandingOutcome.LandedElsewhere)
+            .Select(o => o.summary.RenderName)
+            .ToList();
+        var notInYet = outcomes
+            .Where(o => o.outcome is ServerLandingOutcome.NeverLanded)
             .Select(o => o.summary.RenderName)
             .ToList();
 
-        _log.LogInformation("Squad landing check: {Missed} of {Total} missed server {JobId}.",
-            missed.Count, dispatched.Count, requested.JobId);
+        _log.LogInformation(
+            "Squad landing check for server {JobId}: {Elsewhere} elsewhere, {NotInYet} not in yet, of {Total}.",
+            requested.JobId, elsewhere.Count, notInYet.Count, dispatched.Count);
 
-        if (ServerLandingReport.ComposeSquadMiss(missed, dispatched.Count) is { } banner)
+        if (ServerLandingReport.ComposeSquadMiss(elsewhere, notInYet, dispatched.Count) is { } banner)
         {
             StatusBanner = banner;
         }

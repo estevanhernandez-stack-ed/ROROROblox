@@ -94,27 +94,58 @@ internal static class ServerLandingGate
 /// The words a missed landing gets. Banner only — no row affordance, no automatic retry (decision,
 /// 2026-08-02): every retry is another client restart, and against a genuinely full server it is a
 /// restart that cannot succeed. Tell the user plainly and let them choose.
+/// <para>
+/// <b>The two misses take opposite advice, and this is field-verified, not reasoned.</b> Squad
+/// launch into a one-spot server, 2026-08-02: Roblox did not reject the seven that didn't fit — it
+/// queued them ("server full, waiting in line 1 of 7") and let them in as spots opened. So
+/// <see cref="ServerLandingOutcome.NeverLanded"/> usually means STANDING IN LINE, and recycling
+/// forfeits that place. <see cref="ServerLandingOutcome.LandedElsewhere"/> means in a game and in
+/// the wrong one, where a restart costs nothing. Recycle is the remedy for exactly one of these.
+/// </para>
 /// </summary>
 internal static class ServerLandingReport
 {
-    /// <summary>Recycle missed for one account. Recycle itself is the retry, so name it.</summary>
+    /// <summary>Names shown before the rest collapse into a count. A banner is one line.</summary>
+    private const int MaxNamesShown = 4;
+
+    /// <summary>Recycle missed for one account.</summary>
     public static string ComposeRecycleMiss(string accountName, ServerLandingOutcome outcome) =>
         outcome == ServerLandingOutcome.NeverLanded
-            ? $"{accountName} didn't get back into the game. Recycle again to retry."
+            ? $"{accountName} isn't in that server yet — check its Roblox window. A full server puts you in line; "
+              + "waiting or picking another server beats recycling, which gives up the spot."
             : $"{accountName} came back in a different server — Roblox moved it. Recycle again to retry.";
 
     /// <summary>
-    /// Squad Launch missed for some accounts. "We are all together" is the whole point of the
+    /// Squad Launch missed for some accounts. "We're all together" is the whole point of the
     /// feature, so a partial miss is the headline. Null when everyone made it — success is silent.
+    /// The two groups get separate sentences because they get opposite advice.
     /// </summary>
-    public static string? ComposeSquadMiss(IReadOnlyList<string> missedNames, int totalVerified)
+    public static string? ComposeSquadMiss(
+        IReadOnlyList<string> landedElsewhere, IReadOnlyList<string> notInYet, int totalVerified)
     {
-        if (missedNames.Count == 0)
+        var parts = new List<string>();
+
+        if (notInYet.Count > 0)
         {
-            return null;
+            parts.Add($"{notInYet.Count} of {totalVerified} aren't in that server yet: {Names(notInYet)}. "
+                + "Check their Roblox windows — a full server puts you in line, and recycling gives up the spot.");
         }
 
-        return $"{missedNames.Count} of {totalVerified} didn't make the squad's server: "
-            + $"{string.Join(", ", missedNames)}. Recycle those rows to retry.";
+        if (landedElsewhere.Count > 0)
+        {
+            parts.Add($"{landedElsewhere.Count} of {totalVerified} landed in a different server: "
+                + $"{Names(landedElsewhere)}. Recycle those rows to retry.");
+        }
+
+        return parts.Count == 0 ? null : string.Join(" ", parts);
     }
+
+    /// <summary>
+    /// First few names, then a count of the rest. The counts in the sentences around this stay
+    /// exact — a trimmed list must never make a partial miss read as a smaller one.
+    /// </summary>
+    private static string Names(IReadOnlyList<string> names) =>
+        names.Count <= MaxNamesShown
+            ? string.Join(", ", names)
+            : string.Join(", ", names.Take(MaxNamesShown)) + $" +{names.Count - MaxNamesShown} more";
 }

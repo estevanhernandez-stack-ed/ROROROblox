@@ -26,6 +26,29 @@
 >
 > Everything else — the `RequestGameJob` URI, the matched-pair rule, first-lands-then-rest, the
 > `Place` fallback on timeout, `PrivateServer` never being upgraded — shipped as written.
+>
+> ### Field finding, same day: a full server QUEUES you
+>
+> The body below says we had *"not characterised what Roblox does when the requested server is
+> full — it may reject, or it may silently matchmake."* Now measured, on the first real squad run:
+> **it does neither.** Eight accounts at a server with one spot — one got in, and Roblox put the
+> other seven in a visible queue (*"server full, waiting in line 1 of 7"*), admitting them as spots
+> opened. The request is honored, just later. Silent matchmaking — the outcome that would have
+> looked like success while being a failure — does not happen.
+>
+> That inverts the remedy for one of the two misses, and the first build got it wrong: the banner
+> told all seven queued accounts to *"Recycle those rows to retry,"* which would have thrown away
+> their place in line. Corrected — the two outcomes now carry opposite advice:
+>
+> | Outcome | What it means | What we say |
+> | --- | --- | --- |
+> | `LandedElsewhere` | In a game, wrong server | Recycle to retry — a restart costs nothing |
+> | `NeverLanded` | Usually standing in a queue | Check the Roblox window; wait or pick another server. **Do not recycle** |
+>
+> Also worth recording for the retry question the body defers: an automatic retry against a full
+> server would not just be useless, it would be *destructive* — it would evict the account from the
+> line it was already standing in. Auto-retry stays out of scope on stronger grounds than "needs
+> field data."
 
 **Date:** 2026-08-02
 **Status:** Approved design. Core behaviour **verified live** — see Evidence.
