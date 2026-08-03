@@ -333,12 +333,21 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// FIX 1 (final whole-branch review, 2026-08-03): <c>Server</c> is built via
     /// <see cref="RosterServer.TryFrom"/> from BOTH the account's current presence server AND its
     /// <see cref="AccountSummary.LastLaunchTarget"/> — the record of what the session was actually
-    /// launched with (private-server code and kind included). Passing the raw
+    /// launched with (private-server place id, code, and kind included). Passing the raw
     /// <see cref="ServerInstance"/> alone (the pre-fix shape) always produced a public
     /// <c>g|</c> Discord secret, even for a private-server roster: a friend clicking Join landed on
     /// a public target Roblox then bounced server-side, silently defeating the denied-entry warning
-    /// this feature exists to show. <see cref="RosterServer.TryFrom"/>'s own matched-pair guard is
-    /// what keeps a stale private code from ever being attached to the wrong place.
+    /// this feature exists to show.
+    /// </para>
+    /// <para>
+    /// Corrected in the 2026-08-03 re-review's blocking finding: <see cref="RosterServer.TryFrom"/>
+    /// no longer requires presence to agree with <c>LastLaunchTarget</c> about WHICH place the
+    /// account is in (Pet Sim 99 teleports between places inside one universe, so that agreement
+    /// never held for the audience this feature exists for). The private place id, code, and kind
+    /// travel together from <c>LastLaunchTarget</c> itself; presence supplies liveness and
+    /// clustering only. The stale-credential risk that place-matching used to (incompletely) guard
+    /// against is instead closed by <see cref="ApplyPresence"/> clearing
+    /// <see cref="AccountSummary.LastLaunchTarget"/> when the account fully leaves a game (Minor 1).
     /// </para>
     internal RosterSnapshot BuildRosterSnapshot() => new(
         AccountsSnapshot.Select(a => new RosterAccount(
@@ -2604,6 +2613,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 summary.CurrentPlaceId = null;
                 summary.CurrentServer = null;
                 summary.InGameSinceUtc = null;
+                // MINOR 1 (re-review, 2026-08-03): an account cannot join a genuinely different
+                // server — public or private — without first fully leaving whatever it was in, so
+                // presence reporting not-in-game is the deterministic point to drop a private-server
+                // LastLaunchTarget. Without this, a stale private code from an earlier launch would
+                // keep attaching itself to a later PUBLIC server of the same place (place matching
+                // alone can't catch this, and the blocking-finding fix above deliberately stopped
+                // requiring presence to agree on place at all). A within-session universe teleport
+                // never passes through this branch — CurrentServer just gets a fresh (place, job)
+                // while PresenceState stays InGame the whole time — so a genuinely continuous
+                // private-server session's credential survives exactly as intended.
+                summary.LastLaunchTarget = null;
 
                 // Presence-confirmed close: the row was active, presence now says not-in-game,
                 // and the process is also gone — both signals agree, so stamp the close. This is

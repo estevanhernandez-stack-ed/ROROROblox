@@ -3,6 +3,7 @@ using ROROROblox.App.Discord;
 using ROROROblox.App.Discord.Internal;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
+using ROROROblox.Core.Diagnostics;
 using ROROROblox.Core.Discord;
 
 namespace ROROROblox.Tests.Discord;
@@ -58,19 +59,29 @@ public class RosterSnapshotProjectionTests
 
     // ---------- FIX 1 (final whole-branch review, 2026-08-03): private-server Join carrier ----------
 
-    [Fact]
-    public async Task PrivateServerRoster_EncodesAPSecretThatRoundTripsToTheSameCodeAndKind()
+    [Theory]
+    [InlineData(PrivateServerCodeKind.AccessCode)]
+    [InlineData(PrivateServerCodeKind.LinkCode)]
+    public async Task PrivateServerInAUniverseThatTeleports_StillPublishesThePrivateSecret(PrivateServerCodeKind kind)
     {
-        // Before the fix, PresencePayloadBuilder.JoinableServer carried only the (place, job)
-        // pair -- never the private-server credential the session was actually launched with --
-        // so DiscordPresenceService.Refresh() always encoded a public g| secret, even for a
-        // private-server roster. A friend clicking Join then received a target Roblox bounced
-        // server-side, with no warning ever shown. RosterServer.TryFrom (fed by
-        // AccountSummary.LastLaunchTarget via BuildRosterSnapshot) is what lets a p| secret
-        // reach the wire at all.
+        // THE test for the re-review's blocking finding. Pet Simulator 99 teleports players
+        // between places INSIDE one universe -- entry place 8737899170, presence reports the
+        // account in 140403681187145 (measured 2026-08-02, see ServerInstance's doc comment and
+        // ServerInstanceTargetingTests' "THE test"). A private-server launch records the ENTRY
+        // place in LastLaunchTarget; presence then reports the TELEPORTED place. The pre-fix
+        // RosterServer.TryFrom compared ps.PlaceId == server.PlaceId, which is false for every
+        // Pet Sim private-server session -- the exact audience this feature exists for -- so the
+        // private code was silently dropped and Refresh() published a public g| secret instead.
+        // The old version of this test hid the bug entirely by setting CurrentServer to the SAME
+        // (entry) place as LastLaunchTarget, which never happens live.
+        //
+        // Both PrivateServerCodeKind values are exercised (Theory) because AccessCode and
+        // LinkCode are not interchangeable on the wire -- Roblox returns permission-denied when
+        // one is sent in the other's slot, so a kind lost in the carrier is a silent failure of
+        // its own, distinct from the code being lost entirely.
         var (vm, row) = DiscordTestHarness.VmWithOneInGameAccount(realName: "a", maskedName: "a");
-        row.CurrentServer = new ServerInstance(8737899170, "job-private");
-        row.LastLaunchTarget = new LaunchTarget.PrivateServer(8737899170, "SECRETCODE", PrivateServerCodeKind.AccessCode);
+        row.CurrentServer = new ServerInstance(140403681187145, "job-teleported"); // presence: teleported place
+        row.LastLaunchTarget = new LaunchTarget.PrivateServer(8737899170, "SECRETCODE", kind); // entry place
 
         var rpc = new FakeRpcClient();
         var svc = new DiscordPresenceService(rpc, vm.BuildRosterSnapshot, NullLogger.Instance);
@@ -84,7 +95,42 @@ public class RosterSnapshotProjectionTests
         Assert.True(JoinSecretCodec.TryDecode(party.JoinSecret, out var target));
         var decoded = Assert.IsType<LaunchTarget.PrivateServer>(target);
         Assert.Equal("SECRETCODE", decoded.Code);
-        Assert.Equal(PrivateServerCodeKind.AccessCode, decoded.Kind);
+        Assert.Equal(kind, decoded.Kind);
+        // The secret must carry the PRIVATE SERVER'S OWN place id (the entry place the code was
+        // actually issued for), never presence's teleported place -- joining that access code
+        // under the wrong place produces Roblox's "server became unavailable" error.
+        Assert.Equal(8737899170, decoded.PlaceId);
+        Assert.NotEqual(row.CurrentServer.PlaceId, decoded.PlaceId);
+    }
+
+    [Fact]
+    public async Task StalePrivateLaunchTarget_AfterLeavingForAPublicServer_PublishesAPublicSecret()
+    {
+        // MINOR 1 (re-review): LastLaunchTarget is written once per launch and never cleared on
+        // its own. Once the blocking fix stops requiring presence to agree on place, a private
+        // code recorded by an earlier launch must not silently keep attaching itself to whatever
+        // server the account is in NOW. The account fully leaving the game (presence: not in
+        // game) before joining a different, public server -- even one at the SAME place -- is
+        // the signal that invalidates the stale credential; ApplyPresence's not-in-game branch
+        // clears LastLaunchTarget alongside CurrentServer for exactly this reason.
+        var (vm, row) = DiscordTestHarness.VmWithOneInGameAccount(realName: "a", maskedName: "a");
+        row.CurrentServer = new ServerInstance(8737899170, "job-private");
+        row.LastLaunchTarget = new LaunchTarget.PrivateServer(8737899170, "STALECODE", PrivateServerCodeKind.AccessCode);
+
+        vm.ApplyPresence(new AccountPresenceEventArgs(
+            row.Id, UserPresenceType.Offline, null, null, DateTimeOffset.UtcNow));
+        vm.ApplyPresence(new AccountPresenceEventArgs(
+            row.Id, UserPresenceType.InGame, placeId: 8737899170, gameName: "Pet Simulator 99!",
+            occurredAtUtc: DateTimeOffset.UtcNow, server: new ServerInstance(8737899170, "job-public")));
+
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, vm.BuildRosterSnapshot, NullLogger.Instance);
+        vm.DiscordPresence = svc;
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true, JoinEnabled = true });
+
+        var party = Assert.Single(rpc.Presences).Party;
+        Assert.NotNull(party);
+        Assert.StartsWith("g|", party!.JoinSecret, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -113,9 +159,11 @@ public class RosterSnapshotProjectionTests
         // through HandleDiscordJoinAsync exactly as the in-client Join button would. This is the
         // regression guard for the whole-branch finding -- before the fix this secret decoded to
         // a LaunchTarget.GameJob, HandleDiscordJoinAsync saw no PrivateServer, and the
-        // denied-entry warning never showed.
+        // denied-entry warning never showed. Uses the real measured teleporting pair (entry vs.
+        // presence place) rather than a matching one -- see
+        // PrivateServerInAUniverseThatTeleports_StillPublishesThePrivateSecret's remarks.
         var (vm, row) = DiscordTestHarness.VmWithOneInGameAccount(realName: "a", maskedName: "a");
-        row.CurrentServer = new ServerInstance(8737899170, "job-private");
+        row.CurrentServer = new ServerInstance(140403681187145, "job-teleported");
         row.LastLaunchTarget = new LaunchTarget.PrivateServer(8737899170, "CODE", PrivateServerCodeKind.LinkCode);
 
         var rpc = new FakeRpcClient();

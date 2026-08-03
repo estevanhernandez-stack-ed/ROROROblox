@@ -42,8 +42,9 @@ public static class PresencePayloadBuilder
         // The cluster's private/public nature is decided from the SAME accounts the cluster is
         // built from, not an unrelated row: every member shares the same (place, job) pair by
         // construction (grouped by JobId), but only the member(s) whose LastLaunchTarget was
-        // actually a matching PrivateServer carry the code — others in the same physical server may
-        // have arrived via Follow, a plain GameJob, or a since-stale LastLaunchTarget. Preferring a
+        // actually a PrivateServer carry the code — others in the same physical server may have
+        // arrived via Follow, a plain GameJob, or a since-cleared LastLaunchTarget (MainViewModel
+        // clears it once an account fully leaves a game — see RosterServer's remarks). Preferring a
         // member that carries the code (when one exists) keeps a private session correctly
         // identified even when .First() would otherwise land on a member that never recorded one.
         var joinableRepresentative = biggestCluster?.FirstOrDefault(a => a.Server?.PrivateServerCode is not null)

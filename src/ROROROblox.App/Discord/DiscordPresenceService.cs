@@ -159,14 +159,18 @@ internal sealed class DiscordPresenceService : IDisposable
             DiscordPresenceParty? party = null;
             if (_config.JoinEnabled && fields.JoinableServer is { } server)
             {
-                // FIX 1 (final whole-branch review, 2026-08-03): encode a p| secret carrying the
-                // real private-server code + kind when the joinable cluster's session was actually
-                // launched into one — see RosterServer's remarks. Encoding a bare GameJob for a
-                // private session (the pre-fix behavior) always published a Join button Roblox
-                // would bounce server-side, defeating the denied-entry warning entirely.
+                // FIX 1 (final whole-branch review, 2026-08-03; corrected in the 2026-08-03
+                // re-review's blocking finding): encode a p| secret carrying the real
+                // private-server PLACE id + code + kind when the joinable cluster's session was
+                // actually launched into one — see RosterServer's remarks. The place id comes from
+                // RosterServer.PrivateServerPlaceId (the private target's own place), never from
+                // server.Server.PlaceId (presence's CURRENT place) — a teleporting universe (Pet
+                // Sim 99) makes those two differ for every private-server session, and pairing the
+                // code with presence's place produced a Join Roblox would bounce server-side with
+                // "server became unavailable," defeating the denied-entry warning entirely.
                 LaunchTarget launchTarget = server.PrivateServerCode is not null
                     ? new LaunchTarget.PrivateServer(
-                        server.Server.PlaceId, server.PrivateServerCode, server.PrivateServerCodeKind!.Value)
+                        server.PrivateServerPlaceId!.Value, server.PrivateServerCode, server.PrivateServerCodeKind!.Value)
                     : new LaunchTarget.GameJob(server.Server.PlaceId, server.Server.JobId);
 
                 var secret = JoinSecretCodec.Encode(launchTarget);
