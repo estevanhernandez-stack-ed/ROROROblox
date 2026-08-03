@@ -15,7 +15,7 @@ public sealed class FpsCapSettlerTests
 
     /// <summary>
     /// Generous pump budget for tests that let the slow path run to completion. SettleTimeout
-    /// (20s) is the real ceiling on any single settle call regardless of how many quiet-waits or
+    /// (45s) is the real ceiling on any single settle call regardless of how many quiet-waits or
     /// retries it takes internally, so advancing a little past it is always enough headroom and
     /// never needs re-deriving per test.
     /// </summary>
@@ -268,12 +268,12 @@ public sealed class FpsCapSettlerTests
     /// the settler must not write the next account's cap before that write is observed, no matter
     /// how long the file has otherwise looked "quiet" against the launch baseline.
     /// <para>
-    /// Proven by mutation (see the fix report at
-    /// <c>.superpowers/sdd/proof-of-read/report.md</c>): hardcoding <c>writeObserved = true</c> in
-    /// <c>FpsCapSettler.WaitForQuietAsync</c> (i.e. deleting the proof-of-read gate) turns this test
-    /// red -- the write lands during the "must not write yet" window below. Restoring the gate turns
-    /// it green. A call-count fake (like <see cref="FakeProbe"/>) cannot express this at all, which
-    /// is exactly why the original gap shipped four reviews deep without being caught.
+    /// Proven by mutation: deleting the <c>writeObserved &amp;&amp;</c> conjunct in
+    /// <c>FpsCapSettler</c>'s pre-write wait (i.e. deleting the proof-of-read gate) turns this test
+    /// red -- the write then lands inside the window this test asserts must stay empty. Restoring
+    /// the conjunct turns it green. A call-count fake (like <see cref="FakeProbe"/>) cannot express
+    /// this at all, which is exactly why the original gap shipped four reviews deep without being
+    /// caught.
     /// </para>
     /// </summary>
     [Fact]

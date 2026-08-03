@@ -14,11 +14,14 @@ public static class MultiInstanceCopy
     /// <summary>
     /// Shown when the accounts on screen do not all share one FPS cap. Roblox keeps a single
     /// settings file per install, so a differing cap forces RoRoRo to wait for each client to
-    /// finish loading before starting the next. Quotes 15 seconds deliberately: the measured
-    /// settle is 9-12 s plus the confirm window, and a user told 10 who waits 14 assumes a hang.
+    /// finish loading before starting the next. Quotes 20 seconds deliberately: the proof-of-read
+    /// wait (2026-08-02) means a contended attempt can now run 15-20 s, plus MainViewModel's 5 s
+    /// InterLaunchThrottle between hops — promising 20 and delivering sooner is the right
+    /// direction to be wrong in, same rationale as the original 15 s figure, updated for the new
+    /// ceiling.
     /// </summary>
     public const string FpsCapMismatchBanner =
         "Different FPS caps will slow your launches. Roblox keeps one shared settings file for "
         + "every client, so RoRoRo waits for each account to finish loading before starting the "
-        + "next — about 15 seconds each. Set every account to the same cap to launch at full speed.";
+        + "next — up to about 20 seconds each. Set every account to the same cap to launch at full speed.";
 }

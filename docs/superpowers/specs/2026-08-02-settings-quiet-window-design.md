@@ -34,6 +34,12 @@
 > The rest of this document — the bug narrative, the fast-path rationale, the pid-gate postmortem,
 > the logging plan — is unchanged and still accurate. Only §Sequence step 3c and the
 > `WriteConfirmWindow` row + worst-case line in §Constants describe the superseded design.
+>
+> **Update (2325a05):** the 20 s figure above is stale. Shipping the corrected sequence's step 1
+> (below) ahead of this second quiet-wait raised the real worst-case bound to `SettleTimeout` =
+> 45 s (`FpsCapSettler.cs`) — the proof-of-read wait and the post-write quiet-wait both now stack
+> inside one settle call. The 18 s this doc originally claimed was already superseded by the 20 s
+> figure above; both are superseded again by 45 s.
 
 **Date:** 2026-08-02
 **Status:** Approved design.
@@ -70,7 +76,9 @@
 >
 > **Corrected sequence** (steps 2–5 already exist and are measured working):
 >
-> 1. **Wait for at least one write by the launched client** — proves it has read. *(missing)*
+> 1. **Wait for at least one write by the launched client** — proves it has read.
+>    *(shipped in `2325a05` — the proof-of-read gate, `FpsCapSettler`'s `requireWriteSince`
+>    param + `writeObserved` conjunct.)*
 > 2. Then wait for quiet — proves its write-back storm has finished.
 > 3. Write the next account's cap.
 > 4. Wait for quiet again, re-read to confirm it survived, retry on clobber.
