@@ -42,7 +42,7 @@ public static class JoinSecretCodec
 
         switch (parts[0])
         {
-            case "g" when !string.IsNullOrWhiteSpace(parts[2]):
+            case "g" when parts.Length == 3 && !string.IsNullOrWhiteSpace(parts[2]):
                 target = new LaunchTarget.GameJob(placeId, parts[2]);
                 return true;
             case "p" when parts.Length == 4 && !string.IsNullOrWhiteSpace(parts[3]):

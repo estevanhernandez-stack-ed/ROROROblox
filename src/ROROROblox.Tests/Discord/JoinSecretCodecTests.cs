@@ -64,4 +64,22 @@ public class JoinSecretCodecTests
     {
         Assert.False(JoinSecretCodec.TryDecode(input, out _));
     }
+
+    [Fact]
+    public void TryDecode_GameJobPayloadContainingTheDelimiter_FailsClosedRatherThanTruncating()
+    {
+        // If a JobId ever contained the pipe delimiter, the codec must fail closed rather than
+        // return a silently-truncated server address. A decode that cannot be trusted must report
+        // failure, not a corrupted result.
+        Assert.False(JoinSecretCodec.TryDecode("g|140403681187145|job|with|pipes", out _));
+    }
+
+    [Fact]
+    public void TryDecode_PrivateServerPayloadContainingTheDelimiter_FailsClosedRatherThanTruncating()
+    {
+        // Same closure: a private-server code containing pipes must fail closed, not truncate.
+        // (The current implementation already requires parts.Length == 4, so this passes, but
+        // the test documents the expected behavior for consistency.)
+        Assert.False(JoinSecretCodec.TryDecode("p|8737899170|l|SHARE|TOKEN", out _));
+    }
 }
