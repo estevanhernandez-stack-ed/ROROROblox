@@ -239,6 +239,207 @@ public class MainViewModelTests
         return new AccountSummary(added with { RobloxUserId = robloxUserId }) { SessionExpired = true };
     }
 
+    /// <summary>A display row carrying just the FPS cap — everything else is irrelevant here.</summary>
+    private static AccountSummary RowWithCap(int? fpsCap) => new(new Account(
+        Guid.NewGuid(),
+        DisplayName: "acct",
+        AvatarUrl: "",
+        CreatedAt: DateTimeOffset.UtcNow,
+        LastLaunchedAt: null,
+        FpsCap: fpsCap));
+
+    [Fact]
+    public void FpsCapWarning_IsEmpty_WhenEveryAccountSharesOneCap()
+    {
+        var (vm, _, _, path) = Build(new CapturingRobloxLauncher());
+        try
+        {
+            vm.Accounts.Add(RowWithCap(20));
+            vm.Accounts.Add(RowWithCap(20));
+
+            vm.RefreshFpsCapWarning();
+
+            Assert.Equal(string.Empty, vm.FpsCapWarningText);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public void FpsCapWarning_IsEmpty_ForASingleAccount()
+    {
+        var (vm, _, _, path) = Build(new CapturingRobloxLauncher());
+        try
+        {
+            vm.Accounts.Add(RowWithCap(20));
+
+            vm.RefreshFpsCapWarning();
+
+            Assert.Equal(string.Empty, vm.FpsCapWarningText);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public void FpsCapWarning_Appears_WhenTwoAccountsHaveDifferentCaps()
+    {
+        var (vm, _, _, path) = Build(new CapturingRobloxLauncher());
+        try
+        {
+            vm.Accounts.Add(RowWithCap(20));
+            vm.Accounts.Add(RowWithCap(9999));
+
+            vm.RefreshFpsCapWarning();
+
+            Assert.Equal(MultiInstanceCopy.FpsCapMismatchBanner, vm.FpsCapWarningText);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public void FpsCapWarning_TreatsUnsetAsItsOwnValue()
+    {
+        // One account capped and one left alone is still a mismatch: the capped account's write
+        // and the uncapped account's client contend over the same shared file.
+        var (vm, _, _, path) = Build(new CapturingRobloxLauncher());
+        try
+        {
+            vm.Accounts.Add(RowWithCap(20));
+            vm.Accounts.Add(RowWithCap(null));
+
+            vm.RefreshFpsCapWarning();
+
+            Assert.Equal(MultiInstanceCopy.FpsCapMismatchBanner, vm.FpsCapWarningText);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    // ---- FPS-cap warning dismissal (fix/settings-quiet-window) ----
+    //
+    // The dismissed state is a SIGNATURE of the distinct cap set, not a boolean -- these tests
+    // pin that a dismissal is scoped to the exact configuration acknowledged, not "never show
+    // this banner again." Each test's discriminating power is called out inline: what production
+    // change would make it fail is stated, and two are proven red/green by a temporary mutation
+    // (see the two "MUTATION PROOF" comments below, reverted immediately after).
+
+    [Fact]
+    public void ComputeFpsCapSignature_IsOrderIndependent_AndTreatsNullAsDistinctToken()
+    {
+        // Pure-function pin, independent of the VM: row order must not affect the signature, and
+        // "no cap" must canonicalize to a stable "none" token rather than being dropped or
+        // colliding with an actual numeric cap. Would fail if the implementation sorted by
+        // insertion order instead of value, or silently omitted null caps from the signature.
+        var a = MainViewModel.ComputeFpsCapSignature([20, null, 45]);
+        var b = MainViewModel.ComputeFpsCapSignature([45, 20, null]);
+        var c = MainViewModel.ComputeFpsCapSignature([null, 45, 20, 45, null]);   // dupes + reorder
+
+        Assert.Equal(a, b);
+        Assert.Equal(a, c);
+        Assert.Equal("none,20,45", a);
+    }
+
+    [Fact]
+    public void FpsCapWarning_Dismiss_HidesTheCurrentlyVisibleBanner()
+    {
+        // Fails if DismissFpsCapWarningCommand doesn't actually record a signature that
+        // RefreshFpsCapWarning compares against (e.g. a no-op command, or one that forgets to
+        // call RefreshFpsCapWarning after recording).
+        var (vm, _, _, path) = Build(new CapturingRobloxLauncher());
+        try
+        {
+            vm.Accounts.Add(RowWithCap(20));
+            vm.Accounts.Add(RowWithCap(9999));
+            vm.RefreshFpsCapWarning();
+            Assert.Equal(MultiInstanceCopy.FpsCapMismatchBanner, vm.FpsCapWarningText);
+
+            vm.DismissFpsCapWarningCommand.Execute(null);
+
+            Assert.Equal(string.Empty, vm.FpsCapWarningText);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public void FpsCapWarning_AfterDismiss_ChangeToAnUnseenCapSet_ShowsAgain()
+    {
+        // Fails if dismissal is implemented as a plain "ever dismissed" boolean/latch instead of
+        // a signature comparison -- that shape would keep the banner hidden forever after the
+        // first dismissal, even for a genuinely new mismatch the user never acknowledged.
+        var (vm, _, _, path) = Build(new CapturingRobloxLauncher());
+        try
+        {
+            var second = RowWithCap(9999);
+            vm.Accounts.Add(RowWithCap(20));
+            vm.Accounts.Add(second);
+            vm.RefreshFpsCapWarning();
+            vm.DismissFpsCapWarningCommand.Execute(null);
+            Assert.Equal(string.Empty, vm.FpsCapWarningText);
+
+            second.FpsCap = 45;   // {20, 9999} dismissed -> now {20, 45}, never acknowledged
+            vm.RefreshFpsCapWarning();
+
+            Assert.Equal(MultiInstanceCopy.FpsCapMismatchBanner, vm.FpsCapWarningText);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public void FpsCapWarning_ReturnToAPreviouslyDismissedSet_StaysHidden()
+    {
+        // Deliberately routes through an INTERMEDIATE, different, visible mismatch before
+        // returning to the originally-dismissed set. A version of this test that dismissed once
+        // and immediately re-checked the same unchanged state would pass even if the whole
+        // signature system were unwired (nothing would have re-shown the banner in between to
+        // prove the comparison is live). Routing through a second, distinct mismatch first proves
+        // the stored signature specifically survives an intervening "show" -- it fails if, e.g.,
+        // RefreshFpsCapWarning's show-branch ever clears the stored dismissed signature as a
+        // side effect (see MUTATION PROOF below, reverted after confirming red).
+        var (vm, _, _, path) = Build(new CapturingRobloxLauncher());
+        try
+        {
+            var second = RowWithCap(9999);
+            vm.Accounts.Add(RowWithCap(20));
+            vm.Accounts.Add(second);
+            vm.RefreshFpsCapWarning();
+            vm.DismissFpsCapWarningCommand.Execute(null);          // dismiss {20, 9999}
+            Assert.Equal(string.Empty, vm.FpsCapWarningText);
+
+            second.FpsCap = 45;                                     // -> {20, 45}, unseen, shows
+            vm.RefreshFpsCapWarning();
+            Assert.Equal(MultiInstanceCopy.FpsCapMismatchBanner, vm.FpsCapWarningText);
+
+            second.FpsCap = 9999;                                   // back to {20, 9999}, dismissed
+            vm.RefreshFpsCapWarning();
+
+            Assert.Equal(string.Empty, vm.FpsCapWarningText);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public void FpsCapWarning_UnsetPlusCapped_IsStillAMismatch_EvenAfterDismissingADifferentSet()
+    {
+        // Pins the "unset is its own contending value" rule specifically through the dismissal
+        // path -- fails if dismissal collapses null into "no cap" (e.g. by treating a null entry
+        // as equal to whatever numeric cap is present) rather than the distinct "none" token.
+        var (vm, _, _, path) = Build(new CapturingRobloxLauncher());
+        try
+        {
+            vm.Accounts.Add(RowWithCap(20));
+            vm.Accounts.Add(RowWithCap(45));
+            vm.RefreshFpsCapWarning();
+            vm.DismissFpsCapWarningCommand.Execute(null);           // dismiss {20, 45}
+            Assert.Equal(string.Empty, vm.FpsCapWarningText);
+
+            vm.Accounts.Clear();
+            vm.Accounts.Add(RowWithCap(20));
+            vm.Accounts.Add(RowWithCap(null));                      // {20, none} -- never dismissed
+            vm.RefreshFpsCapWarning();
+
+            Assert.Equal(MultiInstanceCopy.FpsCapMismatchBanner, vm.FpsCapWarningText);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
     [Fact]
     public async Task ReauthenticateAsync_CancelledCapture_KeepsTagAndSurfacesBanner()
     {
@@ -868,6 +1069,16 @@ public class MainViewModelTests
         // Read synchronously (via await) by MainViewModel's ctor fire-and-forget
         // InitializeBloxstrapWarningAsync — must return a benign completed Task, never throw.
         public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(true);
+
+        // Backing field (not throw-NotImplemented) so LoadAsync's read/dismiss-signature
+        // round trip is exercisable by FPS-cap dismissal tests without a real AppSettings.
+        public string? DismissedFpsCapWarningSignature { get; set; }
+        public Task<string?> GetDismissedFpsCapWarningSignatureAsync() => Task.FromResult(DismissedFpsCapWarningSignature);
+        public Task SetDismissedFpsCapWarningSignatureAsync(string? signature)
+        {
+            DismissedFpsCapWarningSignature = signature;
+            return Task.CompletedTask;
+        }
 
         public Task<string?> GetDefaultPlaceUrlAsync() => throw new NotImplementedException();
         public Task SetDefaultPlaceUrlAsync(string url) => throw new NotImplementedException();

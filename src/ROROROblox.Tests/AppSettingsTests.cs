@@ -181,6 +181,59 @@ public class AppSettingsTests : IDisposable
     }
 
     [Fact]
+    public async Task DismissedFpsCapWarningSignature_DefaultsNull_ThenRoundTripsAcrossInstances()
+    {
+        {
+            using var first = new AppSettings(_filePath);
+            Assert.Null(await first.GetDismissedFpsCapWarningSignatureAsync());
+
+            await first.SetDismissedFpsCapWarningSignatureAsync("none,20,45");
+            Assert.Equal("none,20,45", await first.GetDismissedFpsCapWarningSignatureAsync());
+        }
+
+        using var second = new AppSettings(_filePath);
+        Assert.Equal("none,20,45", await second.GetDismissedFpsCapWarningSignatureAsync());
+    }
+
+    [Fact]
+    public async Task DismissedFpsCapWarningSignature_CanBeClearedBackToNull()
+    {
+        using var settings = new AppSettings(_filePath);
+
+        await settings.SetDismissedFpsCapWarningSignatureAsync("20,45");
+        Assert.Equal("20,45", await settings.GetDismissedFpsCapWarningSignatureAsync());
+
+        await settings.SetDismissedFpsCapWarningSignatureAsync(null);
+        Assert.Null(await settings.GetDismissedFpsCapWarningSignatureAsync());
+    }
+
+    /// <summary>
+    /// A v1-shaped settings file written before this field existed -- no
+    /// dismissedFpsCapWarningSignature property at all, not even null -- must still load cleanly
+    /// with the field defaulting to null, exactly like every other field added to SettingsBlob
+    /// after v1. Proves the back-compat comment on SettingsBlob is actually true, not just
+    /// asserted.
+    /// </summary>
+    [Fact]
+    public async Task OlderSettingsFile_MissingDismissedFpsCapWarningSignature_LoadsWithNullDefault()
+    {
+        File.WriteAllText(_filePath, """
+            {
+              "version": 1,
+              "defaultPlaceUrl": "https://www.roblox.com/games/920587237/Adopt-Me",
+              "bloxstrapWarningDismissed": true
+            }
+            """);
+
+        using var settings = new AppSettings(_filePath);
+
+        Assert.Null(await settings.GetDismissedFpsCapWarningSignatureAsync());
+        // And the older fields the file DID carry still load correctly alongside the new default.
+        Assert.Equal("https://www.roblox.com/games/920587237/Adopt-Me", await settings.GetDefaultPlaceUrlAsync());
+        Assert.True(await settings.GetBloxstrapWarningDismissedAsync());
+    }
+
+    [Fact]
     public async Task MuteIdleAlerts_DefaultsFalse_RoundTrips()
     {
         using var settings = new AppSettings(_filePath);

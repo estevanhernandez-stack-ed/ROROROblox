@@ -34,6 +34,17 @@ public interface IAppSettings
     Task SetBloxstrapWarningDismissedAsync(bool value);
 
     /// <summary>
+    /// The canonical signature (see <c>MainViewModel.ComputeFpsCapSignature</c>) of the distinct
+    /// FPS-cap set that was in effect the last time the user dismissed the FPS-cap mismatch
+    /// banner. <c>null</c> means nothing has ever been dismissed. Persisted so the banner does
+    /// not re-render on every launch for a mismatch the user already acknowledged, but DOES
+    /// re-render if the set of distinct caps later changes to something not covered by this
+    /// signature — dismissal is scoped to the configuration, not "forever."
+    /// </summary>
+    Task<string?> GetDismissedFpsCapWarningSignatureAsync();
+    Task SetDismissedFpsCapWarningSignatureAsync(string? signature);
+
+    /// <summary>
     /// True when the idle-alert toast should stay silent. Defaults to false (alerts on).
     /// The user opts out via the Preferences dialog.
     /// </summary>

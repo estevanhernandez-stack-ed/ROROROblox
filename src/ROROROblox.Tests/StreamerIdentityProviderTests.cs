@@ -169,6 +169,8 @@ public class StreamerIdentityProviderTests
         public Task SetActiveThemeIdAsync(string t) => throw new NotImplementedException();
         public Task<bool> GetBloxstrapWarningDismissedAsync() => throw new NotImplementedException();
         public Task SetBloxstrapWarningDismissedAsync(bool v) => throw new NotImplementedException();
+        public Task<string?> GetDismissedFpsCapWarningSignatureAsync() => throw new NotImplementedException();
+        public Task SetDismissedFpsCapWarningSignatureAsync(string? s) => throw new NotImplementedException();
         public Task<bool> GetMuteIdleAlertsAsync() => throw new NotImplementedException();
         public Task SetMuteIdleAlertsAsync(bool m) => throw new NotImplementedException();
         public Task<int> GetIdleWarnThresholdMinutesAsync() => throw new NotImplementedException();

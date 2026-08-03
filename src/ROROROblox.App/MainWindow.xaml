@@ -1400,6 +1400,7 @@
                                 <Condition Binding="{Binding StatusBanner}" Value="" />
                                 <Condition Binding="{Binding IdleSummaryText}" Value="" />
                                 <Condition Binding="{Binding ContestedBannerText}" Value="" />
+                                <Condition Binding="{Binding FpsCapWarningText}" Value="" />
                             </MultiDataTrigger.Conditions>
                             <Setter Property="Visibility" Value="Collapsed" />
                         </MultiDataTrigger>
@@ -1434,6 +1435,32 @@
                                 Background="#22314A" Foreground="#FFFFFF" BorderThickness="0" FontSize="11" />
                     </StackPanel>
                 </StackPanel>
+                <!-- FPS-cap mismatch (2026-08-02). Roblox keeps one shared settings file per
+                     install, so differing per-account caps force a settle window between
+                     launches. Display only — it never blocks launching. Dismissible per
+                     distinct-cap-set signature (see MainViewModel.RefreshFpsCapWarning) — sticks
+                     until the set of distinct caps actually changes, so acknowledging today's
+                     mismatch doesn't silence a genuinely new one later. DockPanel (not a Grid
+                     row) so the button docks right while the text keeps wrapping in the
+                     remaining width — same shape as the Bloxstrap banner below, just quieter. -->
+                <DockPanel Margin="0,4,0,0"
+                           Visibility="{Binding FpsCapWarningText, Converter={StaticResource StringToVisibilityConverter}}">
+                    <Button DockPanel.Dock="Right"
+                            Content="Dismiss"
+                            Command="{Binding DismissFpsCapWarningCommand}"
+                            Margin="8,0,0,0"
+                            Padding="0"
+                            FontSize="11"
+                            VerticalAlignment="Top"
+                            Foreground="{DynamicResource CyanBrush}"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand" />
+                    <TextBlock Text="{Binding FpsCapWarningText}"
+                               FontSize="11"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource MutedTextBrush}" />
+                </DockPanel>
             </StackPanel>
         </Border>
 
