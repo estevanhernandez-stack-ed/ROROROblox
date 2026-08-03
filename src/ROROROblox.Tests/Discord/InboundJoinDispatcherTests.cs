@@ -19,6 +19,7 @@ public class InboundJoinDispatcherTests
         var dispatcher = new InboundJoinDispatcher(
             joinEnabled: () => false,
             viewModel: vm,
+            origin: JoinOrigin.UriHandler,
             confirm: _ => true,
             log: NullLogger.Instance);
 
@@ -34,6 +35,7 @@ public class InboundJoinDispatcherTests
         var dispatcher = new InboundJoinDispatcher(
             joinEnabled: () => true,
             viewModel: vm,
+            origin: JoinOrigin.DiscordClient,
             confirm: _ => true,
             log: NullLogger.Instance);
 
@@ -53,6 +55,7 @@ public class InboundJoinDispatcherTests
         var dispatcher = new InboundJoinDispatcher(
             joinEnabled: () => false,
             viewModel: vm,
+            origin: JoinOrigin.DiscordClient,
             confirm: _ => { confirmCalled = true; return true; },
             log: NullLogger.Instance);
 
@@ -60,6 +63,28 @@ public class InboundJoinDispatcherTests
 
         Assert.False(confirmCalled);
         Assert.Empty(launcher.Launches);
+    }
+
+    // Fix round 2: proves origin actually threads through the dispatcher into
+    // HandleDiscordJoinAsync end to end -- App.xaml.cs builds one dispatcher per origin now (not
+    // one shared instance), and this is the seam that would silently break if a future edit
+    // collapsed them back into one without also threading the origin argument.
+    [Fact]
+    public async Task HandleAsync_UriHandlerOrigin_PublicTarget_ConfirmsThroughTheFullChain()
+    {
+        var (vm, launcher) = DiscordTestHarness.VmWithOneIdleAccount();
+        var confirmCalled = false;
+        var dispatcher = new InboundJoinDispatcher(
+            joinEnabled: () => true,
+            viewModel: vm,
+            origin: JoinOrigin.UriHandler,
+            confirm: _ => { confirmCalled = true; return true; },
+            log: NullLogger.Instance);
+
+        await dispatcher.HandleAsync(new LaunchTarget.GameJob(140403681187145, "job-a"));
+
+        Assert.True(confirmCalled);
+        Assert.Single(launcher.Launches);
     }
 
     [Fact]
@@ -72,6 +97,7 @@ public class InboundJoinDispatcherTests
         var dispatcher = new InboundJoinDispatcher(
             joinEnabled: () => true,
             viewModel: vm,
+            origin: JoinOrigin.DiscordClient,
             confirm: _ => throw new InvalidOperationException("confirm should not be reached for a public target"),
             log: NullLogger.Instance);
 

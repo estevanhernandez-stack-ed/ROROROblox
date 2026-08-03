@@ -3,15 +3,30 @@ using System.Windows;
 namespace ROROROblox.App.Modals;
 
 /// <summary>
-/// Private-server join warning (Task 8, v1.9 Discord presence). Shown before a Discord Join
-/// dispatches into a <c>LaunchTarget.PrivateServer</c> — Roblox checks server-side permission,
-/// so a clan member not on that server's list gets bounced after the client launches, and this
-/// says so up front. <see cref="MainViewModel"/>'s <c>HandleDiscordJoinAsync</c> takes the
-/// decision as an injected <c>Func&lt;string, bool&gt;</c> so it's testable without a window —
-/// <see cref="Confirm"/> is the one production implementation of that delegate, wired by whichever
-/// inbound-join subscriber shows it (in-client Join button, or the <c>roblox-rororo:</c> URI
-/// relay). Not a destructive confirm — nothing is lost by trying — so "Try anyway" is the
-/// IsDefault button, unlike <see cref="StopAllConfirmWindow"/>'s cancel-defaults-to-safe pattern.
+/// Confirm-before-join modal (Task 8, v1.9 Discord presence). Shown by
+/// <c>MainViewModel.HandleDiscordJoinAsync</c> before a Discord join dispatches, for either of two
+/// DIFFERENT reasons that carry DIFFERENT copy in <c>BodyText</c> (see that method's remarks for
+/// the full decision table, added Fix round 2):
+/// <list type="bullet">
+///   <item>Target is a <c>LaunchTarget.PrivateServer</c> — Roblox checks permission server-side, so
+///   a clan member not on that server's list gets bounced after the client launches, and this
+///   says so up front. Applies regardless of where the join request came from.</item>
+///   <item>The join arrived via the <c>roblox-rororo:</c> URI handler (<c>JoinOrigin.UriHandler</c>)
+///   — even for a public server. Nothing about the URI proves Discord sent it (any local process,
+///   <c>.url</c> file, or browser navigation can trigger it), so this confirms on origin, not
+///   destination risk, and names the account about to launch instead of warning about entry.</item>
+/// </list>
+/// When BOTH apply (a private-server target reached via the URI handler), exactly one prompt shows
+/// — the private-server one, since <c>HandleDiscordJoinAsync</c> checks that condition first and it
+/// already carries the stronger warning.
+/// <para>
+/// <c>HandleDiscordJoinAsync</c> takes the decision as an injected <c>Func&lt;string, bool&gt;</c>
+/// so it's testable without a window — <see cref="Confirm"/> is the one production implementation
+/// of that delegate, wired by whichever inbound-join subscriber shows it (in-client Join button, or
+/// the <c>roblox-rororo:</c> URI relay). Not a destructive confirm — nothing is lost by trying — so
+/// "Try anyway" is the IsDefault button, unlike <see cref="StopAllConfirmWindow"/>'s
+/// cancel-defaults-to-safe pattern.
+/// </para>
 /// </summary>
 internal partial class JoinRequestWindow : Window
 {
@@ -24,7 +39,7 @@ internal partial class JoinRequestWindow : Window
     }
 
     /// <summary>
-    /// Shows the warning modally and returns whether the user chose to proceed. Takes an
+    /// Shows the confirm modal and returns whether the user chose to proceed. Takes an
     /// <paramref name="owner"/> param, so it isn't itself a <c>Func&lt;string, bool&gt;</c> —
     /// wrap it in a lambda closing over the owner window to match what
     /// <c>HandleDiscordJoinAsync</c> expects: <c>msg =&gt; JoinRequestWindow.Confirm(owner, msg)</c>.
@@ -39,7 +54,7 @@ internal partial class JoinRequestWindow : Window
     /// chain that marshals — so a subscriber wiring this delegate for THAT path must wrap the call
     /// in <c>Application.Current.Dispatcher.Invoke</c> (or post via <c>InvokeAsync</c>) before
     /// reaching <c>HandleDiscordJoinAsync</c>, which is what ultimately calls back into this
-    /// method for a private-server target.
+    /// method — for either reason above, not just a private-server target.
     /// </para>
     /// </summary>
     public static bool Confirm(Window? owner, string message)

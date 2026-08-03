@@ -21,29 +21,37 @@ namespace ROROROblox.App.Discord;
 /// over an already-running session — whether or not the user ever turned Join on.
 /// </para>
 /// <para>
-/// Both inbound-join call sites in <c>App.xaml.cs</c> route through this one class, so the gate
-/// applies uniformly: <c>App.JoinRequested</c> (the URI relay/cold-start path, already UI-thread
-/// marshalled — see that event's remarks) calls <see cref="HandleAsync"/> directly; the in-client
-/// Join button (<see cref="DiscordPresenceService.JoinRequested"/>, Lachee's background RPC thread)
-/// is still hopped onto the UI thread by the caller BEFORE reaching <see cref="HandleAsync"/> — this
-/// class does no thread marshalling of its own.
+/// Both inbound-join call sites in <c>App.xaml.cs</c> route through this class — one instance PER
+/// origin, since <see cref="JoinOrigin"/> is fixed per call site and, as of Fix round 2, changes
+/// what <see cref="MainViewModel.HandleDiscordJoinAsync"/> does (see its remarks): a
+/// <see cref="JoinOrigin.UriHandler"/> join always confirms, even for a public server, because
+/// nothing about the <c>roblox-rororo:</c> URI proves who sent it; a <see cref="JoinOrigin.DiscordClient"/>
+/// join only confirms for a private server, same as before round 2. <c>App.JoinRequested</c> (the URI
+/// relay/cold-start path, already UI-thread marshalled — see that event's remarks) calls
+/// <see cref="HandleAsync"/> directly; the in-client Join button
+/// (<see cref="DiscordPresenceService.JoinRequested"/>, Lachee's background RPC thread) is still
+/// hopped onto the UI thread by the caller BEFORE reaching <see cref="HandleAsync"/> — this class
+/// does no thread marshalling of its own.
 /// </para>
 /// </summary>
 internal sealed class InboundJoinDispatcher
 {
     private readonly Func<bool> _joinEnabled;
     private readonly MainViewModel _viewModel;
+    private readonly JoinOrigin _origin;
     private readonly Func<string, bool> _confirm;
     private readonly ILogger? _log;
 
     public InboundJoinDispatcher(
         Func<bool> joinEnabled,
         MainViewModel viewModel,
+        JoinOrigin origin,
         Func<string, bool> confirm,
         ILogger? log = null)
     {
         _joinEnabled = joinEnabled ?? throw new ArgumentNullException(nameof(joinEnabled));
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        _origin = origin;
         _confirm = confirm ?? throw new ArgumentNullException(nameof(confirm));
         _log = log;
     }
@@ -68,7 +76,7 @@ internal sealed class InboundJoinDispatcher
 
         try
         {
-            await _viewModel.HandleDiscordJoinAsync(target, _confirm).ConfigureAwait(true);
+            await _viewModel.HandleDiscordJoinAsync(target, _origin, _confirm).ConfigureAwait(true);
         }
         catch (Exception ex)
         {

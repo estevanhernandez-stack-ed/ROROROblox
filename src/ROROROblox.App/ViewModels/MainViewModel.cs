@@ -1195,40 +1195,56 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal IPrivateServerStore PrivateServerStoreForPlugin => _privateServerStore;
 
     /// <summary>
-    /// A clan member clicked Join in Discord. Private servers get a warning first: Roblox checks
-    /// permission server-side, so someone not on that server's list gets bounced, and saying so up
-    /// front beats a mystery failure. <paramref name="confirm"/> is injected so the decision is
-    /// testable without showing a window.
+    /// A Discord join request landed — either the in-client Join button or the
+    /// <c>roblox-rororo:</c> OS protocol handler; <paramref name="origin"/> says which.
+    /// <paramref name="confirm"/> is injected so the decision is testable without showing a window.
+    /// <para>
+    /// <b>Fix round 2 — confirm is gated on ORIGIN, not just destination.</b> A private-server
+    /// target always confirms, regardless of origin: Roblox checks permission server-side, so
+    /// someone not on that server's list gets bounced, and saying so up front beats a mystery
+    /// failure. Separately, ANY <see cref="JoinOrigin.UriHandler"/> join confirms even for a public
+    /// server — the reason is origin, not destination risk. A <see cref="JoinOrigin.DiscordClient"/>
+    /// join can only fire after the user turned Join on and a friend received a secret RoRoRo
+    /// deliberately published; a <c>roblox-rororo:</c> URI can be triggered by any local process,
+    /// <c>.url</c> file, or browser navigation, and nothing in it proves Discord sent it. The two
+    /// prompts are deliberately different copy (see the two branches below) — never collapsed into
+    /// one message, and never shown twice when both conditions hold (a private-server target from
+    /// the URI handler still shows exactly one prompt: the private-server one, since it already
+    /// carries the stronger "may be denied entry" warning).
+    /// </para>
+    /// <para>
+    /// The row is picked BEFORE the confirm decision (a change from the pre-round-2 shape) because
+    /// the URI-origin prompt has to name the account that's about to launch — see the confirm
+    /// message below. It uses <see cref="AccountSummary.RenderName"/>, never <c>DisplayName</c>:
+    /// streamer mode has to hold outbound, and a modal is outbound. One side effect: if there is
+    /// nothing to launch with at all, this now returns the "nothing to join with" outcome without
+    /// ever showing a confirm dialog, instead of showing one first and only then discovering there
+    /// was nowhere to launch — a behavior improvement, not a regression any existing test depended on.
+    /// </para>
     /// <para>
     /// <b>Must be called on the UI thread</b> — it reads the UI-bound <see cref="Accounts"/>
     /// collection, sets <see cref="StatusBanner"/>, and reaches <see cref="LaunchAccountAsync"/>,
     /// none of which tolerate a foreign thread. The two inbound paths differ on whether that's
     /// already true by the time they raise:
     /// <list type="bullet">
-    ///   <item><c>App.JoinRequested</c> (the <c>roblox-rororo:</c> URI relay + cold start) is safe
-    ///   as-is — <c>SingleInstanceGuard</c> raises its relay inside <c>mainWindow.Dispatcher.Invoke</c>,
-    ///   and the cold-start path runs from <c>OnStartup</c>, itself on the UI thread. No extra
-    ///   dispatch needed at the call site.</item>
-    ///   <item><see cref="DiscordPresenceService.JoinRequested"/> (the in-client Join button) is
-    ///   NOT marshaled anywhere in its chain — Lachee's <c>OnJoin</c> fires on its own background
-    ///   RPC thread, <c>LacheeDiscordRpcClientAdapter.SafeInvoke</c> only try/catches, and
-    ///   <c>DiscordPresenceService.OnJoinRequested</c> forwards synchronously on that same thread.
-    ///   Whoever subscribes this path MUST marshal onto the UI thread (e.g.
+    ///   <item><c>App.JoinRequested</c> (the <c>roblox-rororo:</c> URI relay + cold start,
+    ///   <see cref="JoinOrigin.UriHandler"/>) is safe as-is — <c>SingleInstanceGuard</c> raises its
+    ///   relay inside <c>mainWindow.Dispatcher.Invoke</c>, and the cold-start path runs from
+    ///   <c>OnStartup</c>, itself on the UI thread. No extra dispatch needed at the call site.</item>
+    ///   <item><see cref="DiscordPresenceService.JoinRequested"/> (the in-client Join button,
+    ///   <see cref="JoinOrigin.DiscordClient"/>) is NOT marshaled anywhere in its chain — Lachee's
+    ///   <c>OnJoin</c> fires on its own background RPC thread, <c>LacheeDiscordRpcClientAdapter.SafeInvoke</c>
+    ///   only try/catches, and <c>DiscordPresenceService.OnJoinRequested</c> forwards synchronously
+    ///   on that same thread. Whoever subscribes this path MUST marshal onto the UI thread (e.g.
     ///   <c>Application.Current.Dispatcher.Invoke</c>) before calling this method — this is the
     ///   steady-state Join path (RoRoRo already running, Discord connected), so skipping the
     ///   dispatch here is not a rare-edge risk, it's the common crash.</item>
     /// </list>
     /// </para>
     /// </summary>
-    internal async Task<bool> HandleDiscordJoinAsync(LaunchTarget target, Func<string, bool> confirm)
+    internal async Task<bool> HandleDiscordJoinAsync(LaunchTarget target, JoinOrigin origin, Func<string, bool> confirm)
     {
         ArgumentNullException.ThrowIfNull(target);
-
-        if (target is LaunchTarget.PrivateServer &&
-            !confirm("This is a private server — you may be denied entry if you're not on its list. Try anyway?"))
-        {
-            return false;
-        }
 
         // Idle-first, then any non-expired account — but never a row mid-launch (IsLaunching),
         // so an inbound join can't double-launch a row that's already in flight. When nothing is
@@ -1243,6 +1259,18 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             StatusBanner = "Nothing to join with — add an account first.";
             return false;
+        }
+
+        var isPrivateServer = target is LaunchTarget.PrivateServer;
+        if (isPrivateServer || origin == JoinOrigin.UriHandler)
+        {
+            var message = isPrivateServer
+                ? "This is a private server — you may be denied entry if you're not on its list. Try anyway?"
+                : $"This join request came from outside RoRoRo and can't be verified — launching {row.RenderName} into this server. Continue anyway?";
+            if (!confirm(message))
+            {
+                return false;
+            }
         }
 
         var takingOverRunningAccount = row.IsRunning;

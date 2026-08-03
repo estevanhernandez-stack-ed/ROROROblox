@@ -1288,14 +1288,24 @@ public partial class App : Application
 
             await presence.ApplyAsync(config).ConfigureAwait(true);
 
-            // Fix round 1, Finding 1: both inbound-join paths gate on the LIVE JoinEnabled setting
-            // through the one InboundJoinDispatcher instance, not just the in-client path
-            // DiscordPresenceService.OnJoinRequested already gated internally. See that class's
-            // remarks for why the roblox-rororo: URI path needed this and didn't have it.
-            var inboundJoin = new InboundJoinDispatcher(
+            // Fix round 1, Finding 1: both inbound-join paths gate on the LIVE JoinEnabled setting.
+            // Fix round 2: they're two SEPARATE InboundJoinDispatcher instances now, not one shared
+            // one — origin is fixed per call site and, as of round 2, changes what
+            // HandleDiscordJoinAsync does (a UriHandler join always confirms; a DiscordClient join
+            // only confirms for a private server). See InboundJoinDispatcher's + HandleDiscordJoinAsync's
+            // remarks for the full reasoning.
+            var discordConfirm = new Func<string, bool>(msg => Modals.JoinRequestWindow.Confirm(mainWindow, msg));
+            var inClientJoin = new InboundJoinDispatcher(
                 joinEnabled: () => presence.JoinEnabled,
                 viewModel: vm,
-                confirm: msg => Modals.JoinRequestWindow.Confirm(mainWindow, msg),
+                origin: JoinOrigin.DiscordClient,
+                confirm: discordConfirm,
+                log: _log);
+            var uriHandlerJoin = new InboundJoinDispatcher(
+                joinEnabled: () => presence.JoinEnabled,
+                viewModel: vm,
+                origin: JoinOrigin.UriHandler,
+                confirm: discordConfirm,
                 log: _log);
 
             // In-client Join button — Lachee's background RPC thread. Must hop to the UI thread
@@ -1305,12 +1315,12 @@ public partial class App : Application
             // should run on the RPC thread. InvokeAsync with an async lambda, not a bare Invoke, so
             // the hop doesn't block that thread either.
             presence.JoinRequested += (_, target) =>
-                Dispatcher.InvokeAsync(async () => await inboundJoin.HandleAsync(target).ConfigureAwait(true));
+                Dispatcher.InvokeAsync(async () => await inClientJoin.HandleAsync(target).ConfigureAwait(true));
 
             // roblox-rororo: URI (cold start or relayed from a second instance) — already
             // UI-thread-marshalled by the time it reaches here; see JoinRequested's own remarks.
             // Fire-and-forget is safe: HandleAsync never throws (see its own doc comment).
-            JoinRequested += (_, target) => _ = inboundJoin.HandleAsync(target);
+            JoinRequested += (_, target) => _ = uriHandlerJoin.HandleAsync(target);
         }
         catch (Exception ex)
         {
