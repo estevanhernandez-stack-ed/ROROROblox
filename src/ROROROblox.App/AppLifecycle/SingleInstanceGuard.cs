@@ -142,6 +142,21 @@ internal sealed class SingleInstanceGuard : IDisposable
                 // signalled the primary — single instance wedged, with no visible error. Log and keep
                 // listening; a bad iteration must not cost every future launch.
                 _log?.LogWarning(ex, "Single-instance pipe listener iteration threw; continuing to listen.");
+
+                // MINOR 2 (re-review, 2026-08-03): without a delay, a PERSISTENTLY-throwing pipe
+                // construction (e.g. the pipe name permanently unusable) spins this loop at full
+                // CPU instead of dying — silent, but still a real resource burn for the life of the
+                // process. A short, cancellation-aware backoff caps that cost while keeping shutdown
+                // prompt: Dispose() cancels _listenerCts, which makes this Delay throw immediately
+                // and fall straight through to the loop's cancellation check.
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
         }
     }
