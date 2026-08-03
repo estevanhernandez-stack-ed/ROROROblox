@@ -29,6 +29,12 @@ public partial class App : Application
     private ILogger<App>? _log;
 
     /// <summary>
+    /// Owns the guarded parse-and-raise for both inbound-join paths (cold start + relay). See
+    /// <see cref="InboundJoinRelay"/>'s remarks for why the guard lives there and not inline here.
+    /// </summary>
+    private InboundJoinRelay? _joinRelay;
+
+    /// <summary>
     /// The plugin-host listener's bind task, set by <see cref="StartPluginHostListener"/> and
     /// awaited by <see cref="StartPluginAutostart"/>. Null when the host failed to start, in
     /// which case autostart is skipped: a plugin process that can't reach the pipe would fail
@@ -51,6 +57,11 @@ public partial class App : Application
     /// protocol-handler path Discord falls back to. Always raised on the UI thread. Task 8 owns
     /// what happens next (server-instance targeting + the private-server warning) — this task's
     /// job ends at handing over a decoded <see cref="LaunchTarget"/>.
+    /// <para>
+    /// Forwarded from <see cref="InboundJoinRelay.JoinRequested"/> — every raise of this event,
+    /// including whatever a subscriber does with it, runs inside that relay's try/catch. A
+    /// subscriber throwing here cannot escape and cannot wedge the single-instance pipe listener.
+    /// </para>
     /// </summary>
     public event EventHandler<LaunchTarget>? JoinRequested;
 
@@ -70,6 +81,13 @@ public partial class App : Application
         WindowTheming.RegisterGlobalDarkTitleBar();
 
         _log.LogInformation("ROROROblox starting (v{Version}, OS {Os})", version, Environment.OSVersion);
+
+        // Guarded parse-and-raise for inbound joins (see InboundJoinRelay's remarks). Wire the
+        // forwarding subscription now, before either call site below can fire: it runs INSIDE
+        // the relay's try/catch, so a throwing App.JoinRequested subscriber is caught here too,
+        // not just a bad parse.
+        _joinRelay = new InboundJoinRelay(_log);
+        _joinRelay.JoinRequested += (_, target) => JoinRequested?.Invoke(this, target);
 
         // Discord Join, inbound half: if this process was launched with a roblox-rororo://join/
         // URI (Discord handed it to us via the registered protocol handler), pull the raw arg out
@@ -257,20 +275,10 @@ public partial class App : Application
 
         // Discord Join relay: a second instance launched with a join URI forwards it here over
         // the existing single-instance pipe (see SingleInstanceGuard.JoinUriReceived). The guard
-        // already marshals this onto the UI thread before invoking, so raising JoinRequested
-        // synchronously is safe.
-        _singleInstance.JoinUriReceived += relayedUri =>
-        {
-            if (JoinUriParser.TryParse([relayedUri], out var relayedTarget))
-            {
-                _log?.LogInformation("Discord join relayed from a newly-launched instance.");
-                JoinRequested?.Invoke(this, relayedTarget);
-            }
-            else
-            {
-                _log?.LogDebug("Relayed Discord join URI failed to parse; ignoring.");
-            }
-        };
+        // already marshals this onto the UI thread before invoking; _joinRelay.Handle owns the
+        // exception boundary (see InboundJoinRelay's remarks) — a throw here must not kill the
+        // pipe-listener thread this callback runs on.
+        _singleInstance.JoinUriReceived += relayedUri => _joinRelay!.Handle(relayedUri, "relay");
 
         tray.Show();
         _singleInstance.StartListening(mainWindow);
@@ -280,10 +288,9 @@ public partial class App : Application
         // handed it straight to us rather than to an already-running instance). Raised after
         // mainWindow.Show() so anything Task 8 wires up earlier in OnStartup is already
         // subscribed by the time this fires.
-        if (joinArg is not null && JoinUriParser.TryParse([joinArg], out var coldStartTarget))
+        if (joinArg is not null)
         {
-            _log?.LogInformation("Cold-started via a Discord join.");
-            JoinRequested?.Invoke(this, coldStartTarget);
+            _joinRelay.Handle(joinArg, "cold start");
         }
 
         // Fire-and-forget startup checks. Failures are silent; banner stays null on no-drift / no-network.
