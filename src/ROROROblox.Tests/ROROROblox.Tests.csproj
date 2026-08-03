@@ -32,6 +32,9 @@
     <None Include="..\ROROROblox.App\Modals\RobloxAlreadyRunningWindow.xaml" Link="Modals\RobloxAlreadyRunningWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\ROROROblox.App\Modals\StopAllConfirmWindow.xaml" Link="Modals\StopAllConfirmWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\ROROROblox.App\Modals\LeftoverProcessesWindow.xaml" Link="Modals\LeftoverProcessesWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <!-- FIX 10 (final whole-branch review, 2026-08-03): JoinRequestWindow was missing from this
+         group, so ModalDefaultButtonSafetyTests never saw it at all. -->
+    <None Include="..\ROROROblox.App\Modals\JoinRequestWindow.xaml" Link="Modals\JoinRequestWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

@@ -147,6 +147,40 @@ public class DiscordPresenceServiceTests
         Assert.Contains("isn't running", svc.StatusLine, StringComparison.OrdinalIgnoreCase);
     }
 
+    // ---------- FIX 5 (final whole-branch review, 2026-08-03): status line honors "off" ----------
+
+    [Fact]
+    public async Task ConnectionFailed_AfterPresenceTurnedOff_DoesNotOverwriteTheOffStatus()
+    {
+        // Deinitialize() (called by ApplyAsync's presence-off branch) can trigger Lachee's pipe to
+        // close, which can raise ConnectionFailed asynchronously afterward. That stray callback
+        // must not contradict the "Presence is off." the user just asked for.
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, () => Roster(Live("A")), NullLogger.Instance);
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true });
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = false });
+        Assert.Equal("Presence is off.", svc.StatusLine);
+
+        rpc.RaiseConnectionFailed();
+
+        Assert.Equal("Presence is off.", svc.StatusLine);
+    }
+
+    [Fact]
+    public async Task Ready_AfterPresenceTurnedOff_DoesNotOverwriteTheOffStatusOrPushAStrayRefresh()
+    {
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, () => Roster(Live("A")), NullLogger.Instance);
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true });
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = false });
+        var pushedBeforeStrayReady = rpc.Presences.Count;
+
+        rpc.RaiseReady();
+
+        Assert.Equal("Presence is off.", svc.StatusLine);
+        Assert.Equal(pushedBeforeStrayReady, rpc.Presences.Count);
+    }
+
     // ---------- Fix round 1, Finding 2: StatusChanged / the honest transient ----------
 
     [Fact]
@@ -192,6 +226,31 @@ public class DiscordPresenceServiceTests
         Assert.False(fired);
     }
 
+    // ---------- FIX 3 (final whole-branch review, 2026-08-03): Ready refreshes the roster ----------
+
+    [Fact]
+    public async Task Ready_RefreshesFromTheCurrentRoster_NotWhateverWasCachedBeforeTheDrop()
+    {
+        // Spec §8: "Discord restarts mid-session -> Reconnect with backoff; presence restored
+        // from current roster." Simulate a reconnect: the roster changes WHILE "disconnected"
+        // (Discord dropped), then Ready fires again -- the push that follows must reflect the
+        // roster AT Ready time, not whatever was pushed before the drop.
+        var accounts = new List<RosterAccount> { Live("A") };
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, () => Roster([.. accounts]), NullLogger.Instance);
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true });
+
+        Assert.Single(rpc.Presences);
+        Assert.Equal("1 account", rpc.Presences[0].State);
+
+        accounts.Add(Live("B")); // roster changed before Discord came back
+
+        rpc.RaiseReady();
+
+        Assert.Equal(2, rpc.Presences.Count);
+        Assert.Equal("2 accounts in one server", rpc.Presences[^1].State);
+    }
+
     // ---------- Fix round 1, Finding 1: JoinEnabled mirror for InboundJoinDispatcher ----------
 
     [Fact]
@@ -207,5 +266,35 @@ public class DiscordPresenceServiceTests
 
         await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true, JoinEnabled = false });
         Assert.False(svc.JoinEnabled);
+    }
+
+    // FIX 7 (final whole-branch review, 2026-08-03): Presence and Join are independently
+    // togglable in Preferences, so "Presence off, Join on" is a reachable combination. Before
+    // this fix it published no Join button (Refresh already required PresenceEnabled) yet still
+    // accepted inbound URI joins, because JoinEnabled mirrored the raw config flag alone.
+    [Fact]
+    public async Task JoinEnabled_IsFalseWhenPresenceIsOff_EvenIfJoinItselfIsOn()
+    {
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, () => Roster(Live("A")), NullLogger.Instance);
+
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = false, JoinEnabled = true });
+
+        Assert.False(svc.JoinEnabled);
+    }
+
+    [Fact]
+    public async Task JoinRequested_PresenceOffJoinOn_IsIgnored()
+    {
+        // The in-client Join button path must honor the same effective gate as JoinEnabled.
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, () => Roster(Live("A")), NullLogger.Instance);
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = false, JoinEnabled = true });
+        var fired = false;
+        svc.JoinRequested += (_, _) => fired = true;
+
+        rpc.RaiseJoin("g|140403681187145|job-a");
+
+        Assert.False(fired);
     }
 }

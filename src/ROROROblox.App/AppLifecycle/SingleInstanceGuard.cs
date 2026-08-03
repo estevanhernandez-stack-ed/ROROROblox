@@ -2,6 +2,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Windows;
 using System.Windows.Interop;
+using Microsoft.Extensions.Logging;
 using ROROROblox.App.Discord;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -25,14 +26,16 @@ internal sealed class SingleInstanceGuard : IDisposable
     private readonly string _pipeName;
     private readonly Mutex _mutex;
     private readonly bool _ownsMutex;
+    private readonly ILogger? _log;
     private CancellationTokenSource? _listenerCts;
     private Task? _listenerTask;
 
-    public SingleInstanceGuard(string id)
+    public SingleInstanceGuard(string id, ILogger? log = null)
     {
         var mutexName = string.Format(MutexNameTemplate, id);
         _pipeName = string.Format(PipeNameTemplate, id);
         _mutex = new Mutex(initiallyOwned: true, name: mutexName, createdNew: out _ownsMutex);
+        _log = log;
     }
 
     /// <param name="joinUri">
@@ -126,6 +129,19 @@ internal sealed class SingleInstanceGuard : IDisposable
             }
             catch (IOException)
             {
+            }
+            catch (Exception ex)
+            {
+                // FIX 2 (final whole-branch review, 2026-08-03): SurfaceWindow — and, as of the
+                // Discord join branch, JoinUriReceived's subscribers — run inside the same
+                // Dispatcher.Invoke above, and neither is exception-free (SurfaceWindow makes real
+                // Win32 P/Invoke calls; JoinUriReceived hands off to app code). Before this catch, a
+                // throw from either one propagated out of this iteration and killed _listenerTask for
+                // the rest of the process: every later relaunch would then time out silently in
+                // SignalExisting, and the second instance would call Shutdown(0) believing it had
+                // signalled the primary — single instance wedged, with no visible error. Log and keep
+                // listening; a bad iteration must not cost every future launch.
+                _log?.LogWarning(ex, "Single-instance pipe listener iteration threw; continuing to listen.");
             }
         }
     }

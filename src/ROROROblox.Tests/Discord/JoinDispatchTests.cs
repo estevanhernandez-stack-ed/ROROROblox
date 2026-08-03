@@ -108,6 +108,28 @@ public class JoinDispatchTests
         Assert.Empty(launcher.Launches);
     }
 
+    // FIX 8 (final whole-branch review, 2026-08-03): the row is picked BEFORE the confirm
+    // decision, so row.IsRunning is already known when the prompt is built. When true, the
+    // prompt itself says a running session is about to be taken over -- not only the
+    // StatusBanner, which appears AFTER the user has already agreed to something else.
+    [Fact]
+    public async Task HandleDiscordJoinAsync_ConfirmMentionsTakeover_WhenTheChosenRowIsAlreadyRunning()
+    {
+        var (vm, _) = DiscordTestHarness.VmWithOneIdleAccount();
+        var row = Assert.Single(vm.Accounts);
+        row.IsRunning = true; // the only account is already running
+        string? shown = null;
+        var target = new LaunchTarget.PrivateServer(8737899170, "CODE", PrivateServerCodeKind.LinkCode);
+
+        await vm.HandleDiscordJoinAsync(target, JoinOrigin.DiscordClient, msg => { shown = msg; return false; });
+
+        Assert.NotNull(shown);
+        Assert.Contains("takes over", shown, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(row.RenderName, shown, StringComparison.Ordinal);
+        // The private-server warning must still be there too -- this is additive, not a swap.
+        Assert.Contains("denied entry", shown, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public async Task HandleDiscordJoinAsync_NoAccountsConfigured_IsAnEmptyStateNotAnError()
     {

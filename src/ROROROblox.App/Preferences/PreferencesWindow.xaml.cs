@@ -107,6 +107,10 @@ internal partial class PreferencesWindow : Window
                 _discordConfig = await _discordConfigStore.LoadAsync();
                 DiscordPresenceToggle.IsChecked = _discordConfig.PresenceEnabled;
                 DiscordJoinToggle.IsChecked = _discordConfig.JoinEnabled;
+                // FIX 7 (final whole-branch review, 2026-08-03): Join has no effect while presence
+                // is off (DiscordPresenceService.JoinEnabled is now PresenceEnabled && JoinEnabled)
+                // — disabling the checkbox here says so instead of leaving it checkable-but-inert.
+                DiscordJoinToggle.IsEnabled = _discordConfig.PresenceEnabled;
                 if (_mainViewModel.DiscordPresence is { } presence)
                 {
                     // Fix round 1, Finding 2: subscribe so the status line stays honest for the
@@ -329,6 +333,9 @@ internal partial class PreferencesWindow : Window
         var wanted = DiscordPresenceToggle.IsChecked == true;
         var updated = _discordConfig with { PresenceEnabled = wanted };
         _discordConfig = updated; // update the in-memory copy before the first await — see field doc
+        // FIX 7: keep the Join checkbox's enabled state tracking presence live, not just at
+        // OnLoaded — Join has no effect while presence is off (DiscordPresenceService.JoinEnabled).
+        DiscordJoinToggle.IsEnabled = wanted;
         try
         {
             await _discordConfigStore.SaveAsync(updated);
@@ -347,6 +354,7 @@ internal partial class PreferencesWindow : Window
             _suppressClickHandlers = true;
             _discordConfig = await _discordConfigStore.LoadAsync();
             DiscordPresenceToggle.IsChecked = _discordConfig.PresenceEnabled;
+            DiscordJoinToggle.IsEnabled = _discordConfig.PresenceEnabled;
             _suppressClickHandlers = false;
         }
     }

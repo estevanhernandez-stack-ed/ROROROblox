@@ -1275,9 +1275,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var isPrivateServer = target is LaunchTarget.PrivateServer;
         if (isPrivateServer || origin == JoinOrigin.UriHandler)
         {
+            // FIX 8 (final whole-branch review, 2026-08-03): row.IsRunning is already known here —
+            // the row is chosen above, before this decision. When it's true, the join is about to
+            // kick that account's live session; the confirm prompt says so up front rather than the
+            // user only learning it from the StatusBanner AFTER already agreeing to something else.
+            // The banner below still fires post-confirm — this is additive, not a replacement.
+            var takeoverClause = row.IsRunning
+                ? $" This takes over {row.RenderName}'s running session."
+                : string.Empty;
             var message = isPrivateServer
-                ? "This is a private server — you may be denied entry if you're not on its list. Try anyway?"
-                : $"This join request came from outside RoRoRo and can't be verified — launching {row.RenderName} into this server. Continue anyway?";
+                ? $"This is a private server — you may be denied entry if you're not on its list.{takeoverClause} Try anyway?"
+                : $"This join request came from outside RoRoRo and can't be verified — launching {row.RenderName} into this server.{takeoverClause} Continue anyway?";
             if (!confirm(message))
             {
                 return false;

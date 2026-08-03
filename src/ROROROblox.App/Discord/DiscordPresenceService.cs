@@ -37,8 +37,8 @@ internal sealed class DiscordPresenceService : IDisposable
         // after ApplyAsync has already returned (Fix round 1, Finding 2) — SetStatus's StatusChanged
         // event is how a subscriber (PreferencesWindow) learns the real, eventual outcome instead of
         // reading a StatusLine snapshot that's already stale by the time it's read.
-        _client.ConnectionFailed += (_, _) => SetStatus("Discord isn't running — presence starts when it does.");
-        _client.Ready += (_, _) => SetStatus("Connected to Discord.");
+        _client.ConnectionFailed += OnConnectionFailed;
+        _client.Ready += OnReady;
         _client.Errored += (_, msg) => _log.LogDebug("Discord rejected a presence update: {Message}", msg);
     }
 
@@ -53,14 +53,23 @@ internal sealed class DiscordPresenceService : IDisposable
     public event EventHandler? StatusChanged;
 
     /// <summary>
-    /// Live mirror of <c>DiscordConfig.JoinEnabled</c> for callers that gate a join dispatch outside
-    /// this class — specifically the <c>roblox-rororo:</c> protocol-handler path
+    /// Live mirror of the EFFECTIVE Join setting for callers that gate a join dispatch outside this
+    /// class — specifically the <c>roblox-rororo:</c> protocol-handler path
     /// (<see cref="ROROROblox.App.Discord.InboundJoinDispatcher"/>), which has no other seam back to
-    /// the live config. <see cref="OnJoinRequested"/> already gates the in-client Join button
-    /// against <c>_config.JoinEnabled</c> directly; this property exists for the OTHER inbound path,
-    /// which does not go through this class at all.
+    /// the live config. <see cref="OnJoinRequested"/> gates the in-client Join button through this
+    /// same property; this exists as a public seam for the OTHER inbound path, which does not go
+    /// through this class at all.
+    /// <para>
+    /// FIX 7 (final whole-branch review, 2026-08-03): <c>PresenceEnabled &amp;&amp; JoinEnabled</c>,
+    /// not <c>JoinEnabled</c> alone — the two settings are independently togglable in Preferences,
+    /// so "Presence off, Join on" is a reachable combination. Before this fix that combination
+    /// published no Join button (<see cref="Refresh"/> already required <c>PresenceEnabled</c> to
+    /// run at all) while STILL accepting inbound URI joins, since the URI path only ever checked
+    /// the bare <c>JoinEnabled</c> flag — a setting the user could not see any effect of turning
+    /// off, because presence being off hid the checkbox's real meaning.
+    /// </para>
     /// </summary>
-    internal bool JoinEnabled => _config.JoinEnabled;
+    internal bool JoinEnabled => _config.PresenceEnabled && _config.JoinEnabled;
 
     /// <summary>Fires when a clan member clicks Join. The target is already decoded.</summary>
     public event EventHandler<LaunchTarget>? JoinRequested;
@@ -70,6 +79,36 @@ internal sealed class DiscordPresenceService : IDisposable
         if (StatusLine == value) return;
         StatusLine = value;
         StatusChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// FIX 5 (final whole-branch review, 2026-08-03). <c>Deinitialize()</c> (called from
+    /// <c>ApplyAsync</c>'s presence-off branch) triggers Lachee's underlying pipe to close, which
+    /// can raise <c>ConnectionFailed</c> asynchronously afterward — without this guard, that stray
+    /// callback would immediately overwrite the "Presence is off." the user just asked for with
+    /// "Discord isn't running…", contradicting the toggle they just clicked. Same reasoning applies
+    /// to <see cref="OnReady"/>.
+    /// </summary>
+    private void OnConnectionFailed(object? sender, EventArgs e)
+    {
+        if (!_config.PresenceEnabled) return;
+        SetStatus("Discord isn't running — presence starts when it does.");
+    }
+
+    /// <summary>
+    /// FIX 3 (final whole-branch review, 2026-08-03): fires on every (re)connect, including a
+    /// Discord restart mid-session — spec §8 requires presence be restored from the CURRENT
+    /// roster then, not whatever Lachee cached from before the drop. <see cref="Refresh"/> is
+    /// already safe to call from any thread (it reads <c>AccountsSnapshot</c>, never the
+    /// UI-owned <c>Accounts</c> collection, and is fully try/catch-guarded), so no extra
+    /// marshalling is needed here. See <see cref="OnConnectionFailed"/>'s remarks for why this is
+    /// also gated on <c>PresenceEnabled</c> (FIX 5).
+    /// </summary>
+    private void OnReady(object? sender, EventArgs e)
+    {
+        if (!_config.PresenceEnabled) return;
+        SetStatus("Connected to Discord.");
+        Refresh();
     }
 
     public Task ApplyAsync(DiscordConfig config)
@@ -150,11 +189,13 @@ internal sealed class DiscordPresenceService : IDisposable
 
     private void OnJoinRequested(object? sender, string secret)
     {
-        if (!_config.JoinEnabled)
+        // FIX 7: gate on the EFFECTIVE JoinEnabled property (PresenceEnabled && JoinEnabled), not
+        // the raw config flag — see that property's remarks. The user turned Join (or presence)
+        // off after a secret went out — a friend's stale cached Join button or an in-flight click
+        // can still arrive here. Same "offer a Join the user did not enable" failure Refresh()
+        // guards against outbound; guard it here inbound too.
+        if (!JoinEnabled)
         {
-            // The user turned Join off after a secret went out — a friend's stale cached Join
-            // button or an in-flight click can still arrive here. Same "offer a Join the user did
-            // not enable" failure Refresh() guards against outbound; guard it here inbound too.
             _log.LogDebug("Ignoring a Discord join request — Join is currently disabled.");
             return;
         }
