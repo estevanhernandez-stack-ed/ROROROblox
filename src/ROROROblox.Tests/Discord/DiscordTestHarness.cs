@@ -93,6 +93,111 @@ internal static class DiscordTestHarness
         return (vm, row);
     }
 
+    /// <summary>
+    /// Task 8: one idle account (never launched, session not expired, no tracked process) —
+    /// exactly the row <see cref="MainViewModel.HandleDiscordJoinAsync"/>'s
+    /// <c>Accounts.FirstOrDefault</c> picks. Uses <see cref="RecordingLauncher"/> (not the
+    /// throw-on-call <see cref="FakeRobloxLauncher"/> used by <see cref="VmWithOneInGameAccount"/>)
+    /// so tests can assert on what actually reached the launcher, including "nothing" when the
+    /// user declines the private-server warning.
+    /// </summary>
+    public static (MainViewModel Vm, RecordingLauncher Launcher) VmWithOneIdleAccount()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"rororo-discord-test-{Guid.NewGuid():N}.dat");
+        var accountStore = new AccountStore(path);
+        var launcher = new RecordingLauncher();
+        var processTracker = new FakeRobloxProcessTracker();
+        var windowDecorator = new RobloxWindowDecorator();
+        var trayService = new FakeTrayService();
+
+        var vm = BuildVm(accountStore, launcher, processTracker, windowDecorator, trayService);
+
+        windowDecorator.Dispose();
+
+        accountStore.AddAsync("IdleAccount", "", "cookie").GetAwaiter().GetResult();
+        vm.LoadAsync().GetAwaiter().GetResult();
+
+        return (vm, launcher);
+    }
+
+    /// <summary>
+    /// Task 8: an empty roster — <see cref="MainViewModel.HandleDiscordJoinAsync"/> should treat
+    /// "nothing to launch with" as an empty state (return false, set a banner) rather than throw.
+    /// </summary>
+    public static (MainViewModel Vm, RecordingLauncher Launcher) VmWithNoAccounts()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"rororo-discord-test-{Guid.NewGuid():N}.dat");
+        var accountStore = new AccountStore(path);
+        var launcher = new RecordingLauncher();
+        var processTracker = new FakeRobloxProcessTracker();
+        var windowDecorator = new RobloxWindowDecorator();
+        var trayService = new FakeTrayService();
+
+        var vm = BuildVm(accountStore, launcher, processTracker, windowDecorator, trayService);
+
+        windowDecorator.Dispose();
+
+        vm.LoadAsync().GetAwaiter().GetResult();
+
+        return (vm, launcher);
+    }
+
+    /// <summary>Shared ctor wiring for the Task 8 factories above — same fake set as <see cref="VmWithOneInGameAccount"/>, minus the streamer-identity provider (neither Task 8 test needs a masked name).</summary>
+    private static MainViewModel BuildVm(
+        AccountStore accountStore,
+        IRobloxLauncher launcher,
+        FakeRobloxProcessTracker processTracker,
+        RobloxWindowDecorator windowDecorator,
+        FakeTrayService trayService)
+        => new(
+            cookieCapture: new FakeCookieCapture(),
+            api: new FakeRobloxApi(),
+            accountStore: accountStore,
+            launcher: launcher,
+            compatChecker: new FakeRobloxCompatChecker(),
+            settings: new FakeAppSettings(),
+            favorites: new FakeFavoriteGameStore(),
+            processTracker: processTracker,
+            presenceService: new FakePresenceService(),
+            diagnostics: new FakeDiagnosticsCollector(),
+            privateServerStore: new FakePrivateServerStore(),
+            sessionHistory: new FakeSessionHistoryStore(),
+            startupRegistration: new FakeStartupRegistration(),
+            themeStore: new FakeThemeStore(),
+            themeService: new ThemeService(new FakeThemeStore(), new FakeAppSettings()),
+            windowDecorator: windowDecorator,
+            bloxstrapDetector: new FakeBloxstrapDetector(),
+            updateProbe: new FakeRobloxUpdateProbe(),
+            accountTransport: new FakeAccountTransport(),
+            activityMonitor: new FakeActivityMonitor(),
+            memoryWatchdog: new FakeMemoryWatchdog(),
+            instanceStopper: new FakeRobloxInstanceStopper(),
+            tray: trayService,
+            idleAlertPresenter: new IdleAlertPresenter(trayService),
+            streamerIdentity: new FakeStreamerIdentityProvider(string.Empty));
+
+    /// <summary>
+    /// Always succeeds with an incrementing pid and records the exact <see cref="LaunchTarget"/>
+    /// instance passed for each launch — Task 8's dispatch tests need to assert on what reached
+    /// the launcher (or that nothing did, when the user declines the private-server warning).
+    /// Mirrors <c>MainViewModelTests.RecordingSuccessLauncher</c>, kept as its own copy per this
+    /// file's header note on not sharing private fakes across test files.
+    /// </summary>
+    internal sealed class RecordingLauncher : IRobloxLauncher
+    {
+        private int _nextPid = 6000;
+        public List<LaunchTarget> Launches { get; } = [];
+
+        public Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null)
+        {
+            Launches.Add(target);
+            return Task.FromResult<LaunchResult>(new LaunchResult.Started(_nextPid++, DateTimeOffset.UtcNow));
+        }
+
+        public Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null, long? browserTrackerId = null)
+            => throw new NotImplementedException();
+    }
+
     private sealed class FakeStreamerIdentityProvider(string maskedName) : IStreamerIdentityProvider
     {
         public bool IsActive => true;

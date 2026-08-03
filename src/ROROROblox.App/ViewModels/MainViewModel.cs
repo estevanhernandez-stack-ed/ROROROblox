@@ -1192,6 +1192,38 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal IPrivateServerStore PrivateServerStoreForPlugin => _privateServerStore;
 
     /// <summary>
+    /// A clan member clicked Join in Discord. Private servers get a warning first: Roblox checks
+    /// permission server-side, so someone not on that server's list gets bounced, and saying so up
+    /// front beats a mystery failure. <paramref name="confirm"/> is injected so the decision is
+    /// testable without showing a window. Called from two inbound paths — the in-client Discord
+    /// Join button (<see cref="DiscordPresenceService.JoinRequested"/>) and the <c>roblox-rororo:</c>
+    /// URI relay (<c>App.JoinRequested</c>), the latter of which can arrive on the single-instance
+    /// pipe thread rather than the UI thread — so this method touches nothing that assumes a
+    /// dispatcher context beyond what <see cref="LaunchAccountAsync"/> already tolerates.
+    /// </summary>
+    internal async Task<bool> HandleDiscordJoinAsync(LaunchTarget target, Func<string, bool> confirm)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+
+        if (target is LaunchTarget.PrivateServer &&
+            !confirm("This is a private server — you may be denied entry if you're not on its list. Try anyway?"))
+        {
+            return false;
+        }
+
+        var row = Accounts.FirstOrDefault(a => !a.SessionExpired && !a.IsRunning)
+                  ?? Accounts.FirstOrDefault(a => !a.SessionExpired);
+        if (row is null)
+        {
+            StatusBanner = "Nothing to join with — add an account first.";
+            return false;
+        }
+
+        await LaunchAccountAsync(row, overrideTarget: target).ConfigureAwait(true);
+        return true;
+    }
+
+    /// <summary>
     /// Returns the launcher pid (<c>RobloxPlayerLauncher.exe</c>, from <see cref="LaunchResult.Started"/>)
     /// on success, 0 otherwise. Fire-and-forget from every OTHER caller's POV — the real player
     /// pid arrives later via <see cref="IRobloxProcessTracker.ProcessAttached"/> — but Task 8's
