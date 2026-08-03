@@ -25,12 +25,12 @@ Built with `scripts/finalize-store-build.ps1` at `-Version 1.14.0.0`,
 
 ## 2. Notes for certification
 
-Paste the fenced block from [`reviewer-letter-1.14.0.0.md`](reviewer-letter-1.14.0.0.md).
+Paste the fenced block from [`reviewer-letter-1.14.0.0.md`](reviewer-letter-1.14.0.0.md) as-is.
 
-**One thing to check before you paste.** The letter opens against a baseline of v1.12.0.0, on the
-assumption that v1.12 is what Partner Center currently has approved. I can't see Partner Center.
-Open the app's submission history first — if the live version is older than 1.12, change that
-reference. A letter that claims a baseline the reviewer cannot see is the wrong way to start.
+**Baseline confirmed 2026-08-03 by Este: v1.12.0.0 is the approved version in the Store.** v1.13
+was never submitted. The letter's "since v1.12.0.0" framing is therefore correct and needs no
+edit — v1.12 is genuinely the last thing a reviewer has on file, which is exactly why the letter
+describes both releases' changes rather than v1.14's alone.
 
 ## 3. Store listing fields
 
@@ -58,22 +58,28 @@ reference. A letter that claims a baseline the reviewer cannot see is the wrong 
 
 ## 5. Open items — yours
 
-1. **Confirm the approved baseline version** in Partner Center and fix the letter's "since
-   v1.12.0.0" reference if it isn't v1.12. (§2 above.)
-2. **Two screenshots are stale.** `01-accounts-streamer-mode.png` and `06-squad-launch.png` were
-   captured 2026-08-01 and both show the toolbar button labelled **Private server**, which this
-   release renames to **Squad Launch**. The squad modal's body copy changed too. A reviewer
-   comparing screenshots to the running app would see a button that no longer exists. Not a
-   blocker — screenshots aren't required to change per submission — but it's the kind of small
-   mismatch that invites a second look. Say the word and I'll recapture both; it needs streamer
-   mode on so no real account names ship in a Store asset.
-3. **The GitHub release for v1.14.0.0 is a draft** — review and publish it. Its body comes from
-   [`release-notes-1.14.0.0.md`](release-notes-1.14.0.0.md).
-4. **v1.13.0.0's draft release is still sitting there.** Its work ships inside v1.14, so it will
-   never be published on its own. Delete the draft, or leave it as a record — either is fine, but
-   don't publish it after v1.14 or the version order on the releases page will read backwards.
+1. **Upload the two packages and paste the two blocks.** Everything above is ready as-is; the
+   baseline question is resolved (§2).
+2. **Publish the v1.14.0.0 GitHub draft** —
+   <https://github.com/estevanhernandez-stack-ed/ROROROblox/releases/tag/untagged-aa1f8f51d384fc2cc659>
+   (drafts have no public tag URL until published). Body comes from
+   [`release-notes-1.14.0.0.md`](release-notes-1.14.0.0.md); Setup.exe, the portable zip, and
+   `roblox-compat.json` are already attached.
 
-## 6. If it comes back rejected
+## 6. Carried, deliberately
+
+**Two screenshots show a button this release renames.** `01-accounts-streamer-mode.png` and
+`06-squad-launch.png` (captured 2026-08-01) both show the toolbar labelled **Private server**,
+now **Squad Launch**; the squad modal's body copy changed too. Accepted as-is for this cycle —
+screenshots aren't required to change per submission, and the mismatch is a label, not a claim
+about behavior. **Recapture before the next submission** so it doesn't compound: it needs
+streamer mode on, so no real account names ship in a Store asset.
+
+**v1.13.0.0's draft release stays as a record**, not published. Its work ships inside v1.14. Do
+not publish it later — after v1.14 it would put the releases page out of order.
+<https://github.com/estevanhernandez-stack-ed/ROROROblox/releases/tag/untagged-8ea38ab371e0e91c9dcc>
+
+## 7. If it comes back rejected
 
 [`reviewer-letter-1.14.0.0.md`](reviewer-letter-1.14.0.0.md) § *Defenses by clause* has the
 prepared answer for each clause, including what extra evidence to offer. The one to watch this
