@@ -636,6 +636,114 @@ public class RobloxLauncherTests
             e.Message.Contains("No IGlobalBasicSettingsProbe wired", StringComparison.Ordinal));
     }
 
+    /// <summary>
+    /// Time-aware settings-file double for the launch-baseline test below. Unlike
+    /// <see cref="StubSettingsProbe"/> (fixed cap) or <see cref="FlipAfterFirstReadProbe"/>
+    /// (call-count scripted), this holds LIVE mutable state so a test can move its mtime at a
+    /// specific FAKE-CLOCK instant to model a DIFFERENT process writing to the file -- the shape
+    /// FpsCapSettlerTests.TimeAwareProbe uses at the settler level, duplicated here per this file's
+    /// stand-alone convention (see CapturingLogger's remarks above) because this test exercises the
+    /// baseline threading THROUGH RobloxLauncher across two consecutive launches, not the settler in
+    /// isolation.
+    /// </summary>
+    private sealed class TimeAwareLauncherProbe : IGlobalBasicSettingsProbe
+    {
+        public int? Cap { get; set; }
+        public DateTimeOffset? Mtime { get; set; }
+        public int? ReadFramerateCap() => Cap;
+        public DateTimeOffset? GetLastWriteTimeUtc() => Mtime;
+    }
+
+    /// <summary>Writes through to a <see cref="TimeAwareLauncherProbe"/>, stamping its own write's mtime.</summary>
+    private sealed class TimeAwareLauncherWriter : IGlobalBasicSettingsWriter
+    {
+        private readonly TimeAwareLauncherProbe _probe;
+        private readonly TimeProvider _clock;
+        public List<int?> Writes { get; } = new();
+
+        public TimeAwareLauncherWriter(TimeAwareLauncherProbe probe, TimeProvider clock)
+        {
+            _probe = probe;
+            _clock = clock;
+        }
+
+        public Task WriteFramerateCapAsync(int? fps, CancellationToken ct = default)
+        {
+            Writes.Add(fps);
+            _probe.Cap = fps;
+            _probe.Mtime = _clock.GetUtcNow();
+            return Task.CompletedTask;
+        }
+    }
+
+    /// <summary>
+    /// End-to-end proof that <see cref="RobloxLauncher"/> itself -- not just
+    /// <see cref="FpsCapSettler"/> in isolation -- threads the launch baseline correctly. Account A
+    /// launches with no cap of its own (only its <c>Process.Start</c> matters, to seed the baseline
+    /// <see cref="RobloxLauncher"/> must remember). Account B launches next wanting a DIFFERENT cap;
+    /// its settle call must refuse to write B's cap until A's client proves it read A's cap first (a
+    /// write-back to the same file), not credit "the file hasn't moved since A launched" as quiet.
+    /// This is the exact end-to-end shape of the measured bug: three accounts at three different
+    /// caps each came up running the next account's value.
+    /// </summary>
+    [Fact]
+    public async Task LaunchAsync_SecondLaunch_WaitsForFirstLaunchedClientsWriteBeforeApplyingTheNextCap()
+    {
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var probe = new TimeAwareLauncherProbe { Cap = 9999, Mtime = clock.GetUtcNow() };
+        var gbs = new TimeAwareLauncherWriter(probe, clock);
+        var starter = new RecordingProcessStarter(_ => 1);
+        var (launcher, _, _) = CreateLauncher(
+            ticket: "T",
+            defaultPlaceUrl: TestPlaceUrl,
+            globalBasicSettings: gbs,
+            settingsProbe: probe,
+            processStarter: starter,
+            timeProvider: clock);
+
+        // Launch A -- no cap requested, so nothing is written; only Process.Start (and the baseline
+        // it seeds) matters here.
+        var firstResult = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(1))
+            .WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.IsType<LaunchResult.Started>(firstResult);
+        Assert.Empty(gbs.Writes);
+
+        // Launch B wants cap 20; the probe currently reports 9999 -- the slow path.
+        var secondTask = launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(2), fpsCap: 20);
+
+        // Drive the clock well past QuietDebounce with the file's mtime UNCHANGED since A's launch
+        // -- exactly the pre-fix bug shape. Must NOT write B's cap while this holds.
+        var noWriteWindow = FpsCapSettler.QuietDebounce + TimeSpan.FromSeconds(3);
+        var elapsed = TimeSpan.Zero;
+        while (elapsed < noWriteWindow)
+        {
+            clock.Advance(FpsCapSettler.QuietPollInterval);
+            elapsed += FpsCapSettler.QuietPollInterval;
+            for (var i = 0; i < 8; i++) { await Task.Yield(); }
+        }
+        Assert.Empty(gbs.Writes);
+
+        // A's client finally writes its own value back -- proof it read the file. Mutated directly
+        // on the probe (not through `gbs`, which only records OUR writes): this models the OTHER
+        // process.
+        probe.Cap = 9999;
+        probe.Mtime = clock.GetUtcNow();
+
+        elapsed = TimeSpan.Zero;
+        var settleBudget = FpsCapSettler.SettleTimeout + TimeSpan.FromSeconds(2);
+        while (elapsed < settleBudget && !secondTask.IsCompleted)
+        {
+            clock.Advance(FpsCapSettler.QuietPollInterval);
+            elapsed += FpsCapSettler.QuietPollInterval;
+            for (var i = 0; i < 8; i++) { await Task.Yield(); }
+        }
+
+        var secondResult = await secondTask.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.IsType<LaunchResult.Started>(secondResult);
+        Assert.Equal(new int?[] { 20 }, gbs.Writes);
+    }
+
     /// <summary>Captures how many cap writes had happened at the moment Process.Start was called.</summary>
     private sealed class OrderRecordingStarter : IProcessStarter
     {

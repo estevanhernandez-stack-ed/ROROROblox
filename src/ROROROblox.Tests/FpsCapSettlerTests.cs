@@ -262,6 +262,84 @@ public sealed class FpsCapSettlerTests
         Assert.Equal(new int?[] { 20, 20 }, writer.Writes);
     }
 
+    /// <summary>
+    /// THE headline test for the 2026-08-02 proof-of-read fix. A fake probe whose mtime changes at
+    /// a SCRIPTED FAKE-CLOCK INSTANT simulates the previously launched client writing back late --
+    /// the settler must not write the next account's cap before that write is observed, no matter
+    /// how long the file has otherwise looked "quiet" against the launch baseline.
+    /// <para>
+    /// Proven by mutation (see the fix report at
+    /// <c>.superpowers/sdd/proof-of-read/report.md</c>): hardcoding <c>writeObserved = true</c> in
+    /// <c>FpsCapSettler.WaitForQuietAsync</c> (i.e. deleting the proof-of-read gate) turns this test
+    /// red -- the write lands during the "must not write yet" window below. Restoring the gate turns
+    /// it green. A call-count fake (like <see cref="FakeProbe"/>) cannot express this at all, which
+    /// is exactly why the original gap shipped four reviews deep without being caught.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task LaunchBaseline_GatesTheWriteUntilTheLaunchedClientsFirstWriteIsObserved()
+    {
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        // The mtime RobloxLauncher would have captured at the PREVIOUS launch's Process.Start.
+        var baseline = clock.GetUtcNow();
+        var probe = new TimeAwareProbe { Cap = 9999, Mtime = baseline };
+        var writer = new TimeAwareWriter(probe, clock);
+
+        var task = FpsCapSettler.SettleAsync(
+            probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None,
+            launchBaselineUtc: baseline);
+
+        // Drive the clock well past QuietDebounce with the file's mtime UNCHANGED from baseline --
+        // the exact shape of the pre-fix bug: "the file hasn't moved" gets credited as quiet, but
+        // for the wrong reason (the launched client hasn't started writing yet, not because it
+        // already read the cap and calmed down). Must NOT write while this holds.
+        var noWriteWindow = FpsCapSettler.QuietDebounce + TimeSpan.FromSeconds(3);
+        await AdvanceAsync(clock, noWriteWindow, FpsCapSettler.QuietPollInterval);
+
+        Assert.Empty(writer.Writes);
+
+        // The launched client finally produces its first write-back -- proof it read the file --
+        // at this scripted fake-clock instant. Mutated directly on the probe (not through `writer`,
+        // which only records OUR writes): this models a DIFFERENT process.
+        probe.Cap = 9999;
+        probe.Mtime = clock.GetUtcNow();
+
+        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval);
+
+        var outcome = await task.WaitAsync(TestBound);
+
+        Assert.Equal(FpsCapSettleOutcome.Settled, outcome);
+        Assert.Equal(new int?[] { 20 }, writer.Writes);
+    }
+
+    /// <summary>
+    /// The launched client crashed, or Roblox folded the launch into an already-running instance --
+    /// either way it never produces the write the proof-of-read gate is watching for. That gate must
+    /// be BOUNDED, not blocking: once its own wait budget is spent, the settle proceeds to write the
+    /// cap anyway rather than hang the launch indefinitely.
+    /// </summary>
+    [Fact]
+    public async Task LaunchBaseline_ClientNeverWrites_ProceedsAnywayOnceBounded()
+    {
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var baseline = clock.GetUtcNow();
+        var probe = new TimeAwareProbe { Cap = 9999, Mtime = baseline };
+        var writer = new TimeAwareWriter(probe, clock);
+
+        var task = FpsCapSettler.SettleAsync(
+            probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None,
+            launchBaselineUtc: baseline);
+
+        // The "launched client" never writes -- probe.Mtime only ever moves from SettleAsync's own
+        // eventual write (via TimeAwareWriter).
+        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval);
+
+        var outcome = await task.WaitAsync(TestBound);
+
+        Assert.Equal(FpsCapSettleOutcome.Settled, outcome);
+        Assert.Equal(new int?[] { 20 }, writer.Writes);
+    }
+
     [Fact]
     public async Task NeverSurvives_ExhaustsAttemptsAndStillReturns()
     {

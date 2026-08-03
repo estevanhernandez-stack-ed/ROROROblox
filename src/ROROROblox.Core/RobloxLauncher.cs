@@ -28,6 +28,18 @@ public sealed class RobloxLauncher : IRobloxLauncher
     private readonly ILogger _log;
     private readonly SemaphoreSlim _launchGate = new(initialCount: 1, maxCount: 1);
 
+    /// <summary>
+    /// The settings file's mtime at the moment the MOST RECENTLY launched client's
+    /// <c>Process.Start</c> returned, or <see langword="null"/> before the first launch of the
+    /// session (or when no <see cref="IGlobalBasicSettingsProbe"/> is wired). Fed into the NEXT
+    /// launch's <see cref="FpsCapSettler.SettleAsync"/> call as the proof-of-read baseline — see
+    /// <see cref="ApplyFpsCapAsync"/>. Every access is already serialized by <see cref="_launchGate"/>
+    /// (both <see cref="LaunchAsync(string, LaunchTarget, int?, long?)"/> and
+    /// <see cref="LaunchAsync(string, string?, int?, long?)"/> hold it for the full launch), so no
+    /// separate lock is needed here.
+    /// </summary>
+    private DateTimeOffset? _lastLaunchMtimeUtc;
+
     public RobloxLauncher(
         IRobloxApi api,
         IAppSettings settings,
@@ -143,9 +155,20 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
 
         await FpsCapSettler.SettleAsync(
-            _settingsProbe, _globalBasicSettings, fpsCap, _timeProvider, _log, CancellationToken.None)
+            _settingsProbe, _globalBasicSettings, fpsCap, _timeProvider, _log, CancellationToken.None,
+            launchBaselineUtc: _lastLaunchMtimeUtc)
             .ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Remember the settings file's mtime right after a successful <c>Process.Start</c>, for the
+    /// NEXT launch's proof-of-read gate (<see cref="ApplyFpsCapAsync"/>). Called unconditionally on
+    /// every successful launch — not just ones with an <c>fpsCap</c> — because a launch with no cap
+    /// this time still needs to leave a fresh baseline behind for whichever future launch does have
+    /// one. No-ops (stays <see langword="null"/>) when no probe is wired, matching every other
+    /// no-probe degrade in this class.
+    /// </summary>
+    private void RecordLaunchBaseline() => _lastLaunchMtimeUtc = _settingsProbe?.GetLastWriteTimeUtc();
 
     private async Task<LaunchResult> ExecuteLaunchAsync(string cookie, LaunchTarget target, long? stableBrowserTrackerId)
     {
@@ -197,6 +220,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         {
             var launchedAtUtc = _timeProvider.GetUtcNow();
             var pid = _processStarter.StartViaShell(uri);
+            RecordLaunchBaseline();
             return new LaunchResult.Started(pid, launchedAtUtc);
         }
         catch (Win32Exception)
@@ -302,6 +326,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         {
             var launchedAtUtc = _timeProvider.GetUtcNow();
             var pid = _processStarter.StartViaShell(uri);
+            RecordLaunchBaseline();
             return new LaunchResult.Started(pid, launchedAtUtc);
         }
         catch (Win32Exception)
