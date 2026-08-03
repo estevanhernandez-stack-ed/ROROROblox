@@ -436,6 +436,37 @@ public sealed class AccountSummary : INotifyPropertyChanged
         set => SetField(ref _currentPlaceId, value);
     }
 
+    private DateTimeOffset? _presenceUpdatedAtUtc;
+
+    /// <summary>
+    /// When the presence reading behind <see cref="PresenceState"/> / <see cref="CurrentServer"/>
+    /// was taken. Landing verification (v1.14) needs it to tell a fresh confirmation from the
+    /// reading it already had before a relaunch — see <c>ServerLandingGate</c>.
+    /// </summary>
+    public DateTimeOffset? PresenceUpdatedAtUtc
+    {
+        get => _presenceUpdatedAtUtc;
+        set => SetField(ref _presenceUpdatedAtUtc, value);
+    }
+
+    private ServerInstance? _currentServer;
+
+    /// <summary>
+    /// WHICH server of <see cref="CurrentPlaceId"/> this account is in right now — the whole
+    /// (place, job id) pair straight off one presence reading, or null when offline, when privacy
+    /// withholds the job id, or before the first poll. <see cref="CurrentPlaceId"/> identifies the
+    /// GAME; this identifies the SERVER, and only the pair is a usable address (v1.14).
+    /// <para>
+    /// Cleared the moment presence says not-in-game: a job id outlives the session it names, and a
+    /// stale one would aim the next Recycle at a server this account is not in.
+    /// </para>
+    /// </summary>
+    public ServerInstance? CurrentServer
+    {
+        get => _currentServer;
+        set => SetField(ref _currentServer, value);
+    }
+
     /// <summary>
     /// When we first observed <see cref="UserPresenceType.InGame"/> for this account — drives the
     /// "· {age}" duration tail on the in-game label. Set by the presence consumer (item 4) on the

@@ -376,6 +376,16 @@ public sealed class RobloxLauncher : IRobloxLauncher
                 $"&placeId={place.PlaceId}" +
                 "&isPlayTogetherGame=false",
 
+            // One specific server. Verified live 2026-08-02: this shape put a recycled client back
+            // into the job id it left, still holding 34 seconds later. placeId here is presence's
+            // place, NOT the place the account originally launched into — see ServerInstance.
+            LaunchTarget.GameJob job when job.PlaceId > 0 && !string.IsNullOrWhiteSpace(job.JobId) =>
+                $"{PlaceLauncherEndpoint}?request=RequestGameJob" +
+                $"&browserTrackerId={browserTrackerId}" +
+                $"&placeId={job.PlaceId}" +
+                $"&gameId={Uri.EscapeDataString(job.JobId)}" +
+                "&isPlayTogetherGame=false",
+
             // Emit ONLY the matching slot. The two codes are not interchangeable — sending a
             // linkCode in the accessCode slot returns permission-denied even on owner servers.
             // Roblox resolves linkCode -> server-side at launch, so we hand off either form.

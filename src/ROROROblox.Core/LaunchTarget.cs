@@ -31,6 +31,22 @@ public abstract record LaunchTarget
     public sealed record Place(long PlaceId) : LaunchTarget;
 
     /// <summary>
+    /// One SPECIFIC running server of a place — <c>request=RequestGameJob&amp;placeId={X}&amp;gameId={jobId}</c>.
+    /// <para>
+    /// Where <see cref="Place"/> means "this game, any server with room" and lets Roblox matchmake,
+    /// this asks for the server an account is already in, so a recycled or squad-launched client
+    /// lands with the squad instead of wherever there was space. <paramref name="JobId"/> is
+    /// Roblox's <c>gameId</c> (the DataModel JobId presence reports for an in-game account).
+    /// </para>
+    /// <para>
+    /// <b>Both fields must come from one presence reading.</b> Build these through
+    /// <see cref="ServerInstanceTargeting.Upgrade"/> — never by hand at a call site. See
+    /// <see cref="ServerInstance"/> for why mixing sources is a live Roblox error.
+    /// </para>
+    /// </summary>
+    public sealed record GameJob(long PlaceId, string JobId) : LaunchTarget;
+
+    /// <summary>
     /// VIP / private server. Squad Launch + per-row VIP picker.
     /// <para>
     /// Roblox's private servers are addressable by two distinct codes — and they are NOT

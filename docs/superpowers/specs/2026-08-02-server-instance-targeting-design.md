@@ -1,5 +1,32 @@
 # Server-instance targeting — rejoin a specific Roblox server
 
+> ## ⚠ Built 2026-08-02 — four deviations from this document
+>
+> The design below is what was approved. This banner is what shipped. The body is left intact on
+> purpose; read it as the reasoning, not the record.
+>
+> 1. **The remedy is a status banner, not a row affordance.** The spec calls for surfacing a miss
+>    "on the row with a one-click retry." Este's call at build time: banner only, no new per-row
+>    button. Recycle already IS the retry, so the copy names it (`ServerLandingReport`). The
+>    verification itself — presence comparison, the timeout-is-a-miss rule — shipped exactly as
+>    specified.
+> 2. **The pair is a type, not two properties.** The spec says retain `GameJobId` on
+>    `AccountSummary.CurrentGameJobId` alongside `CurrentPlaceId`. Shipped as
+>    `AccountSummary.CurrentServer`, a `ServerInstance(PlaceId, JobId)` record built only by
+>    `ServerInstance.TryFrom`. Two nullable properties can be read one at a time — which is the
+>    matched-pair bug the spike hit. One value cannot.
+> 3. **A stale `GameJob` target degrades to `Place`.** The spec covers upgrading `Place` →
+>    `GameJob` but not what a SECOND recycle does with the remembered `GameJob`. It takes the fresh
+>    presence pair when there is one, and falls back to `Place(rememberedPlaceId)` when there
+>    isn't — an unverifiable job id may be dead, and a dead one strands the account at the home
+>    screen. Covered by `ServerInstanceTargetingTests`.
+> 4. **Squad Launch takes a public place by pasted link only.** The spec says "allow a public place
+>    as a squad target" without naming the picker. The modal's URL box now accepts a plain game
+>    link; no games-library list was added to that modal.
+>
+> Everything else — the `RequestGameJob` URI, the matched-pair rule, first-lands-then-rest, the
+> `Place` fallback on timeout, `PrivateServer` never being upgraded — shipped as written.
+
 **Date:** 2026-08-02
 **Status:** Approved design. Core behaviour **verified live** — see Evidence.
 **Driver:** User report — Recycle returns you to the game but not the server you were in.

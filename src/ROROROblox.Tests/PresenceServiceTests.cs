@@ -79,6 +79,64 @@ public class PresenceServiceTests
     }
 
     [Fact]
+    public async Task PollOnceAsync_InGame_CarriesTheServerInstanceSoRecycleCanTargetIt()
+    {
+        // The job id was always fetched (RobloxApi parses Roblox's `gameId` into
+        // UserPresence.GameJobId) and always thrown away here. Dropping it again — passing null,
+        // or forwarding the place without the job — makes this fail, and takes server-instance
+        // targeting with it: Recycle has no input and silently degrades to "any server."
+        var accountId = Guid.NewGuid();
+        const long userId = 303;
+        const long placeId = 140403681187145;
+        var store = new FakeAccountStore { CookieByAccount = { [accountId] = Cookie } };
+        var api = new FakeRobloxApi
+        {
+            PresenceByCookie =
+            {
+                [Cookie] = [new UserPresence(userId, UserPresenceType.InGame, placeId,
+                    "fcbe3a36-d655-41da-ba8a-8280f5709568", "Pet Simulator 99!")],
+            },
+            GameNameByPlaceId = { [placeId] = "Pet Simulator 99!" },
+        };
+        var service = CreateService(api, store, [new PresenceTarget(accountId, userId)]);
+
+        var events = new List<AccountPresenceEventArgs>();
+        service.AccountPresenceUpdated += (_, e) => events.Add(e);
+
+        await service.PollOnceAsync();
+
+        var ev = Assert.Single(events);
+        Assert.NotNull(ev.Server);
+        // Both halves off ONE reading — the pair is the address.
+        Assert.Equal(placeId, ev.Server.PlaceId);
+        Assert.Equal("fcbe3a36-d655-41da-ba8a-8280f5709568", ev.Server.JobId);
+    }
+
+    [Fact]
+    public async Task PollOnceAsync_InGameWithoutAJobId_CarriesNoServerInstance()
+    {
+        // Privacy can withhold the job id while presence still reports the place. Half a pair is
+        // not an address — the row must see null, not a place-only "server."
+        var accountId = Guid.NewGuid();
+        const long userId = 404;
+        const long placeId = 920587237;
+        var store = new FakeAccountStore { CookieByAccount = { [accountId] = Cookie } };
+        var api = new FakeRobloxApi
+        {
+            PresenceByCookie = { [Cookie] = [new UserPresence(userId, UserPresenceType.InGame, placeId, null, "Adopt Me!")] },
+            GameNameByPlaceId = { [placeId] = "Adopt Me!" },
+        };
+        var service = CreateService(api, store, [new PresenceTarget(accountId, userId)]);
+
+        var events = new List<AccountPresenceEventArgs>();
+        service.AccountPresenceUpdated += (_, e) => events.Add(e);
+
+        await service.PollOnceAsync();
+
+        Assert.Null(Assert.Single(events).Server);
+    }
+
+    [Fact]
     public async Task PollOnceAsync_TwiceSamePlace_ResolvesGameNameOnlyOnce_CacheHit()
     {
         var accountId = Guid.NewGuid();

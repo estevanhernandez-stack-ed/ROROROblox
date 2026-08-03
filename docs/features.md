@@ -73,6 +73,7 @@
 | Launch-to-home | No default set → launch lands on Roblox home instead of failing. | v1.10.0 | `src/ROROROblox.Core/LaunchTarget.cs` |
 | Squad Launch (trust-aware, 3-phase) | Set of accounts into one private server: direct → anchor on #1 → follow; careful mode waits for each to land; per-account "join via friend" toggle. | v1.1-era; trust-aware v1.10.0 | `src/ROROROblox.App/SquadLaunch/` |
 | Friend Follow | Follow a friend into their server; picker browses the main account's friends, not just saved accounts. | v1.1-era; friends-from-main v1.9.0 | `src/ROROROblox.App/Friends/` |
+| Server-instance targeting | Rejoin the *server*, not just the game. Recycle returns an account to the exact server it was in; Squad Launch accepts a public game link and puts the whole roster in one public server (first lands, rest follow its job id). Presence verifies where each client actually landed and names the misses. Private servers are never re-targeted — their code already identifies one server. | v1.14 (unreleased) | `src/ROROROblox.Core/ServerInstance.cs`, `ServerInstanceTargeting.cs`, `App/ViewModels/ServerLandingGate.cs` |
 
 ## Plugin system (Windows)
 
@@ -141,9 +142,10 @@
 
 ## In-flight / queued (not shipped — keep OFF the hub page)
 
-- **Rejoin-after-death** — when a client dies (RAM exhaustion, crash), relaunch it into the server it was in. Closes the loop on the v1.12 memory work and is the automated-reconnect piece. Depends on server-instance targeting.
-- **Regroup ("send my others here")** — row action: pick an account, send the rest of the roster to its current server. Recovery when a squad scatters. Depends on server-instance targeting.
-- **Plugin: live server identity** — `host.queries.current-server` today exposes only the last private-server link. Extend to live job IDs so a plugin can coordinate a roster itself. Contract bump. Depends on server-instance targeting.
+- **Rejoin-after-death** — when a client dies (RAM exhaustion, crash), relaunch it into the server it was in. Closes the loop on the v1.12 memory work and is the automated-reconnect piece. Unblocked: server-instance targeting shipped in v1.14; the row now carries `CurrentServer`.
+- **Regroup ("send my others here")** — row action: pick an account, send the rest of the roster to its current server. Recovery when a squad scatters. Unblocked by v1.14 — it is `ServerInstanceTargeting.Upgrade` against one row's `CurrentServer`, applied to the batch.
+- **Plugin: live server identity** — `host.queries.current-server` today exposes only the last private-server link. Extend to live job IDs so a plugin can coordinate a roster itself. Contract bump. Unblocked by v1.14; the job id now reaches the ViewModel.
+- **Automatic retry on a verification miss** — v1.14 tells the user when a client landed in the wrong server but never retries on its own. Needs field data on how often misses happen, and why, before spending a restart on it.
 - **Account groups** — named "launch these together" sets; spec approved, unbuilt (`docs/superpowers/specs/2026-07-09-account-groups-design.md`).
 - **Account stats: uptime + per-game play time** — presence-driven recording; spec approved, unbuilt (`…account-stats-uptime-design.md`).
 - **Themed window chrome** — WPF-UI FluentWindow/TitleBar across main + modals; spec approved, unbuilt (`…themed-window-chrome-design.md`).

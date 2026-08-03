@@ -1,5 +1,14 @@
 # Handoff — server-instance targeting (Recycle back into the *same* server)
 
+> **CLOSED 2026-08-02 — built on `feat/server-instance-targeting`.** All four items shipped
+> (primitive, presence plumb-through, Recycle, Squad Launch), plus the verification the open design
+> question asked about — answered as *status banner, no row affordance, no auto-retry*. Deviations
+> from the spec are bannered at the top of
+> [`specs/2026-08-02-server-instance-targeting-design.md`](specs/2026-08-02-server-instance-targeting-design.md).
+> **Still manual:** the live smoke (launch, recycle, confirm the same server) — this feature cannot
+> be verified against real roblox.com from CI. **Still open:** Recycle is only visible while a
+> memory warning is latched, so the rejoin is not reachable outside that state.
+
 **Written:** 2026-08-02, end of a long session. **Status:** spec written, spike verified live,
 **nothing built.** Start here.
 
