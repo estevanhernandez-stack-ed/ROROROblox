@@ -111,8 +111,8 @@ internal static class ServerLandingReport
     /// <summary>Recycle missed for one account.</summary>
     public static string ComposeRecycleMiss(string accountName, ServerLandingOutcome outcome) =>
         outcome == ServerLandingOutcome.NeverLanded
-            ? $"{accountName} isn't in that server yet — check its Roblox window. A full server puts you in line; "
-              + "waiting or picking another server beats recycling, which gives up the spot."
+            // Says what to check, not what to avoid. Naming the wrong move plants it.
+            ? $"{accountName} isn't in that server yet — check its Roblox window. A full server puts you in line."
             : $"{accountName} came back in a different server — Roblox moved it. Recycle again to retry.";
 
     /// <summary>
@@ -128,7 +128,7 @@ internal static class ServerLandingReport
         if (notInYet.Count > 0)
         {
             parts.Add($"{notInYet.Count} of {totalVerified} aren't in that server yet: {Names(notInYet)}. "
-                + "Check their Roblox windows — a full server puts you in line, and recycling gives up the spot.");
+                + "Check their Roblox windows — a full server puts you in line.");
         }
 
         if (landedElsewhere.Count > 0)

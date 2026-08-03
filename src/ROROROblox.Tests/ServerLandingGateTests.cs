@@ -122,7 +122,9 @@ public class ServerLandingGateTests
 
         Assert.Contains("Alt3", banner);
         Assert.DoesNotContain("different server", banner);
-        Assert.DoesNotContain("Recycle again", banner);
+        // Not a word about recycling — the copy says what to check, never what to avoid. Naming
+        // the wrong move is how a user ends up trying it.
+        Assert.DoesNotContain("recycl", banner, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("line", banner);   // names the queue, so "still loading" isn't the only read
     }
 
@@ -148,7 +150,7 @@ public class ServerLandingGateTests
         Assert.Contains("2 of 8", banner);
         Assert.Contains("Alt2", banner);
         Assert.Contains("line", banner);
-        Assert.DoesNotContain("Recycle those rows", banner);
+        Assert.DoesNotContain("recycl", banner, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

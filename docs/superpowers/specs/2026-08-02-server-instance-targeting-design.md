@@ -43,7 +43,7 @@
 > | Outcome | What it means | What we say |
 > | --- | --- | --- |
 > | `LandedElsewhere` | In a game, wrong server | Recycle to retry — a restart costs nothing |
-> | `NeverLanded` | Usually standing in a queue | Check the Roblox window; wait or pick another server. **Do not recycle** |
+> | `NeverLanded` | Usually standing in a queue | Points at the Roblox window and names the queue — and says nothing at all about recycling. An earlier draft warned *against* it; naming the wrong move is how a user ends up trying it |
 >
 > Also worth recording for the retry question the body defers: an automatic retry against a full
 > server would not just be useless, it would be *destructive* — it would evict the account from the
