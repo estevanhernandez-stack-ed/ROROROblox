@@ -7,6 +7,31 @@
 **Depends on:** v1.14 server-instance targeting
 ([`2026-08-02-server-instance-targeting-design.md`](2026-08-02-server-instance-targeting-design.md)) — shipped.
 
+> **Banner correction — 2026-08-03, post-build (feat/discord-presence).** Two places build reality
+> diverged from what's written below. Per this repo's rule, the divergence is recorded here rather
+> than rewritten into the body.
+>
+> **(a) §5.2 Join confirm is gated on ORIGIN, not just destination.** As originally written, §5.2
+> only says the private-server warning applies "for presence" — it doesn't distinguish where a join
+> request arrived from. Build reality: a join that arrives via the `roblox-rororo:` OS URI handler
+> (cold start or a relayed second instance) **always** shows a confirm, even for a public server.
+> A join that arrives via Discord's in-client Join button only confirms when the target is a
+> private server (the behavior §5.2 describes). The reasoning is origin, not destination risk: a
+> `DiscordClient`-origin join can only fire after the user turned Join on and a friend received a
+> secret RoRoRo deliberately published; a `roblox-rororo:` URI can be triggered by any local
+> process, `.url` file, or browser navigation, and nothing in it proves Discord sent it. When both
+> conditions hold (a private-server target reached via the URI handler), exactly one prompt shows —
+> the private-server one, since it already carries the stronger "may be denied entry" warning. See
+> `JoinOrigin` and `MainViewModel.HandleDiscordJoinAsync` in `src/ROROROblox.App/`.
+>
+> **(b) §6's 15-second presence-push throttle was not implemented.** §6 says presence pushes are
+> "Throttled to at most one push every 15 s; Discord ignores faster updates anyway." Build reality:
+> `DiscordPresenceService.Refresh()` fires unthrottled on every roster-changing event (process
+> attach/exit, presence poll landing, session-limited, memory pressure crossing, Discord
+> reconnect). This is a known deviation to revisit, not an oversight to discover later — flagged
+> here so a future session doesn't have to rediscover it by reading Discord's own rate-limit
+> behavior the hard way.
+
 ## 1. Why now
 
 The May design was built and abandoned at **zero adopters**. RoRoRo has **806**. That changes three
