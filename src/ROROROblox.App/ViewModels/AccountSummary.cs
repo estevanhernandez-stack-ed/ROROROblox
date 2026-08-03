@@ -488,7 +488,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
     public bool InGame => _presenceState == UserPresenceType.InGame;
 
     /// <summary>
-    /// Whether this account is included in batch launches (Launch multiple / Private server).
+    /// Whether this account is included in batch launches (Launch multiple / Squad Launch).
     /// Defaults to true; the user toggles via the small dot next to the status text.
     /// Persisted to <c>accounts.dat</c> so unticked alts stay unticked across restarts.
     /// </summary>

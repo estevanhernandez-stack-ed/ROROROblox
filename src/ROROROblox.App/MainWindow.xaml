@@ -418,10 +418,10 @@
                                           IsChecked="{Binding IsSelected}"
                                           Margin="12,0,4,0"
                                           VerticalAlignment="Center"
-                                          ToolTip="Include this account in Launch multiple / Private server batches. Click to skip." />
+                                          ToolTip="Include this account in Launch multiple / Squad Launch batches. Click to skip." />
                             <TextBlock FontSize="11"
                                        VerticalAlignment="Center"
-                                       ToolTip="Whether this account joins Launch multiple / Private server batch launches. Click the dot to flip.">
+                                       ToolTip="Whether this account joins Launch multiple / Squad Launch batch launches. Click the dot to flip.">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Text" Value="In batches" />
@@ -1312,7 +1312,10 @@
                                 FontSize="12"
                                 FontWeight="SemiBold"
                                 ToolTip="Launch every selected account into its own per-row game, one at a time about 5 seconds apart — the gap makes sure each window lands on the right account. Use the dot next to each account's status to deselect." />
-                        <Button Content="Private server"
+                        <!-- Labelled "Private server" until v1.14, when the modal stopped being
+                             private-server-only: a plain game link now puts the squad in one public
+                             server. The old label described the input, not what the button does. -->
+                        <Button Content="Squad Launch"
                                 Command="{Binding OpenSquadLaunchCommand}"
                                 Padding="14,6"
                                 Background="{DynamicResource MagentaBrush}"
@@ -1320,7 +1323,7 @@
                                 BorderThickness="0"
                                 FontSize="12"
                                 FontWeight="SemiBold"
-                                ToolTip="Send every selected account into the same Roblox private server. Use the dot next to each account's status to deselect." />
+                                ToolTip="Send every selected account into the SAME server — a private server link, or a plain game link to share one public server. Launch multiple, next to this, sends each account into its own game instead. Use the dot next to each account's status to deselect." />
                     </StackPanel>
                 </Grid>
 
