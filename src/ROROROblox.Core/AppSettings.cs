@@ -238,6 +238,24 @@ public sealed class AppSettings : IAppSettings, IDisposable
         finally { _gate.Release(); }
     }
 
+    public async Task<bool> GetAlwaysShowRecycleAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).AlwaysShowRecycle; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetAlwaysShowRecycleAsync(bool always)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with { AlwaysShowRecycle = always }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
     public async Task<bool> GetStreamerModeAsync()
     {
         await _gate.WaitAsync().ConfigureAwait(false);
@@ -411,5 +429,6 @@ public sealed class AppSettings : IAppSettings, IDisposable
         int? MemoryReserveMb = null,
         int? MemoryCapMb = null,
         int ProjectionWarnMinutes = 120,
-        string? DismissedFpsCapWarningSignature = null);
+        string? DismissedFpsCapWarningSignature = null,
+        bool AlwaysShowRecycle = false);
 }

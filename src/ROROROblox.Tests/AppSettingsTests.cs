@@ -271,6 +271,24 @@ public class AppSettingsTests : IDisposable
     }
 
     [Fact]
+    public async Task AlwaysShowRecycle_DefaultsFalse_RoundTripsAcrossInstances()
+    {
+        // Off by default keeps the row silhouette that shipped in v1.12 — Recycle appears when the
+        // memory warning latches. On, it rides every running row, because since v1.14 it also puts
+        // the account back in the server it was in, which has nothing to do with memory.
+        {
+            using var first = new AppSettings(_filePath);
+            Assert.False(await first.GetAlwaysShowRecycleAsync());
+
+            await first.SetAlwaysShowRecycleAsync(true);
+            Assert.True(await first.GetAlwaysShowRecycleAsync());
+        }
+
+        using var second = new AppSettings(_filePath);
+        Assert.True(await second.GetAlwaysShowRecycleAsync());
+    }
+
+    [Fact]
     public async Task StreamerMode_DefaultsFalse_ThenPersists()
     {
         {

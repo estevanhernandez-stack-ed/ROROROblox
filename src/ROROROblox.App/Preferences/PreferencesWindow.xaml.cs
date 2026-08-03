@@ -56,6 +56,8 @@ internal partial class PreferencesWindow : Window
             RunOnLoginToggle.IsChecked = SafeIsStartupEnabled();
             LaunchMainToggle.IsChecked = await _settings.GetLaunchMainOnStartupAsync();
 
+            AlwaysShowRecycleToggle.IsChecked = await _settings.GetAlwaysShowRecycleAsync();
+
             // v1.8 idle awareness — mute toggle + warn-threshold preset (10/12/15/18 minutes).
             MuteIdleAlertsToggle.IsChecked = await _settings.GetMuteIdleAlertsAsync();
             var thresholdMinutes = await _settings.GetIdleWarnThresholdMinutesAsync();
@@ -177,6 +179,30 @@ internal partial class PreferencesWindow : Window
                 MessageBoxImage.Warning);
             _suppressClickHandlers = true;
             LaunchMainToggle.IsChecked = await _settings.GetLaunchMainOnStartupAsync();
+            _suppressClickHandlers = false;
+        }
+    }
+
+    private async void OnAlwaysShowRecycleToggle(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+        var wanted = AlwaysShowRecycleToggle.IsChecked == true;
+        try
+        {
+            await _settings.SetAlwaysShowRecycleAsync(wanted);
+            // Push it into the live view model too — the rows bind to the flag, not the file, so
+            // without this the change wouldn't show until the next start.
+            _mainViewModel.AlwaysShowRecycle = wanted;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this,
+                $"Couldn't save preference: {ex.Message}",
+                "Preferences",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            _suppressClickHandlers = true;
+            AlwaysShowRecycleToggle.IsChecked = await _settings.GetAlwaysShowRecycleAsync();
             _suppressClickHandlers = false;
         }
     }

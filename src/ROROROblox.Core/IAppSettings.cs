@@ -67,6 +67,19 @@ public interface IAppSettings
     Task SetCarefulSquadLaunchAsync(bool careful);
 
     /// <summary>
+    /// True when the per-row Recycle button should show on every running row instead of only while
+    /// the memory warning is latched. Defaults to false (the v1.12 silhouette).
+    /// <para>
+    /// Recycle was built as the remedy for Roblox's memory leak, and its visibility still says so.
+    /// Since v1.14 it also puts an account back in the exact server it was in — a reason to press
+    /// it that has nothing to do with RAM. This opt-in makes it reachable then, without changing
+    /// what an untouched install looks like.
+    /// </para>
+    /// </summary>
+    Task<bool> GetAlwaysShowRecycleAsync();
+    Task SetAlwaysShowRecycleAsync(bool always);
+
+    /// <summary>
     /// True when streamer mode is on — the account manager shows fake identities instead of real
     /// names/avatars. Sticky across launches (a streamer wants it reliably on). Defaults to false.
     /// </summary>

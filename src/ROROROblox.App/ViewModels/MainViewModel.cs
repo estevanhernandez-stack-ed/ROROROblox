@@ -717,6 +717,19 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         private set => SetField(ref _robloxUpdating, value);
     }
 
+    private bool _alwaysShowRecycle;
+
+    /// <summary>
+    /// True when Recycle should ride every running row rather than appearing only under a latched
+    /// memory warning (opt-in, Preferences). Bound by both row templates; see
+    /// <see cref="IAppSettings.GetAlwaysShowRecycleAsync"/> for why the option exists.
+    /// </summary>
+    public bool AlwaysShowRecycle
+    {
+        get => _alwaysShowRecycle;
+        set => SetField(ref _alwaysShowRecycle, value);
+    }
+
     /// <summary>Loads accounts + games from disk. Called once at MainWindow load.</summary>
     public async Task LoadAsync()
     {
@@ -759,6 +772,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // first paint, so this can't race the way a fire-and-forget ctor read could.
         _dismissedFpsCapSignature = await _settings.GetDismissedFpsCapWarningSignatureAsync();
         RefreshFpsCapWarning();
+
+        // Same reasoning as the read above — awaited before first paint, so the rows never flash
+        // the wrong Recycle visibility. Preferences writes both the setting and this flag.
+        AlwaysShowRecycle = await _settings.GetAlwaysShowRecycleAsync();
 
         await ReloadGamesAsync();
         OnPropertyChanged(nameof(MainAccount));
