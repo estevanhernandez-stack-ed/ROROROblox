@@ -2554,18 +2554,24 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     private void OnAccountSessionLimited(object? sender, Guid accountId)
+        => Application.Current?.Dispatcher.Invoke(() => ApplySessionLimited(accountId));
+
+    /// <summary>
+    /// UI-thread body of the session-limited handler (internal for tests — <see cref="OnAccountSessionLimited"/>
+    /// marshals to it, same seam shape as <see cref="ApplyPresence"/>/<see cref="ApplySessionExpired"/> —
+    /// <c>Application.Current</c> is null off a real WPF host, so a test calling the raw event
+    /// handler would silently no-op instead of exercising this body).
+    /// </summary>
+    internal void ApplySessionLimited(Guid accountId)
     {
-        Application.Current?.Dispatcher.Invoke(() =>
-        {
-            var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
-            if (summary is null) return;
-            summary.SessionLimited = true;
-            summary.PresenceState = UserPresenceType.Offline;  // clear the frozen "In game"
-            summary.CurrentGameName = null;
-            summary.InGameSinceUtc = null;
-            RelayCommand.RaiseCanExecuteChanged();
-            DiscordPresence?.Refresh();
-        });
+        var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
+        if (summary is null) return;
+        summary.SessionLimited = true;
+        summary.PresenceState = UserPresenceType.Offline;  // clear the frozen "In game"
+        summary.CurrentGameName = null;
+        summary.InGameSinceUtc = null;
+        RelayCommand.RaiseCanExecuteChanged();
+        DiscordPresence?.Refresh();
     }
 
     /// <summary>
