@@ -135,6 +135,19 @@ jobs:
           vpk @args
           if ($LASTEXITCODE -ne 0) { throw "vpk upload failed (exit $LASTEXITCODE)" }
 
+      - name: Sign compat config
+        env:
+          ROBLOXCOMPAT_SIGNING_KEY: ${{ secrets.ROBLOXCOMPAT_SIGNING_KEY }}
+        shell: pwsh
+        run: |
+          # Detached-signs roblox-compat.json (ECDSA P-256/SHA-256, ported from 626-mod-launcher's
+          # manifest-signing pattern) so RobloxCompatChecker.FetchConfigAsync can verify the raw
+          # bytes before deserializing. Fails the build hard on a missing/bad key rather than ever
+          # publishing an unsigned-but-expected roblox-compat.json.
+          $compatPath = (Resolve-Path 'roblox-compat.json').Path
+          dotnet run --project tools/CompatSigner --configuration Release -- $compatPath
+          if ($LASTEXITCODE -ne 0) { throw "CompatSigner failed (exit $LASTEXITCODE)" }
+
       - name: Upload remote compat config
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -142,13 +155,18 @@ jobs:
         run: |
           # roblox-compat.json (known-good Roblox version range + singleton mutex name) must ride on
           # every release so releases/latest/download/roblox-compat.json resolves. The app fetches it
-          # at startup for the version-drift banner + the config-driven mutex name; a missing asset
-          # means the app silently falls back (drift banner never fires, mutex name = hardcoded default).
-          gh release upload '${{ steps.ver.outputs.tag }}' roblox-compat.json --clobber
+          # at startup for the version-drift banner + the config-driven mutex name, and VERIFIES the
+          # fetched bytes against the pinned RobloxCompatSigningKey before trusting them — so
+          # roblox-compat.json.sig (produced by the "Sign compat config" step above) must ride
+          # alongside it on every release. A missing/invalid signature means the app treats it as no
+          # update available (fail-quiet to the existing safe defaults) — never a crash, never a
+          # fallback to unverified content.
+          gh release upload '${{ steps.ver.outputs.tag }}' roblox-compat.json roblox-compat.json.sig --clobber
           # plugins-catalog.json rides the same way: the marketplace (unpackaged builds only) fetches
           # releases/latest/download/plugins-catalog.json. Missing asset = 404 = empty Available
           # section (fail-safe dark), but a release that BECOMES latest without it would un-light
-          # the marketplace for everyone — so every release carries the current catalog.
+          # the marketplace for everyone — so every release carries the current catalog. Not signed
+          # yet — a natural follow-up, out of scope for this change.
           gh release upload '${{ steps.ver.outputs.tag }}' docs/store/plugins-catalog.json --clobber
 
       - name: Summary

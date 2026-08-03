@@ -60,7 +60,7 @@ RORORO initiates HTTPS connections **only** to:
 | `thumbnails.roblox.com` | When listing accounts | Public avatar imagery. |
 | `api.github.com` | At app startup | Velopack auto-update checks against the public RORORO GitHub Releases. |
 | `objects.githubusercontent.com` | When applying an update **or** installing a plugin (v1.4+) | Velopack downloads update packages from GitHub Releases; plugin installs download from the GitHub release URL you paste into Plugins → Install. |
-| Optional: `gist.githubusercontent.com` | At app startup | Fetches `roblox-compat.json` (current known-good Roblox version + mutex name). Used so we can ship config updates within hours when Roblox renames the singleton mutex. |
+| `github.com` (Releases) | At app startup | Fetches `roblox-compat.json` (current known-good Roblox version + mutex name) from `releases/latest/download/`. Used so we can ship config updates within hours when Roblox renames the singleton mutex. Signed (ECDSA P-256/SHA-256) as of the first release built after this signing change lands — the app verifies the raw bytes against a pinned public key before trusting anything the feed returns; a missing or invalid signature is treated as no update available, never a crash and never a fallback to unverified content. |
 | Plugin-publisher URLs *(v1.4+)* | Only when **you** paste a plugin install URL | RoRoRo fetches `manifest.json`, `manifest.sha256`, and `plugin.zip` from the exact URL you provide. Never auto-fetched. Each plugin's own network behavior after install is governed by that plugin's policy, not this one. |
 
 RORORO sends a `User-Agent` header of `RORORO/<version>` on every request. We do **not** spoof a browser UA. We are transparent and identifiable to the receiving servers.

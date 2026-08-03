@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- net10.0-windows to match ROROROblox.Core's TFM (project references need TFM compatibility);
+         the release workflow already runs on windows-latest for the WPF/Velopack build, so this
+         costs nothing. Tool-only: never part of the shipped app or the Velopack release build. -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Reuses RobloxCompatSignature.Format so the CI signer and the app's verifier can never drift
+         on the signature format (P1363 vs DER, hash algorithm) — the one thing both sides MUST agree on. -->
+    <ProjectReference Include="..\..\src\ROROROblox.Core\ROROROblox.Core.csproj" />
+  </ItemGroup>
+</Project>

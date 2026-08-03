@@ -1,8 +1,9 @@
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ROROROblox.Core;
 
@@ -11,11 +12,21 @@ namespace ROROROblox.Core;
 /// <c>FileVersionInfo</c> on <c>RobloxPlayerBeta.exe</c>; fetches remote config from
 /// <c>GitHub Releases / latest / download / roblox-compat.json</c>. Both calls are
 /// best-effort — any failure returns a no-drift result so the user sees a clean window.
+///
+/// <para>The remote fetch is signed. <see cref="FetchConfigAsync"/> pulls the config bytes AND the
+/// detached <c>.sig</c> sibling, and verifies the raw bytes against <see cref="RobloxCompatSigningKey"/>
+/// (ECDSA P-256/SHA-256, ported from 626-mod-launcher's manifest-signing pattern) BEFORE anything is
+/// deserialized. Missing/invalid/unparseable signature is treated exactly like a network failure —
+/// no update available, logged locally at Debug, never a crash, and the unverified bytes are never
+/// deserialized or cached. Stricter than the mod-launcher's cache-then-verify-at-next-launch design:
+/// this feed verifies at fetch time, in memory, so nothing unverified is ever trusted.</para>
 /// </summary>
 public sealed class RobloxCompatChecker : IRobloxCompatChecker
 {
     private const string CompatConfigUrl =
         "https://github.com/estevanhernandez-stack-ed/ROROROblox/releases/latest/download/roblox-compat.json";
+
+    private const string CompatConfigSignatureUrl = CompatConfigUrl + ".sig";
 
     private const string IssuesUrl =
         "https://github.com/estevanhernandez-stack-ed/ROROROblox/issues";
@@ -30,22 +41,32 @@ public sealed class RobloxCompatChecker : IRobloxCompatChecker
     private readonly HttpClient _httpClient;
     private readonly Func<string?> _readLastKnownMutex;
     private readonly Action<string> _writeLastKnownMutex;
+    private readonly ILogger<RobloxCompatChecker> _log;
+    private readonly byte[] _pinnedPublicKey;
 
     /// <summary>
     /// ONE public ctor only — the typed-HttpClient DI activator requires exactly one applicable
     /// constructor (two would make it throw "Multiple constructors" at resolve time). The DI
-    /// registration supplies just the <see cref="HttpClient"/>; the last-known-good cache read/write
-    /// default to the real <c>%LOCALAPPDATA%\ROROROblox\last-known-mutex.txt</c> seams. Unit tests
-    /// pass fakes to drive the resolver's fallback ladder without touching disk.
+    /// registration supplies just the <see cref="HttpClient"/> (DI fills the optional
+    /// <see cref="ILogger{T}"/>); the last-known-good cache read/write default to the real
+    /// <c>%LOCALAPPDATA%\ROROROblox\last-known-mutex.txt</c> seams, and <paramref name="pinnedPublicKey"/>
+    /// defaults to the pinned production key (<see cref="RobloxCompatSigningKey.PublicKeySpki"/>).
+    /// Unit tests pass fakes/an explicit test keypair to drive the resolver's fallback ladder and the
+    /// signature-verify gate without touching disk, the network, or the production private key
+    /// (which lives only in CI).
     /// </summary>
     public RobloxCompatChecker(
         HttpClient httpClient,
         Func<string?>? readLastKnownMutex = null,
-        Action<string>? writeLastKnownMutex = null)
+        Action<string>? writeLastKnownMutex = null,
+        ILogger<RobloxCompatChecker>? log = null,
+        byte[]? pinnedPublicKey = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _readLastKnownMutex = readLastKnownMutex ?? ReadLastKnownMutexFromDisk;
         _writeLastKnownMutex = writeLastKnownMutex ?? WriteLastKnownMutexToDisk;
+        _log = log ?? NullLogger<RobloxCompatChecker>.Instance;
+        _pinnedPublicKey = pinnedPublicKey ?? RobloxCompatSigningKey.PublicKeySpki;
     }
 
     public async Task<CompatCheckResult> CheckAsync()
@@ -89,14 +110,38 @@ public sealed class RobloxCompatChecker : IRobloxCompatChecker
 
     private async Task<RobloxCompatConfig?> FetchConfigAsync(TimeSpan timeout)
     {
+        byte[] configBytes;
+        byte[] signatureBytes;
         try
         {
             using var cts = new CancellationTokenSource(timeout);
-            return await _httpClient.GetFromJsonAsync<RobloxCompatConfig>(CompatConfigUrl, JsonOptions, cts.Token)
-                .ConfigureAwait(false);
+            configBytes = await _httpClient.GetByteArrayAsync(CompatConfigUrl, cts.Token).ConfigureAwait(false);
+            signatureBytes = await _httpClient.GetByteArrayAsync(CompatConfigSignatureUrl, cts.Token).ConfigureAwait(false);
         }
-        catch
+        catch (Exception ex)
         {
+            // No network, timeout, or missing .sig (404 -> HttpRequestException). Fail-quiet: treated
+            // exactly like "no published config" — the caller sees no drift / the default mutex name.
+            _log.LogDebug(ex, "roblox-compat.json/.sig fetch failed; degrading to no update available.");
+            return null;
+        }
+
+        // Verify the EXACT bytes fetched off the wire, before anything is deserialized. Reject-and-
+        // fail-quiet: an invalid/missing signature is never distinguished from a network failure to
+        // the caller, and the unverified bytes are never deserialized, cached, or trusted.
+        if (!RobloxCompatSignature.Verify(_pinnedPublicKey, configBytes, signatureBytes))
+        {
+            _log.LogDebug("roblox-compat.json signature did not verify; degrading to no update available.");
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<RobloxCompatConfig>(configBytes, JsonOptions);
+        }
+        catch (JsonException ex)
+        {
+            _log.LogDebug(ex, "roblox-compat.json failed to parse after a valid signature; degrading to no update available.");
             return null;
         }
     }
