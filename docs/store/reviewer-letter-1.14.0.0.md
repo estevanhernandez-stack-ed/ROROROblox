@@ -9,10 +9,9 @@
 >    submitted; its FPS-cap work ships inside this package. A reviewer diffing against the last
 >    approved submission will see both sets of changes, so the letter discloses both rather than
 >    describing v1.14 alone.
-> 2. **Confirm what is actually live in Partner Center before pasting.** This letter says "since
->    v1.12.0.0" on the assumption that v1.12 was the last submission. If the approved version in
->    Partner Center is older, adjust that reference — do not let the letter claim a baseline the
->    reviewer cannot see.
+> 2. **Baseline confirmed 2026-08-03: v1.12.0.0 is the approved version in the Store.** v1.13 was
+>    built but never submitted, so "since v1.12.0.0" is accurate and this letter can be pasted
+>    as-is. That is also why it describes both releases' changes rather than v1.14's alone.
 > 3. **The v1.12 memory-counter paragraph stays.** It is now part of the shipped baseline, not a
 >    v1.12-only disclosure. Dropping it would leave the standing "no memory reads" phrasing from
 >    the pre-v1.12 letters as the most recent thing on file about memory.
@@ -137,8 +136,7 @@ Estevan Hernandez
 
 ## Pre-submission sanity check (v1.14-specific)
 
-- [ ] Confirm in Partner Center which version is actually approved/live, and fix the letter's
-      "since v1.12.0.0" reference if it is not v1.12
+- [x] Approved/live version confirmed as v1.12.0.0 (2026-08-03) — the letter's baseline is correct
 - [ ] `Package.appxmanifest` Version = `1.14.0.0` (4th component zero)
 - [ ] `ROROROblox.App.csproj` `<Version>` = `1.14.0.0` (must match the manifest)
 - [ ] `PublisherDisplayName` = `626Labs LLC` (NO space in 626Labs — the spaced form fails Partner Center validation)
