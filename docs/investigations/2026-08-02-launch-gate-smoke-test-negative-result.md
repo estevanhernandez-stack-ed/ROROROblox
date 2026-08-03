@@ -498,3 +498,76 @@ The branch is a genuine improvement on both halves it does cover, and deleting P
 gate was correct regardless. **But it does not fix the wrong-FPS-cap bug and must not be
 described as doing so.** The fast path — which is what keeps the feature affordable — is
 precisely where the hole is.
+
+---
+
+# PASSING RUN — proof-of-read gate, 2026-08-02 21:16
+
+Build `15d0b3f` (proof-of-read gate `2325a05` plus prose corrections). Three accounts,
+three different caps, dispatched **within 2.5 seconds of each other** — the hardest case,
+not a paced one.
+
+**Result: every client came up running its own configured cap.** Confirmed in-game.
+
+This is the first of three mechanisms attempted today to survive this gate.
+
+## Timeline
+
+```
+21:16:40.272  A (estehernandez, 9999) launching
+21:16:40.298  A: "FPS cap 9999 already on disk; no write, no wait."   <- fast path
+21:16:40.598  A launcher pid 57764                                     <- instant
+21:16:41.516  B (CElCPapa) launching        <- dispatched +1.2s
+21:16:42.753  C (ELeonDog)  launching       <- dispatched +1.2s
+21:16:52.384  B: quiet wait (pre-write) settled after 10.85s          <- THE GATE
+21:16:57.428  B: quiet wait (post-write) settled after  5.02s
+21:16:57.661  B launcher pid 59732
+21:17:10.662  C: quiet wait (pre-write) settled after 13.00s          <- THE GATE
+21:17:15.692  C: quiet wait (post-write) settled after  5.03s
+21:17:15.946  C launcher pid 43332
+```
+
+## The one number that separates working from broken
+
+| Pre-write quiet wait | Failing build (20:20) | Passing build (21:16) |
+|---|---|---|
+| Account B | **0.0004 s** | **10.85 s** |
+| Account C | **0.0002 s** | **13.00 s** |
+
+Same code path, same accounts, same launch cadence. In the failing build the wait credited
+prior quiet instantly — the file *was* quiet, because the previously launched client had not
+started writing yet. The gate now refuses to treat that as quiet until it has observed a
+write since the last launch, which is proof the previous client has read.
+
+Everything else was already correct and unchanged. The post-write waits ran 5.02 s and
+5.03 s in both builds and did their job in both.
+
+## What it costs
+
+~17-18 s per account when the cap differs from what is on disk (A launched at :40.6,
+B at :57.7, C at 21:17:15.9). The fast path stayed free — A wrote nothing and waited
+nothing, because the file already held its value.
+
+That validates the shipped banner copy, "up to about 20 seconds each." Note the earlier
+15 s figure would have under-promised; it was corrected in `15d0b3f`.
+
+## Clean signals
+
+No `Gave up applying FPS cap`, no `could not be confirmed`, no `was overwritten` — so no
+retry was needed on any of the three. The gate plus the quiet wait meant our writes were
+never clobbered in the first place, rather than being clobbered and recovered.
+
+## For whoever reads this after it breaks again
+
+The diagnostic that matters is **the pre-write quiet wait duration**. If it reads in
+milliseconds on a launch where the cap differed, the gate is not engaging and the bug is
+back, whatever the tests say. Two mechanisms shipped green before this one:
+
+- PR #70 gated on the previous client's *process* appearing — right position, hopeless
+  signal (measured 0.023 s and 5.92 s between the first new pid and the real client, and the
+  same 26 MB windowless signature appears when a client is merely *closed*).
+- The un-gated settler had the right signal in the wrong position — it protected our write
+  and left the launched client's read exposed.
+
+Both passed every automated check. Both were caught in minutes by launching three accounts
+and looking.
