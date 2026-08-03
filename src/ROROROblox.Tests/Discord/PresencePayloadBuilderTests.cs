@@ -9,8 +9,10 @@ public class PresencePayloadBuilderTests
     private static readonly ServerInstance ServerA = new(140403681187145, "job-a");
     private static readonly ServerInstance ServerB = new(140403681187145, "job-b");
 
-    private static RosterAccount InGame(string name, ServerInstance? server, DateTimeOffset? since = null) =>
-        new(Guid.NewGuid(), name, InGame: true, GameName: "Pet Simulator 99!", Server: server,
+    private static RosterAccount InGame(
+        string name, ServerInstance? server, DateTimeOffset? since = null, LaunchTarget? lastLaunchTarget = null) =>
+        new(Guid.NewGuid(), name, InGame: true, GameName: "Pet Simulator 99!",
+            Server: RosterServer.TryFrom(server, lastLaunchTarget),
             InGameSinceUtc: since ?? T0);
 
     [Fact]
@@ -31,7 +33,8 @@ public class PresencePayloadBuilderTests
         Assert.NotNull(fields);
         Assert.Equal("Pet Simulator 99!", fields.Details);
         Assert.Equal("3 accounts in one server", fields.State);
-        Assert.Equal(ServerA, fields.JoinableServer);
+        Assert.Equal(ServerA, fields.JoinableServer!.Server);
+        Assert.Null(fields.JoinableServer.PrivateServerCode);   // public roster still encodes g|
     }
 
     [Fact]
@@ -43,7 +46,7 @@ public class PresencePayloadBuilderTests
         var fields = PresencePayloadBuilder.Build(snapshot);
 
         Assert.Equal("3 accounts · 2 in this server", fields!.State);
-        Assert.Equal(ServerA, fields.JoinableServer);   // the biggest cluster is the joinable one
+        Assert.Equal(ServerA, fields.JoinableServer!.Server);   // the biggest cluster is the joinable one
     }
 
     [Fact]
@@ -109,7 +112,8 @@ public class PresencePayloadBuilderTests
         // Discord display must align: Details says game X, Join button lands in game X, not Y.
         // The roster-first account is in "Adopt Me!" but the biggestCluster is in "Pet Simulator 99!".
         var snapshot = new RosterSnapshot([
-            new(Guid.NewGuid(), "RosterFirst", InGame: true, GameName: "Adopt Me!", Server: ServerB,
+            new(Guid.NewGuid(), "RosterFirst", InGame: true, GameName: "Adopt Me!",
+                Server: RosterServer.TryFrom(ServerB, null),
                 InGameSinceUtc: T0),
             InGame("CaptainNoodle", ServerA),
             InGame("LadyPixel", ServerA)]);
@@ -118,6 +122,32 @@ public class PresencePayloadBuilderTests
 
         // Details should come from the cluster the Join button points at, not the roster-first account.
         Assert.Equal("Pet Simulator 99!", fields!.Details);
-        Assert.Equal(ServerA, fields.JoinableServer);
+        Assert.Equal(ServerA, fields.JoinableServer!.Server);
+    }
+
+    [Fact]
+    public void Build_MixedPrivateAndPublicRoster_JoinableServerResolvesFromTheWinningCluster()
+    {
+        // FIX 1 (final whole-branch review, 2026-08-03): two accounts together in a PRIVATE
+        // server (the biggest cluster) and one alone in a public one. The winning cluster is
+        // still decided by size alone -- but its private/public nature has to be read off the
+        // SAME two accounts that make up that cluster, not the unrelated public row, and not by
+        // blind .First() (LadyPixel's copy of the pairing never recorded a code; CaptainNoodle's
+        // did -- both are the same physical server).
+        var privateServer = new ServerInstance(8737899170, "job-private");
+        var publicServer = new ServerInstance(140403681187145, "job-public");
+        var privateTarget = new LaunchTarget.PrivateServer(8737899170, "CODE", PrivateServerCodeKind.LinkCode);
+
+        var snapshot = new RosterSnapshot([
+            InGame("CaptainNoodle", privateServer, lastLaunchTarget: privateTarget),
+            InGame("LadyPixel", privateServer),                 // same server, no recorded code
+            InGame("DoctorDuck", publicServer)]);
+
+        var fields = PresencePayloadBuilder.Build(snapshot);
+
+        Assert.Equal("job-private", fields!.JoinableServer!.Server.JobId);
+        Assert.Equal("CODE", fields.JoinableServer.PrivateServerCode);
+        Assert.Equal(PrivateServerCodeKind.LinkCode, fields.JoinableServer.PrivateServerCodeKind);
+        Assert.Equal(2, fields.JoinableServerAccountCount);
     }
 }

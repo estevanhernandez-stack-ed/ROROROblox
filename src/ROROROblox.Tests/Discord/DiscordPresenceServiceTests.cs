@@ -32,7 +32,8 @@ public class DiscordPresenceServiceTests
     private static RosterSnapshot Roster(params RosterAccount[] accounts) => new(accounts);
 
     private static RosterAccount Live(string name) =>
-        new(Guid.NewGuid(), name, InGame: true, "Pet Simulator 99!", ServerA, DateTimeOffset.UtcNow);
+        new(Guid.NewGuid(), name, InGame: true, "Pet Simulator 99!",
+            RosterServer.TryFrom(ServerA, lastLaunchTarget: null), DateTimeOffset.UtcNow);
 
     [Fact]
     public async Task ApplyAsync_PresenceDisabled_NeverInitializesTheClient()

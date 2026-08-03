@@ -20,7 +20,7 @@ public static class PresencePayloadBuilder
         // The biggest cluster of accounts sharing one server is what a friend would want to join.
         var biggestCluster = live
             .Where(a => a.Server is not null)
-            .GroupBy(a => a.Server!.JobId, StringComparer.OrdinalIgnoreCase)
+            .GroupBy(a => a.Server!.Server.JobId, StringComparer.OrdinalIgnoreCase)
             .OrderByDescending(g => g.Count())
             .FirstOrDefault();
 
@@ -39,11 +39,21 @@ public static class PresencePayloadBuilder
                       ?? live.Select(a => a.GameName)
                           .FirstOrDefault(n => !string.IsNullOrWhiteSpace(n));
 
+        // The cluster's private/public nature is decided from the SAME accounts the cluster is
+        // built from, not an unrelated row: every member shares the same (place, job) pair by
+        // construction (grouped by JobId), but only the member(s) whose LastLaunchTarget was
+        // actually a matching PrivateServer carry the code — others in the same physical server may
+        // have arrived via Follow, a plain GameJob, or a since-stale LastLaunchTarget. Preferring a
+        // member that carries the code (when one exists) keeps a private session correctly
+        // identified even when .First() would otherwise land on a member that never recorded one.
+        var joinableRepresentative = biggestCluster?.FirstOrDefault(a => a.Server?.PrivateServerCode is not null)
+                                      ?? biggestCluster?.First();
+
         return new PresenceFields(
             Details: details,
             State: state,
             StartedAtUtc: live.Where(a => a.InGameSinceUtc is not null).Min(a => a.InGameSinceUtc),
-            JoinableServer: biggestCluster?.First().Server,
+            JoinableServer: joinableRepresentative?.Server,
             JoinableServerAccountCount: togetherCount);
     }
 }

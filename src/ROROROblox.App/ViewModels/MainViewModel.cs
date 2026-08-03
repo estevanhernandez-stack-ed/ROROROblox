@@ -329,13 +329,24 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// snapshot mirror exists to prevent.
     /// </para>
     /// </summary>
+    /// <para>
+    /// FIX 1 (final whole-branch review, 2026-08-03): <c>Server</c> is built via
+    /// <see cref="RosterServer.TryFrom"/> from BOTH the account's current presence server AND its
+    /// <see cref="AccountSummary.LastLaunchTarget"/> — the record of what the session was actually
+    /// launched with (private-server code and kind included). Passing the raw
+    /// <see cref="ServerInstance"/> alone (the pre-fix shape) always produced a public
+    /// <c>g|</c> Discord secret, even for a private-server roster: a friend clicking Join landed on
+    /// a public target Roblox then bounced server-side, silently defeating the denied-entry warning
+    /// this feature exists to show. <see cref="RosterServer.TryFrom"/>'s own matched-pair guard is
+    /// what keeps a stale private code from ever being attached to the wrong place.
+    /// </para>
     internal RosterSnapshot BuildRosterSnapshot() => new(
         AccountsSnapshot.Select(a => new RosterAccount(
             a.Id,
             a.RenderName,
             a.InGame,
             a.CurrentGameName,
-            a.CurrentServer,
+            RosterServer.TryFrom(a.CurrentServer, a.LastLaunchTarget),
             a.InGameSinceUtc)).ToList());
 
     /// <summary>

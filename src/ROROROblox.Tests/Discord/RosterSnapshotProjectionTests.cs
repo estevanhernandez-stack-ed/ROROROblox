@@ -53,7 +53,86 @@ public class RosterSnapshotProjectionTests
 
         var account = Assert.Single(vm.BuildRosterSnapshot().Accounts);
 
-        Assert.Equal("job-a", account.Server!.JobId);
+        Assert.Equal("job-a", account.Server!.Server.JobId);
+    }
+
+    // ---------- FIX 1 (final whole-branch review, 2026-08-03): private-server Join carrier ----------
+
+    [Fact]
+    public async Task PrivateServerRoster_EncodesAPSecretThatRoundTripsToTheSameCodeAndKind()
+    {
+        // Before the fix, PresencePayloadBuilder.JoinableServer carried only the (place, job)
+        // pair -- never the private-server credential the session was actually launched with --
+        // so DiscordPresenceService.Refresh() always encoded a public g| secret, even for a
+        // private-server roster. A friend clicking Join then received a target Roblox bounced
+        // server-side, with no warning ever shown. RosterServer.TryFrom (fed by
+        // AccountSummary.LastLaunchTarget via BuildRosterSnapshot) is what lets a p| secret
+        // reach the wire at all.
+        var (vm, row) = DiscordTestHarness.VmWithOneInGameAccount(realName: "a", maskedName: "a");
+        row.CurrentServer = new ServerInstance(8737899170, "job-private");
+        row.LastLaunchTarget = new LaunchTarget.PrivateServer(8737899170, "SECRETCODE", PrivateServerCodeKind.AccessCode);
+
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, vm.BuildRosterSnapshot, NullLogger.Instance);
+        vm.DiscordPresence = svc;
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true, JoinEnabled = true });
+
+        var party = Assert.Single(rpc.Presences).Party;
+        Assert.NotNull(party);
+        Assert.StartsWith("p|", party!.JoinSecret, StringComparison.Ordinal);
+
+        Assert.True(JoinSecretCodec.TryDecode(party.JoinSecret, out var target));
+        var decoded = Assert.IsType<LaunchTarget.PrivateServer>(target);
+        Assert.Equal("SECRETCODE", decoded.Code);
+        Assert.Equal(PrivateServerCodeKind.AccessCode, decoded.Kind);
+    }
+
+    [Fact]
+    public async Task PublicRoster_StillEncodesAGSecret()
+    {
+        // The other half of the same fix: a session that was never launched into a private
+        // server (no matching LastLaunchTarget) must keep publishing the plain g| secret --
+        // RosterServer.TryFrom must not invent a private code where none exists.
+        var (vm, row) = DiscordTestHarness.VmWithOneInGameAccount(realName: "a", maskedName: "a");
+        row.CurrentServer = new ServerInstance(140403681187145, "job-public");
+
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, vm.BuildRosterSnapshot, NullLogger.Instance);
+        vm.DiscordPresence = svc;
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true, JoinEnabled = true });
+
+        var party = Assert.Single(rpc.Presences).Party;
+        Assert.NotNull(party);
+        Assert.StartsWith("g|", party!.JoinSecret, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task PrivateServerPresence_JoinReachesTheDeniedEntryConfirm()
+    {
+        // End to end: decode the ACTUAL secret a private-server roster publishes, then feed it
+        // through HandleDiscordJoinAsync exactly as the in-client Join button would. This is the
+        // regression guard for the whole-branch finding -- before the fix this secret decoded to
+        // a LaunchTarget.GameJob, HandleDiscordJoinAsync saw no PrivateServer, and the
+        // denied-entry warning never showed.
+        var (vm, row) = DiscordTestHarness.VmWithOneInGameAccount(realName: "a", maskedName: "a");
+        row.CurrentServer = new ServerInstance(8737899170, "job-private");
+        row.LastLaunchTarget = new LaunchTarget.PrivateServer(8737899170, "CODE", PrivateServerCodeKind.LinkCode);
+
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, vm.BuildRosterSnapshot, NullLogger.Instance);
+        vm.DiscordPresence = svc;
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true, JoinEnabled = true });
+
+        var secret = Assert.Single(rpc.Presences).Party!.JoinSecret;
+        Assert.True(JoinSecretCodec.TryDecode(secret, out var target));
+
+        string? shown = null;
+        // Decline the launch (return false) -- this test only needs to prove the confirm was
+        // reached with the right copy, not exercise a real launch through the fake launcher.
+        await vm.HandleDiscordJoinAsync(target, JoinOrigin.DiscordClient, msg => { shown = msg; return false; });
+
+        Assert.NotNull(shown);
+        Assert.Contains("denied entry", shown, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

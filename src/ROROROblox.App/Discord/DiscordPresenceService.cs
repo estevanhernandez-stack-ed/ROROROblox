@@ -120,11 +120,21 @@ internal sealed class DiscordPresenceService : IDisposable
             DiscordPresenceParty? party = null;
             if (_config.JoinEnabled && fields.JoinableServer is { } server)
             {
-                var secret = JoinSecretCodec.Encode(new LaunchTarget.GameJob(server.PlaceId, server.JobId));
+                // FIX 1 (final whole-branch review, 2026-08-03): encode a p| secret carrying the
+                // real private-server code + kind when the joinable cluster's session was actually
+                // launched into one — see RosterServer's remarks. Encoding a bare GameJob for a
+                // private session (the pre-fix behavior) always published a Join button Roblox
+                // would bounce server-side, defeating the denied-entry warning entirely.
+                LaunchTarget launchTarget = server.PrivateServerCode is not null
+                    ? new LaunchTarget.PrivateServer(
+                        server.Server.PlaceId, server.PrivateServerCode, server.PrivateServerCodeKind!.Value)
+                    : new LaunchTarget.GameJob(server.Server.PlaceId, server.Server.JobId);
+
+                var secret = JoinSecretCodec.Encode(launchTarget);
                 if (secret is not null)
                 {
                     party = new DiscordPresenceParty(
-                        $"rororo-{server.JobId}", secret, fields.JoinableServerAccountCount, PartyMaxSize);
+                        $"rororo-{server.Server.JobId}", secret, fields.JoinableServerAccountCount, PartyMaxSize);
                 }
             }
 
