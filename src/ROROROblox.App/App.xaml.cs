@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ROROROblox.App.AppLifecycle;
 using ROROROblox.App.CookieCapture;
+using ROROROblox.App.Discord;
 using ROROROblox.App.Logging;
 using ROROROblox.App.Startup;
 using ROROROblox.App.Theming;
@@ -41,6 +42,18 @@ public partial class App : Application
     /// </summary>
     public static bool IsShuttingDown { get; private set; }
 
+    /// <summary>
+    /// Raised when a Discord Join lands via the <c>roblox-rororo:</c> URI scheme — either this
+    /// process was cold-started with the URI as an argument (Discord launched us fresh), or a
+    /// second instance relayed one through <see cref="SingleInstanceGuard.JoinUriReceived"/>
+    /// (we were already running). Distinct from <see cref="Discord.DiscordPresenceService.JoinRequested"/>,
+    /// which covers Discord's in-client IPC Join button while connected; this event is the OS
+    /// protocol-handler path Discord falls back to. Always raised on the UI thread. Task 8 owns
+    /// what happens next (server-instance targeting + the private-server warning) — this task's
+    /// job ends at handing over a decoded <see cref="LaunchTarget"/>.
+    /// </summary>
+    public event EventHandler<LaunchTarget>? JoinRequested;
+
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -58,12 +71,43 @@ public partial class App : Application
 
         _log.LogInformation("ROROROblox starting (v{Version}, OS {Os})", version, Environment.OSVersion);
 
+        // Discord Join, inbound half: if this process was launched with a roblox-rororo://join/
+        // URI (Discord handed it to us via the registered protocol handler), pull the raw arg out
+        // now so it can be relayed to an already-running instance below, or turned into a
+        // LaunchTarget once we know we're the primary instance.
+        var joinArg = e.Args.FirstOrDefault(a =>
+            a is not null && a.StartsWith($"{JoinUriScheme.SchemeName}://join/", StringComparison.OrdinalIgnoreCase));
+
         _singleInstance = new SingleInstanceGuard("ROROROblox-app-singleton");
-        if (!_singleInstance.AcquireOrSignalExisting())
+        if (!_singleInstance.AcquireOrSignalExisting(joinArg))
         {
             _log.LogInformation("Another instance is running; signaling and exiting.");
             Shutdown(0);
             return;
+        }
+
+        // Register the roblox-rororo: URI scheme (HKCU, no elevation) before anything Discord-
+        // related can run. Two things that look optional and are not: the registry command value
+        // must end in "%1" or Windows launches us with no argument at all and every inbound join
+        // silently does nothing (a May-branch regression); and Discord refuses to accept a
+        // presence carrying join secrets unless the scheme is registered first, so this has to
+        // land before Task 9's SetPresence — which is why it runs this early, before any other
+        // startup work. A registration failure must not block a normal Roblox-launching session.
+        try
+        {
+            var exePath = Environment.ProcessPath;
+            if (exePath is not null)
+            {
+                JoinUriScheme.Register(exePath);
+            }
+            else
+            {
+                _log.LogDebug("Environment.ProcessPath was null; skipped Discord join URI scheme registration.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Discord join URI scheme registration failed; inbound Join clicks won't reach RoRoRo until this succeeds.");
         }
 
         var services = new ServiceCollection();
@@ -211,9 +255,36 @@ public partial class App : Application
             : acquired ? MultiInstanceState.On
             : MultiInstanceState.Error);
 
+        // Discord Join relay: a second instance launched with a join URI forwards it here over
+        // the existing single-instance pipe (see SingleInstanceGuard.JoinUriReceived). The guard
+        // already marshals this onto the UI thread before invoking, so raising JoinRequested
+        // synchronously is safe.
+        _singleInstance.JoinUriReceived += relayedUri =>
+        {
+            if (JoinUriParser.TryParse([relayedUri], out var relayedTarget))
+            {
+                _log?.LogInformation("Discord join relayed from a newly-launched instance.");
+                JoinRequested?.Invoke(this, relayedTarget);
+            }
+            else
+            {
+                _log?.LogDebug("Relayed Discord join URI failed to parse; ignoring.");
+            }
+        };
+
         tray.Show();
         _singleInstance.StartListening(mainWindow);
         mainWindow.Show();
+
+        // Cold-start Discord Join: this process itself was launched with the join URI (Discord
+        // handed it straight to us rather than to an already-running instance). Raised after
+        // mainWindow.Show() so anything Task 8 wires up earlier in OnStartup is already
+        // subscribed by the time this fires.
+        if (joinArg is not null && JoinUriParser.TryParse([joinArg], out var coldStartTarget))
+        {
+            _log?.LogInformation("Cold-started via a Discord join.");
+            JoinRequested?.Invoke(this, coldStartTarget);
+        }
 
         // Fire-and-forget startup checks. Failures are silent; banner stays null on no-drift / no-network.
         _ = RunStartupChecksAsync();

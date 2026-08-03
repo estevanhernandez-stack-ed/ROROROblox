@@ -2,6 +2,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Windows;
 using System.Windows.Interop;
+using ROROROblox.App.Discord;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
@@ -13,6 +14,13 @@ internal sealed class SingleInstanceGuard : IDisposable
     private const string MutexNameTemplate = @"Local\{0}";
     private const string PipeNameTemplate = "{0}-show-window";
     private const string ShowWindowMessage = "SHOW";
+
+    // Discord Join relay: a second instance launched with a roblox-rororo://join/ URI (Discord
+    // hands the URI to whichever process the registry's "%1" command starts) forwards it to the
+    // already-running instance over the same pipe, instead of inventing a second channel. Reuses
+    // the existing single-line protocol — "SHOW" for a bare focus request, "JOIN:<uri>" to also
+    // carry the join URI — rather than opening a parallel pipe/mechanism for one more message type.
+    private const string JoinMessagePrefix = "JOIN:";
 
     private readonly string _pipeName;
     private readonly Mutex _mutex;
@@ -27,17 +35,21 @@ internal sealed class SingleInstanceGuard : IDisposable
         _mutex = new Mutex(initiallyOwned: true, name: mutexName, createdNew: out _ownsMutex);
     }
 
-    public bool AcquireOrSignalExisting()
+    /// <param name="joinUri">
+    /// The raw <c>roblox-rororo://join/...</c> argument this (second) process was launched with,
+    /// if any. Null for a normal "just bring the window forward" relaunch.
+    /// </param>
+    public bool AcquireOrSignalExisting(string? joinUri = null)
     {
         if (_ownsMutex)
         {
             return true;
         }
-        SignalExisting();
+        SignalExisting(joinUri);
         return false;
     }
 
-    private void SignalExisting()
+    private void SignalExisting(string? joinUri)
     {
         // Grant the first instance permission to take foreground. Without this, Windows
         // blocks SetForegroundWindow as a cross-process focus steal and only flashes the
@@ -52,7 +64,7 @@ internal sealed class SingleInstanceGuard : IDisposable
             using var client = new NamedPipeClientStream(".", _pipeName, PipeDirection.Out);
             client.Connect(timeout: 1000);
             using var writer = new StreamWriter(client) { AutoFlush = true };
-            writer.WriteLine(ShowWindowMessage);
+            writer.WriteLine(joinUri is null ? ShowWindowMessage : JoinMessagePrefix + joinUri);
         }
         catch (TimeoutException)
         {
@@ -61,6 +73,15 @@ internal sealed class SingleInstanceGuard : IDisposable
         {
         }
     }
+
+    /// <summary>
+    /// Fires when a second instance relayed a <c>roblox-rororo://join/...</c> URI (raw, still
+    /// url-encoded) instead of a bare focus request. Always raised on the UI thread — the
+    /// listener's caller (<see cref="StartListening"/>) passes <paramref name="mainWindow"/>'s
+    /// dispatcher for exactly this. Callers turn the raw URI into a <c>LaunchTarget</c> via
+    /// <see cref="JoinUriParser"/> themselves; this class stays agnostic of that decode.
+    /// </summary>
+    public event Action<string>? JoinUriReceived;
 
     public void StartListening(Window mainWindow)
     {
@@ -86,6 +107,17 @@ internal sealed class SingleInstanceGuard : IDisposable
                 if (message == ShowWindowMessage)
                 {
                     mainWindow.Dispatcher.Invoke(() => SurfaceWindow(mainWindow));
+                }
+                else if (message is not null && message.StartsWith(JoinMessagePrefix, StringComparison.Ordinal))
+                {
+                    // A relayed join still surfaces the window — the user clicked Join and should
+                    // see RoRoRo, same as a bare focus request — then hands the raw URI onward.
+                    var joinUri = message[JoinMessagePrefix.Length..];
+                    mainWindow.Dispatcher.Invoke(() =>
+                    {
+                        SurfaceWindow(mainWindow);
+                        JoinUriReceived?.Invoke(joinUri);
+                    });
                 }
             }
             catch (OperationCanceledException)
