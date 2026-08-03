@@ -41,6 +41,44 @@
 **Evidence:** `docs/investigations/2026-08-02-launch-gate-smoke-test-negative-result.md`
 **Severity:** Silent wrong behavior — no error, no log, the user's configured cap simply does not apply.
 
+> ## 🛑 CORRECTED (2026-08-02 evening) — the sequence below protects the wrong side of the launch
+>
+> This design was built, reviewed four times, and manually verified. **It does not fix the
+> bug.** Three accounts at three different caps each came up running the *next* account's
+> value, with no perceptible delay.
+>
+> **What it got wrong.** The sequence protects *our write* from the previous client. Nothing
+> protects the *newly launched client's read* from the next account's write. And "the file is
+> quiet" is ambiguous in a way this document never accounted for: immediately after a launch,
+> quiet means the client **has not started writing yet**, not that it has finished. So the next
+> launch credits instant prior quiet and writes straight into the window where the previous
+> client is about to read. The fast path — the thing that makes the feature affordable — is
+> exactly where the hole is, because it launches having waited for nothing at all.
+>
+> PR #70's post-launch hold was in the **right position** with a hopeless signal. This design
+> has the **right signal in the wrong position**.
+>
+> **The measurement that fixes it** (2026-08-02, `docs/investigations/2026-08-02-launch-gate-smoke-test-negative-result.md`):
+> a client's first write-back to this file is a valid **proof-of-read**. Primed the file so
+> RoRoRo's fast path wrote nothing, waited for the client's first write, overwrote with a
+> sentinel 50 ms later — and the client restored its own value 3 s afterwards, proving it had
+> already read. Confirmed in-game.
+>
+> Two constraints from the same run: the first write-back landed at **+2.88 s** and, minutes
+> earlier, **+7.07 s** — so no fixed delay is correct; and the signal alone is insufficient,
+> because the client keeps re-persisting for a further ~9–12 s.
+>
+> **Corrected sequence** (steps 2–5 already exist and are measured working):
+>
+> 1. **Wait for at least one write by the launched client** — proves it has read. *(missing)*
+> 2. Then wait for quiet — proves its write-back storm has finished.
+> 3. Write the next account's cap.
+> 4. Wait for quiet again, re-read to confirm it survived, retry on clobber.
+> 5. Launch.
+>
+> Concretely: the pre-write quiet wait must not credit prior quiet when the previous action was
+> a launch whose client has not yet written. Everything below stands apart from that.
+
 ## The bug, in one paragraph
 
 Roblox keeps **one** settings file per install — `%LOCALAPPDATA%\Roblox\GlobalBasicSettings_<N>.xml` —
