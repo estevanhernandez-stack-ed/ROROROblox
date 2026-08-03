@@ -103,14 +103,30 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 
 > Avoid "cheat", "exploit", "bypass" — those will trigger reviewer concerns even if irrelevant.
 
-## What's new (release notes for v1.12.0.0)
+## What's new (release notes for v1.14.0.0)
 
-> Store field only. Do NOT mention the plugin marketplace here — it's hidden in the
-> Store (packaged) build, so advertising it would confuse Store users and invite
-> reviewer questions. The memory watchdog leads: it solves a problem users actually
-> reported, and "we watch for it and give you one click to fix it" is a clean
-> user-benefit framing. Keep it about the user's machine filling up — do not
-> editorialise about the Roblox client, which reads as blame-shifting to a reviewer.
+> Store field only. Do NOT mention the plugin marketplace here. Lead with the same-server
+> rejoin: it's the change users asked for by name. Say "the server you were in," not "the
+> server instance" — nobody outside this repo says instance. Do not describe the queue
+> mechanics here; that belongs in the app and the GitHub notes, and in a Store field it reads
+> as a warning about a defect. This block bundles v1.13's FPS-cap fix, which never shipped
+> on its own.
+
+```
+v1.14.0.0:
+• Recycle now puts an account back in the same server it was in, not just the same game — so closing and reopening a client no longer costs you your spot with everyone else.
+• Squad Launch can send your accounts into one public server together. Paste a game link instead of a private server link; the first account goes in and the rest join it there.
+• RoRoRo checks where each account actually ended up after a launch, and tells you by name if one didn't make it.
+• Recycle can now sit on every running account, not just ones RoRoRo is warning about — turn it on in Settings.
+• Frame-rate caps stick. Setting different caps on different accounts used to be a coin flip when you launched them close together; now each client gets the cap you chose for it.
+```
+
+## What's new — v1.12.0.0 (superseded, kept for reference)
+
+> The memory watchdog led this one: it solved a problem users actually reported, and
+> "we watch for it and give you one click to fix it" is a clean user-benefit framing.
+> Keep it about the user's machine filling up — do not editorialise about the Roblox
+> client, which reads as blame-shifting to a reviewer.
 
 ```
 v1.12.0.0:
