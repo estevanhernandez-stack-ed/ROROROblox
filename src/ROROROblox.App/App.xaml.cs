@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using ROROROblox.App.AppLifecycle;
 using ROROROblox.App.CookieCapture;
 using ROROROblox.App.Discord;
+using ROROROblox.App.Discord.Internal;
 using ROROROblox.App.Logging;
 using ROROROblox.App.Startup;
 using ROROROblox.App.Theming;
@@ -17,6 +18,7 @@ using ROROROblox.App.Updates;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
+using ROROROblox.Core.Discord;
 using ROROROblox.Core.Theming;
 
 namespace ROROROblox.App;
@@ -262,6 +264,14 @@ public partial class App : Application
         StartPluginAutostart();
         await InitializeIdleSettingsAsync();
         await InitializeStreamerModeAsync();
+
+        // Discord presence + Join (Task 9). MUST run before mainWindow.Show() below: the
+        // cold-start join dispatch (_joinRelay.Handle(joinArg, "cold start")) fires right after
+        // Show(), and a join that launched this very process needs JoinRequested already wired
+        // by then, or it's silently dropped. mainWindow and the DI graph are both available by
+        // this point (mainWindow resolved above at var mainWindow = ...), so there's no ordering
+        // reason to push this any later.
+        await WireDiscordPresenceAsync(mainWindow);
 
         _log.LogInformation(
             "Startup mutex: name={Name}, source={Source}, acquired={Acquired}.",
@@ -684,6 +694,15 @@ public partial class App : Application
         var dataDir = System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "ROROROblox");
+
+        // Discord presence + Join config (Task 9) — DPAPI-encrypted, alongside accounts.dat and
+        // consent.dat under the same data dir. Registered unconditionally, independent of whether
+        // Discord:ApplicationId is configured: Preferences needs to read/write the toggle state
+        // (see PreferencesWindow) even in a build where the feature itself can't run yet, so a
+        // saved preference is honored automatically the moment a future build ships an app id.
+        services.AddSingleton(_ => new DiscordConfigStore(
+            System.IO.Path.Combine(dataDir, "discord.dat")));
+
         services.AddSingleton<IDiagnosticsCollector>(sp => new DiagnosticsCollector(
             sp.GetRequiredService<IAccountStore>(),
             sp.GetRequiredService<IRobloxProcessTracker>(),
@@ -1191,6 +1210,151 @@ public partial class App : Application
         }
     }
 
+    /// <summary>
+    /// Discord presence + Join, startup half (Task 9). Skips the whole feature — no client, no
+    /// presence service, nothing assigned to <see cref="MainViewModel.DiscordPresence"/> — when
+    /// <c>Discord:ApplicationId</c> (appsettings.json) is empty, which it is by default.
+    /// <see cref="LacheeDiscordRpcClientAdapter.Initialize"/> already guards the same case
+    /// defensively, but constructing and starting a presence service that can never connect is
+    /// pointless ceremony, and Preferences needs to know NOW (not discover it lazily on first
+    /// toggle) so it can disable the checkboxes and say why instead of showing controls that
+    /// quietly do nothing. <see cref="JoinUriScheme.Register"/> already ran earlier in
+    /// <see cref="OnStartup"/>, well before this — Discord refuses to accept a presence carrying
+    /// join secrets until that registration exists.
+    /// <para>
+    /// Subscribes BOTH inbound-join paths to the same <see cref="MainViewModel.HandleDiscordJoinAsync"/>
+    /// — the brief for this task only mentions <see cref="DiscordPresenceService.JoinRequested"/>
+    /// (the in-client Join button), but <see cref="JoinRequested"/> (this class's own event, the
+    /// <c>roblox-rororo:</c> OS protocol-handler path Task 7 built) has no other subscriber
+    /// anywhere in the codebase. Without this second subscription, a Join click that arrives while
+    /// RoRoRo is closed (Discord cold-starts us with the URI) decodes correctly, raises the event,
+    /// and then goes nowhere — the entire protocol-handler path would ship as dead code.
+    /// </para>
+    /// <para>
+    /// The two events are marshalled differently, per each one's own doc remarks:
+    /// <see cref="JoinRequested"/> already arrives on the UI thread (<c>SingleInstanceGuard</c>
+    /// raises its relay inside <c>Dispatcher.Invoke</c>; cold start runs from <c>OnStartup</c>,
+    /// itself on the UI thread) and is wired directly. <see cref="DiscordPresenceService.JoinRequested"/>
+    /// arrives on Lachee's background RPC thread with nothing in its chain that marshals, so it is
+    /// hopped onto the UI thread via <c>Dispatcher.InvokeAsync</c> before ever touching
+    /// <see cref="MainViewModel"/> or showing <see cref="Modals.JoinRequestWindow"/> — skipping
+    /// that hop is the common crash here (every in-client Join goes through this path), not a rare
+    /// edge case.
+    /// </para>
+    /// <para>
+    /// No account name enters the presence payload today — <c>PresencePayloadBuilder.Build</c>
+    /// only ever reads <c>InGame</c>/<c>Server</c>/<c>GameName</c>/<c>InGameSinceUtc</c> off each
+    /// <see cref="ROROROblox.Core.Discord.RosterAccount"/>, never <c>DisplayName</c> — so streamer
+    /// mode flipping <c>RenderName</c> has nothing to leak outbound and does not need to trigger
+    /// <see cref="DiscordPresenceService.Refresh"/>. If a future change puts a name on the wire,
+    /// that same commit must wire <c>IStreamerIdentityProvider.Changed</c> to
+    /// <c>DiscordPresence?.Refresh()</c> (Task 6 review finding).
+    /// </para>
+    /// </summary>
+    private async Task WireDiscordPresenceAsync(MainWindow mainWindow)
+    {
+        if (_services is null) return;
+        try
+        {
+            var applicationId = ReadDiscordApplicationId();
+            if (string.IsNullOrWhiteSpace(applicationId))
+            {
+                _log?.LogDebug("Discord:ApplicationId is empty; Discord presence disabled this session.");
+                return;
+            }
+
+            var vm = _services.GetRequiredService<MainViewModel>();
+            var configStore = _services.GetRequiredService<DiscordConfigStore>();
+            var config = await configStore.LoadAsync().ConfigureAwait(true);
+
+            var client = new LacheeDiscordRpcClientAdapter(
+                applicationId, _services.GetRequiredService<ILogger<LacheeDiscordRpcClientAdapter>>());
+            var presence = new DiscordPresenceService(
+                client,
+                vm.BuildRosterSnapshot,
+                _services.GetRequiredService<ILogger<DiscordPresenceService>>());
+            vm.DiscordPresence = presence;
+
+            await presence.ApplyAsync(config).ConfigureAwait(true);
+
+            // In-client Join button — Lachee's background RPC thread. Must hop to the UI thread
+            // before calling HandleDiscordJoinAsync (see this method's remarks + both types' own
+            // doc comments). InvokeAsync with an async lambda, not a bare Invoke: the join can
+            // show a modal (JoinRequestWindow.Confirm) and reach LaunchAccountAsync, neither of
+            // which should block the RPC thread while they run.
+            presence.JoinRequested += (_, target) =>
+            {
+                Dispatcher.InvokeAsync(async () =>
+                {
+                    try
+                    {
+                        await vm.HandleDiscordJoinAsync(
+                            target, msg => Modals.JoinRequestWindow.Confirm(mainWindow, msg)).ConfigureAwait(true);
+                    }
+                    catch (Exception ex)
+                    {
+                        _log?.LogWarning(ex, "Discord in-client Join handling threw; ignoring.");
+                    }
+                });
+            };
+
+            // roblox-rororo: URI (cold start or relayed from a second instance) — already
+            // UI-thread-marshalled by the time it reaches here; see JoinRequested's own remarks.
+            JoinRequested += async (_, target) =>
+            {
+                try
+                {
+                    await vm.HandleDiscordJoinAsync(
+                        target, msg => Modals.JoinRequestWindow.Confirm(mainWindow, msg)).ConfigureAwait(true);
+                }
+                catch (Exception ex)
+                {
+                    _log?.LogWarning(ex, "Inbound Discord join (protocol handler) handling threw; ignoring.");
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Discord presence wiring failed; continuing without it.");
+        }
+    }
+
+    /// <summary>
+    /// Reads <c>Discord:ApplicationId</c> straight out of appsettings.json next to the exe. No
+    /// <c>IConfiguration</c> binder runs anywhere in this process —
+    /// <see cref="ROROROblox.App.Plugins.PluginHostStartupService"/> deliberately uses
+    /// <c>WebApplication.CreateSlimBuilder</c> specifically to skip that config stack (see its own
+    /// remarks) — so this is a direct, minimal JSON read rather than pulling in
+    /// Microsoft.Extensions.Configuration.Json for one string. A missing file, malformed JSON, or
+    /// a missing/non-string key all resolve to <see cref="string.Empty"/> (feature off), same
+    /// tamper-tolerant shape as <see cref="DiscordConfigStore"/>.
+    /// </summary>
+    private static string ReadDiscordApplicationId()
+    {
+        try
+        {
+            var path = System.IO.Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+            if (!System.IO.File.Exists(path))
+            {
+                return string.Empty;
+            }
+
+            using var doc = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(path));
+            if (doc.RootElement.TryGetProperty("Discord", out var discord) &&
+                discord.TryGetProperty("ApplicationId", out var appId) &&
+                appId.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                return appId.GetString() ?? string.Empty;
+            }
+
+            return string.Empty;
+        }
+        catch (Exception)
+        {
+            return string.Empty;
+        }
+    }
+
     private void WireMainAvatarTrayPainter()
     {
         if (_services is null) return;
@@ -1231,9 +1395,10 @@ public partial class App : Application
             var accountStore = _services.GetRequiredService<IAccountStore>();
             var transport = _services.GetRequiredService<ROROROblox.Core.Transport.IAccountTransport>();
             var mainViewModel = _services.GetRequiredService<MainViewModel>();
+            var discordConfigStore = _services.GetRequiredService<DiscordConfigStore>();
             var window = new Preferences.PreferencesWindow(
                 settings, startup, themeStore, themeService,
-                accountStore, transport, mainViewModel);
+                accountStore, transport, mainViewModel, discordConfigStore);
             if (owner.IsLoaded) window.Owner = owner;
             SurfaceMainWindow(owner);
             window.ShowDialog();
@@ -1851,6 +2016,21 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _log?.LogDebug(ex, "MutexContestedWatcher.Dispose threw on exit; ignoring.");
+            }
+
+            // Discord presence (Task 9) — not DI-registered (WireDiscordPresenceAsync constructs
+            // it conditionally, skipped whenever Discord:ApplicationId is empty), so
+            // _services.DisposeAsync() below never reaches it; this is its only cleanup call.
+            // Dispose() tears down the Lachee IPC client, which is what actually makes Discord
+            // clear the presence on exit rather than leaving a stale status showing until Discord
+            // notices the pipe died on its own.
+            try
+            {
+                _services.GetService<MainViewModel>()?.DiscordPresence?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "DiscordPresenceService.Dispose threw on exit; ignoring.");
             }
         }
 

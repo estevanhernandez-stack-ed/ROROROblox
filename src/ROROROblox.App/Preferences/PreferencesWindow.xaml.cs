@@ -5,6 +5,7 @@ using ROROROblox.App.Theming;
 using ROROROblox.App.Transport;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
+using ROROROblox.Core.Discord;
 using ROROROblox.Core.Theming;
 using ROROROblox.Core.Transport;
 
@@ -26,7 +27,15 @@ internal partial class PreferencesWindow : Window
     private readonly IAccountStore _accountStore;
     private readonly IAccountTransport _transport;
     private readonly MainViewModel _mainViewModel;
+    private readonly DiscordConfigStore _discordConfigStore;
     private bool _suppressClickHandlers; // true while we set the initial check states.
+
+    // Loaded once at OnLoaded, mutated on each Discord toggle click, saved whole. A compound
+    // record (Presence + Join + webhook fields live in one encrypted blob) needs an in-memory
+    // canonical copy — re-reading the store fresh on every click risks a lost-update race if
+    // the two Discord checkboxes are clicked in quick succession (the UI message pump can
+    // interleave a second click into the first click's await).
+    private DiscordConfig _discordConfig = new();
 
     public PreferencesWindow(
         IAppSettings settings,
@@ -35,7 +44,8 @@ internal partial class PreferencesWindow : Window
         ThemeService themeService,
         IAccountStore accountStore,
         IAccountTransport transport,
-        MainViewModel mainViewModel)
+        MainViewModel mainViewModel,
+        DiscordConfigStore discordConfigStore)
     {
         _settings = settings;
         _startupRegistration = startupRegistration;
@@ -44,6 +54,7 @@ internal partial class PreferencesWindow : Window
         _accountStore = accountStore;
         _transport = transport;
         _mainViewModel = mainViewModel;
+        _discordConfigStore = discordConfigStore;
         InitializeComponent();
         Loaded += OnLoaded;
     }
@@ -57,6 +68,24 @@ internal partial class PreferencesWindow : Window
             LaunchMainToggle.IsChecked = await _settings.GetLaunchMainOnStartupAsync();
 
             AlwaysShowRecycleToggle.IsChecked = await _settings.GetAlwaysShowRecycleAsync();
+
+            // Discord presence + Join (v1.14+ plan). DiscordPresence is only non-null when
+            // App.OnStartup found a non-empty Discord:ApplicationId in appsettings.json — see
+            // App.WireDiscordPresenceAsync. Null means the feature can never work in this build,
+            // so the toggles are disabled rather than left checkable-but-inert.
+            _discordConfig = await _discordConfigStore.LoadAsync();
+            DiscordPresenceToggle.IsChecked = _discordConfig.PresenceEnabled;
+            DiscordJoinToggle.IsChecked = _discordConfig.JoinEnabled;
+            if (_mainViewModel.DiscordPresence is { } presence)
+            {
+                DiscordStatusLine.Text = presence.StatusLine;
+            }
+            else
+            {
+                DiscordPresenceToggle.IsEnabled = false;
+                DiscordJoinToggle.IsEnabled = false;
+                DiscordStatusLine.Text = "Discord presence isn't set up for this build.";
+            }
 
             // v1.8 idle awareness — mute toggle + warn-threshold preset (10/12/15/18 minutes).
             MuteIdleAlertsToggle.IsChecked = await _settings.GetMuteIdleAlertsAsync();
@@ -203,6 +232,72 @@ internal partial class PreferencesWindow : Window
                 MessageBoxImage.Warning);
             _suppressClickHandlers = true;
             AlwaysShowRecycleToggle.IsChecked = await _settings.GetAlwaysShowRecycleAsync();
+            _suppressClickHandlers = false;
+        }
+    }
+
+    /// <summary>
+    /// "Show what I'm playing on Discord." Mirrors <see cref="OnAlwaysShowRecycleToggle"/>'s
+    /// shape: save, then push the change into the live service so it takes effect immediately
+    /// instead of on next restart. <c>ApplyAsync</c> both applies AND refreshes
+    /// <see cref="DiscordPresenceService.StatusLine"/>, so the status line always reflects the
+    /// connection state right after a toggle, not just at open.
+    /// </summary>
+    private async void OnDiscordPresenceToggle(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+        var wanted = DiscordPresenceToggle.IsChecked == true;
+        var updated = _discordConfig with { PresenceEnabled = wanted };
+        _discordConfig = updated; // update the in-memory copy before the first await — see field doc
+        try
+        {
+            await _discordConfigStore.SaveAsync(updated);
+            if (_mainViewModel.DiscordPresence is { } presence)
+            {
+                await presence.ApplyAsync(updated);
+                DiscordStatusLine.Text = presence.StatusLine;
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this,
+                $"Couldn't save preference: {ex.Message}",
+                "Preferences",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            _suppressClickHandlers = true;
+            _discordConfig = await _discordConfigStore.LoadAsync();
+            DiscordPresenceToggle.IsChecked = _discordConfig.PresenceEnabled;
+            _suppressClickHandlers = false;
+        }
+    }
+
+    /// <summary>"Let friends join my server from Discord." Same shape as <see cref="OnDiscordPresenceToggle"/>.</summary>
+    private async void OnDiscordJoinToggle(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+        var wanted = DiscordJoinToggle.IsChecked == true;
+        var updated = _discordConfig with { JoinEnabled = wanted };
+        _discordConfig = updated;
+        try
+        {
+            await _discordConfigStore.SaveAsync(updated);
+            if (_mainViewModel.DiscordPresence is { } presence)
+            {
+                await presence.ApplyAsync(updated);
+                DiscordStatusLine.Text = presence.StatusLine;
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this,
+                $"Couldn't save preference: {ex.Message}",
+                "Preferences",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            _suppressClickHandlers = true;
+            _discordConfig = await _discordConfigStore.LoadAsync();
+            DiscordJoinToggle.IsChecked = _discordConfig.JoinEnabled;
             _suppressClickHandlers = false;
         }
     }

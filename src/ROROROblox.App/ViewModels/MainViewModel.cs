@@ -55,6 +55,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly ITrayService _tray;
     private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
     private readonly Core.StreamerMode.IStreamerIdentityProvider? _streamerIdentity;
+    private readonly DiscordConfigStore? _discordConfigStore;
     private readonly ILogger<MainViewModel> _log;
 
     /// <summary>
@@ -126,6 +127,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         ITrayService tray,
         Notifications.IdleAlertPresenter idleAlertPresenter,
         Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
+        DiscordConfigStore? discordConfigStore = null,
         ILogger<MainViewModel>? log = null)
     {
         _cookieCapture = cookieCapture;
@@ -153,6 +155,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _tray = tray;
         _idleAlertPresenter = idleAlertPresenter;
         _streamerIdentity = streamerIdentity;
+        _discordConfigStore = discordConfigStore;
         _log = log ?? NullLogger<MainViewModel>.Instance;
 
         // AccountRecycler (Task 8) is built here, not injected — its LaunchDelegate needs to call
@@ -3175,9 +3178,19 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OpenPreferences()
     {
+        // _discordConfigStore is DI-supplied unconditionally in production (App.ConfigureServices
+        // registers it regardless of whether Discord:ApplicationId is configured — see that
+        // registration's remarks). It's only ever null here in a test fixture that constructed
+        // this VM directly and never exercises OpenPreferencesCommand; the same
+        // LocalApplicationData\ROROROblox\discord.dat path App.xaml.cs uses is the correct
+        // fallback rather than letting the window construction throw.
+        var discordConfigStore = _discordConfigStore ?? new DiscordConfigStore(
+            System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "ROROROblox", "discord.dat"));
         var window = new Preferences.PreferencesWindow(
             _settings, _startupRegistration, _themeStore, _themeService,
-            _accountStore, _accountTransport, this)
+            _accountStore, _accountTransport, this, discordConfigStore)
         {
             Owner = Application.Current.MainWindow,
         };
