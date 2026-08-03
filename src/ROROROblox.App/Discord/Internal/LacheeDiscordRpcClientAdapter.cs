@@ -38,44 +38,113 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
     {
         if (_client is not null) return;
 
-        _client = new DiscordRpcClient(_applicationId);
-        _client.OnReady += (_, _) => Ready?.Invoke(this, EventArgs.Empty);
-        _client.OnConnectionFailed += (_, _) => ConnectionFailed?.Invoke(this, EventArgs.Empty);
-        _client.OnClose += (_, _) => ConnectionFailed?.Invoke(this, EventArgs.Empty);
-        _client.OnError += (_, e) => Errored?.Invoke(this, e.Message);
-        _client.OnJoin += (_, e) => JoinRequested?.Invoke(this, e.Secret);
+        if (string.IsNullOrWhiteSpace(_applicationId))
+        {
+            // Defense-in-depth: Task 6 owns the "skip the feature when unconfigured" decision
+            // upstream, but `new DiscordRpcClient("")` throws ArgumentNullException synchronously,
+            // and Discord:ApplicationId ships empty today. One guard is too sharp an edge to rely on.
+            _log.LogWarning("Discord presence unavailable: no application id configured.");
+            return;
+        }
 
-        _client.Initialize();
-        // Without this the Join button renders and its click is never delivered.
-        _client.Subscribe(EventType.Join);
+        try
+        {
+            _client = new DiscordRpcClient(_applicationId);
+            _client.OnReady += (_, _) => SafeInvoke(() => Ready?.Invoke(this, EventArgs.Empty));
+            _client.OnConnectionFailed += (_, _) => SafeInvoke(() => ConnectionFailed?.Invoke(this, EventArgs.Empty));
+            _client.OnClose += (_, _) => SafeInvoke(() => ConnectionFailed?.Invoke(this, EventArgs.Empty));
+            _client.OnError += (_, e) => SafeInvoke(() => Errored?.Invoke(this, e.Message));
+            _client.OnJoin += (_, e) => SafeInvoke(() => JoinRequested?.Invoke(this, e.Secret));
+
+            _client.Initialize();
+            // Without this the Join button renders and its click is never delivered.
+            _client.Subscribe(EventType.Join);
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Discord IPC initialize failed; presence unavailable this session.");
+            _client?.Dispose();
+            _client = null;
+        }
     }
 
     public void Deinitialize()
     {
-        _client?.Deinitialize();
-        _client?.Dispose();
-        _client = null;
+        try
+        {
+            _client?.Deinitialize();
+            _client?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Discord IPC deinitialize failed.");
+        }
+        finally
+        {
+            _client = null;
+        }
     }
 
     public void SetPresence(DiscordPresencePayload payload)
     {
         if (_client is null) return;
-        _client.SetPresence(new RichPresence
+        try
         {
-            State = payload.State,
-            Details = payload.Details,
-            Timestamps = payload.StartedAtUtc is { } t ? new Timestamps(t.UtcDateTime) : null,
-            Assets = new Assets
-            {
-                LargeImageKey = payload.LargeImageKey,
-                LargeImageText = payload.LargeImageText,
-            },
-            Party = payload.Party is { } p ? new Party { ID = p.PartyId, Size = p.Size, Max = p.MaxSize } : null,
-            Secrets = payload.Party is { } s ? new Secrets { JoinSecret = s.JoinSecret } : null,
-        });
+            _client.SetPresence(ToRichPresence(payload));
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Discord SetPresence failed; presence not updated this cycle.");
+        }
     }
 
-    public void ClearPresence() => _client?.ClearPresence();
+    /// <summary>
+    /// Pure mapping from the seam DTO to Lachee's <see cref="RichPresence"/>. Touches no IPC, so
+    /// it is unit-testable without a Discord pipe — see
+    /// ROROROblox.Tests/Discord/DiscordPresencePayloadMappingTests.cs.
+    /// </summary>
+    internal static RichPresence ToRichPresence(DiscordPresencePayload payload) => new()
+    {
+        State = payload.State,
+        Details = payload.Details,
+        Timestamps = payload.StartedAtUtc is { } t ? new Timestamps(t.UtcDateTime) : null,
+        Assets = new Assets
+        {
+            LargeImageKey = payload.LargeImageKey,
+            LargeImageText = payload.LargeImageText,
+        },
+        Party = payload.Party is { } p ? new Party { ID = p.PartyId, Size = p.Size, Max = p.MaxSize } : null,
+        Secrets = payload.Party is { } s ? new Secrets { JoinSecret = s.JoinSecret } : null,
+    };
+
+    public void ClearPresence()
+    {
+        try
+        {
+            _client?.ClearPresence();
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Discord ClearPresence failed.");
+        }
+    }
 
     public void Dispose() => Deinitialize();
+
+    /// <summary>
+    /// Event forwarding fires on Lachee's background RPC thread (AutoEvents defaults to true).
+    /// A throwing subscriber would otherwise surface on that thread, outside app control, and
+    /// can take the process down. Isolate it instead.
+    /// </summary>
+    private void SafeInvoke(Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Discord event subscriber threw; isolated to keep the IPC thread alive.");
+        }
+    }
 }
