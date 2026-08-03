@@ -161,6 +161,24 @@ public sealed class AppSettings : IAppSettings, IDisposable
         }
     }
 
+    public async Task<string?> GetDismissedFpsCapWarningSignatureAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).DismissedFpsCapWarningSignature; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetDismissedFpsCapWarningSignatureAsync(string? signature)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with { DismissedFpsCapWarningSignature = signature }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
     public async Task<bool> GetMuteIdleAlertsAsync()
     {
         await _gate.WaitAsync().ConfigureAwait(false);
@@ -372,10 +390,13 @@ public sealed class AppSettings : IAppSettings, IDisposable
     // SettingsBlob: missing fields decode as defaults (System.Text.Json), so older v1 blobs
     // without LaunchMainOnStartup, BloxstrapWarningDismissed, MuteIdleAlerts,
     // IdleWarnThresholdMinutes, CarefulSquadLaunch, StreamerMode, MemoryWatchdogEnabled,
-    // MemoryReserveMb, MemoryCapMb, or ProjectionWarnMinutes load cleanly with those fields at
-    // their defaults — no migration step. MemoryReserveMb/MemoryCapMb default to null ("never
-    // set" — the composition root derives from installed RAM); they are NOT sentinel-zero because
-    // 0 is a real, distinct user choice for MemoryCapMb (disable the cap trigger).
+    // MemoryReserveMb, MemoryCapMb, ProjectionWarnMinutes, or DismissedFpsCapWarningSignature
+    // load cleanly with those fields at their defaults — no migration step. MemoryReserveMb/
+    // MemoryCapMb default to null ("never set" — the composition root derives from installed
+    // RAM); they are NOT sentinel-zero because 0 is a real, distinct user choice for MemoryCapMb
+    // (disable the cap trigger). DismissedFpsCapWarningSignature defaults to null ("nothing
+    // dismissed yet") for the same reason — an empty string would be ambiguous with a real
+    // (if degenerate) signature.
     private sealed record SettingsBlob(
         int Version,
         string? DefaultPlaceUrl,
@@ -389,5 +410,6 @@ public sealed class AppSettings : IAppSettings, IDisposable
         bool MemoryWatchdogEnabled = true,
         int? MemoryReserveMb = null,
         int? MemoryCapMb = null,
-        int ProjectionWarnMinutes = 120);
+        int ProjectionWarnMinutes = 120,
+        string? DismissedFpsCapWarningSignature = null);
 }

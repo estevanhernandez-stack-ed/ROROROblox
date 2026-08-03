@@ -892,6 +892,9 @@ public class RobloxLauncherTests
         public bool BloxstrapWarningDismissed { get; set; }
         public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(BloxstrapWarningDismissed);
         public Task SetBloxstrapWarningDismissedAsync(bool value) { BloxstrapWarningDismissed = value; return Task.CompletedTask; }
+        public string? DismissedFpsCapWarningSignature { get; set; }
+        public Task<string?> GetDismissedFpsCapWarningSignatureAsync() => Task.FromResult(DismissedFpsCapWarningSignature);
+        public Task SetDismissedFpsCapWarningSignatureAsync(string? signature) { DismissedFpsCapWarningSignature = signature; return Task.CompletedTask; }
         public bool MuteIdleAlerts { get; set; }
         public Task<bool> GetMuteIdleAlertsAsync() => Task.FromResult(MuteIdleAlerts);
         public Task SetMuteIdleAlertsAsync(bool muted) { MuteIdleAlerts = muted; return Task.CompletedTask; }

@@ -176,6 +176,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OpenPreferencesCommand = new RelayCommand(OpenPreferences);
         OpenPluginsCommand = new RelayCommand(_ => RequestOpenPlugins?.Invoke(this, EventArgs.Empty));
         DismissBloxstrapWarningCommand = new RelayCommand(_ => _ = DismissBloxstrapWarningAsync());
+        DismissFpsCapWarningCommand = new RelayCommand(_ => _ = DismissFpsCapWarningAsync());
 
         // v1.3.x — default-game widget + rename overlay commands.
         SetDefaultGameCommand = new RelayCommand(p => _ = SetDefaultGameAsync(p as FavoriteGame));
@@ -451,6 +452,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand OpenPreferencesCommand { get; }
     public ICommand OpenPluginsCommand { get; }
     public ICommand DismissBloxstrapWarningCommand { get; }
+    public ICommand DismissFpsCapWarningCommand { get; }
 
     public event EventHandler? RequestOpenPlugins;
 
@@ -750,6 +752,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // Re-apply any active filter against the freshly-loaded rows so a reload (e.g. after the
         // Games dialog closes) doesn't surface filtered-out rows. No-op when the filter is empty.
         ApplyFilter();
+
+        // Read the dismissed FPS-cap signature here (not the ctor's fire-and-forget pattern used
+        // by InitializeBloxstrapWarningAsync) so it is guaranteed to land before the very first
+        // RefreshFpsCapWarning() call below -- LoadAsync is genuinely awaited by MainWindow before
+        // first paint, so this can't race the way a fire-and-forget ctor read could.
+        _dismissedFpsCapSignature = await _settings.GetDismissedFpsCapWarningSignatureAsync();
         RefreshFpsCapWarning();
 
         await ReloadGamesAsync();
@@ -3092,7 +3100,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <summary>
     /// Non-empty when the accounts on screen do not all share one FPS cap — see
     /// <see cref="MultiInstanceCopy.FpsCapMismatchBanner"/>. Display only; it does not gate
-    /// launching. The user chose this trade, so do not make them re-confirm it.
+    /// launching. The user chose this trade, so do not make them re-confirm it -- UNLESS the set
+    /// of distinct caps changes to something they haven't acknowledged yet; see
+    /// <see cref="_dismissedFpsCapSignature"/>.
     /// </summary>
     public string FpsCapWarningText
     {
@@ -3101,13 +3111,76 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// The signature (see <see cref="ComputeFpsCapSignature"/>) of the distinct FPS-cap set that
+    /// was in effect the last time the user dismissed <see cref="FpsCapWarningText"/>, or
+    /// <c>null</c> if nothing has been dismissed yet. Loaded once in <see cref="LoadAsync"/> (not
+    /// the ctor's fire-and-forget pattern -- see the comment there) and updated in
+    /// <see cref="DismissFpsCapWarningAsync"/>. This is intentionally a single value, not a set of
+    /// every signature ever dismissed: only the MOST RECENT acknowledgement counts, matching the
+    /// spec's "one signature" persistence shape.
+    /// </summary>
+    private string? _dismissedFpsCapSignature;
+
+    /// <summary>
+    /// Pure, order-independent, dedup canonicalization of a set of per-account FPS caps into a
+    /// stable string signature -- e.g. two accounts capped at 45 and one uncapped always produces
+    /// <c>"none,45"</c> regardless of row order or how many rows share a value. <c>null</c> (no
+    /// cap set) is represented as the literal <c>"none"</c> token, distinct from any numeric
+    /// value, because an uncapped account still contends over the shared settings file with a
+    /// capped one -- "unset" is its own contending value, not an absence of one. Extracted as a
+    /// static pure function (mirrors <see cref="ResolveLaunchTarget"/> / <see cref="AccountMatchesFilter"/>)
+    /// so the canonicalization rule is unit-testable without a live VM.
+    /// </summary>
+    internal static string ComputeFpsCapSignature(IEnumerable<int?> caps)
+    {
+        var distinct = caps.Distinct().ToList();
+        var parts = new List<string>(distinct.Count);
+        if (distinct.Contains(null))
+        {
+            parts.Add("none");
+        }
+        parts.AddRange(distinct
+            .Where(c => c.HasValue)
+            .Select(c => c!.Value)
+            .OrderBy(v => v)
+            .Select(v => v.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+        return string.Join(",", parts);
+    }
+
+    /// <summary>
     /// Recompute the mismatch warning. "Unset" counts as its own distinct value: a capped account
-    /// and an uncapped one still contend over the same shared file.
+    /// and an uncapped one still contend over the same shared file. The banner shows only when
+    /// there IS a mismatch AND the current cap-set signature differs from the last one the user
+    /// dismissed -- so acknowledging today's mismatch doesn't silence a genuinely different one
+    /// that shows up later.
     /// </summary>
     internal void RefreshFpsCapWarning()
     {
-        var distinct = Accounts.Select(a => a.FpsCap).Distinct().Count();
-        FpsCapWarningText = distinct > 1 ? MultiInstanceCopy.FpsCapMismatchBanner : string.Empty;
+        var caps = Accounts.Select(a => a.FpsCap).ToList();
+        if (caps.Distinct().Count() <= 1)
+        {
+            FpsCapWarningText = string.Empty;
+            return;
+        }
+
+        var signature = ComputeFpsCapSignature(caps);
+        FpsCapWarningText = signature == _dismissedFpsCapSignature
+            ? string.Empty
+            : MultiInstanceCopy.FpsCapMismatchBanner;
+    }
+
+    /// <summary>
+    /// Dismiss handler for <see cref="DismissFpsCapWarningCommand"/> -- mirrors
+    /// <see cref="DismissBloxstrapWarningAsync"/>'s shape. Records the CURRENT cap-set signature
+    /// (not a boolean) so a later change to a genuinely different set re-surfaces the banner, and
+    /// a later return to this exact set stays quiet.
+    /// </summary>
+    private async Task DismissFpsCapWarningAsync()
+    {
+        var signature = ComputeFpsCapSignature(Accounts.Select(a => a.FpsCap));
+        _dismissedFpsCapSignature = signature;
+        RefreshFpsCapWarning();
+        await _settings.SetDismissedFpsCapWarningSignatureAsync(signature);
     }
 
     public event Action? RequestCloseRobloxForMe;
