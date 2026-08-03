@@ -145,4 +145,66 @@ public class DiscordPresenceServiceTests
 
         Assert.Contains("isn't running", svc.StatusLine, StringComparison.OrdinalIgnoreCase);
     }
+
+    // ---------- Fix round 1, Finding 2: StatusChanged / the honest transient ----------
+
+    [Fact]
+    public async Task ApplyAsync_PresenceEnabled_SetsAnHonestTransientStatusImmediately()
+    {
+        // FakeRpcClient.Initialize() doesn't raise Ready/ConnectionFailed on its own (tests call
+        // RaiseReady/RaiseConnectionFailed explicitly) -- so at this point, in production, the real
+        // outcome hasn't arrived yet either. StatusLine must not still read the PREVIOUS value
+        // ("Presence is off.") while presence is actually turning on.
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, () => Roster(Live("A")), NullLogger.Instance);
+
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true });
+
+        Assert.Equal("Connecting to Discord…", svc.StatusLine);
+    }
+
+    [Fact]
+    public async Task StatusChanged_FiresOnEveryRealTransition()
+    {
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, () => Roster(Live("A")), NullLogger.Instance);
+        var seen = new List<string>();
+        svc.StatusChanged += (_, _) => seen.Add(svc.StatusLine);
+
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true });
+        rpc.RaiseReady();
+
+        Assert.Equal(["Connecting to Discord…", "Connected to Discord."], seen);
+    }
+
+    [Fact]
+    public async Task StatusChanged_DoesNotFireWhenTheValueIsUnchanged()
+    {
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, () => Roster(Live("A")), NullLogger.Instance);
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = false }); // already "Presence is off."
+        var fired = false;
+        svc.StatusChanged += (_, _) => fired = true;
+
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = false }); // same value again
+
+        Assert.False(fired);
+    }
+
+    // ---------- Fix round 1, Finding 1: JoinEnabled mirror for InboundJoinDispatcher ----------
+
+    [Fact]
+    public async Task JoinEnabled_MirrorsTheLiveConfig()
+    {
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, () => Roster(Live("A")), NullLogger.Instance);
+
+        Assert.False(svc.JoinEnabled); // default DiscordConfig has JoinEnabled = false
+
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true, JoinEnabled = true });
+        Assert.True(svc.JoinEnabled);
+
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true, JoinEnabled = false });
+        Assert.False(svc.JoinEnabled);
+    }
 }

@@ -33,16 +33,44 @@ internal sealed class DiscordPresenceService : IDisposable
         _roster = rosterProvider;
         _log = log;
         _client.JoinRequested += OnJoinRequested;
-        _client.ConnectionFailed += (_, _) => StatusLine = "Discord isn't running — presence starts when it does.";
-        _client.Ready += (_, _) => StatusLine = "Connected to Discord.";
+        // Ready/ConnectionFailed arrive on Lachee's background RPC thread, asynchronously and well
+        // after ApplyAsync has already returned (Fix round 1, Finding 2) — SetStatus's StatusChanged
+        // event is how a subscriber (PreferencesWindow) learns the real, eventual outcome instead of
+        // reading a StatusLine snapshot that's already stale by the time it's read.
+        _client.ConnectionFailed += (_, _) => SetStatus("Discord isn't running — presence starts when it does.");
+        _client.Ready += (_, _) => SetStatus("Connected to Discord.");
         _client.Errored += (_, msg) => _log.LogDebug("Discord rejected a presence update: {Message}", msg);
     }
 
     /// <summary>Plain-language state for the Settings panel. Never a stack trace.</summary>
     public string StatusLine { get; private set; } = "Presence is off.";
 
+    /// <summary>
+    /// Fires whenever <see cref="StatusLine"/> changes — including from <c>Ready</c>/
+    /// <c>ConnectionFailed</c>, which arrive on Lachee's background RPC thread. A subscriber must
+    /// marshal to its own thread (e.g. a WPF <c>Dispatcher</c>) before touching UI from this event.
+    /// </summary>
+    public event EventHandler? StatusChanged;
+
+    /// <summary>
+    /// Live mirror of <c>DiscordConfig.JoinEnabled</c> for callers that gate a join dispatch outside
+    /// this class — specifically the <c>roblox-rororo:</c> protocol-handler path
+    /// (<see cref="ROROROblox.App.Discord.InboundJoinDispatcher"/>), which has no other seam back to
+    /// the live config. <see cref="OnJoinRequested"/> already gates the in-client Join button
+    /// against <c>_config.JoinEnabled</c> directly; this property exists for the OTHER inbound path,
+    /// which does not go through this class at all.
+    /// </summary>
+    internal bool JoinEnabled => _config.JoinEnabled;
+
     /// <summary>Fires when a clan member clicks Join. The target is already decoded.</summary>
     public event EventHandler<LaunchTarget>? JoinRequested;
+
+    private void SetStatus(string value)
+    {
+        if (StatusLine == value) return;
+        StatusLine = value;
+        StatusChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     public Task ApplyAsync(DiscordConfig config)
     {
@@ -52,9 +80,16 @@ internal sealed class DiscordPresenceService : IDisposable
             if (!config.PresenceEnabled)
             {
                 if (_client.IsInitialized) { _client.ClearPresence(); _client.Deinitialize(); }
-                StatusLine = "Presence is off.";
+                SetStatus("Presence is off.");
                 return Task.CompletedTask;
             }
+
+            // Honest transient (Fix round 1, Finding 2): without this, a caller that reads
+            // StatusLine immediately after ApplyAsync returns sees whatever it was BEFORE this
+            // call — "Presence is off." while presence is actually turning on — because the real
+            // outcome (Ready/ConnectionFailed) hasn't arrived yet. Never contradictory, even in
+            // the instant before the first Lachee callback lands.
+            SetStatus("Connecting to Discord…");
 
             if (!_client.IsInitialized) { _client.Initialize(); }
             Refresh();
@@ -62,7 +97,7 @@ internal sealed class DiscordPresenceService : IDisposable
         catch (Exception ex)
         {
             _log.LogDebug(ex, "Discord presence apply failed; continuing without presence.");
-            StatusLine = "Discord isn't running — presence starts when it does.";
+            SetStatus("Discord isn't running — presence starts when it does.");
         }
         return Task.CompletedTask;
     }

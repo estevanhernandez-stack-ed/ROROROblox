@@ -3178,19 +3178,24 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OpenPreferences()
     {
-        // _discordConfigStore is DI-supplied unconditionally in production (App.ConfigureServices
-        // registers it regardless of whether Discord:ApplicationId is configured — see that
-        // registration's remarks). It's only ever null here in a test fixture that constructed
-        // this VM directly and never exercises OpenPreferencesCommand; the same
-        // LocalApplicationData\ROROROblox\discord.dat path App.xaml.cs uses is the correct
-        // fallback rather than letting the window construction throw.
-        var discordConfigStore = _discordConfigStore ?? new DiscordConfigStore(
-            System.IO.Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "ROROROblox", "discord.dat"));
+        // Fix round 1, Finding 4: no fallback here. _discordConfigStore is DI-supplied
+        // unconditionally in production (App.ConfigureServices registers it regardless of whether
+        // Discord:ApplicationId is configured — see that registration's remarks), so this is never
+        // null at either real call site (this method, and App.OpenPreferencesFromTray). A
+        // hand-rolled fallback that recomposed the same discord.dat path here was dead code that
+        // could never run in production and left two places knowing where that file lives — a null
+        // here means a test constructed this VM directly and is exercising OpenPreferencesCommand
+        // without supplying one, which is a fixture bug to fix, not a case to paper over.
+        if (_discordConfigStore is null)
+        {
+            throw new InvalidOperationException(
+                "OpenPreferences requires a DiscordConfigStore. DI supplies one in production; a " +
+                "test exercising OpenPreferencesCommand must pass one into the MainViewModel constructor.");
+        }
+
         var window = new Preferences.PreferencesWindow(
             _settings, _startupRegistration, _themeStore, _themeService,
-            _accountStore, _accountTransport, this, discordConfigStore)
+            _accountStore, _accountTransport, this, _discordConfigStore)
         {
             Owner = Application.Current.MainWindow,
         };

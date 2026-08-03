@@ -1250,6 +1250,17 @@ public partial class App : Application
     /// that same commit must wire <c>IStreamerIdentityProvider.Changed</c> to
     /// <c>DiscordPresence?.Refresh()</c> (Task 6 review finding).
     /// </para>
+    /// <para>
+    /// <b>Fix round 1, Finding 1.</b> Both events are dispatched through one
+    /// <see cref="InboundJoinDispatcher"/> instance rather than calling
+    /// <c>HandleDiscordJoinAsync</c> directly, so both gate on the LIVE <c>JoinEnabled</c> setting
+    /// (<see cref="DiscordPresenceService.JoinEnabled"/>) before dispatching anything. Before this
+    /// fix, the <see cref="JoinRequested"/> (protocol-handler) path had no such gate anywhere in its
+    /// chain — <see cref="JoinUriScheme.Register"/> runs unconditionally on every install, and
+    /// neither <c>InboundJoinRelay.Handle</c> nor <c>HandleDiscordJoinAsync</c> check
+    /// <c>JoinEnabled</c> — so once a real application id shipped, the URI alone could launch a
+    /// saved account (and take over a running session) whether or not the user ever turned Join on.
+    /// </para>
     /// </summary>
     private async Task WireDiscordPresenceAsync(MainWindow mainWindow)
     {
@@ -1277,41 +1288,29 @@ public partial class App : Application
 
             await presence.ApplyAsync(config).ConfigureAwait(true);
 
+            // Fix round 1, Finding 1: both inbound-join paths gate on the LIVE JoinEnabled setting
+            // through the one InboundJoinDispatcher instance, not just the in-client path
+            // DiscordPresenceService.OnJoinRequested already gated internally. See that class's
+            // remarks for why the roblox-rororo: URI path needed this and didn't have it.
+            var inboundJoin = new InboundJoinDispatcher(
+                joinEnabled: () => presence.JoinEnabled,
+                viewModel: vm,
+                confirm: msg => Modals.JoinRequestWindow.Confirm(mainWindow, msg),
+                log: _log);
+
             // In-client Join button — Lachee's background RPC thread. Must hop to the UI thread
-            // before calling HandleDiscordJoinAsync (see this method's remarks + both types' own
-            // doc comments). InvokeAsync with an async lambda, not a bare Invoke: the join can
-            // show a modal (JoinRequestWindow.Confirm) and reach LaunchAccountAsync, neither of
-            // which should block the RPC thread while they run.
+            // before reaching InboundJoinDispatcher.HandleAsync (see this method's remarks + both
+            // types' own doc comments) — it ends up at HandleDiscordJoinAsync, which can show a
+            // modal (JoinRequestWindow.Confirm) and reach LaunchAccountAsync, neither of which
+            // should run on the RPC thread. InvokeAsync with an async lambda, not a bare Invoke, so
+            // the hop doesn't block that thread either.
             presence.JoinRequested += (_, target) =>
-            {
-                Dispatcher.InvokeAsync(async () =>
-                {
-                    try
-                    {
-                        await vm.HandleDiscordJoinAsync(
-                            target, msg => Modals.JoinRequestWindow.Confirm(mainWindow, msg)).ConfigureAwait(true);
-                    }
-                    catch (Exception ex)
-                    {
-                        _log?.LogWarning(ex, "Discord in-client Join handling threw; ignoring.");
-                    }
-                });
-            };
+                Dispatcher.InvokeAsync(async () => await inboundJoin.HandleAsync(target).ConfigureAwait(true));
 
             // roblox-rororo: URI (cold start or relayed from a second instance) — already
             // UI-thread-marshalled by the time it reaches here; see JoinRequested's own remarks.
-            JoinRequested += async (_, target) =>
-            {
-                try
-                {
-                    await vm.HandleDiscordJoinAsync(
-                        target, msg => Modals.JoinRequestWindow.Confirm(mainWindow, msg)).ConfigureAwait(true);
-                }
-                catch (Exception ex)
-                {
-                    _log?.LogWarning(ex, "Inbound Discord join (protocol handler) handling threw; ignoring.");
-                }
-            };
+            // Fire-and-forget is safe: HandleAsync never throws (see its own doc comment).
+            JoinRequested += (_, target) => _ = inboundJoin.HandleAsync(target);
         }
         catch (Exception ex)
         {
