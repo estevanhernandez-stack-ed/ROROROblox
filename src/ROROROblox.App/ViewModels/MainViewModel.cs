@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.App.About;
 using ROROROblox.App.Diagnostics;
+using ROROROblox.App.Discord;
 using ROROROblox.App.History;
 using ROROROblox.App.Friends;
 using ROROROblox.App.JoinByLink;
@@ -17,6 +18,7 @@ using ROROROblox.App.Settings;
 using ROROROblox.App.SquadLaunch;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
+using ROROROblox.Core.Discord;
 
 namespace ROROROblox.App.ViewModels;
 
@@ -54,6 +56,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
     private readonly Core.StreamerMode.IStreamerIdentityProvider? _streamerIdentity;
     private readonly ILogger<MainViewModel> _log;
+
+    /// <summary>
+    /// Discord rich-presence service (Task 9 wires this during startup wiring, only when the user
+    /// has Discord presence configured). Null in every install that hasn't opted in — which is the
+    /// default and every existing test — so every call site below reaches it through <c>?.</c>.
+    /// Roster-changing handlers call <see cref="DiscordPresenceService.Refresh"/> through this
+    /// field rather than the service subscribing to anything itself: the service is PULL, not
+    /// push, and this VM is the one place that knows every seam the roster actually changes at.
+    /// </summary>
+    internal DiscordPresenceService? DiscordPresence { get; set; }
 
     /// <summary>
     /// In-flight session-history rows keyed by account id. Populated when LaunchAccountAsync
@@ -296,6 +308,24 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// silently killed the presence loop — 2026-06-12 review).
     /// </summary>
     public IReadOnlyList<AccountSummary> AccountsSnapshot => _accountsMirror.Snapshot;
+
+    /// <summary>
+    /// Project the live rows into the shape Discord presence consumes. Internal so the projection
+    /// — especially the streamer-mode rule — is unit-testable without a Discord pipe.
+    /// <para>
+    /// Names come from <see cref="AccountSummary.RenderName"/>, never <c>DisplayName</c>: streamer
+    /// mode has to hold on the way OUT of the app, or it is a promise that only covers the window
+    /// the user is already looking at.
+    /// </para>
+    /// </summary>
+    internal RosterSnapshot BuildRosterSnapshot() => new(
+        Accounts.Select(a => new RosterAccount(
+            a.Id,
+            a.RenderName,
+            a.InGame,
+            a.CurrentGameName,
+            a.CurrentServer,
+            a.InGameSinceUtc)).ToList());
 
     /// <summary>
     /// Sentinel entry the per-row ComboBox treats as "open the Join-by-link modal."
@@ -2354,6 +2384,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CompactRows));
             OnPropertyChanged(nameof(HasCompactRows));
             RelayCommand.RaiseCanExecuteChanged();
+            DiscordPresence?.Refresh();
         });
     }
 
@@ -2400,6 +2431,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CompactRows));
             OnPropertyChanged(nameof(HasCompactRows));
             RelayCommand.RaiseCanExecuteChanged();
+            DiscordPresence?.Refresh();
         });
         // Fire-and-forget the history end-stamp; persistence isn't on the UI critical path.
         _ = RecordSessionEndAsync(e.AccountId, e.OccurredAtUtc, outcomeHint: null);
@@ -2470,6 +2502,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CompactRows));
             OnPropertyChanged(nameof(HasCompactRows));
             RelayCommand.RaiseCanExecuteChanged();
+            DiscordPresence?.Refresh();
         }
     }
 
