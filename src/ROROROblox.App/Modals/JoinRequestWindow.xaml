@@ -1,0 +1,61 @@
+<Window x:Class="ROROROblox.App.Modals.JoinRequestWindow"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Private server"
+        Height="220" Width="480"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico"
+        Background="{DynamicResource NavyBrush}">
+    <!-- Discord Join, inbound half (Task 8). Roblox checks private-server permission
+         server-side — a clan member not on the target server's list gets bounced AFTER the
+         client launches. This warns up front instead of letting that land as a mystery
+         failure. Not destructive (nothing is lost by trying), so "Try anyway" keeps cyan
+         primary rather than the magenta used for StopAllConfirmWindow's teardown. CenterScreen
+         (no owner) — a join can arrive while the main window is hidden in the tray. -->
+    <Grid Margin="32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="This is a private server"
+                   FontSize="18" FontWeight="Bold"
+                   Foreground="{DynamicResource CyanBrush}" />
+
+        <TextBlock Grid.Row="1"
+                   x:Name="BodyText"
+                   TextWrapping="Wrap"
+                   FontSize="12"
+                   Foreground="{DynamicResource WhiteBrush}"
+                   Opacity="0.85"
+                   Margin="0,12,0,0" />
+
+        <TextBlock Grid.Row="2"
+                   Text="ROBLOX CHECKS ACCESS SERVER-SIDE"
+                   FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                   FontSize="10"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   VerticalAlignment="Bottom"
+                   Margin="0,16,0,0" />
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Cancel" Padding="16,8" IsCancel="True"
+                    Background="{DynamicResource RowBgBrush}"
+                    Foreground="{DynamicResource WhiteBrush}"
+                    BorderThickness="0"
+                    Margin="0,0,8,0"
+                    Click="OnCancelClick" />
+            <Button Content="Try anyway" Padding="16,8" IsDefault="True"
+                    Background="{DynamicResource CyanBrush}"
+                    Foreground="{DynamicResource NavyBrush}"
+                    BorderThickness="0"
+                    FontWeight="Bold"
+                    Click="OnTryAnywayClick" />
+        </StackPanel>
+    </Grid>
+</Window>

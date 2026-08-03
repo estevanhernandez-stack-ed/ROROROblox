@@ -62,10 +62,26 @@ public class ModalDefaultButtonSafetyTests
     public void LeftoverModal_DefaultsToContinue()
         => Assert.Equal("Continue", DefaultButtonLabel("LeftoverProcessesWindow.xaml"));
 
+    /// <summary>
+    /// FIX 10 (final whole-branch review, 2026-08-03): JoinRequestWindow was never linked into
+    /// this test project, so this convention suite never saw it — a gap, not a deliberate
+    /// exemption. Its "Try anyway" button carries <c>IsDefault="True"</c>, which on its face looks
+    /// exactly like the bug <see cref="DestructiveButton_IsNeverTheEnterKeyDefault"/> exists to
+    /// catch. It is deliberately NOT in <see cref="DestructiveButtons"/>: unlike the other three
+    /// modals, nothing is lost by clicking through here — Roblox's own server-side permission
+    /// check is what actually blocks entry, "Try anyway" only requests it. Asserted explicitly
+    /// here (rather than left off <see cref="DestructiveButtons"/> silently) so a future reader
+    /// sees the reasoning instead of wondering why this modal was skipped.
+    /// </summary>
+    [Fact]
+    public void JoinRequestModal_DefaultsToTryAnyway_DeliberatelyNotDestructive()
+        => Assert.Equal("Try anyway", DefaultButtonLabel("JoinRequestWindow.xaml"));
+
     [Theory]
     [InlineData("RobloxAlreadyRunningWindow.xaml")]
     [InlineData("StopAllConfirmWindow.xaml")]
     [InlineData("LeftoverProcessesWindow.xaml")]
+    [InlineData("JoinRequestWindow.xaml")]
     public void EachModal_HasExactlyOneDefaultButton(string modalFile)
         => Assert.Single(Buttons(modalFile), IsDefault);
 

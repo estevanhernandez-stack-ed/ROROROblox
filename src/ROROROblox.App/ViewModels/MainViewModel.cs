@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.App.About;
 using ROROROblox.App.Diagnostics;
+using ROROROblox.App.Discord;
 using ROROROblox.App.History;
 using ROROROblox.App.Friends;
 using ROROROblox.App.JoinByLink;
@@ -17,6 +18,7 @@ using ROROROblox.App.Settings;
 using ROROROblox.App.SquadLaunch;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
+using ROROROblox.Core.Discord;
 
 namespace ROROROblox.App.ViewModels;
 
@@ -53,7 +55,18 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly ITrayService _tray;
     private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
     private readonly Core.StreamerMode.IStreamerIdentityProvider? _streamerIdentity;
+    private readonly DiscordConfigStore? _discordConfigStore;
     private readonly ILogger<MainViewModel> _log;
+
+    /// <summary>
+    /// Discord rich-presence service (Task 9 wires this during startup wiring, only when the user
+    /// has Discord presence configured). Null in every install that hasn't opted in — which is the
+    /// default and every existing test — so every call site below reaches it through <c>?.</c>.
+    /// Roster-changing handlers call <see cref="DiscordPresenceService.Refresh"/> through this
+    /// field rather than the service subscribing to anything itself: the service is PULL, not
+    /// push, and this VM is the one place that knows every seam the roster actually changes at.
+    /// </summary>
+    internal DiscordPresenceService? DiscordPresence { get; set; }
 
     /// <summary>
     /// In-flight session-history rows keyed by account id. Populated when LaunchAccountAsync
@@ -114,6 +127,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         ITrayService tray,
         Notifications.IdleAlertPresenter idleAlertPresenter,
         Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
+        DiscordConfigStore? discordConfigStore = null,
         ILogger<MainViewModel>? log = null)
     {
         _cookieCapture = cookieCapture;
@@ -141,6 +155,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _tray = tray;
         _idleAlertPresenter = idleAlertPresenter;
         _streamerIdentity = streamerIdentity;
+        _discordConfigStore = discordConfigStore;
         _log = log ?? NullLogger<MainViewModel>.Instance;
 
         // AccountRecycler (Task 8) is built here, not injected — its LaunchDelegate needs to call
@@ -296,6 +311,52 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// silently killed the presence loop — 2026-06-12 review).
     /// </summary>
     public IReadOnlyList<AccountSummary> AccountsSnapshot => _accountsMirror.Snapshot;
+
+    /// <summary>
+    /// Project the live rows into the shape Discord presence consumes. Internal so the projection
+    /// — especially the streamer-mode rule — is unit-testable without a Discord pipe.
+    /// <para>
+    /// Names come from <see cref="AccountSummary.RenderName"/>, never <c>DisplayName</c>: streamer
+    /// mode has to hold on the way OUT of the app, or it is a promise that only covers the window
+    /// the user is already looking at.
+    /// </para>
+    /// <para>
+    /// Enumerates <see cref="AccountsSnapshot"/>, not <see cref="Accounts"/> — this method is
+    /// called from <c>DiscordPresenceService.Refresh()</c>, which is not guaranteed to run on the
+    /// UI thread (Task 9 wires <c>ApplyAsync</c> from a settings dialog and Lachee's IPC
+    /// <c>Ready</c> callback runs off its own thread). Enumerating the UI-thread-owned
+    /// <see cref="Accounts"/> from there risks the same "Collection was modified" fault the
+    /// snapshot mirror exists to prevent.
+    /// </para>
+    /// </summary>
+    /// <para>
+    /// FIX 1 (final whole-branch review, 2026-08-03): <c>Server</c> is built via
+    /// <see cref="RosterServer.TryFrom"/> from BOTH the account's current presence server AND its
+    /// <see cref="AccountSummary.LastLaunchTarget"/> — the record of what the session was actually
+    /// launched with (private-server place id, code, and kind included). Passing the raw
+    /// <see cref="ServerInstance"/> alone (the pre-fix shape) always produced a public
+    /// <c>g|</c> Discord secret, even for a private-server roster: a friend clicking Join landed on
+    /// a public target Roblox then bounced server-side, silently defeating the denied-entry warning
+    /// this feature exists to show.
+    /// </para>
+    /// <para>
+    /// Corrected in the 2026-08-03 re-review's blocking finding: <see cref="RosterServer.TryFrom"/>
+    /// no longer requires presence to agree with <c>LastLaunchTarget</c> about WHICH place the
+    /// account is in (Pet Sim 99 teleports between places inside one universe, so that agreement
+    /// never held for the audience this feature exists for). The private place id, code, and kind
+    /// travel together from <c>LastLaunchTarget</c> itself; presence supplies liveness and
+    /// clustering only. The stale-credential risk that place-matching used to (incompletely) guard
+    /// against is instead closed by <see cref="ApplyPresence"/> clearing
+    /// <see cref="AccountSummary.LastLaunchTarget"/> when the account fully leaves a game (Minor 1).
+    /// </para>
+    internal RosterSnapshot BuildRosterSnapshot() => new(
+        AccountsSnapshot.Select(a => new RosterAccount(
+            a.Id,
+            a.RenderName,
+            a.InGame,
+            a.CurrentGameName,
+            RosterServer.TryFrom(a.CurrentServer, a.LastLaunchTarget),
+            a.InGameSinceUtc)).ToList());
 
     /// <summary>
     /// Sentinel entry the per-row ComboBox treats as "open the Join-by-link modal."
@@ -1152,6 +1213,103 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     /// <summary>Plugin-host seam: read-only access to the saved private-server store.</summary>
     internal IPrivateServerStore PrivateServerStoreForPlugin => _privateServerStore;
+
+    /// <summary>
+    /// A Discord join request landed — either the in-client Join button or the
+    /// <c>roblox-rororo:</c> OS protocol handler; <paramref name="origin"/> says which.
+    /// <paramref name="confirm"/> is injected so the decision is testable without showing a window.
+    /// <para>
+    /// <b>Fix round 2 — confirm is gated on ORIGIN, not just destination.</b> A private-server
+    /// target always confirms, regardless of origin: Roblox checks permission server-side, so
+    /// someone not on that server's list gets bounced, and saying so up front beats a mystery
+    /// failure. Separately, ANY <see cref="JoinOrigin.UriHandler"/> join confirms even for a public
+    /// server — the reason is origin, not destination risk. A <see cref="JoinOrigin.DiscordClient"/>
+    /// join can only fire after the user turned Join on and a friend received a secret RoRoRo
+    /// deliberately published; a <c>roblox-rororo:</c> URI can be triggered by any local process,
+    /// <c>.url</c> file, or browser navigation, and nothing in it proves Discord sent it. The two
+    /// prompts are deliberately different copy (see the two branches below) — never collapsed into
+    /// one message, and never shown twice when both conditions hold (a private-server target from
+    /// the URI handler still shows exactly one prompt: the private-server one, since it already
+    /// carries the stronger "may be denied entry" warning).
+    /// </para>
+    /// <para>
+    /// The row is picked BEFORE the confirm decision (a change from the pre-round-2 shape) because
+    /// the URI-origin prompt has to name the account that's about to launch — see the confirm
+    /// message below. It uses <see cref="AccountSummary.RenderName"/>, never <c>DisplayName</c>:
+    /// streamer mode has to hold outbound, and a modal is outbound. One side effect: if there is
+    /// nothing to launch with at all, this now returns the "nothing to join with" outcome without
+    /// ever showing a confirm dialog, instead of showing one first and only then discovering there
+    /// was nowhere to launch — a behavior improvement, not a regression any existing test depended on.
+    /// </para>
+    /// <para>
+    /// <b>Must be called on the UI thread</b> — it reads the UI-bound <see cref="Accounts"/>
+    /// collection, sets <see cref="StatusBanner"/>, and reaches <see cref="LaunchAccountAsync"/>,
+    /// none of which tolerate a foreign thread. The two inbound paths differ on whether that's
+    /// already true by the time they raise:
+    /// <list type="bullet">
+    ///   <item><c>App.JoinRequested</c> (the <c>roblox-rororo:</c> URI relay + cold start,
+    ///   <see cref="JoinOrigin.UriHandler"/>) is safe as-is — <c>SingleInstanceGuard</c> raises its
+    ///   relay inside <c>mainWindow.Dispatcher.Invoke</c>, and the cold-start path runs from
+    ///   <c>OnStartup</c>, itself on the UI thread. No extra dispatch needed at the call site.</item>
+    ///   <item><see cref="DiscordPresenceService.JoinRequested"/> (the in-client Join button,
+    ///   <see cref="JoinOrigin.DiscordClient"/>) is NOT marshaled anywhere in its chain — Lachee's
+    ///   <c>OnJoin</c> fires on its own background RPC thread, <c>LacheeDiscordRpcClientAdapter.SafeInvoke</c>
+    ///   only try/catches, and <c>DiscordPresenceService.OnJoinRequested</c> forwards synchronously
+    ///   on that same thread. Whoever subscribes this path MUST marshal onto the UI thread (e.g.
+    ///   <c>Application.Current.Dispatcher.Invoke</c>) before calling this method — this is the
+    ///   steady-state Join path (RoRoRo already running, Discord connected), so skipping the
+    ///   dispatch here is not a rare-edge risk, it's the common crash.</item>
+    /// </list>
+    /// </para>
+    /// </summary>
+    internal async Task<bool> HandleDiscordJoinAsync(LaunchTarget target, JoinOrigin origin, Func<string, bool> confirm)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+
+        // Idle-first, then any non-expired account — but never a row mid-launch (IsLaunching),
+        // so an inbound join can't double-launch a row that's already in flight. When nothing is
+        // idle, the fallback CAN land on an already-running account: Roblox enforces one session
+        // per account server-side, so this takes over (kicks) that account's live session rather
+        // than silently failing. Accepted tradeoff — the plan chose "join always finds a seat"
+        // over "join can be a no-op" — but it must not be a SILENT takeover, hence the distinct
+        // banner below.
+        var row = Accounts.FirstOrDefault(a => !a.SessionExpired && !a.IsRunning && !a.IsLaunching)
+                  ?? Accounts.FirstOrDefault(a => !a.SessionExpired && !a.IsLaunching);
+        if (row is null)
+        {
+            StatusBanner = "Nothing to join with — add an account first.";
+            return false;
+        }
+
+        var isPrivateServer = target is LaunchTarget.PrivateServer;
+        if (isPrivateServer || origin == JoinOrigin.UriHandler)
+        {
+            // FIX 8 (final whole-branch review, 2026-08-03): row.IsRunning is already known here —
+            // the row is chosen above, before this decision. When it's true, the join is about to
+            // kick that account's live session; the confirm prompt says so up front rather than the
+            // user only learning it from the StatusBanner AFTER already agreeing to something else.
+            // The banner below still fires post-confirm — this is additive, not a replacement.
+            var takeoverClause = row.IsRunning
+                ? $" This takes over {row.RenderName}'s running session."
+                : string.Empty;
+            var message = isPrivateServer
+                ? $"This is a private server — you may be denied entry if you're not on its list.{takeoverClause} Try anyway?"
+                : $"This join request came from outside RoRoRo and can't be verified — launching {row.RenderName} into this server.{takeoverClause} Continue anyway?";
+            if (!confirm(message))
+            {
+                return false;
+            }
+        }
+
+        var takingOverRunningAccount = row.IsRunning;
+        if (takingOverRunningAccount)
+        {
+            StatusBanner = $"Joining via {row.RenderName} — this takes over that account's running session.";
+        }
+
+        await LaunchAccountAsync(row, overrideTarget: target).ConfigureAwait(true);
+        return true;
+    }
 
     /// <summary>
     /// Returns the launcher pid (<c>RobloxPlayerLauncher.exe</c>, from <see cref="LaunchResult.Started"/>)
@@ -2354,6 +2512,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CompactRows));
             OnPropertyChanged(nameof(HasCompactRows));
             RelayCommand.RaiseCanExecuteChanged();
+            DiscordPresence?.Refresh();
         });
     }
 
@@ -2400,6 +2559,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CompactRows));
             OnPropertyChanged(nameof(HasCompactRows));
             RelayCommand.RaiseCanExecuteChanged();
+            DiscordPresence?.Refresh();
         });
         // Fire-and-forget the history end-stamp; persistence isn't on the UI critical path.
         _ = RecordSessionEndAsync(e.AccountId, e.OccurredAtUtc, outcomeHint: null);
@@ -2453,6 +2613,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 summary.CurrentPlaceId = null;
                 summary.CurrentServer = null;
                 summary.InGameSinceUtc = null;
+                // MINOR 1 (re-review, 2026-08-03): an account cannot join a genuinely different
+                // server — public or private — without first fully leaving whatever it was in, so
+                // presence reporting not-in-game is the deterministic point to drop a private-server
+                // LastLaunchTarget. Without this, a stale private code from an earlier launch would
+                // keep attaching itself to a later PUBLIC server of the same place (place matching
+                // alone can't catch this, and the blocking-finding fix above deliberately stopped
+                // requiring presence to agree on place at all). A within-session universe teleport
+                // never passes through this branch — CurrentServer just gets a fresh (place, job)
+                // while PresenceState stays InGame the whole time — so a genuinely continuous
+                // private-server session's credential survives exactly as intended.
+                summary.LastLaunchTarget = null;
 
                 // Presence-confirmed close: the row was active, presence now says not-in-game,
                 // and the process is also gone — both signals agree, so stamp the close. This is
@@ -2470,6 +2641,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CompactRows));
             OnPropertyChanged(nameof(HasCompactRows));
             RelayCommand.RaiseCanExecuteChanged();
+            DiscordPresence?.Refresh();
         }
     }
 
@@ -2513,17 +2685,24 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     private void OnAccountSessionLimited(object? sender, Guid accountId)
+        => Application.Current?.Dispatcher.Invoke(() => ApplySessionLimited(accountId));
+
+    /// <summary>
+    /// UI-thread body of the session-limited handler (internal for tests — <see cref="OnAccountSessionLimited"/>
+    /// marshals to it, same seam shape as <see cref="ApplyPresence"/>/<see cref="ApplySessionExpired"/> —
+    /// <c>Application.Current</c> is null off a real WPF host, so a test calling the raw event
+    /// handler would silently no-op instead of exercising this body).
+    /// </summary>
+    internal void ApplySessionLimited(Guid accountId)
     {
-        Application.Current?.Dispatcher.Invoke(() =>
-        {
-            var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
-            if (summary is null) return;
-            summary.SessionLimited = true;
-            summary.PresenceState = UserPresenceType.Offline;  // clear the frozen "In game"
-            summary.CurrentGameName = null;
-            summary.InGameSinceUtc = null;
-            RelayCommand.RaiseCanExecuteChanged();
-        });
+        var summary = Accounts.FirstOrDefault(a => a.Id == accountId);
+        if (summary is null) return;
+        summary.SessionLimited = true;
+        summary.PresenceState = UserPresenceType.Offline;  // clear the frozen "In game"
+        summary.CurrentGameName = null;
+        summary.InGameSinceUtc = null;
+        RelayCommand.RaiseCanExecuteChanged();
+        DiscordPresence?.Refresh();
     }
 
     /// <summary>
@@ -2661,6 +2840,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // comment in LoadAsync for why this row would otherwise leak.
         summary.DetachIdentityProvider();
         Accounts.Remove(summary);
+        // If the removed row was the only in-game account, no further presence/process event will
+        // ever fire for it — without this, the last-pushed Discord payload would stay stale
+        // indefinitely instead of dropping the account or clearing presence entirely.
+        DiscordPresence?.Refresh();
         RefreshFpsCapWarning();
 
         // Store auto-promotes a new main when the previous one was just removed; mirror that
@@ -3062,9 +3245,24 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OpenPreferences()
     {
+        // Fix round 1, Finding 4: no fallback here. _discordConfigStore is DI-supplied
+        // unconditionally in production (App.ConfigureServices registers it regardless of whether
+        // Discord:ApplicationId is configured — see that registration's remarks), so this is never
+        // null at either real call site (this method, and App.OpenPreferencesFromTray). A
+        // hand-rolled fallback that recomposed the same discord.dat path here was dead code that
+        // could never run in production and left two places knowing where that file lives — a null
+        // here means a test constructed this VM directly and is exercising OpenPreferencesCommand
+        // without supplying one, which is a fixture bug to fix, not a case to paper over.
+        if (_discordConfigStore is null)
+        {
+            throw new InvalidOperationException(
+                "OpenPreferences requires a DiscordConfigStore. DI supplies one in production; a " +
+                "test exercising OpenPreferencesCommand must pass one into the MainViewModel constructor.");
+        }
+
         var window = new Preferences.PreferencesWindow(
             _settings, _startupRegistration, _themeStore, _themeService,
-            _accountStore, _accountTransport, this)
+            _accountStore, _accountTransport, this, _discordConfigStore)
         {
             Owner = Application.Current.MainWindow,
         };

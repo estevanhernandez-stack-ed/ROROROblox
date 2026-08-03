@@ -129,6 +129,28 @@
                     </StackPanel>
                 </Border>
 
+                <!-- v1.14+ Discord presence + Join (plan 2026-08-03). Off by default; the status
+                     line reports the live connection state in plain words, never a stack trace. -->
+                <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                    <StackPanel>
+                        <CheckBox x:Name="DiscordPresenceToggle"
+                                  Foreground="{DynamicResource WhiteBrush}" FontSize="13" FontWeight="SemiBold"
+                                  Click="OnDiscordPresenceToggle">
+                            <TextBlock Text="Show what I'm playing on Discord." TextWrapping="Wrap" />
+                        </CheckBox>
+                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                   Margin="22,4,0,8"
+                                   Text="Your Discord status shows the game, how many accounts you have in it, and how long you've been going. Nothing to set up — it uses the Discord app already on this PC." />
+                        <CheckBox x:Name="DiscordJoinToggle"
+                                  Foreground="{DynamicResource WhiteBrush}" FontSize="12"
+                                  Margin="22,0,0,0" Click="OnDiscordJoinToggle">
+                            <TextBlock Text="Let friends join my server from Discord" TextWrapping="Wrap" />
+                        </CheckBox>
+                        <TextBlock x:Name="DiscordStatusLine" FontSize="11"
+                                   Foreground="{DynamicResource CyanBrush}" TextWrapping="Wrap" Margin="22,8,0,0" />
+                    </StackPanel>
+                </Border>
+
                 <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14">
                     <StackPanel>
                         <TextBlock Text="Theme"

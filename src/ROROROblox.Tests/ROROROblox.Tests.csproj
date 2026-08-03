@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="DiscordRichPresence" Version="1.6.1.70" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
@@ -28,12 +29,12 @@
        no destructive button is the Enter-key default. Instantiating a WPF Window in a test needs an
        STA dispatcher; parsing the shipped markup checks the same property with none of that. -->
   <ItemGroup>
-    <None Include="..\ROROROblox.App\Modals\RobloxAlreadyRunningWindow.xaml"
-          Link="Modals\RobloxAlreadyRunningWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\ROROROblox.App\Modals\StopAllConfirmWindow.xaml"
-          Link="Modals\StopAllConfirmWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\ROROROblox.App\Modals\LeftoverProcessesWindow.xaml"
-          Link="Modals\LeftoverProcessesWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\ROROROblox.App\Modals\RobloxAlreadyRunningWindow.xaml" Link="Modals\RobloxAlreadyRunningWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\ROROROblox.App\Modals\StopAllConfirmWindow.xaml" Link="Modals\StopAllConfirmWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\ROROROblox.App\Modals\LeftoverProcessesWindow.xaml" Link="Modals\LeftoverProcessesWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <!-- FIX 10 (final whole-branch review, 2026-08-03): JoinRequestWindow was missing from this
+         group, so ModalDefaultButtonSafetyTests never saw it at all. -->
+    <None Include="..\ROROROblox.App\Modals\JoinRequestWindow.xaml" Link="Modals\JoinRequestWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
