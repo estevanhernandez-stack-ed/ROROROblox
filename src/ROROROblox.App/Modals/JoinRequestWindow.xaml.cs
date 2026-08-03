@@ -24,9 +24,10 @@ internal partial class JoinRequestWindow : Window
     }
 
     /// <summary>
-    /// Shows the warning modally and returns whether the user chose to proceed. Matches the
-    /// <c>Func&lt;string, bool&gt;</c> shape <c>HandleDiscordJoinAsync</c> expects, so a caller can
-    /// pass this method group straight through (e.g. <c>msg => JoinRequestWindow.Confirm(owner, msg)</c>).
+    /// Shows the warning modally and returns whether the user chose to proceed. Takes an
+    /// <paramref name="owner"/> param, so it isn't itself a <c>Func&lt;string, bool&gt;</c> —
+    /// wrap it in a lambda closing over the owner window to match what
+    /// <c>HandleDiscordJoinAsync</c> expects: <c>msg =&gt; JoinRequestWindow.Confirm(owner, msg)</c>.
     /// Must run on the UI thread — both inbound-join paths already marshal onto it before a
     /// subscriber sees the event (see <c>App.JoinRequested</c>'s remarks), so this does not
     /// re-dispatch itself.
