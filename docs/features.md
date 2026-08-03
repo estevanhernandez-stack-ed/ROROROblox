@@ -6,7 +6,7 @@
 >
 > **Version attribution.** Best-effort from tags, release runbooks, and commit history. There is no v1.2.x or v1.3.0.0 tag — those dev cycles folded into the first published v1.3 tag (`v1.3.1.0`).
 
-**Current shipped version: `v1.12.0.0`** (tagged 2026-08-01, Store candidate). Headline: the memory watchdog. Store ID `9NMJCS390KWB`, listed as "RORORO."
+**Current shipped version: `v1.13.0.0`** (tagged 2026-08-02). Headline: per-account FPS caps survive close-together launches. Store ID `9NMJCS390KWB`, listed as "RORORO."
 
 ## Version timeline (quick map)
 
@@ -24,6 +24,7 @@
 | v1.10 | Trust-aware Squad Launch (3-phase + careful mode), seamless singleton takeover, default private server, launch-to-home, plugin agent-ops (MarkAccountActive, StopAccounts) |
 | v1.11 / v1.11.1 | Streamer mode (98-name pool, 12 avatars, reveal-only server links), portable-build taskbar identity, real-version diagnostics fix |
 | v1.12 | Memory watchdog: per-account memory, RAM-exhaustion warning, one-click Recycle, stray cleanup, contract 0.7.0 memory-pressure capability. Also Arm64 Store MSIX flavor + native Arm64 CI lane (merged post-v1.11.1, first shipped here). |
+| v1.13 | Per-account FPS caps survive close-together launches — launches serialize behind a proof-of-read gate on Roblox's shared settings file, with a dismissible warning when caps differ. Free when every account shares a cap. |
 
 ## Multi-instance core
 
@@ -50,7 +51,7 @@
 | DPAPI-corrupt recovery | Detects an undecryptable vault; Start Fresh / Quit flow. | v1.1 | `src/ROROROblox.App/Modals/DpapiCorruptWindow.*` |
 | Session-expired re-auth | Yellow row state + re-auth via the login modal; fresh cookie, no data loss. | v1.1 | `src/ROROROblox.App/ViewModels/MainViewModel.cs` |
 | Main account + tray double-click | Designate a main; double-click the tray to launch it; optional auto-launch on startup. | v1.1 | `src/ROROROblox.App/Tray/` |
-| Per-account FPS limiter | Per-row FPS-cap dropdown writing Roblox's settings pre-launch; Bloxstrap-conflict warning. | v1.2 line | `src/ROROROblox.Core/FpsPresets.cs`, `ClientAppSettingsWriter.cs` |
+| Per-account FPS limiter | Per-row FPS-cap dropdown writing Roblox's settings pre-launch; Bloxstrap-conflict warning. Since v1.13 the cap survives close-together launches: Roblox keeps one shared settings file, so RoRoRo holds the next write until the previously launched client has provably read its own (measured — a client's first write-back proves the read). ~15-20s per account when caps differ, free when they match, with a dismissible banner. | v1.2 line; survives multi-launch v1.13 | `src/ROROROblox.Core/FpsPresets.cs`, `FpsCapSettler.cs`, `GlobalBasicSettingsProbe.cs` |
 | Local rename overlay | Right-click Rename on any account/game/server; local display name everywhere, Roblox-side names untouched. | v1.3.x | `src/ROROROblox.Core/RenameDispatch.cs`, `src/ROROROblox.App/Modals/RenameWindow.*` |
 | Account tags + filter | Free-text tag chips (PS99, RCU, …) with a filter box. | tags v1.5.0; filter v1.6.0 | `src/ROROROblox.Core/Account.cs` |
 | Roblox userId persistence + backfill | Stores each account's userId (backfilled for legacy vaults) to power presence/friends. | v1.3.x | `src/ROROROblox.Core/AccountUserIdBackfillService.cs` |
