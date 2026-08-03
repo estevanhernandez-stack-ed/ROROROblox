@@ -88,4 +88,22 @@ public class PresencePayloadBuilderTests
 
         Assert.Equal("1 account", PresencePayloadBuilder.Build(snapshot)!.State);
     }
+
+    [Fact]
+    public void Build_AccountsAcrossTwoGames_DetailsNamesTheGameTheJoinButtonPointsAt()
+    {
+        // Discord display must align: Details says game X, Join button lands in game X, not Y.
+        // The roster-first account is in "Adopt Me!" but the biggestCluster is in "Pet Simulator 99!".
+        var snapshot = new RosterSnapshot([
+            new(Guid.NewGuid(), "RosterFirst", InGame: true, GameName: "Adopt Me!", Server: ServerB,
+                InGameSinceUtc: T0),
+            InGame("CaptainNoodle", ServerA),
+            InGame("LadyPixel", ServerA)]);
+
+        var fields = PresencePayloadBuilder.Build(snapshot);
+
+        // Details should come from the cluster the Join button points at, not the roster-first account.
+        Assert.Equal("Pet Simulator 99!", fields!.Details);
+        Assert.Equal(ServerA, fields.JoinableServer);
+    }
 }

@@ -33,8 +33,14 @@ public static class PresencePayloadBuilder
                     ? $"{live.Count} accounts · {togetherCount} in this server"
                     : $"{live.Count} accounts";
 
+        // Details should reflect the game the Join button points at (biggestCluster), not the roster-first account.
+        var details = biggestCluster?.Select(a => a.GameName)
+                          .FirstOrDefault(n => !string.IsNullOrWhiteSpace(n))
+                      ?? live.Select(a => a.GameName)
+                          .FirstOrDefault(n => !string.IsNullOrWhiteSpace(n));
+
         return new PresenceFields(
-            Details: live.Select(a => a.GameName).FirstOrDefault(n => !string.IsNullOrWhiteSpace(n)),
+            Details: details,
             State: state,
             StartedAtUtc: live.Where(a => a.InGameSinceUtc is not null).Min(a => a.InGameSinceUtc),
             JoinableServer: biggestCluster?.First().Server);
