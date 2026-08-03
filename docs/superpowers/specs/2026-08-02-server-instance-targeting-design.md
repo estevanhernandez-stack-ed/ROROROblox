@@ -45,6 +45,19 @@
 > | `LandedElsewhere` | In a game, wrong server | Recycle to retry — a restart costs nothing |
 > | `NeverLanded` | Usually standing in a queue | Points at the Roblox window and names the queue — and says nothing at all about recycling. An earlier draft warned *against* it; naming the wrong move is how a user ends up trying it |
 >
+> **Second run, and the verification window was wrong too.** All eight got in. Presence timestamps
+> put them in game at 11 s, 28 s, 53 s, 2m15s, 2m33s, 2m33s, 2m34s and 2m59s after launch — so the
+> 90 s window (chosen to match `AnchorGate.MaxWait`, on the reasoning that both time the same
+> event) reported the last four as not-in-yet, three of them within nine seconds of the cutoff.
+> The two waits are not the same event: the anchor gate waits for one client with a spot waiting
+> for it, the landing check waits for a batch that may be queuing. Window is now four minutes,
+> poll interval 15 s, both from that measurement.
+>
+> Worth carrying forward: a verdict with a deadline is a claim about a moment, and this one printed
+> a permanent banner. Widening the window makes it right for the observed distribution; it does not
+> make it right in principle. If long queues turn up in the field, the fix is a banner that
+> retracts when the stragglers arrive, not a bigger number.
+>
 > Also worth recording for the retry question the body defers: an automatic retry against a full
 > server would not just be useless, it would be *destructive* — it would evict the account from the
 > line it was already standing in. Auto-retry stays out of scope on stronger grounds than "needs

@@ -37,17 +37,29 @@ internal enum ServerLandingOutcome
 internal static class ServerLandingGate
 {
     /// <summary>
-    /// Upper bound on the wait. Matches <see cref="AnchorGate.MaxWait"/>: it is the same physical
-    /// event (a client going from launched to fully in-game), measured the same way.
+    /// Upper bound on the wait — four minutes, from measurement rather than symmetry.
+    /// <para>
+    /// This was 90 s, matched to <see cref="AnchorGate.MaxWait"/> on the reasoning that both time
+    /// the same physical event. They don't. The anchor gate waits for ONE client with a spot
+    /// waiting for it; this waits for a batch that may be standing in a queue. A real eight-account
+    /// squad on 2026-08-02 arrived at 11 s / 28 s / 53 s / 2m15s / 2m33s / 2m33s / 2m34s / 2m59s
+    /// after launch — the 90 s window called the last four a miss, and three of them were in
+    /// within nine seconds of the cutoff. A verdict that flips to false eight seconds after it
+    /// prints is worse than no verdict.
+    /// </para>
+    /// Four minutes clears the measured tail by a minute. It is still a bound, not a promise: a
+    /// longer queue prints "aren't in that server yet," which stays true either way and points the
+    /// user at the window that actually knows.
     /// </summary>
-    public static readonly TimeSpan MaxWait = TimeSpan.FromSeconds(90);
+    public static readonly TimeSpan MaxWait = TimeSpan.FromMinutes(4);
 
     /// <summary>
-    /// How often the verification loop nudges presence for one account. Slow enough to stay well
-    /// clear of Roblox's rate limiter across a full squad (≤9 extra calls per account per launch),
-    /// fast enough to beat the 25 s background poll.
+    /// How often the verification loop nudges presence for one account. An account that lands
+    /// leaves the loop on its next tick, so only stragglers keep polling — 15 s over a 4-minute
+    /// window is ≤16 extra calls for an account that never arrives, and typically two or three for
+    /// one that does. Still comfortably faster than the 25 s background poll.
     /// </summary>
-    public static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(10);
+    public static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(15);
 
     /// <inheritdoc cref="AnchorGate.WaitExpired"/>
     public static bool WaitExpired(DateTime utcNow, DateTime deadline) => utcNow >= deadline;
