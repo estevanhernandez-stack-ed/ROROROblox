@@ -717,6 +717,19 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         private set => SetField(ref _robloxUpdating, value);
     }
 
+    private bool _alwaysShowRecycle;
+
+    /// <summary>
+    /// True when Recycle should ride every running row rather than appearing only under a latched
+    /// memory warning (opt-in, Preferences). Bound by both row templates; see
+    /// <see cref="IAppSettings.GetAlwaysShowRecycleAsync"/> for why the option exists.
+    /// </summary>
+    public bool AlwaysShowRecycle
+    {
+        get => _alwaysShowRecycle;
+        set => SetField(ref _alwaysShowRecycle, value);
+    }
+
     /// <summary>Loads accounts + games from disk. Called once at MainWindow load.</summary>
     public async Task LoadAsync()
     {
@@ -759,6 +772,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // first paint, so this can't race the way a fire-and-forget ctor read could.
         _dismissedFpsCapSignature = await _settings.GetDismissedFpsCapWarningSignatureAsync();
         RefreshFpsCapWarning();
+
+        // Same reasoning as the read above — awaited before first paint, so the rows never flash
+        // the wrong Recycle visibility. Preferences writes both the setting and this flag.
+        AlwaysShowRecycle = await _settings.GetAlwaysShowRecycleAsync();
 
         await ReloadGamesAsync();
         OnPropertyChanged(nameof(MainAccount));
@@ -1319,7 +1336,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         if (summary is null) return false;
 
-        var target = summary.LastLaunchTarget ?? ResolveLaunchTarget(summary.SelectedGame, overrideTarget: null);
+        var resolved = summary.LastLaunchTarget ?? ResolveLaunchTarget(summary.SelectedGame, overrideTarget: null);
+
+        // v1.14: "same game" was never the promise the Recycle button makes — the user is mid-run
+        // with a squad, and Roblox matchmakes a plain Place anywhere with room. If presence knows
+        // which server this account is in, go back to THAT one. The rule (and the matched-pair
+        // invariant that makes it correct) lives in ServerInstanceTargeting.
+        var target = ServerInstanceTargeting.Upgrade(resolved, summary.CurrentServer);
+        if (!ReferenceEquals(target, resolved))
+        {
+            _log.LogInformation(
+                "Recycle: {From} -> {To} for account {AccountId} (presence server {PlaceId}/{JobId}).",
+                resolved.GetType().Name, target.GetType().Name, summary.Id,
+                summary.CurrentServer?.PlaceId, summary.CurrentServer?.JobId ?? "(none)");
+        }
 
         // Spec log table: pre-recycle private bytes + the target being restored, never a cookie.
         // AccountMemory is a struct, so a plain FirstOrDefault() can't return null on a miss —
@@ -1337,8 +1367,99 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         if (!ok)
         {
             StatusBanner = $"Couldn't recycle {summary.RenderName} — relaunch failed.";
+            return false;
         }
-        return ok;
+
+        // Started != landed. When we asked for one specific server, check with presence and say so
+        // if Roblox put the account somewhere else. Fire-and-forget: the answer is up to 90 s away
+        // and nothing downstream waits on it. The launch timestamp is taken HERE, after the
+        // relaunch fired, so the row's pre-recycle reading can't be mistaken for a confirmation.
+        if (target is LaunchTarget.GameJob job)
+        {
+            PendingServerVerification = VerifyRecycleLandingAsync(
+                summary, new ServerInstance(job.PlaceId, job.JobId), DateTimeOffset.UtcNow);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Tunables for post-launch landing verification (v1.14). Defaults come from
+    /// <see cref="ServerLandingGate"/>; tests shorten them so a verdict lands without real waiting.
+    /// </summary>
+    internal TimeSpan ServerVerificationPollInterval { get; set; } = ServerLandingGate.PollInterval;
+
+    /// <inheritdoc cref="ServerVerificationPollInterval"/>
+    internal TimeSpan ServerVerificationMaxWait { get; set; } = ServerLandingGate.MaxWait;
+
+    /// <summary>
+    /// How long a squad waits for its first account to report which server it landed in before
+    /// giving up and sending the rest into the game instead. Same physical wait as
+    /// <see cref="AnchorGate.MaxWait"/>.
+    /// </summary>
+    internal TimeSpan SquadServerResolveMaxWait { get; set; } = AnchorGate.MaxWait;
+
+    /// <summary>
+    /// The in-flight landing verification for the most recent server-targeted recycle, or null when
+    /// the last relaunch made no server-specific claim to check.
+    /// </summary>
+    internal Task? PendingServerVerification { get; private set; }
+
+    /// <summary>
+    /// Watch presence until it can say whether <paramref name="summary"/> got into
+    /// <paramref name="requested"/>, then narrate a miss. Success is silent — the user asked to go
+    /// back to their server and they did.
+    /// </summary>
+    private async Task VerifyRecycleLandingAsync(
+        AccountSummary summary, ServerInstance requested, DateTimeOffset launchedAtUtc)
+    {
+        var outcome = await AwaitServerLandingAsync(summary, requested, launchedAtUtc).ConfigureAwait(true);
+        _log.LogInformation(
+            "Recycle landing for {AccountId}: {Outcome} (requested {PlaceId}/{JobId}, observed {ObservedJobId}).",
+            summary.Id, outcome, requested.PlaceId, requested.JobId, summary.CurrentServer?.JobId ?? "(none)");
+
+        if (outcome is ServerLandingOutcome.LandedElsewhere or ServerLandingOutcome.NeverLanded)
+        {
+            StatusBanner = ServerLandingReport.ComposeRecycleMiss(summary.RenderName, outcome);
+        }
+    }
+
+    /// <summary>
+    /// Poll presence for one account until <see cref="ServerLandingGate"/> reaches a verdict or the
+    /// window closes. Nudges the poller directly rather than waiting out the 25 s background tick;
+    /// a refresh failure is not a verdict, so it degrades to that background tick instead of ending
+    /// the wait. Bounded by <see cref="ServerVerificationMaxWait"/> — never hangs.
+    /// </summary>
+    private async Task<ServerLandingOutcome> AwaitServerLandingAsync(
+        AccountSummary summary, ServerInstance requested, DateTimeOffset launchedAtUtc)
+    {
+        var deadline = DateTime.UtcNow + ServerVerificationMaxWait;
+        while (true)
+        {
+            var outcome = ServerLandingGate.Evaluate(
+                requested,
+                summary.CurrentServer,
+                summary.InGame,
+                summary.PresenceUpdatedAtUtc,
+                launchedAtUtc,
+                ServerLandingGate.WaitExpired(DateTime.UtcNow, deadline));
+
+            if (outcome != ServerLandingOutcome.Pending)
+            {
+                return outcome;
+            }
+
+            try
+            {
+                await _presenceService.RequestImmediateRefreshAsync(summary.Id).ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                _log.LogDebug(ex, "Landing-verification presence refresh failed for {AccountId}; falling back to the background poll.", summary.Id);
+            }
+
+            await Task.Delay(ServerVerificationPollInterval).ConfigureAwait(true);
+        }
     }
 
     /// <summary>
@@ -1464,7 +1585,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <c>RobloxPlayerBeta.exe</c> by start time AND widens the appStorage contested window
     /// (v1.4.2.0). Shared by Launch-multiple + Private-server batches.
     /// </summary>
-    private static readonly TimeSpan InterLaunchThrottle = TimeSpan.FromMilliseconds(5000);
+    internal TimeSpan InterLaunchThrottle { get; set; } = TimeSpan.FromMilliseconds(5000);
 
     /// <summary>
     /// Poll cadence for the v1.7.0 pre-warm wait — checks the installer-gone + first-attached
@@ -1486,11 +1607,18 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// Eligibility / skip-reason banners are computed by the callers BEFORE this — pre-warm wraps the
     /// batch, it doesn't replace eligibility.
     /// </summary>
+    /// <param name="resolveTailTarget">
+    /// v1.14 server-instance targeting: when set, #1 is dispatched on its own and this decides what
+    /// the REST launch into, given where #1 actually ended up. That is the only way to put a squad
+    /// in one public server — the server does not exist as an address until somebody is in it.
+    /// Returning null keeps <paramref name="overrideTarget"/> for the tail.
+    /// </param>
     private async Task DispatchBatchAsync(
         IReadOnlyList<AccountSummary> targets,
         LaunchTarget? overrideTarget,
         Func<AccountSummary, int, int, string> launchingBanner,
-        bool waitForLanding = false)
+        bool waitForLanding = false,
+        Func<AccountSummary, DateTimeOffset, Task<LaunchTarget?>>? resolveTailTarget = null)
     {
         if (targets.Count == 0)
         {
@@ -1500,15 +1628,30 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var decision = await DecidePreWarmAsync().ConfigureAwait(true);
 
         // Single-account batches can't benefit from serializing the update (there is no "rest"),
-        // so they always go down the normal path — the lone launch IS the pre-warm.
-        if (decision == PreWarmDecision.PreWarmThenRelease && targets.Count > 1)
+        // so they always go down the normal path — the lone launch IS the pre-warm. A tail-target
+        // resolver forces the same split for a different reason: the tail's address is unknown
+        // until #1 lands.
+        if ((decision == PreWarmDecision.PreWarmThenRelease || resolveTailTarget is not null) && targets.Count > 1)
         {
             // --- Pre-warm: launch #1, hold the rest until the update clears. ---
             var first = targets[0];
             StatusBanner = launchingBanner(first, 1, targets.Count);
+            // Stamped BEFORE the launch so the tail resolver can tell a presence reading about the
+            // client we just started from one left over from before it.
+            var firstLaunchedAtUtc = DateTimeOffset.UtcNow;
             await LaunchAccountAsync(first, overrideTarget).ConfigureAwait(true);
 
-            await WaitForPreWarmAsync(first).ConfigureAwait(true);
+            if (decision == PreWarmDecision.PreWarmThenRelease)
+            {
+                await WaitForPreWarmAsync(first).ConfigureAwait(true);
+            }
+
+            if (resolveTailTarget is not null)
+            {
+                // Waiting for #1 to be IN the game subsumes the pre-warm wait (installer gone +
+                // attached is strictly earlier), so an update-pending batch is still serialized.
+                overrideTarget = await resolveTailTarget(first, firstLaunchedAtUtc).ConfigureAwait(true) ?? overrideTarget;
+            }
 
             if (waitForLanding)
             {
@@ -1706,8 +1849,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// (<see cref="IAppSettings.GetCarefulSquadLaunchAsync"/>) threads <c>waitForLanding</c> through
     /// every dispatch path so joins serialize on presence instead of firing on the fixed throttle alone.
     /// </para>
+    /// <para>
+    /// v1.14 server-instance targeting: <paramref name="target"/> may now be a PUBLIC place, which
+    /// was structurally impossible before (this parameter was typed <c>PrivateServer</c>). A public
+    /// server has no address until someone is standing in it, so #1 goes in as a plain
+    /// <see cref="LaunchTarget.Place"/>, presence reports which server it got, and the rest are
+    /// dispatched at THAT server via <see cref="LaunchTarget.GameJob"/>. If #1's server can't be
+    /// read in time the rest still launch into the game — a scattered squad beats no squad.
+    /// </para>
     /// </summary>
-    private async Task SquadLaunchAsync(LaunchTarget.PrivateServer target)
+    internal async Task SquadLaunchAsync(LaunchTarget target)
     {
         if (IsBusy) return;
         IsBusy = true;
@@ -1723,8 +1874,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             var careful = await _settings.GetCarefulSquadLaunchAsync();
             var plan = SquadLaunchPlan.Build(targets);
             _log.LogInformation(
-                "PrivateServer: placeId={PlaceId}, {Count} eligible ({Direct} direct, {Flagged} join-via-friend), careful={Careful}, {Running} running, {Expired} expired, {Deselected} deselected",
-                target.PlaceId, targets.Count, plan.Direct.Count, plan.Flagged.Count, careful,
+                "Squad launch: target={Target}, {Count} eligible ({Direct} direct, {Flagged} join-via-friend), careful={Careful}, {Running} running, {Expired} expired, {Deselected} deselected",
+                target.GetType().Name, targets.Count, plan.Direct.Count, plan.Flagged.Count, careful,
                 result.Breakdown.Running, result.Breakdown.Expired, result.Breakdown.Deselected);
             if (targets.Count == 0)
             {
@@ -1732,14 +1883,32 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 return;
             }
 
+            // A public place needs #1 to land before the rest have an address to aim at. A private
+            // server already IS one address, so it keeps the pre-v1.14 single-shot dispatch.
+            ServerInstance? squadServer = null;
+            Func<AccountSummary, DateTimeOffset, Task<LaunchTarget?>>? resolveTailTarget = target is LaunchTarget.Place
+                ? async (first, launchedAtUtc) =>
+                {
+                    StatusBanner = $"Waiting for {first.RenderName} to land so the rest can join that server...";
+                    squadServer = await WaitForServerInstanceAsync(first, launchedAtUtc).ConfigureAwait(true);
+                    if (squadServer is null)
+                    {
+                        StatusBanner = $"Couldn't read {first.RenderName}'s server in time — the rest are joining the game, not that server.";
+                        return null;
+                    }
+                    return ServerInstanceTargeting.Upgrade(target, squadServer);
+                }
+            : null;
+
             // Phase 1 — direct batch (byte-identical to today when nothing is flagged + careful off).
             if (plan.Direct.Count > 0)
             {
                 await DispatchBatchAsync(
                     plan.Direct,
                     overrideTarget: target,
-                    launchingBanner: (summary, n, total) => $"Joining private server: {summary.RenderName} ({n} of {total})...",
-                    waitForLanding: careful);
+                    launchingBanner: (summary, n, total) => $"Joining server: {summary.RenderName} ({n} of {total})...",
+                    waitForLanding: careful,
+                    resolveTailTarget: resolveTailTarget);
             }
 
             if (plan.Flagged.Count > 0)
@@ -1789,28 +1958,116 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                         await DispatchBatchAsync(
                             plan.Flagged,
                             overrideTarget: target,
-                            launchingBanner: (summary, n, total) => $"Joining private server (direct fallback): {summary.RenderName} ({n} of {total})...",
-                            waitForLanding: careful);
+                            launchingBanner: (summary, n, total) => $"Joining server (direct fallback): {summary.RenderName} ({n} of {total})...",
+                            waitForLanding: careful,
+                            // Nothing landed before this batch, so #1 here defines the server the
+                            // rest aim at — same first-lands-then-follow shape as the direct batch.
+                            resolveTailTarget: resolveTailTarget);
                     }
                     else
                     {
                         // Anchor timed out, but Phase 1 already ran the pre-warm decision for the
-                        // direct batch — no need to re-gate here.
+                        // direct batch — no need to re-gate here. A squad server read during phase 1
+                        // still applies: these accounts couldn't follow a friend, but they can still
+                        // be sent at the server the direct batch is in.
                         await ReleaseBatchAsync(
                             plan.Flagged,
-                            overrideTarget: target,
-                            launchingBanner: (summary, n, total) => $"Joining private server (direct fallback): {summary.RenderName} ({n} of {total})...",
+                            overrideTarget: ServerInstanceTargeting.Upgrade(target, squadServer),
+                            launchingBanner: (summary, n, total) => $"Joining server (direct fallback): {summary.RenderName} ({n} of {total})...",
                             startIndex: 0,
                             waitForLanding: careful);
                     }
                 }
             }
 
-            StatusBanner = result.PartialBanner(targets.Count, "Private server launch finished");
+            StatusBanner = result.PartialBanner(targets.Count, "Squad launch finished");
+
+            // Everyone was aimed at one specific server — check with presence who actually made it.
+            // Fire-and-forget: the verdict is up to 90 s out and the batch is done either way.
+            if (squadServer is not null)
+            {
+                var dispatched = plan.Direct.Concat(plan.Flagged).ToList();
+                PendingServerVerification = VerifySquadLandingsAsync(dispatched, squadServer, DateTimeOffset.UtcNow);
+            }
         }
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Wait for one account to be IN a game and report WHICH server, so the rest of a squad can be
+    /// aimed at it. Bounded by <see cref="AnchorGate.MaxWait"/> — the same physical wait the anchor
+    /// gate measures, plus the job id. Null on timeout, on privacy withholding the job id, or if the
+    /// account never lands; every caller falls back to launching into the game.
+    /// </summary>
+    private async Task<ServerInstance?> WaitForServerInstanceAsync(AccountSummary summary, DateTimeOffset launchedAtUtc)
+    {
+        var deadline = DateTime.UtcNow + SquadServerResolveMaxWait;
+        while (true)
+        {
+            // Freshness matters here for the same reason it does in ServerLandingGate: only a
+            // reading taken after the launch describes the client we just started.
+            if (summary.PresenceUpdatedAtUtc is { } at && at > launchedAtUtc
+                && summary.InGame && summary.CurrentServer is { } server)
+            {
+                _log.LogInformation("Squad server resolved from {Account}: place={PlaceId} job={JobId}.",
+                    summary.DisplayName, server.PlaceId, server.JobId);
+                return server;
+            }
+
+            if (ServerLandingGate.WaitExpired(DateTime.UtcNow, deadline))
+            {
+                _log.LogWarning(
+                    "No server id from {Account} within {Cap}s (inGame={InGame}); the rest of the squad joins the game instead.",
+                    summary.DisplayName, (int)AnchorGate.MaxWait.TotalSeconds, summary.InGame);
+                return null;
+            }
+
+            try
+            {
+                await _presenceService.RequestImmediateRefreshAsync(summary.Id).ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                _log.LogDebug(ex, "Squad server-resolve presence refresh failed for {AccountId}; falling back to the background poll.", summary.Id);
+            }
+
+            await Task.Delay(ServerVerificationPollInterval).ConfigureAwait(true);
+        }
+    }
+
+    /// <summary>
+    /// Check each squad member against the server they were aimed at and name the ones who missed.
+    /// "We're all together" is the entire point of Squad Launch, so a partial miss is worth saying
+    /// out loud; a clean sweep says nothing.
+    /// </summary>
+    private async Task VerifySquadLandingsAsync(
+        IReadOnlyList<AccountSummary> dispatched, ServerInstance requested, DateTimeOffset launchedAtUtc)
+    {
+        var outcomes = await Task.WhenAll(dispatched.Select(async summary =>
+            (summary, outcome: await AwaitServerLandingAsync(summary, requested, launchedAtUtc).ConfigureAwait(true))))
+            .ConfigureAwait(true);
+
+        // Split by outcome, not by "missed": one group should recycle and the other must not.
+        // A queued account is one spot away from where it wants to be; recycling throws that away.
+        var elsewhere = outcomes
+            .Where(o => o.outcome is ServerLandingOutcome.LandedElsewhere)
+            .Select(o => o.summary.RenderName)
+            .ToList();
+        var notInYet = outcomes
+            .Where(o => o.outcome is ServerLandingOutcome.NeverLanded)
+            .Select(o => o.summary.RenderName)
+            .ToList();
+
+        _log.LogInformation(
+            "Squad landing check for server {JobId}: {Elsewhere} elsewhere, {NotInYet} not in yet, of {Total}.",
+            requested.JobId, elsewhere.Count, notInYet.Count, dispatched.Count);
+
+        if (ServerLandingReport.ComposeSquadMiss(elsewhere, notInYet, dispatched.Count) is { } banner)
+        {
+            StatusBanner = banner;
         }
     }
 
@@ -2155,13 +2412,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// §"Components > 2" + "Data flow."
     /// </summary>
     private void OnAccountPresenceUpdated(object? sender, AccountPresenceEventArgs e)
+        => Application.Current?.Dispatcher.Invoke(() => ApplyPresence(e));
+
+    /// <summary>
+    /// UI-thread body of the presence handler (internal for tests — <see cref="OnAccountPresenceUpdated"/>
+    /// marshals to it, same seam shape as <see cref="ApplySessionExpired"/>).
+    /// </summary>
+    internal void ApplyPresence(AccountPresenceEventArgs e)
     {
-        Application.Current?.Dispatcher.Invoke(() =>
         {
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
             if (summary is null) return;
             // A presence poll landing means Roblox is answering this cookie again — clear Limited.
             summary.SessionLimited = false;
+            summary.PresenceUpdatedAtUtc = e.OccurredAtUtc;
 
             if (e.PresenceType == UserPresenceType.InGame)
             {
@@ -2174,6 +2438,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 summary.CurrentPlaceId = e.PlaceId;
                 summary.CurrentGameName = e.GameName;
                 summary.PresenceState = e.PresenceType;
+                // WHICH server, not just which game (v1.14). Null when privacy or timing withheld
+                // the job id — Recycle then behaves exactly as it did before this feature.
+                summary.CurrentServer = e.Server;
             }
             else
             {
@@ -2184,6 +2451,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 summary.PresenceState = e.PresenceType;
                 summary.CurrentGameName = null;
                 summary.CurrentPlaceId = null;
+                summary.CurrentServer = null;
                 summary.InGameSinceUtc = null;
 
                 // Presence-confirmed close: the row was active, presence now says not-in-game,
@@ -2202,7 +2470,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(CompactRows));
             OnPropertyChanged(nameof(HasCompactRows));
             RelayCommand.RaiseCanExecuteChanged();
-        });
+        }
     }
 
     /// <summary>

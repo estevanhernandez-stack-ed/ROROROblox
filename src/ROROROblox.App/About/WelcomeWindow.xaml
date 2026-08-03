@@ -144,7 +144,7 @@
                         <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="In batches" />
                         <Run Text=" / " />
                         <Run FontWeight="SemiBold" Foreground="{DynamicResource WhiteBrush}" Text="Skipped" />
-                        <Run Text=" — toggles whether this account joins Launch multiple / Private server runs. Persists across restarts." />
+                        <Run Text=" — toggles whether this account joins Launch multiple / Squad Launch runs. Persists across restarts." />
                     </TextBlock>
                     <TextBlock FontSize="11"
                                Foreground="{DynamicResource MutedTextBrush}"

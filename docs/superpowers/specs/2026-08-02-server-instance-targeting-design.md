@@ -1,5 +1,68 @@
 # Server-instance targeting — rejoin a specific Roblox server
 
+> ## ⚠ Built 2026-08-02 — four deviations from this document
+>
+> The design below is what was approved. This banner is what shipped. The body is left intact on
+> purpose; read it as the reasoning, not the record.
+>
+> 1. **The remedy is a status banner, not a row affordance.** The spec calls for surfacing a miss
+>    "on the row with a one-click retry." Este's call at build time: banner only, no new per-row
+>    button. Recycle already IS the retry, so the copy names it (`ServerLandingReport`). The
+>    verification itself — presence comparison, the timeout-is-a-miss rule — shipped exactly as
+>    specified.
+> 2. **The pair is a type, not two properties.** The spec says retain `GameJobId` on
+>    `AccountSummary.CurrentGameJobId` alongside `CurrentPlaceId`. Shipped as
+>    `AccountSummary.CurrentServer`, a `ServerInstance(PlaceId, JobId)` record built only by
+>    `ServerInstance.TryFrom`. Two nullable properties can be read one at a time — which is the
+>    matched-pair bug the spike hit. One value cannot.
+> 3. **A stale `GameJob` target degrades to `Place`.** The spec covers upgrading `Place` →
+>    `GameJob` but not what a SECOND recycle does with the remembered `GameJob`. It takes the fresh
+>    presence pair when there is one, and falls back to `Place(rememberedPlaceId)` when there
+>    isn't — an unverifiable job id may be dead, and a dead one strands the account at the home
+>    screen. Covered by `ServerInstanceTargetingTests`.
+> 4. **Squad Launch takes a public place by pasted link only.** The spec says "allow a public place
+>    as a squad target" without naming the picker. The modal's URL box now accepts a plain game
+>    link; no games-library list was added to that modal.
+>
+> Everything else — the `RequestGameJob` URI, the matched-pair rule, first-lands-then-rest, the
+> `Place` fallback on timeout, `PrivateServer` never being upgraded — shipped as written.
+>
+> ### Field finding, same day: a full server QUEUES you
+>
+> The body below says we had *"not characterised what Roblox does when the requested server is
+> full — it may reject, or it may silently matchmake."* Now measured, on the first real squad run:
+> **it does neither.** Eight accounts at a server with one spot — one got in, and Roblox put the
+> other seven in a visible queue (*"server full, waiting in line 1 of 7"*), admitting them as spots
+> opened. The request is honored, just later. Silent matchmaking — the outcome that would have
+> looked like success while being a failure — does not happen.
+>
+> That inverts the remedy for one of the two misses, and the first build got it wrong: the banner
+> told all seven queued accounts to *"Recycle those rows to retry,"* which would have thrown away
+> their place in line. Corrected — the two outcomes now carry opposite advice:
+>
+> | Outcome | What it means | What we say |
+> | --- | --- | --- |
+> | `LandedElsewhere` | In a game, wrong server | Recycle to retry — a restart costs nothing |
+> | `NeverLanded` | Usually standing in a queue | Points at the Roblox window and names the queue — and says nothing at all about recycling. An earlier draft warned *against* it; naming the wrong move is how a user ends up trying it |
+>
+> **Second run, and the verification window was wrong too.** All eight got in. Presence timestamps
+> put them in game at 11 s, 28 s, 53 s, 2m15s, 2m33s, 2m33s, 2m34s and 2m59s after launch — so the
+> 90 s window (chosen to match `AnchorGate.MaxWait`, on the reasoning that both time the same
+> event) reported the last four as not-in-yet, three of them within nine seconds of the cutoff.
+> The two waits are not the same event: the anchor gate waits for one client with a spot waiting
+> for it, the landing check waits for a batch that may be queuing. Window is now four minutes,
+> poll interval 15 s, both from that measurement.
+>
+> Worth carrying forward: a verdict with a deadline is a claim about a moment, and this one printed
+> a permanent banner. Widening the window makes it right for the observed distribution; it does not
+> make it right in principle. If long queues turn up in the field, the fix is a banner that
+> retracts when the stragglers arrive, not a bigger number.
+>
+> Also worth recording for the retry question the body defers: an automatic retry against a full
+> server would not just be useless, it would be *destructive* — it would evict the account from the
+> line it was already standing in. Auto-retry stays out of scope on stronger grounds than "needs
+> field data."
+
 **Date:** 2026-08-02
 **Status:** Approved design. Core behaviour **verified live** — see Evidence.
 **Driver:** User report — Recycle returns you to the game but not the server you were in.

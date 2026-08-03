@@ -244,6 +244,51 @@ public class LaunchTargetTests
     }
 
     [Fact]
+    public void BuildPlaceLauncherUrl_GameJob_ProducesRequestGameJobFormCarryingTheJobIdAsGameId()
+    {
+        // Verified live 2026-08-02 (spike/game-job-targeting): this exact shape put a recycled
+        // client back into job fcbe3a36-… — the same server it left. Fails if the request verb or
+        // the gameId slot name drifts, which is the whole contract with PlaceLauncher.
+        var url = RobloxLauncher.BuildPlaceLauncherUrl(
+            new LaunchTarget.GameJob(140403681187145, "fcbe3a36-d655-41da-ba8a-8280f5709568"),
+            browserTrackerId: "BT-1");
+
+        Assert.Contains("request=RequestGameJob", url);
+        Assert.Contains("browserTrackerId=BT-1", url);
+        Assert.Contains("placeId=140403681187145", url);
+        Assert.Contains("gameId=fcbe3a36-d655-41da-ba8a-8280f5709568", url);
+        Assert.Contains("isPlayTogetherGame=false", url);
+        // RequestGame is a PREFIX of RequestGameJob — assert the plain form isn't what got emitted.
+        Assert.DoesNotContain("request=RequestGame&", url);
+    }
+
+    [Fact]
+    public void BuildPlaceLauncherUrl_GameJob_UrlEncodesTheJobId()
+    {
+        var url = RobloxLauncher.BuildPlaceLauncherUrl(
+            new LaunchTarget.GameJob(12345, "job id/with+chars"),
+            browserTrackerId: "1");
+
+        Assert.Contains(Uri.EscapeDataString("job id/with+chars"), url);
+        Assert.DoesNotContain("gameId=job id", url);
+    }
+
+    [Fact]
+    public void BuildPlaceLauncherUrl_RejectsGameJobWithZeroPlaceId()
+    {
+        // Half a pair is not an address. Never let one reach Roblox.
+        Assert.Throws<ArgumentException>(() =>
+            RobloxLauncher.BuildPlaceLauncherUrl(new LaunchTarget.GameJob(0, "job-1"), "BT"));
+    }
+
+    [Fact]
+    public void BuildPlaceLauncherUrl_RejectsGameJobWithEmptyJobId()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            RobloxLauncher.BuildPlaceLauncherUrl(new LaunchTarget.GameJob(12345, ""), "BT"));
+    }
+
+    [Fact]
     public void BuildPlaceLauncherUrl_DefaultGame_Throws()
     {
         Assert.Throws<InvalidOperationException>(() =>

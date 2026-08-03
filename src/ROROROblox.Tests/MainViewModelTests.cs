@@ -930,6 +930,291 @@ public class MainViewModelTests
         finally { if (File.Exists(path)) File.Delete(path); }
     }
 
+    // === Server-instance targeting (v1.14) ===
+    //
+    // Presence has always known WHICH server an account is in; the pipeline dropped it at this
+    // boundary. These tests hold the two ends: the row retains the pair, and Recycle spends it.
+
+    private static AccountPresenceEventArgs InGameAt(Guid accountId, ServerInstance server) =>
+        new(accountId, UserPresenceType.InGame, server.PlaceId, "Pet Simulator 99!",
+            DateTimeOffset.UtcNow, server);
+
+    [Fact]
+    public async Task ApplyPresence_InGame_RetainsTheServerInstanceOnTheRow()
+    {
+        var (vm, store, _, path) = Build();
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+            var server = new ServerInstance(140403681187145, "fcbe3a36-d655-41da-ba8a-8280f5709568");
+
+            vm.ApplyPresence(InGameAt(row.Id, server));
+
+            // Discarding e.Server here again (the pre-v1.14 behaviour) makes this fail.
+            Assert.Equal(server, row.CurrentServer);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ApplyPresence_LeavingTheGame_ClearsTheServerInstance()
+    {
+        // A job id outlives the session it names. Holding one after the account left would send
+        // the next Recycle at a server it is not in — worse than not targeting at all.
+        var (vm, store, _, path) = Build();
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+            vm.ApplyPresence(InGameAt(row.Id, new ServerInstance(140403681187145, "job-1")));
+            Assert.NotNull(row.CurrentServer);
+
+            vm.ApplyPresence(new AccountPresenceEventArgs(
+                row.Id, UserPresenceType.Offline, null, null, DateTimeOffset.UtcNow));
+
+            Assert.Null(row.CurrentServer);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task RecycleAccountCommand_UpgradesAPlaceTargetToTheSERVERTheAccountIsIn()
+    {
+        // The feature, end to end at the ViewModel: Recycle used to relaunch into LastLaunchTarget
+        // verbatim ("this game, any server") and matchmake the user away from their squad. Deleting
+        // the upgrade call in RecycleAccountAsync makes this fail with a plain Place.
+        var launcher = new RecordingSuccessLauncher();
+        var (vm, store, _, path) = Build(launcher, memoryWatchdog: new SpyMemoryWatchdog());
+        try
+        {
+            // Close the verification window so the fire-and-forget check resolves at once instead
+            // of leaving a 90 s poll loop running past the end of this test.
+            vm.ServerVerificationMaxWait = TimeSpan.Zero;
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+            // Launched into the universe's ENTRY place; presence reports a different place inside
+            // that universe (Pet Sim teleports) plus the job id. The pair must win, whole.
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.Place(8737899170));
+            vm.ApplyPresence(InGameAt(row.Id, new ServerInstance(140403681187145, "job-abc")));
+
+            await vm.RecycleAccountAsync(row);
+
+            var relaunch = Assert.IsType<LaunchTarget.GameJob>(launcher.Launches[1]);
+            Assert.Equal(140403681187145, relaunch.PlaceId);
+            Assert.Equal("job-abc", relaunch.JobId);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task RecycleAccountCommand_WithNoKnownServer_RelaunchesTheUnchangedPlace()
+    {
+        var launcher = new RecordingSuccessLauncher();
+        var (vm, store, _, path) = Build(launcher, memoryWatchdog: new SpyMemoryWatchdog());
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+            var original = new LaunchTarget.Place(8737899170);
+            await vm.LaunchAccountForPluginAsync(row, original);
+
+            await vm.RecycleAccountAsync(row);
+
+            Assert.Same(original, launcher.Launches[1]);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task RecycleAccountCommand_NeverUpgradesAPrivateServerTarget()
+    {
+        // A private server's code already names one server, durably. Swapping it for a job id
+        // would trade a permanent address for a perishable one and drop the credential.
+        var launcher = new RecordingSuccessLauncher();
+        var (vm, store, _, path) = Build(launcher, memoryWatchdog: new SpyMemoryWatchdog());
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+            var vip = new LaunchTarget.PrivateServer(8737899170, "SHARE_TOKEN", PrivateServerCodeKind.LinkCode);
+            await vm.LaunchAccountForPluginAsync(row, vip);
+            vm.ApplyPresence(InGameAt(row.Id, new ServerInstance(140403681187145, "job-abc")));
+
+            await vm.RecycleAccountAsync(row);
+
+            Assert.Same(vip, launcher.Launches[1]);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task ApplyPresence_StampsWhenTheReadingArrived()
+    {
+        // Landing verification is only meaningful against readings taken AFTER the relaunch —
+        // without this stamp the gate cannot tell a fresh confirmation from the pre-recycle one.
+        var (vm, store, _, path) = Build();
+        try
+        {
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+            var at = DateTimeOffset.UtcNow;
+
+            vm.ApplyPresence(new AccountPresenceEventArgs(
+                row.Id, UserPresenceType.InGame, 140403681187145, "Pet Simulator 99!", at,
+                new ServerInstance(140403681187145, "job-1")));
+
+            Assert.Equal(at, row.PresenceUpdatedAtUtc);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task RecycleAccountCommand_ServerTargeted_VerifiesTheLandingAndBannersAMiss()
+    {
+        // A launch that "Started" proves a process started, nothing more. With the verification
+        // window closed (zero wait) and no post-relaunch presence confirmation, the gate must call
+        // it a miss and say so — deleting the verification kickoff leaves the banner untouched.
+        var launcher = new RecordingSuccessLauncher();
+        var (vm, store, _, path) = Build(launcher, memoryWatchdog: new SpyMemoryWatchdog());
+        try
+        {
+            vm.ServerVerificationMaxWait = TimeSpan.Zero;
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.Place(8737899170));
+            vm.ApplyPresence(InGameAt(row.Id, new ServerInstance(140403681187145, "job-abc")));
+
+            await vm.RecycleAccountAsync(row);
+            var verification = vm.PendingServerVerification;
+            Assert.NotNull(verification);
+            await verification.WaitAsync(TimeSpan.FromSeconds(5));
+
+            Assert.Contains("TestAlt", vm.StatusBanner);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task RecycleAccountCommand_NotServerTargeted_SkipsVerificationEntirely()
+    {
+        // No job id means no claim to verify. Never nag about a plain "any server" relaunch —
+        // landing elsewhere IS the contract there.
+        var launcher = new RecordingSuccessLauncher();
+        var (vm, store, _, path) = Build(launcher, memoryWatchdog: new SpyMemoryWatchdog());
+        try
+        {
+            vm.ServerVerificationMaxWait = TimeSpan.Zero;
+            var added = await store.AddAsync("TestAlt", "", "cookie");
+            var row = new AccountSummary(added);
+            vm.Accounts.Add(row);
+            await vm.LaunchAccountForPluginAsync(row, new LaunchTarget.Place(8737899170));
+
+            await vm.RecycleAccountAsync(row);
+
+            Assert.Null(vm.PendingServerVerification);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    /// <summary>
+    /// Launches like <see cref="RecordingSuccessLauncher"/>, but runs a callback as the FIRST
+    /// launch fires — standing in for presence reporting where that client landed while the rest of
+    /// the batch is still queued. Squad-into-a-public-server is exactly that interleaving.
+    /// </summary>
+    private sealed class LandingLauncher(Action<int> onLaunch) : IRobloxLauncher
+    {
+        public List<LaunchTarget> Launches { get; } = [];
+
+        public Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null)
+        {
+            Launches.Add(target);
+            onLaunch(Launches.Count);
+            return Task.FromResult<LaunchResult>(new LaunchResult.Started(9000 + Launches.Count, DateTimeOffset.UtcNow));
+        }
+
+        public Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null, long? browserTrackerId = null)
+            => throw new NotImplementedException();
+    }
+
+    [Fact]
+    public async Task SquadLaunch_PublicPlace_SendsTheRestOfTheSquadToTheServerTheFirstAccountGot()
+    {
+        // Before v1.14 this squad was structurally impossible — SelectedTarget was typed
+        // PrivateServer, and a public place means "any server with room" for each account
+        // independently. The batch must now pivot on where #1 actually landed.
+        AccountSummary? first = null;
+        var landed = new ServerInstance(140403681187145, "job-shared");
+        var launcher = new LandingLauncher(n =>
+        {
+            if (n != 1 || first is null) return;
+            // Presence lands for #1: in game, and here is which server. Timestamped after the
+            // launch — a reading from before it would describe a client that no longer exists.
+            first.PresenceState = UserPresenceType.InGame;
+            first.CurrentServer = landed;
+            first.PresenceUpdatedAtUtc = DateTimeOffset.UtcNow.AddSeconds(30);
+        });
+        var (vm, store, _, path) = Build(launcher);
+        try
+        {
+            vm.InterLaunchThrottle = TimeSpan.Zero;      // 5 s of real throttle buys nothing here
+            vm.ServerVerificationPollInterval = TimeSpan.Zero;
+            vm.ServerVerificationMaxWait = TimeSpan.Zero; // no background verification loop outliving the test
+            foreach (var name in new[] { "Alt1", "Alt2", "Alt3" })
+            {
+                vm.Accounts.Add(new AccountSummary(await store.AddAsync(name, "", "cookie")));
+            }
+            first = vm.Accounts[0];
+
+            await vm.SquadLaunchAsync(new LaunchTarget.Place(8737899170)).WaitAsync(TimeSpan.FromSeconds(10));
+
+            Assert.Equal(3, launcher.Launches.Count);
+            // #1 goes in blind — there is no server to name yet.
+            Assert.IsType<LaunchTarget.Place>(launcher.Launches[0]);
+            foreach (var follower in launcher.Launches.Skip(1))
+            {
+                var job = Assert.IsType<LaunchTarget.GameJob>(follower);
+                Assert.Equal(landed.JobId, job.JobId);
+                Assert.Equal(landed.PlaceId, job.PlaceId);
+            }
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task SquadLaunch_PublicPlace_FirstAccountsServerNeverReadable_StillLaunchesEveryoneIntoTheGame()
+    {
+        // Spec floor: "No failure path may leave the account outside the game." A scattered squad
+        // is worse than a together one and far better than no squad.
+        var launcher = new LandingLauncher(_ => { });   // presence never reports a server
+        var (vm, store, _, path) = Build(launcher);
+        try
+        {
+            vm.InterLaunchThrottle = TimeSpan.Zero;
+            vm.ServerVerificationPollInterval = TimeSpan.Zero;
+            vm.ServerVerificationMaxWait = TimeSpan.Zero;
+            vm.SquadServerResolveMaxWait = TimeSpan.Zero;  // close the window immediately
+            foreach (var name in new[] { "Alt1", "Alt2" })
+            {
+                vm.Accounts.Add(new AccountSummary(await store.AddAsync(name, "", "cookie")));
+            }
+
+            var place = new LaunchTarget.Place(8737899170);
+            await vm.SquadLaunchAsync(place).WaitAsync(TimeSpan.FromSeconds(10));
+
+            Assert.Equal(2, launcher.Launches.Count);
+            Assert.All(launcher.Launches, t => Assert.Same(place, t));
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
     [Fact]
     public async Task ApplyMemory_CalledTwiceWithUnchangedPressure_MemoryWarningStaysTrue()
     {
@@ -1091,7 +1376,10 @@ public class MainViewModelTests
         public Task SetMuteIdleAlertsAsync(bool muted) => throw new NotImplementedException();
         public Task<int> GetIdleWarnThresholdMinutesAsync() => throw new NotImplementedException();
         public Task SetIdleWarnThresholdMinutesAsync(int minutes) => throw new NotImplementedException();
-        public Task<bool> GetCarefulSquadLaunchAsync() => throw new NotImplementedException();
+        // Careful mode off — the default a fresh install runs with, and what the squad tests want.
+        public Task<bool> GetCarefulSquadLaunchAsync() => Task.FromResult(false);
+        public Task<bool> GetAlwaysShowRecycleAsync() => Task.FromResult(false);
+        public Task SetAlwaysShowRecycleAsync(bool always) => throw new NotImplementedException();
         public Task SetCarefulSquadLaunchAsync(bool careful) => throw new NotImplementedException();
         public Task<bool> GetStreamerModeAsync() => throw new NotImplementedException();
         public Task SetStreamerModeAsync(bool enabled) => throw new NotImplementedException();

@@ -22,8 +22,13 @@ internal partial class SquadLaunchWindow : Window
     private readonly int _expiredAccountCount;
     private bool _suppressClickHandlers; // true while we set the initial check state.
 
-    /// <summary>The target the user picked — null if the user closed without launching.</summary>
-    public LaunchTarget.PrivateServer? SelectedTarget { get; private set; }
+    /// <summary>
+    /// The target the user picked — null if the user closed without launching. Either a
+    /// <see cref="LaunchTarget.PrivateServer"/> (saved or pasted) or, since v1.14, a
+    /// <see cref="LaunchTarget.Place"/> pasted as a plain game link: the ViewModel lands the first
+    /// account, reads which server it got, and sends the rest there.
+    /// </summary>
+    public LaunchTarget? SelectedTarget { get; private set; }
 
     public SquadLaunchWindow(
         IPrivateServerStore store,
@@ -318,7 +323,7 @@ internal partial class SquadLaunchWindow : Window
         var input = UrlInput.Text?.Trim();
         if (string.IsNullOrEmpty(input))
         {
-            StatusText.Text = "Paste a private server share URL first.";
+            StatusText.Text = "Paste a private server link or a game link first.";
             return;
         }
 
@@ -330,12 +335,26 @@ internal partial class SquadLaunchWindow : Window
             //   privateServerLinkCode share URL  -> direct parse, LinkCode kind
             //   PlaceLauncher.ashx accessCode    -> direct parse, AccessCode kind
             //   roblox.com/share?code=X&type=Y   -> Roblox API resolve-link, LinkCode kind
+            //   roblox.com/games/<id>            -> public place: the squad lands together in
+            //                                       whichever server the first account gets (v1.14)
             var parsed = await _resolveShareUrl(input);
+
+            if (parsed is LaunchTarget.Place place)
+            {
+                // Nothing to save — a public game isn't a server, and the server the squad ends up
+                // in is decided at launch. Saving belongs to the Games library, not here.
+                SelectedTarget = place;
+                DialogResult = true;
+                Close();
+                return;
+            }
+
             if (parsed is not LaunchTarget.PrivateServer ps)
             {
-                StatusText.Text = "Couldn't read that as a private server link. Paste the URL " +
-                                  "from your private server's \"Configure Server\" page (either " +
-                                  "the new roblox.com/share?... link or the older privateServerLinkCode= form).";
+                StatusText.Text = "Couldn't read that as a Roblox link. Paste a private server URL " +
+                                  "from its \"Configure Server\" page (either the roblox.com/share?... " +
+                                  "form or the older privateServerLinkCode= one), or a plain game link " +
+                                  "to put the squad in one public server.";
                 return;
             }
 

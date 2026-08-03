@@ -449,7 +449,7 @@
                     <TextBlock Text="No saved private servers."
                                FontSize="13"
                                Foreground="{DynamicResource MutedTextBrush}" />
-                    <TextBlock Text="Use the Private server toolbar button to add one."
+                    <TextBlock Text="Use the Squad Launch toolbar button to add one."
                                FontSize="11"
                                Foreground="{DynamicResource MutedTextBrush}"
                                Margin="0,4,0,0"

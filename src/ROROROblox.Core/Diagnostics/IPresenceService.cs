@@ -105,13 +105,15 @@ public sealed class AccountPresenceEventArgs : EventArgs
         UserPresenceType presenceType,
         long? placeId,
         string? gameName,
-        DateTimeOffset occurredAtUtc)
+        DateTimeOffset occurredAtUtc,
+        ServerInstance? server = null)
     {
         AccountId = accountId;
         PresenceType = presenceType;
         PlaceId = placeId;
         GameName = gameName;
         OccurredAtUtc = occurredAtUtc;
+        Server = server;
     }
 
     public Guid AccountId { get; }
@@ -119,4 +121,16 @@ public sealed class AccountPresenceEventArgs : EventArgs
     public long? PlaceId { get; }
     public string? GameName { get; }
     public DateTimeOffset OccurredAtUtc { get; }
+
+    /// <summary>
+    /// WHICH server of <see cref="PlaceId"/> this account is in right now, when presence reported
+    /// both halves — the input server-instance targeting runs on (Recycle, Squad Launch). Null when
+    /// offline, when privacy withholds the job id, or before the first poll lands. Never a half
+    /// pair: see <see cref="ServerInstance"/>.
+    /// <para>
+    /// Note <see cref="ServerInstance.PlaceId"/> can differ from <see cref="PlaceId"/>'s meaning to
+    /// other consumers only in that it is guaranteed non-null here; both come from the same reading.
+    /// </para>
+    /// </summary>
+    public ServerInstance? Server { get; }
 }

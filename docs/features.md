@@ -73,6 +73,7 @@
 | Launch-to-home | No default set → launch lands on Roblox home instead of failing. | v1.10.0 | `src/ROROROblox.Core/LaunchTarget.cs` |
 | Squad Launch (trust-aware, 3-phase) | Set of accounts into one private server: direct → anchor on #1 → follow; careful mode waits for each to land; per-account "join via friend" toggle. | v1.1-era; trust-aware v1.10.0 | `src/ROROROblox.App/SquadLaunch/` |
 | Friend Follow | Follow a friend into their server; picker browses the main account's friends, not just saved accounts. | v1.1-era; friends-from-main v1.9.0 | `src/ROROROblox.App/Friends/` |
+| Server-instance targeting | Rejoin the *server*, not just the game. Recycle returns an account to the exact server it was in; Squad Launch accepts a public game link and puts the whole roster in one public server (first lands, rest follow its job id). Presence verifies where each client actually landed and names the misses — separating "in the wrong server, recycle it" from "still in Roblox's queue, don't." Private servers are never re-targeted — their code already identifies one server. | v1.14 (unreleased) | `src/ROROROblox.Core/ServerInstance.cs`, `ServerInstanceTargeting.cs`, `App/ViewModels/ServerLandingGate.cs` |
 
 ## Plugin system (Windows)
 
@@ -133,7 +134,7 @@
 | Roblox-not-installed modal | Friendly Download / "I have Bloxstrap" paths. | v1.1 | `src/ROROROblox.App/Modals/RobloxNotInstalledWindow.*` |
 | Memory watchdog | Samples each launched client's private bytes every 30s; dual triggers (per-client cap + machine-wide RAM-exhaustion projection) with latch hysteresis so a client oscillating at a threshold can't spam warnings. Thresholds derive from installed RAM. | v1.12 | `src/ROROROblox.Core/Diagnostics/MemoryWatchdog.cs`, `MemoryDefaults.cs` |
 | Memory warning surfaces | Amber row chip + tray icon state + balloon; chip and Recycle also present in compact mode. | v1.12 | `MainWindow.xaml`, `Tray/TrayService.cs` |
-| One-click Recycle | Stops one account's client and relaunches it into the same `LaunchTarget`; resets the watchdog baseline. Process exit is the only reclaim Windows offers for the Roblox leak. | v1.12 | `src/ROROROblox.Core/Diagnostics/AccountRecycler.cs` |
+| One-click Recycle | Stops one account's client and relaunches it into the same `LaunchTarget`; resets the watchdog baseline. Process exit is the only reclaim Windows offers for the Roblox leak. Since v1.14 it returns the account to the exact *server* it was in, and Preferences can show it on every running row instead of only under a memory warning (off by default). | v1.12; rejoin + always-show option v1.14 | `src/ROROROblox.Core/Diagnostics/AccountRecycler.cs` |
 | Stray cleanup | Closes only the windowless leftovers Roblox abandons on exit; never touches a client with a game window. | v1.12 | `RobloxInstanceStopper.StopWindowless`, `Modals/LeftoverProcessesWindow.*` |
 | Fail-closed window probe | An unreadable `MainWindowHandle` now reports *windowed*, so a live game is never mistaken for an orphan and silently closed. | v1.12 (#68) | `src/ROROROblox.Core/Diagnostics/RobloxRunningProbe.cs` |
 | Memory curve in the log | One Information line every 15 minutes with each client's bytes + growth rate — the artifact that makes a "my windows closed" report diagnosable. Version now stamped on every log line. | v1.12 | `MemoryWatchdog.cs`, `Logging/AppLogging.cs` |
@@ -141,9 +142,10 @@
 
 ## In-flight / queued (not shipped — keep OFF the hub page)
 
-- **Rejoin-after-death** — when a client dies (RAM exhaustion, crash), relaunch it into the server it was in. Closes the loop on the v1.12 memory work and is the automated-reconnect piece. Depends on server-instance targeting.
-- **Regroup ("send my others here")** — row action: pick an account, send the rest of the roster to its current server. Recovery when a squad scatters. Depends on server-instance targeting.
-- **Plugin: live server identity** — `host.queries.current-server` today exposes only the last private-server link. Extend to live job IDs so a plugin can coordinate a roster itself. Contract bump. Depends on server-instance targeting.
+- **Rejoin-after-death** — when a client dies (RAM exhaustion, crash), relaunch it into the server it was in. Closes the loop on the v1.12 memory work and is the automated-reconnect piece. Unblocked: server-instance targeting shipped in v1.14; the row now carries `CurrentServer`.
+- **Regroup ("send my others here")** — row action: pick an account, send the rest of the roster to its current server. Recovery when a squad scatters. Unblocked by v1.14 — it is `ServerInstanceTargeting.Upgrade` against one row's `CurrentServer`, applied to the batch.
+- **Plugin: live server identity** — `host.queries.current-server` today exposes only the last private-server link. Extend to live job IDs so a plugin can coordinate a roster itself. Contract bump. Unblocked by v1.14; the job id now reaches the ViewModel.
+- **Automatic retry on a verification miss** — v1.14 tells the user when a client landed in the wrong server but never retries on its own. Needs field data on how often misses happen, and why, before spending a restart on it.
 - **Account groups** — named "launch these together" sets; spec approved, unbuilt (`docs/superpowers/specs/2026-07-09-account-groups-design.md`).
 - **Account stats: uptime + per-game play time** — presence-driven recording; spec approved, unbuilt (`…account-stats-uptime-design.md`).
 - **Themed window chrome** — WPF-UI FluentWindow/TitleBar across main + modals; spec approved, unbuilt (`…themed-window-chrome-design.md`).

@@ -295,7 +295,9 @@ public sealed class PresenceService : IPresenceService, IDisposable
             presenceType,
             placeId,
             gameName,
-            DateTimeOffset.UtcNow));
+            DateTimeOffset.UtcNow,
+            // Both halves off THIS reading — the only construction the matched-pair rule allows.
+            ServerInstance.TryFrom(placeId, presence?.GameJobId)));
     }
 
     private static UserPresence? MatchPresence(IReadOnlyList<UserPresence> presences, long userId)
