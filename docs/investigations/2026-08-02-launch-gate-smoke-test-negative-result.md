@@ -393,3 +393,108 @@ That is a real price for a feature whose value is unclear, and it deserves an ex
 decision rather than an implementation. **One global cap for all clients** removes the
 race entirely, costs nothing, and may be what multi-instance users actually want. Per-account
 caps should survive only if someone genuinely needs different values simultaneously.
+
+---
+
+# The quiet-window build also fails — and the measurement that fixes it (2026-08-02 evening)
+
+The `fix/settings-quiet-window` branch was built, reviewed four times, and manually
+verified. **It does not fix the bug either.** Here is what happened and what we now know.
+
+## The failed verification
+
+Three accounts, three different caps, launched close together on the branch build
+(`5fc5cd2`):
+
+| Account | Configured | Ended up running |
+|---|---|---|
+| estehernandez (1st) | Unlimited (9999) | **20** |
+| CElCPapa (2nd) | 20 | **45** |
+| ELeonDog (3rd) | 45 | 45 |
+
+Each account got **the next account's value**. And there was no perceptible delay.
+
+## The log says exactly why
+
+```
+20:20:10.765  A: "FPS cap 9999 already on disk; no write, no wait."   <- FAST PATH
+20:20:11.132  A launches
+20:20:12.914  B: quiet wait (pre-write) settled after 0.0004s          <- instant credit
+              B writes 20
+20:20:22.859  B: quiet wait (post-write) settled after 9.93s
+20:20:23.140  B launches
+20:20:23.140  C: quiet wait (pre-write) settled after 0.0002s
+              C writes 45
+20:20:34.881  C: quiet wait (post-write) settled after 11.74s
+20:20:35.207  C launches
+```
+
+The file already held 9999 from earlier testing, so A took the fast path — wrote nothing,
+waited nothing, launched at :11. A's *client* does not read the file until seconds later.
+B wrote 20 at :12.9. **A read B's value.** Same shape B → C.
+
+**The design error:** the settle protects *our write* from the previous client. Nothing
+protects the *newly launched client's read* from the next account's write. And "the file
+is quiet" turns out to be ambiguous in a way the design never accounted for — immediately
+after a launch, quiet means the client **has not started writing yet**, not that it has
+finished. So the next launch credits instant quiet and writes straight into the window
+where the previous client is about to read.
+
+Note the irony: **PR #70's post-launch hold was in the right position.** Its signal (the
+first new pid) was a coin flip, so it never worked — but *where* it waited was correct.
+This branch replaced a right-place/wrong-signal mechanism with a right-signal/wrong-place one.
+
+## The measurement — is a client's first write-back proof that it has read?
+
+The proposed fix is to hold after launching client N until N writes the file. That is only
+sound if the client **reads before it first writes**. Tested directly:
+
+Set the file to 9999 and the account to Unlimited, so RoRoRo takes its fast path and writes
+nothing — making the first mtime change unambiguously the *client's*. The instant it
+appeared, overwrite with a sentinel of 20 and watch what the client does next.
+
+```
+client pid 14524 started   20:44:11.490
+CLIENT'S FIRST WRITE       20:44:14.370   +2.88s after process start, cap=9999
+SENTINEL 20 written        20:44:14.420   +50ms after the client's write
+client write #1            20:44:17.359   cap=9999    <- restored its own value
+final cap on disk: 9999
+```
+
+**The client overwrote the sentinel with 9999.** It was holding 9999 in memory, which it
+could only have obtained by reading the file before its first write-back. Confirmed
+independently in-game: that client ran uncapped.
+
+**Conclusion: a client's first write-back is a valid proof-of-read.**
+
+### Two constraints the same measurement establishes
+
+**1. The interval is not fixed.** First write-back landed at **+2.88 s** on this run and
+**+7.07 s** on an earlier one — a 2.5x spread on the same machine, minutes apart. No
+constant is correct. The hold must be condition-based, which this signal now permits.
+
+**2. The signal alone is insufficient.** The client keeps re-persisting its own value for
+seconds afterwards (measured earlier at ~9-12 s of storm). Writing the next account's cap
+the moment the write-back appears would simply be clobbered.
+
+## The corrected design
+
+Per launch, when the next account's cap differs:
+
+1. **Wait for at least one write by the launched client** — proves it has read.
+2. **Then wait for quiet** — proves its write-back storm has finished.
+3. Write the next account's cap.
+4. Wait for quiet again and re-read to confirm it survived; retry on clobber.
+5. Launch.
+
+Steps 2-5 already exist and work — the post-write waits measured 9.93 s and 11.74 s and did
+exactly their job. **Step 1 is the whole missing piece.** Concretely: the pre-write quiet
+wait must not credit prior quiet when the previous action was a launch whose client has not
+yet written. Everything else stands.
+
+## Status of `fix/settings-quiet-window`
+
+The branch is a genuine improvement on both halves it does cover, and deleting PR #70's pid
+gate was correct regardless. **But it does not fix the wrong-FPS-cap bug and must not be
+described as doing so.** The fast path — which is what keeps the feature affordable — is
+precisely where the hole is.
