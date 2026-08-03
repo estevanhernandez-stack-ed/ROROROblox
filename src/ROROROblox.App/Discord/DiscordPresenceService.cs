@@ -70,10 +70,15 @@ internal sealed class DiscordPresenceService : IDisposable
     /// <summary>Recompute and push. Safe to call from any roster-changing event.</summary>
     public void Refresh()
     {
-        if (!_config.PresenceEnabled || !_client.IsInitialized) return;
-
         try
         {
+            // IsInitialized itself can throw on a disposed/faulted Lachee client — this guard used
+            // to sit outside the try/catch, which meant a Discord-side fault could propagate out of
+            // Refresh() and into a Roblox launch path (OnProcessAttached calls this). No Discord
+            // failure may affect a Roblox launch, so the whole method body — including the guard —
+            // is covered.
+            if (!_config.PresenceEnabled || !_client.IsInitialized) return;
+
             var fields = PresencePayloadBuilder.Build(_roster());
             if (fields is null) { _client.ClearPresence(); return; }
 

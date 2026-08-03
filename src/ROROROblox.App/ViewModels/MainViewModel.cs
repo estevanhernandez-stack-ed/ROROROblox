@@ -317,9 +317,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// mode has to hold on the way OUT of the app, or it is a promise that only covers the window
     /// the user is already looking at.
     /// </para>
+    /// <para>
+    /// Enumerates <see cref="AccountsSnapshot"/>, not <see cref="Accounts"/> — this method is
+    /// called from <c>DiscordPresenceService.Refresh()</c>, which is not guaranteed to run on the
+    /// UI thread (Task 9 wires <c>ApplyAsync</c> from a settings dialog and Lachee's IPC
+    /// <c>Ready</c> callback runs off its own thread). Enumerating the UI-thread-owned
+    /// <see cref="Accounts"/> from there risks the same "Collection was modified" fault the
+    /// snapshot mirror exists to prevent.
+    /// </para>
     /// </summary>
     internal RosterSnapshot BuildRosterSnapshot() => new(
-        Accounts.Select(a => new RosterAccount(
+        AccountsSnapshot.Select(a => new RosterAccount(
             a.Id,
             a.RenderName,
             a.InGame,
@@ -2556,6 +2564,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             summary.CurrentGameName = null;
             summary.InGameSinceUtc = null;
             RelayCommand.RaiseCanExecuteChanged();
+            DiscordPresence?.Refresh();
         });
     }
 
@@ -2694,6 +2703,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // comment in LoadAsync for why this row would otherwise leak.
         summary.DetachIdentityProvider();
         Accounts.Remove(summary);
+        // If the removed row was the only in-game account, no further presence/process event will
+        // ever fire for it — without this, the last-pushed Discord payload would stay stale
+        // indefinitely instead of dropping the account or clearing presence entirely.
+        DiscordPresence?.Refresh();
         RefreshFpsCapWarning();
 
         // Store auto-promotes a new main when the previous one was just removed; mirror that

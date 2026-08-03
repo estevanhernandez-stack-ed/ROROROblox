@@ -41,4 +41,27 @@ public class RosterSnapshotProjectionTests
 
         Assert.False(Assert.Single(vm.BuildRosterSnapshot().Accounts).InGame);
     }
+
+    [Fact]
+    public void BuildRosterSnapshot_SessionLimitedAccount_NoLongerReportsInGame()
+    {
+        // Fix round 1, finding 3: OnAccountSessionLimited (MainViewModel.cs) is a private handler
+        // wired to IPresenceService.AccountSessionLimited — the harness's FakePresenceService
+        // exposes that event as a no-op add/remove sink (matching MainViewModelTests' fixture), so
+        // there is no way to raise it from a test and land inside the real handler. Per the fix
+        // instructions, this reproduces the handler's own field mutations directly instead:
+        // SessionLimited = true, PresenceState = Offline, CurrentGameName = null,
+        // InGameSinceUtc = null — verbatim from OnAccountSessionLimited's body — then asserts the
+        // projection reflects it. Without MainViewModel calling DiscordPresence?.Refresh() from
+        // that handler, a friend watching Discord would keep seeing a rate-limited account as
+        // in-game until some unrelated roster event happened to fire next.
+        var (vm, row) = DiscordTestHarness.VmWithOneInGameAccount(realName: "a", maskedName: "a");
+
+        row.SessionLimited = true;
+        row.PresenceState = UserPresenceType.Offline;
+        row.CurrentGameName = null;
+        row.InGameSinceUtc = null;
+
+        Assert.False(Assert.Single(vm.BuildRosterSnapshot().Accounts).InGame);
+    }
 }
