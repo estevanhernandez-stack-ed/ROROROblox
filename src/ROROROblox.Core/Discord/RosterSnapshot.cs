@@ -13,9 +13,14 @@ public sealed record RosterAccount(
 /// <summary>The whole roster at one instant. Presence describes the fleet, not one account.</summary>
 public sealed record RosterSnapshot(IReadOnlyList<RosterAccount> Accounts);
 
-/// <summary>What Discord should display. Null <see cref="JoinableServer"/> means no Join button.</summary>
+/// <summary>What Discord should display. Null <see cref="JoinableServer"/> means no Join button.
+/// <paramref name="JoinableServerAccountCount"/> is how many roster accounts are already in
+/// <see cref="JoinableServer"/> — 0 when there is no joinable server. It is the correct Discord
+/// party "Size": showing a party size smaller than the accounts actually together in that server
+/// reads as self-contradicting next to the State line.</summary>
 public sealed record PresenceFields(
     string? Details,
     string? State,
     DateTimeOffset? StartedAtUtc,
-    ServerInstance? JoinableServer);
+    ServerInstance? JoinableServer,
+    int JoinableServerAccountCount);

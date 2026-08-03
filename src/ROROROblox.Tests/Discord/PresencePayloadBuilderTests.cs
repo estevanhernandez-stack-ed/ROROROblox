@@ -47,6 +47,20 @@ public class PresencePayloadBuilderTests
     }
 
     [Fact]
+    public void Build_SplitAcrossServers_JoinableServerAccountCountIsTheClusterSizeNotTheFleetSize()
+    {
+        // Two in server A, one in server B: the joinable count is the cluster (2), never the
+        // whole live fleet (3) — a Discord party "2 of N" next to "3 accounts · 2 in this server"
+        // must describe the server a Join click actually lands in, not the roster total.
+        var snapshot = new RosterSnapshot([
+            InGame("CaptainNoodle", ServerA), InGame("LadyPixel", ServerA), InGame("DoctorDuck", ServerB)]);
+
+        var fields = PresencePayloadBuilder.Build(snapshot);
+
+        Assert.Equal(2, fields!.JoinableServerAccountCount);
+    }
+
+    [Fact]
     public void Build_SingleAccount_UsesSingularWording()
     {
         var fields = PresencePayloadBuilder.Build(new RosterSnapshot([InGame("CaptainNoodle", ServerA)]));

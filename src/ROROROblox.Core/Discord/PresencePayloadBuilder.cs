@@ -43,6 +43,7 @@ public static class PresencePayloadBuilder
             Details: details,
             State: state,
             StartedAtUtc: live.Where(a => a.InGameSinceUtc is not null).Min(a => a.InGameSinceUtc),
-            JoinableServer: biggestCluster?.First().Server);
+            JoinableServer: biggestCluster?.First().Server,
+            JoinableServerAccountCount: togetherCount);
     }
 }

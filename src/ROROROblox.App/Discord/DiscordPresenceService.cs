@@ -15,6 +15,13 @@ namespace ROROROblox.App.Discord;
 /// </summary>
 internal sealed class DiscordPresenceService : IDisposable
 {
+    /// <summary>
+    /// Discord will not render a Join button on a party it considers full — so <c>MaxSize</c> must
+    /// always exceed the live party <c>Size</c>. This is comfortably above any realistic RoRoRo
+    /// roster; it is not a Roblox server-capacity figure and must never be read as one.
+    /// </summary>
+    private const int PartyMaxSize = 100;
+
     private readonly IDiscordRpcClient _client;
     private readonly Func<RosterSnapshot> _roster;
     private readonly ILogger _log;
@@ -76,7 +83,8 @@ internal sealed class DiscordPresenceService : IDisposable
                 var secret = JoinSecretCodec.Encode(new LaunchTarget.GameJob(server.PlaceId, server.JobId));
                 if (secret is not null)
                 {
-                    party = new DiscordPresenceParty($"rororo-{server.JobId}", secret, 1, 8);
+                    party = new DiscordPresenceParty(
+                        $"rororo-{server.JobId}", secret, fields.JoinableServerAccountCount, PartyMaxSize);
                 }
             }
 
@@ -92,6 +100,15 @@ internal sealed class DiscordPresenceService : IDisposable
 
     private void OnJoinRequested(object? sender, string secret)
     {
+        if (!_config.JoinEnabled)
+        {
+            // The user turned Join off after a secret went out — a friend's stale cached Join
+            // button or an in-flight click can still arrive here. Same "offer a Join the user did
+            // not enable" failure Refresh() guards against outbound; guard it here inbound too.
+            _log.LogDebug("Ignoring a Discord join request — Join is currently disabled.");
+            return;
+        }
+
         if (!JoinSecretCodec.TryDecode(secret, out var target))
         {
             _log.LogDebug("Ignoring an undecodable Discord join secret.");

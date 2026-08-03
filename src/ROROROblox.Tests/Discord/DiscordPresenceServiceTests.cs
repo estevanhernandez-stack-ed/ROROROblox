@@ -101,6 +101,24 @@ public class DiscordPresenceServiceTests
     }
 
     [Fact]
+    public async Task JoinRequested_AfterTheUserDisablesJoin_IsIgnored()
+    {
+        // A friend's stale cached Join button or an in-flight click can still arrive on the seam
+        // after Join is turned off. The same "offer a Join the user did not enable" failure that
+        // Refresh() guards against outbound must also be guarded against inbound.
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, () => Roster(Live("A")), NullLogger.Instance);
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true, JoinEnabled = true });
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true, JoinEnabled = false });
+        var fired = false;
+        svc.JoinRequested += (_, _) => fired = true;
+
+        rpc.RaiseJoin("g|140403681187145|job-a");
+
+        Assert.False(fired);
+    }
+
+    [Fact]
     public async Task JoinRequested_UndecodableSecret_IsIgnoredNotThrown()
     {
         // A malformed secret from anywhere must not take the app down.
