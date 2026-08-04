@@ -296,6 +296,11 @@ public partial class App : Application
         // reason to push this any later.
         await WireDiscordPresenceAsync(mainWindow, discordApplicationId);
 
+        // Alerts, wired separately and unconditionally — see the AlertDispatcher registration for
+        // why they must not ride on the Discord app id. Presence needs a Discord pipe; a desktop
+        // notification needs nothing at all.
+        await WireAlertsAsync();
+
         _log.LogInformation(
             "Startup mutex: name={Name}, source={Source}, acquired={Acquired}.",
             mutex.MutexName, nameSource, acquired);
@@ -725,6 +730,39 @@ public partial class App : Application
         // saved preference is honored automatically the moment a future build ships an app id.
         services.AddSingleton(_ => new DiscordConfigStore(
             System.IO.Path.Combine(dataDir, "discord.dat")));
+
+        // Alerts are registered unconditionally and — unlike presence — do NOT depend on
+        // Discord:ApplicationId or on Discord being installed at all. The desktop-notification
+        // destination is the whole point: someone who never makes a webhook still gets told when
+        // a client drops. Gating this on the Discord app id would silently remove the only part
+        // of the feature that needs no setup.
+        services.AddHttpClient<DiscordWebhookSender>(client =>
+        {
+            // Short timeout: an alert that has not landed in ten seconds has missed its moment,
+            // and a hung POST must never be what keeps the app alive at shutdown.
+            client.Timeout = TimeSpan.FromSeconds(10);
+            client.DefaultRequestHeaders.UserAgent.Clear();
+            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
+        });
+
+        services.AddHttpClient<WebhookProbe>(client =>
+        {
+            // Setup help is best-effort and blocks a visible field, so it fails fast.
+            client.Timeout = TimeSpan.FromSeconds(5);
+            client.DefaultRequestHeaders.UserAgent.Clear();
+            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
+        });
+
+        services.AddSingleton<DiscordConfigCache>();
+
+        services.AddSingleton(sp => new AlertDispatcher(
+            sp.GetRequiredService<DiscordWebhookSender>(),
+            sp.GetRequiredService<ITrayService>(),
+            () => sp.GetRequiredService<DiscordConfigCache>().Current,
+            TimeProvider.System,
+            sp.GetRequiredService<ILogger<AlertDispatcher>>()));
 
         services.AddSingleton<IDiagnosticsCollector>(sp => new DiagnosticsCollector(
             sp.GetRequiredService<IAccountStore>(),
@@ -1285,6 +1323,63 @@ public partial class App : Application
     /// saved account (and take over a running session) whether or not the user ever turned Join on.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Bridges <see cref="MainViewModel.AlertsRaised"/> to <see cref="AlertDispatcher"/>.
+    /// <para>
+    /// Deliberately independent of Discord presence: this runs whether or not Discord is
+    /// installed, configured, or running, because the desktop-notification destination is the one
+    /// that needs no setup and therefore the one most users will actually have.
+    /// </para>
+    /// </summary>
+    private async Task WireAlertsAsync()
+    {
+        if (_services is null) return;
+        try
+        {
+            await RefreshDiscordConfigAsync().ConfigureAwait(true);
+
+            var vm = _services.GetRequiredService<MainViewModel>();
+            var dispatcher = _services.GetRequiredService<AlertDispatcher>();
+
+            vm.PreferencesWindowFactory = BuildPreferencesWindow;
+
+            // Paint the saved mutes onto the rows. Without this the preference persists but the
+            // row shows unmuted after every restart — the user re-mutes an account that was never
+            // going to alert, and stops trusting the toggle.
+            var muted = _services.GetRequiredService<DiscordConfigCache>().Current.MutedAccountIds.ToHashSet();
+            foreach (var row in vm.Accounts)
+            {
+                row.AlertsMuted = muted.Contains(row.Id);
+            }
+
+            // Fire-and-forget on purpose: AlertsRaised is raised from ApplyPresence and the
+            // watchdog's crossing handler, both of which are on the UI thread and neither of which
+            // may be made to wait on an HTTP POST to Discord. DispatchAsync swallows its own
+            // failures (see its remarks), so there is no unobserved-exception hazard here.
+            vm.AlertsRaised += (_, triggers) => _ = dispatcher.DispatchAsync(triggers);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Couldn't wire Discord alerts; the app runs without them.");
+        }
+    }
+
+    /// <summary>Reload <see cref="DiscordConfigCache"/> from the store. Called at startup and on
+    /// Preferences close — the only two moments these settings change.</summary>
+    private async Task RefreshDiscordConfigAsync()
+    {
+        if (_services is null) return;
+        try
+        {
+            _services.GetRequiredService<DiscordConfigCache>().Current =
+                await _services.GetRequiredService<DiscordConfigStore>().LoadAsync().ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Couldn't read Discord settings; alerts stay at their defaults (off).");
+        }
+    }
+
     private async Task WireDiscordPresenceAsync(MainWindow mainWindow, string applicationId)
     {
         if (_services is null) return;
@@ -1377,6 +1472,29 @@ public partial class App : Application
     /// a missing/non-string key all resolve to <see cref="string.Empty"/> (feature off), same
     /// tamper-tolerant shape as <see cref="DiscordConfigStore"/>.
     /// </summary>
+    /// <summary>
+    /// The single place that knows what the Preferences dialog needs. Both entry points — the tray
+    /// menu and the main window's own command (via
+    /// <see cref="MainViewModel.PreferencesWindowFactory"/>) — go through here, so a dependency
+    /// added to that window is added once, in the composition root, rather than in every caller.
+    /// </summary>
+    private Preferences.PreferencesWindow BuildPreferencesWindow()
+    {
+        ArgumentNullException.ThrowIfNull(_services);
+        return new Preferences.PreferencesWindow(
+            _services.GetRequiredService<IAppSettings>(),
+            _services.GetRequiredService<IStartupRegistration>(),
+            _services.GetRequiredService<IThemeStore>(),
+            _services.GetRequiredService<ThemeService>(),
+            _services.GetRequiredService<IAccountStore>(),
+            _services.GetRequiredService<ROROROblox.Core.Transport.IAccountTransport>(),
+            _services.GetRequiredService<MainViewModel>(),
+            _services.GetRequiredService<DiscordConfigStore>(),
+            _services.GetRequiredService<AlertDispatcher>(),
+            _services.GetRequiredService<DiscordWebhookSender>(),
+            _services.GetRequiredService<WebhookProbe>());
+    }
+
     private static string ReadDiscordApplicationId()
     {
         try
@@ -1444,9 +1562,7 @@ public partial class App : Application
             var transport = _services.GetRequiredService<ROROROblox.Core.Transport.IAccountTransport>();
             var mainViewModel = _services.GetRequiredService<MainViewModel>();
             var discordConfigStore = _services.GetRequiredService<DiscordConfigStore>();
-            var window = new Preferences.PreferencesWindow(
-                settings, startup, themeStore, themeService,
-                accountStore, transport, mainViewModel, discordConfigStore);
+            var window = BuildPreferencesWindow();
             if (owner.IsLoaded) window.Owner = owner;
             SurfaceMainWindow(owner);
             window.ShowDialog();
@@ -1456,6 +1572,11 @@ public partial class App : Application
             // the monitor + VM on close so a changed threshold/mute takes effect without a
             // restart, regardless of which control the user touched last.
             _ = InitializeIdleSettingsAsync();
+
+            // Same reasoning as the idle re-push above: Preferences persists Discord alert routing
+            // and webhook edits on click, so re-read them on close or the dispatcher keeps routing
+            // against whatever was loaded at startup until the next restart.
+            _ = RefreshDiscordConfigAsync();
         }
         catch (Exception ex)
         {

@@ -151,6 +151,77 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Alerts (plan 2026-08-03, Task 7). The only wall in this feature is the webhook,
+                     and it starts one step earlier than a paste field: "Server Settings ->
+                     Integrations" assumes you own a server, and plenty of clan members have only
+                     ever joined one. Hence the walkthrough button. Desktop alerts need no setup at
+                     all, but the status line never pretends they are the point — you can already
+                     see a dead client if you are sitting at the PC. -->
+                <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Alerts" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource WhiteBrush}" Margin="0,0,0,6" />
+                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                   Margin="0,0,0,10"
+                                   Text="Get told when something happens to an account while you're away from the PC. Sending to a Discord channel is what reaches your phone — a webhook takes about a minute to set up, and there's a walkthrough below if you've never made one." />
+
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="An account drops out" FontSize="12" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource WhiteBrush}" Width="180" />
+                            <ComboBox Grid.Column="1" x:Name="DroppedOutDestination" Width="170" HorizontalAlignment="Left"
+                                      SelectionChanged="OnAlertRoutingChanged">
+                                <ComboBoxItem Content="Off" Tag="None" />
+                                <ComboBoxItem Content="Desktop only" Tag="Local" />
+                                <ComboBoxItem Content="My channel (phone)" Tag="Mine" />
+                                <ComboBoxItem Content="Clan channel" Tag="Clan" />
+                            </ComboBox>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="An account eats memory" FontSize="12" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource WhiteBrush}" Width="180" />
+                            <ComboBox Grid.Column="1" x:Name="MemoryWarningDestination" Width="170" HorizontalAlignment="Left"
+                                      SelectionChanged="OnAlertRoutingChanged">
+                                <ComboBoxItem Content="Off" Tag="None" />
+                                <ComboBoxItem Content="Desktop only" Tag="Local" />
+                                <ComboBoxItem Content="My channel (phone)" Tag="Mine" />
+                                <ComboBoxItem Content="Clan channel" Tag="Clan" />
+                            </ComboBox>
+                        </Grid>
+
+                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                   Margin="0,6,0,4"
+                                   Text="Your webhook URL — paste it here. It's saved encrypted on this PC and never leaves it except to post your alerts." />
+                        <TextBox x:Name="MineWebhookInput" Padding="8,6" FontSize="11"
+                                 Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
+                                 BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                                 LostFocus="OnWebhookCommitted" />
+                        <TextBlock x:Name="MineWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
+                                   Foreground="{DynamicResource MutedTextBrush}" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button x:Name="SendTestButton" Content="Send test" Padding="12,5" Click="OnSendTestClick"
+                                    Background="{DynamicResource MagentaBrush}" Foreground="{DynamicResource WhiteBrush}"
+                                    BorderThickness="0" FontSize="11" FontWeight="SemiBold" />
+                            <Button x:Name="NoServerHelpButton" Content="I don't have a Discord server" Padding="12,5" Margin="8,0,0,0"
+                                    Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
+                                    BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1" FontSize="11"
+                                    Click="OnNoServerHelpClick" />
+                        </StackPanel>
+
+                        <TextBlock x:Name="AlertsStatusLine" FontSize="11" Margin="0,10,0,0" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource CyanBrush}" />
+                    </StackPanel>
+                </Border>
+
                 <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14">
                     <StackPanel>
                         <TextBlock Text="Theme"

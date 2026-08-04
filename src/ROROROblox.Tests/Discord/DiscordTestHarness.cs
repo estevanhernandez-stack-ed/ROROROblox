@@ -5,6 +5,7 @@ using ROROROblox.App.Tray;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
+using ROROROblox.Core.Discord;
 using ROROROblox.Core.StreamerMode;
 using ROROROblox.Core.Theming;
 using ROROROblox.Core.Transport;
@@ -118,6 +119,34 @@ internal static class DiscordTestHarness
         vm.LoadAsync().GetAwaiter().GetResult();
 
         return (vm, launcher);
+    }
+
+    /// <summary>
+    /// One account plus a real <see cref="DiscordConfigStore"/> over a temp file, wired into the
+    /// view model — for the per-account mute, where the point of the test is that the preference
+    /// actually round-trips through DPAPI storage rather than living in memory.
+    /// </summary>
+    public static (MainViewModel Vm, AccountSummary Row, DiscordConfigStore ConfigStore) VmWithConfigStore()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), $"rororo-discord-test-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(dir);
+
+        var accountStore = new AccountStore(Path.Combine(dir, "accounts.dat"));
+        var processTracker = new FakeRobloxProcessTracker();
+        var windowDecorator = new RobloxWindowDecorator();
+        var trayService = new FakeTrayService();
+
+        var vm = BuildVm(accountStore, new FakeRobloxLauncher(), processTracker, windowDecorator, trayService);
+
+        windowDecorator.Dispose();
+
+        var configStore = new DiscordConfigStore(Path.Combine(dir, "discord.dat"));
+        vm.DiscordConfigStoreOverride = configStore;
+
+        accountStore.AddAsync("MutableAccount", "", "cookie").GetAwaiter().GetResult();
+        vm.LoadAsync().GetAwaiter().GetResult();
+
+        return (vm, vm.Accounts.Single(), configStore);
     }
 
     /// <summary>
