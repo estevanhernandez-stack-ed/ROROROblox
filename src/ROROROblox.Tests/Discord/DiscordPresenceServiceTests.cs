@@ -8,24 +8,7 @@ namespace ROROROblox.Tests.Discord;
 
 public class DiscordPresenceServiceTests
 {
-    private sealed class FakeRpcClient : IDiscordRpcClient
-    {
-        public List<DiscordPresencePayload> Presences { get; } = [];
-        public int ClearCount { get; private set; }
-        public bool IsInitialized { get; private set; }
-        public void Initialize() => IsInitialized = true;
-        public void Deinitialize() => IsInitialized = false;
-        public void SetPresence(DiscordPresencePayload p) => Presences.Add(p);
-        public void ClearPresence() => ClearCount++;
-        public void Dispose() { }
-        public event EventHandler<string>? JoinRequested;
-        public event EventHandler? ConnectionFailed;
-        public event EventHandler? Ready;
-        public event EventHandler<string>? Errored;
-        public void RaiseJoin(string secret) => JoinRequested?.Invoke(this, secret);
-        public void RaiseConnectionFailed() => ConnectionFailed?.Invoke(this, EventArgs.Empty);
-        public void RaiseReady() => Ready?.Invoke(this, EventArgs.Empty);
-    }
+    // FakeRpcClient lives in its own file — see FakeRpcClient.cs.
 
     private static readonly ServerInstance ServerA = new(140403681187145, "job-a");
 

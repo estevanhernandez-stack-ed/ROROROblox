@@ -52,12 +52,27 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
         {
             _client = new DiscordRpcClient(_applicationId);
             _client.OnReady += (_, _) => SafeInvoke(() => Ready?.Invoke(this, EventArgs.Empty));
-            _client.OnConnectionFailed += (_, _) => SafeInvoke(() => ConnectionFailed?.Invoke(this, EventArgs.Empty));
-            _client.OnClose += (_, _) => SafeInvoke(() => ConnectionFailed?.Invoke(this, EventArgs.Empty));
+
+            // OnConnectionFailed and OnClose both mean "no pipe" to the service above, but they are
+            // NOT the same event down here: failed = Discord was never reachable, close = a pipe we
+            // had went away (a Discord restart). The seam stays one event; the log tells them apart,
+            // because "did our connection drop or was it never up?" is the first question worth
+            // asking when presence goes quiet.
+            _client.OnConnectionFailed += (_, _) =>
+            {
+                _log.LogDebug("Discord IPC connection attempt failed (Discord not reachable).");
+                SafeInvoke(() => ConnectionFailed?.Invoke(this, EventArgs.Empty));
+            };
+            _client.OnClose += (_, e) =>
+            {
+                _log.LogInformation("Discord IPC pipe closed: {Reason}", e.Reason);
+                SafeInvoke(() => ConnectionFailed?.Invoke(this, EventArgs.Empty));
+            };
             _client.OnError += (_, e) => SafeInvoke(() => Errored?.Invoke(this, e.Message));
             _client.OnJoin += (_, e) => SafeInvoke(() => JoinRequested?.Invoke(this, e.Secret));
 
             _client.Initialize();
+            _log.LogInformation("Discord IPC initialized for application {ApplicationId}.", _applicationId);
 
             // Lachee tracks its OWN internal "URI scheme registered" flag — separate from the
             // `roblox-rororo:` scheme JoinUriScheme.Register wrote earlier in OnStartup, which
@@ -67,6 +82,7 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
             try
             {
                 _client.RegisterUriScheme();
+                _log.LogInformation("Discord URI scheme registered.");
 
                 // Lachee's RegisterUriScheme writes the registry command WITHOUT the "%1"
                 // argument placeholder, so Windows launches us with no argument when Discord
@@ -90,6 +106,7 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
             // to JoinRequest (in addition to Join) covers both the in-client Join click and the
             // "Ask to Join" request path.
             _client.Subscribe(EventType.Join | EventType.JoinRequest);
+            _log.LogInformation("Discord Join subscription active.");
         }
         catch (Exception ex)
         {

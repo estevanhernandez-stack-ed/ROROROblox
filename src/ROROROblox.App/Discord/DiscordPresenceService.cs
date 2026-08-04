@@ -20,6 +20,21 @@ internal sealed class DiscordPresenceService : IDisposable
     private readonly ILogger _log;
     private DiscordConfig _config = new();
 
+    /// <summary>
+    /// Distinguishes a first connect from a recovery. "Did Discord's restart bring us back, and
+    /// when?" was unanswerable from the log before this — see <see cref="OnReady"/>.
+    /// </summary>
+    private bool _hasEverConnected;
+
+    /// <summary>
+    /// The last push summary written at <c>Information</c>. <see cref="Refresh"/> runs on every
+    /// roster poll, so logging each push at Information would bury the file inside one session;
+    /// identical repeats drop to <c>Debug</c> instead. Cleared on every connect and drop so the
+    /// push that PROVES a reconnect worked is logged even though the roster never changed across
+    /// the outage — which is precisely the case worth reading.
+    /// </summary>
+    private string? _lastLoggedPush;
+
     public DiscordPresenceService(IDiscordRpcClient client, Func<RosterSnapshot> rosterProvider, ILogger log)
     {
         _client = client;
@@ -32,7 +47,10 @@ internal sealed class DiscordPresenceService : IDisposable
         // reading a StatusLine snapshot that's already stale by the time it's read.
         _client.ConnectionFailed += OnConnectionFailed;
         _client.Ready += OnReady;
-        _client.Errored += (_, msg) => _log.LogDebug("Discord rejected a presence update: {Message}", msg);
+        // Warning, not Debug: Discord rejecting an update is how a wrong asset key presents — the
+        // entry renders with no artwork and nothing anywhere says why. That cost a live debugging
+        // session on 2026-08-03.
+        _client.Errored += (_, msg) => _log.LogWarning("Discord rejected a presence update: {Message}", msg);
     }
 
     /// <summary>Plain-language state for the Settings panel. Never a stack trace.</summary>
@@ -85,6 +103,22 @@ internal sealed class DiscordPresenceService : IDisposable
     private void OnConnectionFailed(object? sender, EventArgs e)
     {
         if (!_config.PresenceEnabled) return;
+
+        // Two very different situations behind one seam event, and the log has to tell them apart:
+        // "Discord was never there" is the ordinary case, "the pipe we had went away" is the one
+        // that should be followed by a reconnect line within a minute (Lachee retries forever with
+        // a 500ms→60s backoff). If a drop is never followed by a reconnect, that is a real bug and
+        // this pair of lines is what makes it visible.
+        if (_hasEverConnected)
+        {
+            _log.LogInformation("Discord connection dropped; retrying with backoff.");
+        }
+        else
+        {
+            _log.LogInformation("Discord isn't running yet; presence will connect when it starts.");
+        }
+
+        _lastLoggedPush = null;
         SetStatus("Discord isn't running — presence starts when it does.");
     }
 
@@ -100,6 +134,13 @@ internal sealed class DiscordPresenceService : IDisposable
     private void OnReady(object? sender, EventArgs e)
     {
         if (!_config.PresenceEnabled) return;
+
+        _log.LogInformation(_hasEverConnected
+            ? "Reconnected to Discord; republishing presence from the current roster."
+            : "Connected to Discord.");
+        _hasEverConnected = true;
+        _lastLoggedPush = null;
+
         SetStatus("Connected to Discord.");
         Refresh();
     }
@@ -181,11 +222,39 @@ internal sealed class DiscordPresenceService : IDisposable
                 fields.State, fields.Details, fields.StartedAtUtc,
                 LargeImageKey: fields.IsIdle ? "idle_large" : "active_large",
                 LargeImageText: "RoRoRo", Party: party));
+
+            LogPush(fields, party);
         }
         catch (Exception ex)
         {
             _log.LogDebug(ex, "Discord presence refresh failed; leaving the last state in place.");
         }
+    }
+
+    /// <summary>
+    /// Records what actually went to Discord, so a working push and a dead pipe stop producing
+    /// identical logs (both silent, before this).
+    /// <para>
+    /// <b>The secret is never logged — only whether one was attached.</b> A private-server Join
+    /// secret embeds a real private-server code, and a log file is the easiest place in the app to
+    /// leak one: users paste logs into Discord when they ask for help. "Join secret attached" is
+    /// the entire diagnostic value; the bytes are not. Pinned by a test.
+    /// </para>
+    /// </summary>
+    private void LogPush(PresenceFields fields, DiscordPresenceParty? party)
+    {
+        var summary = party is null
+            ? $"presence → {fields.State} | {fields.Details} | no join secret"
+            : $"presence → {fields.State} | {fields.Details} | party {party.Size}/{party.MaxSize}, join secret attached";
+
+        if (summary == _lastLoggedPush)
+        {
+            _log.LogDebug("Discord {Summary} (unchanged).", summary);
+            return;
+        }
+
+        _lastLoggedPush = summary;
+        _log.LogInformation("Discord {Summary}", summary);
     }
 
     private void OnJoinRequested(object? sender, string secret)
