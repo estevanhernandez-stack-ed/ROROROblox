@@ -40,11 +40,11 @@ Built with `scripts/finalize-store-build.ps1` at `-Version 1.15.0.0`,
 
 Paste the fenced block from [`reviewer-letter-1.15.0.0.md`](reviewer-letter-1.15.0.0.md) as-is.
 
-> **Confirm the baseline before pasting.** The letter is written as "what's new in v1.15." That is
-> correct only if **v1.14.0.0 was approved and is live**. v1.14 was submitted on 2026-08-03; if it
-> was rejected, withdrawn, or is still in certification, the letter needs to describe v1.14's
-> changes too — exactly as the v1.14 letter had to cover v1.13, which was never submitted. Check
-> the Partner Center submission history and tell me if it needs the wider framing.
+> **Baseline confirmed 2026-08-04 by Este: v1.14.0.0 was accepted and is the currently served
+> version.** The letter's "what's new in v1.15" framing is therefore correct and needs no edit —
+> a reviewer has v1.14 on file, so this submission only has to explain what changed since it.
+> (Contrast v1.14's own letter, which had to cover v1.13 as well because v1.13 was never
+> submitted.)
 
 ## 3. Store listing — the title changes this release
 

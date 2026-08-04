@@ -6,7 +6,9 @@
 >
 > **Version attribution.** Best-effort from tags, release runbooks, and commit history. There is no v1.2.x or v1.3.0.0 tag — those dev cycles folded into the first published v1.3 tag (`v1.3.1.0`).
 
-**Current shipped version: `v1.13.0.0`** (tagged 2026-08-02). Headline: per-account FPS caps survive close-together launches. Store ID `9NMJCS390KWB`, listed as "RORORO."
+**Current shipped version: `v1.14.0.0`** — accepted by Partner Center and serving as of 2026-08-04. Headline: server-instance targeting, so Recycle and Squad Launch rejoin the exact server rather than matchmaking into a new one. Store ID `9NMJCS390KWB`, listed as "RORORO" until the v1.15 submission renames it to "RoRoRo — Multi-launcher for Windows."
+
+**In preparation: `v1.15.0.0`** — Discord alerting, plus the naming pass. Packages built, submission packet ready ([`store/submission-packet-1.15.0.0.md`](store/submission-packet-1.15.0.0.md)); awaiting the Partner Center upload.
 
 ## Version timeline (quick map)
 
