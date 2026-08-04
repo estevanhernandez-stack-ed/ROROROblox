@@ -52,9 +52,24 @@ public sealed class AlertDispatcher(
             var now = time.GetUtcNow();
             var routed = AlertRouter.Route(triggers, current, _lastSent, now);
 
+            // Same diagnostic gap that cost three sessions on the presence side: without this, a
+            // delivered alert and a swallowed one look identical in the log (both silent). The
+            // swallowed cases are the ones worth naming — routed nowhere (the shipped default),
+            // muted, or inside the cooldown all look like "the feature is broken" from outside.
+            if (routed.Count == 0)
+            {
+                log.LogInformation(
+                    "Alert raised for {Count} account(s) but routed nowhere — check the destination, the per-account mute, and the {Cooldown}-minute cooldown.",
+                    triggers.Count, AlertRouter.Cooldown.TotalMinutes);
+                return;
+            }
+
             foreach (var alert in routed)
             {
                 var payload = WebhookPayload.ForAlert(alert.Kind, alert.Triggers);
+
+                log.LogInformation("Alert → {Destination}: {Title} ({Count} account(s)).",
+                    alert.Destination, payload.Title, alert.Triggers.Count);
 
                 switch (alert.Destination)
                 {
