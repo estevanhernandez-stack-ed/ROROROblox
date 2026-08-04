@@ -209,11 +209,18 @@ public class RosterSnapshotProjectionTests
         // ever run — this repo's established fix for that exact problem is the internal body method,
         // which this test calls instead.
         //
-        // With only one account and it dropping out of game, the roster is now empty, so the
-        // service's Refresh() should CLEAR the presence rather than leave the stale "in game" push
-        // in place. Deleting the DiscordPresence?.Refresh() line from ApplySessionLimited was
-        // verified BY EXPERIMENT to make this assertion fail (see task-6-report.md, fix round 2) —
-        // ClearCount stays 0 and rpc.Presences keeps only the original in-game push.
+        // With only one account and it dropping out of game, the roster is now empty, so Refresh()
+        // must push AGAIN rather than leave the stale "in game" card standing. Deleting the
+        // DiscordPresence?.Refresh() line from ApplySessionLimited was verified BY EXPERIMENT to
+        // make this assertion fail (see task-6-report.md, fix round 2).
+        //
+        // What that second push CONTAINS changed after the idle-presence decision (2026-08-03): the
+        // service used to call ClearPresence when the roster emptied, and now publishes a deliberate
+        // idle payload instead, because the RPC connection stays open either way and a cleared entry
+        // renders as a blank card. The regression this test exists to catch is unchanged — a missing
+        // Refresh means no second push at all — so the assertion moved from "cleared once" to "pushed
+        // again, and the new push is the idle one." Asserting only the count would let a stale
+        // in-game payload pass, so the content is checked too.
         var (vm, row) = DiscordTestHarness.VmWithOneInGameAccount(realName: "a", maskedName: "a");
         var rpc = new FakeRpcClient();
         var svc = new DiscordPresenceService(rpc, vm.BuildRosterSnapshot, NullLogger.Instance);
@@ -225,6 +232,10 @@ public class RosterSnapshotProjectionTests
 
         vm.ApplySessionLimited(row.Id);
 
-        Assert.Equal(1, rpc.ClearCount);
+        Assert.Equal(2, rpc.Presences.Count);
+        var afterDropout = rpc.Presences[^1];
+        Assert.Equal("idle_large", afterDropout.LargeImageKey);
+        Assert.Null(afterDropout.Party);          // an idle entry is never joinable
+        Assert.Null(afterDropout.StartedAtUtc);   // and has no elapsed run
     }
 }

@@ -26,7 +26,7 @@ public class PresencePayloadBuilderTests
 
         Assert.NotNull(fields);
         Assert.True(fields.IsIdle);
-        Assert.Equal("No saved accounts yet", fields.Details);
+        Assert.Equal("No accounts yet", fields.Details);
         Assert.Null(fields.JoinableServer);           // not joinable
         Assert.Null(fields.StartedAtUtc);              // no elapsed run
         Assert.Equal(0, fields.JoinableServerAccountCount);
@@ -45,7 +45,7 @@ public class PresencePayloadBuilderTests
         var fields = PresencePayloadBuilder.Build(snapshot);
 
         Assert.True(fields.IsIdle);
-        Assert.Equal("3 saved accounts, standing by", fields.Details);
+        Assert.Equal("3 accounts standing by", fields.Details);
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class PresencePayloadBuilderTests
 
         var fields = PresencePayloadBuilder.Build(snapshot);
 
-        Assert.Equal("1 saved account, standing by", fields.Details);
+        Assert.Equal("1 account standing by", fields.Details);
     }
 
     [Fact]

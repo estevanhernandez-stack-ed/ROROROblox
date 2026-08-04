@@ -70,14 +70,17 @@ public static class PresencePayloadBuilder
         var saved = snapshot.Accounts.Count;
         var details = saved switch
         {
-            0 => "No saved accounts yet",
-            1 => "1 saved account, standing by",
-            _ => $"{saved} saved accounts, standing by",
+            0 => "No accounts yet",
+            1 => "1 account standing by",
+            _ => $"{saved} accounts standing by",
         };
 
+        // Discord already renders the application name as the card's header, so naming the product
+        // again on the second line spends the only other visible string saying "RoRoRo" twice. The
+        // tagline is the thing that isn't already on screen.
         return new PresenceFields(
             Details: details,
-            State: "RoRoRo — multi-instance for Roblox",
+            State: "Imagine Something Else.",
             StartedAtUtc: null,
             JoinableServer: null,
             JoinableServerAccountCount: 0,
