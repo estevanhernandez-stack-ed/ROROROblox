@@ -35,11 +35,21 @@ Then the smoke run found five real bugs the 1247-green suite did not:
 
 Plus the clan channel exemption from streamer mode, per Este.
 
+## Added after the first wrap
+
+- **`PRIVACY.md` has a Discord section.** Covers the local pipe, `discord.com` as a new outbound host, `discord.dat`, the URI registration, and the two limits worth stating outright: the presence visibility rule, and the clan channel's streamer-mode exemption. The "never in a diagnostics bundle" claim was verified against `DiagnosticsSnapshot`, not asserted.
+- **Naming pass.** The exe version resource, the Velopack installer title, `Core.dll` metadata, the MSIX `DisplayName`, and the manifest's trademark disclaimer all said some form of `ROROROblox` / `RORORO`. All now RoRoRo. **Not changed, deliberately:** Velopack `--packId` and `PublisherDisplayName` — see the commits for why each looks like a typo and is not.
+- **Store artwork regenerated.** Hero, boxart, and poster read RoRoRo. They had no generator before; `docs/store/graphics/store-mark.source.html` is now the single source for all six, with a README.
+- **Settings states the presence visibility limit** under the toggle, so users stop reporting it as a bug.
+
+### The webhook, resolved
+
+The earlier "rotate this" item was overstated. Webhook ID `1501780993676414986` appeared in a **local session transcript only**. It is not in git — verified by scanning `git log --all -p` for a real-looking token and by checking the plan commit, which carries only synthetic placeholders. GitHub push protection caught it before it landed. Nothing was posted publicly. Rotation is optional hygiene, not remediation.
+
 ## Open, in rough priority
 
-- **Rename `ROROROblox.App.exe` → `RoRoRo.exe`.** Discord's game detection is earned by installs and keys off the executable name. Every hour anyone runs it credits the current, off-brand name. Touches the MSIX manifest, Velopack, the run-on-login entry, and the URI-scheme command — cheap now, expensive later.
-- **`PRIVACY.md` owes a Discord section** — new outbound host (`discord.com`), local named-pipe IPC, DPAPI-stored webhook URLs. Este's own privacy-accuracy commit `6579b23` is on main and this feature invalidates it. Blocks the next Store submission alongside `docs/store/discord-disclosure.md`.
-- **Document the presence visibility limit in the Settings UI** — while Roblox runs, friends see Roblox, not RoRoRo. Users will report this as a bug otherwise.
+- **Partner Center, at submission time.** Upload the regenerated graphics and change the listing title to *"RoRoRo — Multi-launcher for Windows"*. The bare wordmark is a coined word with no search volume; the artwork already carries that line. Also fold `docs/store/discord-disclosure.md` into the reviewer letter.
+- ~~Rename the executable~~ — **dropped.** Discord presence takes its name from the Discord application (already RoRoRo), and detection reads the exe's version-resource fields, not the file name. Those are fixed, so renaming `AssemblyName` would churn the MSIX manifest, Velopack, the run-on-login entry, and the URI-scheme command for nothing.
 - **The FpsCapSettler flake** (see above).
 - **Preferences restructure + move streamer mode into it** — top of the feature-ledger backlog, per Este.
 - **Discord-restart reconnect** — still unmeasured. Lachee auto-reconnects (500ms→60s backoff) and re-synchronises presence itself, so the earlier "dead until I toggle it" was probably the backoff. #81's logging is what will confirm or kill that; the test is in the smoke sheet, step 10.
