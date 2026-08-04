@@ -47,7 +47,12 @@ public sealed class DiscordWebhookSender(HttpClient client, ILogger<DiscordWebho
             var body = new { content = $"**{payload.Title}**\n{payload.Body}" };
             using var response = await client.PostAsJsonAsync(url, body, ct).ConfigureAwait(false);
 
-            if (response.IsSuccessStatusCode) return WebhookSendResult.Sent;
+            if (response.IsSuccessStatusCode)
+            {
+                log.LogInformation("Webhook post accepted ({Status}).", (int)response.StatusCode);
+                return WebhookSendResult.Sent;
+            }
+
             if (response.StatusCode == HttpStatusCode.NotFound) return WebhookSendResult.WebhookGone;
             if (response.StatusCode == HttpStatusCode.TooManyRequests) return WebhookSendResult.RateLimited;
 
