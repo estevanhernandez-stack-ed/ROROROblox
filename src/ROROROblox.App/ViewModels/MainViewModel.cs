@@ -240,7 +240,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             try
             {
-                Application.Current?.Dispatcher.Invoke(() => ApplyMemory(snap));
+                Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    ApplyMemory(snap);
+
+                    // Alerts hang off the CROSSING, never off ApplyMemory — the 30s ticker calls
+                    // ApplyMemory too, and raising there would re-fire the same warning twice a
+                    // minute for as long as pressure held. PressureCrossed is edge-triggered and
+                    // latched per account, which is exactly the "this just became true" signal an
+                    // alert wants.
+                    RaiseAlerts(BuildMemoryAlerts(snap, DateTimeOffset.UtcNow));
+                });
             }
             catch (Exception ex)
             {
@@ -2613,8 +2623,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             else
             {
                 // Capture combined active state BEFORE mutating presence so we can tell whether
-                // this poll is the moment the row went fully inactive.
+                // this poll is the moment the row went fully inactive. The game name goes with it:
+                // the dropped-out alert wants to say WHICH game the account fell out of, and the
+                // lines below have already blanked it by the time that alert is built.
                 var wasActive = summary.InGame || summary.IsRunning;
+                var lastGameName = summary.CurrentGameName;
 
                 summary.PresenceState = e.PresenceType;
                 summary.CurrentGameName = null;
@@ -2640,6 +2653,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 if (wasActive && !summary.IsRunning)
                 {
                     summary.LastClosedAtUtc = e.OccurredAtUtc;
+
+                    // The dropped-out alert rides the SAME both-signals-agree rule, deliberately.
+                    // The ghost case (process killed by the anti-multilaunch bootstrapper, client
+                    // respawned under a new pid) is a false alarm we already know how to suppress —
+                    // paging someone at 3am for it would burn the feature's credibility on the
+                    // first night. RenderName, never DisplayName: streamer mode holds outbound.
+                    RaiseAlerts([new AlertTrigger(
+                        AlertKind.AccountDroppedOut, summary.Id, summary.RenderName,
+                        lastGameName, PrivateBytes: null, e.OccurredAtUtc)]);
                 }
             }
 
@@ -2757,6 +2779,77 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// A row with no matching account in the snapshot (not yet launched, or launched after the
     /// last sample) is left untouched. Task 7.
     /// </summary>
+    /// <summary>
+    /// Fires when something alert-worthy happened. The composition root wires this to
+    /// <c>AlertDispatcher.DispatchAsync</c>.
+    /// <para>
+    /// An event rather than an injected dispatcher, deliberately: this constructor already takes
+    /// twenty-odd dependencies, and every one added means touching every construction site in the
+    /// test suite. Routing, muting, cooldown, and delivery all live in the dispatcher — the view
+    /// model's whole job here is to notice, name the account, and say when.
+    /// </para>
+    /// </summary>
+    internal event EventHandler<IReadOnlyList<AlertTrigger>>? AlertsRaised;
+
+    /// <summary>
+    /// Guarded raise. An alert is a passenger — same contract as presence. A throwing subscriber
+    /// must never propagate back into <see cref="ApplyPresence"/> or the watchdog's crossing
+    /// handler, because both of those sit on paths that keep the roster honest.
+    /// </summary>
+    private void RaiseAlerts(IReadOnlyList<AlertTrigger> triggers)
+    {
+        if (triggers.Count == 0) return;
+
+        try
+        {
+            AlertsRaised?.Invoke(this, triggers);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Alert subscriber threw; the alert was dropped.");
+        }
+    }
+
+    /// <summary>
+    /// Projects a memory crossing onto the accounts worth naming in an alert.
+    /// <para>
+    /// Accounts genuinely over their own cap are the answer when there are any. When the crossing
+    /// is projection-only — the machine is heading for the ceiling but no single client is over
+    /// cap — the watchdog still names the client worth recycling
+    /// (<see cref="MemoryPressureSnapshot.TargetAccountId"/>), and the alert says which one rather
+    /// than going quiet on a crossing that genuinely fired.
+    /// </para>
+    /// <para>
+    /// <c>ReadOk == false</c> is excluded everywhere: it means UNKNOWN, not zero. Alerting on a
+    /// reading we could not take is a wrong number stated confidently, which is the exact failure
+    /// the watchdog exists to prevent.
+    /// </para>
+    /// </summary>
+    internal IReadOnlyList<AlertTrigger> BuildMemoryAlerts(MemoryPressureSnapshot snapshot, DateTimeOffset nowUtc)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+
+        var readable = snapshot.Accounts.Where(a => a.ReadOk).ToList();
+        var named = readable.Where(a => a.OverCap).ToList();
+
+        if (named.Count == 0 && snapshot.TargetAccountId is { } target)
+        {
+            named = readable.Where(a => a.AccountId == target).ToList();
+        }
+
+        return named
+            .Select(a => new
+            {
+                Memory = a,
+                Row = Accounts.FirstOrDefault(r => r.Id == a.AccountId),
+            })
+            .Where(x => x.Row is not null)
+            .Select(x => new AlertTrigger(
+                AlertKind.MemoryWarning, x.Memory.AccountId, x.Row!.RenderName,
+                x.Row.CurrentGameName, x.Memory.PrivateBytes, nowUtc))
+            .ToList();
+    }
+
     internal void ApplyMemory(MemoryPressureSnapshot snapshot)
     {
         // snapshot.Accounts is guaranteed non-null (even pre-first-sample) by
