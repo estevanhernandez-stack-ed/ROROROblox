@@ -32,7 +32,8 @@ public static class AlertStatusLine
         DiscordConfig config,
         bool mineWebhookRejected = false,
         bool clanWebhookRejected = false,
-        string? mineChannelName = null)
+        string? mineChannelName = null,
+        string? clanChannelName = null)
     {
         ArgumentNullException.ThrowIfNull(config);
 
@@ -68,8 +69,22 @@ public static class AlertStatusLine
             return "Desktop only. You'll see these at the PC, but nothing will reach your phone.";
         }
 
-        return mineChannelName is { Length: > 0 }
-            ? $"Sending to #{mineChannelName}."
-            : "Sending to your Discord channel.";
+        // Name every channel actually in use. With two webhooks configured, "Sending to #alerts"
+        // would be a true statement that hides half of where things are going — and the half it
+        // would hide is the clan channel, the one with an audience.
+        var channels = new List<string>();
+        if (routed.Contains(AlertDestination.Mine))
+        {
+            channels.Add(mineChannelName is { Length: > 0 } ? $"#{mineChannelName}" : "your channel");
+        }
+
+        if (routed.Contains(AlertDestination.Clan))
+        {
+            channels.Add(clanChannelName is { Length: > 0 } ? $"#{clanChannelName}" : "the clan channel");
+        }
+
+        return channels.Count == 0
+            ? "Sending to your Discord channel."
+            : $"Sending to {string.Join(" and ", channels)}.";
     }
 }

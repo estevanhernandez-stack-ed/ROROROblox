@@ -104,6 +104,43 @@ public class AlertStatusLineTests
     }
 
     [Fact]
+    public void Compose_BothWebhooksInUse_NamesBothChannels()
+    {
+        // With two destinations live, naming only the personal one is a true sentence that hides
+        // half of where things go — and the half it hides is the clan channel, the one with an
+        // audience. Someone checking this line before a long session is checking exactly that.
+        var line = AlertStatusLine.Compose(
+            new DiscordConfig
+            {
+                DroppedOutDestination = AlertDestination.Mine,
+                MemoryWarningDestination = AlertDestination.Clan,
+                MineWebhookUrl = Webhook,
+                ClanWebhookUrl = Webhook,
+            },
+            mineChannelName: "rororo-alerts",
+            clanChannelName: "clan-general");
+
+        Assert.Contains("#rororo-alerts", line, StringComparison.Ordinal);
+        Assert.Contains("#clan-general", line, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Compose_ClanRoutedWithNoClanWebhook_WarnsEvenWhenThePersonalOneWorks()
+    {
+        // The trap two webhooks introduce: the personal side is set up and visibly working, so the
+        // line reads healthy while everything aimed at the clan quietly lands on this desktop.
+        var line = AlertStatusLine.Compose(new DiscordConfig
+        {
+            DroppedOutDestination = AlertDestination.Mine,
+            MemoryWarningDestination = AlertDestination.Clan,
+            MineWebhookUrl = Webhook,
+            ClanWebhookUrl = null,
+        });
+
+        Assert.Contains("haven't pasted a webhook", line, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void Compose_OneTriggerToTheChannelAndOneToDesktop_ReportsTheChannel()
     {
         // Mixed routing still reaches the phone for the trigger that matters, so this is not the
