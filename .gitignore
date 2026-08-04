@@ -78,3 +78,6 @@ src/ROROROblox.App/Tray/Resources/.debug/
 # OS noise
 Thumbs.db
 .DS_Store
+
+# vibe-glow capture evidence — regenerated per campaign round, not source of truth.
+docs/ui-evidence/
