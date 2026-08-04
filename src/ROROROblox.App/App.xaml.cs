@@ -1872,6 +1872,8 @@ public partial class App : Application
             var confirm = new Modals.StopAllConfirmWindow(running);
             if (confirm.ShowDialog() == true)
             {
+                // Every one of these closes was asked for, so none of them is a dropped-out alert.
+                _services.GetRequiredService<MainViewModel>().ExpectCloseForAll();
                 var stopped = _services.GetRequiredService<IRobloxInstanceStopper>().StopAll();
                 _log?.LogInformation("Stop-all from tray: stopped {Stopped} of {Running} instance(s).", stopped, running);
             }
@@ -2093,6 +2095,12 @@ public partial class App : Application
     private void RequestShutdown()
     {
         IsShuttingDown = true;
+
+        // Quitting closes every client at once. Without this, the last thing RoRoRo does on its
+        // way out is page the user about a roster they deliberately shut down.
+        try { _services?.GetRequiredService<MainViewModel>().ExpectCloseForAll(); }
+        catch (Exception ex) { _log?.LogDebug(ex, "Couldn't mark shutdown closes as expected."); }
+
         Shutdown(0);
     }
 
