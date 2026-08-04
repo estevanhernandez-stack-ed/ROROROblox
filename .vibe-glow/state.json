@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "app": "RoRoRo",
+  "stage": "waves",
+  "adapter": "winui-powershell",
+  "evidenceDir": "docs/ui-evidence",
+  "designLanguagePath": "docs/superpowers/specs/2026-08-04-rororo-settings-navigation-conventions.md",
+  "findingsRegisterPath": "docs/superpowers/research/2026-08-04-rororo-settings-ui-audit-findings.md",
+  "themes": [
+    "brand",
+    "magenta-heat",
+    "flatline"
+  ],
+  "invariants": [
+    "Color belongs to the theme system; identity lives in structure — every surface binds DynamicResource brushes and users ship their own JSON themes, so a finding that prescribes a color is invalid. Findings must argue layout, weight, spacing, or shape.",
+    "The 626 Labs duo is never split — cyan #17d4fa and magenta #f22f89 appear together or not at all. CORRECTED 2026-08-04: JoinByLinkWindow.xaml:27-33 and WelcomeWindow.xaml:38-43 already breach this.",
+    "Type roles are fixed — Space Grotesk display, Inter body, JetBrains Mono for small meta labels only (uppercase, 0.12em tracking). Findings may argue size, weight, and hierarchy, never a different family.",
+    "WPF-UI (lepoco) owns control chrome — findings target our composition, not the library's control internals. The themed MenuItem check-glyph behavior is already worked around deliberately in two places and is not a defect to re-litigate.",
+    "No emoji in UI copy. AMENDED 2026-08-04 by Este: the die on Reroll identity and the clipboard on Copy AI prompt STAY — thematic to streamer mode's deliberately silly naming, not decoration. The defect at that site is placement, not the glyph; moving Reroll identity off the dashboard (goal 1) is the fix. Do not strip them in a copy wave.",
+    "Token-contract extensions must be optional-with-fallback — Theme has exactly ten required slots and user themes on disk supply all of them. A new slot breaks every existing user theme unless it defaults."
+  ],
+  "waves": [],
+  "scope": {
+    "area": "Settings, plus the app's navigation and page chrome around it",
+    "goal": "1) Get the items that are really settings INTO Settings — streamer mode, and probably About, History, Diagnostics, which currently hang off the main window. 2) Settings was already getting tall before Discord and alerts landed on it, so work out how to split it up. 3) Main-window buttons are fine to keep or change — including a separate container for tools if that is the right answer — but each one has to lead where it says it leads. 4) Fix the page titles: they read like an app being readied for a hackathon, explaining each page at the top like an ad rather than reading as app chrome. OPEN: History and Diagnostics are tools, not preferences — 'under Settings' may be the wrong home for them; the user's word was 'maybe' and this campaign decides it on evidence.",
+    "surfaces": [
+      "main-window",
+      "main-window-empty",
+      "preferences",
+      "preferences-scrolled",
+      "about",
+      "history",
+      "diagnostics",
+      "library",
+      "plugins",
+      "theme-builder",
+      "tray-menu"
+    ]
+  }
+}
