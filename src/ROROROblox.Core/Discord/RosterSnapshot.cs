@@ -102,6 +102,13 @@ public sealed record RosterServer
 /// party "Size": showing a party size smaller than the accounts actually together in that server
 /// reads as self-contradicting next to the State line.
 /// <para>
+/// <paramref name="JoinableServerAccountMax"/> (2026-08-03) is the Discord party "Max" — the honest
+/// ceiling is the user's TOTAL saved-account count (from the roster snapshot, live or not), never
+/// an arbitrary constant: "3 of 8" reads as three of my eight accounts, and 8 is the only number
+/// that is actually true. See <see cref="PresencePayloadBuilder"/>'s remarks for the full-roster
+/// edge case (size == max).
+/// </para>
+/// <para>
 /// <paramref name="IsIdle"/> replaces the old "null means nothing running, so clear presence"
 /// signalling (2026-08-03, live smoke test). The RPC connection stays open regardless of what is
 /// running, so a cleared entry still renders in Discord — just as a bare "Playing RoRoRo" with no
@@ -120,4 +127,5 @@ public sealed record PresenceFields(
     DateTimeOffset? StartedAtUtc,
     RosterServer? JoinableServer,
     int JoinableServerAccountCount,
+    int JoinableServerAccountMax,
     bool IsIdle = false);

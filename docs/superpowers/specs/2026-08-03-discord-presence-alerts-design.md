@@ -48,6 +48,19 @@
 > connection is actually going away. See `PresencePayloadBuilder.BuildIdle` in
 > `src/ROROROblox.Core/Discord/PresencePayloadBuilder.cs` and `PresenceFields.IsIdle`'s remarks in
 > `src/ROROROblox.Core/Discord/RosterSnapshot.cs`.
+>
+> **(d) §5.1 doesn't state a party maximum at all (live smoke test, 2026-08-03).** Build reality
+> (pre-fix) hardcoded it to `100`, a magic number that exists only because Discord will not render
+> a Join button on a party it considers full. A viewer reads "3 of 100" as three of a hundred,
+> which is not what it means. Fixed: the party max is now the user's TOTAL saved-account count
+> (from the roster snapshot, live or not) — the only honest ceiling, since that's the true upper
+> bound on how many of the user's accounts could ever land in one server. The full-roster edge
+> (every saved account in one server, so size == max) is shipped as-is, unfudged — whether Discord
+> actually hides Join at size == max is UNVERIFIED reasoning, not measurement, and Este is checking
+> it live; see the comment at the party-max computation in `PresencePayloadBuilder.Build` for what
+> to change if it turns out Join does disappear. See
+> `src/ROROROblox.Core/Discord/PresencePayloadBuilder.cs` and `PresenceFields.JoinableServerAccountMax`'s
+> remarks in `src/ROROROblox.Core/Discord/RosterSnapshot.cs`.
 
 ## 1. Why now
 

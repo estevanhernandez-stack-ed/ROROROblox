@@ -50,12 +50,28 @@ public static class PresencePayloadBuilder
         var joinableRepresentative = biggestCluster?.FirstOrDefault(a => a.Server?.PrivateServerCode is not null)
                                       ?? biggestCluster?.First();
 
+        // The party MAXIMUM is the honest ceiling: the user's total saved-account count (every
+        // account the roster snapshot knows about, live or not) — not an arbitrary constant. "3 of
+        // 8" reads as three of my eight accounts; that reading only holds if 8 is actually true.
+        //
+        // FULL-ROSTER EDGE — UNVERIFIED, 2026-08-03: when every saved account is in the same
+        // server, size == max. The prior code's comment asserted Discord will not render a Join
+        // button on a party it considers "full" at size == max. That assertion is REASONING, not
+        // MEASUREMENT — nobody has watched it happen. Este is verifying it live. Do NOT pre-emptively
+        // fudge this (e.g. max = size + 1) to dodge an unconfirmed edge case. If the live test shows
+        // Join actually disappearing at size == max, the fix is one line here: change
+        // `savedAccountCount` below to `savedAccountCount + 1` for the max — and log a decision
+        // entry recording that Discord's full-party behavior was confirmed, since every other
+        // caller of this builder will want to know.
+        var savedAccountCount = snapshot.Accounts.Count;
+
         return new PresenceFields(
             Details: details,
             State: state,
             StartedAtUtc: live.Where(a => a.InGameSinceUtc is not null).Min(a => a.InGameSinceUtc),
             JoinableServer: joinableRepresentative?.Server,
-            JoinableServerAccountCount: togetherCount);
+            JoinableServerAccountCount: togetherCount,
+            JoinableServerAccountMax: savedAccountCount);
     }
 
     /// <summary>
@@ -84,6 +100,7 @@ public static class PresencePayloadBuilder
             StartedAtUtc: null,
             JoinableServer: null,
             JoinableServerAccountCount: 0,
+            JoinableServerAccountMax: 0,
             IsIdle: true);
     }
 }
