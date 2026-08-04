@@ -7,10 +7,15 @@
 # Run from repo root with the four values Partner Center gave you:
 #
 #   powershell -ExecutionPolicy Bypass -File scripts/finalize-store-build.ps1 `
-#       -IdentityName       "626Labs.ROROROblox" `
+#       -IdentityName       "626LabsLLC.RoRoRoBlox" `
 #       -PublisherCN        "CN=YOUR-RESERVATION-CN" `
-#       -PublisherDisplayName "626 Labs LLC" `
+#       -PublisherDisplayName "626Labs LLC" `
 #       -Version            "1.1.0.0"
+#
+# PublisherDisplayName has NO space: Partner Center holds "626Labs LLC", and this value must
+# match it byte for byte or the submission is rejected on identity mismatch. It reads like a
+# typo and it is not — do not "correct" it. (This example previously said "626 Labs LLC",
+# which would have failed for anyone who copy-pasted it.)
 #
 # What it does:
 #   1. Reads src/ROROROblox.App/Package.appxmanifest, updates the four identity-related

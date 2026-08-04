@@ -38,6 +38,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
     private string? _memoryText;
     private bool _memoryWarning;
     private bool _joinViaFriend;
+    private bool _alertsMuted;
     private IStreamerIdentityProvider? _identity;
 
     public AccountSummary(Account account)
@@ -509,6 +510,19 @@ public sealed class AccountSummary : INotifyPropertyChanged
     {
         get => _joinViaFriend;
         set => SetField(ref _joinViaFriend, value);
+    }
+
+    /// <summary>
+    /// Whether Discord alerts for this account are suppressed — the per-account half of the
+    /// two-control design (routing is per-trigger, muting is per-account). Persisted in the
+    /// Discord config rather than <c>accounts.dat</c>: it is Discord state, not account state, and
+    /// an exported account should not carry someone else's notification preferences. Flipped via
+    /// <see cref="MainViewModel.SetAlertsMutedAsync"/>.
+    /// </summary>
+    public bool AlertsMuted
+    {
+        get => _alertsMuted;
+        set => SetField(ref _alertsMuted, value);
     }
 
     /// <summary>

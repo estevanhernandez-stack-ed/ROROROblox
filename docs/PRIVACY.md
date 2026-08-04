@@ -139,6 +139,44 @@ If a plugin asks for the memory-pressure capability, it receives these same figu
 
 ---
 
+## Discord integration (v1.15 and later)
+
+RoRoRo can connect to the Discord app on your PC to show what you're playing, and can send you alerts when something happens to an account while you're away. **Both are off until you turn them on**, and a fresh install makes no Discord connection of any kind.
+
+There are two halves and they are independent — you can use either, both, or neither.
+
+### Rich presence and Join
+
+- **How it connects.** Through a **local named pipe** to the Discord desktop app already running on your PC. This is the standard mechanism every game with a Discord status uses. It never leaves your machine and it is not a network connection.
+- **What it publishes.** The game name, how many of your accounts are in it, and how long the session has been going. If you also turn on Join, a friend clicking Join receives a code that points at the server your accounts are in.
+- **Streamer mode holds.** With streamer mode on, presence publishes your masked names and hides the roster count — the same promise the app makes on screen, kept on the way out.
+- **A visibility limit worth knowing.** While Roblox is running, Discord shows *Roblox* to your friends rather than RoRoRo, because Discord gives the "playing" slot to a game it detects and RoRoRo is an application, not a detected game. Your own card is always correct. This is a Discord platform rule, not a setting we can change.
+- **URI registration.** Turning on Join registers a `roblox-rororo:` link handler for your Windows user, so Discord can hand a join back to the app. Every inbound join shows a confirmation naming what is about to launch before anything starts.
+
+### Alerts
+
+- **What triggers one.** Two things only: an account dropping out of a game unexpectedly, and a client crossing the memory warning threshold. Closes you asked for — Stop, Recycle, quitting RoRoRo — deliberately do not alert.
+- **Where they go.** A Windows notification, and/or a Discord channel of your choosing. The channel is reached with a **webhook URL that you create and paste in.** RoRoRo cannot see, discover, or reach any Discord channel you have not explicitly given it a webhook for.
+- **What an alert says.** The account name and the game name; for a memory warning, that client's memory figure. Nothing else.
+- **What an alert can never contain.** A private-server link, invite, or access code. This is enforced by the shape of the type that carries the message — it has two text fields and no field a link could occupy — and a test fails the build if anyone adds one. A Discord Join reaches only people who can see your Join button; a channel post is read by everyone in that channel, now and in future, so the two are held to different rules.
+- **Streamer mode, with one deliberate exception.** Alerts use your masked names everywhere except a channel you have designated as your **clan channel**, which sends real account names. That room is one you deliberately joined, with people who already know which accounts are yours, and a board of invented names there would be unusable. Note the consequence: if that channel is visible while you are streaming, real names are visible too.
+
+### What this adds to the tables above
+
+| Location | Contents | Encryption |
+|---|---|---|
+| `discord.dat` (in the app's local data folder) | Discord settings: which alerts are on, where each goes, any webhook URLs you pasted, and which accounts you muted | **DPAPI-encrypted** per Windows user |
+
+| Host | When | Purpose |
+|---|---|---|
+| `discord.com` | Only when you have pasted a webhook URL and chosen a destination that uses it | Posting your alerts to the channel that webhook belongs to, and a one-time read of the webhook to show you which channel it posts to before the first alert lands there. Sends `User-Agent: RORORO/<version>`, same as every other request. |
+
+A webhook URL is a credential — anyone holding it can post to that channel until you delete it in Discord. RoRoRo stores it encrypted, **never writes it to the log file**, and never includes it in a diagnostics bundle. If you paste something that looks like a Discord bot token, RoRoRo tells you what it is and refuses it rather than storing it.
+
+**No telemetry, still.** RoRoRo does not report whether you set any of this up, whether it worked, or whether you turned it off.
+
+---
+
 ## Children's privacy
 
 RORORO is a launcher for the Roblox platform. We do not collect data from anyone, including children. Children should follow the privacy practices of Roblox itself when using the Roblox platform. RORORO launches the official Roblox client unmodified; we do not interpose between the user and Roblox's privacy-relevant flows.

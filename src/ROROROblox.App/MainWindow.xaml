@@ -274,6 +274,26 @@
                             </MenuItem.Style>
                         </MenuItem>
 
+                        <!-- Per-account Discord alert mute. Lives in the context menu rather than
+                             the row's action group deliberately: the row is already dense, and a
+                             mute is a set-once preference, not a per-session control. Same
+                             Header-DataTrigger check pattern as Join via friend above (WPF-UI's
+                             themed MenuItem only draws a glyph when IsCheckable="True"). -->
+                        <MenuItem Command="{Binding Data.ToggleAlertsMutedCommand, Source={StaticResource VmProxy}}"
+                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                  ToolTip="Stop Discord alerts for this account only. Routing is per-trigger; muting is per-account.">
+                            <MenuItem.Style>
+                                <Style TargetType="MenuItem">
+                                    <Setter Property="Header" Value="Mute Discord alerts" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding PlacementTarget.DataContext.AlertsMuted, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Value="True">
+                                            <Setter Property="Header" Value="✓ Muted — no Discord alerts" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </MenuItem.Style>
+                        </MenuItem>
+
                         <Separator />
 
                         <!-- Streamer mode (v1.10, Task 10) — per-row reroll. CommandParameter binds

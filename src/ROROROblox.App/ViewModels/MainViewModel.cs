@@ -69,6 +69,25 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal DiscordPresenceService? DiscordPresence { get; set; }
 
     /// <summary>
+    /// Test seam over the ctor-injected <see cref="_discordConfigStore"/>, so a fixture can supply
+    /// one without threading another argument through every construction site. Production always
+    /// takes the constructor path.
+    /// </summary>
+    internal DiscordConfigStore? DiscordConfigStoreOverride { get; set; }
+
+    /// <summary>The store per-account mute writes through — ctor-injected, or a test override.</summary>
+    private DiscordConfigStore? AlertConfigStore => _discordConfigStore ?? DiscordConfigStoreOverride;
+
+    /// <summary>
+    /// Builds the Preferences dialog. Set by the composition root, which is the only place that
+    /// should know what that window needs — it now takes eleven services, and having this view
+    /// model construct it meant every dependency added to Preferences also had to be added here,
+    /// to a constructor that is already the largest in the app. The factory keeps that growth in
+    /// the one place designed to absorb it.
+    /// </summary>
+    internal Func<Preferences.PreferencesWindow>? PreferencesWindowFactory { get; set; }
+
+    /// <summary>
     /// In-flight session-history rows keyed by account id. Populated when LaunchAccountAsync
     /// succeeds; consumed by OnProcessExited / OnProcessAttachFailed to stamp end / outcome.
     /// In-memory only — restart loses pending end-stamps, but the launched-at row is already
@@ -202,6 +221,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         ResetItemNameCommand = new RelayCommand(p => _ = ResetItemNameAsync(BuildRenameTarget(p)));
         RemoveGameCommand = new RelayCommand(p => _ = RemoveGameAsync(p as FavoriteGame));
         ToggleJoinViaFriendCommand = new RelayCommand(p => _ = ToggleJoinViaFriendAsync(p as AccountSummary));
+        ToggleAlertsMutedCommand = new RelayCommand(p =>
+        {
+            if (p is AccountSummary row) { _ = SetAlertsMutedAsync(row, !row.AlertsMuted); }
+        });
 
         // Streamer mode (v1.10) — main-window switch + reroll controls (Task 10). No-ops when
         // _streamerIdentity is null (VM-level test harness, which doesn't pass one).
@@ -240,7 +263,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             try
             {
-                Application.Current?.Dispatcher.Invoke(() => ApplyMemory(snap));
+                Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    ApplyMemory(snap);
+
+                    // Alerts hang off the CROSSING, never off ApplyMemory — the 30s ticker calls
+                    // ApplyMemory too, and raising there would re-fire the same warning twice a
+                    // minute for as long as pressure held. PressureCrossed is edge-triggered and
+                    // latched per account, which is exactly the "this just became true" signal an
+                    // alert wants.
+                    RaiseAlerts(BuildMemoryAlerts(snap, DateTimeOffset.UtcNow));
+                });
             }
             catch (Exception ex)
             {
@@ -537,6 +570,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// is the row's <see cref="AccountSummary"/>. See <see cref="ToggleJoinViaFriendAsync"/>.
     /// </summary>
     public ICommand ToggleJoinViaFriendCommand { get; }
+
+    /// <summary>
+    /// Flips an account row's <see cref="AccountSummary.AlertsMuted"/> preference and persists it
+    /// through the Discord config — the account row's context-menu checkbox. Parameter is the
+    /// row's <see cref="AccountSummary"/>. See <see cref="SetAlertsMutedAsync"/>.
+    /// </summary>
+    public ICommand ToggleAlertsMutedCommand { get; }
 
     /// <summary>
     /// True when streamer mode is active — bound two-way to the main-window <c>ui:ToggleSwitch</c>
@@ -1529,6 +1569,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             "Recycle requested for account {AccountId} ({DisplayName}): pre-recycle private bytes={PreBytes}, target={Target}",
             summary.Id, summary.DisplayName, preRecycleBytes, target.GetType().Name);
 
+        // Recycle stops the client before relaunching it. Without this the memory alert's own
+        // "Recycle suggested" advice produces a dropped-out alert the moment it's followed.
+        ExpectClose(summary.Id);
+
         var ok = await _accountRecycler.RecycleAsync(summary.Id, target).ConfigureAwait(true);
         if (!ok)
         {
@@ -2412,6 +2456,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
         _log.LogInformation("StopAccount {AccountId} (pid {Pid})", summary.Id, summary.RunningPid);
+        ExpectClose(summary.Id);
         if (!_processTracker.RequestClose(summary.Id))
         {
             // Window unresponsive — escalate.
@@ -2613,8 +2658,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             else
             {
                 // Capture combined active state BEFORE mutating presence so we can tell whether
-                // this poll is the moment the row went fully inactive.
+                // this poll is the moment the row went fully inactive. The game name goes with it:
+                // the dropped-out alert wants to say WHICH game the account fell out of, and the
+                // lines below have already blanked it by the time that alert is built.
                 var wasActive = summary.InGame || summary.IsRunning;
+                var lastGameName = summary.CurrentGameName;
 
                 summary.PresenceState = e.PresenceType;
                 summary.CurrentGameName = null;
@@ -2640,6 +2688,27 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 if (wasActive && !summary.IsRunning)
                 {
                     summary.LastClosedAtUtc = e.OccurredAtUtc;
+
+                    // The dropped-out alert rides the SAME both-signals-agree rule, deliberately.
+                    // The ghost case (process killed by the anti-multilaunch bootstrapper, client
+                    // respawned under a new pid) is a false alarm we already know how to suppress —
+                    // paging someone at 3am for it would burn the feature's credibility on the
+                    // first night. RenderName, never DisplayName: streamer mode holds outbound.
+                    //
+                    // A close the user ASKED for is the other false alarm — see _expectedCloses.
+                    if (WasCloseExpected(summary.Id, e.OccurredAtUtc))
+                    {
+                        _expectedCloses.Remove(summary.Id);
+                        _log.LogDebug("Suppressed a dropped-out alert for {AccountId}: the close was user-initiated.", summary.Id);
+                    }
+                    else
+                    {
+                        // Both names travel: RenderName is what every destination shows by
+                        // default, DisplayName is used only by the clan channel. See AlertTrigger.
+                        RaiseAlerts([new AlertTrigger(
+                            AlertKind.AccountDroppedOut, summary.Id, summary.RenderName,
+                            summary.DisplayName, lastGameName, PrivateBytes: null, e.OccurredAtUtc)]);
+                    }
                 }
             }
 
@@ -2757,6 +2826,139 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// A row with no matching account in the snapshot (not yet launched, or launched after the
     /// last sample) is left untouched. Task 7.
     /// </summary>
+    /// <summary>
+    /// Fires when something alert-worthy happened. The composition root wires this to
+    /// <c>AlertDispatcher.DispatchAsync</c>.
+    /// <para>
+    /// An event rather than an injected dispatcher, deliberately: this constructor already takes
+    /// twenty-odd dependencies, and every one added means touching every construction site in the
+    /// test suite. Routing, muting, cooldown, and delivery all live in the dispatcher — the view
+    /// model's whole job here is to notice, name the account, and say when.
+    /// </para>
+    /// </summary>
+    internal event EventHandler<IReadOnlyList<AlertTrigger>>? AlertsRaised;
+
+    /// <summary>
+    /// Accounts the user just closed on purpose, and when. A dropped-out alert exists to report a
+    /// client dying when nobody asked — a crash, a kick, a session dropping while the user is out.
+    /// Clicking Stop and then being told the thing you clicked Stop on stopped is noise.
+    /// <para>
+    /// The sharpest case is self-inflicted: the memory alert's own text says "Recycle suggested,"
+    /// and Recycle stops the client — so without this, following the advice in one alert
+    /// immediately produces another.
+    /// </para>
+    /// </summary>
+    private readonly Dictionary<Guid, DateTimeOffset> _expectedCloses = [];
+
+    /// <summary>
+    /// How long a deliberate close stays "expected." Long enough to cover the stop plus the
+    /// presence poll that confirms it; short enough that a client dying for real a minute after
+    /// you touched it still reports.
+    /// </summary>
+    internal static readonly TimeSpan ExpectedCloseWindow = TimeSpan.FromSeconds(60);
+
+    /// <summary>Mark a close as user-initiated so it does not raise a dropped-out alert.</summary>
+    internal void ExpectClose(Guid accountId) => _expectedCloses[accountId] = DateTimeOffset.UtcNow;
+
+    /// <summary>Mark every running account as expected — app shutdown closes them all at once.</summary>
+    internal void ExpectCloseForAll()
+    {
+        foreach (var row in AccountsSnapshot)
+        {
+            _expectedCloses[row.Id] = DateTimeOffset.UtcNow;
+        }
+    }
+
+    private bool WasCloseExpected(Guid accountId, DateTimeOffset atUtc) =>
+        _expectedCloses.TryGetValue(accountId, out var asked) && atUtc - asked <= ExpectedCloseWindow;
+
+    /// <summary>
+    /// Mute or unmute Discord alerts for one account, persisting through the config store.
+    /// <para>
+    /// Read-modify-write of the whole <see cref="DiscordConfig"/> record, deliberately explicit:
+    /// getting this wrong silently wipes the user's webhook URL or presence toggle — settings they
+    /// would then have to re-enter without ever being told why. Pinned by a test.
+    /// </para>
+    /// </summary>
+    internal async Task SetAlertsMutedAsync(AccountSummary summary, bool muted)
+    {
+        ArgumentNullException.ThrowIfNull(summary);
+        summary.AlertsMuted = muted;
+
+        if (AlertConfigStore is not { } store) return;
+
+        try
+        {
+            var config = await store.LoadAsync().ConfigureAwait(true);
+            var ids = config.MutedAccountIds.ToHashSet();
+            if (muted) { ids.Add(summary.Id); } else { ids.Remove(summary.Id); }
+            await store.SaveAsync(config with { MutedAccountIds = [.. ids] }).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Couldn't persist the alert mute for this account; it holds for this session only.");
+        }
+    }
+
+    /// <summary>
+    /// Guarded raise. An alert is a passenger — same contract as presence. A throwing subscriber
+    /// must never propagate back into <see cref="ApplyPresence"/> or the watchdog's crossing
+    /// handler, because both of those sit on paths that keep the roster honest.
+    /// </summary>
+    private void RaiseAlerts(IReadOnlyList<AlertTrigger> triggers)
+    {
+        if (triggers.Count == 0) return;
+
+        try
+        {
+            AlertsRaised?.Invoke(this, triggers);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Alert subscriber threw; the alert was dropped.");
+        }
+    }
+
+    /// <summary>
+    /// Projects a memory crossing onto the accounts worth naming in an alert.
+    /// <para>
+    /// Accounts genuinely over their own cap are the answer when there are any. When the crossing
+    /// is projection-only — the machine is heading for the ceiling but no single client is over
+    /// cap — the watchdog still names the client worth recycling
+    /// (<see cref="MemoryPressureSnapshot.TargetAccountId"/>), and the alert says which one rather
+    /// than going quiet on a crossing that genuinely fired.
+    /// </para>
+    /// <para>
+    /// <c>ReadOk == false</c> is excluded everywhere: it means UNKNOWN, not zero. Alerting on a
+    /// reading we could not take is a wrong number stated confidently, which is the exact failure
+    /// the watchdog exists to prevent.
+    /// </para>
+    /// </summary>
+    internal IReadOnlyList<AlertTrigger> BuildMemoryAlerts(MemoryPressureSnapshot snapshot, DateTimeOffset nowUtc)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+
+        var readable = snapshot.Accounts.Where(a => a.ReadOk).ToList();
+        var named = readable.Where(a => a.OverCap).ToList();
+
+        if (named.Count == 0 && snapshot.TargetAccountId is { } target)
+        {
+            named = readable.Where(a => a.AccountId == target).ToList();
+        }
+
+        return named
+            .Select(a => new
+            {
+                Memory = a,
+                Row = Accounts.FirstOrDefault(r => r.Id == a.AccountId),
+            })
+            .Where(x => x.Row is not null)
+            .Select(x => new AlertTrigger(
+                AlertKind.MemoryWarning, x.Memory.AccountId, x.Row!.RenderName,
+                x.Row.DisplayName, x.Row.CurrentGameName, x.Memory.PrivateBytes, nowUtc))
+            .ToList();
+    }
+
     internal void ApplyMemory(MemoryPressureSnapshot snapshot)
     {
         // snapshot.Accounts is guaranteed non-null (even pre-first-sample) by
@@ -3273,19 +3475,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // could never run in production and left two places knowing where that file lives — a null
         // here means a test constructed this VM directly and is exercising OpenPreferencesCommand
         // without supplying one, which is a fixture bug to fix, not a case to paper over.
-        if (_discordConfigStore is null)
+        if (PreferencesWindowFactory is null)
         {
             throw new InvalidOperationException(
-                "OpenPreferences requires a DiscordConfigStore. DI supplies one in production; a " +
-                "test exercising OpenPreferencesCommand must pass one into the MainViewModel constructor.");
+                "OpenPreferences requires PreferencesWindowFactory. The composition root sets it " +
+                "in production; a test exercising OpenPreferencesCommand must supply one.");
         }
 
-        var window = new Preferences.PreferencesWindow(
-            _settings, _startupRegistration, _themeStore, _themeService,
-            _accountStore, _accountTransport, this, _discordConfigStore)
-        {
-            Owner = Application.Current.MainWindow,
-        };
+        var window = PreferencesWindowFactory();
+        window.Owner = Application.Current.MainWindow;
         window.ShowDialog();
     }
 

@@ -51,6 +51,20 @@
          time (same PNG sources). Missing this was the "Install Partially Succeeded"
          blank-shortcut-icon on direct-download installs. -->
     <ApplicationIcon>Package\Logos\AppIcon.ico</ApplicationIcon>
+    <!-- The exe's version resource — the FRIENDLY name Windows and Discord read, as distinct
+         from the file name. Without these, all three fields default to the assembly name and the
+         product introduces itself as "ROROROblox.App" in Task Manager, in the UAC dialog, in
+         Explorer's details pane, and in Discord's manual "Add a game" list.
+         That last one matters beyond cosmetics: Discord's game detection matches a running
+         executable and takes its display name from these fields, so whatever they say is the name
+         RoRoRo would eventually be recognised under. Cheap to fix now, permanent later.
+         AssemblyName is deliberately NOT changed — renaming the output file would churn the MSIX
+         manifest, Velopack, the run-on-login entry, and the URI-scheme command for no additional
+         benefit, since none of those surfaces show the file name to a user. -->
+    <AssemblyTitle>RoRoRo</AssemblyTitle>
+    <Product>RoRoRo</Product>
+    <Company>626 Labs LLC</Company>
+    <Copyright>© 626 Labs LLC</Copyright>
   </PropertyGroup>
 
   <!-- Expose internals (PluginRow, PluginsViewModel) to the test project so VM-level

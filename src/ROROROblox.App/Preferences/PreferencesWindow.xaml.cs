@@ -29,13 +29,30 @@ internal partial class PreferencesWindow : Window
     private readonly IAccountTransport _transport;
     private readonly MainViewModel _mainViewModel;
     private readonly DiscordConfigStore _discordConfigStore;
+    private readonly AlertDispatcher _alertDispatcher;
+    private readonly DiscordWebhookSender _webhookSender;
+    private readonly WebhookProbe _webhookProbe;
+    private readonly DiscordConfigCache _discordConfigCache;
     private bool _suppressClickHandlers; // true while we set the initial check states.
+
+    /// <summary>Channel names reported by the probe for each webhook, if it answered.</summary>
+    private string? _mineChannelName;
+
+    private string? _clanChannelName;
 
     // Loaded once at OnLoaded, mutated on each Discord toggle click, saved whole. A compound
     // record (Presence + Join + webhook fields live in one encrypted blob) needs an in-memory
     // canonical copy — re-reading the store fresh on every click risks a lost-update race if
     // the two Discord checkboxes are clicked in quick succession (the UI message pump can
     // interleave a second click into the first click's await).
+    //
+    // 2026-08-03: the alert controls below join this same snapshot rather than each doing their
+    // own load-modify-save, for exactly the reason above — a fresh read per control would REVERSE
+    // this decision and reintroduce the interleave it was written to prevent. The one other writer
+    // of this record is MainViewModel.SetAlertsMutedAsync (the row context menu), which cannot run
+    // while this dialog is open because the dialog is modal. If Preferences ever becomes
+    // modeless, that becomes a real lost update and this whole scheme needs a single owner
+    // instead — it is the modality, not the code, that makes this safe today.
     private DiscordConfig _discordConfig = new();
 
     // Set in OnLoaded when DiscordPresence is available, so OnDiscordStatusChanged and OnClosed
@@ -50,8 +67,16 @@ internal partial class PreferencesWindow : Window
         IAccountStore accountStore,
         IAccountTransport transport,
         MainViewModel mainViewModel,
-        DiscordConfigStore discordConfigStore)
+        DiscordConfigStore discordConfigStore,
+        AlertDispatcher alertDispatcher,
+        DiscordWebhookSender webhookSender,
+        WebhookProbe webhookProbe,
+        DiscordConfigCache discordConfigCache)
     {
+        _alertDispatcher = alertDispatcher;
+        _webhookSender = webhookSender;
+        _webhookProbe = webhookProbe;
+        _discordConfigCache = discordConfigCache;
         _settings = settings;
         _startupRegistration = startupRegistration;
         _themeStore = themeStore;
@@ -111,6 +136,9 @@ internal partial class PreferencesWindow : Window
                 // is off (DiscordPresenceService.JoinEnabled is now PresenceEnabled && JoinEnabled)
                 // — disabling the checkbox here says so instead of leaving it checkable-but-inert.
                 DiscordJoinToggle.IsEnabled = _discordConfig.PresenceEnabled;
+                // Alerts share this loaded snapshot — and, unlike presence, work with no Discord
+                // application id, so they are populated outside the DiscordPresence null-check below.
+                PopulateAlertControls();
                 if (_mainViewModel.DiscordPresence is { } presence)
                 {
                     // Fix round 1, Finding 2: subscribe so the status line stays honest for the
@@ -333,6 +361,7 @@ internal partial class PreferencesWindow : Window
         var wanted = DiscordPresenceToggle.IsChecked == true;
         var updated = _discordConfig with { PresenceEnabled = wanted };
         _discordConfig = updated; // update the in-memory copy before the first await — see field doc
+        _discordConfigCache.Current = updated;
         // FIX 7: keep the Join checkbox's enabled state tracking presence live, not just at
         // OnLoaded — Join has no effect while presence is off (DiscordPresenceService.JoinEnabled).
         DiscordJoinToggle.IsEnabled = wanted;
@@ -366,6 +395,7 @@ internal partial class PreferencesWindow : Window
         var wanted = DiscordJoinToggle.IsChecked == true;
         var updated = _discordConfig with { JoinEnabled = wanted };
         _discordConfig = updated;
+        _discordConfigCache.Current = updated;
         try
         {
             await _discordConfigStore.SaveAsync(updated);
@@ -387,6 +417,263 @@ internal partial class PreferencesWindow : Window
             _suppressClickHandlers = false;
         }
     }
+
+    // ---------- Alerts (plan 2026-08-03, Task 7) ----------
+
+    /// <summary>
+    /// Paint the alert controls from the loaded config. Called from <c>OnLoaded</c> inside the
+    /// same guarded block as the presence toggles.
+    /// </summary>
+    private void PopulateAlertControls()
+    {
+        SelectDestination(DroppedOutDestination, _discordConfig.DroppedOutDestination);
+        SelectDestination(MemoryWarningDestination, _discordConfig.MemoryWarningDestination);
+        MineWebhookInput.Text = _discordConfig.MineWebhookUrl ?? "";
+        ClanWebhookInput.Text = _discordConfig.ClanWebhookUrl ?? "";
+        RefreshAlertsStatus();
+
+        // Best-effort, fire-and-forget: name the channel each saved webhook posts to, so a clan
+        // webhook sitting in the personal slot is visible on open rather than after it matters.
+        if (!string.IsNullOrWhiteSpace(_discordConfig.MineWebhookUrl))
+        {
+            _ = ProbeWebhookAsync(_discordConfig.MineWebhookUrl, isClan: false);
+        }
+
+        if (!string.IsNullOrWhiteSpace(_discordConfig.ClanWebhookUrl))
+        {
+            _ = ProbeWebhookAsync(_discordConfig.ClanWebhookUrl, isClan: true);
+        }
+    }
+
+    private static void SelectDestination(System.Windows.Controls.ComboBox combo, AlertDestination destination)
+    {
+        foreach (var item in combo.Items.OfType<System.Windows.Controls.ComboBoxItem>())
+        {
+            if (Equals(item.Tag as string, destination.ToString()))
+            {
+                combo.SelectedItem = item;
+                return;
+            }
+        }
+    }
+
+    private static AlertDestination ReadDestination(System.Windows.Controls.ComboBox combo) =>
+        combo.SelectedItem is System.Windows.Controls.ComboBoxItem { Tag: string tag }
+            && Enum.TryParse<AlertDestination>(tag, out var parsed)
+                ? parsed
+                : AlertDestination.None;
+
+    /// <summary>
+    /// The status line is the feature's honesty, so it is recomputed after every change rather
+    /// than set once. <see cref="AlertStatusLine"/> owns which sentence belongs to which state —
+    /// see its remarks for why that decision does not live here.
+    /// </summary>
+    /// <summary>
+    /// Persist a settings change AND make it live immediately.
+    /// <para>
+    /// The cache is what <see cref="AlertDispatcher"/> reads on every dispatch, and it used to be
+    /// refreshed only when this dialog closed. That meant a user who set a destination and then sat
+    /// watching for an alert with Settings still open got nothing — the dispatcher was still reading
+    /// the config from app startup. Measured live: webhook saved 00:07:26, a real memory crossing at
+    /// 00:08:46 logged "routed nowhere." A setting that does not take effect until you close the
+    /// window it lives in is indistinguishable from a broken feature.
+    /// </para>
+    /// </summary>
+    private async Task SaveDiscordConfigAsync(DiscordConfig updated)
+    {
+        _discordConfig = updated;
+        _discordConfigCache.Current = updated;
+        await _discordConfigStore.SaveAsync(updated);
+    }
+
+    private void RefreshAlertsStatus() =>
+        AlertsStatusLine.Text = AlertStatusLine.Compose(
+            _discordConfig,
+            _alertDispatcher.MineWebhookRejected,
+            _alertDispatcher.ClanWebhookRejected,
+            _mineChannelName,
+            _clanChannelName);
+
+    private async void OnAlertRoutingChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+
+        var updated = _discordConfig with
+        {
+            DroppedOutDestination = ReadDestination(DroppedOutDestination),
+            MemoryWarningDestination = ReadDestination(MemoryWarningDestination),
+        };
+        RefreshAlertsStatus();
+
+        try
+        {
+            await SaveDiscordConfigAsync(updated);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, $"Couldn't save alert routing: {ex.Message}",
+                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    /// <summary>
+    /// Commit on LostFocus rather than TextChanged: a webhook URL is pasted whole, and validating
+    /// every keystroke would flash four different rejections at someone typing one in by hand.
+    /// <para>
+    /// One handler serves both fields. The personal and clan webhooks differ only in which slot
+    /// they write and which rejection they clear — duplicating this logic per field is how the two
+    /// drift into validating differently, and the clan one (the shared room) is the worse half to
+    /// get wrong.
+    /// </para>
+    /// </summary>
+    private async void OnWebhookCommitted(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+
+        var isClan = ReferenceEquals(sender, ClanWebhookInput);
+        var input = isClan ? ClanWebhookInput : MineWebhookInput;
+        var verdictLine = isClan ? ClanWebhookVerdict : MineWebhookVerdict;
+        var saved = isClan ? _discordConfig.ClanWebhookUrl : _discordConfig.MineWebhookUrl;
+
+        var verdict = WebhookUrlValidator.Inspect(input.Text);
+        verdictLine.Text = verdict.Message;
+
+        // Anything that isn't a webhook leaves the SAVED value alone. Clobbering a working webhook
+        // because someone pasted an invite over it and then tabbed away is a silent downgrade to
+        // desktop-only — precisely the failure the status line exists to surface, self-inflicted.
+        if (verdict.Kind is not (WebhookUrlKind.Valid or WebhookUrlKind.Empty)) return;
+
+        var url = verdict.Kind == WebhookUrlKind.Valid ? verdict.NormalizedUrl : null;
+        if (url == saved) return;
+
+        // A newly pasted webhook is a fresh chance for a destination the user previously killed.
+        DiscordConfig updated;
+        if (isClan)
+        {
+            _clanChannelName = null;
+            updated = _discordConfig with { ClanWebhookUrl = url };
+            _alertDispatcher.ResetClanRejection();
+        }
+        else
+        {
+            _mineChannelName = null;
+            updated = _discordConfig with { MineWebhookUrl = url };
+            _alertDispatcher.ResetMineRejection();
+        }
+
+        input.Text = url ?? "";
+        RefreshAlertsStatus();
+
+        try
+        {
+            await SaveDiscordConfigAsync(updated);
+            if (url is not null) await ProbeWebhookAsync(url, isClan);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, $"Couldn't save the webhook: {ex.Message}",
+                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    /// <summary>
+    /// Name the channel a webhook posts to. Doubly worth it with two fields: the mistake this
+    /// catches is a clan webhook pasted into the personal slot (or the reverse), which is invisible
+    /// until something lands in front of the wrong audience.
+    /// </summary>
+    private async Task ProbeWebhookAsync(string url, bool isClan)
+    {
+        var identity = await _webhookProbe.DescribeAsync(url);
+        if (identity is null) return;
+
+        if (isClan) { _clanChannelName = identity.ChannelName; }
+        else { _mineChannelName = identity.ChannelName; }
+
+        (isClan ? ClanWebhookVerdict : MineWebhookVerdict).Text =
+            $"Posts to #{identity.ChannelName} in {identity.GuildName}.";
+        RefreshAlertsStatus();
+    }
+
+    /// <summary>
+    /// Sends a real message down the real path. "It says connected but nothing arrives" is the
+    /// failure that otherwise surfaces at 3am, to someone who has already stopped watching.
+    /// </summary>
+    private async void OnSendTestClick(object sender, RoutedEventArgs e)
+    {
+        // Test every webhook that is configured, not just the personal one. A clan webhook that
+        // silently does not work is the worse failure of the two — nobody notices a channel that
+        // never gets posts, and the person who set it up is the last to find out.
+        var targets = new List<(string Label, string Url)>();
+        if (!string.IsNullOrWhiteSpace(_discordConfig.MineWebhookUrl))
+        {
+            targets.Add(("My channel", _discordConfig.MineWebhookUrl));
+        }
+
+        if (!string.IsNullOrWhiteSpace(_discordConfig.ClanWebhookUrl))
+        {
+            targets.Add(("Clan channel", _discordConfig.ClanWebhookUrl));
+        }
+
+        if (targets.Count == 0)
+        {
+            AlertsStatusLine.Text = "Paste a webhook URL first — there's nowhere to send a test yet.";
+            return;
+        }
+
+        SendTestButton.IsEnabled = false;
+        AlertsStatusLine.Text = "Sending…";
+        try
+        {
+            var results = new List<string>();
+            foreach (var (label, url) in targets)
+            {
+                var result = await _webhookSender.SendAsync(url,
+                    new WebhookPayload("RoRoRo test", "If you can read this, alerts work."));
+
+                results.Add(result switch
+                {
+                    WebhookSendResult.Sent => $"{label}: sent.",
+                    WebhookSendResult.WebhookGone => $"{label}: that webhook no longer exists — make a new one and paste it again.",
+                    WebhookSendResult.RateLimited => $"{label}: Discord is rate-limiting us. Wait a minute; the webhook itself looks fine.",
+                    _ => $"{label}: couldn't reach Discord.",
+                });
+
+                if (result == WebhookSendResult.WebhookGone) RefreshAlertsStatus();
+            }
+
+            AlertsStatusLine.Text = string.Join("  ", results);
+        }
+        finally
+        {
+            SendTestButton.IsEnabled = true;
+        }
+    }
+
+    /// <summary>
+    /// The step before the step. Every "how to make a webhook" guide starts at Server Settings →
+    /// Integrations, which quietly assumes you own a server — and plenty of people have only ever
+    /// joined one. A server you make for yourself is free, private, and takes three clicks.
+    /// </summary>
+    private void OnNoServerHelpClick(object sender, RoutedEventArgs e) =>
+        MessageBox.Show(this,
+            """
+            You need a Discord server of your own. It's free, it can be just you, and nobody else can see it.
+
+            Make one:
+              1. Click the + button on the left edge of Discord.
+              2. Choose "Create My Own", then skip the questions.
+              3. Name it anything — "RoRoRo" works.
+
+            Then make the webhook:
+              4. Right-click your new server, then Server Settings.
+              5. Integrations, then Webhooks, then New Webhook.
+              6. Click Copy Webhook URL, and paste it into the box here.
+
+            Alerts will arrive in that server — on your phone too, as long as Discord is installed on it.
+            """,
+            "Setting up alerts",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
 
     private async void OnMuteIdleAlertsToggle(object sender, RoutedEventArgs e)
     {

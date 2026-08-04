@@ -24,11 +24,11 @@
                 <TextBlock Text=" / "
                            FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource MagentaBrush}" />
-                <TextBlock Text="Startup"
+                <TextBlock Text="Settings"
                            FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource WhiteBrush}" />
             </StackPanel>
-            <TextBlock Text="How RoRoRo behaves when Windows starts up."
+            <TextBlock Text="How RoRoRo behaves — startup, idle, Discord, alerts, and theme."
                        FontSize="11"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0" />
@@ -141,6 +141,14 @@
                         <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                    Margin="22,4,0,8"
                                    Text="Your Discord status shows the game, how many accounts you have in it, and how long you've been going. Nothing to set up — it uses the Discord app already on this PC." />
+                        <!-- Said here because otherwise every user who turns this on asks a friend
+                             "do you see it?", gets no, and files a bug. Discord gives the profile
+                             "playing" slot to a game it detects, and RoRoRo is an application, not
+                             a detected game — nothing we can toggle. Detection is earned by
+                             installs over time, so the last line is a real path, not a consolation. -->
+                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                   Margin="22,0,0,8"
+                                   Text="Worth knowing: while Roblox is running, your friends see Roblox on your profile instead of RoRoRo — Discord gives that spot to games it recognises. You'll always see your own card. RoRoRo gets recognised once enough people are running it." />
                         <CheckBox x:Name="DiscordJoinToggle"
                                   Foreground="{DynamicResource WhiteBrush}" FontSize="12"
                                   Margin="22,0,0,0" Click="OnDiscordJoinToggle">
@@ -148,6 +156,97 @@
                         </CheckBox>
                         <TextBlock x:Name="DiscordStatusLine" FontSize="11"
                                    Foreground="{DynamicResource CyanBrush}" TextWrapping="Wrap" Margin="22,8,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Alerts (plan 2026-08-03, Task 7). The only wall in this feature is the webhook,
+                     and it starts one step earlier than a paste field: "Server Settings ->
+                     Integrations" assumes you own a server, and plenty of clan members have only
+                     ever joined one. Hence the walkthrough button. Desktop alerts need no setup at
+                     all, but the status line never pretends they are the point — you can already
+                     see a dead client if you are sitting at the PC. -->
+                <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Alerts" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource WhiteBrush}" Margin="0,0,0,6" />
+                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                   Margin="0,0,0,10"
+                                   Text="Get told when something happens to an account while you're away from the PC. Sending to a Discord channel takes about a minute to set up — there's a walkthrough below if you've never made a webhook." />
+
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="An account drops out" FontSize="12" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource WhiteBrush}" Width="180" />
+                            <ComboBox Grid.Column="1" x:Name="DroppedOutDestination" Width="170" HorizontalAlignment="Left"
+                                      SelectionChanged="OnAlertRoutingChanged">
+                                <ComboBoxItem Content="Off" Tag="None" />
+                                <ComboBoxItem Content="Desktop only" Tag="Local" />
+                                <ComboBoxItem Content="My channel" Tag="Mine" />
+                                <ComboBoxItem Content="Clan channel" Tag="Clan" />
+                            </ComboBox>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="An account eats memory" FontSize="12" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource WhiteBrush}" Width="180" />
+                            <ComboBox Grid.Column="1" x:Name="MemoryWarningDestination" Width="170" HorizontalAlignment="Left"
+                                      SelectionChanged="OnAlertRoutingChanged">
+                                <ComboBoxItem Content="Off" Tag="None" />
+                                <ComboBoxItem Content="Desktop only" Tag="Local" />
+                                <ComboBoxItem Content="My channel" Tag="Mine" />
+                                <ComboBoxItem Content="Clan channel" Tag="Clan" />
+                            </ComboBox>
+                        </Grid>
+
+                        <!-- Two separate webhooks, because they are two different audiences. "My
+                             channel" is a server you own and nobody else reads; "Clan channel" is a
+                             shared room. Keeping them apart is what lets someone send health noise
+                             to themselves and only the interesting things to the clan — and it is
+                             why the payload type has no field a private-server link could live in
+                             (see WebhookPayload). One shared field would collapse that choice. -->
+                        <TextBlock Text="My channel — webhook URL" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource WhiteBrush}" Margin="0,10,0,2" />
+                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                   Margin="0,0,0,4"
+                                   Text="A server only you read. Saved encrypted on this PC and never leaves it except to post your alerts." />
+                        <TextBox x:Name="MineWebhookInput" Padding="8,6" FontSize="11"
+                                 Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
+                                 BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                                 LostFocus="OnWebhookCommitted" />
+                        <TextBlock x:Name="MineWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
+                                   Foreground="{DynamicResource MutedTextBrush}" />
+
+                        <TextBlock Text="Clan channel — webhook URL" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource WhiteBrush}" Margin="0,12,0,2" />
+                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                   Margin="0,0,0,4"
+                                   Text="A shared room. Anything routed here is read by everyone in that channel, now and later — so send what the clan should see, not everything." />
+                        <TextBox x:Name="ClanWebhookInput" Padding="8,6" FontSize="11"
+                                 Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
+                                 BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                                 LostFocus="OnWebhookCommitted" />
+                        <TextBlock x:Name="ClanWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
+                                   Foreground="{DynamicResource MutedTextBrush}" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button x:Name="SendTestButton" Content="Send test" Padding="12,5" Click="OnSendTestClick"
+                                    Background="{DynamicResource MagentaBrush}" Foreground="{DynamicResource WhiteBrush}"
+                                    BorderThickness="0" FontSize="11" FontWeight="SemiBold" />
+                            <Button x:Name="NoServerHelpButton" Content="I don't have a Discord server" Padding="12,5" Margin="8,0,0,0"
+                                    Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
+                                    BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1" FontSize="11"
+                                    Click="OnNoServerHelpClick" />
+                        </StackPanel>
+
+                        <TextBlock x:Name="AlertsStatusLine" FontSize="11" Margin="0,10,0,0" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource CyanBrush}" />
                     </StackPanel>
                 </Border>
 

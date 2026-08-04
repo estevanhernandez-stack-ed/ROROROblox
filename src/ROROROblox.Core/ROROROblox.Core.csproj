@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- Friendly name in the DLL's version resource; without it Windows shows the assembly name. -->
+    <AssemblyTitle>RoRoRo</AssemblyTitle>
+    <Product>RoRoRo</Product>
+    <Company>626 Labs LLC</Company>
     <!-- net10.0-windows because Core hosts Win32 sync-object primitives (CreateMutex / WaitForSingleObject).
          The whole product is Windows-only by design — the singleton mutex defeat is a Windows API trick. -->
     <TargetFramework>net10.0-windows</TargetFramework>

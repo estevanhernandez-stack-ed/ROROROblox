@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ROROROblox.Core;
+using ROROROblox.App.Discord;
 using ROROROblox.Core.Diagnostics;
 
 namespace ROROROblox.Tests;
@@ -20,6 +21,8 @@ public class TypedHttpClientRegistrationTests
     [InlineData(typeof(IRobloxApi))]
     [InlineData(typeof(IRobloxCompatChecker))]
     [InlineData(typeof(IRobloxUpdateProbe))]
+    [InlineData(typeof(DiscordWebhookSender))]
+    [InlineData(typeof(WebhookProbe))]
     public void TypedHttpClient_Resolves_WithExactlyOneApplicableCtor(Type serviceType)
     {
         var services = new ServiceCollection();
@@ -27,10 +30,63 @@ public class TypedHttpClientRegistrationTests
         services.AddHttpClient<IRobloxApi, RobloxApi>();
         services.AddHttpClient<IRobloxCompatChecker, RobloxCompatChecker>();
         services.AddHttpClient<IRobloxUpdateProbe, RobloxUpdateProbe>();
+        services.AddHttpClient<DiscordWebhookSender>();
+        services.AddHttpClient<WebhookProbe>();
         using var provider = services.BuildServiceProvider();
 
         var resolved = provider.GetRequiredService(serviceType);
 
         Assert.NotNull(resolved);
+    }
+
+    /// <summary>
+    /// The other half of the same failure, and the one that actually shipped to a smoke build:
+    /// <c>DiscordWebhookSender</c> took a NON-GENERIC <c>ILogger</c>. DI registers only
+    /// <c>ILogger&lt;T&gt;</c>, so it threw "Unable to resolve service for type ...ILogger" at
+    /// resolve time — clean build, 1247 green tests, and Settings would not open, because the
+    /// failure cascaded into the composition-root method that also wired the Preferences factory.
+    /// <para>
+    /// Asserted through the real graph rather than by reading the constructor: the point is that
+    /// the container can build it, not that the signature looks right.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void AlertDispatcher_ResolvesThroughTheRealGraph()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddHttpClient<DiscordWebhookSender>();
+        services.AddSingleton<ITrayService, NoOpTrayService>();
+        services.AddSingleton<DiscordConfigCache>();
+        services.AddSingleton(sp => new AlertDispatcher(
+            sp.GetRequiredService<DiscordWebhookSender>(),
+            sp.GetRequiredService<ITrayService>(),
+            () => sp.GetRequiredService<DiscordConfigCache>().Current,
+            TimeProvider.System,
+            sp.GetRequiredService<ILogger<AlertDispatcher>>()));
+        using var provider = services.BuildServiceProvider();
+
+        Assert.NotNull(provider.GetRequiredService<AlertDispatcher>());
+    }
+
+    private sealed class NoOpTrayService : ITrayService
+    {
+        public void Show() { }
+        public void UpdateStatus(MultiInstanceState state) { }
+        public void ShowToast(string title, string message) { }
+        public void SetMemoryWarning(bool active) { }
+        public void ShowMemoryWarning(string title, string message, Guid accountId) { }
+        public void Dispose() { }
+        public event EventHandler? RequestOpenMainWindow { add { } remove { } }
+        public event EventHandler? RequestToggleMutex { add { } remove { } }
+        public event EventHandler? RequestStopAllInstances { add { } remove { } }
+        public event EventHandler? RequestQuit { add { } remove { } }
+        public event EventHandler? RequestOpenDiagnostics { add { } remove { } }
+        public event EventHandler? RequestOpenLogs { add { } remove { } }
+        public event EventHandler? RequestOpenPreferences { add { } remove { } }
+        public event EventHandler? RequestOpenHistory { add { } remove { } }
+        public event EventHandler? RequestOpenPlugins { add { } remove { } }
+        public event EventHandler? RequestActivateMain { add { } remove { } }
+        public event EventHandler<Guid>? RequestFocusAccount { add { } remove { } }
     }
 }
