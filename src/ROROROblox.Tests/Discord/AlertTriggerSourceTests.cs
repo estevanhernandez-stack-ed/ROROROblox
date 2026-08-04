@@ -61,6 +61,59 @@ public class AlertTriggerSourceTests
     }
 
     [Fact]
+    public void ApplyPresence_ACloseTheUserAskedFor_RaisesNothing()
+    {
+        // A dropped-out alert reports a client dying when nobody asked. Being told that the thing
+        // you clicked Stop on stopped is noise — and the sharpest case is self-inflicted: the
+        // memory alert's own text says "Recycle suggested," and Recycle stops the client, so
+        // without this, following one alert's advice immediately produces another.
+        var (vm, row) = DiscordTestHarness.VmWithOneInGameAccount(realName: "este_real", maskedName: "CaptainNoodle");
+        var raised = new List<AlertTrigger>();
+        vm.AlertsRaised += (_, triggers) => raised.AddRange(triggers);
+
+        vm.ExpectClose(row.Id);
+        vm.ApplyPresence(OutOfGame(row.Id));
+
+        Assert.Empty(raised);
+    }
+
+    [Fact]
+    public void ApplyPresence_ADifferentAccountClosing_StillAlerts()
+    {
+        // Suppression is per-account. Stopping one client must not silence a genuine drop on
+        // another — that would turn one deliberate click into a blind spot across the roster.
+        var (vm, row) = DiscordTestHarness.VmWithOneInGameAccount(realName: "este_real", maskedName: "CaptainNoodle");
+        var raised = new List<AlertTrigger>();
+        vm.AlertsRaised += (_, triggers) => raised.AddRange(triggers);
+
+        vm.ExpectClose(Guid.NewGuid());   // some other account
+        vm.ApplyPresence(OutOfGame(row.Id));
+
+        Assert.Single(raised);
+    }
+
+    [Fact]
+    public void ApplyPresence_ASecondCloseAfterAnExpectedOne_AlertsAgain()
+    {
+        // The suppression is consumed by the close it was for. A client that dies for real after
+        // being restarted must still report — otherwise one Recycle buys permanent silence.
+        var (vm, row) = DiscordTestHarness.VmWithOneInGameAccount(realName: "este_real", maskedName: "CaptainNoodle");
+        vm.ExpectClose(row.Id);
+        vm.ApplyPresence(OutOfGame(row.Id));
+
+        var raised = new List<AlertTrigger>();
+        vm.AlertsRaised += (_, triggers) => raised.AddRange(triggers);
+
+        // Back in game, then gone again — this time nobody asked.
+        vm.ApplyPresence(new AccountPresenceEventArgs(
+            row.Id, UserPresenceType.InGame, placeId: 8737899170, gameName: "Pet Simulator 99!",
+            occurredAtUtc: DateTimeOffset.UtcNow, server: null));
+        vm.ApplyPresence(OutOfGame(row.Id));
+
+        Assert.Single(raised);
+    }
+
+    [Fact]
     public void BuildMemoryAlerts_AnOverCapAccount_BecomesAMemoryWarningCarryingItsBytes()
     {
         var (vm, row) = DiscordTestHarness.VmWithOneInGameAccount(realName: "este_real", maskedName: "CaptainNoodle");

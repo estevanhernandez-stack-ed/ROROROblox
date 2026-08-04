@@ -24,11 +24,11 @@
                 <TextBlock Text=" / "
                            FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource MagentaBrush}" />
-                <TextBlock Text="Startup"
+                <TextBlock Text="Settings"
                            FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource WhiteBrush}" />
             </StackPanel>
-            <TextBlock Text="How RoRoRo behaves when Windows starts up."
+            <TextBlock Text="How RoRoRo behaves — startup, idle, Discord, alerts, and theme."
                        FontSize="11"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0" />

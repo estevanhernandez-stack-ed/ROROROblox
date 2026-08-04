@@ -1569,6 +1569,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             "Recycle requested for account {AccountId} ({DisplayName}): pre-recycle private bytes={PreBytes}, target={Target}",
             summary.Id, summary.DisplayName, preRecycleBytes, target.GetType().Name);
 
+        // Recycle stops the client before relaunching it. Without this the memory alert's own
+        // "Recycle suggested" advice produces a dropped-out alert the moment it's followed.
+        ExpectClose(summary.Id);
+
         var ok = await _accountRecycler.RecycleAsync(summary.Id, target).ConfigureAwait(true);
         if (!ok)
         {
@@ -2452,6 +2456,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
         _log.LogInformation("StopAccount {AccountId} (pid {Pid})", summary.Id, summary.RunningPid);
+        ExpectClose(summary.Id);
         if (!_processTracker.RequestClose(summary.Id))
         {
             // Window unresponsive — escalate.
@@ -2689,9 +2694,19 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     // respawned under a new pid) is a false alarm we already know how to suppress —
                     // paging someone at 3am for it would burn the feature's credibility on the
                     // first night. RenderName, never DisplayName: streamer mode holds outbound.
-                    RaiseAlerts([new AlertTrigger(
-                        AlertKind.AccountDroppedOut, summary.Id, summary.RenderName,
-                        lastGameName, PrivateBytes: null, e.OccurredAtUtc)]);
+                    //
+                    // A close the user ASKED for is the other false alarm — see _expectedCloses.
+                    if (WasCloseExpected(summary.Id, e.OccurredAtUtc))
+                    {
+                        _expectedCloses.Remove(summary.Id);
+                        _log.LogDebug("Suppressed a dropped-out alert for {AccountId}: the close was user-initiated.", summary.Id);
+                    }
+                    else
+                    {
+                        RaiseAlerts([new AlertTrigger(
+                            AlertKind.AccountDroppedOut, summary.Id, summary.RenderName,
+                            lastGameName, PrivateBytes: null, e.OccurredAtUtc)]);
+                    }
                 }
             }
 
@@ -2820,6 +2835,40 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </para>
     /// </summary>
     internal event EventHandler<IReadOnlyList<AlertTrigger>>? AlertsRaised;
+
+    /// <summary>
+    /// Accounts the user just closed on purpose, and when. A dropped-out alert exists to report a
+    /// client dying when nobody asked — a crash, a kick, a session dropping while the user is out.
+    /// Clicking Stop and then being told the thing you clicked Stop on stopped is noise.
+    /// <para>
+    /// The sharpest case is self-inflicted: the memory alert's own text says "Recycle suggested,"
+    /// and Recycle stops the client — so without this, following the advice in one alert
+    /// immediately produces another.
+    /// </para>
+    /// </summary>
+    private readonly Dictionary<Guid, DateTimeOffset> _expectedCloses = [];
+
+    /// <summary>
+    /// How long a deliberate close stays "expected." Long enough to cover the stop plus the
+    /// presence poll that confirms it; short enough that a client dying for real a minute after
+    /// you touched it still reports.
+    /// </summary>
+    internal static readonly TimeSpan ExpectedCloseWindow = TimeSpan.FromSeconds(60);
+
+    /// <summary>Mark a close as user-initiated so it does not raise a dropped-out alert.</summary>
+    internal void ExpectClose(Guid accountId) => _expectedCloses[accountId] = DateTimeOffset.UtcNow;
+
+    /// <summary>Mark every running account as expected — app shutdown closes them all at once.</summary>
+    internal void ExpectCloseForAll()
+    {
+        foreach (var row in AccountsSnapshot)
+        {
+            _expectedCloses[row.Id] = DateTimeOffset.UtcNow;
+        }
+    }
+
+    private bool WasCloseExpected(Guid accountId, DateTimeOffset atUtc) =>
+        _expectedCloses.TryGetValue(accountId, out var asked) && atUtc - asked <= ExpectedCloseWindow;
 
     /// <summary>
     /// Mute or unmute Discord alerts for one account, persisting through the config store.
