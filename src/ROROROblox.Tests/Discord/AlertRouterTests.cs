@@ -11,7 +11,7 @@ public class AlertRouterTests
     private static AlertTrigger Trigger(AlertKind kind, Guid id, string name, DateTimeOffset? at = null) =>
         new(kind, id, name, "Pet Simulator 99!", 4_000_000_000, at ?? Now);
 
-    private static readonly Dictionary<Guid, DateTimeOffset> NothingSentYet = new();
+    private static readonly Dictionary<(Guid, AlertKind), DateTimeOffset> NothingSentYet = new();
 
     [Fact]
     public void Route_TriggerSetToNone_ProducesNothing()
@@ -80,7 +80,7 @@ public class AlertRouterTests
     {
         // A flapping client must not page someone every thirty seconds.
         var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Local };
-        var lastSent = new Dictionary<Guid, DateTimeOffset> { [AccountA] = Now.AddMinutes(-1) };
+        var lastSent = new Dictionary<(Guid, AlertKind), DateTimeOffset> { [(AccountA, AlertKind.AccountDroppedOut)] = Now.AddMinutes(-1) };
 
         var routed = AlertRouter.Route(
             [Trigger(AlertKind.AccountDroppedOut, AccountA, "A")], config, lastSent, Now);
@@ -92,12 +92,51 @@ public class AlertRouterTests
     public void Route_AccountAlertedBeforeTheCooldownExpired_SendsAgain()
     {
         var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Local };
-        var lastSent = new Dictionary<Guid, DateTimeOffset> { [AccountA] = Now - AlertRouter.Cooldown.Add(TimeSpan.FromSeconds(1)) };
+        var lastSent = new Dictionary<(Guid, AlertKind), DateTimeOffset> { [(AccountA, AlertKind.AccountDroppedOut)] = Now - AlertRouter.Cooldown.Add(TimeSpan.FromSeconds(1)) };
 
         var routed = AlertRouter.Route(
             [Trigger(AlertKind.AccountDroppedOut, AccountA, "A")], config, lastSent, Now);
 
         Assert.Single(routed);
+    }
+
+    [Fact]
+    public void Route_AMemoryWarningCooldown_DoesNotSilenceADropForTheSameAccount()
+    {
+        // Measured live, 2026-08-04. A memory warning went out at 00:13:55 and stamped the
+        // cooldown for two accounts; a genuine client close at 00:14:21 was swallowed because it
+        // landed inside that window, and the user reasonably concluded the close path was broken.
+        // The cooldown exists to stop ONE flapping condition paging someone repeatedly — a memory
+        // warning silencing a crash is a different thing, and the crash is the more urgent news.
+        var config = new DiscordConfig
+        {
+            DroppedOutDestination = AlertDestination.Local,
+            MemoryWarningDestination = AlertDestination.Local,
+        };
+        var justWarnedAboutMemory = new Dictionary<(Guid, AlertKind), DateTimeOffset>
+        {
+            [(AccountA, AlertKind.MemoryWarning)] = Now.AddSeconds(-30),
+        };
+
+        var routed = AlertRouter.Route(
+            [Trigger(AlertKind.AccountDroppedOut, AccountA, "A")], config, justWarnedAboutMemory, Now);
+
+        Assert.Equal(AlertKind.AccountDroppedOut, Assert.Single(routed).Kind);
+    }
+
+    [Fact]
+    public void Route_TheSameKindInsideTheCooldown_IsStillSuppressed()
+    {
+        // The other half: splitting the key by kind must not weaken the guard it was written for.
+        // A flapping client still gets one alert per five minutes, not one per flap.
+        var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Local };
+        var justDropped = new Dictionary<(Guid, AlertKind), DateTimeOffset>
+        {
+            [(AccountA, AlertKind.AccountDroppedOut)] = Now.AddSeconds(-30),
+        };
+
+        Assert.Empty(AlertRouter.Route(
+            [Trigger(AlertKind.AccountDroppedOut, AccountA, "A")], config, justDropped, Now));
     }
 
     [Fact]

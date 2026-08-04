@@ -84,7 +84,7 @@ public class AccountMuteTests
         var routed = AlertRouter.Route(
             [trigger],
             config with { DroppedOutDestination = AlertDestination.Local },
-            new Dictionary<Guid, DateTimeOffset>(),
+            new Dictionary<(Guid, AlertKind), DateTimeOffset>(),
             DateTimeOffset.UtcNow);
 
         Assert.Empty(routed);

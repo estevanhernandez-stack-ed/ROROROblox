@@ -20,10 +20,20 @@ public static class AlertRouter
     /// <summary>Per-account quiet period. A client that flaps must not page someone repeatedly.</summary>
     public static readonly TimeSpan Cooldown = TimeSpan.FromMinutes(5);
 
+    /// <summary>
+    /// <paramref name="lastSentPerAccount"/> is keyed by (account, KIND), not by account alone.
+    /// <para>
+    /// Measured live on 2026-08-04: a memory warning at 00:13:55 stamped the cooldown for two
+    /// accounts, and a genuine client close at 00:14:21 was swallowed because it fell inside that
+    /// window. The cooldown exists to stop ONE flapping condition paging someone repeatedly — it
+    /// was never meant to let a memory warning silence a crash. Different kinds are different
+    /// news, and the drop is the more urgent of the two.
+    /// </para>
+    /// </summary>
     public static IReadOnlyList<RoutedAlert> Route(
         IReadOnlyList<AlertTrigger> pending,
         DiscordConfig config,
-        IReadOnlyDictionary<Guid, DateTimeOffset> lastSentPerAccount,
+        IReadOnlyDictionary<(Guid AccountId, AlertKind Kind), DateTimeOffset> lastSentPerAccount,
         DateTimeOffset nowUtc)
     {
         ArgumentNullException.ThrowIfNull(pending);
@@ -34,7 +44,7 @@ public static class AlertRouter
 
         return pending
             .Where(t => !muted.Contains(t.AccountId))
-            .Where(t => !lastSentPerAccount.TryGetValue(t.AccountId, out var last) || nowUtc - last > Cooldown)
+            .Where(t => !lastSentPerAccount.TryGetValue((t.AccountId, t.Kind), out var last) || nowUtc - last > Cooldown)
             .GroupBy(t => t.Kind)
             .Select(group => new { group.Key, Triggers = group.ToList(), Destination = Resolve(group.Key, config) })
             .Where(x => x.Destination != AlertDestination.None)
