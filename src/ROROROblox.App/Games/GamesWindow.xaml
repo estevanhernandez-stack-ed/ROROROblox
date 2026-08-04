@@ -1,9 +1,9 @@
-<Window x:Class="ROROROblox.App.Settings.SettingsWindow"
+<Window x:Class="ROROROblox.App.Games.GamesWindow"
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:core="clr-namespace:ROROROblox.Core;assembly=ROROROblox.Core"
-        Title="RoRoRo -- Library"
+        Title="RoRoRo -- Games"
         Height="820" Width="700"
         MinHeight="600" MinWidth="640"
         WindowStartupLocation="CenterOwner"
@@ -340,7 +340,7 @@
                 <TextBlock Text=" / "
                            FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource MagentaBrush}" />
-                <TextBlock Text="Library"
+                <TextBlock Text="Games"
                            FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource WhiteBrush}" />
             </StackPanel>

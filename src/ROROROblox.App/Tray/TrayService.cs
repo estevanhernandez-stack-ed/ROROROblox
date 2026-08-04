@@ -77,7 +77,7 @@ internal sealed class TrayService : ITrayService
         _streamerModeItem = streamerMode;
         _taskbarIcon.ContextMenu = menu;
 
-        // Streamer mode (v1.10) can also be flipped from the main-window switch or the plugin
+        // Streamer mode (v1.10) can also be flipped from the Settings checkbox or the plugin
         // host — keep the tray checkmark in lockstep regardless of which surface toggled it.
         _streamerIdentity.Changed += OnStreamerModeChanged;
 
@@ -255,7 +255,7 @@ internal sealed class TrayService : ITrayService
 
     /// <summary>
     /// Keeps the tray checkmark in sync when streamer mode flips from a surface other than this
-    /// menu item (the main-window switch, a plugin, or this same click landing asynchronously).
+    /// menu item (the Settings checkbox, a plugin, or this same click landing asynchronously).
     /// The provider's <c>Changed</c> event can fire off the UI thread (its <c>SetActiveAsync</c>
     /// awaits a settings write with <c>ConfigureAwait(false)</c>), and <see cref="MenuItem"/> is a
     /// WPF DependencyObject — direct property writes from a non-UI thread throw, so this marshals

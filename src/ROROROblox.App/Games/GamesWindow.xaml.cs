@@ -5,9 +5,9 @@ using System.Windows.Input;
 using ROROROblox.App.Modals;
 using ROROROblox.Core;
 
-namespace ROROROblox.App.Settings;
+namespace ROROROblox.App.Games;
 
-internal partial class SettingsWindow : Window
+internal partial class GamesWindow : Window
 {
     private readonly IFavoriteGameStore _favorites;
     private readonly IPrivateServerStore _servers;
@@ -16,7 +16,7 @@ internal partial class SettingsWindow : Window
     private readonly ObservableCollection<GameSearchResult> _searchItems = [];
     private readonly ObservableCollection<SavedPrivateServer> _serverItems = [];
 
-    public SettingsWindow(IFavoriteGameStore favorites, IPrivateServerStore servers, IRobloxApi api)
+    public GamesWindow(IFavoriteGameStore favorites, IPrivateServerStore servers, IRobloxApi api)
     {
         _favorites = favorites;
         _servers = servers;

@@ -71,6 +71,41 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Streamer mode. Moved off the main window 2026-08-04 (audit finding F-008): a
+                     setting occupied a full band of the dashboard and printed its own tooltip a
+                     second time as body copy. Rendered as a CheckBox rather than the ui:ToggleSwitch
+                     it was, to match the six settings already on this page — the ToggleSwitch was
+                     the app's only one. The tray checkbox stays; the two are views of one source of
+                     truth (IStreamerIdentityProvider), not two flags. -->
+                <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                    <StackPanel>
+                        <CheckBox x:Name="StreamerModeToggle"
+                                  Foreground="{DynamicResource WhiteBrush}"
+                                  FontSize="13"
+                                  FontWeight="SemiBold"
+                                  Click="OnStreamerModeToggle">
+                            <TextBlock Text="Streamer mode." />
+                        </CheckBox>
+                        <TextBlock FontSize="11"
+                                   Foreground="{DynamicResource MutedTextBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="22,4,0,8"
+                                   Text="Hides names, avatars, and share links inside RoRoRo. It does not change anything Roblox itself shows — your stream still shows whatever is on screen in the game." />
+                        <Button x:Name="RerollAllButton"
+                                Content="Reroll all identities"
+                                Click="OnRerollAllClick"
+                                HorizontalAlignment="Left"
+                                Margin="22,0,0,0"
+                                Padding="10,6"
+                                Background="{DynamicResource NavyBrush}"
+                                Foreground="{DynamicResource MutedTextBrush}"
+                                BorderBrush="{DynamicResource DividerBrush}"
+                                BorderThickness="1"
+                                FontSize="11"
+                                ToolTip="Assign every fake name and avatar a fresh pick." />
+                    </StackPanel>
+                </Border>
+
                 <!-- v1.14 — Recycle now rejoins the exact server an account is in, so it earns a
                      place outside the memory-warning state. Off by default; same block shape. -->
                 <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">

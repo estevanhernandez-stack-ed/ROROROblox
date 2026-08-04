@@ -115,6 +115,10 @@ internal partial class PreferencesWindow : Window
 
             AlwaysShowRecycleToggle.IsChecked = await _settings.GetAlwaysShowRecycleAsync();
 
+            // Streamer mode reads through to IStreamerIdentityProvider via the view model — there is
+            // no separate persisted flag here, which is why this reads the VM rather than _settings.
+            StreamerModeToggle.IsChecked = _mainViewModel.StreamerModeOn;
+
             // Discord presence + Join (v1.14+ plan). DiscordPresence is only non-null when
             // App.OnStartup found a non-empty Discord:ApplicationId in appsettings.json — see
             // App.WireDiscordPresenceAsync. Null means the feature can never work in this build,
@@ -674,6 +678,32 @@ internal partial class PreferencesWindow : Window
             "Setting up alerts",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
+
+    /// <summary>
+    /// Streamer mode, moved here from the main window (audit finding F-008).
+    /// <para>
+    /// Writes through <see cref="MainViewModel.StreamerModeOn"/>, whose setter fire-and-forgets to
+    /// <c>IStreamerIdentityProvider.SetActiveAsync</c> and waits for the provider to confirm before
+    /// raising a change notification. That means this checkbox, the tray checkmark, and the row
+    /// rendering are three views of one source of truth rather than three flags that can drift —
+    /// so there is deliberately no local bool here to keep in step.
+    /// </para>
+    /// </summary>
+    private void OnStreamerModeToggle(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+        _mainViewModel.StreamerModeOn = StreamerModeToggle.IsChecked == true;
+    }
+
+    /// <summary>Reroll every fake name and avatar at once. Same command the main window used to
+    /// invoke; the button moved with the toggle it belongs to.</summary>
+    private void OnRerollAllClick(object sender, RoutedEventArgs e)
+    {
+        if (_mainViewModel.RerollAllCommand.CanExecute(null))
+        {
+            _mainViewModel.RerollAllCommand.Execute(null);
+        }
+    }
 
     private async void OnMuteIdleAlertsToggle(object sender, RoutedEventArgs e)
     {
