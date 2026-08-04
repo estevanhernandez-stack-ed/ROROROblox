@@ -2,11 +2,17 @@
 
 > Paste the block between the `---` markers below into Partner Center → your app → **Submission options** → **Notes for certification**.
 >
-> v1.15 adds an optional Discord integration. The letter leads with the two things a reviewer will
-> want answered before anything else — *does this add capabilities?* (no) and *what leaves the
-> machine?* (nothing, until the user pastes a webhook URL they created themselves). The package
-> `DisplayName` also changes from RORORO to RoRoRo in this release; that is called out explicitly
-> so it does not read as an identity discrepancy.
+> v1.15 adds optional Discord alerting. The letter leads with the two things a reviewer will want
+> answered before anything else — *does this add capabilities?* (no) and *what leaves the machine?*
+> (nothing, until the user pastes a webhook URL they created themselves). The package `DisplayName`
+> also changes from RORORO to RoRoRo in this release; that is called out explicitly so it does not
+> read as an identity discrepancy.
+>
+> **Framing note.** The webhook alerting is the feature; the Discord status display is described as
+> minor and "ready if that changes." That is honest — the status display is genuinely limited by
+> Discord giving the profile slot to detected games — and it also keeps the reviewer's attention on
+> the half where the security questions actually live. Leading with rich presence would invite
+> questions about a capability that barely functions.
 >
 > Source for the technical detail: [`discord-disclosure.md`](discord-disclosure.md).
 
@@ -15,9 +21,10 @@
 ```
 Hello reviewer,
 
-Thank you for your time on v1.15.0.0. This release adds an optional
-Discord integration. Two answers up front, because they are the
-questions the change raises:
+Thank you for your time on v1.15.0.0. This release adds optional
+Discord alerting, so a user running several Roblox clients finds out
+when one of them fails while they are away from the PC. Two answers
+up front, because they are the questions the change raises:
 
   1. It requires NO new package capabilities. The manifest still
      declares runFullTrust and nothing else.
@@ -36,21 +43,39 @@ graphics have been re-uploaded to match.
 
 WHAT THE INTEGRATION DOES
 
-Two independent halves, both OFF by default:
+Two independent halves, both OFF by default. The substantive one is
+the second.
 
-Rich presence — RoRoRo publishes what the user is playing to the
-Discord desktop app already installed on the same PC, over a LOCAL
-NAMED PIPE. This is the standard Discord IPC mechanism used by games
-with a Discord status. It is not a network connection and it does not
-leave the machine. A "Join" option lets a friend launch one of the
-user's own saved accounts into the same game.
+Status display (minor) — RoRoRo can publish what the user is playing
+to the Discord desktop app already installed on the same PC, over a
+LOCAL NAMED PIPE. This is the standard Discord IPC mechanism used by
+games with a Discord status. It is not a network connection and it
+does not leave the machine. Its practical reach is currently limited
+by Discord itself: while Roblox is running, Discord shows Roblox on
+the user's profile rather than RoRoRo, because that slot goes to a
+game Discord detects and RoRoRo is an application. We have built the
+groundwork — including a "Join" option that launches one of the
+user's OWN saved accounts into the same game — so the feature is
+ready if that changes. Today it is a small convenience, and it is
+described that way in the app.
 
-Alerts — RoRoRo can notify the user when one of their accounts drops
-out of a game unexpectedly, or when a client crosses a memory-use
-threshold. Alerts go to a Windows notification and/or to a Discord
-channel the user chooses by pasting a webhook URL. RoRoRo cannot
-discover, enumerate, or reach any Discord channel the user has not
-explicitly supplied a webhook for.
+Alerts by webhook (the actual feature) — this is what the release is
+for. A user running several Roblox clients cannot watch all of them.
+RoRoRo now notifies them when one of their accounts drops out of a
+game unexpectedly, or when a client crosses a memory-use threshold,
+so they find out while away from the PC instead of an hour later.
+
+Delivery is a Windows notification and/or a Discord channel the user
+chooses BY PASTING A WEBHOOK URL THEY CREATED THEMSELVES. That is the
+entire mechanism — RoRoRo cannot discover, enumerate, browse, or
+reach any Discord channel the user has not explicitly handed it a
+webhook for, and it has no Discord account, bot, or OAuth
+relationship of any kind. It never reads from Discord; messages flow
+one way, outbound, to an address the user typed in.
+
+Alerts are rate-limited by design (one message per account per five
+minutes, and simultaneous events coalesced into a single message),
+and closes the user initiated themselves are deliberately silent.
 
 CAPABILITIES: NONE ADDED
 
@@ -79,11 +104,13 @@ User-Agent anywhere, consistent with previous submissions.
 
 URI SCHEME
 
-Enabling the Join option registers a per-user (HKCU) roblox-rororo:
-link handler so Discord can hand an inbound join back to the app —
-the same mechanism any launcher uses for deep links. Every inbound
-join shows a confirmation naming what is about to launch before
-anything starts.
+This belongs to the minor status-display half. Enabling its Join
+option registers a per-user (HKCU) roblox-rororo: link handler so
+Discord can hand an inbound join back to the app — the same mechanism
+any launcher uses for deep links. Every inbound join shows a
+confirmation naming what is about to launch before anything starts,
+and the target is always one of the user's own saved accounts. The
+alerting half registers nothing.
 
 USER DATA
 

@@ -72,10 +72,16 @@ Screenshots in `docs/store/screenshots/` are unchanged and still current.
 
 ## 5. What's actually in this release
 
-**Discord integration** — optional, both halves off by default. Rich presence over the local
-Discord pipe with a Join button; per-account alerts for a client dropping out unexpectedly or
-crossing a memory threshold, routed to a Windows notification and/or a Discord channel the user
-supplies a webhook for.
+**Discord alerting** — the feature. Someone running eight clients cannot watch eight clients, so
+RoRoRo now tells them when an account drops out unexpectedly or a client crosses a memory
+threshold, delivered to a Windows notification and/or a Discord channel the user supplies a
+webhook for. Off by default; nothing leaves the machine until a webhook is pasted.
+
+**Discord status display** — minor, and framed that way in the letter, the release notes, and the
+app itself. It works, but Discord gives the profile slot to a detected game, so while Roblox runs
+the user's friends see Roblox rather than RoRoRo. The groundwork (including Join) is in place for
+if that changes. Leading a submission with this half would invite questions about a capability that
+barely functions today.
 
 **Naming** — the product presents as RoRoRo everywhere a human reads it: exe version resource
 (Task Manager, UAC, Explorer), installer and Add/Remove Programs entry, package DisplayName, and
