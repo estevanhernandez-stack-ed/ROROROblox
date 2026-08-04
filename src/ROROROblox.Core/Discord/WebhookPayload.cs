@@ -11,12 +11,20 @@ namespace ROROROblox.Core.Discord;
 /// </summary>
 public sealed record WebhookPayload(string Title, string Body)
 {
-    public static WebhookPayload ForAlert(AlertKind kind, IReadOnlyList<AlertTrigger> triggers)
+    /// <summary>
+    /// <paramref name="useRealNames"/> is set only for the clan destination — see
+    /// <see cref="AlertTrigger"/> for why that one room is exempt from streamer mode. Defaults to
+    /// false so any future caller that forgets the question gets the masked names.
+    /// </summary>
+    public static WebhookPayload ForAlert(
+        AlertKind kind, IReadOnlyList<AlertTrigger> triggers, bool useRealNames = false)
     {
         ArgumentNullException.ThrowIfNull(triggers);
         if (triggers.Count == 0) throw new ArgumentException("No triggers.", nameof(triggers));
 
-        var noun = triggers.Count == 1 ? triggers[0].DisplayName : $"{triggers.Count} accounts";
+        string Name(AlertTrigger t) => useRealNames ? t.RealName : t.DisplayName;
+
+        var noun = triggers.Count == 1 ? Name(triggers[0]) : $"{triggers.Count} accounts";
         var title = kind switch
         {
             AlertKind.AccountDroppedOut => $"{noun} dropped out",
@@ -27,8 +35,8 @@ public sealed record WebhookPayload(string Title, string Body)
         var lines = triggers.Select(t => kind switch
         {
             AlertKind.MemoryWarning when t.PrivateBytes is { } b =>
-                $"• {t.DisplayName} — {b / 1024 / 1024 / 1024.0:0.0} GB · Recycle suggested",
-            _ => $"• {t.DisplayName}{(t.GameName is null ? "" : $" — {t.GameName}")}",
+                $"• {Name(t)} — {b / 1024 / 1024 / 1024.0:0.0} GB · Recycle suggested",
+            _ => $"• {Name(t)}{(t.GameName is null ? "" : $" — {t.GameName}")}",
         });
 
         return new WebhookPayload(title, string.Join("\n", lines));

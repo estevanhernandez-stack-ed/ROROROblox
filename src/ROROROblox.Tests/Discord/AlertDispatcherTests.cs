@@ -40,7 +40,7 @@ public class AlertDispatcherTests
     private const string MineUrl = "https://discord.com/api/webhooks/1/mine";
 
     private static AlertTrigger Dropped(Guid id, string name) =>
-        new(AlertKind.AccountDroppedOut, id, name, "Pet Simulator 99!", null, DateTimeOffset.UtcNow);
+        new(AlertKind.AccountDroppedOut, id, name, $"real_{name}", "Pet Simulator 99!", null, DateTimeOffset.UtcNow);
 
     private static (DiscordWebhookSender Sender, StubHttpHandler Handler) Sender(HttpStatusCode status)
     {
@@ -79,6 +79,57 @@ public class AlertDispatcherTests
 
         Assert.Contains("BaronBloxwell", Assert.Single(handler.Bodies), StringComparison.Ordinal);
         Assert.Empty(tray.Toasts);
+    }
+
+    [Fact]
+    public async Task DispatchAsync_ClanDestination_UsesTheRealNameNotTheStreamerAlias()
+    {
+        // The one destination exempt from streamer mode. A clan channel is a room the user
+        // deliberately joined, full of people who already know which accounts are theirs — a board
+        // of invented names there is worse than useless, because nobody can act on it.
+        var (sender, handler) = Sender(HttpStatusCode.NoContent);
+        var dispatcher = Build(sender, new SpyTrayService(), new DiscordConfig
+        {
+            DroppedOutDestination = AlertDestination.Clan,
+            ClanWebhookUrl = "https://discord.com/api/webhooks/2/clan",
+        });
+
+        await dispatcher.DispatchAsync([Dropped(Guid.NewGuid(), "CaptainNoodle")]).WaitAsync(TimeSpan.FromSeconds(5));
+
+        var body = Assert.Single(handler.Bodies);
+        Assert.Contains("real_CaptainNoodle", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task DispatchAsync_PersonalChannel_StillMasksTheName()
+    {
+        // The exemption is scoped to the clan room and nowhere else. The personal channel can be
+        // in a server with other people in it, and the desktop toast renders on a screen that may
+        // be on stream — both keep the alias.
+        var (sender, handler) = Sender(HttpStatusCode.NoContent);
+        var dispatcher = Build(sender, new SpyTrayService(), new DiscordConfig
+        {
+            DroppedOutDestination = AlertDestination.Mine,
+            MineWebhookUrl = MineUrl,
+        });
+
+        await dispatcher.DispatchAsync([Dropped(Guid.NewGuid(), "CaptainNoodle")]).WaitAsync(TimeSpan.FromSeconds(5));
+
+        var body = Assert.Single(handler.Bodies);
+        Assert.Contains("CaptainNoodle", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("real_CaptainNoodle", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task DispatchAsync_DesktopToast_StillMasksTheName()
+    {
+        var (sender, _) = Sender(HttpStatusCode.NoContent);
+        var tray = new SpyTrayService();
+        var dispatcher = Build(sender, tray, new DiscordConfig { DroppedOutDestination = AlertDestination.Local });
+
+        await dispatcher.DispatchAsync([Dropped(Guid.NewGuid(), "CaptainNoodle")]).WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.DoesNotContain("real_CaptainNoodle", Assert.Single(tray.Toasts), StringComparison.Ordinal);
     }
 
     [Fact]

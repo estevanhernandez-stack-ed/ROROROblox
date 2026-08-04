@@ -68,7 +68,12 @@ public sealed class AlertDispatcher(
 
             foreach (var alert in routed)
             {
-                var payload = WebhookPayload.ForAlert(alert.Kind, alert.Triggers);
+                // The clan channel is the one destination exempt from streamer mode — a room the
+                // user deliberately joined, full of people who already know which accounts are
+                // theirs. See AlertTrigger for the full reasoning. Every other destination
+                // (desktop toast, personal channel) keeps the masked name.
+                var payload = WebhookPayload.ForAlert(
+                    alert.Kind, alert.Triggers, useRealNames: alert.Destination == AlertDestination.Clan);
 
                 log.LogInformation("Alert → {Destination}: {Title} ({Count} account(s)).",
                     alert.Destination, payload.Title, alert.Triggers.Count);

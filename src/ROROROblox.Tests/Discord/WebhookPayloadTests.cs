@@ -5,7 +5,7 @@ namespace ROROROblox.Tests.Discord;
 public class WebhookPayloadTests
 {
     private static AlertTrigger Dropped(string name) =>
-        new(AlertKind.AccountDroppedOut, Guid.NewGuid(), name, "Pet Simulator 99!", null,
+        new(AlertKind.AccountDroppedOut, Guid.NewGuid(), name, $"real_{name}", "Pet Simulator 99!", null,
             new DateTimeOffset(2026, 8, 3, 3, 14, 0, TimeSpan.Zero));
 
     [Fact]

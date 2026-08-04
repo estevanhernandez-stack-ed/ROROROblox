@@ -9,7 +9,7 @@ public class AlertRouterTests
     private static readonly Guid AccountB = Guid.NewGuid();
 
     private static AlertTrigger Trigger(AlertKind kind, Guid id, string name, DateTimeOffset? at = null) =>
-        new(kind, id, name, "Pet Simulator 99!", 4_000_000_000, at ?? Now);
+        new(kind, id, name, $"real_{name}", "Pet Simulator 99!", 4_000_000_000, at ?? Now);
 
     private static readonly Dictionary<(Guid, AlertKind), DateTimeOffset> NothingSentYet = new();
 
