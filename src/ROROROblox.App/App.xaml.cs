@@ -1497,7 +1497,8 @@ public partial class App : Application
             _services.GetRequiredService<DiscordConfigStore>(),
             _services.GetRequiredService<AlertDispatcher>(),
             _services.GetRequiredService<DiscordWebhookSender>(),
-            _services.GetRequiredService<WebhookProbe>());
+            _services.GetRequiredService<WebhookProbe>(),
+            _services.GetRequiredService<DiscordConfigCache>());
     }
 
     private static string ReadDiscordApplicationId()

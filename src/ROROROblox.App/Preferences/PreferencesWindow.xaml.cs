@@ -32,6 +32,7 @@ internal partial class PreferencesWindow : Window
     private readonly AlertDispatcher _alertDispatcher;
     private readonly DiscordWebhookSender _webhookSender;
     private readonly WebhookProbe _webhookProbe;
+    private readonly DiscordConfigCache _discordConfigCache;
     private bool _suppressClickHandlers; // true while we set the initial check states.
 
     /// <summary>Channel name reported by the probe for the personal webhook, if it answered.</summary>
@@ -67,11 +68,13 @@ internal partial class PreferencesWindow : Window
         DiscordConfigStore discordConfigStore,
         AlertDispatcher alertDispatcher,
         DiscordWebhookSender webhookSender,
-        WebhookProbe webhookProbe)
+        WebhookProbe webhookProbe,
+        DiscordConfigCache discordConfigCache)
     {
         _alertDispatcher = alertDispatcher;
         _webhookSender = webhookSender;
         _webhookProbe = webhookProbe;
+        _discordConfigCache = discordConfigCache;
         _settings = settings;
         _startupRegistration = startupRegistration;
         _themeStore = themeStore;
@@ -356,6 +359,7 @@ internal partial class PreferencesWindow : Window
         var wanted = DiscordPresenceToggle.IsChecked == true;
         var updated = _discordConfig with { PresenceEnabled = wanted };
         _discordConfig = updated; // update the in-memory copy before the first await — see field doc
+        _discordConfigCache.Current = updated;
         // FIX 7: keep the Join checkbox's enabled state tracking presence live, not just at
         // OnLoaded — Join has no effect while presence is off (DiscordPresenceService.JoinEnabled).
         DiscordJoinToggle.IsEnabled = wanted;
@@ -389,6 +393,7 @@ internal partial class PreferencesWindow : Window
         var wanted = DiscordJoinToggle.IsChecked == true;
         var updated = _discordConfig with { JoinEnabled = wanted };
         _discordConfig = updated;
+        _discordConfigCache.Current = updated;
         try
         {
             await _discordConfigStore.SaveAsync(updated);
@@ -455,6 +460,24 @@ internal partial class PreferencesWindow : Window
     /// than set once. <see cref="AlertStatusLine"/> owns which sentence belongs to which state —
     /// see its remarks for why that decision does not live here.
     /// </summary>
+    /// <summary>
+    /// Persist a settings change AND make it live immediately.
+    /// <para>
+    /// The cache is what <see cref="AlertDispatcher"/> reads on every dispatch, and it used to be
+    /// refreshed only when this dialog closed. That meant a user who set a destination and then sat
+    /// watching for an alert with Settings still open got nothing — the dispatcher was still reading
+    /// the config from app startup. Measured live: webhook saved 00:07:26, a real memory crossing at
+    /// 00:08:46 logged "routed nowhere." A setting that does not take effect until you close the
+    /// window it lives in is indistinguishable from a broken feature.
+    /// </para>
+    /// </summary>
+    private async Task SaveDiscordConfigAsync(DiscordConfig updated)
+    {
+        _discordConfig = updated;
+        _discordConfigCache.Current = updated;
+        await _discordConfigStore.SaveAsync(updated);
+    }
+
     private void RefreshAlertsStatus() =>
         AlertsStatusLine.Text = AlertStatusLine.Compose(
             _discordConfig,
@@ -471,12 +494,11 @@ internal partial class PreferencesWindow : Window
             DroppedOutDestination = ReadDestination(DroppedOutDestination),
             MemoryWarningDestination = ReadDestination(MemoryWarningDestination),
         };
-        _discordConfig = updated;
         RefreshAlertsStatus();
 
         try
         {
-            await _discordConfigStore.SaveAsync(updated);
+            await SaveDiscordConfigAsync(updated);
         }
         catch (Exception ex)
         {
@@ -506,7 +528,6 @@ internal partial class PreferencesWindow : Window
 
         _mineChannelName = null;
         var updated = _discordConfig with { MineWebhookUrl = url };
-        _discordConfig = updated;
 
         // A newly pasted webhook is a fresh chance for a destination the user previously killed.
         _alertDispatcher.ResetMineRejection();
@@ -516,7 +537,7 @@ internal partial class PreferencesWindow : Window
 
         try
         {
-            await _discordConfigStore.SaveAsync(updated);
+            await SaveDiscordConfigAsync(updated);
             if (url is not null) await ProbeMineWebhookAsync(url);
         }
         catch (Exception ex)

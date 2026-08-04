@@ -163,7 +163,7 @@
                                    Foreground="{DynamicResource WhiteBrush}" Margin="0,0,0,6" />
                         <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                    Margin="0,0,0,10"
-                                   Text="Get told when something happens to an account while you're away from the PC. Sending to a Discord channel is what reaches your phone — a webhook takes about a minute to set up, and there's a walkthrough below if you've never made one." />
+                                   Text="Get told when something happens to an account while you're away from the PC. Sending to a Discord channel takes about a minute to set up — there's a walkthrough below if you've never made a webhook." />
 
                         <Grid Margin="0,0,0,6">
                             <Grid.ColumnDefinitions>
@@ -176,7 +176,7 @@
                                       SelectionChanged="OnAlertRoutingChanged">
                                 <ComboBoxItem Content="Off" Tag="None" />
                                 <ComboBoxItem Content="Desktop only" Tag="Local" />
-                                <ComboBoxItem Content="My channel (phone)" Tag="Mine" />
+                                <ComboBoxItem Content="My channel" Tag="Mine" />
                                 <ComboBoxItem Content="Clan channel" Tag="Clan" />
                             </ComboBox>
                         </Grid>
@@ -192,7 +192,7 @@
                                       SelectionChanged="OnAlertRoutingChanged">
                                 <ComboBoxItem Content="Off" Tag="None" />
                                 <ComboBoxItem Content="Desktop only" Tag="Local" />
-                                <ComboBoxItem Content="My channel (phone)" Tag="Mine" />
+                                <ComboBoxItem Content="My channel" Tag="Mine" />
                                 <ComboBoxItem Content="Clan channel" Tag="Clan" />
                             </ComboBox>
                         </Grid>
