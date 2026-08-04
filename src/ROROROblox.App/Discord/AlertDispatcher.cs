@@ -22,7 +22,7 @@ public sealed class AlertDispatcher(
     ITrayService tray,
     Func<DiscordConfig> config,
     TimeProvider time,
-    ILogger log)
+    ILogger<AlertDispatcher> log)
 {
     private readonly Dictionary<Guid, DateTimeOffset> _lastSent = [];
 

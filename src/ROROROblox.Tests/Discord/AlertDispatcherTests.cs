@@ -45,11 +45,11 @@ public class AlertDispatcherTests
     private static (DiscordWebhookSender Sender, StubHttpHandler Handler) Sender(HttpStatusCode status)
     {
         var handler = new StubHttpHandler(_ => new HttpResponseMessage(status));
-        return (new DiscordWebhookSender(new HttpClient(handler), NullLogger.Instance), handler);
+        return (new DiscordWebhookSender(new HttpClient(handler), NullLogger<DiscordWebhookSender>.Instance), handler);
     }
 
     private static AlertDispatcher Build(DiscordWebhookSender sender, ITrayService tray, DiscordConfig config) =>
-        new(sender, tray, () => config, new FakeTimeProvider(), NullLogger.Instance);
+        new(sender, tray, () => config, new FakeTimeProvider(), NullLogger<AlertDispatcher>.Instance);
 
     [Fact]
     public async Task DispatchAsync_LocalDestination_RaisesATrayToastAndPostsNothing()
@@ -104,7 +104,7 @@ public class AlertDispatcherTests
         var tray = new SpyTrayService();
         var time = new FakeTimeProvider();
         var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Local };
-        var dispatcher = new AlertDispatcher(sender, tray, () => config, time, NullLogger.Instance);
+        var dispatcher = new AlertDispatcher(sender, tray, () => config, time, NullLogger<AlertDispatcher>.Instance);
         var id = Guid.NewGuid();
 
         await dispatcher.DispatchAsync([Dropped(id, "A")]).WaitAsync(TimeSpan.FromSeconds(5));

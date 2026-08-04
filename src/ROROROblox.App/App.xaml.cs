@@ -294,6 +294,13 @@ public partial class App : Application
         // by then, or it's silently dropped. mainWindow and the DI graph are both available by
         // this point (mainWindow resolved above at var mainWindow = ...), so there's no ordering
         // reason to push this any later.
+        // Preferences must never depend on an optional feature wiring up. This assignment lived
+        // inside WireAlertsAsync for one build, and when a DI resolve failed in there (a
+        // non-generic ILogger parameter), the factory was never set and the whole Settings window
+        // stopped opening — an alerts problem taking out a core window. Alerts are a passenger;
+        // this is not. Set it first, unconditionally, before anything that can fail.
+        _services.GetRequiredService<MainViewModel>().PreferencesWindowFactory = BuildPreferencesWindow;
+
         await WireDiscordPresenceAsync(mainWindow, discordApplicationId);
 
         // Alerts, wired separately and unconditionally — see the AlertDispatcher registration for
@@ -1340,8 +1347,6 @@ public partial class App : Application
 
             var vm = _services.GetRequiredService<MainViewModel>();
             var dispatcher = _services.GetRequiredService<AlertDispatcher>();
-
-            vm.PreferencesWindowFactory = BuildPreferencesWindow;
 
             // Paint the saved mutes onto the rows. Without this the preference persists but the
             // row shows unmuted after every restart — the user re-mutes an account that was never
