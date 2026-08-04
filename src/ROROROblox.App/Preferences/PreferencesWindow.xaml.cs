@@ -35,8 +35,10 @@ internal partial class PreferencesWindow : Window
     private readonly DiscordConfigCache _discordConfigCache;
     private bool _suppressClickHandlers; // true while we set the initial check states.
 
-    /// <summary>Channel name reported by the probe for the personal webhook, if it answered.</summary>
+    /// <summary>Channel names reported by the probe for each webhook, if it answered.</summary>
     private string? _mineChannelName;
+
+    private string? _clanChannelName;
 
     // Loaded once at OnLoaded, mutated on each Discord toggle click, saved whole. A compound
     // record (Presence + Join + webhook fields live in one encrypted blob) needs an in-memory
@@ -427,13 +429,19 @@ internal partial class PreferencesWindow : Window
         SelectDestination(DroppedOutDestination, _discordConfig.DroppedOutDestination);
         SelectDestination(MemoryWarningDestination, _discordConfig.MemoryWarningDestination);
         MineWebhookInput.Text = _discordConfig.MineWebhookUrl ?? "";
+        ClanWebhookInput.Text = _discordConfig.ClanWebhookUrl ?? "";
         RefreshAlertsStatus();
 
-        // Best-effort, fire-and-forget: name the channel a saved webhook posts to, so a clan
+        // Best-effort, fire-and-forget: name the channel each saved webhook posts to, so a clan
         // webhook sitting in the personal slot is visible on open rather than after it matters.
         if (!string.IsNullOrWhiteSpace(_discordConfig.MineWebhookUrl))
         {
-            _ = ProbeMineWebhookAsync(_discordConfig.MineWebhookUrl);
+            _ = ProbeWebhookAsync(_discordConfig.MineWebhookUrl, isClan: false);
+        }
+
+        if (!string.IsNullOrWhiteSpace(_discordConfig.ClanWebhookUrl))
+        {
+            _ = ProbeWebhookAsync(_discordConfig.ClanWebhookUrl, isClan: true);
         }
     }
 
@@ -483,7 +491,8 @@ internal partial class PreferencesWindow : Window
             _discordConfig,
             _alertDispatcher.MineWebhookRejected,
             _alertDispatcher.ClanWebhookRejected,
-            _mineChannelName);
+            _mineChannelName,
+            _clanChannelName);
 
     private async void OnAlertRoutingChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
@@ -510,13 +519,24 @@ internal partial class PreferencesWindow : Window
     /// <summary>
     /// Commit on LostFocus rather than TextChanged: a webhook URL is pasted whole, and validating
     /// every keystroke would flash four different rejections at someone typing one in by hand.
+    /// <para>
+    /// One handler serves both fields. The personal and clan webhooks differ only in which slot
+    /// they write and which rejection they clear — duplicating this logic per field is how the two
+    /// drift into validating differently, and the clan one (the shared room) is the worse half to
+    /// get wrong.
+    /// </para>
     /// </summary>
     private async void OnWebhookCommitted(object sender, RoutedEventArgs e)
     {
         if (_suppressClickHandlers) return;
 
-        var verdict = WebhookUrlValidator.Inspect(MineWebhookInput.Text);
-        MineWebhookVerdict.Text = verdict.Message;
+        var isClan = ReferenceEquals(sender, ClanWebhookInput);
+        var input = isClan ? ClanWebhookInput : MineWebhookInput;
+        var verdictLine = isClan ? ClanWebhookVerdict : MineWebhookVerdict;
+        var saved = isClan ? _discordConfig.ClanWebhookUrl : _discordConfig.MineWebhookUrl;
+
+        var verdict = WebhookUrlValidator.Inspect(input.Text);
+        verdictLine.Text = verdict.Message;
 
         // Anything that isn't a webhook leaves the SAVED value alone. Clobbering a working webhook
         // because someone pasted an invite over it and then tabbed away is a silent downgrade to
@@ -524,21 +544,30 @@ internal partial class PreferencesWindow : Window
         if (verdict.Kind is not (WebhookUrlKind.Valid or WebhookUrlKind.Empty)) return;
 
         var url = verdict.Kind == WebhookUrlKind.Valid ? verdict.NormalizedUrl : null;
-        if (url == _discordConfig.MineWebhookUrl) return;
-
-        _mineChannelName = null;
-        var updated = _discordConfig with { MineWebhookUrl = url };
+        if (url == saved) return;
 
         // A newly pasted webhook is a fresh chance for a destination the user previously killed.
-        _alertDispatcher.ResetMineRejection();
+        DiscordConfig updated;
+        if (isClan)
+        {
+            _clanChannelName = null;
+            updated = _discordConfig with { ClanWebhookUrl = url };
+            _alertDispatcher.ResetClanRejection();
+        }
+        else
+        {
+            _mineChannelName = null;
+            updated = _discordConfig with { MineWebhookUrl = url };
+            _alertDispatcher.ResetMineRejection();
+        }
 
-        MineWebhookInput.Text = url ?? "";
+        input.Text = url ?? "";
         RefreshAlertsStatus();
 
         try
         {
             await SaveDiscordConfigAsync(updated);
-            if (url is not null) await ProbeMineWebhookAsync(url);
+            if (url is not null) await ProbeWebhookAsync(url, isClan);
         }
         catch (Exception ex)
         {
@@ -547,13 +576,21 @@ internal partial class PreferencesWindow : Window
         }
     }
 
-    private async Task ProbeMineWebhookAsync(string url)
+    /// <summary>
+    /// Name the channel a webhook posts to. Doubly worth it with two fields: the mistake this
+    /// catches is a clan webhook pasted into the personal slot (or the reverse), which is invisible
+    /// until something lands in front of the wrong audience.
+    /// </summary>
+    private async Task ProbeWebhookAsync(string url, bool isClan)
     {
         var identity = await _webhookProbe.DescribeAsync(url);
         if (identity is null) return;
 
-        _mineChannelName = identity.ChannelName;
-        MineWebhookVerdict.Text = $"Posts to #{identity.ChannelName} in {identity.GuildName}.";
+        if (isClan) { _clanChannelName = identity.ChannelName; }
+        else { _mineChannelName = identity.ChannelName; }
+
+        (isClan ? ClanWebhookVerdict : MineWebhookVerdict).Text =
+            $"Posts to #{identity.ChannelName} in {identity.GuildName}.";
         RefreshAlertsStatus();
     }
 
@@ -563,8 +600,21 @@ internal partial class PreferencesWindow : Window
     /// </summary>
     private async void OnSendTestClick(object sender, RoutedEventArgs e)
     {
-        var url = _discordConfig.MineWebhookUrl;
-        if (string.IsNullOrWhiteSpace(url))
+        // Test every webhook that is configured, not just the personal one. A clan webhook that
+        // silently does not work is the worse failure of the two — nobody notices a channel that
+        // never gets posts, and the person who set it up is the last to find out.
+        var targets = new List<(string Label, string Url)>();
+        if (!string.IsNullOrWhiteSpace(_discordConfig.MineWebhookUrl))
+        {
+            targets.Add(("My channel", _discordConfig.MineWebhookUrl));
+        }
+
+        if (!string.IsNullOrWhiteSpace(_discordConfig.ClanWebhookUrl))
+        {
+            targets.Add(("Clan channel", _discordConfig.ClanWebhookUrl));
+        }
+
+        if (targets.Count == 0)
         {
             AlertsStatusLine.Text = "Paste a webhook URL first — there's nowhere to send a test yet.";
             return;
@@ -574,20 +624,24 @@ internal partial class PreferencesWindow : Window
         AlertsStatusLine.Text = "Sending…";
         try
         {
-            var result = await _webhookSender.SendAsync(url,
-                new WebhookPayload("RoRoRo test", "If you can read this, alerts work."));
-
-            AlertsStatusLine.Text = result switch
+            var results = new List<string>();
+            foreach (var (label, url) in targets)
             {
-                WebhookSendResult.Sent => _mineChannelName is { Length: > 0 }
-                    ? $"Sent. Check #{_mineChannelName} — if it's there, you're done."
-                    : "Sent. Check your Discord channel — if it's there, you're done.",
-                WebhookSendResult.WebhookGone => "That webhook no longer exists. Make a new one in Discord and paste it again.",
-                WebhookSendResult.RateLimited => "Discord is rate-limiting us right now. Wait a minute and try again — the webhook itself looks fine.",
-                _ => "Couldn't reach Discord. Check your connection and try again.",
-            };
+                var result = await _webhookSender.SendAsync(url,
+                    new WebhookPayload("RoRoRo test", "If you can read this, alerts work."));
 
-            if (result == WebhookSendResult.WebhookGone) RefreshAlertsStatus();
+                results.Add(result switch
+                {
+                    WebhookSendResult.Sent => $"{label}: sent.",
+                    WebhookSendResult.WebhookGone => $"{label}: that webhook no longer exists — make a new one and paste it again.",
+                    WebhookSendResult.RateLimited => $"{label}: Discord is rate-limiting us. Wait a minute; the webhook itself looks fine.",
+                    _ => $"{label}: couldn't reach Discord.",
+                });
+
+                if (result == WebhookSendResult.WebhookGone) RefreshAlertsStatus();
+            }
+
+            AlertsStatusLine.Text = string.Join("  ", results);
         }
         finally
         {

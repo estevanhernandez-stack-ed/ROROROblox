@@ -197,14 +197,34 @@
                             </ComboBox>
                         </Grid>
 
+                        <!-- Two separate webhooks, because they are two different audiences. "My
+                             channel" is a server you own and nobody else reads; "Clan channel" is a
+                             shared room. Keeping them apart is what lets someone send health noise
+                             to themselves and only the interesting things to the clan — and it is
+                             why the payload type has no field a private-server link could live in
+                             (see WebhookPayload). One shared field would collapse that choice. -->
+                        <TextBlock Text="My channel — webhook URL" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource WhiteBrush}" Margin="0,10,0,2" />
                         <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
-                                   Margin="0,6,0,4"
-                                   Text="Your webhook URL — paste it here. It's saved encrypted on this PC and never leaves it except to post your alerts." />
+                                   Margin="0,0,0,4"
+                                   Text="A server only you read. Saved encrypted on this PC and never leaves it except to post your alerts." />
                         <TextBox x:Name="MineWebhookInput" Padding="8,6" FontSize="11"
                                  Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
                                  BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
                                  LostFocus="OnWebhookCommitted" />
                         <TextBlock x:Name="MineWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
+                                   Foreground="{DynamicResource MutedTextBrush}" />
+
+                        <TextBlock Text="Clan channel — webhook URL" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource WhiteBrush}" Margin="0,12,0,2" />
+                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                   Margin="0,0,0,4"
+                                   Text="A shared room. Anything routed here is read by everyone in that channel, now and later — so send what the clan should see, not everything." />
+                        <TextBox x:Name="ClanWebhookInput" Padding="8,6" FontSize="11"
+                                 Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
+                                 BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                                 LostFocus="OnWebhookCommitted" />
+                        <TextBlock x:Name="ClanWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
                                    Foreground="{DynamicResource MutedTextBrush}" />
 
                         <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
