@@ -1,0 +1,90 @@
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap');
+
+  :root {
+    --navy: #0f1f31;
+    --cyan: #17d4fa;
+    --magenta: #f22f89;
+    --teal: #2ee6c9;
+    --white: #f4f8fb;
+    --muted: #8ea6bd;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--navy); }
+  body { font-family: 'Space Grotesk', system-ui, sans-serif; }
+
+  .stage { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+
+  /* ---- HERO: mark left, text right (16:9) ---- */
+  body.hero .stage { gap: 7vw; }
+  body.hero .cube { width: 17vw; }
+  body.hero .wordmark { font-size: 9.4vw; }
+  body.hero .tagline  { font-size: 2.6vw; margin-top: 1.6vw; }
+  body.hero .footline { font-size: 1.5vw; margin-top: 2.4vw; }
+  body.hero .copy { text-align: left; }
+
+  /* ---- BOXART: square, stacked + centred ---- */
+  body.boxart .stage { flex-direction: column; gap: 9vmin; }
+  body.boxart .cube { width: 28vmin; }
+  body.boxart .wordmark { font-size: 15vmin; }
+  body.boxart .tagline  { font-size: 4.2vmin; margin-top: 2.4vmin; }
+  body.boxart .footline { font-size: 2.6vmin; margin-top: 3.6vmin; }
+  body.boxart .copy { text-align: center; }
+
+  /* ---- POSTER: 2:3 portrait, stacked + centred ---- */
+  body.poster .stage { flex-direction: column; gap: 10vw; }
+  body.poster .cube { width: 42vw; }
+  body.poster .wordmark { font-size: 21vw; }
+  body.poster .tagline  { font-size: 5.6vw; margin-top: 3vw; }
+  body.poster .footline { font-size: 3.4vw; margin-top: 4.6vw; }
+  body.poster .copy { text-align: center; }
+
+  .wordmark {
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+  .tagline { font-weight: 700; color: var(--cyan); letter-spacing: -0.01em; }
+  .footline { font-weight: 500; color: var(--muted); }
+</style>
+
+<div class="stage">
+  <!-- Isometric stacked-cube mark: three slabs, cyan / magenta / teal, top-lit.
+       Same geometry as the shipped artwork — only the wordmark casing changes. -->
+  <svg class="cube" viewBox="0 0 300 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- band 0 — cyan -->
+    <path d="M10,88 L150,166 L150,266 L10,188 Z"   fill="#1596b8"/>
+    <path d="M150,166 L290,88 L290,188 L150,266 Z" fill="#17d4fa"/>
+    <!-- band 1 — magenta -->
+    <path d="M10,188 L150,266 L150,366 L10,288 Z"   fill="#a81f5f"/>
+    <path d="M150,266 L290,188 L290,288 L150,366 Z" fill="#f22f89"/>
+    <!-- band 2 — teal -->
+    <path d="M10,288 L150,366 L150,466 L10,388 Z"   fill="#1f9c86"/>
+    <path d="M150,366 L290,288 L290,388 L150,466 Z" fill="#2ee6c9"/>
+    <!-- top face, drawn last so it caps the stack -->
+    <path d="M150,10 L290,88 L150,166 L10,88 Z" fill="#6fe3fb"/>
+  </svg>
+
+  <div class="copy">
+    <div class="wordmark">RoRoRo</div>
+    <div class="tagline">Multi-launcher for Windows.</div>
+    <div class="footline">A 626 Labs product</div>
+  </div>
+</div>
+
+<script>
+  // Layout is chosen from the viewport's aspect ratio, so one file renders every size:
+  // 16:9 -> hero, 1:1 -> boxart, 2:3 -> poster. Keeps the six exports from drifting apart.
+  function apply() {
+    const r = window.innerWidth / window.innerHeight;
+    document.body.className = r > 1.4 ? 'hero' : (r > 0.85 ? 'boxart' : 'poster');
+  }
+  apply();
+  // Must re-run on resize: the capture tool sets the viewport AFTER load, so a one-shot
+  // classification would render every export in whatever shape the default window happened to be.
+  window.addEventListener('resize', apply);
+</script>
