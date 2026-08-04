@@ -54,7 +54,6 @@ The earlier "rotate this" item was overstated. Webhook ID `1501780993676414986` 
 - **Preferences restructure + move streamer mode into it** — top of the feature-ledger backlog, per Este.
 - **Discord-restart reconnect** — still unmeasured. Lachee auto-reconnects (500ms→60s backoff) and re-synchronises presence itself, so the earlier "dead until I toggle it" was probably the backoff. #81's logging is what will confirm or kill that; the test is in the smoke sheet, step 10.
 - **Alert delivery has no integration test.** Unit coverage is good; nothing exercises trigger → dispatch → real HTTP. Send test is that check, done by hand.
-- Este's Discord webhook token from the earlier session still wants rotating (it was in plaintext and printed to a transcript).
 
 ## Environment left clean
 
