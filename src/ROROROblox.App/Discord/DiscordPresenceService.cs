@@ -154,7 +154,6 @@ internal sealed class DiscordPresenceService : IDisposable
             if (!_config.PresenceEnabled || !_client.IsInitialized) return;
 
             var fields = PresencePayloadBuilder.Build(_roster());
-            if (fields is null) { _client.ClearPresence(); return; }
 
             DiscordPresenceParty? party = null;
             if (_config.JoinEnabled && fields.JoinableServer is { } server)
@@ -183,7 +182,8 @@ internal sealed class DiscordPresenceService : IDisposable
 
             _client.SetPresence(new DiscordPresencePayload(
                 fields.State, fields.Details, fields.StartedAtUtc,
-                LargeImageKey: "active_large", LargeImageText: "RoRoRo", Party: party));
+                LargeImageKey: fields.IsIdle ? "idle_large" : "active_large",
+                LargeImageText: "RoRoRo", Party: party));
         }
         catch (Exception ex)
         {

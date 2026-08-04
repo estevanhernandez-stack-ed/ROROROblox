@@ -16,9 +16,55 @@ public class PresencePayloadBuilderTests
             InGameSinceUtc: since ?? T0);
 
     [Fact]
-    public void Build_NothingRunning_ReturnsNull_SoPresenceIsCleared()
+    public void Build_NothingRunning_ReturnsAnIdlePayload_NotNull()
     {
-        Assert.Null(PresencePayloadBuilder.Build(new RosterSnapshot([])));
+        // 2026-08-03, live smoke test: the RPC connection stays open whether or not anything is
+        // running, so returning null (-> ClearPresence) still rendered a bare "Playing RoRoRo"
+        // with no artwork and no text. Nothing running now means an honest idle payload, never a
+        // null the caller has to interpret as "clear."
+        var fields = PresencePayloadBuilder.Build(new RosterSnapshot([]));
+
+        Assert.NotNull(fields);
+        Assert.True(fields.IsIdle);
+        Assert.Equal("No saved accounts yet", fields.Details);
+        Assert.Null(fields.JoinableServer);           // not joinable
+        Assert.Null(fields.StartedAtUtc);              // no elapsed run
+        Assert.Equal(0, fields.JoinableServerAccountCount);
+    }
+
+    [Fact]
+    public void Build_NothingRunning_SavedAccountsStandingBy_UsesTheRosterCount()
+    {
+        // The roster still knows the saved accounts even when none are live -- that count is real
+        // information, so the idle line says it rather than inventing activity.
+        var snapshot = new RosterSnapshot([
+            new(Guid.NewGuid(), "CaptainNoodle", InGame: false, null, null, null),
+            new(Guid.NewGuid(), "LadyPixel", InGame: false, null, null, null),
+            new(Guid.NewGuid(), "DoctorDuck", InGame: false, null, null, null)]);
+
+        var fields = PresencePayloadBuilder.Build(snapshot);
+
+        Assert.True(fields.IsIdle);
+        Assert.Equal("3 saved accounts, standing by", fields.Details);
+    }
+
+    [Fact]
+    public void Build_NothingRunning_OneSavedAccount_UsesSingularWording()
+    {
+        var snapshot = new RosterSnapshot([
+            new(Guid.NewGuid(), "CaptainNoodle", InGame: false, null, null, null)]);
+
+        var fields = PresencePayloadBuilder.Build(snapshot);
+
+        Assert.Equal("1 saved account, standing by", fields.Details);
+    }
+
+    [Fact]
+    public void Build_LiveAccounts_IsIdleIsFalse()
+    {
+        var fields = PresencePayloadBuilder.Build(new RosterSnapshot([InGame("CaptainNoodle", ServerA)]));
+
+        Assert.False(fields.IsIdle);
     }
 
     [Fact]

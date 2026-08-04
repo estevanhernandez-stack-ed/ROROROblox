@@ -7,9 +7,9 @@
 **Depends on:** v1.14 server-instance targeting
 ([`2026-08-02-server-instance-targeting-design.md`](2026-08-02-server-instance-targeting-design.md)) — shipped.
 
-> **Banner correction — 2026-08-03, post-build (feat/discord-presence).** Two places build reality
-> diverged from what's written below. Per this repo's rule, the divergence is recorded here rather
-> than rewritten into the body.
+> **Banner correction — 2026-08-03, post-build (feat/discord-presence).** Three places build
+> reality diverged from what's written below. Per this repo's rule, the divergence is recorded
+> here rather than rewritten into the body.
 >
 > **(a) §5.2 Join confirm is gated on ORIGIN, not just destination.** As originally written, §5.2
 > only says the private-server warning applies "for presence" — it doesn't distinguish where a join
@@ -31,6 +31,23 @@
 > reconnect). This is a known deviation to revisit, not an oversight to discover later — flagged
 > here so a future session doesn't have to rediscover it by reading Discord's own rate-limit
 > behavior the hard way.
+>
+> **(c) §5.1's "Nothing running → Presence cleared entirely" row is wrong.** Live smoke testing
+> (2026-08-03) showed why: `ClearPresence()` does not close the RPC connection — that only happens
+> when presence is toggled OFF (a different path, unchanged). With nothing running, the connection
+> stayed open and Discord kept rendering a bare "Playing RoRoRo" entry with no artwork and no text.
+> That reads as broken, not absent, which defeats §1's whole premise that every presence is the
+> product introducing itself to a Discord full of Roblox players. The choice was never "cleared vs.
+> shown" — the entry was always going to be visible while the app is open and presence is on. The
+> real choice was blank-looking vs. deliberate, so build reality now publishes an idle payload
+> instead of clearing: `idle_large` artwork, and text built from the one thing the roster still
+> knows with nothing live — how many saved accounts are standing by (`"3 saved accounts, standing
+> by"` / `"1 saved account, standing by"` / `"No saved accounts yet"`). No party, no join secret,
+> no timestamp — an idle entry is not joinable and has no elapsed run. `ClearPresence()` is still
+> used, unchanged, for the presence-OFF path, where the entry should disappear entirely because the
+> connection is actually going away. See `PresencePayloadBuilder.BuildIdle` in
+> `src/ROROROblox.Core/Discord/PresencePayloadBuilder.cs` and `PresenceFields.IsIdle`'s remarks in
+> `src/ROROROblox.Core/Discord/RosterSnapshot.cs`.
 
 ## 1. Why now
 

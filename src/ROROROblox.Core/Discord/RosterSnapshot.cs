@@ -100,10 +100,24 @@ public sealed record RosterServer
 /// <paramref name="JoinableServerAccountCount"/> is how many roster accounts are already in
 /// <see cref="JoinableServer"/> — 0 when there is no joinable server. It is the correct Discord
 /// party "Size": showing a party size smaller than the accounts actually together in that server
-/// reads as self-contradicting next to the State line.</summary>
+/// reads as self-contradicting next to the State line.
+/// <para>
+/// <paramref name="IsIdle"/> replaces the old "null means nothing running, so clear presence"
+/// signalling (2026-08-03, live smoke test). The RPC connection stays open regardless of what is
+/// running, so a cleared entry still renders in Discord — just as a bare "Playing RoRoRo" with no
+/// artwork and no text, which reads as broken rather than absent. An idle payload is deliberate
+/// instead: honest text, the <c>idle_large</c> artwork, and never a Join target — an idle entry is
+/// not joinable and has no elapsed run, so <see cref="JoinableServer"/> and
+/// <see cref="StartedAtUtc"/> are always null/absent when <paramref name="IsIdle"/> is true. The
+/// caller (<c>DiscordPresenceService.Refresh</c>) uses the flag only to choose which large-image
+/// key to send; it must not re-derive idle-ness or invent its own idle text — that decision lives
+/// here, where it is a table of cases a unit test can pin down.
+/// </para>
+/// </summary>
 public sealed record PresenceFields(
     string? Details,
     string? State,
     DateTimeOffset? StartedAtUtc,
     RosterServer? JoinableServer,
-    int JoinableServerAccountCount);
+    int JoinableServerAccountCount,
+    bool IsIdle = false);

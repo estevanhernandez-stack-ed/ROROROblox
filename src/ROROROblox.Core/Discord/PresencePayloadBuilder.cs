@@ -7,14 +7,14 @@ namespace ROROROblox.Core.Discord;
 /// </summary>
 public static class PresencePayloadBuilder
 {
-    public static PresenceFields? Build(RosterSnapshot snapshot)
+    public static PresenceFields Build(RosterSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
         var live = snapshot.Accounts.Where(a => a.InGame).ToList();
         if (live.Count == 0)
         {
-            return null;   // nothing running -> clear presence entirely
+            return BuildIdle(snapshot);
         }
 
         // The biggest cluster of accounts sharing one server is what a friend would want to join.
@@ -56,5 +56,31 @@ public static class PresencePayloadBuilder
             StartedAtUtc: live.Where(a => a.InGameSinceUtc is not null).Min(a => a.InGameSinceUtc),
             JoinableServer: joinableRepresentative?.Server,
             JoinableServerAccountCount: togetherCount);
+    }
+
+    /// <summary>
+    /// Nothing running is not "nothing to say." The RPC connection stays open regardless (see
+    /// <see cref="PresenceFields"/>'s remarks), so the choice is between a blank-looking entry and
+    /// a deliberate one. The only thing the roster actually knows in this state is how many saved
+    /// accounts are standing by — that is real information, so it is what the idle entry says.
+    /// Never a game name, never elapsed time, never a Join target: none of those are true right now.
+    /// </summary>
+    private static PresenceFields BuildIdle(RosterSnapshot snapshot)
+    {
+        var saved = snapshot.Accounts.Count;
+        var details = saved switch
+        {
+            0 => "No saved accounts yet",
+            1 => "1 saved account, standing by",
+            _ => $"{saved} saved accounts, standing by",
+        };
+
+        return new PresenceFields(
+            Details: details,
+            State: "RoRoRo — multi-instance for Roblox",
+            StartedAtUtc: null,
+            JoinableServer: null,
+            JoinableServerAccountCount: 0,
+            IsIdle: true);
     }
 }
