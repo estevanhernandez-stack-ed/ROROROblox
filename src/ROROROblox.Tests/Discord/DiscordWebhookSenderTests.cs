@@ -14,7 +14,7 @@ public class DiscordWebhookSenderTests
     public async Task SendAsync_Success_ReportsSentAndPostsTheText()
     {
         var handler = new StubHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.NoContent));
-        var sender = new DiscordWebhookSender(new HttpClient(handler), NullLogger.Instance);
+        var sender = new DiscordWebhookSender(new HttpClient(handler), NullLogger<DiscordWebhookSender>.Instance);
 
         var result = await sender.SendAsync(Url, Payload).WaitAsync(TimeSpan.FromSeconds(5));
 
@@ -28,7 +28,7 @@ public class DiscordWebhookSenderTests
         // A deleted webhook never comes back. Retrying it forever is how a background loop
         // outlives the reason for it.
         var handler = new StubHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
-        var sender = new DiscordWebhookSender(new HttpClient(handler), NullLogger.Instance);
+        var sender = new DiscordWebhookSender(new HttpClient(handler), NullLogger<DiscordWebhookSender>.Instance);
 
         var result = await sender.SendAsync(Url, Payload).WaitAsync(TimeSpan.FromSeconds(5));
 
@@ -40,7 +40,7 @@ public class DiscordWebhookSenderTests
     public async Task SendAsync_429_ReportsRateLimited()
     {
         var handler = new StubHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.TooManyRequests));
-        var sender = new DiscordWebhookSender(new HttpClient(handler), NullLogger.Instance);
+        var sender = new DiscordWebhookSender(new HttpClient(handler), NullLogger<DiscordWebhookSender>.Instance);
 
         var result = await sender.SendAsync(Url, Payload).WaitAsync(TimeSpan.FromSeconds(5));
 
@@ -52,7 +52,7 @@ public class DiscordWebhookSenderTests
     {
         // No Discord failure may affect the app. An alert is a passenger too.
         var handler = new StubHttpHandler(_ => throw new HttpRequestException("no network"));
-        var sender = new DiscordWebhookSender(new HttpClient(handler), NullLogger.Instance);
+        var sender = new DiscordWebhookSender(new HttpClient(handler), NullLogger<DiscordWebhookSender>.Instance);
 
         var result = await sender.SendAsync(Url, Payload).WaitAsync(TimeSpan.FromSeconds(5));
 

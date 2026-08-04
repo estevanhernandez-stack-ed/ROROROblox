@@ -27,7 +27,15 @@ public enum WebhookSendResult
 /// alerts stopped arriving. The status code is the whole diagnostic value; the token is not.
 /// </para>
 /// </summary>
-public sealed class DiscordWebhookSender(HttpClient client, ILogger log)
+/// <remarks>
+/// <c>ILogger&lt;DiscordWebhookSender&gt;</c>, NOT the non-generic <c>ILogger</c>: DI registers only
+/// the generic form, so a non-generic parameter fails at RESOLVE time with "Unable to resolve
+/// service for type 'Microsoft.Extensions.Logging.ILogger'". That is invisible to a clean build and
+/// to every direct-construction unit test — it shipped to a smoke build here, where it took down
+/// AlertDispatcher and, through it, the whole Preferences window. Guarded by
+/// <c>TypedHttpClientRegistrationTests</c>.
+/// </remarks>
+public sealed class DiscordWebhookSender(HttpClient client, ILogger<DiscordWebhookSender> log)
 {
     public async Task<WebhookSendResult> SendAsync(string url, WebhookPayload payload, CancellationToken ct = default)
     {
