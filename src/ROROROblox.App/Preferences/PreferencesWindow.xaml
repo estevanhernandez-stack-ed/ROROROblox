@@ -141,6 +141,14 @@
                         <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                    Margin="22,4,0,8"
                                    Text="Your Discord status shows the game, how many accounts you have in it, and how long you've been going. Nothing to set up — it uses the Discord app already on this PC." />
+                        <!-- Said here because otherwise every user who turns this on asks a friend
+                             "do you see it?", gets no, and files a bug. Discord gives the profile
+                             "playing" slot to a game it detects, and RoRoRo is an application, not
+                             a detected game — nothing we can toggle. Detection is earned by
+                             installs over time, so the last line is a real path, not a consolation. -->
+                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                   Margin="22,0,0,8"
+                                   Text="Worth knowing: while Roblox is running, your friends see Roblox on your profile instead of RoRoRo — Discord gives that spot to games it recognises. You'll always see your own card. RoRoRo gets recognised once enough people are running it." />
                         <CheckBox x:Name="DiscordJoinToggle"
                                   Foreground="{DynamicResource WhiteBrush}" FontSize="12"
                                   Margin="22,0,0,0" Click="OnDiscordJoinToggle">
