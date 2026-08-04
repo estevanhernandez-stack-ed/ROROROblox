@@ -61,6 +61,21 @@
 > to change if it turns out Join does disappear. See
 > `src/ROROROblox.Core/Discord/PresencePayloadBuilder.cs` and `PresenceFields.JoinableServerAccountMax`'s
 > remarks in `src/ROROROblox.Core/Discord/RosterSnapshot.cs`.
+>
+> **(e) §5.1's state-line table and §7.1 ("Streamer mode is honored outbound") both describe names
+> as the only thing streamer mode masks.** Build reality (live smoke test, 2026-08-03): the roster
+> COUNT is the same category of disclosure — "3 of 8" sizes the fleet exactly as much as the real
+> names would — and it was leaking unmasked through both the party numbers and the state text right
+> alongside the already-masked names. Fixed: `RosterSnapshot.IsStreamerModeActive` (read from the
+> same `IStreamerIdentityProvider` that already supplies `RenderName` — see
+> `MainViewModel.BuildRosterSnapshot`) drives `PresencePayloadBuilder` to publish `"In a server"` /
+> `"In a game"` in place of any state line with a digit in it, a neutral placeholder party (size 1,
+> max 2 — a Discord rendering requirement, not a fact about the user) in place of the real
+> count/max, and an idle card with no digit (`"Accounts standing by"`) in place of `"N accounts
+> standing by"`. The Join button, game name, and Join secret are all unaffected — streamer mode
+> hides the count, never the function. See `PresencePayloadBuilder.Build`/`BuildIdle` in
+> `src/ROROROblox.Core/Discord/PresencePayloadBuilder.cs` and `RosterSnapshot.IsStreamerModeActive`'s
+> remarks in `src/ROROROblox.Core/Discord/RosterSnapshot.cs`.
 
 ## 1. Why now
 

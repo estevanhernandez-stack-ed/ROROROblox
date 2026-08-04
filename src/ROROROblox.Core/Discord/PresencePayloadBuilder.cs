@@ -25,13 +25,21 @@ public static class PresencePayloadBuilder
             .FirstOrDefault();
 
         var togetherCount = biggestCluster?.Count() ?? 0;
-        var state = live.Count == 1
-            ? "1 account"
-            : togetherCount == live.Count
-                ? $"{live.Count} accounts in one server"
-                : togetherCount > 1
-                    ? $"{live.Count} accounts · {togetherCount} in this server"
-                    : $"{live.Count} accounts";
+
+        // Streamer mode hides the roster SIZE, not the roster's LOCATION — "3 of 8" (or "8
+        // accounts in one server") tells a viewer exactly how big the fleet is; "in a server" /
+        // "in a game" says where without a single digit. Every non-streamer branch below collapses
+        // into those two: something live is known to share a server (a joinable cluster exists),
+        // or nothing live has a known server yet.
+        var state = snapshot.IsStreamerModeActive
+            ? (biggestCluster is not null ? "In a server" : "In a game")
+            : live.Count == 1
+                ? "1 account"
+                : togetherCount == live.Count
+                    ? $"{live.Count} accounts in one server"
+                    : togetherCount > 1
+                        ? $"{live.Count} accounts · {togetherCount} in this server"
+                        : $"{live.Count} accounts";
 
         // Details should reflect the game the Join button points at (biggestCluster), not the roster-first account.
         var details = biggestCluster?.Select(a => a.GameName)
@@ -65,13 +73,31 @@ public static class PresencePayloadBuilder
         // caller of this builder will want to know.
         var savedAccountCount = snapshot.Accounts.Count;
 
+        int partyCount;
+        int partyMax;
+        if (snapshot.IsStreamerModeActive)
+        {
+            // Discord requires SOME party size to render a Join button at all — these two numbers
+            // are a Discord UI requirement, not a fact about the user. 1 of 2 says nothing about
+            // the real fleet (not the count, not how many share a server) while still satisfying
+            // Discord's rendering rule. The Join secret itself is unaffected — streamer mode hides
+            // the count, never the function.
+            partyCount = 1;
+            partyMax = 2;
+        }
+        else
+        {
+            partyCount = togetherCount;
+            partyMax = savedAccountCount;
+        }
+
         return new PresenceFields(
             Details: details,
             State: state,
             StartedAtUtc: live.Where(a => a.InGameSinceUtc is not null).Min(a => a.InGameSinceUtc),
             JoinableServer: joinableRepresentative?.Server,
-            JoinableServerAccountCount: togetherCount,
-            JoinableServerAccountMax: savedAccountCount);
+            JoinableServerAccountCount: partyCount,
+            JoinableServerAccountMax: partyMax);
     }
 
     /// <summary>
@@ -84,12 +110,19 @@ public static class PresencePayloadBuilder
     private static PresenceFields BuildIdle(RosterSnapshot snapshot)
     {
         var saved = snapshot.Accounts.Count;
-        var details = saved switch
-        {
-            0 => "No accounts yet",
-            1 => "1 account standing by",
-            _ => $"{saved} accounts standing by",
-        };
+
+        // Streamer mode: "No accounts yet" carries no digit (zero saved accounts isn't a fleet
+        // size to hide), but any positive count is — "8 accounts standing by" is exactly as much
+        // of a headcount leak idle as "8 accounts in one server" is live. The active variant says
+        // the same true thing without the number.
+        var details = snapshot.IsStreamerModeActive
+            ? (saved == 0 ? "No accounts yet" : "Accounts standing by")
+            : saved switch
+            {
+                0 => "No accounts yet",
+                1 => "1 account standing by",
+                _ => $"{saved} accounts standing by",
+            };
 
         // Discord already renders the application name as the card's header, so naming the product
         // again on the second line spends the only other visible string saying "RoRoRo" twice. The

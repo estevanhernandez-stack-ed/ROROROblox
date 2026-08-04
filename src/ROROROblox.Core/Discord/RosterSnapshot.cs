@@ -10,8 +10,20 @@ public sealed record RosterAccount(
     RosterServer? Server,
     DateTimeOffset? InGameSinceUtc);
 
-/// <summary>The whole roster at one instant. Presence describes the fleet, not one account.</summary>
-public sealed record RosterSnapshot(IReadOnlyList<RosterAccount> Accounts);
+/// <summary>The whole roster at one instant. Presence describes the fleet, not one account.
+/// <para>
+/// <paramref name="IsStreamerModeActive"/> (2026-08-03) is the SAME streamer-identity signal that
+/// already drives <c>RosterAccount.DisplayName</c> via <c>AccountSummary.RenderName</c> — carried
+/// alongside the accounts so <see cref="PresencePayloadBuilder"/> can decide whether the roster
+/// COUNT (not just the names) is safe to publish, without reaching for a streamer-mode singleton
+/// itself. Names were already masked outbound; the count is the same category of disclosure
+/// ("3 of 8" tells a viewer exactly how big the fleet is) and had been leaking through the party
+/// numbers and the state text right alongside the (already-masked) names. Default <see langword="false"/>
+/// so every positional <c>new RosterSnapshot([...])</c> call site written before this field existed
+/// keeps compiling and keeps its old (non-anonymized) behavior.
+/// </para>
+/// </summary>
+public sealed record RosterSnapshot(IReadOnlyList<RosterAccount> Accounts, bool IsStreamerModeActive = false);
 
 /// <summary>
 /// One running server as presence + Join sees it — the (place, job) pair presence reports right
@@ -106,7 +118,7 @@ public sealed record RosterServer
 /// ceiling is the user's TOTAL saved-account count (from the roster snapshot, live or not), never
 /// an arbitrary constant: "3 of 8" reads as three of my eight accounts, and 8 is the only number
 /// that is actually true. See <see cref="PresencePayloadBuilder"/>'s remarks for the full-roster
-/// edge case (size == max).
+/// edge case (size == max) and streamer mode's neutral-placeholder override.
 /// </para>
 /// <para>
 /// <paramref name="IsIdle"/> replaces the old "null means nothing running, so clear presence"

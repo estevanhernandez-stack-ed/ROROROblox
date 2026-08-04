@@ -349,6 +349,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// against is instead closed by <see cref="ApplyPresence"/> clearing
     /// <see cref="AccountSummary.LastLaunchTarget"/> when the account fully leaves a game (Minor 1).
     /// </para>
+    /// <para>
+    /// <see cref="RosterSnapshot.IsStreamerModeActive"/> (2026-08-03) reads the SAME provider that
+    /// already supplies <see cref="AccountSummary.RenderName"/> (<see cref="_streamerIdentity"/>)
+    /// — not a second source of truth. <see cref="PresencePayloadBuilder"/> is pure and must stay
+    /// that way, so the anonymizing decision travels in on the snapshot instead of the builder (or
+    /// this service) reaching for a streamer-mode singleton itself.
+    /// </para>
     internal RosterSnapshot BuildRosterSnapshot() => new(
         AccountsSnapshot.Select(a => new RosterAccount(
             a.Id,
@@ -356,7 +363,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             a.InGame,
             a.CurrentGameName,
             RosterServer.TryFrom(a.CurrentServer, a.LastLaunchTarget),
-            a.InGameSinceUtc)).ToList());
+            a.InGameSinceUtc)).ToList(),
+        IsStreamerModeActive: _streamerIdentity?.IsActive ?? false);
 
     /// <summary>
     /// Sentinel entry the per-row ComboBox treats as "open the Join-by-link modal."
@@ -3016,9 +3024,21 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// The streamer-identity provider flipped active/inactive or reassigned identities — refresh
     /// <see cref="StreamerModeOn"/> so the main-window switch stays in sync whether the flip came
     /// from this window, the tray checkbox, or a plugin. Task 10.
+    /// <para>
+    /// Also refreshes Discord presence (2026-08-03): flipping streamer mode changes what
+    /// <see cref="BuildRosterSnapshot"/> hands <see cref="PresencePayloadBuilder"/> — masked names,
+    /// and now the anonymized roster count/party — so a push already sitting in Discord goes stale
+    /// the instant the mode flips, not on the next unrelated roster event. Predicted by an earlier
+    /// review note ("do this in the same commit that puts identity-derived data on the wire") —
+    /// this is that commit. Safe to call even when <see cref="DiscordPresence"/> is null (presence
+    /// never configured) via the null-conditional, same as every other roster-changing call site.
+    /// </para>
     /// </summary>
     private void OnStreamerIdentityChanged(object? sender, EventArgs e)
-        => OnPropertyChanged(nameof(StreamerModeOn));
+    {
+        OnPropertyChanged(nameof(StreamerModeOn));
+        DiscordPresence?.Refresh();
+    }
 
     /// <summary>"Reroll all identities" button body — reassigns every streamer-mode fake identity at once. Task 10.</summary>
     private Task RerollAllIdentitiesAsync()
