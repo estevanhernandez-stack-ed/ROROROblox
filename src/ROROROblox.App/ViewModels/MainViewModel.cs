@@ -69,6 +69,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal DiscordPresenceService? DiscordPresence { get; set; }
 
     /// <summary>
+    /// Set by the composition root so per-account mute survives a restart. Null in tests that do
+    /// not exercise mute, and in that case <see cref="SetAlertsMutedAsync"/> still updates the row
+    /// — the toggle works, it just does not persist, which is the right degradation for a
+    /// preference rather than refusing the click.
+    /// </summary>
+    internal DiscordConfigStore? DiscordConfigStore { get; set; }
+
+    /// <summary>
     /// In-flight session-history rows keyed by account id. Populated when LaunchAccountAsync
     /// succeeds; consumed by OnProcessExited / OnProcessAttachFailed to stamp end / outcome.
     /// In-memory only — restart loses pending end-stamps, but the launched-at row is already
@@ -202,6 +210,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         ResetItemNameCommand = new RelayCommand(p => _ = ResetItemNameAsync(BuildRenameTarget(p)));
         RemoveGameCommand = new RelayCommand(p => _ = RemoveGameAsync(p as FavoriteGame));
         ToggleJoinViaFriendCommand = new RelayCommand(p => _ = ToggleJoinViaFriendAsync(p as AccountSummary));
+        ToggleAlertsMutedCommand = new RelayCommand(p =>
+        {
+            if (p is AccountSummary row) { _ = SetAlertsMutedAsync(row, !row.AlertsMuted); }
+        });
 
         // Streamer mode (v1.10) — main-window switch + reroll controls (Task 10). No-ops when
         // _streamerIdentity is null (VM-level test harness, which doesn't pass one).
@@ -547,6 +559,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// is the row's <see cref="AccountSummary"/>. See <see cref="ToggleJoinViaFriendAsync"/>.
     /// </summary>
     public ICommand ToggleJoinViaFriendCommand { get; }
+
+    /// <summary>
+    /// Flips an account row's <see cref="AccountSummary.AlertsMuted"/> preference and persists it
+    /// through the Discord config — the account row's context-menu checkbox. Parameter is the
+    /// row's <see cref="AccountSummary"/>. See <see cref="SetAlertsMutedAsync"/>.
+    /// </summary>
+    public ICommand ToggleAlertsMutedCommand { get; }
 
     /// <summary>
     /// True when streamer mode is active — bound two-way to the main-window <c>ui:ToggleSwitch</c>
@@ -2790,6 +2809,34 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </para>
     /// </summary>
     internal event EventHandler<IReadOnlyList<AlertTrigger>>? AlertsRaised;
+
+    /// <summary>
+    /// Mute or unmute Discord alerts for one account, persisting through the config store.
+    /// <para>
+    /// Read-modify-write of the whole <see cref="DiscordConfig"/> record, deliberately explicit:
+    /// getting this wrong silently wipes the user's webhook URL or presence toggle — settings they
+    /// would then have to re-enter without ever being told why. Pinned by a test.
+    /// </para>
+    /// </summary>
+    internal async Task SetAlertsMutedAsync(AccountSummary summary, bool muted)
+    {
+        ArgumentNullException.ThrowIfNull(summary);
+        summary.AlertsMuted = muted;
+
+        if (DiscordConfigStore is null) return;
+
+        try
+        {
+            var config = await DiscordConfigStore.LoadAsync().ConfigureAwait(true);
+            var ids = config.MutedAccountIds.ToHashSet();
+            if (muted) { ids.Add(summary.Id); } else { ids.Remove(summary.Id); }
+            await DiscordConfigStore.SaveAsync(config with { MutedAccountIds = [.. ids] }).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Couldn't persist the alert mute for this account; it holds for this session only.");
+        }
+    }
 
     /// <summary>
     /// Guarded raise. An alert is a passenger — same contract as presence. A throwing subscriber

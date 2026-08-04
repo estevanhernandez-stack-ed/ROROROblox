@@ -1332,6 +1332,17 @@ public partial class App : Application
             var vm = _services.GetRequiredService<MainViewModel>();
             var dispatcher = _services.GetRequiredService<AlertDispatcher>();
 
+            vm.DiscordConfigStore = _services.GetRequiredService<DiscordConfigStore>();
+
+            // Paint the saved mutes onto the rows. Without this the preference persists but the
+            // row shows unmuted after every restart — the user re-mutes an account that was never
+            // going to alert, and stops trusting the toggle.
+            var muted = _services.GetRequiredService<DiscordConfigCache>().Current.MutedAccountIds.ToHashSet();
+            foreach (var row in vm.Accounts)
+            {
+                row.AlertsMuted = muted.Contains(row.Id);
+            }
+
             // Fire-and-forget on purpose: AlertsRaised is raised from ApplyPresence and the
             // watchdog's crossing handler, both of which are on the UI thread and neither of which
             // may be made to wait on an HTTP POST to Discord. DispatchAsync swallows its own
