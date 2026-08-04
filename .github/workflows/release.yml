@@ -125,7 +125,7 @@ jobs:
             '--repoUrl',     "https://github.com/${{ github.repository }}"
             '--token',       "$env:GITHUB_TOKEN"
             '--tag',         '${{ steps.ver.outputs.tag }}'
-            '--releaseName', 'RORORO ${{ steps.ver.outputs.tag }}'
+            '--releaseName', 'RoRoRo ${{ steps.ver.outputs.tag }}'
             '--outputDir',   'dist/release'
             '--merge'
           )

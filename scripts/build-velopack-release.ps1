@@ -56,7 +56,7 @@ $releaseDir = Join-Path $repoRoot 'dist\release'
 $logosDir = Join-Path $repoRoot 'src\ROROROblox.App\Package\Logos'
 $icoOutPath = Join-Path $logosDir 'AppIcon.ico'
 
-Write-Host "[velopack] RORORO v$Version ($Runtime, $Configuration) -- vpk packVersion=$packVersion" -ForegroundColor Cyan
+Write-Host "[velopack] RoRoRo v$Version ($Runtime, $Configuration) -- vpk packVersion=$packVersion" -ForegroundColor Cyan
 
 # ----- 1. Pre-flight ----------------------------------------------------------
 
