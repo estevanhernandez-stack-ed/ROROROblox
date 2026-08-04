@@ -746,6 +746,15 @@ public partial class App : Application
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         });
 
+        services.AddHttpClient<WebhookProbe>(client =>
+        {
+            // Setup help is best-effort and blocks a visible field, so it fails fast.
+            client.Timeout = TimeSpan.FromSeconds(5);
+            client.DefaultRequestHeaders.UserAgent.Clear();
+            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
+        });
+
         services.AddSingleton<DiscordConfigCache>();
 
         services.AddSingleton(sp => new AlertDispatcher(
@@ -1332,7 +1341,7 @@ public partial class App : Application
             var vm = _services.GetRequiredService<MainViewModel>();
             var dispatcher = _services.GetRequiredService<AlertDispatcher>();
 
-            vm.DiscordConfigStore = _services.GetRequiredService<DiscordConfigStore>();
+            vm.PreferencesWindowFactory = BuildPreferencesWindow;
 
             // Paint the saved mutes onto the rows. Without this the preference persists but the
             // row shows unmuted after every restart — the user re-mutes an account that was never
@@ -1463,6 +1472,29 @@ public partial class App : Application
     /// a missing/non-string key all resolve to <see cref="string.Empty"/> (feature off), same
     /// tamper-tolerant shape as <see cref="DiscordConfigStore"/>.
     /// </summary>
+    /// <summary>
+    /// The single place that knows what the Preferences dialog needs. Both entry points — the tray
+    /// menu and the main window's own command (via
+    /// <see cref="MainViewModel.PreferencesWindowFactory"/>) — go through here, so a dependency
+    /// added to that window is added once, in the composition root, rather than in every caller.
+    /// </summary>
+    private Preferences.PreferencesWindow BuildPreferencesWindow()
+    {
+        ArgumentNullException.ThrowIfNull(_services);
+        return new Preferences.PreferencesWindow(
+            _services.GetRequiredService<IAppSettings>(),
+            _services.GetRequiredService<IStartupRegistration>(),
+            _services.GetRequiredService<IThemeStore>(),
+            _services.GetRequiredService<ThemeService>(),
+            _services.GetRequiredService<IAccountStore>(),
+            _services.GetRequiredService<ROROROblox.Core.Transport.IAccountTransport>(),
+            _services.GetRequiredService<MainViewModel>(),
+            _services.GetRequiredService<DiscordConfigStore>(),
+            _services.GetRequiredService<AlertDispatcher>(),
+            _services.GetRequiredService<DiscordWebhookSender>(),
+            _services.GetRequiredService<WebhookProbe>());
+    }
+
     private static string ReadDiscordApplicationId()
     {
         try
@@ -1530,9 +1562,7 @@ public partial class App : Application
             var transport = _services.GetRequiredService<ROROROblox.Core.Transport.IAccountTransport>();
             var mainViewModel = _services.GetRequiredService<MainViewModel>();
             var discordConfigStore = _services.GetRequiredService<DiscordConfigStore>();
-            var window = new Preferences.PreferencesWindow(
-                settings, startup, themeStore, themeService,
-                accountStore, transport, mainViewModel, discordConfigStore);
+            var window = BuildPreferencesWindow();
             if (owner.IsLoaded) window.Owner = owner;
             SurfaceMainWindow(owner);
             window.ShowDialog();

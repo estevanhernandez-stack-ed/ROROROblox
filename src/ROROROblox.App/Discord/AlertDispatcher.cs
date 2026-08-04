@@ -32,6 +32,15 @@ public sealed class AlertDispatcher(
 
     public bool ClanWebhookRejected { get; private set; }
 
+    /// <summary>
+    /// Clear the rejection so a newly pasted webhook gets a real chance. Without this, a user who
+    /// deletes a webhook, sees the warning, makes a new one, and pastes it would still be routed
+    /// to desktop-only for the rest of the session — punished for fixing the problem.
+    /// </summary>
+    public void ResetMineRejection() => MineWebhookRejected = false;
+
+    public void ResetClanRejection() => ClanWebhookRejected = false;
+
     public async Task DispatchAsync(IReadOnlyList<AlertTrigger> triggers)
     {
         ArgumentNullException.ThrowIfNull(triggers);

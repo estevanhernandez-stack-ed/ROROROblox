@@ -69,12 +69,23 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal DiscordPresenceService? DiscordPresence { get; set; }
 
     /// <summary>
-    /// Set by the composition root so per-account mute survives a restart. Null in tests that do
-    /// not exercise mute, and in that case <see cref="SetAlertsMutedAsync"/> still updates the row
-    /// — the toggle works, it just does not persist, which is the right degradation for a
-    /// preference rather than refusing the click.
+    /// Test seam over the ctor-injected <see cref="_discordConfigStore"/>, so a fixture can supply
+    /// one without threading another argument through every construction site. Production always
+    /// takes the constructor path.
     /// </summary>
-    internal DiscordConfigStore? DiscordConfigStore { get; set; }
+    internal DiscordConfigStore? DiscordConfigStoreOverride { get; set; }
+
+    /// <summary>The store per-account mute writes through — ctor-injected, or a test override.</summary>
+    private DiscordConfigStore? AlertConfigStore => _discordConfigStore ?? DiscordConfigStoreOverride;
+
+    /// <summary>
+    /// Builds the Preferences dialog. Set by the composition root, which is the only place that
+    /// should know what that window needs — it now takes eleven services, and having this view
+    /// model construct it meant every dependency added to Preferences also had to be added here,
+    /// to a constructor that is already the largest in the app. The factory keeps that growth in
+    /// the one place designed to absorb it.
+    /// </summary>
+    internal Func<Preferences.PreferencesWindow>? PreferencesWindowFactory { get; set; }
 
     /// <summary>
     /// In-flight session-history rows keyed by account id. Populated when LaunchAccountAsync
@@ -2823,14 +2834,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         ArgumentNullException.ThrowIfNull(summary);
         summary.AlertsMuted = muted;
 
-        if (DiscordConfigStore is null) return;
+        if (AlertConfigStore is not { } store) return;
 
         try
         {
-            var config = await DiscordConfigStore.LoadAsync().ConfigureAwait(true);
+            var config = await store.LoadAsync().ConfigureAwait(true);
             var ids = config.MutedAccountIds.ToHashSet();
             if (muted) { ids.Add(summary.Id); } else { ids.Remove(summary.Id); }
-            await DiscordConfigStore.SaveAsync(config with { MutedAccountIds = [.. ids] }).ConfigureAwait(true);
+            await store.SaveAsync(config with { MutedAccountIds = [.. ids] }).ConfigureAwait(true);
         }
         catch (Exception ex)
         {
@@ -3413,19 +3424,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // could never run in production and left two places knowing where that file lives — a null
         // here means a test constructed this VM directly and is exercising OpenPreferencesCommand
         // without supplying one, which is a fixture bug to fix, not a case to paper over.
-        if (_discordConfigStore is null)
+        if (PreferencesWindowFactory is null)
         {
             throw new InvalidOperationException(
-                "OpenPreferences requires a DiscordConfigStore. DI supplies one in production; a " +
-                "test exercising OpenPreferencesCommand must pass one into the MainViewModel constructor.");
+                "OpenPreferences requires PreferencesWindowFactory. The composition root sets it " +
+                "in production; a test exercising OpenPreferencesCommand must supply one.");
         }
 
-        var window = new Preferences.PreferencesWindow(
-            _settings, _startupRegistration, _themeStore, _themeService,
-            _accountStore, _accountTransport, this, _discordConfigStore)
-        {
-            Owner = Application.Current.MainWindow,
-        };
+        var window = PreferencesWindowFactory();
+        window.Owner = Application.Current.MainWindow;
         window.ShowDialog();
     }
 

@@ -141,7 +141,7 @@ internal static class DiscordTestHarness
         windowDecorator.Dispose();
 
         var configStore = new DiscordConfigStore(Path.Combine(dir, "discord.dat"));
-        vm.DiscordConfigStore = configStore;
+        vm.DiscordConfigStoreOverride = configStore;
 
         accountStore.AddAsync("MutableAccount", "", "cookie").GetAwaiter().GetResult();
         vm.LoadAsync().GetAwaiter().GetResult();
