@@ -729,7 +729,15 @@ internal partial class PreferencesWindow : Window
     /// </summary>
     private void OnStreamerModeToggle(object sender, RoutedEventArgs e)
     {
-        if (_suppressClickHandlers) return;
+        // NO _suppressClickHandlers guard here, deliberately — it would only ever swallow a real
+        // user. Click is raised by ToggleButton.OnClick, which programmatic IsChecked assignment
+        // never reaches (that raises Checked/Unchecked instead), so the flag can never protect
+        // this handler from our own populate. What it CAN do is eat a genuine click: OnLoaded
+        // holds the flag across seven awaits — settings reads, a DPAPI decrypt of discord.dat,
+        // theme enumeration — while the window is already visible and interactive. Clicking the
+        // box in that window flipped IsChecked (WPF toggles before raising Click) and then hit the
+        // guard, so the box looked checked and streamer mode never engaged. Reported live by Este
+        // on the wave-1 build, and predicted by the cold review as "failure trace B".
         _mainViewModel.StreamerModeOn = StreamerModeToggle.IsChecked == true;
     }
 
