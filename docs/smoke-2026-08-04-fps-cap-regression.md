@@ -45,9 +45,14 @@ Roblox is *doing*. The 2026-08-02 failure looked completely correct in RoRoRo's 
 
 | Account | Cap set in RoRoRo | FPS on screen (Shift+F5) |
 |---|---|---|
-| 1 | 20 | |
-| 2 | 60 | |
-| 3 | 240 | |
+| 1 | 20 | 20 ✓ |
+| 2 | 60 | 60 ✓ |
+| 3 | 240 | 240 ✓ |
+
+> **Result — 2026-08-04: PASS.** All three held their own cap on the combined build (PR #81 +
+> #82 + the naming pass). First recorded pass for this feature; the only prior measurement was
+> the 2026-08-02 failure this sheet was written to re-test. The Discord and alerts work does not
+> disturb the launch path.
 
 **Pass:** each window holds its own number.
 **Fail:** any window shows another account's cap — that's the original bug, and the shape of the
