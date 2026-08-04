@@ -10,25 +10,8 @@ namespace ROROROblox.Tests.Discord;
 
 public class RosterSnapshotProjectionTests
 {
-    /// <summary>
-    /// Local copy of the fake used in <c>DiscordPresenceServiceTests</c> — not shared, per this
-    /// suite's convention of not reaching into other test classes' private nested fixtures.
-    /// </summary>
-    private sealed class FakeRpcClient : IDiscordRpcClient
-    {
-        public List<DiscordPresencePayload> Presences { get; } = [];
-        public int ClearCount { get; private set; }
-        public bool IsInitialized { get; private set; }
-        public void Initialize() => IsInitialized = true;
-        public void Deinitialize() => IsInitialized = false;
-        public void SetPresence(DiscordPresencePayload p) => Presences.Add(p);
-        public void ClearPresence() => ClearCount++;
-        public void Dispose() { }
-        public event EventHandler<string>? JoinRequested;
-        public event EventHandler? ConnectionFailed;
-        public event EventHandler? Ready;
-        public event EventHandler<string>? Errored;
-    }
+    // FakeRpcClient lives in its own file — see FakeRpcClient.cs. It used to be copied per-suite;
+    // three copies of one seam double is three chances for them to disagree about what the seam does.
 
     [Fact]
     public void BuildRosterSnapshot_UsesRenderName_SoStreamerModeIsHonoredOutbound()
