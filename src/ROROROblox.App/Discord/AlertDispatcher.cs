@@ -24,7 +24,9 @@ public sealed class AlertDispatcher(
     TimeProvider time,
     ILogger<AlertDispatcher> log)
 {
-    private readonly Dictionary<Guid, DateTimeOffset> _lastSent = [];
+    /// <summary>Keyed by (account, KIND) — see <see cref="AlertRouter.Route"/> for why the kind
+    /// belongs in the key.</summary>
+    private readonly Dictionary<(Guid AccountId, AlertKind Kind), DateTimeOffset> _lastSent = [];
 
     /// <summary>True once that webhook has returned 404. Surfaced in Settings; also stops the
     /// dispatcher offering the destination at all — see <see cref="EffectiveConfig"/>.</summary>
@@ -84,7 +86,7 @@ public sealed class AlertDispatcher(
                         break;
                 }
 
-                foreach (var t in alert.Triggers) { _lastSent[t.AccountId] = now; }
+                foreach (var t in alert.Triggers) { _lastSent[(t.AccountId, t.Kind)] = now; }
             }
         }
         catch (Exception ex)
