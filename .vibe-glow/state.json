@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "app": "RoRoRo",
-  "stage": "audit",
+  "stage": "waves",
   "adapter": "winui-powershell",
   "evidenceDir": "docs/ui-evidence",
   "designLanguagePath": "docs/superpowers/specs/2026-08-04-rororo-settings-navigation-conventions.md",
-  "findingsRegisterPath": "",
+  "findingsRegisterPath": "docs/superpowers/research/2026-08-04-rororo-settings-ui-audit-findings.md",
   "themes": [
     "brand",
     "magenta-heat",
@@ -13,10 +13,10 @@
   ],
   "invariants": [
     "Color belongs to the theme system; identity lives in structure — every surface binds DynamicResource brushes and users ship their own JSON themes, so a finding that prescribes a color is invalid. Findings must argue layout, weight, spacing, or shape.",
-    "The 626 Labs duo is never split — cyan #17d4fa and magenta #f22f89 appear together or not at all. A reviewer proposing one alone is proposing an off-brand surface.",
+    "The 626 Labs duo is never split — cyan #17d4fa and magenta #f22f89 appear together or not at all. CORRECTED 2026-08-04: JoinByLinkWindow.xaml:27-33 and WelcomeWindow.xaml:38-43 already breach this.",
     "Type roles are fixed — Space Grotesk display, Inter body, JetBrains Mono for small meta labels only (uppercase, 0.12em tracking). Findings may argue size, weight, and hierarchy, never a different family.",
     "WPF-UI (lepoco) owns control chrome — findings target our composition, not the library's control internals. The themed MenuItem check-glyph behavior is already worked around deliberately in two places and is not a defect to re-litigate.",
-    "No emoji in UI copy — this is a Store-listed product and the rule is already enforced across shipped surfaces.",
+    "No emoji in UI copy — this is a Store-listed product. CORRECTED 2026-08-04: the rule is a rule, but the code does NOT already obey it — MainWindow.xaml:302 and ThemeBuilderWindow.xaml:52 ship emoji.",
     "Token-contract extensions must be optional-with-fallback — Theme has exactly ten required slots and user themes on disk supply all of them. A new slot breaks every existing user theme unless it defaults."
   ],
   "waves": [],

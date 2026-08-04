@@ -31,15 +31,19 @@ may be the wrong home. The user's word was "maybe"; this campaign decides it on 
    `DynamicResource` brushes and users ship their own JSON themes, so a finding that prescribes a
    color is invalid. Findings must argue layout, weight, spacing, or shape.
 2. The 626 Labs duo is never split — cyan `#17d4fa` and magenta `#f22f89` appear together or not at
-   all. A reviewer proposing one alone is proposing an off-brand surface.
+   all. A reviewer proposing one alone is proposing an off-brand surface. **Corrected 2026-08-04:
+   two shipped windows already breach this** — `JoinByLink/JoinByLinkWindow.xaml:27-33` and
+   `About/WelcomeWindow.xaml:38-43` both render the two-tone header with no magenta.
 3. Type roles are fixed — Space Grotesk display, Inter body, JetBrains Mono for small meta labels
    only (uppercase, 0.12em tracking). Findings may argue size, weight, and hierarchy, never a
    different family.
 4. WPF-UI (lepoco) owns control chrome — findings target our composition, not the library's control
    internals. The themed `MenuItem` check-glyph behavior is already worked around deliberately in
    two places and is not a defect to re-litigate.
-5. No emoji in UI copy — this is a Store-listed product and the rule is already enforced across
-   shipped surfaces.
+5. No emoji in UI copy — this is a Store-listed product. **Corrected 2026-08-04: the rule is NOT
+   currently enforced.** Two emoji ship — `MainWindow.xaml:302` `"🎲 Reroll identity"` and
+   `Theming/ThemeBuilderWindow.xaml:52` `"📋 Copy AI prompt"`. The invariant stands as a rule;
+   the claim that the code already obeys it was false.
 6. Token-contract extensions must be optional-with-fallback — `Theme` has exactly ten required slots
    and user themes on disk supply all of them. A new slot breaks every existing user theme unless it
    defaults.
@@ -69,7 +73,7 @@ Discord, alerts, and theme."
 The device itself is not the problem — a page needs a name. The convention to hold is: **name the
 page once, in one place, and let the content start.**
 
-## C2 — Titles: six competing conventions across 25 windows
+## C2 — Titles: seven competing conventions across 25 windows
 
 | Pattern | Windows |
 | --- | --- |
@@ -78,7 +82,9 @@ page once, in one place, and let the content start.**
 | Bare noun | "Join by link", "Squad Launch", "Rename", "Export accounts", "Import accounts", "Private server" |
 | Problem statement | "Roblox is already running", "Roblox needed", "Saved accounts can't be unlocked", "Microsoft WebView2 needed", "Leftover Roblox processes" |
 | Imperative | "Pick a title-bar color", "Add Roblox account — log in", "Stop all Roblox instances" |
-| **Absent** | `FriendFollowWindow.xaml` sets no `Title` at all |
+| **Repo name, three parts** | `FriendFollowWindow` — set at runtime, `Friends/FriendFollowWindow.xaml.cs:133`: `"ROROROblox -- Friends -- {name}"`. The only three-part title, and the only one built on the repo name. |
+
+> **Corrected 2026-08-04 by the audit's skeptic pass.** This section originally said six conventions and listed `FriendFollowWindow` as having no title at all — a XAML-only sweep missed that it sets one in code-behind. The count is seven.
 
 The defensible split already present in the app: **destinations take a noun, interruptions state
 the problem.** "Squad Launch" is a place you went; "Roblox is already running" is something that
@@ -165,3 +171,17 @@ settled here by assertion:
 - What replaces the two-tone header, if anything.
 
 The brief's job is to make sure whatever is proposed can be checked against something.
+
+## C10 — The repo name leaks into user-facing copy (added by the audit, 2026-08-04)
+
+The product is **RoRoRo**; `ROROROblox` is for code identifiers only. It reaches users in four
+places, one of which is the surface a tray-resident app shows most often:
+
+- `Friends/FriendFollowWindow.xaml.cs:133` — window title, so also the taskbar and Alt-Tab
+- `Tray/TrayService.cs:221` — "Open ROROROblox" in the tray menu
+- `Tray/TrayService.cs:98-100` — the tray tooltip, all three states
+- `Diagnostics/DiagnosticsWindow.xaml.cs:220` — "ROROROblox support snapshot", first line of a
+  file users forward to other people
+
+The v1.15 naming pass fixed the exe metadata, the installer, and the package. It did not reach
+these, because they are runtime strings rather than build-time metadata.
