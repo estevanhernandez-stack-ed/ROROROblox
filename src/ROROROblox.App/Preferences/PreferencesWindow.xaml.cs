@@ -103,6 +103,41 @@ internal partial class PreferencesWindow : Window
         {
             presence.StatusChanged -= OnDiscordStatusChanged;
         }
+
+        // Same leak shape as the presence subscription above: this window is transient per-open,
+        // MainViewModel is a singleton, so an unsubscribed handler would fire through a closed
+        // window's Dispatcher for the rest of the process.
+        _mainViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+    }
+
+    /// <summary>
+    /// Keeps the streamer-mode checkbox a VIEW of the provider rather than a snapshot of it.
+    /// <para>
+    /// Streamer mode is flippable from three places — this checkbox, the tray menu, and a plugin —
+    /// and the tray menu is reachable while this window is open, because a modal
+    /// <c>ShowDialog</c> disables only the top-level windows that existed when it opened, and the
+    /// tray's <c>ContextMenu</c> popup is created after that. Without this subscription, flipping
+    /// the mask from the tray leaves this checkbox reporting the opposite of the truth on the one
+    /// control that tells a streamer whether their names are hidden.
+    /// </para>
+    /// <para>
+    /// Wave 1 shipped exactly that bug for one review round: the original control was a two-way
+    /// binding, and moving it here turned it into a single read in <c>OnLoaded</c>.
+    /// </para>
+    /// </summary>
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(MainViewModel.StreamerModeOn)) return;
+
+        _suppressClickHandlers = true;
+        try
+        {
+            StreamerModeToggle.IsChecked = _mainViewModel.StreamerModeOn;
+        }
+        finally
+        {
+            _suppressClickHandlers = false;
+        }
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -117,7 +152,9 @@ internal partial class PreferencesWindow : Window
 
             // Streamer mode reads through to IStreamerIdentityProvider via the view model — there is
             // no separate persisted flag here, which is why this reads the VM rather than _settings.
+            // The SUBSCRIPTION is the load-bearing half: see OnViewModelPropertyChanged.
             StreamerModeToggle.IsChecked = _mainViewModel.StreamerModeOn;
+            _mainViewModel.PropertyChanged += OnViewModelPropertyChanged;
 
             // Discord presence + Join (v1.14+ plan). DiscordPresence is only non-null when
             // App.OnStartup found a non-empty Discord:ApplicationId in appsettings.json — see
@@ -683,10 +720,11 @@ internal partial class PreferencesWindow : Window
     /// Streamer mode, moved here from the main window (audit finding F-008).
     /// <para>
     /// Writes through <see cref="MainViewModel.StreamerModeOn"/>, whose setter fire-and-forgets to
-    /// <c>IStreamerIdentityProvider.SetActiveAsync</c> and waits for the provider to confirm before
-    /// raising a change notification. That means this checkbox, the tray checkmark, and the row
-    /// rendering are three views of one source of truth rather than three flags that can drift —
-    /// so there is deliberately no local bool here to keep in step.
+    /// <c>IStreamerIdentityProvider.SetActiveAsync</c> — it does NOT wait for the provider, and the
+    /// write can fail silently (see the register's follow-up on that inherited behaviour). What
+    /// keeps this checkbox honest is not the write but the read: <see cref="OnViewModelPropertyChanged"/>
+    /// re-reads on the provider's confirmation, so the checkbox, the tray checkmark and the row
+    /// rendering end up as three views of one source of truth rather than three flags that drift.
     /// </para>
     /// </summary>
     private void OnStreamerModeToggle(object sender, RoutedEventArgs e)

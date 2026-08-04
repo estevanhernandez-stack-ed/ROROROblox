@@ -28,7 +28,7 @@
                            FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource WhiteBrush}" />
             </StackPanel>
-            <TextBlock Text="How RoRoRo behaves — startup, idle, Discord, alerts, and theme."
+            <TextBlock Text="How RoRoRo behaves."
                        FontSize="11"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0" />

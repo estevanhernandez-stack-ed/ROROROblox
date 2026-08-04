@@ -242,7 +242,7 @@ internal partial class GamesWindow : Window
         var game = _items.FirstOrDefault(f => f.PlaceId == placeId);
         var confirm = MessageBox.Show(
             this,
-            $"Remove {game?.RenderName ?? "this game"} from your library?",
+            $"Remove {game?.RenderName ?? "this game"} from your saved games?",
             "Remove game",
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
@@ -273,7 +273,7 @@ internal partial class GamesWindow : Window
         var server = _serverItems.FirstOrDefault(s => s.Id == id);
         var confirm = MessageBox.Show(
             this,
-            $"Remove {server?.RenderName ?? "this server"} from your library?",
+            $"Remove {server?.RenderName ?? "this server"} from your saved servers?",
             "Remove server",
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);

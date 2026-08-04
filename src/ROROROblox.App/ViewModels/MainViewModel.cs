@@ -659,7 +659,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     public string DefaultGameTooltip =>
         _currentDefaultGame is null
-            ? "Launches open Roblox at home. Set a default game in the Library to launch straight into it."
+            ? "Launches open Roblox at home. Set a default game under Games to launch straight into it."
             : "The default game Launch As uses when no per-row pick is set. Click to change.";
 
     private bool _isCompact;

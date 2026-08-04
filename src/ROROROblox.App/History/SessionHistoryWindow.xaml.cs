@@ -286,7 +286,7 @@ internal partial class SessionHistoryWindow : Window
                     Cursor = System.Windows.Input.Cursors.Hand,
                     HorizontalAlignment = HorizontalAlignment.Right,
                     Margin = new Thickness(0, 2, 0, 0),
-                    ToolTip = "Add this place to your saved Games library so you can launch into it any time.",
+                    ToolTip = "Add this place to your saved games so you can launch into it any time.",
                     Tag = row,
                 };
                 bookmark.Click += OnBookmarkClick;
