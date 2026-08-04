@@ -100,6 +100,15 @@
 | F-074 | CV-18 | Stop all confirmation | copy | 1 | 2 | `StopAllConfirmWindow.xaml:36` "UNSAVED GAME STATE WILL BE LOST" in the JetBrains Mono 10px uppercase label style at #5A6982, the dimmest text on the surface | Shape says "label," words say "you will lose work" — the only warning in a destructive confirmation dressed as a section header | Move into the body as ordinary 12px prose: "Anything not saved in those games is lost." Reserve mono-uppercase for genuine labels | open |
 | F-075 | CV-12 | cross-surface, row controls, empty states, Welcome | copy | 0 | 4 | `MainWindow.xaml:131,334,700,704,578,1141` — all Emoji_Presentation=No text glyphs; `WelcomeWindow.xaml:123,130` teaches ☰/★ by showing the same glyphs | These are functional glyphs, not decoration — sole content of controls too small for a label, or state indicators the Welcome tour teaches by name | No change — recorded as a deliberate keep so a later pass doesn't strip them; ▶ Start (:1682) flagged as the one marginal case | open |
 
+## Rulings by the user (these override the register)
+
+- **The two shipped emoji stay.** Este, 2026-08-04, on approving this register: the die on
+  `Reroll identity` is thematic to streamer mode's deliberately silly naming, not decoration, and
+  the same goes for the clipboard on `Copy AI prompt`. Any finding whose fix is "delete the emoji"
+  is **closed as ruled**, not open. What those findings were really reacting to is **placement** —
+  `Reroll identity` is a settings-shaped action sitting on the main dashboard — and that is already
+  covered by the goal-1 relocation work. Invariant 5 is amended in the brief accordingly.
+
 ## Absorbed
 
 - **VC-2** → absorbed into **VC-1** (F-025) — same root cause (fill == page bg, no shape affordance), same one-control-style-dictionary fix.

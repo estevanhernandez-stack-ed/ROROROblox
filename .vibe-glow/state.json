@@ -16,7 +16,7 @@
     "The 626 Labs duo is never split — cyan #17d4fa and magenta #f22f89 appear together or not at all. CORRECTED 2026-08-04: JoinByLinkWindow.xaml:27-33 and WelcomeWindow.xaml:38-43 already breach this.",
     "Type roles are fixed — Space Grotesk display, Inter body, JetBrains Mono for small meta labels only (uppercase, 0.12em tracking). Findings may argue size, weight, and hierarchy, never a different family.",
     "WPF-UI (lepoco) owns control chrome — findings target our composition, not the library's control internals. The themed MenuItem check-glyph behavior is already worked around deliberately in two places and is not a defect to re-litigate.",
-    "No emoji in UI copy — this is a Store-listed product. CORRECTED 2026-08-04: the rule is a rule, but the code does NOT already obey it — MainWindow.xaml:302 and ThemeBuilderWindow.xaml:52 ship emoji.",
+    "No emoji in UI copy. AMENDED 2026-08-04 by Este: the die on Reroll identity and the clipboard on Copy AI prompt STAY — thematic to streamer mode's deliberately silly naming, not decoration. The defect at that site is placement, not the glyph; moving Reroll identity off the dashboard (goal 1) is the fix. Do not strip them in a copy wave.",
     "Token-contract extensions must be optional-with-fallback — Theme has exactly ten required slots and user themes on disk supply all of them. A new slot breaks every existing user theme unless it defaults."
   ],
   "waves": [],

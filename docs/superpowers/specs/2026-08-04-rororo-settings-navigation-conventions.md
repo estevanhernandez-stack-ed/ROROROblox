@@ -42,8 +42,15 @@ may be the wrong home. The user's word was "maybe"; this campaign decides it on 
    two places and is not a defect to re-litigate.
 5. No emoji in UI copy — this is a Store-listed product. **Corrected 2026-08-04: the rule is NOT
    currently enforced.** Two emoji ship — `MainWindow.xaml:302` `"🎲 Reroll identity"` and
-   `Theming/ThemeBuilderWindow.xaml:52` `"📋 Copy AI prompt"`. The invariant stands as a rule;
-   the claim that the code already obeys it was false.
+   `Theming/ThemeBuilderWindow.xaml:52` `"📋 Copy AI prompt"`.
+
+   **AMENDED 2026-08-04 by Este, and this ruling governs.** The die on *Reroll identity* stays. It
+   is thematic rather than decorative: streamer mode exists to hand accounts deliberately silly
+   fake names, and a die on the action that re-rolls them reads as part of that feature, not as
+   ornament. The real defect at that site is **placement, not the glyph** — Reroll identity is a
+   settings-shaped action sitting on the main dashboard, and moving it (goal 1) resolves what the
+   emoji finding was really reacting to. Do not strip either glyph as part of a copy wave. Revisit
+   only if a Store reviewer raises it.
 6. Token-contract extensions must be optional-with-fallback — `Theme` has exactly ten required slots
    and user themes on disk supply all of them. A new slot breaks every existing user theme unless it
    defaults.
