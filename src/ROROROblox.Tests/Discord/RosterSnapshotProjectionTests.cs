@@ -47,6 +47,21 @@ public class RosterSnapshotProjectionTests
     }
 
     [Fact]
+    public void BuildRosterSnapshot_CarriesStreamerModeState_FromTheSameProviderRenderNameUses()
+    {
+        // Same source of truth as RenderName -- not a second flag invented for presence.
+        // DiscordTestHarness's fake starts active (matching its RenderName-masking default), so
+        // this also proves the flag is actually read, not just always false/true by construction.
+        var (vm, _) = DiscordTestHarness.VmWithOneInGameAccount(realName: "este_real", maskedName: "CaptainNoodle");
+
+        Assert.True(vm.BuildRosterSnapshot().IsStreamerModeActive);
+
+        vm.StreamerModeOn = false;
+
+        Assert.False(vm.BuildRosterSnapshot().IsStreamerModeActive);
+    }
+
+    [Fact]
     public void BuildRosterSnapshot_CarriesTheServerFromPresence()
     {
         var (vm, row) = DiscordTestHarness.VmWithOneInGameAccount(realName: "a", maskedName: "a");
@@ -209,11 +224,18 @@ public class RosterSnapshotProjectionTests
         // ever run — this repo's established fix for that exact problem is the internal body method,
         // which this test calls instead.
         //
-        // With only one account and it dropping out of game, the roster is now empty, so the
-        // service's Refresh() should CLEAR the presence rather than leave the stale "in game" push
-        // in place. Deleting the DiscordPresence?.Refresh() line from ApplySessionLimited was
-        // verified BY EXPERIMENT to make this assertion fail (see task-6-report.md, fix round 2) —
-        // ClearCount stays 0 and rpc.Presences keeps only the original in-game push.
+        // With only one account and it dropping out of game, the roster is now empty, so Refresh()
+        // must push AGAIN rather than leave the stale "in game" card standing. Deleting the
+        // DiscordPresence?.Refresh() line from ApplySessionLimited was verified BY EXPERIMENT to
+        // make this assertion fail (see task-6-report.md, fix round 2).
+        //
+        // What that second push CONTAINS changed after the idle-presence decision (2026-08-03): the
+        // service used to call ClearPresence when the roster emptied, and now publishes a deliberate
+        // idle payload instead, because the RPC connection stays open either way and a cleared entry
+        // renders as a blank card. The regression this test exists to catch is unchanged — a missing
+        // Refresh means no second push at all — so the assertion moved from "cleared once" to "pushed
+        // again, and the new push is the idle one." Asserting only the count would let a stale
+        // in-game payload pass, so the content is checked too.
         var (vm, row) = DiscordTestHarness.VmWithOneInGameAccount(realName: "a", maskedName: "a");
         var rpc = new FakeRpcClient();
         var svc = new DiscordPresenceService(rpc, vm.BuildRosterSnapshot, NullLogger.Instance);
@@ -225,6 +247,46 @@ public class RosterSnapshotProjectionTests
 
         vm.ApplySessionLimited(row.Id);
 
-        Assert.Equal(1, rpc.ClearCount);
+        Assert.Equal(2, rpc.Presences.Count);
+        var afterDropout = rpc.Presences[^1];
+        Assert.Equal("idle_large", afterDropout.LargeImageKey);
+        Assert.Null(afterDropout.Party);          // an idle entry is never joinable
+        Assert.Null(afterDropout.StartedAtUtc);   // and has no elapsed run
+    }
+
+    [Fact]
+    public async Task StreamerModeToggle_RefreshesDiscordPresence_ProvingTheWiringIsCovered()
+    {
+        // Flipping streamer mode changes what BuildRosterSnapshot hands PresencePayloadBuilder --
+        // masked-vs-real name, and now the anonymized-vs-honest roster count and party. A push
+        // already sitting in Discord goes stale the instant the mode flips unless something calls
+        // DiscordPresence.Refresh() from the same place that reacts to the flip
+        // (MainViewModel.OnStreamerIdentityChanged). Same proof shape as
+        // SessionLimited_PushesAClearedPresence_ProvingTheMissingRefreshRegressionIsCovered: a real
+        // DiscordPresenceService over a fake Discord RPC client, wired to vm.DiscordPresence, so
+        // this exercises the actual production handler rather than a hand-rolled stand-in for it.
+        //
+        // Verified by experiment (2026-08-03): commenting out the `DiscordPresence?.Refresh();`
+        // line in OnStreamerIdentityChanged made this exact test fail with
+        // "Assert.Equal() Failure: Values differ / Expected: 2 / Actual: 1" -- only the pre-toggle,
+        // streamer-masked push was ever observed. Restored immediately after; see commit history.
+        var (vm, row) = DiscordTestHarness.VmWithOneInGameAccount(realName: "este_real", maskedName: "CaptainNoodle");
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, vm.BuildRosterSnapshot, NullLogger.Instance);
+        vm.DiscordPresence = svc;
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true, JoinEnabled = true });
+
+        var beforeToggle = Assert.Single(rpc.Presences);
+        // Streamer mode is active by default in this harness (mirrors RenderName's masked-by-
+        // default fixture) -- the state line must not leak the roster's real headcount.
+        Assert.DoesNotContain(beforeToggle.State!, char.IsDigit);
+
+        vm.StreamerModeOn = false;
+
+        Assert.Equal(2, rpc.Presences.Count);
+        var afterToggle = rpc.Presences[^1];
+        // "1 account" -- the real count is now visible, proving the second push actually reflects
+        // the new state rather than being a duplicate of the first.
+        Assert.Contains(afterToggle.State!, char.IsDigit);
     }
 }

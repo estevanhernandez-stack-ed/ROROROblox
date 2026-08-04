@@ -7,9 +7,9 @@
 **Depends on:** v1.14 server-instance targeting
 ([`2026-08-02-server-instance-targeting-design.md`](2026-08-02-server-instance-targeting-design.md)) — shipped.
 
-> **Banner correction — 2026-08-03, post-build (feat/discord-presence).** Two places build reality
-> diverged from what's written below. Per this repo's rule, the divergence is recorded here rather
-> than rewritten into the body.
+> **Banner correction — 2026-08-03, post-build (feat/discord-presence).** Three places build
+> reality diverged from what's written below. Per this repo's rule, the divergence is recorded
+> here rather than rewritten into the body.
 >
 > **(a) §5.2 Join confirm is gated on ORIGIN, not just destination.** As originally written, §5.2
 > only says the private-server warning applies "for presence" — it doesn't distinguish where a join
@@ -31,6 +31,51 @@
 > reconnect). This is a known deviation to revisit, not an oversight to discover later — flagged
 > here so a future session doesn't have to rediscover it by reading Discord's own rate-limit
 > behavior the hard way.
+>
+> **(c) §5.1's "Nothing running → Presence cleared entirely" row is wrong.** Live smoke testing
+> (2026-08-03) showed why: `ClearPresence()` does not close the RPC connection — that only happens
+> when presence is toggled OFF (a different path, unchanged). With nothing running, the connection
+> stayed open and Discord kept rendering a bare "Playing RoRoRo" entry with no artwork and no text.
+> That reads as broken, not absent, which defeats §1's whole premise that every presence is the
+> product introducing itself to a Discord full of Roblox players. The choice was never "cleared vs.
+> shown" — the entry was always going to be visible while the app is open and presence is on. The
+> real choice was blank-looking vs. deliberate, so build reality now publishes an idle payload
+> instead of clearing: `idle_large` artwork, and text built from the one thing the roster still
+> knows with nothing live — how many saved accounts are standing by (`"3 saved accounts, standing
+> by"` / `"1 saved account, standing by"` / `"No saved accounts yet"`). No party, no join secret,
+> no timestamp — an idle entry is not joinable and has no elapsed run. `ClearPresence()` is still
+> used, unchanged, for the presence-OFF path, where the entry should disappear entirely because the
+> connection is actually going away. See `PresencePayloadBuilder.BuildIdle` in
+> `src/ROROROblox.Core/Discord/PresencePayloadBuilder.cs` and `PresenceFields.IsIdle`'s remarks in
+> `src/ROROROblox.Core/Discord/RosterSnapshot.cs`.
+>
+> **(d) §5.1 doesn't state a party maximum at all (live smoke test, 2026-08-03).** Build reality
+> (pre-fix) hardcoded it to `100`, a magic number that exists only because Discord will not render
+> a Join button on a party it considers full. A viewer reads "3 of 100" as three of a hundred,
+> which is not what it means. Fixed: the party max is now the user's TOTAL saved-account count
+> (from the roster snapshot, live or not) — the only honest ceiling, since that's the true upper
+> bound on how many of the user's accounts could ever land in one server. The full-roster edge
+> (every saved account in one server, so size == max) is shipped as-is, unfudged — whether Discord
+> actually hides Join at size == max is UNVERIFIED reasoning, not measurement, and Este is checking
+> it live; see the comment at the party-max computation in `PresencePayloadBuilder.Build` for what
+> to change if it turns out Join does disappear. See
+> `src/ROROROblox.Core/Discord/PresencePayloadBuilder.cs` and `PresenceFields.JoinableServerAccountMax`'s
+> remarks in `src/ROROROblox.Core/Discord/RosterSnapshot.cs`.
+>
+> **(e) §5.1's state-line table and §7.1 ("Streamer mode is honored outbound") both describe names
+> as the only thing streamer mode masks.** Build reality (live smoke test, 2026-08-03): the roster
+> COUNT is the same category of disclosure — "3 of 8" sizes the fleet exactly as much as the real
+> names would — and it was leaking unmasked through both the party numbers and the state text right
+> alongside the already-masked names. Fixed: `RosterSnapshot.IsStreamerModeActive` (read from the
+> same `IStreamerIdentityProvider` that already supplies `RenderName` — see
+> `MainViewModel.BuildRosterSnapshot`) drives `PresencePayloadBuilder` to publish `"In a server"` /
+> `"In a game"` in place of any state line with a digit in it, a neutral placeholder party (size 1,
+> max 2 — a Discord rendering requirement, not a fact about the user) in place of the real
+> count/max, and an idle card with no digit (`"Accounts standing by"`) in place of `"N accounts
+> standing by"`. The Join button, game name, and Join secret are all unaffected — streamer mode
+> hides the count, never the function. See `PresencePayloadBuilder.Build`/`BuildIdle` in
+> `src/ROROROblox.Core/Discord/PresencePayloadBuilder.cs` and `RosterSnapshot.IsStreamerModeActive`'s
+> remarks in `src/ROROROblox.Core/Discord/RosterSnapshot.cs`.
 
 ## 1. Why now
 

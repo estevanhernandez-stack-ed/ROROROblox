@@ -73,8 +73,11 @@ public class DiscordPresenceServiceTests
     }
 
     [Fact]
-    public async Task Refresh_NothingRunning_ClearsPresenceRatherThanShowingStaleState()
+    public async Task Refresh_NothingRunning_PublishesIdlePresenceRatherThanClearing()
     {
+        // 2026-08-03, live smoke test: the RPC connection stays open regardless, so clearing left
+        // a bare "Playing RoRoRo" with no artwork -- the entry looked broken, not absent. Nothing
+        // running now publishes a deliberate idle payload instead of calling ClearPresence.
         var rpc = new FakeRpcClient();
         var roster = Roster(Live("A"));
         var svc = new DiscordPresenceService(rpc, () => roster, NullLogger.Instance);
@@ -83,7 +86,40 @@ public class DiscordPresenceServiceTests
         roster = Roster();          // everything closed
         svc.Refresh();
 
+        Assert.Equal(0, rpc.ClearCount);
+        var pushed = rpc.Presences[^1];
+        Assert.Equal("idle_large", pushed.LargeImageKey);
+        Assert.Null(pushed.Party);
+        Assert.Null(pushed.StartedAtUtc);
+    }
+
+    [Fact]
+    public async Task Refresh_NothingRunning_UsesTheActiveImageKeyOnceSomethingIsRunningAgain()
+    {
+        // Companion to the idle test above: the "active_large" key is not lost once idle is wired
+        // in -- it is still what a live roster gets.
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, () => Roster(Live("A")), NullLogger.Instance);
+
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true });
+
+        Assert.Equal("active_large", Assert.Single(rpc.Presences).LargeImageKey);
+    }
+
+    [Fact]
+    public async Task ApplyAsync_TurningPresenceOff_StillClearsAndDeinitializes()
+    {
+        // The idle payload only replaces the "nothing running" case -- turning presence OFF is a
+        // different path entirely and must still wipe the entry rather than leave the last idle
+        // (or active) payload sitting in Discord.
+        var rpc = new FakeRpcClient();
+        var svc = new DiscordPresenceService(rpc, () => Roster(Live("A")), NullLogger.Instance);
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = true });
+
+        await svc.ApplyAsync(new DiscordConfig { PresenceEnabled = false });
+
         Assert.Equal(1, rpc.ClearCount);
+        Assert.False(rpc.IsInitialized);
     }
 
     [Fact]

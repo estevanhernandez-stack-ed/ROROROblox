@@ -15,13 +15,6 @@ namespace ROROROblox.App.Discord;
 /// </summary>
 internal sealed class DiscordPresenceService : IDisposable
 {
-    /// <summary>
-    /// Discord will not render a Join button on a party it considers full — so <c>MaxSize</c> must
-    /// always exceed the live party <c>Size</c>. This is comfortably above any realistic RoRoRo
-    /// roster; it is not a Roblox server-capacity figure and must never be read as one.
-    /// </summary>
-    private const int PartyMaxSize = 100;
-
     private readonly IDiscordRpcClient _client;
     private readonly Func<RosterSnapshot> _roster;
     private readonly ILogger _log;
@@ -154,7 +147,6 @@ internal sealed class DiscordPresenceService : IDisposable
             if (!_config.PresenceEnabled || !_client.IsInitialized) return;
 
             var fields = PresencePayloadBuilder.Build(_roster());
-            if (fields is null) { _client.ClearPresence(); return; }
 
             DiscordPresenceParty? party = null;
             if (_config.JoinEnabled && fields.JoinableServer is { } server)
@@ -176,14 +168,19 @@ internal sealed class DiscordPresenceService : IDisposable
                 var secret = JoinSecretCodec.Encode(launchTarget);
                 if (secret is not null)
                 {
+                    // Size + Max both come from PresencePayloadBuilder now — the honest
+                    // saved-account ceiling normally, or streamer mode's neutral 1-of-2 placeholder
+                    // when active (see PresenceFields.JoinableServerAccountMax's remarks). This
+                    // service no longer decides either number.
                     party = new DiscordPresenceParty(
-                        $"rororo-{server.Server.JobId}", secret, fields.JoinableServerAccountCount, PartyMaxSize);
+                        $"rororo-{server.Server.JobId}", secret, fields.JoinableServerAccountCount, fields.JoinableServerAccountMax);
                 }
             }
 
             _client.SetPresence(new DiscordPresencePayload(
                 fields.State, fields.Details, fields.StartedAtUtc,
-                LargeImageKey: "active_large", LargeImageText: "RoRoRo", Party: party));
+                LargeImageKey: fields.IsIdle ? "idle_large" : "active_large",
+                LargeImageText: "RoRoRo", Party: party));
         }
         catch (Exception ex)
         {

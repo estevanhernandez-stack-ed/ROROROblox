@@ -1,6 +1,7 @@
 using DiscordRPC;
 using DiscordRPC.Message;
 using Microsoft.Extensions.Logging;
+using ROROROblox.App.Discord;
 
 namespace ROROROblox.App.Discord.Internal;
 
@@ -57,8 +58,38 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
             _client.OnJoin += (_, e) => SafeInvoke(() => JoinRequested?.Invoke(this, e.Secret));
 
             _client.Initialize();
-            // Without this the Join button renders and its click is never delivered.
-            _client.Subscribe(EventType.Join);
+
+            // Lachee tracks its OWN internal "URI scheme registered" flag — separate from the
+            // `roblox-rororo:` scheme JoinUriScheme.Register wrote earlier in OnStartup, which
+            // Lachee knows nothing about. Subscribe() throws InvalidConfigurationException unless
+            // this ran first. Wrapped and swallowed: a failure here still leaves presence (state,
+            // details, party) working, just without the Join button.
+            try
+            {
+                _client.RegisterUriScheme();
+
+                // Lachee's RegisterUriScheme writes the registry command WITHOUT the "%1"
+                // argument placeholder, so Windows launches us with no argument when Discord
+                // dispatches the discord-{applicationId} scheme. Fix the value it just wrote.
+                var exePath = Environment.ProcessPath;
+                if (exePath is not null)
+                {
+                    JoinUriScheme.FixupDiscordSchemeCommand(_applicationId, exePath);
+                }
+                else
+                {
+                    _log.LogDebug("Environment.ProcessPath was null; skipped Discord URI scheme command fixup.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "Discord RegisterUriScheme failed; presence will connect without a Join button this session.");
+            }
+
+            // Without this the Join button renders and its click is never delivered. Subscribing
+            // to JoinRequest (in addition to Join) covers both the in-client Join click and the
+            // "Ask to Join" request path.
+            _client.Subscribe(EventType.Join | EventType.JoinRequest);
         }
         catch (Exception ex)
         {

@@ -16,9 +16,55 @@ public class PresencePayloadBuilderTests
             InGameSinceUtc: since ?? T0);
 
     [Fact]
-    public void Build_NothingRunning_ReturnsNull_SoPresenceIsCleared()
+    public void Build_NothingRunning_ReturnsAnIdlePayload_NotNull()
     {
-        Assert.Null(PresencePayloadBuilder.Build(new RosterSnapshot([])));
+        // 2026-08-03, live smoke test: the RPC connection stays open whether or not anything is
+        // running, so returning null (-> ClearPresence) still rendered a bare "Playing RoRoRo"
+        // with no artwork and no text. Nothing running now means an honest idle payload, never a
+        // null the caller has to interpret as "clear."
+        var fields = PresencePayloadBuilder.Build(new RosterSnapshot([]));
+
+        Assert.NotNull(fields);
+        Assert.True(fields.IsIdle);
+        Assert.Equal("No accounts yet", fields.Details);
+        Assert.Null(fields.JoinableServer);           // not joinable
+        Assert.Null(fields.StartedAtUtc);              // no elapsed run
+        Assert.Equal(0, fields.JoinableServerAccountCount);
+    }
+
+    [Fact]
+    public void Build_NothingRunning_SavedAccountsStandingBy_UsesTheRosterCount()
+    {
+        // The roster still knows the saved accounts even when none are live -- that count is real
+        // information, so the idle line says it rather than inventing activity.
+        var snapshot = new RosterSnapshot([
+            new(Guid.NewGuid(), "CaptainNoodle", InGame: false, null, null, null),
+            new(Guid.NewGuid(), "LadyPixel", InGame: false, null, null, null),
+            new(Guid.NewGuid(), "DoctorDuck", InGame: false, null, null, null)]);
+
+        var fields = PresencePayloadBuilder.Build(snapshot);
+
+        Assert.True(fields.IsIdle);
+        Assert.Equal("3 accounts standing by", fields.Details);
+    }
+
+    [Fact]
+    public void Build_NothingRunning_OneSavedAccount_UsesSingularWording()
+    {
+        var snapshot = new RosterSnapshot([
+            new(Guid.NewGuid(), "CaptainNoodle", InGame: false, null, null, null)]);
+
+        var fields = PresencePayloadBuilder.Build(snapshot);
+
+        Assert.Equal("1 account standing by", fields.Details);
+    }
+
+    [Fact]
+    public void Build_LiveAccounts_IsIdleIsFalse()
+    {
+        var fields = PresencePayloadBuilder.Build(new RosterSnapshot([InGame("CaptainNoodle", ServerA)]));
+
+        Assert.False(fields.IsIdle);
     }
 
     [Fact]
@@ -149,5 +195,111 @@ public class PresencePayloadBuilderTests
         Assert.Equal("CODE", fields.JoinableServer.PrivateServerCode);
         Assert.Equal(PrivateServerCodeKind.LinkCode, fields.JoinableServer.PrivateServerCodeKind);
         Assert.Equal(2, fields.JoinableServerAccountCount);
+    }
+
+    // ---------- Party max is the saved-account count, not a magic constant (2026-08-03) ----------
+
+    [Fact]
+    public void Build_PartyMax_IsTheSavedAccountCount_NotAConstant()
+    {
+        // The only honest ceiling: how many of the user's accounts could ever land in one server
+        // is bounded by how many are SAVED, not by a Discord-rendering magic number (the old 100).
+        // Live and saved deliberately differ here -- two live together, one saved but offline --
+        // so a max that just echoed the live/party count (or a hardcoded constant) would slip past
+        // a same-number scenario without being caught.
+        var snapshot = new RosterSnapshot([
+            InGame("CaptainNoodle", ServerA),
+            InGame("LadyPixel", ServerA),
+            new RosterAccount(Guid.NewGuid(), "OfflineDuck", InGame: false, null, null, null)]);
+
+        var fields = PresencePayloadBuilder.Build(snapshot);
+
+        Assert.Equal(3, fields!.JoinableServerAccountMax);   // 3 saved accounts total
+        Assert.Equal(2, fields.JoinableServerAccountCount);  // 2 actually together right now
+        Assert.NotEqual(100, fields.JoinableServerAccountMax);
+    }
+
+    [Fact]
+    public void Build_AllSavedAccountsTogether_PartyIsFull_NotFudged()
+    {
+        // The full-roster edge: every saved account is live in the SAME server, so size == max.
+        // This is deliberately NOT fudged (e.g. max = size + 1) -- the honest number ships as-is;
+        // whether Discord actually hides Join at size == max is unverified and is being checked
+        // live (see PresencePayloadBuilder's remarks at the party-max computation).
+        var snapshot = new RosterSnapshot([InGame("CaptainNoodle", ServerA), InGame("LadyPixel", ServerA)]);
+
+        var fields = PresencePayloadBuilder.Build(snapshot);
+
+        Assert.Equal(2, fields!.JoinableServerAccountCount);
+        Assert.Equal(2, fields.JoinableServerAccountMax);
+        Assert.Equal(fields.JoinableServerAccountCount, fields.JoinableServerAccountMax);
+    }
+
+    // ---------- Streamer mode anonymizes the roster COUNT outbound (2026-08-03) ----------
+
+    [Fact]
+    public void Build_StreamerModeActive_StateHasNoDigitsAndPartyIsTheNeutralPlaceholder()
+    {
+        var snapshot = new RosterSnapshot(
+            [InGame("CaptainNoodle", ServerA), InGame("LadyPixel", ServerA), InGame("DoctorDuck", ServerA)],
+            IsStreamerModeActive: true);
+
+        var fields = PresencePayloadBuilder.Build(snapshot);
+
+        // No digit anywhere in the state text -- "3 accounts in one server" is exactly the kind
+        // of headcount streamer mode exists to hide.
+        Assert.DoesNotContain(fields!.State!, char.IsDigit);
+        // The game name is not a count -- it still shows. Streamer mode hides the fleet size, not
+        // where the fleet is.
+        Assert.Equal("Pet Simulator 99!", fields.Details);
+        // Discord requires SOME party size to render Join at all; 1 of 2 says nothing true about
+        // the real fleet (not 3 together, not 3 saved) while still satisfying that requirement.
+        Assert.Equal(1, fields.JoinableServerAccountCount);
+        Assert.Equal(2, fields.JoinableServerAccountMax);
+    }
+
+    [Fact]
+    public void Build_StreamerModeActive_NoKnownServer_SaysInAGameNotInAServer()
+    {
+        // Streamer mode says WHERE, not HOW MANY -- "in a server" only when a server is actually
+        // known; otherwise "in a game" is the honest (still countless) alternative.
+        var snapshot = new RosterSnapshot([InGame("CaptainNoodle", server: null)], IsStreamerModeActive: true);
+
+        var fields = PresencePayloadBuilder.Build(snapshot);
+
+        Assert.Equal("In a game", fields!.State);
+    }
+
+    [Fact]
+    public void Build_StreamerModeActive_NothingRunning_IdleCardCarriesNoCount()
+    {
+        // Today's (pre-fix) idle text says "8 accounts standing by" -- exactly the headcount leak
+        // streamer mode is supposed to close. The active variant must carry no digit at all.
+        var snapshot = new RosterSnapshot(
+            [new(Guid.NewGuid(), "CaptainNoodle", InGame: false, null, null, null),
+             new(Guid.NewGuid(), "LadyPixel", InGame: false, null, null, null),
+             new(Guid.NewGuid(), "DoctorDuck", InGame: false, null, null, null)],
+            IsStreamerModeActive: true);
+
+        var fields = PresencePayloadBuilder.Build(snapshot);
+
+        Assert.True(fields!.IsIdle);
+        Assert.DoesNotContain(fields.Details!, char.IsDigit);
+    }
+
+    [Fact]
+    public void Build_StreamerModeInactive_ExistingBehaviorIsUnchanged()
+    {
+        // The default (IsStreamerModeActive: false, matching every RosterSnapshot built before
+        // this field existed) must keep publishing real numbers -- the anonymization is opt-in via
+        // the flag, never the ambient default.
+        var snapshot = new RosterSnapshot([
+            InGame("CaptainNoodle", ServerA), InGame("LadyPixel", ServerA), InGame("DoctorDuck", ServerA)]);
+
+        var fields = PresencePayloadBuilder.Build(snapshot);
+
+        Assert.Equal("3 accounts in one server", fields!.State);
+        Assert.Equal(3, fields.JoinableServerAccountCount);
+        Assert.Equal(3, fields.JoinableServerAccountMax);
     }
 }

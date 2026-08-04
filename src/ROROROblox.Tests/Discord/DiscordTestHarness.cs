@@ -198,18 +198,36 @@ internal static class DiscordTestHarness
             => throw new NotImplementedException();
     }
 
+    /// <summary>
+    /// Starts active (matches this class's original hardcoded-<see langword="true"/> behavior, so
+    /// every existing caller that never touches active-state keeps seeing the masked name
+    /// immediately) but is genuinely stateful from here: <see cref="SetActiveAsync"/> flips
+    /// <see cref="IsActive"/> and raises <see cref="Changed"/> like the real
+    /// <c>StreamerIdentityProvider</c> does, and <see cref="ForAccount"/>/<see cref="ForFriend"/>
+    /// consult that live state instead of always masking. Needed once a test has to prove
+    /// something reacts to a streamer-mode TOGGLE (2026-08-03) — the prior always-on, no-op-set
+    /// fake could only ever represent one frozen state.
+    /// </summary>
     private sealed class FakeStreamerIdentityProvider(string maskedName) : IStreamerIdentityProvider
     {
-        public bool IsActive => true;
+        public bool IsActive { get; private set; } = true;
         public event EventHandler? Changed;
 
         public Task InitializeAsync(IReadOnlyCollection<(Guid accountId, StreamerIdentity identity)> accountIdentities)
             => Task.CompletedTask;
-        public Task SetActiveAsync(bool active) => Task.CompletedTask;
+
+        public Task SetActiveAsync(bool active)
+        {
+            if (IsActive == active) return Task.CompletedTask;
+            IsActive = active;
+            Changed?.Invoke(this, EventArgs.Empty);
+            return Task.CompletedTask;
+        }
+
         public DisplayIdentity ForAccount(Guid accountId, string realName, string realAvatarUrl)
-            => new(maskedName, realAvatarUrl);
+            => IsActive ? new(maskedName, realAvatarUrl) : new(realName, realAvatarUrl);
         public DisplayIdentity ForFriend(long robloxUserId, string realName, string realAvatarUrl)
-            => new(maskedName, realAvatarUrl);
+            => IsActive ? new(maskedName, realAvatarUrl) : new(realName, realAvatarUrl);
         public Task RerollAsync(string identityKey) => Task.CompletedTask;
         public Task RerollAllAsync() => Task.CompletedTask;
     }
