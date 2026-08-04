@@ -78,7 +78,7 @@ public class AccountMuteTests
         var config = await configStore.LoadAsync();
 
         var trigger = new AlertTrigger(
-            AlertKind.AccountDroppedOut, row.Id, row.RenderName, "Pet Simulator 99!", null,
+            AlertKind.AccountDroppedOut, row.Id, row.RenderName, row.DisplayName, "Pet Simulator 99!", null,
             DateTimeOffset.UtcNow);
 
         var routed = AlertRouter.Route(

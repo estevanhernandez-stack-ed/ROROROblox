@@ -2703,9 +2703,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     }
                     else
                     {
+                        // Both names travel: RenderName is what every destination shows by
+                        // default, DisplayName is used only by the clan channel. See AlertTrigger.
                         RaiseAlerts([new AlertTrigger(
                             AlertKind.AccountDroppedOut, summary.Id, summary.RenderName,
-                            lastGameName, PrivateBytes: null, e.OccurredAtUtc)]);
+                            summary.DisplayName, lastGameName, PrivateBytes: null, e.OccurredAtUtc)]);
                     }
                 }
             }
@@ -2953,7 +2955,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             .Where(x => x.Row is not null)
             .Select(x => new AlertTrigger(
                 AlertKind.MemoryWarning, x.Memory.AccountId, x.Row!.RenderName,
-                x.Row.CurrentGameName, x.Memory.PrivateBytes, nowUtc))
+                x.Row.DisplayName, x.Row.CurrentGameName, x.Memory.PrivateBytes, nowUtc))
             .ToList();
     }
 
