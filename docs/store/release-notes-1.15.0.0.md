@@ -1,5 +1,22 @@
 # RoRoRo v1.15.0.0 — release notes
 
+## Paste-ready: Partner Center "What's new in this version"
+
+Same shape as v1.14's. Benefit first, mechanism second, one line each.
+
+```
+• RoRoRo can tell you when an account drops out of a game on its own, or when a client starts eating enough memory to be heading for trouble — so you find out while you're away from the PC instead of an hour later.
+• Alerts go to a Windows notification, your own Discord channel, or your clan's — each one routed separately, so health noise can go to you and only the things worth sharing go to the clan. Any account can be muted on its own.
+• The Discord side is one webhook, and RoRoRo walks you through making one even if you've never owned a Discord server. Paste the wrong thing and it tells you what you actually pasted; paste the right thing and it names the channel it'll post to before the first alert lands there.
+• Closes you asked for stay quiet. Stop, Recycle, and quitting RoRoRo don't alert — being told that the thing you just closed is closed isn't news.
+• Your Discord status can show what you're playing, if you want it. Modest for now: while Roblox is running, Discord shows Roblox on your profile rather than RoRoRo, so this mostly lands between sessions.
+• RoRoRo calls itself RoRoRo everywhere Windows shows it. Task Manager, the install entry, and the Store package all used to say ROROROblox or RORORO.
+```
+
+---
+
+## Longer form — for the GitHub release and the clan Discord post
+
 ## Know when something goes wrong while you're away from the PC
 
 This is the release's real feature.
