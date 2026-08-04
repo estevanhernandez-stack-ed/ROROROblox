@@ -155,12 +155,17 @@ New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
 
 $vpkArgs = @(
     'pack'
+    # packId is the Velopack UPDATE IDENTITY, not a display string. Every installed copy looks
+    # for releases under this exact id — changing it strands every existing install on its current
+    # version, silently, forever. It stays 'RORORO' permanently regardless of how the product is
+    # branded elsewhere.
     '--packId',      'RORORO'
     '--packVersion', $packVersion
     '--packDir',     $publishDir
     '--mainExe',     'ROROROblox.App.exe'
-    '--packTitle',   'RORORO'
-    '--packAuthors', '626 Labs'
+    # packTitle and packAuthors are display-only — the shortcut and the Add/Remove Programs entry.
+    '--packTitle',   'RoRoRo'
+    '--packAuthors', '626 Labs LLC'
     '--icon',        $icoOutPath
     '--outputDir',   $releaseDir
     '--delta',       'BestSpeed'
