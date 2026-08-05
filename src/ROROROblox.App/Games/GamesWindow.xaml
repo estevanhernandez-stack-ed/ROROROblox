@@ -17,7 +17,7 @@
              "Cannot find resource" at template-APPLY time — invisible to builds and unit tests,
              fatal on the first rendered row (live-crash caught 2026-07-09). -->
         <Style x:Key="InverseBoolToVisibilityStyle" TargetType="Button"
-               BasedOn="{StaticResource {x:Type Button}}">
+               BasedOn="{StaticResource SecondaryButtonStyle}">
             <Setter Property="Visibility" Value="Visible" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsDefault}" Value="True">
@@ -154,19 +154,12 @@
                                 Tag="{Binding PlaceId}"
                                 Click="OnSetDefaultClick"
                                 Padding="10,6" Margin="0,0,8,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
                                 FontSize="11"
                                 Style="{StaticResource InverseBoolToVisibilityStyle}" />
                         <Button Content="Clear default"
                                 Click="OnClearDefaultClick"
                                 Padding="10,6" Margin="0,0,8,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
+                                Style="{StaticResource SecondaryButtonStyle}"
                                 FontSize="11"
                                 ToolTip="Stop using this as the default. Launch As will open Roblox home until you set a default game."
                                 Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisibilityConverter}}" />
@@ -176,20 +169,14 @@
                                 Tag="{Binding}"
                                 Click="OnRenameGameClick"
                                 Padding="10,6" Margin="0,0,8,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
+                                Style="{StaticResource SecondaryButtonStyle}"
                                 FontSize="11"
                                 ToolTip="Give this game a custom name shown only in RoRoRo. The Roblox-side name stays untouched." />
                         <Button Content="Remove"
                                 Tag="{Binding PlaceId}"
                                 Click="OnRemoveClick"
                                 Padding="10,6"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
+                                Style="{StaticResource SecondaryButtonStyle}"
                                 FontSize="11" />
                     </StackPanel>
                 </Grid>
@@ -278,20 +265,13 @@
                                 Tag="{Binding Id}"
                                 Click="OnSetDefaultServerClick"
                                 Padding="10,6" Margin="0,0,8,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
                                 FontSize="11"
                                 ToolTip="Pre-select this server when you launch all accounts to a private server."
                                 Style="{StaticResource InverseBoolToVisibilityStyle}" />
                         <Button Content="Clear default"
                                 Click="OnClearDefaultServerClick"
                                 Padding="10,6" Margin="0,0,8,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
+                                Style="{StaticResource SecondaryButtonStyle}"
                                 FontSize="11"
                                 ToolTip="Stop pre-selecting this server. You'll pick one each time again."
                                 Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisibilityConverter}}" />
@@ -301,20 +281,14 @@
                                 Tag="{Binding}"
                                 Click="OnRenameServerClick"
                                 Padding="10,6" Margin="0,0,8,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
+                                Style="{StaticResource SecondaryButtonStyle}"
                                 FontSize="11"
                                 ToolTip="Give this server a custom name shown only in RoRoRo." />
                         <Button Content="Remove"
                                 Tag="{Binding Id}"
                                 Click="OnRemoveServerClick"
                                 Padding="10,6"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
+                                Style="{StaticResource SecondaryButtonStyle}"
                                 FontSize="11" />
                     </StackPanel>
                 </Grid>
@@ -392,10 +366,7 @@
                      ToolTip="Or paste a roblox.com/games/&lt;id&gt;/&lt;name&gt; URL or place id" />
             <Button Grid.Column="1" x:Name="AddButton" Content="+ Add by URL"
                     Padding="14,8" Margin="8,0,0,0"
-                    Background="{DynamicResource NavyBrush}"
-                    Foreground="{DynamicResource WhiteBrush}"
-                    BorderBrush="{DynamicResource DividerBrush}"
-                    BorderThickness="1"
+                    Style="{StaticResource SecondaryStrongButtonStyle}"
                     FontSize="12"
                     Click="OnAddClick" />
         </Grid>
@@ -447,10 +418,7 @@
 
         <Button Grid.Row="6" Content="Close" Padding="16,8"
                 HorizontalAlignment="Right" Margin="0,12,0,0"
-                Background="{DynamicResource NavyBrush}"
-                Foreground="{DynamicResource WhiteBrush}"
-                BorderBrush="{DynamicResource DividerBrush}"
-                BorderThickness="1"
+                Style="{StaticResource SecondaryStrongButtonStyle}"
                 IsCancel="True"
                 Click="OnCloseClick" />
     </Grid>

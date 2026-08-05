@@ -59,6 +59,33 @@
         "F-076"
       ],
       "note": "Not a wave — a single standalone finding, fixed and verified in one PR (merged 9587ee6b). F-076 was itself added BY wave 2, whose capture tooling photographed a live webhook token. Masking logic lives in Core with nine unit tests; the reveal toggle is wired to Checked/Unchecked rather than Click because UI Automation's TogglePattern never raises Click — the first version looked right and did nothing under automation. Este declined rotating the exposed webhook (2026-08-04); it never left the machine and was never committed."
+    },
+    {
+      "id": 4,
+      "name": "Page chrome — goal 4, the window-title system and the two header grammars",
+      "status": "clean",
+      "findings": [
+        "F-004",
+        "F-005",
+        "F-007",
+        "F-014",
+        "F-015",
+        "F-016",
+        "F-017"
+      ],
+      "note": "Merged as 3d41846 (PR #92). LEDGER ENTRY WRITTEN LATE, 2026-08-05: that merge updated the register rows to clean and added the f076 entry but never wrote wave 4's own entry here, so the ledger claimed three waves while the register showed four waves' worth of closed rows. Recorded now from the register rows rather than from memory. The wave itself: a title rule made enforceable by a test that scans XAML AND code-behind Title= assignments (the one runtime-assembled title had shipped the repo name for months), plus a shared PageHeader replacing 12 of 13 hand-rolled headers. About keeps its own, deliberately — its heading is a clickable named TextBlock with a handler."
+    },
+    {
+      "id": 5,
+      "name": "The component vocabulary — secondary buttons get an edge that clears 3:1",
+      "status": "open",
+      "findings": [
+        "F-025",
+        "F-030",
+        "F-031",
+        "F-035"
+      ],
+      "note": "In flight on glow/wave-5-component-vocabulary. Scope was REVISED mid-wave after Este's constraint about users who already authored their own themes: the original plan would have repainted every separator and card edge in every user theme. Divider turned out to do two jobs — decorative separator and control boundary — and WCAG 1.4.11 governs only the second. So the fix derives InteractiveEdgeBrush via ContrastGuard instead of adding an eleventh theme slot (invariant 6 holds), a test fences it off from Border/Rectangle/Separator/Line/Ellipse, and a per-theme consent prompt asks before changing a theme somebody wrote themselves. Verified live under the flatline user theme, both answers."
     }
   ],
   "scope": {

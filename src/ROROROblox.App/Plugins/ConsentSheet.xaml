@@ -132,10 +132,7 @@
                     Margin="0,16,0,0">
             <Button Content="Cancel"
                     Padding="18,8" Margin="0,0,8,0"
-                    Background="{DynamicResource NavyBrush}"
-                    Foreground="{DynamicResource MutedTextBrush}"
-                    BorderBrush="{DynamicResource DividerBrush}"
-                    BorderThickness="1"
+                    Style="{StaticResource SecondaryButtonStyle}"
                     IsCancel="True"
                     Click="OnCancelClick" />
             <Button Content="Install"

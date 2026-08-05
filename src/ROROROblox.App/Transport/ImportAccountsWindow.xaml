@@ -54,10 +54,7 @@
                      BorderThickness="1" />
             <Button Grid.Column="1" Content="Browse…"
                     Padding="14,8" Margin="8,0,0,0"
-                    Background="{DynamicResource NavyBrush}"
-                    Foreground="{DynamicResource WhiteBrush}"
-                    BorderBrush="{DynamicResource DividerBrush}"
-                    BorderThickness="1"
+                    Style="{StaticResource SecondaryStrongButtonStyle}"
                     Click="OnBrowseClick" />
         </Grid>
 
@@ -85,10 +82,7 @@
 
         <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button Content="Cancel" Padding="16,8" Margin="0,0,8,0"
-                    Background="{DynamicResource NavyBrush}"
-                    Foreground="{DynamicResource WhiteBrush}"
-                    BorderBrush="{DynamicResource DividerBrush}"
-                    BorderThickness="1"
+                    Style="{StaticResource SecondaryStrongButtonStyle}"
                     IsCancel="True"
                     Click="OnCancelClick" />
             <Button x:Name="ImportButton" Content="Import" Padding="16,8"

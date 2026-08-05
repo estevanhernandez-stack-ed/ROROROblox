@@ -9,6 +9,10 @@
             <ResourceDictionary.MergedDictionaries>
                 <ui:ThemesDictionary Theme="Dark" />
                 <ui:ControlsDictionary />
+                <!-- After ControlsDictionary, deliberately: these styles BasedOn WPF-UI's implicit
+                     Button style, and a StaticResource BasedOn resolves at parse time, so the
+                     library's dictionary has to be merged first or the lookup fails. -->
+                <ResourceDictionary Source="/ROROROblox.App;component/Controls/ControlStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
@@ -34,6 +38,16 @@
             <SolidColorBrush x:Key="RowExpiredBgBrush" Color="#3A2D14" />
             <SolidColorBrush x:Key="RowExpiredAccentBrush" Color="#F1B232" />
             <SolidColorBrush x:Key="NavyBrush" Color="#0F1F31" />
+
+            <!-- DERIVED, not a theme slot. ThemeService recomputes this from Navy + Divider on
+                 every theme change so an interactive control's edge always clears WCAG 1.4.11's
+                 3:1. The value here is only the pre-startup fallback (brand's derived edge).
+
+                 ONLY interactive controls bind this. Cards, row separators and dividers keep
+                 DividerBrush — a separator is not a component boundary, 1.4.11 does not govern it,
+                 and the author's faint hairline is what they chose. Binding this to a card edge
+                 repaints every user's theme to fix a problem that surface does not have. -->
+            <SolidColorBrush x:Key="InteractiveEdgeBrush" Color="#5E6B7C" />
 
             <!-- Small round toggle for "include this account in batch launches."
                  Selected = filled cyan; deselected = hollow grey ring. ~14px, lives inline with

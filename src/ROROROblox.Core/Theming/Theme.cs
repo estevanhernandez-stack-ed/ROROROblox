@@ -39,4 +39,20 @@ public static class ThemeSlots
     public const string RowExpiredBg = "RowExpiredBgBrush";
     public const string RowExpiredAccent = "RowExpiredAccentBrush";
     public const string Navy = "NavyBrush";
+
+    /// <summary>
+    /// DERIVED, not a theme slot — no JSON field, nothing for a theme author to supply, and it is
+    /// deliberately absent from <see cref="Theme"/>. Computed by <see cref="ContrastGuard"/> from
+    /// Navy and Divider so an interactive control's edge always clears WCAG 1.4.11's 3:1, whatever
+    /// a theme sets.
+    /// <para>
+    /// USE THIS ONLY ON INTERACTIVE CONTROLS. `Divider` does two jobs: a decorative separator
+    /// between rows and around cards, where the author's faint hairline is correct and intended,
+    /// and the boundary of a control, where 3:1 is required. 1.4.11 governs component boundaries,
+    /// not separators. Binding this brush to a card edge or a row rule would repaint every user's
+    /// theme from a hairline to mid grey — measured at #1F3149 -> #5E6B7C in brand — to fix a
+    /// problem those surfaces do not have. A test enforces the split; see the wave-5 scope.
+    /// </para>
+    /// </summary>
+    public const string InteractiveEdge = "InteractiveEdgeBrush";
 }

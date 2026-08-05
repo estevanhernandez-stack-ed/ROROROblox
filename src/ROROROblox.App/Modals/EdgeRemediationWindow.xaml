@@ -1,0 +1,108 @@
+<Window x:Class="ROROROblox.App.Modals.EdgeRemediationWindow"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Theme contrast"
+        SizeToContent="Height" Width="520"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico"
+        Background="{DynamicResource BgBrush}">
+    <!-- Asked once, per theme, and only about themes the user wrote themselves. Wave 5 gives
+         interactive controls an edge that clears WCAG 1.4.11's 3:1; on a built-in that is us fixing
+         our own defect and it happens silently. On somebody's own theme it is us altering their
+         work, so it gets a question.
+
+         The change is already on screen behind this window — the buttons in this footer are drawn
+         with it. That is deliberate: the question is whether to KEEP it, which is unanswerable if
+         the answer is invisible. See EdgeRemediation for the rules and Theme.cs for why the edge is
+         derived rather than an eleventh theme slot. -->
+    <Grid Margin="32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="We changed one colour in your theme"
+                   FontSize="18" FontWeight="Bold"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource CyanBrush}" />
+
+        <TextBlock Grid.Row="1"
+                   x:Name="BodyText"
+                   TextWrapping="Wrap"
+                   FontSize="12"
+                   LineHeight="18"
+                   Foreground="{DynamicResource WhiteBrush}"
+                   Opacity="0.85"
+                   Margin="0,12,0,0" />
+
+        <!-- Both previews are real: same fill, same border thickness, same corner radius as the
+             buttons this affects. The only difference between them is the one colour in question. -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,20,0,0">
+            <StackPanel Margin="0,0,24,0">
+                <Border x:Name="AuthoredSwatch"
+                        Width="160" Height="34"
+                        BorderThickness="1" CornerRadius="4">
+                    <TextBlock Text="Your theme"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               FontSize="12"
+                               Foreground="{DynamicResource MutedTextBrush}" />
+                </Border>
+                <TextBlock x:Name="AuthoredRatio"
+                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                           FontSize="10"
+                           Foreground="{DynamicResource MutedTextBrush}"
+                           Margin="0,6,0,0" />
+            </StackPanel>
+
+            <StackPanel>
+                <Border x:Name="DerivedSwatch"
+                        Width="160" Height="34"
+                        BorderThickness="1" CornerRadius="4">
+                    <TextBlock Text="With the fix"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               FontSize="12"
+                               Foreground="{DynamicResource MutedTextBrush}" />
+                </Border>
+                <TextBlock x:Name="DerivedRatio"
+                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                           FontSize="10"
+                           Foreground="{DynamicResource MutedTextBrush}"
+                           Margin="0,6,0,0" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Says buttons, because buttons is what changed. An earlier draft read "buttons and other
+             controls you can click", which the review gate caught as an overclaim: text boxes,
+             dropdowns and password fields all still draw their own edge from your theme's divider.
+             Promising more than shipped is the one thing a consent dialog cannot do. -->
+        <TextBlock Grid.Row="3"
+                   Text="Separators, card edges and row rules are untouched either way, and so is every text box and dropdown — this is the outline on buttons."
+                   TextWrapping="Wrap"
+                   FontSize="11"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   Margin="0,20,0,0" />
+
+        <!-- Keeping the theme as authored is the Enter-key default. Enter should never be the key
+             that changes somebody's work for them — the same reasoning as the Stop all confirm,
+             where Cancel is default. The recommended action is one deliberate click away. -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
+            <Button Content="Keep my theme as I wrote it"
+                    Style="{StaticResource SecondaryStrongButtonStyle}"
+                    Padding="16,8" Margin="0,0,8,0"
+                    IsCancel="True" IsDefault="True"
+                    Click="OnKeepClick" />
+            <Button Content="Use the readable edge"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Padding="16,8"
+                    FontWeight="Bold"
+                    Click="OnAcceptClick" />
+        </StackPanel>
+    </Grid>
+</Window>

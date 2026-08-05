@@ -27,6 +27,20 @@ public interface IAppSettings
     Task SetActiveThemeIdAsync(string themeId);
 
     /// <summary>
+    /// A theme author's answer to "may we raise this theme's interactive-control edge so it meets
+    /// the 3:1 contrast floor?", keyed by theme id. <c>null</c> means never asked — the question is
+    /// put once per theme and never again. <c>true</c> accepted; <c>false</c> declined, and the
+    /// theme then renders exactly as authored.
+    /// <para>
+    /// Keyed per theme rather than per app because the answer is about somebody's specific work.
+    /// Switching to a different custom theme is a different question. Built-in themes are never
+    /// asked about (the shortfall is ours to fix), so they never appear here.
+    /// </para>
+    /// </summary>
+    Task<bool?> GetEdgeRemediationAnswerAsync(string themeId);
+    Task SetEdgeRemediationAnswerAsync(string themeId, bool accepted);
+
+    /// <summary>
     /// True after the user has dismissed the "Bloxstrap will override per-account FPS"
     /// banner. Persisted so the banner does not re-render on every launch.
     /// </summary>

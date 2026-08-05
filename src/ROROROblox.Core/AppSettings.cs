@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -125,6 +125,51 @@ public sealed class AppSettings : IAppSettings, IDisposable
             var settings = await LoadAsync().ConfigureAwait(false);
             settings = settings with { ActiveThemeId = themeId };
             await SaveAsync(settings).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task<bool?> GetEdgeRemediationAnswerAsync(string themeId)
+    {
+        if (string.IsNullOrWhiteSpace(themeId)) return null;
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var answers = (await LoadAsync().ConfigureAwait(false)).EdgeRemediationAnswers;
+            // OrdinalIgnoreCase, not Ordinal: theme ids come from FILENAMES on a case-insensitive
+            // filesystem, and ThemeStore.GetByIdAsync matches them case-insensitively too. Matching
+            // Ordinal here meant renaming "Neon Dusk.json" to "neon dusk.json" silently lost a
+            // recorded decline and repainted the theme. Found by the wave-5 review gate.
+            return answers is not null && Lookup(answers).TryGetValue(themeId, out var answered) ? answered : null;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task SetEdgeRemediationAnswerAsync(string themeId, bool accepted)
+    {
+        if (string.IsNullOrWhiteSpace(themeId))
+        {
+            throw new ArgumentException("Theme id must not be empty.", nameof(themeId));
+        }
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var settings = await LoadAsync().ConfigureAwait(false);
+            // Copy rather than mutate: `with` shares the dictionary reference with the blob we
+            // just read, so mutating in place would edit a value another caller may still hold.
+            var answers = settings.EdgeRemediationAnswers is null
+                ? new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase)
+                : Lookup(settings.EdgeRemediationAnswers);
+            answers[themeId] = accepted;
+            await SaveAsync(settings with { EdgeRemediationAnswers = answers }).ConfigureAwait(false);
         }
         finally
         {
@@ -346,6 +391,14 @@ public sealed class AppSettings : IAppSettings, IDisposable
         finally { _gate.Release(); }
     }
 
+    /// <summary>
+    /// Re-keys the deserialized answers case-insensitively. System.Text.Json always hands back an
+    /// Ordinal dictionary regardless of what was written, so the comparer has to be re-applied on
+    /// every read rather than assumed to have survived the round trip.
+    /// </summary>
+    private static Dictionary<string, bool> Lookup(Dictionary<string, bool> answers) =>
+        new(answers, StringComparer.OrdinalIgnoreCase);
+
     private async Task<SettingsBlob> LoadAsync()
     {
         if (!File.Exists(_filePath))
@@ -414,7 +467,9 @@ public sealed class AppSettings : IAppSettings, IDisposable
     // RAM); they are NOT sentinel-zero because 0 is a real, distinct user choice for MemoryCapMb
     // (disable the cap trigger). DismissedFpsCapWarningSignature defaults to null ("nothing
     // dismissed yet") for the same reason — an empty string would be ambiguous with a real
-    // (if degenerate) signature.
+    // (if degenerate) signature. EdgeRemediationAnswers defaults to null ("nobody has been asked
+    // about any theme"), which is what every settings.json written before v1.16 looks like — the
+    // absent key is exactly the state the remediation prompt is designed to handle.
     private sealed record SettingsBlob(
         int Version,
         string? DefaultPlaceUrl,
@@ -430,5 +485,6 @@ public sealed class AppSettings : IAppSettings, IDisposable
         int? MemoryCapMb = null,
         int ProjectionWarnMinutes = 120,
         string? DismissedFpsCapWarningSignature = null,
-        bool AlwaysShowRecycle = false);
+        bool AlwaysShowRecycle = false,
+        Dictionary<string, bool>? EdgeRemediationAnswers = null);
 }

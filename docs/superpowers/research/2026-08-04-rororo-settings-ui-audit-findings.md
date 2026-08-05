@@ -209,3 +209,38 @@ it introduced (the popup border and the separator) and left the rest.
 - **CO-12 evidence error.** The original button-padding claim ("16,8 leads with 26 uses") mislabeled all-`Padding` counts (Buttons + Borders + TextBoxes) as Button-only counts; `10,8` never appears on a Button at all. The corrected Button-only leaders are 16,8=25 / 10,6=19 / 14,8=12 / 12,6=7. Moot for the register since CO-12 absorbed into CO-1, but worth knowing if the shared dictionary's padding scale gets picked from this data.
 - **AX-6's residual gap.** Even the best available theme-derived CTA foreground (navy) only reaches 4.40:1 on magenta in the shipped brand theme — still short of WCAG's 4.5:1 floor. The fix direction in F-050 needs a validation step, not just a resolver, to catch that the "pick the better of two slots" mechanism doesn't clear the bar on its own for magenta fills.
 - **CO-6 is stronger than originally written.** `Navy == Bg` holds in all three built-in themes (`ThemeStore.cs:208/217, 224/233, 240/249`), not just the shipped default — the secondary-button affordance problem is structural to the app's theme model, not an artifact of one theme's specific values.
+
+## F-031 verified and widened, 2026-08-05 — it fails in every shipped theme
+
+Computed from the verbatim slot values in `ThemeStore.cs:202-250`, not from the
+register's own evidence column. WCAG 1.4.11 requires a non-text interactive
+boundary to reach **3:1**.
+
+| theme | Navy == Bg | secondary button edge (Divider on Navy) | primary button edge (Cyan on Navy) |
+|---|---|---|---|
+| brand (shipped default) | yes | **1.26:1 — FAIL** | 9.39:1 pass |
+| midnight | yes | **1.16:1 — FAIL** | 8.05:1 pass |
+| magenta-heat | yes | **1.14:1 — FAIL** | 4.90:1 pass |
+
+Three things this settles:
+
+1. **It is not a flatline artifact.** The adversarial theme made it obvious, but
+   the failure ships in the default theme every user has right now, at a fifth of
+   the required contrast.
+2. **`Navy == Bg` in all three built-ins**, so a secondary button's fill
+   contributes exactly zero separation. The entire affordance rests on a
+   1.2:1 hairline. Any user theme that leaves those slots equal — which every
+   built-in does, so it reads as the intended pattern — inherits the same failure.
+3. **The primary recipe passes comfortably.** This is not "the palette is too
+   dark"; it is one recipe, used on the nav band, Remove, Reroll all identities,
+   and 8+ other buttons, whose only boundary token was never contrast-checked.
+
+This is why F-025, F-029, F-030, F-031, F-026 and C5 are one finding wearing six
+numbers: they all reduce to *grouping and affordance are carried by a fill, and
+the fill is the same colour as what it sits on.* Three waves have now worked
+around it — wave 2's rail selection had to be a shape, wave 3's popup had to
+carry a border — and each workaround was correct, local, and re-derived from
+scratch because there is no shared vocabulary to fix once.
+
+`App.xaml` holds 10 brushes, 9 converters, and **one** keyed control style
+(F-035). That is the reason every fix has been a hand-copy.

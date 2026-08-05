@@ -1,4 +1,4 @@
-using ROROROblox.App.Friends;
+﻿using ROROROblox.App.Friends;
 using ROROROblox.App.Notifications;
 using ROROROblox.App.Startup;
 using ROROROblox.App.Theming;
@@ -1353,6 +1353,8 @@ public class MainViewModelTests
     {
         // Read synchronously (via await) by MainViewModel's ctor fire-and-forget
         // InitializeBloxstrapWarningAsync — must return a benign completed Task, never throw.
+        public Task<bool?> GetEdgeRemediationAnswerAsync(string themeId) => Task.FromResult<bool?>(null);
+        public Task SetEdgeRemediationAnswerAsync(string themeId, bool accepted) => Task.CompletedTask;
         public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(true);
 
         // Backing field (not throw-NotImplemented) so LoadAsync's read/dismiss-signature

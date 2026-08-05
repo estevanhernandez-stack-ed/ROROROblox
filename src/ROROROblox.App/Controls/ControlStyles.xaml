@@ -1,0 +1,58 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- The app's component vocabulary (F-035). Before this file, App.xaml held ten brushes, nine
+         converters, and exactly ONE keyed control style — so every button in the app was a
+         hand-copied attribute set. 63 sites across 15 files repeat the same four themed attributes,
+         which is why they drifted and why every previous fix had to be applied 63 times.
+
+         These styles own the THEMED attributes only: background, foreground, border. Padding,
+         margin and font size stay at the call site, because those legitimately differ — a toolbar
+         button and a dialog footer button are not the same size, and pretending otherwise would
+         trade one bug for a layout sweep nobody asked for. -->
+
+    <!-- Primary. Navy field, white text, cyan edge. Measured 9.39:1 in brand, 8.05:1 in midnight,
+         4.90:1 in magenta-heat — this recipe was always fine. It is here so it stops being copied
+         by hand, not because it was broken. -->
+    <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CyanBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <!-- Secondary — the recipe F-025, F-030 and F-031 are all about.
+
+         It differs from primary in exactly one attribute: the border. That single difference is the
+         entire defect. Secondary bound DividerBrush, and Navy == Bg in all three built-in themes,
+         so the fill contributed zero separation and the whole affordance rested on a border
+         measuring 1.26:1 (brand), 1.16:1 (midnight), 1.14:1 (magenta-heat) against WCAG 1.4.11's
+         3:1 floor. It shipped in the default theme at about a fifth of the required contrast.
+
+         InteractiveEdgeBrush is derived by ContrastGuard from whatever the active theme supplies,
+         so this clears 3:1 under any theme including ones users authored — without adding a slot
+         they would have to fill in, and without touching DividerBrush, which is still correct
+         everywhere it draws a separator rather than a control boundary. -->
+    <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource InteractiveEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+
+    <!-- Secondary, strong label. The sweep that consolidated these found THREE recipes, not two:
+         Navy+MutedText+Divider (quiet secondary), Navy+White+Cyan (primary), and this one —
+         Navy+White+Divider — on dialog footers, Open log folder, Clear history and their kin.
+
+         It gets the same edge fix and keeps its white label. Folding it into the quiet secondary
+         would have fixed the contrast bug by demoting a dialog's main action to muted text, which
+         is a legibility trade nobody asked for. Three recipes existed; three styles name them. -->
+    <Style x:Key="SecondaryStrongButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource InteractiveEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+</ResourceDictionary>

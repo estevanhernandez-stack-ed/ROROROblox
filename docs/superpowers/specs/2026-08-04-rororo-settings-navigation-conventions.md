@@ -174,7 +174,8 @@ The prose is good and users need it — the alerts work this week proved that. T
 - Cards: `CornerRadius="8"`, `Padding="14"`, `Margin="0,0,0,10"`, `RowBgBrush`.
 - Section heading: 13px SemiBold `WhiteBrush`, with 11px `MutedTextBrush` body beneath.
 - Primary CTA: accent fill, `BorderThickness="0"`, 11px SemiBold.
-- Secondary: `NavyBrush` fill with a `DividerBrush` border.
+- Secondary: `NavyBrush` fill with an `InteractiveEdgeBrush` border. **CORRECTED 2026-08-05 (wave 5).** This read "with a `DividerBrush` border" — which was an accurate description of the app and a description of F-031, the defect. `Navy == Bg` in all three built-in themes, so the fill contributed zero separation and the border alone measured 1.26:1 against WCAG 1.4.11's 3:1 floor. Wave 5 replaced it with a derived brush that clears 3:1 under any theme. Leaving the old line under a heading reading "keep, do not reinvent" would have told the next reader to rebuild the bug.
+- Secondary, strong label: `NavyBrush` fill, `WhiteBrush` text, `InteractiveEdgeBrush` border. **ADDED 2026-08-05 (wave 5).** The sweep found three button recipes, not two — dialog footers and their kin use a white label where the quiet secondary uses muted. C8 never named it.
 - Small meta labels: uppercase, letter-spaced — the `DEFAULT` chip on the game picker.
 - Dialog close: a `Close` button, bottom-right. Consistent across every window checked.
 - Row context menus carry the check-state in the header text, not a glyph (a deliberate WPF-UI
