@@ -315,10 +315,28 @@
                             <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                        Margin="0,0,0,4"
                                        Text="A server only you read. Saved encrypted on this PC and never leaves it except to post your alerts." />
-                            <TextBox x:Name="MineWebhookInput" Padding="8,6" FontSize="11"
-                                     Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
-                                     BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
-                                     LostFocus="OnWebhookCommitted" />
+                            <!-- F-076. The saved value renders masked and read-only; Show reveals it
+                                 AND makes it editable, so revealing is a deliberate act and nobody
+                                 can blind-edit a credential they cannot see. A webhook URL is a
+                                 bearer token — this app has a streamer mode, and the field used to
+                                 sit at full contrast where a stream or a screen-share picks it up. -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="MineWebhookInput" Grid.Column="0" Padding="8,6" FontSize="11"
+                                         Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
+                                         BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                                         LostFocus="OnWebhookCommitted" />
+                                <ToggleButton x:Name="MineWebhookReveal" Grid.Column="1" Content="Show"
+                                              Margin="6,0,0,0" Padding="10,5" FontSize="11"
+                                              Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
+                                              Background="{DynamicResource NavyBrush}"
+                                              Foreground="{DynamicResource MutedTextBrush}"
+                                              BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                                              ToolTip="Reveal the saved webhook so you can read or replace it." />
+                            </Grid>
                             <TextBlock x:Name="MineWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
                                        Foreground="{DynamicResource MutedTextBrush}" />
 
@@ -327,10 +345,23 @@
                             <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                        Margin="0,0,0,4"
                                        Text="A shared room. Anything routed here is read by everyone in that channel, now and later — so send what the clan should see, not everything." />
-                            <TextBox x:Name="ClanWebhookInput" Padding="8,6" FontSize="11"
-                                     Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
-                                     BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
-                                     LostFocus="OnWebhookCommitted" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="ClanWebhookInput" Grid.Column="0" Padding="8,6" FontSize="11"
+                                         Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
+                                         BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                                         LostFocus="OnWebhookCommitted" />
+                                <ToggleButton x:Name="ClanWebhookReveal" Grid.Column="1" Content="Show"
+                                              Margin="6,0,0,0" Padding="10,5" FontSize="11"
+                                              Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
+                                              Background="{DynamicResource NavyBrush}"
+                                              Foreground="{DynamicResource MutedTextBrush}"
+                                              BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                                              ToolTip="Reveal the saved webhook so you can read or replace it." />
+                            </Grid>
                             <TextBlock x:Name="ClanWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
                                        Foreground="{DynamicResource MutedTextBrush}" />
 
