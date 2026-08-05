@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Windows;
 using ROROROblox.App.Discord;
+using ROROROblox.App.Modals;
 using ROROROblox.App.Startup;
 using ROROROblox.App.Theming;
 using ROROROblox.App.Transport;
@@ -262,6 +263,9 @@ internal partial class PreferencesWindow : Window
         try
         {
             await _themeService.SetActiveAsync(picked.Id);
+            // Switching TO a user theme whose edge had to be raised is the same question startup
+            // asks — put here too, or the only way to see it would be to restart.
+            await EdgeRemediationWindow.AskIfPendingAsync(_themeService, this);
         }
         catch
         {
@@ -287,6 +291,10 @@ internal partial class PreferencesWindow : Window
             {
                 _suppressClickHandlers = false;
             }
+
+            // Asked here rather than inside the builder: the builder is closing at the moment it
+            // applies the theme, and a dialog parented to a window on its way out is a flicker.
+            await EdgeRemediationWindow.AskIfPendingAsync(_themeService, this);
         }
     }
 

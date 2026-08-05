@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -890,6 +890,8 @@ public class RobloxLauncherTests
         public Task<string?> GetActiveThemeIdAsync() => Task.FromResult(ActiveThemeId);
         public Task SetActiveThemeIdAsync(string themeId) { ActiveThemeId = themeId; return Task.CompletedTask; }
         public bool BloxstrapWarningDismissed { get; set; }
+        public Task<bool?> GetEdgeRemediationAnswerAsync(string themeId) => Task.FromResult<bool?>(null);
+        public Task SetEdgeRemediationAnswerAsync(string themeId, bool accepted) => Task.CompletedTask;
         public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(BloxstrapWarningDismissed);
         public Task SetBloxstrapWarningDismissedAsync(bool value) { BloxstrapWarningDismissed = value; return Task.CompletedTask; }
         public string? DismissedFpsCapWarningSignature { get; set; }

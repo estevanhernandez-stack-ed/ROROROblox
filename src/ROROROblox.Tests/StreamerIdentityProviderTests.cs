@@ -1,4 +1,4 @@
-using ROROROblox.Core;
+﻿using ROROROblox.Core;
 using ROROROblox.Core.StreamerMode;
 
 namespace ROROROblox.Tests;
@@ -167,6 +167,8 @@ public class StreamerIdentityProviderTests
         public Task SetLaunchMainOnStartupAsync(bool e) => throw new NotImplementedException();
         public Task<string?> GetActiveThemeIdAsync() => throw new NotImplementedException();
         public Task SetActiveThemeIdAsync(string t) => throw new NotImplementedException();
+        public Task<bool?> GetEdgeRemediationAnswerAsync(string themeId) => throw new NotImplementedException();
+        public Task SetEdgeRemediationAnswerAsync(string themeId, bool accepted) => throw new NotImplementedException();
         public Task<bool> GetBloxstrapWarningDismissedAsync() => throw new NotImplementedException();
         public Task SetBloxstrapWarningDismissedAsync(bool v) => throw new NotImplementedException();
         public Task<string?> GetDismissedFpsCapWarningSignatureAsync() => throw new NotImplementedException();

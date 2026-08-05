@@ -77,11 +77,22 @@ public class ModalDefaultButtonSafetyTests
     public void JoinRequestModal_DefaultsToTryAnyway_DeliberatelyNotDestructive()
         => Assert.Equal("Try anyway", DefaultButtonLabel("JoinRequestWindow.xaml"));
 
+    /// <summary>
+    /// Wave 5 (2026-08-05). Nothing here force-closes anything, so this is not a
+    /// <see cref="DestructiveButtons"/> case — but Enter must still not be the key that changes
+    /// somebody's theme for them. A modal that appears unprompted at startup and defaults to
+    /// altering the user's own work is the same reflex trap in a quieter costume.
+    /// </summary>
+    [Fact]
+    public void EdgeRemediationModal_DefaultsToLeavingTheUsersThemeAlone()
+        => Assert.Equal("Keep my theme as I wrote it", DefaultButtonLabel("EdgeRemediationWindow.xaml"));
+
     [Theory]
     [InlineData("RobloxAlreadyRunningWindow.xaml")]
     [InlineData("StopAllConfirmWindow.xaml")]
     [InlineData("LeftoverProcessesWindow.xaml")]
     [InlineData("JoinRequestWindow.xaml")]
+    [InlineData("EdgeRemediationWindow.xaml")]
     public void EachModal_HasExactlyOneDefaultButton(string modalFile)
         => Assert.Single(Buttons(modalFile), IsDefault);
 

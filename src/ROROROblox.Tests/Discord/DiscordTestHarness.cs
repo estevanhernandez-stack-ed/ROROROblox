@@ -1,4 +1,4 @@
-using ROROROblox.App.Notifications;
+﻿using ROROROblox.App.Notifications;
 using ROROROblox.App.Startup;
 using ROROROblox.App.Theming;
 using ROROROblox.App.Tray;
@@ -310,6 +310,8 @@ internal static class DiscordTestHarness
 
     private sealed class FakeAppSettings : IAppSettings
     {
+        public Task<bool?> GetEdgeRemediationAnswerAsync(string themeId) => Task.FromResult<bool?>(null);
+        public Task SetEdgeRemediationAnswerAsync(string themeId, bool accepted) => Task.CompletedTask;
         public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(true);
         public string? DismissedFpsCapWarningSignature { get; set; }
         public Task<string?> GetDismissedFpsCapWarningSignatureAsync() => Task.FromResult(DismissedFpsCapWarningSignature);

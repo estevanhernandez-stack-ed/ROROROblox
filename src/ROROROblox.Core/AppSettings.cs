@@ -132,6 +132,47 @@ public sealed class AppSettings : IAppSettings, IDisposable
         }
     }
 
+    public async Task<bool?> GetEdgeRemediationAnswerAsync(string themeId)
+    {
+        if (string.IsNullOrWhiteSpace(themeId)) return null;
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var answers = (await LoadAsync().ConfigureAwait(false)).EdgeRemediationAnswers;
+            return answers is not null && answers.TryGetValue(themeId, out var answered) ? answered : null;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task SetEdgeRemediationAnswerAsync(string themeId, bool accepted)
+    {
+        if (string.IsNullOrWhiteSpace(themeId))
+        {
+            throw new ArgumentException("Theme id must not be empty.", nameof(themeId));
+        }
+
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var settings = await LoadAsync().ConfigureAwait(false);
+            // Copy rather than mutate: `with` shares the dictionary reference with the blob we
+            // just read, so mutating in place would edit a value another caller may still hold.
+            var answers = settings.EdgeRemediationAnswers is null
+                ? new Dictionary<string, bool>(StringComparer.Ordinal)
+                : new Dictionary<string, bool>(settings.EdgeRemediationAnswers, StringComparer.Ordinal);
+            answers[themeId] = accepted;
+            await SaveAsync(settings with { EdgeRemediationAnswers = answers }).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async Task<bool> GetBloxstrapWarningDismissedAsync()
     {
         await _gate.WaitAsync().ConfigureAwait(false);
@@ -414,7 +455,9 @@ public sealed class AppSettings : IAppSettings, IDisposable
     // RAM); they are NOT sentinel-zero because 0 is a real, distinct user choice for MemoryCapMb
     // (disable the cap trigger). DismissedFpsCapWarningSignature defaults to null ("nothing
     // dismissed yet") for the same reason — an empty string would be ambiguous with a real
-    // (if degenerate) signature.
+    // (if degenerate) signature. EdgeRemediationAnswers defaults to null ("nobody has been asked
+    // about any theme"), which is what every settings.json written before v1.16 looks like — the
+    // absent key is exactly the state the remediation prompt is designed to handle.
     private sealed record SettingsBlob(
         int Version,
         string? DefaultPlaceUrl,
@@ -430,5 +473,6 @@ public sealed class AppSettings : IAppSettings, IDisposable
         int? MemoryCapMb = null,
         int ProjectionWarnMinutes = 120,
         string? DismissedFpsCapWarningSignature = null,
-        bool AlwaysShowRecycle = false);
+        bool AlwaysShowRecycle = false,
+        Dictionary<string, bool>? EdgeRemediationAnswers = null);
 }

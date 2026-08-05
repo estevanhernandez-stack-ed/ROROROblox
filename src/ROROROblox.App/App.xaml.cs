@@ -338,6 +338,22 @@ public partial class App : Application
             _joinRelay.Handle(joinArg, "cold start");
         }
 
+        // Wave 5 raised the outline on clickable controls to clear WCAG's 3:1. On a built-in theme
+        // that already happened silently, upstream in ApplyAtStartup. If the active theme is one
+        // the user wrote themselves, ApplyAtStartup left a question here instead — asked once, with
+        // the change visible behind it, and never again for that theme. Deliberately AFTER
+        // mainWindow.Show(): the dialog needs an owner to centre on, and the user needs to see what
+        // it is talking about. Nothing to ask in the overwhelming majority of launches.
+        try
+        {
+            await Modals.EdgeRemediationWindow.AskIfPendingAsync(
+                _services.GetRequiredService<ThemeService>(), mainWindow);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "The theme-edge question threw; the derived edge stays applied for this session.");
+        }
+
         // Fire-and-forget startup checks. Failures are silent; banner stays null on no-drift / no-network.
         _ = RunStartupChecksAsync();
     }
