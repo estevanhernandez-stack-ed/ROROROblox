@@ -498,7 +498,7 @@
                                             Padding="6,3"
                                             BorderThickness="1"
                                             Background="{DynamicResource NavyBrush}"
-                                            BorderBrush="{DynamicResource DividerBrush}"
+                                            BorderBrush="{DynamicResource InteractiveEdgeBrush}"
                                             Cursor="Hand">
                                         <!-- Hide the chip that represents the row's own account so
                                              you can't follow yourself. -->
@@ -740,10 +740,7 @@
                                 Command="{Binding DataContext.OpenFriendFollowCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="10,6" Margin="0,0,8,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
+                                Style="{StaticResource SecondaryButtonStyle}"
                                 FontSize="11"
                                 ToolTip="See this account's friends and follow one into their server (works for public + private)."
                                 IsEnabled="{Binding SessionExpired, Converter={StaticResource InverseBoolConverter}}" />
@@ -1050,10 +1047,7 @@
                         <Button Content="Settings"
                                 Command="{Binding OpenPreferencesCommand}"
                                 Padding="10,6" Margin="0,0,6,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
+                                Style="{StaticResource SecondaryButtonStyle}"
                                 FontSize="11"
                                 ToolTip="Startup, accounts, alerts, Discord, and theme." />
                         <!-- A real Menu, not a Button that opens a ContextMenu. The first version was
@@ -1070,10 +1064,7 @@
                         <controls:ToolsDropDownButton Content="Tools  &#x25BE;"
                                            AutomationProperties.Name="Tools"
                                            Padding="10,6" Margin="0,0,6,0"
-                                           Background="{DynamicResource NavyBrush}"
-                                           Foreground="{DynamicResource MutedTextBrush}"
-                                           BorderBrush="{DynamicResource DividerBrush}"
-                                           BorderThickness="1"
+                                           Style="{StaticResource SecondaryButtonStyle}"
                                            FontSize="11"
                                            ToolTip="History, Diagnostics, Games, Plugins, About.">
                             <controls:ToolsDropDownButton.ContextMenu>
@@ -1188,14 +1179,14 @@
                                 Command="{Binding OpenGamesCommand}"
                                 MinWidth="220" MaxWidth="340"
                                 Padding="12,6"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
                                 FontSize="11"
                                 Cursor="Hand">
                             <Button.Style>
-                                <Style TargetType="Button">
+                                <!-- BasedOn rather than an attribute: this button already carries an
+                                     inline Style for its empty-state visibility trigger, and Style
+                                     can only be set once. Basing it on the shared secondary style
+                                     keeps the themed edge AND the trigger. -->
+                                <Style TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
                                     <Setter Property="Visibility" Value="Collapsed" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding WidgetGames.Count}" Value="0">
@@ -1361,10 +1352,7 @@
                         <Button Content="Launch multiple"
                                 Command="{Binding LaunchAllCommand}"
                                 Padding="14,6" Margin="0,0,8,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource WhiteBrush}"
-                                BorderBrush="{DynamicResource CyanBrush}"
-                                BorderThickness="1"
+                                Style="{StaticResource PrimaryButtonStyle}"
                                 FontSize="12"
                                 FontWeight="SemiBold"
                                 ToolTip="Launch every selected account into its own per-row game, one at a time about 5 seconds apart — the gap makes sure each window lands on the right account. Use the dot next to each account's status to deselect." />
@@ -1710,10 +1698,7 @@
                                 <Button Command="{Binding ToggleCompactCommand}"
                                         Content="Expand"
                                         Padding="14,8"
-                                        Background="{DynamicResource NavyBrush}"
-                                        Foreground="{DynamicResource WhiteBrush}"
-                                        BorderBrush="{DynamicResource CyanBrush}"
-                                        BorderThickness="1"
+                                        Style="{StaticResource PrimaryButtonStyle}"
                                         FontWeight="SemiBold"
                                         HorizontalAlignment="Stretch" />
                             </StackPanel>

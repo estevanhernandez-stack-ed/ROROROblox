@@ -9,6 +9,10 @@
             <ResourceDictionary.MergedDictionaries>
                 <ui:ThemesDictionary Theme="Dark" />
                 <ui:ControlsDictionary />
+                <!-- After ControlsDictionary, deliberately: these styles BasedOn WPF-UI's implicit
+                     Button style, and a StaticResource BasedOn resolves at parse time, so the
+                     library's dictionary has to be merged first or the lookup fails. -->
+                <ResourceDictionary Source="/ROROROblox.App;component/Controls/ControlStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
