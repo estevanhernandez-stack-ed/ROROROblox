@@ -865,6 +865,16 @@ internal partial class PreferencesWindow : Window
     {
         if (PageStartup is null) return;   // fires once during InitializeComponent, before the pages exist
 
+        // A single-selection ListBox CAN reach SelectedIndex == -1: Ctrl+click on the already-
+        // selected item, or Ctrl+Space with the rail focused, both deselect. Without this the loop
+        // below collapses all five pages and the user is left staring at an empty window with no
+        // error and no obvious way back. The rail always has a page.
+        if (SettingsNav.SelectedIndex < 0)
+        {
+            SettingsNav.SelectedIndex = 0;   // re-enters this handler with a valid index
+            return;
+        }
+
         var pages = new[] { PageStartup, PageAccounts, PageAlerts, PageDiscord, PageAppearance };
         for (var i = 0; i < pages.Length; i++)
         {
