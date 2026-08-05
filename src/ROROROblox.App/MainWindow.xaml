@@ -988,11 +988,10 @@
                                        FontSize="22" FontWeight="Bold"
                                        Foreground="{DynamicResource WhiteBrush}" />
                         </StackPanel>
-                        <TextBlock Text="Run multiple Roblox clients side by side. Add a saved account, click Launch As to open it."
-                                   FontSize="11"
-                                   Foreground="{DynamicResource MutedTextBrush}"
-                                   Margin="0,4,0,0"
-                                   TextWrapping="Wrap" />
+                        <!-- F-010: the Store-listing pitch used to live here, read on every launch by
+                             someone who already has eight accounts on screen. The first-run tour and
+                             the empty state already carry it to the only user who needs it. -->
+
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
@@ -1015,8 +1014,15 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
+                    <!-- Six identically-weighted buttons became two (F-009). Settings is the only one
+                         that writes settings.json, so it is the only one that earns the band; the rest
+                         are verb-shaped and episodic — you go there, do a thing, and leave — which is
+                         what "tool" means here (F-001).
+
+                         The gear glyph is gone (F-012): one of six peers wore an icon for no
+                         distinction the other five had. -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Content="&#x2699; Settings"
+                        <Button Content="Settings"
                                 Command="{Binding OpenPreferencesCommand}"
                                 Padding="10,6" Margin="0,0,6,0"
                                 Background="{DynamicResource NavyBrush}"
@@ -1024,52 +1030,47 @@
                                 BorderBrush="{DynamicResource DividerBrush}"
                                 BorderThickness="1"
                                 FontSize="11"
-                                ToolTip="Run on login, launch main on startup, theme picker, build a custom theme." />
-                        <Button Content="About"
-                                Command="{Binding OpenAboutCommand}"
+                                ToolTip="Startup, accounts, alerts, Discord, and theme." />
+                        <Button x:Name="ToolsButton"
+                                Content="Tools  &#x25BE;"
+                                Click="OnToolsClick"
                                 Padding="10,6" Margin="0,0,6,0"
                                 Background="{DynamicResource NavyBrush}"
                                 Foreground="{DynamicResource MutedTextBrush}"
                                 BorderBrush="{DynamicResource DividerBrush}"
                                 BorderThickness="1"
                                 FontSize="11"
-                                ToolTip="Version, links, license." />
-                        <Button Content="History"
-                                Command="{Binding OpenHistoryCommand}"
-                                Padding="10,6" Margin="0,0,6,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
-                                FontSize="11"
-                                ToolTip="Recent sessions per account: what game/server, when, how long." />
-                        <Button Content="Diagnostics"
-                                Command="{Binding OpenDiagnosticsCommand}"
-                                Padding="10,6" Margin="0,0,6,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
-                                FontSize="11"
-                                ToolTip="System health, Roblox + WebView2 versions, log location." />
-                        <Button Content="Games"
-                                Command="{Binding OpenGamesCommand}"
-                                Padding="10,6" Margin="0,0,6,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
-                                FontSize="11"
-                                ToolTip="Saved games and private servers for the launch picker." />
-                        <Button Content="Plugins"
-                                Command="{Binding OpenPluginsCommand}"
-                                Padding="10,6" Margin="0,0,6,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
-                                FontSize="11"
-                                ToolTip="Install and manage RoRoRo plugins." />
+                                ToolTip="History, Diagnostics, Games, Plugins, About.">
+                            <Button.ContextMenu>
+                                <!-- BorderThickness is load-bearing, not decoration. NavyBrush ==
+                                     BgBrush in all three built-in themes and in any user theme that
+                                     leaves them equal, so a popup filled with Navy and no border is
+                                     invisible against the window behind it. The border is what makes
+                                     this menu survive a theme that flattens fills — same lesson the
+                                     Settings rail learned from flatline. -->
+                                <ContextMenu Background="{DynamicResource NavyBrush}"
+                                             BorderBrush="{DynamicResource DividerBrush}"
+                                             BorderThickness="1"
+                                             Foreground="{DynamicResource WhiteBrush}">
+                                    <MenuItem Header="History"
+                                              Command="{Binding OpenHistoryCommand}"
+                                              ToolTip="Recent sessions per account: what game/server, when, how long." />
+                                    <MenuItem Header="Diagnostics"
+                                              Command="{Binding OpenDiagnosticsCommand}"
+                                              ToolTip="System health, Roblox + WebView2 versions, log location." />
+                                    <MenuItem Header="Games"
+                                              Command="{Binding OpenGamesCommand}"
+                                              ToolTip="Saved games and private servers for the launch picker." />
+                                    <MenuItem Header="Plugins"
+                                              Command="{Binding OpenPluginsCommand}"
+                                              ToolTip="Install and manage RoRoRo plugins." />
+                                    <Separator />
+                                    <MenuItem Header="About"
+                                              Command="{Binding OpenAboutCommand}"
+                                              ToolTip="Version, links, license." />
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
                     </StackPanel>
 
                     <!-- v1.3.x — default-game widget. Lives between the left-side nav and the
@@ -1767,25 +1768,11 @@
                         VerticalAlignment="Center"
                         ToolTip="Shrink to a small ops view that only shows running accounts. Click again to expand." />
 
-                <TextBlock Grid.Column="2"
-                           Text="Multi-launcher for Windows. A 626 Labs product."
-                           FontSize="10"
-                           Foreground="{DynamicResource MutedTextBrush}"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           TextTrimming="CharacterEllipsis">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Visible" />
-                            <Style.Triggers>
-                                <!-- Tagline disappears in compact mode — not enough room for it. -->
-                                <DataTrigger Binding="{Binding IsCompact}" Value="True">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
+                <!-- F-011: Grid.Column="2" held "Multi-launcher for Windows. A 626 Labs product."
+                     Every other cell in this status bar reports live state; that one sold the app to
+                     someone already running it. The line is the actual subject of the About window,
+                     which is where it still lives. Column left empty so the surrounding columns keep
+                     their positions. -->
 
                 <TextBlock Grid.Column="3"
                            Text="X minimizes to tray. Quit from the tray to exit."
