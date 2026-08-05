@@ -1,0 +1,83 @@
+<UserControl x:Class="ROROROblox.App.Controls.PageHeader"
+             x:ClassModifier="internal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root">
+
+    <!-- One header for every window (F-007). Thirteen windows hand-rolled this device at three
+         sizes (20/22/24px) and four grammars; they drifted because there was nothing to drift
+         FROM. Size, weight, spacing and the separator are fixed in here now.
+
+         STRUCTURE CARRIES THE HIERARCHY, NOT COLOUR (invariant 1). The heading is 22px SemiBold
+         against an 11px muted descriptor — a 2x size step and a weight step. Under a theme that
+         collapses every colour to one value the header still reads as a header, because none of
+         the hierarchy was ever spent on hue. The cyan/magenta wordmark is decoration layered on
+         top of a structure that already works without it.
+
+         THE WORDMARK IS OFF BY DEFAULT, deliberately. F-004 reserves it for MainWindow and About —
+         the two surfaces whose subject IS the product. Everywhere else the title bar already names
+         the destination, so a "RoRoRo / X" header prints the product name a second time in the
+         same window. Default-off means a new window gets the right answer by doing nothing. -->
+
+    <StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <!-- Wordmark: cyan + magenta separator, never one without the other (invariant 2). -->
+            <TextBlock Text="RoRoRo"
+                       FontSize="22" FontWeight="Bold"
+                       Foreground="{DynamicResource CyanBrush}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowWordmark, ElementName=Root}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <TextBlock Text=" / "
+                       FontSize="22" FontWeight="Bold"
+                       Foreground="{DynamicResource MagentaBrush}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowWordmark, ElementName=Root}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <TextBlock Text="{Binding Heading, ElementName=Root}"
+                       FontSize="22" FontWeight="Bold"
+                       Foreground="{DynamicResource WhiteBrush}" />
+        </StackPanel>
+
+        <!-- One line, and it collapses entirely when unset — the subtitle slot had no contract
+             before, so it absorbed a 55-word help paragraph on one page and a table of contents on
+             another. Windows with nothing worth saying here now say nothing by construction. -->
+        <TextBlock Text="{Binding Descriptor, ElementName=Root}"
+                   FontSize="11"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   TextWrapping="Wrap"
+                   Margin="0,4,0,0">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Descriptor, ElementName=Root}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Descriptor, ElementName=Root}" Value="">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+    </StackPanel>
+</UserControl>

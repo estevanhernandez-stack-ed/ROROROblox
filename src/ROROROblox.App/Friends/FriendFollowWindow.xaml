@@ -2,6 +2,7 @@
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:ROROROblox.App.Controls"
         Height="640" Width="560"
         MinHeight="420" MinWidth="480"
         WindowStartupLocation="CenterOwner"
@@ -20,17 +21,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Friends"
-                           FontSize="22" FontWeight="Bold"
-                           Foreground="{DynamicResource CyanBrush}" />
-                <TextBlock Text=" / "
-                           FontSize="22" FontWeight="Bold"
-                           Foreground="{DynamicResource MagentaBrush}" />
-                <TextBlock x:Name="AccountTitle"
-                           FontSize="22" FontWeight="Bold"
-                           Foreground="{DynamicResource WhiteBrush}" />
-            </StackPanel>
+            <controls:PageHeader x:Name="Header" />
             <TextBlock Text="Pick a friend to follow into their server. Roblox does the permission check — works for public AND private servers if your friend's privacy + server allowlist permit."
                        FontSize="11"
                        Foreground="{DynamicResource MutedTextBrush}"

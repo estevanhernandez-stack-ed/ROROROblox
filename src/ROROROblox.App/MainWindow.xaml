@@ -983,17 +983,7 @@
                          this panel stretches to the row height set by the + Add Account button and
                          the title top-aligns a few pixels above that button's centreline. -->
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="RoRoRo"
-                                       FontSize="22" FontWeight="Bold"
-                                       Foreground="{DynamicResource CyanBrush}" />
-                            <TextBlock Text=" / "
-                                       FontSize="22" FontWeight="Bold"
-                                       Foreground="{DynamicResource MagentaBrush}" />
-                            <TextBlock Text="Accounts"
-                                       FontSize="22" FontWeight="Bold"
-                                       Foreground="{DynamicResource WhiteBrush}" />
-                        </StackPanel>
+                        <controls:PageHeader ShowWordmark="True" Heading="Accounts" />
                         <!-- F-010: the Store-listing pitch used to live here — "Run multiple Roblox
                              clients side by side. Add a saved account, click Launch As to open it."
                              — read on every launch by someone who already has eight accounts on
