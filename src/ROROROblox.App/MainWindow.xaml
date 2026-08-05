@@ -5,6 +5,7 @@
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:vm="clr-namespace:ROROROblox.App.ViewModels"
                  xmlns:app="clr-namespace:ROROROblox.App"
+                 xmlns:controls="clr-namespace:ROROROblox.App.Controls"
                  Title="RoRoRo"
                  Height="600" Width="900"
                  MinHeight="400" MinWidth="860"
@@ -976,7 +977,10 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0">
+                    <!-- VerticalAlignment matters now that the subtitle below is gone: without it
+                         this panel stretches to the row height set by the + Add Account button and
+                         the title top-aligns a few pixels above that button's centreline. -->
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="RoRoRo"
                                        FontSize="22" FontWeight="Bold"
@@ -988,11 +992,21 @@
                                        FontSize="22" FontWeight="Bold"
                                        Foreground="{DynamicResource WhiteBrush}" />
                         </StackPanel>
-                        <TextBlock Text="Run multiple Roblox clients side by side. Add a saved account, click Launch As to open it."
-                                   FontSize="11"
-                                   Foreground="{DynamicResource MutedTextBrush}"
-                                   Margin="0,4,0,0"
-                                   TextWrapping="Wrap" />
+                        <!-- F-010: the Store-listing pitch used to live here — "Run multiple Roblox
+                             clients side by side. Add a saved account, click Launch As to open it."
+                             — read on every launch by someone who already has eight accounts on
+                             screen. WelcomeWindow.xaml:45 carries the same pitch to the first-run
+                             user, who is the one it was written for.
+
+                             The empty state does NOT repeat it; it says "No saved accounts yet." and
+                             names the next click. That is deliberate: the empty state's job is the
+                             next action, not the elevator pitch.
+
+                             docs/store/rename-plan.md had an open item to KEEP this line for
+                             nominative use of the Roblox name. That reason survives without it —
+                             WelcomeWindow.xaml:45 and AboutWindow.xaml:73 both still make the
+                             nominative statement. The plan is updated rather than silently broken. -->
+
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
@@ -1015,8 +1029,33 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
+                    <!-- Six identically-weighted buttons became two (F-009). Settings is the only one
+                         that writes settings.json, so it is the only one that earns the band; the rest
+                         are verb-shaped and episodic — you go there, do a thing, and leave — which is
+                         what "tool" means here (F-001).
+
+                         The gear glyph is gone (F-012): one of six peers wore an icon for no
+                         distinction the other five had.
+
+                         TWO DELIBERATE DEPARTURES FROM THE REGISTER, so a later reader does not
+                         "restore" them:
+
+                         1. F-009 says the menu should rename Games -> Library. It must not. F-006
+                            shipped in wave 1 and swept "Library" out of every user-visible string,
+                            including the title of the window this item opens. F-009's direction was
+                            written before that landed; following it would undo a merged wave.
+
+                         2. F-009 says Tools should mirror the tray's item list. It does not exactly:
+                            the tray runs Preferences/History/Diagnostics/Plugins, while this adds
+                            Games and About. Settings is a peer button here rather than a menu item,
+                            and Games and About are main-window destinations the tray never carried.
+
+                         F-001 also lists Stop all, Open log folder, and the Welcome tour as Tools
+                         items. They are absent: none has a view-model command (the tray raises
+                         events handled in App.xaml.cs), so they need new plumbing. F-001 stays open
+                         with exactly those three named. -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Content="&#x2699; Settings"
+                        <Button Content="Settings"
                                 Command="{Binding OpenPreferencesCommand}"
                                 Padding="10,6" Margin="0,0,6,0"
                                 Background="{DynamicResource NavyBrush}"
@@ -1024,52 +1063,57 @@
                                 BorderBrush="{DynamicResource DividerBrush}"
                                 BorderThickness="1"
                                 FontSize="11"
-                                ToolTip="Run on login, launch main on startup, theme picker, build a custom theme." />
-                        <Button Content="About"
-                                Command="{Binding OpenAboutCommand}"
-                                Padding="10,6" Margin="0,0,6,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
-                                FontSize="11"
-                                ToolTip="Version, links, license." />
-                        <Button Content="History"
-                                Command="{Binding OpenHistoryCommand}"
-                                Padding="10,6" Margin="0,0,6,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
-                                FontSize="11"
-                                ToolTip="Recent sessions per account: what game/server, when, how long." />
-                        <Button Content="Diagnostics"
-                                Command="{Binding OpenDiagnosticsCommand}"
-                                Padding="10,6" Margin="0,0,6,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
-                                FontSize="11"
-                                ToolTip="System health, Roblox + WebView2 versions, log location." />
-                        <Button Content="Games"
-                                Command="{Binding OpenGamesCommand}"
-                                Padding="10,6" Margin="0,0,6,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
-                                FontSize="11"
-                                ToolTip="Saved games and private servers for the launch picker." />
-                        <Button Content="Plugins"
-                                Command="{Binding OpenPluginsCommand}"
-                                Padding="10,6" Margin="0,0,6,0"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
-                                FontSize="11"
-                                ToolTip="Install and manage RoRoRo plugins." />
+                                ToolTip="Startup, accounts, alerts, Discord, and theme." />
+                        <!-- A real Menu, not a Button that opens a ContextMenu. The first version was
+                             the latter, and a screen reader announced it as a plain button: no
+                             ExpandCollapse pattern, no expanded/collapsed state, no indication that
+                             five destinations sat behind it. Six discoverable buttons would have
+                             become one that announces as a dead end. A top-level MenuItem reports
+                             ExpandCollapse, highlights its first item on keyboard open, and toggles
+                             shut on a second click — all behaviour the Button pattern needed
+                             hand-written and got wrong.
+
+                             AutomationProperties.Name strips the chevron from what gets announced;
+                             the glyph is a visual affordance, not part of the name. -->
+                        <controls:ToolsDropDownButton Content="Tools  &#x25BE;"
+                                           AutomationProperties.Name="Tools"
+                                           Padding="10,6" Margin="0,0,6,0"
+                                           Background="{DynamicResource NavyBrush}"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           BorderBrush="{DynamicResource DividerBrush}"
+                                           BorderThickness="1"
+                                           FontSize="11"
+                                           ToolTip="History, Diagnostics, Games, Plugins, About.">
+                            <controls:ToolsDropDownButton.ContextMenu>
+                                <ContextMenu Background="{DynamicResource NavyBrush}"
+                                             BorderBrush="{DynamicResource DividerBrush}"
+                                             BorderThickness="1"
+                                             Foreground="{DynamicResource WhiteBrush}">
+                                <MenuItem Header="History"
+                                          Command="{Binding OpenHistoryCommand}"
+                                          ToolTip="Recent sessions per account: what game/server, when, how long." />
+                                <MenuItem Header="Diagnostics"
+                                          Command="{Binding OpenDiagnosticsCommand}"
+                                          ToolTip="System health, Roblox + WebView2 versions, log location." />
+                                <MenuItem Header="Games"
+                                          Command="{Binding OpenGamesCommand}"
+                                          ToolTip="Saved games and private servers for the launch picker." />
+                                <MenuItem Header="Plugins"
+                                          Command="{Binding OpenPluginsCommand}"
+                                          ToolTip="Install and manage RoRoRo plugins." />
+                                <!-- Explicitly themed. WPF-UI's default Separator draws a 4%-alpha
+                                     white rule from its own dictionary, which ThemeService never
+                                     touches (it owns ten RoRoRo slots and nothing else) — so on any
+                                     user theme with a light field the divider vanishes. That is the
+                                     same flatten-the-fill failure the popup border defends against,
+                                     and it would have shipped one element away from it. -->
+                                    <Separator Background="{DynamicResource DividerBrush}" />
+                                    <MenuItem Header="About"
+                                              Command="{Binding OpenAboutCommand}"
+                                              ToolTip="Version, links, license." />
+                                </ContextMenu>
+                            </controls:ToolsDropDownButton.ContextMenu>
+                        </controls:ToolsDropDownButton>
                     </StackPanel>
 
                     <!-- v1.3.x — default-game widget. Lives between the left-side nav and the
@@ -1767,25 +1811,11 @@
                         VerticalAlignment="Center"
                         ToolTip="Shrink to a small ops view that only shows running accounts. Click again to expand." />
 
-                <TextBlock Grid.Column="2"
-                           Text="Multi-launcher for Windows. A 626 Labs product."
-                           FontSize="10"
-                           Foreground="{DynamicResource MutedTextBrush}"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           TextTrimming="CharacterEllipsis">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Visible" />
-                            <Style.Triggers>
-                                <!-- Tagline disappears in compact mode — not enough room for it. -->
-                                <DataTrigger Binding="{Binding IsCompact}" Value="True">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
+                <!-- F-011: Grid.Column="2" held "Multi-launcher for Windows. A 626 Labs product."
+                     Every other cell in this status bar reports live state; that one sold the app to
+                     someone already running it. The line is the actual subject of the About window,
+                     which is where it still lives. Column left empty so the surrounding columns keep
+                     their positions. -->
 
                 <TextBlock Grid.Column="3"
                            Text="X minimizes to tray. Quit from the tray to exit."

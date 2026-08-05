@@ -391,6 +391,12 @@ internal partial class MainWindow : FluentWindow
     // Compact-mode rows never carry these handlers (chips stay read-only), so the toggle is
     // full-mode only by construction.
 
+    // Tools has no click handler by design: it is a Menu, so opening, keyboard highlight of the
+    // first item, second-click dismiss, and the ExpandCollapse automation pattern all come from
+    // the control. The first version was a Button that opened a ContextMenu — it hand-wrote the
+    // opening, got the other three wrong, and announced to a screen reader as a plain button with
+    // no indication that five destinations sat behind it.
+
     /// <summary>The "+" pill was clicked — engage the inline tag input for this row.</summary>
     private void OnAddTagPlusClick(object sender, MouseButtonEventArgs e)
     {

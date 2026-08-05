@@ -49,7 +49,7 @@
 - [ ] `WelcomeWindow.xaml` line 41 `<TextBlock Text="RORORO">` → new name
 - [ ] `WelcomeWindow.xaml` Title attribute → check + update
 - [ ] All other secondary windows — Title attributes (Diagnostics, Settings, JoinByLink, SquadLaunch, FriendFollow, ThemeBuilder, CaptionColorPicker, SessionHistory, CookieCapture, RobloxNotInstalled, WebView2NotInstalled, DpapiCorrupt, Preferences, PreferencesWindow)
-- [ ] `MainWindow.xaml` "Run multiple Roblox clients side by side. Add a saved account, click Launch As to open it." subtitle → keep (nominative use in description)
+- [x] `MainWindow.xaml` "Run multiple Roblox clients side by side. Add a saved account, click Launch As to open it." subtitle → ~~keep (nominative use in description)~~ **DELETED by glow wave 3 (F-011).** Superseded, not overlooked: the line was Store-listing copy read on every launch by someone who already has accounts on screen. The nominative-use reason it was kept for survives without it — `About/WelcomeWindow.xaml:45` carries "Run multiple Roblox clients side by side" to the first-run user, and `About/AboutWindow.xaml:73` carries "Multi-launcher for Windows." So the nominative statement still ships on two surfaces; it just stopped being the first thing a returning user reads.
 
 **Code-behind status messages + dialogs:**
 - [ ] Search `*.xaml.cs` for any string literal containing `"RORORO"` and assess each — most are filesystem paths (keep) or window titles (change)
