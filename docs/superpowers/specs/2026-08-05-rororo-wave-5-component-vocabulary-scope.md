@@ -34,7 +34,84 @@ required contrast. Not "the palette is too dark" — the primary recipe passes a
 9.39:1 in that same theme. **One recipe, never contrast-checked**, on the nav
 band, Remove, Reroll all identities, and 8+ other buttons.
 
-## The hard part: a floor that survives a user theme
+## REVISED 2026-08-05 — the first version of this section was wrong
+
+> Este's objection: *"we're going to have users that may have already created
+> their own themes. So we need it to be friendly so that their theme doesn't
+> change too much."* Testing that objection is what found the real bug. The
+> original plan is left below the correction, because the reasoning matters.
+
+**What the original plan actually produces**, computed rather than assumed:
+
+| theme | `Divider` as authored | after guarding |
+|---|---|---|
+| brand | `#1F3149` — dark navy hairline | **`#5E6B7C`** — mid grey |
+| midnight | `#162232` | **`#5A626D`** |
+| magenta-heat | `#2D1832` | **`#6C5D70`** |
+
+Applying that would repaint every row separator, every card edge and every
+divider in the app from a dark hairline to mid grey. That is not a contrast fix,
+it is a different theme — and it would do it to every user theme on disk without
+asking.
+
+### The real bug: `Divider` has two jobs
+
+Working out why the number came back so extreme is what found it. `Divider` is
+used as:
+
+1. a **decorative separator** between rows and around cards — where a faint
+   1.26:1 hairline is correct, intended, and exactly what an author chose; and
+2. the **boundary of an interactive control** — where WCAG 1.4.11 requires 3:1.
+
+**1.4.11 governs UI component boundaries, not decorative separators.** Treating
+one token as though it had one job is what made the fix look ten times more
+invasive than it is. The original section's error was not the derivation — it was
+applying it to a token that is mostly not an interactive boundary.
+
+### The corrected shape
+
+**Secondary controls stop using `Divider` as their only affordance.** A derived
+`InteractiveEdgeBrush` is computed by `ContrastGuard` from the surface, and is
+consumed *only* by interactive control styles.
+
+- **`Divider` is untouched.** Row separators and card edges render exactly as
+  every author wrote them. Zero change where people would notice most.
+- **The visible change is confined to control borders** — precisely where the
+  affordance was missing and where 1.4.11 actually applies.
+- **Still no new token**, so invariant 6 holds and no user theme file changes.
+
+`ContrastGuard` survives unchanged, including its twelve tests. It now supplies
+one derived brush instead of overriding a shared one.
+
+This still replaces F-025's "accent-set outline or geometry": geometry would
+survive a flat theme too, but it restyles every secondary control to fix a
+contrast bug, which is the same over-reach in a different costume.
+
+### Remediation on first launch — Este's ask, narrowed to fit
+
+Even confined to control borders, a user theme's buttons will look different
+after this update. That is a fix, not a break, but it is still their theme
+changing without being asked.
+
+On first launch after the update, when **the active theme is a user theme** whose
+interactive edge had to be derived:
+
+- one dialog, once, explaining what changed and why, with a before/after swatch;
+- a choice — **use the accessible edge** (recommended, default) or **keep my
+  theme exactly as authored**;
+- the answer remembered *per theme*, so switching themes can re-ask but the same
+  theme never asks twice.
+
+Built-in themes get no dialog. They are ours, the bug is ours, and asking
+permission to fix our own defect is theatre.
+
+Declining is honoured — it is their theme. The dialog is where accessibility and
+authorship are reconciled, rather than one silently overruling the other.
+
+---
+
+<details>
+<summary>Original section, superseded — kept because the reasoning is why the correction exists</summary>
 
 Invariant 6 forbids the obvious fix. `Theme` has exactly ten required slots and
 every user theme on disk supplies all ten; an eleventh "boundary" slot breaks
@@ -48,27 +125,27 @@ the same collapse the moment someone copies the shape of a built-in.
 brush and returns a boundary colour nudged until it clears 3:1 against that
 surface — lightening on dark fields, darkening on light ones.
 
-Three properties that make this the right shape:
+*Correct as far as it went. The unexamined step was assuming the derived value
+should replace `DividerBrush` app-wide.*
 
-- **No new token.** Invariant 6 is satisfied by not extending the contract at all.
-- **Every existing user theme is fixed on next launch**, without the author
-  touching their JSON.
-- **It cannot be flattened.** The guarantee is computed from whatever the theme
-  supplies, so there is no value a theme can set that defeats it.
-
-This replaces F-025's suggested "accent-set outline or geometry". Geometry would
-also survive, but it changes how every secondary control looks in order to fix a
-contrast bug — a bigger visual change for a narrower gain.
+</details>
 
 ## What the dictionary owns
 
 A merged `ResourceDictionary`, one file, keyed styles:
 
-- `SecondaryButtonStyle` — the recipe at the centre of F-025/F-030/F-031
+- `SecondaryButtonStyle` — the recipe at the centre of F-025/F-030/F-031, and the
+  only style that binds `InteractiveEdgeBrush`
 - `PrimaryButtonStyle` — already passes; formalised so it stops being hand-copied
 - `AppTextBoxStyle` — F-029's one input system
-- `CardBorderStyle` — the setting-level container
+- `CardBorderStyle` — the setting-level container. Binds **`DividerBrush`**, not
+  the derived edge: a card is not an interactive control, and this is where the
+  revision above stops the change from spreading
 - `SectionHeadingStyle` — F-026's missing level *above* the card
+
+Plus one derived resource, `InteractiveEdgeBrush`, recomputed by
+`ThemeService.ApplySlot` on every theme change and consumed by interactive styles
+only. It is a resource, not a theme slot — nothing new enters the JSON contract.
 
 F-026 is a structure fix, not a colour one: a section and a setting currently
 render at identical weight, so eight sibling cards read as eight peers when three
@@ -79,14 +156,23 @@ level that never existed.
 
 ## Staging — three commits, each independently reviewable
 
-1. **Dictionary + `ContrastGuard` + tests.** No call sites converted. The only
-   visible change is that secondary boundaries become legible.
-2. **Buttons** — `Primary`/`Secondary` applied across ~dozens of sites (F-025,
-   F-030, F-031).
-3. **Containers and inputs** — `CardBorder`, `SectionHeading`, `AppTextBox`
+1. **`ContrastGuard` + tests.** Pure logic, no call sites, nothing visible.
+   **Done — `a42ca77`.**
+2. **Dictionary + `InteractiveEdgeBrush` wired into `ThemeService.ApplySlot`.**
+   Still no call sites converted; the brush exists and updates on theme change,
+   but nothing consumes it yet. Nothing visible.
+3. **Buttons** — `Primary`/`Secondary` applied across ~dozens of sites (F-025,
+   F-030, F-031). **The first stage anything changes on screen**, and the change
+   is confined to control borders.
+4. **The remediation dialog** — first-launch detection, before/after swatch,
+   per-theme answer. Ships with or immediately after stage 3; it must not land
+   *after* a user has already been surprised.
+5. **Containers and inputs** — `CardBorder`, `SectionHeading`, `AppTextBox`
    (F-026, F-029, C5).
 
-Stopping after any stage leaves the app coherent.
+Stopping after any stage leaves the app coherent. Stages 1 and 2 are invisible by
+construction, which is deliberate: the widest-blast-radius mechanism lands and
+gets reviewed before anything depends on it.
 
 ## Verification
 
@@ -94,7 +180,12 @@ Stopping after any stage leaves the app coherent.
   pathological all-one-colour theme, and for a light-field theme (it must darken
   rather than lighten). Plus a test asserting **every built-in theme's derived
   boundary clears 3:1** — the check that did not exist and would have caught this
-  years ago.
+  years ago. **Done: twelve tests in `a42ca77`.**
+- **Unit, added by the revision:** a test that `CardBorderStyle` and every
+  separator bind `DividerBrush` and **not** `InteractiveEdgeBrush`. The whole
+  correction above is the claim that the derived edge stays off decorative
+  surfaces; that claim needs a guard, or the next person to reach for a visible
+  border will quietly undo it.
 - **Static:** the XAML Style scanner (merged `9102a40`) already fails the build on
   a style that cannot construct. That safety net did not exist when the last
   shared-control bug shipped; it covers this wave's largest risk.
@@ -113,3 +204,11 @@ Stopping after any stage leaves the app coherent.
   hand-copied and are not uniform; consolidating will move some buttons by a few
   pixels. That is the point, but it means per-theme captures matter more than
   usual.
+- **Scope creep back toward the original plan.** The correction above holds only
+  as long as `InteractiveEdgeBrush` stays confined to interactive controls. The
+  pull to "just use the visible one everywhere, it looks cleaner" is exactly how
+  the first version of this scope went wrong, and it would silently repaint every
+  user's theme. That is what the new binding test is for.
+- **The dialog is the one place this wave touches consent, not pixels.** Getting
+  it wrong — nagging, or changing a theme without asking — costs more trust than
+  the contrast bug costs accessibility. It ships with stage 3 or not at all.
