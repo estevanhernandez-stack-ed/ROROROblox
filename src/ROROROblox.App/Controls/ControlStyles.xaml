@@ -106,4 +106,36 @@
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
+    <!-- ======================= SURFACES + HEADINGS (F-047, F-064) =======================
+
+         WHAT THESE DO AND DO NOT FIX. They consolidate. Nine section cards in Preferences repeat
+         the same four attributes by hand; Diagnostics builds its section heading in C# with a third
+         spec no markup review would ever see. One style each, so the next change is one edit.
+
+         They do NOT fix C5. A card is a fill and a radius, and under a theme that sets RowBg == Bg
+         the grouping disappears entirely — no brush in this file can rescue that, because the
+         problem is that grouping is carried by colour alone. The real fix is structural: a heading
+         level above the card so the group reads from typography and rhythm rather than a fill. That
+         is F-026, tagged [new-mechanism] in the register, and it is deliberately not smuggled in
+         here. What this does is make F-026 a one-place edit instead of a nine-place one. -->
+
+    <Style x:Key="CardBorderStyle" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource RowBgBrush}" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="14" />
+        <Setter Property="Margin" Value="0,0,0,10" />
+    </Style>
+
+    <!-- C8's stated convention, finally expressed once: 13px SemiBold on the primary text token.
+         Diagnostics had it at 12px on CyanBrush — accent colour doing structural work, which is the
+         same mistake as grouping-by-fill and fails for the same reader. The generous top margin is
+         the point: with the accent gone, separation between groups has to come from rhythm, not
+         hue. -->
+    <Style x:Key="SectionHeadingStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="Margin" Value="0,18,0,6" />
+    </Style>
+
 </ResourceDictionary>

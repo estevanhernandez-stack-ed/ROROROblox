@@ -85,7 +85,7 @@
             <ScrollViewer Grid.Column="1" Margin="16,0,0,0" VerticalScrollBarVisibility="Auto">
                 <Grid>
                 <StackPanel x:Name="PageStartup">
-                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                    <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
                             <CheckBox x:Name="RunOnLoginToggle"
                                       Foreground="{DynamicResource WhiteBrush}"
@@ -102,7 +102,7 @@
                         </StackPanel>
                     </Border>
 
-                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                    <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
                             <CheckBox x:Name="LaunchMainToggle"
                                       Foreground="{DynamicResource WhiteBrush}"
@@ -128,7 +128,7 @@
                          it was, to match the six settings already on this page — the ToggleSwitch was
                          the app's only one. The tray checkbox stays; the two are views of one source of
                          truth (IStreamerIdentityProvider), not two flags. -->
-                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                    <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
                             <CheckBox x:Name="StreamerModeToggle"
                                       Foreground="{DynamicResource WhiteBrush}"
@@ -156,7 +156,7 @@
 
                     <!-- v1.14 — Recycle now rejoins the exact server an account is in, so it earns a
                          place outside the memory-warning state. Off by default; same block shape. -->
-                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                    <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
                             <CheckBox x:Name="AlwaysShowRecycleToggle"
                                       Foreground="{DynamicResource WhiteBrush}"
@@ -174,7 +174,7 @@
                     </Border>
 
                     <!-- Accounts — move accounts to another PC (v1.6.0 account transport). -->
-                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                    <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
                             <TextBlock Text="Accounts"
                                        Foreground="{DynamicResource WhiteBrush}"
@@ -206,7 +206,7 @@
                 <StackPanel x:Name="PageAlerts" Visibility="Collapsed">
                     <!-- v1.8 idle awareness — mute toggle + warn-threshold preset, mirroring the
                          LaunchMainToggle block above exactly (same CheckBox shape, same hint pattern). -->
-                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                    <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
                             <CheckBox x:Name="MuteIdleAlertsToggle"
                                       Foreground="{DynamicResource WhiteBrush}"
@@ -246,7 +246,7 @@
                          ever joined one. Hence the walkthrough button. Desktop alerts need no setup at
                          all, but the status line never pretends they are the point — you can already
                          see a dead client if you are sitting at the PC. -->
-                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                    <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
                             <TextBlock Text="Alerts" FontSize="13" FontWeight="SemiBold"
                                        Foreground="{DynamicResource WhiteBrush}" Margin="0,0,0,6" />
@@ -363,7 +363,7 @@
                 <StackPanel x:Name="PageDiscord" Visibility="Collapsed">
                     <!-- v1.14+ Discord presence + Join (plan 2026-08-03). Off by default; the status
                          line reports the live connection state in plain words, never a stack trace. -->
-                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                    <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
                             <CheckBox x:Name="DiscordPresenceToggle"
                                       Foreground="{DynamicResource WhiteBrush}" FontSize="13" FontWeight="SemiBold"
@@ -393,7 +393,9 @@
                 </StackPanel>
 
                 <StackPanel x:Name="PageAppearance" Visibility="Collapsed">
-                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14">
+                    <!-- Only card on its page, so no bottom margin — the one place the shared
+                         spacing is wrong rather than the one place someone forgot it. -->
+                    <Border Style="{StaticResource CardBorderStyle}" Margin="0">
                         <StackPanel>
                             <TextBlock Text="Theme"
                                        Foreground="{DynamicResource WhiteBrush}"
