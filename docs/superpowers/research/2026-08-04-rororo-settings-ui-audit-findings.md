@@ -30,11 +30,18 @@ a row here, not a drive-by fix.
 
 ## Status, derived from the rows above on 2026-08-04
 
-**6 clean · 70 open · 76 total.** Counted from the status cells, not carried
+**7 clean · 69 open · 76 total.** Counted from the status cells, not carried
 forward from a previous summary.
 
 Closed by wave 2 (merged `159fe4b`): F-002, F-003.
 Closed by wave 3 (merged `3fc838b`): F-009, F-010, F-011, F-012.
+Closed standalone (merged `9587ee6b`): F-076.
+
+> This line said **6 clean · 70 open** for about ten minutes. It was accurate when
+> written and wrong by the time it merged, because F-076 landed in a second PR
+> right behind this one. Re-derived from the rows rather than patched by one —
+> which is the whole reason the rule says derive, never carry forward. Leaving the
+> note because a scoreboard that silently self-corrects teaches nobody anything.
 
 **Wave 1's rows (F-006, F-008) are still marked `open` and are NOT counted as
 clean here.** Wave 1 shipped and its work looks done in the tree, but its
