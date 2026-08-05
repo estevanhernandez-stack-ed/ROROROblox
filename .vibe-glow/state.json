@@ -23,10 +23,19 @@
     {
       "id": 1,
       "name": "Games naming knot + streamer mode leaves the dashboard",
-      "status": "open",
+      "status": "shipped",
       "findings": [
         "F-006",
         "F-008"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Settings nav rail — five pages, shape-based selection, resizable",
+      "status": "open",
+      "findings": [
+        "F-002",
+        "F-003"
       ]
     }
   ],

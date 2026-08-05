@@ -18,7 +18,15 @@
 | a11y | 16 | 5 | 4 | 1 | 6 |
 | **total** | **95** | **43** | **32** | **8** | **12** |
 
-`survived` + `downgraded` = 75 rows in the register below.
+`survived` + `downgraded` = 75 rows from the audit. Later waves may add rows they
+discover; the table above counts the audit only. Register total is now **76**
+(F-076 added by wave 2 — see the wave-additions note below).
+
+**Wave additions.** A wave ships only its own batch; anything it discovers becomes
+a row here, not a drive-by fix.
+
+- **F-076** — added by wave 2, whose own capture tooling put a live webhook
+  credential in a PNG.
 
 ## The register
 
@@ -98,6 +106,7 @@
 | F-072 | AX-13 | History | a11y | 2 | 1 | 503 unpaired Text nodes, 100 sessions, zero DataItem/List containers; only two real focus stops (Clear history, Close), both terminal | History reads to assistive tech as ~500 loose strings with no session boundaries; its total lack of interactive surface is placement evidence for QF-19's "tool not preference" conclusion | A repeated five-field record is a table — give each session a row container whose name composes the fields (placement evidence only, not a rebuild this wave) | open |
 | F-073 | AX-15 | main window, FPS-cap banner | a11y | 2 | 1 | UIA tree shows Button 'Dismiss' declared before the banner's own text; visual right-alignment via DockPanel.Dock means a sighted user sees nothing wrong | A screen-reader user is offered "Dismiss" before being told what there is to dismiss | Declare banner content before the dismiss action in markup; name what each Dismiss button dismisses | open |
 | F-074 | CV-18 | Stop all confirmation | copy | 1 | 2 | `StopAllConfirmWindow.xaml:36` "UNSAVED GAME STATE WILL BE LOST" in the JetBrains Mono 10px uppercase label style at #5A6982, the dimmest text on the surface | Shape says "label," words say "you will lose work" — the only warning in a destructive confirmation dressed as a section header | Move into the body as ordinary 12px prose: "Anything not saved in those games is lost." Reserve mono-uppercase for genuine labels | open |
+| F-076 | (wave 2) | Settings -- Alerts & memory | qol | 3 | 3 | Wave-2 flatline capture of the Alerts page rendered both webhook URLs in full plaintext, including the token segment, in a screenshot taken by a scripted capture with no consent step. Capture deleted; `docs/ui-evidence/` is gitignored, so nothing was committed | A Discord webhook URL is a bearer credential — the token is the whole auth. This app ships a streamer mode whose entire job is to keep identity off a live stream, and Settings > Alerts puts a working credential on screen at full contrast. A stream, a screen-share, or a support screenshot leaks post-access to the user's clan channel. Found by this wave's own tooling, which is the proof that it is easy to hit | Mask the saved value by default (show scheme + host + last 4, e.g. `https://discord.com/api/webhooks/...BeqXP`) with an explicit reveal; keep the field editable by paste-over. Pairs with the streamer-mode work already in the campaign | open |
 | F-075 | CV-12 | cross-surface, row controls, empty states, Welcome | copy | 0 | 4 | `MainWindow.xaml:131,334,700,704,578,1141` — all Emoji_Presentation=No text glyphs; `WelcomeWindow.xaml:123,130` teaches ☰/★ by showing the same glyphs | These are functional glyphs, not decoration — sole content of controls too small for a label, or state indicators the Welcome tour teaches by name | No change — recorded as a deliberate keep so a later pass doesn't strip them; ▶ Start (:1682) flagged as the one marginal case | open |
 
 ## Rulings by the user (these override the register)
@@ -143,6 +152,8 @@
 - **`ROROROblox` (the repo name) leaks into user-facing copy in four places, not two or three.** `Friends/FriendFollowWindow.xaml.cs:133` (window title / taskbar / Alt-Tab), `Tray/TrayService.cs:221` ("Open ROROROblox," tray menu), `Tray/TrayService.cs:98-100` (tray tooltip, all three states — the surface a tray-resident app shows most often), and `Diagnostics/DiagnosticsWindow.xaml.cs:220` ("ROROROblox support snapshot," first line of a file users forward). All four violate the memory rule that user-facing brand is RoRoRo; ROROROblox stays for code identifiers only.
 
 ## Notes carried forward
+
+- **No test loads any XAML, so CI cannot catch a window that fails to render.** Raised by wave 2's review gate. `src/ROROROblox.Tests` contains no window instantiation and no `LoadComponent` call — every test targets view-models and services. That is precisely why the `GamesWindow` `TargetType="UIElement"` bug survived from 2026-05-04 to now: a resource-resolution failure at template-apply is invisible to 1268 green tests. Wave 2's own blank-page guard is also runtime-only and uncoverable today. Fix direction is a smoke test that constructs each `Window` on an STA thread inside an `Application`, which turns "does this window even load" into a CI question. Not a UI finding, so no register row — but it is the reason two of this campaign's bugs were found by eye instead of by build.
 
 - **Welcome-tour sentinel bug, found incidentally (QF-13 skeptic).** `MainWindow.xaml.cs:103-110` marks the `.welcome-shown` sentinel *before* checking `Accounts.Count == 0`. An upgrading user who already has accounts burns the sentinel without ever seeing the tour — worse than the original finding stated, since it means the one surface documenting six unlabelled row affordances silently never fires for that user class at all.
 - **Flatline fixture definition, load-bearing for several downgrades.** Per `docs/ui-capture-checklist.md:8-9`, flatline collapses backgrounds and text colors but keeps exactly one accent — it does not collapse accent-colored elements into the text color. Several original findings (VC-8, VC-9, VC-10, and to a lesser degree others) claimed accent-colored headings or dividers "disappeared" or became indistinguishable under flatline; the captures disprove that, and those findings were downgraded or absorbed accordingly rather than refuted outright, since the non-accent half of each claim still held.
