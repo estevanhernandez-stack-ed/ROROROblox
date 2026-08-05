@@ -23,7 +23,7 @@
 
         <StackPanel Grid.Row="0">
             <controls:PageHeader Heading="Diagnostics" />
-            <TextBlock Text="Snapshot of what RoRoRo sees right now. Save the bundle when filing a bug — log files redact secrets."
+            <TextBlock Text="Save the bundle when filing a bug — log files redact secrets."
                        FontSize="11"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0"

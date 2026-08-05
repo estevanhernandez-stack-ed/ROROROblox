@@ -336,11 +336,6 @@
 
         <StackPanel Grid.Row="0">
             <controls:PageHeader Heading="Games" />
-            <TextBlock Text="Saved games and private servers. The game marked DEFAULT is what Launch As uses — no default game? Launches open Roblox at home. The private server marked DEFAULT is pre-selected when you launch all accounts to a server. Rename any row to give it a custom name (Roblox-side names stay untouched)."
-                       FontSize="11"
-                       Foreground="{DynamicResource MutedTextBrush}"
-                       Margin="0,4,0,0"
-                       TextWrapping="Wrap" />
         </StackPanel>
 
         <Grid Grid.Row="1" Margin="0,20,0,0">

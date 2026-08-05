@@ -22,11 +22,6 @@
 
         <StackPanel Grid.Row="0">
             <controls:PageHeader Heading="History" />
-            <TextBlock Text="What each account has launched into recently. Newest first; the last 100 sessions are kept."
-                       FontSize="11"
-                       Foreground="{DynamicResource MutedTextBrush}"
-                       Margin="0,4,0,0"
-                       TextWrapping="Wrap" />
         </StackPanel>
 
         <Border Grid.Row="1" Margin="0,20,0,0"

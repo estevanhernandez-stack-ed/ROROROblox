@@ -65,7 +65,7 @@
         <!-- Header -->
         <StackPanel Grid.Row="0">
             <controls:PageHeader Heading="Plugins" />
-            <TextBlock Text="What you've added on top of RoRoRo. Each plugin runs in its own process and only sees what you grant."
+            <TextBlock Text="Each plugin runs in its own process and only sees what you grant."
                        FontSize="11"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0"
