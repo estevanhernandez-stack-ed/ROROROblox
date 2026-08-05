@@ -790,7 +790,9 @@
                                     </Style>
                                 </ComboBox.ItemContainerStyle>
                             </ComboBox>
-                            <TextBlock Text="Add games with the Games button"
+                            <!-- Wave 3 moved Games off the toolbar into the Tools menu. This line
+                                 tells a user where to go, so it has to name where the thing now is. -->
+                            <TextBlock Text="Add games from Tools → Games"
                                        FontSize="11"
                                        FontStyle="Italic"
                                        Foreground="{DynamicResource MutedTextBrush}"
@@ -1190,7 +1192,8 @@
                         </ToggleButton>
 
                         <!-- Empty state: replaces the toggle when no games are saved.
-                             One click → Games settings sheet (same as the toolbar Games button). -->
+                             One click → the Games window (same as Tools → Games; it was a toolbar
+                             button until wave 3 folded it into the Tools menu). -->
                         <Button Content="No saved games yet — Add a game"
                                 Command="{Binding OpenGamesCommand}"
                                 MinWidth="220" MaxWidth="340"

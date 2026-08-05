@@ -32,11 +32,24 @@
     {
       "id": 2,
       "name": "Settings nav rail — five pages, shape-based selection, resizable",
-      "status": "open",
+      "status": "clean",
       "findings": [
         "F-002",
         "F-003"
-      ]
+      ],
+      "note": "Merged as 159fe4b. Residue recorded, not hidden: C5 is still unmet INSIDE a page — the nine section cards remain fill-only and collapse under flatline. Splitting them across five pages did not make cards load-bearing. That is a C5 conformance gap, not an F-002 miss, and it stays open."
+    },
+    {
+      "id": 3,
+      "name": "Tools container — six nav buttons become Settings + Tools, and the ad copy goes",
+      "status": "clean",
+      "findings": [
+        "F-009",
+        "F-010",
+        "F-011",
+        "F-012"
+      ],
+      "note": "Merged as 3fc838b. F-001 was in the batch and did NOT close: its fix direction also lists Stop all, Open log folder and the Welcome tour, none of which has a view-model command (the tray raises events handled in App.xaml.cs). F-001 stays open with exactly those three named. The gate also caught an accessibility regression — the first Tools control announced as a plain button with no ExpandCollapse — fixed with a custom peer after all three stock controls each failed a different half."
     }
   ],
   "scope": {
