@@ -117,6 +117,15 @@ internal sealed class ThemeService
         ApplySlot(resources, ThemeSlots.RowExpiredBg, theme.RowExpiredBg);
         ApplySlot(resources, ThemeSlots.RowExpiredAccent, theme.RowExpiredAccent);
         ApplySlot(resources, ThemeSlots.Navy, theme.Navy);
+
+        // Derived last, because it reads two slots that were just written. An interactive
+        // control's edge has to clear WCAG 1.4.11's 3:1 against the surface behind it, and no
+        // built-in theme manages it: Navy == Bg in all three, so a secondary button's fill
+        // contributes nothing and its border alone measures ~1.2:1. Deriving rather than adding an
+        // eleventh slot means every user theme already on disk is covered without its author
+        // touching anything (invariant 6 — the contract does not grow).
+        ApplySlot(resources, ThemeSlots.InteractiveEdge, ContrastGuard.Ensure(theme.Navy, theme.Divider));
+
         CurrentTheme = theme;
         _log.LogInformation("Applied theme {Id} ({Name}).", theme.Id, theme.Name);
     }
