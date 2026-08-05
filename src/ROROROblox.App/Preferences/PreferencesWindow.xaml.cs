@@ -167,6 +167,7 @@ internal partial class PreferencesWindow : Window
         _suppressClickHandlers = true;
         try
         {
+            SettingsNav.SelectedIndex = 0;
             RunOnLoginToggle.IsChecked = SafeIsStartupEnabled();
             LaunchMainToggle.IsChecked = await _settings.GetLaunchMainOnStartupAsync();
 
@@ -847,6 +848,28 @@ internal partial class PreferencesWindow : Window
     {
         var window = new ImportAccountsWindow(_accountStore, _transport, _mainViewModel) { Owner = this };
         window.ShowDialog();
+    }
+
+    /// <summary>
+    /// Nav rail → page. Five StackPanels live in one Grid and exactly one is visible; the rail's
+    /// SelectedIndex picks it.
+    /// <para>
+    /// Deliberately not a TabControl: a TabControl's headers are chrome we would then have to
+    /// re-template to get a shape-based selected state, and its content is rebuilt on tab change,
+    /// which would re-run the population every switch. These pages are populated once in OnLoaded
+    /// and stay live — the Discord status line subscribes for the window's lifetime, so a page
+    /// that gets torn down and rebuilt would drop that subscription silently.
+    /// </para>
+    /// </summary>
+    private void OnNavSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (PageStartup is null) return;   // fires once during InitializeComponent, before the pages exist
+
+        var pages = new[] { PageStartup, PageAccounts, PageAlerts, PageDiscord, PageAppearance };
+        for (var i = 0; i < pages.Length; i++)
+        {
+            pages[i].Visibility = i == SettingsNav.SelectedIndex ? Visibility.Visible : Visibility.Collapsed;
+        }
     }
 
     private void OnCloseClick(object sender, RoutedEventArgs e) => Close();

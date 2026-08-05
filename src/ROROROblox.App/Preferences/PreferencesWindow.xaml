@@ -3,11 +3,53 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="RoRoRo -- Preferences"
-        Height="600" Width="500"
-        ResizeMode="NoResize"
+        Height="640" Width="860"
+        MinHeight="480" MinWidth="720"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BgBrush}"
         Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
+
+    <Window.Resources>
+        <!-- Nav rail item. SELECTION IS A SHAPE, NOT A FILL — deliberately, and it is the whole
+             reason this rail replaces a scroll of cards. The audit's flatline theme collapses
+             RowBgBrush into BgBrush, which erased the old section cards entirely (finding F-002);
+             a rail whose selected state were a highlight fill would rebuild that same failure in a
+             new shape. So selection is carried by an accent BAR plus a weight change, two cues
+             that both survive a theme with one background colour. Do not add a Background setter
+             to the selected trigger. -->
+        <Style x:Key="NavItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid Background="Transparent">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Rectangle x:Name="Marker" Grid.Column="0"
+                                       Fill="{DynamicResource CyanBrush}"
+                                       RadiusX="1.5" RadiusY="1.5"
+                                       Visibility="Hidden" />
+                            <ContentPresenter Grid.Column="1" Margin="12,9"
+                                              VerticalAlignment="Center" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Marker" Property="Visibility" Value="Visible" />
+                                <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
 
     <Grid Margin="28,24">
         <Grid.RowDefinitions>
@@ -18,7 +60,7 @@
 
         <StackPanel Grid.Row="0">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Preferences"
+                <TextBlock Text="RoRoRo"
                            FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource CyanBrush}" />
                 <TextBlock Text=" / "
@@ -28,341 +70,367 @@
                            FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource WhiteBrush}" />
             </StackPanel>
-            <TextBlock Text="How RoRoRo behaves."
-                       FontSize="11"
-                       Foreground="{DynamicResource MutedTextBrush}"
-                       Margin="0,4,0,0" />
         </StackPanel>
 
-        <ScrollViewer Grid.Row="1" Margin="0,24,0,0" VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-                <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
-                    <StackPanel>
-                        <CheckBox x:Name="RunOnLoginToggle"
-                                  Foreground="{DynamicResource WhiteBrush}"
-                                  FontSize="13"
-                                  FontWeight="SemiBold"
-                                  Click="OnRunOnLoginToggle">
-                            <TextBlock Text="Start RoRoRo when Windows starts." />
-                        </CheckBox>
-                        <TextBlock FontSize="11"
-                                   Foreground="{DynamicResource MutedTextBrush}"
-                                   TextWrapping="Wrap"
-                                   Margin="22,4,0,0"
-                                   Text="Adds a value under HKCU Run. Removes it when unchecked." />
-                    </StackPanel>
-                </Border>
+        <Grid Grid.Row="1" Margin="0,20,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="164" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-                <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
-                    <StackPanel>
-                        <CheckBox x:Name="LaunchMainToggle"
-                                  Foreground="{DynamicResource WhiteBrush}"
-                                  FontSize="13"
-                                  FontWeight="SemiBold"
-                                  Click="OnLaunchMainToggle">
-                            <TextBlock Text="Launch my main account when RoRoRo starts." />
-                        </CheckBox>
-                        <TextBlock x:Name="LaunchMainHint"
-                                   FontSize="11"
-                                   Foreground="{DynamicResource MutedTextBrush}"
-                                   TextWrapping="Wrap"
-                                   Margin="22,4,0,0"
-                                   Text="Pair with the toggle above for a one-step boot-to-Roblox setup. Pick a main account in the row list (the &#x2606; star) first." />
-                    </StackPanel>
-                </Border>
+            <ListBox x:Name="SettingsNav" Grid.Column="0"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     FontSize="13"
+                     ItemContainerStyle="{StaticResource NavItemStyle}"
+                     SelectionChanged="OnNavSelectionChanged">
+                    <ListBoxItem Content="Startup" />
+                    <ListBoxItem Content="Accounts" />
+                    <ListBoxItem Content="Alerts &amp; memory" />
+                    <ListBoxItem Content="Discord" />
+                    <ListBoxItem Content="Appearance" />
+            </ListBox>
 
-                <!-- Streamer mode. Moved off the main window 2026-08-04 (audit finding F-008): a
-                     setting occupied a full band of the dashboard and printed its own tooltip a
-                     second time as body copy. Rendered as a CheckBox rather than the ui:ToggleSwitch
-                     it was, to match the six settings already on this page — the ToggleSwitch was
-                     the app's only one. The tray checkbox stays; the two are views of one source of
-                     truth (IStreamerIdentityProvider), not two flags. -->
-                <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
-                    <StackPanel>
-                        <CheckBox x:Name="StreamerModeToggle"
-                                  Foreground="{DynamicResource WhiteBrush}"
-                                  FontSize="13"
-                                  FontWeight="SemiBold"
-                                  Click="OnStreamerModeToggle">
-                            <TextBlock Text="Streamer mode." />
-                        </CheckBox>
-                        <TextBlock FontSize="11"
-                                   Foreground="{DynamicResource MutedTextBrush}"
-                                   TextWrapping="Wrap"
-                                   Margin="22,4,0,8"
-                                   Text="Hides names, avatars, and share links inside RoRoRo. It does not change anything Roblox itself shows — your stream still shows whatever is on screen in the game." />
-                        <Button x:Name="RerollAllButton"
-                                Content="Reroll all identities"
-                                Click="OnRerollAllClick"
-                                HorizontalAlignment="Left"
-                                Margin="22,0,0,0"
-                                Padding="10,6"
-                                Background="{DynamicResource NavyBrush}"
-                                Foreground="{DynamicResource MutedTextBrush}"
-                                BorderBrush="{DynamicResource DividerBrush}"
-                                BorderThickness="1"
-                                FontSize="11"
-                                ToolTip="Assign every fake name and avatar a fresh pick." />
-                    </StackPanel>
-                </Border>
-
-                <!-- v1.14 — Recycle now rejoins the exact server an account is in, so it earns a
-                     place outside the memory-warning state. Off by default; same block shape. -->
-                <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
-                    <StackPanel>
-                        <CheckBox x:Name="AlwaysShowRecycleToggle"
-                                  Foreground="{DynamicResource WhiteBrush}"
-                                  FontSize="13"
-                                  FontWeight="SemiBold"
-                                  Click="OnAlwaysShowRecycleToggle">
-                            <TextBlock Text="Always show Recycle on running accounts." TextWrapping="Wrap" />
-                        </CheckBox>
-                        <TextBlock FontSize="11"
-                                   Foreground="{DynamicResource MutedTextBrush}"
-                                   TextWrapping="Wrap"
-                                   Margin="22,4,0,0"
-                                   Text="Recycle closes a client and puts it straight back into the server it was in — useful for a client that's gone sideways, not just one eating memory. Off, it appears only when RoRoRo warns about that account's memory." />
-                    </StackPanel>
-                </Border>
-
-                <!-- v1.8 idle awareness — mute toggle + warn-threshold preset, mirroring the
-                     LaunchMainToggle block above exactly (same CheckBox shape, same hint pattern). -->
-                <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
-                    <StackPanel>
-                        <CheckBox x:Name="MuteIdleAlertsToggle"
-                                  Foreground="{DynamicResource WhiteBrush}"
-                                  FontSize="13"
-                                  FontWeight="SemiBold"
-                                  Click="OnMuteIdleAlertsToggle">
-                            <TextBlock Text="Mute idle alerts." />
-                        </CheckBox>
-                        <TextBlock FontSize="11"
-                                   Foreground="{DynamicResource MutedTextBrush}"
-                                   TextWrapping="Wrap"
-                                   Margin="22,4,0,8"
-                                   Text="RoRoRo shows one tray toast when a running account crosses the idle threshold below. Checking this keeps the row chip but skips the toast." />
-                        <TextBlock Text="Idle warn threshold"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource WhiteBrush}"
-                                   Margin="22,0,0,4" />
-                        <ComboBox x:Name="IdleWarnThresholdPicker"
-                                  Margin="22,0,0,0"
-                                  Width="160"
-                                  HorizontalAlignment="Left"
-                                  SelectionChanged="OnIdleWarnThresholdChanged"
-                                  Background="{DynamicResource NavyBrush}"
-                                  Foreground="{DynamicResource WhiteBrush}"
-                                  BorderBrush="{DynamicResource DividerBrush}"
-                                  Padding="8,6"
-                                  FontSize="12">
-                            <ComboBoxItem Content="10 minutes" Tag="10" />
-                            <ComboBoxItem Content="12 minutes" Tag="12" />
-                            <ComboBoxItem Content="15 minutes" Tag="15" />
-                            <ComboBoxItem Content="18 minutes" Tag="18" />
-                        </ComboBox>
-                    </StackPanel>
-                </Border>
-
-                <!-- v1.14+ Discord presence + Join (plan 2026-08-03). Off by default; the status
-                     line reports the live connection state in plain words, never a stack trace. -->
-                <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
-                    <StackPanel>
-                        <CheckBox x:Name="DiscordPresenceToggle"
-                                  Foreground="{DynamicResource WhiteBrush}" FontSize="13" FontWeight="SemiBold"
-                                  Click="OnDiscordPresenceToggle">
-                            <TextBlock Text="Show what I'm playing on Discord." TextWrapping="Wrap" />
-                        </CheckBox>
-                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
-                                   Margin="22,4,0,8"
-                                   Text="Your Discord status shows the game, how many accounts you have in it, and how long you've been going. Nothing to set up — it uses the Discord app already on this PC." />
-                        <!-- Said here because otherwise every user who turns this on asks a friend
-                             "do you see it?", gets no, and files a bug. Discord gives the profile
-                             "playing" slot to a game it detects, and RoRoRo is an application, not
-                             a detected game — nothing we can toggle. Detection is earned by
-                             installs over time, so the last line is a real path, not a consolation. -->
-                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
-                                   Margin="22,0,0,8"
-                                   Text="Worth knowing: while Roblox is running, your friends see Roblox on your profile instead of RoRoRo — Discord gives that spot to games it recognizes. You'll always see your own card. RoRoRo gets recognized once enough people are running it." />
-                        <CheckBox x:Name="DiscordJoinToggle"
-                                  Foreground="{DynamicResource WhiteBrush}" FontSize="12"
-                                  Margin="22,0,0,0" Click="OnDiscordJoinToggle">
-                            <TextBlock Text="Let friends join my server from Discord" TextWrapping="Wrap" />
-                        </CheckBox>
-                        <TextBlock x:Name="DiscordStatusLine" FontSize="11"
-                                   Foreground="{DynamicResource CyanBrush}" TextWrapping="Wrap" Margin="22,8,0,0" />
-                    </StackPanel>
-                </Border>
-
-                <!-- Alerts (plan 2026-08-03, Task 7). The only wall in this feature is the webhook,
-                     and it starts one step earlier than a paste field: "Server Settings ->
-                     Integrations" assumes you own a server, and plenty of clan members have only
-                     ever joined one. Hence the walkthrough button. Desktop alerts need no setup at
-                     all, but the status line never pretends they are the point — you can already
-                     see a dead client if you are sitting at the PC. -->
-                <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
-                    <StackPanel>
-                        <TextBlock Text="Alerts" FontSize="13" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource WhiteBrush}" Margin="0,0,0,6" />
-                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
-                                   Margin="0,0,0,10"
-                                   Text="Get told when something happens to an account while you're away from the PC. Sending to a Discord channel takes about a minute to set up — there's a walkthrough below if you've never made a webhook." />
-
-                        <Grid Margin="0,0,0,6">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="An account drops out" FontSize="12" VerticalAlignment="Center"
-                                       Foreground="{DynamicResource WhiteBrush}" Width="180" />
-                            <ComboBox Grid.Column="1" x:Name="DroppedOutDestination" Width="170" HorizontalAlignment="Left"
-                                      SelectionChanged="OnAlertRoutingChanged">
-                                <ComboBoxItem Content="Off" Tag="None" />
-                                <ComboBoxItem Content="Desktop only" Tag="Local" />
-                                <ComboBoxItem Content="My channel" Tag="Mine" />
-                                <ComboBoxItem Content="Clan channel" Tag="Clan" />
-                            </ComboBox>
-                        </Grid>
-
-                        <Grid Margin="0,0,0,6">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="An account eats memory" FontSize="12" VerticalAlignment="Center"
-                                       Foreground="{DynamicResource WhiteBrush}" Width="180" />
-                            <ComboBox Grid.Column="1" x:Name="MemoryWarningDestination" Width="170" HorizontalAlignment="Left"
-                                      SelectionChanged="OnAlertRoutingChanged">
-                                <ComboBoxItem Content="Off" Tag="None" />
-                                <ComboBoxItem Content="Desktop only" Tag="Local" />
-                                <ComboBoxItem Content="My channel" Tag="Mine" />
-                                <ComboBoxItem Content="Clan channel" Tag="Clan" />
-                            </ComboBox>
-                        </Grid>
-
-                        <!-- Two separate webhooks, because they are two different audiences. "My
-                             channel" is a server you own and nobody else reads; "Clan channel" is a
-                             shared room. Keeping them apart is what lets someone send health noise
-                             to themselves and only the interesting things to the clan — and it is
-                             why the payload type has no field a private-server link could live in
-                             (see WebhookPayload). One shared field would collapse that choice. -->
-                        <TextBlock Text="My channel — webhook URL" FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource WhiteBrush}" Margin="0,10,0,2" />
-                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
-                                   Margin="0,0,0,4"
-                                   Text="A server only you read. Saved encrypted on this PC and never leaves it except to post your alerts." />
-                        <TextBox x:Name="MineWebhookInput" Padding="8,6" FontSize="11"
-                                 Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
-                                 BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
-                                 LostFocus="OnWebhookCommitted" />
-                        <TextBlock x:Name="MineWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
-                                   Foreground="{DynamicResource MutedTextBrush}" />
-
-                        <TextBlock Text="Clan channel — webhook URL" FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource WhiteBrush}" Margin="0,12,0,2" />
-                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
-                                   Margin="0,0,0,4"
-                                   Text="A shared room. Anything routed here is read by everyone in that channel, now and later — so send what the clan should see, not everything." />
-                        <TextBox x:Name="ClanWebhookInput" Padding="8,6" FontSize="11"
-                                 Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
-                                 BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
-                                 LostFocus="OnWebhookCommitted" />
-                        <TextBlock x:Name="ClanWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
-                                   Foreground="{DynamicResource MutedTextBrush}" />
-
-                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                            <Button x:Name="SendTestButton" Content="Send test" Padding="12,5" Click="OnSendTestClick"
-                                    Background="{DynamicResource MagentaBrush}" Foreground="{DynamicResource WhiteBrush}"
-                                    BorderThickness="0" FontSize="11" FontWeight="SemiBold" />
-                            <Button x:Name="NoServerHelpButton" Content="I don't have a Discord server" Padding="12,5" Margin="8,0,0,0"
-                                    Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
-                                    BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1" FontSize="11"
-                                    Click="OnNoServerHelpClick" />
+            <ScrollViewer Grid.Column="1" Margin="16,0,0,0" VerticalScrollBarVisibility="Auto">
+                <Grid>
+                <StackPanel x:Name="PageStartup">
+                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                        <StackPanel>
+                            <CheckBox x:Name="RunOnLoginToggle"
+                                      Foreground="{DynamicResource WhiteBrush}"
+                                      FontSize="13"
+                                      FontWeight="SemiBold"
+                                      Click="OnRunOnLoginToggle">
+                                <TextBlock Text="Start RoRoRo when Windows starts." />
+                            </CheckBox>
+                            <TextBlock FontSize="11"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="22,4,0,0"
+                                       Text="Adds a value under HKCU Run. Removes it when unchecked." />
                         </StackPanel>
+                    </Border>
 
-                        <TextBlock x:Name="AlertsStatusLine" FontSize="11" Margin="0,10,0,0" TextWrapping="Wrap"
-                                   Foreground="{DynamicResource CyanBrush}" />
-                    </StackPanel>
-                </Border>
+                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                        <StackPanel>
+                            <CheckBox x:Name="LaunchMainToggle"
+                                      Foreground="{DynamicResource WhiteBrush}"
+                                      FontSize="13"
+                                      FontWeight="SemiBold"
+                                      Click="OnLaunchMainToggle">
+                                <TextBlock Text="Launch my main account when RoRoRo starts." />
+                            </CheckBox>
+                            <TextBlock x:Name="LaunchMainHint"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="22,4,0,0"
+                                       Text="Pair with the toggle above for a one-step boot-to-Roblox setup. Pick a main account in the row list (the &#x2606; star) first." />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
 
-                <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14">
-                    <StackPanel>
-                        <TextBlock Text="Theme"
-                                   Foreground="{DynamicResource WhiteBrush}"
-                                   FontSize="13" FontWeight="SemiBold" />
-                        <TextBlock FontSize="11"
-                                   Foreground="{DynamicResource MutedTextBrush}"
-                                   TextWrapping="Wrap"
-                                   Margin="0,2,0,8"
-                                   Text="Pick a built-in or drop your own JSON in the themes folder. The main window updates immediately; secondary dialogs (this one, Diagnostics, About) adopt the theme on next open." />
-                        <ComboBox x:Name="ThemePicker"
-                                  DisplayMemberPath="Name"
-                                  SelectionChanged="OnThemeChanged"
-                                  Background="{DynamicResource NavyBrush}"
-                                  Foreground="{DynamicResource WhiteBrush}"
-                                  BorderBrush="{DynamicResource DividerBrush}"
-                                  Padding="8,6"
-                                  FontSize="12" />
-                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                            <Button x:Name="BuildThemeButton"
-                                    Content="+ Build a theme..."
+                <StackPanel x:Name="PageAccounts" Visibility="Collapsed">
+                    <!-- Streamer mode. Moved off the main window 2026-08-04 (audit finding F-008): a
+                         setting occupied a full band of the dashboard and printed its own tooltip a
+                         second time as body copy. Rendered as a CheckBox rather than the ui:ToggleSwitch
+                         it was, to match the six settings already on this page — the ToggleSwitch was
+                         the app's only one. The tray checkbox stays; the two are views of one source of
+                         truth (IStreamerIdentityProvider), not two flags. -->
+                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                        <StackPanel>
+                            <CheckBox x:Name="StreamerModeToggle"
+                                      Foreground="{DynamicResource WhiteBrush}"
+                                      FontSize="13"
+                                      FontWeight="SemiBold"
+                                      Click="OnStreamerModeToggle">
+                                <TextBlock Text="Streamer mode." />
+                            </CheckBox>
+                            <TextBlock FontSize="11"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="22,4,0,8"
+                                       Text="Hides names, avatars, and share links inside RoRoRo. It does not change anything Roblox itself shows — your stream still shows whatever is on screen in the game." />
+                            <Button x:Name="RerollAllButton"
+                                    Content="Reroll all identities"
+                                    Click="OnRerollAllClick"
                                     HorizontalAlignment="Left"
-                                    Padding="10,5" Margin="0,0,8,0"
-                                    Background="{DynamicResource MagentaBrush}"
-                                    Foreground="{DynamicResource WhiteBrush}"
-                                    BorderThickness="0"
-                                    FontWeight="SemiBold"
-                                    FontSize="11"
-                                    Click="OnBuildThemeClick"
-                                    ToolTip="Open the theme builder. Copy an AI prompt, paste the result back, save." />
-                            <Button x:Name="OpenThemesFolderButton"
-                                    Content="Open themes folder"
-                                    HorizontalAlignment="Left"
-                                    Padding="10,5"
+                                    Margin="22,0,0,0"
+                                    Padding="10,6"
                                     Background="{DynamicResource NavyBrush}"
                                     Foreground="{DynamicResource MutedTextBrush}"
                                     BorderBrush="{DynamicResource DividerBrush}"
                                     BorderThickness="1"
                                     FontSize="11"
-                                    Click="OnOpenThemesFolderClick"
-                                    ToolTip="Drop a *.json file in here to make it appear in the picker after restart." />
+                                    ToolTip="Assign every fake name and avatar a fresh pick." />
                         </StackPanel>
-                    </StackPanel>
-                </Border>
+                    </Border>
 
-                <!-- Accounts — move accounts to another PC (v1.6.0 account transport). -->
-                <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,10,0,0">
-                    <StackPanel>
-                        <TextBlock Text="Accounts"
-                                   Foreground="{DynamicResource WhiteBrush}"
-                                   FontSize="13" FontWeight="SemiBold" />
-                        <TextBlock FontSize="11"
-                                   Foreground="{DynamicResource MutedTextBrush}"
-                                   TextWrapping="Wrap"
-                                   Margin="0,2,0,8"
-                                   Text="Move your saved accounts to another PC. Export writes a passphrase-encrypted file; import merges it in without touching accounts already on this machine." />
-                        <StackPanel Orientation="Horizontal">
-                            <Button Content="Export accounts…" Padding="14,8" Margin="0,0,8,0"
-                                    Background="{DynamicResource NavyBrush}"
-                                    Foreground="{DynamicResource WhiteBrush}"
-                                    BorderBrush="{DynamicResource CyanBrush}"
-                                    BorderThickness="1"
-                                    FontSize="12"
-                                    Click="OnExportAccountsClick"
-                                    ToolTip="Save your accounts to an encrypted file you can move to another PC." />
-                            <Button Content="Import accounts…" Padding="14,8"
-                                    Background="{DynamicResource NavyBrush}"
-                                    Foreground="{DynamicResource WhiteBrush}"
-                                    BorderBrush="{DynamicResource MagentaBrush}"
-                                    BorderThickness="1"
-                                    FontSize="12"
-                                    Click="OnImportAccountsClick"
-                                    ToolTip="Add accounts from an encrypted .rororo-accounts file." />
+                    <!-- v1.14 — Recycle now rejoins the exact server an account is in, so it earns a
+                         place outside the memory-warning state. Off by default; same block shape. -->
+                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                        <StackPanel>
+                            <CheckBox x:Name="AlwaysShowRecycleToggle"
+                                      Foreground="{DynamicResource WhiteBrush}"
+                                      FontSize="13"
+                                      FontWeight="SemiBold"
+                                      Click="OnAlwaysShowRecycleToggle">
+                                <TextBlock Text="Always show Recycle on running accounts." TextWrapping="Wrap" />
+                            </CheckBox>
+                            <TextBlock FontSize="11"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="22,4,0,0"
+                                       Text="Recycle closes a client and puts it straight back into the server it was in — useful for a client that's gone sideways, not just one eating memory. Off, it appears only when RoRoRo warns about that account's memory." />
                         </StackPanel>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-        </ScrollViewer>
+                    </Border>
+
+                    <!-- Accounts — move accounts to another PC (v1.6.0 account transport). -->
+                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,10,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Accounts"
+                                       Foreground="{DynamicResource WhiteBrush}"
+                                       FontSize="13" FontWeight="SemiBold" />
+                            <TextBlock FontSize="11"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,2,0,8"
+                                       Text="Move your saved accounts to another PC. Export writes a passphrase-encrypted file; import merges it in without touching accounts already on this machine." />
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Export accounts…" Padding="14,8" Margin="0,0,8,0"
+                                        Background="{DynamicResource NavyBrush}"
+                                        Foreground="{DynamicResource WhiteBrush}"
+                                        BorderBrush="{DynamicResource CyanBrush}"
+                                        BorderThickness="1"
+                                        FontSize="12"
+                                        Click="OnExportAccountsClick"
+                                        ToolTip="Save your accounts to an encrypted file you can move to another PC." />
+                                <Button Content="Import accounts…" Padding="14,8"
+                                        Background="{DynamicResource NavyBrush}"
+                                        Foreground="{DynamicResource WhiteBrush}"
+                                        BorderBrush="{DynamicResource MagentaBrush}"
+                                        BorderThickness="1"
+                                        FontSize="12"
+                                        Click="OnImportAccountsClick"
+                                        ToolTip="Add accounts from an encrypted .rororo-accounts file." />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel x:Name="PageAlerts" Visibility="Collapsed">
+                    <!-- v1.8 idle awareness — mute toggle + warn-threshold preset, mirroring the
+                         LaunchMainToggle block above exactly (same CheckBox shape, same hint pattern). -->
+                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                        <StackPanel>
+                            <CheckBox x:Name="MuteIdleAlertsToggle"
+                                      Foreground="{DynamicResource WhiteBrush}"
+                                      FontSize="13"
+                                      FontWeight="SemiBold"
+                                      Click="OnMuteIdleAlertsToggle">
+                                <TextBlock Text="Mute idle alerts." />
+                            </CheckBox>
+                            <TextBlock FontSize="11"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="22,4,0,8"
+                                       Text="RoRoRo shows one tray toast when a running account crosses the idle threshold below. Checking this keeps the row chip but skips the toast." />
+                            <TextBlock Text="Idle warn threshold"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource WhiteBrush}"
+                                       Margin="22,0,0,4" />
+                            <ComboBox x:Name="IdleWarnThresholdPicker"
+                                      Margin="22,0,0,0"
+                                      Width="160"
+                                      HorizontalAlignment="Left"
+                                      SelectionChanged="OnIdleWarnThresholdChanged"
+                                      Background="{DynamicResource NavyBrush}"
+                                      Foreground="{DynamicResource WhiteBrush}"
+                                      BorderBrush="{DynamicResource DividerBrush}"
+                                      Padding="8,6"
+                                      FontSize="12">
+                                <ComboBoxItem Content="10 minutes" Tag="10" />
+                                <ComboBoxItem Content="12 minutes" Tag="12" />
+                                <ComboBoxItem Content="15 minutes" Tag="15" />
+                                <ComboBoxItem Content="18 minutes" Tag="18" />
+                            </ComboBox>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Alerts (plan 2026-08-03, Task 7). The only wall in this feature is the webhook,
+                         and it starts one step earlier than a paste field: "Server Settings ->
+                         Integrations" assumes you own a server, and plenty of clan members have only
+                         ever joined one. Hence the walkthrough button. Desktop alerts need no setup at
+                         all, but the status line never pretends they are the point — you can already
+                         see a dead client if you are sitting at the PC. -->
+                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                        <StackPanel>
+                            <TextBlock Text="Alerts" FontSize="13" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource WhiteBrush}" Margin="0,0,0,6" />
+                            <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                       Margin="0,0,0,10"
+                                       Text="Get told when something happens to an account while you're away from the PC. Sending to a Discord channel takes about a minute to set up — there's a walkthrough below if you've never made a webhook." />
+
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="An account drops out" FontSize="12" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource WhiteBrush}" Width="180" />
+                                <ComboBox Grid.Column="1" x:Name="DroppedOutDestination" Width="170" HorizontalAlignment="Left"
+                                          SelectionChanged="OnAlertRoutingChanged">
+                                    <ComboBoxItem Content="Off" Tag="None" />
+                                    <ComboBoxItem Content="Desktop only" Tag="Local" />
+                                    <ComboBoxItem Content="My channel" Tag="Mine" />
+                                    <ComboBoxItem Content="Clan channel" Tag="Clan" />
+                                </ComboBox>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="An account eats memory" FontSize="12" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource WhiteBrush}" Width="180" />
+                                <ComboBox Grid.Column="1" x:Name="MemoryWarningDestination" Width="170" HorizontalAlignment="Left"
+                                          SelectionChanged="OnAlertRoutingChanged">
+                                    <ComboBoxItem Content="Off" Tag="None" />
+                                    <ComboBoxItem Content="Desktop only" Tag="Local" />
+                                    <ComboBoxItem Content="My channel" Tag="Mine" />
+                                    <ComboBoxItem Content="Clan channel" Tag="Clan" />
+                                </ComboBox>
+                            </Grid>
+
+                            <!-- Two separate webhooks, because they are two different audiences. "My
+                                 channel" is a server you own and nobody else reads; "Clan channel" is a
+                                 shared room. Keeping them apart is what lets someone send health noise
+                                 to themselves and only the interesting things to the clan — and it is
+                                 why the payload type has no field a private-server link could live in
+                                 (see WebhookPayload). One shared field would collapse that choice. -->
+                            <TextBlock Text="My channel — webhook URL" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource WhiteBrush}" Margin="0,10,0,2" />
+                            <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                       Margin="0,0,0,4"
+                                       Text="A server only you read. Saved encrypted on this PC and never leaves it except to post your alerts." />
+                            <TextBox x:Name="MineWebhookInput" Padding="8,6" FontSize="11"
+                                     Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
+                                     BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                                     LostFocus="OnWebhookCommitted" />
+                            <TextBlock x:Name="MineWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource MutedTextBrush}" />
+
+                            <TextBlock Text="Clan channel — webhook URL" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource WhiteBrush}" Margin="0,12,0,2" />
+                            <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                       Margin="0,0,0,4"
+                                       Text="A shared room. Anything routed here is read by everyone in that channel, now and later — so send what the clan should see, not everything." />
+                            <TextBox x:Name="ClanWebhookInput" Padding="8,6" FontSize="11"
+                                     Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
+                                     BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                                     LostFocus="OnWebhookCommitted" />
+                            <TextBlock x:Name="ClanWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource MutedTextBrush}" />
+
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <Button x:Name="SendTestButton" Content="Send test" Padding="12,5" Click="OnSendTestClick"
+                                        Background="{DynamicResource MagentaBrush}" Foreground="{DynamicResource WhiteBrush}"
+                                        BorderThickness="0" FontSize="11" FontWeight="SemiBold" />
+                                <Button x:Name="NoServerHelpButton" Content="I don't have a Discord server" Padding="12,5" Margin="8,0,0,0"
+                                        Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
+                                        BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1" FontSize="11"
+                                        Click="OnNoServerHelpClick" />
+                            </StackPanel>
+
+                            <TextBlock x:Name="AlertsStatusLine" FontSize="11" Margin="0,10,0,0" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource CyanBrush}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel x:Name="PageDiscord" Visibility="Collapsed">
+                    <!-- v1.14+ Discord presence + Join (plan 2026-08-03). Off by default; the status
+                         line reports the live connection state in plain words, never a stack trace. -->
+                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                        <StackPanel>
+                            <CheckBox x:Name="DiscordPresenceToggle"
+                                      Foreground="{DynamicResource WhiteBrush}" FontSize="13" FontWeight="SemiBold"
+                                      Click="OnDiscordPresenceToggle">
+                                <TextBlock Text="Show what I'm playing on Discord." TextWrapping="Wrap" />
+                            </CheckBox>
+                            <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                       Margin="22,4,0,8"
+                                       Text="Your Discord status shows the game, how many accounts you have in it, and how long you've been going. Nothing to set up — it uses the Discord app already on this PC." />
+                            <!-- Said here because otherwise every user who turns this on asks a friend
+                                 "do you see it?", gets no, and files a bug. Discord gives the profile
+                                 "playing" slot to a game it detects, and RoRoRo is an application, not
+                                 a detected game — nothing we can toggle. Detection is earned by
+                                 installs over time, so the last line is a real path, not a consolation. -->
+                            <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                       Margin="22,0,0,8"
+                                       Text="Worth knowing: while Roblox is running, your friends see Roblox on your profile instead of RoRoRo — Discord gives that spot to games it recognizes. You'll always see your own card. RoRoRo gets recognized once enough people are running it." />
+                            <CheckBox x:Name="DiscordJoinToggle"
+                                      Foreground="{DynamicResource WhiteBrush}" FontSize="12"
+                                      Margin="22,0,0,0" Click="OnDiscordJoinToggle">
+                                <TextBlock Text="Let friends join my server from Discord" TextWrapping="Wrap" />
+                            </CheckBox>
+                            <TextBlock x:Name="DiscordStatusLine" FontSize="11"
+                                       Foreground="{DynamicResource CyanBrush}" TextWrapping="Wrap" Margin="22,8,0,0" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel x:Name="PageAppearance" Visibility="Collapsed">
+                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8" Padding="14">
+                        <StackPanel>
+                            <TextBlock Text="Theme"
+                                       Foreground="{DynamicResource WhiteBrush}"
+                                       FontSize="13" FontWeight="SemiBold" />
+                            <TextBlock FontSize="11"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,2,0,8"
+                                       Text="Pick a built-in or drop your own JSON in the themes folder. The main window updates immediately; secondary dialogs (this one, Diagnostics, About) adopt the theme on next open." />
+                            <ComboBox x:Name="ThemePicker"
+                                      DisplayMemberPath="Name"
+                                      SelectionChanged="OnThemeChanged"
+                                      Background="{DynamicResource NavyBrush}"
+                                      Foreground="{DynamicResource WhiteBrush}"
+                                      BorderBrush="{DynamicResource DividerBrush}"
+                                      Padding="8,6"
+                                      FontSize="12" />
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <Button x:Name="BuildThemeButton"
+                                        Content="+ Build a theme..."
+                                        HorizontalAlignment="Left"
+                                        Padding="10,5" Margin="0,0,8,0"
+                                        Background="{DynamicResource MagentaBrush}"
+                                        Foreground="{DynamicResource WhiteBrush}"
+                                        BorderThickness="0"
+                                        FontWeight="SemiBold"
+                                        FontSize="11"
+                                        Click="OnBuildThemeClick"
+                                        ToolTip="Open the theme builder. Copy an AI prompt, paste the result back, save." />
+                                <Button x:Name="OpenThemesFolderButton"
+                                        Content="Open themes folder"
+                                        HorizontalAlignment="Left"
+                                        Padding="10,5"
+                                        Background="{DynamicResource NavyBrush}"
+                                        Foreground="{DynamicResource MutedTextBrush}"
+                                        BorderBrush="{DynamicResource DividerBrush}"
+                                        BorderThickness="1"
+                                        FontSize="11"
+                                        Click="OnOpenThemesFolderClick"
+                                        ToolTip="Drop a *.json file in here to make it appear in the picker after restart." />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button Content="Close" Padding="22,8"
