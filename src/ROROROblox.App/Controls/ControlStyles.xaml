@@ -40,4 +40,19 @@
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
+
+    <!-- Secondary, strong label. The sweep that consolidated these found THREE recipes, not two:
+         Navy+MutedText+Divider (quiet secondary), Navy+White+Cyan (primary), and this one —
+         Navy+White+Divider — on dialog footers, Open log folder, Clear history and their kin.
+
+         It gets the same edge fix and keeps its white label. Folding it into the quiet secondary
+         would have fixed the contrast bug by demoting a dialog's main action to muted text, which
+         is a legibility trade nobody asked for. Three recipes existed; three styles name them. -->
+    <Style x:Key="SecondaryStrongButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource InteractiveEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
 </ResourceDictionary>

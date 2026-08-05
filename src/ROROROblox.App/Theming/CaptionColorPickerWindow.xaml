@@ -79,10 +79,7 @@
             <Button x:Name="ResetButton"
                     Content="Reset to auto"
                     Padding="12,6" Margin="0,0,8,0"
-                    Background="{DynamicResource NavyBrush}"
-                    Foreground="{DynamicResource MutedTextBrush}"
-                    BorderBrush="{DynamicResource DividerBrush}"
-                    BorderThickness="1"
+                    Style="{StaticResource SecondaryButtonStyle}"
                     FontSize="11"
                     Click="OnResetClick" />
             <Button Content="Close"

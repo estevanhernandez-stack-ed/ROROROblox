@@ -91,16 +91,10 @@
             <Button x:Name="OpenFolderButton"
                     Content="Open themes folder"
                     Padding="12,8" Margin="0,0,8,0"
-                    Background="{DynamicResource NavyBrush}"
-                    Foreground="{DynamicResource MutedTextBrush}"
-                    BorderBrush="{DynamicResource DividerBrush}"
-                    BorderThickness="1"
+                    Style="{StaticResource SecondaryButtonStyle}"
                     Click="OnOpenFolderClick" />
             <Button Content="Cancel" Padding="14,8" Margin="0,0,8,0"
-                    Background="{DynamicResource NavyBrush}"
-                    Foreground="{DynamicResource WhiteBrush}"
-                    BorderBrush="{DynamicResource DividerBrush}"
-                    BorderThickness="1"
+                    Style="{StaticResource SecondaryStrongButtonStyle}"
                     IsCancel="True"
                     Click="OnCancelClick" />
             <Button x:Name="SaveButton"

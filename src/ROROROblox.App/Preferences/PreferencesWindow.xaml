@@ -148,10 +148,7 @@
                                     HorizontalAlignment="Left"
                                     Margin="22,0,0,0"
                                     Padding="10,6"
-                                    Background="{DynamicResource NavyBrush}"
-                                    Foreground="{DynamicResource MutedTextBrush}"
-                                    BorderBrush="{DynamicResource DividerBrush}"
-                                    BorderThickness="1"
+                                    Style="{StaticResource SecondaryButtonStyle}"
                                     FontSize="11"
                                     ToolTip="Assign every fake name and avatar a fresh pick." />
                         </StackPanel>
@@ -189,10 +186,7 @@
                                        Text="Move your saved accounts to another PC. Export writes a passphrase-encrypted file; import merges it in without touching accounts already on this machine." />
                             <StackPanel Orientation="Horizontal">
                                 <Button Content="Export accounts…" Padding="14,8" Margin="0,0,8,0"
-                                        Background="{DynamicResource NavyBrush}"
-                                        Foreground="{DynamicResource WhiteBrush}"
-                                        BorderBrush="{DynamicResource CyanBrush}"
-                                        BorderThickness="1"
+                                        Style="{StaticResource PrimaryButtonStyle}"
                                         FontSize="12"
                                         Click="OnExportAccountsClick"
                                         ToolTip="Save your accounts to an encrypted file you can move to another PC." />
@@ -361,8 +355,7 @@
                                         Background="{DynamicResource MagentaBrush}" Foreground="{DynamicResource WhiteBrush}"
                                         BorderThickness="0" FontSize="11" FontWeight="SemiBold" />
                                 <Button x:Name="NoServerHelpButton" Content="I don't have a Discord server" Padding="12,5" Margin="8,0,0,0"
-                                        Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
-                                        BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1" FontSize="11"
+                                        Style="{StaticResource SecondaryStrongButtonStyle}" FontSize="11"
                                         Click="OnNoServerHelpClick" />
                             </StackPanel>
 
@@ -439,10 +432,7 @@
                                         Content="Open themes folder"
                                         HorizontalAlignment="Left"
                                         Padding="10,5"
-                                        Background="{DynamicResource NavyBrush}"
-                                        Foreground="{DynamicResource MutedTextBrush}"
-                                        BorderBrush="{DynamicResource DividerBrush}"
-                                        BorderThickness="1"
+                                        Style="{StaticResource SecondaryButtonStyle}"
                                         FontSize="11"
                                         Click="OnOpenThemesFolderClick"
                                         ToolTip="Drop a *.json file in here to make it appear in the picker after restart." />

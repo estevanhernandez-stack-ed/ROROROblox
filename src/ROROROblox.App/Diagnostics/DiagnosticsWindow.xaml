@@ -43,17 +43,11 @@
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button x:Name="OpenLogFolderButton" Content="Open log folder"
                     Padding="12,8" Margin="0,0,8,0"
-                    Background="{DynamicResource NavyBrush}"
-                    Foreground="{DynamicResource WhiteBrush}"
-                    BorderBrush="{DynamicResource DividerBrush}"
-                    BorderThickness="1"
+                    Style="{StaticResource SecondaryStrongButtonStyle}"
                     Click="OnOpenLogFolderClick" />
             <Button x:Name="OpenDataFolderButton" Content="Open data folder"
                     Padding="12,8" Margin="0,0,8,0"
-                    Background="{DynamicResource NavyBrush}"
-                    Foreground="{DynamicResource WhiteBrush}"
-                    BorderBrush="{DynamicResource DividerBrush}"
-                    BorderThickness="1"
+                    Style="{StaticResource SecondaryStrongButtonStyle}"
                     Click="OnOpenDataFolderClick" />
             <Button x:Name="SaveBundleButton" Content="Save support bundle (.zip)"
                     Padding="14,8" Margin="0,0,8,0"
@@ -64,10 +58,7 @@
                     Click="OnSaveBundleClick"
                     ToolTip="Bundle the latest log files + this snapshot into a zip you can attach to a Discord report. Cookies are never logged; the bundle contains no secrets." />
             <Button Content="Close" Padding="14,8"
-                    Background="{DynamicResource NavyBrush}"
-                    Foreground="{DynamicResource WhiteBrush}"
-                    BorderBrush="{DynamicResource DividerBrush}"
-                    BorderThickness="1"
+                    Style="{StaticResource SecondaryStrongButtonStyle}"
                     IsCancel="True"
                     Click="OnCloseClick" />
         </StackPanel>
