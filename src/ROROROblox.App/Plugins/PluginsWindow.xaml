@@ -2,9 +2,10 @@
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:ROROROblox.App.Controls"
         xmlns:local="clr-namespace:ROROROblox.App"
         xmlns:plugins="clr-namespace:ROROROblox.App.Plugins"
-        Title="RoRoRo -- Plugins"
+        Title="Plugins"
         Height="600" Width="720"
         MinHeight="480" MinWidth="600"
         WindowStartupLocation="CenterOwner"
@@ -63,18 +64,8 @@
 
         <!-- Header -->
         <StackPanel Grid.Row="0">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Plugins"
-                           FontSize="22" FontWeight="Bold"
-                           Foreground="{DynamicResource CyanBrush}" />
-                <TextBlock Text=" / "
-                           FontSize="22" FontWeight="Bold"
-                           Foreground="{DynamicResource MagentaBrush}" />
-                <TextBlock Text="Installed"
-                           FontSize="22" FontWeight="Bold"
-                           Foreground="{DynamicResource WhiteBrush}" />
-            </StackPanel>
-            <TextBlock Text="What you've added on top of RoRoRo. Each plugin runs in its own process and only sees what you grant."
+            <controls:PageHeader Heading="Plugins" />
+            <TextBlock Text="Each plugin runs in its own process and only sees what you grant."
                        FontSize="11"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0"

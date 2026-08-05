@@ -97,6 +97,27 @@ The defensible split already present in the app: **destinations take a noun, int
 the problem.** "Squad Launch" is a place you went; "Roblox is already running" is something that
 happened to you. That distinction is worth keeping; the six-way spread is not.
 
+### The rule, decided — wave 4, 2026-08-04
+
+The table above is what was *observed*. This is what the app now *follows*. Left the observation
+in place: it is why the rule reads the way it does.
+
+1. **The title bar names the destination, and nothing else.** No product name — Windows already
+   prints it in the taskbar and Alt-Tab, so repeating it spends the most valuable words in the
+   window on something the OS said first. `Diagnostics`, not `RoRoRo -- Diagnostics`.
+2. **The header matches the title bar.** A window called one thing in Alt-Tab is not called
+   another inside it.
+3. **Destinations take a noun. Interruptions state the problem.** Discovered, not invented — 18 of
+   25 windows already did this.
+
+**Exempt, deliberately:** `MainWindow`, `About`, `Welcome`. The product *is* their subject.
+
+The rule is **enforced by test**, not by review: `WindowTitleConventionTests` walks every window
+and fails the build on a product name outside the exempt three, or the repo name anywhere in a
+user-facing title — XAML or assembled at runtime. A convention nobody can check is one that rots,
+and this one already had: the `FriendFollowWindow` repo-name leak sat in shipped releases because
+no sweep looked at titles built in code.
+
 ## C3 — The main window mixes three kinds of control in one band
 
 One row, one visual weight, six buttons: `Settings · About · History · Diagnostics · Games ·

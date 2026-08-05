@@ -2,7 +2,8 @@
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="RoRoRo -- Build a theme"
+        xmlns:controls="clr-namespace:ROROROblox.App.Controls"
+        Title="Build a theme"
         Height="640" Width="640"
         MinHeight="500" MinWidth="540"
         WindowStartupLocation="CenterOwner"
@@ -19,17 +20,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Theme builder"
-                           FontSize="22" FontWeight="Bold"
-                           Foreground="{DynamicResource CyanBrush}" />
-                <TextBlock Text=" / "
-                           FontSize="22" FontWeight="Bold"
-                           Foreground="{DynamicResource MagentaBrush}" />
-                <TextBlock Text="Paste from any AI"
-                           FontSize="22" FontWeight="Bold"
-                           Foreground="{DynamicResource WhiteBrush}" />
-            </StackPanel>
+            <controls:PageHeader Heading="Build a theme" />
             <TextBlock TextWrapping="Wrap"
                        FontSize="11"
                        Foreground="{DynamicResource MutedTextBrush}"

@@ -224,7 +224,7 @@ internal sealed class TrayService : ITrayService
 
         menu.Items.Add(new Separator());
 
-        var preferences = new MenuItem { Header = "Preferences..." };
+        var preferences = new MenuItem { Header = "Settings..." };
         preferences.Click += (_, _) => RequestOpenPreferences?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(preferences);
 

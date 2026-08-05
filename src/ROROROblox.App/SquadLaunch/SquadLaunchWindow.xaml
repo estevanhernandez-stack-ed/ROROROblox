@@ -2,6 +2,7 @@
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:ROROROblox.App.Controls"
         Title="Squad Launch"
         Height="600" Width="640"
         MinHeight="480" MinWidth="540"
@@ -23,17 +24,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Squad Launch"
-                           FontSize="22" FontWeight="Bold"
-                           Foreground="{DynamicResource CyanBrush}" />
-                <TextBlock Text=" / "
-                           FontSize="22" FontWeight="Bold"
-                           Foreground="{DynamicResource MagentaBrush}" />
-                <TextBlock Text="every account, one server"
-                           FontSize="22" FontWeight="Bold"
-                           Foreground="{DynamicResource WhiteBrush}" />
-            </StackPanel>
+            <controls:PageHeader Heading="Squad Launch" />
             <TextBlock Text="Send every active account into the same Roblox server. Private server: everyone joins the link directly. Public game: the first account goes in, and the rest join the server it landed in."
                        FontSize="11"
                        Foreground="{DynamicResource MutedTextBrush}"

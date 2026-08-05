@@ -44,7 +44,7 @@ came off in F-012).
 | 05 | `about` | ~~Candidate for relocation into Settings~~ — wave 3 answered it: About is not a setting (it writes nothing), so it lives in Tools | **Tools ▾ → About** (`-Watch`) |
 | 06 | `history` | ~~The open question~~ — wave 3 answered it. A tool, not a preference: verb-shaped, episodic, writes nothing to settings.json | **Tools ▾ → History** (`-Watch`) |
 | 07 | `diagnostics` | Same answer as history (F-001) | **Tools ▾ → Diagnostics** (`-Watch`) |
-| 08 | `games` | `Games/GamesWindow.xaml`, titled "RoRoRo -- Games" — renamed in wave 1 (F-006). Was `Settings/SettingsWindow.xaml` titled "RoRoRo -- Library": a class named SettingsWindow, in a folder named Settings, that is the game library. | **Tools ▾ → Games** (`-Watch`) |
+| 08 | `games` | `Games/GamesWindow.xaml`, titled "Games" — renamed in wave 1 (F-006), product prefix dropped in wave 4 (F-004). Was `Settings/SettingsWindow.xaml` titled "RoRoRo -- Library": a class named SettingsWindow, in a folder named Settings, that is the game library. | **Tools ▾ → Games** (`-Watch`) |
 | 09 | `plugins` | ~~Reached by a main-window button~~ — moved into Tools by wave 3 (F-009) | **Tools ▾ → Plugins** (`-Watch`) |
 | 10 | `theme-builder` | A settings-adjacent tool that already lives outside Settings | Preferences → theme area |
 | 11 | `tray-menu` | The other navigation surface entirely — it duplicates several main-window buttons | Right-click tray icon |
@@ -68,15 +68,24 @@ which is gathered from source rather than screenshots.
 
 ## Title inventory (from source — no capture needed)
 
-Six competing conventions across 25 windows. Recorded here because it is the goal-4 evidence and
-does not need a screenshot to be true:
+**Seven** competing conventions across 25 windows — corrected from "six" by the audit's skeptic
+pass, which found the one this list called absent. Recorded here because it is the goal-4 evidence
+and does not need a screenshot to be true:
 
-- **`RoRoRo -- X`** — Diagnostics, History, Preferences, Plugins, Library, Build a theme, Install plugin
+- ~~**`RoRoRo -- X`** — Diagnostics, History, Preferences, Plugins, Library, Build a theme, Install plugin~~
+  **Retired by wave 4 (F-004).** Those seven now read `Diagnostics`, `History`, `Settings`, `Plugins`,
+  `Games`, `Build a theme`, `Install plugin` — the title bar names the destination, not the product.
+  Enforced by `WindowTitleConventionTests`, so a regression fails the build rather than a review.
 - **Prose with the app name** — "About RoRoRo", "Welcome to RoRoRo"
 - **Bare noun** — "Join by link", "Squad Launch", "Rename", "Export accounts", "Import accounts", "Private server"
 - **Problem statement** — "Roblox is already running", "Roblox needed", "Saved accounts can't be unlocked", "Microsoft WebView2 needed", "Leftover Roblox processes"
 - **Imperative** — "Pick a title-bar color", "Add Roblox account — log in", "Stop all Roblox instances"
-- **Absent** — `FriendFollowWindow.xaml` sets no `Title`
+- ~~**Absent** — `FriendFollowWindow.xaml` sets no `Title`~~ **Wrong, and the reason the count
+  was seven not six.** It sets one in code-behind: `FriendFollowWindow.xaml.cs:133` built
+  `"ROROROblox -- Friends -- {name}"` at runtime — the only three-part title, the only one
+  assembled in code, and the only one carrying the REPO name into user-facing chrome. A
+  XAML-only sweep could not see it. Wave 4 changed it to `Friends — {name}` and added a test
+  that scans code-behind assignments too, so this class of miss fails the build now.
 
 ## Capture notes
 

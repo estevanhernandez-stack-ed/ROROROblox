@@ -130,8 +130,13 @@ internal partial class FriendFollowWindow : Window
     private void UpdateSourceChrome()
     {
         var current = CurrentSource;
-        Title = $"ROROROblox -- Friends -- {ChromeName(current)}";
-        AccountTitle.Text = ChromeName(current);
+
+        // Heading and title bar are the same string by construction, not by two assignments that
+        // could drift — rule 2 of the wave-4 title rule. This window is the only one that builds
+        // its chrome at runtime, and it is the one that got it wrong for months: it used to say
+        // "ROROROblox -- Friends -- {name}", leaking the repo name into user-facing chrome.
+        Title = $"Friends — {ChromeName(current)}";
+        Header.Heading = Title;
 
         if (_sources.Count > 1)
         {

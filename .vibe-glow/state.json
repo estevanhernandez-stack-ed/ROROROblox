@@ -50,6 +50,15 @@
         "F-012"
       ],
       "note": "Merged as 3fc838b. F-001 was in the batch and did NOT close: its fix direction also lists Stop all, Open log folder and the Welcome tour, none of which has a view-model command (the tray raises events handled in App.xaml.cs). F-001 stays open with exactly those three named. The gate also caught an accessibility regression — the first Tools control announced as a plain button with no ExpandCollapse — fixed with a custom peer after all three stock controls each failed a different half."
+    },
+    {
+      "id": "f076",
+      "name": "Mask the saved webhook credential in Settings",
+      "status": "clean",
+      "findings": [
+        "F-076"
+      ],
+      "note": "Not a wave — a single standalone finding, fixed and verified in one PR (merged 9587ee6b). F-076 was itself added BY wave 2, whose capture tooling photographed a live webhook token. Masking logic lives in Core with nine unit tests; the reveal toggle is wired to Checked/Unchecked rather than Click because UI Automation's TogglePattern never raises Click — the first version looked right and did nothing under automation. Este declined rotating the exposed webhook (2026-08-04); it never left the machine and was never committed."
     }
   ],
   "scope": {
