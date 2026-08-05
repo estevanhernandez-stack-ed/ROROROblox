@@ -55,10 +55,7 @@
                     <TextBox x:Name="UrlInput" Grid.Column="0"
                              Padding="8,6" FontSize="11"
                              Background="{DynamicResource NavyBrush}"
-                             Foreground="{DynamicResource WhiteBrush}"
-                             BorderBrush="{DynamicResource DividerBrush}"
-                             BorderThickness="1"
-                             VerticalContentAlignment="Center" />
+                             VerticalContentAlignment="Center" Style="{StaticResource AppTextBoxStyle}"/>
                     <Button x:Name="AddButton" Grid.Column="1"
                             Content="Launch all here"
                             Padding="14,6" Margin="8,0,0,0"

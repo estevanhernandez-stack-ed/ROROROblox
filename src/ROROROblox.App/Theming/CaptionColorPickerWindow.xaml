@@ -52,10 +52,7 @@
                      FontSize="12"
                      Padding="8,5"
                      Background="{DynamicResource NavyBrush}"
-                     Foreground="{DynamicResource WhiteBrush}"
-                     CaretBrush="{DynamicResource CyanBrush}"
-                     BorderBrush="{DynamicResource DividerBrush}"
-                     BorderThickness="1" />
+                     CaretBrush="{DynamicResource CyanBrush}" Style="{StaticResource AppTextBoxStyle}"/>
             <Button Grid.Column="2"
                     x:Name="ApplyHexButton"
                     Content="Apply"

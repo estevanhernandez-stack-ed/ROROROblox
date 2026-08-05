@@ -321,12 +321,9 @@
                      FontSize="13"
                      Padding="10,8"
                      Background="{DynamicResource RowBgBrush}"
-                     Foreground="{DynamicResource WhiteBrush}"
-                     BorderBrush="{DynamicResource DividerBrush}"
                      CaretBrush="{DynamicResource CyanBrush}"
-                     BorderThickness="1"
                      KeyDown="OnSearchKeyDown"
-                     ToolTip="Search Roblox games by name. Enter to search." />
+                     ToolTip="Search Roblox games by name. Enter to search." Style="{StaticResource AppTextBoxStyle}"/>
             <Button Grid.Column="1" x:Name="SearchButton" Content="Search"
                     Padding="14,8" Margin="8,0,0,0"
                     Background="{DynamicResource CyanBrush}"
@@ -359,11 +356,8 @@
                      FontFamily="Consolas"
                      Padding="10,8"
                      Background="{DynamicResource RowBgBrush}"
-                     Foreground="{DynamicResource WhiteBrush}"
-                     BorderBrush="{DynamicResource DividerBrush}"
                      CaretBrush="{DynamicResource CyanBrush}"
-                     BorderThickness="1"
-                     ToolTip="Or paste a roblox.com/games/&lt;id&gt;/&lt;name&gt; URL or place id" />
+                     ToolTip="Or paste a roblox.com/games/&lt;id&gt;/&lt;name&gt; URL or place id" Style="{StaticResource AppTextBoxStyle}"/>
             <Button Grid.Column="1" x:Name="AddButton" Content="+ Add by URL"
                     Padding="14,8" Margin="8,0,0,0"
                     Style="{StaticResource SecondaryStrongButtonStyle}"

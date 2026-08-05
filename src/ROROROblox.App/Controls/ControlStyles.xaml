@@ -61,4 +61,49 @@
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
+    <!-- ============================ INPUTS (F-029, F-049) ============================
+
+         A text box IS a UI component under WCAG 1.4.11, exactly as much as a button is. Wave 5
+         fixed buttons and left these on DividerBrush, which produced a visible inconsistency the
+         close-out captured: under the flatline theme the Alerts panel shows a "Show" button with a
+         clear outline sitting directly beside a webhook field with no boundary at all.
+
+         Same derived brush, same reasoning. This is not new policy — it is the policy wave 5 wrote,
+         applied to the controls it did not reach. What stays on DividerBrush is decoration: card
+         edges, row rules, the popup edge on a context menu. Those are separators, and 1.4.11 does
+         not govern separators. The fence test enforces that split by role. -->
+
+    <!-- NO Background setter, and that is deliberate. Two fills are in use and both are right:
+         RowBgBrush where the field sits on a card (Export, Import, Games) and NavyBrush where it
+         sits on window chrome (Preferences). A field takes its fill from the surface behind it, so
+         forcing one here would flatten a real distinction — the same reason the button styles leave
+         padding and font size at the call site. The border is what drifted; the border is what this
+         owns. -->
+    <Style x:Key="AppTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource InteractiveEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <!-- A password field's boundary matters more than most, not less: there is no text to infer the
+         control's extent from, so the outline is the only thing saying where to type. -->
+    <Style x:Key="AppPasswordBoxStyle" TargetType="PasswordBox" BasedOn="{StaticResource {x:Type PasswordBox}}">
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource InteractiveEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <!-- IMPLICIT, deliberately, and the only implicit style in this file (F-049). The alerts block
+         was added twenty lines below an identical ComboBox and picked up none of its theming,
+         because nothing made it inherit. Keying this would preserve exactly that failure mode: the
+         next ComboBox someone adds would again theme itself by hand or not at all. Buttons and text
+         boxes stay keyed — they have more than one legitimate recipe, so an implicit default there
+         would silently overrule deliberate choices. A ComboBox has one. -->
+    <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+        <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource InteractiveEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
 </ResourceDictionary>

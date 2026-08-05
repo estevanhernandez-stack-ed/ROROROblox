@@ -230,9 +230,6 @@
                                       Width="160"
                                       HorizontalAlignment="Left"
                                       SelectionChanged="OnIdleWarnThresholdChanged"
-                                      Background="{DynamicResource NavyBrush}"
-                                      Foreground="{DynamicResource WhiteBrush}"
-                                      BorderBrush="{DynamicResource DividerBrush}"
                                       Padding="8,6"
                                       FontSize="12">
                                 <ComboBoxItem Content="10 minutes" Tag="10" />
@@ -311,9 +308,8 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="MineWebhookInput" Grid.Column="0" Padding="8,6" FontSize="11"
-                                         Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
-                                         BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
-                                         LostFocus="OnWebhookCommitted" />
+                                         Background="{DynamicResource NavyBrush}"
+                                         LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
                                 <ToggleButton x:Name="MineWebhookReveal" Grid.Column="1" Content="Show"
                                               Margin="6,0,0,0" Padding="10,5" FontSize="11"
                                               Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
@@ -336,9 +332,8 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="ClanWebhookInput" Grid.Column="0" Padding="8,6" FontSize="11"
-                                         Background="{DynamicResource NavyBrush}" Foreground="{DynamicResource WhiteBrush}"
-                                         BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
-                                         LostFocus="OnWebhookCommitted" />
+                                         Background="{DynamicResource NavyBrush}"
+                                         LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
                                 <ToggleButton x:Name="ClanWebhookReveal" Grid.Column="1" Content="Show"
                                               Margin="6,0,0,0" Padding="10,5" FontSize="11"
                                               Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
@@ -411,9 +406,6 @@
                             <ComboBox x:Name="ThemePicker"
                                       DisplayMemberPath="Name"
                                       SelectionChanged="OnThemeChanged"
-                                      Background="{DynamicResource NavyBrush}"
-                                      Foreground="{DynamicResource WhiteBrush}"
-                                      BorderBrush="{DynamicResource DividerBrush}"
                                       Padding="8,6"
                                       FontSize="12" />
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">

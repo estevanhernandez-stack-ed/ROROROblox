@@ -69,14 +69,11 @@
                          FontFamily="Consolas"
                          FontSize="12"
                          Background="{DynamicResource NavyBrush}"
-                         Foreground="{DynamicResource WhiteBrush}"
                          CaretBrush="{DynamicResource CyanBrush}"
-                         BorderBrush="{DynamicResource DividerBrush}"
-                         BorderThickness="1"
                          Padding="10"
                          VerticalScrollBarVisibility="Auto"
                          HorizontalScrollBarVisibility="Auto"
-                         TextWrapping="NoWrap" />
+                         TextWrapping="NoWrap" Style="{StaticResource AppTextBoxStyle}"/>
             </Grid>
         </Border>
 

@@ -48,10 +48,7 @@
                      FontFamily="Consolas"
                      Padding="10,8"
                      IsReadOnly="True"
-                     Background="{DynamicResource RowBgBrush}"
-                     Foreground="{DynamicResource WhiteBrush}"
-                     BorderBrush="{DynamicResource DividerBrush}"
-                     BorderThickness="1" />
+                     Background="{DynamicResource RowBgBrush}" Style="{StaticResource AppTextBoxStyle}"/>
             <Button Grid.Column="1" Content="Browse…"
                     Padding="14,8" Margin="8,0,0,0"
                     Style="{StaticResource SecondaryStrongButtonStyle}"
@@ -68,11 +65,8 @@
                      FontSize="13"
                      Padding="10,8"
                      Background="{DynamicResource RowBgBrush}"
-                     Foreground="{DynamicResource WhiteBrush}"
-                     BorderBrush="{DynamicResource DividerBrush}"
                      CaretBrush="{DynamicResource CyanBrush}"
-                     BorderThickness="1"
-                     PasswordChanged="OnInputChanged" />
+                     PasswordChanged="OnInputChanged" Style="{StaticResource AppPasswordBoxStyle}"/>
 
         <TextBlock Grid.Row="6" x:Name="StatusText"
                    FontSize="11"
