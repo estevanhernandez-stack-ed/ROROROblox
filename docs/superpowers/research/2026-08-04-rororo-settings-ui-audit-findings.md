@@ -30,9 +30,10 @@ a row here, not a drive-by fix.
 
 ## Status, derived from the rows above on 2026-08-04
 
-**7 clean · 69 open · 76 total.** Counted from the status cells, not carried
+**9 clean · 67 open · 76 total.** Counted from the status cells, not carried
 forward from a previous summary.
 
+Closed by wave 1, verified 2026-08-04: F-006, F-008.
 Closed by wave 2 (merged `159fe4b`): F-002, F-003.
 Closed by wave 3 (merged `3fc838b`): F-009, F-010, F-011, F-012.
 Closed standalone (merged `9587ee6b`): F-076.
@@ -43,10 +44,20 @@ Closed standalone (merged `9587ee6b`): F-076.
 > which is the whole reason the rule says derive, never carry forward. Leaving the
 > note because a scoreboard that silently self-corrects teaches nobody anything.
 
-**Wave 1's rows (F-006, F-008) are still marked `open` and are NOT counted as
-clean here.** Wave 1 shipped and its work looks done in the tree, but its
-close-out never marked the register, and closing a row from memory is exactly
-what the scoreboard law forbids. They need a verification pass before they move.
+**Wave 1's rows (F-006, F-008) are now verified and closed** — against the tree,
+not the changelog:
+
+- **F-006** — `GamesWindow.xaml:6` `Title="RoRoRo -- Games"`, `:344` header
+  `Text="Games"`, and the exact prescribed tooltip ("Saved games and private
+  servers for the launch picker.") now on the Tools menu item at
+  `MainWindow.xaml:1102`. The only surviving "Library" in the app is inside a
+  code comment.
+- **F-008** — the streamer toggle is at `PreferencesWindow.xaml:142` and *Reroll
+  all identities* at `:154`, both in Settings. The tray checkbox survives
+  (`TrayService.cs`, `_streamerModeItem`). The main-window band and its duplicated
+  helper line are gone; the only streamer string left on MainWindow is the
+  per-row *Reroll identity* context item, which is a per-account action, not the
+  band the finding was about.
 
 **F-001 did not close with wave 3.** Its fix direction lists Stop all, Open log
 folder and the Welcome tour as Tools items alongside History/Diagnostics/Plugins/
@@ -73,9 +84,9 @@ it introduced (the popup border and the separator) and left the rest.
 | F-003 | QF-2 | Preferences | qol | 5 | 5 | `PreferencesWindow.xaml:6-7` Height=600 Width=500 NoResize; flatline scrollbar thumb covers ~1/5 of track | The tallest, densest surface in the app is the one window the user cannot resize | Split into named pages behind a nav rail and drop ResizeMode=NoResize; MinHeight/MinWidth as an interim one-line fix [new-mechanism] | clean |
 | F-004 | CV-1 | cross-surface, all 25 windows | copy | 5 | 5 | 25 `Title=` + `FriendFollowWindow.xaml.cs:133` runtime title = 7 competing conventions; 18/25 already fit a destination/interruption split, 7 break | No stated title rule exists — most common invention (prefixing product name) is the "looks like an ad" defect, literally | One 3-line rule: title bar names destination only; heading matches title bar; destinations take a noun, interruptions state the problem. Apply to the 7 breaks; reserve two-tone wordmark for MainWindow + About [new-mechanism] | open |
 | F-005 | CV-8 | main toolbar / Preferences / tray | copy | 5 | 5 | `MainWindow.xaml:1020` "Settings" → `PreferencesWindow.xaml` Title="RoRoRo -- Preferences", header prints "Preferences / Settings" (:21,27); tray :227 "Preferences..." | Same destination called Settings, Preferences, both-at-once, and Preferences again — nobody chose | "Settings" everywhere; retire "Preferences" as a user-facing word; replace stale tooltip (:1028, omits Discord/alerts/idle/transport) | open |
-| F-006 | CV-7 | main toolbar → Games/Library | copy | 5 | 4 | `MainWindow.xaml:1056` Content="Games" → `SettingsWindow.xaml` Title="RoRoRo -- Library", header "Library" (:343); tooltip covers only half the window | One destination, three names; tooltip describes only games, not private servers — goal-3 verbatim | Pick "Games" everywhere visible (title, header, tooltip: "Saved games and private servers for the launch picker.") | open |
+| F-006 | CV-7 | main toolbar → Games/Library | copy | 5 | 4 | `MainWindow.xaml:1056` Content="Games" → `SettingsWindow.xaml` Title="RoRoRo -- Library", header "Library" (:343); tooltip covers only half the window | One destination, three names; tooltip describes only games, not private servers — goal-3 verbatim | Pick "Games" everywhere visible (title, header, tooltip: "Saved games and private servers for the launch picker.") | clean |
 | F-007 | CO-3 | 12 destination windows + 7 modals | consistency | 4 | 5 | Two-tone header copied 12x at 4 sizes/4 grammars — 22px "Page/descriptor" (6 of 12), 24px About, reversed no-separator Welcome, 20px/18px singles | Twelve near-copies with no agreement on size, grammar, or whether the product name belongs in the title — the mechanism behind goal 4 | One PageHeader control taking Page + Descriptor, separator/size/casing fixed inside; title bar carries product name once, not twice [new-mechanism] | open |
-| F-008 | QF-5 | main window, Row 3 band | qol | 4 | 5 | `MainWindow.xaml:1365` tooltip and `:1379` body text identical, word for word; toggle already has a tray home (`TrayService.cs:211`) | A setting already reachable from the tray occupies a full band of the main window and explains itself twice | Move toggle + Reroll all identities into the Settings shell; keep the tray checkbox; delete the duplicated helper line | open |
+| F-008 | QF-5 | main window, Row 3 band | qol | 4 | 5 | `MainWindow.xaml:1365` tooltip and `:1379` body text identical, word for word; toggle already has a tray home (`TrayService.cs:211`) | A setting already reachable from the tray occupies a full band of the main window and explains itself twice | Move toggle + Reroll all identities into the Settings shell; keep the tray checkbox; delete the duplicated helper line | clean |
 | F-009 | QF-21 | main window, Row 2 toolbar | qol | 4 | 5 | `MainWindow.xaml:1019-1073` six identical buttons at MinWidth=860, band already edge-to-edge; Games opens a library at Settings' weight (C4 drift) | Collapse six buttons to Settings + Tools▾ — capacity/heterogeneity hold; "tray already proves this" does not, since the tray groups Settings inside Tools, not apart | Two buttons where six were; Tools▾ mirrors the tray's item list; rename Games→Library in the menu; keep Launch multiple/Squad Launch in place [new-mechanism] | clean |
 | F-010 | CV-2 | main window | copy | 4 | 5 | `MainWindow.xaml:992` "Run multiple Roblox clients side by side. Add a saved account, click Launch As to open it." | Store-listing copy pasted into the app, read on every launch by a user with 8 accounts already on screen | Delete the line — WelcomeWindow's first-run guide and the empty-state text (:1597-1601) already carry it to the user who needs it | clean |
 | F-011 | CV-3 | main window footer status bar | copy | 4 | 5 | `MainWindow.xaml:1809` "Multi-launcher for Windows. A 626 Labs product." — the other three status-bar cells report live state | Positioning copy in a status bar — the literal instance of goal 4's "ad" reading | Delete it; the line already lives in About (:73,77) where it's the actual subject | clean |
