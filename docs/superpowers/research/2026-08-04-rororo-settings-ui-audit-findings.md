@@ -30,7 +30,7 @@ a row here, not a drive-by fix.
 
 ## Status, derived from the rows above on 2026-08-04
 
-**16 clean · 60 open · 76 total.** Counted from the status cells, not carried
+**18 clean · 58 open · 76 total.** Counted from the status cells, not carried
 forward from a previous summary.
 
 Closed by wave 1, verified 2026-08-04: F-006, F-008.
@@ -38,6 +38,24 @@ Closed by wave 2 (merged `159fe4b`): F-002, F-003.
 Closed by wave 3 (merged `3fc838b`): F-009, F-010, F-011, F-012.
 Closed standalone (merged `9587ee6b`): F-076.
 Closed by wave 4: F-004, F-005, F-007, F-014, F-015, F-016, F-017 — all four campaign goals now have shipped work.
+
+**Closed as side effects, verified after wave 4 merged (`3d41846`):**
+
+- **F-028** — the Games subtitle that had become a manual. Deleted by wave 4 stage 3;
+  `grep` for its text returns nothing.
+- **F-036** — the main window explaining the product twice in permanent chrome. Both
+  lines went in wave 3 (F-010, F-011); only a comment recording the deletion remains.
+
+Neither was in a wave's batch. A finding whose fix arrives sideways still has to be
+verified before it closes — these were checked against the tree, not assumed from
+overlapping scope.
+
+**F-034 is worse than its row states.** The repo name is not just in the menu and one
+tooltip: `Tray/TrayService.cs:98-101` puts "ROROROblox" in ALL THREE tray-tooltip states —
+the surface a tray-resident app shows most often — plus `:221` "Open ROROROblox", and
+`Diagnostics/DiagnosticsWindow.xaml.cs:220` writes "ROROROblox support snapshot" as the
+first line of a file users forward when asking for help. Same class as the
+FriendFollowWindow title wave 4 fixed, on more visible surfaces.
 
 > This line said **6 clean · 70 open** for about ten minutes. It was accurate when
 > written and wrong by the time it merged, because F-076 landed in a second PR
@@ -107,7 +125,7 @@ it introduced (the popup border and the separator) and left the rest.
 | F-025 | VC-1 | main-window | visual | 5 | 5 | `App.xaml:27,36` BgBrush==NavyBrush; 8 secondary controls rely on a DividerBrush border alone; flatline shows all 8 collapse to text while Launch multiple's cyan border survives | C8's secondary recipe is one-legged — fill contributes zero contrast even in the shipped theme; a single collapsible brush takes out 8 controls on the most-seen screen | Affordance from a property the theme can't flatten — accent-set outline or geometry; needs an app-wide control-style dictionary [new-mechanism] | open |
 | F-026 | VC-4 | preferences | visual | 4 | 5 | `PreferencesWindow.xaml` 8 sibling cards — 5 hold one setting, 3 (incl. Alerts, 13 controls) sit at identical weight | One grouping primitive carries two incompatible meanings at identical weight — why goal 2's "split it up" can't be answered with more cards | Separate the two jobs structurally — a section needs a level above the card, a setting stays a row inside it [new-mechanism] | open |
 | F-027 | VC-11 | main-window | visual | 4 | 5 | Cyan/slash/white lockup reused 9x with 6 different second-token meanings — product/page, product/version, page/instruction, etc. | The lockup is the brand wordmark; reusing it as page chrome forces a second token with no consistent job | Retire the lockup from page chrome (About, splash, tray only); page chrome names the destination once, at one size [new-mechanism] | open |
-| F-028 | VC-13 | library | visual | 4 | 5 | `SettingsWindow.xaml:347` ~310-char/4-sentence subtitle vs 62 chars in Preferences; Title="RoRoRo -- Library" on class SettingsWindow in folder Settings/, opened via button "Games" | The one-line subtitle convention becomes a manual on the one window whose name/class/folder/button already disagree four ways | Move the rules to the controls they govern; settle the name (button/title/class/folder) in the same pass | open |
+| F-028 | VC-13 | library | visual | 4 | 5 | `SettingsWindow.xaml:347` ~310-char/4-sentence subtitle vs 62 chars in Preferences; Title="RoRoRo -- Library" on class SettingsWindow in folder Settings/, opened via button "Games" | The one-line subtitle convention becomes a manual on the one window whose name/class/folder/button already disagree four ways | Move the rules to the controls they govern; settle the name (button/title/class/folder) in the same pass | clean |
 | F-029 | CO-4 | Plugins/Preferences/Library/JoinByLink/SquadLaunch/ThemeBuilder/Import/Rename/CaptionColorPicker vs MainWindow | consistency | 4 | 5 | 2 ui:TextBox (MainWindow only) vs 11 plain TextBox across 10 windows, disagreeing on fill; flatline shows the install-URL field vanish while the main-window filter survives | Two input systems; the one used on 11 of 12 surfaces disappears under a theme the app ships support for | One AppTextBox style — standardize on ui:TextBox (invariant 4 already assigns chrome to WPF-UI) or give the shared style a shape cue independent of a collapsing fill/border | open |
 | F-030 | CO-6 | cross-surface, every secondary button | consistency | 4 | 5 | C8's secondary recipe is Navy==Bg in all three built-in themes; nav band, Remove, Reroll all, and 8+ other buttons rely on it; Launch multiple's cyan border is the sole survivor | Four secondary-button recipes exist; the most-used one binds its only shape cue to the divider brush | One SecondaryButton style whose outline reads at any brush setting; new token optional-with-fallback per invariant 6 [new-mechanism] | open |
 | F-031 | AX-5 | nav band + per-row Friends/Remove/Reroll all/Open themes folder/follow chips | a11y | 4 | 5 | DividerBrush vs NavyBrush = 1.26:1 brand / 1.00:1 flatline (fails WCAG 1.4.11's 3:1 in both); CyanBrush vs NavyBrush (Launch multiple) = 9.39:1/4.34:1, passes both | The border was never a legible boundary even in the shipped brand theme — fix is binding the boundary to a contrast-guaranteed token, not "add a border" | Interactive boundaries bind a token guaranteed ≥3:1; add a load-time validation step that warns on a theme falling under 3:1 [new-mechanism] | open |
@@ -115,7 +133,7 @@ it introduced (the popup border and the separator) and left the rest.
 | F-033 | QF-7 | main window, Compact mode | qol | 4 | 4 | `MainViewModel.cs:663` plain SetField property; nothing writes it to disk; SettingsBlob has no compact field | Compact mode — pitched by the Welcome tour as a second-monitor workflow — is forgotten on every restart | Add CompactMode bool to SettingsBlob (no migration needed) and restore it in MainWindow.OnLoaded | open |
 | F-034 | CV-9 | tray menu | copy | 4 | 4 | `TrayService.cs:221` "Open ROROROblox"; also tooltip :98-100 "ROROROblox — Multi-Instance ON/OFF/ERROR"; `DiagnosticsWindow.xaml.cs:220` "ROROROblox support snapshot" | The repo name shipped into the menu and tooltip a tray-resident app shows most often, violating the RoRoRo-brand memory rule | "Open RoRoRo" in menu + tooltip; "RoRoRo support snapshot" in the bundle header; same fix covers FriendFollowWindow's title (CV-1 row 6) | open |
 | F-035 | CO-1 | cross-surface (root cause) | consistency | 5 | 3 | `App.xaml` has 10 brushes, 9 converters, 1 keyed control style total; 6 nav buttons and 8 Preferences cards repeat the same attribute sets verbatim | C8 describes a component vocabulary that exists only as habit — every window is free to reinvent it, and most have | Promote the vocabulary into a real merged ResourceDictionary — CardBorder, PageHeader, SectionHeading, PrimaryButton, SecondaryButton, DialogFooter, AppTextBox [new-mechanism] | open |
-| F-036 | VC-12 | main-window | visual | 3 | 5 | `MainWindow.xaml:992-996` header subtitle pitches the product, `:1808-1814` permanent status-bar tagline — both visible simultaneously | The main window explains what the product is twice, in permanent chrome, to a user already looking at their own account list | Pitch belongs on About and the Store listing; recover the header row and footer slot for content that changes | open |
+| F-036 | VC-12 | main-window | visual | 3 | 5 | `MainWindow.xaml:992-996` header subtitle pitches the product, `:1808-1814` permanent status-bar tagline — both visible simultaneously | The main window explains what the product is twice, in permanent chrome, to a user already looking at their own account list | Pitch belongs on About and the Store listing; recover the header row and footer slot for content that changes | clean |
 | F-037 | VC-15 | preferences | visual | 3 | 5 | Accent fill on Send test, "+ Build a theme...", and Close (loudest control on the page) in Preferences; same cyan Close is loudest on About/History/Plugins; Diagnostics reverses it | Accent fill marks four different things — on 4 of 5 windows the loudest control on screen does nothing | Reserve filled treatment for the action the window exists to perform; dismissal takes the secondary treatment everywhere, as Diagnostics already does | open |
 | F-038 | QF-11 | History | qol | 4 | 3 | `SessionHistoryWindow.xaml.cs:65-72` swallows read/Clear failures to the same empty-state copy | A history file that can't be read presents as "you have never launched anything"; a failed Clear looks identical to a successful one | Distinguish empty/loaded/failed states with distinct copy; Diagnostics already models this correctly (`:29-39`) | open |
 | F-039 | QF-13 | Welcome tour / About | qol | 4 | 3 | `WelcomeWindow.xaml.cs:26-38` one-shot sentinel; only documentation of 6 unlabelled row affordances; sentinel marked before the account-count check, so upgrading users burn it silently | The only explanation of RoRoRo's least self-evident controls is shown once, before the user has accounts, then unreachable forever | Add "Show the welcome tour" to the Tools group (QF-21) and to About | open |
