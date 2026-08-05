@@ -154,14 +154,22 @@ internal static class XamlStyleScanner
 
     internal readonly record struct XamlFile(string FullPath, string Label);
 
+    /// <summary>The app project's source directory, or null when the repo-root walk fails.</summary>
+    internal static string? AppSourceDirectory()
+    {
+        var root = FindRepoRoot();
+        if (root is null) return null;
+
+        var appDir = Path.Combine(root, "src", "ROROROblox.App");
+        return Directory.Exists(appDir) ? appDir : null;
+    }
+
     /// <summary>Every .xaml under the app project, located by walking up to the solution file.</summary>
     internal static IEnumerable<XamlFile> EnumerateAppXamlFiles()
     {
         var root = FindRepoRoot();
-        if (root is null) yield break;
-
-        var appDir = Path.Combine(root, "src", "ROROROblox.App");
-        if (!Directory.Exists(appDir)) yield break;
+        var appDir = AppSourceDirectory();
+        if (root is null || appDir is null) yield break;
 
         foreach (var path in Directory.EnumerateFiles(appDir, "*.xaml", SearchOption.AllDirectories))
         {

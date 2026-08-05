@@ -130,7 +130,7 @@ internal partial class FriendFollowWindow : Window
     private void UpdateSourceChrome()
     {
         var current = CurrentSource;
-        Title = $"ROROROblox -- Friends -- {ChromeName(current)}";
+        Title = $"Friends — {ChromeName(current)}";
         AccountTitle.Text = ChromeName(current);
 
         if (_sources.Count > 1)
