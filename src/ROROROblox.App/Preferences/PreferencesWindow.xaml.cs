@@ -129,10 +129,32 @@ internal partial class PreferencesWindow : Window
     {
         if (e.PropertyName != nameof(MainViewModel.StreamerModeOn)) return;
 
-        _suppressClickHandlers = true;
+        // MARSHAL FIRST. This notification arrives on a THREADPOOL thread:
+        // StreamerIdentityProvider.SetActiveAsync awaits the settings write with
+        // ConfigureAwait(false) and raises Changed on that continuation
+        // (StreamerIdentityProvider.cs:107-108). Writing IsChecked from there throws cross-thread
+        // instantly — and MainViewModel.StreamerModeOn discards the task it started, so the throw
+        // is swallowed with no log line AND it aborts the rest of the Changed multicast, starving
+        // every subscriber behind this one. That is the same hazard MainViewModel:261 documents
+        // for PressureCrossed, and the rule at MainViewModel:288: the binding engine auto-
+        // dispatches, a direct control write does not. The two-way binding this control replaced
+        // was marshalling for free; hand-rolling it dropped that.
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.BeginInvoke(new Action(() => OnViewModelPropertyChanged(sender, e)));
+            return;
+        }
+
         try
         {
+            _suppressClickHandlers = true;
             StreamerModeToggle.IsChecked = _mainViewModel.StreamerModeOn;
+        }
+        catch (Exception)
+        {
+            // Never let a UI refresh abort the notification chain — see above. Worst case this
+            // checkbox is stale until reopened, which is strictly better than silently breaking
+            // every other subscriber's update.
         }
         finally
         {
