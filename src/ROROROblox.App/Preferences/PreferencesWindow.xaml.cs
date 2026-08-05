@@ -492,8 +492,8 @@ internal partial class PreferencesWindow : Window
     {
         SelectDestination(DroppedOutDestination, _discordConfig.DroppedOutDestination);
         SelectDestination(MemoryWarningDestination, _discordConfig.MemoryWarningDestination);
-        MineWebhookInput.Text = _discordConfig.MineWebhookUrl ?? "";
-        ClanWebhookInput.Text = _discordConfig.ClanWebhookUrl ?? "";
+        ShowWebhookMasked(MineWebhookInput, MineWebhookReveal, _discordConfig.MineWebhookUrl);
+        ShowWebhookMasked(ClanWebhookInput, ClanWebhookReveal, _discordConfig.ClanWebhookUrl);
         RefreshAlertsStatus();
 
         // Best-effort, fire-and-forget: name the channel each saved webhook posts to, so a clan
@@ -590,6 +590,82 @@ internal partial class PreferencesWindow : Window
     /// get wrong.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Puts a saved webhook on screen as a mask, read-only (F-076).
+    /// <para>
+    /// Read-only matters as much as the mask: a user cannot meaningfully edit a credential whose
+    /// middle they cannot see, and letting them try invites a half-edited URL that validates as
+    /// garbage. Revealing is the deliberate act that unlocks editing.
+    /// </para>
+    /// </summary>
+    /// <summary>Re-entrancy guard for the programmatic <c>IsChecked</c> write below. Set and cleared
+    /// around one assignment only — never held across an await, which is how a suppression flag
+    /// swallowed a real user click earlier in this cycle.</summary>
+    private bool _syncingWebhookReveal;
+
+    private void ShowWebhookMasked(
+        System.Windows.Controls.TextBox input,
+        System.Windows.Controls.Primitives.ToggleButton reveal,
+        string? savedUrl)
+    {
+        var hasSaved = !string.IsNullOrWhiteSpace(savedUrl);
+
+        input.Text = WebhookUrlMasker.Mask(savedUrl);
+        input.IsReadOnly = hasSaved;
+
+        try
+        {
+            _syncingWebhookReveal = true;
+            reveal.IsChecked = false;
+        }
+        finally
+        {
+            _syncingWebhookReveal = false;
+        }
+
+        reveal.Content = "Show";
+        // Nothing saved means nothing to hide: the field is an ordinary empty box you can paste
+        // into, and a Show button over an empty field would be a control that does nothing.
+        reveal.Visibility = hasSaved ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// Show / Hide on a saved webhook. Revealing also unlocks the field, so "read it" and "replace
+    /// it" are the same gesture rather than two controls.
+    /// <para>
+    /// Wired to Checked and Unchecked rather than Click, and that is load-bearing: a ToggleButton
+    /// driven through UI Automation's TogglePattern calls OnToggle and never raises Click. On Click
+    /// alone, assistive technology could flip this control's visual state while the field stayed
+    /// masked — the button would say one thing and the field show another. Checked/Unchecked fire
+    /// for the mouse, the keyboard, and automation alike.
+    /// </para>
+    /// </summary>
+    private void OnRevealWebhookToggled(object sender, RoutedEventArgs e)
+    {
+        // Only the programmatic re-sync in ShowWebhookMasked is filtered. Deliberately NOT guarded
+        // by _suppressClickHandlers: that flag is held across the awaits in OnLoaded, and guarding a
+        // user-driven toggle with it swallowed a real click once already (streamer mode, wave 1).
+        if (_syncingWebhookReveal) return;
+
+        var isClan = ReferenceEquals(sender, ClanWebhookReveal);
+        var input = isClan ? ClanWebhookInput : MineWebhookInput;
+        var reveal = isClan ? ClanWebhookReveal : MineWebhookReveal;
+        var saved = isClan ? _discordConfig.ClanWebhookUrl : _discordConfig.MineWebhookUrl;
+
+        if (reveal.IsChecked == true)
+        {
+            input.Text = saved ?? "";
+            input.IsReadOnly = false;
+            reveal.Content = "Hide";
+            input.Focus();
+            input.SelectAll();   // so a paste replaces rather than appends
+        }
+        else
+        {
+            ShowWebhookMasked(input, reveal, saved);
+        }
+    }
+
     private async void OnWebhookCommitted(object sender, RoutedEventArgs e)
     {
         if (_suppressClickHandlers) return;
@@ -598,6 +674,11 @@ internal partial class PreferencesWindow : Window
         var input = isClan ? ClanWebhookInput : MineWebhookInput;
         var verdictLine = isClan ? ClanWebhookVerdict : MineWebhookVerdict;
         var saved = isClan ? _discordConfig.ClanWebhookUrl : _discordConfig.MineWebhookUrl;
+
+        // A mask is not an edit. Tabbing past a hidden field must leave the saved value alone and
+        // say nothing — without this the mask reaches the validator, fails, and reports "that isn't
+        // a webhook URL" about a webhook that is saved and working.
+        if (WebhookUrlMasker.IsMasked(input.Text)) return;
 
         var verdict = WebhookUrlValidator.Inspect(input.Text);
         verdictLine.Text = verdict.Message;
@@ -625,7 +706,10 @@ internal partial class PreferencesWindow : Window
             _alertDispatcher.ResetMineRejection();
         }
 
-        input.Text = url ?? "";
+        // Straight back behind the mask once it is saved. Leaving a just-pasted webhook revealed
+        // means the credential stays on screen for the rest of the session — the same exposure,
+        // just later.
+        ShowWebhookMasked(input, isClan ? ClanWebhookReveal : MineWebhookReveal, url);
         RefreshAlertsStatus();
 
         try
