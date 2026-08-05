@@ -2838,6 +2838,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// model's whole job here is to notice, name the account, and say when.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// The streamer-identity provider this view model was built with, for tests that need to flip
+    /// streamer mode the way the tray and plugins do — through the provider, not through
+    /// <see cref="StreamerModeOn"/>'s setter. Null when no provider was resolved.
+    /// </summary>
+    internal Core.StreamerMode.IStreamerIdentityProvider? StreamerIdentityForTests => _streamerIdentity;
+
     internal event EventHandler<IReadOnlyList<AlertTrigger>>? AlertsRaised;
 
     /// <summary>

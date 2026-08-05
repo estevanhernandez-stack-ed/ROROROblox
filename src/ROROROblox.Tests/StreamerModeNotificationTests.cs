@@ -26,12 +26,12 @@ public class StreamerModeNotificationTests
     [Fact]
     public async Task ProviderFlip_RaisesPropertyChangedForStreamerModeOn()
     {
-        var (vm, _) = DiscordTestHarness.VmWithOneInGameAccount(realName: "este_real", maskedName: "CaptainNoodle");
+        var (vm, _, streamer) = DiscordTestHarness.VmWithStreamerProvider(realName: "este_real", maskedName: "CaptainNoodle");
         var raised = new List<string?>();
         vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
 
         // The provider is what the tray and plugins write through — not the view model.
-        await DiscordTestHarness.SetStreamerModeAsync(vm, active: false);
+        await streamer.SetActiveAsync(active: false);
 
         Assert.Contains(nameof(MainViewModel.StreamerModeOn), raised);
     }
@@ -42,10 +42,10 @@ public class StreamerModeNotificationTests
         // The property is a read-through, not a cached flag: whoever asks after the flip gets the
         // new answer. A consumer that re-reads on the notification is therefore correct by
         // construction — which is the contract the Settings checkbox now relies on.
-        var (vm, _) = DiscordTestHarness.VmWithOneInGameAccount(realName: "este_real", maskedName: "CaptainNoodle");
+        var (vm, _, streamer) = DiscordTestHarness.VmWithStreamerProvider(realName: "este_real", maskedName: "CaptainNoodle");
         Assert.True(vm.StreamerModeOn);
 
-        await DiscordTestHarness.SetStreamerModeAsync(vm, active: false);
+        await streamer.SetActiveAsync(active: false);
 
         Assert.False(vm.StreamerModeOn);
     }
