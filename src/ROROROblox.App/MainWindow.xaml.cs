@@ -391,32 +391,11 @@ internal partial class MainWindow : FluentWindow
     // Compact-mode rows never carry these handlers (chips stay read-only), so the toggle is
     // full-mode only by construction.
 
-    /// <summary>
-    /// Tools ▾ was clicked — drop its menu under the button (F-001, F-009).
-    /// <para>
-    /// A ContextMenu rather than a Wpf.Ui DropDownButton: the menu has to inherit the window's
-    /// DataContext so its items can bind straight to the same commands the buttons used, and a
-    /// ContextMenu hung off the button gets that through PlacementTarget without re-plumbing five
-    /// commands. Placement is Bottom so it reads as a dropdown, not a right-click menu.
-    /// </para>
-    /// <para>
-    /// StaysOpen is left default (false) — clicking elsewhere dismisses it, which is what a user
-    /// who opened the wrong menu expects.
-    /// </para>
-    /// </summary>
-    private void OnToolsClick(object sender, RoutedEventArgs e)
-    {
-        // Fully qualified: both Wpf.Ui.Controls and System.Windows.Controls are imported here, and
-        // a plain <Button> in XAML is the System.Windows one (WPF-UI restyles it, it does not
-        // replace the type).
-        if (sender is not System.Windows.Controls.Button button || button.ContextMenu is null) return;
-
-        // Without an explicit PlacementTarget the menu can inherit the mouse position instead of
-        // the button, which puts it wherever the pointer happened to be on a keyboard activation.
-        button.ContextMenu.PlacementTarget = button;
-        button.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
-        button.ContextMenu.IsOpen = true;
-    }
+    // Tools has no click handler by design: it is a Menu, so opening, keyboard highlight of the
+    // first item, second-click dismiss, and the ExpandCollapse automation pattern all come from
+    // the control. The first version was a Button that opened a ContextMenu — it hand-wrote the
+    // opening, got the other three wrong, and announced to a screen reader as a plain button with
+    // no indication that five destinations sat behind it.
 
     /// <summary>The "+" pill was clicked — engage the inline tag input for this row.</summary>
     private void OnAddTagPlusClick(object sender, MouseButtonEventArgs e)

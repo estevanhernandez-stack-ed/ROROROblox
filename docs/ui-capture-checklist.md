@@ -21,6 +21,14 @@ accent; text stays legible so only colour-borne distinctions collapse).
 file's own `_note` states for the tray menu and the library picker. Select the rail item, then
 capture the foreground window.
 
+**So are the five Tools destinations, as of wave 3.** About / History / Diagnostics / Games /
+Plugins used to be main-window buttons with working routes. They are now `MenuItem`s inside a
+popup, and a popup is **not in the main window's automation subtree even while open** — a driver
+walking down from the window root will not find them, which is why those five routes are gone from
+`ui-routes.json` rather than renamed. Open Tools ▾, pick the item, capture the window that appears.
+Only `03-preferences` is still route-driven, and its invoke name is now `Settings` (the `⚙` glyph
+came off in F-012).
+
 ## In scope
 
 | NN | Surface | Why it is in scope | How to reach it |
@@ -33,11 +41,11 @@ capture the foreground window.
 | 03b | `preferences-alerts` | Rail page 3. Idle threshold + the Discord alert routing and both webhook fields | Settings → rail → Alerts & memory |
 | 03c | `preferences-discord` | Rail page 4. Rich-presence toggles + the live status line | Settings → rail → Discord |
 | 03d | `preferences-appearance` | Rail page 5. Theme picker + theme-builder entry | Settings → rail → Appearance |
-| 05 | `about` | Candidate for relocation into Settings | About button |
-| 06 | `history` | Candidate — but a tool, not a preference. The open question. | History button |
-| 07 | `diagnostics` | Candidate — same open question as history | Diagnostics button |
-| 08 | `games` | `Games/GamesWindow.xaml`, titled "RoRoRo -- Games" — renamed in wave 1 (F-006). Was `Settings/SettingsWindow.xaml` titled "RoRoRo -- Library": a class named SettingsWindow, in a folder named Settings, that is the game library. | Games button |
-| 09 | `plugins` | Reached by a main-window button; a tools-container candidate | Plugins button |
+| 05 | `about` | ~~Candidate for relocation into Settings~~ — wave 3 answered it: About is not a setting (it writes nothing), so it lives in Tools | **Tools ▾ → About** (`-Watch`) |
+| 06 | `history` | ~~The open question~~ — wave 3 answered it. A tool, not a preference: verb-shaped, episodic, writes nothing to settings.json | **Tools ▾ → History** (`-Watch`) |
+| 07 | `diagnostics` | Same answer as history (F-001) | **Tools ▾ → Diagnostics** (`-Watch`) |
+| 08 | `games` | `Games/GamesWindow.xaml`, titled "RoRoRo -- Games" — renamed in wave 1 (F-006). Was `Settings/SettingsWindow.xaml` titled "RoRoRo -- Library": a class named SettingsWindow, in a folder named Settings, that is the game library. | **Tools ▾ → Games** (`-Watch`) |
+| 09 | `plugins` | ~~Reached by a main-window button~~ — moved into Tools by wave 3 (F-009) | **Tools ▾ → Plugins** (`-Watch`) |
 | 10 | `theme-builder` | A settings-adjacent tool that already lives outside Settings | Preferences → theme area |
 | 11 | `tray-menu` | The other navigation surface entirely — it duplicates several main-window buttons | Right-click tray icon |
 

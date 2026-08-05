@@ -1,57 +1,13 @@
 {
   "app": "RoRoRo",
   "processName": "ROROROblox.App",
-  "_note": "Authored from a -DumpUia tree of the main window. Almost nothing in this app carries an AutomationId, so routes invoke by visible NAME — which means a copy change to a button silently breaks a route. Find-UiaElement matches Name OR AutomationId, so add ids and switch these over if routes start missing. Surfaces reachable only through a nested picker (library) or a non-Invoke control (tray menu, streamer toggle) are captured in -Watch mode instead; they are listed in the checklist, not here.",
+  "_note": "Authored from a -DumpUia tree of the main window. Almost nothing in this app carries an AutomationId, so routes invoke by visible NAME — which means a copy change to a button silently breaks a route. Find-UiaElement matches Name OR AutomationId, so add ids and switch these over if routes start missing. Surfaces reachable only through a nested picker (library) or a non-Invoke control (tray menu, the Settings nav rail, the Tools menu) are captured in -Watch mode instead; they are listed in the checklist, not here.",
+  "_wave3": "Glow wave 3 collapsed the main window's six nav buttons to Settings + a Tools menu, which deleted five routes from this file. About, History, Diagnostics, Games and Plugins are now MenuItems inside a popup, and a popup is NOT in the main window's automation subtree even while it is open — a driver walking down from the window root will never find them. They are -Watch captures now, listed in docs/ui-capture-checklist.md. The Settings route survives, but its invoke name changed: the button read '⚙ Settings' and now reads 'Settings' (F-012 dropped the glyph).",
   "routes": [
     {
       "surface": "03-preferences",
       "invoke": [
-        "⚙ Settings"
-      ],
-      "close": [
-        "Close"
-      ]
-    },
-    {
-      "surface": "08-games",
-      "invoke": [
-        "Games"
-      ],
-      "close": [
-        "Close"
-      ]
-    },
-    {
-      "surface": "05-about",
-      "invoke": [
-        "About"
-      ],
-      "close": [
-        "Close"
-      ]
-    },
-    {
-      "surface": "06-history",
-      "invoke": [
-        "History"
-      ],
-      "close": [
-        "Close"
-      ]
-    },
-    {
-      "surface": "07-diagnostics",
-      "invoke": [
-        "Diagnostics"
-      ],
-      "close": [
-        "Close"
-      ]
-    },
-    {
-      "surface": "09-plugins",
-      "invoke": [
-        "Plugins"
+        "Settings"
       ],
       "close": [
         "Close"
