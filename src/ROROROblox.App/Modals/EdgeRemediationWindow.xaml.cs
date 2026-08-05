@@ -22,11 +22,16 @@ internal partial class EdgeRemediationWindow : Window
         ArgumentNullException.ThrowIfNull(question);
         InitializeComponent();
 
+        // NOT "your colour is too faint." Our own theme template ships divider #1F3149 on navy
+        // #0F1F31 — 1.26:1 — and that is the RIGHT value for a hairline between rows. The divider
+        // was doing two jobs and only one of them needed 3:1; anyone who followed our documentation
+        // wrote exactly this. Copy that implies the author erred would be blaming them for our
+        // design. Found by the wave-5 review gate.
         BodyText.Text =
-            $"RoRoRo now outlines buttons and other clickable controls so they can be told apart "
-            + $"from the surface behind them. Your theme — {question.ThemeName} — draws that "
-            + "outline in a colour too faint to do the job, so we brightened it just enough to pass. "
-            + "Nothing else about your theme changed.";
+            $"RoRoRo now outlines buttons so they can be told apart from the surface behind them. "
+            + $"Your theme — {question.ThemeName} — sets one divider colour, and it does two jobs: "
+            + "the faint rule between rows, which is right as you wrote it, and now the outline on a "
+            + "button, which needs to be brighter to be seen. We brightened it for buttons only.";
 
         Paint(AuthoredSwatch, AuthoredRatio, question.Surface, question.AuthoredEdge);
         Paint(DerivedSwatch, DerivedRatio, question.Surface, question.DerivedEdge);
@@ -95,18 +100,41 @@ internal partial class EdgeRemediationWindow : Window
             dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
 
-        var accepted = dialog.ShowDialog() == true;
-        await themeService.AnswerEdgeQuestionAsync(accepted);
+        // Dismissed is not answered. One reflexive click on the title-bar X must not permanently opt
+        // somebody's theme out of the fix without them reading a word of it — there is no re-ask
+        // affordance anywhere.
+        //
+        // MEASURED, because the obvious version of this check does not work: a first attempt tested
+        // `ShowDialog() is null`, on the assumption that closing via the X leaves DialogResult unset.
+        // It does not. Verified live 2026-08-05 by sending WM_CLOSE to the real dialog — WPF closes a
+        // modal with DialogResult false, so the X was indistinguishable from pressing Keep, and the
+        // answer was still written. A flag the two button handlers set is the only thing that
+        // actually separates an answer from a dismissal.
+        dialog.ShowDialog();
+        if (!dialog._answered) return;
+
+        // Esc DOES count as an answer: IsCancel routes it through the labelled Keep button, which
+        // sets the flag — the same contract as every other modal in the app.
+        await themeService.AnswerEdgeQuestionAsync(question, dialog.DialogResult == true);
     }
+
+    /// <summary>
+    /// True once one of the two labelled buttons was actually pressed. WPF closes a modal with
+    /// <c>DialogResult == false</c> whether the user chose "keep mine" or just clicked the X, so
+    /// <c>DialogResult</c> alone cannot tell an answer from a dismissal — this can.
+    /// </summary>
+    private bool _answered;
 
     private void OnAcceptClick(object sender, RoutedEventArgs e)
     {
+        _answered = true;
         DialogResult = true;
         Close();
     }
 
     private void OnKeepClick(object sender, RoutedEventArgs e)
     {
+        _answered = true;
         DialogResult = false;
         Close();
     }

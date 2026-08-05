@@ -29,11 +29,21 @@ Given the reference image or vibe description I'm providing, return **only** a v
 | `magenta`           | Secondary brand accent — Stop button bg, Private server CTA, MAIN pill, alert pills     |
 | `white`             | Primary text (display names, headers) — must be high-contrast against `row_bg`          |
 | `muted_text`        | Secondary text (status lines, footers, tooltips) — same hue as `white`, lower luminance |
-| `divider`           | 1-px divider lines, subtle borders between sections                                     |
+| `divider`           | 1-px divider lines, subtle borders between sections. Keep it faint — that is correct; see the note below on button outlines. |
 | `row_bg`            | Account row card background (the cards that hold each saved account)                    |
 | `row_expired_bg`    | Card background when a session has expired — usually a warm tint                        |
 | `row_expired_accent`| Accent on expired-session cards — yellow/amber by convention                            |
 | `navy`              | Secondary button bodies + modal chrome (slightly brighter than `bg` for depth)          |
+
+> **On `divider` and button outlines (added 2026-08-05).** `divider` does two jobs: the faint rule
+> between rows and cards, and — historically — the outline around a button. WCAG 1.4.11 requires a
+> 3:1 boundary on anything you can click, but *not* on a decorative separator. RoRoRo now resolves
+> that split for you: it derives an interactive edge from your `divider` and `navy`, brightened only
+> as far as 3:1 needs, and uses it on buttons alone. Your separators render exactly as you wrote
+> them. If your `divider` is faint against `navy` — as the template's is, deliberately — RoRoRo asks
+> you once, on first launch, whether to keep the brighter button outline. Either answer is fine, and
+> nothing about your separators changes either way. Do not compromise `divider` to make buttons
+> visible; that is handled.
 
 ### Design rules to follow
 

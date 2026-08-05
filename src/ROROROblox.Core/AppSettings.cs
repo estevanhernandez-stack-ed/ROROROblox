@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -140,7 +140,11 @@ public sealed class AppSettings : IAppSettings, IDisposable
         try
         {
             var answers = (await LoadAsync().ConfigureAwait(false)).EdgeRemediationAnswers;
-            return answers is not null && answers.TryGetValue(themeId, out var answered) ? answered : null;
+            // OrdinalIgnoreCase, not Ordinal: theme ids come from FILENAMES on a case-insensitive
+            // filesystem, and ThemeStore.GetByIdAsync matches them case-insensitively too. Matching
+            // Ordinal here meant renaming "Neon Dusk.json" to "neon dusk.json" silently lost a
+            // recorded decline and repainted the theme. Found by the wave-5 review gate.
+            return answers is not null && Lookup(answers).TryGetValue(themeId, out var answered) ? answered : null;
         }
         finally
         {
@@ -162,8 +166,8 @@ public sealed class AppSettings : IAppSettings, IDisposable
             // Copy rather than mutate: `with` shares the dictionary reference with the blob we
             // just read, so mutating in place would edit a value another caller may still hold.
             var answers = settings.EdgeRemediationAnswers is null
-                ? new Dictionary<string, bool>(StringComparer.Ordinal)
-                : new Dictionary<string, bool>(settings.EdgeRemediationAnswers, StringComparer.Ordinal);
+                ? new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase)
+                : Lookup(settings.EdgeRemediationAnswers);
             answers[themeId] = accepted;
             await SaveAsync(settings with { EdgeRemediationAnswers = answers }).ConfigureAwait(false);
         }
@@ -386,6 +390,14 @@ public sealed class AppSettings : IAppSettings, IDisposable
         }
         finally { _gate.Release(); }
     }
+
+    /// <summary>
+    /// Re-keys the deserialized answers case-insensitively. System.Text.Json always hands back an
+    /// Ordinal dictionary regardless of what was written, so the comparer has to be re-applied on
+    /// every read rather than assumed to have survived the round trip.
+    /// </summary>
+    private static Dictionary<string, bool> Lookup(Dictionary<string, bool> answers) =>
+        new(answers, StringComparer.OrdinalIgnoreCase);
 
     private async Task<SettingsBlob> LoadAsync()
     {

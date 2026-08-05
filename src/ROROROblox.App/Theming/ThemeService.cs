@@ -117,10 +117,17 @@ internal sealed class ThemeService
     /// answer holds for this session and the question comes back next time, which is the honest
     /// failure: better to ask twice than to silently keep a change somebody refused.
     /// </summary>
-    public async Task AnswerEdgeQuestionAsync(bool accepted)
+    /// <param name="question">
+    /// The question that was actually put, NOT whatever is pending now. <c>ShowDialog</c> runs a
+    /// nested message pump, so a theme change can land while the dialog is open — the picker's
+    /// handler is <c>async void</c> and two arrow-key presses genuinely overlap. Re-reading
+    /// <see cref="PendingEdgeQuestion"/> here recorded the answer against the theme that arrived
+    /// second, marking a theme declined whose author was never asked and permanently silencing its
+    /// prompt. Found by the wave-5 review gate 2026-08-05.
+    /// </param>
+    public async Task AnswerEdgeQuestionAsync(EdgeQuestion question, bool accepted)
     {
-        var question = PendingEdgeQuestion;
-        if (question is null) return;
+        ArgumentNullException.ThrowIfNull(question);
 
         try
         {
@@ -131,12 +138,17 @@ internal sealed class ThemeService
             _log.LogWarning(ex, "Saving the edge answer for {Id} failed; it will be asked again.", question.ThemeId);
         }
 
-        PendingEdgeQuestion = null;
+        // Only re-apply if the theme being answered about is still the one on screen. If it moved on
+        // while the dialog was up, the answer is recorded and that is all — repainting a theme the
+        // user has since navigated away from would undo their newer choice.
         var theme = CurrentTheme;
-        if (theme is not null)
+        if (theme is null || !string.Equals(theme.Id, question.ThemeId, StringComparison.OrdinalIgnoreCase))
         {
-            ApplyToResources(theme, accepted);
+            return;
         }
+
+        PendingEdgeQuestion = null;
+        ApplyToResources(theme, accepted);
     }
 
     /// <summary>

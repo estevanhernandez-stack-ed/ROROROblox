@@ -22,8 +22,34 @@ namespace ROROROblox.Tests;
 /// </summary>
 public class InteractiveEdgeBindingTests
 {
-    /// <summary>Elements that draw a surface, not a control. A boundary here is decoration.</summary>
-    private static readonly string[] DecorativeElements = ["Border", "Rectangle", "Separator", "Line", "Ellipse"];
+    /// <summary>
+    /// Element types that USUALLY draw a surface rather than a control. "Usually" is doing real work
+    /// here — see <see cref="IsInteractive"/>. A shape type alone does not settle the question.
+    /// </summary>
+    private static readonly string[] DecorativeElements =
+        ["Border", "Rectangle", "Separator", "Line", "Ellipse", "Path", "Polygon"];
+
+    /// <summary>
+    /// Properties that paint an element's outline. <c>Stroke</c> and <c>Fill</c> are here because a
+    /// <c>Rectangle</c> or <c>Path</c> draws its edge with those, not with <c>BorderBrush</c>.
+    /// </summary>
+    private static readonly string[] EdgeProperties = ["BorderBrush", "Stroke", "Fill", "Background"];
+
+    /// <summary>
+    /// A shape type that responds to the mouse is a control, whatever its tag says.
+    /// <para>
+    /// The first version of this test hard-listed <c>Border</c> as decorative full stop. The wave-5
+    /// review gate pointed out that <c>MainWindow.xaml</c> has a <c>Border</c> with
+    /// <c>Cursor="Hand"</c> and a click handler — the per-account caption swatch — which IS a UI
+    /// component under 1.4.11. The old rule would have failed the build on its own correct fix. Role
+    /// decides, not element name.
+    /// </para>
+    /// </summary>
+    private static bool IsInteractive(XElement el) =>
+        el.Attributes().Any(a =>
+            a.Name.LocalName.Contains("Mouse", StringComparison.Ordinal)
+            || a.Name.LocalName is "Cursor" && a.Value == "Hand"
+            || a.Name.LocalName is "InputBindings");
 
     [Fact]
     public void TheDerivedEdgeIsNeverBoundToADecorativeSurface()
@@ -38,14 +64,49 @@ public class InteractiveEdgeBindingTests
 
             foreach (var el in doc.Descendants())
             {
-                if (!DecorativeElements.Contains(el.Name.LocalName)) continue;
+                var name = el.Name.LocalName;
 
-                foreach (var attr in el.Attributes())
+                // 1. A Style targeting a decorative type. THE HOLE THE REVIEW GATE FOUND: this test
+                //    used to read attributes on elements only, so the single easiest version of the
+                //    edit it exists to prevent — one Setter in ControlStyles.xaml with
+                //    TargetType="Border" — repainted every Border in the app and scanned clean. The
+                //    wave's own thesis is "hand-copies become named styles"; a style-blind fence
+                //    guards the form the wave is moving away from.
+                if (name == "Style"
+                    && Strip((string?)el.Attribute("TargetType")) is { } targetType
+                    && DecorativeElements.Contains(targetType))
                 {
-                    if (!attr.Value.Contains(ThemeSlotName, StringComparison.Ordinal)) continue;
+                    foreach (var setter in el.Descendants().Where(d => d.Name.LocalName == "Setter"))
+                    {
+                        var prop = (string?)setter.Attribute("Property");
+                        var value = (string?)setter.Attribute("Value") ?? string.Join("", setter.Descendants().Select(d => d.Value));
+                        if (prop is not null && EdgeProperties.Contains(prop) && Mentions(value))
+                        {
+                            offenders.Add($"{file.Label}{Line(el)}: <Style TargetType=\"{targetType}\"> sets {prop}");
+                        }
+                    }
+                    continue;
+                }
 
-                    var line = el is System.Xml.IXmlLineInfo li && li.HasLineInfo() ? $":{li.LineNumber}" : "";
-                    offenders.Add($"{file.Label}{line}: <{el.Name.LocalName} {attr.Name}=\"{attr.Value}\">");
+                // 2. Property-element syntax: <Border.BorderBrush>…</Border.BorderBrush>.
+                if (name.Contains('.', StringComparison.Ordinal))
+                {
+                    var owner = name[..name.IndexOf('.', StringComparison.Ordinal)];
+                    var prop = name[(name.IndexOf('.', StringComparison.Ordinal) + 1)..];
+                    if (DecorativeElements.Contains(owner) && EdgeProperties.Contains(prop)
+                        && Mentions(el.Value) && !IsInteractive(el.Parent ?? el))
+                    {
+                        offenders.Add($"{file.Label}{Line(el)}: <{name}> property element");
+                    }
+                    continue;
+                }
+
+                // 3. The direct-attribute form the original test caught.
+                if (!DecorativeElements.Contains(name) || IsInteractive(el)) continue;
+
+                foreach (var attr in el.Attributes().Where(a => Mentions(a.Value)))
+                {
+                    offenders.Add($"{file.Label}{Line(el)}: <{name} {attr.Name}=\"{attr.Value}\">");
                 }
             }
         }
@@ -56,6 +117,61 @@ public class InteractiveEdgeBindingTests
             + "derived value there repaints every user's authored theme:"
             + Environment.NewLine + string.Join(Environment.NewLine, offenders));
     }
+
+    [Fact]
+    public void NoControlBuiltInCodeBehindKeepsTheDecorativeBrushAsItsBoundary()
+    {
+        // THE GAP THIS CLOSES. Wave 5's sweep commit claimed "zero Buttons left on DividerBrush."
+        // That was true of the markup and false of the app: CaptionColorPickerWindow and
+        // SquadLaunchWindow each build a Button in C# and set its BorderBrush from FindResource.
+        // Every other test in this wave parses XAML, so all of them agreed with the wrong claim.
+        var appDir = XamlStyleScanner.AppSourceDirectory();
+        Assert.NotNull(appDir);
+
+        var offenders = new List<string>();
+
+        foreach (var path in Directory.EnumerateFiles(appDir!, "*.cs", SearchOption.AllDirectories))
+        {
+            if (path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")) continue;
+            if (path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}")) continue;
+
+            var lines = File.ReadAllLines(path);
+            for (var i = 0; i < lines.Length; i++)
+            {
+                if (!lines[i].Contains("BorderBrush", StringComparison.Ordinal)) continue;
+                if (!lines[i].Contains("DividerBrush", StringComparison.Ordinal)) continue;
+
+                offenders.Add($"{Path.GetFileName(path)}:{i + 1}: {lines[i].Trim()}");
+            }
+        }
+
+        Assert.True(offenders.Count == 0,
+            "A control's boundary built in code is still a control's boundary — WCAG 1.4.11 does "
+            + $"not care which language drew it. Use {ThemeSlotName}:"
+            + Environment.NewLine + string.Join(Environment.NewLine, offenders));
+    }
+
+    [Fact]
+    public void TheFenceSeesTheAppItClaimsTo()
+    {
+        // Every assertion above is a "found nothing" — which is also what a broken scan returns.
+        // The app has ~30 XAML files, and the derived brush must actually appear somewhere or the
+        // wave did not ship.
+        var files = XamlStyleScanner.EnumerateAppXamlFiles().ToList();
+        Assert.True(files.Count >= 20, $"Expected the app's XAML, found {files.Count} files.");
+
+        var mentions = files.Count(f => File.ReadAllText(f.FullPath).Contains(ThemeSlotName, StringComparison.Ordinal));
+        Assert.True(mentions >= 2, $"{ThemeSlotName} appears in {mentions} files — the fence has nothing to guard.");
+    }
+
+    private static string? Strip(string? targetType) =>
+        targetType?.Replace("{x:Type ", "", StringComparison.Ordinal).TrimEnd('}').Split(':').Last();
+
+    private static bool Mentions(string? value) =>
+        value?.Contains(ThemeSlotName, StringComparison.Ordinal) == true;
+
+    private static string Line(XElement el) =>
+        el is System.Xml.IXmlLineInfo li && li.HasLineInfo() ? $":{li.LineNumber}" : "";
 
     [Fact]
     public void TheDerivedEdgeIsNotAThemeSlotAuthorsHaveToSupply()

@@ -78,8 +78,12 @@
             </StackPanel>
         </StackPanel>
 
+        <!-- Says buttons, because buttons is what changed. An earlier draft read "buttons and other
+             controls you can click", which the review gate caught as an overclaim: text boxes,
+             dropdowns and password fields all still draw their own edge from your theme's divider.
+             Promising more than shipped is the one thing a consent dialog cannot do. -->
         <TextBlock Grid.Row="3"
-                   Text="Separators, card edges and row rules are untouched either way — this is only the outline on buttons and other controls you can click."
+                   Text="Separators, card edges and row rules are untouched either way, and so is every text box and dropdown — this is the outline on buttons."
                    TextWrapping="Wrap"
                    FontSize="11"
                    Foreground="{DynamicResource MutedTextBrush}"

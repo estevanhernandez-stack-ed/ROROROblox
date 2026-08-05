@@ -97,8 +97,13 @@ On first launch after the update, when **the active theme is a user theme** whos
 interactive edge had to be derived:
 
 - one dialog, once, explaining what changed and why, with a before/after swatch;
-- a choice — **use the accessible edge** (recommended, default) or **keep my
-  theme exactly as authored**;
+- a choice — **use the readable edge** (recommended) or **keep my theme as I wrote
+  it**. **CORRECTED 2026-08-05:** this said the accessible edge would be the
+  Enter-key *default*. It is not, and should not be — Enter must never be the key
+  that changes somebody's work for them, the same reasoning that makes Cancel the
+  default on the Stop all confirm. "Keep my theme" is `IsDefault`; the recommended
+  action takes one deliberate click. Pinned by
+  `ModalDefaultButtonSafetyTests.EdgeRemediationModal_DefaultsToLeavingTheUsersThemeAlone`;
 - the answer remembered *per theme*, so switching themes can re-ask but the same
   theme never asks twice.
 

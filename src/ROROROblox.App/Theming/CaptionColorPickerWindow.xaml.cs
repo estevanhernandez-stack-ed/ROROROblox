@@ -53,7 +53,9 @@ internal partial class CaptionColorPickerWindow : Window
                 Height = 50,
                 Margin = new Thickness(4),
                 Background = new SolidColorBrush(ParseColor(hex)),
-                BorderBrush = (Brush)FindResource("DividerBrush"),
+                // Built in code, so wave 5's markup sweep never saw it — and neither does any test
+                // in that wave, which all parse XAML. Found by the review gate.
+                BorderBrush = (Brush)FindResource("InteractiveEdgeBrush"),
                 BorderThickness = new Thickness(1),
                 Cursor = Cursors.Hand,
                 ToolTip = $"{label}  {hex}",

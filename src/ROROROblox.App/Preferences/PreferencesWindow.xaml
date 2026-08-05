@@ -319,7 +319,7 @@
                                               Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
                                               Background="{DynamicResource NavyBrush}"
                                               Foreground="{DynamicResource MutedTextBrush}"
-                                              BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                                              BorderBrush="{DynamicResource InteractiveEdgeBrush}" BorderThickness="1"
                                               ToolTip="Reveal the saved webhook so you can read or replace it." />
                             </Grid>
                             <TextBlock x:Name="MineWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
@@ -344,7 +344,7 @@
                                               Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
                                               Background="{DynamicResource NavyBrush}"
                                               Foreground="{DynamicResource MutedTextBrush}"
-                                              BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1"
+                                              BorderBrush="{DynamicResource InteractiveEdgeBrush}" BorderThickness="1"
                                               ToolTip="Reveal the saved webhook so you can read or replace it." />
                             </Grid>
                             <TextBlock x:Name="ClanWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
