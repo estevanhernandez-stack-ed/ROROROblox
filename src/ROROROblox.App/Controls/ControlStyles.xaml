@@ -6,6 +6,12 @@
          hand-copied attribute set. 63 sites across 15 files repeat the same four themed attributes,
          which is why they drifted and why every previous fix had to be applied 63 times.
 
+         WHAT THESE STYLES DO NOT REACH (review gate, 2026-08-05): two buttons are constructed in
+         C# rather than markup — CaptionColorPickerWindow's palette swatches and SquadLaunchWindow's
+         Remove — and they set their brushes via FindResource, not via a Style. They bind the same
+         derived edge and are guarded by their own test, but a change made here does NOT reach them.
+         Text inputs are a separate, deliberate gap: they keep the authored divider until stage 5.
+
          These styles own the THEMED attributes only: background, foreground, border. Padding,
          margin and font size stay at the call site, because those legitimately differ — a toolbar
          button and a dialog footer button are not the same size, and pretending otherwise would

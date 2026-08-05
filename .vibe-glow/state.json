@@ -78,14 +78,14 @@
     {
       "id": 5,
       "name": "The component vocabulary — secondary buttons get an edge that clears 3:1",
-      "status": "open",
+      "status": "clean",
       "findings": [
         "F-025",
         "F-030",
         "F-031",
         "F-035"
       ],
-      "note": "In flight on glow/wave-5-component-vocabulary. Scope was REVISED mid-wave after Este's constraint about users who already authored their own themes: the original plan would have repainted every separator and card edge in every user theme. Divider turned out to do two jobs — decorative separator and control boundary — and WCAG 1.4.11 governs only the second. So the fix derives InteractiveEdgeBrush via ContrastGuard instead of adding an eleventh theme slot (invariant 6 holds), a test fences it off from Border/Rectangle/Separator/Line/Ellipse, and a per-theme consent prompt asks before changing a theme somebody wrote themselves. Verified live under the flatline user theme, both answers."
+      "note": "Merged as bf1fdef (PR #94). All four rows closed. Scope was REVISED mid-wave after Este's constraint about users who already authored their own themes: the original plan would have repainted every separator and card edge in every user theme. Divider turned out to do two jobs — decorative separator and control boundary — and WCAG 1.4.11 governs only the second. The fix derives InteractiveEdgeBrush via ContrastGuard rather than adding an eleventh slot (invariant 6 holds), a role-based test fences it off from decoration, and a per-theme consent prompt asks before changing a theme somebody wrote. REVIEW GATE (two Opus reviewers, local): ten findings addressed, one disagreed with on the merits. The two worst were cases where a test agreed with a false claim — ContrastGuard checked the ratio of an un-quantized triple then rounded on the way out, so 9,569 of 147,511 failing pairs came back under 3:1 (all three built-ins cleared it by luck, midnight by 0.019); and the sweep commit's 'zero Buttons left on DividerBrush' was true of the markup and false of the app, since two buttons are built in C# and every test in the wave parses XAML. Also: the answer could be persisted against the wrong theme across the modal's message pump, and dismissing the dialog with the title-bar X wrote a permanent decline — the first fix for that DID NOT WORK (WPF closes a modal with DialogResult false, not null) and only live WM_CLOSE testing caught it. DISAGREED: the gate flagged that our own theme template ships a 1.26:1 divider so anyone following our docs trips the dialog. Real, but changing the template hex would rebuild the bug — a faint divider is CORRECT for a hairline. Fixed the dialog copy and AGENT_PROMPT instead, so it no longer implies the author erred. CLOSE-OUT: re-captured main window and the Alerts page under brand and flatline (87-90). Under flatline the converted controls carry visible edges and the webhook TextBox beside the converted Show toggle has none — the stage-5 residue is now visible rather than theoretical. Comment drift: ControlStyles.xaml implied the dictionary reached every button; corrected to name the two code-behind exceptions. Gate surfaced three register additions: F-077, F-078, F-079."
     }
   ],
   "scope": {
