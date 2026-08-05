@@ -15,7 +15,8 @@
              in document order, and a forward reference inside the same ResourceDictionary throws
              "Cannot find resource" at template-APPLY time — invisible to builds and unit tests,
              fatal on the first rendered row (live-crash caught 2026-07-09). -->
-        <Style x:Key="InverseBoolToVisibilityStyle" TargetType="UIElement">
+        <Style x:Key="InverseBoolToVisibilityStyle" TargetType="Button"
+               BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Visibility" Value="Visible" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsDefault}" Value="True">
