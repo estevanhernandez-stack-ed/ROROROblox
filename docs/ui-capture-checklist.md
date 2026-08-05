@@ -12,14 +12,14 @@ accent; text stays legible so only colour-borne distinctions collapse).
 
 | NN | Surface | Why it is in scope | How to reach it |
 | --- | --- | --- | --- |
-| 01 | `main-window` | Hosts the buttons under review and the streamer-mode switch that should live in Settings | App launch |
+| 01 | `main-window` | Hosts the buttons under review. The streamer-mode switch moved to Settings in wave 1 (F-008). | App launch |
 | 02 | `main-window-empty` | Empty state — "Add your first account"; the chrome with nothing to hide behind | Launch with no accounts |
 | 03 | `preferences` | THE area. Five stacked sections in one scroll: startup, idle, Discord, alerts, theme | Settings button, or tray → Preferences |
 | 04 | `preferences-scrolled` | The bottom of the scroll — proves whether anything below the fold is discoverable | Scroll `preferences` to end |
 | 05 | `about` | Candidate for relocation into Settings | About button |
 | 06 | `history` | Candidate — but a tool, not a preference. The open question. | History button |
 | 07 | `diagnostics` | Candidate — same open question as history | Diagnostics button |
-| 08 | `library` | **`Settings/SettingsWindow.xaml`, titled "RoRoRo -- Library."** A class named SettingsWindow, in a folder named Settings, that is the game library. Directly in the IA under review. | Games → Manage games… |
+| 08 | `games` | `Games/GamesWindow.xaml`, titled "RoRoRo -- Games" — renamed in wave 1 (F-006). Was `Settings/SettingsWindow.xaml` titled "RoRoRo -- Library": a class named SettingsWindow, in a folder named Settings, that is the game library. | Games button |
 | 09 | `plugins` | Reached by a main-window button; a tools-container candidate | Plugins button |
 | 10 | `theme-builder` | A settings-adjacent tool that already lives outside Settings | Preferences → theme area |
 | 11 | `tray-menu` | The other navigation surface entirely — it duplicates several main-window buttons | Right-click tray icon |

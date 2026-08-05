@@ -967,7 +967,6 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <!-- Row 1: title block (left) + primary actions (right). -->
@@ -1054,14 +1053,14 @@
                                 FontSize="11"
                                 ToolTip="System health, Roblox + WebView2 versions, log location." />
                         <Button Content="Games"
-                                Command="{Binding OpenSettingsCommand}"
+                                Command="{Binding OpenGamesCommand}"
                                 Padding="10,6" Margin="0,0,6,0"
                                 Background="{DynamicResource NavyBrush}"
                                 Foreground="{DynamicResource MutedTextBrush}"
                                 BorderBrush="{DynamicResource DividerBrush}"
                                 BorderThickness="1"
                                 FontSize="11"
-                                ToolTip="Manage saved games for the per-row launch picker." />
+                                ToolTip="Saved games and private servers for the launch picker." />
                         <Button Content="Plugins"
                                 Command="{Binding OpenPluginsCommand}"
                                 Padding="10,6" Margin="0,0,6,0"
@@ -1149,7 +1148,7 @@
                         <!-- Empty state: replaces the toggle when no games are saved.
                              One click → Games settings sheet (same as the toolbar Games button). -->
                         <Button Content="No saved games yet — Add a game"
-                                Command="{Binding OpenSettingsCommand}"
+                                Command="{Binding OpenGamesCommand}"
                                 MinWidth="220" MaxWidth="340"
                                 Padding="12,6"
                                 Background="{DynamicResource NavyBrush}"
@@ -1187,7 +1186,7 @@
                                 <DockPanel>
                                     <Button DockPanel.Dock="Bottom"
                                             Content="Manage games…"
-                                            Command="{Binding OpenSettingsCommand}"
+                                            Command="{Binding OpenGamesCommand}"
                                             Padding="10,6"
                                             Margin="0,4,0,0"
                                             HorizontalContentAlignment="Left"
@@ -1347,43 +1346,6 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Row 3: streamer mode (v1.10, Task 10) — switch + reroll-all + the scope-boundary
-                     copy that matters most: this hides names/avatars/links in RoRoRo's OWN UI,
-                     it does not touch anything Roblox itself shows. -->
-                <Grid Grid.Row="2" Margin="0,14,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-                    <ui:ToggleSwitch Grid.Column="0"
-                                      Content="Streamer mode"
-                                      IsChecked="{Binding StreamerModeOn, Mode=TwoWay}"
-                                      VerticalAlignment="Center"
-                                      ToolTip="Hides names, avatars, and share links in RoRoRo. Doesn't change what shows inside Roblox." />
-
-                    <Button Grid.Column="1"
-                            Content="Reroll all identities"
-                            Command="{Binding RerollAllCommand}"
-                            Padding="10,6" Margin="14,0,0,0"
-                            Background="{DynamicResource NavyBrush}"
-                            Foreground="{DynamicResource MutedTextBrush}"
-                            BorderBrush="{DynamicResource DividerBrush}"
-                            BorderThickness="1"
-                            FontSize="11"
-                            ToolTip="Assign every fake name and avatar a fresh pick." />
-
-                    <TextBlock Grid.Column="2"
-                               Text="Hides names, avatars, and share links in RoRoRo. Doesn't change what shows inside Roblox."
-                               FontSize="10"
-                               Foreground="{DynamicResource MutedTextBrush}"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Right"
-                               TextWrapping="Wrap"
-                               MaxWidth="380"
-                               Margin="14,0,0,0" />
-                </Grid>
             </Grid>
         </Border>
 

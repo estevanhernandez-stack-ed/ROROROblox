@@ -14,7 +14,7 @@ using ROROROblox.App.History;
 using ROROROblox.App.Friends;
 using ROROROblox.App.JoinByLink;
 using ROROROblox.App.Modals;
-using ROROROblox.App.Settings;
+using ROROROblox.App.Games;
 using ROROROblox.App.SquadLaunch;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
@@ -195,7 +195,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // a second capture can start while one is open — each capture's user-data-dir sweep
         // would then delete files under the other's LIVE WebView2 profile.
         ReauthenticateCommand = new RelayCommand(p => ReauthenticateAsync(p as AccountSummary), _ => !IsBusy);
-        OpenSettingsCommand = new RelayCommand(OpenSettings);
+        OpenGamesCommand = new RelayCommand(OpenGames);
         LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !a.SessionLimited && !(a.InGame || a.IsRunning)));
         StopAccountCommand = new RelayCommand(p => StopAccount(p as AccountSummary));
         RecycleAccountCommand = new RelayCommand(p => _ = RecycleAccountAsync(p as AccountSummary));
@@ -226,7 +226,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             if (p is AccountSummary row) { _ = SetAlertsMutedAsync(row, !row.AlertsMuted); }
         });
 
-        // Streamer mode (v1.10) — main-window switch + reroll controls (Task 10). No-ops when
+        // Streamer mode (v1.10) — the Settings checkbox + reroll controls (Task 10; moved off the
+        // main window 2026-08-04, finding F-008). No-ops when
         // _streamerIdentity is null (VM-level test harness, which doesn't pass one).
         RerollAllCommand = new RelayCommand(RerollAllIdentitiesAsync);
         RerollAccountCommand = new RelayCommand(p => RerollAccountAsync(p));
@@ -281,7 +282,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             }
         };
 
-        // Streamer mode (v1.10, Task 10) — keep the main-window switch (and the tray checkmark,
+        // Streamer mode (v1.10, Task 10) — keep the Settings checkbox (and the tray checkmark,
         // via its own subscription) in sync when the mode flips from either surface. Mirrors
         // AccountSummary.OnIdentityChanged's un-marshaled OnPropertyChanged call: WPF's binding
         // engine auto-dispatches PropertyChanged notifications to the owning thread, so no manual
@@ -535,7 +536,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand LaunchAccountCommand { get; }
     public ICommand RemoveAccountCommand { get; }
     public ICommand ReauthenticateCommand { get; }
-    public ICommand OpenSettingsCommand { get; }
+    public ICommand OpenGamesCommand { get; }
     public ICommand LaunchAllCommand { get; }
     public ICommand StopAccountCommand { get; }
     /// <summary>
@@ -579,8 +580,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand ToggleAlertsMutedCommand { get; }
 
     /// <summary>
-    /// True when streamer mode is active — bound two-way to the main-window <c>ui:ToggleSwitch</c>
-    /// (Task 10). Get reads straight through to <see cref="Core.StreamerMode.IStreamerIdentityProvider.IsActive"/>;
+    /// True when streamer mode is active — read and written by the Settings checkbox
+    /// (<c>PreferencesWindow.StreamerModeToggle</c>; it lived on the main window as a
+    /// <c>ui:ToggleSwitch</c> until 2026-08-04, finding F-008). Get reads straight through to <see cref="Core.StreamerMode.IStreamerIdentityProvider.IsActive"/>;
     /// set fire-and-forgets <see cref="Core.StreamerMode.IStreamerIdentityProvider.SetActiveAsync"/> and relies on
     /// <see cref="OnStreamerIdentityChanged"/> to raise the change notification once the provider
     /// confirms the flip (keeps the switch and the tray checkbox as two views of one source of
@@ -657,7 +659,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     public string DefaultGameTooltip =>
         _currentDefaultGame is null
-            ? "Launches open Roblox at home. Set a default game in the Library to launch straight into it."
+            ? "Launches open Roblox at home. Set a default game under Games to launch straight into it."
             : "The default game Launch As uses when no per-row pick is set. Click to change.";
 
     private bool _isCompact;
@@ -2836,6 +2838,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// model's whole job here is to notice, name the account, and say when.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// The streamer-identity provider this view model was built with, for tests that need to flip
+    /// streamer mode the way the tray and plugins do — through the provider, not through
+    /// <see cref="StreamerModeOn"/>'s setter. Null when no provider was resolved.
+    /// </summary>
+    internal Core.StreamerMode.IStreamerIdentityProvider? StreamerIdentityForTests => _streamerIdentity;
+
     internal event EventHandler<IReadOnlyList<AlertTrigger>>? AlertsRaised;
 
     /// <summary>
@@ -3182,9 +3191,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private void OpenSettings()
+    /// <summary>
+    /// Opens the saved-games + private-servers window. Named for what it opens: until 2026-08-04
+    /// this was <c>OpenSettings</c> opening <c>Settings.SettingsWindow</c> titled "Library" behind
+    /// a button labelled "Games" — one destination with three names, and a class called
+    /// SettingsWindow that was never settings (audit finding F-006). Settings is
+    /// <see cref="OpenPreferencesCommand"/>.
+    /// </summary>
+    private void OpenGames()
     {
-        var window = new SettingsWindow(_favorites, _privateServerStore, _api) { Owner = Application.Current.MainWindow };
+        var window = new GamesWindow(_favorites, _privateServerStore, _api) { Owner = Application.Current.MainWindow };
         window.ShowDialog();
         // Refresh in case the user added / removed / set-default'd a game.
         _ = ReloadGamesAsync();
@@ -3224,7 +3240,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     /// <summary>
     /// The streamer-identity provider flipped active/inactive or reassigned identities — refresh
-    /// <see cref="StreamerModeOn"/> so the main-window switch stays in sync whether the flip came
+    /// <see cref="StreamerModeOn"/> so the Settings checkbox stays in sync whether the flip came
     /// from this window, the tray checkbox, or a plugin. Task 10.
     /// <para>
     /// Also refreshes Discord presence (2026-08-03): flipping streamer mode changes what

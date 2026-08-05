@@ -122,6 +122,24 @@ internal static class DiscordTestHarness
     }
 
     /// <summary>
+    /// Like <see cref="VmWithOneInGameAccount"/>, but hands back the streamer-identity provider so
+    /// a test can flip streamer mode the way the tray and plugins do — through the provider, not
+    /// through the view model's setter.
+    /// <para>
+    /// Returned rather than stashed in a static: xUnit runs test classes in parallel, so a static
+    /// "last built provider" is overwritten by whichever collection happens to build a view model
+    /// next, and the test flips someone else's provider. That is a self-inflicted flake, and this
+    /// harness had one for exactly one commit.
+    /// </para>
+    /// </summary>
+    public static (MainViewModel Vm, AccountSummary Row, IStreamerIdentityProvider Streamer) VmWithStreamerProvider(
+        string realName, string maskedName)
+    {
+        var (vm, row) = VmWithOneInGameAccount(realName, maskedName);
+        return (vm, row, vm.StreamerIdentityForTests!);
+    }
+
+    /// <summary>
     /// One account plus a real <see cref="DiscordConfigStore"/> over a temp file, wired into the
     /// view model — for the per-account mute, where the point of the test is that the preference
     /// actually round-trips through DPAPI storage rather than living in memory.

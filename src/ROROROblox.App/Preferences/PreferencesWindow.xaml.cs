@@ -103,6 +103,63 @@ internal partial class PreferencesWindow : Window
         {
             presence.StatusChanged -= OnDiscordStatusChanged;
         }
+
+        // Same leak shape as the presence subscription above: this window is transient per-open,
+        // MainViewModel is a singleton, so an unsubscribed handler would fire through a closed
+        // window's Dispatcher for the rest of the process.
+        _mainViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+    }
+
+    /// <summary>
+    /// Keeps the streamer-mode checkbox a VIEW of the provider rather than a snapshot of it.
+    /// <para>
+    /// Streamer mode is flippable from three places — this checkbox, the tray menu, and a plugin —
+    /// and the tray menu is reachable while this window is open, because a modal
+    /// <c>ShowDialog</c> disables only the top-level windows that existed when it opened, and the
+    /// tray's <c>ContextMenu</c> popup is created after that. Without this subscription, flipping
+    /// the mask from the tray leaves this checkbox reporting the opposite of the truth on the one
+    /// control that tells a streamer whether their names are hidden.
+    /// </para>
+    /// <para>
+    /// Wave 1 shipped exactly that bug for one review round: the original control was a two-way
+    /// binding, and moving it here turned it into a single read in <c>OnLoaded</c>.
+    /// </para>
+    /// </summary>
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(MainViewModel.StreamerModeOn)) return;
+
+        // MARSHAL FIRST. This notification arrives on a THREADPOOL thread:
+        // StreamerIdentityProvider.SetActiveAsync awaits the settings write with
+        // ConfigureAwait(false) and raises Changed on that continuation
+        // (StreamerIdentityProvider.cs:107-108). Writing IsChecked from there throws cross-thread
+        // instantly — and MainViewModel.StreamerModeOn discards the task it started, so the throw
+        // is swallowed with no log line AND it aborts the rest of the Changed multicast, starving
+        // every subscriber behind this one. That is the same hazard MainViewModel:261 documents
+        // for PressureCrossed, and the rule at MainViewModel:288: the binding engine auto-
+        // dispatches, a direct control write does not. The two-way binding this control replaced
+        // was marshalling for free; hand-rolling it dropped that.
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.BeginInvoke(new Action(() => OnViewModelPropertyChanged(sender, e)));
+            return;
+        }
+
+        try
+        {
+            _suppressClickHandlers = true;
+            StreamerModeToggle.IsChecked = _mainViewModel.StreamerModeOn;
+        }
+        catch (Exception)
+        {
+            // Never let a UI refresh abort the notification chain — see above. Worst case this
+            // checkbox is stale until reopened, which is strictly better than silently breaking
+            // every other subscriber's update.
+        }
+        finally
+        {
+            _suppressClickHandlers = false;
+        }
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -114,6 +171,12 @@ internal partial class PreferencesWindow : Window
             LaunchMainToggle.IsChecked = await _settings.GetLaunchMainOnStartupAsync();
 
             AlwaysShowRecycleToggle.IsChecked = await _settings.GetAlwaysShowRecycleAsync();
+
+            // Streamer mode reads through to IStreamerIdentityProvider via the view model — there is
+            // no separate persisted flag here, which is why this reads the VM rather than _settings.
+            // The SUBSCRIPTION is the load-bearing half: see OnViewModelPropertyChanged.
+            StreamerModeToggle.IsChecked = _mainViewModel.StreamerModeOn;
+            _mainViewModel.PropertyChanged += OnViewModelPropertyChanged;
 
             // Discord presence + Join (v1.14+ plan). DiscordPresence is only non-null when
             // App.OnStartup found a non-empty Discord:ApplicationId in appsettings.json — see
@@ -674,6 +737,41 @@ internal partial class PreferencesWindow : Window
             "Setting up alerts",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
+
+    /// <summary>
+    /// Streamer mode, moved here from the main window (audit finding F-008).
+    /// <para>
+    /// Writes through <see cref="MainViewModel.StreamerModeOn"/>, whose setter fire-and-forgets to
+    /// <c>IStreamerIdentityProvider.SetActiveAsync</c> — it does NOT wait for the provider, and the
+    /// write can fail silently (see the register's follow-up on that inherited behaviour). What
+    /// keeps this checkbox honest is not the write but the read: <see cref="OnViewModelPropertyChanged"/>
+    /// re-reads on the provider's confirmation, so the checkbox, the tray checkmark and the row
+    /// rendering end up as three views of one source of truth rather than three flags that drift.
+    /// </para>
+    /// </summary>
+    private void OnStreamerModeToggle(object sender, RoutedEventArgs e)
+    {
+        // NO _suppressClickHandlers guard here, deliberately — it would only ever swallow a real
+        // user. Click is raised by ToggleButton.OnClick, which programmatic IsChecked assignment
+        // never reaches (that raises Checked/Unchecked instead), so the flag can never protect
+        // this handler from our own populate. What it CAN do is eat a genuine click: OnLoaded
+        // holds the flag across seven awaits — settings reads, a DPAPI decrypt of discord.dat,
+        // theme enumeration — while the window is already visible and interactive. Clicking the
+        // box in that window flipped IsChecked (WPF toggles before raising Click) and then hit the
+        // guard, so the box looked checked and streamer mode never engaged. Reported live by Este
+        // on the wave-1 build, and predicted by the cold review as "failure trace B".
+        _mainViewModel.StreamerModeOn = StreamerModeToggle.IsChecked == true;
+    }
+
+    /// <summary>Reroll every fake name and avatar at once. Same command the main window used to
+    /// invoke; the button moved with the toggle it belongs to.</summary>
+    private void OnRerollAllClick(object sender, RoutedEventArgs e)
+    {
+        if (_mainViewModel.RerollAllCommand.CanExecute(null))
+        {
+            _mainViewModel.RerollAllCommand.Execute(null);
+        }
+    }
 
     private async void OnMuteIdleAlertsToggle(object sender, RoutedEventArgs e)
     {
