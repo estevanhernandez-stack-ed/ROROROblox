@@ -42,10 +42,7 @@
                  Padding="8,6"
                  MaxLines="1"
                  Background="{DynamicResource RowBgBrush}"
-                 Foreground="{DynamicResource WhiteBrush}"
-                 BorderBrush="{DynamicResource DividerBrush}"
-                 CaretBrush="{DynamicResource CyanBrush}"
-                 BorderThickness="1" />
+                 CaretBrush="{DynamicResource CyanBrush}" Style="{StaticResource AppTextBoxStyle}"/>
 
         <!-- Reset hyperlink — visible only when CurrentLocalName != null. Code-behind sets
              Visibility on construct. Magenta-tinted to read as a destructive-ish tertiary. -->

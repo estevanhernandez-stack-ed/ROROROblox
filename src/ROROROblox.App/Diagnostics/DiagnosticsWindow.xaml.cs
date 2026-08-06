@@ -87,13 +87,15 @@ internal partial class DiagnosticsWindow : Window
 
     private void AddSection(string title, IEnumerable<(string label, string value)> rows)
     {
+        // F-064. This was the app's THIRD definition of a section heading — 12px SemiBold on
+        // CyanBrush — and it lived in C#, where no markup review would ever have found it. Accent
+        // colour was carrying structural work, which fails the same reader that grouping-by-fill
+        // fails. It now consumes the one shared style, whose larger top margin supplies the group
+        // separation the cyan used to fake.
         var header = new TextBlock
         {
             Text = title,
-            FontSize = 12,
-            FontWeight = FontWeights.SemiBold,
-            Foreground = (Brush)FindResource("CyanBrush"),
-            Margin = new Thickness(0, 8, 0, 6),
+            Style = (Style)FindResource("SectionHeadingStyle"),
         };
         DetailsList.Children.Add(header);
 

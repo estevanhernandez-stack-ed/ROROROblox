@@ -654,10 +654,15 @@
                         <!-- Title-bar color swatch. Click opens a popup with the 8-palette + Auto +
                              custom hex. The swatch shows whatever color the Roblox window's title
                              bar currently uses (manual override OR auto-derived from Id hash). -->
+                        <!-- F-077. A Border by tag, a control by behaviour — Cursor="Hand" and a
+                             click handler below. WCAG 1.4.11 governs it, so it takes the derived
+                             edge like any other control. The fence test permits this because it
+                             decides by role, not element name; an earlier version of that test
+                             hard-listed Border as decorative and would have failed the build here. -->
                         <Border Width="22" Height="14"
                                 CornerRadius="3"
                                 Margin="0,0,8,0"
-                                BorderBrush="{DynamicResource DividerBrush}"
+                                BorderBrush="{DynamicResource InteractiveEdgeBrush}"
                                 BorderThickness="1"
                                 Cursor="Hand"
                                 ToolTip="Pick a Roblox window title-bar color for this account."

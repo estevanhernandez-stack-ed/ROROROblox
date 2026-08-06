@@ -140,13 +140,10 @@
                     <TextBox Grid.Column="0"
                              Text="{Binding InstallUrlInput, UpdateSourceTrigger=PropertyChanged}"
                              Background="{DynamicResource NavyBrush}"
-                             Foreground="{DynamicResource WhiteBrush}"
-                             BorderBrush="{DynamicResource DividerBrush}"
-                             BorderThickness="1"
                              Padding="8,6"
                              FontSize="12"
                              VerticalContentAlignment="Center"
-                             IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverterLocal}}" />
+                             IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverterLocal}}" Style="{StaticResource AppTextBoxStyle}"/>
                     <Button Grid.Column="1"
                             Content="Install"
                             Margin="8,0,0,0"
