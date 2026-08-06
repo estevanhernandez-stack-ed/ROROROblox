@@ -171,7 +171,8 @@ The prose is good and users need it — the alerts work this week proved that. T
 
 ## C8 — Established component vocabulary (keep, do not reinvent)
 
-- Cards: `CornerRadius="8"`, `Padding="14"`, `Margin="0,0,0,10"`, `RowBgBrush`.
+- Cards: `CardBorderStyle` — `CornerRadius="8"`, `Padding="14"`, `Margin="0,0,0,10"`, `RowBgBrush`. **UPDATED 2026-08-05 (wave 6):** the values are unchanged; they now live in one style instead of nine hand-copies. Note the recipe is still fill-only, so grouping still disappears under a theme that sets `RowBg == Bg` — that is C5/F-026 and it is not fixed, only made a one-place edit.
+- Inputs: `AppTextBoxStyle` / `AppPasswordBoxStyle`, and an IMPLICIT `ComboBox` style. **ADDED 2026-08-05 (wave 6):** C8 never named an input recipe, which is why two of them drifted and why every input in the app kept a boundary below WCAG 1.4.11's 3:1 through wave 5. The styles own foreground and border; `Background` stays at the call site because a field takes its fill from the surface behind it (`RowBgBrush` on a card, `NavyBrush` on chrome).
 - Section heading: 13px SemiBold `WhiteBrush`, with 11px `MutedTextBrush` body beneath.
 - Primary CTA: accent fill, `BorderThickness="0"`, 11px SemiBold.
 - Secondary: `NavyBrush` fill with an `InteractiveEdgeBrush` border. **CORRECTED 2026-08-05 (wave 5).** This read "with a `DividerBrush` border" — which was an accurate description of the app and a description of F-031, the defect. `Navy == Bg` in all three built-in themes, so the fill contributed zero separation and the border alone measured 1.26:1 against WCAG 1.4.11's 3:1 floor. Wave 5 replaced it with a derived brush that clears 3:1 under any theme. Leaving the old line under a heading reading "keep, do not reinvent" would have told the next reader to rebuild the bug.
