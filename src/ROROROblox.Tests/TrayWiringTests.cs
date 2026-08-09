@@ -1,3 +1,4 @@
+using System.Reflection;
 using ROROROblox.App.Tray;
 using ROROROblox.Core;
 
@@ -68,22 +69,37 @@ public class TrayWiringTests
     [Fact]
     public void EveryTrayRequestEventHasAHandler()
     {
-        // Guards the rot case: a new Request* event added to ITrayService with nothing subscribed.
-        var events = typeof(ITrayService).GetEvents()
-            .Select(e => e.Name)
-            .Where(n => n.StartsWith("Request", StringComparison.Ordinal))
-            .Select(n => n["Request".Length..])
+        // Guards the rot case: a new Request* event added to ITrayService that TrayWiring.Connect
+        // never subscribes to. Naming correspondence alone (ITrayService's Request<X> vs
+        // TrayHandlers' <X>) is not enough — RecordingTray must implement any new event to compile,
+        // so the suite stays green even if Connect forgets the subscription line. This actually
+        // calls TrayWiring.Connect and inspects whether each event got a subscriber.
+        //
+        // C# field-like events (`public event EventHandler? Foo;`, as RecordingTray declares) are
+        // compiler-generated into a private instance field named exactly Foo holding the multicast
+        // delegate. An event nobody subscribed to has a null backing field; Connect subscribing to
+        // it makes the field non-null. Reflecting over those fields after Connect runs is what
+        // "has a handler" now genuinely means.
+        var (tray, _) = Connect();
+
+        var eventNames = typeof(ITrayService).GetEvents().Select(e => e.Name).ToHashSet();
+
+        var backingFields = typeof(RecordingTray)
+            .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+            .Where(f => eventNames.Contains(f.Name))
             .ToList();
 
-        var handlerNames = typeof(TrayHandlers).GetProperties().Select(p => p.Name).ToHashSet();
+        // Sanity check on the reflection technique itself: if this is empty, the field-like-event
+        // backing-field assumption stopped holding (e.g. RecordingTray switched to explicit
+        // add/remove) and the test below would pass vacuously without saying so.
+        Assert.Equal(eventNames.Count, backingFields.Count);
 
-        // ITrayService names each event Request<X>; TrayHandlers names each delegate <X>. That
-        // one-to-one correspondence is the invariant — if a future event breaks it, rename the
-        // handler to match rather than adding a mapping table here, or this test stops meaning
-        // anything.
-        var missing = events.Where(e => !handlerNames.Contains(e)).ToList();
+        var unsubscribed = backingFields
+            .Where(f => f.GetValue(tray) is null)
+            .Select(f => f.Name)
+            .ToList();
 
-        Assert.Empty(missing);
+        Assert.Empty(unsubscribed);
     }
 }
 

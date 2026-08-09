@@ -71,12 +71,19 @@ internal partial class WelcomeWindow : Window
     /// <summary>
     /// Show the tour on demand (Tools menu). Deliberately does NOT touch the sentinel: opening the
     /// tour manually says nothing about whether the automatic first-run path has run.
+    /// <para>
+    /// Owner resolution checks visibility, not just loaded state: the main window's X-close handler
+    /// cancels close and calls <c>Hide()</c> as the minimize-to-tray path, which leaves
+    /// <c>IsLoaded</c> true even though nothing is on screen. The tray can fire this tour with the
+    /// main window hidden that way, and an invisible owner would otherwise still receive activation
+    /// back on dismissal.
+    /// </para>
     /// </summary>
     internal static void ShowTour()
     {
         var dialog = new WelcomeWindow();
         var owner = Application.Current?.MainWindow;
-        if (owner is not null && owner.IsLoaded)
+        if (owner is not null && owner.IsLoaded && owner.IsVisible)
         {
             dialog.Owner = owner;
         }

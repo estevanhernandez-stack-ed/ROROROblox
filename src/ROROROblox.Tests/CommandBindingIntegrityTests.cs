@@ -69,6 +69,8 @@ public class CommandBindingIntegrityTests
     public void TheThreeF001VerbsAreBoundInTheToolsMenu(string commandName)
     {
         var appDir = XamlStyleScanner.AppSourceDirectory();
+        Assert.NotNull(appDir);
+
         var markup = File.ReadAllText(Path.Combine(appDir!, "MainWindow.xaml"));
 
         Assert.Contains($"{{Binding {commandName}}}", markup, StringComparison.Ordinal);

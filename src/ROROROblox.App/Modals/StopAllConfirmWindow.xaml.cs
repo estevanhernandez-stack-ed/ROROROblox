@@ -32,13 +32,17 @@ internal partial class StopAllConfirmWindow : Window
     /// <summary>
     /// Show the confirm and report whether the user accepted. Owner resolution matches
     /// <c>LaunchHeadroomWindow.ShouldProceed</c>: an unloaded or absent main window means centre on
-    /// screen rather than parent to something that cannot host a dialog.
+    /// screen rather than parent to something that cannot host a dialog. Visibility is checked
+    /// too, not just loaded state: the main window's X-close handler cancels close and calls
+    /// <c>Hide()</c> as the minimize-to-tray path, which leaves <c>IsLoaded</c> true even though
+    /// nothing is on screen. The tray can fire this Stop-all confirm with the main window hidden
+    /// that way, and an invisible owner would otherwise still receive activation back on dismissal.
     /// </summary>
     internal static bool Confirm(int runningCount)
     {
         var dialog = new StopAllConfirmWindow(runningCount);
         var owner = Application.Current?.MainWindow;
-        if (owner is not null && owner.IsLoaded)
+        if (owner is not null && owner.IsLoaded && owner.IsVisible)
         {
             dialog.Owner = owner;
         }
