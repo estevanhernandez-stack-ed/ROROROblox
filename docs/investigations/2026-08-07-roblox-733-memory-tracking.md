@@ -65,24 +65,90 @@ reproduce.
 - **One machine, one game.** A regression that only appears on other hardware or other
   experiences is not excluded.
 
-## Conclusion and where to look next
+## RESOLVED, same day: it is Roblox's updater killing live clients
 
-On this machine, on this game, **733 did not raise per-client memory and did not close
-clients**. The release note is most likely a coincidence — which is precisely the trap it
-was set up to be: the top note mentioned memory, and the symptom sounded like memory.
+The open question — window vanishes, or stays up with an error? — came back **vanishes**.
+That rules out disconnect and points at process death. Windows records every application
+fault, so the evidence was already on disk.
 
-The drop-outs are real and cross-manager, so something changed. It does not look like RAM.
+**There are zero Roblox crash records on this machine in 21 days.** No `Application Error`,
+no WER archive, no dump. A process that dies without a fault record was not crashing; it was
+terminated.
 
-**The unanswered diagnostic question, and it is cheap:** when an account drops, does the
-Roblox window *disappear*, or does it stay open showing an error? Gone means a crash.
-Still-there-with-a-message means a disconnect or session expiry — a different investigation
-entirely, and one that would explain why memory reads normal.
+### What actually happened
+
+Roblox shipped **two client builds today**, an hour and three-quarters apart:
+
+| build | version dir | installed (local) |
+|---|---|---|
+| `0.733.0.7330989` | `d584fb6c…` | 07:51 |
+| `0.733.603.7330990` | `7d4de67b…` | **09:40** |
+
+Three clients died at the second install, and the three sources line up to the second:
+
+```
+09:40:31   Roblox session log ACEC8 stops     (no teardown marker)
+09:40:32   RoRoRo: pid 44112 exited for account c30a1f44
+09:40:36   Roblox session log 921FF stops     (no teardown marker)
+09:40:37   Roblox installer: "Reporting Installer Start"
+09:40:37   RoRoRo: pid 31684 exited for account f9c5eee7
+09:40:40   Roblox installer: "Reporting Installer Success"
+09:40:41   RoRoRo: pid 53392 exited for account caa05bf6
+```
+
+A clean Roblox exit writes `RobloxStarter destroyed` / `User exit app`. None of the three
+did. **RoRoRo issued no stop command** — the log shows it only observing the exits — and
+Este did not close them.
+
+### Why this fits every observation
+
+- **Window vanishes, no error** — nothing errored; the process was terminated.
+- **No crash record** — it was not a fault.
+- **Every account manager equally** — this is Roblox's own updater, entirely outside any manager.
+- **Started with 733** — 733 pushed at least two builds inside two hours. Each push takes out
+  live clients. More hot-fix builds means more kills, which reads exactly as "accounts
+  dropping out sooner."
+- **Memory reads normal** — memory was never the mechanism.
+
+### One observation held loosely
+
+It killed the three **highest-memory** clients (3236–3280 MB) and left five smaller ones
+(2578–2749 MB) alive. That may be memory-related, or it may be that those three were simply
+the newest, launched at 08:37–08:39 into busier worlds. **Not enough evidence to claim a
+selection rule** — recorded so a future occurrence can confirm or kill it.
+
+## Conclusion
+
+**733 did not raise per-client memory.** The release note was a coincidence — precisely the
+trap it was set up to be: the top note mentioned memory, and the symptom sounded like memory.
+Chasing it would have burned days.
+
+**The drop-outs are Roblox's own updater terminating live clients when a new build installs.**
+Not a crash, not a disconnect, not RoRoRo, and nothing the clan can fix on their end. 733 has
+been hot-fixed repeatedly, and every push kills whatever is running.
+
+For a single-client player that is one window closing and mildly annoying. For someone running
+eight, it is eight sessions gone at once — which is why account-manager communities noticed and
+the general playerbase did not.
 
 ## What this exposed about our own instrumentation
 
-**RoRoRo logs when a client starts and nothing about why it ended.** We watch the process
-vanish and record nothing — no exit code, no last-known memory, no elapsed session. That is
-why this question needed a live test instead of being answerable from logs already on disk.
+`RobloxProcessTracker.cs:385` logs **that** a client exited — pid and account id. That line is
+what pinned the timing here, so it earned its keep. What it does not carry is **why**: no exit
+code, no last-known private bytes, no session duration.
 
-Filed as a follow-up: log exit code + last-known memory + session duration at teardown. It
-makes every future "Roblox broke something" question measurable retroactively.
+*(An earlier version of this section, and of F-081, said we "record nothing when a client ends."
+That was wrong, and it mispriced the fix as a new teardown path. It is one enriched log
+statement.)*
+
+Because of that gap, answering this took a 45-minute live test plus Windows event logs plus
+Roblox's own client logs, reconstructed by hand. With exit code, last memory reading, session
+duration — and a distinct line when several clients exit inside a few seconds, which is the
+updater-kill signature — the same question would have been a grep.
+
+## What to tell the clan
+
+It is not their PC, not their RAM, and not their account manager. Roblox is shipping frequent
+client updates and each one closes running clients. The practical mitigation is the same one
+that already exists for the memory case: relaunch after an update lands. Worth saying plainly,
+because the natural assumption is that something on their end is broken.
