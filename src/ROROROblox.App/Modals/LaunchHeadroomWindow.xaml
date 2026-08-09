@@ -1,0 +1,67 @@
+<Window x:Class="ROROROblox.App.Modals.LaunchHeadroomWindow"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Not much memory left"
+        SizeToContent="Height" Width="480"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico"
+        Background="{DynamicResource BgBrush}">
+    <!-- Shown before a launch that the machine probably cannot hold (F-082). It ADVISES and does
+         not block: the estimate is a constant measured on one machine, and the person clicking is
+         looking at their own. Deliberately unlike the mutex modal, which does hard-block — that
+         failure is deterministic with one recovery, this is a forecast.
+
+         Ten accounts want about 26.5 GB at the footprint we measured. A 16 GB machine has roughly
+         12.9 GB usable. Until now RoRoRo let that launch proceed and said nothing. -->
+    <Grid Margin="32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   x:Name="Heading"
+                   FontSize="18" FontWeight="Bold"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource CyanBrush}" />
+
+        <TextBlock Grid.Row="1"
+                   x:Name="BodyText"
+                   TextWrapping="Wrap"
+                   FontSize="12"
+                   LineHeight="18"
+                   Foreground="{DynamicResource WhiteBrush}"
+                   Opacity="0.85"
+                   Margin="0,12,0,0" />
+
+        <TextBlock Grid.Row="2"
+                   x:Name="Numbers"
+                   FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                   FontSize="10"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   TextWrapping="Wrap"
+                   Margin="0,16,0,0" />
+
+        <!-- Cancel is the Enter-key default. Launching past the limit can take down the sessions
+             already running, so a reflexive Enter must not be what does it — the same reasoning as
+             the Stop all confirm. Going ahead stays one deliberate click away, because it is their
+             machine and this is an estimate. -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
+            <Button Content="Cancel"
+                    Style="{StaticResource SecondaryStrongButtonStyle}"
+                    Padding="16,8" Margin="0,0,8,0"
+                    IsCancel="True" IsDefault="True"
+                    Click="OnCancelClick" />
+            <Button Content="Launch anyway"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Padding="16,8"
+                    FontWeight="Bold"
+                    Click="OnLaunchClick" />
+        </StackPanel>
+    </Grid>
+</Window>

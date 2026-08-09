@@ -1,4 +1,4 @@
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 
 namespace ROROROblox.Tests;
 
@@ -87,12 +87,22 @@ public class ModalDefaultButtonSafetyTests
     public void EdgeRemediationModal_DefaultsToLeavingTheUsersThemeAlone()
         => Assert.Equal("Keep my theme as I wrote it", DefaultButtonLabel("EdgeRemediationWindow.xaml"));
 
+    /// <summary>
+    /// F-082. Launching past the memory limit can take down sessions ALREADY running, so a
+    /// reflexive Enter must not be what does it — the same reasoning as the Stop all confirm.
+    /// The warning is advisory and "Launch anyway" stays available, one deliberate click away.
+    /// </summary>
+    [Fact]
+    public void LaunchHeadroomModal_DefaultsToCancel()
+        => Assert.Equal("Cancel", DefaultButtonLabel("LaunchHeadroomWindow.xaml"));
+
     [Theory]
     [InlineData("RobloxAlreadyRunningWindow.xaml")]
     [InlineData("StopAllConfirmWindow.xaml")]
     [InlineData("LeftoverProcessesWindow.xaml")]
     [InlineData("JoinRequestWindow.xaml")]
     [InlineData("EdgeRemediationWindow.xaml")]
+    [InlineData("LaunchHeadroomWindow.xaml")]
     public void EachModal_HasExactlyOneDefaultButton(string modalFile)
         => Assert.Single(Buttons(modalFile), IsDefault);
 

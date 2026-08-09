@@ -1730,6 +1730,22 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             var targets = MatchEligible(summaries, result.Eligible);
             _log.LogInformation("LaunchMultiple: {Count} eligible, {Running} running, {Expired} expired, {Deselected} deselected",
                 targets.Count, result.Breakdown.Running, result.Breakdown.Expired, result.Breakdown.Deselected);
+
+            // F-082, the preventive half. Batch launch is where oversubscription actually happens —
+            // ten accounts want about 26.5 GB at the measured footprint, and a 16 GB machine has
+            // roughly 12.9 GB usable. Until now RoRoRo started all ten and said nothing.
+            //
+            // Advisory: the user can go ahead. Deliberately NOT on the single-launch path, where the
+            // same dialog would interrupt one-at-a-time play on a machine already near its limit.
+            // That is nagging, and a nagged warning gets ignored by the time it finally matters.
+            if (targets.Count > 0
+                && !Modals.LaunchHeadroomWindow.ShouldProceed(
+                    _memoryWatchdog.GetSnapshot(), _memoryWatchdog.ReserveBytes, targets.Count,
+                    Application.Current?.MainWindow))
+            {
+                _log.LogInformation("LaunchMultiple: cancelled at the headroom warning ({Count} targets)", targets.Count);
+                return;
+            }
             foreach (var t in targets)
             {
                 _log.LogInformation("LaunchMultiple target: id={Id} name={Name} robloxUserId={RobloxUserId}",

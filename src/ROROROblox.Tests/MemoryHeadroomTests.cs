@@ -191,4 +191,49 @@ public class MemoryHeadroomTests
         Assert.Equal("1 Roblox client running",
             ROROROblox.App.ViewModels.MemoryChipFormatter.FormatFooter(1, 0, false));
     }
+
+    [Theory]
+    // 16 GB with ten clients already up: nothing fits, and the batch must be warned about.
+    [InlineData(400, 10, LaunchHeadroomAdvisor.Verdict.WontFit, 0)]
+    // Room for two more, asked for six — partial, still worth saying before starting six.
+    [InlineData(7900, 6, LaunchHeadroomAdvisor.Verdict.Partial, 2)]
+    // Plenty: say nothing at all.
+    [InlineData(30000, 4, LaunchHeadroomAdvisor.Verdict.Fits, 10)]
+    public void ThePreLaunchAdvisorSeesTheBatchBeforeItStarts(
+        int availableMb, int requested, LaunchHeadroomAdvisor.Verdict expected, int expectedRoom)
+    {
+        var reserve = (long)MemoryDefaults.ReserveMb(16 * Gb) * Mb;
+        var (verdict, roomFor) = LaunchHeadroomAdvisor.Evaluate(
+            probeOk: true, availableBytes: availableMb * Mb, reserveBytes: reserve, requested: requested);
+
+        Assert.Equal(expected, verdict);
+        Assert.Equal(expectedRoom, roomFor);
+    }
+
+    [Fact]
+    public void AFailedProbeIsUnknownAndNeverAWarning()
+    {
+        // The watchdog writes AvailableBytes: 0 when the read fails, so a zero is ambiguous.
+        // Treating it as "no memory" would fire this dialog on every batch launch for anyone whose
+        // probe is broken — the fastest possible route to the warning being ignored.
+        var (verdict, room) = LaunchHeadroomAdvisor.Evaluate(
+            probeOk: false, availableBytes: 0, reserveBytes: 1 * Gb, requested: 4);
+
+        Assert.Equal(LaunchHeadroomAdvisor.Verdict.Unknown, verdict);
+        Assert.Equal(0, room);
+    }
+
+    [Fact]
+    public void AZeroAvailableReadingIsTreatedAsUnknownNotAsEmpty()
+    {
+        // The watchdog collapses "probe failed" and "genuinely zero" into AvailableBytes: 0, so the
+        // caller maps a zero to probeOk:false. Pinning that mapping here, because the alternative —
+        // reading zero as "no memory left" — fires the dialog on every batch launch for anyone
+        // whose probe is broken, and a warning that always fires is one nobody reads.
+        var available = 0L;
+        var (verdict, _) = LaunchHeadroomAdvisor.Evaluate(
+            probeOk: available > 0, availableBytes: available, reserveBytes: 1 * Gb, requested: 1);
+
+        Assert.Equal(LaunchHeadroomAdvisor.Verdict.Unknown, verdict);
+    }
 }
