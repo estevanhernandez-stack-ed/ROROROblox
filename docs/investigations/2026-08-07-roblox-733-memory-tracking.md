@@ -65,6 +65,47 @@ reproduce.
 - **One machine, one game.** A regression that only appears on other hardware or other
   experiences is not excluded.
 
+## RETRACTED 2026-08-08: the "updater kill" conclusion was wrong
+
+**The three clients that exited at 09:40 were closed by Este.** They had hit a captcha on
+reconnect and never got back into a game, so he closed them manually. Nothing terminated them.
+
+**How the error was made, because the mechanism matters more than the mistake.** I asked Este
+directly whether he had closed those three, then answered my own question from logs rather than
+waiting for him. The inference was: *RoRoRo issued no stop command, therefore the user did not
+close them.* That is invalid. RoRoRo's stop log covers only RoRoRo's **own** stop path — closing
+a Roblox window directly never touches our app, and produces exactly the bare `pid exited` line
+we observed. The absence of a stop command was never evidence of anything.
+
+The installer really did run at 09:40:37–40, and three clients really did exit at 09:40:32/37/41.
+The correlation was real and coincidental. Three sources agreeing on a timestamp confirmed only
+**when**, never **why** — and I read "why" into it.
+
+**What survives, and what does not:**
+
+| claim | status |
+|---|---|
+| 733 did not raise per-client memory | **stands** — measured independently |
+| No Roblox crash records in 21 days | **stands** — but now unremarkable, since no unexplained death occurred here |
+| Roblox shipped two 733 builds on 2026-08-07 | **stands** |
+| Roblox's updater terminates live clients | **RETRACTED — no evidence** |
+| The clan's drop-outs are explained | **RETRACTED — still unexplained** |
+
+**The one real new clue, from Este:** those three hit a **captcha on reconnect** and could not
+get back into a game. That is worth chasing — this repo already has captcha history (the
+AppStorageDefender work in v1.4.2.0). A reconnect-captcha loop looks nothing like a crash, but to
+a user whose alt never comes back it may well be the same complaint.
+
+**And this is a second, better argument for F-081.** Had the exit line carried a reason — even
+just "process exited with code 0 after a window close" versus "terminated externally" — this
+error would have been impossible to make. The gap did not merely cost a morning of
+reconstruction; it let a wrong answer look confirmed.
+
+---
+
+*The section below is preserved as originally written, for the reasoning trail. Its conclusion
+is withdrawn.*
+
 ## RESOLVED, same day: it is Roblox's updater killing live clients
 
 The open question — window vanishes, or stays up with an error? — came back **vanishes**.
@@ -117,19 +158,14 @@ It killed the three **highest-memory** clients (3236–3280 MB) and left five sm
 the newest, launched at 08:37–08:39 into busier worlds. **Not enough evidence to claim a
 selection rule** — recorded so a future occurrence can confirm or kill it.
 
-## Conclusion
+## Conclusion (revised 2026-08-08)
 
-**733 did not raise per-client memory.** The release note was a coincidence — precisely the
-trap it was set up to be: the top note mentioned memory, and the symptom sounded like memory.
-Chasing it would have burned days.
+**733 did not raise per-client memory.** That result was measured and it stands. The release
+note was a coincidence — precisely the trap it was set up to be.
 
-**The drop-outs are Roblox's own updater terminating live clients when a new build installs.**
-Not a crash, not a disconnect, not RoRoRo, and nothing the clan can fix on their end. 733 has
-been hot-fixed repeatedly, and every push kills whatever is running.
-
-For a single-client player that is one window closing and mildly annoying. For someone running
-eight, it is eight sessions gone at once — which is why account-manager communities noticed and
-the general playerbase did not.
+**The drop-outs remain unexplained.** The updater-kill answer was withdrawn (see the retraction
+above). No unexplained client death has been observed on this machine. The next real lead is the
+captcha-on-reconnect behaviour, not memory and not the updater.
 
 ## What this exposed about our own instrumentation
 
