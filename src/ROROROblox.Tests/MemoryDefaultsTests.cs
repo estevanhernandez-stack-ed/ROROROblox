@@ -16,12 +16,25 @@ public class MemoryDefaultsTests
     public void ReserveMb_ClampsBetween1024And4096(int totalGb, int expectedMb)
         => Assert.Equal(expectedMb, MemoryDefaults.ReserveMb(totalGb * Gb));
 
+    /// <summary>
+    /// REWRITTEN 2026-08-08 (F-082). This test used to assert the defect as though it were the
+    /// specification — <c>Math.Max(35% of RAM, 4 GB)</c>, giving 5734 MB on 16 GB and 22937 MB on
+    /// 64 GB. Those expectations were green for the whole life of v1.12–v1.16 while the warning
+    /// they described could not fire: a Roblox client peaks near 3280 MB, so nothing ever crossed
+    /// a cap that started at 5734 MB and climbed from there.
+    /// <para>
+    /// The axis was wrong. A per-client cap is anomaly detection, and a Roblox client's footprint
+    /// does not depend on how much RAM its owner bought. The fraction now clamps the cap DOWNWARD
+    /// (<c>Min</c>, not <c>Max</c>), so a small machine gets a stricter cap and a large one stops
+    /// at the flat anomaly line instead of growing more permissive forever.
+    /// </para>
+    /// </summary>
     [Theory]
-    [InlineData(8, 4096)]    // 35% of 8 GB = 2867 -> floor
-    [InlineData(16, 5734)]   // 35% of 16 GB
-    [InlineData(32, 11468)]  // 35% of 32 GB
-    [InlineData(64, 22937)]  // 35% of 64 GB
-    public void CapMb_FloorsAt4096(int totalGb, int expectedMb)
+    [InlineData(8, 2867)]    // 35% of 8 GB — below the anomaly line, so the small machine tightens
+    [InlineData(16, 4096)]   // 35% would be 5734; clamped down to the 4 GB anomaly line
+    [InlineData(32, 4096)]   // 35% would be 11468
+    [InlineData(64, 4096)]   // 35% would be 22937 — the cap must NOT climb with installed RAM
+    public void CapMb_ClampsDownToTheAnomalyLine(int totalGb, int expectedMb)
         => Assert.Equal(expectedMb, MemoryDefaults.CapMb(totalGb * Gb));
 
     [Fact]

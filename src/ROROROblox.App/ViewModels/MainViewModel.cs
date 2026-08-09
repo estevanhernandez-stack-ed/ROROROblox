@@ -762,13 +762,19 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    /// <summary>Footer text — e.g. "3 Roblox clients running" / "No clients running".</summary>
-    public string LiveProcessSummary => _liveProcessCount switch
-    {
-        0 => "No Roblox clients running",
-        1 => "1 Roblox client running",
-        _ => $"{_liveProcessCount} Roblox clients running",
-    };
+    /// <summary>
+    /// Footer text — e.g. "6 Roblox clients running · 16.2 GB" (F-080). The total is what a
+    /// multi-client user needs in order to decide whether another alt fits, and until now it lived
+    /// nowhere in the app.
+    /// </summary>
+    public string LiveProcessSummary =>
+        MemoryChipFormatter.FormatFooter(_liveProcessCount, _aggregateClientBytes, _belowReserve);
+
+    /// <summary>Sum of every readable client's private bytes, from the watchdog's latest sample.</summary>
+    private long _aggregateClientBytes;
+
+    /// <summary>Machine is already past the reserve — see MemoryPressureSnapshot.BelowReserve.</summary>
+    private bool _belowReserve;
 
     public string StatusBanner
     {
@@ -1724,6 +1730,22 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             var targets = MatchEligible(summaries, result.Eligible);
             _log.LogInformation("LaunchMultiple: {Count} eligible, {Running} running, {Expired} expired, {Deselected} deselected",
                 targets.Count, result.Breakdown.Running, result.Breakdown.Expired, result.Breakdown.Deselected);
+
+            // F-082, the preventive half. Batch launch is where oversubscription actually happens —
+            // ten accounts want about 26.5 GB at the measured footprint, and a 16 GB machine has
+            // roughly 12.9 GB usable. Until now RoRoRo started all ten and said nothing.
+            //
+            // Advisory: the user can go ahead. Deliberately NOT on the single-launch path, where the
+            // same dialog would interrupt one-at-a-time play on a machine already near its limit.
+            // That is nagging, and a nagged warning gets ignored by the time it finally matters.
+            if (targets.Count > 0
+                && !Modals.LaunchHeadroomWindow.ShouldProceed(
+                    _memoryWatchdog.GetSnapshot(), _memoryWatchdog.ReserveBytes, targets.Count,
+                    Application.Current?.MainWindow))
+            {
+                _log.LogInformation("LaunchMultiple: cancelled at the headroom warning ({Count} targets)", targets.Count);
+                return;
+            }
             foreach (var t in targets)
             {
                 _log.LogInformation("LaunchMultiple target: id={Id} name={Name} robloxUserId={RobloxUserId}",
@@ -2974,6 +2996,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // MemoryWatchdog.GetSnapshot()'s seeded field default — no null-guard needed here.
         var projectionWarned = snapshot.HasProjection
             && snapshot.MinutesToCeiling < _memoryWatchdog.ProjectionWarnMinutes;
+
+        // F-080. Both feed the footer, so raise its change notification when either moves. This
+        // runs on the 30s ticker as well as on a crossing, which is what keeps the total live
+        // rather than only updating when something goes wrong.
+        if (_aggregateClientBytes != snapshot.AggregateClientBytes || _belowReserve != snapshot.BelowReserve)
+        {
+            _aggregateClientBytes = snapshot.AggregateClientBytes;
+            _belowReserve = snapshot.BelowReserve;
+            OnPropertyChanged(nameof(LiveProcessSummary));
+        }
 
         foreach (var account in snapshot.Accounts)
         {

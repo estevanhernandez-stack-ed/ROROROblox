@@ -382,7 +382,32 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
         {
             _attachedByAccount.TryRemove(accountId, out _);
             _claimedPidToAccount.TryRemove(process.Id, out _);
-            _log.LogInformation("RobloxPlayerBeta pid {Pid} exited for account {AccountId}", process.Id, accountId);
+
+            // F-081 — say WHY, not just that it happened.
+            //
+            // This line used to carry pid + account and nothing else, and on 2026-08-07 that gap
+            // produced a WRONG conclusion rather than merely a slow one: three exits were read as
+            // Roblox's updater terminating clients when the user had closed them himself, and
+            // nothing in the log could tell the two apart. Reconstructing the truth took a live
+            // 45-minute test, Windows event logs, and Roblox's own client logs.
+            //
+            // Exit code distinguishes the common cases: 0 is an orderly shutdown (the user closed
+            // the window, or Roblox exited cleanly); anything else is the client dying. Uptime
+            // separates "died on launch" from "ran for hours". Both are read defensively — a
+            // process that has already been reaped throws rather than answering, and an unreadable
+            // value must log as unknown, never as a confident zero.
+            int? exitCode = null;
+            TimeSpan? uptime = null;
+            try { exitCode = process.ExitCode; } catch { }
+            try { uptime = DateTime.Now - process.StartTime; } catch { }
+
+            _log.LogInformation(
+                "RobloxPlayerBeta pid {Pid} exited for account {AccountId} (exit code {ExitCode}, up {Uptime})",
+                process.Id,
+                accountId,
+                exitCode is { } code ? code.ToString() : "unknown",
+                uptime is { } up ? $"{(int)up.TotalMinutes}m{up.Seconds:D2}s" : "unknown");
+
             ProcessExited?.Invoke(this, new RobloxProcessEventArgs(accountId, process.Id));
         }
         finally

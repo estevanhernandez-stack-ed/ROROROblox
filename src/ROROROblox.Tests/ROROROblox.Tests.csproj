@@ -36,6 +36,7 @@
          group, so ModalDefaultButtonSafetyTests never saw it at all. -->
     <None Include="..\ROROROblox.App\Modals\JoinRequestWindow.xaml" Link="Modals\JoinRequestWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\ROROROblox.App\Modals\EdgeRemediationWindow.xaml" Link="Modals\EdgeRemediationWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\ROROROblox.App\Modals\LaunchHeadroomWindow.xaml" Link="Modals\LaunchHeadroomWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
