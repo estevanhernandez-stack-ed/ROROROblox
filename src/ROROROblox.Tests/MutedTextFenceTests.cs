@@ -111,6 +111,14 @@ public class MutedTextFenceTests
         // this watches the centre.
         var offenders = new List<string>();
 
+        // Candidate set for THIS clause's own vacuity floor below. TheFenceSeesTheAppItClaimsTo
+        // scans element Foreground attributes only — a <Setter Property="Foreground" .../> has no
+        // Foreground attribute of its own, so it never counts toward that floor. Without a floor
+        // scoped to what this clause actually walks, a break in targetName extraction (say a future
+        // TargetType="{x:Type ui:Foo}" form failing to resolve) silently regresses to
+        // offenders.Count == 0 and this clause passes forever while checking nothing.
+        var candidates = 0;
+
         foreach (var (doc, label) in AppXaml())
         {
             foreach (var style in doc.Descendants().Where(e => e.Name.LocalName == "Style"))
@@ -121,8 +129,10 @@ public class MutedTextFenceTests
 
                 foreach (var setter in style.Descendants().Where(e => e.Name.LocalName == "Setter"))
                 {
-                    if (setter.Attribute("Property")?.Value == "Foreground"
-                        && setter.Attribute("Value")?.Value == ProseToken)
+                    if (setter.Attribute("Property")?.Value != "Foreground") continue;
+                    candidates++;
+
+                    if (setter.Attribute("Value")?.Value == ProseToken)
                     {
                         offenders.Add(
                             $"{label}:{LineOf(setter)} Style TargetType={targetName} sets Foreground={ProseToken}");
@@ -130,6 +140,15 @@ public class MutedTextFenceTests
                 }
             }
         }
+
+        // Measured 2026-08-09: 10 Foreground setters inside control-targeted <Style> elements
+        // (ControlStyles.xaml, MainWindow.xaml, PreferencesWindow.xaml — most legitimately bind
+        // WhiteBrush or another named brush; two are this clause's real offenders). Floor of 5
+        // leaves generous headroom below 10 for ordinary style churn while staying far above zero.
+        Assert.True(candidates >= 5,
+            $"This clause examined only {candidates} control-style Foreground setters. It is "
+            + "supposed to be walking roughly ten — a count this low means targetName "
+            + "extraction or the Style/Setter walk is broken, not that styles were removed.");
 
         Assert.True(offenders.Count == 0,
             "A control style may not set the prose token as its foreground — one setter reaches "
@@ -148,6 +167,13 @@ public class MutedTextFenceTests
 
         var offenders = new List<string>();
 
+        // Candidate set for THIS clause's own vacuity floor below. TheFenceSeesTheAppItClaimsTo
+        // never opens a .cs file at all, so a break in the directory walk or the discriminator
+        // regex here — the exact shape of the bug caught during Task 2's own review, where
+        // NearestConstructedType matched `new Thickness(...)` before reaching `new Button` and this
+        // clause silently found 0 offenders while checking nothing — has nothing else watching it.
+        var candidates = 0;
+
         foreach (var cs in Directory.EnumerateFiles(appDir!, "*.cs", SearchOption.AllDirectories))
         {
             if (cs.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
@@ -161,6 +187,7 @@ public class MutedTextFenceTests
             {
                 if (!lines[i].Contains("MutedTextBrush", StringComparison.Ordinal)) continue;
                 if (!lines[i].Contains("Foreground", StringComparison.Ordinal)) continue;
+                candidates++;
 
                 // Prose built in code-behind is legitimate and there is a lot of it — seven
                 // `new TextBlock` sites set this token correctly. Only a CONTROL is a violation, so
@@ -172,6 +199,18 @@ public class MutedTextFenceTests
             }
         }
 
+        // Measured 2026-08-09: 9 lines where MutedTextBrush and Foreground co-occur in code-behind
+        // (8 legitimate `new TextBlock` prose sites + the 1 `new Button` offender this clause
+        // exists to catch). The next task fixes that one site, which drops the co-occurrence count
+        // to 8 — Foreground stops naming MutedTextBrush there at all, it does not just stop being an
+        // offender. Floor of 5 survives that drop with headroom to spare while staying far above
+        // zero.
+        Assert.True(candidates >= 5,
+            $"This clause examined only {candidates} code-behind lines mentioning MutedTextBrush "
+            + "and Foreground together. It is supposed to be walking roughly eight or nine — a "
+            + "count this low means the directory walk or the co-occurrence scan is broken, not "
+            + "that the app changed.");
+
         Assert.True(offenders.Count == 0,
             "A control built in code-behind may not resolve the prose token for its foreground:\n  "
             + string.Join("\n  ", offenders));
@@ -180,9 +219,15 @@ public class MutedTextFenceTests
     [Fact]
     public void TheFenceSeesTheAppItClaimsTo()
     {
-        // A scan that silently matches nothing passes every clause above while checking nothing.
-        // ~109 bindings exist at the time of writing; the floor is deliberately far below that so
-        // ordinary churn does not trip it, and far above zero so a broken scan does.
+        // Backstops NoControlLabelBindsTheProseToken specifically — same scan idiom, element
+        // Foreground attributes only. It does NOT reach the other two clauses: a <Setter
+        // Property="Foreground" .../> has no Foreground attribute of its own (clause 2), and this
+        // never opens a .cs file (clause 3). Those two now carry their own candidate-count floors,
+        // next to their own offender lists, for exactly that reason — a scan that silently matches
+        // nothing passes its clause while checking nothing, and this test only ever guarded one of
+        // the three clauses that failure mode can strike. ~109 bindings exist at the time of
+        // writing; the floor is deliberately far below that so ordinary churn does not trip it, and
+        // far above zero so a broken scan does.
         var bindings = 0;
 
         foreach (var (doc, _) in AppXaml())
