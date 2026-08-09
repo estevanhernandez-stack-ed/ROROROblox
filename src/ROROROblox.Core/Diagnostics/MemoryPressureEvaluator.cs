@@ -20,6 +20,16 @@ public static class MemoryPressureEvaluator
 {
     public static bool IsClear(MemoryPressureSnapshot snapshot, int projectionWarnMinutes)
     {
+        // THIRD AXIS (F-082), and the first one checked because it is the only one that can see an
+        // oversubscribed machine. The two below both go quiet in that exact case: the projection
+        // needs growth that plateaued clients do not produce, and the cap needs one client to be
+        // abnormal when ten normal ones are each fine. Reading "clear" while free memory sits under
+        // the reserve is the bug this whole wave exists to fix.
+        if (snapshot.BelowReserve)
+        {
+            return false;
+        }
+
         foreach (var account in snapshot.Accounts)
         {
             if (account.OverCap)

@@ -35,6 +35,13 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
     /// </summary>
     private const double ProjectionReArmFactor = 1.15;
 
+    /// <summary>
+    /// Headroom re-arm deadband. Free memory must climb 15% clear of the reserve before the
+    /// machine-wide warning can fire again — the bare inverse would re-fire on the normal
+    /// oscillation of a machine sitting right at the line.
+    /// </summary>
+    private const double HeadroomReArmFactor = 1.15;
+
     private sealed class Record
     {
         public int Pid;
@@ -63,6 +70,9 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
     // and no warning. Fixing it here, once, beats every call site re-guarding with `?? []`.
     private MemoryPressureSnapshot _last = new(0, 0, 0, false, null, []);
     private DateTimeOffset _lastSummaryAt = DateTimeOffset.MinValue;
+
+    /// <summary>Machine-wide, not per account — headroom is a property of the box, not a client.</summary>
+    private bool _headroomLatched;
 
     public long CapBytes { get; set; }
     public long ReserveBytes { get; set; }
@@ -194,6 +204,43 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
             minutes = (int)Math.Clamp(minutesRaw, 0, int.MaxValue);
         }
 
+        // F-082 — the third axis, and the only one that can see an oversubscribed machine.
+        //
+        // The other two both go silent in exactly the case that matters. The projection above needs
+        // aggregateGrowth > 0, and ten plateaued clients produce none. The per-client cap below
+        // needs one client to be abnormal, and ten normal clients are each perfectly normal. So a
+        // user at 100% RAM with steady clients tripped neither and RoRoRo said nothing while their
+        // machine ran out.
+        //
+        // This is a LEVEL, not a rate: free memory is already past the reserve, whatever happens
+        // next. Latched machine-wide (not per account) with the same deadband discipline the other
+        // axes use — the old fixed cap's real failure was noise, one account crossing four times in
+        // eight minutes, and a warning that cries wolf gets muted.
+        var crossedHeadroom = false;
+        var aggregateClientBytes = 0L;
+        for (var i = 0; i < accounts.Count; i++)
+        {
+            if (accounts[i].ReadOk) aggregateClientBytes += accounts[i].PrivateBytes;
+        }
+
+        var belowReserve = systemOk && ReserveBytes > 0 && available < ReserveBytes;
+        if (belowReserve && !_headroomLatched)
+        {
+            _headroomLatched = true;
+            crossedHeadroom = true;
+            _log.LogWarning(
+                "memory headroom crossed: {AvailableMb} MB free, below the {ReserveMb} MB reserve "
+                + "({Count} client(s) holding {AggregateMb} MB)",
+                available / (1024 * 1024), ReserveBytes / (1024 * 1024),
+                accounts.Count, aggregateClientBytes / (1024 * 1024));
+        }
+        else if (systemOk && (ReserveBytes <= 0 || available > ReserveBytes * HeadroomReArmFactor))
+        {
+            // Re-arm only past the deadband, and only on a KNOWN reading. A probe failure is
+            // UNKNOWN, never "recovered" — same rule the cap axis follows.
+            _headroomLatched = false;
+        }
+
         // Target = fattest client with a valid reading. The projection describes the machine;
         // the user needs to know which account to act on.
         Guid? target = accounts
@@ -276,7 +323,9 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
             MinutesToCeiling: minutes,
             HasProjection: hasProjection,
             TargetAccountId: target,
-            Accounts: accounts);
+            Accounts: accounts,
+            AggregateClientBytes: aggregateClientBytes,
+            BelowReserve: belowReserve);
 
         // Per-tick logging is banned: AppLogging's own comment records HttpClientFactory at 10s
         // consuming ~90% of a 15 MB day. The 15-minute summary carries the same information at
@@ -292,7 +341,7 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
                 FormatAccountPayload(accounts));
         }
 
-        if (crossed)
+        if (crossed || crossedHeadroom)
         {
             PressureCrossed?.Invoke(this, _last);
         }

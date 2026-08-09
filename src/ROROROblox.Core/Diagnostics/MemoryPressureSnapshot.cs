@@ -25,4 +25,31 @@ public sealed record MemoryPressureSnapshot(
     int MinutesToCeiling,
     bool HasProjection,
     Guid? TargetAccountId,
-    IReadOnlyList<AccountMemory> Accounts);
+    IReadOnlyList<AccountMemory> Accounts,
+    long AggregateClientBytes = 0,
+    bool BelowReserve = false)
+{
+    /// <summary>
+    /// True when free memory has already fallen past the reserve — the machine is out of room
+    /// NOW, whatever it is doing next.
+    /// <para>
+    /// This exists because the other two axes both go quiet in exactly the case that matters most
+    /// (F-082). <see cref="MinutesToCeiling"/> needs growth, and ten plateaued clients produce
+    /// none. The per-client cap needs one client to be abnormal, and ten normal clients are each
+    /// perfectly normal. A user at 100% RAM with steady clients tripped neither, so RoRoRo watched
+    /// them run out and said nothing.
+    /// </para>
+    /// <para>
+    /// Ten accounts want about 26.5 GB at the footprint measured on 2026-08-07. A 16 GB machine
+    /// has roughly 12.9 GB usable. That user is the reason this field exists.
+    /// </para>
+    /// </summary>
+    public bool BelowReserve { get; init; } = BelowReserve;
+
+    /// <summary>
+    /// Sum of every tracked client's private bytes — the number that actually predicts trouble,
+    /// and the one shown in the footer. Risk from N clients is aggregate; no per-client figure
+    /// can see it.
+    /// </summary>
+    public long AggregateClientBytes { get; init; } = AggregateClientBytes;
+}
