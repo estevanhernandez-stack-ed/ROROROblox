@@ -703,6 +703,7 @@ public partial class App : Application
         // services in Core; consumed by App.OnStartup before mutex.Acquire.
         services.AddSingleton<IRobloxRunningProbe, RobloxRunningProbe>();
         services.AddSingleton<IRobloxInstanceStopper, RobloxInstanceStopper>();
+        services.AddSingleton<IShellOpener, ShellOpener>();
         services.AddSingleton<IRobloxTrayLauncher>(sp =>
             new RobloxTrayLauncher(sp.GetService<ILogger<RobloxTrayLauncher>>()));
         services.AddSingleton<StartupGate>();
