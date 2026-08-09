@@ -62,6 +62,8 @@ internal static class DiscordTestHarness
             activityMonitor: new FakeActivityMonitor(),
             memoryWatchdog: new FakeMemoryWatchdog(),
             instanceStopper: new FakeRobloxInstanceStopper(),
+            runningProbe: new FakeRobloxRunningProbe(),
+            shellOpener: new FakeShellOpener(),
             tray: trayService,
             idleAlertPresenter: new IdleAlertPresenter(trayService),
             streamerIdentity: streamerIdentity);
@@ -219,6 +221,8 @@ internal static class DiscordTestHarness
             activityMonitor: new FakeActivityMonitor(),
             memoryWatchdog: new FakeMemoryWatchdog(),
             instanceStopper: new FakeRobloxInstanceStopper(),
+            runningProbe: new FakeRobloxRunningProbe(),
+            shellOpener: new FakeShellOpener(),
             tray: trayService,
             idleAlertPresenter: new IdleAlertPresenter(trayService),
             streamerIdentity: new FakeStreamerIdentityProvider(string.Empty));
@@ -386,6 +390,17 @@ internal static class DiscordTestHarness
         public int StopAll() => 0;
         public bool StopAccount(Guid accountId) => true;
         public int StopWindowless() => 0;
+    }
+
+    private sealed class FakeRobloxRunningProbe : IRobloxRunningProbe
+    {
+        public IReadOnlyList<int> GetRunningPlayerPids() => Array.Empty<int>();
+        public IReadOnlyList<RobloxProcessInfo> GetRunningPlayers() => Array.Empty<RobloxProcessInfo>();
+    }
+
+    private sealed class FakeShellOpener : IShellOpener
+    {
+        public void Open(string path) { }
     }
 
     private sealed class FakePresenceService : IPresenceService

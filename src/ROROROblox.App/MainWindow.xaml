@@ -1041,10 +1041,12 @@
                             Games and About. Settings is a peer button here rather than a menu item,
                             and Games and About are main-window destinations the tray never carried.
 
-                         F-001 also lists Stop all, Open log folder, and the Welcome tour as Tools
-                         items. They are absent: none has a view-model command (the tray raises
-                         events handled in App.xaml.cs), so they need new plumbing. F-001 stays open
-                         with exactly those three named. -->
+                         F-001 is closed: Stop all, Open log folder and the Welcome tour now sit in
+                         groups 2 and 3 below, each bound to a MainViewModel command. Stop all and
+                         Open log folder are the same commands the tray invokes (see
+                         Tray/TrayWiring.cs), so those two surfaces cannot drift; the Welcome tour
+                         has no tray equivalent. Spec:
+                         docs/superpowers/specs/2026-08-09-rororo-f001-tools-verbs-design.md -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Content="Settings"
                                 Command="{Binding OpenPreferencesCommand}"
@@ -1068,7 +1070,7 @@
                                            Padding="10,6" Margin="0,0,6,0"
                                            Style="{StaticResource SecondaryButtonStyle}"
                                            FontSize="11"
-                                           ToolTip="History, Diagnostics, Games, Plugins, About.">
+                                           ToolTip="History, Diagnostics, Games, Plugins, log folder, Stop all, tour, About.">
                             <controls:ToolsDropDownButton.ContextMenu>
                                 <ContextMenu Background="{DynamicResource NavyBrush}"
                                              BorderBrush="{DynamicResource DividerBrush}"
@@ -1086,6 +1088,17 @@
                                 <MenuItem Header="Plugins"
                                           Command="{Binding OpenPluginsCommand}"
                                           ToolTip="Install and manage RoRoRo plugins." />
+                                <!-- F-001 group 2 — verbs that reach outside the app. Kept apart
+                                     from the destinations above so the one destructive item is not
+                                     a row away from Plugins; the confirm catches a mis-click, but
+                                     distance is cheaper than a dialog. -->
+                                <Separator Background="{DynamicResource DividerBrush}" />
+                                <MenuItem Header="Open log folder"
+                                          Command="{Binding OpenLogFolderCommand}"
+                                          ToolTip="Open the folder holding RoRoRo's log files." />
+                                <MenuItem Header="Stop all Roblox instances"
+                                          Command="{Binding StopAllCommand}"
+                                          ToolTip="Force-close every running Roblox client. Asks first." />
                                 <!-- Explicitly themed. WPF-UI's default Separator draws a 4%-alpha
                                      white rule from its own dictionary, which ThemeService never
                                      touches (it owns ten RoRoRo slots and nothing else) — so on any
@@ -1093,6 +1106,9 @@
                                      same flatten-the-fill failure the popup border defends against,
                                      and it would have shipped one element away from it. -->
                                     <Separator Background="{DynamicResource DividerBrush}" />
+                                    <MenuItem Header="Welcome tour"
+                                              Command="{Binding ShowWelcomeTourCommand}"
+                                              ToolTip="Replay the first-run tour of the account row." />
                                     <MenuItem Header="About"
                                               Command="{Binding OpenAboutCommand}"
                                               ToolTip="Version, links, license." />

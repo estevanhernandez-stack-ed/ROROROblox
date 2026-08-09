@@ -55,5 +55,43 @@ internal partial class WelcomeWindow : Window
         }
     }
 
+    /// <summary>
+    /// Whether the automatic first-run tour should appear. Pure, so the rule is testable without
+    /// touching %LOCALAPPDATA% or constructing a Window.
+    /// <para>
+    /// The caller must mark the sentinel only when this returns true. Marking unconditionally is the
+    /// bug this replaces: an upgrading user with accounts burned the sentinel and never saw the tour.
+    /// </para>
+    /// </summary>
+    internal static bool ShouldShowOnStartup(bool isFirstRun, int accountCount) =>
+        isFirstRun && accountCount == 0;
+
     private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
+
+    /// <summary>
+    /// Show the tour on demand (Tools menu). Deliberately does NOT touch the sentinel: opening the
+    /// tour manually says nothing about whether the automatic first-run path has run.
+    /// <para>
+    /// Owner resolution checks visibility, not just loaded state: the main window's X-close handler
+    /// cancels close and calls <c>Hide()</c> as the minimize-to-tray path, which leaves
+    /// <c>IsLoaded</c> true even though nothing is on screen. The tray can fire this tour with the
+    /// main window hidden that way, and an invisible owner would otherwise still receive activation
+    /// back on dismissal.
+    /// </para>
+    /// </summary>
+    internal static void ShowTour()
+    {
+        var dialog = new WelcomeWindow();
+        var owner = Application.Current?.MainWindow;
+        if (owner is not null && owner.IsLoaded && owner.IsVisible)
+        {
+            dialog.Owner = owner;
+        }
+        else
+        {
+            dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        }
+
+        dialog.ShowDialog();
+    }
 }

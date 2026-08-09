@@ -703,6 +703,7 @@ public partial class App : Application
         // services in Core; consumed by App.OnStartup before mutex.Acquire.
         services.AddSingleton<IRobloxRunningProbe, RobloxRunningProbe>();
         services.AddSingleton<IRobloxInstanceStopper, RobloxInstanceStopper>();
+        services.AddSingleton<IShellOpener, ShellOpener>();
         services.AddSingleton<IRobloxTrayLauncher>(sp =>
             new RobloxTrayLauncher(sp.GetService<ILogger<RobloxTrayLauncher>>()));
         services.AddSingleton<StartupGate>();
@@ -908,31 +909,36 @@ public partial class App : Application
 
     private void WireTrayEvents(ITrayService tray, IMutexHolder mutex, MainWindow mainWindow)
     {
-        tray.RequestOpenMainWindow += (_, _) => SurfaceMainWindow(mainWindow);
-        tray.RequestToggleMutex += (_, _) => ToggleMutex(mutex, tray);
-        tray.RequestStopAllInstances += (_, _) => StopAllInstances();
-        tray.RequestQuit += (_, _) => RequestShutdown();
-        tray.RequestOpenDiagnostics += (_, _) => OpenDiagnosticsFromTray(mainWindow);
-        tray.RequestOpenLogs += (_, _) => OpenLogsFolder();
-        tray.RequestOpenPreferences += (_, _) => OpenPreferencesFromTray(mainWindow);
-        tray.RequestActivateMain += (_, _) => ActivateMainFromTray(mainWindow);
-        tray.RequestOpenHistory += (_, _) => OpenHistoryFromTray(mainWindow);
-        tray.RequestOpenPlugins += (_, _) => OpenPluginsFromTray(mainWindow);
-        // Task 8 — the whole reason ShowMemoryWarning carries an accountId: a balloon click that
-        // goes nowhere wastes it. TrayBalloonTipClicked is a WPF-originated UI event (unlike
-        // PressureCrossed), so no dispatcher marshaling is needed here.
-        tray.RequestFocusAccount += (_, accountId) =>
-        {
-            try
+        // F-001 — subscribing is now a table (Tray.TrayWiring), not eleven inline lambdas, so a
+        // transposed subscription (Stop all wired to Quit) is a test failure instead of a silent
+        // behaviour swap that compiles cleanly. StopAllInstances/OpenLogs route through
+        // MainViewModel's commands so the tray and the Tools menu share one implementation.
+        Tray.TrayWiring.Connect(tray, new Tray.TrayHandlers(
+            OpenMainWindow: () => SurfaceMainWindow(mainWindow),
+            ToggleMutex: () => ToggleMutex(mutex, tray),
+            StopAllInstances: () => _services!.GetRequiredService<MainViewModel>().StopAllCommand.Execute(null),
+            Quit: RequestShutdown,
+            OpenDiagnostics: () => OpenDiagnosticsFromTray(mainWindow),
+            OpenLogs: () => _services!.GetRequiredService<MainViewModel>().OpenLogFolderCommand.Execute(null),
+            OpenPreferences: () => OpenPreferencesFromTray(mainWindow),
+            ActivateMain: () => ActivateMainFromTray(mainWindow),
+            OpenHistory: () => OpenHistoryFromTray(mainWindow),
+            OpenPlugins: () => OpenPluginsFromTray(mainWindow),
+            // Task 8 — the whole reason ShowMemoryWarning carries an accountId: a balloon click
+            // that goes nowhere wastes it. TrayBalloonTipClicked is a WPF-originated UI event
+            // (unlike PressureCrossed), so no dispatcher marshaling is needed here.
+            FocusAccount: accountId =>
             {
-                SurfaceMainWindow(mainWindow);
-                mainWindow.FocusAccountRow(accountId);
-            }
-            catch (Exception ex)
-            {
-                _log?.LogDebug(ex, "RequestFocusAccount handling threw; window surfaced (if it got that far) but the row may not be highlighted.");
-            }
-        };
+                try
+                {
+                    SurfaceMainWindow(mainWindow);
+                    mainWindow.FocusAccountRow(accountId);
+                }
+                catch (Exception ex)
+                {
+                    _log?.LogDebug(ex, "RequestFocusAccount handling threw; window surfaced (if it got that far) but the row may not be highlighted.");
+                }
+            }));
     }
 
     private void WireMainViewModelEvents(MainWindow mainWindow)
@@ -1626,23 +1632,6 @@ public partial class App : Application
         }
     }
 
-    private void OpenLogsFolder()
-    {
-        try
-        {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = AppLogging.LogDirectory,
-                UseShellExecute = true,
-                Verb = "open",
-            });
-        }
-        catch (Exception ex)
-        {
-            _log?.LogWarning(ex, "Couldn't open log folder from tray");
-        }
-    }
-
     private void WireMutexLost(IMutexHolder mutex, ITrayService tray)
     {
         mutex.MutexLost += (_, _) =>
@@ -1871,33 +1860,6 @@ public partial class App : Application
         };
 
         watcher.Start();
-    }
-
-    private void StopAllInstances()
-    {
-        if (_services is null) return;
-        try
-        {
-            var running = _services.GetRequiredService<IRobloxRunningProbe>().GetRunningPlayerPids().Count;
-            if (running == 0)
-            {
-                _log?.LogInformation("Stop-all requested from tray: no Roblox instances running.");
-                return;
-            }
-
-            var confirm = new Modals.StopAllConfirmWindow(running);
-            if (confirm.ShowDialog() == true)
-            {
-                // Every one of these closes was asked for, so none of them is a dropped-out alert.
-                _services.GetRequiredService<MainViewModel>().ExpectCloseForAll();
-                var stopped = _services.GetRequiredService<IRobloxInstanceStopper>().StopAll();
-                _log?.LogInformation("Stop-all from tray: stopped {Stopped} of {Running} instance(s).", stopped, running);
-            }
-        }
-        catch (Exception ex)
-        {
-            _log?.LogWarning(ex, "Stop-all from tray failed.");
-        }
     }
 
     private void TryRaiseMutexBusEvent(string state)
