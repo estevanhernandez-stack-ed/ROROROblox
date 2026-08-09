@@ -25,7 +25,7 @@ namespace ROROROblox.Tests;
 /// </summary>
 public class MainViewModelTests
 {
-    private static (MainViewModel Vm, IAccountStore AccountStore, IRobloxProcessTracker ProcessTracker, string AccountStorePath) Build(
+    internal static (MainViewModel Vm, IAccountStore AccountStore, IRobloxProcessTracker ProcessTracker, string AccountStorePath) Build(
         IRobloxLauncher? launcher = null,
         ICookieCapture? cookieCapture = null,
         Func<IAccountStore, IAccountStore>? wrapStore = null,
@@ -33,7 +33,9 @@ public class MainViewModelTests
         IFavoriteGameStore? favorites = null,
         IRobloxInstanceStopper? instanceStopper = null,
         IMemoryWatchdog? memoryWatchdog = null,
-        ITrayService? tray = null)
+        ITrayService? tray = null,
+        IRobloxRunningProbe? runningProbe = null,
+        IShellOpener? shellOpener = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
@@ -65,6 +67,8 @@ public class MainViewModelTests
             activityMonitor: new FakeActivityMonitor(),
             memoryWatchdog: memoryWatchdog ?? new FakeMemoryWatchdog(),
             instanceStopper: instanceStopper ?? new FakeRobloxInstanceStopper(),
+            runningProbe: runningProbe ?? new NoRobloxRunningProbe(),
+            shellOpener: shellOpener ?? new NullShellOpener(),
             tray: trayService,
             idleAlertPresenter: new IdleAlertPresenter(trayService));
 
@@ -1588,5 +1592,16 @@ public class MainViewModelTests
         public void SetMemoryWarning(bool active) { }
         public void ShowMemoryWarning(string title, string message, Guid accountId) { }
         public event EventHandler<Guid>? RequestFocusAccount { add { } remove { } }
+    }
+
+    private sealed class NoRobloxRunningProbe : IRobloxRunningProbe
+    {
+        public IReadOnlyList<int> GetRunningPlayerPids() => Array.Empty<int>();
+        public IReadOnlyList<RobloxProcessInfo> GetRunningPlayers() => Array.Empty<RobloxProcessInfo>();
+    }
+
+    private sealed class NullShellOpener : IShellOpener
+    {
+        public void Open(string path) { }
     }
 }

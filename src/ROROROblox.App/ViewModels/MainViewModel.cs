@@ -13,6 +13,7 @@ using ROROROblox.App.Discord;
 using ROROROblox.App.History;
 using ROROROblox.App.Friends;
 using ROROROblox.App.JoinByLink;
+using ROROROblox.App.Logging;
 using ROROROblox.App.Modals;
 using ROROROblox.App.Games;
 using ROROROblox.App.SquadLaunch;
@@ -51,6 +52,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly IActivityMonitor _activityMonitor;
     private readonly IMemoryWatchdog _memoryWatchdog;
     private readonly IRobloxInstanceStopper _instanceStopper;
+    private readonly IRobloxRunningProbe _runningProbe;
+    private readonly IShellOpener _shellOpener;
     private readonly AccountRecycler _accountRecycler;
     private readonly ITrayService _tray;
     private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
@@ -143,6 +146,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         IActivityMonitor activityMonitor,
         IMemoryWatchdog memoryWatchdog,
         IRobloxInstanceStopper instanceStopper,
+        IRobloxRunningProbe runningProbe,
+        IShellOpener shellOpener,
         ITrayService tray,
         Notifications.IdleAlertPresenter idleAlertPresenter,
         Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
@@ -171,6 +176,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _activityMonitor = activityMonitor;
         _memoryWatchdog = memoryWatchdog;
         _instanceStopper = instanceStopper;
+        _runningProbe = runningProbe;
+        _shellOpener = shellOpener;
         _tray = tray;
         _idleAlertPresenter = idleAlertPresenter;
         _streamerIdentity = streamerIdentity;
@@ -211,6 +218,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OpenPluginsCommand = new RelayCommand(_ => RequestOpenPlugins?.Invoke(this, EventArgs.Empty));
         DismissBloxstrapWarningCommand = new RelayCommand(_ => _ = DismissBloxstrapWarningAsync());
         DismissFpsCapWarningCommand = new RelayCommand(_ => _ = DismissFpsCapWarningAsync());
+
+        StopAllCommand = new RelayCommand(StopAllInstances);
+        OpenLogFolderCommand = new RelayCommand(() => _shellOpener.Open(AppLogging.LogDirectory));
+        ShowWelcomeTourCommand = new RelayCommand(() => ShowWelcomeTour());
 
         // v1.3.x — default-game widget + rename overlay commands.
         SetDefaultGameCommand = new RelayCommand(p => _ = SetDefaultGameAsync(p as FavoriteGame));
@@ -556,6 +567,22 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand OpenPluginsCommand { get; }
     public ICommand DismissBloxstrapWarningCommand { get; }
     public ICommand DismissFpsCapWarningCommand { get; }
+
+    /// <summary>
+    /// How the stop-all confirm is asked. Defaults to the real dialog; tests replace it, because a
+    /// view-model that constructs a Window cannot be unit tested without an STA thread.
+    /// </summary>
+    internal Func<int, bool> StopAllConfirm { get; set; } = Modals.StopAllConfirmWindow.Confirm;
+
+    /// <summary>How the tour is shown. Same reasoning as <see cref="StopAllConfirm"/>.</summary>
+    internal Action ShowWelcomeTour { get; set; } = About.WelcomeWindow.ShowTour;
+
+    /// <summary>Test hook: fires immediately after <see cref="ExpectCloseForAll"/> inside stop-all.</summary>
+    internal Action? ExpectCloseForAllObserved { get; set; }
+
+    public ICommand StopAllCommand { get; }
+    public ICommand OpenLogFolderCommand { get; }
+    public ICommand ShowWelcomeTourCommand { get; }
 
     public event EventHandler? RequestOpenPlugins;
 
@@ -2902,6 +2929,42 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private bool WasCloseExpected(Guid accountId, DateTimeOffset atUtc) =>
         _expectedCloses.TryGetValue(accountId, out var asked) && atUtc - asked <= ExpectedCloseWindow;
+
+    /// <summary>
+    /// F-001. Moved from App.xaml.cs so the Tools menu and the tray share one implementation.
+    /// <para>
+    /// ORDERING IS LOAD-BEARING: <see cref="ExpectCloseForAll"/> runs BEFORE
+    /// <c>StopAll()</c>. Every one of these closes was asked for, so none of them is a drop-out —
+    /// reversed, stopping eight clients raises eight false alerts, and a warning that cries wolf
+    /// gets ignored by the time it matters.
+    /// </para>
+    /// </summary>
+    private void StopAllInstances()
+    {
+        try
+        {
+            var running = _runningProbe.GetRunningPlayerPids().Count;
+            if (running == 0)
+            {
+                _log.LogInformation("Stop-all requested: no Roblox instances running.");
+                return;
+            }
+
+            if (!StopAllConfirm(running))
+            {
+                return;
+            }
+
+            ExpectCloseForAll();
+            ExpectCloseForAllObserved?.Invoke();
+            var stopped = _instanceStopper.StopAll();
+            _log.LogInformation("Stop-all: stopped {Stopped} of {Running} instance(s).", stopped, running);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Stop-all failed.");
+        }
+    }
 
     /// <summary>
     /// Mute or unmute Discord alerts for one account, persisting through the config store.
