@@ -90,6 +90,12 @@ The full architecture, data flows, error buckets, and decision rationale live in
 - **Manifests:**
   - `Package.appxmanifest` declares `runFullTrust` ONLY. No `broadFileSystemAccess`, no `internetClient` (outgoing HTTPS doesn't need declaration).
   - Partner Center identity is the Store-signed cert; sideload uses a separately generated self-signed cert. **The two keys are never the same.**
+- **Findings register:** `docs/superpowers/research/2026-08-04-rororo-settings-ui-audit-findings.md` is the VibeGlow register.
+  - **A PR that closes a register row flips that row in the same PR — wave or not.** Not the next wave's close-out, not a later status doc. The same PR.
+  - **Why:** glow waves already maintain their own rows; everything else did not, so by 2026-08-09 six rows described a state that no longer existed. That is not bookkeeping — F-001 was picked as the top open finding at 5/5 and roughly 60% of it had already shipped in wave 3. The build cycle was scoped against fiction. A register that only tracks wave activity measures the process, not the app.
+  - **Verify against the tree, never a changelog.** "Wave N said it closed this" is not evidence. Read the code.
+  - **An open row is not static.** F-032 measured 11 offending controls at audit and had 15 by the time anyone re-read it, while two waves built machinery around it. When a row's count is re-measured, record the new number and the direction.
+  - **Rulings override rows.** The register's own "Rulings by the user" section wins. F-040 sat open for five days against a decision already made because nobody re-checked it.
 - **Roblox compat:** every architectural decision that depends on a Roblox-side contract (mutex name, auth-ticket endpoint, URI format, RobloxPlayerLauncher behavior) gets logged to the dashboard with the caveat. When Roblox ships a breaking update, the decisions log is how we trace what assumed-stable.
 
 ## Decisions log
