@@ -91,6 +91,12 @@ was, not that it is verified end to end.
 row): F-018 and F-039 are each half-shipped by F-001; F-021's citation moved with
 the Games rename; F-042 has drifted **worse** since the audit.
 
+**F-032 deserved separate mention while it was open.** It measured 11 controls binding
+`MutedTextBrush` as `Foreground`; by the reconciliation pass `MainWindow.xaml` alone had 15.
+Waves 5 and 6 added contrast machinery around it without stopping the leak spreading. It has
+since been fixed and fenced — but an open row is not a static thing, and nothing was watching
+that one grow.
+
 **Added:** F-084, the hidden-owner defect class, surfaced by F-001's final review.
 
 **The rule this suggests:** any PR that closes a register row flips the row in the
