@@ -17,6 +17,26 @@ namespace ROROROblox.Tests;
 /// This is a role fence, not a token ban. Prose keeps the token. What it may not do is label a
 /// control.
 /// </para>
+/// <para>
+/// WHERE THE FENCE CANNOT SEE. All four clauses cover element-attribute bindings on a control
+/// element (a <c>Foreground="{DynamicResource MutedTextBrush}"</c> read off the control itself by
+/// clause 1) and control-style setters (a <c>&lt;Setter Property="Foreground"&gt;</c> inside a
+/// <c>&lt;Style TargetType&gt;</c> that resolves to a control type, by clause 2). Neither reaches a
+/// control whose label colour arrives via a <b>child element</b> instead of the control's own
+/// attribute or its own style. The main-account star (<c>MainWindow.xaml</c>, the
+/// <c>&lt;Button&gt;</c> around line 667 whose entire content is a child <c>&lt;TextBlock&gt;</c>)
+/// set its colour through a <c>&lt;Style TargetType="TextBlock"&gt;</c> nested inside that child, at
+/// line 707: clause 1 finds no Foreground attribute on the Button itself, clause 2 skips the
+/// nested style because <c>TextBlock</c> is not in <c>ControlElements</c>, clause 3 never opens
+/// XAML, and clause 4 counted the binding as ordinary prose. That is the instance that revealed
+/// the limit, and it was fixed by hand. The <c>☰</c> drag grip (<c>MainWindow.xaml</c>, the child
+/// <c>&lt;TextBlock&gt;</c> around line 337 inside an interactive <c>&lt;Border&gt;</c>) is the
+/// other known instance of a control's label living on a child element — there the child sets
+/// Foreground directly rather than through a nested style, but the child itself is still not a
+/// control by type or behaviour, so clause 1's own <c>IsControl</c> check never looks at it either.
+/// It is deliberately left as-is — out of F-032's scope. Neither instance will trip this fence if
+/// it regresses further; that is a known gap, not a false sense of coverage.
+/// </para>
 /// </summary>
 public class MutedTextFenceTests
 {
@@ -124,7 +144,18 @@ public class MutedTextFenceTests
             foreach (var style in doc.Descendants().Where(e => e.Name.LocalName == "Style"))
             {
                 var target = style.Attribute("TargetType")?.Value ?? "";
-                var targetName = target.Split('.', ':').Last().Trim('}', ' ');
+
+                // Matches the last identifier before end-of-string, optionally followed by a
+                // closing '}' and whitespace. That covers every form the codebase writes:
+                // "Button", "ui:ToggleSwitch" (namespace prefix), and "{x:Type Button}" — the
+                // form every BasedOn already uses, and the one a future implicit style could use
+                // for TargetType itself. The prior Split('.', ':').Last().Trim('}', ' ') left
+                // "{x:Type Button}" as "Type Button" (Trim only strips from the ends, not the
+                // "x:Type " prefix in the middle), which is in no ControlElements list, so that
+                // style silently skipped this clause — and the floor below still counted, so
+                // nothing complained.
+                var targetMatch = System.Text.RegularExpressions.Regex.Match(target, @"[A-Za-z_][A-Za-z0-9_]*(?=\}?\s*$)");
+                var targetName = targetMatch.Success ? targetMatch.Value : "";
                 if (!ControlElements.Contains(targetName)) continue;
 
                 foreach (var setter in style.Descendants().Where(e => e.Name.LocalName == "Setter"))
@@ -168,10 +199,18 @@ public class MutedTextFenceTests
         var offenders = new List<string>();
 
         // Candidate set for THIS clause's own vacuity floor below. TheFenceSeesTheAppItClaimsTo
-        // never opens a .cs file at all, so a break in the directory walk or the discriminator
-        // regex here — the exact shape of the bug caught during Task 2's own review, where
-        // NearestConstructedType matched `new Thickness(...)` before reaching `new Button` and this
-        // clause silently found 0 offenders while checking nothing — has nothing else watching it.
+        // never opens a .cs file at all, so a break in the directory walk or the
+        // MutedTextBrush+Foreground co-occurrence scan below has nothing else watching it.
+        //
+        // What this floor does NOT cover: NearestConstructedType. candidates++ happens on the
+        // co-occurrence match, before the discriminator ever runs — so a regression inside
+        // NearestConstructedType changes which lines land in `offenders`, never how many land in
+        // `candidates`. That is the exact shape of the bug caught during Task 2's own review,
+        // where the discriminator matched `new Thickness(...)` before reaching `new Button` and
+        // this clause silently found 0 offenders while checking nothing, with `candidates`
+        // sitting unchanged the whole time. A floor over app content structurally cannot see
+        // that failure, so the discriminator carries its own direct tests instead — see
+        // NearestConstructedType_ResolvesTheAllmanOwner_NotAValueTypeOnAnEarlierLine below.
         var candidates = 0;
 
         foreach (var cs in Directory.EnumerateFiles(appDir!, "*.cs", SearchOption.AllDirectories))
@@ -217,6 +256,50 @@ public class MutedTextFenceTests
     }
 
     [Fact]
+    public void NearestConstructedType_ResolvesTheAllmanOwner_NotAValueTypeOnAnEarlierLine()
+    {
+        // Direct test of the discriminator itself — see the "What this floor does NOT cover"
+        // note above NoCodeBehindControlResolvesTheProseTokenForItsForeground's `candidates`
+        // scan. No floor over app content can watch this helper, because the app no longer
+        // contains a code-behind control whose Foreground resolves MutedTextBrush (Task 3 fixed
+        // the one that did), so nothing left in app content exercises the positive path. This is
+        // the verbatim shape of the SquadLaunchWindow bug: an Allman-style `new Button` several
+        // lines above the Foreground line it owns, with a single-line value construction (`new
+        // Thickness(...)`) in between that the unanchored regex used to grab instead.
+        var lines = new[]
+        {
+            "var b = new Button",
+            "{",
+            "    Content = \"Remove\",",
+            "    Padding = new Thickness(10, 6, 10, 6),",
+            "    Foreground = (Brush)FindResource(\"MutedTextBrush\"),",
+        };
+
+        var owner = NearestConstructedType(lines, 4);
+
+        Assert.Equal("Button", owner);
+    }
+
+    [Fact]
+    public void NearestConstructedType_ResolvesTextBlockOwner_ForLegitimateProseSites()
+    {
+        // Negative case for the same discriminator: seven legitimate code-behind prose sites
+        // depend on this returning a non-control so NoCodeBehindControlResolvesTheProseTokenFor
+        // ItsForeground does not flag them.
+        var lines = new[]
+        {
+            "var t = new TextBlock",
+            "{",
+            "    Text = \"Loaded\",",
+            "    Foreground = (Brush)FindResource(\"MutedTextBrush\"),",
+        };
+
+        var owner = NearestConstructedType(lines, 3);
+
+        Assert.Equal("TextBlock", owner);
+    }
+
+    [Fact]
     public void TheFenceSeesTheAppItClaimsTo()
     {
         // Backstops NoControlLabelBindsTheProseToken specifically — same scan idiom, element
@@ -225,7 +308,7 @@ public class MutedTextFenceTests
         // never opens a .cs file (clause 3). Those two now carry their own candidate-count floors,
         // next to their own offender lists, for exactly that reason — a scan that silently matches
         // nothing passes its clause while checking nothing, and this test only ever guarded one of
-        // the three clauses that failure mode can strike. ~109 bindings exist at the time of
+        // the three clauses that failure mode can strike. ~104 bindings exist at the time of
         // writing; the floor is deliberately far below that so ordinary churn does not trip it, and
         // far above zero so a broken scan does.
         var bindings = 0;
@@ -238,7 +321,7 @@ public class MutedTextFenceTests
 
         Assert.True(bindings >= 50,
             $"The fence found only {bindings} prose-token bindings. It is supposed to be scanning an "
-            + "app with roughly 109 — a count this low means the scan is broken, not that the app "
+            + "app with roughly 104 — a count this low means the scan is broken, not that the app "
             + "changed.");
     }
 }

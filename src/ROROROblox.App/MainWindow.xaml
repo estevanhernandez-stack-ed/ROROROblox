@@ -704,7 +704,7 @@
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Text" Value="&#x2606;" />
-                                        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsMain}" Value="True">
                                                 <Setter Property="Text" Value="&#x2605;" />
