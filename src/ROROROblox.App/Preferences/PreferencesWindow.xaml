@@ -19,7 +19,7 @@
              that both survive a theme with one background colour. Do not add a Background setter
              to the selected trigger. -->
         <Style x:Key="NavItemStyle" TargetType="ListBoxItem">
-            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -314,7 +314,7 @@
                                               Margin="6,0,0,0" Padding="10,5" FontSize="11"
                                               Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
                                               Background="{DynamicResource NavyBrush}"
-                                              Foreground="{DynamicResource MutedTextBrush}"
+                                              Foreground="{DynamicResource WhiteBrush}"
                                               BorderBrush="{DynamicResource InteractiveEdgeBrush}" BorderThickness="1"
                                               ToolTip="Reveal the saved webhook so you can read or replace it." />
                             </Grid>
@@ -338,7 +338,7 @@
                                               Margin="6,0,0,0" Padding="10,5" FontSize="11"
                                               Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
                                               Background="{DynamicResource NavyBrush}"
-                                              Foreground="{DynamicResource MutedTextBrush}"
+                                              Foreground="{DynamicResource WhiteBrush}"
                                               BorderBrush="{DynamicResource InteractiveEdgeBrush}" BorderThickness="1"
                                               ToolTip="Reveal the saved webhook so you can read or replace it." />
                             </Grid>

@@ -38,18 +38,26 @@
          InteractiveEdgeBrush is derived by ContrastGuard from whatever the active theme supplies,
          so this clears 3:1 under any theme including ones users authored — without adding a slot
          they would have to fill in, and without touching DividerBrush, which is still correct
-         everywhere it draws a separator rather than a control boundary. -->
+         everywhere it draws a separator rather than a control boundary.
+
+         F-032: the label was MutedTextBrush, the same token helper prose uses. Muted-vs-White is
+         2.42:1 in brand and 1.00:1 under flatline, so colour could not carry "quiet" under a theme
+         this app supports — a control label and the paragraph beside it became the same thing.
+         Weight carries it now, and the derived edge above already marks control-vs-prose. Note the
+         label was never illegible: Muted on Navy measures 6.88:1 and passes AA. The defect was
+         semantic, not contrast. -->
     <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="FontWeight" Value="Normal" />
         <Setter Property="BorderBrush" Value="{DynamicResource InteractiveEdgeBrush}" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
 
-    <!-- Secondary, strong label. The sweep that consolidated these found THREE recipes, not two:
-         Navy+MutedText+Divider (quiet secondary), Navy+White+Cyan (primary), and this one —
-         Navy+White+Divider — on dialog footers, Open log folder, Clear history and their kin.
+    <!-- Secondary, strong label. The sweep that consolidated these found THREE recipes, not two.
+         Since F-032 all three share a white label and differ by edge and weight: quiet secondary
+         (derived edge, Normal), primary (cyan edge), and this one (derived edge, SemiBold).
 
          It gets the same edge fix and keeps its white label. Folding it into the quiet secondary
          would have fixed the contrast bug by demoting a dialog's main action to muted text, which
@@ -57,6 +65,7 @@
     <Style x:Key="SecondaryStrongButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="BorderBrush" Value="{DynamicResource InteractiveEdgeBrush}" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>

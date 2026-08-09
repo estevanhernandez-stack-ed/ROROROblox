@@ -585,7 +585,7 @@
                                                         FontWeight="Bold"
                                                         Background="Transparent"
                                                         BorderThickness="0"
-                                                        Foreground="{DynamicResource MutedTextBrush}"
+                                                        Foreground="{DynamicResource WhiteBrush}"
                                                         Cursor="Hand"
                                                         ToolTip="Remove this tag." />
                                             </StackPanel>
@@ -1237,7 +1237,7 @@
                                             Margin="0,4,0,0"
                                             HorizontalContentAlignment="Left"
                                             Background="{DynamicResource NavyBrush}"
-                                            Foreground="{DynamicResource MutedTextBrush}"
+                                            Foreground="{DynamicResource WhiteBrush}"
                                             BorderBrush="{DynamicResource InteractiveEdgeBrush}"
                                             BorderThickness="0,1,0,0"
                                             FontSize="11"
@@ -1800,7 +1800,7 @@
                         Content="{Binding CompactToggleLabel}"
                         Padding="10,4" Margin="14,0,0,0"
                         Background="Transparent"
-                        Foreground="{DynamicResource MutedTextBrush}"
+                        Foreground="{DynamicResource WhiteBrush}"
                         BorderBrush="{DynamicResource InteractiveEdgeBrush}"
                         BorderThickness="1"
                         FontSize="10"
