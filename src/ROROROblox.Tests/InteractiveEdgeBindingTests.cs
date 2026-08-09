@@ -35,22 +35,6 @@ public class InteractiveEdgeBindingTests
     /// </summary>
     private static readonly string[] EdgeProperties = ["BorderBrush", "Stroke", "Fill", "Background"];
 
-    /// <summary>
-    /// A shape type that responds to the mouse is a control, whatever its tag says.
-    /// <para>
-    /// The first version of this test hard-listed <c>Border</c> as decorative full stop. The wave-5
-    /// review gate pointed out that <c>MainWindow.xaml</c> has a <c>Border</c> with
-    /// <c>Cursor="Hand"</c> and a click handler — the per-account caption swatch — which IS a UI
-    /// component under 1.4.11. The old rule would have failed the build on its own correct fix. Role
-    /// decides, not element name.
-    /// </para>
-    /// </summary>
-    private static bool IsInteractive(XElement el) =>
-        el.Attributes().Any(a =>
-            a.Name.LocalName.Contains("Mouse", StringComparison.Ordinal)
-            || a.Name.LocalName is "Cursor" && a.Value == "Hand"
-            || a.Name.LocalName is "InputBindings");
-
     [Fact]
     public void TheDerivedEdgeIsNeverBoundToADecorativeSurface()
     {
@@ -94,7 +78,7 @@ public class InteractiveEdgeBindingTests
                     var owner = name[..name.IndexOf('.', StringComparison.Ordinal)];
                     var prop = name[(name.IndexOf('.', StringComparison.Ordinal) + 1)..];
                     if (DecorativeElements.Contains(owner) && EdgeProperties.Contains(prop)
-                        && Mentions(el.Value) && !IsInteractive(el.Parent ?? el))
+                        && Mentions(el.Value) && !XamlStyleScanner.IsInteractive(el.Parent ?? el))
                     {
                         offenders.Add($"{file.Label}{Line(el)}: <{name}> property element");
                     }
@@ -102,7 +86,7 @@ public class InteractiveEdgeBindingTests
                 }
 
                 // 3. The direct-attribute form the original test caught.
-                if (!DecorativeElements.Contains(name) || IsInteractive(el)) continue;
+                if (!DecorativeElements.Contains(name) || XamlStyleScanner.IsInteractive(el)) continue;
 
                 foreach (var attr in el.Attributes().Where(a => Mentions(a.Value)))
                 {
