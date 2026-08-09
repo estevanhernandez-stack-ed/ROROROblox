@@ -13,7 +13,7 @@
 - **Solution file is `ROROROblox.slnx`.** A gitignored legacy `ROROROblox.sln` stray may exist. Bare `dotnet build` errors MSB1011 while both are present — always pass `ROROROblox.slnx`.
 - **Conventional commits:** `feat` / `fix` / `docs` / `refactor` / `test` / `chore` / `build` / `ci`.
 - **No emoji** in UI copy or code.
-- **Do NOT touch the ~104 prose uses of `MutedTextBrush`.** Helper text, empty states, `"Follow:"`, memory chips. Muted is correct there. A diff that changes ~104 sites is wrong — the expected change is exactly 7: 1 style setter, 5 inline XAML labels, 1 code-behind button.
+- **Do NOT touch the ~104 prose uses of `MutedTextBrush`.** Helper text, empty states, `"Follow:"`, memory chips. Muted is correct there. A diff that changes ~104 sites is wrong — the expected change is exactly 8: 2 style setters, 5 inline XAML labels, 1 code-behind button.
 - **Exactly three button recipes must remain distinguishable:** Primary (cyan edge), SecondaryStrong (InteractiveEdge + SemiBold), Secondary (InteractiveEdge + Normal).
 - **Spec:** `docs/superpowers/specs/2026-08-09-rororo-f032-control-labels-design.md`.
 - **Branch:** `feat/f032-control-labels` (already created; spec committed as `1b0ae10`).
@@ -29,7 +29,7 @@
 | `src/ROROROblox.Tests/MutedTextFenceTests.cs` (new) | the four-clause fence |
 | `src/ROROROblox.App/Controls/ControlStyles.xaml` (modify) | Secondary → `WhiteBrush`; explicit `FontWeight` on both secondary styles |
 | `src/ROROROblox.App/MainWindow.xaml` (modify) | 3 inline control labels |
-| `src/ROROROblox.App/Preferences/PreferencesWindow.xaml` (modify) | 2 inline control labels |
+| `src/ROROROblox.App/Preferences/PreferencesWindow.xaml` (modify) | 2 inline control labels + `NavItemStyle`'s resting foreground |
 | `src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml.cs` (modify) | the Remove button built in C#, which no Style reaches |
 | `docs/superpowers/research/2026-08-04-rororo-settings-ui-audit-findings.md` (modify) | F-032 row → `clean` |
 
@@ -124,7 +124,7 @@ git commit -m "refactor(tests): share IsInteractive so both fences use one role 
 - Consumes: `XamlStyleScanner.IsInteractive(XElement)` (Task 1); `XamlStyleScanner.EnumerateAppXamlFiles()` returning `XamlFile(string FullPath, string Label)`; `XamlStyleScanner.AppSourceDirectory()` returning `string?`.
 - Produces: nothing later tasks consume.
 
-**This task ends RED on purpose.** Seven real violations exist — one style setter, five inline XAML labels, and one button built in C# — and Task 3 fixes them. Do not fix any production code here, and do not weaken the fence to make it pass.
+**This task ends RED on purpose.** Eight real violations exist — two style setters, five inline XAML labels, and one button built in C# — and Task 3 fixes them. Do not fix any production code here, and do not weaken the fence to make it pass.
 
 - [ ] **Step 1: Write the fence**
 
@@ -330,13 +330,13 @@ Run: `dotnet test src/ROROROblox.Tests/ --filter "FullyQualifiedName~MutedTextFe
 Expected: **3 of 4 FAIL.**
 
 - `NoControlLabelBindsTheProseToken` fails naming **5** sites: three in `MainWindow.xaml`, two in `PreferencesWindow.xaml`.
-- `NoControlStyleSetsTheProseTokenAsForeground` fails naming **1** site: `SecondaryButtonStyle` in `ControlStyles.xaml`.
+- `NoControlStyleSetsTheProseTokenAsForeground` fails naming **2** sites: `SecondaryButtonStyle` in `ControlStyles.xaml`, and `NavItemStyle` (`TargetType="ListBoxItem"`) in `PreferencesWindow.xaml`.
 - `NoCodeBehindControlResolvesTheProseTokenForItsForeground` fails naming **exactly 1** site: `SquadLaunchWindow.xaml.cs` around line 229, `new Button ... Content = "Remove"`.
 - `TheFenceSeesTheAppItClaimsTo` passes (~109 found).
 
 **The code-behind clause must name one site, not eight.** Seven other files set this token from C# on `new TextBlock` — prose, and correct. If that clause names any `TextBlock` site, `NearestConstructedType` is not discriminating and the clause is broken; fix the helper rather than editing prose.
 
-If the offender counts differ from 5, 1 and 1, stop and report — a fence that over-matches will force wrong edits in Task 3.
+If the offender counts differ from 5, 2 and 1, stop and report — a fence that over-matches will force wrong edits in Task 3.
 
 - [ ] **Step 3: Commit the RED fence**
 
@@ -429,7 +429,20 @@ The `Foreground` line sits a few lines below each anchor, inside the same elemen
 
 Both are `<ToggleButton>`. Anchors, both verified unique: `x:Name="MineWebhookReveal"` and `x:Name="ClanWebhookReveal"`. Each has a `Foreground="{DynamicResource MutedTextBrush}"` attribute inside the element; change it to `{DynamicResource WhiteBrush}`.
 
-- [ ] **Step 6: Fix the Remove button built in C#**
+- [ ] **Step 6: Fix `NavItemStyle`'s resting foreground**
+
+In `src/ROROROblox.App/Preferences/PreferencesWindow.xaml`, find `<Style x:Key="NavItemStyle" TargetType="ListBoxItem">` and change its **first** setter:
+
+```xml
+        <Style x:Key="NavItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+```
+
+That is the resting (unselected) label colour for the Preferences nav rail. Selection continues to read via the cyan `Marker` bar and `FontWeight="SemiBold"` in the `IsSelected` trigger — both survive the flatline theme, which the comment above the style already states is the point. **Leave the `IsSelected` and `IsMouseOver` triggers exactly as they are;** they already set `WhiteBrush` and are not violations.
+
+This site is in scope by ruling (Este, 2026-08-09) rather than by the register's original wording: `NavItemStyle` postdates the 2026-08-04 audit — the rail shipped in wave 2 — so F-032's "nav band" surface meant the main window's older nav row, not this. The fence found it; the ruling keeps it in this PR rather than deferring it to a new row.
+
+- [ ] **Step 7: Fix the Remove button built in C#**
 
 `src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml.cs`, around line 229. Anchor on the object initialiser containing `Content = "Remove"`:
 
@@ -457,27 +470,27 @@ grep -rn 'FindResource("MutedTextBrush")' src/ROROROblox.App --include=*.cs | wc
 
 Expected: `8` before your edit, `7` after.
 
-- [ ] **Step 7: Run the fence — it must now be fully green**
+- [ ] **Step 8: Run the fence — it must now be fully green**
 
 Run: `dotnet test src/ROROROblox.Tests/ --filter "FullyQualifiedName~MutedTextFenceTests"`
 Expected: PASS, 4/4.
 
 If `NoControlLabelBindsTheProseToken` still names sites, you missed one of the five. If it names a `TextBlock`, you have changed prose — revert that edit.
 
-- [ ] **Step 8: Confirm the diff is the right size**
+- [ ] **Step 9: Confirm the diff is the right size**
 
 Run: `git diff --stat`
 
-Expected: 4 files changed. The XAML changes must number exactly **6** (1 style setter + 5 inline labels), and the C# change exactly **1**. Verify both:
+Expected: 4 files changed. The XAML changes must number exactly **7** (2 style setters + 5 inline labels), and the C# change exactly **1**. Verify both:
 
 ```bash
-git diff -U0 | grep -c '^-.*Foreground="{DynamicResource MutedTextBrush}"'   # expect 6
+git diff -U0 | grep -c '^-.*Foreground="{DynamicResource MutedTextBrush}"'   # expect 7
 git diff -U0 | grep -c '^-.*FindResource("MutedTextBrush")'                  # expect 1
 ```
 
 If that number is anywhere near 100, prose has been swept — revert and redo. This is the single most important check in the task.
 
-- [ ] **Step 9: Prove the load-bearing clause actually bites**
+- [ ] **Step 10: Prove the load-bearing clause actually bites**
 
 Temporarily revert `SecondaryButtonStyle`'s `Foreground` back to `{DynamicResource MutedTextBrush}`.
 
@@ -488,12 +501,12 @@ Then restore `WhiteBrush`, re-run, and confirm PASS. Confirm `git diff` on `Cont
 
 A gate nobody has watched fail is a gate nobody knows works — and this repo lost three months to a `Style TargetType` bug hiding behind a green suite.
 
-- [ ] **Step 10: Build and run the full suite**
+- [ ] **Step 11: Build and run the full suite**
 
 Run: `dotnet build ROROROblox.slnx && dotnet test ROROROblox.slnx`
 Expected: `0 Error(s)`; 1400 passing, 1 skipped (1396 + 4 fence tests).
 
-- [ ] **Step 11: Commit**
+- [ ] **Step 12: Commit**
 
 ```bash
 git add src/ROROROblox.App/Controls/ControlStyles.xaml src/ROROROblox.App/MainWindow.xaml src/ROROROblox.App/Preferences/PreferencesWindow.xaml src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml.cs
