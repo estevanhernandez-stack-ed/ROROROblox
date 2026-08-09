@@ -1042,8 +1042,10 @@
                             and Games and About are main-window destinations the tray never carried.
 
                          F-001 is closed: Stop all, Open log folder and the Welcome tour now sit in
-                         group 2 and group 3 below, each bound to a MainViewModel command that the
-                         tray also uses (see Tray/TrayWiring.cs). Spec:
+                         groups 2 and 3 below, each bound to a MainViewModel command. Stop all and
+                         Open log folder are the same commands the tray invokes (see
+                         Tray/TrayWiring.cs), so those two surfaces cannot drift; the Welcome tour
+                         has no tray equivalent. Spec:
                          docs/superpowers/specs/2026-08-09-rororo-f001-tools-verbs-design.md -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Content="Settings"
