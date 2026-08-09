@@ -98,16 +98,22 @@ internal partial class MainWindow : FluentWindow
             await vm.LoadAsync();
         }
 
-        // First-run welcome — only when there's nothing in the account list. If the user
-        // already has accounts (returning from an upgrade), the sentinel write happens silently.
-        if (WelcomeWindow.IsFirstRun())
+        // First-run welcome — only when there is nothing in the account list.
+        //
+        // The sentinel is written INSIDE this branch. It used to be written before the account
+        // check, so an upgrading user with accounts burned it and could never see the tour on any
+        // later launch either. Tools > Welcome tour now reaches it on demand regardless (F-001);
+        // this stops the app recording that it showed something it did not.
+        //
+        // Consequence, deliberate: an upgrading user keeps IsFirstRun() true, so if they later
+        // remove every account the tour appears. An empty list is the state the tour is written for
+        // and they have never seen it.
+        if (DataContext is MainViewModel mvm
+            && WelcomeWindow.ShouldShowOnStartup(WelcomeWindow.IsFirstRun(), mvm.Accounts.Count))
         {
             WelcomeWindow.MarkShown();
-            if (DataContext is MainViewModel mvm && mvm.Accounts.Count == 0)
-            {
-                var welcome = new WelcomeWindow { Owner = this };
-                welcome.ShowDialog();
-            }
+            var welcome = new WelcomeWindow { Owner = this };
+            welcome.ShowDialog();
         }
     }
 

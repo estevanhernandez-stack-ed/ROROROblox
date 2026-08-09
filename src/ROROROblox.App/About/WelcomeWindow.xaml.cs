@@ -55,6 +55,17 @@ internal partial class WelcomeWindow : Window
         }
     }
 
+    /// <summary>
+    /// Whether the automatic first-run tour should appear. Pure, so the rule is testable without
+    /// touching %LOCALAPPDATA% or constructing a Window.
+    /// <para>
+    /// The caller must mark the sentinel only when this returns true. Marking unconditionally is the
+    /// bug this replaces: an upgrading user with accounts burned the sentinel and never saw the tour.
+    /// </para>
+    /// </summary>
+    internal static bool ShouldShowOnStartup(bool isFirstRun, int accountCount) =>
+        isFirstRun && accountCount == 0;
+
     private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
 
     /// <summary>
