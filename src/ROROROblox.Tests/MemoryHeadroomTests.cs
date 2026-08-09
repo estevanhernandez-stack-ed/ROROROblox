@@ -158,4 +158,37 @@ public class MemoryHeadroomTests
         Assert.Equal(0, snapshot.AggregateClientBytes);
         Assert.True(MemoryPressureEvaluator.IsClear(snapshot, projectionWarnMinutes: 120));
     }
+
+    [Fact]
+    public void TheFooterShowsWhatTheClientsCostTogether()
+    {
+        // F-080. The number that needed a PowerShell probe on 2026-08-07 while the watchdog had
+        // been sampling it every 15 seconds.
+        var text = ROROROblox.App.ViewModels.MemoryChipFormatter.FormatFooter(
+            clientCount: 6, aggregateBytes: 16 * Gb + 200 * Mb, belowReserve: false);
+
+        Assert.Equal("6 Roblox clients running · 16.2 GB", text);
+    }
+
+    [Fact]
+    public void TheFooterMarksAnOutOfRoomMachine()
+    {
+        var text = ROROROblox.App.ViewModels.MemoryChipFormatter.FormatFooter(
+            clientCount: 10, aggregateBytes: 26 * Gb, belowReserve: true);
+
+        Assert.StartsWith("10 Roblox clients running · ▲", text);
+    }
+
+    [Fact]
+    public void TheFooterSaysNothingAboutMemoryItDoesNotHave()
+    {
+        // "0.0 GB" reads as a measurement when it is really the absence of one. Before the first
+        // sample lands, and with nothing running, the line stays as it always was.
+        Assert.Equal("No Roblox clients running",
+            ROROROblox.App.ViewModels.MemoryChipFormatter.FormatFooter(0, 0, false));
+        Assert.Equal("2 Roblox clients running",
+            ROROROblox.App.ViewModels.MemoryChipFormatter.FormatFooter(2, 0, false));
+        Assert.Equal("1 Roblox client running",
+            ROROROblox.App.ViewModels.MemoryChipFormatter.FormatFooter(1, 0, false));
+    }
 }

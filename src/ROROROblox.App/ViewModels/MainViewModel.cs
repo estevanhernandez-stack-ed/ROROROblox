@@ -762,13 +762,19 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    /// <summary>Footer text — e.g. "3 Roblox clients running" / "No clients running".</summary>
-    public string LiveProcessSummary => _liveProcessCount switch
-    {
-        0 => "No Roblox clients running",
-        1 => "1 Roblox client running",
-        _ => $"{_liveProcessCount} Roblox clients running",
-    };
+    /// <summary>
+    /// Footer text — e.g. "6 Roblox clients running · 16.2 GB" (F-080). The total is what a
+    /// multi-client user needs in order to decide whether another alt fits, and until now it lived
+    /// nowhere in the app.
+    /// </summary>
+    public string LiveProcessSummary =>
+        MemoryChipFormatter.FormatFooter(_liveProcessCount, _aggregateClientBytes, _belowReserve);
+
+    /// <summary>Sum of every readable client's private bytes, from the watchdog's latest sample.</summary>
+    private long _aggregateClientBytes;
+
+    /// <summary>Machine is already past the reserve — see MemoryPressureSnapshot.BelowReserve.</summary>
+    private bool _belowReserve;
 
     public string StatusBanner
     {
@@ -2974,6 +2980,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // MemoryWatchdog.GetSnapshot()'s seeded field default — no null-guard needed here.
         var projectionWarned = snapshot.HasProjection
             && snapshot.MinutesToCeiling < _memoryWatchdog.ProjectionWarnMinutes;
+
+        // F-080. Both feed the footer, so raise its change notification when either moves. This
+        // runs on the 30s ticker as well as on a crossing, which is what keeps the total live
+        // rather than only updating when something goes wrong.
+        if (_aggregateClientBytes != snapshot.AggregateClientBytes || _belowReserve != snapshot.BelowReserve)
+        {
+            _aggregateClientBytes = snapshot.AggregateClientBytes;
+            _belowReserve = snapshot.BelowReserve;
+            OnPropertyChanged(nameof(LiveProcessSummary));
+        }
 
         foreach (var account in snapshot.Accounts)
         {
