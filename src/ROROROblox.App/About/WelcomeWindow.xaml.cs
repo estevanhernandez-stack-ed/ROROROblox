@@ -56,4 +56,24 @@ internal partial class WelcomeWindow : Window
     }
 
     private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
+
+    /// <summary>
+    /// Show the tour on demand (Tools menu). Deliberately does NOT touch the sentinel: opening the
+    /// tour manually says nothing about whether the automatic first-run path has run.
+    /// </summary>
+    internal static void ShowTour()
+    {
+        var dialog = new WelcomeWindow();
+        var owner = Application.Current?.MainWindow;
+        if (owner is not null && owner.IsLoaded)
+        {
+            dialog.Owner = owner;
+        }
+        else
+        {
+            dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        }
+
+        dialog.ShowDialog();
+    }
 }

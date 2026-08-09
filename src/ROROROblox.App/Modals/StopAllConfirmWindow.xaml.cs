@@ -28,4 +28,25 @@ internal partial class StopAllConfirmWindow : Window
         DialogResult = false;
         Close();
     }
+
+    /// <summary>
+    /// Show the confirm and report whether the user accepted. Owner resolution matches
+    /// <c>LaunchHeadroomWindow.ShouldProceed</c>: an unloaded or absent main window means centre on
+    /// screen rather than parent to something that cannot host a dialog.
+    /// </summary>
+    internal static bool Confirm(int runningCount)
+    {
+        var dialog = new StopAllConfirmWindow(runningCount);
+        var owner = Application.Current?.MainWindow;
+        if (owner is not null && owner.IsLoaded)
+        {
+            dialog.Owner = owner;
+        }
+        else
+        {
+            dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        }
+
+        return dialog.ShowDialog() == true;
+    }
 }
