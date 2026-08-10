@@ -427,7 +427,7 @@ rows=[l for l in open(p,encoding='utf-8') if re.match(r'^\| F-\d+ \|',l)]
 print(len(rows),'rows',dict(Counter(l.strip().strip('|').split('|')[-1].strip() for l in rows)))"
 ```
 
-Expected: `84 rows {'clean': 32, 'open': 51, 'closed': 1}` — unchanged, because no status flipped.
+Expected: `84 rows {'clean': 31, 'open': 52, 'closed': 1}` — unchanged, because no status flipped.
 
 - [ ] **Step 3: Commit**
 
