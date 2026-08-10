@@ -1035,10 +1035,18 @@ dictionary. Theme change repaints it; no converter, no cached instance, no liter
   own fix removed the last declared pair using the prose token as a foreground, so ~104 bindings are
   measured by nothing. `MinimumPairs` is 6, so losing a pair failed nothing and announced nothing.
   Flatline's muted values are measured in §4.3 and asserted nowhere. Phase 2 gate work.
-- **The gate cannot see style-resolved brushes**, so items 3, 3a and 3b are **fenced, not gated**
-  (§5.4). More load-bearing than when this was written: three items now rest on it. The fence is
-  `ThemedStatusColourTests`, three facts and a 97-literal ceiling. Do not describe that work as
-  gated. Phase 2, with its own design.
+- ~~**The gate cannot see style-resolved brushes**, so items 3, 3a and 3b are **fenced, not
+  gated**~~ — **CLOSED after the cycle**, by the Phase 2 rendered gate on branch
+  `feat/rendered-contrast-gate`. `TriggeredStatusColourGateTests` extracts the shipped `Style`
+  subtrees out of `MainWindow.xaml` with `XamlReader`, binds a real `AccountSummary`, renders on an
+  STA thread and samples pixels: 16 of 16 dot cases and 24 of 24 chip cases resolve to the exact
+  theme slot §5.3 maps them to, across all four built-ins. Items 3, 3a and 3b are **gated now, not
+  fenced.** `ThemedStatusColourTests` stays as it is — it guards against literals regrowing, which
+  is a different question from whether the trigger fired.
+  **The fence stays load-bearing for one site the gate does not reach:** the status bar's
+  live-process dot (F-088's site, `MainWindow.xaml:1888`) binds `LiveProcessCount` on
+  `MainViewModel`, which is not cheaply constructible in a test, so it is still guarded only by the
+  XAML fence. Do not read "gated" as covering it.
 - **Bloxstrap banner literals** (§7). Now **F-085**, `open`, and **three** literals rather than the
   two this document named: `#3F3000`, `#8F7000`, and a body `Foreground="#FFE3A6"`. Fix belongs with
   F-068.
