@@ -21,10 +21,23 @@ internal sealed record Sample(
     string Foreground,
     string? Edge,
     bool SentinelLeaked,
-    IReadOnlyList<(string Colour, int Count)> Histogram)
+    IReadOnlyList<(string Colour, int Count)> Histogram,
+    int Width,
+    int Height,
+    IReadOnlyDictionary<string, (int Left, int Top, int Right, int Bottom)> Bounds)
 {
     public double? ForegroundRatio => ContrastGuard.RatioBetween(Fill, Foreground);
     public double? EdgeRatio => Edge is null ? null : ContrastGuard.RatioBetween(Fill, Edge);
+
+    /// <summary>
+    /// Where a colour actually landed, for the questions contrast cannot answer — is this dot
+    /// centred, did that rule draw on the left edge. Added when a human found two geometry defects
+    /// by eye that every colour assertion in this project passed straight over.
+    /// </summary>
+    public (int Left, int Top, int Right, int Bottom, int Width, int Height)? BoundsOf(string hex) =>
+        Bounds.TryGetValue(hex, out var b)
+            ? (b.Left, b.Top, b.Right, b.Bottom, Width, Height)
+            : null;
 
     public string Describe() => string.Join("\n", Histogram.Take(6).Select(h => $"      {h.Colour} x{h.Count}"));
 }
@@ -125,7 +138,7 @@ internal static class ThemedRender
     /// Renders <paramref name="build"/>'s element as the visual root on a sentinel host and samples
     /// it. Runs on its own STA thread; the caller does not need to be on one.
     /// </summary>
-    public static Sample Measure(Theme theme, string what, Func<ResourceDictionary, FrameworkElement> build)
+    public static Sample Measure(Theme theme, string what, Func<ResourceDictionary, FrameworkElement> build, double dpi = 96)
         => Sta.Run(() =>
         {
             var dict = Resources(theme);
@@ -158,18 +171,32 @@ internal static class ThemedRender
 
             var w = (int)Math.Ceiling(size.Width);
             var h = (int)Math.Ceiling(size.Height);
-            var bmp = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
+            // DPI is a parameter because two of this project's geometry defects only exist at
+            // fractional scaling: an inset that rounds evenly at 96 splits unevenly at 120. A gate
+            // that only ever renders at 96 cannot see the bug a user reported at 125%.
+            var scale = dpi / 96.0;
+            var pw = (int)Math.Ceiling(w * scale);
+            var ph = (int)Math.Ceiling(h * scale);
+            var bmp = new RenderTargetBitmap(pw, ph, dpi, dpi, PixelFormats.Pbgra32);
             bmp.Render(host);
 
-            var stride = w * 4;
-            var px = new byte[stride * h];
+            var stride = pw * 4;
+            var px = new byte[stride * ph];
             bmp.CopyPixels(px, stride, 0);
 
             var histogram = new Dictionary<string, int>(StringComparer.Ordinal);
+            var bounds = new Dictionary<string, (int Left, int Top, int Right, int Bottom)>(StringComparer.Ordinal);
             for (var i = 0; i < px.Length; i += 4)
             {
                 var key = $"#{px[i + 2]:X2}{px[i + 1]:X2}{px[i]:X2}";
                 histogram[key] = histogram.GetValueOrDefault(key) + 1;
+
+                var pixel = i / 4;
+                var x = pixel % pw;
+                var y = pixel / pw;
+                bounds[key] = bounds.TryGetValue(key, out var b)
+                    ? (Math.Min(b.Left, x), Math.Min(b.Top, y), Math.Max(b.Right, x), Math.Max(b.Bottom, y))
+                    : (x, y, x, y);
             }
 
             var ordered = histogram.OrderByDescending(kv => kv.Value)
@@ -188,8 +215,8 @@ internal static class ThemedRender
             // Walk in from the left edge on the vertical midline; the first non-sentinel pixel is
             // the outermost thing the control draws, which is its border when it has one.
             string? edge = null;
-            var midRow = h / 2;
-            for (var x = 0; x < w && edge is null; x++)
+            var midRow = ph / 2;
+            for (var x = 0; x < pw && edge is null; x++)
             {
                 var o = midRow * stride + x * 4;
                 var c = $"#{px[o + 2]:X2}{px[o + 1]:X2}{px[o]:X2}";
@@ -201,7 +228,10 @@ internal static class ThemedRender
                 foreground,
                 edge,
                 SentinelLeaked: ordered.Take(3).Any(c => c.Colour == Sentinel),
-                ordered);
+                ordered,
+                pw,
+                ph,
+                bounds);
         }, what);
 
     /// <summary>A control carrying a keyed style, sized so its glyphs sample cleanly.</summary>

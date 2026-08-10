@@ -69,7 +69,7 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ToggleButton">
-                            <Grid>
+                            <Grid UseLayoutRounding="True">
                                 <!-- Outer ring (always visible). Rest and hover are two different
                                      slots on purpose: the literals these replace were two different
                                      greys, and collapsing both to one would delete the hover
@@ -83,9 +83,31 @@
                                 <Ellipse x:Name="Ring"
                                          Stroke="{DynamicResource MutedTextBrush}" StrokeThickness="1.5"
                                          Fill="Transparent" />
-                                <!-- Inner fill (visible when checked). -->
+                                <!-- Inner fill (visible when checked).
+                                     EXPLICIT SIZE AND CENTRE ALIGNMENT, not Margin. A stretched
+                                     ellipse inset by a margin is centred only if both insets round
+                                     the same way, and at 125% they do not: a 14 DIP slot is 17.5
+                                     device px and a 10 DIP fill is 12.5, so one side takes the odd
+                                     pixel and the dot sits visibly off-centre on a 14px control.
+                                     A fixed size centred in the slot has one rounding decision
+                                     instead of two, and UseLayoutRounding on the Grid keeps it on
+                                     whole device pixels.
+
+                                     6x6 rather than the old 10x10, and the size IS the fix for the
+                                     second half of this: the gap between the ring's inner edge and
+                                     the dot goes from 1.25px to 3.25px. Checked-vs-unchecked used
+                                     to be carried by the resting ring being DARK against a bright
+                                     accent fill — 3.87:1 in brand. Theming the ring to
+                                     MutedText dropped that to 1.37:1, because MutedText is light,
+                                     so a filled dot read as a slightly fatter ring. No shipped slot
+                                     recovers the old separation without going invisible against the
+                                     row (Divider and Navy both land at 1.05-1.33:1 there), so the
+                                     distinction moves to shape, which is what §6.4 credits this
+                                     control for in the first place. -->
                                 <Ellipse x:Name="Fill"
-                                         Margin="2"
+                                         Width="6" Height="6"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
                                          Fill="{DynamicResource CyanBrush}"
                                          Visibility="Collapsed" />
                             </Grid>
