@@ -62,9 +62,9 @@
                                            FontSize="8" FontWeight="Bold"
                                            Foreground="{DynamicResource WhiteBrush}" />
                             </Border>
-                            <!-- Memory chip (compact mode) — same MemoryText/MemoryWarning + shared
-                                 converters as the full row template (below). Compact rows are the
-                                 exact unattended/parked-on-a-second-monitor scenario the watchdog
+                            <!-- Memory chip (compact mode) — same MemoryText/MemoryWarning + the same
+                                 warn/quiet Style as the full row template (below). Compact rows are
+                                 the exact unattended/parked-on-a-second-monitor scenario the watchdog
                                  exists for, so this can't be full-row-only: without it, a compact
                                  user gets no chip, no Recycle, and only a tray icon Windows 11
                                  hides by default. Collapses entirely via StringToVisibilityConverter
@@ -74,8 +74,18 @@
                                     Margin="6,0,0,0"
                                     VerticalAlignment="Center">
                                 <TextBlock Text="{Binding MemoryText}"
-                                           FontSize="9"
-                                           Foreground="{Binding MemoryWarning, Converter={StaticResource IdleChipBrushConverter}}" />
+                                           FontSize="9">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding MemoryWarning}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Border>
                         </StackPanel>
                         <TextBlock FontSize="10" Foreground="{DynamicResource MutedTextBrush}"
@@ -383,11 +393,35 @@
                             </Border>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                            <!-- Live status dot: green=running, yellow=expired, grey=idle. -->
+                            <!-- Live status dot. Every state resolves from a theme slot, so the dot
+                                 repaints with the theme instead of holding a brand hue the theme
+                                 cannot reach (spec §5.3). Active takes WhiteBrush rather than the
+                                 tempting CyanBrush: under flatline Cyan and RowExpiredAccent are the
+                                 same value, which would land active and expired at 1.00:1 of each
+                                 other. The four states measure 13.17:1 / 9.68:1 / 4.98:1 / 2.81:1
+                                 against the row under flatline. Grey/idle is the Setter rather than
+                                 a trigger — it is also the fallback for a StatusDot string nobody
+                                 planned for, which is what the deleted converter's `_ => Grey` did. -->
                             <Ellipse Width="8" Height="8"
-                                     Fill="{Binding StatusDot, Converter={StaticResource StatusDotBrushConverter}}"
                                      VerticalAlignment="Center"
-                                     Margin="0,0,8,0" />
+                                     Margin="0,0,8,0">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="{DynamicResource MutedTextBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding StatusDot}" Value="green">
+                                                <Setter Property="Fill" Value="{DynamicResource WhiteBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding StatusDot}" Value="yellow">
+                                                <Setter Property="Fill" Value="{DynamicResource RowExpiredAccentBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding StatusDot}" Value="magenta">
+                                                <Setter Property="Fill" Value="{DynamicResource MagentaBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
                             <TextBlock Text="{Binding SecondaryStatusText}"
                                        FontSize="11"
                                        VerticalAlignment="Center">
@@ -407,30 +441,51 @@
                                 </TextBlock.Style>
                             </TextBlock>
                             <!-- Idle chip — shows "idle {duration}" once a running account has been
-                                 quiet for at least a minute. Amber when IdleWarn (crossed the warn
-                                 threshold), muted otherwise. Task 7; driven by ActivitySnapshotApplier
-                                 (Task 8) via SinceActivity/IdleWarn. -->
+                                 quiet for at least a minute. RowExpiredAccentBrush when IdleWarn
+                                 (crossed the warn threshold), MutedTextBrush otherwise. Task 7;
+                                 driven by ActivitySnapshotApplier (Task 8) via SinceActivity/IdleWarn. -->
                             <Border Visibility="{Binding ShowIdleChip, Converter={StaticResource BoolToVisibilityConverter}}"
                                     Background="Transparent"
                                     Margin="8,0,0,0"
                                     VerticalAlignment="Center">
                                 <TextBlock Text="{Binding IdleText}"
-                                           FontSize="11"
-                                           Foreground="{Binding IdleWarn, Converter={StaticResource IdleChipBrushConverter}}" />
+                                           FontSize="11">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IdleWarn}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Border>
                             <!-- Memory chip (Task 7) — per-account private-bytes reading from the
                                  memory watchdog, e.g. "2.3 GB" or "▲ 2.3 GB · ~45 min" once a cap/
                                  projection trigger has latched. Collapsed entirely when MemoryText is
                                  null/empty — no reading yet, or the last pid read failed (never show a
-                                 stale or zero figure). Amber via the same IdleChipBrushConverter the
-                                 idle chip above uses, so both warning states read as one visual system. -->
+                                 stale or zero figure). RowExpiredAccentBrush when warning, via the same
+                                 warn/quiet Style the idle chip above uses, so both warning states read
+                                 as one visual system in every theme. -->
                             <Border Visibility="{Binding MemoryText, Converter={StaticResource StringToVisibilityConverter}}"
                                     Background="Transparent"
                                     Margin="8,0,0,0"
                                     VerticalAlignment="Center">
                                 <TextBlock Text="{Binding MemoryText}"
-                                           FontSize="11"
-                                           Foreground="{Binding MemoryWarning, Converter={StaticResource IdleChipBrushConverter}}" />
+                                           FontSize="11">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding MemoryWarning}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Border>
                             <!-- Selection toggle for batch launches. Filled cyan = included; hollow = skipped.
                                  Defaults to selected; user toggles to exclude an account from Launch multiple

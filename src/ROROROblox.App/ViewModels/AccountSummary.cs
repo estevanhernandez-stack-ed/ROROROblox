@@ -264,8 +264,10 @@ public sealed class AccountSummary : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// True when this account's idle duration has crossed the warn threshold — drives the amber
-    /// (vs muted) color of the idle chip via <see cref="IdleChipBrushConverter"/>. Set by
+    /// True when this account's idle duration has crossed the warn threshold — drives the idle
+    /// chip's foreground through a <c>DataTrigger</c> on its Style in <c>MainWindow.xaml</c>,
+    /// which sets <c>RowExpiredAccentBrush</c> when true and leaves <c>MutedTextBrush</c> when
+    /// false. Both resolve from the active theme, so the chip repaints with it. Set by
     /// <c>ActivitySnapshotApplier</c> (Task 8); pure display state, never persisted.
     /// </summary>
     public bool IdleWarn
