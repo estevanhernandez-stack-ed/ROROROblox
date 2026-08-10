@@ -13,9 +13,9 @@ namespace ROROROblox.Tests;
 /// The route file drives a tool that clicks buttons in the live app against real accounts, so two
 /// of these assertions are safety properties, not tidiness: every step must name a control type
 /// (five elements in this app share the name "Settings", and a name-only match binds the Window,
-/// which carries no InvokePattern), and no route may target a name on the deny list (those names
-/// stop Roblox clients, delete accounts, or launch game sessions). Safety properties belong at
-/// build time, not discovered while the tool is driving a live app.
+/// which carries no InvokePattern), and no route may target a denied control by name or AutomationId
+/// (those controls stop Roblox clients, delete accounts, or launch game sessions). Safety properties
+/// belong at build time, not discovered while the tool is driving a live app.
 /// </para>
 /// </summary>
 public class UiRoutesSchemaTests
@@ -85,17 +85,27 @@ public class UiRoutesSchemaTests
         var deny = doc.GetProperty("deny").EnumerateArray()
             .Select(x => x.GetString()!).ToHashSet(StringComparer.Ordinal);
 
-        // Guards the guard: an empty deny list would make this test vacuously pass forever.
+        // Guards the guard: an empty deny list or missing entries would make this test vacuously pass.
         Assert.Contains("Stop all Roblox instances", deny);
         Assert.Contains("Remove", deny);
         Assert.Contains("Launch As", deny);
+        Assert.Contains("Launch multiple", deny);
+        Assert.Contains("Squad Launch", deny);
+        Assert.Equal(5, deny.Count);
 
-        var problems = (from surface in Surfaces(doc)
-                        let id = surface.GetProperty("id").GetString()
-                        from step in StepsOf(surface)
-                        where step.TryGetProperty("name", out var n) && deny.Contains(n.GetString()!)
-                        select $"{id}: step targets denied name '{step.GetProperty("name").GetString()}'")
-                       .ToList();
+        var problems = new List<string>();
+        foreach (var surface in Surfaces(doc))
+        {
+            var id = surface.GetProperty("id").GetString();
+            foreach (var step in StepsOf(surface))
+            {
+                if (step.TryGetProperty("name", out var n) && deny.Contains(n.GetString()!))
+                    problems.Add($"{id}: step targets denied name '{n.GetString()}'");
+
+                if (step.TryGetProperty("aid", out var a) && deny.Contains(a.GetString()!))
+                    problems.Add($"{id}: step targets denied aid '{a.GetString()}'");
+            }
+        }
 
         Assert.True(problems.Count == 0, string.Join(Environment.NewLine, problems));
     }
