@@ -222,8 +222,15 @@ Theme items are matched on the substring `Id = <id>,` within the item's UIA name
 `Theme` record's `ToString()` rather than the display name. Matching on the id substring is stable
 against that.
 
-Today this yields two rounds, `brand` and `magenta-heat`. It becomes three when `flatline` ships,
-with no change to the tool.
+Today this yields **three** rounds: `brand`, `midnight` and `magenta-heat`. It becomes four when
+`flatline` ships, with no change to the tool.
+
+> **Corrected 2026-08-10.** This section originally said two rounds, naming only `brand` and
+> `magenta-heat`, which contradicted §2.5 of this same document three sections earlier. `midnight` is
+> a built-in and was dropped by an authoring slip that the spec self-review did not catch. The first
+> real capture run enumerated three themes and produced 42 captures across them, which is how it
+> surfaced. Recorded rather than quietly edited, because a spec that disagreed with itself is worth
+> knowing about when judging how much the rest of it has been checked.
 
 Evidence lands as `docs/ui-evidence/NN-<surface>--<theme>.png`, gitignored at `.gitignore:83`.
 
