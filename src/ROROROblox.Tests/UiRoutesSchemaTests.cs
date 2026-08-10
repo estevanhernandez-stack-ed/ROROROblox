@@ -91,7 +91,10 @@ public class UiRoutesSchemaTests
         Assert.Contains("Launch As", deny);
         Assert.Contains("Launch multiple", deny);
         Assert.Contains("Squad Launch", deny);
-        Assert.Equal(5, deny.Count);
+        Assert.Contains("Stop", deny);
+        Assert.Contains("Recycle", deny);
+        Assert.Contains("Stop all", deny);
+        Assert.Equal(8, deny.Count);
 
         var problems = new List<string>();
         foreach (var surface in Surfaces(doc))

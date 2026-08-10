@@ -390,6 +390,12 @@ function Wait-ForStable {
             if ($key -eq $last -and $r.Width -gt 0 -and $r.Height -gt 0) { return $el }
             $last = $key
         }
+        catch [DenyViolation] {
+            # A capture target resolving onto a denied control must not be swallowed into a polling
+            # retry: the same shape as Close-Surface and Invoke-CaptureRound's catch ordering, so a
+            # denied resolution can't hide behind an 8-second timeout that looks like ordinary drift.
+            throw
+        }
         catch { $lastError = $_.Exception.Message; $last = $null }
         Start-Sleep -Milliseconds 250
     }
@@ -634,18 +640,25 @@ function Get-AvailableThemes {
     $exp = $picker.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
     $exp.Expand()
     Start-Sleep -Milliseconds 700
-    $items = $picker.FindAll([System.Windows.Automation.TreeScope]::Descendants,
-        (New-Object System.Windows.Automation.PropertyCondition(
-            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-            [System.Windows.Automation.ControlType]::ListItem)))
     $ids = @()
-    foreach ($i in $items) {
-        # The picker sets DisplayMemberPath="Name", which is visual only, so UIA exposes the Theme
-        # record's ToString(). Matching the id substring is stable against that.
-        if ($i.Current.Name -match 'Id = ([A-Za-z0-9_-]+),') { $ids += $Matches[1] }
+    try {
+        $items = $picker.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+            (New-Object System.Windows.Automation.PropertyCondition(
+                [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+                [System.Windows.Automation.ControlType]::ListItem)))
+        foreach ($i in $items) {
+            # The picker sets DisplayMemberPath="Name", which is visual only, so UIA exposes the
+            # Theme record's ToString(). Matching the id substring is stable against that.
+            if ($i.Current.Name -match 'Id = ([A-Za-z0-9_-]+),') { $ids += $Matches[1] }
+        }
     }
-    $exp.Collapse()
-    Start-Sleep -Milliseconds 300
+    finally {
+        # Structural, not positional: a fault inside FindAll/the match loop must not skip this.
+        # A ComboBox left expanded when the Settings window later closes permanently ghosts that
+        # window's automation subtree (measured live -- see Set-ActiveTheme).
+        $exp.Collapse()
+        Start-Sleep -Milliseconds 300
+    }
     if ($ids.Count -eq 0) { throw 'ThemePicker exposed no themes; the UIA name format may have changed' }
     return $ids
 }
@@ -656,27 +669,32 @@ function Set-ActiveTheme {
     $exp = $picker.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
     $exp.Expand()
     Start-Sleep -Milliseconds 700
-    $items = $picker.FindAll([System.Windows.Automation.TreeScope]::Descendants,
-        (New-Object System.Windows.Automation.PropertyCondition(
-            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-            [System.Windows.Automation.ControlType]::ListItem)))
-    foreach ($i in $items) {
-        if ($i.Current.Name -match "Id = $([regex]::Escape($ThemeId)),") {
-            $i.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
-            Start-Sleep -Milliseconds 900
-            # Collapse before returning. Measured live: closing the Settings window while this
-            # ComboBox's dropdown is still expanded leaves the window's automation subtree as a
-            # permanent ghost -- SettingsNav keeps matching it forever after, and every later
-            # -Within lookup against the main window's Subtree becomes ambiguous by one more
-            # element per leaked cycle. Reproduced with a 2-cycle repro (0 -> 1 -> 2 ghosts) and
-            # confirmed fixed by collapsing first (0 -> 0 -> 0) before this line existed.
-            $exp.Collapse()
-            Start-Sleep -Milliseconds 300
-            return
+    $found = $false
+    try {
+        $items = $picker.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+            (New-Object System.Windows.Automation.PropertyCondition(
+                [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+                [System.Windows.Automation.ControlType]::ListItem)))
+        foreach ($i in $items) {
+            if ($i.Current.Name -match "Id = $([regex]::Escape($ThemeId)),") {
+                $i.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
+                Start-Sleep -Milliseconds 900
+                $found = $true
+                break
+            }
         }
     }
-    $exp.Collapse()
-    throw "theme '$ThemeId' not found in the picker"
+    finally {
+        # Collapse unconditionally -- found, not-found, or a thrown fault from FindAll/Select() all
+        # land here. Measured live: closing the Settings window while this ComboBox's dropdown is
+        # still expanded leaves the window's automation subtree as a permanent ghost -- SettingsNav
+        # keeps matching it forever after, and every later -Within lookup against the main window's
+        # Subtree becomes ambiguous by one more element per leaked cycle. A `finally` closes that
+        # off regardless of which path got here, rather than only the success path.
+        $exp.Collapse()
+        Start-Sleep -Milliseconds 300
+    }
+    if (-not $found) { throw "theme '$ThemeId' not found in the picker" }
 }
 
 #endregion
@@ -895,8 +913,18 @@ if ($Watch) {
             continue
         }
 
+        # Before any bytes are written. -Watch was exempt from every other capture path's guard --
+        # an operator toggling "Show" on the Alerts page and pressing Enter here would otherwise
+        # bake the raw webhook into a PNG with nothing to stop it. $fgElement is already resolved
+        # above; no separate lookup needed. SecretExposure propagates uncaught -- it must abort the
+        # session, not fall back to a warning.
+        Assert-NoSecrets -Element $fgElement -SurfaceName "watch:$label"
+
         $bmp = Get-WindowBitmap -Hwnd $hwnd
         try {
+            if (Test-BlankFrame -Bmp $bmp) {
+                throw "capture came back blank ($($bmp.Width)x$($bmp.Height)); refusing to write it as evidence"
+            }
             $path = Join-Path $OutDir ("watch-{0}-{1}.png" -f (++$n), $label)
             $bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
             Write-Host "  wrote $path (captured '$fgName')"
@@ -907,6 +935,18 @@ if ($Watch) {
 }
 
 if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Force -Path $OutDir | Out-Null }
+
+# Vacuity floor, checked before any app interaction or manifest write. A filter that matches
+# nothing (a typo'd -Surface value, for example) must not silently run the theme loop: with zero
+# expected surfaces, $ok -lt ($expected * 0.5) is 0 -lt 0, which is false, so the floor further
+# down never fires -- the run would exit 0 while cycling the app through every theme and
+# Set-Content-ing an empty `surfaces` array over each round's already-good run-<theme>.json.
+# Invoke-VerifyMode has had this same guard from the start; the capture path never got it.
+$expectedSurfaceCount = @(Get-CapturedSurfaces -Routes $routes -Only $Surface).Count
+if ($expectedSurfaceCount -eq 0) {
+    $filterDesc = if ($Surface) { "-Surface $($Surface -join ', ')" } else { 'the default filter' }
+    throw "no captured surfaces matched $filterDesc; the route file resolved to nothing. Refusing to run the theme loop or touch any manifest."
+}
 
 Open-AppearancePage -Scope $appRoot
 $themes = Get-AvailableThemes -Scope $appRoot
@@ -930,9 +970,11 @@ foreach ($themeId in $themes) {
 
 $ok = @($all | Where-Object { $_.status -eq 'ok' }).Count
 $failed = @($all | Where-Object { $_.status -eq 'failed' }).Count
-# @() around the call: PowerShell unwraps a single-element array on return, and a bare .Count on a
-# scalar PSCustomObject is 1 rather than an error, so the floor would silently compute from garbage.
-$expected = @(Get-CapturedSurfaces -Routes $routes -Only $Surface).Count * @($themes).Count
+# Reuses $expectedSurfaceCount (checked non-zero above) rather than recomputing it, so the two
+# can't drift. @() around @($themes): PowerShell unwraps a single-element array on return, and a
+# bare .Count on a scalar PSCustomObject is 1 rather than an error, so the floor would silently
+# compute from garbage.
+$expected = $expectedSurfaceCount * @($themes).Count
 
 Write-Host ''
 Write-Host "Captured $ok of $expected, $failed failed."
