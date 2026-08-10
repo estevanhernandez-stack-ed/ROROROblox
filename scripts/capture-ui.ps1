@@ -603,6 +603,145 @@ function Write-RunManifest {
 
 #endregion
 
+#region Themes
+
+function Open-AppearancePage {
+    param([Parameter(Mandatory)]$Scope)
+    Resolve-UiaElement -Scope $Scope -Type 'Button' -Name 'Settings' -Verb 'invoke' |
+        ForEach-Object { $_.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke() }
+    Start-Sleep -Milliseconds 800
+    Resolve-UiaElement -Scope $Scope -Type 'ListItem' -Name 'Appearance' -Verb 'select' -Within 'SettingsNav' |
+        ForEach-Object { $_.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select() }
+    Start-Sleep -Milliseconds 500
+}
+
+function Close-Preferences {
+    param([Parameter(Mandatory)]$Scope)
+    try {
+        Resolve-UiaElement -Scope $Scope -Type 'Window' -Name 'Settings' -Verb 'close-window' |
+            ForEach-Object { $_.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern).Close() }
+        Start-Sleep -Milliseconds 400
+    }
+    catch { Write-Warning "could not close Preferences: $($_.Exception.Message)" }
+}
+
+function Get-AvailableThemes {
+    param([Parameter(Mandatory)]$Scope)
+    # Enumerated at runtime, never hardcoded. The checklist schedules a 'flatline' round for a theme
+    # that does not ship; reading the picker means it joins the rotation the day it does.
+    $picker = Resolve-UiaElement -Scope $Scope -Type 'ComboBox' -Aid 'ThemePicker' -Verb 'expand'
+    $exp = $picker.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
+    $exp.Expand()
+    Start-Sleep -Milliseconds 700
+    $items = $picker.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+        (New-Object System.Windows.Automation.PropertyCondition(
+            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+            [System.Windows.Automation.ControlType]::ListItem)))
+    $ids = @()
+    foreach ($i in $items) {
+        # The picker sets DisplayMemberPath="Name", which is visual only, so UIA exposes the Theme
+        # record's ToString(). Matching the id substring is stable against that.
+        if ($i.Current.Name -match 'Id = ([A-Za-z0-9_-]+),') { $ids += $Matches[1] }
+    }
+    $exp.Collapse()
+    Start-Sleep -Milliseconds 300
+    if ($ids.Count -eq 0) { throw 'ThemePicker exposed no themes; the UIA name format may have changed' }
+    return $ids
+}
+
+function Set-ActiveTheme {
+    param([Parameter(Mandatory)]$Scope, [Parameter(Mandatory)][string]$ThemeId)
+    $picker = Resolve-UiaElement -Scope $Scope -Type 'ComboBox' -Aid 'ThemePicker' -Verb 'expand'
+    $exp = $picker.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
+    $exp.Expand()
+    Start-Sleep -Milliseconds 700
+    $items = $picker.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+        (New-Object System.Windows.Automation.PropertyCondition(
+            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+            [System.Windows.Automation.ControlType]::ListItem)))
+    foreach ($i in $items) {
+        if ($i.Current.Name -match "Id = $([regex]::Escape($ThemeId)),") {
+            $i.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
+            Start-Sleep -Milliseconds 900
+            # Collapse before returning. Measured live: closing the Settings window while this
+            # ComboBox's dropdown is still expanded leaves the window's automation subtree as a
+            # permanent ghost -- SettingsNav keeps matching it forever after, and every later
+            # -Within lookup against the main window's Subtree becomes ambiguous by one more
+            # element per leaked cycle. Reproduced with a 2-cycle repro (0 -> 1 -> 2 ghosts) and
+            # confirmed fixed by collapsing first (0 -> 0 -> 0) before this line existed.
+            $exp.Collapse()
+            Start-Sleep -Milliseconds 300
+            return
+        }
+    }
+    $exp.Collapse()
+    throw "theme '$ThemeId' not found in the picker"
+}
+
+#endregion
+
+#region Rounds
+
+function Invoke-CaptureRound {
+    param(
+        [Parameter(Mandatory)]$Scope,
+        [Parameter(Mandatory)]$Routes,
+        [Parameter(Mandatory)][string]$ThemeId,
+        [Parameter(Mandatory)][string]$OutDir,
+        [Parameter(Mandatory)]$Proc,
+        [string[]]$Only,
+        [switch]$DumpUia
+    )
+    $results = New-Object System.Collections.Generic.List[psobject]
+
+    foreach ($surface in (Get-CapturedSurfaces -Routes $Routes -Only $Only)) {
+        $file = Join-Path $OutDir ("{0}-{1}--{2}.png" -f $surface.id, $surface.name, $ThemeId)
+        try {
+            $target = Open-Surface -Scope $Scope -Surface $surface
+
+            # Before any bytes are written.
+            Assert-NoSecrets -Element $target -SurfaceName $surface.name
+
+            $saved = Save-SurfaceCapture -Element $target -Path $file
+
+            if ($DumpUia) {
+                $dump = [IO.Path]::ChangeExtension($file, '.uia.txt')
+                Get-SubtreeText -Element $target | Set-Content -Path $dump -Encoding utf8
+            }
+
+            $results.Add([pscustomobject]@{
+                id = $surface.id; name = $surface.name; status = 'ok'
+                file = Split-Path -Leaf $saved.Path
+                width = $saved.Width; height = $saved.Height
+            })
+            Write-Host ("  ok   {0,-4} {1}" -f $surface.id, $surface.name) -ForegroundColor Green
+        }
+        catch [SecretExposure] {
+            # A credential on screen aborts the whole run. Never demote this to one failed surface:
+            # the next surface would be captured while the same credential is still rendered.
+            throw
+        }
+        catch [DenyViolation] {
+            # A step resolving onto a denied control means the route file is wrong in a direction
+            # that stops Roblox clients or deletes accounts. Stop, do not drive 12 more surfaces.
+            throw
+        }
+        catch {
+            $results.Add([pscustomobject]@{
+                id = $surface.id; name = $surface.name; status = 'failed'
+                error = $_.Exception.Message
+            })
+            Write-Host ("  FAIL {0,-4} {1}: {2}" -f $surface.id, $surface.name, $_.Exception.Message) -ForegroundColor Red
+        }
+        finally {
+            Close-Surface -Scope $Scope -Surface $surface
+        }
+    }
+    return $results.ToArray()
+}
+
+#endregion
+
 #region Self-test
 
 function Invoke-SelfTest {
@@ -728,4 +867,58 @@ if ($Verify) {
     exit ($(if ($ok) { 0 } else { 1 }))
 }
 
-Write-Host 'capture-ui.ps1: capture loop lands in a later task.'
+if ($Watch) {
+    Write-Host 'Watch mode: bring the surface you want on screen, then press Enter. Ctrl+C to stop.'
+    $n = 0
+    while ($true) {
+        $label = Read-Host 'Surface label (blank to quit)'
+        if ([string]::IsNullOrWhiteSpace($label)) { break }
+        Start-Sleep -Seconds 2
+        $bmp = Get-WindowBitmap -Hwnd ([IntPtr]$proc.MainWindowHandle)
+        try {
+            $path = Join-Path $OutDir ("watch-{0}-{1}.png" -f (++$n), $label)
+            $bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
+            Write-Host "  wrote $path"
+        }
+        finally { $bmp.Dispose() }
+    }
+    exit 0
+}
+
+if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Force -Path $OutDir | Out-Null }
+
+Open-AppearancePage -Scope $appRoot
+$themes = Get-AvailableThemes -Scope $appRoot
+Close-Preferences -Scope $appRoot
+Write-Host "Themes: $($themes -join ', ')"
+
+$all = @()
+foreach ($themeId in $themes) {
+    Write-Host ''
+    Write-Host "Round: $themeId" -ForegroundColor Cyan
+    Open-AppearancePage -Scope $appRoot
+    Set-ActiveTheme -Scope $appRoot -ThemeId $themeId
+    Close-Preferences -Scope $appRoot
+
+    $results = Invoke-CaptureRound -Scope $appRoot -Routes $routes -ThemeId $themeId `
+                                   -OutDir $OutDir -Proc $proc -Only $Surface -DumpUia:$DumpUia
+    $manifest = Write-RunManifest -OutDir $OutDir -ThemeId $themeId -Results $results -Proc $proc
+    Write-Host "  manifest: $manifest"
+    $all += $results
+}
+
+$ok = @($all | Where-Object { $_.status -eq 'ok' }).Count
+$failed = @($all | Where-Object { $_.status -eq 'failed' }).Count
+# @() around the call: PowerShell unwraps a single-element array on return, and a bare .Count on a
+# scalar PSCustomObject is 1 rather than an error, so the floor would silently compute from garbage.
+$expected = @(Get-CapturedSurfaces -Routes $routes -Only $Surface).Count * @($themes).Count
+
+Write-Host ''
+Write-Host "Captured $ok of $expected, $failed failed."
+
+# Vacuity floor: a run that captured a handful of surfaces must not exit looking like success.
+if ($ok -lt ($expected * 0.5)) {
+    Write-Host "Captured fewer than half the expected surfaces. Treating the run as failed." -ForegroundColor Red
+    exit 1
+}
+exit ($(if ($failed -gt 0) { 1 } else { 0 }))

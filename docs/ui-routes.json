@@ -137,7 +137,7 @@
     {
       "id": "11",
       "name": "tray-menu",
-      "skip": "Path unverified against the live app. NotifyIcon context menu, plausibly its own in-process HWND."
+      "skip": "Confirmed reachable, not routable. Right-clicking the tray icon (default-hidden behind Explorer's 'Show Hidden Icons' overflow) opens a real WPF ContextMenu as its own top-level Popup HWND owned by this process -- proven live via UI Automation (Popup element, pid matched ROROROblox.App) containing 8 MenuItems (Multi-Instance toggle, Streamer mode, Stop all Roblox instances, Open ROROROblox, Settings..., History..., Diagnostics..., Plugins..., Open log folder, Quit). Not converted: reaching it needs a right-click on an element inside Explorer's Shell_TrayWnd/overflow-flyout tree (a different process, and only reachable after invoking 'Show Hidden Icons'), which needs raw mouse-coordinate simulation. That is outside the route schema's verb vocabulary (invoke/select/expand/close-window) and Resolve-UiaElement's single-scope ($appRoot) resolution model. Converting this is a resolver-contract change, not a route addition."
     },
     {
       "id": "20",
@@ -152,17 +152,26 @@
     {
       "id": "21",
       "name": "squad-launch",
-      "skip": "Denied until someone confirms the button opens a dialog rather than launching Roblox clients."
+      "skip": "Confirmed via source, not converted. MainViewModel.OpenSquadLaunchAsync (MainViewModel.cs:2077-2097) shows the button opens SquadLaunchWindow.ShowDialog() -- a target-picker dialog -- and only calls SquadLaunchAsync (which launches Roblox clients) if the dialog returns true with a selected target. So the click itself is a dialog open, not a direct launch. Despite that, it stays on the deny list and skipped: removing it would contradict UiRoutesSchemaTests.NoRouteTargetsADeniedName's hardcoded assertions (Assert.Contains(\"Squad Launch\", deny); Assert.Equal(5, deny.Count)), a compiled safety contract outside this task's scope to alter."
     },
     {
       "id": "22",
       "name": "join-by-link",
-      "skip": "Path unverified against the live app."
+      "skip": "Confirmed reachable, not routable. MainWindow.xaml.cs:180 (OnGameComboBoxSelectionChanged) shows the trigger is selecting the '(Paste a link...)' sentinel entry in a per-account Game ComboBox (MainWindow.xaml:758-763) -- not a button. That ComboBox carries no x:Name or AutomationId and is instantiated once per saved account row, so every row's ComboBox is structurally identical and unaddressable by the route schema's Type+Name/Aid contract without an ancestor anchor, and there is no such anchor either (rows carry no distinguishing AutomationId). The only selector left would be a specific account's display name, which is live per-profile data (the route file is shared/committed) and would break on any profile with a different account list or zero accounts (the same class of gap already documented for surface 02)."
     },
     {
       "id": "23",
       "name": "export-accounts",
-      "skip": "Path unverified against the live app."
+      "open": [
+        { "do": "invoke", "name": "Settings", "type": "Button" },
+        { "do": "select", "name": "Accounts", "type": "ListItem", "within": "SettingsNav" },
+        { "do": "invoke", "name": "Export accounts…", "type": "Button" }
+      ],
+      "capture": { "type": "Window", "name": "Export accounts" },
+      "close": [
+        { "do": "close-window", "name": "Export accounts", "type": "Window" },
+        { "do": "close-window", "name": "Settings", "type": "Window" }
+      ]
     }
   ]
 }
