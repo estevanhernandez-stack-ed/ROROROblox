@@ -397,3 +397,24 @@ Not part of this build, recorded so they are not rediscovered.
   Candidate row for the findings register, alongside the existing `AutomationProperties.Name`
   coverage finding.
 - **`flatline` still does not exist.** Already tracked as a dashboard task; §2.5 is the evidence.
+
+- **An unexplained intermittent on `-Within 'SettingsNav'` surfaces.** Observed twice, on `06 history`
+  and on `03b preferences-alerts`, both self-resolving on immediate re-run. The first hypothesis was
+  the theme-ComboBox ghosting bug, and §11's `try/finally` hardening was expected to retire it. It did
+  not: the `03b` occurrence happened *after* that fix was live, and its failure text was
+  `Wait-ForStable`'s never-settled branch rather than the ambiguous-match symptom ghosting produces.
+  Different shape, so the cause is still open. Recorded rather than absorbed into "the fix handles it",
+  because the next person to see it should know it is the third sighting and not the first.
+
+- **`-Watch` has no deny enforcement.** It captures the foreground window and never resolves an
+  element by name, so `$script:DenyList` is never consulted on that path. It only captures and never
+  invokes, so it cannot itself trigger a destructive control, but the asymmetry with the routed path
+  is worth closing if `-Watch` ever grows the ability to click.
+
+- **The run manifest carries no monitor identity.** §7 records the reasoning. Worth adding, since the
+  campaign requires one monitor and one scale factor for a whole round and the manifest is the only
+  artifact that could prove it.
+
+- **`02 main-window-empty` remains uncapturable** without a `RORORO_DATA_DIR` override. §11 records
+  the cost. It is the surface most likely to carry unreviewed chrome, precisely because nobody sees
+  it.
