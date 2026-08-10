@@ -155,7 +155,7 @@
     {
       "id": "21",
       "name": "squad-launch",
-      "skip": "Confirmed via source, not converted. MainViewModel.OpenSquadLaunchAsync (MainViewModel.cs:2077-2097) shows the button opens SquadLaunchWindow.ShowDialog() -- a target-picker dialog -- and only calls SquadLaunchAsync (which launches Roblox clients) if the dialog returns true with a selected target. So the click itself is a dialog open, not a direct launch. Despite that, it stays on the deny list and skipped: removing it would contradict UiRoutesSchemaTests.NoRouteTargetsADeniedName's hardcoded assertions (Assert.Contains(\"Squad Launch\", deny); Assert.Equal(5, deny.Count)), a compiled safety contract outside this task's scope to alter."
+      "skip": "Confirmed via source, not converted. MainViewModel.OpenSquadLaunchAsync (MainViewModel.cs:2077-2097) shows the button opens SquadLaunchWindow.ShowDialog() -- a target-picker dialog -- and only calls SquadLaunchAsync (which launches Roblox clients) if the dialog returns true with a selected target. So the click itself is a dialog open, not a direct launch. Despite that, it stays on the deny list and skipped: deny-list membership is a compiled contract asserted by UiRoutesSchemaTests.NoRouteTargetsADeniedName, which pins both an Assert.Contains per entry and a hardcoded Assert.Equal on the list's total count. Removing 'Squad Launch' from deny therefore means deliberately editing that test, not just this route file -- outside this task's scope to do unilaterally."
     },
     {
       "id": "22",
