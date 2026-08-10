@@ -1866,24 +1866,33 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Live process count + green/grey dot. -->
+                <!-- Live process count + status dot. The FIFTH status-colour site (F-088) — spec
+                     §5.3 enumerated four, and this one shipped alongside F-080 in PR #96 holding the
+                     same brand green and grey the deleted StatusDotBrushConverter held. The two hexes
+                     are recorded in F-088's row, not here: a comment that names a shipped colour goes
+                     false the moment the theme changes it, which is the whole defect class item 6
+                     spent an item removing. Same mapping as the per-row dot above — live takes
+                     WhiteBrush, zero clients takes MutedTextBrush.
+
+                     ARRANGEMENT IS INVERTED FROM THE ROW DOT, on purpose. There, quiet is the plain
+                     Setter and the loud states are triggers, because StatusDot is a four-string enum
+                     whose quiet value doubles as the fallback for a string nobody planned for. Here
+                     the bound value is an int: DataTrigger matches on equality, so "zero" is
+                     expressible as a trigger and "any number of clients" is not. Putting live in the
+                     Setter is what keeps this on {DynamicResource} without a converter or a new
+                     view-model bool — the machinery §5.2 deleted. The cost, named rather than
+                     buried: a binding that fails outright leaves the dot at the live colour. It sits
+                     beside LiveProcessSummary, which states the count in words, so the dot is a
+                     redundant echo either way (§6.1). -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <Ellipse Width="7" Height="7"
                              VerticalAlignment="Center" Margin="0,0,8,0">
                         <Ellipse.Style>
                             <Style TargetType="Ellipse">
-                                <Setter Property="Fill">
-                                    <Setter.Value>
-                                        <SolidColorBrush Color="#4FE08C" />
-                                    </Setter.Value>
-                                </Setter>
+                                <Setter Property="Fill" Value="{DynamicResource WhiteBrush}" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding LiveProcessCount}" Value="0">
-                                        <Setter Property="Fill">
-                                            <Setter.Value>
-                                                <SolidColorBrush Color="#4A5C70" />
-                                            </Setter.Value>
-                                        </Setter>
+                                        <Setter Property="Fill" Value="{DynamicResource MutedTextBrush}" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>

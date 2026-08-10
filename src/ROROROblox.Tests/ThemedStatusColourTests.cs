@@ -211,6 +211,227 @@ public class ThemedStatusColourTests
             + string.Join("\n  ", offenders));
     }
 
+    /// <summary>
+    /// The XAML clause, added by item 3a after item 6's register pass found a FIFTH status-colour
+    /// site the spec never enumerated: the status bar's live-process dot, a raw
+    /// <c>&lt;SolidColorBrush Color="#4FE08C" /&gt;</c> nested in a <c>Setter.Value</c> at
+    /// <c>MainWindow.xaml:1877</c>, swapping to <c>#4A5C70</c> at zero clients — the same brand
+    /// green and grey the deleted <c>StatusDotBrushConverter</c> held (F-088).
+    /// <para>
+    /// WHY IT COULD HIDE. Both fences item 3 shipped are structurally blind to it, for different
+    /// reasons. The clause above walks <c>*.cs</c> and this is markup.
+    /// <c>ContrastPairGateTests</c> reads <c>Background=</c> / <c>Foreground=</c> attributes and
+    /// this is a literal nested two levels inside a style setter. A hex in XAML matched neither
+    /// pattern, so nothing would have caught a sixth site being added tomorrow either.
+    /// </para>
+    /// <para>
+    /// THE RULE THAT MAKES THIS WORTH HAVING: <b>a literal is permitted only when an open register
+    /// row already owns it.</b> Every entry below cites the finding id that owns it, or spec §7 for
+    /// the one set the spec itself puts out of the theme's reach. That is deliberately harder than
+    /// "list the files we do not want to fix today" — an exemption nobody can trace back to a row is
+    /// how the fifth site lived on <c>main</c> unnoticed since PR #96. The one entry with no finding
+    /// is <c>App.xaml</c>'s brush dictionary, and it has none because it is not a defect: those
+    /// eleven instances ARE the governed path's origin.
+    /// </para>
+    /// </summary>
+    private sealed record AllowedXamlLiteral(string Path, string? Anchor, int Span, string Reason);
+
+    /// <summary>
+    /// A colour literal written into markup. Six or eight hex digits, which is every form this app
+    /// actually uses — a sweep of App XAML on 2026-08-10 found no <c>#RGB</c> / <c>#ARGB</c>
+    /// shorthand anywhere. The <c>(?&lt;![&amp;\w])</c> guard keeps XML character entities out:
+    /// <c>&amp;#x2630;</c> and a six-digit decimal entity are both markup escapes, not colours, and
+    /// this app writes ten of the former.
+    /// <para>
+    /// It scans lines, so a hex inside an XML comment counts too. That is deliberate and it fired on
+    /// its first run against this item's own comment: a comment naming a shipped colour is a claim
+    /// that goes false the moment the theme changes that value, which is the defect class item 6
+    /// spent a whole item removing from the test project. The hex belongs in the register row, and
+    /// the comment cites the row.
+    /// </para>
+    /// </summary>
+    private static readonly Regex XamlLiteralColour =
+        new(@"(?<![&\w])#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6})\b", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Where a hex may sit in App XAML, and the open row that owns it.
+    /// <para>
+    /// <c>Path</c> is the repo-relative file, or a directory prefix when it ends in <c>/</c>.
+    /// <c>Anchor</c> must appear on the offending line or within <c>Span</c> lines above it; a null
+    /// <c>Anchor</c> exempts the whole file, which is used ONLY where an open row's own evidence
+    /// covers the whole file. <c>MainWindow.xaml</c> never gets a whole-file entry — it is the file
+    /// the fifth site hid in, so blanket-exempting it would blind this fence in the one place it
+    /// exists to watch.
+    /// </para>
+    /// </summary>
+    private static readonly AllowedXamlLiteral[] XamlAllowList =
+    [
+        new("src/ROROROblox.App/App.xaml", "<SolidColorBrush x:Key=", 0,
+            "NOT a finding, and the only entry here that has none. These eleven instances are the "
+            + "governed path's own origin: ten theme slots plus the derived InteractiveEdgeBrush "
+            + "fallback, and ThemeService.ApplySlot REPLACES each instance on every theme change "
+            + "(ThemeService.cs:262-269). The hex in the markup is the pre-startup value of a brush "
+            + "the theme owns, not a colour that escaped it. Flagging these would flag the mechanism."),
+
+        new("src/ROROROblox.App/App.xaml", "x:Key=\"SelectionDotStyle\"", 30,
+            "F-089, open. The batch-selection toggle's ControlTemplate holds four un-themed hexes — "
+            + "ring #4A5C70, checked fill and checked stroke #17D4FA, hover stroke #9AA8B8 — on a "
+            + "control that ships on every account row of the main window. NOT in spec §7 and owned "
+            + "by no row before this item; turned up by this clause's own scan while it was being "
+            + "written, so it got a row rather than a silent permission, exactly as F-087 did for "
+            + "the consent sheet. Out of scope here: item 3a owns F-088, and §6.4 already recorded "
+            + "this toggle as carrying its state "
+            + "in shape rather than colour, so the literals are a theming defect and not a "
+            + "legibility one."),
+
+        new("src/ROROROblox.App/MainWindow.xaml", "Runtime contested-lock banner", 15,
+            "F-066, open. The mutex-recovery banner: Foreground #F1B232 at :1568, then #17D4FA on "
+            + "#0F1F31 and #FFFFFF on #22314A across the two recovery buttons at :1572 and :1575. "
+            + "Five hex occurrences on three lines — item 6 re-read this row today and recorded both "
+            + "that its citation had drifted (:1474,1477 -> :1572,1575) and that it never counted the "
+            + "third line. Deliberately not fixed here; its fix is F-068's shared banner/button "
+            + "recipe, and hand-fixing one of three near-copies is how there came to be three."),
+
+        new("src/ROROROblox.App/MainWindow.xaml", "Bloxstrap warning banner", 20,
+            "F-085, open. Background #3F3000, BorderBrush #8F7000, body Foreground #FFE3A6 — THREE "
+            + "literals, not the two spec §7 names, which is what item 6 corrected when it opened the "
+            + "row. The banner renders the same warm amber under all four built-ins including "
+            + "flatline, whose field is #101010. Same F-068 fix as the row above, and left out of "
+            + "this cycle for the same reason."),
+
+        new("src/ROROROblox.App/About/AboutWindow.xaml", null, 0,
+            "Spec §7 AND F-063, open — this is the one region with both. §7 puts the fixed logo "
+            + "hexes out of the theme's reach under invariant 2 (the 626 Labs duo is never split and "
+            + "the logo's own brand hex stays fixed), which covers the eight keyed tint brushes at "
+            + ":13-20 and the magenta glow at :89. F-063 covers the rest of the window and its fix "
+            + "direction says so in as many words — bind the card at :96, drop the canvas fill, "
+            + "'logo tint steps stay fixed hex'. Whole-file because F-063's surface IS the whole "
+            + "window."),
+
+        new("src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml", null, 0,
+            "F-066, open. That row's surface is literally 'Modals/CookieCapture vs rest' and its "
+            + "62-hex count is where these fourteen live. Whole-file for the same reason: the row "
+            + "owns the file, not a line in it."),
+
+        new("src/ROROROblox.App/Modals/", null, 0,
+            "F-079 and F-066, both open. F-079 names StopAllConfirmWindow, LeftoverProcessesWindow, "
+            + "RobloxAlreadyRunningWindow, RobloxNotInstalledWindow, WebView2NotInstalledWindow and "
+            + "RenameWindow, and its verdict is exactly this defect — modals that opt out of theming "
+            + "and render brand colours on a themed field. DpapiCorruptWindow is the one file in the "
+            + "folder F-079 does not name; F-066's 'mostly in out-of-scope modals' count owns it. "
+            + "Directory prefix rather than seven near-identical entries, and the ceiling below is "
+            + "what stops a new modal quietly widening it."),
+    ];
+
+    /// <summary>
+    /// Measured against the tree on 2026-08-10, after the two F-088 literals were rebound: 101
+    /// allowed hex occurrences. App.xaml 15 (11 seed + 4 SelectionDotStyle), MainWindow.xaml 8
+    /// (5 mutex-recovery + 3 Bloxstrap), AboutWindow.xaml 10, CookieCaptureWindow.xaml 14,
+    /// Modals/ 54 — occurrences, not lines: several of those lines set a foreground and a background
+    /// in one attribute pair.
+    /// <para>
+    /// A CEILING, not just a floor, and that is the point of it. An allow-listed region is a region
+    /// a row has already counted; a literal added inside one is a NEW literal wearing an old row's
+    /// badge, and the offender list would never see it. F-032 went from 11 offending controls at
+    /// audit to 15 while two waves built machinery around it and nobody re-counted — the register's
+    /// own rule about a row not being a static thing, enforced here in arithmetic instead of prose.
+    /// </para>
+    /// </summary>
+    private const int AllowedXamlLiteralCeiling = 101;
+
+    /// <summary>
+    /// Vacuity floor. Well under the ceiling so that genuinely CLOSING F-079 or F-066 — which would
+    /// delete 53 and 14 hits respectively — does not turn a fix into a red build, while still
+    /// catching a repo-root walk that found nothing.
+    /// </summary>
+    private const int AllowedXamlLiteralFloor = 25;
+
+    private static IEnumerable<(string RelativePath, string[] Lines)> AppXaml()
+    {
+        foreach (var file in XamlStyleScanner.EnumerateAppXamlFiles())
+        {
+            yield return (file.Label, File.ReadAllLines(file.FullPath));
+        }
+    }
+
+    private static AllowedXamlLiteral? AllowedXamlAt(string relativePath, string[] lines, int index)
+    {
+        foreach (var entry in XamlAllowList)
+        {
+            var fileMatches = entry.Path.EndsWith('/')
+                ? relativePath.StartsWith(entry.Path, StringComparison.OrdinalIgnoreCase)
+                : string.Equals(entry.Path, relativePath, StringComparison.OrdinalIgnoreCase);
+            if (!fileMatches) continue;
+
+            if (entry.Anchor is null) return entry;
+
+            for (var i = index; i >= 0 && i >= index - entry.Span; i--)
+            {
+                if (lines[i].Contains(entry.Anchor, StringComparison.Ordinal)) return entry;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The fifth-site clause. Item 3 rebound four status-colour sites and the app had five; this is
+    /// what makes a sixth impossible to add quietly, in the one language the other two fences do not
+    /// read.
+    /// </summary>
+    [Fact]
+    public void NoColourLiteralIsWrittenIntoAppXamlOutsideTheAllowList()
+    {
+        var offenders = new List<string>();
+        var allowed = 0;
+
+        foreach (var (relativePath, lines) in AppXaml())
+        {
+            for (var i = 0; i < lines.Length; i++)
+            {
+                var matches = XamlLiteralColour.Matches(lines[i]);
+                if (matches.Count == 0) continue;
+
+                if (AllowedXamlAt(relativePath, lines, i) is not null)
+                {
+                    allowed += matches.Count;
+                    continue;
+                }
+
+                var values = string.Join(", ", matches.Select(m => m.Value));
+                offenders.Add($"{relativePath}:{i + 1}  [{values}]  {lines[i].Trim()}");
+            }
+        }
+
+        // Offenders first, deliberately. The count assertions below are integrity checks on this
+        // clause; this one is the clause. A secondary failure that masks "MainWindow.xaml:1877 holds
+        // a brand hex" would hand the reader a number where a file and a line were available.
+        Assert.True(offenders.Count == 0,
+            "A colour literal written into App XAML is off the governed path: ThemeService.ApplyTo "
+            + "replaces brush INSTANCES in the resource dictionary, and a hex typed into markup is "
+            + "not one of them, so it survives every theme change unchanged. Bind a theme slot "
+            + "through {DynamicResource} instead — Style + DataTrigger when the value depends on "
+            + "state (spec §5.2, §5.3), which is what the status bar's live-process dot now does. "
+            + "An exemption is available, but only on the register's terms: a literal is permitted "
+            + "here only when an OPEN finding already owns it, and the entry cites that finding id "
+            + "with its reason inline. If no row owns it, the answer is a new row (F-087 and F-089 "
+            + "are both that), not a new entry:\n  "
+            + string.Join("\n  ", offenders));
+
+        Assert.True(allowed >= AllowedXamlLiteralFloor,
+            $"This clause matched only {allowed} allow-listed colour literals in App XAML. It should "
+            + $"be seeing {AllowedXamlLiteralCeiling} — a count this low means the XAML walk or the "
+            + "anchor lookback broke, not that the app stopped writing hexes into markup.");
+
+        Assert.True(allowed <= AllowedXamlLiteralCeiling,
+            $"An allow-listed region of App XAML now holds {allowed} colour literals, up from the "
+            + $"{AllowedXamlLiteralCeiling} measured on 2026-08-10. Every entry on this list is a "
+            + "region an OPEN register row has already counted, so a new literal inside one is a new "
+            + "defect wearing an old row's id — and the offender list above will never see it. "
+            + "Re-count, update the row with the new number and the direction, and move this "
+            + "constant. Do not move the constant alone.");
+    }
+
     [Fact]
     public void TheFenceSeesTheAppItClaimsTo()
     {
@@ -226,12 +447,12 @@ public class ThemedStatusColourTests
         Assert.True(files >= 60,
             $"The source walk found only {files} App .cs files. It should be seeing roughly 124 — "
             + "the repo-root walk is broken, not the app.");
-    }
 
-    // AboutWindow is NOT on the allow-list and does not need to be. Spec §7 puts its fixed logo
-    // hexes out of scope (invariant 2 — the 626 Labs duo is never split), but every one of them is
-    // declared in AboutWindow.xaml as <SolidColorBrush Color="#..."/> markup; AboutWindow.xaml.cs
-    // constructs no colour at all. This fence scans C# only, per §5.4's "constructed in App code",
-    // so it never looks at those hexes. An allow-list entry for them would be a claim this fence
-    // had considered and permitted something it structurally cannot see.
+        // Same backstop for the XAML clause's walk, off XamlStyleScanner's enumerator rather than a
+        // second copy of the same directory logic. The app ships 30 .xaml files outside obj/bin.
+        var xaml = AppXaml().Count();
+        Assert.True(xaml >= 20,
+            $"The XAML walk found only {xaml} App .xaml files. It should be seeing roughly 30 — "
+            + "the repo-root walk is broken, not the app.");
+    }
 }
