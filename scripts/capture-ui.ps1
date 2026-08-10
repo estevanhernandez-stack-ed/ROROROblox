@@ -31,6 +31,14 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
 
+# A typed exception for deny-list hits, so callers can discriminate "this route step is pointed at
+# something dangerous" from every other failure with `catch [DenyViolation]` instead of matching
+# substrings against exception text. A prose match breaks silently the moment the wording drifts;
+# a type cannot.
+class DenyViolation : System.Exception {
+    DenyViolation([string]$message) : base($message) { }
+}
+
 #region Win32 interop
 
 $win32 = @'
@@ -210,7 +218,7 @@ function Resolve-UiaElement {
     )
 
     if ($Name -and $script:DenyList -contains $Name) {
-        throw "DENIED: '$Name' is on the deny list. It stops Roblox clients, deletes accounts, or launches game sessions."
+        throw [DenyViolation]::new("DENIED: '$Name' is on the deny list. It stops Roblox clients, deletes accounts, or launches game sessions.")
     }
     if (-not $script:ControlTypes.ContainsKey($Type)) { throw "unknown control type '$Type'" }
     if ([string]::IsNullOrEmpty($Name) -eq [string]::IsNullOrEmpty($Aid)) {
@@ -277,7 +285,7 @@ function Resolve-UiaElement {
     # past it. Checking after resolution closes that regardless of which selector was used.
     $resolvedName = $hits[0].Current.Name
     if ($resolvedName -and $script:DenyList -contains $resolvedName) {
-        throw "DENIED: resolved to '$resolvedName', which is on the deny list. It stops Roblox clients, deletes accounts, or launches game sessions."
+        throw [DenyViolation]::new("DENIED: resolved to '$resolvedName', which is on the deny list. It stops Roblox clients, deletes accounts, or launches game sessions.")
     }
 
     return $hits[0]
@@ -379,7 +387,7 @@ function Wait-ForStable {
     if (-not $everResolved) {
         throw "capture target did not stabilise within ${TimeoutMs}ms (never resolved: $lastError)"
     }
-    throw "capture target did not stabilise within ${TimeoutMs}ms (resolved every poll but bounds never repeated; last bounds: $lastBoundsKey)"
+    throw "capture target did not stabilise within ${TimeoutMs}ms (resolved at least once but never settled; last bounds: $lastBoundsKey)"
 }
 
 function Open-Surface {
@@ -397,12 +405,15 @@ function Close-Surface {
         try {
             Invoke-Step -Scope $Scope -Step $step
         }
+        catch [DenyViolation] {
+            # A DENIED failure is different from an ordinary close failure: the route file resolved
+            # a close step onto a denied control, which means the route file itself is wrong in a
+            # dangerous direction, so that one must not be swallowed -- it stops the run.
+            throw
+        }
         catch {
-            # A close step failing must not abort the run; the next surface re-opens from a known
-            # state. A DENIED failure is different: the route file resolved a close step onto a
-            # denied control, which means the route file itself is wrong in a dangerous direction,
-            # so that one must not be swallowed -- it stops the run.
-            if ($_.Exception.Message -like 'DENIED:*') { throw }
+            # Every other close step failing must not abort the run; the next surface re-opens from
+            # a known state.
             $selector = if ($step.PSObject.Properties.Name -contains 'name') { "name='$($step.name)'" } else { "aid='$($step.aid)'" }
             Write-Warning "close step failed for surface $($Surface.id) ($($Surface.name)) [$($step.do) $selector]: $($_.Exception.Message)"
         }
@@ -424,7 +435,9 @@ function Invoke-VerifyMode {
     # a healthy app while going blind to the exact drift it exists to catch. Opening each surface
     # for real is only what a normal capture run already does; safety comes from the deny list
     # (checked twice inside Resolve-UiaElement, and again as the hard stop in Close-Surface),
-    # not from never clicking anything.
+    # not from never clicking anything. A DenyViolation is not an ordinary per-surface failure: it
+    # means a route resolved onto something that stops Roblox clients or deletes accounts, and it
+    # aborts the whole run rather than being recorded and continued past.
     $problems = New-Object System.Collections.Generic.List[string]
     $checked = 0
 
@@ -441,12 +454,15 @@ function Invoke-VerifyMode {
             Write-Host ("  OK   {0,-4} {1}  '{2}' ({3}x{4} at {5},{6})" -f `
                 $surface.id, $surface.name, $el.Current.Name, [int]$r.Width, [int]$r.Height, [int]$r.X, [int]$r.Y) -ForegroundColor Green
         }
+        catch [DenyViolation] {
+            throw
+        }
         catch {
             $problems.Add("$($surface.id) $($surface.name): $($_.Exception.Message)")
         }
         finally {
-            # Always attempt the close, even after a failed open, so one bad surface cannot leave a
-            # dialog on screen to poison every surface that runs after it.
+            # Always attempt the close, even after a failed open (deny violation included), so one
+            # bad surface cannot leave a dialog on screen to poison every surface that runs after it.
             Close-Surface -Scope $Scope -Surface $surface
         }
     }
