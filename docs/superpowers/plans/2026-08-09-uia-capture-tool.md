@@ -1208,16 +1208,26 @@ function Find-SecretsInText {
     return $found.ToArray()
 }
 
+# A typed exception, not a message prefix. Task 4 learned this the hard way: detecting an abort
+# condition with -like 'DENIED:*' couples a safety guard to human-readable prose, so a reworded
+# message silently disarms it. Catch sites discriminate with catch [SecretExposure].
+#
+# Declare this near the top of the script alongside DenyViolation. PowerShell resolves class names
+# in catch filters at parse time, so a class defined below its first catch site will not bind.
+class SecretExposure : System.Exception {
+    SecretExposure([string]$message) : base($message) { }
+}
+
 function Assert-NoSecrets {
     param([Parameter(Mandatory)]$Element, [Parameter(Mandatory)][string]$SurfaceName)
     $hits = Find-SecretsInText -Texts (Get-SubtreeText -Element $Element)
     if ($hits.Count -gt 0) {
         $kinds = ($hits | ForEach-Object { $_.Kind } | Sort-Object -Unique) -join ', '
-        throw @"
+        throw [SecretExposure]::new(@"
 ABORTED on surface '$SurfaceName': a credential is rendered on screen ($kinds).
 Nothing was written. Clear or mask the field, then re-run.
 A Discord webhook URL is a bearer credential: the token segment is the entire auth.
-"@
+"@)
     }
 }
 
@@ -1440,9 +1450,17 @@ function Invoke-CaptureRound {
             })
             Write-Host ("  ok   {0,-4} {1}" -f $surface.id, $surface.name) -ForegroundColor Green
         }
+        catch [SecretExposure] {
+            # A credential on screen aborts the whole run. Never demote this to one failed surface:
+            # the next surface would be captured while the same credential is still rendered.
+            throw
+        }
+        catch [DenyViolation] {
+            # A step resolving onto a denied control means the route file is wrong in a direction
+            # that stops Roblox clients or deletes accounts. Stop, do not drive 12 more surfaces.
+            throw
+        }
         catch {
-            # A secret hit must abort the whole run, not be recorded as one failed surface.
-            if ($_.Exception.Message -like 'ABORTED*') { throw }
             $results.Add([pscustomobject]@{
                 id = $surface.id; name = $surface.name; status = 'failed'
                 error = $_.Exception.Message
