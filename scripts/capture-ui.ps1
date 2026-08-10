@@ -357,19 +357,29 @@ function Wait-ForStable {
     # how a harness like this becomes flaky on a slower machine.
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     $last = $null
-    $lastError = 'never resolved'
+    $everResolved = $false
+    $lastBoundsKey = $null
+    $lastError = $null
     while ($sw.ElapsedMilliseconds -lt $TimeoutMs) {
         try {
             $el = Resolve-CaptureTarget -Scope $Scope -Spec $CaptureSpec
+            $everResolved = $true
             $r = $el.Current.BoundingRectangle
             $key = '{0},{1},{2},{3}' -f $r.X, $r.Y, $r.Width, $r.Height
-            if ($key -eq $last -and $r.Width -gt 0) { return $el }
+            $lastBoundsKey = $key
+            if ($key -eq $last -and $r.Width -gt 0 -and $r.Height -gt 0) { return $el }
             $last = $key
         }
         catch { $lastError = $_.Exception.Message; $last = $null }
         Start-Sleep -Milliseconds 250
     }
-    throw "capture target did not stabilise within ${TimeoutMs}ms (last: $lastError)"
+    # Two distinct timeout causes, and they mean different things: never-resolved points at the
+    # route file or the app not being at the state the caller assumed; resolved-but-never-settled
+    # points at something still animating (or genuinely jittering) on screen.
+    if (-not $everResolved) {
+        throw "capture target did not stabilise within ${TimeoutMs}ms (never resolved: $lastError)"
+    }
+    throw "capture target did not stabilise within ${TimeoutMs}ms (resolved every poll but bounds never repeated; last bounds: $lastBoundsKey)"
 }
 
 function Open-Surface {
@@ -384,9 +394,18 @@ function Close-Surface {
     param([Parameter(Mandatory)]$Scope, [Parameter(Mandatory)]$Surface)
     if ($Surface.PSObject.Properties.Name -notcontains 'close') { return }
     foreach ($step in $Surface.close) {
-        # A close step failing must not abort the run; the next surface re-opens from a known state.
-        try { Invoke-Step -Scope $Scope -Step $step }
-        catch { Write-Warning "close step failed for $($Surface.name): $($_.Exception.Message)" }
+        try {
+            Invoke-Step -Scope $Scope -Step $step
+        }
+        catch {
+            # A close step failing must not abort the run; the next surface re-opens from a known
+            # state. A DENIED failure is different: the route file resolved a close step onto a
+            # denied control, which means the route file itself is wrong in a dangerous direction,
+            # so that one must not be swallowed -- it stops the run.
+            if ($_.Exception.Message -like 'DENIED:*') { throw }
+            $selector = if ($step.PSObject.Properties.Name -contains 'name') { "name='$($step.name)'" } else { "aid='$($step.aid)'" }
+            Write-Warning "close step failed for surface $($Surface.id) ($($Surface.name)) [$($step.do) $selector]: $($_.Exception.Message)"
+        }
     }
 }
 
@@ -400,8 +419,12 @@ function Get-CapturedSurfaces {
 function Invoke-VerifyMode {
     param([Parameter(Mandatory)]$Scope, [Parameter(Mandatory)]$Routes)
 
-    # Read-only. Resolves every step and every capture target without invoking anything, so a copy
-    # change fails here instead of silently capturing the wrong window.
+    # Drives the UI. Static resolution cannot tell a renamed button from a closed dialog -- both
+    # throw "no element matched" against a Subtree search -- which made this mode exit non-zero on
+    # a healthy app while going blind to the exact drift it exists to catch. Opening each surface
+    # for real is only what a normal capture run already does; safety comes from the deny list
+    # (checked twice inside Resolve-UiaElement, and again as the hard stop in Close-Surface),
+    # not from never clicking anything.
     $problems = New-Object System.Collections.Generic.List[string]
     $checked = 0
 
@@ -410,33 +433,33 @@ function Invoke-VerifyMode {
             Write-Host ("  SKIP {0,-4} {1}  ({2})" -f $surface.id, $surface.name, $surface.skip)
             continue
         }
-        foreach ($key in 'open', 'close') {
-            if ($surface.PSObject.Properties.Name -notcontains $key) { continue }
-            foreach ($step in $surface.$key) {
-                $checked++
-                $name = if ($step.PSObject.Properties.Name -contains 'name') { $step.name } else { $null }
-                $aid  = if ($step.PSObject.Properties.Name -contains 'aid')  { $step.aid }  else { $null }
-                $within = if ($step.PSObject.Properties.Name -contains 'within') { $step.within } else { $null }
-                try {
-                    Resolve-UiaElement -Scope $Scope -Type $step.type -Name $name -Aid $aid `
-                                       -Verb $step.do -Within $within | Out-Null
-                }
-                catch {
-                    $problems.Add("$($surface.id) [$key] $($step.do): $($_.Exception.Message)")
-                }
-            }
+
+        $checked++
+        try {
+            $el = Open-Surface -Scope $Scope -Surface $surface
+            $r = $el.Current.BoundingRectangle
+            Write-Host ("  OK   {0,-4} {1}  '{2}' ({3}x{4} at {5},{6})" -f `
+                $surface.id, $surface.name, $el.Current.Name, [int]$r.Width, [int]$r.Height, [int]$r.X, [int]$r.Y) -ForegroundColor Green
+        }
+        catch {
+            $problems.Add("$($surface.id) $($surface.name): $($_.Exception.Message)")
+        }
+        finally {
+            # Always attempt the close, even after a failed open, so one bad surface cannot leave a
+            # dialog on screen to poison every surface that runs after it.
+            Close-Surface -Scope $Scope -Surface $surface
         }
     }
 
-    if ($checked -eq 0) { throw 'verify checked zero steps; the route file resolved to nothing' }
+    if ($checked -eq 0) { throw 'verify checked zero surfaces; the route file resolved to nothing' }
 
     if ($problems.Count -gt 0) {
         Write-Host ''
         $problems | ForEach-Object { Write-Host "  FAIL $_" -ForegroundColor Red }
-        Write-Host "$($problems.Count) of $checked steps failed to resolve." -ForegroundColor Red
+        Write-Host "$($problems.Count) of $checked surfaces failed." -ForegroundColor Red
         return $false
     }
-    Write-Host "All $checked steps resolved." -ForegroundColor Green
+    Write-Host "All $checked surfaces opened and closed cleanly." -ForegroundColor Green
     return $true
 }
 
