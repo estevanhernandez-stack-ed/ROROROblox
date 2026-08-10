@@ -1,16 +1,179 @@
 {
   "app": "RoRoRo",
   "processName": "ROROROblox.App",
-  "_note": "Authored from a -DumpUia tree of the main window. Almost nothing in this app carries an AutomationId, so routes invoke by visible NAME — which means a copy change to a button silently breaks a route. Find-UiaElement matches Name OR AutomationId, so add ids and switch these over if routes start missing. Surfaces reachable only through a nested picker (library) or a non-Invoke control (tray menu, the Settings nav rail, the Tools menu) are captured in -Watch mode instead; they are listed in the checklist, not here.",
-  "_wave3": "Glow wave 3 collapsed the main window's six nav buttons to Settings + a Tools menu, which deleted five routes from this file. About, History, Diagnostics, Games and Plugins are now MenuItems inside a popup, and a popup is NOT in the main window's automation subtree even while it is open — a driver walking down from the window root will never find them. They are -Watch captures now, listed in docs/ui-capture-checklist.md. The Settings route survives, but its invoke name changed: the button read '⚙ Settings' and now reads 'Settings' (F-012 dropped the glyph).",
-  "routes": [
+  "_note": "Every step names a control TYPE as well as a name or AutomationId, and the resolver additionally requires the UIA pattern the verb needs. This is not decoration: five elements in this app are named 'Settings' (a Window, a TitleBar, two Texts and the Button), and a name-only FindFirst returns the Window, which carries no InvokePattern. Steps that resolve to zero or to more than one element are errors, never a silent first-match.",
+  "deny": [
+    "Stop all Roblox instances",
+    "Remove",
+    "Launch As",
+    "Launch multiple",
+    "Squad Launch",
+    "Stop",
+    "Recycle",
+    "Stop all"
+  ],
+  "surfaces": [
     {
-      "surface": "03-preferences",
-      "invoke": [
-        "Settings"
+      "id": "01",
+      "name": "main-window",
+      "capture": { "type": "Window", "name": "RoRoRo" }
+    },
+    {
+      "id": "02",
+      "name": "main-window-empty",
+      "skip": "Requires zero saved accounts; the live profile has eight. Documented gap, see the design spec section 11."
+    },
+    {
+      "id": "03",
+      "name": "preferences",
+      "open": [
+        { "do": "invoke", "name": "Settings", "type": "Button" },
+        { "do": "select", "name": "Startup", "type": "ListItem", "within": "SettingsNav" }
       ],
+      "capture": { "type": "Window", "name": "Settings" },
+      "close": [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
+    },
+    {
+      "id": "03a",
+      "name": "preferences-accounts",
+      "open": [
+        { "do": "invoke", "name": "Settings", "type": "Button" },
+        { "do": "select", "name": "Accounts", "type": "ListItem", "within": "SettingsNav" }
+      ],
+      "capture": { "type": "Window", "name": "Settings" },
+      "close": [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
+    },
+    {
+      "id": "03b",
+      "name": "preferences-alerts",
+      "open": [
+        { "do": "invoke", "name": "Settings", "type": "Button" },
+        { "do": "select", "name": "Alerts & memory", "type": "ListItem", "within": "SettingsNav" }
+      ],
+      "capture": { "type": "Window", "name": "Settings" },
+      "close": [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
+    },
+    {
+      "id": "03c",
+      "name": "preferences-discord",
+      "open": [
+        { "do": "invoke", "name": "Settings", "type": "Button" },
+        { "do": "select", "name": "Discord", "type": "ListItem", "within": "SettingsNav" }
+      ],
+      "capture": { "type": "Window", "name": "Settings" },
+      "close": [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
+    },
+    {
+      "id": "03d",
+      "name": "preferences-appearance",
+      "open": [
+        { "do": "invoke", "name": "Settings", "type": "Button" },
+        { "do": "select", "name": "Appearance", "type": "ListItem", "within": "SettingsNav" }
+      ],
+      "capture": { "type": "Window", "name": "Settings" },
+      "close": [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
+    },
+    {
+      "id": "05",
+      "name": "about",
+      "open": [
+        { "do": "expand", "name": "Tools", "type": "Button" },
+        { "do": "invoke", "name": "About", "type": "MenuItem" }
+      ],
+      "capture": { "type": "Window", "name": "About RoRoRo" },
+      "close": [ { "do": "close-window", "name": "About RoRoRo", "type": "Window" } ]
+    },
+    {
+      "id": "06",
+      "name": "history",
+      "open": [
+        { "do": "expand", "name": "Tools", "type": "Button" },
+        { "do": "invoke", "name": "History", "type": "MenuItem" }
+      ],
+      "capture": { "type": "Window", "name": "History" },
+      "close": [ { "do": "close-window", "name": "History", "type": "Window" } ]
+    },
+    {
+      "id": "07",
+      "name": "diagnostics",
+      "open": [
+        { "do": "expand", "name": "Tools", "type": "Button" },
+        { "do": "invoke", "name": "Diagnostics", "type": "MenuItem" }
+      ],
+      "capture": { "type": "Window", "name": "Diagnostics" },
+      "close": [ { "do": "close-window", "name": "Diagnostics", "type": "Window" } ]
+    },
+    {
+      "id": "08",
+      "name": "games",
+      "open": [
+        { "do": "expand", "name": "Tools", "type": "Button" },
+        { "do": "invoke", "name": "Games", "type": "MenuItem" }
+      ],
+      "capture": { "type": "Window", "name": "Games" },
+      "close": [ { "do": "close-window", "name": "Games", "type": "Window" } ]
+    },
+    {
+      "id": "09",
+      "name": "plugins",
+      "open": [
+        { "do": "expand", "name": "Tools", "type": "Button" },
+        { "do": "invoke", "name": "Plugins", "type": "MenuItem" }
+      ],
+      "capture": { "type": "Window", "name": "Plugins" },
+      "close": [ { "do": "close-window", "name": "Plugins", "type": "Window" } ]
+    },
+    {
+      "id": "10",
+      "name": "theme-builder",
+      "open": [
+        { "do": "invoke", "name": "Settings", "type": "Button" },
+        { "do": "select", "name": "Appearance", "type": "ListItem", "within": "SettingsNav" },
+        { "do": "invoke", "aid": "BuildThemeButton", "type": "Button" }
+      ],
+      "capture": { "type": "Window", "name": "Build a theme" },
       "close": [
-        "Close"
+        { "do": "close-window", "name": "Build a theme", "type": "Window" },
+        { "do": "close-window", "name": "Settings", "type": "Window" }
+      ]
+    },
+    {
+      "id": "11",
+      "name": "tray-menu",
+      "skip": "Confirmed reachable, not routable. Right-clicking the tray icon (default-hidden behind Explorer's 'Show Hidden Icons' overflow) opens a real WPF ContextMenu as its own top-level Popup HWND owned by this process -- proven live via UI Automation (Popup element, pid matched ROROROblox.App) containing 8 MenuItems (Multi-Instance toggle, Streamer mode, Stop all Roblox instances, Open ROROROblox, Settings..., History..., Diagnostics..., Plugins..., Open log folder, Quit). Not converted: reaching it needs a right-click on an element inside Explorer's Shell_TrayWnd/overflow-flyout tree (a different process, and only reachable after invoking 'Show Hidden Icons'), which needs raw mouse-coordinate simulation. That is outside the route schema's verb vocabulary (invoke/select/expand/close-window) and Resolve-UiaElement's single-scope ($appRoot) resolution model. Converting this is a resolver-contract change, not a route addition."
+    },
+    {
+      "id": "20",
+      "name": "welcome",
+      "open": [
+        { "do": "expand", "name": "Tools", "type": "Button" },
+        { "do": "invoke", "name": "Welcome tour", "type": "MenuItem" }
+      ],
+      "capture": { "type": "Window", "name": "Welcome to RoRoRo" },
+      "close": [ { "do": "close-window", "name": "Welcome to RoRoRo", "type": "Window" } ]
+    },
+    {
+      "id": "21",
+      "name": "squad-launch",
+      "skip": "Confirmed via source, not converted. MainViewModel.OpenSquadLaunchAsync (MainViewModel.cs:2077-2097) shows the button opens SquadLaunchWindow.ShowDialog() -- a target-picker dialog -- and only calls SquadLaunchAsync (which launches Roblox clients) if the dialog returns true with a selected target. So the click itself is a dialog open, not a direct launch. Despite that, it stays on the deny list and skipped: deny-list membership is a compiled contract asserted by UiRoutesSchemaTests.NoRouteTargetsADeniedName, which pins both an Assert.Contains per entry and a hardcoded Assert.Equal on the list's total count. Removing 'Squad Launch' from deny therefore means deliberately editing that test, not just this route file -- outside this task's scope to do unilaterally."
+    },
+    {
+      "id": "22",
+      "name": "join-by-link",
+      "skip": "Confirmed reachable, not routable. MainWindow.xaml.cs:165 (OnGameComboBoxSelectionChanged) shows the trigger is selecting the '(Paste a link...)' sentinel entry in a per-account Game ComboBox (MainWindow.xaml:758-763) -- not a button. That ComboBox carries no x:Name or AutomationId and is instantiated once per saved account row, so every row's ComboBox is structurally identical and unaddressable by the route schema's Type+Name/Aid contract without an ancestor anchor, and there is no such anchor either (rows carry no distinguishing AutomationId). The only selector left would be a specific account's display name, which is live per-profile data (the route file is shared/committed) and would break on any profile with a different account list or zero accounts (the same class of gap already documented for surface 02)."
+    },
+    {
+      "id": "23",
+      "name": "export-accounts",
+      "open": [
+        { "do": "invoke", "name": "Settings", "type": "Button" },
+        { "do": "select", "name": "Accounts", "type": "ListItem", "within": "SettingsNav" },
+        { "do": "invoke", "name": "Export accounts…", "type": "Button" }
+      ],
+      "capture": { "type": "Window", "name": "Export accounts" },
+      "close": [
+        { "do": "close-window", "name": "Export accounts", "type": "Window" },
+        { "do": "close-window", "name": "Settings", "type": "Window" }
       ]
     }
   ]

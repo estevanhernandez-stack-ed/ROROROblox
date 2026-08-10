@@ -1,5 +1,19 @@
 # Capture checklist — glow campaign: Settings + navigation
 
+> **Corrected 2026-08-09 by measurement against the running app.** Three constraints below are
+> false and the capture tool does not honour them.
+>
+> - "A popup is not in the main window's automation subtree even while open" is false. All eight
+>   Tools items resolve from the main window. The five Tools destinations are routed, not watched.
+> - "The rail's pages cannot be routed" is false. They expose `SelectionItemPattern`, and
+>   `Select()` routes them. The claim conflated "carries no InvokePattern" with "cannot be routed".
+> - The `flatline` round cannot run: the app ships `brand`, `midnight` and `magenta-heat`, and
+>   `flatline` does not exist. The tool enumerates themes at runtime, so the round appears when the
+>   theme does.
+>
+> The webhook warning below stands unchanged. `scripts/capture-ui.ps1` also refuses mechanically,
+> but UIA text is not the rendered pixels, so the warning is backup rather than obsolete.
+
 Scoped campaign. In-scope surfaces are the ones the goal names; neighbors are captured as
 context for the consistency lens, not as fix targets. Evidence lands in `docs/ui-evidence/`
 (gitignored) as `NN-<surface>--<theme>.png`.
