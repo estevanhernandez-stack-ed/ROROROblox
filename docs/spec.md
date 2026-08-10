@@ -441,6 +441,28 @@ each other. `WhiteBrush` keeps all four states at distinct values in every theme
 | idle | `#989898` | 4.98:1 |
 | limited | `#6E6E6E` | 2.81:1 |
 
+> **Corrected after the build, by measurement.** The rendered gate
+> (`TriggeredStatusColourGateTests`) reproduces every value in the table above exactly, and found two
+> things wrong with the prose around it.
+>
+> **The expired row is 9.68:1 against a surface it never shows.** That figure is `#D4D4D4` against
+> `RowBgBrush`, and the column header says "vs the row it sits on". But `StatusDot` returns `yellow`
+> if and only if `SessionExpired` ([`AccountSummary.cs:687-688`](../src/ROROROblox.App/ViewModels/AccountSummary.cs#L687-L688)),
+> and `SessionExpired` is exactly the condition under which the row's own trigger repaints it to
+> `RowExpiredBgBrush` ([`MainWindow.xaml:229-231`](../src/ROROROblox.App/MainWindow.xaml#L229-L231)).
+> The expired dot is never seen against `RowBg`. Measured against the surface that state actually
+> renders, it is **7.33:1** under flatline — 7.13 brand, 6.58 midnight, 7.13 magenta-heat. Lower than
+> published, still comfortable, and the argument the row is making is unaffected. The number was
+> arithmetically correct and described a state that cannot occur, which is the same defect shape as
+> the three register rows this cycle existed to reconcile. The gate now prints both figures on every
+> run rather than quietly replacing one with the other.
+>
+> **Flatline is not the hard case for dot separation, and nobody had checked.** The closest pair of
+> dot values is **1.19:1 in midnight** and **1.29:1 in brand**, against flatline's 1.36:1. The
+> achromatic theme separates its four states better than either chromatic theme, because it was
+> designed against this constraint and they were not. §5.3 reasons about flatline throughout as
+> though it were the worst case; it is the best one.
+
 **Cost, named rather than buried:** under brand the active dot shifts from green `#4FE08C` to white
 `#FFFFFF`. That is a visible change to the default theme, not just to flatline, and it is the
 correct trade — a status colour the theme cannot reach is the actual bug. It wants eyes on the brand
