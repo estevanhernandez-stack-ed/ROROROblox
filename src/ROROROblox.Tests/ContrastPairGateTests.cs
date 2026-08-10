@@ -32,6 +32,17 @@ namespace ROROROblox.Tests;
 /// setter, a DynamicResource that fails to resolve at runtime, alpha compositing. That is Phase 2's
 /// job — see the spec. A green run here does not mean "contrast is verified."
 /// </para>
+/// <para>
+/// THEME COVERAGE, stated plainly: this gate runs against the three themes <see cref="ThemeStore"/>
+/// actually ships — <c>brand</c>, <c>midnight</c>, <c>magenta-heat</c>. "Flatline" — the adversarial
+/// one-background/one-text theme the design-review campaign's findings repeatedly cite as a second
+/// measurement column — is NOT covered here, because it is not a shipped theme. It exists only in
+/// campaign documentation and was never committed as a <see cref="ThemeStore"/> entry. That gap
+/// matters concretely: several register findings (F-050 among them) argue from ratios measured
+/// under flatline, and this gate cannot reproduce those numbers or re-check them. A pair that passes
+/// every assertion below could still collapse under flatline — passing here is not the same claim as
+/// passing every theme a design reviewer might reach for.
+/// </para>
 /// </summary>
 public class ContrastPairGateTests
 {
@@ -124,7 +135,7 @@ public class ContrastPairGateTests
         catch (IOException) { }
 
         Assert.True(themes.Count >= 3,
-            $"Expected at least the 3 built-in themes (brand, magenta-heat, flatline); got {themes.Count}.");
+            $"Expected at least the 3 built-in themes (brand, midnight, magenta-heat); got {themes.Count}.");
 
         return themes;
     }
