@@ -141,8 +141,15 @@ function Test-BlankFrame {
     )
     $counts = @{}
     $total = 0
-    for ($y = 0; $y -lt $Bmp.Height; $y += 16) {
-        for ($x = 0; $x -lt $Bmp.Width; $x += 16) {
+    # A fixed stride silently returns "blank" for anything smaller than the stride in both
+    # dimensions, because only the (0,0) sample gets taken: $total=1, $max=1, ratio 1.0 regardless
+    # of content. Get-RegionBitmap is the fallback capture path for popups and menus, which can be
+    # exactly that small, so the stride adapts to bitmap size instead: target ~32 samples per
+    # axis, never below 1, so every pixel of a sub-stride bitmap gets examined.
+    $strideX = [math]::Max(1, [int][math]::Floor($Bmp.Width / 32))
+    $strideY = [math]::Max(1, [int][math]::Floor($Bmp.Height / 32))
+    for ($y = 0; $y -lt $Bmp.Height; $y += $strideY) {
+        for ($x = 0; $x -lt $Bmp.Width; $x += $strideX) {
             $argb = $Bmp.GetPixel($x, $y).ToArgb()
             if ($counts.ContainsKey($argb)) { $counts[$argb]++ } else { $counts[$argb] = 1 }
             $total++
@@ -181,22 +188,46 @@ function Invoke-SelfTest {
     Assert-That (-not (Test-BlankFrame -Bmp $varied)) 'gradient bitmap should not be detected as blank'
     $varied.Dispose()
 
-    # A bitmap that is 94% one colour is under the threshold; 97% is over it.
+    # A bitmap that is 94% one colour is under the threshold; 97% is over it. Derive the sample
+    # count from the same adaptive-stride formula Test-BlankFrame uses, rather than hardcoding 16:
+    # for a 64x64 bitmap that is stride 2 (floor(64/32)), so 32x32 = 1024 samples. At that
+    # resolution 3% is ~31 sampled pixels -- genuinely expressible, and genuinely distinct between
+    # the two cases -- instead of both collapsing to the same single repainted pixel (round 1's
+    # bug) or the 97% case collapsing to 100% black (round 1's fix, still a granularity trap).
     foreach ($case in @(@{ Pct = 0.94; Blank = $false }, @{ Pct = 0.97; Blank = $true })) {
-        $bmp = New-Object System.Drawing.Bitmap(64, 64)
+        $w = 64; $h = 64
+        $bmp = New-Object System.Drawing.Bitmap($w, $h)
         $g2 = [System.Drawing.Graphics]::FromImage($bmp)
         $g2.Clear([System.Drawing.Color]::Black); $g2.Dispose()
-        # Sampling strides by 16, so 4x4 = 16 sampled pixels. Repaint enough to cross the line.
-        # Ceiling(0.94) and Ceiling(0.97) both round to 1 of 16 at this granularity, producing
-        # byte-identical bitmaps for both cases -- Round is the fix; it's the closest integer
-        # sample count to each percentage instead of always rounding away from the black count.
-        $repaint = [math]::Round((1 - $case.Pct) * 16, [MidpointRounding]::AwayFromZero)
+
+        $strideX = [math]::Max(1, [int][math]::Floor($w / 32))
+        $strideY = [math]::Max(1, [int][math]::Floor($h / 32))
+        $samplesPerRow = [math]::Ceiling($w / $strideX)
+        $samples = $samplesPerRow * [math]::Ceiling($h / $strideY)
+
+        $repaint = [math]::Round((1 - $case.Pct) * $samples, [MidpointRounding]::AwayFromZero)
         for ($i = 0; $i -lt $repaint; $i++) {
-            $bmp.SetPixel(($i % 4) * 16, [math]::Floor($i / 4) * 16, [System.Drawing.Color]::Red)
+            $sx = ($i % $samplesPerRow) * $strideX
+            $sy = [math]::Floor($i / $samplesPerRow) * $strideY
+            $bmp.SetPixel($sx, $sy, [System.Drawing.Color]::Red)
         }
         Assert-That ((Test-BlankFrame -Bmp $bmp) -eq $case.Blank) "blank threshold wrong at $($case.Pct)"
         $bmp.Dispose()
     }
+
+    # Regression case: a fixed 16px stride only ever samples (0,0) for a bitmap smaller than the
+    # stride in both dimensions, so it reports "blank" unconditionally regardless of content.
+    # Get-RegionBitmap is the fallback path for popups and menus, which can be this small, so an
+    # 8x8 bitmap that is half black / half red -- nowhere near uniform -- must NOT be blank.
+    $small = New-Object System.Drawing.Bitmap(8, 8)
+    for ($y = 0; $y -lt 8; $y++) {
+        for ($x = 0; $x -lt 8; $x++) {
+            $color = if ($x -lt 4) { [System.Drawing.Color]::Black } else { [System.Drawing.Color]::Red }
+            $small.SetPixel($x, $y, $color)
+        }
+    }
+    Assert-That (-not (Test-BlankFrame -Bmp $small)) 'half-black/half-red 8x8 bitmap should not be detected as blank (sub-stride regression)'
+    $small.Dispose()
 
     if ($failures.Count -gt 0) {
         $failures | ForEach-Object { Write-Host "FAIL: $_" -ForegroundColor Red }
