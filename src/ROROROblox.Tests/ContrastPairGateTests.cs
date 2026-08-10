@@ -54,20 +54,36 @@ public class ContrastPairGateTests
     private const int MinimumPairs = 6;
 
     private static readonly Regex ElementTag = new(@"<\s*[A-Za-z:]+\b[^>]*?>", RegexOptions.Singleline | RegexOptions.Compiled);
-    private static readonly Regex BackgroundToken = new(@"Background\s*=\s*""\{DynamicResource (\w+)\}""", RegexOptions.Compiled);
-    private static readonly Regex ForegroundToken = new(@"Foreground\s*=\s*""\{DynamicResource (\w+)\}""", RegexOptions.Compiled);
+
+    // Left-boundary lookbehind: without it, "Background=" also matches inside "SelectionBackground="
+    // and "Foreground=" inside "PlaceholderForeground=", and Regex.Match returns the FIRST hit in the
+    // tag — so a WPF-UI PlaceholderForeground attribute would silently steal the match and the gate
+    // would measure the wrong token pair without any indication it had done so. Nothing in the app
+    // uses those attributes today, but this is the same shape as a bug this repo has already shipped.
+    private static readonly Regex BackgroundToken = new(@"(?<![A-Za-z.])Background\s*=\s*""\{DynamicResource (\w+)\}""", RegexOptions.Compiled);
+    private static readonly Regex ForegroundToken = new(@"(?<![A-Za-z.])Foreground\s*=\s*""\{DynamicResource (\w+)\}""", RegexOptions.Compiled);
 
     /// <summary>
-    /// A pair that is allowed to fail, and the register row that says why. Each entry is contrast
+    /// A pair that is allowed to fail AA, and the register row that says why. Each entry is contrast
     /// DEBT, not permission — <see cref="NoExemptionOutlivesItsFinding"/> deletes it for you when the
-    /// finding closes.
+    /// finding closes. <c>MinimumRatio</c> is a second, lower floor: the exemption forgives today's
+    /// known-bad ratio, it does not forgive that ratio getting worse. A pair with no recorded floor
+    /// would be watched by nothing at all.
     /// </summary>
-    private static readonly (string Fill, string Text, string Finding)[] Exemptions =
+    private static readonly (string Fill, string Text, string Finding, double MinimumRatio)[] Exemptions =
     [
-        // F-050: white on magenta measures 3.79:1 brand / 2.99:1 flatline, and the best
-        // theme-derived foreground reaches only 4.40:1 — under AA even after the obvious fix.
-        // 8 elements use this pair. Open at the time of writing.
-        ("MagentaBrush", "WhiteBrush", "F-050"),
+        // F-050: white on magenta. Measured 2026-08-09 through this same resolution path
+        // (ContrastGuard.RatioBetween on ResolveTheme output, not hand arithmetic): 3.79:1 brand,
+        // 4.16:1 midnight, 3.29:1 magenta-heat. The best theme-derived foreground still only reaches
+        // 4.40:1 under brand — under AA even after the obvious fix, which is why this is exempted
+        // rather than fixed outright. 8 elements use this pair. Open at the time of writing.
+        //
+        // MinimumRatio 3.20 sits a little below the worst measured theme (magenta-heat, 3.2858),
+        // leaving ~0.09 of headroom for measurement noise while still catching a real regression —
+        // the scenario this exemption exists to guard against is brand's Magenta getting retuned
+        // darker and white-on-magenta sliding from 3.79 toward 2-something while this gate stays
+        // green. A floor this close to the worst measured value cannot let that happen silently.
+        ("MagentaBrush", "WhiteBrush", "F-050", 3.20),
     ];
 
     private sealed record Pair(string Fill, string Text, int Sites);
@@ -111,7 +127,17 @@ public class ContrastPairGateTests
             if (key is string name && resources[key] is SolidColorBrush brush)
             {
                 var c = brush.Color;
-                resolved[name] = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+
+                // Preserve alpha. Dropping it here would silently re-introduce, inside this gate's
+                // own resolution step, the exact defect ContrastGuard.Composite's doc already
+                // describes fixing: a 12%-alpha white hairline (#20FFFFFF) would format as opaque
+                // #FFFFFF and measure 16.66:1 against brand navy when it really lands at 1.46:1. All
+                // three built-ins ship 6-digit (fully opaque) hex today, so this is not live against
+                // anything currently shipped — but Phase 2 will copy this formatter, and
+                // ContrastGuard.TryParse already accepts the #AARRGGBB form this produces.
+                resolved[name] = c.A == 255
+                    ? $"#{c.R:X2}{c.G:X2}{c.B:X2}"
+                    : $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
             }
         }
 
@@ -159,6 +185,13 @@ public class ContrastPairGateTests
     public void EveryDeclaredPairClearsAaUnderEveryTheme()
     {
         var pairs = ScanPairs(out _);
+
+        // A filtered run of the loop below reports pass on a dead scan — the floor that catches a
+        // broken scan otherwise lives only in the sibling TheScanSeesTheAppItClaimsTo. Restated here
+        // so this test cannot report green on nothing by itself.
+        Assert.True(pairs.Count >= MinimumPairs,
+            $"Found only {pairs.Count} distinct token pairs; expected at least {MinimumPairs} (9 measured 2026-08-09).");
+
         var failures = new List<string>();
 
         foreach (var theme in BuiltInThemes())
@@ -167,18 +200,42 @@ public class ContrastPairGateTests
 
             foreach (var pair in pairs)
             {
-                if (Exemptions.Any(e => e.Fill == pair.Fill && e.Text == pair.Text)) continue;
-
                 Assert.True(slots.ContainsKey(pair.Fill), $"Theme '{theme.Id}' resolved no brush for {pair.Fill}.");
                 Assert.True(slots.ContainsKey(pair.Text), $"Theme '{theme.Id}' resolved no brush for {pair.Text}.");
 
+                // Computed unconditionally, including for an exempted pair below — an exemption
+                // forgives a known ratio, it does not excuse the gate from measuring it.
                 var ratio = ContrastGuard.RatioBetween(slots[pair.Fill], slots[pair.Text]);
 
-                // A null means a resolved brush would not parse. That is a real defect, not a
-                // reason to skip the pair — coercing it to a passing number is how a gate goes blind.
+                // A null means a resolved brush would not parse. Under the pre-fix formatter (see
+                // ResolveTheme) this branch was unreachable: dropping alpha meant every string this
+                // method could produce was an unconditional 6-digit hex built from valid byte
+                // components, which ContrastGuard.TryParse always accepts — so this assertion could
+                // never actually fire, no matter what a theme shipped. Preserving alpha routes
+                // translucent brushes through TryParse's #AARRGGBB branch for the first time, so this
+                // is now the seam that would catch a genuinely malformed resolved value rather than a
+                // check that could not have failed either way.
                 Assert.True(ratio.HasValue,
                     $"Theme '{theme.Id}': could not compute a ratio for {pair.Text} on {pair.Fill} "
                     + $"({slots[pair.Fill]} / {slots[pair.Text]}).");
+
+                var exemption = Array.Find(Exemptions, e => e.Fill == pair.Fill && e.Text == pair.Text);
+                if (exemption.Fill is not null)
+                {
+                    // Exempted DEBT, not exempted from measurement. The exemption forgives today's
+                    // known-bad ratio down to its recorded floor; it does not forgive that ratio
+                    // sliding further from AA unnoticed. This is the branch I-1 exists for.
+                    if (ratio!.Value < exemption.MinimumRatio)
+                    {
+                        failures.Add($"{theme.Id}: EXEMPTED PAIR GOT WORSE — {pair.Text} on {pair.Fill} "
+                            + $"({exemption.Finding}) = {ratio.Value:F2}:1, below its recorded floor of "
+                            + $"{exemption.MinimumRatio:F2}:1 ({pair.Sites} site(s)). This is exempted "
+                            + "debt deepening, not a newly discovered violation — re-measure and either "
+                            + "tighten the floor to match reality or fix the pair.");
+                    }
+
+                    continue;
+                }
 
                 if (ratio!.Value < AaThreshold)
                 {
@@ -189,7 +246,8 @@ public class ContrastPairGateTests
         }
 
         Assert.True(failures.Count == 0,
-            "Colour pairs below WCAG AA. Fix the pair, or add an exemption naming the register row "
+            "Colour pairs below WCAG AA (or an exempted pair's debt got worse — see EXEMPTED PAIR "
+            + "GOT WORSE lines). Fix the pair, or add/adjust an exemption naming the register row "
             + "that justifies it:\n  " + string.Join("\n  ", failures));
     }
 
@@ -213,7 +271,7 @@ public class ContrastPairGateTests
         }
 
         var stale = new List<string>();
-        foreach (var (fill, text, finding) in Exemptions)
+        foreach (var (fill, text, finding, _) in Exemptions)
         {
             Assert.True(statuses.ContainsKey(finding),
                 $"Exemption for {text} on {fill} names {finding}, which is not a row in the register.");
