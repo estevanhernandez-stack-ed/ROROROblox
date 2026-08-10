@@ -422,3 +422,256 @@ re-litigate the crux analysis or the cut list, consistent with the profile's zer
 habit when the analysis is clean.
 
 **Handoff:** `/prd`.
+
+## /prd — flatline requirements (2026-08-10)
+
+Zero deepening rounds, consistent with the profile's habit when the upstream analysis is clean. The
+`/scope` crux was already resolved analytically, so there was nothing to sharpen by asking; the value
+this step added came from recon instead.
+
+**What changed versus the scope doc.** Scope described the redundancy work as "enumerate the affected
+surfaces, the register's colour-only findings are the starting list." Reading the tree first turned up
+a category the register does not cover and scope did not anticipate: two WPF converters hardcode their
+status colours in C#. `StatusDotBrushConverter` holds four RGB literals and `IdleChipBrushConverter`
+holds two (`Converters.cs:169-218`). `ThemeService.ApplyTo` cannot reach either. Under flatline they
+paint brand green, amber and magenta onto a monochrome field, which reads as half-painted rather than
+flat, and lands squarely against the "won't ship a broken-looking tile" bar. That became Epic 3 and it
+sequences AHEAD of the redundancy work in the build order, because a status dot still glowing brand
+green makes every redundancy screenshot useless as evidence.
+
+**Second find, smaller but load-bearing.** Two test files carry flatline claims in prose that go false
+on merge. `ContrastPairGateTests`' class doc says flatline "was never committed as a ThemeStore entry"
+and the gate "cannot reproduce those numbers" (`:36-45`); `MutedTextFenceTests` cites "1.00:1 under
+flatline" (`:10-13`), a number that belongs to `flatline-lab` after this cycle. Scope's register
+reconciliation covered three rows in a markdown table and missed both. Same defect class, different
+file type. Folded into Epic 5.
+
+**A scope worry closed rather than carried.** Scope flagged that a one-accent theme might trip the
+edge-remediation prompt on first selection, calling it a bad first impression. It cannot:
+`EdgeRemediation.Decide` returns `DeriveSilently` for any built-in (`EdgeRemediation.cs:45`). Kept as
+an acceptance criterion anyway, phrased as verify-on-screen rather than verify-on-paper, because
+"the code says it can't happen" is how it happens.
+
+**New non-goal, surfaced here.** No theme-conditional UI. No `if (theme == flatline)` branch anywhere.
+A redundancy that only appears in one theme is a costume, and it would make the four capture rounds
+disagree with each other by design. This is the constraint most likely to be violated under build
+pressure, which is why it is a numbered non-goal rather than a note.
+
+**Scope guard.** Two temptations named and pushed to "with more time": extending the contrast gate to
+cover converter-supplied brushes (Phase 2 gate work with its own design), and a theme-level "this
+theme is monochrome" declaration (real, premature before one such theme exists).
+
+**Left open deliberately.** Display name still defaults to "Flatline" with a recommendation to keep
+it; scope routed the call here and the id stays `flatline` regardless, so it blocks nothing. Where
+Story 1.3's one-sentence description lives is a genuine `/spec` fork, constrained by the codebase's
+stated invariant that the theme contract does not grow.
+
+**Session logging:** appended directly to the Cart session log rather than through the runtime, which
+is not wired in this environment.
+
+**Handoff:** `/spec`.
+
+## /spec — flatline technical blueprint (2026-08-10)
+
+Zero deepening rounds, fifth consecutive translation command with none. This one earned it
+differently from the others though: the value did not come from asking, it came from **measuring**.
+The PRD routed two genuine forks and one "resolved by measurement" item here, and all three were
+settled against the running code rather than by argument.
+
+**The method is the point, and it is written into the spec.** Every ratio in `docs/spec.md` was
+produced by resolving candidate palettes through the app's own `ThemeService.ApplyTo` into a real
+`ResourceDictionary` and measuring with `ContrastGuard.RatioBetween`, against the pair list scanned
+live out of the XAML. That ran inside the test project as a temporary xUnit fact, deleted after the
+numbers were recorded; the tree is clean. Writing a spec full of hand arithmetic for a cycle whose
+whole subject is three findings that quote unverifiable numbers would have been repeating the defect
+while describing it.
+
+The method validated itself before being trusted: it reproduces brand's 3.79:1, midnight's 4.16:1
+and magenta-heat's 3.29:1 on F-050's pair, F-031's 1.26:1, F-032's 2.42:1, and the
+`#1F3149 -> #5E6B7C` derived edge that `Theme.cs:52` records. Six numbers, three files, all matched
+before a single new value was proposed.
+
+**Fork 1 — the description sentence. Resolved: App-layer lookup, no eleventh slot.** The codebase
+argues its own case here; `ContrastGuard.cs:15-23` already explains why an eleventh `Theme` slot
+breaks every user theme on disk. A tooltip was rejected on two grounds: hover is not "focus", and it
+risks the `Id = <id>,` substring the capture tool reads out of the picker's UIA name, which Epic 6
+depends on.
+
+**Fork 2 — the converters. Resolved: delete both, use Style + DataTrigger.** The obvious answer,
+"teach the converter to read `Application.Current.Resources`", is wrong and quietly so.
+`IValueConverter.Convert` re-runs on binding-source change, not on resource-dictionary change, and
+`ApplySlot` *replaces* the brush instance rather than mutating it, so a converter-fetched brush goes
+stale the moment the theme changes. It would have looked correct in review and failed the live
+repaint Story 1.1 requires. `{DynamicResource}` inside a `DataTrigger` setter is the fix, and
+`MainWindow.xaml` already uses that idiom twice.
+
+**A design call scope did not anticipate: flatline is a ramp, not a flat surface.** Scope's
+implementation note had `Bg`, `Navy` and `RowBg` collapsing toward one value. That would reproduce
+F-002's own defect (cards vanish, 1.00:1) while calling itself an accessibility fix. CVD affects hue
+discrimination, not luminance, so the honest reading of "carries no meaning in colour" is achromatic
+*ramp*. Shipped flatline separates rows from the page at 1.33:1 against brand's 1.09:1 — the theme
+ends up better at the thing the register faults the default for.
+
+**A claim I nearly shipped, disproved by enumeration.** I was about to write that a single accent
+value cannot serve both `NavyBrush on CyanBrush` (22 sites) and `WhiteBrush on MagentaBrush` (8) at
+AA. False — 26 solutions exist. The real constraint is sharper and worth more: every one of them
+forces a page at `#040404` or darker and caps RowBg-vs-Bg separation at 1.024:1. So a single accent
+does not fail the gate, it forces the theme to reproduce F-002. That is the argument in the spec,
+and it is enumerated rather than asserted. Two accent lightnesses, both achromatic.
+
+**Third stale in-code claim, found by measurement and not in scope or the PRD.**
+`ContrastPairGateTests` says "9 distinct pairs" in three places. The app ships 8. Verified against
+two commits rather than assumed: the scan returns 44/9 at `1fcf74d` (where the gate was authored)
+and 44/8 at HEAD, because `2c9ab16` — the F-032 fix — rebound three `MutedTextBrush` foregrounds to
+`WhiteBrush` and merged a pair. Nothing fails, `MinimumPairs` is 6. The consequence underneath it is
+the real find: **the gate can no longer see `MutedTextBrush` at all**, because its own fix removed
+the only declared pair using that token. Flatline's muted values are measured in the spec and
+asserted nowhere. That is a register row, and it is the kind of blind spot that only shows up if you
+run the scan instead of reading it.
+
+**Fixture reconstruction turned out to be self-verifying.** The original flatline JSON is gone —
+themes folder empty, no flatline captures survive — so `flatline-lab` was reconstructed from the
+ratios the register records. F-031's 4.34:1 and F-050's 2.99:1 were recorded in separate findings;
+they multiply to 12.98, and the reconstructed fixture's White-vs-Navy measures exactly 12.98:1.
+Numbers written months apart are mutually consistent with one achromatic one-accent theme, which
+means the reconstruction is faithful rather than invented. The fixture puts 4 pairs below AA and
+drops the exempted pair below its 3.20 floor, so it trips both branches of the gate. It can go red.
+
+**Scope guard held.** Two things were named and pushed out rather than absorbed: extending the gate
+to style-resolved brushes (Phase 2, own design) and F-050's actual fix. F-050 explicitly stays open
+— closing it auto-deletes the exemption via `NoExemptionOutlivesItsFinding` and turns brand and
+magenta-heat red. One new out-of-scope find recorded rather than fixed: the Bloxstrap banner's
+literal `#3F3000`/`#8F7000`, which belongs with F-068.
+
+**Cost named rather than buried.** Mapping active status to `WhiteBrush` changes brand's active dot
+from green to white. That is a visible change to the default theme, not just to flatline, and it
+wants eyes on the brand capture at a checkpoint. Cyan was the tempting alternative and was rejected
+on measurement: it collides with `RowExpiredAccent` at 1.00:1 under flatline.
+
+**Artifact shape changed this cycle.** `docs/spec.md` is the canonical technical spec rather than a
+pointer-stub, per Este's ruling that Cart drives spec work here. The prior cycles' spec index is
+preserved as an appendix so the chain is not erased.
+
+**Session/friction loggers:** Cart's plugin data dir still absent on this machine. Nth cycle
+confirming it. Durable record is this file.
+
+**Handoff:** `/checklist`. Predicted shape: 8-9 items. Item 1 is the palette + built-in record
+(everything depends on the theme existing), item 2 is the converter deletion (ahead of redundancy,
+because a brand-green dot makes every flatline screenshot useless as evidence), then redundancy,
+then `flatline-lab` in parallel, then reconciliation, then the capture round last as the verification
+step. Two checkpoints worth placing: after the converter work (brand captures, not just flatline —
+the default theme changes) and after redundancy.
+
+## /checklist — flatline build sequence (2026-08-10)
+
+Zero deepening rounds, sixth consecutive translation command with none. **8 items**, inside the
+predicted 8-9. Autonomous-with-verification, two checkpoints, commit after each item on the existing
+`feat/flatline-theme` branch. Effort ≈ 6-7 hours, no spike — the palette was proven by measurement at
+`/spec` time, so there is no Roblox-side or arithmetic gate left to clear before code.
+
+**The value this command added was recon, not sequencing.** The sequence was already settled by the
+`/spec` handoff and survived contact unchanged. What did not survive was the spec's own site list.
+
+**Spec drift caught pre-build, corrected inline.** `spec.md > §5.1` listed two `IdleChipBrushConverter`
+binding sites. A grep of the tree returns three: `MainWindow.xaml:78` is the **compact-mode** row's
+memory chip, bound to `MemoryWarning` exactly as `:433` is in the standard row. Four binding sites
+total. Missing it would have shipped brand amber on an achromatic field in the one row template the
+capture round is least likely to have open — the half-painted defect Story 3.1 exists to kill, hiding
+in the mode nobody screenshots. Also unlisted, and each one a build break rather than a cosmetic miss:
+`App.xaml:23-24` declares both converters as `StaticResource` keys (a resource entry naming a deleted
+type fails the build), the whole of `ConvertersTests.cs` asserts `IdleChipBrushConverter`'s literal
+RGB, `AccountSummary.cs:268` carries a `<see cref="IdleChipBrushConverter"/>`, and
+`MainWindow.xaml:425-426` names the converter in a comment that goes false on merge. Fixed inline in
+`spec.md` §5.1 and §13 per the repo's pre-build-catch precedent (the 2026-05-03 spike outcome
+established it: banner-correct is for post-build divergence, pre-build catches go inline), and named
+again inside checklist item 3 so `/build` cannot miss them.
+
+**Sequencing rationale, dependency-first:**
+
+- **Item 1 is the theme record** because everything downstream needs flatline to exist as something
+  you can select. It is also self-gating: `ContrastPairGateTests` enrols any `IsBuiltIn` theme
+  automatically, so a wrong hex reddens the build immediately rather than at review.
+- **Item 2 (description line) sits second and small.** Different project, different concern
+  (presentation copy, App layer), and it must land before item 7 because it touches the picker item
+  whose UIA name `capture-ui.ps1` reads. If item 7 ever needs a script edit, item 2 broke the
+  `Id = <id>,` substring — that is the diagnosis, written into item 7 so nobody patches the script.
+- **Item 3 (converters) ahead of item 4 (redundancy)**, carried straight from `/prd` and `/spec`. A
+  status dot still glowing brand green makes every redundancy screenshot useless as evidence.
+- **Item 5 (`flatline-lab`) is genuinely parallel** to 3 and 4 — test project only, no App dependency.
+  Placed after them rather than before because it is the least likely to reveal something that
+  reshapes the others.
+- **Item 6 (reconciliation) after 5**, because it cites `flatline-lab` by file and the file has to
+  exist to be cited.
+- **Item 7 (capture round) last of the build items** because it verifies 1 through 4.
+
+**Two checkpoints, and C1 is the unusual one.** C1 lands after item 3 rather than at a natural
+"first runnable" boundary because item 3 changes the **default** theme: mapping active status to
+`WhiteBrush` shifts brand's active dot from green `#4FE08C` to white. Cyan was the tempting
+alternative and collides with `RowExpiredAccent` at 1.00:1 under flatline, so the trade is correct,
+but a visible change to the product's identity theme wants a human yes before three more items build
+on top of it. C2 is the evidence gate at item 7 — the full `spec.md > §11.3` manual list plus eyes on
+56 PNGs, including the brand round.
+
+**Deliberately not split:** item 3 is the heaviest by a distance (four binding sites, four collateral
+files, a new fence test) and carries a 90-minute split flag rather than a pre-emptive 3a/3b. Splitting
+it would put the deletion and the fence in separate commits, and the fence's whole assertion is that
+the deletion happened — half-done is the state it exists to prevent.
+
+**Deliberately not its own item:** the `spec.md > §11.3` manual smoke. Its eight steps distribute
+naturally into the Verify fields of items 1, 3, 4 and 7 where they actually gate something, and the
+full list re-runs at C2. Prior cycles collapsed the same standalone-smoke item for the same reason.
+
+**Risk callouts for `/build`:**
+
+- **The four collateral files in item 3 land in the same commit or the build breaks.** `App.xaml` is
+  the sharp one — a `StaticResource` declaration naming a deleted type is a build failure, not a
+  warning, and it is not in the same file as anything else being edited.
+- **`IdleWarn`'s setter must raise `OnPropertyChanged(nameof(IdleText))`** (item 4b). `IdleText` is
+  recomputed on `SinceActivity` change but not on `IdleWarn` change, so the `▲` lands a tick late and
+  looks perfectly fine on a slow-moving row. This is the miss that ships.
+- **F-050 stays `open`** (item 6). `NoExemptionOutlivesItsFinding` deletes the gate's exemption the
+  moment that row stops being open, which tightens the gate on brand (3.79:1) and magenta-heat
+  (3.29:1) and turns both red. Flipping it casually breaks the build for a reason that will not look
+  connected to the flip.
+- **No `if (theme == flatline)` anywhere** (item 4). Numbered non-goal 6, and the constraint most
+  likely to be violated under build pressure because it is always the cheapest local fix.
+- **Item 3's fence is a fence, not a gate.** `ContrastPairGateTests` structurally cannot see a
+  `DataTrigger` setter, before or after. An unmeasured fix is acceptable; an unmeasured fix described
+  as gated is not, and the checklist says so in the item.
+
+**Spec coverage matrix:**
+
+| Spec section | Checklist item(s) |
+|---|---|
+| §1 Stack | All items (no new dependencies reaffirmed) |
+| §2 Runtime / identity / signing | Item 8 (version lockstep 1.16.0.0 → 1.17.0.0) |
+| §3 Architecture — governed vs escaped paths | Items 1, 3 (context for both) |
+| §4.1-4.4 Palette, design rules, measurement, no-prompt | Item 1 |
+| §4.5 Description sentence | Item 2 |
+| §5.1-5.4 Converters, mapping, fence | Item 3 |
+| §6.1-6.4 Redundancy + verified-clean | Item 4 |
+| §7 Out of scope | Item 3 (the allow-list *is* §7's set) + item 6 (new Bloxstrap row) |
+| §8.1-8.5 flatline-lab | Item 5 |
+| §9 Fourth capture round | Item 7 |
+| §10.1-10.3 Register + in-code reconciliation | Item 6 |
+| §11.1 Measurement method | Items 1, 5 (both re-run it) |
+| §11.2 Automated | Items 1, 3, 4, 5, 6 |
+| §11.3 Manual | Items 1, 3, 4, 7 (distributed) + C2 (full list) |
+| §12 Data model | Item 2 (the contract does not grow — that is the item's constraint) |
+| §13 File structure | All items |
+| §14 Data flow | Items 1, 3 |
+| §15 Key technical decisions | Item 8 (all six log to the dashboard) |
+| §16 Open issues | Item 8 (carried forward, not dropped) |
+
+Every numbered section maps to at least one item. PRD coverage is complete too: Epic 1 → items 1-2,
+Epic 2 → item 4, Epic 3 → items 3 + 6, Epic 4 → item 5, Epic 5 → item 6, Epic 6 → item 7.
+
+**Active shaping:** none this run — no interactive beats, autonomous contract. The one place the
+record could not answer was whether to split item 3, and the split flag defers that to wall-clock at
+`/build` rather than guessing now.
+
+**Session/friction loggers:** Cart's plugin data dir still absent on this machine. Nth cycle
+confirming it. Durable record is this file.
+
+**Handoff:** `/build`. Autonomous through the checklist, halting at C1 (after item 3) and C2 (after
+item 7).
