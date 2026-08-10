@@ -18,7 +18,7 @@
 - **Assertions are relationships, never absolute colours.** A glow invariant states *"a finding that prescribes a color is invalid"* — users ship their own JSON themes.
 - **Spec:** `docs/superpowers/specs/2026-08-09-rororo-rendered-contrast-gate-design.md` (Phase 1 sections only; Phase 2 is a later plan).
 - **Branch:** `feat/rendered-contrast-gate` (already created; spec committed as `0b20147`).
-- Baseline suite: **1402 passing, 1 skipped.**
+- Baseline suite: **1396 passing, 1 skipped.**
 
 ## File Structure
 
@@ -93,7 +93,7 @@ Expected: PASS, same count as before your change.
 - [ ] **Step 5: Run the full suite**
 
 Run: `dotnet test ROROROblox.slnx`
-Expected: 1402 passing, 1 skipped. Unchanged - this task adds no tests.
+Expected: 1396 passing, 1 skipped. Unchanged - this task adds no tests.
 
 - [ ] **Step 6: Commit**
 
@@ -378,7 +378,7 @@ Restore `"F-050"`, re-run, confirm PASS. This is the mechanism that stops the ex
 - [ ] **Step 6: Run the full suite**
 
 Run: `dotnet build ROROROblox.slnx && dotnet test ROROROblox.slnx`
-Expected: `0 Error(s)`; 1405 passing, 1 skipped (1402 + 3).
+Expected: `0 Error(s)`; 1399 passing, 1 skipped (1396 + 3).
 
 - [ ] **Step 7: Commit**
 
