@@ -181,7 +181,7 @@ internal static class XamlStyleScanner
     }
 
     /// <summary>Walks up from the test assembly until it finds the tracked solution file.</summary>
-    private static string? FindRepoRoot()
+    internal static string? FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
