@@ -301,6 +301,147 @@ function Get-SubtreeText {
 
 #endregion
 
+#region Routes
+
+function Read-Routes {
+    param([Parameter(Mandatory)][string]$Path)
+    if (-not (Test-Path $Path)) { throw "route file not found at $Path" }
+    $routes = Get-Content -Raw -Path $Path | ConvertFrom-Json
+    $script:DenyList = @($routes.deny)
+    if ($script:DenyList.Count -eq 0) { throw 'route file declares an empty deny list' }
+    return $routes
+}
+
+function Invoke-Step {
+    param([Parameter(Mandatory)]$Scope, [Parameter(Mandatory)]$Step)
+
+    $name = if ($Step.PSObject.Properties.Name -contains 'name') { $Step.name } else { $null }
+    $aid  = if ($Step.PSObject.Properties.Name -contains 'aid')  { $Step.aid }  else { $null }
+    $within = if ($Step.PSObject.Properties.Name -contains 'within') { $Step.within } else { $null }
+
+    $el = Resolve-UiaElement -Scope $Scope -Type $Step.type -Name $name -Aid $aid `
+                             -Verb $Step.do -Within $within
+
+    switch ($Step.do) {
+        'invoke' {
+            $el.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+        }
+        'select' {
+            $el.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
+        }
+        'expand' {
+            $el.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern).Expand()
+        }
+        'close-window' {
+            $el.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern).Close()
+        }
+        default { throw "unknown verb '$($Step.do)'" }
+    }
+    Start-Sleep -Milliseconds 250
+}
+
+function Resolve-CaptureTarget {
+    param([Parameter(Mandatory)]$Scope, [Parameter(Mandatory)]$Spec)
+    $name = if ($Spec.PSObject.Properties.Name -contains 'name') { $Spec.name } else { $null }
+    $aid  = if ($Spec.PSObject.Properties.Name -contains 'aid')  { $Spec.aid }  else { $null }
+    return Resolve-UiaElement -Scope $Scope -Type $Spec.type -Name $name -Aid $aid
+}
+
+function Wait-ForStable {
+    param(
+        [Parameter(Mandatory)]$Scope,
+        [Parameter(Mandatory)]$CaptureSpec,
+        [int]$TimeoutMs = 8000
+    )
+    # Poll until the target exists AND its bounds are unchanged across two reads. Fixed sleeps are
+    # how a harness like this becomes flaky on a slower machine.
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    $last = $null
+    $lastError = 'never resolved'
+    while ($sw.ElapsedMilliseconds -lt $TimeoutMs) {
+        try {
+            $el = Resolve-CaptureTarget -Scope $Scope -Spec $CaptureSpec
+            $r = $el.Current.BoundingRectangle
+            $key = '{0},{1},{2},{3}' -f $r.X, $r.Y, $r.Width, $r.Height
+            if ($key -eq $last -and $r.Width -gt 0) { return $el }
+            $last = $key
+        }
+        catch { $lastError = $_.Exception.Message; $last = $null }
+        Start-Sleep -Milliseconds 250
+    }
+    throw "capture target did not stabilise within ${TimeoutMs}ms (last: $lastError)"
+}
+
+function Open-Surface {
+    param([Parameter(Mandatory)]$Scope, [Parameter(Mandatory)]$Surface)
+    if ($Surface.PSObject.Properties.Name -contains 'open') {
+        foreach ($step in $Surface.open) { Invoke-Step -Scope $Scope -Step $step }
+    }
+    return (Wait-ForStable -Scope $Scope -CaptureSpec $Surface.capture)
+}
+
+function Close-Surface {
+    param([Parameter(Mandatory)]$Scope, [Parameter(Mandatory)]$Surface)
+    if ($Surface.PSObject.Properties.Name -notcontains 'close') { return }
+    foreach ($step in $Surface.close) {
+        # A close step failing must not abort the run; the next surface re-opens from a known state.
+        try { Invoke-Step -Scope $Scope -Step $step }
+        catch { Write-Warning "close step failed for $($Surface.name): $($_.Exception.Message)" }
+    }
+}
+
+function Get-CapturedSurfaces {
+    param([Parameter(Mandatory)]$Routes, [string[]]$Only)
+    $list = @($Routes.surfaces | Where-Object { $_.PSObject.Properties.Name -notcontains 'skip' })
+    if ($Only) { $list = @($list | Where-Object { $Only -contains $_.name -or $Only -contains $_.id }) }
+    return $list
+}
+
+function Invoke-VerifyMode {
+    param([Parameter(Mandatory)]$Scope, [Parameter(Mandatory)]$Routes)
+
+    # Read-only. Resolves every step and every capture target without invoking anything, so a copy
+    # change fails here instead of silently capturing the wrong window.
+    $problems = New-Object System.Collections.Generic.List[string]
+    $checked = 0
+
+    foreach ($surface in $Routes.surfaces) {
+        if ($surface.PSObject.Properties.Name -contains 'skip') {
+            Write-Host ("  SKIP {0,-4} {1}  ({2})" -f $surface.id, $surface.name, $surface.skip)
+            continue
+        }
+        foreach ($key in 'open', 'close') {
+            if ($surface.PSObject.Properties.Name -notcontains $key) { continue }
+            foreach ($step in $surface.$key) {
+                $checked++
+                $name = if ($step.PSObject.Properties.Name -contains 'name') { $step.name } else { $null }
+                $aid  = if ($step.PSObject.Properties.Name -contains 'aid')  { $step.aid }  else { $null }
+                $within = if ($step.PSObject.Properties.Name -contains 'within') { $step.within } else { $null }
+                try {
+                    Resolve-UiaElement -Scope $Scope -Type $step.type -Name $name -Aid $aid `
+                                       -Verb $step.do -Within $within | Out-Null
+                }
+                catch {
+                    $problems.Add("$($surface.id) [$key] $($step.do): $($_.Exception.Message)")
+                }
+            }
+        }
+    }
+
+    if ($checked -eq 0) { throw 'verify checked zero steps; the route file resolved to nothing' }
+
+    if ($problems.Count -gt 0) {
+        Write-Host ''
+        $problems | ForEach-Object { Write-Host "  FAIL $_" -ForegroundColor Red }
+        Write-Host "$($problems.Count) of $checked steps failed to resolve." -ForegroundColor Red
+        return $false
+    }
+    Write-Host "All $checked steps resolved." -ForegroundColor Green
+    return $true
+}
+
+#endregion
+
 #region Self-test
 
 function Invoke-SelfTest {
@@ -383,4 +524,14 @@ function Invoke-SelfTest {
 
 if ($SelfTest) { Invoke-SelfTest }
 
-Write-Host 'capture-ui.ps1: route engine lands in a later task.'
+$routes = Read-Routes -Path $RoutesPath
+$proc = Get-AppProcess -ProcessName $routes.processName
+$appRoot = Get-AppRoot -ProcessId $proc.Id
+Write-Host "Attached to $($routes.processName) (pid $($proc.Id))."
+
+if ($Verify) {
+    $ok = Invoke-VerifyMode -Scope $appRoot -Routes $routes
+    exit ($(if ($ok) { 0 } else { 1 }))
+}
+
+Write-Host 'capture-ui.ps1: capture loop lands in a later task.'
