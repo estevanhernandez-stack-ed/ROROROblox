@@ -12,7 +12,7 @@
 
 - **`Add-Type` compiles pure Win32 P/Invoke only.** .NET 10 moved `Bitmap` and `Graphics` behind `System.Private.Windows.GdiPlus` / `System.Private.Windows.Core`. C# naming either type fails with CS0012 no matter what is referenced. The compiled surface returns primitives plus one `RECT` struct; every GDI+ call happens in PowerShell.
 - **Build with `dotnet build ROROROblox.slnx`, test with `dotnet test ROROROblox.slnx`.** Never bare `dotnet build`: a gitignored legacy `ROROROblox.sln` stray causes MSB1011.
-- **Never use `$matches` as a variable name.** It is the automatic variable populated by `-match`. Use `$hits`.
+- **Never assign to `$matches`.** It is the automatic variable populated by `-match`, so a local named `$matches` collides with it. Use `$hits` for match collections. Reading `$Matches[1]` immediately after a successful `-match` is correct and expected.
 - **Window lookup is always process-scoped.** A desktop-root match on `Name="Settings"` has been observed binding a Chrome window.
 - **`PrintWindow` flag is `2` (`PW_RENDERFULLCONTENT`).** Measured: flags=0 returns 13.3% pure-black pixels on this app.
 - **DWM bounds attribute is `9` (`DWMWA_EXTENDED_FRAME_BOUNDS`).** `GetWindowRect` includes the invisible resize border and bakes dead margin into captures.
@@ -659,28 +659,30 @@ If it fails on the threshold cases, that is a real bug in `Test-BlankFrame`, not
 
 - [ ] **Step 5: Prove the real capture path against the live app**
 
-Start the app per the File Structure section, then run:
+Start the app per the File Structure section. Then write this scratch file as
+`scratch-capture-check.ps1` in the repo root, run it, and delete it afterwards. Do not commit it.
 
 ```powershell
-pwsh -NoProfile -Command @'
-. { } # placeholder so the block below runs in a fresh scope
-'@
+. ./scripts/capture-ui.ps1 -SelfTest:$false 2>$null
+$proc = Get-AppProcess -ProcessName 'ROROROblox.App'
+Write-Host "pid $($proc.Id), hwnd $($proc.MainWindowHandle)"
+
+$bmp = Get-WindowBitmap -Hwnd ([IntPtr]$proc.MainWindowHandle)
+try {
+    Write-Host "captured $($bmp.Width)x$($bmp.Height), blank=$(Test-BlankFrame -Bmp $bmp)"
+    $bmp.Save("$PWD\scratch-capture-check.png", [System.Drawing.Imaging.ImageFormat]::Png)
+}
+finally { $bmp.Dispose() }
 ```
 
-Instead, run this directly:
+Dot-sourcing runs the script body, which at this task ends with a `Write-Host` placeholder and no
+`exit`, so the functions land in scope.
 
-```powershell
-pwsh -NoProfile -Command "Add-Type -AssemblyName System.Drawing; . ./scripts/capture-ui.ps1 -SelfTest"
-```
+Expected: a nonzero hwnd, dimensions matching the app window, `blank=False`. **Open
+`scratch-capture-check.png` and confirm it shows the RoRoRo window.** A capture that is the right
+size but the wrong content is exactly the failure this step exists to catch.
 
-Then verify the window path manually in a scratch console:
-
-```powershell
-$p = Get-Process -Name ROROROblox.App
-Write-Host $p.MainWindowHandle
-```
-
-Expected: a nonzero handle. Record it in your report. The full capture path is exercised end to end by Task 6; this step only confirms the process is findable.
+Delete `scratch-capture-check.ps1` and `scratch-capture-check.png` before committing.
 
 - [ ] **Step 6: Commit**
 
@@ -1208,7 +1210,7 @@ If the masked-form assertion fails, the token pattern is too loose: `****` must 
 
 - [ ] **Step 5: Add capture writing and the run manifest**
 
-Append inside the Secrets region's file, in a new `#region Evidence`:
+Append a new `#region Evidence` to the script, directly after the Secrets region:
 
 ```powershell
 #region Evidence
