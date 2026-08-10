@@ -813,6 +813,15 @@ function Resolve-UiaElement {
     if ($hits.Count -gt 1) {
         throw "$($hits.Count) elements matched [$Type] $label$(if ($Verb) { " supporting '$Verb'" }). Ambiguous; add a 'within' scope."
     }
+
+    # Deny again, on the RESOLVED element's own name. The pre-check above only sees the name the
+    # caller asked for, so a step selecting a denied control by AutomationId would walk straight
+    # past it. Checking after resolution closes that regardless of which selector was used.
+    $resolvedName = $hits[0].Current.Name
+    if ($resolvedName -and $script:DenyList -contains $resolvedName) {
+        throw "DENIED: resolved to '$resolvedName', which is on the deny list. It stops Roblox clients, deletes accounts, or launches game sessions."
+    }
+
     return $hits[0]
 }
 
@@ -887,12 +896,26 @@ Expected: throws "8 elements matched ... Ambiguous; add a 'within' scope." (the 
 
 This proves the resolver refuses to guess rather than returning a first match.
 
-- [ ] **Step 5: Run the self-test**
+- [ ] **Step 5: Verify both deny checks fire**
+
+The resolver denies twice, and each check catches a case the other cannot. Prove both.
+
+Set `$script:DenyList = @('Remove', 'Settings')` in your temporary switch, then:
+
+1. Resolve `-Type 'Button' -Name 'Remove'`.
+   Expected: throws `DENIED: 'Remove' is on the deny list...`, from the pre-check, before any search runs.
+2. Resolve `-Type 'Button' -Aid 'SomeAidThatResolvesToADeniedControl'`. To make this concrete without inventing an AutomationId, temporarily add `'Compact'` to the deny list and resolve the Compact button by name to confirm the message, then resolve any control by `-Aid` whose resolved `Name` is on the deny list.
+
+   The point being proven: the second check reads `$hits[0].Current.Name` AFTER resolution, so a step that selects a denied control by AutomationId cannot walk past the deny list. Expected: throws `DENIED: resolved to '<name>', ...`.
+
+Restore `$script:DenyList = @()` and remove the temporary switch before committing. Record both thrown messages in your report.
+
+- [ ] **Step 6: Run the self-test**
 
 Run: `pwsh -File scripts/capture-ui.ps1 -SelfTest`
 Expected: `Self-test passed.` Task 2's assertions must still pass.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add scripts/capture-ui.ps1
