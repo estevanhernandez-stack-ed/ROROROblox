@@ -367,4 +367,88 @@ public class AccountSummaryTests
         Assert.Contains(nameof(AccountSummary.IdleText), raised);
         Assert.Contains(nameof(AccountSummary.ShowIdleChip), raised);
     }
+
+    // === Non-colour redundancy on the idle chip (spec §6.3) ===
+
+    [Fact]
+    public void SettingIdleWarn_RaisesIdleTextChange()
+    {
+        // THE NAMED TRAP. IdleText used to be recomputed only when SinceActivity changed, and the
+        // warn state used to live purely in the chip's foreground brush, so nothing needed to
+        // recompute the string. Now the glyph is IN the string: without this notification the row
+        // repaints the colour immediately and the glyph on the next SinceActivity tick — which on
+        // a row whose duration is still moving looks perfectly correct, and on a settled row is
+        // simply wrong. That is the shape of a defect that ships.
+        var s = NewSummary();
+        s.IsRunning = true;
+        s.SinceActivity = TimeSpan.FromMinutes(12);
+
+        var raised = new List<string?>();
+        s.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+        s.IdleWarn = true;
+
+        Assert.Contains(nameof(AccountSummary.IdleWarn), raised);
+        Assert.Contains(nameof(AccountSummary.IdleText), raised);
+    }
+
+    [Fact]
+    public void IdleText_PrefixesTheWarnGlyph_OnlyWhileIdleWarnIsSet()
+    {
+        var s = NewSummary();
+        s.SinceActivity = TimeSpan.FromMinutes(18);
+
+        Assert.Equal("idle 18m", s.IdleText);
+
+        s.IdleWarn = true;
+        Assert.Equal("▲ idle 18m", s.IdleText);
+
+        // Flips back. A warn state that latches into the string is a different bug from the one
+        // above and would look identical on a screenshot.
+        s.IdleWarn = false;
+        Assert.Equal("idle 18m", s.IdleText);
+    }
+
+    [Theory]
+    [InlineData(45, "▲ idle 45s")]          // seconds branch
+    [InlineData(18 * 60, "▲ idle 18m")]     // minutes branch
+    [InlineData(3840, "▲ idle 1h4m")]       // hours branch
+    public void IdleText_CarriesTheGlyphOnEveryDurationBranch(int seconds, string expected)
+    {
+        // Three format branches, one prefix. A prefix applied to only the branch someone happened
+        // to test is how a redundancy device ends up absent exactly when the row is worth looking at.
+        var s = NewSummary();
+        s.IdleWarn = true;
+        s.SinceActivity = TimeSpan.FromSeconds(seconds);
+
+        Assert.Equal(expected, s.IdleText);
+    }
+
+    [Fact]
+    public void IdleText_WarnGlyphIsTheSameCodepointTheMemoryChipUses()
+    {
+        // Two claims at once, both cheap and both load-bearing.
+        //
+        // (1) One vocabulary. The chip beside this one already prefixes a warn glyph via
+        //     MemoryChipFormatter; if these two ever drift to different glyphs the window is
+        //     speaking two warning languages and nobody notices from a diff.
+        // (2) Encoding. U+25B2 BLACK UP-POINTING TRIANGLE is Emoji_Presentation=No — a Segoe UI
+        //     geometric, not emoji, which is why it does not trip the register's invariant-5 rule.
+        //     It is also the character most likely to arrive as mojibake if a file gets rewritten
+        //     in the wrong codepage, and mojibake still renders SOMETHING, so a human proofing a
+        //     screenshot can miss it. Assert the codepoint, not the appearance.
+        var s = NewSummary();
+        s.IdleWarn = true;
+        s.SinceActivity = TimeSpan.FromMinutes(5);
+
+        var reading = new ROROROblox.Core.Diagnostics.AccountMemory(
+            AccountId: Guid.NewGuid(), PrivateBytes: 2_469_606_195L, GrowthBytesPerHour: 0,
+            MinutesToCeiling: 0, OverCap: false, IsTarget: false, ReadOk: true);
+        var memoryChip = MemoryChipFormatter.Format(
+            reading, warned: true, hasProjection: false, minutesToCeiling: 0);
+
+        Assert.Equal('▲', s.IdleText[0]);
+        Assert.Equal("▲ ", s.IdleText[..2]);
+        Assert.Equal(s.IdleText[..2], memoryChip![..2]);
+    }
 }
