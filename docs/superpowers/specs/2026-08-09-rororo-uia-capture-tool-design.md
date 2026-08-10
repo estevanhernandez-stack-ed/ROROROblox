@@ -133,7 +133,7 @@ A C# project in the solution was considered and cut: it would add build weight t
           "within": "SettingsNav" }
       ],
       "capture": { "type": "Window", "name": "Settings" },
-      "close":   [ { "do": "close-window", "name": "Settings" } ]
+      "close":   [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
     }
   ]
 }
@@ -163,10 +163,23 @@ expressible at all given 32 identically named buttons, and it is how the rail is
 popups and menus, it falls back to `CopyFromScreen` over the element's `BoundingRectangle`. One
 capture path, no per-surface special casing.
 
-The `deny` list is enforced inside the resolver. A step or a `-Watch` interaction targeting a
-denied name aborts the run. These routes now reach "Stop all Roblox instances", "Remove" and
-"Launch As", all of which have real side effects on live data and live game clients. A warning is
-not sufficient for that.
+The `deny` list is enforced inside the resolver, twice: once on the name a step asks for, and again
+on the resolved element's own name, so selecting a denied control by AutomationId cannot dodge it.
+A step targeting a denied name aborts the run. These routes reach controls with real side effects on
+live data and live game clients, so a warning is not sufficient.
+
+> **Corrected 2026-08-10.** This paragraph originally claimed that "a step **or a `-Watch`
+> interaction** targeting a denied name aborts the run". The `-Watch` half was never true and is
+> still not: `-Watch` captures whatever window the operator brings to the foreground and never
+> resolves an element by name, so it never consults the deny list at all. `-Watch` is guarded by the
+> credential scan and the blank-frame check (§6), not by the deny list. Stated plainly because the
+> original wording would have let a reader believe an operator-driven capture is protected from
+> destructive controls, which it is not — though note `-Watch` only captures, it never invokes.
+
+The list is not limited to the obviously destructive verbs. It also carries `Stop`, `Recycle` and
+`Stop all`, added after the final review found them missing: `Recycle` is captioned "Close and
+relaunch this client", so it both stops a running client and launches a new one, satisfying two of
+the three conditions the list exists to catch.
 
 ## 5. Capture pipeline
 
@@ -234,9 +247,14 @@ Today this yields **three** rounds: `brand`, `midnight` and `magenta-heat`. It b
 
 Evidence lands as `docs/ui-evidence/NN-<surface>--<theme>.png`, gitignored at `.gitignore:83`.
 
-Each round writes `docs/ui-evidence/run-<theme>.json`: timestamp, app version, resolved theme id,
-DPI scale, monitor, and per-surface status. Evidence that cannot say which build produced it is how
-the findings register drifted six rows out of date.
+Each round writes `docs/ui-evidence/run-<theme>.json`: timestamp, app version, app path, resolved
+theme id, raw DPI and DPI scale, and per-surface status. Evidence that cannot say which build
+produced it is how the findings register drifted six rows out of date.
+
+> **Corrected 2026-08-10.** This list previously included a `monitor` field. `Write-RunManifest`
+> does not emit one. Struck rather than implemented: the capture note below already requires one
+> monitor per round, and a spec that lists a provenance field the manifest does not carry undermines
+> the provenance argument it is making. Adding it later is a fair follow-up.
 
 `-DumpUia` writes the resolved tree alongside each PNG as `NN-<surface>--<theme>.uia.txt`. The
 checklist wants this on at least the `brand` round.
@@ -281,10 +299,18 @@ a fast check instead of silently capturing the wrong window.
 > `Wait-ForStable` and `Resolve-CaptureTarget` were never exercised by any check and would have
 > reached the tree untested until the first real capture run. `-Verify` now runs all of them.
 
-**Route-file schema test**, in `src/ROROROblox.Tests`: every step carries a `type`, every `do` is a
-known verb, ids are unique, surface ids match the checklist's list, and no route targets a name on
-the deny list. The last is a safety property, and safety properties should fail at build time
-rather than be discovered while the tool drives a live app.
+**Route-file schema test**, in `src/ROROROblox.Tests/UiRoutesSchemaTests.cs`: every step carries a
+`type` and exactly one of `name`/`aid`, every `do` is a known verb, ids are unique, skipped surfaces
+declare no capture target while captured ones do, the file holds exactly 18 surfaces with at least
+13 captured and no resurrected `04`, and no route targets a denied name or AutomationId. The last is
+a safety property, and safety properties should fail at build time rather than be discovered while
+the tool drives a live app. The deny assertions are guarded in both directions: every entry is
+checked by name and the total count is pinned, so silently dropping one fails the build.
+
+> **Corrected 2026-08-10.** This previously claimed the test asserts that "surface ids match the
+> checklist's list". It does not, and never did: it pins counts and the absence of `04`, and never
+> reads `docs/ui-capture-checklist.md` at all. Restated accurately, because the value of this section
+> is telling a reader what the build actually guarantees.
 
 **Deliberately cut:** an xUnit test asserting every route name exists somewhere in the app's XAML.
 A name existing somewhere in the tree is weak evidence, because the same string legitimately lives
@@ -317,18 +343,43 @@ Reversing it means specifying the `RORORO_DATA_DIR` override, which is app surfa
 twelve hardcoded `LocalApplicationData` call sites. `Environment.GetFolderPath` ignores the
 `LOCALAPPDATA` environment variable, so there is no shell-level shortcut.
 
-**`11 tray-menu` routability is unverified.** It is a Hardcodet NotifyIcon context menu, plausibly
-its own in-process HWND. Implementation resolves it. If it does not route, it is the one genuine
-`-Watch` surface.
+> **Resolved 2026-08-10.** The four surfaces below were specified as open questions for
+> implementation to answer. It answered all four with evidence. Their findings are recorded in each
+> surface's `skip` string in `docs/ui-routes.json`, which is the operative source; the text here is
+> corrected so this section cannot be read as still-open.
 
-**`21`, `22`, `23` have unverified paths.** Implementation resolves these against the live app.
+**`11 tray-menu`: reachable, not routable.** The tray context menu is a real top-level Popup HWND
+owned by this process, carrying 8 MenuItems, proven live via UI Automation. It is not routable
+because reaching it needs a right-click on an element inside Explorer's `Shell_TrayWnd` overflow, a
+different process, and only after invoking "Show Hidden Icons". That requires raw mouse-coordinate
+simulation, which is outside the route schema's four verbs and outside the resolver's single-scope
+model. Converting it is a resolver-contract change, not a route addition.
 
-`21 squad-launch` needs care, because §4 denies the very button §10 lists as a surface. That is
-deliberate and not a contradiction: the button is denied until someone confirms what it does. If it
-opens a dialog, it comes off the deny list and becomes a normal route. If it launches Roblox
-directly, it stays denied and the surface is captured in `-Watch` mode or dropped. Default-denied
-until proven safe is the right direction for a control that may spawn game clients, so the
-resolution is an implementation step with an explicit verification, not a judgement call made now.
+**`22 join-by-link`: reachable, not routable.** The trigger is selecting a "(Paste a link…)" sentinel
+entry in a per-account Game ComboBox, not a button. That ComboBox carries no `x:Name` or
+`AutomationId`, is instantiated once per saved account, and has no distinguishing ancestor anchor, so
+every row's copy is structurally identical and unaddressable by the Type + Name/Aid contract. The
+only remaining selector would be a specific account's display name, which is live per-profile data in
+a committed file. Same class of gap as `02`.
+
+**`23 export-accounts`: routed.** Reached via Settings → Accounts → "Export accounts…". This was the
+fourteenth surface and it captures.
+
+**`21 squad-launch`: stays denied, by ruling rather than by ignorance.**
+
+This section originally said the button "is denied until someone confirms what it does. If it opens a
+dialog, it comes off the deny list and becomes a normal route." Implementation confirmed via source
+(`MainViewModel.OpenSquadLaunchAsync`, never by clicking) that it *does* open a picker dialog and only
+launches clients if that dialog returns a selected target. By the original text, it would now be
+routed.
+
+It is not. The ruling is to leave it denied, and the reasoning is deliberately recorded here so it is
+not silently reversed by a later reader following the sentence above: the evidence is static analysis
+of one code path, the machine runs a live profile with eight real accounts, and the payoff is a single
+context-only neighbour capture out of fourteen. Weakening a safety default deserves better evidence
+than "the code reads safe". Reversing this is one deny-list entry plus a schema-test count bump, and
+it is a legitimate call for whoever owns that decision to make explicitly — but it should be made
+explicitly, not inherited from stale spec text.
 
 ## 12. Out of scope
 
