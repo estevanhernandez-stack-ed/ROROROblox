@@ -273,16 +273,12 @@ public class ThemedStatusColourTests
             + "(ThemeService.cs:262-269). The hex in the markup is the pre-startup value of a brush "
             + "the theme owns, not a colour that escaped it. Flagging these would flag the mechanism."),
 
-        new("src/ROROROblox.App/App.xaml", "x:Key=\"SelectionDotStyle\"", 30,
-            "F-089, open. The batch-selection toggle's ControlTemplate holds four un-themed hexes — "
-            + "ring #4A5C70, checked fill and checked stroke #17D4FA, hover stroke #9AA8B8 — on a "
-            + "control that ships on every account row of the main window. NOT in spec §7 and owned "
-            + "by no row before this item; turned up by this clause's own scan while it was being "
-            + "written, so it got a row rather than a silent permission, exactly as F-087 did for "
-            + "the consent sheet. Out of scope here: item 3a owns F-088, and §6.4 already recorded "
-            + "this toggle as carrying its state "
-            + "in shape rather than colour, so the literals are a theming defect and not a "
-            + "legibility one."),
+        // F-089's entry was retired by item 3b, which rebound SelectionDotStyle's four hexes to
+        // MutedTextBrush and CyanBrush. It is deliberately not replaced by a narrower entry: an
+        // allow-list entry that outlives the finding it cites is the defect
+        // NoExemptionOutlivesItsFinding exists to catch, one layer up. A closed row grants nothing,
+        // so a new literal in that ControlTemplate now fails this clause instead of inheriting a
+        // permission it never earned.
 
         new("src/ROROROblox.App/MainWindow.xaml", "Runtime contested-lock banner", 15,
             "F-066, open. The mutex-recovery banner: Foreground #F1B232 at :1568, then #17D4FA on "
@@ -324,11 +320,15 @@ public class ThemedStatusColourTests
     ];
 
     /// <summary>
-    /// Measured against the tree on 2026-08-10, after the two F-088 literals were rebound: 101
-    /// allowed hex occurrences. App.xaml 15 (11 seed + 4 SelectionDotStyle), MainWindow.xaml 8
-    /// (5 mutex-recovery + 3 Bloxstrap), AboutWindow.xaml 10, CookieCaptureWindow.xaml 14,
-    /// Modals/ 54 — occurrences, not lines: several of those lines set a foreground and a background
-    /// in one attribute pair.
+    /// Measured against the tree on 2026-08-10, after item 3a rebound F-088's two literals and item
+    /// 3b rebound F-089's four: 97 allowed hex occurrences. App.xaml 11 (the seed dictionary, and
+    /// only that — SelectionDotStyle's four are gone), MainWindow.xaml 8 (5 mutex-recovery +
+    /// 3 Bloxstrap), AboutWindow.xaml 10, CookieCaptureWindow.xaml 14, Modals/ 54 — occurrences,
+    /// not lines: several of those lines set a foreground and a background in one attribute pair.
+    /// <para>
+    /// The drop from 101 is F-089 closing, and the ceiling moved with it on purpose. A ceiling that
+    /// keeps room for a closed row's literals is an open invitation to re-add them.
+    /// </para>
     /// <para>
     /// A CEILING, not just a floor, and that is the point of it. An allow-listed region is a region
     /// a row has already counted; a literal added inside one is a NEW literal wearing an old row's
@@ -337,7 +337,7 @@ public class ThemedStatusColourTests
     /// own rule about a row not being a static thing, enforced here in arithmetic instead of prose.
     /// </para>
     /// </summary>
-    private const int AllowedXamlLiteralCeiling = 101;
+    private const int AllowedXamlLiteralCeiling = 97;
 
     /// <summary>
     /// Vacuity floor. Well under the ceiling so that genuinely CLOSING F-079 or F-066 — which would

@@ -62,23 +62,32 @@
                     <Setter.Value>
                         <ControlTemplate TargetType="ToggleButton">
                             <Grid>
-                                <!-- Outer ring (always visible). -->
+                                <!-- Outer ring (always visible). Rest and hover are two different
+                                     slots on purpose: the literals these replace were two different
+                                     greys, and collapsing both to one would delete the hover
+                                     affordance while looking like a faithful port. InteractiveEdge
+                                     is the semantically closer slot for a control boundary, and it
+                                     is deliberately NOT used — InteractiveEdgeBindingTests keeps the
+                                     derived brush off shape elements, and that fence is tuned tight
+                                     against exactly the "it looks cleaner" edit this would have
+                                     been. Ring contrast is carried by MutedText, which every theme
+                                     already holds legible against its own row. -->
                                 <Ellipse x:Name="Ring"
-                                         Stroke="#4A5C70" StrokeThickness="1.5"
+                                         Stroke="{DynamicResource MutedTextBrush}" StrokeThickness="1.5"
                                          Fill="Transparent" />
                                 <!-- Inner fill (visible when checked). -->
                                 <Ellipse x:Name="Fill"
                                          Margin="2"
-                                         Fill="#17D4FA"
+                                         Fill="{DynamicResource CyanBrush}"
                                          Visibility="Collapsed" />
                             </Grid>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="Ring" Property="Stroke" Value="#17D4FA" />
+                                    <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource CyanBrush}" />
                                     <Setter TargetName="Fill" Property="Visibility" Value="Visible" />
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Ring" Property="Stroke" Value="#9AA8B8" />
+                                    <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource WhiteBrush}" />
                                 </Trigger>
                                 <MultiTrigger>
                                     <MultiTrigger.Conditions>
