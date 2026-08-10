@@ -5,6 +5,29 @@
 **Related:** the glow campaign (`.vibe-glow/state.json`), F-031 (derived edge), F-032 (control labels),
 F-050 (CTA contrast, open)
 
+> ## ⚠️ Banner-correct (2026-08-09, post-build)
+>
+> **Originally proposed:** Phase 1 and Phase 2 both run against `brand`, `magenta-heat`, and
+> `flatline` — see roughly §"What Phase 1 finds today", "What it asserts", "Exemptions", "Phase 1
+> acceptance" item 3 (the "3 themes" it counts), and Phase 2's assertions/acceptance sections, all of
+> which name or count `flatline` as one of the three built-in themes.
+>
+> **What is actually true:** `ThemeStore` ships exactly three built-in themes — `brand`,
+> `midnight`, and `magenta-heat`. `flatline` was never committed as a `ThemeStore` entry; it exists
+> only in the glow campaign's documentation as an adversarial one-background/one-text theme several
+> register findings (F-050 among them) cite ratios from. `ContrastPairGateTests` (shipped on this
+> branch) runs against the three themes that actually exist — `brand`, `midnight`, `magenta-heat` —
+> and cannot reproduce or re-check any flatline-derived figure quoted below. `.vibe-glow/state.json`
+> is corrected to match (`["brand", "midnight", "magenta-heat"]`).
+>
+> Shipping `flatline` as a real built-in theme is approved as separate future work, not part of this
+> branch. Phase 2, when it is built, should read `midnight` wherever the body below says `flatline`.
+>
+> The body below remains as originally written, per the "Don't rewrite the canonical spec on
+> drift — banner-correct it" rule from `CLAUDE.md` (pattern v from Vibe Thesis) — the original
+> reasoning about why an adversarial theme matters stays legible even though the theme it names
+> isn't the one that shipped.
+
 ---
 
 ## Two phases, cheapest first
