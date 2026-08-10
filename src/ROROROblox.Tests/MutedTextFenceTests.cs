@@ -9,9 +9,20 @@ namespace ROROROblox.Tests;
 /// <para>
 /// <c>MutedTextBrush</c> does two jobs. On helper text, empty states and chips it is correct and
 /// there are ~104 of those. On a control's label it is the defect: muted-vs-white measures 2.42:1
-/// in the brand theme and 1.00:1 under flatline, so under a theme the app supports there is nothing
-/// separating a control's label from the paragraph beside it. F-031 already shipped the affordance
-/// that does the separating — <c>InteractiveEdgeBrush</c>, derived to clear 3:1 under any theme.
+/// in the brand theme, so a control's label and the paragraph beside it are separated by almost
+/// nothing. F-031 already shipped the affordance that does the separating —
+/// <c>InteractiveEdgeBrush</c>, derived to clear 3:1 under any theme.
+/// </para>
+/// <para>
+/// CORRECTED for v1.17. This doc cited "1.00:1 under flatline." That number belongs to
+/// <c>flatline-lab</c>, the adversarial fixture in <c>FlatlineLabGateTests</c> — not to the
+/// <c>flatline</c> theme now shipping in <c>ThemeStore</c>, which measures muted-vs-white at
+/// <b>2.65:1</b>, better separation than brand's 2.42:1. The fence's rationale is unchanged by
+/// that: brand is the weakest shipped separation and brand is the default, and the argument was
+/// never "one theme collapses" but "colour was carrying a job the edge already does." Worth
+/// knowing that neither number is watched — since PR #100 no declared pair puts the prose token
+/// on a fill, so <c>ContrastPairGateTests</c> cannot see this token at all (F-086). This fence
+/// guards the ROLE; nothing currently guards the RATIO.
 /// </para>
 /// <para>
 /// This is a role fence, not a token ban. Prose keeps the token. What it may not do is label a
