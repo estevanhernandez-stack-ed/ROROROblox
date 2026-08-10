@@ -827,7 +827,15 @@ artifact reproduces which number:
   a theme that does not need the exemption. `NoExemptionOutlivesItsFinding`
   ([`:254-288`](../src/ROROROblox.Tests/ContrastPairGateTests.cs#L254-L288)) deletes the exemption
   automatically the moment that row stops being `open`, which would tighten the gate on brand
-  (3.79:1) and magenta-heat (3.29:1) and turn them both red. Flipping it casually breaks the build.
+  (3.79:1), midnight (4.16:1) and magenta-heat (3.29:1) and turn **all three** red. Flipping it
+  casually breaks the build.
+  > **Corrected 2026-08-10 by the register re-verification.** This paragraph said "brand and
+  > magenta-heat" and "both", omitting midnight, and §15.6 and the register's own F-050 row repeated
+  > it. `AaThreshold` is 4.5 ([`ContrastPairGateTests.cs:62`](../src/ROROROblox.Tests/ContrastPairGateTests.cs#L62))
+  > and §4.3 records midnight at 4.16:1 on that pair, three lines above where the claim was made.
+  > Every pre-flatline built-in fails without the exemption; only flatline (4.68:1) survives. The
+  > guard is 50% larger than it described itself as, which is the direction that matters least for
+  > safety and most for whoever eventually decides this row is cheap to close.
 - **F-002** — its 1.00:1 flatline row-vs-page number belongs to `flatline-lab`. Shipped flatline
   measures **1.33:1**, better than brand's 1.09:1.
 - **Citation fix.** The register's "Flatline fixture definition" note cites

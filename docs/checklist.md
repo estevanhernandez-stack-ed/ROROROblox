@@ -221,7 +221,9 @@ already proven by measurement at `/spec` time (`spec.md > §11.1`). Heaviest by 
   the adversarial ratios, shipped flatline measures 1.51:1 / 12.84:1, 2.65:1 and 1.33:1 respectively,
   all better than brand's. **F-050 stays `open`** — this cycle ships a theme that does not need the
   exemption, it does not implement F-050's fix direction; flipping that row auto-deletes the gate's
-  exemption via `NoExemptionOutlivesItsFinding` and turns brand (3.79:1) and magenta-heat (3.29:1) red.
+  exemption via `NoExemptionOutlivesItsFinding` and turns brand (3.79:1), midnight (4.16:1) and
+  magenta-heat (3.29:1) red — **all three** pre-flatline built-ins, not two. (Corrected 2026-08-10:
+  this said two and omitted midnight, which measures 4.16:1 against an `AaThreshold` of 4.5.)
   Fix the **citation** at [`:285`](superpowers/research/2026-08-04-rororo-settings-ui-audit-findings.md#L285):
   the fixture definition is at `docs/ui-capture-checklist.md:21-23`, not `:8-9` (which is the nav-rail
   correction). Two **new rows**: the Bloxstrap banner's un-themed literals `#3F3000` / `#8F7000`
