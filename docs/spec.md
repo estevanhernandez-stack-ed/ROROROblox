@@ -441,6 +441,28 @@ each other. `WhiteBrush` keeps all four states at distinct values in every theme
 | idle | `#989898` | 4.98:1 |
 | limited | `#6E6E6E` | 2.81:1 |
 
+> **Corrected after the build, by measurement.** The rendered gate
+> (`TriggeredStatusColourGateTests`) reproduces every value in the table above exactly, and found two
+> things wrong with the prose around it.
+>
+> **The expired row is 9.68:1 against a surface it never shows.** That figure is `#D4D4D4` against
+> `RowBgBrush`, and the column header says "vs the row it sits on". But `StatusDot` returns `yellow`
+> if and only if `SessionExpired` ([`AccountSummary.cs:687-688`](../src/ROROROblox.App/ViewModels/AccountSummary.cs#L687-L688)),
+> and `SessionExpired` is exactly the condition under which the row's own trigger repaints it to
+> `RowExpiredBgBrush` ([`MainWindow.xaml:229-231`](../src/ROROROblox.App/MainWindow.xaml#L229-L231)).
+> The expired dot is never seen against `RowBg`. Measured against the surface that state actually
+> renders, it is **7.33:1** under flatline — 7.13 brand, 6.58 midnight, 7.13 magenta-heat. Lower than
+> published, still comfortable, and the argument the row is making is unaffected. The number was
+> arithmetically correct and described a state that cannot occur, which is the same defect shape as
+> the three register rows this cycle existed to reconcile. The gate now prints both figures on every
+> run rather than quietly replacing one with the other.
+>
+> **Flatline is not the hard case for dot separation, and nobody had checked.** The closest pair of
+> dot values is **1.19:1 in midnight** and **1.29:1 in brand**, against flatline's 1.36:1. The
+> achromatic theme separates its four states better than either chromatic theme, because it was
+> designed against this constraint and they were not. §5.3 reasons about flatline throughout as
+> though it were the worst case; it is the best one.
+
 **Cost, named rather than buried:** under brand the active dot shifts from green `#4FE08C` to white
 `#FFFFFF`. That is a visible change to the default theme, not just to flatline, and it is the
 correct trade — a status colour the theme cannot reach is the actual bug. It wants eyes on the brand
@@ -497,6 +519,34 @@ A green run does not mean "the status dot's contrast is verified."
 > it proved by failing on item 3a's first draft of the comment above the status-bar dot. That was
 > kept deliberately. A comment naming a shipped colour is a claim that goes false the moment the
 > theme changes that value, which is the defect class item 6 spent an item removing.
+
+> **Corrected 2026-08-10, post-v1.17. The answer is now yes, and this section's "no" is why the gate
+> was built.** `TriggeredStatusColourGateTests` — stage 3 of the rendered-contrast gate — parses the
+> shipped `MainWindow.xaml` with `XDocument`, lifts the real `Ellipse` and the three chip
+> `TextBlock` subtrees out of it, reconstitutes each through `XamlReader.Parse`, hands it a real
+> `AccountSummary` and renders it. **40 cases** — 4 dot states x 4 built-in themes, plus 3 chips x 2
+> states x 4 themes — and every one samples the exact resolved slot §5.3's table maps it to, to the
+> byte. It measures the shipped markup rather than a copy of it, which is the whole point: a
+> hand-written equivalent would pass forever while the real file rotted.
+>
+> It also asserts the four dot states stay **mutually distinct in every theme**, which turns the
+> `WhiteBrush`-over-`CyanBrush` decision below from an argument into a gate. The fence is untouched
+> and stays — this is a gate beside it, not instead of it.
+>
+> **Two of this section's published numbers are now reproduced by a test** rather than asserted: the
+> flatline ratios 13.17 / 9.68 / 4.98 / 2.81, and the ladder 1.36 / 1.95 / 1.77. One of them needs a
+> caveat the table does not carry. **9.68:1 is computed against `RowBgBrush`, and the `yellow` dot
+> appears exactly when `SessionExpired` is true — which is exactly when the row's own `DataTrigger`
+> ([`MainWindow.xaml:229`](../src/ROROROblox.App/MainWindow.xaml#L229)) repaints the row to
+> `RowExpiredBgBrush`.** Against the surface that state actually shows, the expired dot measures
+> **7.33:1**. Lower than the published figure, still clear of everything, and now printed beside it
+> on every run.
+>
+> **And flatline is not the hard case for dot separation.** §5.3 reasons about it as though it were.
+> Measured across all four built-ins, flatline's closest pair is green/yellow at 1.36:1 while
+> `midnight` puts magenta/grey at **1.19:1** and `brand` puts yellow/grey at **1.29:1**. The
+> achromatic theme separates its dots better than the two chromatic ones, because it was designed to
+> and they were not.
 
 ## 6. Non-colour redundancy
 
@@ -985,10 +1035,18 @@ dictionary. Theme change repaints it; no converter, no cached instance, no liter
   own fix removed the last declared pair using the prose token as a foreground, so ~104 bindings are
   measured by nothing. `MinimumPairs` is 6, so losing a pair failed nothing and announced nothing.
   Flatline's muted values are measured in §4.3 and asserted nowhere. Phase 2 gate work.
-- **The gate cannot see style-resolved brushes**, so items 3, 3a and 3b are **fenced, not gated**
-  (§5.4). More load-bearing than when this was written: three items now rest on it. The fence is
-  `ThemedStatusColourTests`, three facts and a 97-literal ceiling. Do not describe that work as
-  gated. Phase 2, with its own design.
+- ~~**The gate cannot see style-resolved brushes**, so items 3, 3a and 3b are **fenced, not
+  gated**~~ — **CLOSED after the cycle**, by the Phase 2 rendered gate on branch
+  `feat/rendered-contrast-gate`. `TriggeredStatusColourGateTests` extracts the shipped `Style`
+  subtrees out of `MainWindow.xaml` with `XamlReader`, binds a real `AccountSummary`, renders on an
+  STA thread and samples pixels: 16 of 16 dot cases and 24 of 24 chip cases resolve to the exact
+  theme slot §5.3 maps them to, across all four built-ins. Items 3, 3a and 3b are **gated now, not
+  fenced.** `ThemedStatusColourTests` stays as it is — it guards against literals regrowing, which
+  is a different question from whether the trigger fired.
+  **The fence stays load-bearing for one site the gate does not reach:** the status bar's
+  live-process dot (F-088's site, `MainWindow.xaml:1888`) binds `LiveProcessCount` on
+  `MainViewModel`, which is not cheaply constructible in a test, so it is still guarded only by the
+  XAML fence. Do not read "gated" as covering it.
 - **Bloxstrap banner literals** (§7). Now **F-085**, `open`, and **three** literals rather than the
   two this document named: `#3F3000`, `#8F7000`, and a body `Foreground="#FFE3A6"`. Fix belongs with
   F-068.
