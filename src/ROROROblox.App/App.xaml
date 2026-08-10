@@ -23,9 +23,17 @@
             <local:CaptionColorBrushConverter x:Key="CaptionColorBrushConverter" />
             <local:EqualsToCollapseConverter x:Key="EqualsToCollapseConverter" />
 
-            <!-- Themed brushes — single source of truth at app level. ThemeService mutates
-                 each brush's Color at startup + on theme change. References from any window
-                 use {StaticResource} since the brush instance is stable; only Color flips. -->
+            <!-- Themed brushes — single source of truth at app level, and these hexes are only the
+                 pre-startup values. ThemeService.ApplySlot REPLACES each brush instance on startup
+                 and on every theme change (ThemeService.cs:261-268); it does not mutate the held
+                 brush's Color.
+
+                 So reference these with {DynamicResource}, never {StaticResource}. A StaticResource
+                 resolves once and keeps the instance it got, which is the instance replacement
+                 throws away — the reference would render correctly on first paint and then silently
+                 never repaint again. DynamicResource subscribers re-bind when the dictionary entry
+                 changes, which is the whole reason replacement is the chosen path. Every themed
+                 reference in App XAML is DynamicResource today; keep it that way. -->
             <SolidColorBrush x:Key="BgBrush" Color="#0F1F31" />
             <SolidColorBrush x:Key="CyanBrush" Color="#17D4FA" />
             <SolidColorBrush x:Key="MagentaBrush" Color="#F22F89" />
