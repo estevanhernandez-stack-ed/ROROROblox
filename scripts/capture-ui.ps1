@@ -219,10 +219,17 @@ function Resolve-UiaElement {
 
     $searchRoot = $Scope
     if ($Within) {
-        $searchRoot = $Scope.FindFirst([System.Windows.Automation.TreeScope]::Descendants,
+        # FindAll, not FindFirst: a mis-scoped -Within silently searches the wrong ancestor's
+        # subtree and can still return a clean single hit from the wrong part of the tree, which
+        # is worse than failing outright. Same exactly-one contract as the element match below.
+        $ancestorHits = $Scope.FindAll([System.Windows.Automation.TreeScope]::Descendants,
             (New-Object System.Windows.Automation.PropertyCondition(
                 [System.Windows.Automation.AutomationElement]::AutomationIdProperty, $Within)))
-        if (-not $searchRoot) { throw "within-scope AutomationId '$Within' not found" }
+        if ($ancestorHits.Count -eq 0) { throw "within-scope AutomationId '$Within' not found" }
+        if ($ancestorHits.Count -gt 1) {
+            throw "$($ancestorHits.Count) elements matched within-scope AutomationId '$Within'. Ambiguous; use a more specific scope."
+        }
+        $searchRoot = $ancestorHits[0]
     }
 
     $conds = New-Object System.Collections.Generic.List[System.Windows.Automation.Condition]
