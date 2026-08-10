@@ -379,3 +379,46 @@ All 7 items complete on branch `v1.7.0-install-deferral`. Final: `dotnet build R
 **Open at cycle end:** real-smoke the banner/deferral at the next actual Roblox update. The full Bloxstrap-style install *deferral/suppression* (and the multilaunch-during-install identity edge) remains a future cycle — this cycle handles the *interruption* at our layer, not Roblox's update cadence itself.
 
 **Handoff:** branch PR-ready. I drive the release (version 1.7.0.0, Store MSIX + sideload + reviewer letter + GitHub release); builder's only step is the Partner Center submit.
+
+## /scope — flatline as a built-in theme (2026-08-10)
+
+Cart cycle entered after PR #102 (the UIA capture tool) merged. Este's process ruling this session:
+route spec work through Vibe Cartographer rather than superpowers brainstorming, because the capture
+tool's defects were nearly all authored in the plan document rather than in implementation.
+
+**Wrong turn worth recording:** I first invoked `/iterate`, reading it as the compressed loop for an
+established app. It is a hackathon polish pass over already-built code. `/scope` is the entry for a
+feature cycle here, since `docs/checklist.md` is cycle-shaped and overwritten each round.
+
+**Autonomy:** profile is `fully-autonomous`, pacing brisk, persona Architect. Flowed through every
+beat the record answered. One genuine fork was escalated, correctly per the contract's "confirmations
+exist for genuine forks the record can't resolve."
+
+**The fork, and how it moved the cycle.** flatline arrived as an adversarial QA instrument whose job
+was to collapse colour distinction so colour-only signalling failed measurably. Shipping it
+user-selectable makes it a product, and a product needs a reason to exist in the picker. I put the
+tension to Este directly: product theme (accessible, legibility-maximising, passes the gate) versus
+instrument-that-ships (stays adversarial, preserves the findings' evidence), and named the cost —
+a flatline that passes every contrast check has stopped demonstrating F-032's 1.00:1.
+
+He ruled **product theme**. That changed the design goal from "collapse distinction" to "carry
+distinction without colour," which is a materially different theme and a materially larger cycle: the
+real work is now non-colour redundancy for every status the app currently says in hue alone.
+
+**Consequence I scoped in rather than buried:** the ruling strands F-031, F-032 and F-050's evidence.
+Resolved with a `flatline-lab` test fixture, not a built-in and not user-selectable, which preserves
+those numbers AND earns its place by being fed to the contrast gate to prove it FAILS. A gate that has
+only ever seen passing themes is unproven. Better outcome than either horn of the original fork.
+
+**Crux resolved analytically rather than by discussion.** The feared conflict — an adversarial theme
+reddening `ContrastPairGateTests` — does not survive reading what the gate measures. It measures
+foreground against its own fill; flatline collapses distinction BETWEEN semantic elements. Orthogonal.
+One real constraint remains: the single accent is a fill with white text on it, so white-on-accent must
+clear the F-050 exemption floor of 3.20 and should target 4.5:1 outright. Explicitly rejected: any
+notion of a theme exempt from measurement, which is where a real regression would hide.
+
+**Active shaping:** Este drove the decisive call in four words and it was the right one. He did not
+re-litigate the crux analysis or the cut list, consistent with the profile's zero-deepening-rounds
+habit when the analysis is clean.
+
+**Handoff:** `/prd`.
