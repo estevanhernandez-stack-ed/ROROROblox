@@ -498,6 +498,34 @@ A green run does not mean "the status dot's contrast is verified."
 > kept deliberately. A comment naming a shipped colour is a claim that goes false the moment the
 > theme changes that value, which is the defect class item 6 spent an item removing.
 
+> **Corrected 2026-08-10, post-v1.17. The answer is now yes, and this section's "no" is why the gate
+> was built.** `TriggeredStatusColourGateTests` — stage 3 of the rendered-contrast gate — parses the
+> shipped `MainWindow.xaml` with `XDocument`, lifts the real `Ellipse` and the three chip
+> `TextBlock` subtrees out of it, reconstitutes each through `XamlReader.Parse`, hands it a real
+> `AccountSummary` and renders it. **40 cases** — 4 dot states x 4 built-in themes, plus 3 chips x 2
+> states x 4 themes — and every one samples the exact resolved slot §5.3's table maps it to, to the
+> byte. It measures the shipped markup rather than a copy of it, which is the whole point: a
+> hand-written equivalent would pass forever while the real file rotted.
+>
+> It also asserts the four dot states stay **mutually distinct in every theme**, which turns the
+> `WhiteBrush`-over-`CyanBrush` decision below from an argument into a gate. The fence is untouched
+> and stays — this is a gate beside it, not instead of it.
+>
+> **Two of this section's published numbers are now reproduced by a test** rather than asserted: the
+> flatline ratios 13.17 / 9.68 / 4.98 / 2.81, and the ladder 1.36 / 1.95 / 1.77. One of them needs a
+> caveat the table does not carry. **9.68:1 is computed against `RowBgBrush`, and the `yellow` dot
+> appears exactly when `SessionExpired` is true — which is exactly when the row's own `DataTrigger`
+> ([`MainWindow.xaml:229`](../src/ROROROblox.App/MainWindow.xaml#L229)) repaints the row to
+> `RowExpiredBgBrush`.** Against the surface that state actually shows, the expired dot measures
+> **7.33:1**. Lower than the published figure, still clear of everything, and now printed beside it
+> on every run.
+>
+> **And flatline is not the hard case for dot separation.** §5.3 reasons about it as though it were.
+> Measured across all four built-ins, flatline's closest pair is green/yellow at 1.36:1 while
+> `midnight` puts magenta/grey at **1.19:1** and `brand` puts yellow/grey at **1.29:1**. The
+> achromatic theme separates its dots better than the two chromatic ones, because it was designed to
+> and they were not.
+
 ## 6. Non-colour redundancy
 
 *Implements `prd.md > Epic 2`. Ships for every theme. No `if (theme == flatline)` anywhere — that
