@@ -246,9 +246,14 @@ internal partial class PreferencesWindow : Window
             var themes = await _themeStore.ListAsync();
             ThemePicker.ItemsSource = themes;
             var activeId = await _settings.GetActiveThemeIdAsync() ?? "brand";
-            ThemePicker.SelectedItem = themes.FirstOrDefault(t =>
+            var initialTheme = themes.FirstOrDefault(t =>
                 string.Equals(t.Id, activeId, StringComparison.OrdinalIgnoreCase))
                 ?? themes.FirstOrDefault();
+            ThemePicker.SelectedItem = initialTheme;
+            // _suppressClickHandlers is still true here, so OnThemeChanged's SelectionChanged
+            // fire above is a no-op — set the description explicitly or a user who never touches
+            // the picker never sees it for the theme that is already active.
+            UpdateThemeDescription(initialTheme);
         }
         finally
         {
@@ -260,6 +265,7 @@ internal partial class PreferencesWindow : Window
     {
         if (_suppressClickHandlers) return;
         if (ThemePicker.SelectedItem is not Theme picked) return;
+        UpdateThemeDescription(picked);
         try
         {
             await _themeService.SetActiveAsync(picked.Id);
@@ -273,6 +279,20 @@ internal partial class PreferencesWindow : Window
         }
     }
 
+    /// <summary>
+    /// Sets the one-sentence line under the picker from <see cref="ThemeDescriptions.For"/>.
+    /// Collapsed (not Hidden) when the theme is a user theme and the lookup returns null, so no
+    /// empty gap is left where the line would have been. Called on initial load and on every
+    /// selection change — including a freshly-built user theme (<see cref="OnBuildThemeClick"/>),
+    /// which returns null just like any other user theme and must clear a stale built-in line.
+    /// </summary>
+    private void UpdateThemeDescription(Theme? theme)
+    {
+        var description = theme is null ? null : ThemeDescriptions.For(theme.Id);
+        ThemeDescriptionText.Text = description ?? string.Empty;
+        ThemeDescriptionText.Visibility = description is null ? Visibility.Collapsed : Visibility.Visible;
+    }
+
     private async void OnBuildThemeClick(object sender, RoutedEventArgs e)
     {
         var builder = new ThemeBuilderWindow(_themeStore, _themeService) { Owner = this };
@@ -284,8 +304,12 @@ internal partial class PreferencesWindow : Window
             {
                 var themes = await _themeStore.ListAsync();
                 ThemePicker.ItemsSource = themes;
-                ThemePicker.SelectedItem = themes.FirstOrDefault(t =>
+                var selected = themes.FirstOrDefault(t =>
                     string.Equals(t.Id, saved.Id, StringComparison.OrdinalIgnoreCase));
+                ThemePicker.SelectedItem = selected;
+                // Suppressed the same way the initial load is — set explicitly or a prior
+                // built-in's sentence stays on screen over a brand-new user theme.
+                UpdateThemeDescription(selected);
             }
             finally
             {

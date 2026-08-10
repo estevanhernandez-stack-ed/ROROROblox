@@ -410,6 +410,15 @@
                                       SelectionChanged="OnThemeChanged"
                                       Padding="8,6"
                                       FontSize="12" />
+                            <!-- One sentence per built-in, keyed by id via ThemeDescriptions.For.
+                                 User themes return null: Collapsed, not Hidden, so no empty gap
+                                 is left where the line would have been. -->
+                            <TextBlock x:Name="ThemeDescriptionText"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,6,0,0"
+                                       Visibility="Collapsed" />
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                 <Button x:Name="BuildThemeButton"
                                         Content="+ Build a theme..."

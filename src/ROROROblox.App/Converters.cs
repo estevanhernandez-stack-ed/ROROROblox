@@ -162,57 +162,10 @@ internal sealed class EqualsToCollapseConverter : IMultiValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>
-/// Translate the AccountSummary.StatusDot string ("green" / "yellow" / "grey") into a SolidColorBrush
-/// matching the navy/cyan/magenta brand. Used by the row's leading status dot.
-/// </summary>
-internal sealed class StatusDotBrushConverter : IValueConverter
-{
-    private static readonly System.Windows.Media.SolidColorBrush Green =
-        new(System.Windows.Media.Color.FromRgb(0x4F, 0xE0, 0x8C)); // brand-friendly green
-
-    private static readonly System.Windows.Media.SolidColorBrush Yellow =
-        new(System.Windows.Media.Color.FromRgb(0xF1, 0xB2, 0x32)); // matches RowExpiredAccentBrush
-
-    private static readonly System.Windows.Media.SolidColorBrush Magenta =
-        new(System.Windows.Media.Color.FromRgb(0xF2, 0x2F, 0x89)); // brand magenta — "attention"
-
-    private static readonly System.Windows.Media.SolidColorBrush Grey =
-        new(System.Windows.Media.Color.FromRgb(0x4A, 0x5C, 0x70));
-
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        return (value as string) switch
-        {
-            "green" => Green,
-            "yellow" => Yellow,
-            "magenta" => Magenta,
-            _ => Grey,
-        };
-    }
-
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotSupportedException();
-    }
-}
-
-/// <summary>
-/// Translate <see cref="ROROROblox.App.ViewModels.AccountSummary.IdleWarn"/> into a SolidColorBrush
-/// for the row's idle chip text — amber when the idle duration has crossed the warn threshold,
-/// muted grey otherwise. Used by the idle chip added in Task 7.
-/// </summary>
-internal sealed class IdleChipBrushConverter : IValueConverter
-{
-    private static readonly System.Windows.Media.SolidColorBrush Amber =
-        new(System.Windows.Media.Color.FromRgb(0xF1, 0xB2, 0x32)); // matches RowExpiredAccentBrush / StatusDot yellow
-
-    private static readonly System.Windows.Media.SolidColorBrush Muted =
-        new(System.Windows.Media.Color.FromRgb(0x8A, 0x93, 0xA0));
-
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => value is true ? Amber : Muted;
-
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => throw new NotSupportedException();
-}
+// StatusDotBrushConverter and IdleChipBrushConverter used to live here, holding six RGB literals
+// between them for the row's status dot and its two warning chips. Deleted in v1.17.0: a converter
+// cannot observe a resource-dictionary change, and ThemeService.ApplySlot REPLACES the brush
+// instance rather than mutating it, so a converter that resolved the theme at Convert time would
+// still hand back a stale brush the moment the theme changed. Those colours now come from a Style +
+// DataTrigger setting {DynamicResource} in MainWindow.xaml, which re-resolves live. See spec §5.2,
+// and ThemedStatusColourTests for the fence that keeps them from growing back.

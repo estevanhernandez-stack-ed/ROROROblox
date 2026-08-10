@@ -33,15 +33,27 @@ namespace ROROROblox.Tests;
 /// job — see the spec. A green run here does not mean "contrast is verified."
 /// </para>
 /// <para>
-/// THEME COVERAGE, stated plainly: this gate runs against the three themes <see cref="ThemeStore"/>
-/// actually ships — <c>brand</c>, <c>midnight</c>, <c>magenta-heat</c>. "Flatline" — the adversarial
-/// one-background/one-text theme the design-review campaign's findings repeatedly cite as a second
-/// measurement column — is NOT covered here, because it is not a shipped theme. It exists only in
-/// campaign documentation and was never committed as a <see cref="ThemeStore"/> entry. That gap
-/// matters concretely: several register findings (F-050 among them) argue from ratios measured
-/// under flatline, and this gate cannot reproduce those numbers or re-check them. A pair that passes
-/// every assertion below could still collapse under flatline — passing here is not the same claim as
-/// passing every theme a design reviewer might reach for.
+/// THEME COVERAGE, stated plainly: this gate runs against every theme <see cref="ThemeStore"/>
+/// returns with <c>IsBuiltIn</c> — <c>brand</c>, <c>midnight</c>, <c>magenta-heat</c>, and since
+/// v1.17 <c>flatline</c>. Flatline enrolled itself the moment it shipped; <see cref="BuiltInThemes"/>
+/// iterates the real store rather than a list written here, so there was nothing to wire.
+/// </para>
+/// <para>
+/// Two things that used to be true of this doc and are not: flatline is a shipped theme a user can
+/// pick, and the adversarial one-background/one-text theme the design-review campaign's findings
+/// cite as a second measurement column is a DIFFERENT theme. That one is preserved as
+/// <c>flatline-lab</c> in <c>FlatlineLabGateTests</c>, which resolves it through the same
+/// <c>ApplyTo</c> path and asserts, by name and to two decimals, that it FAILS — 2.99:1 white on
+/// magenta (F-050), 4.34:1 navy on cyan (F-031). So the register's numbers are now reproducible on
+/// demand instead of unverifiable, and this gate has been shown capable of going red.
+/// </para>
+/// <para>
+/// What is still NOT covered: user themes. <see cref="BuiltInThemes"/> filters on <c>IsBuiltIn</c>
+/// deliberately, so a JSON dropped in <c>%LOCALAPPDATA%</c> is measured by nothing here. And one
+/// token slipped out of scope by accident — since PR #100 rebound the last declared
+/// <c>MutedTextBrush</c> foreground to <c>WhiteBrush</c>, no scanned element pairs the prose token
+/// with a fill, so roughly 104 bindings of it are unmeasured by this gate. Tracked as F-086; a green
+/// run here says nothing about them.
 /// </para>
 /// </summary>
 public class ContrastPairGateTests
@@ -49,7 +61,14 @@ public class ContrastPairGateTests
     /// <summary>WCAG AA for body text. The app's body size is 11px, so the large-text allowance does not apply.</summary>
     private const double AaThreshold = 4.5;
 
-    /// <summary>Measured 2026-08-09: 44 elements across 18 files, collapsing to 9 distinct pairs.</summary>
+    /// <summary>
+    /// Measured 2026-08-10 against HEAD: 44 elements across 18 files, collapsing to <b>8</b> distinct
+    /// pairs. It was 9 when this gate was authored at <c>1fcf74d</c>. Commit <c>2c9ab16</c> (PR #100)
+    /// rebound three <c>MutedTextBrush</c> foregrounds to <c>WhiteBrush</c>, merging
+    /// <c>MutedTextBrush on NavyBrush</c> into the existing <c>WhiteBrush on NavyBrush</c> — same 44
+    /// elements, one fewer pair. Re-scanned rather than assumed. The floors below stay where they are;
+    /// they are floors, not the measurement.
+    /// </summary>
     private const int MinimumElements = 30;
     private const int MinimumPairs = 6;
 
@@ -74,7 +93,11 @@ public class ContrastPairGateTests
     [
         // F-050: white on magenta. Measured 2026-08-09 through this same resolution path
         // (ContrastGuard.RatioBetween on ResolveTheme output, not hand arithmetic): 3.79:1 brand,
-        // 4.16:1 midnight, 3.29:1 magenta-heat. The best theme-derived foreground still only reaches
+        // 4.16:1 midnight, 3.29:1 magenta-heat. Flatline joined in v1.17 at 4.68:1 — above AA, so
+        // this exemption is not load-bearing for that theme, and F-050 stays open anyway because
+        // shipping a theme that does not need the exemption is not the same as resolving CTA
+        // foreground at brush-application time, which is the row's actual fix direction.
+        // The best theme-derived foreground still only reaches
         // 4.40:1 under brand — under AA even after the obvious fix, which is why this is exempted
         // rather than fixed outright. 8 elements use this pair. Open at the time of writing.
         //
@@ -160,8 +183,8 @@ public class ContrastPairGateTests
         try { if (Directory.Exists(scratch)) Directory.Delete(scratch, recursive: true); }
         catch (IOException) { }
 
-        Assert.True(themes.Count >= 3,
-            $"Expected at least the 3 built-in themes (brand, midnight, magenta-heat); got {themes.Count}.");
+        Assert.True(themes.Count >= 4,
+            $"Expected at least the 4 built-in themes (brand, midnight, magenta-heat, flatline); got {themes.Count}.");
 
         return themes;
     }
@@ -170,15 +193,18 @@ public class ContrastPairGateTests
     public void TheScanSeesTheAppItClaimsTo()
     {
         // A scan matching nothing passes every assertion below while checking nothing. Floors are
-        // set well under the 2026-08-09 measurement (44 elements / 9 pairs) so ordinary churn does
-        // not trip them, and well above zero so a broken scan does.
+        // set well under the 2026-08-10 measurement (44 elements / 8 pairs) so ordinary churn does
+        // not trip them, and well above zero so a broken scan does. Worth naming what that headroom
+        // cost: the pair count fell from 9 to 8 at PR #100 and nothing said so, because a floor of 6
+        // cannot notice. The floors are the right shape for catching a broken scan and the wrong
+        // shape for catching lost coverage — F-086.
         var pairs = ScanPairs(out var elements);
 
         Assert.True(elements >= MinimumElements,
             $"Found only {elements} elements declaring both Background and Foreground inline; "
-            + $"expected at least {MinimumElements} (44 measured 2026-08-09). The scan is broken, not the app.");
+            + $"expected at least {MinimumElements} (44 measured 2026-08-10). The scan is broken, not the app.");
         Assert.True(pairs.Count >= MinimumPairs,
-            $"Found only {pairs.Count} distinct token pairs; expected at least {MinimumPairs} (9 measured 2026-08-09).");
+            $"Found only {pairs.Count} distinct token pairs; expected at least {MinimumPairs} (8 measured 2026-08-10).");
     }
 
     [Fact]
@@ -190,7 +216,7 @@ public class ContrastPairGateTests
         // broken scan otherwise lives only in the sibling TheScanSeesTheAppItClaimsTo. Restated here
         // so this test cannot report green on nothing by itself.
         Assert.True(pairs.Count >= MinimumPairs,
-            $"Found only {pairs.Count} distinct token pairs; expected at least {MinimumPairs} (9 measured 2026-08-09).");
+            $"Found only {pairs.Count} distinct token pairs; expected at least {MinimumPairs} (8 measured 2026-08-10).");
 
         var failures = new List<string>();
 

@@ -248,6 +248,23 @@ public sealed class ThemeStore : IThemeStore
             RowExpiredAccent: "#F1B232",
             Navy: "#1A0F1F",
             IsBuiltIn: true),
+        // Flatline — carries no meaning in colour. One page, one row surface, one text colour,
+        // one light accent and one dark accent. Achromatic throughout: nothing here encodes a
+        // hue, so nothing here is lost to colour vision deficiency, a bad panel, or direct sun.
+        new Theme(
+            Id: "flatline",
+            Name: "Flatline",
+            Bg: "#101010",
+            Cyan: "#D4D4D4",
+            Magenta: "#6E6E6E",
+            White: "#F5F5F5",
+            MutedText: "#989898",
+            Divider: "#333333",
+            RowBg: "#2A2A2A",
+            RowExpiredBg: "#3D3D3D",
+            RowExpiredAccent: "#D4D4D4",
+            Navy: "#101010",
+            IsBuiltIn: true),
     };
 
     /// <summary>On-disk shape — same field set as <see cref="Theme"/> minus the id (which comes

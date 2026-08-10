@@ -264,14 +264,29 @@ public sealed class AccountSummary : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// True when this account's idle duration has crossed the warn threshold — drives the amber
-    /// (vs muted) color of the idle chip via <see cref="IdleChipBrushConverter"/>. Set by
+    /// True when this account's idle duration has crossed the warn threshold — drives the idle
+    /// chip's foreground through a <c>DataTrigger</c> on its Style in <c>MainWindow.xaml</c>,
+    /// which sets <c>RowExpiredAccentBrush</c> when true and leaves <c>MutedTextBrush</c> when
+    /// false. Both resolve from the active theme, so the chip repaints with it. Set by
     /// <c>ActivitySnapshotApplier</c> (Task 8); pure display state, never persisted.
+    /// <para>
+    /// The setter raises <see cref="IdleText"/> as well as itself, because the warn state is
+    /// carried in the TEXT too — the "▲ " prefix (spec §6.3), so the chip reads as a warning with
+    /// colour taken away. <see cref="IdleText"/> was previously recomputed only on
+    /// <see cref="SinceActivity"/> change, which on a row whose duration is not moving would land
+    /// the glyph a whole tick late while looking perfectly fine on any row that is.
+    /// </para>
     /// </summary>
     public bool IdleWarn
     {
         get => _idleWarn;
-        set => SetField(ref _idleWarn, value);
+        set
+        {
+            if (SetField(ref _idleWarn, value))
+            {
+                OnPropertyChanged(nameof(IdleText));
+            }
+        }
     }
 
     /// <summary>
@@ -284,15 +299,25 @@ public sealed class AccountSummary : INotifyPropertyChanged
     /// <summary>
     /// Human-friendly idle duration for the row chip: seconds under a minute, minutes under an
     /// hour, "{h}h{m}m" beyond. Empty when <see cref="SinceActivity"/> is unknown.
+    /// <para>
+    /// Prefixed "▲ " while <see cref="IdleWarn"/> is set, so the warn state survives with colour
+    /// removed (spec §6.3). Not a new device: <see cref="MemoryChipFormatter.Format"/> already
+    /// prefixes the same glyph on the memory chip beside this one, so both warning states read as
+    /// one vocabulary. U+25B2 is a Segoe UI geometric glyph, Emoji_Presentation=No — not emoji, so
+    /// it does not trip the register's invariant-5 rule. Ships in every theme; there is no
+    /// theme test here and there must not be one (numbered non-goal 6).
+    /// </para>
     /// </summary>
     public string IdleText
     {
         get
         {
             if (_sinceActivity is not TimeSpan t) return string.Empty;
-            if (t < TimeSpan.FromMinutes(1)) return $"idle {(int)t.TotalSeconds}s";
-            if (t < TimeSpan.FromHours(1)) return $"idle {(int)t.TotalMinutes}m";
-            return $"idle {(int)t.TotalHours}h{t.Minutes}m";
+
+            var warn = _idleWarn ? "▲ " : string.Empty;
+            if (t < TimeSpan.FromMinutes(1)) return $"{warn}idle {(int)t.TotalSeconds}s";
+            if (t < TimeSpan.FromHours(1)) return $"{warn}idle {(int)t.TotalMinutes}m";
+            return $"{warn}idle {(int)t.TotalHours}h{t.Minutes}m";
         }
     }
 

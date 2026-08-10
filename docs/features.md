@@ -6,9 +6,13 @@
 >
 > **Version attribution.** Best-effort from tags, release runbooks, and commit history. There is no v1.2.x or v1.3.0.0 tag — those dev cycles folded into the first published v1.3 tag (`v1.3.1.0`).
 
-**Current shipped version: `v1.15.0.0`** — accepted by Partner Center and published 2026-08-04, and live on the direct-download channel the same day. Headline: Discord alerting — an account dropping out on its own, or a client eating memory, reaches you on your phone while you are away from the PC. Also the naming pass: the product presents as RoRoRo everywhere a human reads it. Store ID `9NMJCS390KWB`.
+**Current shipped version: `v1.16.0.0`** — published on the direct-download channel 2026-08-06. Headline: the app stops contradicting itself. No new features — six waves of a settings/navigation UI campaign, one security fix, one new test suite. Every interactive control's boundary had shipped below WCAG 1.4.11's 3:1 floor in the **default** theme (1.26:1) in every release up to and including v1.15; it now clears 3:1 under any theme, including ones users wrote themselves. The saved Discord webhook is masked in Settings — it is a bearer credential. Store ID `9NMJCS390KWB`. *Partner Center outcome for this version is not recorded here; see `docs/store/release-runbook-1.16.0.0.md`.*
 
-**Previous: `v1.14.0.0`** (accepted 2026-08-03) — server-instance targeting, so Recycle and Squad Launch rejoin the exact server rather than matchmaking into a new one.
+**In flight: `v1.17.0.0`** — flatline, the readable theme. Version bumped in both manifests; not yet tagged. See the v1.17 rows below.
+
+**Previous: `v1.15.0.0`** — accepted by Partner Center and published 2026-08-04, live on the direct-download channel the same day. Discord alerting: an account dropping out on its own, or a client eating memory, reaches you on your phone while you are away from the PC. Also the naming pass — the product presents as RoRoRo everywhere a human reads it.
+
+**Before that: `v1.14.0.0`** (accepted 2026-08-03) — server-instance targeting, so Recycle and Squad Launch rejoin the exact server rather than matchmaking into a new one.
 
 ## Version timeline (quick map)
 
@@ -29,6 +33,8 @@
 | v1.13 | Per-account FPS caps survive close-together launches — launches serialize behind a proof-of-read gate on Roblox's shared settings file, with a dismissible warning when caps differ. Free when every account shares a cap. |
 | v1.14 | Server-instance targeting — Recycle and Squad Launch rejoin the exact server, not just the game; landing verified and reported by name. |
 | v1.15 | Discord alerting — an account dropping out unexpectedly, or a client crossing the memory threshold, delivered to a Windows notification and/or a Discord channel via a user-supplied webhook. Optional Discord status display (limited: Discord gives the profile slot to detected games). Naming pass to RoRoRo across the exe, installer, and Store package. |
+| v1.16 | The app stops contradicting itself. No new features: Settings becomes a five-page nav rail, twelve hand-rolled page headers become one control, 60+ copied attribute sets become named styles, and every interactive control's boundary clears WCAG 1.4.11's 3:1 under any theme — it had been at 1.26:1 in the *default* theme since v1.1. The saved Discord webhook is masked in Settings. |
+| v1.17 | Flatline — a fourth built-in theme that carries no meaning in colour, clearing every declared contrast pair at 4.5:1 with no exemption of its own. Getting there fixed five status surfaces that ignored the active theme entirely, and added non-colour carriers (a left rule, a `▲`) to expired rows and warning chips in **every** theme. Brand's active status dot changes from green to white as a result. |
 
 ## Multi-instance core
 
@@ -118,6 +124,10 @@
 |---|---|---|---|
 | State-coloured tray icon | Cyan = lock held, slate = off, magenta = error; renders the main account's avatar; right-click menu. | v1.1 | `src/ROROROblox.App/Tray/TrayService.cs` |
 | Theme store + themed dialogs | Theme store with per-account caption colors and a theme builder (AI-prompt template included). | v1.1 | `src/ROROROblox.App/Theming/` |
+| **Flatline — the readable theme** | A fourth built-in that carries no meaning in colour, for anyone who can't rely on hue, or is on a bad panel, or in direct sun. An achromatic *ramp*, not one flat surface: rows still separate from the page (1.33:1, against brand's 1.09:1), because colour vision deficiency affects hue and not lightness. Every declared foreground-on-background pair clears WCAG AA 4.5:1 with **zero new exemptions** — white on the dark accent measures 4.68:1, above AA outright. Selecting it raises no prompt and repaints the main window immediately. Every built-in also gains one plain sentence under the theme picker, so an unfamiliar name doesn't read as "broken mode." | v1.17 | `src/ROROROblox.Core/Theming/ThemeStore.cs`, `src/ROROROblox.App/Theming/ThemeDescriptions.cs` |
+| Status colour resolves from the theme | Five surfaces painted brand green, amber or magenta from C# converters or raw hex and never read the active theme: the per-row status dot, the idle chip, the row and compact-mode memory chips, and the status bar's live-process dot. All now resolve through `Style` + `DataTrigger` + `{DynamicResource}`, so they repaint live with the theme. **Brand's active dot changes from green to white** as a direct result — a status colour the theme can't reach was the actual bug. A test fence fails the build on any new colour literal in App code or markup unless an open finding already owns it. | v1.17 | `MainWindow.xaml`, `App.xaml`, `src/ROROROblox.Tests/ThemedStatusColourTests.cs` |
+| Non-colour carriers on warnings | An expired row gains a 3px left rule in a reserved column beside the amber fill; the idle chip and the Roblox-version banner take the same `▲` the memory chip already used. Cover the colour and the state still reads. Ships in **every** theme — there is no theme conditional anywhere. | v1.17 | `MainWindow.xaml`, `src/ROROROblox.App/ViewModels/AccountSummary.cs` |
+| Batch-selection dot follows the theme | The per-row include/skip toggle drew its ring and fill from four hardcoded hexes on every account row. Now theme slots. State is still carried in shape, filled versus hollow. | v1.17 | `App.xaml` (`SelectionDotStyle`) |
 | Compact mode | Collapses header chrome so the account list isn't squeezed. | v1.3.x | `src/ROROROblox.App/ViewModels/CompactEmptyState.cs` |
 | First-run welcome | Onboarding naming the real "Launch multiple" button. | v1.1; fixed v1.7.1 | `src/ROROROblox.App/About/WelcomeWindow.*` |
 | Settings + Preferences | Settings (games, accounts, export/import); Preferences (idle threshold + mute, streamer toggle). | v1.1; Preferences v1.8.0 | `src/ROROROblox.App/Settings/`, `Preferences/` |

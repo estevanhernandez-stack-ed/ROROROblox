@@ -62,9 +62,9 @@
                                            FontSize="8" FontWeight="Bold"
                                            Foreground="{DynamicResource WhiteBrush}" />
                             </Border>
-                            <!-- Memory chip (compact mode) — same MemoryText/MemoryWarning + shared
-                                 converters as the full row template (below). Compact rows are the
-                                 exact unattended/parked-on-a-second-monitor scenario the watchdog
+                            <!-- Memory chip (compact mode) — same MemoryText/MemoryWarning + the same
+                                 warn/quiet Style as the full row template (below). Compact rows are
+                                 the exact unattended/parked-on-a-second-monitor scenario the watchdog
                                  exists for, so this can't be full-row-only: without it, a compact
                                  user gets no chip, no Recycle, and only a tray icon Windows 11
                                  hides by default. Collapses entirely via StringToVisibilityConverter
@@ -74,8 +74,18 @@
                                     Margin="6,0,0,0"
                                     VerticalAlignment="Center">
                                 <TextBlock Text="{Binding MemoryText}"
-                                           FontSize="9"
-                                           Foreground="{Binding MemoryWarning, Converter={StaticResource IdleChipBrushConverter}}" />
+                                           FontSize="9">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding MemoryWarning}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Border>
                         </StackPanel>
                         <TextBlock FontSize="10" Foreground="{DynamicResource MutedTextBrush}"
@@ -200,8 +210,12 @@
                     CornerRadius="2"
                     Background="{DynamicResource CyanBrush}"
                     Visibility="{Binding IsDropTarget, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <!-- Padding is asymmetric on purpose: the left 14px moved into the row grid's first
+                 column so the expired rule can sit flush against the row's own edge instead of
+                 floating inside the padding. Content geometry is unchanged — 3px of rule plus
+                 11px of gap is the same 14px inset it always had. -->
             <Border x:Name="AccountRowBorder"
-                    Padding="14,10"
+                    Padding="0,10,14,10"
                     CornerRadius="8"
                     AllowDrop="True"
                     Tag="{Binding}"
@@ -309,6 +323,11 @@
 
                 <Grid>
                     <Grid.ColumnDefinitions>
+                        <!-- Expired rule + the gap that used to be the Border's left padding.
+                             Reserved whether or not the rule is showing, so a session going stale
+                             does not shove the row's own content sideways — same reason the nav
+                             rail reserves its 3px column for every item, selected or not. -->
+                        <ColumnDefinition Width="14" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <!-- Name column: MinWidth keeps it readable when the action stack on the
@@ -322,10 +341,39 @@
                         <ColumnDefinition Width="Auto" SharedSizeGroup="RowActions" />
                     </Grid.ColumnDefinitions>
 
+                    <!-- Expired-session left rule (spec §6.2). SELECTION IS A SHAPE, NOT A FILL is
+                         already this app's vocabulary — Preferences' nav rail carries its selected
+                         state on a 3px accent BAR plus weight, deliberately, because a fill is the
+                         first thing a theme that flattens surfaces takes away (F-002). Same device,
+                         same width, same radius, applied to the one other row state the app paints
+                         only in colour. The amber fill and border stay; this is what is left when
+                         RowExpiredBg and RowBg land on the same value.
+                         Ships for every theme. There is no theme condition here and there must not
+                         be one (numbered non-goal 6).
+                         The Hidden default lives in the Style setter, not on the element: a local
+                         Visibility="Hidden" would outrank the DataTrigger and the rule would never
+                         appear. -->
+                    <Rectangle Grid.Column="0"
+                               Width="3"
+                               HorizontalAlignment="Left"
+                               RadiusX="1.5" RadiusY="1.5"
+                               Fill="{DynamicResource RowExpiredAccentBrush}">
+                        <Rectangle.Style>
+                            <Style TargetType="Rectangle">
+                                <Setter Property="Visibility" Value="Hidden" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SessionExpired}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Rectangle.Style>
+                    </Rectangle>
+
                     <!-- Drag-grip — visual cue that the row is reorderable. Press-and-drag the
                          grip to move the row; drop on another row to swap. Tag={Binding} so the
                          Window-level handler knows which AccountSummary started the drag. -->
-                    <Border Grid.Column="0" Width="14" Margin="0,0,4,0"
+                    <Border Grid.Column="1" Width="14" Margin="0,0,4,0"
                             Background="Transparent"
                             Cursor="SizeAll"
                             Tag="{Binding}"
@@ -344,7 +392,7 @@
                     <!-- Avatar — wrapped in a colored ring driven by the per-account caption color.
                          The ring is what makes the per-account color visible inside the app even
                          when Roblox's window chrome refuses the DWM caption tint. -->
-                    <Grid Grid.Column="1" Width="52" Height="52" VerticalAlignment="Center">
+                    <Grid Grid.Column="2" Width="52" Height="52" VerticalAlignment="Center">
                         <Ellipse>
                             <Ellipse.Fill>
                                 <MultiBinding Converter="{StaticResource CaptionColorBrushConverter}">
@@ -362,7 +410,7 @@
                     </Grid>
 
                     <!-- Name + status -->
-                    <StackPanel Grid.Column="2" Margin="14,0,14,0" VerticalAlignment="Center">
+                    <StackPanel Grid.Column="3" Margin="14,0,14,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
                             <!-- v1.3.x — RenderName = LocalName ?? DisplayName. Regular row primary
                                  label + tooltip both flip; tooltip shows the un-truncated rename. -->
@@ -383,11 +431,35 @@
                             </Border>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                            <!-- Live status dot: green=running, yellow=expired, grey=idle. -->
+                            <!-- Live status dot. Every state resolves from a theme slot, so the dot
+                                 repaints with the theme instead of holding a brand hue the theme
+                                 cannot reach (spec §5.3). Active takes WhiteBrush rather than the
+                                 tempting CyanBrush: under flatline Cyan and RowExpiredAccent are the
+                                 same value, which would land active and expired at 1.00:1 of each
+                                 other. The four states measure 13.17:1 / 9.68:1 / 4.98:1 / 2.81:1
+                                 against the row under flatline. Grey/idle is the Setter rather than
+                                 a trigger — it is also the fallback for a StatusDot string nobody
+                                 planned for, which is what the deleted converter's `_ => Grey` did. -->
                             <Ellipse Width="8" Height="8"
-                                     Fill="{Binding StatusDot, Converter={StaticResource StatusDotBrushConverter}}"
                                      VerticalAlignment="Center"
-                                     Margin="0,0,8,0" />
+                                     Margin="0,0,8,0">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="{DynamicResource MutedTextBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding StatusDot}" Value="green">
+                                                <Setter Property="Fill" Value="{DynamicResource WhiteBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding StatusDot}" Value="yellow">
+                                                <Setter Property="Fill" Value="{DynamicResource RowExpiredAccentBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding StatusDot}" Value="magenta">
+                                                <Setter Property="Fill" Value="{DynamicResource MagentaBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
                             <TextBlock Text="{Binding SecondaryStatusText}"
                                        FontSize="11"
                                        VerticalAlignment="Center">
@@ -407,30 +479,51 @@
                                 </TextBlock.Style>
                             </TextBlock>
                             <!-- Idle chip — shows "idle {duration}" once a running account has been
-                                 quiet for at least a minute. Amber when IdleWarn (crossed the warn
-                                 threshold), muted otherwise. Task 7; driven by ActivitySnapshotApplier
-                                 (Task 8) via SinceActivity/IdleWarn. -->
+                                 quiet for at least a minute. RowExpiredAccentBrush when IdleWarn
+                                 (crossed the warn threshold), MutedTextBrush otherwise. Task 7;
+                                 driven by ActivitySnapshotApplier (Task 8) via SinceActivity/IdleWarn. -->
                             <Border Visibility="{Binding ShowIdleChip, Converter={StaticResource BoolToVisibilityConverter}}"
                                     Background="Transparent"
                                     Margin="8,0,0,0"
                                     VerticalAlignment="Center">
                                 <TextBlock Text="{Binding IdleText}"
-                                           FontSize="11"
-                                           Foreground="{Binding IdleWarn, Converter={StaticResource IdleChipBrushConverter}}" />
+                                           FontSize="11">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IdleWarn}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Border>
                             <!-- Memory chip (Task 7) — per-account private-bytes reading from the
                                  memory watchdog, e.g. "2.3 GB" or "▲ 2.3 GB · ~45 min" once a cap/
                                  projection trigger has latched. Collapsed entirely when MemoryText is
                                  null/empty — no reading yet, or the last pid read failed (never show a
-                                 stale or zero figure). Amber via the same IdleChipBrushConverter the
-                                 idle chip above uses, so both warning states read as one visual system. -->
+                                 stale or zero figure). RowExpiredAccentBrush when warning, via the same
+                                 warn/quiet Style the idle chip above uses, so both warning states read
+                                 as one visual system in every theme. -->
                             <Border Visibility="{Binding MemoryText, Converter={StaticResource StringToVisibilityConverter}}"
                                     Background="Transparent"
                                     Margin="8,0,0,0"
                                     VerticalAlignment="Center">
                                 <TextBlock Text="{Binding MemoryText}"
-                                           FontSize="11"
-                                           Foreground="{Binding MemoryWarning, Converter={StaticResource IdleChipBrushConverter}}" />
+                                           FontSize="11">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding MemoryWarning}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Border>
                             <!-- Selection toggle for batch launches. Filled cyan = included; hollow = skipped.
                                  Defaults to selected; user toggles to exclude an account from Launch multiple
@@ -650,7 +743,7 @@
                     </StackPanel>
 
                     <!-- Actions -->
-                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
                         <!-- Title-bar color swatch. Click opens a popup with the 8-palette + Auto +
                              custom hex. The swatch shows whatever color the Roblox window's title
                              bar currently uses (manual override OR auto-derived from Id hash). -->
@@ -1517,10 +1610,18 @@
                 BorderBrush="{DynamicResource RowExpiredAccentBrush}"
                 BorderThickness="0,0,0,1"
                 Visibility="{Binding RobloxCompatBanner, Converter={StaticResource StringToVisibilityConverter}}">
-            <TextBlock Text="{Binding RobloxCompatBanner}"
-                       FontSize="11"
+            <!-- The "▲ " is a literal Run rather than a prefix baked into RobloxCompatBanner, for
+                 two reasons. The string is the compat checker's own output (MainViewModel takes it
+                 straight from RobloxCompatResult.Banner) and presentation glyphs do not belong in a
+                 drift-detection result. And the glyph can never render on its own: the Border above
+                 collapses on the same binding via StringToVisibilityConverter, so no banner text
+                 means no banner at all.
+                 Same glyph the memory and idle chips use — one warning vocabulary across the
+                 window (spec §6.3). The two Runs sit on one line deliberately; a line break between
+                 them is significant whitespace. -->
+            <TextBlock FontSize="11"
                        Foreground="{DynamicResource RowExpiredAccentBrush}"
-                       TextWrapping="Wrap" />
+                       TextWrapping="Wrap"><Run Text="▲ " /><Run Text="{Binding RobloxCompatBanner}" /></TextBlock>
         </Border>
 
         <!-- Bloxstrap warning banner — visible when BloxstrapWarningVisible is true.
@@ -1765,24 +1866,33 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Live process count + green/grey dot. -->
+                <!-- Live process count + status dot. The FIFTH status-colour site (F-088) — spec
+                     §5.3 enumerated four, and this one shipped alongside F-080 in PR #96 holding the
+                     same brand green and grey the deleted StatusDotBrushConverter held. The two hexes
+                     are recorded in F-088's row, not here: a comment that names a shipped colour goes
+                     false the moment the theme changes it, which is the whole defect class item 6
+                     spent an item removing. Same mapping as the per-row dot above — live takes
+                     WhiteBrush, zero clients takes MutedTextBrush.
+
+                     ARRANGEMENT IS INVERTED FROM THE ROW DOT, on purpose. There, quiet is the plain
+                     Setter and the loud states are triggers, because StatusDot is a four-string enum
+                     whose quiet value doubles as the fallback for a string nobody planned for. Here
+                     the bound value is an int: DataTrigger matches on equality, so "zero" is
+                     expressible as a trigger and "any number of clients" is not. Putting live in the
+                     Setter is what keeps this on {DynamicResource} without a converter or a new
+                     view-model bool — the machinery §5.2 deleted. The cost, named rather than
+                     buried: a binding that fails outright leaves the dot at the live colour. It sits
+                     beside LiveProcessSummary, which states the count in words, so the dot is a
+                     redundant echo either way (§6.1). -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <Ellipse Width="7" Height="7"
                              VerticalAlignment="Center" Margin="0,0,8,0">
                         <Ellipse.Style>
                             <Style TargetType="Ellipse">
-                                <Setter Property="Fill">
-                                    <Setter.Value>
-                                        <SolidColorBrush Color="#4FE08C" />
-                                    </Setter.Value>
-                                </Setter>
+                                <Setter Property="Fill" Value="{DynamicResource WhiteBrush}" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding LiveProcessCount}" Value="0">
-                                        <Setter Property="Fill">
-                                            <Setter.Value>
-                                                <SolidColorBrush Color="#4A5C70" />
-                                            </Setter.Value>
-                                        </Setter>
+                                        <Setter Property="Fill" Value="{DynamicResource MutedTextBrush}" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
