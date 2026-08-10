@@ -28,9 +28,17 @@
 | `src/ROROROblox.Tests/UiRoutesSchemaTests.cs` (create) | Build-time schema and safety validation of the route file. |
 | `scripts/capture-ui.ps1` (create) | The whole tool. Regions: Win32 interop, capture, UIA resolver, route engine, secret scan, theme loop, modes, self-test. |
 
-**Reference implementation:** a verified-working capture core lives at
-`C:\Users\estev\AppData\Local\Temp\claude\c--Users-estev-Projects-ROROROblox\104da8d7-df71-420a-b422-107c83bbd45a\scratchpad\test-capture.ps1`.
-Read it before Task 2. It already proves the Win32 block, DPI call, frame-bounds call, and both capture paths.
+**Reference implementation:** the verified-working capture core — the Win32 block, the DPI call, the
+frame-bounds call and both capture paths — shipped into
+[`scripts/capture-ui.ps1`](../../../scripts/capture-ui.ps1). Read the `#region Win32 interop` and
+capture regions there.
+
+> **Corrected 2026-08-10.** As written, this pointed at a `test-capture.ps1` inside a per-session
+> Claude scratchpad under `%LOCALAPPDATA%\Temp`, and instructed the reader to open it before Task 2.
+> That directory is keyed to one machine and one session id and no longer exists anywhere, so the
+> instruction was unfollowable by then and is unfollowable now. It also tripped the repo's own
+> local-path guard in full-tree CI mode, which is how it was found. The content it pointed at is not
+> lost — it was absorbed into the shipped script, which is what this now cites.
 
 **Running the app.** Several tasks verify against the live app:
 
