@@ -187,6 +187,47 @@ internal sealed class ThemeService
         {
             return;
         }
+
+        ApplyTo(resources, theme, edgeAnswer);
+
+        var decision = EdgeRemediation.Decide(
+            theme.IsBuiltIn, theme.Navy, theme.Divider,
+            alreadyAnswered: edgeAnswer.HasValue,
+            declined: edgeAnswer == false);
+
+        PendingEdgeQuestion = QuestionFor(theme, decision);
+
+        CurrentTheme = theme;
+        _log.LogInformation("Applied theme {Id} ({Name}).", theme.Id, theme.Name);
+    }
+
+    /// <summary>
+    /// The question to put to a theme's author, or <c>null</c> when there is nothing to ask.
+    /// Separate and static so the mapping is checkable without an <c>Application</c> — everything
+    /// around it in this class needs a live Dispatcher and a resource dictionary.
+    /// </summary>
+    internal static EdgeQuestion? QuestionFor(Theme theme, EdgeRemediation.Decision decision) =>
+        decision == EdgeRemediation.Decision.AskFirst
+            ? new EdgeQuestion(
+                theme.Id,
+                theme.Name,
+                Surface: theme.Navy,
+                AuthoredEdge: theme.Divider,
+                DerivedEdge: ContrastGuard.Ensure(theme.Navy, theme.Divider))
+            : null;
+
+    /// <summary>
+    /// Writes one theme's slots into a resource dictionary, including the derived interactive edge.
+    /// <para>
+    /// Static and dictionary-taking so a theme can be resolved with no <see cref="Application"/> and
+    /// no <see cref="ThemeService"/> instance. The contrast gate (ContrastPairGateTests) measures the
+    /// brushes this produces rather than the raw <see cref="Theme"/> record, because
+    /// <c>ApplySlot</c> returns early when a hex will not parse and leaves the previous brush in
+    /// place - so the record can say one thing while the app shows another.
+    /// </para>
+    /// </summary>
+    internal static void ApplyTo(ResourceDictionary resources, Theme theme, bool? edgeAnswer)
+    {
         ApplySlot(resources, ThemeSlots.Bg, theme.Bg);
         ApplySlot(resources, ThemeSlots.Cyan, theme.Cyan);
         ApplySlot(resources, ThemeSlots.Magenta, theme.Magenta);
@@ -212,27 +253,7 @@ internal sealed class ThemeService
             alreadyAnswered: edgeAnswer.HasValue,
             declined: edgeAnswer == false);
         ApplySlot(resources, ThemeSlots.InteractiveEdge, EdgeRemediation.Resolve(decision, theme.Navy, theme.Divider));
-
-        PendingEdgeQuestion = QuestionFor(theme, decision);
-
-        CurrentTheme = theme;
-        _log.LogInformation("Applied theme {Id} ({Name}).", theme.Id, theme.Name);
     }
-
-    /// <summary>
-    /// The question to put to a theme's author, or <c>null</c> when there is nothing to ask.
-    /// Separate and static so the mapping is checkable without an <c>Application</c> — everything
-    /// around it in this class needs a live Dispatcher and a resource dictionary.
-    /// </summary>
-    internal static EdgeQuestion? QuestionFor(Theme theme, EdgeRemediation.Decision decision) =>
-        decision == EdgeRemediation.Decision.AskFirst
-            ? new EdgeQuestion(
-                theme.Id,
-                theme.Name,
-                Surface: theme.Navy,
-                AuthoredEdge: theme.Divider,
-                DerivedEdge: ContrastGuard.Ensure(theme.Navy, theme.Divider))
-            : null;
 
     /// <summary>
     /// Always REPLACE the brush instance. The MainWindow consumes themed brushes via
