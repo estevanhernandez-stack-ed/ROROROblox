@@ -157,7 +157,7 @@
     {
       "id": "22",
       "name": "join-by-link",
-      "skip": "Confirmed reachable, not routable. MainWindow.xaml.cs:180 (OnGameComboBoxSelectionChanged) shows the trigger is selecting the '(Paste a link...)' sentinel entry in a per-account Game ComboBox (MainWindow.xaml:758-763) -- not a button. That ComboBox carries no x:Name or AutomationId and is instantiated once per saved account row, so every row's ComboBox is structurally identical and unaddressable by the route schema's Type+Name/Aid contract without an ancestor anchor, and there is no such anchor either (rows carry no distinguishing AutomationId). The only selector left would be a specific account's display name, which is live per-profile data (the route file is shared/committed) and would break on any profile with a different account list or zero accounts (the same class of gap already documented for surface 02)."
+      "skip": "Confirmed reachable, not routable. MainWindow.xaml.cs:165 (OnGameComboBoxSelectionChanged) shows the trigger is selecting the '(Paste a link...)' sentinel entry in a per-account Game ComboBox (MainWindow.xaml:758-763) -- not a button. That ComboBox carries no x:Name or AutomationId and is instantiated once per saved account row, so every row's ComboBox is structurally identical and unaddressable by the route schema's Type+Name/Aid contract without an ancestor anchor, and there is no such anchor either (rows carry no distinguishing AutomationId). The only selector left would be a specific account's display name, which is live per-profile data (the route file is shared/committed) and would break on any profile with a different account list or zero accounts (the same class of gap already documented for surface 02)."
     },
     {
       "id": "23",

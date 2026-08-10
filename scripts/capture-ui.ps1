@@ -59,6 +59,7 @@ using System.Runtime.InteropServices;
 public static class Win
 {
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
     [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr hWnd);
     [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr hWnd, IntPtr hdc, uint flags);
@@ -874,11 +875,31 @@ if ($Watch) {
         $label = Read-Host 'Surface label (blank to quit)'
         if ([string]::IsNullOrWhiteSpace($label)) { break }
         Start-Sleep -Seconds 2
-        $bmp = Get-WindowBitmap -Hwnd ([IntPtr]$proc.MainWindowHandle)
+
+        # Foreground window at the moment of capture, not the app's main-window handle. Every
+        # remaining -Watch candidate (the tray menu, future one-offs) is its own top-level HWND
+        # once the five Tools destinations became routed surfaces, so MainWindowHandle would
+        # reliably capture whatever sits BEHIND the thing the operator is trying to catch.
+        $hwnd = [Win]::GetForegroundWindow()
+        $fgElement = [System.Windows.Automation.AutomationElement]::FromHandle($hwnd)
+        $fgName = $fgElement.Current.Name
+        $fgPid = $fgElement.Current.ProcessId
+        Write-Host "  foreground window: '$fgName' (pid $fgPid)"
+
+        if ($fgPid -ne $proc.Id) {
+            # Same class of mistake as a desktop-root name match once binding a Chrome window in
+            # this project: refuse rather than silently screenshot an unrelated app.
+            Write-Warning ("foreground window belongs to pid $fgPid, not $($routes.processName) " +
+                "(pid $($proc.Id)). Refusing to capture -- bring the RoRoRo surface you want to " +
+                "the front, then press Enter again.")
+            continue
+        }
+
+        $bmp = Get-WindowBitmap -Hwnd $hwnd
         try {
             $path = Join-Path $OutDir ("watch-{0}-{1}.png" -f (++$n), $label)
             $bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
-            Write-Host "  wrote $path"
+            Write-Host "  wrote $path (captured '$fgName')"
         }
         finally { $bmp.Dispose() }
     }
