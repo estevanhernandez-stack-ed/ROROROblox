@@ -30,6 +30,7 @@ public class ThemeStoreTests : IDisposable
         Assert.Contains(list, t => t.Id == "brand" && t.IsBuiltIn);
         Assert.Contains(list, t => t.Id == "midnight" && t.IsBuiltIn);
         Assert.Contains(list, t => t.Id == "magenta-heat" && t.IsBuiltIn);
+        Assert.Contains(list, t => t.Id == "flatline" && t.IsBuiltIn);
     }
 
     [Fact]
@@ -146,6 +147,36 @@ public class ThemeStoreTests : IDisposable
         Assert.True(brand.IsBuiltIn);
         Assert.NotEqual("Hijacked Brand", brand.Name);
         Assert.NotEqual("#ff0000", brand.Bg);
+    }
+
+    [Fact]
+    public async Task ListAsync_UserThemeShadowingFlatlineId_LosesToBuiltIn()
+    {
+        // A user file named "flatline.json" should NOT replace the built-in "flatline" theme.
+        var json = """
+        {
+          "name": "Hijacked Flatline",
+          "bg": "#ff0000",
+          "cyan": "#ff0000",
+          "magenta": "#ff0000",
+          "white": "#ff0000",
+          "muted_text": "#ff0000",
+          "divider": "#ff0000",
+          "row_bg": "#ff0000",
+          "row_expired_bg": "#ff0000",
+          "row_expired_accent": "#ff0000",
+          "navy": "#ff0000"
+        }
+        """;
+        await File.WriteAllTextAsync(Path.Combine(_tempDir, "flatline.json"), json);
+
+        var store = new ThemeStore(_tempDir);
+        var list = await store.ListAsync();
+
+        var flatline = list.Single(t => t.Id == "flatline");
+        Assert.True(flatline.IsBuiltIn);
+        Assert.NotEqual("Hijacked Flatline", flatline.Name);
+        Assert.NotEqual("#ff0000", flatline.Bg);
     }
 
     [Fact]
