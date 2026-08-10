@@ -160,8 +160,8 @@ public class ContrastPairGateTests
         try { if (Directory.Exists(scratch)) Directory.Delete(scratch, recursive: true); }
         catch (IOException) { }
 
-        Assert.True(themes.Count >= 3,
-            $"Expected at least the 3 built-in themes (brand, midnight, magenta-heat); got {themes.Count}.");
+        Assert.True(themes.Count >= 4,
+            $"Expected at least the 4 built-in themes (brand, midnight, magenta-heat, flatline); got {themes.Count}.");
 
         return themes;
     }
