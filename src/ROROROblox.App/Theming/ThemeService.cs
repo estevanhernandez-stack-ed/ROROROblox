@@ -188,12 +188,7 @@ internal sealed class ThemeService
             return;
         }
 
-        ApplyTo(resources, theme, edgeAnswer);
-
-        var decision = EdgeRemediation.Decide(
-            theme.IsBuiltIn, theme.Navy, theme.Divider,
-            alreadyAnswered: edgeAnswer.HasValue,
-            declined: edgeAnswer == false);
+        var decision = ApplyTo(resources, theme, edgeAnswer);
 
         PendingEdgeQuestion = QuestionFor(theme, decision);
 
@@ -225,8 +220,10 @@ internal sealed class ThemeService
     /// <c>ApplySlot</c> returns early when a hex will not parse and leaves the previous brush in
     /// place - so the record can say one thing while the app shows another.
     /// </para>
+    /// Returns the remediation decision so the caller can set <see cref="PendingEdgeQuestion"/>
+    /// without recomputing it.
     /// </summary>
-    internal static void ApplyTo(ResourceDictionary resources, Theme theme, bool? edgeAnswer)
+    internal static EdgeRemediation.Decision ApplyTo(ResourceDictionary resources, Theme theme, bool? edgeAnswer)
     {
         ApplySlot(resources, ThemeSlots.Bg, theme.Bg);
         ApplySlot(resources, ThemeSlots.Cyan, theme.Cyan);
@@ -253,6 +250,7 @@ internal sealed class ThemeService
             alreadyAnswered: edgeAnswer.HasValue,
             declined: edgeAnswer == false);
         ApplySlot(resources, ThemeSlots.InteractiveEdge, EdgeRemediation.Resolve(decision, theme.Navy, theme.Divider));
+        return decision;
     }
 
     /// <summary>
