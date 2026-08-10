@@ -675,3 +675,106 @@ confirming it. Durable record is this file.
 
 **Handoff:** `/build`. Autonomous through the checklist, halting at C1 (after item 3) and C2 (after
 item 7).
+
+---
+
+## /build
+
+Autonomous. **Ten items shipped against eight planned**, nine commits, one checkpoint answered and
+one still owed. Suite went 1391 → 1411 with no regression at any step. Build held at 31 warnings /
+0 errors throughout, all pre-existing.
+
+### The cycle's actual shape
+
+Items 1-8 ran as `/checklist` sequenced them. **3a and 3b were added mid-build**, both from defects
+`spec.md` never enumerated, both approved by Este rather than deferred. That is the story of this
+cycle and it is worth stating plainly rather than as a footnote:
+
+`prd.md > Story 3.1` claims *"switching to Flatline leaves no brand hue on the main window."* That
+claim was falsified twice **after** the item meant to satisfy it had shipped and been signed off.
+
+- Item 3 rebound the four status-colour sites `spec.md > §5.3` enumerated. Signed off at **C1**.
+- Item 6's register pass found **F-088** — a fifth site, the status bar's live-process dot, two
+  literals nested in a `Setter.Value`, shipped with F-080 in PR #96 and present on `main`. Both of
+  item 3's fences were structurally blind to it: one walks `*.cs` and this is XAML, the other reads
+  `Background=` / `Foreground=` attributes and this is a literal in a style setter.
+- Item 3a fixed it and added a third fence fact scanning App **XAML** under one rule: **a literal is
+  permitted only when an OPEN register row already owns it**, each allow-list entry citing the id
+  inline.
+- That fence's own first run found **F-089** — four un-themed hexes in `SelectionDotStyle`, on every
+  account row, ring always drawn. The same claim, false a second time.
+- Item 3b fixed it, retired F-089's allow-list entry **before** the fix so the fence went red on all
+  four hexes first, and dropped the ceiling 101 → 97.
+
+**The lesson, and it generalises past this repo.** Enumerating defect sites by reading a spec finds
+what the spec's author saw. Sites five and six were found by a mechanical scan whose rule forces
+every exception to name an open finding — and site six was found by the fence written to fix site
+five. The fence is a better artifact than either fix. It is also the thing that lets the cycle claim
+completeness honestly: the literal inventory is now measured at 97 occurrences, every one attributed
+to a finding or to `App.xaml`'s seed dictionary, rather than asserted.
+
+### Checkpoints
+
+**C1 (after item 3) — answered.** Brand's active dot green `#4FE08C` → white. Approved. The four
+picker sentences were reviewed in the same beat and shipped as drafted, so `spec.md > §16`'s "copy
+polish at `/build`" is resolved rather than open. Cyan was the tempting mapping and is wrong on
+measurement: under flatline `CyanBrush` and `RowExpiredAccentBrush` are the same value, landing
+active and expired at 1.00:1.
+
+**C2 (after item 7) — owed.** The script half ran: **56 of 56 captures, 0 failed**,
+`run-flatline.json` beside the other three. All four rounds were re-shot rather than only flatline,
+so the brand captures reflect item 3's change. The eyes-on half is a human's and has not happened.
+
+### What the agent could and could not verify
+
+Verified in pixels from the capture round: item 3a's status-bar dot renders grey under flatline;
+item 2's sentence renders and wraps under the picker; brand is structurally identical to flatline
+with hue intact. Everything the theme governs is achromatic under flatline.
+
+Not verified, and not claimed: **no test in this project loads a `Window`.** A green suite is not
+evidence that anything renders. `spec.md > §11.3`'s eight manual beats are all owed.
+
+**Observation for a later cycle, not a defect against this one.** The flatline captures still show
+coloured avatar rings and caption swatches. `spec.md > §7` scopes those out as per-account identity
+paint, arguing identity is not colour-only because the account name is right there, and that holds.
+But `scope.md` opened this cycle by listing "the coloured caption swatches" as a colour-only signal,
+so a clan member picking flatline for colour-vision reasons still sees colour. Worth a row.
+
+### Verification defect found in this checklist
+
+Every `Verify:` field shipped with `--filter "ThemeStore*|ContrastPairGate*"`. VSTest's filter
+grammar has no glob wildcards: that expression matches **zero tests** and the run reports success.
+A checkpoint could have been signed off on nothing having executed. Corrected to
+`FullyQualifiedName~` form in three places and each one run. **This will recur in the next
+Cart-authored checklist unless the template changes** — flagging for `/evolve`.
+
+### Repo-hygiene findings, all pre-existing, none fixed here
+
+- **The pre-commit hooks are not installed on this checkout.** `.git/hooks/pre-commit` is absent, so
+  the secret-scan and local-path guards never fired on any of this cycle's nine commits. Both were
+  run manually against the staged set and came back clean, so the commits are sound — but the
+  protection was off the whole time. `.claude/hooks/install.ps1` is the fix. Same failure class as
+  the `--filter` defect above: a guard that reports nothing because it never ran.
+- **`docs/features.md` was a release behind**, not merely missing v1.17. v1.16.0.0 was tagged and
+  published 2026-08-06 and never got a ledger row. Both rows added.
+- **`.gitnexus/` is 74 MB tracked** and `meta.json` holds a hardcoded machine path.
+- **The per-account identity palette lives in three hand-synced copies** in three encodings, and no
+  comment names all three.
+
+### Register
+
+**34 clean · 54 open · 1 closed-as-ruled · 89 total.** The cycle opened F-085, F-086, F-087, F-088,
+F-089 and closed two of them (F-088, F-089) in the same session it opened them. **F-050 stays
+`open`** and was re-verified byte-identical after every register edit — `NoExemptionOutlivesItsFinding`
+reads its last pipe-delimited cell and would auto-delete the gate's exemption, reddening brand
+(3.79:1) and magenta-heat (3.29:1), for a reason that would not look connected to the flip.
+
+### Sharpest result
+
+`flatline-lab` reproduced all six recorded register ratios **exact to four decimals on first run**,
+with no hex tuning, and the cross-check held: the fixture's `WhiteBrush` vs `NavyBrush` measures
+12.9831:1, which is F-031's 4.34 × F-050's 2.99. Two ratios recorded months apart in separate
+findings are mutually consistent with a single reconstructed theme. The register had been telling the
+truth for months; nothing had ever re-derived it.
+
+**Handoff:** C2, then `/iterate` or `/reflect`.

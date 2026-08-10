@@ -243,7 +243,7 @@ already proven by measurement at `/spec` time (`spec.md > §11.1`). Heaviest by 
   item asserts nothing new. Re-read each edited row against the file it cites.
   Commit: `docs(register): reconcile flatline ratios against the artifacts that produce them`.
 
-- [ ] **7. The fourth capture round**
+- [x] **7. The fourth capture round** *(script half done; the eyes-on half is C2, still owed)*
   Spec ref: `spec.md > §9 The fourth capture round` + `§11.3 Manual, and non-negotiable`
   What to build: nothing. **No edit to `scripts/capture-ui.ps1`** — `Get-AvailableThemes` enumerates the
   live picker and matches on the `Id = <id>,` substring
@@ -264,7 +264,7 @@ already proven by measurement at `/spec` time (`spec.md > §11.1`). Heaviest by 
   UIA text is not rendered pixels, so the manual step stands.
   Commit: `docs(evidence): fourth capture round under flatline`.
 
-- [ ] **8. Documentation & Security Verification**
+- [x] **8. Documentation & Security Verification**
   Spec ref: `spec.md > §2 Runtime, deployment, identity and signing` + `§16 Open issues` + `prd.md > What we're building` + `CLAUDE.md > What NOT to do`
   What to build: version to **1.17.0.0** in lockstep — `src/ROROROblox.App/ROROROblox.App.csproj`
   `<Version>` and `Package.appxmanifest` `Identity Version`, both currently 1.16.0.0. No new
