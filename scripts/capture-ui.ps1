@@ -162,6 +162,138 @@ function Test-BlankFrame {
 
 #endregion
 
+$script:DenyList = @()   # populated from the route file by the route engine
+
+#region UIA
+
+# Keep in lockstep with KnownTypes in src/ROROROblox.Tests/UiRoutesSchemaTests.cs.
+$script:ControlTypes = @{
+    'Button'   = [System.Windows.Automation.ControlType]::Button
+    'MenuItem' = [System.Windows.Automation.ControlType]::MenuItem
+    'ListItem' = [System.Windows.Automation.ControlType]::ListItem
+    'Window'   = [System.Windows.Automation.ControlType]::Window
+    'ComboBox' = [System.Windows.Automation.ControlType]::ComboBox
+    'CheckBox' = [System.Windows.Automation.ControlType]::CheckBox
+    'List'     = [System.Windows.Automation.ControlType]::List
+    'Text'     = [System.Windows.Automation.ControlType]::Text
+}
+
+# The pattern each verb needs. Requiring it during resolution is what makes a name collision
+# resolvable: of the five elements named "Settings", only the Button carries InvokePattern.
+$script:VerbPattern = @{
+    'invoke'       = [System.Windows.Automation.InvokePattern]::Pattern
+    'select'       = [System.Windows.Automation.SelectionItemPattern]::Pattern
+    'expand'       = [System.Windows.Automation.ExpandCollapsePattern]::Pattern
+    'close-window' = [System.Windows.Automation.WindowPattern]::Pattern
+}
+
+function Get-AppRoot {
+    param([Parameter(Mandatory)][int]$ProcessId)
+    # Process-scoped, always. A desktop-root match on Name="Settings" has been observed binding a
+    # Chrome window instead of this app's.
+    $root = [System.Windows.Automation.AutomationElement]::RootElement
+    $cond = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $ProcessId)
+    $el = $root.FindFirst([System.Windows.Automation.TreeScope]::Children, $cond)
+    if (-not $el) { throw "no top-level window owned by process $ProcessId" }
+    return $el
+}
+
+function Resolve-UiaElement {
+    param(
+        [Parameter(Mandatory)]$Scope,
+        [Parameter(Mandatory)][string]$Type,
+        [string]$Name,
+        [string]$Aid,
+        [string]$Verb,
+        [string]$Within
+    )
+
+    if ($Name -and $script:DenyList -contains $Name) {
+        throw "DENIED: '$Name' is on the deny list. It stops Roblox clients, deletes accounts, or launches game sessions."
+    }
+    if (-not $script:ControlTypes.ContainsKey($Type)) { throw "unknown control type '$Type'" }
+    if ([string]::IsNullOrEmpty($Name) -eq [string]::IsNullOrEmpty($Aid)) {
+        throw "specify exactly one of -Name or -Aid (got name='$Name' aid='$Aid')"
+    }
+
+    $searchRoot = $Scope
+    if ($Within) {
+        $searchRoot = $Scope.FindFirst([System.Windows.Automation.TreeScope]::Descendants,
+            (New-Object System.Windows.Automation.PropertyCondition(
+                [System.Windows.Automation.AutomationElement]::AutomationIdProperty, $Within)))
+        if (-not $searchRoot) { throw "within-scope AutomationId '$Within' not found" }
+    }
+
+    $conds = New-Object System.Collections.Generic.List[System.Windows.Automation.Condition]
+    $conds.Add((New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty, $script:ControlTypes[$Type])))
+    if ($Name) {
+        $conds.Add((New-Object System.Windows.Automation.PropertyCondition(
+            [System.Windows.Automation.AutomationElement]::NameProperty, $Name)))
+    }
+    if ($Aid) {
+        $conds.Add((New-Object System.Windows.Automation.PropertyCondition(
+            [System.Windows.Automation.AutomationElement]::AutomationIdProperty, $Aid)))
+    }
+    $cond = New-Object System.Windows.Automation.AndCondition($conds.ToArray())
+
+    # Subtree, not Descendants: the main window must be resolvable as its own capture target.
+    $found = $searchRoot.FindAll([System.Windows.Automation.TreeScope]::Subtree, $cond)
+
+    $required = $null
+    if ($Verb) {
+        if (-not $script:VerbPattern.ContainsKey($Verb)) { throw "unknown verb '$Verb'" }
+        $required = $script:VerbPattern[$Verb]
+    }
+
+    # NOTE: not $matches. That is the automatic variable populated by -match.
+    $hits = @()
+    foreach ($e in $found) {
+        if ($required) {
+            $p = $null
+            if (-not $e.TryGetCurrentPattern($required, [ref]$p)) { continue }
+        }
+        $hits += $e
+    }
+
+    $label = if ($Name) { "name='$Name'" } else { "aid='$Aid'" }
+    if ($hits.Count -eq 0) {
+        throw "no [$Type] with $label$(if ($Verb) { " supporting '$Verb'" })"
+    }
+    if ($hits.Count -gt 1) {
+        throw "$($hits.Count) elements matched [$Type] $label$(if ($Verb) { " supporting '$Verb'" }). Ambiguous; add a 'within' scope."
+    }
+
+    # Deny again, on the RESOLVED element's own name. The pre-check above only sees the name the
+    # caller asked for, so a step selecting a denied control by AutomationId would walk straight
+    # past it. Checking after resolution closes that regardless of which selector was used.
+    $resolvedName = $hits[0].Current.Name
+    if ($resolvedName -and $script:DenyList -contains $resolvedName) {
+        throw "DENIED: resolved to '$resolvedName', which is on the deny list. It stops Roblox clients, deletes accounts, or launches game sessions."
+    }
+
+    return $hits[0]
+}
+
+function Get-SubtreeText {
+    param([Parameter(Mandatory)]$Element)
+    $texts = New-Object System.Collections.Generic.List[string]
+    $texts.Add($Element.Current.Name)
+    $all = $Element.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+        [System.Windows.Automation.Condition]::TrueCondition)
+    foreach ($e in $all) {
+        $texts.Add($e.Current.Name)
+        $vp = $null
+        if ($e.TryGetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern, [ref]$vp)) {
+            $texts.Add($vp.Current.Value)
+        }
+    }
+    return $texts.ToArray()
+}
+
+#endregion
+
 #region Self-test
 
 function Invoke-SelfTest {
