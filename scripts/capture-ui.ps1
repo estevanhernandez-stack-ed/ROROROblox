@@ -39,6 +39,17 @@ class DenyViolation : System.Exception {
     DenyViolation([string]$message) : base($message) { }
 }
 
+# A typed exception, not a message prefix. Task 4 learned this the hard way: detecting an abort
+# condition with -like 'DENIED:*' couples a safety guard to human-readable prose, so a reworded
+# message silently disarms it. Catch sites discriminate with catch [SecretExposure].
+#
+# Declared here alongside DenyViolation, not down in the Secrets region below: PowerShell resolves
+# class names in catch filters at parse time, so a class defined below its first catch site would
+# not bind.
+class SecretExposure : System.Exception {
+    SecretExposure([string]$message) : base($message) { }
+}
+
 #region Win32 interop
 
 $win32 = @'
@@ -481,6 +492,114 @@ function Invoke-VerifyMode {
 
 #endregion
 
+#region Secrets
+
+# Scanned before ANY png is written, on every surface rather than only the Alerts page: the Discord
+# page carries a live status line that could render the same URL, and a .ROBLOSECURITY value in a
+# PNG is strictly worse than a webhook.
+#
+# Limit, stated rather than hidden: UIA text is not the rendered pixels. A value could render
+# without being exposed to UIA and this would miss it. The checklist's prose warning stays in place
+# as backup; this guard does not retire it.
+$script:SecretPatterns = @(
+    @{ Kind = 'discord-webhook'; Pattern = 'discord(app)?\.com/api/webhooks/\d+/[A-Za-z0-9_-]{20,}' }
+    @{ Kind = 'roblosecurity';   Pattern = '_\|WARNING:-DO-NOT-SHARE-THIS' }
+)
+
+function Find-SecretsInText {
+    param([string[]]$Texts)
+    $found = New-Object System.Collections.Generic.List[psobject]
+    foreach ($t in $Texts) {
+        if ([string]::IsNullOrEmpty($t)) { continue }
+        foreach ($p in $script:SecretPatterns) {
+            if ($t -match $p.Pattern) {
+                $found.Add([pscustomobject]@{ Kind = $p.Kind; Sample = $t })
+            }
+        }
+    }
+    # Comma-wrapped: `return $found.ToArray()` unrolls a zero- or one-element array to a bare value
+    # ($null for zero, the single element for one) once it crosses the function's output stream,
+    # regardless of the ToArray() type. Under Set-StrictMode that turns "0 hits" into a null
+    # reference and ".Count" throws instead of comparing. The unary comma keeps the array a single
+    # object on that stream.
+    return ,($found.ToArray())
+}
+
+function Assert-NoSecrets {
+    param([Parameter(Mandatory)]$Element, [Parameter(Mandatory)][string]$SurfaceName)
+    $hits = Find-SecretsInText -Texts (Get-SubtreeText -Element $Element)
+    if ($hits.Count -gt 0) {
+        $kinds = ($hits | ForEach-Object { $_.Kind } | Sort-Object -Unique) -join ', '
+        throw [SecretExposure]::new(@"
+ABORTED on surface '$SurfaceName': a credential is rendered on screen ($kinds).
+Nothing was written. Clear or mask the field, then re-run.
+A Discord webhook URL is a bearer credential: the token segment is the entire auth.
+"@)
+    }
+}
+
+#endregion
+
+#region Evidence
+
+function Save-SurfaceCapture {
+    param(
+        [Parameter(Mandatory)]$Element,
+        [Parameter(Mandatory)][string]$Path
+    )
+    $hwnd = [IntPtr]$Element.Current.NativeWindowHandle
+    if ($hwnd -ne [IntPtr]::Zero) {
+        $bmp = Get-WindowBitmap -Hwnd $hwnd
+    }
+    else {
+        # Popups and menus have no window handle of their own. CopyFromScreen reads the composited
+        # desktop, so the element must be on top and unobstructed.
+        $r = $Element.Current.BoundingRectangle
+        $bmp = Get-RegionBitmap -X $r.X -Y $r.Y -W $r.Width -H $r.Height
+    }
+
+    try {
+        if (Test-BlankFrame -Bmp $bmp) {
+            throw "capture came back blank ($($bmp.Width)x$($bmp.Height)); refusing to write it as evidence"
+        }
+        $dir = Split-Path -Parent $Path
+        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+        $bmp.Save($Path, [System.Drawing.Imaging.ImageFormat]::Png)
+        return [pscustomobject]@{ Path = $Path; Width = $bmp.Width; Height = $bmp.Height }
+    }
+    finally { $bmp.Dispose() }
+}
+
+function Write-RunManifest {
+    param(
+        [Parameter(Mandatory)][string]$OutDir,
+        [Parameter(Mandatory)][string]$ThemeId,
+        [Parameter(Mandatory)]$Results,
+        [Parameter(Mandatory)]$Proc
+    )
+    # Evidence that cannot say which build produced it is how the findings register drifted six
+    # rows out of date.
+    #
+    # DPI comes from GetDpiForWindow, not from comparing pixel dimensions. Once the process is
+    # DPI-aware both sides of any such ratio are already physical pixels, so it would report 1.0 on
+    # every machine and quietly tell you nothing.
+    $dpi = [Win]::GetDpiForWindow([IntPtr]$Proc.MainWindowHandle)
+    $manifest = [ordered]@{
+        capturedUtc = (Get-Date).ToUniversalTime().ToString('o')
+        theme       = $ThemeId
+        appVersion  = $Proc.MainModule.FileVersionInfo.FileVersion
+        appPath     = $Proc.MainModule.FileName
+        dpi         = [int]$dpi
+        dpiScale    = [math]::Round(($dpi / 96.0), 3)
+        surfaces    = @($Results)
+    }
+    $path = Join-Path $OutDir "run-$ThemeId.json"
+    $manifest | ConvertTo-Json -Depth 6 | Set-Content -Path $path -Encoding utf8
+    return $path
+}
+
+#endregion
+
 #region Self-test
 
 function Invoke-SelfTest {
@@ -547,6 +666,25 @@ function Invoke-SelfTest {
     }
     Assert-That (-not (Test-BlankFrame -Bmp $small)) 'half-black/half-red 8x8 bitmap should not be detected as blank (sub-stride regression)'
     $small.Dispose()
+
+    # Secret scan: positive cases must be caught, negative cases must not fire.
+    $webhook = 'https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz0123456789'
+    Assert-That ((Find-SecretsInText -Texts @($webhook)).Count -eq 1) 'live webhook URL should be caught'
+
+    $webhookAlt = 'https://discordapp.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz0123456789'
+    Assert-That ((Find-SecretsInText -Texts @($webhookAlt)).Count -eq 1) 'discordapp.com webhook should be caught'
+
+    $cookie = '_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you'
+    Assert-That ((Find-SecretsInText -Texts @($cookie)).Count -eq 1) 'ROBLOSECURITY prefix should be caught'
+
+    # The masked form F-076 ships must NOT trip the scan, or the guard blocks every legitimate run.
+    $masked = 'https://discord.com/api/webhooks/123456789012345678/****'
+    Assert-That ((Find-SecretsInText -Texts @($masked)).Count -eq 0) 'masked webhook must not trip the scan'
+
+    Assert-That ((Find-SecretsInText -Texts @('Alerts & memory', '', 'Idle threshold')).Count -eq 0) `
+        'ordinary UI copy must not trip the scan'
+    Assert-That ((Find-SecretsInText -Texts @('https://discord.com/api/webhooks/')).Count -eq 0) `
+        'a webhook URL with no id or token must not trip the scan'
 
     if ($failures.Count -gt 0) {
         $failures | ForEach-Object { Write-Host "FAIL: $_" -ForegroundColor Red }
