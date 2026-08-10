@@ -252,10 +252,27 @@ looking like success.
 
 ## 9. Verification
 
-**`-Verify` mode** resolves every step of every route without invoking anything, asserting each
-resolves to exactly one element carrying the pattern its verb requires. This is the direct answer
-to the documented failure mode. A copy change now fails a fast read-only check instead of silently
-capturing the wrong window.
+**`-Verify` mode** opens each surface, resolves its capture target, and closes it, capturing nothing
+and writing no files. This is the direct answer to the documented failure mode: a copy change fails
+a fast check instead of silently capturing the wrong window.
+
+> **Amended 2026-08-10, during implementation.** This mode was originally specified as read-only:
+> resolve every step without invoking anything. Measurement killed that design. From the app's idle
+> state, 26 of 38 route steps failed to resolve, and none of them were defects. The Preferences rail
+> pages and the theme-builder entry live inside a dialog that is closed, and the Tools menu items
+> are not instantiated in the UIA tree at all until the menu is first opened.
+>
+> The fatal part is not the noise. A renamed button and a closed dialog raise the *identical* error,
+> "no element matched", and nothing static separates them. So the read-only mode would have exited
+> non-zero on a perfectly healthy app while going blind to the exact drift it exists to catch.
+>
+> Driving the UI performs only actions a normal capture run performs anyway, and every step is
+> deny-guarded twice by the resolver: once on the requested name, once on the resolved element's
+> name. The read-only property was protecting against something the deny list already covers.
+>
+> A second benefit fell out. Under the original design, `Open-Surface`, `Close-Surface`,
+> `Wait-ForStable` and `Resolve-CaptureTarget` were never exercised by any check and would have
+> reached the tree untested until the first real capture run. `-Verify` now runs all of them.
 
 **Route-file schema test**, in `src/ROROROblox.Tests`: every step carries a `type`, every `do` is a
 known verb, ids are unique, surface ids match the checklist's list, and no route targets a name on
