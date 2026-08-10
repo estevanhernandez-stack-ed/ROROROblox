@@ -502,6 +502,9 @@ function Invoke-VerifyMode {
 # without being exposed to UIA and this would miss it. The checklist's prose warning stays in place
 # as backup; this guard does not retire it.
 $script:SecretPatterns = @(
+    # {20,} floor is safe margin, not a tight fit: real Discord webhook tokens run ~68 characters
+    # (WebhookUrlMasker.cs:19-20), so a future editor tightening this number has room before it
+    # risks clipping a real token and missing it.
     @{ Kind = 'discord-webhook'; Pattern = 'discord(app)?\.com/api/webhooks/\d+/[A-Za-z0-9_-]{20,}' }
     @{ Kind = 'roblosecurity';   Pattern = '_\|WARNING:-DO-NOT-SHARE-THIS' }
 )
@@ -680,6 +683,20 @@ function Invoke-SelfTest {
     # The masked form F-076 ships must NOT trip the scan, or the guard blocks every legitimate run.
     $masked = 'https://discord.com/api/webhooks/123456789012345678/****'
     Assert-That ((Find-SecretsInText -Texts @($masked)).Count -eq 0) 'masked webhook must not trip the scan'
+
+    # The `****` case above is a valid negative, but it is not the string the app actually renders.
+    # WebhookUrlMasker.Mask (src/ROROROblox.Core/Discord/WebhookUrlMasker.cs) drops the /api/webhooks/
+    # path entirely and renders scheme://host/ + an ellipsis + the trailing 5 characters of the
+    # original URL -- this is what a real masked webhook looks like on the Alerts page after F-076's
+    # fix. It must produce zero hits too, or the guard fires on every legitimate run the day someone
+    # actually opens that page. Built from the same fixture webhook as the positive assertion above,
+    # by the documented algorithm, rather than a hand-typed literal, so it can't drift from the real
+    # shape. [char]0x2026 rather than a literal ellipsis glyph so a mangled save can't turn it into
+    # three periods and silently stop testing anything.
+    $ellipsis = [char]0x2026
+    $realMasked = 'https://discord.com/' + $ellipsis + $webhook.Substring($webhook.Length - 5)
+    Assert-That ((Find-SecretsInText -Texts @($realMasked)).Count -eq 0) `
+        'the real on-screen mask (WebhookUrlMasker.Mask shape) must not trip the scan'
 
     Assert-That ((Find-SecretsInText -Texts @('Alerts & memory', '', 'Idle threshold')).Count -eq 0) `
         'ordinary UI copy must not trip the scan'
