@@ -1,17 +1,168 @@
 {
   "app": "RoRoRo",
   "processName": "ROROROblox.App",
-  "_note": "Authored from a -DumpUia tree of the main window. Almost nothing in this app carries an AutomationId, so routes invoke by visible NAME — which means a copy change to a button silently breaks a route. Find-UiaElement matches Name OR AutomationId, so add ids and switch these over if routes start missing. Surfaces reachable only through a nested picker (library) or a non-Invoke control (tray menu, the Settings nav rail, the Tools menu) are captured in -Watch mode instead; they are listed in the checklist, not here.",
-  "_wave3": "Glow wave 3 collapsed the main window's six nav buttons to Settings + a Tools menu, which deleted five routes from this file. About, History, Diagnostics, Games and Plugins are now MenuItems inside a popup, and a popup is NOT in the main window's automation subtree even while it is open — a driver walking down from the window root will never find them. They are -Watch captures now, listed in docs/ui-capture-checklist.md. The Settings route survives, but its invoke name changed: the button read '⚙ Settings' and now reads 'Settings' (F-012 dropped the glyph).",
-  "routes": [
+  "_note": "Every step names a control TYPE as well as a name or AutomationId, and the resolver additionally requires the UIA pattern the verb needs. This is not decoration: five elements in this app are named 'Settings' (a Window, a TitleBar, two Texts and the Button), and a name-only FindFirst returns the Window, which carries no InvokePattern. Steps that resolve to zero or to more than one element are errors, never a silent first-match.",
+  "deny": [
+    "Stop all Roblox instances",
+    "Remove",
+    "Launch As",
+    "Launch multiple",
+    "Squad Launch"
+  ],
+  "surfaces": [
     {
-      "surface": "03-preferences",
-      "invoke": [
-        "Settings"
+      "id": "01",
+      "name": "main-window",
+      "capture": { "type": "Window", "name": "RoRoRo" }
+    },
+    {
+      "id": "02",
+      "name": "main-window-empty",
+      "skip": "Requires zero saved accounts; the live profile has eight. Documented gap, see the design spec section 11."
+    },
+    {
+      "id": "03",
+      "name": "preferences",
+      "open": [
+        { "do": "invoke", "name": "Settings", "type": "Button" },
+        { "do": "select", "name": "Startup", "type": "ListItem", "within": "SettingsNav" }
       ],
+      "capture": { "type": "Window", "name": "Settings" },
+      "close": [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
+    },
+    {
+      "id": "03a",
+      "name": "preferences-accounts",
+      "open": [
+        { "do": "invoke", "name": "Settings", "type": "Button" },
+        { "do": "select", "name": "Accounts", "type": "ListItem", "within": "SettingsNav" }
+      ],
+      "capture": { "type": "Window", "name": "Settings" },
+      "close": [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
+    },
+    {
+      "id": "03b",
+      "name": "preferences-alerts",
+      "open": [
+        { "do": "invoke", "name": "Settings", "type": "Button" },
+        { "do": "select", "name": "Alerts & memory", "type": "ListItem", "within": "SettingsNav" }
+      ],
+      "capture": { "type": "Window", "name": "Settings" },
+      "close": [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
+    },
+    {
+      "id": "03c",
+      "name": "preferences-discord",
+      "open": [
+        { "do": "invoke", "name": "Settings", "type": "Button" },
+        { "do": "select", "name": "Discord", "type": "ListItem", "within": "SettingsNav" }
+      ],
+      "capture": { "type": "Window", "name": "Settings" },
+      "close": [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
+    },
+    {
+      "id": "03d",
+      "name": "preferences-appearance",
+      "open": [
+        { "do": "invoke", "name": "Settings", "type": "Button" },
+        { "do": "select", "name": "Appearance", "type": "ListItem", "within": "SettingsNav" }
+      ],
+      "capture": { "type": "Window", "name": "Settings" },
+      "close": [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
+    },
+    {
+      "id": "05",
+      "name": "about",
+      "open": [
+        { "do": "expand", "name": "Tools", "type": "Button" },
+        { "do": "invoke", "name": "About", "type": "MenuItem" }
+      ],
+      "capture": { "type": "Window", "name": "About RoRoRo" },
+      "close": [ { "do": "close-window", "name": "About RoRoRo", "type": "Window" } ]
+    },
+    {
+      "id": "06",
+      "name": "history",
+      "open": [
+        { "do": "expand", "name": "Tools", "type": "Button" },
+        { "do": "invoke", "name": "History", "type": "MenuItem" }
+      ],
+      "capture": { "type": "Window", "name": "History" },
+      "close": [ { "do": "close-window", "name": "History", "type": "Window" } ]
+    },
+    {
+      "id": "07",
+      "name": "diagnostics",
+      "open": [
+        { "do": "expand", "name": "Tools", "type": "Button" },
+        { "do": "invoke", "name": "Diagnostics", "type": "MenuItem" }
+      ],
+      "capture": { "type": "Window", "name": "Diagnostics" },
+      "close": [ { "do": "close-window", "name": "Diagnostics", "type": "Window" } ]
+    },
+    {
+      "id": "08",
+      "name": "games",
+      "open": [
+        { "do": "expand", "name": "Tools", "type": "Button" },
+        { "do": "invoke", "name": "Games", "type": "MenuItem" }
+      ],
+      "capture": { "type": "Window", "name": "Games" },
+      "close": [ { "do": "close-window", "name": "Games", "type": "Window" } ]
+    },
+    {
+      "id": "09",
+      "name": "plugins",
+      "open": [
+        { "do": "expand", "name": "Tools", "type": "Button" },
+        { "do": "invoke", "name": "Plugins", "type": "MenuItem" }
+      ],
+      "capture": { "type": "Window", "name": "Plugins" },
+      "close": [ { "do": "close-window", "name": "Plugins", "type": "Window" } ]
+    },
+    {
+      "id": "10",
+      "name": "theme-builder",
+      "open": [
+        { "do": "invoke", "name": "Settings", "type": "Button" },
+        { "do": "select", "name": "Appearance", "type": "ListItem", "within": "SettingsNav" },
+        { "do": "invoke", "aid": "BuildThemeButton", "type": "Button" }
+      ],
+      "capture": { "type": "Window", "name": "Build a theme" },
       "close": [
-        "Close"
+        { "do": "close-window", "name": "Build a theme", "type": "Window" },
+        { "do": "close-window", "name": "Settings", "type": "Window" }
       ]
+    },
+    {
+      "id": "11",
+      "name": "tray-menu",
+      "skip": "Path unverified against the live app. NotifyIcon context menu, plausibly its own in-process HWND."
+    },
+    {
+      "id": "20",
+      "name": "welcome",
+      "open": [
+        { "do": "expand", "name": "Tools", "type": "Button" },
+        { "do": "invoke", "name": "Welcome tour", "type": "MenuItem" }
+      ],
+      "capture": { "type": "Window", "name": "Welcome to RoRoRo" },
+      "close": [ { "do": "close-window", "name": "Welcome to RoRoRo", "type": "Window" } ]
+    },
+    {
+      "id": "21",
+      "name": "squad-launch",
+      "skip": "Denied until someone confirms the button opens a dialog rather than launching Roblox clients."
+    },
+    {
+      "id": "22",
+      "name": "join-by-link",
+      "skip": "Path unverified against the live app."
+    },
+    {
+      "id": "23",
+      "name": "export-accounts",
+      "skip": "Path unverified against the live app."
     }
   ]
 }
