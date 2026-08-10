@@ -26,10 +26,32 @@ while IFS= read -r file; do
   [ -z "$file" ] && continue
   [ ! -f "$file" ] && continue
 
-  # 1. Real .ROBLOSECURITY cookie literal — they always start with this exact prefix.
+  # 1. Real .ROBLOSECURITY cookie literal.
+  #
+  # The prefix ALONE is not the discriminator, and matching on it alone is what turned this check
+  # red on main. A real cookie is the warning prefix, then the `.|_` separator, then hundreds of
+  # characters of session blob. The two things this used to flag are the capture tool's own secret
+  # scanner — which necessarily contains this pattern because it scans for it — and that scanner's
+  # self-test fixture, which stops at the human-readable tail and carries no session data at all.
+  # Neither is a credential, and a scanner that cannot tell a scanner from a secret blocks every
+  # commit to the file whose job is finding secrets.
+  #
+  # So require the blob. This is deliberately NOT an allowlist: no file is trusted, so a real cookie
+  # pasted into capture-ui.ps1 still fails here, which matters because that script is the one that
+  # handles cookies. Precision goes up and nothing gets a pass.
+  #
+  # {20,} is safe margin, not a tight fit — real cookies run to several hundred characters, so an
+  # editor tightening this later has room before it risks clipping one. Same reasoning
+  # capture-ui.ps1:512-514 already applies to its webhook floor.
+  #
+  # NOTE the capture tool's own pattern (capture-ui.ps1:516) stays loose on purpose and the two are
+  # meant to differ: this one guards COMMITS and wants precision so fixtures do not block the repo;
+  # that one guards SCREENSHOTS and wants recall, because a partial cookie rendered on screen is
+  # still worth refusing to capture.
+  #
   # -I skips binary files (cookie strings are text; binary key blobs caught separately below).
-  if grep -qIE "_\|WARNING:-DO-NOT-SHARE-THIS" "$file"; then
-    red "[secret-scan] FAIL: $file contains a real .ROBLOSECURITY cookie pattern."
+  if grep -qIE "_\|WARNING:-DO-NOT-SHARE-THIS.*\.\|_[A-Za-z0-9_%+/=-]{20,}" "$file"; then
+    red "[secret-scan] FAIL: $file contains a real .ROBLOSECURITY cookie — prefix plus session blob."
     violations=$((violations + 1))
   fi
 
