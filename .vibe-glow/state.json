@@ -8,8 +8,8 @@
   "findingsRegisterPath": "docs/superpowers/research/2026-08-04-rororo-settings-ui-audit-findings.md",
   "themes": [
     "brand",
-    "magenta-heat",
-    "flatline"
+    "midnight",
+    "magenta-heat"
   ],
   "invariants": [
     "Color belongs to the theme system; identity lives in structure — every surface binds DynamicResource brushes and users ship their own JSON themes, so a finding that prescribes a color is invalid. Findings must argue layout, weight, spacing, or shape.",
