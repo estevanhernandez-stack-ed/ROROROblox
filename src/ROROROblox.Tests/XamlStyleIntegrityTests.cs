@@ -192,6 +192,27 @@ internal static class XamlStyleScanner
         return null;
     }
 
+    /// <summary>
+    /// A shape type that responds to the mouse is a control, whatever its tag says.
+    /// <para>
+    /// The first version of this test hard-listed <c>Border</c> as decorative full stop. The wave-5
+    /// review gate pointed out that <c>MainWindow.xaml</c> has a <c>Border</c> with
+    /// <c>Cursor="Hand"</c> and a click handler — the per-account caption swatch — which IS a UI
+    /// component under 1.4.11. The old rule would have failed the build on its own correct fix. Role
+    /// decides, not element name.
+    /// </para>
+    /// <para>
+    /// Lives here rather than in one test class because two fences need it — the derived-edge fence
+    /// and the prose-token fence (F-032). Two copies of a role rule that disagree with each other is
+    /// worse than either copy alone.
+    /// </para>
+    /// </summary>
+    internal static bool IsInteractive(XElement el) =>
+        el.Attributes().Any(a =>
+            a.Name.LocalName.Contains("Mouse", StringComparison.Ordinal)
+            || a.Name.LocalName is "Cursor" && a.Value == "Hand"
+            || a.Name.LocalName is "InputBindings");
+
     internal static IReadOnlyList<string> Scan(string xamlText, string label)
     {
         var problems = new List<string>();

@@ -226,7 +226,7 @@ internal partial class SquadLaunchWindow : Window
             Content = "Remove",
             Padding = new Thickness(10, 6, 10, 6),
             Background = (Brush)FindResource("NavyBrush"),
-            Foreground = (Brush)FindResource("MutedTextBrush"),
+            Foreground = (Brush)FindResource("WhiteBrush"),
             // Built in code, so wave 5's markup sweep never saw it — and neither does any test in
             // that wave, which all parse XAML. Found by the review gate.
             BorderBrush = (Brush)FindResource("InteractiveEdgeBrush"),

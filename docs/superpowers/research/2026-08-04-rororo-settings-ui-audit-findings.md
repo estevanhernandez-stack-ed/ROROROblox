@@ -35,7 +35,7 @@ a row here, not a drive-by fix.
 
 ## Status, derived from the rows above on 2026-08-09
 
-**31 clean · 52 open · 1 closed-as-ruled · 84 total.** Counted from the status
+**32 clean · 51 open · 1 closed-as-ruled · 84 total.** Counted from the status
 cells, not carried forward from a previous summary.
 
 ### Reconciliation pass, 2026-08-09
@@ -64,6 +64,8 @@ again.
 - **F-036** — both the header pitch and the status-bar tagline are gone;
   `MainWindow.xaml:988-1000` is now a comment explaining the removal. Closed
   sideways by wave 3.
+- **F-032** — the label token moved to `WhiteBrush`, quiet secondary now carried by
+  weight plus the F-031 edge, fenced by `MutedTextFenceTests`.
 
 **Credit and a caveat on method.** F-036 was not found by this pass. It was found
 by **PR #93**, an earlier reconciliation opened 2026-08-05 that never merged and
@@ -87,12 +89,13 @@ was, not that it is verified end to end.
 
 **Still open, evidence corrected** (see the reconciliation notes appended to each
 row): F-018 and F-039 are each half-shipped by F-001; F-021's citation moved with
-the Games rename; F-032 and F-042 have drifted **worse** since the audit.
+the Games rename; F-042 has drifted **worse** since the audit.
 
-**F-032 deserves separate mention.** It measured 11 controls binding
-`MutedTextBrush` as `Foreground`; `MainWindow.xaml` alone now has 15. Waves 5 and 6
-added contrast machinery around it without stopping the leak spreading. An open row
-is not a static thing.
+**F-032 deserved separate mention while it was open.** It measured 11 controls binding
+`MutedTextBrush` as `Foreground`; by the reconciliation pass `MainWindow.xaml` alone had 15.
+Waves 5 and 6 added contrast machinery around it without stopping the leak spreading. It has
+since been fixed and fenced — but an open row is not a static thing, and nothing was watching
+that one grow.
 
 **Added:** F-084, the hidden-owner defect class, surfaced by F-001's final review.
 
@@ -178,7 +181,7 @@ it introduced (the popup border and the separator) and left the rest.
 | F-029 | CO-4 | Plugins/Preferences/Library/JoinByLink/SquadLaunch/ThemeBuilder/Import/Rename/CaptionColorPicker vs MainWindow | consistency | 4 | 5 | 2 ui:TextBox (MainWindow only) vs 11 plain TextBox across 10 windows, disagreeing on fill; flatline shows the install-URL field vanish while the main-window filter survives | Two input systems; the one used on 11 of 12 surfaces disappears under a theme the app ships support for | One AppTextBox style — standardize on ui:TextBox (invariant 4 already assigns chrome to WPF-UI) or give the shared style a shape cue independent of a collapsing fill/border | clean |
 | F-030 | CO-6 | cross-surface, every secondary button | consistency | 4 | 5 | C8's secondary recipe is Navy==Bg in all three built-in themes; nav band, Remove, Reroll all, and 8+ other buttons rely on it; Launch multiple's cyan border is the sole survivor | Four secondary-button recipes exist; the most-used one binds its only shape cue to the divider brush | One SecondaryButton style whose outline reads at any brush setting; new token optional-with-fallback per invariant 6 [new-mechanism] | clean |
 | F-031 | AX-5 | nav band + per-row Friends/Remove/Reroll all/Open themes folder/follow chips | a11y | 4 | 5 | DividerBrush vs NavyBrush = 1.26:1 brand / 1.00:1 flatline (fails WCAG 1.4.11's 3:1 in both); CyanBrush vs NavyBrush (Launch multiple) = 9.39:1/4.34:1, passes both | The border was never a legible boundary even in the shipped brand theme — fix is binding the boundary to a contrast-guaranteed token, not "add a border" | Interactive boundaries bind a token guaranteed ≥3:1; add a load-time validation step that warns on a theme falling under 3:1 [new-mechanism] | clean |
-| F-032 | AX-7 | nav band + Friends/Remove/Reroll all/star/Open themes folder | a11y | 4 | 5 | 11 controls bind MutedTextBrush as Foreground (incl. Remove at `:915`) — same token as helper prose; MutedTextBrush vs WhiteBrush = 2.42x brand but 1.00:1 flatline **Reconciled 2026-08-09: worse, not better.** `MainWindow.xaml` alone now binds `MutedTextBrush` as `Foreground` on **15** controls, up from the 11 measured at audit. Waves 5-6 added contrast machinery (`ContrastGuard`, `InteractiveEdgeBrush`) without stopping this leak spreading. | The app expresses "control" and "explanatory prose" with the same color token — C7's collapse and C6's affordance loss share one root cause | Bind control labels to the primary text token; carry "secondary" in weight + the AX-5 boundary; extend Preferences' indent device to the main window | open |
+| F-032 | AX-7 | nav band + Friends/Remove/Reroll all/star/Open themes folder | a11y | 4 | 5 | 11 controls bind MutedTextBrush as Foreground (incl. Remove at `:915`) — same token as helper prose; MutedTextBrush vs WhiteBrush = 2.42x brand but 1.00:1 flatline **Reconciled 2026-08-09: worse, not better.** `MainWindow.xaml` alone now binds `MutedTextBrush` as `Foreground` on **15** controls, up from the 11 measured at audit. Waves 5-6 added contrast machinery (`ContrastGuard`, `InteractiveEdgeBrush`) without stopping this leak spreading. | The app expresses "control" and "explanatory prose" with the same color token — C7's collapse and C6's affordance loss share one root cause | Bind control labels to the primary text token; carry "secondary" in weight + the AX-5 boundary; extend Preferences' indent device to the main window | clean |
 | F-033 | QF-7 | main window, Compact mode | qol | 4 | 4 | `MainViewModel.cs:663` plain SetField property; nothing writes it to disk; SettingsBlob has no compact field | Compact mode — pitched by the Welcome tour as a second-monitor workflow — is forgotten on every restart | Add CompactMode bool to SettingsBlob (no migration needed) and restore it in MainWindow.OnLoaded | open |
 | F-034 | CV-9 | tray menu | copy | 4 | 4 | `TrayService.cs:221` "Open ROROROblox"; also tooltip :98-100 "ROROROblox — Multi-Instance ON/OFF/ERROR"; `DiagnosticsWindow.xaml.cs:220` "ROROROblox support snapshot" **Reconciled 2026-08-09:** 1 of the 4 leak sites is fixed — `FriendFollowWindow.xaml.cs` no longer builds a repo-name title. Three remain: `TrayService.cs:98-101` (tooltip, all three states), `:221` (“Open ROROROblox”), `DiagnosticsWindow.xaml.cs:222`. | The repo name shipped into the menu and tooltip a tray-resident app shows most often, violating the RoRoRo-brand memory rule | "Open RoRoRo" in menu + tooltip; "RoRoRo support snapshot" in the bundle header; same fix covers FriendFollowWindow's title (CV-1 row 6) | open |
 | F-035 | CO-1 | cross-surface (root cause) | consistency | 5 | 3 | `App.xaml` has 10 brushes, 9 converters, 1 keyed control style total; 6 nav buttons and 8 Preferences cards repeat the same attribute sets verbatim | C8 describes a component vocabulary that exists only as habit — every window is free to reinvent it, and most have | Promote the vocabulary into a real merged ResourceDictionary — CardBorder, PageHeader, SectionHeading, PrimaryButton, SecondaryButton, DialogFooter, AppTextBox [new-mechanism] | clean |
