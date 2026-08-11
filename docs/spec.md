@@ -244,6 +244,12 @@ flatline included — a hierarchy carried in colour fails the theme the last cyc
 - **F-052's cross-surface naming pass** remains open, deliberately not half-eaten (§3.4).
 - **F-068's 61 flat call sites** remain open; §6 touches three enumerated buttons and starts nothing.
 - **F-091 plugin theming** remains open and is its own cycle.
+- **The theme re-ask can only do something for a user theme.** `EdgeRemediation.Decide` returns
+  `DeriveSilently` for any `IsBuiltIn` theme, so brand, midnight, magenta-heat and flatline are never
+  asked about by design and the new affordance correctly reports "nothing to choose" on all four.
+  Exercising the real path at C2 needs a user theme in `%LOCALAPPDATA%\ROROROblox	hemes\` whose
+  divider measures under 3:1 against its navy — one built through "+ Build a theme..." usually
+  qualifies. Not a defect, but the affordance is unverifiable on a default install.
 - **The reachability fence cannot express "reachable from where a user would look."** It asserts
   that *something somewhere* can change a setting, which `CarefulSquadLaunch` already satisfied from
   the Squad Launch modal — so the fence would never have caught F-020, the row that says the only way

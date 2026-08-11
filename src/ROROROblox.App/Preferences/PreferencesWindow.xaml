@@ -154,7 +154,7 @@
                                            Text="Pair with the toggle above for a one-step boot-to-Roblox setup. Pick a main account in the row list (the &#x2606; star) first." />
                             </StackPanel>
 
-                            <!-- Careful mode, mirrored (F-024, spec 3.2). The only way to change
+                            <!-- Careful mode, mirrored (F-020, spec 3.2). The only way to change
                                  how a squad launch behaves used to be to begin one: the toggle
                                  lived solely in the Squad Launch modal. This is a MIRROR, not a
                                  move — the modal keeps its copy, because that is where the setting
@@ -370,6 +370,44 @@
                                     <ComboBoxItem Content="Clan channel" Tag="Clan" />
                                 </ComboBox>
                             </Grid>
+
+                            <!-- Muted accounts (F-024, spec 4.3). Muting is per-account and lives on
+                                 the row context menu; this page owned every OTHER alert decision and
+                                 said nothing about that one. Somebody who muted an account three
+                                 weeks ago could not find out from the app that they had.
+
+                                 It sits directly under the two routing rows because it is the
+                                 exception to them: here is where alerts go, and here is who is
+                                 exempt. See MutedAccountsSummary for why the count reads the ROWS
+                                 rather than the persisted id list.
+
+                                 ZERO RENDERS AS ABSENCE (prd Story 1.3). Collapsed by default and
+                                 restored to Collapsed by RefreshMutedAccounts — not a stray "0", not
+                                 an empty row. Collapsed rather than Hidden so no gap is left where
+                                 the block would have been, same as ThemeDescriptionText on the
+                                 Appearance page.
+
+                                 Unmute all takes the ORDINARY secondary treatment, deliberately. It
+                                 is destructive-adjacent and it is not on the destructive list, which
+                                 names exactly three sites — Remove, Clear and Stop all — and treats
+                                 a fourth as the signal to drop that work rather than widen it. -->
+                            <StackPanel x:Name="MutedAccountsRow" Margin="0,4,0,6" Visibility="Collapsed">
+                                <TextBlock x:Name="MutedAccountsLine"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           AutomationProperties.Name="Muted accounts" />
+                                <Button x:Name="UnmuteAllButton"
+                                        Content="Unmute all"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,6,0,0"
+                                        Padding="10,5"
+                                        FontSize="11"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        AutomationProperties.Name="Unmute every muted account"
+                                        Click="OnUnmuteAllClick"
+                                        ToolTip="Turn alerts back on for every account you muted." />
+                            </StackPanel>
 
                             <!-- Two separate webhooks, because they are two different audiences. "My
                                  channel" is a server you own and nobody else reads; "Clan channel" is a
@@ -700,7 +738,35 @@
                                         FontSize="11"
                                         Click="OnOpenThemesFolderClick"
                                         ToolTip="Drop a *.json file in here to make it appear in the picker after restart." />
+                                <!-- The way back to the outline question (F-078, spec 4.3). It used
+                                     to be asked once per theme and never again: EdgeRemediationWindow
+                                     says so in its own source — "one reflexive click on the title-bar
+                                     X must not permanently opt somebody's theme out of the fix
+                                     without them reading a word of it — there is no re-ask affordance
+                                     anywhere." This is that affordance.
+
+                                     It stands on its own rather than reading "ask me again", because
+                                     prd Story 1.4 requires it to be discoverable WITHOUT knowing the
+                                     prompt ever happened. "Again" is a word only somebody who saw the
+                                     first one can parse.
+
+                                     It puts the same question through the same dialog and records
+                                     the answer through the same setter — see OnReviewEdgeClick. -->
+                                <Button x:Name="ReviewEdgeButton"
+                                        Content="Review button outlines"
+                                        HorizontalAlignment="Left"
+                                        Padding="10,5" Margin="8,0,0,0"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        FontSize="11"
+                                        AutomationProperties.Name="Review button outlines on this theme"
+                                        Click="OnReviewEdgeClick"
+                                        ToolTip="See both versions of this theme's button outlines and pick the one it uses." />
                             </StackPanel>
+                            <TextBlock FontSize="11"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,8,0,0"
+                                       Text="Themes people write themselves sometimes set button outlines too faint to see, so RoRoRo brightens those. Review button outlines puts both side by side and lets you pick. You can change your mind as often as you like." />
                         </StackPanel>
                     </Border>
                 </StackPanel>

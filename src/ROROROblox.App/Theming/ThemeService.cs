@@ -152,6 +152,39 @@ internal sealed class ThemeService
     }
 
     /// <summary>
+    /// Puts the edge question back on the table for the theme currently on screen, and reports
+    /// whether there is one to put. Returns <see langword="false"/> — and changes nothing — for a
+    /// built-in, for a theme whose own boundary already clears 3:1, and when no theme has been
+    /// applied at all.
+    /// <para>
+    /// WHY THIS IS NEEDED AT ALL. <see cref="SetActiveAsync"/> reads the stored answer, so a theme
+    /// that has been answered about resolves to <c>DeriveSilently</c> or <c>HonourDecline</c> and
+    /// produces no question — which is exactly right for every automatic path and exactly wrong for
+    /// somebody deliberately asking to see it again. This passes <c>alreadyAnswered: false</c> to
+    /// reach <c>AskFirst</c>, which is the one decision that carries a question.
+    /// </para>
+    /// <para>
+    /// <b>IT WRITES NOTHING.</b> There is one consent path and this is not a second one: the answer
+    /// still goes through <see cref="AnswerEdgeQuestionAsync"/> to
+    /// <c>IAppSettings.SetEdgeRemediationAnswerAsync</c>, the call
+    /// <c>EdgeRemediationWiringTests.AnAnswerCanBeChangedLater</c> already pins as "not write-once"
+    /// against exactly this affordance arriving. Setting the question without applying anything also
+    /// means dismissing the re-asked dialog leaves the theme rendering precisely as it was.
+    /// </para>
+    /// </summary>
+    internal bool ReopenEdgeQuestion()
+    {
+        if (CurrentTheme is not { } theme) return false;
+
+        var decision = EdgeRemediation.Decide(
+            theme.IsBuiltIn, theme.Navy, theme.Divider,
+            alreadyAnswered: false, declined: false);
+
+        PendingEdgeQuestion = QuestionFor(theme, decision);
+        return PendingEdgeQuestion is not null;
+    }
+
+    /// <summary>
     /// Startup-path answer read. Sync-over-async for the same reason the theme-id read above is —
     /// see <see cref="ApplyAtStartup"/>. Built-ins skip the read entirely; they are never asked
     /// about, so the file has nothing to say about them.

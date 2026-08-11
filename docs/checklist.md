@@ -143,7 +143,7 @@ off on nothing having run. Do not "simplify" these back.
   `MemoryDefaults.ReserveMb` / `CapMb` for this machine's RAM.
   Commit: `feat(settings): say what automatic resolves to on this machine`.
 
-- [ ] **5. Alerts admits what it owns, and the theme prompt is reversible**
+- [x] **5. Alerts admits what it owns, and the theme prompt is reversible**
   Spec ref: `spec.md > §4.3 Muted accounts and the theme re-ask`
   What to build: two small additions reading existing state. **(a)** the Alerts section shows a muted-
   account count plus an unmute-all affordance, both reading the set the view-model already

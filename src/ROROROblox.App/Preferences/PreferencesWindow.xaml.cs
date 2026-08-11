@@ -183,7 +183,7 @@ internal partial class PreferencesWindow : Window
             SettingsNav.SelectedIndex = 0;
             RunOnLoginToggle.IsChecked = SafeIsStartupEnabled();
             LaunchMainToggle.IsChecked = await _settings.GetLaunchMainOnStartupAsync();
-            // v1.18 — the mirror of the Squad Launch modal's careful-mode toggle (F-024). Read on
+            // v1.18 — the mirror of the Squad Launch modal's careful-mode toggle (F-020). Read on
             // every open, exactly as SquadLaunchWindow.OnLoaded reads it, so the two surfaces agree
             // without either one holding a copy of the value.
             CarefulSquadLaunchToggle.IsChecked = await _settings.GetCarefulSquadLaunchAsync();
@@ -587,6 +587,12 @@ internal partial class PreferencesWindow : Window
         ShowWebhookMasked(MineWebhookInput, MineWebhookReveal, _discordConfig.MineWebhookUrl);
         ShowWebhookMasked(ClanWebhookInput, ClanWebhookReveal, _discordConfig.ClanWebhookUrl);
         RefreshAlertsStatus();
+        // Called from HERE and nowhere earlier, on purpose. The count itself reads only the view
+        // model's rows and would survive a failed config load — but Unmute all writes the whole
+        // DiscordConfig record, and on that path _discordConfig is still the empty default rather
+        // than what is on disk. Offering the button there would let one click wipe somebody's
+        // webhook URLs. Inside this method it can only appear once the real config is loaded.
+        RefreshMutedAccounts();
 
         // Best-effort, fire-and-forget: name the channel each saved webhook posts to, so a clan
         // webhook sitting in the personal slot is visible on open rather than after it matters.
@@ -914,6 +920,109 @@ internal partial class PreferencesWindow : Window
             "Setting up alerts",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
+
+    // ---------- Muted accounts (v1.18, spec §4.3 — F-024) ----------
+
+    /// <summary>
+    /// Paints the muted-account block, or takes it off the page.
+    /// <para>
+    /// Zero muted collapses the whole block rather than rendering "0 accounts are muted" or leaving
+    /// an unmute button over nothing — <c>prd.md &gt; Story 1.3</c> asks for a clean state, and a
+    /// count of zero is a control reporting the absence of a thing the user never did.
+    /// <see cref="MutedAccountsSummary.Summary.Any"/> is what decides that, so the rule is a
+    /// property a test can assert on rather than a comparison living in this handler.
+    /// </para>
+    /// </summary>
+    private void RefreshMutedAccounts()
+    {
+        var summary = MutedAccountsSummary.Describe(_mainViewModel.Accounts);
+        MutedAccountsLine.Text = summary.Text;
+        MutedAccountsRow.Visibility = summary.Any ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// Unmute everything, in the order that survives a failed write.
+    /// <para>
+    /// Live rows first, then the file. <see cref="MutedAccountsSummary.UnmuteRows"/> hands back
+    /// exactly the rows it changed, so a save that throws is undone by re-muting those and nothing
+    /// else — no reconstruction from an id set, and no chance of switching a mute back on for a row
+    /// that never had one.
+    /// </para>
+    /// <para>
+    /// The write goes through <see cref="SaveDiscordConfigAsync"/> and the in-memory
+    /// <c>_discordConfig</c> snapshot rather than through
+    /// <c>MainViewModel.SetAlertsMutedAsync</c> per row. The snapshot exists because this record is
+    /// compound and a second writer doing its own load-modify-save is the lost update this window's
+    /// field doc describes; calling the view model's per-row writer from inside the dialog would be
+    /// that second writer, once per account. It also keeps the alert dispatcher's cache honest
+    /// immediately, which the per-row path does not.
+    /// </para>
+    /// </summary>
+    private async void OnUnmuteAllClick(object sender, RoutedEventArgs e)
+    {
+        var cleared = MutedAccountsSummary.UnmuteRows(_mainViewModel.Accounts);
+        RefreshMutedAccounts();
+
+        try
+        {
+            await SaveDiscordConfigAsync(MutedAccountsSummary.WithoutMutes(_discordConfig));
+        }
+        catch (Exception ex)
+        {
+            foreach (var row in cleared)
+            {
+                row.AlertsMuted = true;
+            }
+
+            RefreshMutedAccounts();
+            MessageBox.Show(this,
+                $"Couldn't save that: {ex.Message}",
+                "Preferences",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
+    }
+
+    // ---------- The theme prompt, reversible (v1.18, spec §4.3 — F-078) ----------
+
+    /// <summary>
+    /// Asks the outline question again, for the theme on screen.
+    /// <para>
+    /// ONE CONSENT PATH, NOT TWO. This reaches the same dialog through the same
+    /// <see cref="EdgeRemediationWindow.AskIfPendingAsync"/> the startup path, the picker and the
+    /// theme builder use, so the answer is phrased and recorded exactly once —
+    /// <c>ThemeService.AnswerEdgeQuestionAsync</c> into
+    /// <c>IAppSettings.SetEdgeRemediationAnswerAsync</c>. All
+    /// <see cref="ThemeService.ReopenEdgeQuestion"/> does is make there be a question again; it
+    /// writes nothing.
+    /// </para>
+    /// <para>
+    /// Nothing to ask is said out loud rather than left as a dead click. This is a button somebody
+    /// can find without having seen the prompt (that is Story 1.4's requirement), so the common case
+    /// is pressing it on a built-in theme — and a button that silently does nothing is the defect
+    /// this cycle is about wearing a different hat. It is a MessageBox and not the section's status
+    /// line because there is no theme status line yet; the one spec §5 describes reports FAILURES,
+    /// and "this theme has nothing to choose" is not one.
+    /// </para>
+    /// </summary>
+    private async void OnReviewEdgeClick(object sender, RoutedEventArgs e)
+    {
+        if (!_themeService.ReopenEdgeQuestion())
+        {
+            MessageBox.Show(this,
+                "There's nothing to choose for this theme.\n\n"
+                + "RoRoRo only asks about button outlines on themes people write themselves, and "
+                + "only when the outline a theme sets would be too faint to tell a button apart "
+                + "from the surface behind it. The built-in themes are ours to get right, so they "
+                + "are never asked about.",
+                "Button outlines",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        await EdgeRemediationWindow.AskIfPendingAsync(_themeService, this);
+    }
 
     /// <summary>
     /// Streamer mode, moved here from the main window (audit finding F-008).
