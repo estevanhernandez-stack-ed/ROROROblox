@@ -1277,3 +1277,76 @@ only close is how a register starts describing a state that does not exist.
 thinking happened at `/spec`, and this was translation.
 
 **Handoff:** `/build`. Autonomous, halting at C1 (after item 5) and C2 (after item 8).
+
+## /build
+
+Autonomous, no pauses (builder asked for the run to continue unattended). **Nine items, nine
+commits in RoRoRo, one in `rororo-ur-task`.** Suite 1490 → 1500 unit plus 22 harness, green at
+every step. **C1 passed on evidence. C2 could not be run and is owed** — see below.
+
+### The two things this cycle found that no plan predicted
+
+**1. `IThemeAppliedSource` was never registered, and only the DI guard noticed.** Item 5's wiring
+test — the one written specifically to justify making the palette source an *optional* constructor
+parameter — failed on its first run. `ThemeService` is registered as a concrete type only, so
+resolving `IThemeAppliedSource` threw, `ThemeFeedAdapter` could not be constructed at all, and
+`PluginHostService`'s factory would have taken the entire plugin host down at startup. Every unit
+test passed. The harness passed, because it supplies its own stub source. **The app a user runs
+would have lost plugin support completely**, and nothing else in 1500 tests would have said a word.
+
+That is the same shape as the 2026-08-01 wrong-FPS-cap bug the sibling DI test exists for: the
+mechanism exists, every call site uses it, and the real object graph still resolves nothing. An
+optional constructor parameter is a convenience with a bill attached, and the bill is a test that
+builds the container the app actually builds. It was paid in the same item, and it paid for itself
+immediately.
+
+**2. `ROROROblox.PluginContract` has not been published since 0.4.0.** nuget.org carries 0.1.0,
+0.3.0 and 0.4.0. This repo's csproj said **0.7.0**, and `rororo-ur-task` consumed **0.4.0**. Three
+package versions were bumped and never released, so the "track the NuGet version, not the app
+version" advice in the author guide has been describing a feed three versions stale. The plugin leg
+built here against a local pack; publishing is outward-facing and was left as the builder's call.
+
+### Two sequencing corrections made mid-build
+
+**The optional constructor parameter moved from item 5 to item 4.** The wire tests cannot compile
+without it, and a test that cannot compile cannot be watched failing — which is item 4's entire
+reason for existing. Structure moved forward, behaviour stayed in item 5.
+
+**Item 8 absorbed the deletion of seven tests.** `HostThemeReaderTests` covered the machinery being
+removed. Deleting them with it is the point rather than collateral: a suite still covering that
+reader would report healthy coverage of code the plugin no longer runs. What replaced them asserts
+the **absence** of the mechanism — one palette constant, no method for reading the host's storage —
+because the defect was never "flatline is missing from the table", it was that a table existed.
+
+### Two adversarial checks the checklist demanded, both run
+
+**Item 1's read-back test was falsified before it was trusted.** Patching `ReadBack` to report the
+authored value instead turned exactly that one test red and left the other three green, then
+reverted. **Item 2's capability-map guard was watched firing** — removing the `GetTheme` entry
+turned the suite red on `AssertExhaustive`, then restored. A guard nobody has seen fail is a guard
+nobody has tested, and this session's whole theme is checks that report success while measuring
+something else.
+
+**Item 4's failure text was read, not just its count.** Three `Status(StatusCode="Unimplemented")`
+raised from inside `MoveNextCore` on the client stream reader, which is only reachable if the call
+genuinely crossed the pipe. Item 5's verify then required `git diff` against item 4's commit to show
+the three test bodies unmodified. It showed no change to the file at all.
+
+### What is owed, stated plainly
+
+**C2 never ran.** Its acceptance is four built-in themes plus a user theme repainting a real Ur Task
+window, and no suite in either repository spans two processes. The code is written and both repos
+build; nobody has watched flatline reach the plugin. **F-091 is therefore left OPEN**, against the
+checklist's own instruction to flip it in item 9 — closing a row whose evidence nobody has observed
+is precisely the register defect this repo has a rule about.
+
+Also owed: two `HotkeyServiceTests` in ur-task fail with win32 1409 because `Ctrl+Shift+R` is held
+by a running instance on this machine. Environmental, and confirmed pre-existing by stashing.
+
+`PluginClientIntegrationTests` in ur-task had **already** stopped compiling against RoRoRo's
+`PluginHostService`, three parameters behind, before this branch existed. The cross-repo
+`ProjectReference` means that suite rots silently whenever the host's contract surface grows:
+RoRoRo's CI does not build it, and ur-task's CI has no RoRoRo checkout. Repaired in passing, and it
+is a standing hazard rather than a fixed one.
+
+**Handoff:** PR both branches. F-091 closes after the eyes-on walk, not before.
