@@ -904,3 +904,38 @@ setting is reachable or exempted with a reason. F-023 survived months because no
 exemptions naming themselves.
 
 **Handoff:** `/checklist`.
+
+## /checklist
+
+**Twelve items for thirteen rows.** Two pairs merged where the work is one edit (F-024 + F-078 both
+read existing state; F-051 + F-053 are both the theme status line), and two items exist that no row
+asked for — the reachability fence and the register flip.
+
+**Sequencing, and the one that matters:** hierarchy (item 1) before content (item 3), per `spec.md`
+§3.3. Adding four memory controls to a page whose grouping is scheduled for replacement is rework in
+one direction only.
+
+**Item 2 is placed to make its own proof possible.** The reachability fence is written *before* the
+memory controls exist, so it goes red naming the four unreachable settings and item 3 turns it green.
+A fence written after the fix proves nothing — that is the lesson v1.17 learned three times, most
+sharply when a gate built to its own design spec could not fail the test the design nominated to
+prove it.
+
+**Item 10 carries an explicit abort condition**, which is unusual for a checklist item and
+deliberate. If assigning the destructive variant starts requiring a judgement call about a fourth
+button, the instruction is to *drop the item* rather than drag F-068's 61 sites forward, and to say
+so in the commit. An item that can only succeed is how scope creeps.
+
+**The `--filter` syntax is called out in the header with its own warning.** Every Verify field in the
+v1.17 checklist used `--filter "Foo*|Bar*"`, which matches zero tests and reports success — a
+checkpoint could have been signed off on nothing having run. This checklist uses
+`FullyQualifiedName~` throughout and says why, so nobody "simplifies" it back.
+
+**Item 12 carries the archive obligation** that nearly lost v1.17's spec: `docs/spec.md` is
+overwritten each round, and this cycle's is canonical again.
+
+**Two checkpoints.** C1 after item 4 — items 1-4 change how every page groups and add the first
+controls into that structure, so it wants eyes before five more items build on it. C2 after item 10,
+the whole surface done, before docs.
+
+**Handoff:** `/build`. Autonomous, halting at C1 and C2.
