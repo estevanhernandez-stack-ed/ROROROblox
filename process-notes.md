@@ -825,3 +825,36 @@ to state the lifecycle and the archive obligation. This was only cheap to notice
 between cycles.
 
 **Handoff:** `/prd`.
+
+## /prd
+
+**Zero deepening rounds again, same justification.** The re-verification supplied what a PRD
+interview normally extracts: current behaviour with file citations, counts with direction, and fix
+directions already written per row. The beats were flowed rather than asked.
+
+**Five epics from the scope's five groups**, one-to-one. Grouping held under expansion, which is
+usually the test of whether a cluster was real or convenient.
+
+**Three things sharpened that the scope left soft:**
+
+1. **Epic ordering is now an open question rather than an assumption.** Epic 1 adds four memory
+   controls to the Alerts page; Epic 2 fixes the grouping defect on that same page. Doing them in
+   that order means building on a structure you are about to change. Doing them inverted means
+   designing hierarchy against a page about to gain a card. `/spec` picks; the PRD refuses to guess.
+2. **Epic 4.3's boundary is written into the story, not the preamble.** "Assign by consequence" is
+   unbounded on its face and F-068 is 61 sites away. The acceptance criteria say the story defines
+   the variant and applies it on this cycle's surfaces, and that it drops to F-068's cycle if the
+   line cannot hold.
+3. **Story 2.2 forces a statement about accessible naming.** F-052 is not in this cycle and 0 of 137
+   declarations carry a name. Naming Preferences alone is defensible; doing it silently is the thing
+   that makes a register row wrong later.
+
+**One acceptance criterion added that no row asked for.** Story 1.1 requires out-of-range input to be
+refused visibly. Every row in this cluster is a variant of "the app knows something and does not say
+it", and a megabyte field that silently accepts a negative number is that defect one level down.
+
+**One "what we'd add" that came out of the diagnosis rather than the list:** a settings-schema test
+that fails the build when a persisted field has no UI. F-023 existed for months because nothing
+connected "persisted" to "reachable" — the row is a symptom of a missing check.
+
+**Handoff:** `/spec`.
