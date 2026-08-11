@@ -858,3 +858,49 @@ that fails the build when a persisted field has no UI. F-023 existed for months 
 connected "persisted" to "reachable" — the row is a symptom of a missing check.
 
 **Handoff:** `/spec`.
+
+## /spec
+
+**One fork resolved itself on inspection, and it was the highest-rated row in the cluster.**
+F-026 (4/5) asks for "a level above the card." `SectionHeadingStyle` ships at
+`ControlStyles.xaml:143` as `13px / SemiBold / WhiteBrush / Margin 0,18,0,6` — and Preferences' three
+hand-rolled headings are 13px SemiBold White. The style is not merely available, it is *the same
+thing the page already writes by hand*, and its 18-above/6-below margin is precisely the missing
+level. The answer is to place it between cards instead of inside one. No new primitive, which is what
+the PRD required, because a second container is the two-meanings defect restated.
+
+That is the second time this cluster turned out cheaper than rated once someone looked.
+
+**Epic ordering settled, and it was not close.** Hierarchy before content. The reverse risk the PRD
+raised — designing hierarchy against a page about to gain a card — does not survive contact with the
+answer above: a heading placed between cards is generic and does not care what the cards contain. So
+the rework cost runs one direction only.
+
+**Careful mode goes on Startup, and the justification is better than "closest fit."** That page
+already holds *"Launch my main account when RoRoRo starts"*, which is a launch setting on a startup
+page. The mixing already exists; careful mode is the third member of a set. The nav item is
+deliberately not renamed — `ui-routes.json` declares these pages as capture surfaces and a label
+change churns the capture round.
+
+**The accessible-naming fork was answered with a rule rather than a decision.** New work ships named;
+nothing untouched gets retro-named. That keeps F-052's backlog count honest — the exact failure mode
+F-032 demonstrated when it drifted 11 to 15 while two waves built machinery around it.
+
+**One deliberate divergence from the pattern being mirrored.** F-051's fix direction says mirror
+`AlertsStatusLine`. That line uses `CyanBrush` — the accent, the same treatment a success would get.
+A failure message takes `RowExpiredAccentBrush` and the triangle prefix instead, which is the warning
+vocabulary v1.17 established across four surfaces. Mirroring the *mechanism* without inheriting a
+questionable *colour choice*. `AlertsStatusLine` itself is left alone and flagged as an open issue,
+because it is not this cycle's row.
+
+**F-046's boundary is now operational rather than aspirational.** "Assign by consequence" became a
+three-row table naming Remove, Clear and Stop all. A site not on the list is F-068's. If applying the
+variant starts requiring a judgement call about a fourth button, that is the signal to drop the story
+rather than drag 61 sites forward.
+
+**One new mechanism, and it is the anti-regrowth one.** `SettingsReachabilityTests` — every persisted
+setting is reachable or exempted with a reason. F-023 survived months because nothing connected
+"persisted" to "reachable." Same shape as the XAML literal fence v1.17 shipped, same rule about
+exemptions naming themselves.
+
+**Handoff:** `/checklist`.
