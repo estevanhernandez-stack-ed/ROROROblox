@@ -46,12 +46,18 @@ off on nothing having run. Do not "simplify" these back.
   13px SemiBold White — and its `Margin="0,18,0,6"` is the missing level. Headings stand **outside**
   the cards. The three hand-rolled headings at `:179-181`, `:251-252` and `:400-402` become the style;
   cards holding a single control collapse into the section they belong to rather than each wearing
-  full chrome. Measured contents today: 9 cards at 1/1/2/1/2/2/**10**/2/3.
+  full chrome. Measured contents today: 9 cards at 1/1/2/1/2/2/**8**/2/3. **The register row's "10" does not
+  reproduce** — the big Alerts card holds 8 focusable controls; 8 plus the idle card's 2 is the Alerts
+  *page* total of 10, so the row appears to have attributed a page total to a card. Every other figure
+  in the sequence reproduces exactly. Recorded per `CLAUDE.md`'s re-measure rule.
   **Do NOT add a second container primitive** — no `SubCardBorderStyle`, no `GroupBox`, no `Expander`.
   A second container is the two-meanings defect restated, which is the row itself.
   Acceptance: `prd.md > Story 2.1` + `2.2`. A card holding one control and a card holding ten no
-  longer carry identical weight. The distinction survives with colour removed — check flatline, not
-  just brand. Worst-case linear focus run does not grow past 12. The rail's group-to-group movement
+  longer carry identical weight. The distinction survives with colour removed. **Note the framing here was wrong and is
+  corrected:** flatline is not the weak case for grouping-by-fill, it is the strongest — RowBg on Bg
+  measures 1.09 brand, 1.08 midnight, 1.08 magenta-heat, **1.33 flatline**, and all four are under
+  3:1. Fill was thin everywhere. Check all four, and check that the hierarchy rests on weight and
+  rhythm rather than on any fill. Worst-case linear focus run does not grow past 12. The rail's group-to-group movement
   is confirmed, not rebuilt.
   Verify: `dotnet build ROROROblox.slnx`, then open Settings and walk all five pages in **all four
   themes**. Tab through one page start to finish and count the stops.
@@ -94,8 +100,11 @@ off on nothing having run. Do not "simplify" these back.
 
 - [ ] **4. Careful mode gets a home**
   Spec ref: `spec.md > §3.2 Careful mode goes on Startup`
-  What to build: a third `CardBorderStyle` card on the Startup page, matching the two above it exactly
-  — SemiBold 13px `CheckBox` label plus a muted 11px hint at `Margin="22,4,0,0"`. Binds
+  What to build: **a third ROW inside Startup's card**, not a third card — item 1 collapsed that
+  page's two single-control cards into one card with two rows, so the shape this item was written
+  against no longer exists. Match the two rows above it exactly: SemiBold 13px `CheckBox` label plus
+  a muted 11px hint at `Margin="22,4,0,0"`, with `Margin="0,14,0,0"` on the row panel per the
+  call-site margin rule item 1 followed. Intent unchanged, shape corrected after item 1 landed. Binds
   `IAppSettings.CarefulSquadLaunch`, the same value
   [`SquadLaunchWindow.xaml.cs:59,73,79`](../src/ROROROblox.App/SquadLaunchWindow.xaml.cs#L59) reads
   and writes. **The in-modal toggle stays** — this is a mirror, not a move. Both surfaces re-read on

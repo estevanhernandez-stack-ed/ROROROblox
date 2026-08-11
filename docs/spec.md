@@ -56,7 +56,10 @@ the answer must not be another container, because another container is the two-m
 restated.
 
 Consequence for the nine cards: cards holding a single control collapse into the section they belong
-to rather than each wearing full chrome. Measured contents today are 1/1/2/1/2/2/**10**/2/3.
+to rather than each wearing full chrome. Measured contents are 1/1/2/1/2/2/**8**/2/3 — the register
+row's 10 does not reproduce, and 8 plus the idle card's 2 is the Alerts *page* total, so the row
+attributed a page figure to a card. Re-measured 2026-08-10; cards went 9 → 7 and single-control cards
+3 → 0 when item 1 landed.
 
 Rejected: a new `SubCardBorderStyle`, a `GroupBox`, or an `Expander`. Each adds a primitive whose
 meaning must then be taught, and the row's whole complaint is that one primitive already carries two
@@ -78,8 +81,11 @@ launching; careful mode is the third member of a set that exists.
 surfaces and the base `03-preferences` surface is this page; renaming the item churns the capture
 round for a label change. Revisit if a fourth launch setting appears.
 
-Shape: a third `CardBorderStyle` card matching the two above it exactly — SemiBold 13px `CheckBox`
-label plus a muted 11px hint at `Margin="22,4,0,0"`. Binds `IAppSettings.CarefulSquadLaunch`, the
+Shape: **a third row inside Startup's card.** Written as "a third card" before item 1 ran; item 1
+collapsed that page's two single-control cards into one card with two rows, so a third card would
+re-introduce exactly the single-control card the hierarchy work removed. Match the rows above it:
+SemiBold 13px `CheckBox` label, muted 11px hint at `Margin="22,4,0,0"`, row panel at
+`Margin="0,14,0,0"`. Binds `IAppSettings.CarefulSquadLaunch`, the
 same value `SquadLaunchWindow.xaml.cs:59,73,79` reads and writes. Both surfaces re-read on open;
 neither caches.
 
