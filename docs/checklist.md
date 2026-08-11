@@ -112,7 +112,7 @@ on nothing having run. Do not "simplify" these back.
   resolved palette; the adapter's `Latest` is non-null immediately after construction on a booted app.
   Verify: `dotnet test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ThemeFeedAdapter"` green.
 
-- [ ] **4. Write the wire tests, and watch them fail**
+- [x] **4. Write the wire tests, and watch them fail**
   Spec ref: `spec.md > §6`
   What to build: four tests in `EndToEndContractTests.cs`, structured on
   `SubscribeMemoryPressure_ProductionAccessor_ReceivesRaisedSnapshot` (:1025) — real Kestrel, real named

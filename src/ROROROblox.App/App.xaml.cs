@@ -892,7 +892,8 @@ public partial class App : Application
             sp.GetRequiredService<ROROROblox.App.Plugins.PluginUITranslator>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.IActivitySnapshotProvider>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.IAccountActivityMarker>(),
-            sp.GetRequiredService<ROROROblox.App.Plugins.IPluginAccountStopper>()));
+            sp.GetRequiredService<ROROROblox.App.Plugins.IPluginAccountStopper>(),
+            sp.GetRequiredService<ROROROblox.App.Plugins.Adapters.IThemePaletteSource>()));
 
         // CapabilityInterceptor: per-connection plugin id binding is deferred to v1.5+
         // (the gRPC interceptor sees the call before any plugin-id metadata is bound).

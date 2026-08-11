@@ -27,6 +27,21 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     private readonly IAccountActivityMarker _activityMarker;
     private readonly IPluginAccountStopper _accountStopper;
 
+    /// <summary>
+    /// Source of the host's active palette. <b>Optional on purpose, and the exception among these
+    /// dependencies.</b> PluginHostService is constructed at 30 places across the two test
+    /// projects; making this required would edit all 30 for no behavioural gain in 29 of them.
+    /// <para>
+    /// Null means "this host has no theme feed configured" — GetTheme fails cleanly and the
+    /// subscription ends rather than hanging. That is correct for a test that does not care about
+    /// theming and <b>wrong everywhere else</b>, so an optional dependency silently unwired in
+    /// production would be a real defect. <c>ThemeFeedIsWiredInProductionTests</c> resolves this
+    /// service from the real DI container and asserts this field is not null; that test is the
+    /// price of the convenience.
+    /// </para>
+    /// </summary>
+    private readonly Adapters.IThemePaletteSource? _themePalettes;
+
     public PluginHostService(
         IInstalledPluginsLookup registry,
         string hostVersion,
@@ -38,7 +53,8 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         PluginUITranslator uiTranslator,
         IActivitySnapshotProvider activityProvider,
         IAccountActivityMarker activityMarker,
-        IPluginAccountStopper accountStopper)
+        IPluginAccountStopper accountStopper,
+        Adapters.IThemePaletteSource? themePalettes = null)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _hostVersion = hostVersion ?? throw new ArgumentNullException(nameof(hostVersion));
@@ -51,6 +67,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         _activityProvider = activityProvider ?? throw new ArgumentNullException(nameof(activityProvider));
         _activityMarker = activityMarker ?? throw new ArgumentNullException(nameof(activityMarker));
         _accountStopper = accountStopper ?? throw new ArgumentNullException(nameof(accountStopper));
+        _themePalettes = themePalettes;
     }
 
     public override Task<HandshakeResponse> Handshake(HandshakeRequest request, ServerCallContext context)
