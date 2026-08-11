@@ -13,7 +13,7 @@ namespace ROROROblox.App.Theming;
 /// so every <c>{StaticResource}</c> reference re-renders with the new colors. SolidColorBrush
 /// is unfrozen by default — assigning to <c>Color</c> triggers WPF's render invalidation.
 /// </summary>
-internal sealed class ThemeService
+internal sealed class ThemeService : IThemeAppliedSource
 {
     private readonly IThemeStore _store;
     private readonly IAppSettings _settings;

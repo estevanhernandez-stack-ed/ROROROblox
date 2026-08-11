@@ -17,6 +17,7 @@ public sealed class InProcessPluginEventBus : IPluginEventBus
     public event Action<RunningAccountSnapshot, long>? AccountExited;
     public event Action<string>? MutexStateChanged;
     public event Action<AccountMemory>? MemoryPressure;
+    public event Action<ROROROblox.Core.Theming.ResolvedPalette>? ThemeChanged;
 
     public void RaiseAccountLaunched(RunningAccountSnapshot snapshot)
         => AccountLaunched?.Invoke(snapshot);
@@ -29,4 +30,7 @@ public sealed class InProcessPluginEventBus : IPluginEventBus
 
     public void RaiseMemoryPressure(AccountMemory snapshot)
         => MemoryPressure?.Invoke(snapshot);
+
+    public void RaiseThemeChanged(ROROROblox.Core.Theming.ResolvedPalette palette)
+        => ThemeChanged?.Invoke(palette);
 }

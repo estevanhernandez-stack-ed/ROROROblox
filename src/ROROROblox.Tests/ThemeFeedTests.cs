@@ -127,3 +127,84 @@ public class ThemeFeedTests
         Assert.Equal(Hex(resources, ThemeSlots.InteractiveEdge), palette.InteractiveEdge);
     }
 }
+
+/// <summary>
+/// The bridge from the theme service to the plugin bus. Driven through
+/// <c>IThemeAppliedSource</c> rather than <c>ThemeService</c> itself: applying a theme for real
+/// needs a live <c>Application</c> and <c>Dispatcher</c>, which this suite deliberately never
+/// constructs, so the concrete service could not raise its event here at all. The interface is
+/// why this is testable without putting a test-only hook into shipping code.
+/// </summary>
+public class ThemeFeedAdapterTests
+{
+    private sealed class FakeThemeSource : IThemeAppliedSource
+    {
+        public ResolvedPalette? CurrentPalette { get; private set; }
+        public event Action<ResolvedPalette>? ThemeApplied;
+
+        public void Apply(ResolvedPalette palette)
+        {
+            CurrentPalette = palette;
+            ThemeApplied?.Invoke(palette);
+        }
+    }
+
+    private static ResolvedPalette Flatline() => new(
+        "#101010", "#D4D4D4", "#6E6E6E", "#F5F5F5", "#989898",
+        "#333333", "#2A2A2A", "#3D3D3D", "#D4D4D4", "#101010", "#D4D4D4");
+
+    private static ResolvedPalette Brand() => new(
+        "#0F1F31", "#17D4FA", "#F22F89", "#FFFFFF", "#9AA8B8",
+        "#1F3149", "#15263A", "#3A2D14", "#F1B232", "#0F1F31", "#4A6076");
+
+    [Fact]
+    public void Adapter_ForwardsAppliedPaletteToTheBus_Once()
+    {
+        var source = new FakeThemeSource();
+        var bus = new ROROROblox.App.Plugins.InProcessPluginEventBus();
+        using var adapter = new ROROROblox.App.Plugins.Adapters.ThemeFeedAdapter(source, bus);
+
+        var received = new List<ResolvedPalette>();
+        bus.ThemeChanged += received.Add;
+
+        var palette = Flatline();
+        source.Apply(palette);
+
+        Assert.Single(received);
+        Assert.Same(palette, received[0]);
+        Assert.Same(palette, adapter.Latest);
+    }
+
+    [Fact]
+    public void Adapter_SeedsLatestFromTheSourceAtConstruction()
+    {
+        var source = new FakeThemeSource();
+        var seed = Brand();
+        source.Apply(seed);
+
+        var bus = new ROROROblox.App.Plugins.InProcessPluginEventBus();
+        using var adapter = new ROROROblox.App.Plugins.Adapters.ThemeFeedAdapter(source, bus);
+
+        // The point: a plugin connecting mid-session can call GetTheme immediately and get a real
+        // answer without waiting for the user to touch the picker. A subscribe-only feed would
+        // leave it on its fallback colour for the whole session, which is most sessions.
+        Assert.Same(seed, adapter.Latest);
+    }
+
+    [Fact]
+    public void Adapter_StopsForwardingAfterDispose()
+    {
+        var source = new FakeThemeSource();
+        var bus = new ROROROblox.App.Plugins.InProcessPluginEventBus();
+        var adapter = new ROROROblox.App.Plugins.Adapters.ThemeFeedAdapter(source, bus);
+
+        var count = 0;
+        bus.ThemeChanged += _ => count++;
+
+        source.Apply(Flatline());
+        adapter.Dispose();
+        source.Apply(Brand());
+
+        Assert.Equal(1, count);
+    }
+}

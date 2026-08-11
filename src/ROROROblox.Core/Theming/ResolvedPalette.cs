@@ -27,6 +27,25 @@ namespace ROROROblox.Core.Theming;
 /// neither of which should have to reach into the other.
 /// </para>
 /// </summary>
+/// <summary>
+/// Whatever is applying themes, viewed as "the current palette, plus a nudge when it changes."
+/// <para>
+/// Exists so the plugin-side bridge can be built and tested against the question rather than
+/// against <c>ThemeService</c>, which needs a live <c>Application</c> and <c>Dispatcher</c> to
+/// apply anything and therefore cannot raise its event under a test at all. Declared in Core so
+/// <c>ThemeService</c> implementing it points Theming at Core — the direction it already runs —
+/// rather than at Plugins.
+/// </para>
+/// </summary>
+public interface IThemeAppliedSource
+{
+    /// <summary>The palette currently on screen, or null before the first apply.</summary>
+    ResolvedPalette? CurrentPalette { get; }
+
+    /// <summary>Raised after an apply completes, with the palette that was written.</summary>
+    event Action<ResolvedPalette>? ThemeApplied;
+}
+
 public sealed record ResolvedPalette(
     string Bg,
     string Cyan,

@@ -99,7 +99,7 @@ on nothing having run. Do not "simplify" these back.
   green. **Deliberately omit a map entry once and confirm the app refuses to start**, then restore it —
   that is a five-minute check that the guard protecting this item is real rather than assumed.
 
-- [ ] **3. The bus carries a theme, and an adapter puts it there**
+- [x] **3. The bus carries a theme, and an adapter puts it there**
   Spec ref: `spec.md > §4.3`, `spec.md > §4.4`
   What to build: `event Action<ResolvedPalette>? ThemeChanged` on `IPluginEventBus`, implemented in
   `InProcessPluginEventBus` in the same shape as the other four. New

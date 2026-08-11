@@ -850,8 +850,19 @@ public partial class App : Application
             ROROROblox.App.Plugins.Adapters.DefaultPluginProcessStarter>();
         services.AddSingleton<ROROROblox.App.Plugins.PluginProcessSupervisor>();
 
-        services.AddSingleton<ROROROblox.App.Plugins.IPluginEventBus,
-            ROROROblox.App.Plugins.InProcessPluginEventBus>();
+        // Concrete first, interface mapped onto the SAME instance. Registering
+        // AddSingleton<IPluginEventBus, InProcessPluginEventBus>() alone would hand a resolver
+        // asking for the concrete type a SECOND bus, and a second bus is a bus nobody's events
+        // reach. ThemeFeedAdapter asks for the concrete type (it raises, it doesn't listen).
+        services.AddSingleton<ROROROblox.App.Plugins.InProcessPluginEventBus>();
+        services.AddSingleton<ROROROblox.App.Plugins.IPluginEventBus>(sp =>
+            sp.GetRequiredService<ROROROblox.App.Plugins.InProcessPluginEventBus>());
+
+        // Bridges ThemeService's apply to the plugin bus, and caches the palette so GetTheme can
+        // answer before the user has ever touched the theme picker — which is most sessions.
+        services.AddSingleton<ROROROblox.App.Plugins.Adapters.ThemeFeedAdapter>();
+        services.AddSingleton<ROROROblox.App.Plugins.Adapters.IThemePaletteSource>(sp =>
+            sp.GetRequiredService<ROROROblox.App.Plugins.Adapters.ThemeFeedAdapter>());
         services.AddSingleton<ROROROblox.App.Plugins.IPluginHostStateProvider,
             ROROROblox.App.Plugins.Adapters.MutexHostStateAdapter>();
         services.AddSingleton<ROROROblox.App.Plugins.IRunningAccountsProvider,
