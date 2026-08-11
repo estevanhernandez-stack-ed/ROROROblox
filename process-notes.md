@@ -1156,3 +1156,69 @@ exists. That is the rare case where the gap closes by spending what is already b
 **Handoff:** `/spec`. Two forks arrive with it: host-capability discovery (deliberately undefaulted)
 and whether ur-task keeps its disk reader as the no-host fallback while deleting the mirror — which
 may resolve to a third answer rather than either horn.
+
+## /spec
+
+**Two of the PRD's four open questions closed on inspection, and one of them was the fork `/scope`
+deliberately refused to default.** Both closed the same way: the mechanism already existed.
+
+**The discovery fork dissolved into `minHostVersion`.** `PluginInstaller:87-101` already refuses an
+install whose manifest requires a newer host, with a user-facing "update RoRoRo and try again", and
+`MarketplacePlan:72-80` greys the catalogue entry before the user clicks. The decisive evidence was the
+comment sitting above that gate, which names this exact scenario as its reason for existing: *"so the
+user gets a 'this needs a newer RoRoRo' message instead of a downstream symptom (the plugin's gRPC
+client failing because it expects a method this host doesn't expose, for instance)."* Neither proposed
+design was needed. Building a capability-advertisement mechanism next to a working version gate would
+have been a second answer to a solved question, plus a growing untyped string vocabulary to maintain
+alongside `PluginCapability`.
+
+**Second consecutive cycle where the highest-consequence open fork answered itself on a single read** —
+v1.18's was `SectionHeadingStyle` already shipping with precisely the margin the missing level needed.
+Two data points is a pattern worth naming: on a mature codebase, the fork that looks like a design
+decision is often a lookup. Read before deciding.
+
+**The palette is eleven slots, not ten, and it must be the APPLIED values.** Scope and PRD both said
+"every slot the theme defines," reasoning from the `Theme` record's ten. `ApplyTo` writes eleven — the
+extra is `InteractiveEdgeBrush`, derived by `EdgeRemediation` and deliberately absent from the record
+so *"the contract does not grow."* And `ApplySlot` early-returns on an unparseable hex, leaving the
+previous brush, which the file itself describes as *"the record can say one thing while the app shows
+another"* — the stated reason `ContrastPairGateTests` measures brushes rather than the record.
+
+Shipping the record would hand a plugin two defects: no interactive edge unless it re-implements
+`ContrastGuard` and `EdgeRemediation` (a **sixth** copy of host logic, in another repo — the cycle's own
+defect one level up and worse), and values the host is not displaying. The feed carries what `ApplyTo`
+produced, read back from the dictionary. **The contrast gate had already reached this conclusion for
+the same reason; the feed inherits its reasoning rather than re-litigating it.**
+
+**The PRD's fallback question resolved to its third answer, as flagged.** Not "keep the reader" and not
+"collapse to Brand" as a pair of horns — **keep the `Brand` constant, delete the reader.** Every
+coupling the reader embodies is what the cycle removes, so keeping it for the offline case keeps all
+five. The cost is that a plugin launched while RoRoRo is closed paints brand rather than the user's last
+theme, which is already flatline's behaviour today and self-corrects on connect.
+
+**Two deliberate departures from the stream pattern being copied,** both structural rather than
+documented. Capacity **1** instead of 64, because `DropOldest` at depth 1 makes "a stalled plugin
+catches up to current and never replays a backlog" a property of the channel rather than a comment — the
+existing streams carry occurrences where every item matters, this carries state where only the last one
+does. And the current palette is written **before** the loop, so a subscriber is painted on subscribe.
+
+**A bridge adapter rather than an injected bus**, because `Plugins/Adapters/` exists for exactly this and
+every sibling does it that way. Injecting `IPluginEventBus` into `ThemeService` would point `Theming` at
+`Plugins`, inverting the direction every other bridge runs. Matched the established pattern first.
+
+**PRD edge case #1 proven rather than defined.** `ApplyAtStartup()` at `App.xaml.cs:167`;
+`PluginHostStartupService.StartAsync` dispatched at `:1998`. A theme is always applied before the pipe
+accepts a connection, so there is no "no palette yet" state to represent.
+
+**Self-review caught one under-specification before it reached `/checklist`.** §4.3 seeded the adapter
+cache from `ThemeService.CurrentPalette`, a member the spec introduced by implication and never
+declared. §4.2 now names all three new `ThemeService` members in a table. That is the class of gap
+`/build` stumbles on at 2am.
+
+**Zero deepening rounds.** Third cycle running, same justification, and it is now clearly the right
+default for this shape of work: on a contract cycle against two readable trees, reading IS the deepening
+round.
+
+**Handoff:** `/checklist`. Sequencing note: the host leg is fully releasable on its own and the plugin
+leg lives in another repository, so **the register flip must not sit in the host leg** — F-091's evidence
+is a mis-coloured plugin window and the host merge does not repaint it.

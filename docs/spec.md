@@ -1,336 +1,435 @@
-# RORORO — Technical Spec: Settings becomes a place
+# RORORO — Technical Spec: the host tells plugins what colour it is
 
-Implements [`docs/prd.md`](prd.md). Cycle target **v1.18.0.0** (current shipped: 1.17.0.0, published
-as a pre-release).
+**This file is the canonical technical artifact for the v1.19.0 cycle.** `docs/spec.md` is overwritten
+every Cart round; **archive this into `docs/superpowers/specs/` before the next round.** v1.17's was
+nearly lost that way and v1.18's was archived just in time
+([`2026-08-10-rororo-settings-remediation-design.md`](superpowers/specs/2026-08-10-rororo-settings-remediation-design.md)).
 
-**Anchor:** every page holds what its name promises.
+Implements [`docs/prd.md`](prd.md). Closes F-091 across two repositories.
 
-This file is the canonical technical artifact for this cycle, as v1.17's was.
-**Per `CLAUDE.md`, archive it into `docs/superpowers/specs/` before the next Cart round overwrites
-it** — v1.17 was nearly lost that way and the obligation is now written into the file table.
-
-Every current-state claim was read out of the tree on 2026-08-10. The recon is not re-derived here;
-it lives in
-[`2026-08-10-register-reverification/`](superpowers/research/2026-08-10-register-reverification/).
+**Anchor:** a plugin should never need to know where the host keeps its themes.
 
 ---
 
-## 1. Stack
-
-No new dependencies. Nothing here reaches outside what ships.
-
-| Layer | What this cycle touches |
-|---|---|
-| `ROROROblox.Core` | Nothing. No contract change. |
-| `ROROROblox.App` | `Preferences/PreferencesWindow.xaml(.cs)` (the bulk), `Core/AppSettings.cs` + `Core/IAppSettings.cs` (one field — note these live in **Core**, not App), `ViewModels/MainViewModel.cs` (compact persistence), `MainWindow.xaml.cs` (restore), `Controls/ControlStyles.xaml` (one style), 3 enumerated button sites |
-| `ROROROblox.Tests` | `AppSettingsTests`, `PreferencesCopyTests` (new), `SettingsReachabilityTests` (new) |
-
-## 2. Runtime, deployment, identity
-
-Unchanged from v1.17.0.0. Version moves to **1.18.0.0** in lockstep across
-`ROROROblox.App.csproj` `<Version>` and `Package.appxmanifest` `Identity Version`. Capabilities:
-`runFullTrust` only.
-
-**Store submission stays deferred.** The direct-download channel continues; whether v1.18 ships as a
-pre-release like v1.17 or as a full release is a release-time call, not a build decision. Note the
-consequence either way: `UpdateChecker.cs:43` constructs `GithubSource(..., prerelease: false)`, so a
-pre-release reaches nobody automatically.
-
-> **Done at item 12, both lines read back after the edit.**
-> `src/ROROROblox.App/ROROROblox.App.csproj:47` is `<Version>1.18.0.0</Version>` and
-> `src/ROROROblox.App/Package.appxmanifest:11` is
-> `<Identity Name="626LabsLLC.RoRoRoBlox" Publisher="CN=177BCE59-0966-4975-9962-10E36652141F" Version="1.18.0.0" ProcessorArchitecture="x64" />`.
-> `<Capabilities>` holds exactly one entry, `<rescap:Capability Name="runFullTrust" />` — no
-> `broadFileSystemAccess`, no `internetClient`, nothing added this cycle.
-
-## 3. The four forks the PRD routed here, resolved
-
-### 3.1 The hierarchy answer is a style that already ships
-
-*Resolves `prd.md > Story 2.1`, and it resolved itself on inspection.*
-
-`SectionHeadingStyle` ([`ControlStyles.xaml:143-148`](../src/ROROROblox.App/Controls/ControlStyles.xaml#L143-L148))
-is `FontSize 13 / SemiBold / WhiteBrush / Margin 0,18,0,6`. Preferences' three hand-rolled headings
-are **13px SemiBold White** — identical in every property except the margin.
-
-So the style is not merely available, it is the same thing already being written by hand. And its
-`Margin="0,18,0,6"` is precisely the level the page lacks: **18px above, 6px below, placing a heading
-between cards rather than inside one.**
-
-**Decision: a section is a `SectionHeadingStyle` heading standing outside the cards; a setting is a
-row inside a card. No second container primitive.** That directly satisfies the PRD's constraint that
-the answer must not be another container, because another container is the two-meanings defect
-restated.
-
-Consequence for the nine cards: cards holding a single control collapse into the section they belong
-to rather than each wearing full chrome. Measured contents are 1/1/2/1/2/2/**8**/2/3 — the register
-row's 10 does not reproduce, and 8 plus the idle card's 2 is the Alerts *page* total, so the row
-attributed a page figure to a card. Re-measured 2026-08-10; cards went 9 → 7 and single-control cards
-3 → 0 when item 1 landed.
-
-Rejected: a new `SubCardBorderStyle`, a `GroupBox`, or an `Expander`. Each adds a primitive whose
-meaning must then be taught, and the row's whole complaint is that one primitive already carries two
-meanings.
-
-### 3.2 Careful mode goes on Startup, and the page already mixes the two
-
-*Resolves `prd.md > Story 1.2`.*
-
-The rail has no launch page and `prd.md` non-goal 4 forbids a sixth for one checkbox.
-
-**Decision: Startup.** Not a compromise — that page already holds *"Launch my main account when
-RoRoRo starts"*
-([`PreferencesWindow.xaml:110-118`](../src/ROROROblox.App/Preferences/PreferencesWindow.xaml#L110-L118)),
-which is a launch setting, not a startup one. The page's contents are already about starting *and*
-launching; careful mode is the third member of a set that exists.
-
-**The nav item is not renamed.** `docs/ui-routes.json` declares the Preferences pages as capture
-surfaces and the base `03-preferences` surface is this page; renaming the item churns the capture
-round for a label change. Revisit if a fourth launch setting appears.
-
-Shape: **a third row inside Startup's card.** Written as "a third card" before item 1 ran; item 1
-collapsed that page's two single-control cards into one card with two rows, so a third card would
-re-introduce exactly the single-control card the hierarchy work removed. Match the rows above it:
-SemiBold 13px `CheckBox` label, muted 11px hint at `Margin="22,4,0,0"`, row panel at
-`Margin="0,14,0,0"`. Binds `IAppSettings.CarefulSquadLaunch`, the
-same value `SquadLaunchWindow.xaml.cs:59,73,79` reads and writes. Both surfaces re-read on open;
-neither caches.
-
-### 3.3 Epic 2 lands before Epic 1
-
-*Resolves `prd.md > Open questions`.*
-
-**Decision: hierarchy first, then the new controls.**
-
-Epic 1 adds four memory controls to the Alerts page. Epic 2 changes how that page groups things.
-Doing Epic 1 first means authoring four controls into a structure scheduled for replacement, then
-re-authoring them — the rework the PRD named.
-
-The reverse risk the PRD raised does not hold up: §3.1's answer is a heading placed between cards,
-which is generic. It does not depend on knowing what the memory section will contain, only that it
-will be a section. So the ordering cost is one-directional and the choice is not close.
-
-### 3.4 New work ships named; the backlog stays F-052's
-
-*Resolves `prd.md > Story 2.2`'s explicit demand for a statement.*
-
-0 of 137 Button/ComboBox/ToggleButton/TextBox declarations carry an `AutomationProperties.Name`. F-052
-owns that cross-surface pass and is not in this cycle.
-
-**Decision, stated as a rule rather than a one-off: every control this cycle adds ships with an
-accessible name, and no control this cycle does not otherwise touch gets retro-named.**
-
-That draws a line a future reader can apply without re-litigating: new work never adds to F-052's
-backlog, and F-052's backlog does not get half-eaten here in a way that makes its own count wrong —
-which is exactly how F-032 drifted 11 → 15 while two waves built machinery around it.
-
-Section headings added by §3.1 get names too; they are the structure a screen-reader user navigates.
-
-## 4. Reachability, and the check that would have prevented this cycle
-
-*Implements `prd.md > Epic 1`.*
-
-### 4.1 The four watchdog settings
-
-`MemoryWatchdogEnabled`, `MemoryReserveMb`, `MemoryCapMb`, `ProjectionWarnMinutes` are persisted at
-[`AppSettings.cs:322-392`](../src/ROROROblox.Core/AppSettings.cs#L322-L392) and referenced by **zero**
-`.xaml`. They land on the Alerts & memory page as a section per §3.1, beside the routing already
-there.
-
-Types: one bool, three numeric. The numerics need bounds — `prd.md > Story 1.1` requires an
-out-of-range value to be refused **visibly**, which is the one acceptance criterion no register row
-asked for and the one most likely to be skipped as "not in the row."
-
-**Validation lives in the view layer and reports through the same status-line mechanism §5 defines**,
-rather than silently clamping in the setter. A setter that clamps is indistinguishable from a setter
-that worked.
-
-### 4.2 The check that makes this class of defect fail a build
-
-F-023 survived because nothing connects *persisted* to *reachable*. `prd.md > What we'd add` lists
-this and it is cheap enough to do now:
-
-**`SettingsReachabilityTests`** — every property on the settings record is either referenced by name
-in App XAML or code-behind, or appears in a named exemption list with a reason. Same shape as the
-XAML literal fence v1.17 shipped, and the same rule: **an exemption names why, so an unreachable
-setting is a decision rather than an oversight.**
-
-This is the only new mechanism in the cycle and it is what stops the cluster regrowing.
-
-### 4.3 Muted accounts and the theme re-ask
-
-Both read existing state. The muted set is materialised at
-[`App.xaml.cs:1376`](../src/ROROROblox.App/App.xaml.cs#L1376); the count and an unmute-all sit in the
-Alerts section. Zero muted renders as absence, not `0`.
-
-The theme re-ask calls the existing consent setter. One control on Appearance.
-
-## 5. Failure says so, using the pattern already on the page
-
-*Implements `prd.md > Epic 3`.*
-
-`AlertsStatusLine` ([`:357-358`](../src/ROROROblox.App/Preferences/PreferencesWindow.xaml#L357-L358))
-is a `TextBlock`, 11px, wrapping, `CyanBrush`. A sibling `ThemeStatusLine` goes in the Theme section.
-
-**One deliberate divergence: a failure message takes `RowExpiredAccentBrush` and the `▲` prefix, not
-`CyanBrush`.** Cyan is the accent — the same treatment a success would get — and v1.17 established
-`RowExpiredAccentBrush` plus `▲` as this app's warning vocabulary across expired rows, idle chips,
-memory chips and the compat banner. A fourth warning surface should speak it too. `AlertsStatusLine`
-is left alone; retro-fitting it is not this cycle's row.
-
-Covers both Epic 3 stories: a failed theme persist (theme still applies live, session not degraded)
-and an unreadable theme file, named. Success stays silent.
-
-## 6. Voice and weight
-
-*Implements `prd.md > Epic 4`.*
-
-**Copy (Stories 4.1).** Six settings across the run-on-login and Discord cards go to second person
-with terminal periods. The run-on-login hint currently reads *"Adds a value under HKCU Run. Removes
-it when unchecked."* — a registry path presented as an effect, to an audience that does not have one.
-Its first clause also restates the checkbox above it. Clan-facing register per `CLAUDE.md`.
-
-**Close buttons (Story 4.2).** Nine Close buttons, measured today at 5 accent-filled and 4 secondary.
-Sweep to secondary; Diagnostics is the precedent and does not change. The window's own primary action
-keeps its fill.
-
-**The destructive variant (Story 4.3), bounded by enumeration.** `ControlStyles.xaml` has two ranks
-and no destructive one. Add `DestructiveButtonStyle`, and **assign it to a named list rather than by
-sweep** — the PRD's boundary made operational:
-
-| site | why it qualifies |
-|---|---|
-| Remove, on the account row | destroys a saved account and its cookie |
-| Clear, in History | destroys the session log |
-| Stop all Roblox instances | halts every running client at once |
-
-**A site not on that list is F-068's, not this cycle's.** If applying the variant starts requiring
-judgement calls about a fourth button, that is the signal the PRD named: this story drops to F-068's
-cycle rather than dragging its 61 sites forward.
-
-## 7. Persistence
-
-*Implements `prd.md > Epic 5`.* `CompactMode` joins the settings record;
-[`MainViewModel.cs:695-709`](../src/ROROROblox.App/ViewModels/MainViewModel.cs#L695-L709) persists on
-set; `MainWindow` restores on load. No migration — the record's defaulted fields load cleanly on an
-existing file, which `Core/AppSettings.cs:463-465` already documents.
-
-## 8. Testing
-
-| test | asserts | new? |
-|---|---|---|
-| `SettingsReachabilityTests` | every persisted setting is reachable or exempted with a reason | **new**, §4.2 |
-| `PreferencesCopyTests` | second person, terminal periods, no first person, no duplicated label | **new** |
-| `AppSettingsTests` | `CompactMode` round-trips; absent field defaults cleanly | extended |
-| `ContrastPairGateTests` + the three v1.17 rendered gates | unchanged and green | existing |
-
-**Manual, and non-negotiable.** Set each memory value and restart. Enter an out-of-range value and
-read the message. Break the settings write and confirm the theme applies live and says so. Drop a
-malformed theme JSON and read the report. Walk Settings with the keyboard. Look at all four themes,
-flatline included — a hierarchy carried in colour fails the theme the last cycle shipped.
-
-## 9. Key technical decisions
-
-1. **The hierarchy is a heading that already ships**, not a new container. `SectionHeadingStyle` is
-   already what the page hand-writes, and its 18/6 margin *is* the missing level.
-2. **Careful mode goes on Startup** because that page already holds a launch setting. No sixth page,
-   no rename.
-3. **Hierarchy before content**, because the ordering cost is one-directional.
-4. **New work ships named; F-052 keeps its backlog whole.** Stated as a rule so it survives the
-   cycle.
-5. **A failure message speaks the app's warning vocabulary**, not its accent.
-6. **The destructive variant is assigned by enumeration, not by consequence-in-general**, which is
-   how a 13-row cycle stays a 13-row cycle.
-7. **`SettingsReachabilityTests` is the only new mechanism**, and it exists so this cluster cannot
-   regrow silently.
-
-## 10. Open issues
-
-- **F-050 stays `open`** and is untouched. Its status cell auto-deletes the gate exemption and
-  reddens brand 3.79:1, midnight 4.16:1 and magenta-heat 3.29:1 against a 4.5 threshold.
-- **F-052's cross-surface naming pass** remains open, deliberately not half-eaten (§3.4).
-- **F-068's 61 flat call sites** remain open; §6 touches three enumerated buttons and starts nothing.
-- **F-091 plugin theming** remains open and is its own cycle.
-- **The theme re-ask can only do something for a user theme.** `EdgeRemediation.Decide` returns
-  `DeriveSilently` for any `IsBuiltIn` theme, so brand, midnight, magenta-heat and flatline are never
-  asked about by design and the new affordance correctly reports "nothing to choose" on all four.
-  Exercising the real path at C2 needs a user theme in `%LOCALAPPDATA%\ROROROblox\themes\` whose
-  divider measures under 3:1 against its navy — one built through "+ Build a theme..." usually
-  qualifies. Not a defect, but the affordance is unverifiable on a default install.
-- **The reachability fence cannot express "reachable from where a user would look."** It asserts
-  that *something somewhere* can change a setting, which `CarefulSquadLaunch` already satisfied from
-  the Squad Launch modal — so the fence would never have caught F-020, the row that says the only way
-  to change squad-launch behaviour is to begin one. Its own docstring calls it a fence and not a gate;
-  this is the concrete instance. Item 4 adds a second reachable edge, not a first.
-- **`DefaultPlaceUrl` is documented as editable and is not.** `Core/IAppSettings.cs:7` says *"the
-  Preferences dialog allows editing"*; the App references it **zero** times, and `RobloxLauncher.cs`
-  calls it "(legacy single-URL setting)" and "vestigial" while a test pins that it must be ignored.
-  Found by item 2's fence, exempted there to keep old files deserializing. **The honest end state is
-  deleting the field, not adding a control** — worth a register row, and deliberately not opened
-  mid-build.
-- **`EdgeRemediationAnswers` is structurally invisible to any name-derived fence.** The persisted
-  property is plural and its accessor is singular (`Get/SetEdgeRemediationAnswerAsync`), so the names
-  do not match. Exempted rather than papered over.
-- **`AlertsStatusLine` still uses `CyanBrush` for what may be a failure message.** Noticed while
-  writing §5, out of scope, worth a row if it turns out to report failures too.
-
-> ### Carried forward at item 12 — the state of §10 at the end of the cycle
->
-> **Added 2026-08-10, after the build.** Nothing above is rewritten. This block is the closing
-> reading of the same list, because an open issue that is only ever written at `/spec` time is an
-> open issue nobody carries. Four of the bullets above became register rows or moved; six more
-> arrived during the build. Every count here was re-measured against the tree, not read off a
-> commit body.
->
-> **Open, with numbers and direction:**
->
-> - **F-046 did not close, and refusing to close it is item 11's most important outcome.**
->   `DestructiveButtonStyle` exists and the three enumerated sites carry it, but
->   `Plugins/PluginsWindow.xaml:258-268` Remove is still a hand-rolled `MagentaBrush` fill and still
->   the loudest control on its screen — verbatim the row's headline evidence. "Remove" treatments
->   across four surfaces went **2 → 3**. §6 held its line correctly; the row is simply not closed by
->   holding it.
-> - **F-050** stays `open` and untouched. The gate exemption is byte-identical, verified by hash.
-> - **F-052's** 137-declaration backlog is un-nibbled. §3.4's rule held for the whole cycle.
-> - **F-068: 61 → 55 un-migrated call sites, 24 → 22 files.** First movement in five days, and all
->   six came from adopting existing ranks rather than hand-copying attributes. The template-trigger
->   half is still 0% shipped.
-> - **F-079: 12 → 11 `Background="#..."` literals** in `Modals/`, total hex 54 → 52. Six modals
->   untouched.
-> - **F-085: `AllowedXamlLiteralCeiling` 97 → 95.** The banner's own three literals are untouched.
-> - **F-086: gate coverage 44 elements / 18 files → 39 / 16, pairs flat at 8.** Cause is §6's Close
->   sweep leaving the gate's field of view — a good fix that shrank coverage, which is the row's own
->   thesis arriving from the opposite direction. `MinimumElements` is 30, so nothing failed and
->   nothing announced it. The stale `44` in `ContrastPairGateTests`' own doc comment and failure
->   messages is corrected at item 12; the row's "roughly 104 `MutedTextBrush` bindings" is **113**
->   today, up from 105 at v1.17, and belongs to whoever next edits the register.
-> - **F-091 plugin theming** remains its own cycle. No contract change was made.
-> - **F-093 — `DefaultPlaceUrl`** is now a register row rather than a spec bullet. Fix direction is
->   deleting the field, not adding a control.
-> - **F-094 — `AlertsStatusLine`'s `CyanBrush`** is now a register row. The condition the bullet
->   above set was met: `AlertStatusLine.Compose` does report failures, including one whose own doc
->   comment says it has no other discovery path. The page now carries two failure lines in the
->   warning accent and one in the success accent, which is worse than the uniformity it replaced.
->
-> **Open, and deliberately not register rows:**
->
-> - **The suite has pre-existing wall-clock flakiness.** 4 of 15 full runs failed on real-time-bounded
->   tests across two classes, every failure showing a ~30s wall clock against a normal ~10s. A 4-way
->   bisect implicated a new test and then went 6/6 green on the identical config;
->   `FpsCapSettlerTests` documents the same shape in its own source, and `docs/features.md` has
->   carried it as an investigation since 2026-08-04. Declined as a row at item 11 because it is test
->   infrastructure rather than app behaviour. **A red run here is re-run before it is believed.**
-> - **The reachability fence still cannot express "reachable from where a user would look."** Declined
->   as a row at item 11 for a specific reason rather than a general one: F-020 was the live victim and
->   §3.2 closed it, so the limit is now documented with no instance behind it. It is a property of the
->   mechanism, stated in the test's own docstring, and it will matter again the next time a setting is
->   reachable only from the place nobody looks.
-> - **`EdgeRemediationAnswers`** stays exempted for the plural/singular reason above. Nothing found a
->   better shape.
-> - **The theme re-ask is still unverifiable on a default install.** All four built-ins report
->   "nothing to choose" by design; exercising the real path needs a hand-authored user theme.
->
-> **One correction to the text above, made rather than banner-noted because it is a broken string and
-> not an argument:** the user-theme path in the re-ask bullet read
-> `%LOCALAPPDATA%\ROROROblox` + a literal tab + `hemes\` — a `\t` that a writer swallowed. It now
-> reads `%LOCALAPPDATA%\ROROROblox\themes\`, which is the folder that actually exists.
+## §0 — What changed between `/prd` and here
+
+Two of the PRD's four open questions closed on inspection, and one of them was the fork the scope
+deliberately refused to default. Both closed the same way: **the mechanism already existed.**
+
+### §0.1 The discovery fork dissolved. `minHostVersion` is already the answer, and it was built for this
+
+The PRD asked how a plugin discovers whether the host supports the feed, and offered two designs:
+catch `UNIMPLEMENTED` and fall back, or add a capability list to `HostInfo`.
+
+**Neither is needed.** `PluginInstaller` already refuses an install whose manifest declares a
+`minHostVersion` newer than the running host
+([`PluginInstaller.cs:87-101`](../src/ROROROblox.App/Plugins/PluginInstaller.cs#L87-L101)), with a
+user-facing message: *"This plugin requires RoRoRo X or newer. You're running Y. Update RoRoRo and try
+again."* `MarketplacePlan` greys the entry out in the catalogue before the user even clicks
+([`MarketplacePlan.cs:72-80`](../src/ROROROblox.App/Plugins/MarketplacePlan.cs#L72-L80)).
+
+The decisive evidence is the comment sitting directly above that gate, which names this exact
+scenario as the reason the gate exists:
+
+> *…so the user gets a "this needs a newer RoRoRo" message instead of a downstream symptom (the
+> plugin's gRPC client failing because it expects a method this host doesn't expose, for instance).*
+
+A plugin that needs the feed declares the host version that ships it. That is the whole protocol.
+**No new RPC, no new vocabulary, no error-code semantics, and nothing for a future addition to
+retrofit.** Adding a feature-advertisement mechanism next to a working version gate would have been a
+second answer to a solved question, and a growing untyped string vocabulary to maintain alongside
+`PluginCapability`.
+
+**The one gap, and how it is covered without new surface.** `minHostVersion` guards *install*, not a
+later host downgrade — a user who sideloads an older RoRoRo after installing the plugin is outside the
+gate. The plugin needs a tolerant failure path there. It already needs one for "RoRoRo is not running
+at all," which is a normal and supported state (§5.3). One path covers both. **Belt and braces, zero
+new contract surface.**
+
+This is the second consecutive cycle where the highest-consequence open fork answered itself on
+inspection — v1.18's was `SectionHeadingStyle` already shipping with the exact margin the missing level
+needed. Both times the cost was a single read.
+
+### §0.2 The palette is eleven slots, not ten, and it must be the *applied* values
+
+The scope and PRD both said "every slot the host theme defines," reasoning from the `Theme` record's
+ten authored colours. **Reading `ThemeService.ApplyTo` changes the answer, and the reason matters more
+than the count.**
+
+`ApplyTo` writes **eleven** brushes
+([`ThemeService.cs:284-312`](../src/ROROROblox.App/Theming/ThemeService.cs#L284-L312)). The eleventh,
+`InteractiveEdgeBrush`, is **derived** rather than authored: whether it is derived at all depends on
+`EdgeRemediation.Decide`, which reads `theme.IsBuiltIn` and a per-theme answer persisted in settings.
+It is not in the `Theme` record and never will be — the comment there says so explicitly, calling out
+that deriving rather than adding an eleventh slot means *"every user theme already on disk is covered
+without its author touching anything (invariant 6 — the contract does not grow)."*
+
+Worse for the naive design: **`ApplySlot` returns early when a hex will not parse and leaves the
+previous brush in place** ([`ThemeService.cs:320-327`](../src/ROROROblox.App/Theming/ThemeService.cs#L320-L327)).
+The same file states the consequence outright — *"the record can say one thing while the app shows
+another"* — which is precisely why `ContrastPairGateTests` measures the produced brushes rather than
+the record.
+
+So a feed carrying the `Theme` record would ship a plugin two defects:
+
+1. **No interactive edge.** A plugin wanting one would have to re-implement `ContrastGuard` and
+   `EdgeRemediation` — a *sixth* copy of host logic, in a different repository. That is the defect this
+   cycle exists to remove, one level up and worse.
+2. **Values the host is not displaying.** On an unparseable hex the record and the screen disagree, and
+   the plugin would faithfully render the wrong one.
+
+**Decision: the feed carries what `ApplyTo` produced, read back from the resource dictionary.** The
+contrast gate already reached this conclusion for the same reason; the feed inherits its reasoning
+rather than re-litigating it.
+
+---
+
+## §1 Stack
+
+No new dependencies in either repository. Everything below is already in the tree.
+
+| Piece | Already present |
+| --- | --- |
+| Contract | `ROROROblox.PluginContract` — protobuf + Grpc.Tools 2.68.0, Google.Protobuf 3.28.3 |
+| Host transport | Kestrel over a named pipe, `PluginHostStartupService` |
+| Host theming | `ROROROblox.Core/Theming/` (`Theme`, `ThemeSlots`, `ThemeStore`), `App/Theming/ThemeService` |
+| Plugin bridge | `App/Plugins/Adapters/` — the established seam between RoRoRo singletons and plugin interfaces |
+| Integration proof | `ROROROblox.PluginTestHarness` — real Kestrel, real named pipe, real `RoRoRoHostClient` |
+| Plugin side | `rororo-ur-task`, WPF, `HostThemeService` already applies palettes by brush replacement |
+
+**Versions.** Two numbers, and only one moves — restated here because the register row blurred them and
+the PRD had to correct it:
+
+| Number | Now | After | Why |
+| --- | --- | --- | --- |
+| `ROROROblox.PluginContract` NuGet package | 0.7.0 | **0.8.0** | New messages and RPCs |
+| Wire `contract_version` string | `"1.0"` | **`"1.0"`** | Exact-match at `PluginHostService.cs:70`; changing it rejects every existing plugin |
+| RoRoRo app | 1.18.0.0 | **1.19.0.0** | Cycle release |
+| ur-task | 0.5.0 | **0.6.0**, `minHostVersion: "1.19.0"` | Separate repo, separate release |
+
+## §2 Architecture overview
+
+```text
+RoRoRo host process                                    plugin process (ur-task)
+───────────────────────────────────────────────        ──────────────────────────────
+
+ Settings picker ──┐
+                   ├──> ThemeService.ApplyToResources
+ startup ──────────┘            │
+                                ├─ ApplyTo(resources, theme, edgeAnswer)
+                                │     writes 11 brushes, derives the edge
+                                │     reads back ──> ResolvedPalette   [Core]
+                                │
+                                └─ raises ThemeApplied(ResolvedPalette)
+                                          │
+                    ThemeFeedAdapter  <───┘        [App/Plugins/Adapters]
+                     · caches Latest
+                     · forwards to the bus
+                                          │
+                    InProcessPluginEventBus.ThemeChanged
+                                          │
+                    PluginHostService                            gRPC / named pipe
+                     · GetTheme ───────────── unary ─────────────>  paint once on connect
+                     · SubscribeThemeChanged ─ stream ───────────>  repaint on change
+                                                                        │
+                                                                 HostThemeService.Apply
+                                                                  replaces 8 brushes
+```
+
+**The two RPCs are not redundant.** `GetTheme` answers *"what colour are you right now"* for a plugin
+that connects mid-session; the stream answers *"tell me when that changes."* A theme is state, and the
+contract already draws this line — `GetRunningAccounts` pairs with the launch and exit streams while
+`SubscribeMemoryPressure` has no paired read, because pressure is an occurrence.
+
+## §3 Contract changes
+
+PRD ref: `prd.md > Epic 1`, `prd.md > Epic 2`.
+
+### §3.1 `ThemePalette`
+
+```proto
+// The host's ACTIVE palette, as applied. Resolved colours only -- no id, no
+// name, no file path. A plugin that receives this has nothing to look up,
+// which is the point: looking things up is what F-091 was.
+//
+// These are the values ThemeService.ApplyTo actually wrote, read back from the
+// resource dictionary rather than copied from the Theme record. On an
+// unparseable hex ApplySlot leaves the previous brush in place, so the record
+// and the screen can disagree -- the screen wins here, same rule the contrast
+// gate follows.
+message ThemePalette {
+  string bg = 1;
+  string cyan = 2;
+  string magenta = 3;
+  string white = 4;
+  string muted_text = 5;
+  string divider = 6;
+  string row_bg = 7;
+  string row_expired_bg = 8;
+  string row_expired_accent = 9;
+  string navy = 10;
+  // Derived, not authored: EdgeRemediation decides whether the authored divider
+  // clears WCAG 1.4.11's 3:1 against the surface and substitutes when it does
+  // not. Absent from the Theme record by design. A plugin cannot compute this
+  // without a sixth copy of host logic, which is why it ships on the wire.
+  string interactive_edge = 11;
+}
+```
+
+Every field is `#RRGGBB`. Snake_case field names per the file's existing convention; **no `id` field,
+at any point, for any reason.**
+
+### §3.2 RPCs on `RoRoRoHost`
+
+```proto
+  // Theming (v1.19). Additive: the wire contract_version stays "1.0", so a
+  // plugin that never calls these is unaffected and still handshakes.
+  rpc GetTheme(Empty) returns (ThemePalette);
+  rpc SubscribeThemeChanged(SubscriptionRequest) returns (stream ThemePalette);
+```
+
+Placed next to the existing `Subscribe*` block. `Empty` and `SubscriptionRequest` already exist.
+
+### §3.3 Capability map — the entry that keeps the host bootable
+
+PRD ref: `prd.md > Story 3.2`.
+
+```csharp
+["GetTheme"] = null,                  // free read -- a colour is not sensitive
+["SubscribeThemeChanged"] = null,     // free stream -- see below
+```
+
+**These entries are not optional and not cosmetic.** `RpcMethodCapabilityMap.AssertExhaustive()` walks
+the generated service descriptor at startup and **throws if a contract method has no entry**, and
+`CapabilityInterceptor` independently fails closed on an unmapped method at call time. Both were built
+deliberately after `UpdateUI` and `RemoveUI` once shipped ungated. Adding the RPCs without the map
+entries does not produce a permissive hole; it produces an app that will not start.
+
+**Ungated is a deliberate first, and it is affirmed rather than inherited.** Every stream that exists
+today is capability-gated and every ungated entry is a one-shot read, so `SubscribeThemeChanged` is the
+first ungated stream. Affirmed because the gate exists to fence things that can cause harm — a
+capability the user can decline is a capability that lets a plugin be *denied the ability to look
+correct*, which is a worse outcome than any risk of knowing a hex code. The stream carries no account
+data, no identity and no host state beyond colour.
+
+## §4 Host implementation
+
+### §4.1 `ResolvedPalette` — Core
+
+**New:** `src/ROROROblox.Core/Theming/ResolvedPalette.cs`. Core, beside `Theme` and `ThemeSlots`,
+because Core has no UI dependency and both the App layer and the contract-facing layer need it.
+
+```csharp
+/// The eleven brush values a theme resolves to once applied, keyed by ThemeSlots.
+/// Distinct from Theme on purpose: Theme is what an author wrote, this is what the
+/// app is showing. They differ when a hex will not parse (ApplySlot leaves the old
+/// brush) and they always differ by InteractiveEdge, which is derived.
+public sealed record ResolvedPalette(
+    string Bg, string Cyan, string Magenta, string White, string MutedText,
+    string Divider, string RowBg, string RowExpiredBg, string RowExpiredAccent,
+    string Navy, string InteractiveEdge);
+```
+
+### §4.2 `ThemeService.ApplyTo` returns what it wrote
+
+`ApplyTo` currently returns `EdgeRemediation.Decision`. It gains a second return value: the palette
+**read back out of the dictionary** after all eleven writes.
+
+Read-back rather than accumulate-as-you-write, deliberately: read-back is the only version that is
+correct when `ApplySlot` early-returns on an unparseable hex, and being correct in exactly that case is
+the entire reason this design was chosen over shipping the `Theme` record.
+
+`ApplyToResources` then stores the result on a new `CurrentPalette` property beside the existing
+`CurrentTheme`, and raises `ThemeApplied(palette)` **after** both are set, so a subscriber can never
+observe a palette the service has not finished adopting.
+
+Three members land on `ThemeService`, named here so `/checklist` does not have to infer them:
+
+| Member | Shape | Why |
+| --- | --- | --- |
+| `ApplyTo` | returns `(EdgeRemediation.Decision, ResolvedPalette)` | Still `static` and dictionary-taking — §6 depends on that |
+| `CurrentPalette` | `ResolvedPalette?` | What §4.3 seeds its cache from; null only before the startup apply, which no plugin can observe (§4.5) |
+| `ThemeApplied` | `event Action<ResolvedPalette>?` | Plain event, no plugin types — the adapter is what knows about plugins |
+
+### §4.3 `ThemeFeedAdapter` — App/Plugins/Adapters
+
+**New:** `src/ROROROblox.App/Plugins/Adapters/ThemeFeedAdapter.cs`.
+
+`ThemeService` raises a plain `event Action<ResolvedPalette>? ThemeApplied` and knows nothing about
+plugins. The adapter subscribes, caches `Latest`, and forwards to the bus.
+
+**Why an adapter and not an injected bus:** `Plugins/Adapters/` exists for exactly this — bridging
+RoRoRo singletons to plugin interfaces — and every sibling in that folder does it this way. Injecting
+`IPluginEventBus` into `ThemeService` would point `Theming` at `Plugins`, inverting the direction every
+other bridge runs. Matching the established pattern first, deviating only on purpose.
+
+The cache is load-bearing, not an optimisation: it is what lets `GetTheme` answer at any moment,
+including before the user has ever changed a theme. Seeded at construction from
+`ThemeService.CurrentPalette`.
+
+### §4.4 `IPluginEventBus` gains a fifth event
+
+```csharp
+/// The host's active palette, raised on every theme application including the
+/// one at startup. Carries resolved colours, never an id -- a plugin that
+/// receives an id would need somewhere to look it up, which is F-091.
+event Action<ResolvedPalette>? ThemeChanged;
+```
+
+`InProcessPluginEventBus` implements it in the same shape as the other four.
+
+### §4.5 `PluginHostService` — the two handlers
+
+`GetTheme` returns the adapter's cached `Latest`, mapped to `ThemePalette`.
+
+`SubscribeThemeChanged` copies `SubscribeMutexStateChanged`
+([`PluginHostService.cs:280-309`](../src/ROROROblox.App/Plugins/PluginHostService.cs#L280-L309)) —
+bounded channel, handler subscribe, `await foreach` write, unsubscribe in `finally` — with **two
+deliberate departures:**
+
+1. **Capacity 1, not 64.** PRD Story 2.1 requires a stalled plugin to catch up to the *current*
+   palette and never replay a backlog. With `DropOldest`, capacity 1 makes that behaviour structural
+   rather than a comment: the channel can only ever hold the newest palette. A 64-deep queue of
+   superseded themes is not useful to anyone.
+2. **The current palette is written first, before the loop.** A subscriber gets painted immediately
+   rather than waiting for the next change. This makes `GetTheme` optional for a plugin that only ever
+   subscribes, while remaining necessary for one that wants a palette without holding a stream.
+
+**Startup ordering is proven, not assumed** (PRD edge case #1). `ThemeService.ApplyAtStartup()` runs at
+[`App.xaml.cs:167`](../src/ROROROblox.App/App.xaml.cs#L167); `PluginHostStartupService.StartAsync` is
+dispatched at [`App.xaml.cs:1998`](../src/ROROROblox.App/App.xaml.cs#L1998). A theme is always applied
+before the pipe accepts a connection, so there is no "no palette yet" state to represent.
+
+## §5 Plugin implementation — `rororo-ur-task`
+
+PRD ref: `prd.md > Epic 5`. Separate repository, separate release, **not required for the host leg to
+ship.**
+
+### §5.1 What is deleted
+
+`HostThemeReader`'s `BuiltIns` array and the three mirrored palettes, plus `ActiveThemeIdProperty`,
+`ThemeFileOptions`, `ReadActiveThemeId`, `ParseThemeFile` and `ResolveActive` — the five host-storage
+couplings named in scope. `BlendTowards` **stays**: hover is derived from `RowBg`, not read from the
+host, and no contract change affects it.
+
+### §5.2 What replaces it
+
+`HostThemeService.Start` calls `GetTheme` once, applies, then holds `SubscribeThemeChanged` and applies
+on each palette. The `FileSystemWatcher` and its debounce timer go with the reader — the host now tells
+the plugin, so the plugin no longer watches. `Apply` is unchanged: still eight brush keys by
+replacement, still `Freeze()`, still hover-by-tint. Seven slots map straight across and three arrive
+unused, which is the point of shipping all eleven.
+
+### §5.3 The fallback — the PRD's third answer, and it is the right one
+
+The PRD asked whether ur-task keeps its disk reader as the no-host fallback or collapses to the `Brand`
+constant, and flagged that a third answer might exist. **It does: keep the `Brand` constant, delete the
+reader.**
+
+The disk reader cannot survive, because every coupling it embodies is what the cycle removes — keeping
+it "just for the offline case" keeps all five. Collapsing to `Brand` costs exactly one thing: a plugin
+launched while RoRoRo is closed paints brand rather than the user's last theme. That is acceptable
+because it is **already the behaviour for flatline today**, it self-corrects the moment the host comes
+up and the plugin connects, and the alternative is retaining the entire defect for a transient state.
+
+This same path covers a downgraded host (§0.1): a failed `GetTheme` or `SubscribeThemeChanged` is
+treated as "no host feed," logged at debug, and the plugin stays on `Brand` and fully usable. **A
+theming failure must never take the plugin down** — that posture is unchanged from the current reader,
+which falls back to `Brand` on every error path.
+
+## §6 What gets tested, and where
+
+`prd.md > Story 3.3` requires the proof to run over the wire rather than in-process. It can, because
+the harness already exists.
+
+| Test | Project | Proves |
+| --- | --- | --- |
+| `ApplyTo` returns the eleven applied values | `Tests` | Read-back, not record-copy |
+| Unparseable hex → palette reports the brush actually in place | `Tests` | §0.2's whole argument |
+| `InteractiveEdge` present and equals the remediated value | `Tests` | The derived slot ships |
+| Startup apply raises `ThemeChanged` once | `Tests` | Story 2.2 |
+| `AssertExhaustive` passes with both new methods | `Tests` | Story 3.2, and the host boots |
+| `GetTheme` over a real pipe returns the active palette | **Harness** | Story 1.1 |
+| Switching themes pushes a new palette to a live subscriber | **Harness** | Story 2.1 |
+| A subscriber is painted on subscribe, before any change | **Harness** | §4.5 departure 2 |
+| Handshake with `contract_version "1.0"` still accepted | **Harness** | Story 3.1 — the highest-consequence line in the cycle |
+
+The `ThemeChanged`-on-startup test needs a palette without an `Application`; `ApplyTo` is already
+`static` and dictionary-taking *precisely so a theme can be resolved with no `Application` and no
+`ThemeService` instance*, so a bare `ResourceDictionary` is enough.
+
+## §7 File structure
+
+```text
+ROROROblox/
+├── src/
+│   ├── ROROROblox.PluginContract/
+│   │   ├── Protos/plugin_contract.proto        # M ThemePalette + 2 RPCs (§3.1, §3.2)
+│   │   └── ROROROblox.PluginContract.csproj    # M 0.7.0 -> 0.8.0
+│   ├── ROROROblox.Core/Theming/
+│   │   ├── Theme.cs                            # . ThemeSlots unchanged, 11 keys already
+│   │   └── ResolvedPalette.cs                  # + applied values, 11 slots (§4.1)
+│   ├── ROROROblox.App/
+│   │   ├── Theming/ThemeService.cs             # M ApplyTo read-back + ThemeApplied (§4.2)
+│   │   └── Plugins/
+│   │       ├── IPluginEventBus.cs              # M fifth event (§4.4)
+│   │       ├── InProcessPluginEventBus.cs      # M implement it
+│   │       ├── RpcMethodCapabilityMap.cs       # M two ungated entries (§3.3)
+│   │       ├── PluginHostService.cs            # M GetTheme + SubscribeThemeChanged (§4.5)
+│   │       └── Adapters/ThemeFeedAdapter.cs    # + cache + forward (§4.3)
+│   ├── ROROROblox.Tests/ThemeFeedTests.cs      # + unit rows from §6
+│   └── ROROROblox.PluginTestHarness/
+│       └── EndToEndContractTests.cs            # M four wire rows from §6
+├── docs/plugins/AUTHOR_GUIDE.md                # M theming section (Epic 4)
+└── docs/spec.md                                # this file -- ARCHIVE before next round
+
+rororo-ur-task/                                  # separate repo, separate release
+├── src/Theming/
+│   ├── HostThemeReader.cs                      # M keep Brand + BlendTowards, delete the rest (§5.1)
+│   └── HostThemeService.cs                     # M feed replaces the watcher (§5.2)
+├── src/PluginHost/PluginClient.cs              # M expose the two calls
+└── manifest.json                               # M 0.6.0, minHostVersion 1.19.0
+```
+
+`+` new · `M` modified · `.` unchanged, listed for orientation
+
+## §8 Key technical decisions
+
+1. **The feed carries applied brushes, not the `Theme` record.** Eleven slots including the derived
+   `InteractiveEdge`, read back from the resource dictionary. *Tradeoff:* the palette is no longer a
+   direct projection of an on-disk shape, so a reader has to know "applied" and "authored" are
+   different things. Accepted because the alternative ships a plugin either a missing slot or a colour
+   the host is not displaying, and because `ContrastPairGateTests` already established this exact rule
+   for the same reason.
+2. **`minHostVersion` is the discovery mechanism.** No capability list, no `UNIMPLEMENTED` handling as
+   a protocol. *Tradeoff:* a host downgraded after install is outside the gate. Accepted because the
+   plugin needs a tolerant failure path anyway for the host-not-running case, and one path covers both.
+3. **Both RPCs are ungated, and it is the first ungated stream.** *Tradeoff:* a deliberate break in an
+   established pattern. Accepted because a declinable colour capability means a plugin can be denied
+   the ability to look correct, and the stream carries nothing but hex codes.
+4. **Stream capacity 1 with `DropOldest`, and the current palette written before the loop.**
+   *Tradeoff:* diverges from the four existing streams' capacity 64. Accepted because those carry
+   occurrences where every item matters and this carries state where only the last one does — making
+   the requirement structural beats documenting it.
+5. **A bridge adapter, not an injected bus.** *Tradeoff:* one more small type. Accepted because it
+   keeps `Theming` unaware of `Plugins` and matches every sibling in `Adapters/`.
+6. **ur-task drops the disk reader entirely rather than keeping it as an offline fallback.**
+   *Tradeoff:* a plugin started while RoRoRo is closed paints brand instead of the user's last theme.
+   Accepted because keeping the reader keeps all five couplings for a transient state that
+   self-corrects on connect.
+
+## §9 Open issues
+
+- **Neither leg closes F-091 alone.** The row's evidence is a mis-coloured plugin window. The host leg
+  is releasable and useful — it makes every *future* plugin correct by default — but the row stays open
+  until ur-task 0.6.0 ships. `/checklist` must not place a register flip in the host leg.
+- **The three hand-synced palette copies inside RoRoRo are untouched.** The plugin mirror was the
+  fourth; this removes only that one. Still an open issue, still out of scope.
+- **`RowBadgeSpec.color_hex` is the same defect inverted** — a plugin choosing a colour painted into the
+  *host's* window. Declined at `/prd` on evidence: `WpfPluginUIHost` is a stub that logs and renders
+  nothing, so nothing is mis-coloured today. It becomes real when that UI does.
+- **The plugin leg's verification is eyes-on and cross-repo.** Four themes in ur-task's window is the
+  proof, and no harness spans both processes. The host leg's harness coverage does not extend here, and
+  saying otherwise would be this session's recurring failure one more time.
+- **`AUTHOR_GUIDE.md` documents a contract no third party consumes yet.** ur-task is the only plugin.
+  Worth writing anyway — the guide's absence is why the coupling was invented in the first place.
