@@ -63,7 +63,7 @@ off on nothing having run. Do not "simplify" these back.
   themes**. Tab through one page start to finish and count the stops.
   Commit: `refactor(settings): a section is a heading, not another card`.
 
-- [ ] **2. The fence that makes an unreachable setting fail the build**
+- [x] **2. The fence that makes an unreachable setting fail the build**
   Spec ref: `spec.md > §4.2 The check that makes this class of defect fail a build`
   What to build: new `src/ROROROblox.Tests/SettingsReachabilityTests.cs`. Every property on the
   settings record is either referenced by name in App XAML or code-behind, or appears in a named
@@ -80,14 +80,14 @@ off on nothing having run. Do not "simplify" these back.
   Verify: `dotnet test ROROROblox.slnx --filter "FullyQualifiedName~SettingsReachability"` — quote the
   red output. Commit: `test(settings): fence every persisted setting to a reachable control`.
 
-- [ ] **3. The memory watchdog gets the page it is already named for**
+- [x] **3. The memory watchdog gets the page it is already named for**
   Spec ref: `spec.md > §4.1 The four watchdog settings`
   What to build: all four watchdog settings become editable on the **Alerts & memory** page
   ([`:80`](../src/ROROROblox.App/Preferences/PreferencesWindow.xaml#L80)), as a section per item 1,
   beside the alert routing already there. One bool, three numeric. Round-trip through the existing
   `IAppSettings` accessors — **no second source of truth**.
   **Validation is visible, not silent.** An out-of-range value is refused or clamped *in the UI* with
-  the reason shown, reported through item 7's status-line mechanism. A setter that clamps quietly is
+  the reason shown, reported through **its own warning line in the memory section**, styled per `spec.md > §5` (RowExpiredAccentBrush + the triangle prefix). NOT through item 7 -- that item builds the Theme section's line and does not exist yet; and NOT through the existing AlertsStatusLine, which spec §5 explicitly leaves alone. This item owns its message. A setter that clamps quietly is
   indistinguishable from one that worked, which is this cluster's defect one level down. This is the
   one acceptance criterion no register row asked for and the one most likely to be dropped as "not in
   the row."
@@ -98,7 +98,7 @@ off on nothing having run. Do not "simplify" these back.
   Then set each value, restart, confirm it stuck; enter a negative megabyte figure and read the
   message. Commit: `feat(settings): memory watchdog controls on the Alerts and memory page`.
 
-- [ ] **4. Careful mode gets a home**
+- [x] **4. Careful mode gets a home**
   Spec ref: `spec.md > §3.2 Careful mode goes on Startup`
   What to build: **a third ROW inside Startup's card**, not a third card — item 1 collapsed that
   page's two single-control cards into one card with two rows, so the shape this item was written

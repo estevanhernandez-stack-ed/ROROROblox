@@ -153,6 +153,38 @@
                                            Margin="22,4,0,0"
                                            Text="Pair with the toggle above for a one-step boot-to-Roblox setup. Pick a main account in the row list (the &#x2606; star) first." />
                             </StackPanel>
+
+                            <!-- Careful mode, mirrored (F-024, spec 3.2). The only way to change
+                                 how a squad launch behaves used to be to begin one: the toggle
+                                 lived solely in the Squad Launch modal. This is a MIRROR, not a
+                                 move — the modal keeps its copy, because that is where the setting
+                                 is most often wanted. Both surfaces read
+                                 IAppSettings.GetCarefulSquadLaunchAsync on open and neither caches,
+                                 so flipping it in one is what the other shows next time it opens.
+
+                                 It is a ROW here and not a card of its own: this page's two
+                                 single-control cards collapsed into one card with two rows when the
+                                 heading became the grouping level, and a third card would
+                                 reintroduce the exact shape that collapse removed. Startup already holds
+                                 "Launch my main account when RoRoRo starts", which is a launch
+                                 setting rather than a startup one, so this is the third member of a
+                                 set the page already has. The nav item is NOT renamed for it —
+                                 docs/ui-routes.json declares these pages as capture surfaces. -->
+                            <StackPanel Margin="0,14,0,0">
+                                <CheckBox x:Name="CarefulSquadLaunchToggle"
+                                          Foreground="{DynamicResource WhiteBrush}"
+                                          FontSize="13"
+                                          FontWeight="SemiBold"
+                                          AutomationProperties.Name="Launch a squad one account at a time"
+                                          Click="OnCarefulSquadLaunchToggle">
+                                    <TextBlock Text="Launch a squad one account at a time." TextWrapping="Wrap" />
+                                </CheckBox>
+                                <TextBlock FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="22,4,0,0"
+                                           Text="Each account finishes landing in the game before the next one starts. It takes longer, but no two accounts are ever joining at once, which is what sets off Roblox's verification prompts. You can also flip this in the Squad Launch window." />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
                 </StackPanel>

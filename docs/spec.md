@@ -244,6 +244,11 @@ flatline included — a hierarchy carried in colour fails the theme the last cyc
 - **F-052's cross-surface naming pass** remains open, deliberately not half-eaten (§3.4).
 - **F-068's 61 flat call sites** remain open; §6 touches three enumerated buttons and starts nothing.
 - **F-091 plugin theming** remains open and is its own cycle.
+- **The reachability fence cannot express "reachable from where a user would look."** It asserts
+  that *something somewhere* can change a setting, which `CarefulSquadLaunch` already satisfied from
+  the Squad Launch modal — so the fence would never have caught F-020, the row that says the only way
+  to change squad-launch behaviour is to begin one. Its own docstring calls it a fence and not a gate;
+  this is the concrete instance. Item 4 adds a second reachable edge, not a first.
 - **`DefaultPlaceUrl` is documented as editable and is not.** `Core/IAppSettings.cs:7` says *"the
   Preferences dialog allows editing"*; the App references it **zero** times, and `RobloxLauncher.cs`
   calls it "(legacy single-URL setting)" and "vestigial" while a test pins that it must be ignored.

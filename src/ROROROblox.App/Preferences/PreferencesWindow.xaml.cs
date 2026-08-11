@@ -172,6 +172,10 @@ internal partial class PreferencesWindow : Window
             SettingsNav.SelectedIndex = 0;
             RunOnLoginToggle.IsChecked = SafeIsStartupEnabled();
             LaunchMainToggle.IsChecked = await _settings.GetLaunchMainOnStartupAsync();
+            // v1.18 — the mirror of the Squad Launch modal's careful-mode toggle (F-024). Read on
+            // every open, exactly as SquadLaunchWindow.OnLoaded reads it, so the two surfaces agree
+            // without either one holding a copy of the value.
+            CarefulSquadLaunchToggle.IsChecked = await _settings.GetCarefulSquadLaunchAsync();
 
             AlwaysShowRecycleToggle.IsChecked = await _settings.GetAlwaysShowRecycleAsync();
 
@@ -399,6 +403,36 @@ internal partial class PreferencesWindow : Window
                 MessageBoxImage.Warning);
             _suppressClickHandlers = true;
             LaunchMainToggle.IsChecked = await _settings.GetLaunchMainOnStartupAsync();
+            _suppressClickHandlers = false;
+        }
+    }
+
+    /// <summary>
+    /// The Settings-side half of careful mode. Writes the same persisted value
+    /// <c>SquadLaunchWindow.OnCarefulModeToggle</c> writes, through the same
+    /// <c>IAppSettings</c> accessor pair — there is one value and two views of it, not two flags.
+    /// <para>
+    /// On a failed write this reverts from the file rather than leaving the checkbox showing what
+    /// the user asked for, which is the same shape the modal uses: a control that shows an unsaved
+    /// state is how the two surfaces would start disagreeing.
+    /// </para>
+    /// </summary>
+    private async void OnCarefulSquadLaunchToggle(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+        try
+        {
+            await _settings.SetCarefulSquadLaunchAsync(CarefulSquadLaunchToggle.IsChecked == true);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this,
+                $"Couldn't save preference: {ex.Message}",
+                "Preferences",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            _suppressClickHandlers = true;
+            CarefulSquadLaunchToggle.IsChecked = await _settings.GetCarefulSquadLaunchAsync();
             _suppressClickHandlers = false;
         }
     }
