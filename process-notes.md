@@ -1454,3 +1454,55 @@ questions would have been.
 
 **Handoff:** `/spec`, but **Epic 0 first** — it is eyes-on and one minute, and every other decision
 in the spec depends on its answer.
+
+## /spec — one button vocabulary (v1.20)
+
+**Three of the PRD's four open questions closed on evidence, and one of them killed the cheap
+option.**
+
+**The `Style.Triggers` fork is not a preference, it is impossible.** The PRD offered "override the
+template" versus "add `Style.Triggers` on top", and the second is cheaper and survives a WPF-UI
+package bump. Reading the resolved template's setters ends it: **every** hover, pressed and disabled
+setter carries `TargetName=border`. They target a named element *inside* the template, so a Style
+trigger on the Button's own `Background` sets a different object's property — not a precedence
+contest, a different element. Exactly one of the seven, `Foreground` on disabled, is reachable. The
+cycle owns the template.
+
+That is the second time in two cycles that reading a resolved object settled a fork that reasoning
+had left genuinely open. It is also the same technique that produced the answer at `/prd`, which is
+worth noticing: **on WPF, inspect the resolved template; do not reason about what a style "should"
+inherit.**
+
+**A finding the scope did not have: the app declares 116 plain `<Button>` and zero `<ui:Button>`.**
+App.xaml merges WPF-UI's `ControlsDictionary` first specifically so `BasedOn="{StaticResource
+{x:Type Button}}"` picks up the library's implicit style, and the template that resolves is still the
+OS one. Migrating 116 sites to `ui:Button` was considered and cut in §0.3 — it is a control-type swap
+with its own regression surface, and §0.2 means we would need our own template regardless.
+
+**One probe deleted rather than kept.** It could not construct WPF-UI's `ThemesDictionary` standalone
+(`UriFormatException` from its parameterless constructor outside a pack context), so half of it never
+ran. The half that did run answered the fork. Keeping a probe whose first test cannot execute would
+have been a file that looks like coverage.
+
+**The state gate's technique is recorded with its reason.** The render harness cannot force
+`IsMouseOver` — it is input-driven, and `GoToState` returns **False** on this template because it has
+no visual state groups. A `/prd` probe did not know that and produced a confident wrong answer for
+twenty minutes. §5 therefore prefers reading the template's trigger setters over simulating input,
+and says why, so item 6 does not rediscover it at 2am.
+
+**§6 adopts a scanner definition instead of a number.** Register says 55, a scope-time scan said 72,
+file count agreed exactly at 22. Rather than pick a side, the definition goes into a committed script
+and its first run at the branch point becomes the baseline. The older figures are recorded as
+measured under unknown definitions. This row has been sized against an unreproducible number three
+times.
+
+**Two stories are allowed to fail, deliberately.** Story 4.1's fence closes with a finding if its
+allow-list would be disqualifying, and §5's gate closes the same way if it cannot be made to fail
+against a broken template. An item that can only succeed is how scope creeps, and a gate that passes
+by exemption is this session's recurring defect wearing yet another costume.
+
+**Zero deepening rounds.** Fourth cycle running: on a codebase this readable, reading is the
+deepening round.
+
+**Handoff:** `/checklist`. Sequencing note: the template (§2) lands before any migration, because
+migrating first means every migrated button still breaks on hover and nothing visibly improves.
