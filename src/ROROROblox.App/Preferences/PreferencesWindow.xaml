@@ -737,7 +737,7 @@
                                         Style="{StaticResource SecondaryButtonStyle}"
                                         FontSize="11"
                                         Click="OnOpenThemesFolderClick"
-                                        ToolTip="Drop a *.json file in here to make it appear in the picker after restart." />
+                                        ToolTip="Drop a *.json file in here, then close and reopen Settings to see it in the picker." />
                                 <!-- The way back to the outline question (F-078, spec 4.3). It used
                                      to be asked once per theme and never again: EdgeRemediationWindow
                                      says so in its own source — "one reflexive click on the title-bar
@@ -767,6 +767,30 @@
                                        TextWrapping="Wrap"
                                        Margin="0,8,0,0"
                                        Text="Themes people write themselves sometimes set button outlines too faint to see, so RoRoRo brightens those. Review button outlines puts both side by side and lets you pick. You can change your mind as often as you like." />
+                            <!-- This section's own failure line (spec 5), sibling to
+                                 AlertsStatusLine and deliberately NOT dressed like it.
+                                 AlertsStatusLine is CyanBrush, which is the accent — the same
+                                 treatment a success gets — so a failure painted cyan would look
+                                 like a save. RowExpiredAccentBrush and the U+25B2 prefix are the
+                                 warning vocabulary v1.17 established across expired rows, idle
+                                 chips, memory chips and the compat banner, and item 3's
+                                 MemorySettingsWarning already speaks it. AlertsStatusLine itself is
+                                 left alone; spec 10 records it as an open issue.
+
+                                 Two things reach it: a theme that applied but could not be written
+                                 down, and a file in the themes folder that could not be read. The
+                                 text is composed by ThemeStatusSummary, which is where the copy is
+                                 tested — nothing here decides what it says.
+
+                                 Collapsed until there is something wrong. Success stays silent. -->
+                            <TextBlock x:Name="ThemeStatusLine"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource RowExpiredAccentBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,12,0,0"
+                                       Visibility="Collapsed"
+                                       AutomationProperties.Name="Theme warning"
+                                       AutomationProperties.LiveSetting="Assertive" />
                         </StackPanel>
                     </Border>
                 </StackPanel>

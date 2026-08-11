@@ -167,7 +167,7 @@ off on nothing having run. Do not "simplify" these back.
   Verify: `dotnet test ROROROblox.slnx --filter "FullyQualifiedName~AppSettings|FullyQualifiedName~MainViewModel"`.
   Then toggle, quit **from the tray** (X minimises), relaunch. Commit: `feat(settings): compact mode persists across restart`.
 
-- [ ] **7. Failure says so, in the app's warning voice**
+- [x] **7. Failure says so, in the app's warning voice**
   Spec ref: `spec.md > §5 Failure says so, using the pattern already on the page`
   What to build: a `ThemeStatusLine` sibling to `AlertsStatusLine`
   ([`:357-358`](../src/ROROROblox.App/Preferences/PreferencesWindow.xaml#L357-L358)) in the Theme
@@ -177,8 +177,11 @@ off on nothing having run. Do not "simplify" these back.
   warning vocabulary across expired rows, idle chips, memory chips and the compat banner. Leave
   `AlertsStatusLine` alone; retro-fitting it is not this cycle's row.
   Covers both Epic 3 stories: a failed theme persist (theme **still applies live** — the session is
-  not degraded) and an unreadable theme file, **named**. Also correct the "Open themes folder" tooltip
-  to say reopen this page rather than promising a restart the code does not require. Success stays
+  not degraded) and an unreadable theme file, **named**. Also correct the "Open themes folder" tooltip. **It must not say "reopen this page" either** —
+  that was equally false, since the rail's pages are one window with toggled `Visibility` and
+  switching them re-lists nothing. `ThemeStore.ListAsync` re-enumerates per call and
+  `BuildPreferencesWindow` constructs a fresh window per open, so the true instruction is close and
+  reopen Settings. Success stays
   silent; a status line that speaks on every save is noise.
   Acceptance: `prd.md > Story 3.1` + `3.2`. A folder with one bad file among good ones still loads the
   good ones.

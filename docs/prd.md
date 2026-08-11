@@ -116,7 +116,9 @@ As someone who dropped a JSON file in the themes folder, I want to know it faile
 it not appear.
 
 - [ ] An unreadable or malformed theme file is reported in the app, naming the file.
-- [ ] The tooltip stops promising a restart the code does not require — it says reopen this page.
+- [ ] The tooltip stops promising a restart the code does not require. **Corrected during item 7:**
+      it must not say "reopen this page" either — the rail's five pages are one window with toggled
+      `Visibility`, so switching pages re-lists nothing. Only closing and reopening Settings does.
 - [ ] A folder with one bad file among good ones still loads the good ones.
 
 ### Epic 4 — One voice, one meaning for weight

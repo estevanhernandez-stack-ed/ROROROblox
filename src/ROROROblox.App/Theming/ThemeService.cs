@@ -79,14 +79,33 @@ internal sealed class ThemeService
         }
     }
 
-    public async Task SetActiveAsync(string themeId)
+    /// <summary>
+    /// Applies a theme and reports what happened to the half that outlives the session.
+    /// <para>
+    /// IT USED TO RETURN <c>Task</c> AND SAY NOTHING. The write below has always been wrapped in a
+    /// catch that logs and carries on — deliberately, because a failed write is no reason to leave
+    /// somebody on a theme they just replaced. What it also did was end the story: the theme went on
+    /// screen, the user saw exactly what a successful save looks like, and the old theme was back
+    /// after a restart with nothing having ever said so (<c>prd.md &gt; Story 3.1</c>). The
+    /// live-apply behaviour is unchanged here. Only the silence is.
+    /// </para>
+    /// <para>
+    /// The message is not written here. This returns the outcome and
+    /// <see cref="Preferences.ThemeStatusSummary"/> turns it into words, so the copy is testable
+    /// without an <c>Application</c>, a <c>Dispatcher</c> or a <c>Window</c> — none of which the
+    /// suite constructs.
+    /// </para>
+    /// </summary>
+    public async Task<ThemeChange> SetActiveAsync(string themeId)
     {
         var theme = await _store.GetByIdAsync(themeId).ConfigureAwait(true);
         if (theme is null)
         {
             _log.LogWarning("Theme {Id} not found; ignoring.", themeId);
-            return;
+            return ThemeChange.Missing;
         }
+
+        string? persistError = null;
         try
         {
             await _settings.SetActiveThemeIdAsync(themeId).ConfigureAwait(true);
@@ -94,6 +113,7 @@ internal sealed class ThemeService
         catch (Exception ex)
         {
             _log.LogWarning(ex, "Saving active theme id failed; applying live anyway.");
+            persistError = ex.Message;
         }
 
         bool? answer = null;
@@ -109,6 +129,11 @@ internal sealed class ThemeService
             }
         }
         ApplyToResources(theme, answer);
+
+        // AFTER the apply, on purpose. "It is on now but was not remembered" is only true once it
+        // is actually on, and returning before the apply would let a caller paint that sentence
+        // over a theme change that had not happened yet.
+        return persistError is null ? ThemeChange.Saved : ThemeChange.AppliedButNotSaved(persistError);
     }
 
     /// <summary>
@@ -319,4 +344,33 @@ internal sealed class ThemeService
         }
         return false;
     }
+}
+
+/// <summary>
+/// The outcome of <see cref="ThemeService.SetActiveAsync"/>, split into the two things that can
+/// independently fail: whether the theme was found at all, and whether the choice survived being
+/// written down.
+/// <para>
+/// THREE STATES, NOT A BOOL, because they need three different sentences. A theme that was never
+/// found is not on screen and must not be described as though it were — that is the state a user
+/// reaches by deleting a theme file while Settings is open. A theme that applied but was not saved
+/// IS on screen and comes back wrong tomorrow. A theme that saved says nothing at all.
+/// </para>
+/// <para>
+/// <paramref name="PersistError"/> carries the exception's own message rather than a rewritten one.
+/// The memory section one page over already shows the raw text for a failed settings write
+/// (<c>PreferencesWindow.xaml.cs</c>, "Couldn't save that: {ex.Message}"), and a user who has run
+/// out of disk or hit an ACL is better served by what Windows said than by a paraphrase of it.
+/// </para>
+/// </summary>
+internal readonly record struct ThemeChange(bool Found, bool Persisted, string? PersistError)
+{
+    /// <summary>The id had no theme behind it. Nothing was applied and nothing was written.</summary>
+    internal static ThemeChange Missing => new(false, false, null);
+
+    /// <summary>Applied and written down. The silent case.</summary>
+    internal static ThemeChange Saved => new(true, true, null);
+
+    /// <summary>On screen for this session only.</summary>
+    internal static ThemeChange AppliedButNotSaved(string error) => new(true, false, error);
 }

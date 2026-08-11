@@ -44,6 +44,18 @@ internal partial class PreferencesWindow : Window
     /// </summary>
     private readonly AutomaticMemorySummary _automaticMemory;
 
+    /// <summary>
+    /// What the themes folder had to say when this window opened, and what
+    /// <see cref="ThemeStatusLine"/> falls back to.
+    /// <para>
+    /// ONE LINE, TWO REPORTERS, so one of them has to be the resting state. A successful theme
+    /// change is silent (<c>spec.md &gt; §5</c>) — but silent means "says nothing about the save",
+    /// not "blanks the line", and blanking it would wipe a bad-file report the user has not fixed
+    /// yet. A bad file is still a bad file after a theme change that worked.
+    /// </para>
+    /// </summary>
+    private ThemeStatusSummary.Line _themeFolderStatus = ThemeStatusSummary.Silent;
+
     private bool _suppressClickHandlers; // true while we set the initial check states.
 
     /// <summary>Channel names reported by the probe for each webhook, if it answered.</summary>
@@ -284,6 +296,11 @@ internal partial class PreferencesWindow : Window
             // fire above is a no-op — set the description explicitly or a user who never touches
             // the picker never sees it for the theme that is already active.
             UpdateThemeDescription(initialTheme);
+            // v1.18 item 7 (F-026). A theme file the store could not read used to just not appear.
+            // Reported here rather than at startup because this is the page that owns the picker
+            // the file was supposed to show up in, and because a report nobody is looking at is
+            // the same silence in a different place.
+            ReportThemeFolder(themes);
         }
         finally
         {
@@ -298,7 +315,16 @@ internal partial class PreferencesWindow : Window
         UpdateThemeDescription(picked);
         try
         {
-            await _themeService.SetActiveAsync(picked.Id);
+            // v1.18 item 7 (F-019). SetActiveAsync has always applied the theme whether or not the
+            // write succeeded, and used to return nothing — so the failure looked exactly like a
+            // success and the old theme was back after a restart. The apply is unchanged; the
+            // silence is not.
+            var change = await _themeService.SetActiveAsync(picked.Id);
+            var line = ThemeStatusSummary.ForThemeChange(picked.Name, change);
+            // A save that worked does not blank the line, it hands it back to the folder report —
+            // see _themeFolderStatus. Painted BEFORE the edge dialog so the message is on screen
+            // behind it rather than arriving after the user has finished with the modal.
+            ShowThemeStatus(line.Any ? line : _themeFolderStatus);
             // Switching TO a user theme whose edge had to be raised is the same question startup
             // asks — put here too, or the only way to see it would be to restart.
             await EdgeRemediationWindow.AskIfPendingAsync(_themeService, this);
@@ -307,6 +333,52 @@ internal partial class PreferencesWindow : Window
         {
             // best-effort
         }
+    }
+
+    /// <summary>
+    /// Recomputes what the themes folder has to say and puts it on the line.
+    /// <para>
+    /// The file names come from here rather than from the store because
+    /// <c>spec.md &gt; §1</c> puts <c>ROROROblox.Core</c> out of this cycle's reach and
+    /// <c>IThemeStore</c> reports no failures. <see cref="ThemeStatusSummary.ForFolder"/> carries
+    /// the argument for why reading the folder from out here is sound rather than a guess, and the
+    /// test that stops the one duplicated rule drifting.
+    /// </para>
+    /// </summary>
+    private void ReportThemeFolder(IReadOnlyList<Theme> loaded)
+    {
+        _themeFolderStatus = ThemeStatusSummary.ForFolder(loaded, ThemeFolderFileNames());
+        ShowThemeStatus(_themeFolderStatus);
+    }
+
+    /// <summary>
+    /// The <c>*.json</c> names in the user themes folder, matching <c>ThemeStore.ListAsync</c>'s
+    /// own enumeration exactly — same pattern, same top-directory-only scope. A folder that cannot
+    /// be enumerated yields nothing rather than throwing: the store already returned its built-ins
+    /// from the same folder without complaint, so a failure here says nothing new and must not take
+    /// down an <c>async void</c> Loaded handler.
+    /// </summary>
+    private IReadOnlyList<string> ThemeFolderFileNames()
+    {
+        try
+        {
+            return System.IO.Directory
+                .EnumerateFiles(_themeStore.UserThemesFolder, "*.json", System.IO.SearchOption.TopDirectoryOnly)
+                .Select(System.IO.Path.GetFileName)
+                .Where(name => !string.IsNullOrEmpty(name))
+                .Select(name => name!)
+                .ToList();
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private void ShowThemeStatus(ThemeStatusSummary.Line line)
+    {
+        ThemeStatusLine.Text = line.Text;
+        ThemeStatusLine.Visibility = line.Any ? Visibility.Visible : Visibility.Collapsed;
     }
 
     /// <summary>
@@ -340,6 +412,10 @@ internal partial class PreferencesWindow : Window
                 // Suppressed the same way the initial load is — set explicitly or a prior
                 // built-in's sentence stays on screen over a brand-new user theme.
                 UpdateThemeDescription(selected);
+                // Recomputed, and it is not busywork: naming a built-in theme in the builder
+                // writes a file whose id the built-in already owns, so the save "succeeds",
+                // ListAsync drops it and `selected` above lands null. That was silent too.
+                ReportThemeFolder(themes);
             }
             finally
             {
