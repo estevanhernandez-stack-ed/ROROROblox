@@ -1,235 +1,205 @@
-# RORORO — v1.19.0 Plugin Theme Feed Build Checklist
+# RORORO — v1.20.0 Button Vocabulary Build Checklist
 
-**Cycle:** v1.19.0.0 — the host tells plugins what colour it is (current shipped: 1.18.0.0)
-**Cycle type:** Contract addition across two repositories.
-[`docs/spec.md`](spec.md) is the canonical technical artifact for this cycle.
-**Archive it into `docs/superpowers/specs/` before the next Cart round overwrites it** — item 9 owns
-that, and v1.17's was nearly lost exactly this way.
-**Anchor:** a plugin should never need to know where the host keeps its themes.
+**Cycle:** v1.20.0.0 — one button vocabulary (current shipped: 1.19.0.0 on `main`, untagged)
+**Cycle type:** Remediation + one new primitive.
+[`docs/spec.md`](spec.md) is the canonical technical artifact. **Archive it into
+`docs/superpowers/specs/` before the next Cart round** — item 10 owns that.
+**Anchor:** a button should look like the theme in every state, not just at rest.
 
 ## Build Preferences
 
 - **Build mode:** Autonomous
-- **Comprehension checks:** N/A (autonomous)
-- **Git:** Commit after each item. Conventional commits. Branch `feat/plugin-theme-feed` — already cut,
-  already carries reflection + scope + PRD + spec.
-- **Verification:** Yes — **C1 after item 5**, **C2 after item 8**. C1 is the wire gate: the feed is
-  provably working over a real named pipe and no existing plugin is broken. C2 is the only eyes-on gate
-  in the cycle and the only proof that F-091 is actually fixed.
-- **TDD:** strict on **item 1** (read-back semantics), **item 4** (the harness tests must go RED with
-  `UNIMPLEMENTED` *before* item 5 implements the handlers — that ordering is the item's entire proof),
-  and **item 7**. Items 2, 3, 5 are verify-by-build; item 8 is verify-by-running; item 9 is audit.
-
-## Two repositories, and the second one is not optional to the row
-
-Items 1-6 and 9 are **RoRoRo**. Items 7-8 are **`rororo-ur-task`**, a sibling repo at
-`../rororo-ur-task`.
-
-**The host leg is independently releasable and independently useful** — it makes every future plugin
-correct by default. But **F-091 does not close until item 8 ships**, because the row's evidence is a
-mis-coloured plugin window and no host merge repaints it. The register flip sits in item 9, *after* the
-plugin leg. Putting it earlier would be the exact register defect this repo has a `CLAUDE.md` rule
-about, one cycle after the v1.18 reflection named net-register targets as the wrong shape.
+- **Comprehension checks:** N/A
+- **Git:** Commit after each item. Conventional commits. Branch `feat/button-vocabulary`, already
+  cut and already carrying scope + PRD + spec, rebased onto merged `main`.
+- **Verification:** Yes — **C1 after item 4**, **C2 after item 6**. C1 is the look-at-it gate: the
+  template and the new ranks exist and `MainWindow` uses them, so a regression is visible before 21
+  more files inherit it. C2 is the whole-surface eyes-on before the gates and docs.
+- **TDD:** strict on **item 2** (the scanner is this cycle's measuring instrument and its baseline
+  must be recorded before anything moves) and **item 8** (the state gate must be shown failing
+  against a deliberately broken template). Items 1 and 3 are verify-by-render; 4-6 verify-by-eye;
+  7 is a by-name assignment; 9-10 are audit.
 
 ## Effort
 
-**Total ≈ 5-7 hours.** No new dependencies in either repo, no spike. Heaviest is **item 5** (two
-handlers plus a 30-call-site constructor question, see below) and **item 8** (the plugin swap plus a
-four-theme eyes-on walk). Nothing here needs a split.
+**Total ≈ 6-8 hours.** No new dependencies, no contract change, no spike. Heaviest is **item 4**
+(30 sites in the app's most-looked-at file, spanning five intents) and **item 3** (two new ranks that
+31 sites depend on). Item 4 is flagged for a 4a/4b split if it passes 90 minutes.
 
-## Two measured facts that shaped this sequence
+## The measurement this checklist is sized against
 
-Both found by reading before planning. Recording them because they each removed a risk the spec left
-open.
+Run at the branch point with `spec.md > §6`'s definition, before anything moved:
 
-1. **The harness has already exercised a streaming RPC end-to-end.**
-   `SubscribeMemoryPressure_ProductionAccessor_ReceivesRaisedSnapshot`
-   ([`EndToEndContractTests.cs:1025`](../src/ROROROblox.PluginTestHarness/EndToEndContractTests.cs#L1025))
-   raises on the real bus and reads from `ResponseStream` over the real pipe — exactly the shape item 4
-   needs. There was a real risk that streams over a named pipe were untested territory and item 4 would
-   quietly degrade to in-process stubs. **They are not, and it must not.** Copy that test's structure.
-2. **`new PluginHostService(...)` appears at 30 call sites** — 17 in the harness, 13 in
-   `PluginHostServiceTests`. A required 13th constructor parameter edits all 30 for no behavioural
-   gain. See item 5's implementation note for how that is handled and why the cheap answer needs a
-   guard.
+**72 un-migrated sites across 22 files, out of 116 total button declarations.**
+
+Neither 55 (the register) nor any earlier figure is adopted — both were measured under unknown
+definitions, and one of them ("63 across 15 files") reproduces at no commit. Item 2 commits the
+script so this number is reproducible and the closing figure is comparable to this one.
+
+`MainWindow.xaml` holds **30 of the 72** — 42% of the debt in one file. The next-largest is 6.
+
+## What the recon found that the spec did not
+
+Bucketing the 72 by fill turned up **two intents the vocabulary has no rank for**, which is why item
+3 exists and why it precedes every migration item:
+
+| Intent | Sites | Rank today |
+| --- | --- | --- |
+| Cyan-filled CTA — `CyanBrush` ×17 plus raw `#17D4FA` ×6 | **23** | **none** |
+| Magenta-filled action — `Stop`, `Squad Launch` | **8** | **none** |
+| Raw `#22314A` — **in no palette slot at all** | **7** | **none, and unthemed** |
+| Transparent / ghost | 5 | none |
+| Navy / Bg / RowBg | 9 | Secondary ranks fit |
+| No `Background` — inherits | 17 | likely fine |
+
+`#17D4FA` **is** `CyanBrush`'s hex, so those six are the same intent written by hand.
+`PrimaryButtonStyle` is a Navy fill with a cyan *border* — migrating a cyan-filled CTA onto it
+**changes how it looks**, which `spec.md > §3` calls a regression. Without item 3, §3's "a site
+needing a look no rank provides stops the item" rule fires on the first file and the cycle stalls at
+item 4.
+
+**`#22314A` is the sharper find.** It is not `Bg` (`#0F1F31`), not `RowBg` (`#15263A`), not `Divider`
+(`#1F3149`). Seven buttons are painted a colour the theme system has never heard of, so they stay
+navy-blue under flatline no matter what this cycle does to the template. That is F-068's actual
+defect in its purest form.
 
 ## A note on test filters
 
-`--filter "Foo*|Bar*"` **matches zero tests** — VSTest's grammar has no glob wildcards, and the run
-reports success having executed nothing. This checklist uses `FullyQualifiedName~` throughout. That
-defect shipped in every Verify field of the v1.17 checklist and a checkpoint could have been signed off
-on nothing having run. Do not "simplify" these back.
+`--filter "Foo*|Bar*"` **matches zero tests** — VSTest's grammar has no glob wildcards and the run
+reports success having executed nothing. This checklist uses `FullyQualifiedName~` throughout.
 
 ---
 
 ## Checklist
 
-- [x] **1. `ResolvedPalette`, and `ApplyTo` returns what it actually wrote**
-  Spec ref: `spec.md > §4.1`, `spec.md > §4.2`, `spec.md > §0.2`
-  What to build: `src/ROROROblox.Core/Theming/ResolvedPalette.cs` — an 11-slot record beside `Theme`
-  and `ThemeSlots`. Change `ThemeService.ApplyTo` to return `(EdgeRemediation.Decision,
-  ResolvedPalette)`, building the palette by **reading the eleven brushes back out of the
-  `ResourceDictionary`** after all writes, not by accumulating as it writes. Add `CurrentPalette`
-  (`ResolvedPalette?`) and `event Action<ResolvedPalette>? ThemeApplied` to `ThemeService`;
-  `ApplyToResources` sets `CurrentTheme` and `CurrentPalette` first, then raises. `ApplyTo` stays
-  `static` and dictionary-taking — item 4 and the unit tests depend on resolving a theme with no
-  `Application`.
-  Acceptance (`prd.md > Story 1.1`, `prd.md > Story 2.2`): the palette carries all eleven slots
-  including `InteractiveEdge`; for a theme with an unparseable hex the palette reports **the brush
-  actually in place**, not the record's value; `ThemeApplied` fires once per apply, after
-  `CurrentPalette` is set.
-  Verify: `dotnet test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ThemeFeed"` green, including
-  a test that feeds a deliberately malformed hex and asserts the palette disagrees with the record.
-  That test is the whole reason this design was chosen over shipping `Theme` — if it cannot be made to
-  fail against an accumulate-as-you-write implementation, the test is wrong, not the design.
+- [ ] **1. The template, and states that follow the theme**
+  Spec ref: `spec.md > §2`, `spec.md > §0.2`
+  What to build: `AppButtonTemplate` in `Controls/ControlStyles.xaml` — a `Border x:Name="Chrome"`
+  wrapping a `ContentPresenter`, with `ControlTemplate.Triggers` for `IsMouseOver` → `RowBgBrush`,
+  `IsPressed` → `DividerBrush`, `IsEnabled=False` → `Opacity 0.45` plus `MutedTextBrush` foreground.
+  Every value a `{DynamicResource}`; **no colour literal anywhere in the new content.** All four
+  existing ranks take `Template="{StaticResource AppButtonTemplate}"`.
+  Acceptance (`prd.md > Story 1.1`): the four ranks look **unchanged at rest** in all four built-in
+  themes; hover and pressed differ from rest and from each other; nothing in the new markup is a hex
+  literal.
+  Verify: `dotnet test src/ROROROblox.Tests/ --filter "FullyQualifiedName~Contrast|FullyQualifiedName~Render"`
+  green — those gates measure resting appearance, so **them passing is the proof that rest did not
+  move.** Then run the app and hover a button: the fill must be a theme colour, not `#BEE6FD`.
 
-- [x] **2. The contract grows, and the host still starts**
-  Spec ref: `spec.md > §3.1`, `spec.md > §3.2`, `spec.md > §3.3`
-  What to build: `ThemePalette` message (11 snake_case string fields, **no id, no name**) plus
-  `rpc GetTheme(Empty) returns (ThemePalette)` and
-  `rpc SubscribeThemeChanged(SubscriptionRequest) returns (stream ThemePalette)` on `RoRoRoHost`, next
-  to the existing `Subscribe*` block. Add **both** methods to `RpcMethodCapabilityMap` as `null` with
-  the reasoning comment. Bump `ROROROblox.PluginContract` `<Version>` 0.7.0 → 0.8.0. **Do not touch the
-  wire `contract_version` literal at [`App.xaml.cs:876`](../src/ROROROblox.App/App.xaml.cs#L876).**
-  Acceptance (`prd.md > Story 3.1`, `prd.md > Story 3.2`): `AssertExhaustive()` passes with both new
-  methods; the app starts; the wire version string is still `"1.0"`; a plugin manifest declaring
-  `contractVersion "1.0"` still handshakes.
-  Verify: `dotnet build ROROROblox.slnx` 0 errors, then
-  `dotnet test ROROROblox.slnx --filter "FullyQualifiedName~CapabilityMap|FullyQualifiedName~Handshake"`
-  green. **Deliberately omit a map entry once and confirm the app refuses to start**, then restore it —
-  that is a five-minute check that the guard protecting this item is real rather than assumed.
-
-- [x] **3. The bus carries a theme, and an adapter puts it there**
-  Spec ref: `spec.md > §4.3`, `spec.md > §4.4`
-  What to build: `event Action<ResolvedPalette>? ThemeChanged` on `IPluginEventBus`, implemented in
-  `InProcessPluginEventBus` in the same shape as the other four. New
-  `src/ROROROblox.App/Plugins/Adapters/ThemeFeedAdapter.cs` — subscribes to
-  `ThemeService.ThemeApplied`, caches `Latest`, forwards to the bus, seeded at construction from
-  `ThemeService.CurrentPalette`. Wire in `App.xaml.cs` DI. **Do not inject `IPluginEventBus` into
-  `ThemeService`** — that points `Theming` at `Plugins` and inverts the direction every sibling bridge
-  in `Adapters/` runs.
-  Acceptance (`prd.md > Story 2.2`): applying a theme raises `ThemeChanged` exactly once with the
-  resolved palette; the adapter's `Latest` is non-null immediately after construction on a booted app.
-  Verify: `dotnet test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ThemeFeedAdapter"` green.
-
-- [x] **4. Write the wire tests, and watch them fail**
+- [ ] **2. The scanner, and the baseline it records**
   Spec ref: `spec.md > §6`
-  What to build: four tests in `EndToEndContractTests.cs`, structured on
-  `SubscribeMemoryPressure_ProductionAccessor_ReceivesRaisedSnapshot` (:1025) — real Kestrel, real named
-  pipe, real `RoRoRoHostClient`, **no in-process shortcut**: (a) `GetTheme` returns the active palette;
-  (b) raising a theme change pushes a new palette to a live subscriber; (c) a subscriber receives the
-  current palette on subscribe, before any change; (d) a `contract_version "1.0"` handshake is still
-  accepted.
-  Acceptance (`prd.md > Story 3.3`): tests (a)-(c) fail with `UNIMPLEMENTED` because item 5 has not
-  happened yet. Test (d) passes immediately — it is the regression guard, not a new feature.
-  Verify: `dotnet test src/ROROROblox.PluginTestHarness/ --filter "FullyQualifiedName~Theme"` and
-  **read the failure text**. Three `UNIMPLEMENTED`s and nothing else. A pass here, a skip here, or a
-  failure for any other reason means the test is not reaching the wire — stop and fix that before item
-  5, because a gate that cannot fail proves nothing. Five separate instances of exactly that shipped
-  during v1.17 and v1.18; this item exists in this position because of them.
+  What to build: `scripts/count-button-sites.ps1` implementing §6's definition verbatim, printing a
+  total, an un-migrated count and a per-file breakdown. Record its **branch-point output** in the
+  commit message and in the F-068 row.
+  Acceptance (`prd.md > Story 3.1`): re-running it now prints **72 across 22 files**, matching the
+  figure this checklist is sized against.
+  Verify: run it; confirm 72/22. **Then hand-edit one file to add a styled button and re-run** — the
+  count must drop by exactly one, then revert. A counter that cannot be moved on demand is not
+  measuring anything, which is the defect this row has suffered from three times.
 
-- [x] **5. The handlers, and item 4 goes green**
-  Spec ref: `spec.md > §4.5`
-  What to build: `GetTheme` returning the adapter's cached `Latest` mapped to `ThemePalette`.
-  `SubscribeThemeChanged` copying `SubscribeMutexStateChanged`
-  ([`PluginHostService.cs:280-309`](../src/ROROROblox.App/Plugins/PluginHostService.cs#L280-L309)) with
-  **two deliberate departures, both of which need a comment saying they are deliberate**: bounded
-  channel **capacity 1** with `DropOldest` (state, not occurrences — only the latest palette has ever
-  mattered), and **write the current palette before entering the loop** so a subscriber paints on
-  subscribe.
-  **Implementation note — the 30 call sites.** `PluginHostService` is constructed at 30 places across
-  the two test projects. Add the palette source as an **optional trailing constructor parameter
-  defaulting to null**, so those 30 are untouched; when null, `GetTheme` returns `FailedPrecondition`
-  and `SubscribeThemeChanged` completes immediately. **That cheap answer opens a hole and must not ship
-  without its guard:** an optional dependency silently unwired in production is this session's recurring
-  failure class in a new costume. Add a test that resolves `PluginHostService` from the real DI
-  container and asserts its palette source is **not** null.
-  Acceptance (`prd.md > Story 1.1`, `prd.md > Story 2.1`): item 4's three failing tests pass unchanged
-  — do not edit them to fit the implementation.
-  Verify: `dotnet test ROROROblox.slnx` fully green, unit and harness. Confirm the three previously
-  `UNIMPLEMENTED` tests now pass and that **their assertions were not modified** (`git diff` on
-  `EndToEndContractTests.cs` since item 4 should show additions only outside those three test bodies).
+- [ ] **3. The two missing ranks**
+  Spec ref: `spec.md > §2`, and the recon table above
+  What to build: `CtaButtonStyle` (cyan fill — the 23-site intent) and a decision on the
+  magenta-filled 8. **Both go through the contrast gate before any site adopts them:** the
+  foreground on `CyanBrush` and on `MagentaBrush` must clear the same floor the resting pairs are
+  held to, and if it cannot, **the rank's foreground changes rather than the floor.** Also decide the
+  `#22314A` seven — they are unthemed and cannot stay literal.
+  Acceptance: each new rank has a measured foreground/fill ratio recorded in the commit; no rank
+  ships whose own pair fails.
+  Verify: `dotnet test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ContrastPairGate"` green
+  with the new ranks included in whatever it enumerates. **If a rank cannot clear its floor, say so
+  and change the rank** — this cycle does not get to lower a bar it inherited.
+
+- [ ] **4. `MainWindow.xaml` — 30 sites**
+  Spec ref: `spec.md > §3`
+  What to build: migrate all 30 using the ranks from items 1 and 3. Five intents are present (cyan
+  CTA, magenta, `RowExpiredAccent`, transparent, raw hex) — assign by intent, not by convenience.
+  Acceptance (`prd.md > Story 2.1`): the scanner reports MainWindow at **0**; **nothing looks
+  different at rest**; the two raw-hex sites (`#17D4FA`, `#22314A`) are gone.
+  Verify: run the app in **flatline and brand**, compare against a pre-item screenshot, and hover
+  several buttons. A visible change at rest is a regression to fix, not to accept. Split 4a/4b if
+  this passes 90 minutes.
   → **CHECKPOINT C1.**
 
-- [x] **6. The author guide stops being the reason this happened**
-  Spec ref: `spec.md > §3`, `prd.md > Epic 4`
-  What to build: a theming section in [`docs/plugins/AUTHOR_GUIDE.md`](plugins/AUTHOR_GUIDE.md) — how to
-  read the palette once, how to subscribe, what each of the eleven slots is for, and a worked snippet.
-  State plainly that reading the host's `settings.json` or `themes` folder is **not** a supported
-  integration and will break. Note the package version and that the wire version is deliberately
-  unchanged.
-  Acceptance (`prd.md > Story 4.1`): an author could wire theming from this page alone, without opening
-  ur-task's source.
-  Verify: read it against `spec.md > §3.1` and confirm all eleven slot names match the proto exactly.
-  A guide with a wrong slot name is worse than no guide.
+- [ ] **5. The top tail — 5 files, 20 sites**
+  Spec ref: `spec.md > §3`
+  What to build: `PluginsWindow` (6), `GamesWindow` (4), `RobloxAlreadyRunningWindow` (4),
+  `LeftoverProcessesWindow` (3), `PreferencesWindow` (3). **`PluginsWindow`'s Remove belongs to item
+  7** — leave it.
+  Acceptance: the scanner shows those five at 0 except the one Remove; no resting change.
+  Verify: open each window and compare. `LeftoverProcessesWindow` and `RobloxAlreadyRunningWindow`
+  appear during the startup gate, so they are seen at the worst possible moment.
 
-- [x] **7. ur-task can call the two new methods**
-  Repo: **`../rororo-ur-task`**
-  Spec ref: `spec.md > §5.2`
-  What to build: bump the `ROROROblox.PluginContract` package reference to 0.8.0 and expose both
-  `GetTheme` and `SubscribeThemeChanged` through `PluginClient`, following how the existing
-  subscriptions are surfaced there. **Do not touch `HostThemeReader` or `HostThemeService` yet** — this item is plumbing
-  only, so item 8's diff is purely the swap.
-  Acceptance: the project builds against 0.8.0 and both calls are reachable; theming behaviour is
-  byte-for-byte unchanged (still the mirror, still the file watcher).
-  Verify: `dotnet build` in the ur-task repo, 0 errors. Launch it against a running RoRoRo and confirm
-  brand/midnight/magenta-heat still apply and flatline still does not. **Confirming the bug still
-  reproduces is the point** — item 8 has nothing to prove otherwise.
-
-- [x] **8. The mirror dies**
-  Repo: **`../rororo-ur-task`**
-  Spec ref: `spec.md > §5.1`, `spec.md > §5.2`, `spec.md > §5.3`
-  What to build: delete `HostThemeReader`'s `BuiltIns` array and three mirrored palettes,
-  `ActiveThemeIdProperty`, `ThemeFileOptions`, `ReadActiveThemeId`, `ParseThemeFile` and
-  `ResolveActive`. **Keep `Brand`** (the fallback constant) and **keep `BlendTowards`** (hover is
-  derived, not read). In `HostThemeService`: `Start` calls `GetTheme` then holds
-  `SubscribeThemeChanged`; delete the `FileSystemWatcher` and its debounce timer. `Apply` is unchanged
-  — eight brush keys, replacement, `Freeze()`. Any feed failure is logged at debug and leaves the
-  plugin on `Brand`, fully usable. Manifest → `version 0.6.0`, `minHostVersion "1.19.0"`.
-  Acceptance (`prd.md > Story 5.1`): **flatline applies to ur-task's window**; all four built-ins apply;
-  a user-authored theme still applies; editing the active user theme's colours still repaints; the
-  plugin launches and works with RoRoRo closed.
-  Verify: with RoRoRo running and ur-task open, switch through **all four built-ins and one
-  user-authored theme**, confirming the plugin window follows each. Then close RoRoRo and confirm
-  ur-task keeps running on brand without an error dialog. **This is the only proof in the cycle that
-  F-091 is fixed** — the suite cannot span two processes, and saying otherwise would be this session's
-  recurring failure one more time.
+- [ ] **6. The long tail — 16 files, 22 sites**
+  Spec ref: `spec.md > §3`
+  What to build: the remaining files, worst-first. **A site needing a look no rank provides opens a
+  row and stops the item** — it does not get hand-rolled and it does not grow the vocabulary
+  mid-sweep.
+  Acceptance: the scanner total reaches **0**, or the shortfall is named alongside the row that
+  explains it.
+  Verify: run the scanner; open the two or three most-used of these windows.
   → **CHECKPOINT C2.**
 
-- [x] **9. Documentation, security verification, and the row**
+- [ ] **7. F-046 closes**
+  Spec ref: `spec.md > §4`
+  What to build: `PluginsWindow`'s Remove — a hand-rolled magenta fill and the row's headline
+  evidence — takes `DestructiveButtonStyle`. Confirm the by-name destructive list is otherwise
+  unchanged: Remove on the account row, Clear history, Stop all confirm.
+  Acceptance (`prd.md > Story 2.3`): Remove carries the rank; no fourth site was added by judgement.
+  Verify: open the Plugins window in flatline. Destructive must read as destructive **without
+  colour** — that is the rank's whole design.
+
+- [ ] **8. The state gate, written to fail first**
+  Spec ref: `spec.md > §5`
+  What to build: `Tests/Rendering/ButtonStateGateTests.cs` using §5's option (1) — resolve the
+  `ControlTemplate`, read each trigger's setters, assert no value is a hardcoded literal and that
+  each resolved state pair clears its floor. **Do not attempt `VisualStateManager.GoToState`:** it
+  returns False on this template because it has no visual state groups, and a `/prd` probe already
+  lost twenty minutes to that.
+  Acceptance (`prd.md > Story 1.2`): the gate covers hover, pressed and disabled for all ranks.
+  Verify: **break the template on purpose** — put a literal `#BEE6FD` in the hover trigger — and
+  confirm the gate goes red naming that trigger, then restore it. If it cannot be made to fail, the
+  gate is not shipped and the item closes with that finding recorded.
+
+- [ ] **9. The fence, or the finding**
+  Spec ref: `spec.md > §0.4`, `prd.md > Story 4.1`
+  What to build: a test that fails the build when a `Button` declaration sets colour properties
+  inline instead of taking a rank. Every exemption names its reason inline.
+  Acceptance: the fence fails on a planted violation and passes on the migrated tree.
+  **Explicit abort:** if the exemption list is large enough that the fence mostly measures its own
+  allow-list, **do not ship it.** Close the story, record how many exemptions it would have needed
+  and why, and say so in the commit. A gate that passes because everything is exempted reports
+  coverage it does not have.
+
+- [ ] **10. Documentation, security, and the numbers**
   Spec ref: `spec.md > §9`
-  What to build: RoRoRo `<Version>` → 1.19.0.0 with the `Package.appxmanifest` in lockstep. **Flip
-  F-091 to closed in [the findings register](superpowers/research/2026-08-04-rororo-settings-ui-audit-findings.md)
-  citing item 8's commit, not item 5's** — the row's evidence is the plugin window. Update
-  `docs/features.md` (it has drifted live three times in two days). Sync `CLAUDE.md`'s file table.
-  **Archive `docs/spec.md` → `docs/superpowers/specs/2026-08-11-rororo-plugin-theme-feed-design.md`.**
-  Security pass: `dpapi-cookie-blast-radius` agent (the feed adds a new outbound channel — confirm it
-  carries nothing but hex), local-path grep, dependency audit, secret scan.
-  Acceptance: register shows F-091 closed with the right evidence; versions in lockstep; spec archived;
-  no cookie reachable from the theme path; no `c:\Users\` in committed code.
-  Verify: `dotnet test ROROROblox.slnx` green; `git log --oneline` shows the register flip after the
-  plugin work; confirm the archived spec exists at its new path **before** the next Cart round.
+  What to build: version `1.19.0.0` → `1.20.0.0` in csproj and `Package.appxmanifest`, lockstep.
+  **Flip F-068 and F-046 to closed**, recording the scanner definition beside the closing count and
+  noting plainly that it is comparable to the branch point and to nothing before it. Update
+  `docs/features.md`. Sync `CLAUDE.md`'s file table. **Archive `docs/spec.md` →
+  `docs/superpowers/specs/2026-08-11-rororo-button-vocabulary-design.md`.** Security pass:
+  local-path grep, dependency audit, secret scan.
+  Acceptance: both register rows carry the definition and both counts; versions lockstep; spec
+  archived.
+  Verify: `dotnet test ROROROblox.slnx` green; re-run the scanner and confirm the number in the row
+  matches what the script prints.
 
 ---
 
 ## Checkpoints
 
-**C1 (after item 5)** — the wire gate. The feed provably works over a real named pipe, the tests that
-prove it were written before the code and observed failing, and no existing plugin is broken. Nothing
-visible has changed on screen yet; this checkpoint is about the contract being sound before another
-repo depends on it.
+**C1 (after item 4)** — the look-at-it gate. The template, both new ranks, and the app's most-visible
+file land together. A regression here is cheap; the same regression found after 21 more files is not.
 
-**C2 (after item 8)** — the only eyes-on gate, and the only place F-091 is actually proven. Four
-built-ins plus a user theme, in a real plugin window, plus the host-closed case.
+**C2 (after item 6)** — every migration done, before the gates and the close-out. The last point at
+which a wrong rank assignment is cheap to change.
 
 ## What this cycle must not do
 
-- **Do not change the wire `contract_version` string.** It is compared by exact match; changing it
-  rejects every existing plugin. Highest-consequence line in the cycle.
-- **Do not add `flatline` to ur-task's table** as a shortcut if item 8 runs long. That is a fifth copy
-  of the palette and leaves the next built-in broken the same way. If item 8 cannot land, the host leg
-  ships alone and **F-091 stays open** — which is a fine outcome and an honest one.
-- **Do not flip F-091 in item 5** or anywhere before the plugin leg lands.
-- **Do not edit item 4's three tests in item 5.** If they need changing to pass, the implementation is
-  wrong or the test was never reaching the wire.
-- **Do not start on F-068, F-046 or F-050.** Standing exclusions, unchanged.
+- **Do not migrate to `ui:Button`.** Cut in `spec.md > §0.3`: a 116-site control-type swap with its
+  own regression surface, and §0.2 means we would still need our own template.
+- **Do not change how any button looks at rest**, except `PluginsWindow`'s Remove in item 7.
+- **Do not lower a contrast floor to make a new rank fit.** Change the rank.
+- **Do not ship a fence that passes by exemption**, or a state gate that cannot be made to fail.
+- **Do not touch borders** — 60 of 76 still hand-themed, a real debt and a different cycle.
+- **Do not start on F-050.** Standing exclusion, unchanged.

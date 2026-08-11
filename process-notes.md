@@ -1506,3 +1506,54 @@ deepening round.
 
 **Handoff:** `/checklist`. Sequencing note: the template (§2) lands before any migration, because
 migrating first means every migrated button still breaks on hover and nothing visibly improves.
+
+## /checklist — one button vocabulary (v1.20)
+
+**Ten items, two checkpoints, sized against a number measured at the branch point rather than
+recalled.** Running `spec.md > §6`'s definition before anything moved gives **72 un-migrated sites
+across 22 files** out of 116 total declarations. Neither 55 (the register) nor "63 across 15 files"
+(which reproduces at no commit) is adopted — item 2 commits the script so the closing figure is
+comparable to this one and to nothing before it.
+
+**The recon changed the item list, and would have stalled the build if it had not.** Bucketing the 72
+by fill turned up two intents the vocabulary has **no rank for**:
+
+- **23 cyan-filled CTAs** — 17 on `CyanBrush` plus 6 written as raw `#17D4FA`, which *is*
+  `CyanBrush`'s hex, so they are the same intent hand-written.
+- **8 magenta-filled actions** — `Stop`, `Squad Launch`.
+
+`PrimaryButtonStyle` is a Navy fill with a cyan *border*. Migrating a cyan-filled CTA onto it changes
+how it looks, which `spec.md > §3` calls a regression — and §3's rule is that a site needing a look
+no rank provides **stops the item**. Without a rank-definition item, that rule fires on the first
+file and the cycle stalls at item 4 with 30 sites untouched. **Item 3 exists because of the recon,
+and it precedes every migration item.**
+
+**The sharper find is `#22314A`, used at seven sites.** It is not `Bg` (`#0F1F31`), not `RowBg`
+(`#15263A`), not `Divider` (`#1F3149`) — it is in **no palette slot at all**. Seven buttons are
+painted a colour the theme system has never heard of, so they stay navy-blue under flatline no matter
+what this cycle does to the template. That is F-068's defect in its purest form, and it was invisible
+in every count the row has ever carried, because a count of un-migrated sites does not distinguish
+"uses a themed brush directly" from "uses a colour that does not exist in any theme".
+
+**Item 2's Verify is unusual and deliberate:** run the scanner, then hand-edit a file to add a styled
+button and confirm the count drops by exactly one. A counter that cannot be moved on demand is not
+measuring anything — and this row has been sized against an unreproducible number three times, which
+is the whole reason item 2 exists at all.
+
+**Item 3 carries a rule the cycle is not allowed to break:** if a new rank's foreground cannot clear
+the contrast floor on its own fill, **the rank changes, not the floor.** A cyan or magenta fill with
+white text is exactly the pair most likely to fail, and the cheap escape would be to exempt it. This
+cycle does not get to lower a bar it inherited.
+
+**Items 8 and 9 are both allowed to fail**, carried forward from `/spec`. The state gate must be
+shown going red against a deliberately broken template or it does not ship; the fence does not ship
+if its exemption list would be disqualifying, and closes with the exemption count recorded instead.
+
+**Item 8 also carries an anti-rediscovery note:** do not attempt `VisualStateManager.GoToState`. It
+returns False on this template because it has no visual state groups, and a `/prd` probe already lost
+twenty minutes to exactly that. Writing it into the item is cheaper than learning it twice.
+
+**Zero deepening rounds**, consistent with builder-mode habit on `/checklist` — the thinking happened
+at `/spec`, and this was translation plus one measurement that reshaped it.
+
+**Handoff:** `/build`. Autonomous, halting at C1 (after item 4) and C2 (after item 6).
