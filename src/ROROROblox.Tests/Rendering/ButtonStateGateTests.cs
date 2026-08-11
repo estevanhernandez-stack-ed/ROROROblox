@@ -34,6 +34,8 @@ public class ButtonStateGateTests
         "SecondaryButtonStyle",
         "SecondaryStrongButtonStyle",
         "DestructiveButtonStyle",
+        "CtaButtonStyle",
+        "AccentActionButtonStyle",
     };
 
     private static Theme Flatline() => new(
@@ -58,6 +60,8 @@ public class ButtonStateGateTests
     [InlineData("SecondaryButtonStyle")]
     [InlineData("SecondaryStrongButtonStyle")]
     [InlineData("DestructiveButtonStyle")]
+    [InlineData("CtaButtonStyle")]
+    [InlineData("AccentActionButtonStyle")]
     public void EveryRank_UsesOurTemplate_NotTheInheritedOne(string rank)
     {
         var tmpl = TemplateFor(rank);
@@ -86,6 +90,8 @@ public class ButtonStateGateTests
     [InlineData("SecondaryButtonStyle")]
     [InlineData("SecondaryStrongButtonStyle")]
     [InlineData("DestructiveButtonStyle")]
+    [InlineData("CtaButtonStyle")]
+    [InlineData("AccentActionButtonStyle")]
     public void NoStateSetter_CarriesAHardcodedColour(string rank)
     {
         var tmpl = TemplateFor(rank);
@@ -111,6 +117,8 @@ public class ButtonStateGateTests
     [InlineData("SecondaryButtonStyle")]
     [InlineData("SecondaryStrongButtonStyle")]
     [InlineData("DestructiveButtonStyle")]
+    [InlineData("CtaButtonStyle")]
+    [InlineData("AccentActionButtonStyle")]
     public void HoverAndPressed_AreBothDefined_AndAreNotTheSameSlot(string rank)
     {
         var tmpl = TemplateFor(rank);

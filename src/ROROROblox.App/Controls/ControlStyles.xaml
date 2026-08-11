@@ -176,6 +176,52 @@
         <Setter Property="BorderThickness" Value="2" />
     </Style>
 
+    <!-- CTA — the cyan-filled call to action. 23 sites wanted this rank and none existed: 17 wrote
+         CyanBrush + NavyBrush inline and 6 more wrote the same thing as raw #17D4FA + #0F1F31,
+         which are brand's hexes for exactly those two tokens. Those six were frozen to brand and
+         stayed cyan-on-navy under flatline; this rank un-freezes them.
+
+         DARK LABEL, NOT WHITE, and it is not a preference. White on CyanBrush measures 1.77:1 in
+         brand, 1.96:1 midnight, 3.29:1 magenta-heat, 1.36:1 flatline — under AA in every theme the
+         app ships. Navy on CyanBrush measures 9.39 / 8.05 / 4.90 / 12.84 and clears it in every
+         one. The 23 existing sites already use the dark label, so this rank changes nothing about
+         how they look; it only stops them being written by hand. -->
+    <Style x:Key="CtaButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Template" Value="{StaticResource AppButtonTemplate}" />
+        <Setter Property="Background" Value="{DynamicResource CyanBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource NavyBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CyanBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <!-- Accent action — Stop, Squad Launch, and the six other sites that were solid magenta blocks.
+
+         THE MAGENTA MOVED FROM THE FILL TO THE EDGE, and the measurement forced it. A white label
+         on MagentaBrush is 3.79:1 in brand, 4.16:1 midnight, 3.29:1 magenta-heat — under the 4.5:1
+         floor this file holds everything else to. A dark label does not rescue it either: navy on
+         magenta is 4.40 / 3.79 / 4.90 / 3.73, under AA in three of four. There is no label colour
+         that makes a magenta FILL legible in the themes this app ships, which is why F-050 has an
+         exemption rather than a fix.
+
+         As an edge it passes cleanly. The label now sits on Navy at 16.66 / 15.79 / 16.09 / 17.45,
+         and the magenta border measures 4.40 / 3.79 / 4.90 / 3.73 against the fill behind it —
+         above WCAG 1.4.11's 3:1 in all four. Same brand signal, legible label, and it survives
+         greyscale because the edge is a boundary rather than a meaning.
+
+         SEMIBOLD IS LOAD-BEARING, not decoration. Under magenta-heat the theme sets Magenta and
+         Cyan to the SAME value, so this rank's edge and PrimaryButtonStyle's edge render
+         identically there. Weight is what keeps them apart, the same way it separates the two
+         secondary ranks above. Bold stays exclusive to Destructive so the file's three-ranks-
+         three-weights ordering still reads. -->
+    <Style x:Key="AccentActionButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Template" Value="{StaticResource AppButtonTemplate}" />
+        <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="BorderBrush" Value="{DynamicResource MagentaBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
     <!-- ============================ INPUTS (F-029, F-049) ============================
 
          A text box IS a UI component under WCAG 1.4.11, exactly as much as a button is. Wave 5

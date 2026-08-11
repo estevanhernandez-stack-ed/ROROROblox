@@ -97,7 +97,7 @@ reports success having executed nothing. This checklist uses `FullyQualifiedName
   count must drop by exactly one, then revert. A counter that cannot be moved on demand is not
   measuring anything, which is the defect this row has suffered from three times.
 
-- [ ] **3. The two missing ranks**
+- [x] **3. The two missing ranks**
   Spec ref: `spec.md > §2`, and the recon table above
   What to build: `CtaButtonStyle` (cyan fill — the 23-site intent) and a decision on the
   magenta-filled 8. **Both go through the contrast gate before any site adopts them:** the
