@@ -77,8 +77,21 @@ public class ButtonStateGateTests
             .Distinct()
             .ToArray();
 
+        // "border" is the OS template's chrome element. Ours are the sheen layers, which is what
+        // the state triggers address since hover stopped repainting the fill.
         Assert.DoesNotContain("border", targets);
-        Assert.Contains("Chrome", targets);
+        Assert.Contains("HoverSheen", targets);
+
+        // And the fill element is present in the tree we authored, even though no trigger targets
+        // it any more -- asserting only on trigger targets would pass against a template that had
+        // sheens and no Chrome to lay them over.
+        var named = Sta.Run(() =>
+        {
+            var tree = (FrameworkElement)tmpl.LoadContent();
+            return Descendants(tree).Select(e => e.Name)
+                .Where(n => !string.IsNullOrEmpty(n)).ToArray();
+        }, $"template tree for {rank}");
+        Assert.Contains("Chrome", named);
     }
 
     /// <summary>
@@ -112,6 +125,16 @@ public class ButtonStateGateTests
         }
     }
 
+    /// <summary>
+    /// Hover and pressed must both exist, must differ, and must not replace the fill.
+    /// <para>
+    /// The first template swapped <c>Chrome.Background</c> to a fixed slot on hover. That is a
+    /// SURFACE colour, so hovering a bright cyan CTA turned it dark navy and the builder reported
+    /// the button dimming to nothing at C1. It was not dimming; it was being replaced. The fix is
+    /// a translucent sheen layer, which is relative to whatever fill is underneath and therefore
+    /// correct for every rank and every theme, including ones nobody has written yet.
+    /// </para>
+    /// </summary>
     [Theory]
     [InlineData("PrimaryButtonStyle")]
     [InlineData("SecondaryButtonStyle")]
@@ -119,27 +142,98 @@ public class ButtonStateGateTests
     [InlineData("DestructiveButtonStyle")]
     [InlineData("CtaButtonStyle")]
     [InlineData("AccentActionButtonStyle")]
-    public void HoverAndPressed_AreBothDefined_AndAreNotTheSameSlot(string rank)
+    [InlineData("WarningButtonStyle")]
+    [InlineData("GhostButtonStyle")]
+    public void HoverAndPressed_ShowDistinctSheens_AndNeverTouchTheFill(string rank)
     {
         var tmpl = TemplateFor(rank);
 
-        static object? SlotFor(ControlTemplate t, string property) => t.Triggers
+        static string[] TargetsFor(ControlTemplate t, string property) => t.Triggers
             .OfType<Trigger>()
-            .Where(x => x.Property.Name == property)
+            .Where(x => x.Property.Name == property && Equals(x.Value, true))
             .SelectMany(x => x.Setters.OfType<Setter>())
-            .Where(s => s.Property == Border.BackgroundProperty)
-            .Select(s => (s.Value as DynamicResourceExtension)?.ResourceKey)
-            .FirstOrDefault();
+            .Select(s => s.TargetName ?? "<button>")
+            .ToArray();
 
-        var hover = SlotFor(tmpl, nameof(UIElement.IsMouseOver));
-        var pressed = SlotFor(tmpl, "IsPressed");
+        var hover = TargetsFor(tmpl, nameof(UIElement.IsMouseOver));
+        var pressed = TargetsFor(tmpl, "IsPressed");
 
-        Assert.NotNull(hover);
-        Assert.NotNull(pressed);
+        Assert.NotEmpty(hover);
+        Assert.NotEmpty(pressed);
 
-        // A hover and a pressed that resolve to the same slot are one state wearing two names —
-        // the control would give no feedback on click, which is a regression the eye misses because
-        // hovering is a precondition for pressing.
+        // Distinct layers, or pressing a hovered button shows no change at all -- and hovering is
+        // a precondition for pressing, so the eye never catches that one.
         Assert.NotEqual(hover, pressed);
+
+        // And neither may touch the fill. This is the assertion that would have caught the
+        // original defect: a hover that repaints Chrome is a hover that can erase a bright button.
+        foreach (var trigger in tmpl.Triggers.OfType<Trigger>())
+        {
+            foreach (var setter in trigger.Setters.OfType<Setter>())
+            {
+                var touchesFill = setter.TargetName == "Chrome"
+                    && setter.Property == Border.BackgroundProperty;
+                Assert.False(touchesFill,
+                    $"{rank}: trigger {trigger.Property.Name}=={trigger.Value} repaints Chrome's "
+                    + "Background. A state that replaces the fill rather than layering over it "
+                    + "turns a bright button dark and reads as the control vanishing.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// A disabled button must still be visible.
+    /// <para>
+    /// The first template dimmed <c>Chrome</c> to 45% opacity for the disabled state. On a dark row
+    /// that does not read as dimmed, it reads as gone: a disabled <c>Launch As</c> lost its cyan
+    /// entirely and left muted text floating, and the builder flagged it as "the buttons are going
+    /// away" within a minute of the C1 walk. The OS template that was replaced painted a light grey
+    /// fill for disabled, which was ugly and unmissable — unmissable being the part that mattered.
+    /// </para>
+    /// <para>
+    /// So: no state may erase the fill. Opacity in particular is a multiplier with no floor, and
+    /// the fill underneath it can be any colour a user's theme supplies.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData("PrimaryButtonStyle")]
+    [InlineData("SecondaryButtonStyle")]
+    [InlineData("SecondaryStrongButtonStyle")]
+    [InlineData("DestructiveButtonStyle")]
+    [InlineData("CtaButtonStyle")]
+    [InlineData("AccentActionButtonStyle")]
+    [InlineData("WarningButtonStyle")]
+    public void NoState_DimsTheChromeIntoInvisibility(string rank)
+    {
+        var tmpl = TemplateFor(rank);
+
+        foreach (var trigger in tmpl.Triggers.OfType<Trigger>())
+        {
+            foreach (var setter in trigger.Setters.OfType<Setter>())
+            {
+                Assert.False(
+                    setter.Property == UIElement.OpacityProperty,
+                    $"{rank}: trigger {trigger.Property.Name}=={trigger.Value} sets Opacity. "
+                    + "A state that fades the fill makes the control vanish on a dark surface "
+                    + "rather than look unavailable — express the state in a themed brush instead.");
+            }
+        }
+    }
+
+    /// <summary>Every FrameworkElement in a loaded template tree, depth-first.</summary>
+    private static IEnumerable<FrameworkElement> Descendants(FrameworkElement root)
+    {
+        yield return root;
+        var count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
+        if (count == 0 && root is System.Windows.Controls.Decorator d && d.Child is FrameworkElement dc)
+        {
+            foreach (var e in Descendants(dc)) yield return e;
+            yield break;
+        }
+        if (root is System.Windows.Controls.Panel p)
+        {
+            foreach (FrameworkElement c in p.Children.OfType<FrameworkElement>())
+                foreach (var e in Descendants(c)) yield return e;
+        }
     }
 }
