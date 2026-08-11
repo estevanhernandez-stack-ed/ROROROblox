@@ -151,7 +151,7 @@ on nothing having run. Do not "simplify" these back.
   `EndToEndContractTests.cs` since item 4 should show additions only outside those three test bodies).
   → **CHECKPOINT C1.**
 
-- [ ] **6. The author guide stops being the reason this happened**
+- [x] **6. The author guide stops being the reason this happened**
   Spec ref: `spec.md > §3`, `prd.md > Epic 4`
   What to build: a theming section in [`docs/plugins/AUTHOR_GUIDE.md`](plugins/AUTHOR_GUIDE.md) — how to
   read the palette once, how to subscribe, what each of the eleven slots is for, and a worked snippet.
