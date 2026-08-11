@@ -1,159 +1,157 @@
-# RORORO — Scope: Settings becomes a place
+# RORORO — Scope: the host tells plugins what colour it is
 
-Remediation cycle on an established app. Thirteen findings-register rows, one surface, one story.
+One findings row, two repos, one contract addition. F-091 (`3/4`).
 
-Cycle history: v1.16 built the Settings shell — five-page nav rail, resizable window, card vocabulary.
-v1.17 shipped flatline and the rendered contrast gate. Most recent: v1.17.0.0, published as a
-**pre-release** on 2026-08-10. Store submission is deliberately deferred until the backbone is
-remediated; this cycle is the first pass of that remediation.
+Cycle history: v1.17 shipped flatline and the rendered contrast gate. v1.18 furnished the Settings
+shell, closing 12 of 13 rows. Most recent: **v1.18.0.0**, merged as PR #107; **v1.17.0.0** is the last
+published artifact and it went out as a **pre-release**. Store submission remains deliberately parked
+while the backbone is remediated.
 
 ## Idea
 
-The Settings shell shipped and nobody finished furnishing it.
+**RoRoRo has four built-in themes. Its plugins can only see three of them, and the reason is that a
+theme a plugin can see has to be a file.**
 
-v1.16 built the room — a nav rail, five pages, real containers, a resizable window. Then the cycle
-ended. What is left is thirteen rows that all say a version of the same thing: **the structure
-exists and the things that belong inside it were never moved in.** A page called "Alerts & memory"
-with no memory controls. A theme picker that fails to persist without saying so. A card primitive
-carrying two incompatible meanings at identical weight. Six settings written in three voices.
+Plugins are separate processes with their own WPF windows. The contract between them carries no
+colour except a `color_hex` badge override at
+[`plugin_contract.proto:244`](../src/ROROROblox.PluginContract/Protos/plugin_contract.proto#L244). So
+`626labs.ur-task` — whose manifest advertises *"theming that follows the host"* — reaches around the
+contract and reads the host's storage off disk: `activeThemeId` out of `settings.json`, then the
+palette out of `themes\<id>.json`.
 
-This cycle furnishes the room.
+That works for **user** themes, which are files. It cannot work for **built-in** themes, which are
+records in host code and never touch the disk, so the plugin carries a hand-copied mirror of them:
+`BuiltIns = { Brand, Midnight, MagentaHeat }`
+(sibling repo `rororo-ur-task`, `src/Theming/HostThemeReader.cs:61`). Flatline shipped
+after ur-task 0.5.0. It is not in the mirror, it is not on disk, and it lands on Brand.
+
+This cycle deletes the reach-around. The host resolves its own active theme and **pushes the hexes**
+over the gRPC channel that already exists, so a plugin never needs to know a theme id, a filename, or
+a naming policy again.
 
 ## Who it's for
 
-The Pet Sim 99 clan member, same as always — a non-technical Windows user running eight alts. But
-this cycle's user is specifically **the one who opens Settings and tries to change something.**
-Today that person hits a page named for a feature that is not on it, edits `settings.json` in
-Notepad to change a memory threshold, and cannot tell whether the theme they picked actually saved.
+**The clan member who picked flatline and still has a plugin window painted brand navy.** Flatline is
+the accessibility theme — the one that carries no meaning in colour, for someone on a bad panel, in
+direct sun, or with a colour vision deficiency. Half-applying it is worse than not shipping it, because
+the person who needed it now has one window that works and one that does not.
 
-Secondary user, honestly: everyone who has to reason about this app later. Six of these rows are
-consistency and copy defects, and consistency defects compound — every future surface either
-inherits the vocabulary or adds a fourteenth exception.
+**Secondary, and the reason this is a contract change rather than a patch: every future plugin
+author.** The `AUTHOR_GUIDE` does not document any of this, so an author who wants to match the host
+today has to reverse-engineer it from ur-task, and inherit all five couplings while they are at it.
 
 ## The verification that shapes this cycle
 
-Every row here was **re-verified against the tree on 2026-08-10** before scoping. That pass is the
-reason this cycle exists in this shape, and its findings are load-bearing:
+F-091's row has now been **corrected twice, both times by me**, so every claim below was re-read
+against both trees on 2026-08-10 rather than carried forward:
 
-- **Several rows are far cheaper than their ratings suggest.** F-026's fix direction asks for "a
-  level above the card" — the nav rail already supplied it, so what remains is the card-versus-row
-  distinction *inside* a page. F-023's destination exists and is already named "Alerts & memory."
-  F-024's data is already materialised in the view-model. F-033 is one bool on a record the code
-  documents as needing no migration.
-- **F-019 is roughly half-delivered.** `ResizeMode="NoResize"` is gone, the rail is the
-  group-to-group keyboard mechanism the row asked for, and the worst-case linear focus run dropped
-  19 → 12. What remains is the accessible-naming layer and adopting a `SectionHeadingStyle` that
-  already ships with exactly one consumer app-wide.
-- **The register drifts faster than it is read.** Eleven of 57 open rows would have mis-scoped a
-  cycle read off the table. That is why the recon is attached to this doc rather than re-run at
-  `/spec`.
+- **User themes work. This is the second time that had to be established.** `ResolveActive`
+  (sibling repo `rororo-ur-task`, `src/Theming/HostThemeReader.cs:132-169`)
+  checks the mirror first, then falls through to `themes\<id>.json` at `:158-161`. An id absent from
+  the mirror is exactly the case that succeeds. The row claimed the opposite in its original text, and
+  then **again** in a later sentence of the same cell *after* the correction was written above it.
+- **Live repaint is already solved, and is not this cycle's problem.** `HostThemeService`
+  (sibling repo `rororo-ur-task`, `src/Theming/HostThemeService.cs:38-76`) runs a
+  `FileSystemWatcher` over the host folder with a 300ms debounce and re-applies on change. The plugin
+  repaints live today. What it cannot do is **obtain** a built-in palette.
+- **The host has no theme-changed signal at all.** `IPluginEventBus` carries `AccountLaunched`,
+  `AccountExited`, `MutexStateChanged` and `MemoryPressure`. A theme change runs
+  `PreferencesWindow.OnThemeChanged` → `ThemeService.ApplyTo` and nothing else hears it. **The bus
+  event is net-new work, not plumbing that already exists.**
+- **Two different version numbers, and only one moves.** The wire `contract_version` is the string
+  `"1.0"`, supplied as a bare literal at
+  [`App.xaml.cs:876`](../src/ROROROblox.App/App.xaml.cs#L876) and compared by **exact string match** at
+  `PluginHostService.cs:70`. The NuGet package `ROROROblox.PluginContract` is independently at
+  **0.7.0**. This cycle bumps the **package** and leaves the **wire string** alone, which is precisely
+  why no existing plugin is rejected. The register row blurs these into "a version bump"; they are not
+  the same number.
+- **The addition is wire-additive on the host's service.** `RoRoRoHost` already ships four
+  `Subscribe*(SubscriptionRequest) returns (stream …)` RPCs. A fifth is invisible to plugins that never
+  call it. *(Note for `/spec`: the `Plugin` service — `OnUIInteraction` / `OnConsentChanged` /
+  `OnShutdown` — is a reverse channel and looks like a natural home for a push, but adding there means
+  the **host calls a method old plugins do not implement.** The host service is the additive side.)*
+- **ur-task consumes 7 host slots plus one derived**, not the host's full ten
+  (sibling repo `rororo-ur-task`, `src/Theming/HostThemeService.cs:110-122`).
+  `RowExpired*` and `Navy` are dropped deliberately; `RowHoverBrush` is derived by tinting `RowBg` 4%
+  toward `White`.
 
-Full per-row detail: [`2026-08-10-register-reverification/`](superpowers/research/2026-08-10-register-reverification/).
+## In scope
 
-## In scope — the thirteen rows, grouped by what they actually are
+**Host side — ships first, useful alone.**
 
-**Hierarchy — the card means two things (2 rows).**
-F-026 (`4/5`) and F-019 (`3/3`). One grouping primitive carries both "section" and "setting" at
-identical weight, which is why "split it up" cannot be answered with more cards. The rail solved the
-between-page level; this solves the within-page one.
+1. **A theme message in `plugin_contract.proto`** carrying resolved hex slots, and a
+   `SubscribeThemeChanged` streaming RPC on `RoRoRoHost` alongside the four that already exist.
+2. **A theme-changed event on `IPluginEventBus`**, raised where the theme is actually applied, plus
+   the `PluginHostService` handler that forwards it. This is the piece with no existing analogue.
+3. **`ROROROblox.PluginContract` 0.7.0 → 0.8.0** on NuGet. Wire `contract_version` stays `"1.0"`.
+4. **`AUTHOR_GUIDE.md` documents the feed**, because an undocumented capability is one more thing the
+   next author reverse-engineers from ur-task.
 
-**Missing tenants — pages that do not hold what they are named for (4 rows).**
-F-023 (`3/1`) the memory watchdog has four persisted settings and no UI, on a page called "Alerts &
-memory." F-020 (`2/2`) the only way to change squad-launch behaviour is to begin a squad launch.
-F-024 (`2/1`) per-account muting is right-click-only and the Alerts page never mentions it. F-078
-(`2/2`) the theme-consent prompt is one-shot with no route back short of editing JSON.
+**Plugin side — follows when it wants, in its own repo.**
 
-**Silent failure (2 rows).**
-F-051 (`4/2`) a failed settings write applies the theme live, says nothing, and reverts on restart.
-F-053 (`3/2`) an unreadable theme file vanishes with no signal, and the copy sends users through a
-restart the code does not require.
-
-**Voice and weight (4 rows).**
-F-043 (`3/4`) six settings, three voices, first person among them. F-062 (`2/3`) a registry path
-presented as an effect, to a non-technical audience. F-037 (`3/5`) accent fill marks four different
-things. F-046 (`3/3`) fill weight tracks neither consequence nor frequency.
-
-**Persistence (1 row).**
-F-033 (`4/4`) compact mode, pitched by the Welcome tour as a second-monitor workflow, is forgotten
-on every restart.
+- **ur-task drops the mirror** and takes the palette from the feed.
 
 ## What "done" looks like
 
-A clan member opens Settings and every page holds what its name promises. Changing a memory
-threshold does not require Notepad. Picking a theme that fails to save says so. A section reads as a
-section and a setting reads as a setting without either being a card. The page speaks in one voice,
-in second person, and the loudest control on screen is the one the window exists to perform.
+A clan member switches RoRoRo to flatline with ur-task open, and the plugin window goes flat grey
+within a beat. They switch to a theme they wrote themselves and it still works. They close RoRoRo and
+the plugin keeps running, still usable.
 
-Register goes from **51 open to 38**, and `dotnet test ROROROblox.slnx` is green including the
-contrast gate and the three rendered gates v1.17 added.
+`dotnet test ROROROblox.slnx` green including the harness, which is the project that matters here:
+`ROROROblox.PluginTestHarness` runs real Kestrel and a real named pipe against a real
+`RoRoRoHostClient`, so the new stream can be proven end-to-end **in the suite** rather than owed to a
+human. That is unusual for this codebase and worth spending.
+
+Register: F-091 closes. **38 open.**
 
 ## What's explicitly cut
 
-- **F-050 does not close, and must not.** `NoExemptionOutlivesItsFinding` deletes the contrast
-  gate's exemption the moment that row stops reading `open`, which reddens **three** built-in themes
-  — brand 3.79:1, midnight 4.16:1, magenta-heat 3.29:1, all under a 4.5 threshold. Only flatline
-  survives. It stays open until something implements its fix direction, which is not this cycle.
-- **F-091 — plugin theming — is its own cycle.** Plugins read the host's active theme *id* and look
-  it up in a hardcoded table, so every user-authored theme is already broken in every plugin. The
-  fix is a theme message in `plugin_contract.proto`, a `PluginContract` version bump, a host-side
-  push, and a matching `ur-task` release. A contract change to a NuGet external authors consume does
-  not get improvised inside a remediation sweep.
-- **F-068 — the button vocabulary — is its own cycle.** Re-counted at **61 un-migrated call sites
-  across 24 files, direction FLAT**: 96 pre-wave-5, 61 at the commit that wrote the file's own
-  "63 across 15 files" comment, 61 at HEAD. Wave 5 migrated 35 in one pass and nothing has moved in
-  five days. Its template-trigger half is 0% shipped.
-- **The 38 remaining open rows.** This cycle is one cluster, not a register sweep.
-
-## The two rows that are not really Preferences, named rather than smuggled
-
-Honesty about the cluster's edges, because "one surface" is the cycle's whole justification:
-
-- **F-037** is a nine-window Close-button sweep. Bounded — nine buttons, and the re-verification
-  measured today's split at 5 accent-filled versus 4 secondary, so half the app already does what
-  the fix direction asks. It is a decide-and-sweep, not a fix-one-window.
-- **F-046** spans MainWindow, Library, Plugins and Preferences, and its fix direction names *shared
-  button styles* — which is F-068's territory. **Scope it deliberately at `/spec`:** define the
-  destructive variant and assign by consequence on this cycle's surfaces; do **not** start the
-  61-site migration. If that line cannot hold, F-046 drops to F-068's cycle rather than dragging it
-  forward.
-
-## Loose implementation notes
-
-Non-binding, refined at `/spec`.
-
-- `Controls/ControlStyles.xaml` ships `SectionHeadingStyle` with exactly one consumer app-wide
-  (`DiagnosticsWindow`). Preferences' three card headings are hand-rolled 13px SemiBold. F-026 and
-  F-019 may both be partly answered by adopting what already exists rather than inventing a level.
-- F-051's fix direction names a pattern the page already has — `AlertsStatusLine`. Mirror it rather
-  than design a second status affordance.
-- The `AutomationProperties` layer is effectively absent app-wide: 0 of 137 Button/ComboBox/
-  ToggleButton/TextBox declarations carry a `Name`. F-019's remainder overlaps F-052, which is
-  **not** in this cycle — decide at `/spec` whether Preferences gets named here or waits for the
-  cross-surface pass, and say which.
-- Four rows are pure copy (F-043, F-062, plus the copy halves of F-053 and F-023). Clan-facing
-  register per `CLAUDE.md`: second person, terminal periods, no jargon, no first person.
+- **Adding `flatline` to ur-task's `BuiltIns` table.** One line, fixes what Este saw, and it is the
+  wrong fix: a fifth hand-synced copy of the palette, and the sixth built-in would break the same way.
+- **Writing the host's built-ins to disk as theme files.** The honest cheap alternative, and it
+  deserves naming rather than silence — `ThemeStore` already has the writer and the folder, so
+  `themes\flatline.json` would make ur-task work **today with no contract change and no plugin
+  release.** Rejected because it fixes availability while keeping all five storage couplings, and
+  because it forces a new question the code currently answers by accident: `ThemeStore.ListAsync`
+  drops a user theme whose id collides with a built-in, so materialising built-ins turns "the built-in
+  wins" from an in-memory rule into a file-on-disk race. Cheaper today, more expensive every cycle
+  after.
+- **Theming anything beyond the palette slots.** No layout, no fonts, no per-plugin overrides, no
+  theme *authoring* from a plugin. The host owns the theme; plugins receive it.
+- **A capability gate on the theme feed.** `PluginCapability` exists to fence things that can hurt
+  someone. A colour is not one; gating it would mean a plugin can be denied the ability to look
+  correct.
+- **F-050, F-068, F-046** — the standing exclusions, unchanged. F-046 in particular stayed open at the
+  end of v1.18 and belongs to F-068's cycle.
 
 ## Assumptions surfaced
 
-Per the fully-autonomous contract, filled from the record rather than asked. Each is a real fork
-`/spec` should either confirm or overturn.
+Per the fully-autonomous contract, filled from the record. Each is a real fork `/spec` should confirm
+or overturn.
 
-- **F-020's careful-mode toggle gets a home on an existing page rather than a sixth nav item**
-  *(default — confirm)*. The rail has no launch page and the row's fix direction assumes one. Adding
-  a sixth page for a single checkbox trades one inconsistency for another; Startup is the closest
-  existing fit.
-- **F-023 ships all four watchdog settings, not a subset** *(default — confirm)*. They are persisted
-  together and the page is already named for them; shipping two of four leaves the same complaint.
-- **F-026's answer is typographic, not a new container** *(default — confirm)*. The rail supplied
-  the structural level; adding a second container primitive inside a page risks the exact
-  two-meanings defect the row is about.
-- **F-037 sweeps toward secondary-for-dismissal** *(default — confirm)*, following the fix
-  direction and Diagnostics' existing precedent, rather than promoting the other four windows to
-  accent.
+- **The message carries resolved hexes and no theme id** *(default — confirm)*. Sending an id is what
+  the current design does, and it is the entire defect. If a plugin never learns the id, the failure
+  mode cannot recur.
+- **The message carries all ten host slots, not the seven ur-task uses** *(default — confirm)*.
+  Truncating to today's consumer means a second package bump the first time a plugin wants
+  `RowExpiredAccent`. Wire bytes are free here; a bump is not.
+- **The plugin keeps a working no-host fallback** *(default — confirm)*. ur-task's own comment says it
+  is *"fully usable standalone"*. Whether the fallback stays the disk reader or collapses to the Brand
+  constant is a `/spec` call — the reader is dead weight once the feed lands, but deleting it means a
+  plugin launched while RoRoRo is closed forgets the user's theme.
+- **Host ships and releases independently of ur-task** *(default — confirm)*. Nothing forces a
+  coordinated release, and pretending otherwise is how a two-repo cycle stalls.
+
+**One fork deliberately left open for `/spec` rather than defaulted:** how a plugin discovers whether
+the host supports the feed. Calling `SubscribeThemeChanged` against an older host returns
+`UNIMPLEMENTED`, which a plugin can catch and fall back from; the alternative is a capability list on
+`HostInfo`, which is field-additive and safe but is a standing commitment about how this contract
+advertises itself for every future addition. That second option is small now and load-bearing later,
+which is exactly the kind of call that should not be made by default.
 
 ## Distribution audience
 
-Unchanged: Pet Sim 99 clan first, Microsoft Store second — with the Store deliberately parked. Worth
-noting for the eventual listing that "Settings you can actually use" is a weaker headline than an
-accessibility theme, so this cycle is backbone work rather than listing material, and that is the
-point of doing it now while submission is deferred.
+Unchanged: Pet Sim 99 clan first, Microsoft Store second, Store parked. Worth noting that this cycle
+has no listing value at all — nobody installs an app because its plugin windows match — and that is
+fine. It is the cycle that stops the accessibility theme from being half-applied, which is a claim the
+v1.17 release already implicitly made.

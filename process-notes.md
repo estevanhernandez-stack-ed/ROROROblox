@@ -1025,3 +1025,86 @@ under flatline. Also: the theme re-ask is unverifiable on a default install, sin
 returns `DeriveSilently` by design.
 
 **Handoff:** PR to `main`, then `/reflect`.
+
+## /reflect
+
+Wrote [`docs/reflection.md`](docs/reflection.md). Autonomous run — the check-in beats were flowed from
+the record rather than asked, per the fully-autonomous contract, since this session's own transcript
+answers them: the load-bearing artifact was the checklist (twice re-read mid-build for the abort
+condition and the filter syntax), the pushback moment was C1's memory-default catch, and what the
+process missed is exactly what the suite structurally cannot see.
+
+**Artifact-drift measurement** (generating commit → HEAD): scope 0%, prd 4%, spec 29%, checklist 21%.
+All under the 50% `artifact_rewritten` threshold, so nothing logged. The spec and checklist deltas are
+item 12's docs sync rather than builder rewrites — no artifact was re-authored after generation.
+
+**Calibration check-in skipped:** `~/.claude/plugins/data/vibe-cartographer/friction.jsonl` does not
+exist, so there was nothing to calibrate. Note that the sessions dir now DOES exist (the gap six
+prior cycles flagged is fixed in v1.11.0), but only `/prd` wrote a terminal entry this cycle —
+`/scope`, `/spec`, `/checklist` and `/build` did not. Partial instrumentation is its own /evolve-cart
+signal, and a weaker one than a clean absence because it looks like coverage.
+
+**The register arithmetic, since the scope promised a number.** Predicted 51 open → 38. Actual **41**:
+51 − 12 closed = 39, plus F-093 and F-094 which this cycle opened. Exact, and the reflection argues
+the target itself was the wrong shape — a remediation cycle that reads carefully generates rows, so
+the honest target is rows closed, not a net register total.
+
+**Updated unified builder profile** — `projects_completed` 19 → 20, `last_project` set to this cycle,
+and a notes entry covering the three carryable patterns: rows get cheaper when someone reads the code
+(twice this cycle), remediation targets should be rows-closed not net-register, and checkpoints should
+be placed by evidence type rather than item count (2 of 2 found real defects).
+
+**Handoff:** cycle closed. Next cycle is F-091 (plugin theming) against the corrected diagnosis — the
+no-bump claim is verified: the host advertises `"1.0"` as a bare literal at
+[`App.xaml.cs:876`](src/ROROROblox.App/App.xaml.cs#L876) against ur-task's compiled
+`const string ContractVersion = "1.0"`, so a new `SubscribeThemeChanged` RPC is wire-additive and no
+existing plugin is rejected.
+
+## /scope
+
+**F-091's row was wrong a second time, and the recon caught it before the scope inherited it.**
+The row was corrected on 2026-08-10 to kill the claim *"every user-authored theme is already broken in
+every plugin."* The corrected cell then repeated that exact claim four sentences later: *"any id
+absent from the plugin's table falls back to brand, so every user-authored theme is already broken in
+every plugin."* `ResolveActive`
+(sibling repo `rororo-ur-task`, `src/Theming/HostThemeReader.cs:132-169`) checks
+the mirror, then falls through to `themes\<id>.json` at `:158-161` — an id absent from the mirror is
+the case that **works**. Fixed in the register in this run, marked as a second correction and as mine.
+
+A corrected row carrying its own original error is worse than an uncorrected one, because the
+correction reads as verification. That is the same failure the v1.18 reflection named five times, one
+level up: **the check that reports success while measuring something else.** Here the check was the
+word "CORRECTED."
+
+**Three claims the scope does NOT inherit, each verified against the tree rather than the row:**
+
+1. **Live repaint already works.** `HostThemeService` runs a `FileSystemWatcher` with a 300ms debounce
+   and re-applies on change. The plugin repaints today; it just cannot *obtain* a built-in palette.
+   The row's fix direction implies a push is needed to make repainting live. It is not.
+2. **The host has no theme-changed signal at all.** `IPluginEventBus` carries four events and none of
+   them is theming; `PreferencesWindow.OnThemeChanged` → `ThemeService.ApplyTo` is heard by nothing.
+   That bus event is net-new work the row does not mention, and it is the least glamorous item in the
+   cycle.
+3. **"A `PluginContract` version bump" is two numbers, and only one moves.** The NuGet package is at
+   **0.7.0**; the wire `contract_version` is the string `"1.0"`, compared by exact match at
+   `PluginHostService.cs:70`. The package bumps, the wire string does not, and that distinction is the
+   whole reason no plugin is rejected.
+
+**The cheap alternative is named rather than skipped.** `ThemeStore` already has a writer and a themes
+folder, so materialising built-ins to disk would make ur-task work today with no contract change and
+no plugin release. Rejected in scope with its real cost: it keeps all five storage couplings, and it
+turns `ListAsync`'s "built-in wins on id collision" from an in-memory rule into a file-on-disk race.
+A cut is only honest when the rejected option is stated at its strongest.
+
+**One design fork left open rather than defaulted.** How a plugin discovers whether the host supports
+the feed: catch `UNIMPLEMENTED` and fall back, or add a capability list to `HostInfo`. The second is
+field-additive and safe, and is also a standing commitment about how this contract advertises every
+future addition. Small now, load-bearing later — the class of call that should not be made by default
+in an autonomous run.
+
+**Zero deepening rounds.** The beats were flowed per the fully-autonomous contract; the brain dump,
+the research beat and the gap-sharpening were all answered by reading both trees, which is what a
+two-repo contract cycle needs instead of a web search. Este had already made the one genuine
+direction call this session ("full Cart cycle, additive contract") and set the standing exclusions.
+
+**Handoff:** `/prd`.
