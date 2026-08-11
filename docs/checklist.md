@@ -149,7 +149,7 @@ reports success having executed nothing. This checklist uses `FullyQualifiedName
   Verify: open the Plugins window in flatline. Destructive must read as destructive **without
   colour** — that is the rank's whole design.
 
-- [ ] **8. The state gate, written to fail first**
+- [x] **8. The state gate, written to fail first**
   Spec ref: `spec.md > §5`
   What to build: `Tests/Rendering/ButtonStateGateTests.cs` using §5's option (1) — resolve the
   `ControlTemplate`, read each trigger's setters, assert no value is a hardcoded literal and that
@@ -161,7 +161,7 @@ reports success having executed nothing. This checklist uses `FullyQualifiedName
   confirm the gate goes red naming that trigger, then restore it. If it cannot be made to fail, the
   gate is not shipped and the item closes with that finding recorded.
 
-- [ ] **9. The fence, or the finding**
+- [x] **9. The fence, or the finding**
   Spec ref: `spec.md > §0.4`, `prd.md > Story 4.1`
   What to build: a test that fails the build when a `Button` declaration sets colour properties
   inline instead of taking a rank. Every exemption names its reason inline.
@@ -171,7 +171,7 @@ reports success having executed nothing. This checklist uses `FullyQualifiedName
   and why, and say so in the commit. A gate that passes because everything is exempted reports
   coverage it does not have.
 
-- [ ] **10. Documentation, security, and the numbers**
+- [x] **10. Documentation, security, and the numbers**
   Spec ref: `spec.md > §9`
   What to build: version `1.19.0.0` → `1.20.0.0` in csproj and `Package.appxmanifest`, lockstep.
   **Flip F-068 and F-046 to closed**, recording the scanner definition beside the closing count and
@@ -202,4 +202,9 @@ which a wrong rank assignment is cheap to change.
 - **Do not lower a contrast floor to make a new rank fit.** Change the rank.
 - **Do not ship a fence that passes by exemption**, or a state gate that cannot be made to fail.
 - **Do not touch borders** — 60 of 76 still hand-themed, a real debt and a different cycle.
-- **Do not start on F-050.** Standing exclusion, unchanged.
+- **Do not start on F-050.** Standing exclusion, unchanged. *Re-measured at close-out 2026-08-11 and it
+  holds for a reason nobody expected: the exempted PAIR left the contrast gate's field of view when the
+  magenta buttons migrated to `AccentActionButtonStyle`, which reads as the finding resolving itself. It
+  did not. White-on-magenta still ships on five badges (MAIN ×2, DEFAULT, PRIVATE, plugin update), each a
+  magenta `Border` wrapping a `WhiteBrush` `TextBlock` — a parent/child pair the gate cannot see, because
+  it measures only elements declaring both halves on one tag. Row stays open; see its evidence cell.*
