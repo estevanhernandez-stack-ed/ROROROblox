@@ -939,3 +939,89 @@ controls into that structure, so it wants eyes before five more items build on i
 the whole surface done, before docs.
 
 **Handoff:** `/build`. Autonomous, halting at C1 and C2.
+
+## /build
+
+Autonomous. **Fourteen items against twelve planned**, fifteen commits, two checkpoints answered.
+Suite 1427 → 1490 with no regression at any step. Build held at 31 warnings / 0 errors throughout.
+
+### The cycle's actual shape
+
+Twelve planned items ran. **4a was added at C1** on Este's catch — the memory fields accepted blank
+to mean "RoRoRo picks one" and never said what it picked, which is this cycle's own defect one more
+time. The app already knew: `ISystemMemoryProbe` was in DI and `MemoryDefaults` already derived both
+values at startup. Surfacing it was the work; deriving it was not. **The fence hardening** was the
+other unplanned item, and it is the more interesting one — see below.
+
+### What the cycle actually found: fourteen false claims, most of them ours
+
+The register rows were the input. The **output** was a pile of corrections, and the ratio is the
+finding. In rough order of how badly each would have misled someone:
+
+1. **`AppSettings.cs` is in Core, not App.** Spec, PRD and checklist all had the directory wrong with
+   the line numbers right — the citation shape that survives review because the interesting part
+   looks correct.
+2. **Items 3 and 4 cited F-024 for careful mode.** It is F-020. Item 11 flips rows by id, so that
+   would have carried the wrong row's closure evidence.
+3. **"Reopen this page" was equally false.** The PRD prescribed it as the fix for a tooltip promising
+   an unnecessary restart. The rail's pages are one window with toggled `Visibility`, so switching
+   pages re-lists nothing. Trading one false promise for another, caught by item 7.
+4. **The PRD said one setting spoke in first person.** Three did.
+5. **"Six settings" was right at audit and is nine today.**
+6. **The register's card contents said 10 where the tree has 8** — a page total attributed to a card.
+7. **The checklist told item 1 to "check flatline, not just brand"** as the weak case for
+   grouping-by-fill. Flatline is the *strongest* — 1.33:1 against brand's 1.09:1. **Second time in two
+   cycles** flatline was treated as adversarial when the adversarial numbers belong to `flatline-lab`.
+8. **`RawTheme`'s doc comment said camelCase** when the format is snake_case — and a theme written to
+   that comment's instructions vanishes silently, which is F-053's complaint *caused by* the docs.
+9. **`ContrastPairGateTests` quoted 44 elements** (real: 39) **and "roughly 104" MutedText bindings**
+   (real: 113). Two stale numbers inside a fence's own failure messages.
+10. **The fence's own prose counts were stale by six** the moment items 3, 4 and 4a landed.
+11. **`docs/features.md` was drifting live**, claiming v1.17 "not yet tagged" while the tag sat in the
+    repo.
+12. **F-062's "duplicates the label" sub-claim never held textually** — already measured false by the
+    re-verification, and nearly repeated.
+13. **My own constraint lists were self-contradictory twice** — "probe from DI" versus "don't touch
+    App.xaml.cs", and "sweep all nine Close buttons" versus "don't touch PreferencesWindow".
+14. **My own copy test asserted the wrong thing** on its first run, and its message counts were wrong.
+
+### The one that matters most
+
+**The reachability fence read prose as code.** A doc comment naming a setting reported it reachable,
+so a setting could stay green forever on the strength of a comment *about* it. Found on item 3's own
+still-bites proof, on the first attempt.
+
+That is the fifth instance this session of *a check reporting success while measuring something other
+than what it claims* — after the checklist filters that matched zero tests, the pre-commit hook that
+only scanned staged files while its CI twin sat red for seven hours, the rendered gate whose sampling
+model could not fail its own nominated proof, and the centring test I deleted because it passed
+against markup I had deliberately broken three ways.
+
+**Every one of them looked exactly like coverage.**
+
+### Two refusals worth recording
+
+**F-046 was not flipped.** Item 10's enumeration held — the abort never fired, because each site
+resolved by lookup rather than by taste — but holding that line left `PluginsWindow`'s Remove a
+hand-rolled magenta fill, which is verbatim the row's headline evidence. The row is not closed by
+holding the line. Twelve of thirteen is the honest number.
+
+**Three candidate findings were declined rather than opened**, each with its reason, against two that
+earned rows. Reflexively opening a row is the same failure as reflexively closing one.
+
+### Checkpoints
+
+**C1** — approved, and produced item 4a. **C2** — walked on a running build, and the walk itself
+caught defect #8 above: a hand-written test theme was rejected, the new status line named it, and the
+cause turned out to be the doc comment. The feature worked; the fixture was wrong; the comment that
+made it wrong is now right. That is the closest thing to a clean end-to-end validation this cycle got,
+and it happened by accident.
+
+### Owed to a human
+
+The suite constructs no `Window`, by design, so every on-screen claim is owed: the hierarchy in four
+themes, a refused megabyte figure, compact mode across a real restart, the three destructive buttons
+under flatline. Also: the theme re-ask is unverifiable on a default install, since every built-in
+returns `DeriveSilently` by design.
+
+**Handoff:** PR to `main`, then `/reflect`.
