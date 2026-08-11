@@ -231,7 +231,7 @@ off on nothing having run. Do not "simplify" these back.
   and re-run the §8 manual list from `spec.md`.
   Commit: `feat(ui): a destructive button rank, assigned by enumeration`.
 
-- [ ] **11. Flip all thirteen rows in the same PR**
+- [x] **11. Flip all thirteen rows in the same PR**
   Spec ref: `CLAUDE.md > Findings register` + `spec.md > §10 Open issues`
   What to build: per this repo's rule, **a PR that closes a register row flips that row in the same
   PR**. Flip F-019, F-020, F-023, F-024, F-026, F-033, F-037, F-043, F-046, F-051, F-053, F-062,
