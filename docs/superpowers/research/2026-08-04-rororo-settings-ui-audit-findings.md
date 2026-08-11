@@ -211,9 +211,12 @@ not the changelog:
 
 - **F-006** — `GamesWindow.xaml:6` `Title="RoRoRo -- Games"`, `:344` header
   `Text="Games"`, and the exact prescribed tooltip ("Saved games and private
-  servers for the launch picker.") now on the Tools menu item at
-  `MainWindow.xaml:1102`. The only surviving "Library" in the app is inside a
-  code comment.
+  servers for the launch picker.") on the toolbar's Games button at
+  `MainWindow.xaml:1123`. The only surviving "Library" in the app is inside a
+  code comment. *(Evidence pointer re-verified 2026-08-11: the tooltip string is
+  unchanged and F-006 stays closed, but it rode the control. It was on a Tools
+  `MenuItem` when this row was written, and v1.20 moved Games back out to a peer
+  toolbar button. The cited line said `:1102` and had been wrong for two cycles.)*
 - **F-008** — the streamer toggle is at `PreferencesWindow.xaml:142` and *Reroll
   all identities* at `:154`, both in Settings. The tray checkbox survives
   (`TrayService.cs`, `_streamerModeItem`). The main-window band and its duplicated

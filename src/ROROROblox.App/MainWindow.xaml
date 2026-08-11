@@ -1098,7 +1098,7 @@
 
                          2. F-009 says Tools should mirror the tray's item list. It does not exactly:
                             the tray runs Preferences/History/Diagnostics/Plugins, while this adds
-                            Games and About. Settings is a peer button here rather than a menu item,
+                            About. Settings and Games are peer buttons here rather than menu items,
                             and Games and About are main-window destinations the tray never carried.
 
                          F-001 is closed: Stop all, Open log folder and the Welcome tour now sit in
@@ -1108,6 +1108,19 @@
                          has no tray equivalent. Spec:
                          docs/superpowers/specs/2026-08-09-rororo-f001-tools-verbs-design.md -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Games is a peer button, not a Tools entry. It was a toolbar button before
+                             wave 3, wave 3 folded it into the menu, and it comes back out here: the
+                             game library is a destination a player reaches for mid-session, and the
+                             default-game widget one column over already sends people to the same
+                             window. Two paths to Games where one of them was two clicks behind a
+                             chevron. Removed from the Tools menu in the same change so the app has
+                             one route per destination, not two. -->
+                        <Button Content="Games"
+                                Command="{Binding OpenGamesCommand}"
+                                Padding="10,6" Margin="0,0,6,0"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                FontSize="11"
+                                ToolTip="Saved games and private servers for the launch picker." />
                         <Button Content="Settings"
                                 Command="{Binding OpenPreferencesCommand}"
                                 Padding="10,6" Margin="0,0,6,0"
@@ -1130,7 +1143,7 @@
                                            Padding="10,6" Margin="0,0,6,0"
                                            Style="{StaticResource SecondaryButtonStyle}"
                                            FontSize="11"
-                                           ToolTip="History, Diagnostics, Games, Plugins, log folder, Stop all, tour, About.">
+                                           ToolTip="History, Diagnostics, Plugins, log folder, Stop all, tour, About.">
                             <controls:ToolsDropDownButton.ContextMenu>
                                 <ContextMenu Background="{DynamicResource NavyBrush}"
                                              BorderBrush="{DynamicResource DividerBrush}"
@@ -1142,9 +1155,6 @@
                                 <MenuItem Header="Diagnostics"
                                           Command="{Binding OpenDiagnosticsCommand}"
                                           ToolTip="System health, Roblox + WebView2 versions, log location." />
-                                <MenuItem Header="Games"
-                                          Command="{Binding OpenGamesCommand}"
-                                          ToolTip="Saved games and private servers for the launch picker." />
                                 <MenuItem Header="Plugins"
                                           Command="{Binding OpenPluginsCommand}"
                                           ToolTip="Install and manage RoRoRo plugins." />
@@ -1251,8 +1261,9 @@
                         </ToggleButton>
 
                         <!-- Empty state: replaces the toggle when no games are saved.
-                             One click → the Games window (same as Tools → Games; it was a toolbar
-                             button until wave 3 folded it into the Tools menu). -->
+                             One click → the Games window, the same destination as the Games button
+                             in the toolbar. It was a toolbar button before wave 3, spent wave 3
+                             through v1.19 inside the Tools menu, and is back in the toolbar. -->
                         <Button Content="No saved games yet — Add a game"
                                 Command="{Binding OpenGamesCommand}"
                                 MinWidth="220" MaxWidth="340"

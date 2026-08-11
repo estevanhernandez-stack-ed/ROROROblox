@@ -106,9 +106,9 @@
     {
       "id": "08",
       "name": "games",
+      "_note": "Route-driven again as of v1.20: Games left the Tools popup and is a main-window Button, so it resolves from the window root without an expand step. 'Games' also names the captured Window and the default-game ToggleButton is a UIA Button, but neither can win this step -- the Window carries no InvokePattern and a ToggleButton exposes Toggle, not Invoke, so the Type+Verb pair the resolver requires leaves exactly one match.",
       "open": [
-        { "do": "expand", "name": "Tools", "type": "Button" },
-        { "do": "invoke", "name": "Games", "type": "MenuItem" }
+        { "do": "invoke", "name": "Games", "type": "Button" }
       ],
       "capture": { "type": "Window", "name": "Games" },
       "close": [ { "do": "close-window", "name": "Games", "type": "Window" } ]
