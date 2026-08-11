@@ -34,6 +34,16 @@
   <ItemGroup>
     <Protobuf Include="Protos\plugin_contract.proto" GrpcServices="Both" />
     <None Include="PackageReadme.md" Pack="true" PackagePath="\" />
+
+    <!-- Ship the .proto itself, not just the C# it generates. AUTHOR_GUIDE.md has always told
+         plugin authors "the package ships the .proto definitions + generated C# bindings", and
+         until now it shipped only the bindings — the Protobuf item above compiles the file but
+         never packs it.
+         A C# author is fine either way. The boundary is gRPC precisely so a plugin can be written
+         in anything, and for a Python/Go/Rust author the .proto IS the contract; without it the
+         package is unusable to them. Under content/ rather than lib/ so it is inert for C#
+         consumers and simply there to be read or fed to protoc. -->
+    <None Include="Protos\plugin_contract.proto" Pack="true" PackagePath="content\Protos\" />
   </ItemGroup>
 
 </Project>
