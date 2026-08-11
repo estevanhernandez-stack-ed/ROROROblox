@@ -322,6 +322,16 @@ public class FlatlineLabGateTests
             }
         }
 
+        // Ranks carry pairs too. This scan was inline-only until v1.20 migrated 21 buttons into
+        // styles, at which point it stopped seeing them and this gate's expected-failure count
+        // silently dropped from 4 to 3 — a gate quietly measuring less while still passing its own
+        // floor. Shared with ContrastPairGateTests so the fix cannot land in one and miss the other.
+        foreach (var (fill, text, sites) in ContrastPairGateTests.ScanStylePairsShared())
+        {
+            var key = (fill, text);
+            counts[key] = counts.TryGetValue(key, out var n) ? n + sites : sites;
+        }
+
         return counts.Select(kv => new Pair(kv.Key.Fill, kv.Key.Text, kv.Value)).ToList();
     }
 }

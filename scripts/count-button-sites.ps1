@@ -41,6 +41,19 @@ $ErrorActionPreference = 'Stop'
 $opener = [regex] '<(?:ui:)?Button(?![.\w])'
 $styled = [regex] 'Style\s*=\s*"\{(?:Static|Dynamic)Resource\s+[A-Za-z0-9_]*ButtonStyle\s*\}"'
 
+# A button can also take a rank through a PROPERTY-ELEMENT style:
+#     <Button ...>
+#       <Button.Style>
+#         <Style TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+# Five buttons in MainWindow do exactly that, because they need local visibility
+# triggers AND a rank, and XAML forbids setting Style twice. They ARE migrated, and
+# an opening-tag-only scan called them offenders -- the count went UP when they were
+# fixed, which is the clearest possible sign a definition is wrong.
+#
+# Note this is not the child-Style hazard the comment above warns about: <Button.Style>
+# is a property of the button itself, not a nested control.
+$basedOn = [regex] 'BasedOn\s*=\s*"\{(?:Static|Dynamic)Resource\s+[A-Za-z0-9_]*ButtonStyle\s*\}"'
+
 if (-not (Test-Path $Root)) { throw "Root '$Root' not found. Run from the repository root." }
 
 $total = 0
@@ -61,7 +74,17 @@ Get-ChildItem -Path $Root -Filter *.xaml -Recurse -File |
                     else { $text.Substring($m.Index) }
 
             $script:total++
-            if (-not $styled.IsMatch($head)) { $count++ }
+            if ($styled.IsMatch($head)) { continue }
+
+            # Look just past the opening tag for a <Button.Style> carrying a BasedOn to a rank.
+            # 600 chars covers the property element and its <Style ...> line with room to spare.
+            $lookahead = $text.Substring($end + 1, [Math]::Min(600, $text.Length - $end - 1))
+            $bs = $lookahead.IndexOf('<Button.Style>')
+            if ($bs -ge 0 -and $bs -lt 240 -and $basedOn.IsMatch($lookahead.Substring($bs, [Math]::Min(400, $lookahead.Length - $bs)))) {
+                continue
+            }
+
+            $count++
         }
 
         if ($count -gt 0) {

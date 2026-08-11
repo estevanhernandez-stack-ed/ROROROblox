@@ -143,14 +143,10 @@
                                 Command="{Binding DataContext.RecycleAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="7,3" Margin="0,0,6,0"
-                                Background="{DynamicResource RowExpiredAccentBrush}"
-                                Foreground="{DynamicResource NavyBrush}"
-                                BorderThickness="0"
                                 FontSize="11"
-                                FontWeight="Bold"
                                 ToolTip="Recycle — close and relaunch this client back into the server it's in now, and reclaim leaked memory.">
                             <Button.Style>
-                                <Style TargetType="Button">
+                                <Style TargetType="Button" BasedOn="{StaticResource WarningButtonStyle}">
                                     <Setter Property="Visibility" Value="Collapsed" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding MemoryWarning}" Value="True">
@@ -171,15 +167,11 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Button Content="Stop"
+                        <Button Style="{StaticResource AccentActionButtonStyle}" Content="Stop"
                                 Command="{Binding DataContext.StopAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="10,4"
-                                Background="{DynamicResource MagentaBrush}"
-                                Foreground="{DynamicResource WhiteBrush}"
-                                BorderThickness="0"
                                 FontSize="10"
-                                FontWeight="SemiBold"
                                 ToolTip="Close the Roblox window for this account."
                                 Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}" />
                     </StackPanel>
@@ -589,14 +581,11 @@
                                             Tag="{Binding}"
                                             Margin="0,0,6,0"
                                             Padding="6,3"
-                                            BorderThickness="1"
-                                            Background="{DynamicResource NavyBrush}"
-                                            BorderBrush="{DynamicResource InteractiveEdgeBrush}"
                                             Cursor="Hand">
                                         <!-- Hide the chip that represents the row's own account so
                                              you can't follow yourself. -->
                                         <Button.Style>
-                                            <Style TargetType="Button">
+                                            <Style TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
                                                 <Setter Property="Visibility" Value="Visible" />
                                                 <Style.Triggers>
                                                     <DataTrigger Value="Collapsed">
@@ -669,16 +658,12 @@
                                                 <!-- Remove "×". DataContext here is the tag string; reach
                                                      up to the ItemsControl whose DataContext is the row's
                                                      AccountSummary for the command. -->
-                                                <Button Content="&#x00D7;"
+                                                <Button Style="{StaticResource GhostButtonStyle}" Content="&#x00D7;"
                                                         Command="{Binding DataContext.RemoveTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding}"
                                                         Margin="4,0,0,0"
                                                         Padding="3,0"
                                                         FontSize="11"
-                                                        FontWeight="Bold"
-                                                        Background="Transparent"
-                                                        BorderThickness="0"
-                                                        Foreground="{DynamicResource WhiteBrush}"
                                                         Cursor="Hand"
                                                         ToolTip="Remove this tag." />
                                             </StackPanel>
@@ -773,11 +758,9 @@
                         <!-- Set / unset main. Magenta filled star = main; outlined grey star = not.
                              Click toggles. Lives leftmost so it groups visually with the MAIN pill on
                              the name line above. -->
-                        <Button Command="{Binding DataContext.SetMainCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        <Button Style="{StaticResource GhostButtonStyle}" Command="{Binding DataContext.SetMainCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="6,4" Margin="0,0,8,0"
-                                Background="Transparent"
-                                BorderThickness="0"
                                 Cursor="Hand">
                             <Button.ToolTip>
                                 <TextBlock>
@@ -813,13 +796,9 @@
                         <Button Content="Re-authenticate"
                                 Command="{Binding DataContext.ReauthenticateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
-                                Padding="12,6" Margin="0,0,8,0"
-                                Background="{DynamicResource RowExpiredAccentBrush}"
-                                Foreground="{DynamicResource NavyBrush}"
-                                BorderThickness="0"
-                                FontWeight="SemiBold">
+                                Padding="12,6" Margin="0,0,8,0">
                             <Button.Style>
-                                <Style TargetType="Button">
+                                <Style TargetType="Button" BasedOn="{StaticResource WarningButtonStyle}">
                                     <Setter Property="Visibility" Value="Collapsed" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding SessionExpired}" Value="True">
@@ -926,13 +905,9 @@
                         <Button Content="Launch As"
                                 Command="{Binding DataContext.LaunchAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
-                                Padding="14,6" Margin="0,0,8,0"
-                                Background="{DynamicResource CyanBrush}"
-                                Foreground="{DynamicResource NavyBrush}"
-                                BorderThickness="0"
-                                FontWeight="SemiBold">
+                                Padding="14,6" Margin="0,0,8,0">
                             <Button.Style>
-                                <Style TargetType="Button">
+                                <Style TargetType="Button" BasedOn="{StaticResource CtaButtonStyle}">
                                     <Setter Property="Visibility" Value="Visible" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsRunning}" Value="True">
@@ -960,14 +935,10 @@
                                 Command="{Binding DataContext.RecycleAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="12,6" Margin="0,0,8,0"
-                                Background="{DynamicResource RowExpiredAccentBrush}"
-                                Foreground="{DynamicResource NavyBrush}"
-                                BorderThickness="0"
-                                FontWeight="SemiBold"
                                 FontSize="11"
                                 ToolTip="Close and relaunch this client — back into the same server it's in now, and the only guaranteed way to reclaim memory Roblox has leaked.">
                             <Button.Style>
-                                <Style TargetType="Button">
+                                <Style TargetType="Button" BasedOn="{StaticResource WarningButtonStyle}">
                                     <Setter Property="Visibility" Value="Collapsed" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding MemoryWarning}" Value="True">
@@ -993,14 +964,10 @@
                         </Button>
 
                         <!-- Stop (visible while running) -->
-                        <Button Content="Stop"
+                        <Button Style="{StaticResource AccentActionButtonStyle}" Content="Stop"
                                 Command="{Binding DataContext.StopAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="14,6" Margin="0,0,8,0"
-                                Background="{DynamicResource MagentaBrush}"
-                                Foreground="{DynamicResource WhiteBrush}"
-                                BorderThickness="0"
-                                FontWeight="SemiBold"
                                 ToolTip="Close the Roblox window for this account."
                                 Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}" />
 
@@ -1098,13 +1065,9 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Content="+ Add Account"
+                        <Button Style="{StaticResource CtaButtonStyle}" Content="+ Add Account"
                                 Command="{Binding AddAccountCommand}"
                                 Padding="16,8"
-                                Background="{DynamicResource CyanBrush}"
-                                Foreground="{DynamicResource NavyBrush}"
-                                BorderThickness="0"
-                                FontWeight="Bold"
                                 FontSize="13" />
                     </StackPanel>
                 </Grid>
@@ -1327,16 +1290,12 @@
                                     Margin="0,4,0,0"
                                     MinWidth="280" MaxWidth="360">
                                 <DockPanel>
-                                    <Button DockPanel.Dock="Bottom"
+                                    <Button Style="{StaticResource SecondaryButtonStyle}" DockPanel.Dock="Bottom"
                                             Content="Manage games…"
                                             Command="{Binding OpenGamesCommand}"
                                             Padding="10,6"
                                             Margin="0,4,0,0"
                                             HorizontalContentAlignment="Left"
-                                            Background="{DynamicResource NavyBrush}"
-                                            Foreground="{DynamicResource WhiteBrush}"
-                                            BorderBrush="{DynamicResource InteractiveEdgeBrush}"
-                                            BorderThickness="0,1,0,0"
                                             FontSize="11"
                                             Cursor="Hand" />
                                     <ListBox ItemsSource="{Binding WidgetGames}"
@@ -1355,11 +1314,8 @@
                                         </ListBox.ItemContainerStyle>
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <Button Padding="10,6"
+                                                <Button Style="{StaticResource GhostButtonStyle}" Padding="10,6"
                                                         HorizontalContentAlignment="Stretch"
-                                                        Background="Transparent"
-                                                        Foreground="{DynamicResource WhiteBrush}"
-                                                        BorderThickness="0"
                                                         Cursor="Hand"
                                                         Command="{Binding DataContext.SetDefaultGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                         CommandParameter="{Binding}">
@@ -1474,14 +1430,10 @@
                         <!-- Labelled "Private server" until v1.14, when the modal stopped being
                              private-server-only: a plain game link now puts the squad in one public
                              server. The old label described the input, not what the button does. -->
-                        <Button Content="Squad Launch"
+                        <Button Style="{StaticResource AccentActionButtonStyle}" Content="Squad Launch"
                                 Command="{Binding OpenSquadLaunchCommand}"
                                 Padding="14,6"
-                                Background="{DynamicResource MagentaBrush}"
-                                Foreground="{DynamicResource WhiteBrush}"
-                                BorderThickness="0"
                                 FontSize="12"
-                                FontWeight="SemiBold"
                                 ToolTip="Send every selected account into the SAME server — a private server link, or a plain game link to share one public server. Launch multiple, next to this, sends each account into its own game instead. Use the dot next to each account's status to deselect." />
                     </StackPanel>
                 </Grid>
@@ -1571,12 +1523,10 @@
                     <TextBlock Text="{Binding ContestedBannerText}"
                                FontSize="11" TextWrapping="Wrap" Foreground="#F1B232" />
                     <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                        <Button Content="Close Roblox for me" Command="{Binding CloseRobloxForMeCommand}"
-                                Padding="10,4" Margin="0,0,8,0"
-                                Background="#17D4FA" Foreground="#0F1F31" BorderThickness="0" FontSize="11" />
-                        <Button Content="Retry" Command="{Binding RetryMutexCommand}"
-                                Padding="10,4"
-                                Background="#22314A" Foreground="#FFFFFF" BorderThickness="0" FontSize="11" />
+                        <Button Style="{StaticResource CtaButtonStyle}" Content="Close Roblox for me" Command="{Binding CloseRobloxForMeCommand}"
+                                Padding="10,4" Margin="0,0,8,0" FontSize="11" />
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="Retry" Command="{Binding RetryMutexCommand}"
+                                Padding="10,4" FontSize="11" />
                     </StackPanel>
                 </StackPanel>
                 <!-- FPS-cap mismatch (2026-08-02). Roblox keeps one shared settings file per
@@ -1779,12 +1729,8 @@
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            HorizontalAlignment="Center"
                                            Margin="0,0,0,8" />
-                                <Button Command="{Binding StartMainCommand}"
+                                <Button Style="{StaticResource CtaButtonStyle}" Command="{Binding StartMainCommand}"
                                         Padding="14,10"
-                                        Background="{DynamicResource CyanBrush}"
-                                        Foreground="{DynamicResource NavyBrush}"
-                                        BorderThickness="0"
-                                        FontWeight="SemiBold"
                                         FontSize="13"
                                         HorizontalAlignment="Stretch"
                                         ToolTip="Launch your main account into its current per-row game.">
@@ -1843,13 +1789,9 @@
                                            Foreground="{DynamicResource WhiteBrush}"
                                            HorizontalAlignment="Center"
                                            Margin="0,0,0,8" />
-                                <Button Command="{Binding AddAccountCommand}"
+                                <Button Style="{StaticResource CtaButtonStyle}" Command="{Binding AddAccountCommand}"
                                         Content="+ Add your first account"
                                         Padding="14,10"
-                                        Background="{DynamicResource CyanBrush}"
-                                        Foreground="{DynamicResource NavyBrush}"
-                                        BorderThickness="0"
-                                        FontWeight="SemiBold"
                                         FontSize="12"
                                         HorizontalAlignment="Stretch" />
                             </StackPanel>
@@ -1909,14 +1851,10 @@
                 </StackPanel>
 
                 <!-- Compact / Expand toggle, sitting next to the count on the left. -->
-                <Button Grid.Column="1"
+                <Button Style="{StaticResource GhostButtonStyle}" Grid.Column="1"
                         Command="{Binding ToggleCompactCommand}"
                         Content="{Binding CompactToggleLabel}"
                         Padding="10,4" Margin="14,0,0,0"
-                        Background="Transparent"
-                        Foreground="{DynamicResource WhiteBrush}"
-                        BorderBrush="{DynamicResource InteractiveEdgeBrush}"
-                        BorderThickness="1"
                         FontSize="10"
                         VerticalAlignment="Center"
                         ToolTip="Shrink to a small ops view that only shows running accounts. Click again to expand." />

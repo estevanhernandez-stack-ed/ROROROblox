@@ -150,6 +150,14 @@ public class ContrastPairGateTests
     /// the fix for it. XAML is XML; parsing it removes a whole class of that.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Shared with <c>FlatlineLabGateTests</c>, which ran its own inline-only copy of this scan and
+    /// therefore lost sight of every pair v1.20 moved into a rank. One definition, so a fix to it
+    /// cannot land in one gate and miss the other — which is exactly what happened first.
+    /// </summary>
+    internal static IReadOnlyList<(string Fill, string Text, int Sites)> ScanStylePairsShared()
+        => ScanStylePairs().Select(p => (p.Fill, p.Text, p.Sites)).ToList();
+
     private static IReadOnlyList<Pair> ScanStylePairs()
     {
         const string Xaml2006 = "http://schemas.microsoft.com/winfx/2006/xaml";
@@ -223,11 +231,19 @@ public class ContrastPairGateTests
 
         var inline = counts.Select(kv => new Pair(kv.Key.Fill, kv.Key.Text, kv.Value));
 
+        // Rank sites count as measured elements too. Without this the floor below reads a
+        // migration as lost coverage: v1.20 moved 21 buttons out of inline markup and the inline
+        // element count fell 39 -> 28, through a floor of 30, while the pairs themselves were
+        // still measured -- just through their rank. The floor is there to catch a BROKEN scan,
+        // and a scan that follows colours into styles is the opposite of broken.
+        var styleP = ScanStylePairs();
+        elementCount += styleP.Sum(sp => sp.Sites);
+
         // Fold in the ranks. A pair declared once in a Style and used by forty buttons is exactly
         // as load-bearing as the same pair written inline forty times -- more so, since fixing it
         // is one edit. Merged by (fill, text) so a pair reachable both ways is measured once with
         // its true site count.
-        return inline.Concat(ScanStylePairs())
+        return inline.Concat(styleP)
             .GroupBy(p => (p.Fill, p.Text))
             .Select(g => new Pair(g.Key.Fill, g.Key.Text, g.Sum(x => x.Sites)))
             .ToList();

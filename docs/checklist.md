@@ -110,7 +110,7 @@ reports success having executed nothing. This checklist uses `FullyQualifiedName
   with the new ranks included in whatever it enumerates. **If a rank cannot clear its floor, say so
   and change the rank** — this cycle does not get to lower a bar it inherited.
 
-- [ ] **4. `MainWindow.xaml` — 30 sites**
+- [x] **4. `MainWindow.xaml` — 21 sites (30 was a miscount)**
   Spec ref: `spec.md > §3`
   What to build: migrate all 30 using the ranks from items 1 and 3. Five intents are present (cyan
   CTA, magenta, `RowExpiredAccent`, transparent, raw hex) — assign by intent, not by convenience.
