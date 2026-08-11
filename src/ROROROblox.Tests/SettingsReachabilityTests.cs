@@ -207,9 +207,18 @@ public class SettingsReachabilityTests
 
         foreach (var (relativePath, lines) in files)
         {
-            for (var i = 0; i < lines.Length; i++)
+            // COMMENTS ARE STRIPPED FIRST, and this is not tidiness — it is the difference between
+            // a fence and a decoration. This clause used to match raw lines, so a doc comment that
+            // merely NAMED a setting reported it reachable, and a setting would stay green forever
+            // on the strength of prose about it. Found on item 3's own still-bites proof, on the
+            // first attempt: two comments spelling `ProjectionWarnMinutes` kept it passing after
+            // its control had been renamed away. Same class as the checklist filters that matched
+            // zero tests and the pre-commit hook that only ever scanned staged files — a check
+            // reporting success while measuring something other than what it claims.
+            var code = WithoutComments(relativePath, lines);
+            for (var i = 0; i < code.Length; i++)
             {
-                if (accessor.IsMatch(lines[i]) || control.IsMatch(lines[i]))
+                if (accessor.IsMatch(code[i]) || control.IsMatch(code[i]))
                 {
                     return $"{relativePath}:{i + 1}";
                 }
@@ -217,6 +226,113 @@ public class SettingsReachabilityTests
         }
 
         return null;
+    }
+
+    [Fact]
+    public void ProseAboutASettingDoesNotMakeItReachable()
+    {
+        // The hole this closes was real and fired on the first attempt to prove the fence bites:
+        // item 3 renamed a control away and swapped its accessors, and the fence stayed GREEN
+        // because two doc comments spelled the setting's name. A guard that reads prose as code
+        // reports success while measuring something other than what it claims — the same shape as
+        // the checklist filters that matched zero tests and the pre-commit hook that only scanned
+        // staged files.
+        //
+        // Proven on the helper rather than end-to-end: every way of removing a setting's real
+        // edges from the App breaks compilation, so an end-to-end version cannot run.
+        var accessor = AccessorEdge("ProjectionWarnMinutes");
+        var control = ControlEdge("ProjectionWarnMinutes");
+
+        bool Reaches(string relativePath, params string[] lines) =>
+            WithoutComments(relativePath, lines).Any(l => accessor.IsMatch(l) || control.IsMatch(l));
+
+        // Prose only — must NOT count.
+        Assert.False(Reaches("x.cs", "// GetProjectionWarnMinutesAsync is called elsewhere."),
+            "A line comment naming the accessor still counted as reachable.");
+        Assert.False(Reaches("x.cs", "/// <c>ProjectionWarnMinutesInput</c> holds it."),
+            "An XML doc comment naming the control still counted as reachable.");
+        Assert.False(Reaches("x.cs", "/* await _settings.GetProjectionWarnMinutesAsync(); */"),
+            "A single-line block comment still counted as reachable.");
+        Assert.False(Reaches("x.cs", "/* opened here", "   GetProjectionWarnMinutesAsync", "   closed */"),
+            "A block comment spanning lines still counted as reachable.");
+        Assert.False(Reaches("x.xaml", "<!-- x:Name=\"ProjectionWarnMinutesInput\" -->"),
+            "A XAML comment naming the control still counted as reachable.");
+
+        // Real code — must still count, or the strip has eaten the thing it exists to protect.
+        Assert.True(Reaches("x.cs", "await _settings.GetProjectionWarnMinutesAsync();"),
+            "A real accessor call stopped counting as reachable.");
+        Assert.True(Reaches("x.xaml", "<TextBox x:Name=\"ProjectionWarnMinutesInput\" />"),
+            "A real control declaration stopped counting as reachable.");
+        Assert.True(Reaches("x.cs", "await _settings.GetProjectionWarnMinutesAsync(); // trailing note"),
+            "A real accessor call followed by a comment on the same line stopped counting.");
+
+        // Line numbering must survive, or a failure names the wrong line.
+        var kept = WithoutComments("x.cs", ["one", "// two", "/* three", "four */", "five"]);
+        Assert.Equal(5, kept.Length);
+    }
+
+    /// <summary>
+    /// Blanks comment text while preserving line count and line numbers, so a failure still names
+    /// the right line. Handles XAML <c>&lt;!-- --&gt;</c> and C# <c>//</c> and <c>/* */</c>, block
+    /// forms spanning lines.
+    /// <para>
+    /// Known and deliberately accepted: a <c>//</c> inside a string literal — a URL, say — truncates
+    /// the rest of that line. That can only cause a FALSE NEGATIVE, meaning a setting looks
+    /// unreachable and the fence fails loudly. For a guard, failing loud on an edge case is the
+    /// correct direction to be wrong; the alternative is a parser, and a parser is how this stops
+    /// being a twenty-line test.
+    /// </para>
+    /// </summary>
+    private static string[] WithoutComments(string relativePath, string[] lines)
+    {
+        var isXaml = relativePath.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase);
+        var open = isXaml ? "<!--" : "/*";
+        var close = isXaml ? "-->" : "*/";
+
+        var stripped = new string[lines.Length];
+        var inBlock = false;
+
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var line = lines[i];
+            var kept = new System.Text.StringBuilder(line.Length);
+            var at = 0;
+
+            while (at < line.Length)
+            {
+                if (inBlock)
+                {
+                    var end = line.IndexOf(close, at, StringComparison.Ordinal);
+                    if (end < 0) break;
+                    inBlock = false;
+                    at = end + close.Length;
+                    continue;
+                }
+
+                var block = line.IndexOf(open, at, StringComparison.Ordinal);
+                var slash = isXaml ? -1 : line.IndexOf("//", at, StringComparison.Ordinal);
+
+                if (slash >= 0 && (block < 0 || slash < block))
+                {
+                    kept.Append(line, at, slash - at);
+                    break;
+                }
+
+                if (block < 0)
+                {
+                    kept.Append(line, at, line.Length - at);
+                    break;
+                }
+
+                kept.Append(line, at, block - at);
+                inBlock = true;
+                at = block + open.Length;
+            }
+
+            stripped[i] = kept.ToString();
+        }
+
+        return stripped;
     }
 
     /// <summary>
