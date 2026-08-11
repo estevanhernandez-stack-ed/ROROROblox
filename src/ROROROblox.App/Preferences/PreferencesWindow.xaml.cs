@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Windows;
 using ROROROblox.App.Discord;
 using ROROROblox.App.Modals;
@@ -241,6 +242,20 @@ internal partial class PreferencesWindow : Window
                 ?? IdleWarnThresholdPicker.Items
                 .OfType<System.Windows.Controls.ComboBoxItem>()
                 .FirstOrDefault(item => string.Equals((string)item.Tag, "15", StringComparison.Ordinal));
+
+            // v1.18 — the four memory watchdog settings (F-023). Its own try/catch for the same
+            // reason the Discord block above has one: this handler is async void with no outer
+            // catch, and AppSettings.LoadAsync only maps IOException and JsonException to defaults
+            // — an ACL-blocked settings.json throws UnauthorizedAccessException straight through.
+            // Unguarded that would blank the theme picker below, not just this section.
+            try
+            {
+                await PopulateMemoryControlsAsync();
+            }
+            catch (Exception ex)
+            {
+                ShowMemoryWarning($"Couldn't read your memory settings: {ex.Message}");
+            }
 
             // Populate the theme picker. Built-ins first, then user-supplied JSON files.
             var themes = await _themeStore.ListAsync();
@@ -929,6 +944,276 @@ internal partial class PreferencesWindow : Window
                 "Preferences",
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
+        }
+    }
+
+    // ---------- Memory watchdog (v1.18, spec §4.1 — F-023) ----------
+
+    // EVERY SETTING NAME IN THE COMMENTS BELOW IS WRITTEN WITH ITS OWNER, and that is not style.
+    // SettingsReachabilityTests' secondary edge matches a bare setting name anywhere in an App
+    // .cs/.xaml file — comments and doc comments included, since it reads lines, not syntax — and
+    // the one thing it excludes is a preceding "." (a member read is a consumer, not a control).
+    // So a bare setting name in a sentence reports that setting reachable, and the same name
+    // written with its owner does not. Proved on 2026-08-10 while checking this item's own fence
+    // still bites: with the projection setting's control renamed and both of its accessor calls
+    // swapped out, the fence still went green on two doc comments. Do not tidy the owners off.
+
+    // WHERE THESE BOUNDS COME FROM, and why they are the view layer's rather than the setter's.
+    // spec §4.1: "a setter that clamps is indistinguishable from a setter that worked", so the
+    // refusal has to happen where there is a screen to say it on. Every number below is read off
+    // what the watchdog actually does with the value, not picked for looking round.
+    //
+    // RESERVE, floor above zero. The headroom axis is gated on `ReserveBytes > 0`
+    // (MemoryWatchdog.cs:226), so a zero reserve silently deletes the third trigger F-082 added —
+    // and unlike the cap, IAppSettings declares no meaning for zero here. 256 rather than
+    // MemoryDefaults' own 1024 floor because that floor governs a DERIVED value; someone on a small
+    // machine asking for a tighter reserve is making a choice, not a mistake. Ceiling 65536 (64 GB)
+    // because a reserve above installed RAM latches the headroom warning on permanently, which is
+    // the cry-wolf failure MemoryWatchdog's three deadbands exist to prevent.
+    private const int ReserveFloorMb = 256;
+    private const int ReserveCeilingMb = 65536;
+
+    // CAP, and zero is ACCEPTED rather than being the floor. IAppSettings calls it "a distinct,
+    // meaningful user choice: it disables the cap trigger entirely", and MemoryWatchdog.cs:268-275
+    // carries a re-arm clause written for exactly that value. Any OTHER value floors at 256,
+    // under which a client that has only just launched is already over — MemoryDefaults.
+    // ExpectedClientMb is a measured 2650 — so the cap would fire on every healthy client on the
+    // first tick. Same 64 GB ceiling, same reason.
+    private const int CapFloorMb = 256;
+    private const int CapCeilingMb = 65536;
+
+    // PROJECTION, floor 1. The trigger is `minutes < MemoryWatchdog.ProjectionWarnMinutes`
+    // (MemoryWatchdog.cs:287) over a `minutes` clamped to non-negative, so zero makes the axis
+    // structurally unable to fire — the same defect shape as the F-082 cap that could not trigger
+    // at any RAM tier from 16 GB up. Ceiling one day: the watchdog will not claim a slope until it
+    // has MinimumObservation (10 minutes) of samples, and past a day any nonzero growth rate leaves
+    // the warning permanently on.
+    private const int ProjectionFloorMinutes = 1;
+    private const int ProjectionCeilingMinutes = 1440;
+
+    /// <summary>
+    /// Paints the four memory controls from the file, and READS rather than caches. Hand-editing
+    /// <c>settings.json</c> has to keep working, and every accessor here goes back to disk
+    /// (<c>AppSettings.LoadAsync</c>) on each call — so re-opening this window shows whatever is in
+    /// the file, including a value a text editor put there.
+    /// </summary>
+    private async Task PopulateMemoryControlsAsync()
+    {
+        MemoryWatchdogEnabledToggle.IsChecked = await _settings.GetMemoryWatchdogEnabledAsync();
+        MemoryReserveMbInput.Text = FormatOptional(await _settings.GetMemoryReserveMbAsync());
+        MemoryCapMbInput.Text = FormatOptional(await _settings.GetMemoryCapMbAsync());
+        ProjectionWarnMinutesInput.Text =
+            (await _settings.GetProjectionWarnMinutesAsync()).ToString(CultureInfo.InvariantCulture);
+        ClearMemoryWarning();
+    }
+
+    /// <summary>Blank is not empty, it is "never set" — the state App.xaml.cs derives from.</summary>
+    private static string FormatOptional(int? value) =>
+        value?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+
+    private void ShowMemoryWarning(string message)
+    {
+        // U+25B2, a Segoe UI geometric glyph with Emoji_Presentation=No — not emoji, and the same
+        // one AccountSummary's idle chip, MemoryChipFormatter and the compat banner already use.
+        // The warning survives with colour removed, which is the whole point of carrying it in the
+        // text as well as the brush.
+        MemorySettingsWarning.Text = "▲ " + message;
+        MemorySettingsWarning.Visibility = Visibility.Visible;
+    }
+
+    private void ClearMemoryWarning()
+    {
+        MemorySettingsWarning.Text = string.Empty;
+        MemorySettingsWarning.Visibility = Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// Say why, then put the saved value back. Refusing rather than clamping is deliberate: a clamp
+    /// and a save look identical from the outside, which is F-023's own defect one level down
+    /// (spec §4.1). Putting the saved text back is the second half — a box left showing a refused
+    /// number reads as though the number took.
+    /// </summary>
+    private void Refuse(System.Windows.Controls.TextBox input, string savedText, string reason)
+    {
+        ShowMemoryWarning(reason);
+        input.Text = savedText;
+    }
+
+    /// <summary>
+    /// An optional whole number. Blank returns <see langword="null"/> — "RoRoRo picks it" — which is
+    /// what <c>SettingsBlob.MemoryReserveMb</c> and <c>SettingsBlob.MemoryCapMb</c> ship as, and
+    /// what the composition root derives from installed RAM. <paramref name="allowZero"/> lets a
+    /// setting whose zero is documented (the cap) through the range check that would otherwise
+    /// refuse it.
+    /// </summary>
+    private static bool TryReadOptionalWholeNumber(
+        string? text, int floor, int ceiling, bool allowZero, out int? value, out string refusal)
+    {
+        value = null;
+        refusal = string.Empty;
+
+        var trimmed = text?.Trim() ?? string.Empty;
+        if (trimmed.Length == 0)
+        {
+            return true;
+        }
+
+        var blankHint = allowZero
+            ? $"Use a whole number from {floor} to {ceiling}, 0 to turn it off, or leave the box empty and RoRoRo will pick one."
+            : $"Use a whole number from {floor} to {ceiling}, or leave the box empty and RoRoRo will pick one.";
+
+        if (!int.TryParse(trimmed, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
+        {
+            refusal = $"\"{trimmed}\" isn't a whole number, so nothing was saved. {blankHint}";
+            return false;
+        }
+
+        if (allowZero && parsed == 0)
+        {
+            value = 0;
+            return true;
+        }
+
+        if (parsed < floor || parsed > ceiling)
+        {
+            refusal = $"{parsed} is outside {floor} to {ceiling}, so nothing was saved. {blankHint}";
+            return false;
+        }
+
+        value = parsed;
+        return true;
+    }
+
+    /// <summary>
+    /// A required whole number. <c>SettingsBlob.ProjectionWarnMinutes</c> is a plain <c>int</c> with a real
+    /// default, so blank is a refusal here rather than a null — there is no "unset" for it to mean.
+    /// </summary>
+    private static bool TryReadWholeNumber(
+        string? text, int floor, int ceiling, int fallback, out int value, out string refusal)
+    {
+        value = fallback;
+        refusal = string.Empty;
+
+        var trimmed = text?.Trim() ?? string.Empty;
+        var hint = $"Use a whole number from {floor} to {ceiling}. The default is {fallback}.";
+
+        if (trimmed.Length == 0)
+        {
+            refusal = $"This one needs a number, so nothing was saved. {hint}";
+            return false;
+        }
+
+        if (!int.TryParse(trimmed, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
+        {
+            refusal = $"\"{trimmed}\" isn't a whole number, so nothing was saved. {hint}";
+            return false;
+        }
+
+        if (parsed < floor || parsed > ceiling)
+        {
+            refusal = $"{parsed} is outside {floor} to {ceiling}, so nothing was saved. {hint}";
+            return false;
+        }
+
+        value = parsed;
+        return true;
+    }
+
+    private async void OnMemoryWatchdogEnabledToggle(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+        try
+        {
+            await _settings.SetMemoryWatchdogEnabledAsync(MemoryWatchdogEnabledToggle.IsChecked == true);
+            ClearMemoryWarning();
+        }
+        catch (Exception ex)
+        {
+            // Reported on this section's own line rather than in a MessageBox, so a failure to save
+            // and a refusal to accept arrive in the same place and the same voice.
+            ShowMemoryWarning($"Couldn't save that: {ex.Message}");
+            _suppressClickHandlers = true;
+            MemoryWatchdogEnabledToggle.IsChecked = await _settings.GetMemoryWatchdogEnabledAsync();
+            _suppressClickHandlers = false;
+        }
+    }
+
+    /// <summary>
+    /// Commit on LostFocus, the same choice the webhook fields make and for the same reason: a
+    /// figure is typed whole, and validating every keystroke flashes a rejection at anyone who has
+    /// so far typed "2" of "2650".
+    /// </summary>
+    private async void OnMemoryReserveCommitted(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+
+        var saved = FormatOptional(await _settings.GetMemoryReserveMbAsync());
+        if (!TryReadOptionalWholeNumber(MemoryReserveMbInput.Text, ReserveFloorMb, ReserveCeilingMb,
+                allowZero: false, out var reserveMb, out var refusal))
+        {
+            Refuse(MemoryReserveMbInput, saved, refusal);
+            return;
+        }
+
+        try
+        {
+            await _settings.SetMemoryReserveMbAsync(reserveMb);
+            MemoryReserveMbInput.Text = FormatOptional(reserveMb);
+            ClearMemoryWarning();
+        }
+        catch (Exception ex)
+        {
+            Refuse(MemoryReserveMbInput, saved, $"Couldn't save that: {ex.Message}");
+        }
+    }
+
+    private async void OnMemoryCapCommitted(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+
+        var saved = FormatOptional(await _settings.GetMemoryCapMbAsync());
+        // allowZero, and it is not a courtesy: 0 disables the cap trigger and is a documented user
+        // choice, which is why the setting is int? instead of sentinel-zero in the first place.
+        if (!TryReadOptionalWholeNumber(MemoryCapMbInput.Text, CapFloorMb, CapCeilingMb,
+                allowZero: true, out var capMb, out var refusal))
+        {
+            Refuse(MemoryCapMbInput, saved, refusal);
+            return;
+        }
+
+        try
+        {
+            await _settings.SetMemoryCapMbAsync(capMb);
+            MemoryCapMbInput.Text = FormatOptional(capMb);
+            ClearMemoryWarning();
+        }
+        catch (Exception ex)
+        {
+            Refuse(MemoryCapMbInput, saved, $"Couldn't save that: {ex.Message}");
+        }
+    }
+
+    private async void OnProjectionWarnCommitted(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+
+        var saved = (await _settings.GetProjectionWarnMinutesAsync()).ToString(CultureInfo.InvariantCulture);
+        if (!TryReadWholeNumber(ProjectionWarnMinutesInput.Text, ProjectionFloorMinutes,
+                ProjectionCeilingMinutes, fallback: 120, out var minutes, out var refusal))
+        {
+            Refuse(ProjectionWarnMinutesInput, saved, refusal);
+            return;
+        }
+
+        try
+        {
+            await _settings.SetProjectionWarnMinutesAsync(minutes);
+            ProjectionWarnMinutesInput.Text = minutes.ToString(CultureInfo.InvariantCulture);
+            ClearMemoryWarning();
+        }
+        catch (Exception ex)
+        {
+            Refuse(ProjectionWarnMinutesInput, saved, $"Couldn't save that: {ex.Message}");
         }
     }
 

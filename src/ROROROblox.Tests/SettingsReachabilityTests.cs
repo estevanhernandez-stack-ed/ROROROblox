@@ -271,11 +271,7 @@ public class SettingsReachabilityTests
     /// ask, and the count says "1 skipped" out loud on every run instead of saying nothing.
     /// </para>
     /// </summary>
-    [Fact(Skip = "RED BY DESIGN until v1.18 checklist item 3 wires the four memory watchdog "
-        + "settings to controls on the Alerts & memory page. Ran un-skipped on 2026-08-10 and "
-        + "failed naming exactly MemoryWatchdogEnabled, MemoryReserveMb, MemoryCapMb and "
-        + "ProjectionWarnMinutes (AppSettings.cs:483-486). Item 3 deletes this Skip; if it goes "
-        + "green before item 3 lands, the fence is wrong, not the app.")]
+    [Fact]
     public void EveryPersistedSettingIsReachableOrExemptedWithAReason()
     {
         var properties = PersistedProperties();

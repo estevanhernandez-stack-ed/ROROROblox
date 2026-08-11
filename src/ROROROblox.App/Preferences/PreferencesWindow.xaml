@@ -411,6 +411,152 @@
                                        Foreground="{DynamicResource CyanBrush}" />
                         </StackPanel>
                     </Border>
+
+                    <!-- Memory (F-023, spec 4.1). These four have been persisted since v1.13 and
+                         referenced by zero .xaml until now: a page named "Alerts & memory" shipped
+                         with no memory controls on it, and the only way to change one was Notepad.
+                         SettingsReachabilityTests is the fence that makes that shape fail a build.
+
+                         WHY FREE TEXT AND NOT A PRESET PICKER, since the idle threshold two cards
+                         up is a ComboBox. A picker cannot produce an out-of-range value, so it
+                         cannot satisfy prd Story 1.1's requirement that one be refused VISIBLY —
+                         the criterion would be unfalsifiable by construction. Free text is what
+                         gives the refusal something to refuse. It is also what "hand-editing
+                         settings.json still works" already implies: the file accepts any integer,
+                         so the UI has to be able to show any integer and reject the wrong ones.
+
+                         Blank is not empty, it is "RoRoRo picks". SettingsBlob.MemoryReserveMb and
+                         SettingsBlob.MemoryCapMb are int? and null means never set — App.xaml.cs
+                         derives from installed RAM via MemoryDefaults. An empty box has to
+                         round-trip back to null or a user who clears one silently pins whatever
+                         happened to be showing.
+
+                         WRITE THOSE TWO NAMES DOTTED, HERE AND IN THE CODE-BEHIND, and do not tidy
+                         the owner off. SettingsReachabilityTests' control edge matches a bare
+                         setting name anywhere in an App .cs/.xaml file, comments included, and its
+                         one exclusion is a preceding "." (a member read is a consumer, not a
+                         control). So a bare setting name in a sentence is enough to report that
+                         setting reachable; the same name written with its owner is not. Proved on
+                         2026-08-10: with all three of the projection setting's sites renamed away,
+                         the fence still passed on two doc comments alone. Qualified names keep the
+                         fence measuring the controls. -->
+
+                    <TextBlock Text="Memory"
+                               Style="{StaticResource SectionHeadingStyle}"
+                               AutomationProperties.Name="Memory"
+                               AutomationProperties.HeadingLevel="Level2" />
+                    <Border Style="{StaticResource CardBorderStyle}">
+                        <StackPanel>
+                            <StackPanel>
+                                <CheckBox x:Name="MemoryWatchdogEnabledToggle"
+                                          Foreground="{DynamicResource WhiteBrush}"
+                                          FontSize="13"
+                                          FontWeight="SemiBold"
+                                          AutomationProperties.Name="Watch memory while accounts are running"
+                                          Click="OnMemoryWatchdogEnabledToggle">
+                                    <TextBlock Text="Watch memory while accounts are running." TextWrapping="Wrap" />
+                                </CheckBox>
+                                <TextBlock FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="22,4,0,0"
+                                           Text="RoRoRo checks every running client every 30 seconds and tells you before your PC runs out. Turn it off and the three settings below stop doing anything. All four take effect the next time RoRoRo starts." />
+                            </StackPanel>
+
+                            <!-- Row separation is a call-site margin, same as the Startup card. -->
+                            <StackPanel Margin="0,14,0,0">
+                                <TextBlock Text="Memory to keep free (MB)"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource WhiteBrush}"
+                                           Margin="0,0,0,4" />
+                                <TextBox x:Name="MemoryReserveMbInput"
+                                         Width="120"
+                                         HorizontalAlignment="Left"
+                                         Padding="8,6"
+                                         FontSize="12"
+                                         Background="{DynamicResource NavyBrush}"
+                                         Style="{StaticResource AppTextBoxStyle}"
+                                         AutomationProperties.Name="Memory to keep free, in megabytes"
+                                         AutomationProperties.HelpText="A whole number from 256 to 65536, or blank to let RoRoRo pick."
+                                         LostFocus="OnMemoryReserveCommitted" />
+                                <TextBlock FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,4,0,0"
+                                           Text="You get warned once free memory drops under this. 256 to 65536. Leave it blank and RoRoRo works one out from your installed RAM." />
+                            </StackPanel>
+
+                            <StackPanel Margin="0,14,0,0">
+                                <TextBlock Text="Warn when one account passes (MB)"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource WhiteBrush}"
+                                           Margin="0,0,0,4" />
+                                <TextBox x:Name="MemoryCapMbInput"
+                                         Width="120"
+                                         HorizontalAlignment="Left"
+                                         Padding="8,6"
+                                         FontSize="12"
+                                         Background="{DynamicResource NavyBrush}"
+                                         Style="{StaticResource AppTextBoxStyle}"
+                                         AutomationProperties.Name="Warn when one account passes this many megabytes"
+                                         AutomationProperties.HelpText="A whole number from 256 to 65536, 0 to turn this warning off, or blank to let RoRoRo pick."
+                                         LostFocus="OnMemoryCapCommitted" />
+                                <TextBlock FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,4,0,0"
+                                           Text="One client on its own, not the whole PC. A healthy Pet Sim client sits near 2650 MB. 256 to 65536, or 0 to turn this warning off. Leave it blank and RoRoRo works one out." />
+                            </StackPanel>
+
+                            <StackPanel Margin="0,14,0,0">
+                                <TextBlock Text="Warn this far ahead (minutes)"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource WhiteBrush}"
+                                           Margin="0,0,0,4" />
+                                <TextBox x:Name="ProjectionWarnMinutesInput"
+                                         Width="120"
+                                         HorizontalAlignment="Left"
+                                         Padding="8,6"
+                                         FontSize="12"
+                                         Background="{DynamicResource NavyBrush}"
+                                         Style="{StaticResource AppTextBoxStyle}"
+                                         AutomationProperties.Name="Warn this many minutes ahead of running out"
+                                         AutomationProperties.HelpText="A whole number of minutes from 1 to 1440. The default is 120."
+                                         LostFocus="OnProjectionWarnCommitted" />
+                                <TextBlock FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,4,0,0"
+                                           Text="RoRoRo watches how fast your clients are growing and warns you this long before they would fill the PC. 1 to 1440. The default is 120." />
+                            </StackPanel>
+
+                            <!-- This section's OWN failure line, and the three reasons it is its
+                                 own (spec 5). It is not AlertsStatusLine: that line is CyanBrush,
+                                 belongs to the Alerts card above, and spec 5 explicitly leaves it
+                                 alone. It is not the Theme section's line: that one does not exist
+                                 yet and reports a different thing.
+
+                                 RowExpiredAccentBrush and the U+25B2 prefix are the warning
+                                 vocabulary v1.17 established across expired rows, idle chips,
+                                 memory chips and the compat banner. A fifth warning surface speaks
+                                 it. Cyan is the accent — the same treatment a SUCCESS would get —
+                                 so a refusal painted cyan would look like a save.
+
+                                 Collapsed until something is refused. A status line that speaks on
+                                 every save is noise, and the refusal has to arrive as a change. -->
+                            <TextBlock x:Name="MemorySettingsWarning"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource RowExpiredAccentBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,12,0,0"
+                                       Visibility="Collapsed"
+                                       AutomationProperties.Name="Memory settings warning"
+                                       AutomationProperties.LiveSetting="Assertive" />
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
 
                 <StackPanel x:Name="PageDiscord" Visibility="Collapsed">
