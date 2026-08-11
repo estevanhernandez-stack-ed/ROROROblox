@@ -429,12 +429,19 @@
                                 <TextBox x:Name="MineWebhookInput" Grid.Column="0" Padding="8,6" FontSize="11"
                                          Background="{DynamicResource NavyBrush}"
                                          LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
+                                <!-- Takes the rank rather than repeating it. The four attributes
+                                     removed here were byte-identical to SecondaryToggleButtonStyle's
+                                     setters, so nothing moves at rest; what changes is the TEMPLATE,
+                                     which they were not getting. A ToggleButton with no rank inherits
+                                     the OS template and its hardcoded #BEE6FD hover, so both Show
+                                     buttons on this page still flashed Aero blue after the rest of
+                                     the app stopped. Found by item 9's fence, which counts
+                                     ToggleButton because the C2 gap proved a control type outside
+                                     the definition is where this defect survives. -->
                                 <ToggleButton x:Name="MineWebhookReveal" Grid.Column="1" Content="Show"
                                               Margin="6,0,0,0" Padding="10,5" FontSize="11"
                                               Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
-                                              Background="{DynamicResource NavyBrush}"
-                                              Foreground="{DynamicResource WhiteBrush}"
-                                              BorderBrush="{DynamicResource InteractiveEdgeBrush}" BorderThickness="1"
+                                              Style="{StaticResource SecondaryToggleButtonStyle}"
                                               ToolTip="Reveal the saved webhook so you can read or replace it." />
                             </Grid>
                             <TextBlock x:Name="MineWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
@@ -456,9 +463,7 @@
                                 <ToggleButton x:Name="ClanWebhookReveal" Grid.Column="1" Content="Show"
                                               Margin="6,0,0,0" Padding="10,5" FontSize="11"
                                               Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
-                                              Background="{DynamicResource NavyBrush}"
-                                              Foreground="{DynamicResource WhiteBrush}"
-                                              BorderBrush="{DynamicResource InteractiveEdgeBrush}" BorderThickness="1"
+                                              Style="{StaticResource SecondaryToggleButtonStyle}"
                                               ToolTip="Reveal the saved webhook so you can read or replace it." />
                             </Grid>
                             <TextBlock x:Name="ClanWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
