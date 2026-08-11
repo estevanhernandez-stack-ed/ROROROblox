@@ -26,6 +26,17 @@ public static class RpcMethodCapabilityMap
         ["SubscribeAccountExited"] = PluginCapability.HostEventsAccountExited,
         ["SubscribeMutexStateChanged"] = PluginCapability.HostEventsMutexStateChanged,
         ["SubscribeMemoryPressure"] = PluginCapability.HostEventsMemoryPressure,
+        // Theming (0.8.0). Both ungated, deliberately, and SubscribeThemeChanged is the FIRST
+        // ungated stream on this service -- every other Subscribe* requires a capability and
+        // every ungated entry above is a one-shot read. Worth stating rather than inheriting.
+        //
+        // Capabilities fence what can cause harm. A colour cannot: the feed carries eleven hex
+        // codes, no account data, no identity, no host state. Gating it would mean a user can
+        // decline a plugin's ability to LOOK CORRECT, which is a worse outcome than any risk of
+        // knowing what #101010 is -- and a plugin denied the feed would fall back to painting
+        // itself the wrong colour, which is the exact defect this contract addition removes.
+        ["GetTheme"] = null,                     // free read
+        ["SubscribeThemeChanged"] = null,        // free stream -- see above
         ["RequestLaunch"] = PluginCapability.HostCommandsRequestLaunch,
         ["RequestLaunchTarget"] = PluginCapability.HostCommandsLaunchTarget,
         ["GetCurrentServer"] = PluginCapability.HostQueriesCurrentServer,

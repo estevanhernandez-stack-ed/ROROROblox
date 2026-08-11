@@ -1025,3 +1025,328 @@ under flatline. Also: the theme re-ask is unverifiable on a default install, sin
 returns `DeriveSilently` by design.
 
 **Handoff:** PR to `main`, then `/reflect`.
+
+## /reflect
+
+Wrote [`docs/reflection.md`](docs/reflection.md). Autonomous run — the check-in beats were flowed from
+the record rather than asked, per the fully-autonomous contract, since this session's own transcript
+answers them: the load-bearing artifact was the checklist (twice re-read mid-build for the abort
+condition and the filter syntax), the pushback moment was C1's memory-default catch, and what the
+process missed is exactly what the suite structurally cannot see.
+
+**Artifact-drift measurement** (generating commit → HEAD): scope 0%, prd 4%, spec 29%, checklist 21%.
+All under the 50% `artifact_rewritten` threshold, so nothing logged. The spec and checklist deltas are
+item 12's docs sync rather than builder rewrites — no artifact was re-authored after generation.
+
+**Calibration check-in skipped:** `~/.claude/plugins/data/vibe-cartographer/friction.jsonl` does not
+exist, so there was nothing to calibrate. Note that the sessions dir now DOES exist (the gap six
+prior cycles flagged is fixed in v1.11.0), but only `/prd` wrote a terminal entry this cycle —
+`/scope`, `/spec`, `/checklist` and `/build` did not. Partial instrumentation is its own /evolve-cart
+signal, and a weaker one than a clean absence because it looks like coverage.
+
+**The register arithmetic, since the scope promised a number.** Predicted 51 open → 38. Actual **41**:
+51 − 12 closed = 39, plus F-093 and F-094 which this cycle opened. Exact, and the reflection argues
+the target itself was the wrong shape — a remediation cycle that reads carefully generates rows, so
+the honest target is rows closed, not a net register total.
+
+**Updated unified builder profile** — `projects_completed` 19 → 20, `last_project` set to this cycle,
+and a notes entry covering the three carryable patterns: rows get cheaper when someone reads the code
+(twice this cycle), remediation targets should be rows-closed not net-register, and checkpoints should
+be placed by evidence type rather than item count (2 of 2 found real defects).
+
+**Handoff:** cycle closed. Next cycle is F-091 (plugin theming) against the corrected diagnosis — the
+no-bump claim is verified: the host advertises `"1.0"` as a bare literal at
+[`App.xaml.cs:876`](src/ROROROblox.App/App.xaml.cs#L876) against ur-task's compiled
+`const string ContractVersion = "1.0"`, so a new `SubscribeThemeChanged` RPC is wire-additive and no
+existing plugin is rejected.
+
+## /scope
+
+**F-091's row was wrong a second time, and the recon caught it before the scope inherited it.**
+The row was corrected on 2026-08-10 to kill the claim *"every user-authored theme is already broken in
+every plugin."* The corrected cell then repeated that exact claim four sentences later: *"any id
+absent from the plugin's table falls back to brand, so every user-authored theme is already broken in
+every plugin."* `ResolveActive`
+(sibling repo `rororo-ur-task`, `src/Theming/HostThemeReader.cs:132-169`) checks
+the mirror, then falls through to `themes\<id>.json` at `:158-161` — an id absent from the mirror is
+the case that **works**. Fixed in the register in this run, marked as a second correction and as mine.
+
+A corrected row carrying its own original error is worse than an uncorrected one, because the
+correction reads as verification. That is the same failure the v1.18 reflection named five times, one
+level up: **the check that reports success while measuring something else.** Here the check was the
+word "CORRECTED."
+
+**Three claims the scope does NOT inherit, each verified against the tree rather than the row:**
+
+1. **Live repaint already works.** `HostThemeService` runs a `FileSystemWatcher` with a 300ms debounce
+   and re-applies on change. The plugin repaints today; it just cannot *obtain* a built-in palette.
+   The row's fix direction implies a push is needed to make repainting live. It is not.
+2. **The host has no theme-changed signal at all.** `IPluginEventBus` carries four events and none of
+   them is theming; `PreferencesWindow.OnThemeChanged` → `ThemeService.ApplyTo` is heard by nothing.
+   That bus event is net-new work the row does not mention, and it is the least glamorous item in the
+   cycle.
+3. **"A `PluginContract` version bump" is two numbers, and only one moves.** The NuGet package is at
+   **0.7.0**; the wire `contract_version` is the string `"1.0"`, compared by exact match at
+   `PluginHostService.cs:70`. The package bumps, the wire string does not, and that distinction is the
+   whole reason no plugin is rejected.
+
+**The cheap alternative is named rather than skipped.** `ThemeStore` already has a writer and a themes
+folder, so materialising built-ins to disk would make ur-task work today with no contract change and
+no plugin release. Rejected in scope with its real cost: it keeps all five storage couplings, and it
+turns `ListAsync`'s "built-in wins on id collision" from an in-memory rule into a file-on-disk race.
+A cut is only honest when the rejected option is stated at its strongest.
+
+**One design fork left open rather than defaulted.** How a plugin discovers whether the host supports
+the feed: catch `UNIMPLEMENTED` and fall back, or add a capability list to `HostInfo`. The second is
+field-additive and safe, and is also a standing commitment about how this contract advertises every
+future addition. Small now, load-bearing later — the class of call that should not be made by default
+in an autonomous run.
+
+**Zero deepening rounds.** The beats were flowed per the fully-autonomous contract; the brain dump,
+the research beat and the gap-sharpening were all answered by reading both trees, which is what a
+two-repo contract cycle needs instead of a web search. Este had already made the one genuine
+direction call this session ("full Cart cycle, additive contract") and set the standing exclusions.
+
+**Handoff:** `/prd`.
+
+## /prd
+
+**Zero deepening rounds.** Same justification as the last two cycles and it holds here for a different
+reason: this is a contract cycle against two trees that can be read, so the value a deepening round
+normally adds came from recon instead. That has now been the pattern twice running — on a remediation
+or contract cycle, **reading is the deepening round.**
+
+**Three expansions the scope did not contain, all from reading `PluginHostService`, `CapabilityInterceptor` and `RpcMethodCapabilityMap`:**
+
+1. **The scope named a push and only a push. A theme is state, and state needs a read.** A
+   subscribe-only design leaves a plugin that connects mid-session painted with its fallback until the
+   user happens to switch themes, which is most of the time. The contract already draws exactly this
+   line: `GetRunningAccounts` pairs with the launch/exit streams and `HostInfo.multi_instance_state`
+   pairs with the mutex stream, while `SubscribeMemoryPressure` has no paired read because pressure is
+   an *occurrence*. Epic 1 is the read; it did not exist an hour ago.
+2. **Adding an RPC to the proto and forgetting the capability map crashes the host at startup.**
+   `RpcMethodCapabilityMap.AssertExhaustive()` refuses to boot on an unmapped method, and
+   `CapabilityInterceptor` fails closed on one at call time — both deliberately, after `UpdateUI` and
+   `RemoveUI` once shipped ungated. So the scope's cut "no capability gate on the theme feed" needed
+   restating precisely: it means **registered and explicitly marked as requiring nothing**, which is
+   the opposite of absent. Absent is a startup crash. Story 3.2.
+3. **An ungated stream would be the first of its kind.** Every existing `Subscribe*` requires a
+   capability; every ungated entry is a one-shot read. The scope's reasoning for not gating colour is
+   sound and it is still a deliberate break in an established pattern, so the PRD flags it for `/spec`
+   to affirm rather than inherit.
+
+**One thing the PRD says out loud that the scope let slide.** Scope closed with "Register: F-091
+closes. 38 open." The row's evidence is a plugin window painted the wrong colour, and the host leg
+alone does not repaint it. **F-091 does not close until the ur-task leg ships.** Calling it closed on
+the host merge would be precisely the register defect this repo already wrote a `CLAUDE.md` rule
+about, one cycle after the reflection named net-register targets as the wrong shape.
+
+**One candidate finding investigated and declined.** `RowBadgeSpec.color_hex` lets a plugin paint a
+colour into the *host's* window, which is the same defect inverted. Not opened as a row and not pulled
+into scope: `WpfPluginUIHost` is still a stub that logs and renders nothing, so there is no surface
+mis-coloured today. Recorded in "What we'd add" so it lands when that UI does. Declining a finding on
+evidence is the same discipline as opening one.
+
+**Acceptance criteria written harder than usual in one place.** Story 3.3 requires the proof to run in
+`PluginTestHarness` — real Kestrel, real named pipe, real client — rather than in-process stubs. The
+v1.18 reflection's sharpest gap was that the suite constructs no `Window`, so on-screen claims end up
+owed to a human. This cycle's interesting behaviour is a wire protocol and the harness for it already
+exists. That is the rare case where the gap closes by spending what is already built.
+
+**Handoff:** `/spec`. Two forks arrive with it: host-capability discovery (deliberately undefaulted)
+and whether ur-task keeps its disk reader as the no-host fallback while deleting the mirror — which
+may resolve to a third answer rather than either horn.
+
+## /spec
+
+**Two of the PRD's four open questions closed on inspection, and one of them was the fork `/scope`
+deliberately refused to default.** Both closed the same way: the mechanism already existed.
+
+**The discovery fork dissolved into `minHostVersion`.** `PluginInstaller:87-101` already refuses an
+install whose manifest requires a newer host, with a user-facing "update RoRoRo and try again", and
+`MarketplacePlan:72-80` greys the catalogue entry before the user clicks. The decisive evidence was the
+comment sitting above that gate, which names this exact scenario as its reason for existing: *"so the
+user gets a 'this needs a newer RoRoRo' message instead of a downstream symptom (the plugin's gRPC
+client failing because it expects a method this host doesn't expose, for instance)."* Neither proposed
+design was needed. Building a capability-advertisement mechanism next to a working version gate would
+have been a second answer to a solved question, plus a growing untyped string vocabulary to maintain
+alongside `PluginCapability`.
+
+**Second consecutive cycle where the highest-consequence open fork answered itself on a single read** —
+v1.18's was `SectionHeadingStyle` already shipping with precisely the margin the missing level needed.
+Two data points is a pattern worth naming: on a mature codebase, the fork that looks like a design
+decision is often a lookup. Read before deciding.
+
+**The palette is eleven slots, not ten, and it must be the APPLIED values.** Scope and PRD both said
+"every slot the theme defines," reasoning from the `Theme` record's ten. `ApplyTo` writes eleven — the
+extra is `InteractiveEdgeBrush`, derived by `EdgeRemediation` and deliberately absent from the record
+so *"the contract does not grow."* And `ApplySlot` early-returns on an unparseable hex, leaving the
+previous brush, which the file itself describes as *"the record can say one thing while the app shows
+another"* — the stated reason `ContrastPairGateTests` measures brushes rather than the record.
+
+Shipping the record would hand a plugin two defects: no interactive edge unless it re-implements
+`ContrastGuard` and `EdgeRemediation` (a **sixth** copy of host logic, in another repo — the cycle's own
+defect one level up and worse), and values the host is not displaying. The feed carries what `ApplyTo`
+produced, read back from the dictionary. **The contrast gate had already reached this conclusion for
+the same reason; the feed inherits its reasoning rather than re-litigating it.**
+
+**The PRD's fallback question resolved to its third answer, as flagged.** Not "keep the reader" and not
+"collapse to Brand" as a pair of horns — **keep the `Brand` constant, delete the reader.** Every
+coupling the reader embodies is what the cycle removes, so keeping it for the offline case keeps all
+five. The cost is that a plugin launched while RoRoRo is closed paints brand rather than the user's last
+theme, which is already flatline's behaviour today and self-corrects on connect.
+
+**Two deliberate departures from the stream pattern being copied,** both structural rather than
+documented. Capacity **1** instead of 64, because `DropOldest` at depth 1 makes "a stalled plugin
+catches up to current and never replays a backlog" a property of the channel rather than a comment — the
+existing streams carry occurrences where every item matters, this carries state where only the last one
+does. And the current palette is written **before** the loop, so a subscriber is painted on subscribe.
+
+**A bridge adapter rather than an injected bus**, because `Plugins/Adapters/` exists for exactly this and
+every sibling does it that way. Injecting `IPluginEventBus` into `ThemeService` would point `Theming` at
+`Plugins`, inverting the direction every other bridge runs. Matched the established pattern first.
+
+**PRD edge case #1 proven rather than defined.** `ApplyAtStartup()` at `App.xaml.cs:167`;
+`PluginHostStartupService.StartAsync` dispatched at `:1998`. A theme is always applied before the pipe
+accepts a connection, so there is no "no palette yet" state to represent.
+
+**Self-review caught one under-specification before it reached `/checklist`.** §4.3 seeded the adapter
+cache from `ThemeService.CurrentPalette`, a member the spec introduced by implication and never
+declared. §4.2 now names all three new `ThemeService` members in a table. That is the class of gap
+`/build` stumbles on at 2am.
+
+**Zero deepening rounds.** Third cycle running, same justification, and it is now clearly the right
+default for this shape of work: on a contract cycle against two readable trees, reading IS the deepening
+round.
+
+**Handoff:** `/checklist`. Sequencing note: the host leg is fully releasable on its own and the plugin
+leg lives in another repository, so **the register flip must not sit in the host leg** — F-091's evidence
+is a mis-coloured plugin window and the host merge does not repaint it.
+
+## /checklist
+
+**Nine items, two repositories, two checkpoints.** Within the 8-12 band without consolidating anything.
+Autonomous, commit-per-item, branch `feat/plugin-theme-feed` already carrying reflection + scope + PRD
++ spec.
+
+**Two facts measured before sequencing, each of which removed a risk the spec left open:**
+
+1. **The harness has already exercised a streaming RPC end-to-end.**
+   `SubscribeMemoryPressure_ProductionAccessor_ReceivesRaisedSnapshot`
+   (`EndToEndContractTests.cs:1025`) raises on the real bus and reads from `ResponseStream` over the
+   real pipe. There was a live risk that streams over a named pipe were untested territory and item 4
+   would quietly degrade to in-process stubs while still reporting green. It is not, and there is a
+   proven template to copy. **Third "it already exists" find in this cycle**, after `minHostVersion` and
+   `SectionHeadingStyle` the cycle before.
+2. **`new PluginHostService(...)` appears at 30 call sites** — 17 harness, 13 unit. A required 13th
+   constructor parameter edits all 30 for zero behavioural gain. Invisible from the spec, and the
+   largest mechanical cost in the cycle.
+
+**The 30-call-site problem, and why the cheap answer needed a guard.** An optional trailing parameter
+defaulting to null leaves all 30 untouched. That is obviously right and it opens a hole: **an optional
+dependency silently unwired in production is this session's recurring failure class wearing a new
+costume.** Item 5 therefore carries a test that resolves `PluginHostService` from the real DI container
+and asserts the palette source is not null. The cheap answer ships with the thing that makes it safe,
+in the same item.
+
+**Item 4 exists in its position for one reason.** The harness tests are written *before* the handlers so
+they go red with `UNIMPLEMENTED`, and item 5 turns them green. Its Verify does not say "run the tests"
+— it says **read the failure text and confirm three `UNIMPLEMENTED`s and nothing else**, because a pass,
+a skip, or a failure for any other reason all mean the test never reached the wire. Item 5's Verify then
+requires `git diff` to show those three test bodies unmodified. **Five separate instances of a check
+reporting success while measuring something else shipped across v1.17 and v1.18**; this pair of Verify
+fields is the direct response.
+
+**Item 2 carries a five-minute adversarial check** that is unusual for a checklist item: deliberately
+omit one capability-map entry, confirm the app refuses to start, then restore it. `AssertExhaustive` is
+the guard protecting the highest-consequence property in the cycle, and a guard nobody has watched fire
+is a guard nobody has tested. Same discipline as feeding `flatline-lab` to the contrast gate to prove it
+can fail.
+
+**Item 7 exists so item 8's diff is purely the swap.** Its Verify explicitly requires confirming the bug
+**still reproduces** — brand, midnight and magenta-heat applying while flatline does not — because item
+8 has nothing to prove otherwise.
+
+**The register flip is in item 9, after the plugin leg, and the reasoning is written into the file
+twice.** F-091's evidence is a mis-coloured plugin window; no host merge repaints it. The checklist also
+states the honest fallback out loud: if item 8 cannot land, the host leg ships alone and **F-091 stays
+open**, which is a fine outcome. An item that can only succeed is how scope creeps, and a row that can
+only close is how a register starts describing a state that does not exist.
+
+**Zero deepening rounds**, consistent with builder-mode habit on `/checklist` specifically — the heavy
+thinking happened at `/spec`, and this was translation.
+
+**Handoff:** `/build`. Autonomous, halting at C1 (after item 5) and C2 (after item 8).
+
+## /build
+
+Autonomous, no pauses (builder asked for the run to continue unattended). **Nine items, nine
+commits in RoRoRo, one in `rororo-ur-task`.** Suite 1490 → 1500 unit plus 22 harness, green at
+every step. **C1 passed on evidence. C2 could not be run and is owed** — see below.
+
+### The two things this cycle found that no plan predicted
+
+**1. `IThemeAppliedSource` was never registered, and only the DI guard noticed.** Item 5's wiring
+test — the one written specifically to justify making the palette source an *optional* constructor
+parameter — failed on its first run. `ThemeService` is registered as a concrete type only, so
+resolving `IThemeAppliedSource` threw, `ThemeFeedAdapter` could not be constructed at all, and
+`PluginHostService`'s factory would have taken the entire plugin host down at startup. Every unit
+test passed. The harness passed, because it supplies its own stub source. **The app a user runs
+would have lost plugin support completely**, and nothing else in 1500 tests would have said a word.
+
+That is the same shape as the 2026-08-01 wrong-FPS-cap bug the sibling DI test exists for: the
+mechanism exists, every call site uses it, and the real object graph still resolves nothing. An
+optional constructor parameter is a convenience with a bill attached, and the bill is a test that
+builds the container the app actually builds. It was paid in the same item, and it paid for itself
+immediately.
+
+**2. `ROROROblox.PluginContract` has not been published since 0.4.0.** nuget.org carries 0.1.0,
+0.3.0 and 0.4.0. This repo's csproj said **0.7.0**, and `rororo-ur-task` consumed **0.4.0**. Three
+package versions were bumped and never released, so the "track the NuGet version, not the app
+version" advice in the author guide has been describing a feed three versions stale. The plugin leg
+built here against a local pack; publishing is outward-facing and was left as the builder's call.
+
+### Two sequencing corrections made mid-build
+
+**The optional constructor parameter moved from item 5 to item 4.** The wire tests cannot compile
+without it, and a test that cannot compile cannot be watched failing — which is item 4's entire
+reason for existing. Structure moved forward, behaviour stayed in item 5.
+
+**Item 8 absorbed the deletion of seven tests.** `HostThemeReaderTests` covered the machinery being
+removed. Deleting them with it is the point rather than collateral: a suite still covering that
+reader would report healthy coverage of code the plugin no longer runs. What replaced them asserts
+the **absence** of the mechanism — one palette constant, no method for reading the host's storage —
+because the defect was never "flatline is missing from the table", it was that a table existed.
+
+### Two adversarial checks the checklist demanded, both run
+
+**Item 1's read-back test was falsified before it was trusted.** Patching `ReadBack` to report the
+authored value instead turned exactly that one test red and left the other three green, then
+reverted. **Item 2's capability-map guard was watched firing** — removing the `GetTheme` entry
+turned the suite red on `AssertExhaustive`, then restored. A guard nobody has seen fail is a guard
+nobody has tested, and this session's whole theme is checks that report success while measuring
+something else.
+
+**Item 4's failure text was read, not just its count.** Three `Status(StatusCode="Unimplemented")`
+raised from inside `MoveNextCore` on the client stream reader, which is only reachable if the call
+genuinely crossed the pipe. Item 5's verify then required `git diff` against item 4's commit to show
+the three test bodies unmodified. It showed no change to the file at all.
+
+### What is owed, stated plainly
+
+**C2 never ran.** Its acceptance is four built-in themes plus a user theme repainting a real Ur Task
+window, and no suite in either repository spans two processes. The code is written and both repos
+build; nobody has watched flatline reach the plugin. **F-091 is therefore left OPEN**, against the
+checklist's own instruction to flip it in item 9 — closing a row whose evidence nobody has observed
+is precisely the register defect this repo has a rule about.
+
+Also owed: two `HotkeyServiceTests` in ur-task fail with win32 1409 because `Ctrl+Shift+R` is held
+by a running instance on this machine. Environmental, and confirmed pre-existing by stashing.
+
+`PluginClientIntegrationTests` in ur-task had **already** stopped compiling against RoRoRo's
+`PluginHostService`, three parameters behind, before this branch existed. The cross-repo
+`ProjectReference` means that suite rots silently whenever the host's contract surface grows:
+RoRoRo's CI does not build it, and ur-task's CI has no RoRoRo checkout. Repaired in passing, and it
+is a standing hazard rather than a fixed one.
+
+**Handoff:** PR both branches. F-091 closes after the eyes-on walk, not before.

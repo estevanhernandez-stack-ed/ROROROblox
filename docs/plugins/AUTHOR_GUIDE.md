@@ -334,11 +334,90 @@ await foreach (var snap in stream.ResponseStream.ReadAllAsync())
 
 `mins_to_ceiling` is `0` when there's no valid projection (not enough observation time yet, flat growth, or a failed system-memory read this tick) — **never** read `0` as "zero minutes left, act now." Gate your reaction on `over_cap` / `is_target`, and treat `mins_to_ceiling` as informational context once you're already acting.
 
+## Match the host's theme (contract 0.8.0+)
+
+**Do not read RoRoRo's `settings.json` or its `themes` folder.** That is not a supported
+integration, it will break, and it has already broken once — this section exists because of it.
+
+RoRoRo hands you its active palette over the same channel as everything else. Two calls, because a
+theme is *state* rather than an event: ask for it once when you connect, then subscribe so you
+follow along.
+
+```csharp
+// Paint immediately on connect. Do not wait for a change -- most sessions never
+// touch the theme picker, so a subscribe-only plugin sits on its default forever.
+var palette = await client.GetThemeAsync(new Empty(), headers: headers);
+Apply(palette);
+
+// Then follow. The first item you receive is the current palette again (harmless,
+// and it means a plugin that only subscribes still paints correctly).
+using var call = client.SubscribeThemeChanged(new SubscriptionRequest(), headers: headers);
+while (await call.ResponseStream.MoveNext(ct))
+{
+    Apply(call.ResponseStream.Current);
+}
+```
+
+Neither call needs a capability. A colour cannot hurt anyone, and a user who could decline this
+would be declining your ability to look correct.
+
+### The slots
+
+Every field is `#RRGGBB`. Ten come from the theme's author; the eleventh is derived by the host.
+
+| Field | What it is for |
+| --- | --- |
+| `bg` | Window background, the field everything sits on |
+| `cyan` | Primary accent — selection, focus, the affirmative action |
+| `magenta` | Secondary accent — paired with cyan, never used alone as the only signal |
+| `white` | Primary text |
+| `muted_text` | Secondary text, labels, anything deliberately quieter |
+| `divider` | Hairlines and separators |
+| `row_bg` | List-row and card surfaces, one step up from `bg` |
+| `row_expired_bg` | Row surface for something stale or expired |
+| `row_expired_accent` | The warning accent that goes with it |
+| `navy` | The deep surface. Equal to `bg` in every built-in theme, and free to differ in a user's |
+| `interactive_edge` | Border for interactive controls. **Derived, see below** |
+
+`interactive_edge` is the one you cannot compute yourself. An interactive control's border has to
+clear WCAG 1.4.11's 3:1 against the surface behind it, and an authored `divider` frequently does
+not — every built-in theme included, since `navy` equals `bg` in all of them and a secondary
+button's fill therefore contributes nothing. RoRoRo substitutes a derived value when that happens,
+and whether it substitutes depends on whether the theme is built in and on an answer the theme's
+author may have given. Use what arrives; do not try to re-derive it.
+
+Nothing else travels. No fonts, no metrics, no layout, and no theme name or id — deliberately. An
+id would need looking up, and the only place to look it up is inside RoRoRo, which is the whole
+problem this replaced.
+
+### Applying it in WPF
+
+Replace the brush instance, do not mutate its `Color`. `{DynamicResource}` consumers re-bind when a
+dictionary entry changes and ignore mutations to a held brush, and a BAML-loaded brush can come
+back frozen:
+
+```csharp
+var brush = new SolidColorBrush(color);
+brush.Freeze();
+Application.Current.Resources["BgBrush"] = brush;   // replacement, not mutation
+```
+
+### If RoRoRo is old, or not running
+
+Declare `minHostVersion` in your manifest as the RoRoRo version that ships the feed. The installer
+refuses to install you onto an older host and tells the user to update, so you never have to probe
+for support at runtime.
+
+Handle the calls failing anyway — RoRoRo not running is a normal state, and a plugin should stay
+usable when it is. Log it, keep your own default palette, and carry on. **A theming failure must
+never take a plugin down.**
+
 ## Versioning policy (provisional)
 
 - `ROROROblox.PluginContract` follows semver. Breaking changes to method signatures or message shapes bump the major.
 - New capabilities (additive) bump the minor.
 - RoRoRo's host-side handshake check rejects `contractVersion` mismatches strictly — there is no auto-negotiation in v1.4.
+- **The NuGet package version and the wire `contractVersion` are different numbers.** Package 0.8.0 added the theme feed while the wire version stayed `"1.0"` — that is exactly why it broke no existing plugin. Bump your package reference freely; the handshake string only moves on a genuinely breaking change.
 - The contract version is independent from RoRoRo's app version. RoRoRo 1.4 ships contract 1.0; RoRoRo 1.5 might still ship contract 1.0, or might bump to 1.1 — track the NuGet version, not the app version.
 
 ## Where to ask

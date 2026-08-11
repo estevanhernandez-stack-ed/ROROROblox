@@ -13,7 +13,7 @@ namespace ROROROblox.App.Theming;
 /// so every <c>{StaticResource}</c> reference re-renders with the new colors. SolidColorBrush
 /// is unfrozen by default — assigning to <c>Color</c> triggers WPF's render invalidation.
 /// </summary>
-internal sealed class ThemeService
+internal sealed class ThemeService : IThemeAppliedSource
 {
     private readonly IThemeStore _store;
     private readonly IAppSettings _settings;
@@ -27,6 +27,26 @@ internal sealed class ThemeService
     }
 
     public Theme? CurrentTheme { get; private set; }
+
+    /// <summary>
+    /// The active theme as <b>applied</b> — eleven slots including the derived interactive edge.
+    /// Null only before the first apply, which on the real startup path happens at
+    /// <c>App.OnStartup</c> long before anything can observe this.
+    /// </summary>
+    public ResolvedPalette? CurrentPalette { get; private set; }
+
+    /// <summary>
+    /// Raised after a theme has been applied and both <see cref="CurrentTheme"/> and
+    /// <see cref="CurrentPalette"/> are set, so a handler can never catch this service
+    /// mid-adoption.
+    /// <para>
+    /// A plain <c>Action</c> of a Core type, deliberately: this class knows nothing about plugins.
+    /// The bridge that forwards this to the plugin event bus lives in <c>Plugins/Adapters</c> with
+    /// every other bridge, so the dependency runs Plugins → Theming like all its siblings rather
+    /// than inverting for this one case.
+    /// </para>
+    /// </summary>
+    public event Action<ResolvedPalette>? ThemeApplied;
 
     /// <summary>
     /// Set when the active theme is one somebody wrote themselves, its interactive edge had to
@@ -246,12 +266,17 @@ internal sealed class ThemeService
             return;
         }
 
-        var decision = ApplyTo(resources, theme, edgeAnswer);
+        var (decision, palette) = ApplyTo(resources, theme, edgeAnswer);
 
         PendingEdgeQuestion = QuestionFor(theme, decision);
 
         CurrentTheme = theme;
+        CurrentPalette = palette;
         _log.LogInformation("Applied theme {Id} ({Name}).", theme.Id, theme.Name);
+
+        // Last, and after both properties are set: a handler that reads CurrentPalette from inside
+        // this callback must see the palette it was just handed, not the previous one.
+        ThemeApplied?.Invoke(palette);
     }
 
     /// <summary>
@@ -279,9 +304,19 @@ internal sealed class ThemeService
     /// place - so the record can say one thing while the app shows another.
     /// </para>
     /// Returns the remediation decision so the caller can set <see cref="PendingEdgeQuestion"/>
-    /// without recomputing it.
+    /// without recomputing it, and the <see cref="ResolvedPalette"/> that was actually written.
+    /// <para>
+    /// The palette is <b>read back out of the dictionary</b> after every write rather than
+    /// accumulated as we go, and that is not a stylistic choice. <see cref="ApplySlot"/> returns
+    /// early on a hex that will not parse and leaves the previous brush in place, so an
+    /// accumulate-as-you-write palette would report a colour the app is not showing — the exact
+    /// record-versus-screen gap this method's own remarks warn about. Read-back is the only version
+    /// that is correct in that case, and being correct in that case is why anything downstream can
+    /// trust the palette at all.
+    /// </para>
     /// </summary>
-    internal static EdgeRemediation.Decision ApplyTo(ResourceDictionary resources, Theme theme, bool? edgeAnswer)
+    internal static (EdgeRemediation.Decision Decision, ResolvedPalette Palette) ApplyTo(
+        ResourceDictionary resources, Theme theme, bool? edgeAnswer)
     {
         ApplySlot(resources, ThemeSlots.Bg, theme.Bg);
         ApplySlot(resources, ThemeSlots.Cyan, theme.Cyan);
@@ -308,7 +343,33 @@ internal sealed class ThemeService
             alreadyAnswered: edgeAnswer.HasValue,
             declined: edgeAnswer == false);
         ApplySlot(resources, ThemeSlots.InteractiveEdge, EdgeRemediation.Resolve(decision, theme.Navy, theme.Divider));
-        return decision;
+        return (decision, ReadBack(resources));
+    }
+
+    /// <summary>
+    /// The eleven slots as they now stand in the dictionary. Reads the brushes rather than the
+    /// theme record — see <see cref="ApplyTo"/>'s remarks for why that difference is load-bearing.
+    /// A slot that somehow holds something other than a <see cref="SolidColorBrush"/> reports
+    /// <c>#000000</c>; that cannot happen through <see cref="ApplySlot"/>, and reporting a wrong
+    /// colour beats inventing a plausible one.
+    /// </summary>
+    private static ResolvedPalette ReadBack(ResourceDictionary resources) => new(
+        Bg: HexAt(resources, ThemeSlots.Bg),
+        Cyan: HexAt(resources, ThemeSlots.Cyan),
+        Magenta: HexAt(resources, ThemeSlots.Magenta),
+        White: HexAt(resources, ThemeSlots.White),
+        MutedText: HexAt(resources, ThemeSlots.MutedText),
+        Divider: HexAt(resources, ThemeSlots.Divider),
+        RowBg: HexAt(resources, ThemeSlots.RowBg),
+        RowExpiredBg: HexAt(resources, ThemeSlots.RowExpiredBg),
+        RowExpiredAccent: HexAt(resources, ThemeSlots.RowExpiredAccent),
+        Navy: HexAt(resources, ThemeSlots.Navy),
+        InteractiveEdge: HexAt(resources, ThemeSlots.InteractiveEdge));
+
+    private static string HexAt(ResourceDictionary resources, string key)
+    {
+        var c = (resources[key] as SolidColorBrush)?.Color ?? Colors.Black;
+        return $"#{c.R:X2}{c.G:X2}{c.B:X2}";
     }
 
     /// <summary>

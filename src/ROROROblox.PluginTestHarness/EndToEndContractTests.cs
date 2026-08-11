@@ -3,6 +3,7 @@ using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.App.Plugins;
+using ROROROblox.App.Plugins.Adapters;
 using ROROROblox.Core.Diagnostics;
 using ROROROblox.PluginContract;
 
@@ -1516,4 +1517,247 @@ public class EndToEndContractTests
         public void Update(string h, string l) { }
         public void Remove(string h) => RemovedHandles.Add(h);
     }
+
+    // =====================================================================
+    // v1.19 theme feed, over the wire.
+    //
+    // Same shape as SubscribeMemoryPressure_ProductionAccessor_ReceivesRaisedSnapshot above,
+    // which is the standing proof that a streaming RPC can be exercised end-to-end here at all:
+    // real Kestrel, real named pipe, real RoRoRoHostClient, no in-process shortcut.
+    //
+    // THESE WERE WRITTEN BEFORE THE HANDLERS EXISTED AND OBSERVED FAILING WITH UNIMPLEMENTED.
+    // That ordering is the point. A gate authored after its subject can pass without ever having
+    // been able to fail, and five of those shipped across v1.17 and v1.18: checklist filters that
+    // matched zero tests, a pre-commit hook that scanned only staged files while CI sat red, a
+    // rendered gate that could not fail its own nominated proof, a centring test that passed
+    // against markup broken three separate ways, and a fence that read prose as code. Every one
+    // of them looked exactly like coverage.
+    // =====================================================================
+
+    private static readonly ROROROblox.Core.Theming.ResolvedPalette FlatlinePalette = new(
+        Bg: "#101010", Cyan: "#D4D4D4", Magenta: "#6E6E6E", White: "#F5F5F5",
+        MutedText: "#989898", Divider: "#333333", RowBg: "#2A2A2A",
+        RowExpiredBg: "#3D3D3D", RowExpiredAccent: "#D4D4D4", Navy: "#101010",
+        InteractiveEdge: "#D4D4D4");
+
+    private static readonly ROROROblox.Core.Theming.ResolvedPalette BrandPalette = new(
+        Bg: "#0F1F31", Cyan: "#17D4FA", Magenta: "#F22F89", White: "#FFFFFF",
+        MutedText: "#9AA8B8", Divider: "#1F3149", RowBg: "#15263A",
+        RowExpiredBg: "#3A2D14", RowExpiredAccent: "#F1B232", Navy: "#0F1F31",
+        InteractiveEdge: "#4A6076");
+
+    /// <summary>Hands the host a fixed palette. The real implementation is ThemeFeedAdapter.</summary>
+    private sealed class StubThemePaletteSource : IThemePaletteSource
+    {
+        public ROROROblox.Core.Theming.ResolvedPalette? Latest { get; set; }
+    }
+
+    /// <summary>
+    /// A plugin declaring NO capabilities whatsoever. The theme feed is deliberately ungated, so
+    /// if any of these tests ever starts needing a grant, that is a real regression rather than a
+    /// test-setup detail: a capability a user can decline is an ability to look correct a user can
+    /// decline.
+    /// </summary>
+    private static SingleInstalledPluginLookup UngatedThemePlugin() => new(new InstalledPlugin
+    {
+        Manifest = new PluginManifest
+        {
+            SchemaVersion = 1,
+            Id = "626labs.test",
+            Name = "Test",
+            Version = "1.0",
+            ContractVersion = "1.0",
+            Publisher = "626",
+            Description = "x",
+            Capabilities = Array.Empty<string>(),
+        },
+        InstallDir = Path.GetTempPath(),
+        Consent = new ConsentRecord
+        {
+            PluginId = "626labs.test",
+            GrantedCapabilities = Array.Empty<string>(),
+            AutostartEnabled = false,
+        },
+    });
+
+    private static PluginHostService ThemeHost(
+        InProcessPluginEventBus bus, IThemePaletteSource? palettes) =>
+        new(
+            UngatedThemePlugin(), "1.19.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            bus,
+            new NoOpLauncher(),
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider(),
+            new StubActivityMarker(),
+            new StubAccountStopper(),
+            palettes);
+
+    private static CapabilityInterceptor UngatedInterceptor() => new(
+        currentPluginAccessor: () => null,
+        consentLookup: _ => Array.Empty<string>());
+
+    [Fact]
+    public async Task GetTheme_ReturnsTheActivePalette_OverTheWire()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+        var palettes = new StubThemePaletteSource { Latest = FlatlinePalette };
+
+        var startup = new PluginHostStartupService(
+            ThemeHost(new InProcessPluginEventBus(), palettes), UngatedInterceptor(),
+            NullLogger<PluginHostStartupService>.Instance, pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+            var headers = new Metadata { { "x-plugin-id", "626labs.test" } };
+
+            var theme = await client.GetThemeAsync(new Empty(), headers: headers);
+
+            Assert.Equal("#101010", theme.Bg);
+            Assert.Equal("#D4D4D4", theme.Cyan);
+            Assert.Equal("#6E6E6E", theme.Magenta);
+            Assert.Equal("#F5F5F5", theme.White);
+            Assert.Equal("#989898", theme.MutedText);
+            Assert.Equal("#333333", theme.Divider);
+            Assert.Equal("#2A2A2A", theme.RowBg);
+            Assert.Equal("#3D3D3D", theme.RowExpiredBg);
+            Assert.Equal("#D4D4D4", theme.RowExpiredAccent);
+            Assert.Equal("#101010", theme.Navy);
+            // The derived slot: the one a plugin could never compute for itself without a second
+            // copy of EdgeRemediation, which is why it travels on the wire.
+            Assert.Equal("#D4D4D4", theme.InteractiveEdge);
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task SubscribeThemeChanged_PushesTheNewPalette_OverTheWire()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+        var bus = new InProcessPluginEventBus();
+        var palettes = new StubThemePaletteSource { Latest = BrandPalette };
+
+        var startup = new PluginHostStartupService(
+            ThemeHost(bus, palettes), UngatedInterceptor(),
+            NullLogger<PluginHostStartupService>.Instance, pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+            var headers = new Metadata { { "x-plugin-id", "626labs.test" } };
+
+            using var call = client.SubscribeThemeChanged(new SubscriptionRequest(), headers: headers);
+
+            // First item is the CURRENT palette, written before the loop. Covered on its own in
+            // the next test; read past it here to get at the pushed one.
+            var seeded = await call.ResponseStream.MoveNext(CancellationToken.None)
+                .WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.True(seeded);
+            Assert.Equal("#0F1F31", call.ResponseStream.Current.Bg);
+
+            palettes.Latest = FlatlinePalette;
+            bus.RaiseThemeChanged(FlatlinePalette);
+
+            var moved = await call.ResponseStream.MoveNext(CancellationToken.None)
+                .WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.True(moved);
+
+            var pushed = call.ResponseStream.Current;
+            Assert.Equal("#101010", pushed.Bg);
+            Assert.Equal("#D4D4D4", pushed.Cyan);
+            Assert.Equal("#D4D4D4", pushed.InteractiveEdge);
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    /// <summary>
+    /// A subscriber is painted on subscribe, before anything changes. Without this, a plugin that
+    /// only ever subscribes sits on its fallback colour until the user happens to touch the theme
+    /// picker — which most sessions never do, so "most of the time" would be the broken case.
+    /// </summary>
+    [Fact]
+    public async Task SubscribeThemeChanged_SendsCurrentPaletteImmediately_BeforeAnyChange()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+        var palettes = new StubThemePaletteSource { Latest = FlatlinePalette };
+
+        var startup = new PluginHostStartupService(
+            ThemeHost(new InProcessPluginEventBus(), palettes), UngatedInterceptor(),
+            NullLogger<PluginHostStartupService>.Instance, pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+            var headers = new Metadata { { "x-plugin-id", "626labs.test" } };
+
+            using var call = client.SubscribeThemeChanged(new SubscriptionRequest(), headers: headers);
+
+            // Nothing is raised on the bus at any point in this test.
+            var moved = await call.ResponseStream.MoveNext(CancellationToken.None)
+                .WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.True(moved);
+            Assert.Equal("#101010", call.ResponseStream.Current.Bg);
+            Assert.Equal("#D4D4D4", call.ResponseStream.Current.InteractiveEdge);
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    /// <summary>
+    /// The regression guard, and the highest-consequence line in the cycle. The handshake compares
+    /// contract_version by exact string match, so had the theme addition moved that literal, every
+    /// plugin in existence would be rejected on the next launch. This one passes from the moment
+    /// it is written — it is here to catch a future change, not to drive this one.
+    /// </summary>
+    [Fact]
+    public async Task Handshake_WithContractVersion10_StillAccepted_AfterTheThemeAddition()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+
+        var startup = new PluginHostStartupService(
+            ThemeHost(new InProcessPluginEventBus(), palettes: null), UngatedInterceptor(),
+            NullLogger<PluginHostStartupService>.Instance, pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+
+            var reply = await client.HandshakeAsync(new HandshakeRequest
+            {
+                PluginId = "626labs.test",
+                ManifestSha256 = "",
+                ContractVersion = "1.0",
+            });
+
+            Assert.True(reply.Accepted, reply.RejectReason);
+            Assert.Equal("1.0", reply.ContractVersion);
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
 }

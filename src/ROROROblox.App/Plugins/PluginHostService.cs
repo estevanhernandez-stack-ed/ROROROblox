@@ -27,6 +27,21 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     private readonly IAccountActivityMarker _activityMarker;
     private readonly IPluginAccountStopper _accountStopper;
 
+    /// <summary>
+    /// Source of the host's active palette. <b>Optional on purpose, and the exception among these
+    /// dependencies.</b> PluginHostService is constructed at 30 places across the two test
+    /// projects; making this required would edit all 30 for no behavioural gain in 29 of them.
+    /// <para>
+    /// Null means "this host has no theme feed configured" — GetTheme fails cleanly and the
+    /// subscription ends rather than hanging. That is correct for a test that does not care about
+    /// theming and <b>wrong everywhere else</b>, so an optional dependency silently unwired in
+    /// production would be a real defect. <c>ThemeFeedIsWiredInProductionTests</c> resolves this
+    /// service from the real DI container and asserts this field is not null; that test is the
+    /// price of the convenience.
+    /// </para>
+    /// </summary>
+    private readonly Adapters.IThemePaletteSource? _themePalettes;
+
     public PluginHostService(
         IInstalledPluginsLookup registry,
         string hostVersion,
@@ -38,7 +53,8 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         PluginUITranslator uiTranslator,
         IActivitySnapshotProvider activityProvider,
         IAccountActivityMarker activityMarker,
-        IPluginAccountStopper accountStopper)
+        IPluginAccountStopper accountStopper,
+        Adapters.IThemePaletteSource? themePalettes = null)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _hostVersion = hostVersion ?? throw new ArgumentNullException(nameof(hostVersion));
@@ -51,6 +67,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         _activityProvider = activityProvider ?? throw new ArgumentNullException(nameof(activityProvider));
         _activityMarker = activityMarker ?? throw new ArgumentNullException(nameof(activityMarker));
         _accountStopper = accountStopper ?? throw new ArgumentNullException(nameof(accountStopper));
+        _themePalettes = themePalettes;
     }
 
     public override Task<HandshakeResponse> Handshake(HandshakeRequest request, ServerCallContext context)
@@ -307,6 +324,93 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
             channel.Writer.TryComplete();
         }
     }
+
+    // =====================================================================
+    // Theming (v1.19). Two RPCs because a theme is STATE, not an occurrence: GetTheme answers
+    // "what colour are you right now", the stream answers "tell me when that changes". Both are
+    // ungated in RpcMethodCapabilityMap, deliberately and with the reasoning recorded there.
+    //
+    // Both send resolved colours and never a theme id. A plugin holding an id needs somewhere to
+    // look it up, and the only "somewhere" was this app's own settings file and themes folder --
+    // which is F-091, and which worked for user themes (files) and could never work for built-ins
+    // (records in host code).
+    // =====================================================================
+
+    public override Task<ThemePalette> GetTheme(Empty request, ServerCallContext context)
+    {
+        var palette = _themePalettes?.Latest;
+        if (palette is null)
+        {
+            // Either no feed configured (a test that does not care about theming) or no theme
+            // applied yet (not reachable in production -- ApplyAtStartup runs long before the pipe
+            // binds). FailedPrecondition rather than an empty palette: a plugin can fall back to
+            // its own default, and cannot mistake eleven empty strings for a colour scheme.
+            throw new RpcException(new Status(StatusCode.FailedPrecondition,
+                "No theme has been applied yet."));
+        }
+        return Task.FromResult(ToProto(palette));
+    }
+
+    public override async Task SubscribeThemeChanged(
+        SubscriptionRequest request,
+        IServerStreamWriter<ThemePalette> responseStream,
+        ServerCallContext context)
+    {
+        // Capacity 1, not the 64 the four event streams above use, and DropOldest. Those carry
+        // occurrences where every item matters; this carries state where only the latest one does.
+        // A plugin that stalls through three theme switches wants the theme that is on screen now,
+        // not a replay of the two the user already moved past -- and at depth 1 that is a property
+        // of the channel rather than a promise in a comment.
+        var channel = Channel.CreateBounded<ROROROblox.Core.Theming.ResolvedPalette>(
+            new BoundedChannelOptions(1)
+            {
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleReader = true,
+                SingleWriter = false,
+            });
+
+        void Handler(ROROROblox.Core.Theming.ResolvedPalette palette) => channel.Writer.TryWrite(palette);
+
+        _eventBus.ThemeChanged += Handler;
+        try
+        {
+            // Paint on subscribe, before waiting for anything to change. Without this a plugin
+            // that only subscribes sits on its fallback colour until the user happens to open the
+            // theme picker, which most sessions never do -- so the broken case would be the
+            // common one. Sent before the loop so it cannot be dropped by a later change racing it.
+            var current = _themePalettes?.Latest;
+            if (current is not null)
+            {
+                await responseStream.WriteAsync(ToProto(current)).ConfigureAwait(false);
+            }
+
+            await foreach (var palette in channel.Reader.ReadAllAsync(context.CancellationToken).ConfigureAwait(false))
+            {
+                await responseStream.WriteAsync(ToProto(palette)).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) { /* clean stream end on caller disconnect */ }
+        finally
+        {
+            _eventBus.ThemeChanged -= Handler;
+            channel.Writer.TryComplete();
+        }
+    }
+
+    private static ThemePalette ToProto(ROROROblox.Core.Theming.ResolvedPalette p) => new()
+    {
+        Bg = p.Bg,
+        Cyan = p.Cyan,
+        Magenta = p.Magenta,
+        White = p.White,
+        MutedText = p.MutedText,
+        Divider = p.Divider,
+        RowBg = p.RowBg,
+        RowExpiredBg = p.RowExpiredBg,
+        RowExpiredAccent = p.RowExpiredAccent,
+        Navy = p.Navy,
+        InteractiveEdge = p.InteractiveEdge,
+    };
 
     // =====================================================================
     // SubscribeMemoryPressure (memory-watchdog plan, task 10).

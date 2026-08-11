@@ -817,7 +817,8 @@ public partial class App : Application
             sp.GetRequiredService<ROROROblox.App.Plugins.ConsentStore>()));
         services.AddSingleton<ROROROblox.App.Plugins.IInstalledPluginsLookup>(sp =>
             new ROROROblox.App.Plugins.Adapters.InstalledPluginsLookupAdapter(
-                sp.GetRequiredService<ROROROblox.App.Plugins.PluginRegistry>()));
+                sp.GetRequiredService<ROROROblox.App.Plugins.PluginRegistry>(),
+                loggerFactory.CreateLogger<ROROROblox.App.Plugins.Adapters.InstalledPluginsLookupAdapter>()));
 
         // PluginInstaller takes (HttpClient, pluginsRoot, stopRunningPluginAsync) — register
         // the typed HttpClient with the right UA, then build the installer with the resolved
@@ -850,8 +851,27 @@ public partial class App : Application
             ROROROblox.App.Plugins.Adapters.DefaultPluginProcessStarter>();
         services.AddSingleton<ROROROblox.App.Plugins.PluginProcessSupervisor>();
 
-        services.AddSingleton<ROROROblox.App.Plugins.IPluginEventBus,
-            ROROROblox.App.Plugins.InProcessPluginEventBus>();
+        // Concrete first, interface mapped onto the SAME instance. Registering
+        // AddSingleton<IPluginEventBus, InProcessPluginEventBus>() alone would hand a resolver
+        // asking for the concrete type a SECOND bus, and a second bus is a bus nobody's events
+        // reach. ThemeFeedAdapter asks for the concrete type (it raises, it doesn't listen).
+        services.AddSingleton<ROROROblox.App.Plugins.InProcessPluginEventBus>();
+        services.AddSingleton<ROROROblox.App.Plugins.IPluginEventBus>(sp =>
+            sp.GetRequiredService<ROROROblox.App.Plugins.InProcessPluginEventBus>());
+
+        // ThemeService viewed as "the current palette, plus a nudge when it changes". Without this
+        // line ThemeFeedAdapter cannot be constructed AT ALL — ThemeService is registered as a
+        // concrete type only, so resolving IThemeAppliedSource throws and takes the whole plugin
+        // host down with it at startup. Caught by ThemeFeedWiringTests on its first run, which is
+        // the entire reason that test exists.
+        services.AddSingleton<ROROROblox.Core.Theming.IThemeAppliedSource>(sp =>
+            sp.GetRequiredService<ThemeService>());
+
+        // Bridges ThemeService's apply to the plugin bus, and caches the palette so GetTheme can
+        // answer before the user has ever touched the theme picker — which is most sessions.
+        services.AddSingleton<ROROROblox.App.Plugins.Adapters.ThemeFeedAdapter>();
+        services.AddSingleton<ROROROblox.App.Plugins.Adapters.IThemePaletteSource>(sp =>
+            sp.GetRequiredService<ROROROblox.App.Plugins.Adapters.ThemeFeedAdapter>());
         services.AddSingleton<ROROROblox.App.Plugins.IPluginHostStateProvider,
             ROROROblox.App.Plugins.Adapters.MutexHostStateAdapter>();
         services.AddSingleton<ROROROblox.App.Plugins.IRunningAccountsProvider,
@@ -881,7 +901,8 @@ public partial class App : Application
             sp.GetRequiredService<ROROROblox.App.Plugins.PluginUITranslator>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.IActivitySnapshotProvider>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.IAccountActivityMarker>(),
-            sp.GetRequiredService<ROROROblox.App.Plugins.IPluginAccountStopper>()));
+            sp.GetRequiredService<ROROROblox.App.Plugins.IPluginAccountStopper>(),
+            sp.GetRequiredService<ROROROblox.App.Plugins.Adapters.IThemePaletteSource>()));
 
         // CapabilityInterceptor: per-connection plugin id binding is deferred to v1.5+
         // (the gRPC interceptor sees the call before any plugin-id metadata is bound).
@@ -2007,7 +2028,8 @@ public partial class App : Application
         catch (Exception ex)
         {
             _pluginHostListening = null;
-            _log?.LogDebug(ex, "Resolving PluginHostStartupService threw; plugins disabled this session.");
+            _log?.LogWarning(ex, "Resolving PluginHostStartupService threw; PLUGINS DISABLED this session. "
+                    + "Every installed plugin is unavailable until this is resolved.");
         }
     }
 

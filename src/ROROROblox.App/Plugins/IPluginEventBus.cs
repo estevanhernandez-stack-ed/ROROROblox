@@ -30,4 +30,18 @@ public interface IPluginEventBus
     /// so wrapping it again would just be a second name for the same shape.
     /// </summary>
     event Action<AccountMemory>? MemoryPressure;
+
+    /// <summary>
+    /// The host's active palette, raised on every theme application including the one at
+    /// startup. Reuses the Core-layer <see cref="ROROROblox.Core.Theming.ResolvedPalette"/>
+    /// for the same reason <see cref="MemoryPressure"/> reuses <see cref="AccountMemory"/> —
+    /// it already has no proto dependency, so minting a bus-local twin would just be a second
+    /// name for one shape.
+    /// <para>
+    /// Carries resolved colours and never a theme id. A plugin handed an id needs somewhere to
+    /// look it up, and the only "somewhere" available was the host's own settings file and
+    /// themes folder — which is F-091.
+    /// </para>
+    /// </summary>
+    event Action<ROROROblox.Core.Theming.ResolvedPalette>? ThemeChanged;
 }
