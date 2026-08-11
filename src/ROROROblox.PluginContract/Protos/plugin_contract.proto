@@ -32,6 +32,22 @@ service RoRoRoHost {
   // into the same server. See AUTHOR_GUIDE.md's "React to memory pressure" recipe.
   rpc SubscribeMemoryPressure(SubscriptionRequest) returns (stream AccountMemorySnapshot);
 
+  // Theming (additive, NuGet 0.8.0). The wire contract_version stays "1.0" -- these are
+  // new methods on the host's own service, so a plugin that never calls them is entirely
+  // unaffected and still handshakes.
+  //
+  // Two RPCs rather than one because a theme is STATE, not an occurrence. GetTheme answers
+  // "what colour are you right now" for a plugin connecting mid-session; the stream answers
+  // "tell me when that changes". Same split the contract already makes elsewhere:
+  // GetRunningAccounts pairs with the launch/exit streams, while SubscribeMemoryPressure has
+  // no paired read because a pressure crossing is an event, not a state you can ask about.
+  //
+  // Before this existed, a plugin wanting to match the host had to read RoRoRo's settings.json
+  // and themes folder directly -- which worked for user themes (they are files) and could never
+  // work for built-ins (they are records in host code). See F-091.
+  rpc GetTheme(Empty) returns (ThemePalette);
+  rpc SubscribeThemeChanged(SubscriptionRequest) returns (stream ThemePalette);
+
   // Command surface
   rpc RequestLaunch(LaunchRequest) returns (LaunchResult);
 
@@ -116,6 +132,38 @@ message RunningAccount {
 
 message SubscriptionRequest {
   // No filters in v1 — plugin subscribes to all events.
+}
+
+// The host's ACTIVE palette, as applied (0.8.0). Resolved #RRGGBB values only.
+//
+// There is deliberately NO id and NO name field, and that absence is the feature. A plugin
+// that receives a theme id needs somewhere to look it up, and "somewhere" was RoRoRo's own
+// settings.json plus its themes folder plus its file-naming policy -- five internal storage
+// details a plugin had no business knowing, any of which could change in a host release
+// without the plugin noticing. That was F-091. Sending colours instead of a name removes the
+// lookup entirely.
+//
+// These are the values ThemeService.ApplyTo actually wrote, read back out of the resource
+// dictionary rather than copied from the host's Theme record. The two can differ: a hex that
+// will not parse leaves the previous brush in place, so the record says one thing while the
+// screen shows another. The screen wins here, which is the same rule the host's own contrast
+// gate follows.
+message ThemePalette {
+  string bg = 1;
+  string cyan = 2;
+  string magenta = 3;
+  string white = 4;
+  string muted_text = 5;
+  string divider = 6;
+  string row_bg = 7;
+  string row_expired_bg = 8;
+  string row_expired_accent = 9;
+  string navy = 10;
+  // Derived by the host, not authored by the theme: an interactive control's edge has to
+  // clear WCAG 1.4.11's 3:1 against the surface behind it, and the host substitutes when an
+  // authored divider does not. Absent from the host's Theme record by design, so a plugin
+  // cannot compute this without a second copy of that logic -- which is why it ships here.
+  string interactive_edge = 11;
 }
 
 message AccountLaunchedEvent {

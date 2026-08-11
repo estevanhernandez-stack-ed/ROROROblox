@@ -83,7 +83,7 @@ on nothing having run. Do not "simplify" these back.
   That test is the whole reason this design was chosen over shipping `Theme` — if it cannot be made to
   fail against an accumulate-as-you-write implementation, the test is wrong, not the design.
 
-- [ ] **2. The contract grows, and the host still starts**
+- [x] **2. The contract grows, and the host still starts**
   Spec ref: `spec.md > §3.1`, `spec.md > §3.2`, `spec.md > §3.3`
   What to build: `ThemePalette` message (11 snake_case string fields, **no id, no name**) plus
   `rpc GetTheme(Empty) returns (ThemePalette)` and
