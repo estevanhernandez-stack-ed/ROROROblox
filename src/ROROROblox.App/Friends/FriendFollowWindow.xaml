@@ -27,14 +27,10 @@
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0"
                        TextWrapping="Wrap" />
-            <Button x:Name="SourceSwitchButton"
+            <Button Style="{StaticResource PrimaryButtonStyle}" x:Name="SourceSwitchButton"
                     HorizontalAlignment="Left"
                     Padding="12,5"
                     Margin="0,12,0,0"
-                    Background="{DynamicResource NavyBrush}"
-                    Foreground="{DynamicResource CyanBrush}"
-                    BorderBrush="{DynamicResource InteractiveEdgeBrush}"
-                    BorderThickness="1"
                     FontSize="11"
                     Visibility="Collapsed"
                     Click="OnSourceSwitchClick" />

@@ -193,8 +193,15 @@ public class FlatlineLabGateTests
         // Both branches, because they fail for different reasons and a fixture that only trips the
         // ordinary one leaves the exemption's second, lower floor unproven — and that floor is the
         // only thing watching a pair the gate has already forgiven.
-        Assert.True(belowAa.Count == 4,
-            $"Expected 4 pairs below AA under flatline-lab (measured at /spec, 2026-08-10); got "
+        // Re-measured 2026-08-11 at v1.20 item 6: 4 -> 3, and the direction is the point. The pair
+        // that left was CyanBrush-on-NavyBrush, whose last site was FriendFollowWindow's source
+        // switch — a navy button with a cyan LABEL, the only one in the app. It took
+        // PrimaryButtonStyle, which puts the cyan on the edge and the label in white, so the pair
+        // no longer exists anywhere rather than merely going unmeasured. That distinction matters
+        // here: the same test dropped 4 -> 3 earlier in this cycle because the migration hid pairs
+        // from an inline-only scan, and the fix then was to see styles, not to lower the number.
+        Assert.True(belowAa.Count == 3,
+            $"Expected 3 pairs below AA under flatline-lab (re-measured 2026-08-11, was 4); got "
             + $"{belowAa.Count}:\n  " + string.Join("\n  ", belowAa)
             + "\nThe fixture's palette is fixed. A different count means the app's declared pair set "
             + "moved, so re-measure and record the new number with its direction.");
