@@ -13,7 +13,7 @@ it came from. Per-row evidence:
 
 v1.16 built the Settings shell and stopped. A clan member who opens Settings today finds a page
 called **"Alerts & memory"** with four persisted memory settings and no memory controls on it
-([`AppSettings.cs:322-392`](../src/ROROROblox.App/AppSettings.cs#L322-L392) persists them;
+([`AppSettings.cs:322-392`](../src/ROROROblox.Core/AppSettings.cs#L322-L392) persists them;
 zero `.xaml` references exist). To change how much memory triggers a warning they edit
 `settings.json` in Notepad. If their theme fails to save they watch it apply, see nothing, and find
 the old theme back after restart. Nine cards on one page wear identical chrome whether they hold one
@@ -34,7 +34,7 @@ and what counts as too much, from the page already named for it.
 
 - [ ] All four persisted watchdog settings are editable in the app: `MemoryWatchdogEnabled`,
       `MemoryReserveMb`, `MemoryCapMb`, `ProjectionWarnMinutes`
-      ([`AppSettings.cs:322-392`](../src/ROROROblox.App/AppSettings.cs#L322-L392)).
+      ([`AppSettings.cs:322-392`](../src/ROROROblox.Core/AppSettings.cs#L322-L392)).
 - [ ] They live on the **Alerts & memory** page ([`PreferencesWindow.xaml:80`](../src/ROROROblox.App/Preferences/PreferencesWindow.xaml#L80)),
       beside the alert routing that already ships there. Not a new page.
 - [ ] Values persist across restart and round-trip through the same `IAppSettings` accessors the

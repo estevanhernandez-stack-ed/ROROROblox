@@ -38,7 +38,7 @@ off on nothing having run. Do not "simplify" these back.
 
 ## Checklist
 
-- [ ] **1. A section is a heading, not another card** ⚠ largest item
+- [x] **1. A section is a heading, not another card** ⚠ largest item
   Spec ref: `spec.md > §3.1 The hierarchy answer is a style that already ships`
   What to build: adopt `SectionHeadingStyle`
   ([`ControlStyles.xaml:143-148`](../src/ROROROblox.App/Controls/ControlStyles.xaml#L143-L148)) as
@@ -73,7 +73,7 @@ off on nothing having run. Do not "simplify" these back.
   paths** — a pre-commit hook blocks them and CI scans the full tree.
   **TDD, and the ordering is the proof:** write it now, watch it go **red naming
   `MemoryWatchdogEnabled`, `MemoryReserveMb`, `MemoryCapMb`, `ProjectionWarnMinutes`** — the four
-  settings persisted at [`AppSettings.cs:322-392`](../src/ROROROblox.App/AppSettings.cs#L322-L392)
+  settings persisted at [`AppSettings.cs:322-392`](../src/ROROROblox.Core/AppSettings.cs#L322-L392)
   with zero `.xaml` references. Item 3 turns it green. A fence written after the fix proves nothing.
   Acceptance: `prd.md > What we'd add`. The fence goes red on exactly those four and green after item
   3. A fifth persisted setting added later with no UI fails the build.
@@ -135,7 +135,7 @@ off on nothing having run. Do not "simplify" these back.
   [`MainViewModel.cs:695-709`](../src/ROROROblox.App/ViewModels/MainViewModel.cs#L695-L709) persists
   on set — it is a plain in-memory `SetField` today with nothing writing it to disk — and `MainWindow`
   restores it on load. **No migration:** the record's defaulted fields load cleanly on an existing
-  file, which `AppSettings.cs:463-465` already documents.
+  file, which `Core/AppSettings.cs:463-465` already documents.
   Acceptance: `prd.md > Story 5.1`. Toggle compact, restart, still compact. An existing
   `settings.json` with no `CompactMode` field loads without error and defaults off.
   Verify: `dotnet test ROROROblox.slnx --filter "FullyQualifiedName~AppSettings|FullyQualifiedName~MainViewModel"`.

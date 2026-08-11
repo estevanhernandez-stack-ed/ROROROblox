@@ -22,7 +22,7 @@ No new dependencies. Nothing here reaches outside what ships.
 | Layer | What this cycle touches |
 |---|---|
 | `ROROROblox.Core` | Nothing. No contract change. |
-| `ROROROblox.App` | `Preferences/PreferencesWindow.xaml(.cs)` (the bulk), `AppSettings.cs` + `IAppSettings.cs` (one field), `ViewModels/MainViewModel.cs` (compact persistence), `MainWindow.xaml.cs` (restore), `Controls/ControlStyles.xaml` (one style), 3 enumerated button sites |
+| `ROROROblox.App` | `Preferences/PreferencesWindow.xaml(.cs)` (the bulk), `Core/AppSettings.cs` + `Core/IAppSettings.cs` (one field — note these live in **Core**, not App), `ViewModels/MainViewModel.cs` (compact persistence), `MainWindow.xaml.cs` (restore), `Controls/ControlStyles.xaml` (one style), 3 enumerated button sites |
 | `ROROROblox.Tests` | `AppSettingsTests`, `PreferencesCopyTests` (new), `SettingsReachabilityTests` (new) |
 
 ## 2. Runtime, deployment, identity
@@ -126,7 +126,7 @@ Section headings added by §3.1 get names too; they are the structure a screen-r
 ### 4.1 The four watchdog settings
 
 `MemoryWatchdogEnabled`, `MemoryReserveMb`, `MemoryCapMb`, `ProjectionWarnMinutes` are persisted at
-[`AppSettings.cs:322-392`](../src/ROROROblox.App/AppSettings.cs#L322-L392) and referenced by **zero**
+[`AppSettings.cs:322-392`](../src/ROROROblox.Core/AppSettings.cs#L322-L392) and referenced by **zero**
 `.xaml`. They land on the Alerts & memory page as a section per §3.1, beside the routing already
 there.
 
@@ -206,7 +206,7 @@ cycle rather than dragging its 61 sites forward.
 *Implements `prd.md > Epic 5`.* `CompactMode` joins the settings record;
 [`MainViewModel.cs:695-709`](../src/ROROROblox.App/ViewModels/MainViewModel.cs#L695-L709) persists on
 set; `MainWindow` restores on load. No migration — the record's defaulted fields load cleanly on an
-existing file, which `AppSettings.cs:463-465` already documents.
+existing file, which `Core/AppSettings.cs:463-465` already documents.
 
 ## 8. Testing
 
@@ -244,5 +244,14 @@ flatline included — a hierarchy carried in colour fails the theme the last cyc
 - **F-052's cross-surface naming pass** remains open, deliberately not half-eaten (§3.4).
 - **F-068's 61 flat call sites** remain open; §6 touches three enumerated buttons and starts nothing.
 - **F-091 plugin theming** remains open and is its own cycle.
+- **`DefaultPlaceUrl` is documented as editable and is not.** `Core/IAppSettings.cs:7` says *"the
+  Preferences dialog allows editing"*; the App references it **zero** times, and `RobloxLauncher.cs`
+  calls it "(legacy single-URL setting)" and "vestigial" while a test pins that it must be ignored.
+  Found by item 2's fence, exempted there to keep old files deserializing. **The honest end state is
+  deleting the field, not adding a control** — worth a register row, and deliberately not opened
+  mid-build.
+- **`EdgeRemediationAnswers` is structurally invisible to any name-derived fence.** The persisted
+  property is plural and its accessor is singular (`Get/SetEdgeRemediationAnswerAsync`), so the names
+  do not match. Exempted rather than papered over.
 - **`AlertsStatusLine` still uses `CyanBrush` for what may be a failure message.** Noticed while
   writing §5, out of scope, worth a row if it turns out to report failures too.
