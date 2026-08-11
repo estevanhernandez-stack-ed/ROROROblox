@@ -64,8 +64,18 @@ template, not WPF-UI's. Two readings, and they cannot be told apart from inside 
   contrast gate has been measuring a different template than the app renders**, which is a defect in
   the gate rather than in the buttons, and a worse one.
 
-**Either answer justifies this cycle. They justify different cycles.** Resolving it is one action:
-launch RoRoRo, hover a button, look. That is Story 0.
+**ANSWERED 2026-08-11 by looking: reading (a) holds.** Este hovered a button on a running build and
+photographed it — the fill is unmistakably the pale Aero blue, on a dark themed window, next to an
+unhovered sibling that is correctly grey. **Every button in RoRoRo has been flashing `#BEE6FD` on
+hover, in every theme, for the app's entire life.**
+
+Two consequences, and the second one is a relief:
+
+- **The cycle is urgent and the most visible work in four rounds.** This is not a tidiness project
+  with a theming angle; it is a theming defect on the most-used surface in the app, and it fires on
+  every pointer movement.
+- **The render harness is NOT the thing that is wrong.** Reading (b) is eliminated, which means the
+  v1.17 rendered contrast gate resolves the same template the app does. Its results stand.
 
 ## User stories
 
@@ -86,8 +96,9 @@ the running app, so that the work is aimed at the actual bug.
 - [ ] Whichever it is, it goes in the spec as a recorded measurement with the date, not as a
       remembered conclusion.
 
-**This story gates the cycle.** It is one minute of looking and it decides whether Epic 1 is "add
-themed hover states" or "fix the gate, then add themed hover states."
+**RESOLVED 2026-08-11 before `/spec`.** Reading (a). Epic 1 is "add themed hover states" and there is
+no gate to fix first. The story stays in the document as the record of how it was decided, and its
+acceptance criteria are met.
 
 ### Epic 1 — A button looks like the theme in every state
 
@@ -221,7 +232,7 @@ As whoever adds a button next cycle, I want the build to tell me I hand-copied a
 
 | Question | Needs answering |
 | --- | --- |
-| **Does the running app hover to `#BEE6FD`, or does only the harness?** The whole cycle's shape depends on it, and neither answer makes the cycle unnecessary. | **Before `/spec` finishes.** One minute of looking. |
+| ~~**Does the running app hover to `#BEE6FD`, or does only the harness?**~~ **CLOSED 2026-08-11 — the app does.** Confirmed by eye on a running build. Reading (a). The harness is vindicated; the buttons are not. | Done. Epic 0 no longer gates the cycle. |
 | **Override the inherited template, or add `Style.Triggers` on top of it?** Triggers are smaller and survive a WPF-UI bump; a full template is more control and more surface. | At `/spec`. |
 | **Can the fence be written without a disqualifying allow-list?** | At `/spec`, and "no" is an acceptable answer that closes Story 4.1 with a finding. |
 | **Does the contrast gate extend to non-resting states, or is that a new gate?** | At `/spec`. |
