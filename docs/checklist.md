@@ -189,7 +189,7 @@ off on nothing having run. Do not "simplify" these back.
   applies and says so, restart and confirm the message was true. Drop a malformed `.json` in the
   themes folder and read the report. Commit: `feat(settings): report theme persist and load failures`.
 
-- [ ] **8. One voice**
+- [x] **8. One voice**
   Spec ref: `spec.md > §6 Voice and weight` (copy half)
   What to build: the six settings across the run-on-login and Discord cards go to **second person
   with terminal periods**. The run-on-login hint currently reads *"Adds a value under HKCU Run.

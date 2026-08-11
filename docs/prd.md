@@ -126,8 +126,11 @@ it not appear.
 **Story 4.1 — Settings that sound like one app.**
 As a non-technical clan member, I want Settings to speak the way the rest of the app speaks.
 
-- [ ] All six settings on the run-on-login and Discord cards are second person with terminal
-      periods. No first person — today one setting speaks as "I".
+- [ ] All settings on the run-on-login and Discord cards are second person with terminal periods.
+      **Corrected during item 8 — two numbers here were wrong.** "Six settings" was right at audit
+      time and is **nine** today (F-008's streamer relocation plus items 3 and 4 added three), and
+      "one setting speaks as I" undercounts: **three** did, which is what F-043's own row cites and
+      what its fix direction names replacements for. All three fixed.
 - [ ] The run-on-login copy states the **effect**, not the registry path. A registry key is
       implementation, and it is the wrong first read for this audience.
 - [ ] No line duplicates the checkbox label directly above it.

@@ -17,7 +17,7 @@ namespace ROROROblox.App.Preferences;
 
 /// <summary>
 /// Two persistent toggles: "Start ROROROblox when Windows starts" (HKCU Run via
-/// <see cref="IStartupRegistration"/>) and "Launch my main account when ROROROblox starts"
+/// <see cref="IStartupRegistration"/>) and "Launch your main account when ROROROblox starts"
 /// (<see cref="IAppSettings.SetLaunchMainOnStartupAsync"/>). Read both at open, write each
 /// independently on click. No Apply button — toggles persist immediately, like Windows
 /// Settings.
@@ -580,7 +580,7 @@ internal partial class PreferencesWindow : Window
     }
 
     /// <summary>
-    /// "Show what I'm playing on Discord." Mirrors <see cref="OnAlwaysShowRecycleToggle"/>'s shape:
+    /// "Show what you're playing on Discord." Mirrors <see cref="OnAlwaysShowRecycleToggle"/>'s shape:
     /// save, then push the change into the live service. The status line is NOT read here after
     /// <c>ApplyAsync</c> returns — see <see cref="OnDiscordStatusChanged"/>'s remarks for why a
     /// one-time read would show a stale value; the subscription set up in <see cref="OnLoaded"/>
@@ -620,7 +620,7 @@ internal partial class PreferencesWindow : Window
         }
     }
 
-    /// <summary>"Let friends join my server from Discord." Same shape as <see cref="OnDiscordPresenceToggle"/>.</summary>
+    /// <summary>"Let friends join your server from Discord." Same shape as <see cref="OnDiscordPresenceToggle"/>.</summary>
     private async void OnDiscordJoinToggle(object sender, RoutedEventArgs e)
     {
         if (_suppressClickHandlers) return;

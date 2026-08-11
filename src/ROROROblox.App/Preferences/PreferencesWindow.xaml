@@ -131,7 +131,7 @@
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"
                                            Margin="22,4,0,0"
-                                           Text="Adds a value under HKCU Run. Removes it when unchecked." />
+                                           Text="This applies to your Windows account only, and it does not start Roblox: that is the setting below. Unchecking this undoes it completely." />
                             </StackPanel>
 
                             <!-- Row separation inside a card is a margin at the call site, matching
@@ -144,7 +144,7 @@
                                           FontSize="13"
                                           FontWeight="SemiBold"
                                           Click="OnLaunchMainToggle">
-                                    <TextBlock Text="Launch my main account when RoRoRo starts." />
+                                    <TextBlock Text="Launch your main account when RoRoRo starts." />
                                 </CheckBox>
                                 <TextBlock x:Name="LaunchMainHint"
                                            FontSize="11"
@@ -166,7 +166,7 @@
                                  single-control cards collapsed into one card with two rows when the
                                  heading became the grouping level, and a third card would
                                  reintroduce the exact shape that collapse removed. Startup already holds
-                                 "Launch my main account when RoRoRo starts", which is a launch
+                                 "Launch your main account when RoRoRo starts", which is a launch
                                  setting rather than a startup one, so this is the third member of a
                                  set the page already has. The nav item is NOT renamed for it —
                                  docs/ui-routes.json declares these pages as capture surfaces. -->
@@ -666,7 +666,7 @@
                             <CheckBox x:Name="DiscordPresenceToggle"
                                       Foreground="{DynamicResource WhiteBrush}" FontSize="13" FontWeight="SemiBold"
                                       Click="OnDiscordPresenceToggle">
-                                <TextBlock Text="Show what I'm playing on Discord." TextWrapping="Wrap" />
+                                <TextBlock Text="Show what you're playing on Discord." TextWrapping="Wrap" />
                             </CheckBox>
                             <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                        Margin="22,4,0,8"
@@ -682,7 +682,7 @@
                             <CheckBox x:Name="DiscordJoinToggle"
                                       Foreground="{DynamicResource WhiteBrush}" FontSize="12"
                                       Margin="22,0,0,0" Click="OnDiscordJoinToggle">
-                                <TextBlock Text="Let friends join my server from Discord" TextWrapping="Wrap" />
+                                <TextBlock Text="Let friends join your server from Discord." TextWrapping="Wrap" />
                             </CheckBox>
                             <TextBlock x:Name="DiscordStatusLine" FontSize="11"
                                        Foreground="{DynamicResource CyanBrush}" TextWrapping="Wrap" Margin="22,8,0,0" />
