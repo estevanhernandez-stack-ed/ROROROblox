@@ -52,8 +52,10 @@ namespace ROROROblox.Tests;
 /// deliberately, so a JSON dropped in <c>%LOCALAPPDATA%</c> is measured by nothing here. And one
 /// token slipped out of scope by accident — since PR #100 rebound the last declared
 /// <c>MutedTextBrush</c> foreground to <c>WhiteBrush</c>, no scanned element pairs the prose token
-/// with a fill, so roughly 104 bindings of it are unmeasured by this gate. Tracked as F-086; a green
-/// run here says nothing about them.
+/// with a fill, so every binding of it is unmeasured by this gate. Written as "roughly 104" when
+/// this doc was authored; re-counted at <b>113</b> on the v1.18 branch, up from 105 at v1.17 —
+/// this cycle's own new hint text is the eight. Tracked as F-086; a green run here says nothing
+/// about them, and the number it says nothing about keeps growing.
 /// </para>
 /// </summary>
 public class ContrastPairGateTests
@@ -62,12 +64,20 @@ public class ContrastPairGateTests
     private const double AaThreshold = 4.5;
 
     /// <summary>
-    /// Measured 2026-08-10 against HEAD: 44 elements across 18 files, collapsing to <b>8</b> distinct
-    /// pairs. It was 9 when this gate was authored at <c>1fcf74d</c>. Commit <c>2c9ab16</c> (PR #100)
-    /// rebound three <c>MutedTextBrush</c> foregrounds to <c>WhiteBrush</c>, merging
+    /// Measured 2026-08-10 against v1.17.0.0: 44 elements across 18 files, collapsing to <b>8</b>
+    /// distinct pairs. It was 9 when this gate was authored at <c>1fcf74d</c>. Commit <c>2c9ab16</c>
+    /// (PR #100) rebound three <c>MutedTextBrush</c> foregrounds to <c>WhiteBrush</c>, merging
     /// <c>MutedTextBrush on NavyBrush</c> into the existing <c>WhiteBrush on NavyBrush</c> — same 44
-    /// elements, one fewer pair. Re-scanned rather than assumed. The floors below stay where they are;
-    /// they are floors, not the measurement.
+    /// elements, one fewer pair. Re-scanned rather than assumed.
+    /// <para>
+    /// <b>Re-measured on the v1.18 branch: 39 elements across 16 files, still 8 pairs.</b> Down 5
+    /// elements and 2 files; pair count flat. The cause is v1.18 item 9 — the five accent-filled
+    /// Close buttons it swept to a named style dropped their inline <c>Background</c> and
+    /// <c>Foreground</c>, so they leave this gate's scope entirely. Five removed declarations, five
+    /// fewer elements, no pair lost. Number and direction recorded per <c>CLAUDE.md</c>'s re-measure
+    /// rule; F-086 owns the coverage this scan cannot see, and it just got slightly wider.
+    /// </para>
+    /// The floors below stay where they are; they are floors, not the measurement.
     /// </summary>
     private const int MinimumElements = 30;
     private const int MinimumPairs = 6;
@@ -193,18 +203,20 @@ public class ContrastPairGateTests
     public void TheScanSeesTheAppItClaimsTo()
     {
         // A scan matching nothing passes every assertion below while checking nothing. Floors are
-        // set well under the 2026-08-10 measurement (44 elements / 8 pairs) so ordinary churn does
+        // set well under the current measurement (39 elements / 8 pairs) so ordinary churn does
         // not trip them, and well above zero so a broken scan does. Worth naming what that headroom
-        // cost: the pair count fell from 9 to 8 at PR #100 and nothing said so, because a floor of 6
-        // cannot notice. The floors are the right shape for catching a broken scan and the wrong
-        // shape for catching lost coverage — F-086.
+        // cost twice over: the pair count fell from 9 to 8 at PR #100 and the element count from 44
+        // to 39 at v1.18 item 9, and nothing said so either time, because a floor of 6 cannot
+        // notice. The floors are the right shape for catching a broken scan and the wrong shape for
+        // catching lost coverage — F-086.
         var pairs = ScanPairs(out var elements);
 
         Assert.True(elements >= MinimumElements,
             $"Found only {elements} elements declaring both Background and Foreground inline; "
-            + $"expected at least {MinimumElements} (44 measured 2026-08-10). The scan is broken, not the app.");
+            + $"expected at least {MinimumElements} (39 measured on the v1.18 branch, down from 44 "
+            + "at v1.17). The scan is broken, not the app.");
         Assert.True(pairs.Count >= MinimumPairs,
-            $"Found only {pairs.Count} distinct token pairs; expected at least {MinimumPairs} (8 measured 2026-08-10).");
+            $"Found only {pairs.Count} distinct token pairs; expected at least {MinimumPairs} (8 measured on the v1.18 branch).");
     }
 
     [Fact]
@@ -216,7 +228,7 @@ public class ContrastPairGateTests
         // broken scan otherwise lives only in the sibling TheScanSeesTheAppItClaimsTo. Restated here
         // so this test cannot report green on nothing by itself.
         Assert.True(pairs.Count >= MinimumPairs,
-            $"Found only {pairs.Count} distinct token pairs; expected at least {MinimumPairs} (8 measured 2026-08-10).");
+            $"Found only {pairs.Count} distinct token pairs; expected at least {MinimumPairs} (8 measured on the v1.18 branch).");
 
         var failures = new List<string>();
 

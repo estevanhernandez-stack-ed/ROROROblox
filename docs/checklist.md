@@ -245,7 +245,7 @@ off on nothing having run. Do not "simplify" these back.
   Verify: `dotnet test ROROROblox.slnx --filter "FullyQualifiedName~ContrastPairGate"` — the exemption
   parse still finds F-050 `open`. Commit: `docs(register): close the thirteen Settings rows`.
 
-- [ ] **12. Documentation & security verification**
+- [x] **12. Documentation & security verification**
   Spec ref: `spec.md > §2` + `§10 Open issues` + `CLAUDE.md > What NOT to do`
   What to build: version to **1.18.0.0** in lockstep — `ROROROblox.App.csproj` `<Version>` and
   `Package.appxmanifest` `Identity Version`. No new capabilities: `runFullTrust` only. Add the v1.18

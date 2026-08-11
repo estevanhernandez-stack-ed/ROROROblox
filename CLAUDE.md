@@ -25,6 +25,7 @@ Canonical brand spec lives at `~/.claude/skills/626labs-design/` (globally avail
 | `docs/scope.md` | Spec-first Cart pointer-stub |
 | `docs/spec.md` | **Per-cycle, and overwritten each Cart round.** Usually a spec-first pointer-stub; when Cart authors the design directly it is that cycle's canonical artifact and must be archived into `docs/superpowers/specs/` before the next round overwrites it. v1.17 was the first cycle to hit that case. |
 | `docs/superpowers/specs/2026-08-10-rororo-flatline-theme-design.md` | v1.17.0.0 flatline — archived from `docs/spec.md`, carries its own banner-corrections |
+| `docs/superpowers/specs/2026-08-10-rororo-settings-remediation-design.md` | v1.18.0.0 Settings becomes a place — archived from `docs/spec.md`, carries the §2 version confirmation and the §10 end-of-cycle carry-forward |
 | `docs/prd.md` | Compressed PRD — stories + acceptance criteria + prioritization |
 | `docs/builder-profile.md` | Builder-profile excerpt for this cycle |
 | `docs/checklist.md` | **Active build plan.** Cycle-shaped — current cycle (v1.4 plugin system) ships 18 items across 3 milestones with 3 verification checkpoints. Older cycles overwrite this file each round. |
