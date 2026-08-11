@@ -127,6 +127,87 @@
         </ControlTemplate.Triggers>
     </ControlTemplate>
 
+    <!-- The same template for ranks whose fill is BRIGHT, differing in exactly one state.
+
+         Found by ButtonStateGateTests the first time it measured a state pair instead of asserting
+         a state pair was themed. AppButtonTemplate expresses disabled by swapping the label to
+         MutedTextBrush and keeping the fill. That is correct on a navy fill: muted on navy is
+         6.88 brand, 4.50 midnight, 6.55 magenta-heat, 6.60 flatline, and it was written when
+         every rank in the file had one. Items 3 and 4 added two ranks with bright fills and the
+         disabled trigger was never re-measured against them:
+
+             Cta      1.37 brand   1.79 midnight   1.34 magenta-heat   1.95 flatline
+             Warning  1.29 brand   1.60 midnight   1.50 magenta-heat   1.95 flatline
+
+         A mid grey on bright cyan is very close to invisible, and it was not theoretical: the Join
+         by link, Export accounts and Import accounts windows each OPEN with their primary CTA
+         disabled, so that label at 1.37:1 was the first thing a user saw in three separate windows.
+
+         WHY A WASH AND NOT A DIM. Fading a bright fill toward the background is the obvious move
+         and it fails by measurement. It squeezes the dark label from the other side, and there is
+         no opacity at which all eight rank/theme pairs clear AA (0.35 was the best and still failed
+         four). Washing toward WhiteBrush moves the fill away from the dark label instead of into
+         it, so legibility rises as the control becomes less available: 8.96 worst case across all
+         eight, against a 4.5 floor. It also keeps C1's lesson intact, since nothing here fades
+         toward the field the button sits on.
+
+         WHY A SECOND TEMPLATE. The difference is real and belongs to the fill, not to a flag. A
+         Style trigger cannot address a template element by name, so the alternative was a Tag
+         carrying a mode string that the template branched on, which hides the finding above
+         behind an indirection instead of naming it. The two templates differ in one trigger, and
+         ButtonStateGateTests measures both against the same floor. -->
+    <ControlTemplate x:Key="AppFilledButtonTemplate" TargetType="Button">
+        <Grid>
+            <Border x:Name="Chrome"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    SnapsToDevicePixels="True" />
+            <Border x:Name="HoverSheen"
+                    Background="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource WhiteBrush}"
+                    BorderThickness="1"
+                    Opacity="0.22"
+                    Visibility="Collapsed"
+                    IsHitTestVisible="False" />
+            <Border x:Name="PressSheen"
+                    Background="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource WhiteBrush}"
+                    BorderThickness="1"
+                    Opacity="0.38"
+                    Visibility="Collapsed"
+                    IsHitTestVisible="False" />
+            <!-- Sits above the interaction sheens so a disabled control cannot show hover feedback
+                 layered over its own wash. It is never hit-testable, and a disabled control does
+                 not raise IsMouseOver anyway; the ordering is belt and braces for the case where a
+                 rank is disabled while the pointer is already over it. -->
+            <Border x:Name="DisabledWash"
+                    Background="{DynamicResource WhiteBrush}"
+                    Opacity="0.55"
+                    Visibility="Collapsed"
+                    IsHitTestVisible="False" />
+            <ContentPresenter x:Name="Content"
+                              Margin="{TemplateBinding Padding}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              RecognizesAccessKey="True"
+                              SnapsToDevicePixels="True" />
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="HoverSheen" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="PressSheen" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <!-- No foreground swap. The rank's dark label is the thing keeping this legible, and
+                 the wash underneath it is what says unavailable. -->
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="DisabledWash" Property="Visibility" Value="Visible" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
     <!-- ToggleButton gets its own copy of the template, because a ControlTemplate's TargetType
          must match the control and ToggleButton is not a Button. Nothing else about it differs.
 
@@ -292,7 +373,9 @@
          one. The 23 existing sites already use the dark label, so this rank changes nothing about
          how they look; it only stops them being written by hand. -->
     <Style x:Key="CtaButtonStyle" TargetType="Button">
-        <Setter Property="Template" Value="{StaticResource AppButtonTemplate}" />
+        <!-- Filled template: the disabled label stays navy and the fill washes pale. See that
+             template's note: muted-on-cyan measured 1.37:1 and three windows open with one. -->
+        <Setter Property="Template" Value="{StaticResource AppFilledButtonTemplate}" />
         <Setter Property="Background" Value="{DynamicResource CyanBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource NavyBrush}" />
         <Setter Property="FontWeight" Value="SemiBold" />
@@ -345,7 +428,8 @@
          Borderless, and the fill is the boundary: the accent against the page measures
          8.85 / 7.23 / 9.85 / 12.84, well past 1.4.11's 3:1. -->
     <Style x:Key="WarningButtonStyle" TargetType="Button">
-        <Setter Property="Template" Value="{StaticResource AppButtonTemplate}" />
+        <!-- Filled template, same reason as CtaButtonStyle: muted-on-accent measured 1.29:1. -->
+        <Setter Property="Template" Value="{StaticResource AppFilledButtonTemplate}" />
         <Setter Property="Background" Value="{DynamicResource RowExpiredAccentBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource NavyBrush}" />
         <Setter Property="FontWeight" Value="SemiBold" />
@@ -363,9 +447,14 @@
          that invented a fill to have something to measure would be adding chrome to satisfy a
          gate, which is the opposite of the point.
 
-         Hover still reads: the shared template tints Chrome to RowBgBrush on IsMouseOver, so a
-         transparent button gains a visible surface exactly when the pointer is over it, and loses
-         it again after. That is the affordance these sites previously had no way to express. -->
+         Hover still reads: the shared template reveals a translucent white sheen with an outline on
+         IsMouseOver, so a transparent button gains a visible surface exactly when the pointer is
+         over it, and loses it again after. That is the affordance these sites previously had no way
+         to express, and the sheen is the version of it that works here. The first draft of that
+         hover tinted Chrome to RowBgBrush, which this note described until now; it was replaced
+         mid-cycle because repainting the fill erased bright ranks, and a ghost rank is the case
+         where the difference is starkest. A surface colour on a transparent button paints a fill
+         where there was none; a sheen over nothing is still a sheen. -->
     <Style x:Key="GhostButtonStyle" TargetType="Button">
         <Setter Property="Template" Value="{StaticResource AppButtonTemplate}" />
         <Setter Property="Background" Value="Transparent" />

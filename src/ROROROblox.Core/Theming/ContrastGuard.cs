@@ -99,6 +99,34 @@ public static class ContrastGuard
             : null;
 
     /// <summary>
+    /// The <c>#RRGGBB</c> that <paramref name="overlay"/> at <paramref name="opacity"/> actually
+    /// produces over <paramref name="surface"/> — the colour a label ends up sitting on.
+    /// <para>
+    /// Exists because a button's state layers are translucent. The hover and pressed sheens are
+    /// white borders at a fixed opacity laid OVER the rank's fill, so the surface behind the label
+    /// in those states is not any theme slot: it is this blend. Measuring the label against the
+    /// rank's declared fill would report the resting number for all three states and call a state
+    /// gate green without ever measuring a state.
+    /// </para>
+    /// <para>
+    /// Public so <c>ButtonStateGateTests</c> composites through the same code path
+    /// <see cref="RatioBetween"/> does. This repo has twice shipped a fix into one scanner and
+    /// missed its copy in another; a second implementation of alpha compositing would be the third.
+    /// </para>
+    /// </summary>
+    /// <returns>Input that cannot be parsed comes back as <paramref name="surface"/> unchanged,
+    /// matching the rest of this class's degrade-quietly contract on a render path.</returns>
+    public static string Flatten(string? surface, string? overlay, double opacity)
+    {
+        if (!TryParse(surface, out var bg, out _)) return surface ?? "";
+        if (!TryParse(overlay, out var raw, out var alpha)) return surface ?? "";
+
+        // The element's Opacity and the brush's own alpha both attenuate, and they multiply — a
+        // 50%-alpha brush on a 50%-opacity layer lands at 25%, not 50%.
+        return ToHex(Snap(Composite(raw, alpha * Math.Clamp(opacity, 0.0, 1.0), bg)));
+    }
+
+    /// <summary>
     /// Flattens a translucent colour onto the surface behind it.
     /// <para>
     /// This used to drop the alpha byte outright, on the reasoning that we do not know what is
