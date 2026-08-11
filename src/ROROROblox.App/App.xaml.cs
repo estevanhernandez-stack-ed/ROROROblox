@@ -858,6 +858,14 @@ public partial class App : Application
         services.AddSingleton<ROROROblox.App.Plugins.IPluginEventBus>(sp =>
             sp.GetRequiredService<ROROROblox.App.Plugins.InProcessPluginEventBus>());
 
+        // ThemeService viewed as "the current palette, plus a nudge when it changes". Without this
+        // line ThemeFeedAdapter cannot be constructed AT ALL — ThemeService is registered as a
+        // concrete type only, so resolving IThemeAppliedSource throws and takes the whole plugin
+        // host down with it at startup. Caught by ThemeFeedWiringTests on its first run, which is
+        // the entire reason that test exists.
+        services.AddSingleton<ROROROblox.Core.Theming.IThemeAppliedSource>(sp =>
+            sp.GetRequiredService<ThemeService>());
+
         // Bridges ThemeService's apply to the plugin bus, and caches the palette so GetTheme can
         // answer before the user has ever touched the theme picker — which is most sessions.
         services.AddSingleton<ROROROblox.App.Plugins.Adapters.ThemeFeedAdapter>();

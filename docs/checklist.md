@@ -128,7 +128,7 @@ on nothing having run. Do not "simplify" these back.
   5, because a gate that cannot fail proves nothing. Five separate instances of exactly that shipped
   during v1.17 and v1.18; this item exists in this position because of them.
 
-- [ ] **5. The handlers, and item 4 goes green**
+- [x] **5. The handlers, and item 4 goes green**
   Spec ref: `spec.md > §4.5`
   What to build: `GetTheme` returning the adapter's cached `Latest` mapped to `ThemePalette`.
   `SubscribeThemeChanged` copying `SubscribeMutexStateChanged`
