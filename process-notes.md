@@ -1393,3 +1393,64 @@ cycle against a readable tree, reading is the deepening round.
 **Handoff:** `/prd`. Note for it: the fence in scope item 5 is a genuine open question rather than a
 formality — a fence over 22 files with legitimate exceptions can end up measuring its own allow-list,
 and this session has already seen five checks that reported success while measuring something else.
+
+## /prd
+
+**The recon found a second half to F-068, and it is not a tidiness problem.** All four button ranks
+declare `BasedOn="{StaticResource {x:Type Button}}"` and set four or five properties. **None of them
+says anything about hover, pressed or disabled.** `ControlStyles.xaml` has zero `ControlTemplate` and
+zero `Style.Triggers`, and `ThemeService` writes eleven brush keys none of which belong to the control
+library. Whatever the inherited template does on hover, RoRoRo has no influence over it and no test
+that looks at it.
+
+**Scope's central claim was measured rather than repeated, and the measuring went wrong twice first.**
+
+Scope asserted "every button breaks its theme on hover" off a grep. The first probe rendered a button
+and forced `VisualStateManager.GoToState(btn, "MouseOver")`: the hovered pixel came back **identical
+to resting**, which read cleanly as "hover changes nothing." It was wrong. A control state added
+afterwards showed `Disabled` and `Pressed` were also identical **and that `GoToState` returned False
+for every state** — WPF-UI 4.3.0's Button template uses classic property triggers and has no visual
+state groups, so nothing was ever being forced. **The probe was measuring my state-forcing, not the
+button.**
+
+**Sixth instance this session of a check reporting something other than what it claims, and the first
+caught inside the instrument rather than downstream of it** — because the control was built before
+the result was believed. That habit is now worth more than any individual finding it produces.
+
+**What did answer it: reading the resolved `ControlTemplate`'s own triggers.**
+
+```text
+IsMouseOver == True   ->  Background=#BEE6FD, BorderBrush=#3C7FB1
+IsPressed   == True   ->  Background=#C4E5F6, BorderBrush=#2C628B
+IsEnabled   == False  ->  Background=#F4F4F4, Foreground=#838383
+```
+
+Hardcoded literals, not resource references. `#BEE6FD` is classic Windows **Aero** light blue.
+
+**And that is where it stops, because the finding forks and I could not close it from inside the
+suite.** That template is the OS Aero one, not WPF-UI's. Either the running app resolves the same
+template — in which case every button in RoRoRo has always flashed Aero blue on hover, and this cycle
+is urgent — or only the harness resolves it, in which case **the v1.17 rendered contrast gate has
+been measuring a different template than the app renders**, which is a worse finding and a different
+cycle. A fourth probe to distinguish them threw, and stopping beat a fifth attempt at 4am.
+
+Both readings justify the cycle. They justify **different** cycles, so the PRD makes settling it
+**Epic 0**, gating everything: launch RoRoRo under flatline, hover a button, record the colour. One
+minute, and it decides whether Epic 1 is "add themed hover states" or "fix the gate first."
+
+**Story 4.1 is written so it can honestly fail.** The fence over 22 files with legitimate exceptions
+may end up measuring its own allow-list, and the acceptance criterion says so: if the exemption list
+is disqualifying, the fence is **not shipped** and the story closes with that finding recorded. A gate
+that passes because everything is exempted reports coverage it does not have — which is the same
+defect as everything else in this section.
+
+**Epic 3 exists because the row's number has never been reproducible.** Register says 55, a scan
+during scope said 72, file count agrees exactly at 22 — so the scanners disagree about what a *site*
+is. Two earlier cycles cited "63 across 15 files", which reproduces at no commit. The epic requires
+the definition written into the spec and run twice, so the next re-measure compares like with like.
+
+**Zero deepening rounds.** The probe work was the deepening round, and it was worth more than four
+questions would have been.
+
+**Handoff:** `/spec`, but **Epic 0 first** — it is eyes-on and one minute, and every other decision
+in the spec depends on its answer.
