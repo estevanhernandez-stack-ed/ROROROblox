@@ -778,3 +778,50 @@ findings are mutually consistent with a single reconstructed theme. The register
 truth for months; nothing had ever re-derived it.
 
 **Handoff:** C2, then `/iterate` or `/reflect`.
+
+---
+
+# Process Notes — v1.18 cycle (Settings becomes a place)
+
+## /scope
+
+**Zero deepening rounds, and this cycle earns that more than any prior one.** The habit is
+"zero when the spec is clean"; here the recon was not merely clean, it was *measured hours earlier*.
+All 51 open register rows were re-verified against the tree before scoping, with per-row evidence
+committed to `docs/superpowers/research/2026-08-10-register-reverification/`. There was no discovery
+left for an interview to do.
+
+**The interview beats were flowed rather than asked**, per the fully-autonomous contract in the guide
+SKILL. What the mandatory questions would have produced was already on disk:
+
+- *Brain dump* — the register plus four batch reports.
+- *Research and reaction* — the re-verification IS the research. A web search for inspiring examples
+  would have been noise on a remediation cycle against an existing app.
+- *Sharpen the gaps* — the genuine gaps are design forks, not unknowns. They are in
+  "Assumptions surfaced" with defaults chosen and marked for confirmation.
+- *What's NOT in scope* — the builder set three hard exclusions before scope opened.
+
+**The cluster was chosen from data, not instinct.** The 51 open rows were bucketed by fix affinity:
+Preferences/Settings 13, accessible naming 9, copy 8, dialog vocabulary 5, button/banner 3, tail 13.
+Settings won on coherence per row, not on count alone — it is one surface with one story, and the
+re-verification had already shown several of its rows to be far cheaper than rated.
+
+**Two rows were kept with their edges named rather than smuggled in.** F-037 is a nine-window sweep
+and F-046 spans four surfaces and touches F-068's shared-style territory. Both are in, both are
+flagged in scope.md with an explicit instruction to `/spec` about where F-046's line has to hold. The
+alternative — quietly counting them as Preferences rows — is how a 13-row cycle becomes a 61-site one.
+
+**Active shaping:** the builder set the cycle's three exclusions unprompted (F-050, F-091, F-068),
+picked the cluster from four offered shapes, and had already made the two strategic calls this scope
+rests on — defer the Store, publish v1.17 as a pre-release. The agent's contribution was the
+bucketing and the assumption defaults.
+
+**One thing caught in the seam.** `docs/spec.md` is overwritten every Cart round. Every prior cycle
+compressed it to a pointer-stub with the real design under `docs/superpowers/specs/`, so overwriting
+cost nothing — but v1.17 was the first cycle where Cart authored the design in `spec.md` directly,
+making it canonical and the next round's overwrite destructive. Archived as
+`2026-08-10-rororo-flatline-theme-design.md` before starting, and `CLAUDE.md`'s file table corrected
+to state the lifecycle and the archive obligation. This was only cheap to notice in the one moment
+between cycles.
+
+**Handoff:** `/prd`.
