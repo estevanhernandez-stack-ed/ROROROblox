@@ -137,4 +137,17 @@ public interface IAppSettings
     /// </summary>
     Task<int> GetProjectionWarnMinutesAsync();
     Task SetProjectionWarnMinutesAsync(int minutes);
+
+    /// <summary>
+    /// True when the main window opens in compact mode — the fixed-width, live-rows-only strip the
+    /// status bar's Compact button toggles. Defaults to false (expanded).
+    /// <para>
+    /// Sticky because the Welcome tour pitches compact as a second-monitor workflow, and a
+    /// second-monitor layout that resets on every launch is not a workflow. The toggle is on the
+    /// main window, not in Preferences: this is a per-session view state the user flips constantly,
+    /// and its home is where it is used.
+    /// </para>
+    /// </summary>
+    Task<bool> GetCompactModeAsync();
+    Task SetCompactModeAsync(bool compact);
 }

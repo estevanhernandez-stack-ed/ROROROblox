@@ -1,135 +1,159 @@
-# RORORO — Scope: flatline, the readable theme
+# RORORO — Scope: Settings becomes a place
 
-Cart cycle on an established app. Substantive design will land in a spec authored during `/spec`;
-this doc is the scope contract that spec answers to.
+Remediation cycle on an established app. Thirteen findings-register rows, one surface, one story.
 
-Cycle history: v1.1 scope (multi-instance + saved-account quick-launch) in
-[`2026-05-03-rororoblox-design.md`](superpowers/specs/2026-05-03-rororoblox-design.md). v1.2
-per-account FPS limiter, v1.3.x default-game widget + local rename, v1.4 plugin system, v1.7.0
-install deferral. Most recent: the UIA capture tool, merged as PR #102.
+Cycle history: v1.16 built the Settings shell — five-page nav rail, resizable window, card vocabulary.
+v1.17 shipped flatline and the rendered contrast gate. Most recent: v1.17.0.0, published as a
+**pre-release** on 2026-08-10. Store submission is deliberately deferred until the backbone is
+remediated; this cycle is the first pass of that remediation.
 
 ## Idea
 
-Ship `flatline` as a real, user-selectable built-in theme: the one that carries no meaning in colour.
-One background, one text colour, one accent, maximum legibility. If you cannot distinguish hues, or
-you are on a bad panel in bright sun, this is the theme that still works.
+The Settings shell shipped and nobody finished furnishing it.
+
+v1.16 built the room — a nav rail, five pages, real containers, a resizable window. Then the cycle
+ended. What is left is thirteen rows that all say a version of the same thing: **the structure
+exists and the things that belong inside it were never moved in.** A page called "Alerts & memory"
+with no memory controls. A theme picker that fails to persist without saying so. A card primitive
+carrying two incompatible meanings at identical weight. Six settings written in three voices.
+
+This cycle furnishes the room.
 
 ## Who it's for
 
-The Pet Sim 99 clan member running eight alts, same as always. Specifically the slice of them who
-cannot rely on colour: roughly 8% of men have some form of colour vision deficiency, and RORORO's
-entire status vocabulary is currently hue. The cyan-versus-magenta tray ring, the magenta MAIN badge,
-the amber expired-session row, the coloured caption swatches. Every one of those says something, and
-says it only in colour.
+The Pet Sim 99 clan member, same as always — a non-technical Windows user running eight alts. But
+this cycle's user is specifically **the one who opens Settings and tries to change something.**
+Today that person hits a page named for a feature that is not on it, edits `settings.json` in
+Notepad to change a memory threshold, and cannot tell whether the theme they picked actually saved.
 
-Secondary user, honestly: this project. flatline is the theme that makes colour-only signalling
-visible, which is why the glow campaign wanted it.
+Secondary user, honestly: everyone who has to reason about this app later. Six of these rows are
+consistency and copy defects, and consistency defects compound — every future surface either
+inherits the vocabulary or adds a fourteenth exception.
 
-## The ruling that shapes this cycle
+## The verification that shapes this cycle
 
-flatline was conceived as an adversarial instrument, authored to make the app fail measurably by
-collapsing colour distinction. Este ruled it ships as a **product theme** instead: the accessible one,
-sold on legibility rather than on degradation.
+Every row here was **re-verified against the tree on 2026-08-10** before scoping. That pass is the
+reason this cycle exists in this shape, and its findings are load-bearing:
 
-That is the better product and it changes the design goal from "collapse distinction" to "carry
-distinction without colour." Those are not the same theme, and the difference is the crux of this
-cycle.
+- **Several rows are far cheaper than their ratings suggest.** F-026's fix direction asks for "a
+  level above the card" — the nav rail already supplied it, so what remains is the card-versus-row
+  distinction *inside* a page. F-023's destination exists and is already named "Alerts & memory."
+  F-024's data is already materialised in the view-model. F-033 is one bool on a record the code
+  documents as needing no migration.
+- **F-019 is roughly half-delivered.** `ResizeMode="NoResize"` is gone, the rail is the
+  group-to-group keyboard mechanism the row asked for, and the worst-case linear focus run dropped
+  19 → 12. What remains is the accessible-naming layer and adopting a `SectionHeadingStyle` that
+  already ships with exactly one consumer app-wide.
+- **The register drifts faster than it is read.** Eleven of 57 open rows would have mis-scoped a
+  cycle read off the table. That is why the recon is attached to this doc rather than re-run at
+  `/spec`.
 
-## In scope
+Full per-row detail: [`2026-08-10-register-reverification/`](superpowers/research/2026-08-10-register-reverification/).
 
-- **`flatline` as a fourth built-in** in `ThemeStore`, `IsBuiltIn = true`, alongside brand, midnight
-  and magenta-heat. Hardcoded like the others, no filesystem dependency.
-- **A palette that clears the contrast gate rather than dodging it.** See "The gate relationship"
-  below. `/spec` picks exact hex values and proves them by running
-  `ContrastPairGateTests`.
-- **Non-colour redundancy for every status the theme flattens.** This is the real work of the cycle
-  and the reason it is not a fifteen-minute palette commit. Where the app says something in hue
-  alone, flatline needs that meaning carried some other way: text, shape, weight, position or icon.
-  `/spec` enumerates the affected surfaces; the audit register's own colour-only findings are the
-  starting list.
-- **An adversarial `flatline-lab` test fixture**, NOT a built-in and NOT user-selectable. Preserves
-  the campaign's evidence and does something better besides: fed to the contrast gate, it must FAIL.
-  A gate that has only ever seen passing themes is an unproven gate.
-- **Register reconciliation.** F-031, F-032 and F-050 quote ratios measured from a theme that never
-  existed in git. Their rows get updated to say which artifact reproduces which number.
+## In scope — the thirteen rows, grouped by what they actually are
 
-## What's explicitly cut
+**Hierarchy — the card means two things (2 rows).**
+F-026 (`4/5`) and F-019 (`3/3`). One grouping primitive carries both "section" and "setting" at
+identical weight, which is why "split it up" cannot be answered with more cards. The rail solved the
+between-page level; this solves the within-page one.
 
-- **A theme-authoring UI for accessibility presets.** The "+ Build a theme..." builder already
-  exists and user themes are JSON. flatline is a built-in, not a new authoring surface.
-- **Auto-detecting colour vision deficiency, or any OS high-contrast-mode integration.** Windows has
-  its own high-contrast setting; honouring it is a separate cycle with its own semantics. flatline is
-  a RORORO theme the user picks, nothing more.
-- **Reworking the brand theme.** flatline is an alternative, not a correction. Brand stays cyan
-  `#17d4fa` + magenta `#f22f89` on navy `#0f1f31`, always paired, per the canonical design system.
-- **Fixing every colour-only signal app-wide.** flatline must carry its own surfaces. Where a fix is
-  genuinely theme-independent it can ride along, but this cycle is not the colour-redundancy sweep
-  for the whole app. That is register work.
-- **Retiring the adversarial theme concept.** It survives as `flatline-lab`, a fixture. Cutting it
-  entirely would strand three findings' evidence.
-- **Shipping it as the default.** Brand stays default.
+**Missing tenants — pages that do not hold what they are named for (4 rows).**
+F-023 (`3/1`) the memory watchdog has four persisted settings and no UI, on a page called "Alerts &
+memory." F-020 (`2/2`) the only way to change squad-launch behaviour is to begin a squad launch.
+F-024 (`2/1`) per-account muting is right-click-only and the Alerts page never mentions it. F-078
+(`2/2`) the theme-consent prompt is one-shot with no route back short of editing JSON.
 
-## The gate relationship, resolved
+**Silent failure (2 rows).**
+F-051 (`4/2`) a failed settings write applies the theme live, says nothing, and reverts on restart.
+F-053 (`3/2`) an unreadable theme file vanishes with no signal, and the copy sends users through a
+restart the code does not require.
 
-`ContrastPairGateTests.EveryDeclaredPairClearsAaUnderEveryTheme` measures every declared
-Background/Foreground token pair at 4.5:1 across every built-in, with one exemption: `WhiteBrush` on
-`MagentaBrush`, citing F-050, floor 3.20 against a worst measured value of 3.2858 in magenta-heat.
+**Voice and weight (4 rows).**
+F-043 (`3/4`) six settings, three voices, first person among them. F-062 (`2/3`) a registry path
+presented as an effect, to a non-technical audience. F-037 (`3/5`) accent fill marks four different
+things. F-046 (`3/3`) fill weight tracks neither consequence nor frequency.
 
-The apparent conflict, that an adversarial theme would redden the gate, does not survive contact with
-what the gate actually measures. It measures **foreground against its own fill**. What flatline
-collapses is **distinction between semantic elements**: cyan versus magenta as two accents, row
-backgrounds against each other, the expired-row amber against the ordinary row. The gate never
-measures either of those. They are orthogonal.
-
-So flatline passes by construction, with one real constraint: its single accent is used as a fill
-with white text on it, so **white-on-accent must clear the 3.20 exemption floor**, and should target
-the full 4.5:1 so the exemption is not needed at all. Under the product-theme ruling that is not a
-compromise, it is the goal.
-
-**No gate change, no new exemption, and specifically no concept of a theme that is exempt from
-measurement.** That last one was considered and rejected: an "adversarial themes skip the gate" escape
-hatch is exactly where a real regression would hide.
+**Persistence (1 row).**
+F-033 (`4/4`) compact mode, pitched by the Welcome tour as a second-monitor workflow, is forgotten
+on every restart.
 
 ## What "done" looks like
 
-A clan member opens Settings, Appearance, picks Flatline, and the app is entirely usable without
-seeing a single hue. Every status that was colour is now also words or shape. `dotnet test` is green
-including the contrast gate. `scripts/capture-ui.ps1` picks the theme up with no code change and
-produces a fourth round of evidence, 56 captures instead of 42. And `flatline-lab` proves the gate
-fails when it should.
+A clan member opens Settings and every page holds what its name promises. Changing a memory
+threshold does not require Notepad. Picking a theme that fails to save says so. A section reads as a
+section and a setting reads as a setting without either being a card. The page speaks in one voice,
+in second person, and the loudest control on screen is the one the window exists to perform.
+
+Register goes from **51 open to 38**, and `dotnet test ROROROblox.slnx` is green including the
+contrast gate and the three rendered gates v1.17 added.
+
+## What's explicitly cut
+
+- **F-050 does not close, and must not.** `NoExemptionOutlivesItsFinding` deletes the contrast
+  gate's exemption the moment that row stops reading `open`, which reddens **three** built-in themes
+  — brand 3.79:1, midnight 4.16:1, magenta-heat 3.29:1, all under a 4.5 threshold. Only flatline
+  survives. It stays open until something implements its fix direction, which is not this cycle.
+- **F-091 — plugin theming — is its own cycle.** Plugins read the host's active theme *id* and look
+  it up in a hardcoded table, so every user-authored theme is already broken in every plugin. The
+  fix is a theme message in `plugin_contract.proto`, a `PluginContract` version bump, a host-side
+  push, and a matching `ur-task` release. A contract change to a NuGet external authors consume does
+  not get improvised inside a remediation sweep.
+- **F-068 — the button vocabulary — is its own cycle.** Re-counted at **61 un-migrated call sites
+  across 24 files, direction FLAT**: 96 pre-wave-5, 61 at the commit that wrote the file's own
+  "63 across 15 files" comment, 61 at HEAD. Wave 5 migrated 35 in one pass and nothing has moved in
+  five days. Its template-trigger half is 0% shipped.
+- **The 38 remaining open rows.** This cycle is one cluster, not a register sweep.
+
+## The two rows that are not really Preferences, named rather than smuggled
+
+Honesty about the cluster's edges, because "one surface" is the cycle's whole justification:
+
+- **F-037** is a nine-window Close-button sweep. Bounded — nine buttons, and the re-verification
+  measured today's split at 5 accent-filled versus 4 secondary, so half the app already does what
+  the fix direction asks. It is a decide-and-sweep, not a fix-one-window.
+- **F-046** spans MainWindow, Library, Plugins and Preferences, and its fix direction names *shared
+  button styles* — which is F-068's territory. **Scope it deliberately at `/spec`:** define the
+  destructive variant and assign by consequence on this cycle's surfaces; do **not** start the
+  61-site migration. If that line cannot hold, F-046 drops to F-068's cycle rather than dragging it
+  forward.
 
 ## Loose implementation notes
 
-Non-binding, refined in `/spec`.
+Non-binding, refined at `/spec`.
 
-- The `Theme` record's slots collapse naturally: `Bg`, `Navy` and `RowBg` toward one surface value,
-  `Cyan` and `Magenta` toward one accent, `White` and `MutedText` toward legible text. `MutedText`
-  cannot simply equal `White` — F-032's 1.00:1 is precisely that failure. It needs to stay
-  distinguishable from body text while remaining legible on the surface, which is a genuine constraint
-  rather than a slot to zero out.
-- `RowExpiredBg` and `RowExpiredAccent` are the sharpest colour-only signal in the app. Expired
-  sessions are currently amber and nothing else.
-- `ThemeService.ApplyTo` derives `InteractiveEdge` via `EdgeRemediation.Decide`. A theme with one
-  accent and one surface may trigger the edge-remediation prompt on first selection. Worth checking
-  early: a built-in that asks the user a question the moment they pick it is a bad first impression.
-- The capture tool matches theme ids on the substring `Id = <id>,`, so the id stays `flatline` for
-  tooling continuity regardless of the display name.
+- `Controls/ControlStyles.xaml` ships `SectionHeadingStyle` with exactly one consumer app-wide
+  (`DiagnosticsWindow`). Preferences' three card headings are hand-rolled 13px SemiBold. F-026 and
+  F-019 may both be partly answered by adopting what already exists rather than inventing a level.
+- F-051's fix direction names a pattern the page already has — `AlertsStatusLine`. Mirror it rather
+  than design a second status affordance.
+- The `AutomationProperties` layer is effectively absent app-wide: 0 of 137 Button/ComboBox/
+  ToggleButton/TextBox declarations carry a `Name`. F-019's remainder overlaps F-052, which is
+  **not** in this cycle — decide at `/spec` whether Preferences gets named here or waits for the
+  cross-surface pass, and say which.
+- Four rows are pure copy (F-043, F-062, plus the copy halves of F-053 and F-023). Clan-facing
+  register per `CLAUDE.md`: second person, terminal periods, no jargon, no first person.
 
 ## Assumptions surfaced
 
-Per the fully-autonomous contract, these were filled from the record rather than asked.
+Per the fully-autonomous contract, filled from the record rather than asked. Each is a real fork
+`/spec` should either confirm or overturn.
 
-- **Display name stays "Flatline"** *(default — confirm on next interactive run)*. Este coined it and
-  it describes flattening colour rather than flattening a patient. The accessibility promise is
-  carried by the theme's description text, not its name. If it reads as "broken" to a clan member,
-  `/prd` is the place to change it; the id must stay `flatline` either way.
-- **Not the default theme** *(default — confirm on next interactive run)*. Nothing in the record
-  suggests replacing brand as the default, and brand is the product's identity.
-- **Scope excludes the app-wide colour-redundancy sweep** *(default — confirm on next interactive
-  run)*. flatline carries its own surfaces; the rest is register work with its own 51 open rows.
+- **F-020's careful-mode toggle gets a home on an existing page rather than a sixth nav item**
+  *(default — confirm)*. The rail has no launch page and the row's fix direction assumes one. Adding
+  a sixth page for a single checkbox trades one inconsistency for another; Startup is the closest
+  existing fit.
+- **F-023 ships all four watchdog settings, not a subset** *(default — confirm)*. They are persisted
+  together and the page is already named for them; shipping two of four leaves the same complaint.
+- **F-026's answer is typographic, not a new container** *(default — confirm)*. The rail supplied
+  the structural level; adding a second container primitive inside a page risks the exact
+  two-meanings defect the row is about.
+- **F-037 sweeps toward secondary-for-dismissal** *(default — confirm)*, following the fix
+  direction and Diagnostics' existing precedent, rather than promoting the other four windows to
+  accent.
 
 ## Distribution audience
 
-Unchanged: Pet Sim 99 clan first, Microsoft Store second. Worth noting for the Store listing that an
-accessibility theme is a listing asset rather than a footnote, and it is the kind of thing Store
-reviewers read favourably.
+Unchanged: Pet Sim 99 clan first, Microsoft Store second — with the Store deliberately parked. Worth
+noting for the eventual listing that "Settings you can actually use" is a weaker headline than an
+accessibility theme, so this cycle is backbone work rather than listing material, and that is the
+point of doing it now while submission is deferred.

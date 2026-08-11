@@ -350,6 +350,8 @@ internal static class DiscordTestHarness
         public Task SetMemoryCapMbAsync(int? capMb) => throw new NotImplementedException();
         public Task<int> GetProjectionWarnMinutesAsync() => throw new NotImplementedException();
         public Task SetProjectionWarnMinutesAsync(int minutes) => throw new NotImplementedException();
+        public Task<bool> GetCompactModeAsync() => Task.FromResult(false);
+        public Task SetCompactModeAsync(bool compact) => Task.CompletedTask;
     }
 
     private sealed class FakeFavoriteGameStore : IFavoriteGameStore

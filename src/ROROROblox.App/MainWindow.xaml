@@ -1004,12 +1004,16 @@
                                 ToolTip="Close the Roblox window for this account."
                                 Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                        <!-- Remove -->
+                        <!-- Remove. One of the three sites DestructiveButtonStyle is assigned to by
+                             name (spec §6): it destroys a saved account and its cookie, and the
+                             cookie cannot be recovered — re-authentication is the only way back.
+                             Deliberately NOT an accent fill; on a row that also carries Launch As
+                             and Stop, the loudest control must not be the one that deletes. -->
                         <Button Content="Remove"
                                 Command="{Binding DataContext.RemoveAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="10,6"
-                                Style="{StaticResource SecondaryButtonStyle}" />
+                                Style="{StaticResource DestructiveButtonStyle}" />
                     </StackPanel>
                 </Grid>
             </Border>

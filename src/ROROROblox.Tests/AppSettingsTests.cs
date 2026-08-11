@@ -369,4 +369,96 @@ public class AppSettingsTests : IDisposable
         Assert.Equal(0, await second.GetMemoryCapMbAsync());   // fresh instance after reload: 0, not null
         Assert.NotNull(await second.GetMemoryCapMbAsync());
     }
+
+    [Fact]
+    public async Task CompactMode_DefaultsFalse_RoundTripsBothWaysAcrossInstances()
+    {
+        // Both directions, not just the on-flip: compact mode is the one setting a user turns OFF
+        // as deliberately as they turn it on, and a write that only ever persists `true` would pass
+        // a one-way test while leaving the window compact forever.
+        {
+            using var first = new AppSettings(_filePath);
+            Assert.False(await first.GetCompactModeAsync());
+
+            await first.SetCompactModeAsync(true);
+            Assert.True(await first.GetCompactModeAsync());
+        }
+
+        {
+            using var second = new AppSettings(_filePath);
+            Assert.True(await second.GetCompactModeAsync());
+
+            await second.SetCompactModeAsync(false);
+            Assert.False(await second.GetCompactModeAsync());
+        }
+
+        using var third = new AppSettings(_filePath);
+        Assert.False(await third.GetCompactModeAsync());
+    }
+
+    /// <summary>
+    /// The no-migration claim, tested rather than assumed. An existing <c>settings.json</c> written
+    /// before v1.18 has no <c>compactMode</c> key at all; it must load and read off, with no shim
+    /// and no version bump.
+    /// <para>
+    /// The sibling assertions are the discriminator and the reason this is not a one-liner. A
+    /// corrupt or unreadable file ALSO yields <c>CompactMode == false</c>, because
+    /// <c>AppSettings.LoadAsync</c> falls back to a default blob on <c>JsonException</c>. Asserting
+    /// only the false would pass on a file that failed to parse — which is the opposite of what
+    /// "loads without error" means. Reading back the keys that ARE in the file proves the deserialize
+    /// actually succeeded.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task CompactMode_AbsentFromAnExistingFile_LoadsCleanlyAndDefaultsOff()
+    {
+        File.WriteAllText(_filePath, """
+            {
+              "version": 1,
+              "defaultPlaceUrl": null,
+              "launchMainOnStartup": true,
+              "activeThemeId": "midnight",
+              "idleWarnThresholdMinutes": 42
+            }
+            """);
+
+        using var settings = new AppSettings(_filePath);
+
+        Assert.False(await settings.GetCompactModeAsync());
+
+        // Discriminators: the file parsed, so the false above is the field's default and not the
+        // corrupt-file fallback wearing the same value.
+        Assert.True(await settings.GetLaunchMainOnStartupAsync());
+        Assert.Equal("midnight", await settings.GetActiveThemeIdAsync());
+        Assert.Equal(42, await settings.GetIdleWarnThresholdMinutesAsync());
+    }
+
+    /// <summary>
+    /// Writing compact mode onto a pre-v1.18 file preserves everything already in it. A "migration"
+    /// that rewrote the blob from defaults would lose the user's theme and their idle threshold, and
+    /// the round-trip test above would still be green.
+    /// </summary>
+    [Fact]
+    public async Task CompactMode_WrittenOntoAnExistingFile_KeepsTheOtherSettings()
+    {
+        File.WriteAllText(_filePath, """
+            {
+              "version": 1,
+              "launchMainOnStartup": true,
+              "activeThemeId": "midnight",
+              "idleWarnThresholdMinutes": 42
+            }
+            """);
+
+        {
+            using var first = new AppSettings(_filePath);
+            await first.SetCompactModeAsync(true);
+        }
+
+        using var second = new AppSettings(_filePath);
+        Assert.True(await second.GetCompactModeAsync());
+        Assert.True(await second.GetLaunchMainOnStartupAsync());
+        Assert.Equal("midnight", await second.GetActiveThemeIdAsync());
+        Assert.Equal(42, await second.GetIdleWarnThresholdMinutesAsync());
+    }
 }

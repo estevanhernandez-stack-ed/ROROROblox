@@ -778,3 +778,250 @@ findings are mutually consistent with a single reconstructed theme. The register
 truth for months; nothing had ever re-derived it.
 
 **Handoff:** C2, then `/iterate` or `/reflect`.
+
+---
+
+# Process Notes — v1.18 cycle (Settings becomes a place)
+
+## /scope
+
+**Zero deepening rounds, and this cycle earns that more than any prior one.** The habit is
+"zero when the spec is clean"; here the recon was not merely clean, it was *measured hours earlier*.
+All 51 open register rows were re-verified against the tree before scoping, with per-row evidence
+committed to `docs/superpowers/research/2026-08-10-register-reverification/`. There was no discovery
+left for an interview to do.
+
+**The interview beats were flowed rather than asked**, per the fully-autonomous contract in the guide
+SKILL. What the mandatory questions would have produced was already on disk:
+
+- *Brain dump* — the register plus four batch reports.
+- *Research and reaction* — the re-verification IS the research. A web search for inspiring examples
+  would have been noise on a remediation cycle against an existing app.
+- *Sharpen the gaps* — the genuine gaps are design forks, not unknowns. They are in
+  "Assumptions surfaced" with defaults chosen and marked for confirmation.
+- *What's NOT in scope* — the builder set three hard exclusions before scope opened.
+
+**The cluster was chosen from data, not instinct.** The 51 open rows were bucketed by fix affinity:
+Preferences/Settings 13, accessible naming 9, copy 8, dialog vocabulary 5, button/banner 3, tail 13.
+Settings won on coherence per row, not on count alone — it is one surface with one story, and the
+re-verification had already shown several of its rows to be far cheaper than rated.
+
+**Two rows were kept with their edges named rather than smuggled in.** F-037 is a nine-window sweep
+and F-046 spans four surfaces and touches F-068's shared-style territory. Both are in, both are
+flagged in scope.md with an explicit instruction to `/spec` about where F-046's line has to hold. The
+alternative — quietly counting them as Preferences rows — is how a 13-row cycle becomes a 61-site one.
+
+**Active shaping:** the builder set the cycle's three exclusions unprompted (F-050, F-091, F-068),
+picked the cluster from four offered shapes, and had already made the two strategic calls this scope
+rests on — defer the Store, publish v1.17 as a pre-release. The agent's contribution was the
+bucketing and the assumption defaults.
+
+**One thing caught in the seam.** `docs/spec.md` is overwritten every Cart round. Every prior cycle
+compressed it to a pointer-stub with the real design under `docs/superpowers/specs/`, so overwriting
+cost nothing — but v1.17 was the first cycle where Cart authored the design in `spec.md` directly,
+making it canonical and the next round's overwrite destructive. Archived as
+`2026-08-10-rororo-flatline-theme-design.md` before starting, and `CLAUDE.md`'s file table corrected
+to state the lifecycle and the archive obligation. This was only cheap to notice in the one moment
+between cycles.
+
+**Handoff:** `/prd`.
+
+## /prd
+
+**Zero deepening rounds again, same justification.** The re-verification supplied what a PRD
+interview normally extracts: current behaviour with file citations, counts with direction, and fix
+directions already written per row. The beats were flowed rather than asked.
+
+**Five epics from the scope's five groups**, one-to-one. Grouping held under expansion, which is
+usually the test of whether a cluster was real or convenient.
+
+**Three things sharpened that the scope left soft:**
+
+1. **Epic ordering is now an open question rather than an assumption.** Epic 1 adds four memory
+   controls to the Alerts page; Epic 2 fixes the grouping defect on that same page. Doing them in
+   that order means building on a structure you are about to change. Doing them inverted means
+   designing hierarchy against a page about to gain a card. `/spec` picks; the PRD refuses to guess.
+2. **Epic 4.3's boundary is written into the story, not the preamble.** "Assign by consequence" is
+   unbounded on its face and F-068 is 61 sites away. The acceptance criteria say the story defines
+   the variant and applies it on this cycle's surfaces, and that it drops to F-068's cycle if the
+   line cannot hold.
+3. **Story 2.2 forces a statement about accessible naming.** F-052 is not in this cycle and 0 of 137
+   declarations carry a name. Naming Preferences alone is defensible; doing it silently is the thing
+   that makes a register row wrong later.
+
+**One acceptance criterion added that no row asked for.** Story 1.1 requires out-of-range input to be
+refused visibly. Every row in this cluster is a variant of "the app knows something and does not say
+it", and a megabyte field that silently accepts a negative number is that defect one level down.
+
+**One "what we'd add" that came out of the diagnosis rather than the list:** a settings-schema test
+that fails the build when a persisted field has no UI. F-023 existed for months because nothing
+connected "persisted" to "reachable" — the row is a symptom of a missing check.
+
+**Handoff:** `/spec`.
+
+## /spec
+
+**One fork resolved itself on inspection, and it was the highest-rated row in the cluster.**
+F-026 (4/5) asks for "a level above the card." `SectionHeadingStyle` ships at
+`ControlStyles.xaml:143` as `13px / SemiBold / WhiteBrush / Margin 0,18,0,6` — and Preferences' three
+hand-rolled headings are 13px SemiBold White. The style is not merely available, it is *the same
+thing the page already writes by hand*, and its 18-above/6-below margin is precisely the missing
+level. The answer is to place it between cards instead of inside one. No new primitive, which is what
+the PRD required, because a second container is the two-meanings defect restated.
+
+That is the second time this cluster turned out cheaper than rated once someone looked.
+
+**Epic ordering settled, and it was not close.** Hierarchy before content. The reverse risk the PRD
+raised — designing hierarchy against a page about to gain a card — does not survive contact with the
+answer above: a heading placed between cards is generic and does not care what the cards contain. So
+the rework cost runs one direction only.
+
+**Careful mode goes on Startup, and the justification is better than "closest fit."** That page
+already holds *"Launch my main account when RoRoRo starts"*, which is a launch setting on a startup
+page. The mixing already exists; careful mode is the third member of a set. The nav item is
+deliberately not renamed — `ui-routes.json` declares these pages as capture surfaces and a label
+change churns the capture round.
+
+**The accessible-naming fork was answered with a rule rather than a decision.** New work ships named;
+nothing untouched gets retro-named. That keeps F-052's backlog count honest — the exact failure mode
+F-032 demonstrated when it drifted 11 to 15 while two waves built machinery around it.
+
+**One deliberate divergence from the pattern being mirrored.** F-051's fix direction says mirror
+`AlertsStatusLine`. That line uses `CyanBrush` — the accent, the same treatment a success would get.
+A failure message takes `RowExpiredAccentBrush` and the triangle prefix instead, which is the warning
+vocabulary v1.17 established across four surfaces. Mirroring the *mechanism* without inheriting a
+questionable *colour choice*. `AlertsStatusLine` itself is left alone and flagged as an open issue,
+because it is not this cycle's row.
+
+**F-046's boundary is now operational rather than aspirational.** "Assign by consequence" became a
+three-row table naming Remove, Clear and Stop all. A site not on the list is F-068's. If applying the
+variant starts requiring a judgement call about a fourth button, that is the signal to drop the story
+rather than drag 61 sites forward.
+
+**One new mechanism, and it is the anti-regrowth one.** `SettingsReachabilityTests` — every persisted
+setting is reachable or exempted with a reason. F-023 survived months because nothing connected
+"persisted" to "reachable." Same shape as the XAML literal fence v1.17 shipped, same rule about
+exemptions naming themselves.
+
+**Handoff:** `/checklist`.
+
+## /checklist
+
+**Twelve items for thirteen rows.** Two pairs merged where the work is one edit (F-024 + F-078 both
+read existing state; F-051 + F-053 are both the theme status line), and two items exist that no row
+asked for — the reachability fence and the register flip.
+
+**Sequencing, and the one that matters:** hierarchy (item 1) before content (item 3), per `spec.md`
+§3.3. Adding four memory controls to a page whose grouping is scheduled for replacement is rework in
+one direction only.
+
+**Item 2 is placed to make its own proof possible.** The reachability fence is written *before* the
+memory controls exist, so it goes red naming the four unreachable settings and item 3 turns it green.
+A fence written after the fix proves nothing — that is the lesson v1.17 learned three times, most
+sharply when a gate built to its own design spec could not fail the test the design nominated to
+prove it.
+
+**Item 10 carries an explicit abort condition**, which is unusual for a checklist item and
+deliberate. If assigning the destructive variant starts requiring a judgement call about a fourth
+button, the instruction is to *drop the item* rather than drag F-068's 61 sites forward, and to say
+so in the commit. An item that can only succeed is how scope creeps.
+
+**The `--filter` syntax is called out in the header with its own warning.** Every Verify field in the
+v1.17 checklist used `--filter "Foo*|Bar*"`, which matches zero tests and reports success — a
+checkpoint could have been signed off on nothing having run. This checklist uses
+`FullyQualifiedName~` throughout and says why, so nobody "simplifies" it back.
+
+**Item 12 carries the archive obligation** that nearly lost v1.17's spec: `docs/spec.md` is
+overwritten each round, and this cycle's is canonical again.
+
+**Two checkpoints.** C1 after item 4 — items 1-4 change how every page groups and add the first
+controls into that structure, so it wants eyes before five more items build on it. C2 after item 10,
+the whole surface done, before docs.
+
+**Handoff:** `/build`. Autonomous, halting at C1 and C2.
+
+## /build
+
+Autonomous. **Fourteen items against twelve planned**, fifteen commits, two checkpoints answered.
+Suite 1427 → 1490 with no regression at any step. Build held at 31 warnings / 0 errors throughout.
+
+### The cycle's actual shape
+
+Twelve planned items ran. **4a was added at C1** on Este's catch — the memory fields accepted blank
+to mean "RoRoRo picks one" and never said what it picked, which is this cycle's own defect one more
+time. The app already knew: `ISystemMemoryProbe` was in DI and `MemoryDefaults` already derived both
+values at startup. Surfacing it was the work; deriving it was not. **The fence hardening** was the
+other unplanned item, and it is the more interesting one — see below.
+
+### What the cycle actually found: fourteen false claims, most of them ours
+
+The register rows were the input. The **output** was a pile of corrections, and the ratio is the
+finding. In rough order of how badly each would have misled someone:
+
+1. **`AppSettings.cs` is in Core, not App.** Spec, PRD and checklist all had the directory wrong with
+   the line numbers right — the citation shape that survives review because the interesting part
+   looks correct.
+2. **Items 3 and 4 cited F-024 for careful mode.** It is F-020. Item 11 flips rows by id, so that
+   would have carried the wrong row's closure evidence.
+3. **"Reopen this page" was equally false.** The PRD prescribed it as the fix for a tooltip promising
+   an unnecessary restart. The rail's pages are one window with toggled `Visibility`, so switching
+   pages re-lists nothing. Trading one false promise for another, caught by item 7.
+4. **The PRD said one setting spoke in first person.** Three did.
+5. **"Six settings" was right at audit and is nine today.**
+6. **The register's card contents said 10 where the tree has 8** — a page total attributed to a card.
+7. **The checklist told item 1 to "check flatline, not just brand"** as the weak case for
+   grouping-by-fill. Flatline is the *strongest* — 1.33:1 against brand's 1.09:1. **Second time in two
+   cycles** flatline was treated as adversarial when the adversarial numbers belong to `flatline-lab`.
+8. **`RawTheme`'s doc comment said camelCase** when the format is snake_case — and a theme written to
+   that comment's instructions vanishes silently, which is F-053's complaint *caused by* the docs.
+9. **`ContrastPairGateTests` quoted 44 elements** (real: 39) **and "roughly 104" MutedText bindings**
+   (real: 113). Two stale numbers inside a fence's own failure messages.
+10. **The fence's own prose counts were stale by six** the moment items 3, 4 and 4a landed.
+11. **`docs/features.md` was drifting live**, claiming v1.17 "not yet tagged" while the tag sat in the
+    repo.
+12. **F-062's "duplicates the label" sub-claim never held textually** — already measured false by the
+    re-verification, and nearly repeated.
+13. **My own constraint lists were self-contradictory twice** — "probe from DI" versus "don't touch
+    App.xaml.cs", and "sweep all nine Close buttons" versus "don't touch PreferencesWindow".
+14. **My own copy test asserted the wrong thing** on its first run, and its message counts were wrong.
+
+### The one that matters most
+
+**The reachability fence read prose as code.** A doc comment naming a setting reported it reachable,
+so a setting could stay green forever on the strength of a comment *about* it. Found on item 3's own
+still-bites proof, on the first attempt.
+
+That is the fifth instance this session of *a check reporting success while measuring something other
+than what it claims* — after the checklist filters that matched zero tests, the pre-commit hook that
+only scanned staged files while its CI twin sat red for seven hours, the rendered gate whose sampling
+model could not fail its own nominated proof, and the centring test I deleted because it passed
+against markup I had deliberately broken three ways.
+
+**Every one of them looked exactly like coverage.**
+
+### Two refusals worth recording
+
+**F-046 was not flipped.** Item 10's enumeration held — the abort never fired, because each site
+resolved by lookup rather than by taste — but holding that line left `PluginsWindow`'s Remove a
+hand-rolled magenta fill, which is verbatim the row's headline evidence. The row is not closed by
+holding the line. Twelve of thirteen is the honest number.
+
+**Three candidate findings were declined rather than opened**, each with its reason, against two that
+earned rows. Reflexively opening a row is the same failure as reflexively closing one.
+
+### Checkpoints
+
+**C1** — approved, and produced item 4a. **C2** — walked on a running build, and the walk itself
+caught defect #8 above: a hand-written test theme was rejected, the new status line named it, and the
+cause turned out to be the doc comment. The feature worked; the fixture was wrong; the comment that
+made it wrong is now right. That is the closest thing to a clean end-to-end validation this cycle got,
+and it happened by accident.
+
+### Owed to a human
+
+The suite constructs no `Window`, by design, so every on-screen claim is owed: the hierarchy in four
+themes, a refused megabyte figure, compact mode across a real restart, the three destructive buttons
+under flatline. Also: the theme re-ask is unverifiable on a default install, since every built-in
+returns `DeriveSilently` by design.
+
+**Handoff:** PR to `main`, then `/reflect`.

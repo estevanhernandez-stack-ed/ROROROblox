@@ -42,16 +42,23 @@
 
         <!-- Cancel is the Enter-key default. A confirmation whose default IS the destructive action
              offers no protection against a reflexive Enter — the entire point of the confirm. "Stop
-             all" keeps its magenta prominence (it is what the user came here to do) but requires a
-             deliberate click. Guarded by ModalDefaultButtonSafetyTests. -->
+             all" requires a deliberate click. Guarded by ModalDefaultButtonSafetyTests.
+
+             v1.18: "Stop all" is the third site DestructiveButtonStyle is assigned to by name (spec
+             §6) — it halts every running client at once. It previously carried a raw magenta fill,
+             described here as "magenta prominence". That reading does not survive the theme set: the
+             fill was a literal, so it stayed brand magenta under all four built-ins, and under
+             magenta-heat magenta is also the accent, so the loudest control in the confirm was the
+             same colour as every ordinary CTA in the app. The rank now carries it in weight and edge
+             instead, which is legible in flatline too. Cancel keeps its literal chrome — it is not on
+             the enumerated list and F-079 owns this modal's remaining hexes. -->
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button Content="Cancel" Padding="16,8" IsCancel="True" IsDefault="True"
                     Background="#22314A" Foreground="#FFFFFF" BorderThickness="0"
                     Margin="0,0,8,0"
                     Click="OnCancelClick" />
             <Button Content="Stop all" Padding="16,8"
-                    Background="#F22F89" Foreground="#FFFFFF" BorderThickness="0"
-                    FontWeight="Bold"
+                    Style="{StaticResource DestructiveButtonStyle}"
                     Click="OnStopClick" />
         </StackPanel>
     </Grid>

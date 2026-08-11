@@ -84,105 +84,184 @@
 
             <ScrollViewer Grid.Column="1" Margin="16,0,0,0" VerticalScrollBarVisibility="Auto">
                 <Grid>
-                <StackPanel x:Name="PageStartup">
-                    <Border Style="{StaticResource CardBorderStyle}">
-                        <StackPanel>
-                            <CheckBox x:Name="RunOnLoginToggle"
-                                      Foreground="{DynamicResource WhiteBrush}"
-                                      FontSize="13"
-                                      FontWeight="SemiBold"
-                                      Click="OnRunOnLoginToggle">
-                                <TextBlock Text="Start RoRoRo when Windows starts." />
-                            </CheckBox>
-                            <TextBlock FontSize="11"
-                                       Foreground="{DynamicResource MutedTextBrush}"
-                                       TextWrapping="Wrap"
-                                       Margin="22,4,0,0"
-                                       Text="Adds a value under HKCU Run. Removes it when unchecked." />
-                        </StackPanel>
-                    </Border>
+                <!-- HOW EVERY PAGE BELOW IS GROUPED (F-026, spec 3.1). A section is a
+                     SectionHeadingStyle heading standing OUTSIDE the cards; a setting is a row
+                     INSIDE one. Before this, every setting wore its own card, so a card holding one
+                     control and the ten-control Alerts card carried identical weight — "card" meant
+                     both "group" and "setting", which is the two-meanings defect the row is about.
 
+                     The heading is the level that was missing, and the shared style already had it:
+                     Margin="0,18,0,6" puts 18px above and 6px below, which places a heading BETWEEN
+                     cards rather than inside one. Cards holding a single control collapsed into the
+                     section they belong to instead of each wearing full chrome.
+
+                     DO NOT answer a future grouping need with a second container rank — a
+                     SubCardBorderStyle, a GroupBox, an Expander. Another container restates the
+                     defect this structure removes.
+
+                     WHY THE HEADING AND NOT THE FILL, measured 2026-08-10 on the shipped built-ins.
+                     RowBg against Bg — the card's entire separation from the page — is 1.09:1 in
+                     brand, 1.08:1 in midnight, 1.08:1 in magenta-heat and 1.33:1 in flatline. The
+                     fill was never carrying the group anywhere; it is under 3:1 in all four, and
+                     flatline (the theme the last cycle shipped, and the one this was expected to
+                     fail on) is in fact the STRONGEST of the four, not the weakest. So grouping is
+                     carried by the heading's weight and its 18/6 rhythm, which is achromatic and
+                     survives with colour removed. Do not reintroduce a hierarchy that reads only in
+                     hue. Note the register's older "flatline collapses RowBg into Bg" figure belongs
+                     to the adversarial fixture in FlatlineLabGateTests, not to the flatline theme in
+                     ThemeStore — MutedTextFenceTests carries the same correction for the prose
+                     token. (Do not name that fixture here: its own gate fences the name out of
+                     shipped source, and this comment tripped it once already.) -->
+                <StackPanel x:Name="PageStartup">
+                    <TextBlock Text="Startup"
+                               Style="{StaticResource SectionHeadingStyle}"
+                               AutomationProperties.Name="Startup"
+                               AutomationProperties.HeadingLevel="Level2" />
                     <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
-                            <CheckBox x:Name="LaunchMainToggle"
-                                      Foreground="{DynamicResource WhiteBrush}"
-                                      FontSize="13"
-                                      FontWeight="SemiBold"
-                                      Click="OnLaunchMainToggle">
-                                <TextBlock Text="Launch my main account when RoRoRo starts." />
-                            </CheckBox>
-                            <TextBlock x:Name="LaunchMainHint"
-                                       FontSize="11"
-                                       Foreground="{DynamicResource MutedTextBrush}"
-                                       TextWrapping="Wrap"
-                                       Margin="22,4,0,0"
-                                       Text="Pair with the toggle above for a one-step boot-to-Roblox setup. Pick a main account in the row list (the &#x2606; star) first." />
+                            <StackPanel>
+                                <CheckBox x:Name="RunOnLoginToggle"
+                                          Foreground="{DynamicResource WhiteBrush}"
+                                          FontSize="13"
+                                          FontWeight="SemiBold"
+                                          Click="OnRunOnLoginToggle">
+                                    <TextBlock Text="Start RoRoRo when Windows starts." />
+                                </CheckBox>
+                                <TextBlock FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="22,4,0,0"
+                                           Text="This applies to your Windows account only, and it does not start Roblox: that is the setting below. Unchecking this undoes it completely." />
+                            </StackPanel>
+
+                            <!-- Row separation inside a card is a margin at the call site, matching
+                                 how the button styles leave padding and margin to the caller. A
+                                 keyed "row" style would be the second primitive this structure
+                                 exists to avoid. -->
+                            <StackPanel Margin="0,14,0,0">
+                                <CheckBox x:Name="LaunchMainToggle"
+                                          Foreground="{DynamicResource WhiteBrush}"
+                                          FontSize="13"
+                                          FontWeight="SemiBold"
+                                          Click="OnLaunchMainToggle">
+                                    <TextBlock Text="Launch your main account when RoRoRo starts." />
+                                </CheckBox>
+                                <TextBlock x:Name="LaunchMainHint"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="22,4,0,0"
+                                           Text="Pair with the toggle above for a one-step boot-to-Roblox setup. Pick a main account in the row list (the &#x2606; star) first." />
+                            </StackPanel>
+
+                            <!-- Careful mode, mirrored (F-020, spec 3.2). The only way to change
+                                 how a squad launch behaves used to be to begin one: the toggle
+                                 lived solely in the Squad Launch modal. This is a MIRROR, not a
+                                 move — the modal keeps its copy, because that is where the setting
+                                 is most often wanted. Both surfaces read
+                                 IAppSettings.GetCarefulSquadLaunchAsync on open and neither caches,
+                                 so flipping it in one is what the other shows next time it opens.
+
+                                 It is a ROW here and not a card of its own: this page's two
+                                 single-control cards collapsed into one card with two rows when the
+                                 heading became the grouping level, and a third card would
+                                 reintroduce the exact shape that collapse removed. Startup already holds
+                                 "Launch your main account when RoRoRo starts", which is a launch
+                                 setting rather than a startup one, so this is the third member of a
+                                 set the page already has. The nav item is NOT renamed for it —
+                                 docs/ui-routes.json declares these pages as capture surfaces. -->
+                            <StackPanel Margin="0,14,0,0">
+                                <CheckBox x:Name="CarefulSquadLaunchToggle"
+                                          Foreground="{DynamicResource WhiteBrush}"
+                                          FontSize="13"
+                                          FontWeight="SemiBold"
+                                          AutomationProperties.Name="Launch a squad one account at a time"
+                                          Click="OnCarefulSquadLaunchToggle">
+                                    <TextBlock Text="Launch a squad one account at a time." TextWrapping="Wrap" />
+                                </CheckBox>
+                                <TextBlock FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="22,4,0,0"
+                                           Text="Each account finishes landing in the game before the next one starts. It takes longer, but no two accounts are ever joining at once, which is what sets off Roblox's verification prompts. You can also flip this in the Squad Launch window." />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
                 </StackPanel>
 
                 <StackPanel x:Name="PageAccounts" Visibility="Collapsed">
-                    <!-- Streamer mode. Moved off the main window 2026-08-04 (audit finding F-008): a
-                         setting occupied a full band of the dashboard and printed its own tooltip a
-                         second time as body copy. Rendered as a CheckBox rather than the ui:ToggleSwitch
-                         it was, to match the six settings already on this page — the ToggleSwitch was
-                         the app's only one. The tray checkbox stays; the two are views of one source of
-                         truth (IStreamerIdentityProvider), not two flags. -->
+                    <!-- Two settings, one section: both change what RoRoRo puts on an account row.
+                         They were two single-control cards, which is the shape that made a card
+                         holding one control weigh the same as the ten-control Alerts card. -->
+                    <TextBlock Text="What RoRoRo shows"
+                               Style="{StaticResource SectionHeadingStyle}"
+                               AutomationProperties.Name="What RoRoRo shows"
+                               AutomationProperties.HeadingLevel="Level2" />
                     <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
-                            <CheckBox x:Name="StreamerModeToggle"
-                                      Foreground="{DynamicResource WhiteBrush}"
-                                      FontSize="13"
-                                      FontWeight="SemiBold"
-                                      Click="OnStreamerModeToggle">
-                                <TextBlock Text="Streamer mode." />
-                            </CheckBox>
-                            <TextBlock FontSize="11"
-                                       Foreground="{DynamicResource MutedTextBrush}"
-                                       TextWrapping="Wrap"
-                                       Margin="22,4,0,8"
-                                       Text="Hides names, avatars, and share links inside RoRoRo. It does not change anything Roblox itself shows — your stream still shows whatever is on screen in the game." />
-                            <Button x:Name="RerollAllButton"
-                                    Content="Reroll all identities"
-                                    Click="OnRerollAllClick"
-                                    HorizontalAlignment="Left"
-                                    Margin="22,0,0,0"
-                                    Padding="10,6"
-                                    Style="{StaticResource SecondaryButtonStyle}"
-                                    FontSize="11"
-                                    ToolTip="Assign every fake name and avatar a fresh pick." />
+                            <!-- Streamer mode. Moved off the main window 2026-08-04 (audit finding F-008): a
+                                 setting occupied a full band of the dashboard and printed its own tooltip a
+                                 second time as body copy. Rendered as a CheckBox rather than the ui:ToggleSwitch
+                                 it was, to match the six settings already on this page — the ToggleSwitch was
+                                 the app's only one. The tray checkbox stays; the two are views of one source of
+                                 truth (IStreamerIdentityProvider), not two flags. -->
+                            <StackPanel>
+                                <CheckBox x:Name="StreamerModeToggle"
+                                          Foreground="{DynamicResource WhiteBrush}"
+                                          FontSize="13"
+                                          FontWeight="SemiBold"
+                                          Click="OnStreamerModeToggle">
+                                    <TextBlock Text="Streamer mode." />
+                                </CheckBox>
+                                <TextBlock FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="22,4,0,8"
+                                           Text="Hides names, avatars, and share links inside RoRoRo. It does not change anything Roblox itself shows — your stream still shows whatever is on screen in the game." />
+                                <Button x:Name="RerollAllButton"
+                                        Content="Reroll all identities"
+                                        Click="OnRerollAllClick"
+                                        HorizontalAlignment="Left"
+                                        Margin="22,0,0,0"
+                                        Padding="10,6"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        FontSize="11"
+                                        ToolTip="Assign every fake name and avatar a fresh pick." />
+                            </StackPanel>
+
+                            <!-- v1.14 — Recycle now rejoins the exact server an account is in, so it earns a
+                                 place outside the memory-warning state. Off by default; same row shape. -->
+                            <StackPanel Margin="0,14,0,0">
+                                <CheckBox x:Name="AlwaysShowRecycleToggle"
+                                          Foreground="{DynamicResource WhiteBrush}"
+                                          FontSize="13"
+                                          FontWeight="SemiBold"
+                                          Click="OnAlwaysShowRecycleToggle">
+                                    <TextBlock Text="Always show Recycle on running accounts." TextWrapping="Wrap" />
+                                </CheckBox>
+                                <TextBlock FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="22,4,0,0"
+                                           Text="Recycle closes a client and puts it straight back into the server it was in — useful for a client that's gone sideways, not just one eating memory. Off, it appears only when RoRoRo warns about that account's memory." />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 
-                    <!-- v1.14 — Recycle now rejoins the exact server an account is in, so it earns a
-                         place outside the memory-warning state. Off by default; same block shape. -->
+                    <!-- Accounts — move accounts to another PC (v1.6.0 account transport). The
+                         heading was hand-rolled at 13px SemiBold White INSIDE this card; it is the
+                         same declaration the shared style makes, so it moved out and became the
+                         style. Text unchanged deliberately — this item is structure, not copy. -->
+                    <TextBlock Text="Accounts"
+                               Style="{StaticResource SectionHeadingStyle}"
+                               AutomationProperties.Name="Accounts"
+                               AutomationProperties.HeadingLevel="Level2" />
                     <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
-                            <CheckBox x:Name="AlwaysShowRecycleToggle"
-                                      Foreground="{DynamicResource WhiteBrush}"
-                                      FontSize="13"
-                                      FontWeight="SemiBold"
-                                      Click="OnAlwaysShowRecycleToggle">
-                                <TextBlock Text="Always show Recycle on running accounts." TextWrapping="Wrap" />
-                            </CheckBox>
                             <TextBlock FontSize="11"
                                        Foreground="{DynamicResource MutedTextBrush}"
                                        TextWrapping="Wrap"
-                                       Margin="22,4,0,0"
-                                       Text="Recycle closes a client and puts it straight back into the server it was in — useful for a client that's gone sideways, not just one eating memory. Off, it appears only when RoRoRo warns about that account's memory." />
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Accounts — move accounts to another PC (v1.6.0 account transport). -->
-                    <Border Style="{StaticResource CardBorderStyle}">
-                        <StackPanel>
-                            <TextBlock Text="Accounts"
-                                       Foreground="{DynamicResource WhiteBrush}"
-                                       FontSize="13" FontWeight="SemiBold" />
-                            <TextBlock FontSize="11"
-                                       Foreground="{DynamicResource MutedTextBrush}"
-                                       TextWrapping="Wrap"
-                                       Margin="0,2,0,8"
+                                       Margin="0,0,0,8"
                                        Text="Move your saved accounts to another PC. Export writes a passphrase-encrypted file; import merges it in without touching accounts already on this machine." />
                             <StackPanel Orientation="Horizontal">
                                 <Button Content="Export accounts…" Padding="14,8" Margin="0,0,8,0"
@@ -206,6 +285,10 @@
                 <StackPanel x:Name="PageAlerts" Visibility="Collapsed">
                     <!-- v1.8 idle awareness — mute toggle + warn-threshold preset, mirroring the
                          LaunchMainToggle block above exactly (same CheckBox shape, same hint pattern). -->
+                    <TextBlock Text="Idle accounts"
+                               Style="{StaticResource SectionHeadingStyle}"
+                               AutomationProperties.Name="Idle accounts"
+                               AutomationProperties.HeadingLevel="Level2" />
                     <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
                             <CheckBox x:Name="MuteIdleAlertsToggle"
@@ -246,10 +329,12 @@
                          ever joined one. Hence the walkthrough button. Desktop alerts need no setup at
                          all, but the status line never pretends they are the point — you can already
                          see a dead client if you are sitting at the PC. -->
+                    <TextBlock Text="Alerts"
+                               Style="{StaticResource SectionHeadingStyle}"
+                               AutomationProperties.Name="Alerts"
+                               AutomationProperties.HeadingLevel="Level2" />
                     <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
-                            <TextBlock Text="Alerts" FontSize="13" FontWeight="SemiBold"
-                                       Foreground="{DynamicResource WhiteBrush}" Margin="0,0,0,6" />
                             <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                        Margin="0,0,0,10"
                                        Text="Get told when something happens to an account while you're away from the PC. Sending to a Discord channel takes about a minute to set up — there's a walkthrough below if you've never made a webhook." />
@@ -285,6 +370,44 @@
                                     <ComboBoxItem Content="Clan channel" Tag="Clan" />
                                 </ComboBox>
                             </Grid>
+
+                            <!-- Muted accounts (F-024, spec 4.3). Muting is per-account and lives on
+                                 the row context menu; this page owned every OTHER alert decision and
+                                 said nothing about that one. Somebody who muted an account three
+                                 weeks ago could not find out from the app that they had.
+
+                                 It sits directly under the two routing rows because it is the
+                                 exception to them: here is where alerts go, and here is who is
+                                 exempt. See MutedAccountsSummary for why the count reads the ROWS
+                                 rather than the persisted id list.
+
+                                 ZERO RENDERS AS ABSENCE (prd Story 1.3). Collapsed by default and
+                                 restored to Collapsed by RefreshMutedAccounts — not a stray "0", not
+                                 an empty row. Collapsed rather than Hidden so no gap is left where
+                                 the block would have been, same as ThemeDescriptionText on the
+                                 Appearance page.
+
+                                 Unmute all takes the ORDINARY secondary treatment, deliberately. It
+                                 is destructive-adjacent and it is not on the destructive list, which
+                                 names exactly three sites — Remove, Clear and Stop all — and treats
+                                 a fourth as the signal to drop that work rather than widen it. -->
+                            <StackPanel x:Name="MutedAccountsRow" Margin="0,4,0,6" Visibility="Collapsed">
+                                <TextBlock x:Name="MutedAccountsLine"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           AutomationProperties.Name="Muted accounts" />
+                                <Button x:Name="UnmuteAllButton"
+                                        Content="Unmute all"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,6,0,0"
+                                        Padding="10,5"
+                                        FontSize="11"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        AutomationProperties.Name="Unmute every muted account"
+                                        Click="OnUnmuteAllClick"
+                                        ToolTip="Turn alerts back on for every account you muted." />
+                            </StackPanel>
 
                             <!-- Two separate webhooks, because they are two different audiences. "My
                                  channel" is a server you own and nobody else reads; "Clan channel" is a
@@ -358,17 +481,192 @@
                                        Foreground="{DynamicResource CyanBrush}" />
                         </StackPanel>
                     </Border>
+
+                    <!-- Memory (F-023, spec 4.1). These four have been persisted since v1.13 and
+                         referenced by zero .xaml until now: a page named "Alerts & memory" shipped
+                         with no memory controls on it, and the only way to change one was Notepad.
+                         SettingsReachabilityTests is the fence that makes that shape fail a build.
+
+                         WHY FREE TEXT AND NOT A PRESET PICKER, since the idle threshold two cards
+                         up is a ComboBox. A picker cannot produce an out-of-range value, so it
+                         cannot satisfy prd Story 1.1's requirement that one be refused VISIBLY —
+                         the criterion would be unfalsifiable by construction. Free text is what
+                         gives the refusal something to refuse. It is also what "hand-editing
+                         settings.json still works" already implies: the file accepts any integer,
+                         so the UI has to be able to show any integer and reject the wrong ones.
+
+                         Blank is not empty, it is "RoRoRo picks". SettingsBlob.MemoryReserveMb and
+                         SettingsBlob.MemoryCapMb are int? and null means never set — App.xaml.cs
+                         derives from installed RAM via MemoryDefaults. An empty box has to
+                         round-trip back to null or a user who clears one silently pins whatever
+                         happened to be showing.
+
+                         WRITE THOSE TWO NAMES DOTTED, HERE AND IN THE CODE-BEHIND, and do not tidy
+                         the owner off. SettingsReachabilityTests' control edge matches a bare
+                         setting name anywhere in an App .cs/.xaml file, comments included, and its
+                         one exclusion is a preceding "." (a member read is a consumer, not a
+                         control). So a bare setting name in a sentence is enough to report that
+                         setting reachable; the same name written with its owner is not. Proved on
+                         2026-08-10: with all three of the projection setting's sites renamed away,
+                         the fence still passed on two doc comments alone. Qualified names keep the
+                         fence measuring the controls. -->
+
+                    <TextBlock Text="Memory"
+                               Style="{StaticResource SectionHeadingStyle}"
+                               AutomationProperties.Name="Memory"
+                               AutomationProperties.HeadingLevel="Level2" />
+                    <Border Style="{StaticResource CardBorderStyle}">
+                        <StackPanel>
+                            <StackPanel>
+                                <CheckBox x:Name="MemoryWatchdogEnabledToggle"
+                                          Foreground="{DynamicResource WhiteBrush}"
+                                          FontSize="13"
+                                          FontWeight="SemiBold"
+                                          AutomationProperties.Name="Watch memory while accounts are running"
+                                          Click="OnMemoryWatchdogEnabledToggle">
+                                    <TextBlock Text="Watch memory while accounts are running." TextWrapping="Wrap" />
+                                </CheckBox>
+                                <TextBlock FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="22,4,0,0"
+                                           Text="RoRoRo checks every running client every 30 seconds and tells you before your PC runs out. Turn it off and the three settings below stop doing anything. All four take effect the next time RoRoRo starts." />
+                            </StackPanel>
+
+                            <!-- WHAT BLANK ACTUALLY PICKS, on this machine, said out loud (item 4a).
+                                 The three boxes below accept blank to mean "RoRoRo picks one" and
+                                 said nothing about what it picked, which is this cycle's own defect
+                                 restated: the app knew and did not say.
+
+                                 The text is set from the code-behind rather than written here,
+                                 because the figures are DERIVED and the derivation must be the one
+                                 App.WireMemoryWatchdogAsync already runs. See
+                                 AutomaticMemorySummary — it calls MemoryDefaults, so a number here
+                                 cannot disagree with the number the watchdog uses. A literal in
+                                 this markup would be a second source of truth for a value that
+                                 changes with the PC it runs on.
+
+                                 Muted prose, not the warning vocabulary, even on the probe-failure
+                                 path. A machine whose RAM cannot be read is a standing fact, not an
+                                 event, and MemorySettingsWarning below is where a refusal speaks.
+                                 Painting a permanent line in the warning accent would shout on
+                                 every open and leave the actual refusal nothing louder to be. -->
+                            <TextBlock x:Name="AutomaticMemoryLine"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,14,0,0"
+                                       AutomationProperties.Name="What RoRoRo picks when a box is left blank" />
+
+                            <!-- Row separation is a call-site margin, same as the Startup card. -->
+                            <StackPanel Margin="0,14,0,0">
+                                <TextBlock Text="Memory to keep free (MB)"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource WhiteBrush}"
+                                           Margin="0,0,0,4" />
+                                <TextBox x:Name="MemoryReserveMbInput"
+                                         Width="120"
+                                         HorizontalAlignment="Left"
+                                         Padding="8,6"
+                                         FontSize="12"
+                                         Background="{DynamicResource NavyBrush}"
+                                         Style="{StaticResource AppTextBoxStyle}"
+                                         AutomationProperties.Name="Memory to keep free, in megabytes"
+                                         AutomationProperties.HelpText="A whole number from 256 to 65536, or blank to let RoRoRo pick."
+                                         LostFocus="OnMemoryReserveCommitted" />
+                                <TextBlock FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,4,0,0"
+                                           Text="You get warned once free memory drops under this. 256 to 65536. Leave it blank and RoRoRo works one out from your installed RAM." />
+                            </StackPanel>
+
+                            <StackPanel Margin="0,14,0,0">
+                                <TextBlock Text="Warn when one account passes (MB)"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource WhiteBrush}"
+                                           Margin="0,0,0,4" />
+                                <TextBox x:Name="MemoryCapMbInput"
+                                         Width="120"
+                                         HorizontalAlignment="Left"
+                                         Padding="8,6"
+                                         FontSize="12"
+                                         Background="{DynamicResource NavyBrush}"
+                                         Style="{StaticResource AppTextBoxStyle}"
+                                         AutomationProperties.Name="Warn when one account passes this many megabytes"
+                                         AutomationProperties.HelpText="A whole number from 256 to 65536, 0 to turn this warning off, or blank to let RoRoRo pick."
+                                         LostFocus="OnMemoryCapCommitted" />
+                                <TextBlock FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,4,0,0"
+                                           Text="One client on its own, not the whole PC. A healthy Pet Sim client sits near 2650 MB. 256 to 65536, or 0 to turn this warning off. Leave it blank and RoRoRo works one out." />
+                            </StackPanel>
+
+                            <StackPanel Margin="0,14,0,0">
+                                <TextBlock Text="Warn this far ahead (minutes)"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource WhiteBrush}"
+                                           Margin="0,0,0,4" />
+                                <TextBox x:Name="ProjectionWarnMinutesInput"
+                                         Width="120"
+                                         HorizontalAlignment="Left"
+                                         Padding="8,6"
+                                         FontSize="12"
+                                         Background="{DynamicResource NavyBrush}"
+                                         Style="{StaticResource AppTextBoxStyle}"
+                                         AutomationProperties.Name="Warn this many minutes ahead of running out"
+                                         AutomationProperties.HelpText="A whole number of minutes from 1 to 1440. The default is 120."
+                                         LostFocus="OnProjectionWarnCommitted" />
+                                <TextBlock FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,4,0,0"
+                                           Text="RoRoRo watches how fast your clients are growing and warns you this long before they would fill the PC. 1 to 1440. The default is 120." />
+                            </StackPanel>
+
+                            <!-- This section's OWN failure line, and the three reasons it is its
+                                 own (spec 5). It is not AlertsStatusLine: that line is CyanBrush,
+                                 belongs to the Alerts card above, and spec 5 explicitly leaves it
+                                 alone. It is not the Theme section's line: that one does not exist
+                                 yet and reports a different thing.
+
+                                 RowExpiredAccentBrush and the U+25B2 prefix are the warning
+                                 vocabulary v1.17 established across expired rows, idle chips,
+                                 memory chips and the compat banner. A fifth warning surface speaks
+                                 it. Cyan is the accent — the same treatment a SUCCESS would get —
+                                 so a refusal painted cyan would look like a save.
+
+                                 Collapsed until something is refused. A status line that speaks on
+                                 every save is noise, and the refusal has to arrive as a change. -->
+                            <TextBlock x:Name="MemorySettingsWarning"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource RowExpiredAccentBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,12,0,0"
+                                       Visibility="Collapsed"
+                                       AutomationProperties.Name="Memory settings warning"
+                                       AutomationProperties.LiveSetting="Assertive" />
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
 
                 <StackPanel x:Name="PageDiscord" Visibility="Collapsed">
                     <!-- v1.14+ Discord presence + Join (plan 2026-08-03). Off by default; the status
                          line reports the live connection state in plain words, never a stack trace. -->
+                    <TextBlock Text="Discord presence"
+                               Style="{StaticResource SectionHeadingStyle}"
+                               AutomationProperties.Name="Discord presence"
+                               AutomationProperties.HeadingLevel="Level2" />
                     <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
                             <CheckBox x:Name="DiscordPresenceToggle"
                                       Foreground="{DynamicResource WhiteBrush}" FontSize="13" FontWeight="SemiBold"
                                       Click="OnDiscordPresenceToggle">
-                                <TextBlock Text="Show what I'm playing on Discord." TextWrapping="Wrap" />
+                                <TextBlock Text="Show what you're playing on Discord." TextWrapping="Wrap" />
                             </CheckBox>
                             <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                        Margin="22,4,0,8"
@@ -384,7 +682,7 @@
                             <CheckBox x:Name="DiscordJoinToggle"
                                       Foreground="{DynamicResource WhiteBrush}" FontSize="12"
                                       Margin="22,0,0,0" Click="OnDiscordJoinToggle">
-                                <TextBlock Text="Let friends join my server from Discord" TextWrapping="Wrap" />
+                                <TextBlock Text="Let friends join your server from Discord." TextWrapping="Wrap" />
                             </CheckBox>
                             <TextBlock x:Name="DiscordStatusLine" FontSize="11"
                                        Foreground="{DynamicResource CyanBrush}" TextWrapping="Wrap" Margin="22,8,0,0" />
@@ -393,17 +691,18 @@
                 </StackPanel>
 
                 <StackPanel x:Name="PageAppearance" Visibility="Collapsed">
+                    <TextBlock Text="Theme"
+                               Style="{StaticResource SectionHeadingStyle}"
+                               AutomationProperties.Name="Theme"
+                               AutomationProperties.HeadingLevel="Level2" />
                     <!-- Only card on its page, so no bottom margin — the one place the shared
                          spacing is wrong rather than the one place someone forgot it. -->
                     <Border Style="{StaticResource CardBorderStyle}" Margin="0">
                         <StackPanel>
-                            <TextBlock Text="Theme"
-                                       Foreground="{DynamicResource WhiteBrush}"
-                                       FontSize="13" FontWeight="SemiBold" />
                             <TextBlock FontSize="11"
                                        Foreground="{DynamicResource MutedTextBrush}"
                                        TextWrapping="Wrap"
-                                       Margin="0,2,0,8"
+                                       Margin="0,0,0,8"
                                        Text="Pick a built-in or drop your own JSON in the themes folder. The main window updates immediately; secondary dialogs (this one, Diagnostics, About) adopt the theme on next open." />
                             <ComboBox x:Name="ThemePicker"
                                       DisplayMemberPath="Name"
@@ -438,8 +737,60 @@
                                         Style="{StaticResource SecondaryButtonStyle}"
                                         FontSize="11"
                                         Click="OnOpenThemesFolderClick"
-                                        ToolTip="Drop a *.json file in here to make it appear in the picker after restart." />
+                                        ToolTip="Drop a *.json file in here, then close and reopen Settings to see it in the picker." />
+                                <!-- The way back to the outline question (F-078, spec 4.3). It used
+                                     to be asked once per theme and never again: EdgeRemediationWindow
+                                     says so in its own source — "one reflexive click on the title-bar
+                                     X must not permanently opt somebody's theme out of the fix
+                                     without them reading a word of it — there is no re-ask affordance
+                                     anywhere." This is that affordance.
+
+                                     It stands on its own rather than reading "ask me again", because
+                                     prd Story 1.4 requires it to be discoverable WITHOUT knowing the
+                                     prompt ever happened. "Again" is a word only somebody who saw the
+                                     first one can parse.
+
+                                     It puts the same question through the same dialog and records
+                                     the answer through the same setter — see OnReviewEdgeClick. -->
+                                <Button x:Name="ReviewEdgeButton"
+                                        Content="Review button outlines"
+                                        HorizontalAlignment="Left"
+                                        Padding="10,5" Margin="8,0,0,0"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        FontSize="11"
+                                        AutomationProperties.Name="Review button outlines on this theme"
+                                        Click="OnReviewEdgeClick"
+                                        ToolTip="See both versions of this theme's button outlines and pick the one it uses." />
                             </StackPanel>
+                            <TextBlock FontSize="11"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,8,0,0"
+                                       Text="Themes people write themselves sometimes set button outlines too faint to see, so RoRoRo brightens those. Review button outlines puts both side by side and lets you pick. You can change your mind as often as you like." />
+                            <!-- This section's own failure line (spec 5), sibling to
+                                 AlertsStatusLine and deliberately NOT dressed like it.
+                                 AlertsStatusLine is CyanBrush, which is the accent — the same
+                                 treatment a success gets — so a failure painted cyan would look
+                                 like a save. RowExpiredAccentBrush and the U+25B2 prefix are the
+                                 warning vocabulary v1.17 established across expired rows, idle
+                                 chips, memory chips and the compat banner, and item 3's
+                                 MemorySettingsWarning already speaks it. AlertsStatusLine itself is
+                                 left alone; spec 10 records it as an open issue.
+
+                                 Two things reach it: a theme that applied but could not be written
+                                 down, and a file in the themes folder that could not be read. The
+                                 text is composed by ThemeStatusSummary, which is where the copy is
+                                 tested — nothing here decides what it says.
+
+                                 Collapsed until there is something wrong. Success stays silent. -->
+                            <TextBlock x:Name="ThemeStatusLine"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource RowExpiredAccentBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,12,0,0"
+                                       Visibility="Collapsed"
+                                       AutomationProperties.Name="Theme warning"
+                                       AutomationProperties.LiveSetting="Assertive" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -448,11 +799,12 @@
         </Grid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <!-- Ninth and last of the Close sweep (F-037, spec §6). Dismissal takes the secondary
+                 treatment everywhere; this window's own primary actions keep their fill. IsDefault
+                 and IsCancel are kept as authored — which button Enter fires is a keyboard
+                 affordance, not a rank. -->
             <Button Content="Close" Padding="22,8"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="SemiBold"
+                    Style="{StaticResource SecondaryStrongButtonStyle}"
                     IsDefault="True"
                     IsCancel="True"
                     Click="OnCloseClick" />

@@ -35,7 +35,8 @@ public class MainViewModelTests
         IMemoryWatchdog? memoryWatchdog = null,
         ITrayService? tray = null,
         IRobloxRunningProbe? runningProbe = null,
-        IShellOpener? shellOpener = null)
+        IShellOpener? shellOpener = null,
+        FakeAppSettings? settings = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
@@ -50,7 +51,7 @@ public class MainViewModelTests
             accountStore: vmStore,
             launcher: launcher ?? new FakeRobloxLauncher(),
             compatChecker: new FakeRobloxCompatChecker(),
-            settings: new FakeAppSettings(),
+            settings: settings ?? new FakeAppSettings(),
             favorites: favorites ?? new FakeFavoriteGameStore(),
             processTracker: processTracker,
             presenceService: new FakePresenceService(),
@@ -96,6 +97,133 @@ public class MainViewModelTests
 
             vm.SetContested(false);
             Assert.Equal("", vm.ContestedBannerText);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    /// <summary>
+    /// Polls a condition to a deadline instead of asserting the instant after the setter returns.
+    /// <see cref="MainViewModel.IsCompact"/>'s write is fire-and-forget by design (a settings write
+    /// must not block the click), so "it was written" is a thing that becomes true, not a thing that
+    /// is true synchronously. Asserting immediately would pass today only because the fake completes
+    /// inline, and would turn flaky the day the persist grows a real await in front of it.
+    /// </summary>
+    private static async Task Eventually(Func<bool> condition, string because)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+        while (!condition() && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(10);
+        }
+        Assert.True(condition(), because);
+    }
+
+    /// <summary>
+    /// Story 5.1's first half. The property was a plain in-memory <c>SetField</c> with nothing
+    /// writing it to disk, so compact mode was forgotten on every restart. Both directions are
+    /// asserted: a persist that only ever records `true` leaves the window compact forever.
+    /// </summary>
+    [Fact]
+    public async Task IsCompact_Set_PersistsBothDirections()
+    {
+        var settings = new FakeAppSettings();
+        var (vm, _, _, path) = Build(settings: settings);
+        try
+        {
+            Assert.False(vm.IsCompact);
+            Assert.Empty(settings.CompactModeWrites);   // construction alone writes nothing
+
+            vm.IsCompact = true;
+            await Eventually(() => settings.CompactMode, "Turning compact mode on never reached IAppSettings.");
+            Assert.Equal([true], settings.CompactModeWrites);
+
+            vm.IsCompact = false;
+            await Eventually(() => !settings.CompactMode, "Turning compact mode off never reached IAppSettings.");
+            Assert.Equal([true, false], settings.CompactModeWrites);
+
+            // SetField short-circuits an unchanged value, so a redundant set must not re-write.
+            vm.IsCompact = false;
+            Assert.Equal([true, false], settings.CompactModeWrites);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    /// <summary>
+    /// A settings write that fails must not cost the user the toggle they just pressed. The session
+    /// stays compact; only the memory of it across a restart is lost, and that is the failure the
+    /// disk actually had.
+    /// </summary>
+    [Fact]
+    public async Task IsCompact_PersistFailure_LeavesTheSessionCompactAndDoesNotThrow()
+    {
+        var settings = new FakeAppSettings { CompactModeWriteFailure = new IOException("settings.json is read-only") };
+        var (vm, _, _, path) = Build(settings: settings);
+        try
+        {
+            vm.IsCompact = true;
+
+            await Eventually(() => settings.CompactModeWrites.Count == 1, "The failing write was never attempted.");
+            Assert.True(vm.IsCompact);          // the toggle held
+            Assert.False(settings.CompactMode); // and the disk genuinely did not take it
+
+            vm.IsCompact = false;
+            Assert.False(vm.IsCompact);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    /// <summary>
+    /// Story 5.1's second half, minus the window. <c>MainWindow.OnLoaded</c> calls this; the
+    /// geometry it triggers is a WPF concern and belongs to the manual pass, but the value landing
+    /// in the VM does not.
+    /// <para>
+    /// The no-write-back assertion is the one worth having: a restore routed through the public
+    /// setter would persist the value it just read, turning every launch into a disk write and, on
+    /// a read-only settings file, into a logged failure the user never caused.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task RestoreCompactMode_AppliesThePersistedValueWithoutWritingItBack()
+    {
+        var settings = new FakeAppSettings { CompactMode = true };
+        var (vm, _, _, path) = Build(settings: settings);
+        try
+        {
+            Assert.False(vm.IsCompact);
+
+            var notified = new List<string?>();
+            vm.PropertyChanged += (_, e) => notified.Add(e.PropertyName);
+
+            await vm.RestoreCompactModeAsync();
+
+            Assert.True(vm.IsCompact);
+            Assert.Equal("Expand", vm.CompactToggleLabel);
+            // MainWindow drives ApplyCompactState off this notification; without it the value is
+            // restored and the window still opens at full size.
+            Assert.Contains(nameof(MainViewModel.IsCompact), notified);
+            Assert.Empty(settings.CompactModeWrites);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    /// <summary>
+    /// An unreadable settings file at startup must not stop the window loading. Restore is the
+    /// first thing <c>MainWindow.OnLoaded</c> does after <c>LoadAsync</c>, so a throw here is a
+    /// blank window, not a missing preference.
+    /// </summary>
+    [Fact]
+    public async Task RestoreCompactMode_ReadFailure_LeavesTheWindowExpanded()
+    {
+        var settings = new FakeAppSettings
+        {
+            CompactMode = true,
+            CompactModeReadFailure = new IOException("settings.json is unreadable"),
+        };
+        var (vm, _, _, path) = Build(settings: settings);
+        try
+        {
+            await vm.RestoreCompactModeAsync();
+            Assert.False(vm.IsCompact);
         }
         finally { if (File.Exists(path)) File.Delete(path); }
     }
@@ -1353,7 +1481,9 @@ public class MainViewModelTests
         public Task<(string Name, MutexNameSource Source)> ResolveMutexNameAsync() => throw new NotImplementedException();
     }
 
-    private sealed class FakeAppSettings : IAppSettings
+    // internal, not private: Build takes one so a test can hand in a pre-loaded or deliberately
+    // failing settings double, and an internal method cannot expose a private parameter type.
+    internal sealed class FakeAppSettings : IAppSettings
     {
         // Read synchronously (via await) by MainViewModel's ctor fire-and-forget
         // InitializeBloxstrapWarningAsync — must return a benign completed Task, never throw.
@@ -1397,6 +1527,30 @@ public class MainViewModelTests
         public Task SetMemoryCapMbAsync(int? capMb) => throw new NotImplementedException();
         public Task<int> GetProjectionWarnMinutesAsync() => throw new NotImplementedException();
         public Task SetProjectionWarnMinutesAsync(int minutes) => throw new NotImplementedException();
+
+        // Backing field plus a write log, same reasoning as DismissedFpsCapWarningSignature above:
+        // compact mode round-trips through here, and the tests need to see WHAT was written, not
+        // just the value that stuck. CompactModeWriteFailure covers the failed-persist path — the
+        // window must still go compact when the disk says no.
+        public bool CompactMode { get; set; }
+        public List<bool> CompactModeWrites { get; } = [];
+        public Exception? CompactModeWriteFailure { get; set; }
+        public Exception? CompactModeReadFailure { get; set; }
+
+        public Task<bool> GetCompactModeAsync() => CompactModeReadFailure is not null
+            ? Task.FromException<bool>(CompactModeReadFailure)
+            : Task.FromResult(CompactMode);
+
+        public Task SetCompactModeAsync(bool compact)
+        {
+            CompactModeWrites.Add(compact);
+            if (CompactModeWriteFailure is not null)
+            {
+                return Task.FromException(CompactModeWriteFailure);
+            }
+            CompactMode = compact;
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class FakeFavoriteGameStore : IFavoriteGameStore

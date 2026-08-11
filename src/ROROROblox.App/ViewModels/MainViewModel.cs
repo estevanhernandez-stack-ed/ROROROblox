@@ -690,21 +690,90 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             : "The default game Launch As uses when no per-row pick is set. Click to change.";
 
     private bool _isCompact;
-    /// <summary>True when the main window is in compact (collapsed) mode. Drives the bottom-bar
-    /// button label, the column visibility on the row template, and the empty-state surface.</summary>
+    /// <summary>
+    /// True when the main window is in compact (collapsed) mode. Drives the bottom-bar button
+    /// label, the column visibility on the row template, and the empty-state surface.
+    /// <para>
+    /// Setting it persists (v1.18, `prd.md > Story 5.1`). It was a plain in-memory
+    /// <c>SetField</c> through v1.17, so the layout the Welcome tour pitches as a second-monitor
+    /// workflow was forgotten on every restart. <see cref="RestoreCompactModeAsync"/> is the read
+    /// side; <c>MainWindow.OnLoaded</c> calls it.
+    /// </para>
+    /// </summary>
     public bool IsCompact
     {
         get => _isCompact;
         set
         {
-            if (SetField(ref _isCompact, value))
+            if (ApplyCompactMode(value))
             {
-                OnPropertyChanged(nameof(CompactToggleLabel));
-                OnPropertyChanged(nameof(CompactRows));
-                OnPropertyChanged(nameof(HasCompactRows));
-                OnPropertyChanged(nameof(MainAccount));
-                OnPropertyChanged(nameof(CompactEmptyKind));
+                // Fire-and-forget, the shape PersistIsSelectedAsync and PersistTagsAsync already
+                // use: a settings write does not sit in front of a button click, and a write that
+                // fails does not take back the flip the user just made.
+                _ = PersistCompactModeAsync(value);
             }
+        }
+    }
+
+    /// <summary>
+    /// The in-memory half of the compact flip: the field plus every property that reads off it.
+    /// Split out of the setter so <see cref="RestoreCompactModeAsync"/> can apply a value that came
+    /// FROM settings without writing it straight back — a restore routed through the public setter
+    /// would turn every launch into a settings write, and on an unwritable file into a logged
+    /// failure the user never caused. Returns false when the value was already what it is.
+    /// </summary>
+    private bool ApplyCompactMode(bool compact)
+    {
+        if (!SetField(ref _isCompact, compact, nameof(IsCompact)))
+        {
+            return false;
+        }
+
+        OnPropertyChanged(nameof(CompactToggleLabel));
+        OnPropertyChanged(nameof(CompactRows));
+        OnPropertyChanged(nameof(HasCompactRows));
+        OnPropertyChanged(nameof(MainAccount));
+        OnPropertyChanged(nameof(CompactEmptyKind));
+        return true;
+    }
+
+    /// <summary>
+    /// Soft-failure shape, same as <see cref="PersistTagsAsync"/>: the window is already compact (or
+    /// already expanded) by the time this runs, so a failed write costs the user the memory of the
+    /// choice across a restart, not the choice itself. Logged rather than surfaced — the status-bar
+    /// toggle has no message surface, and item 7 builds the Theme section's warning line, not this
+    /// one.
+    /// </summary>
+    private async Task PersistCompactModeAsync(bool compact)
+    {
+        try
+        {
+            await _settings.SetCompactModeAsync(compact);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Persisting compact mode ({Compact}) failed; it holds for this session only.", compact);
+        }
+    }
+
+    /// <summary>
+    /// Applies the persisted compact-mode preference at startup. Called by <c>MainWindow.OnLoaded</c>
+    /// after <see cref="LoadAsync"/>, which is what drives the window geometry: MainWindow listens
+    /// for <see cref="IsCompact"/>'s change notification and runs its <c>ApplyCompactState</c> off it.
+    /// <para>
+    /// A read failure leaves the window expanded rather than throwing. This runs on the load path,
+    /// so an unreadable settings.json must cost a preference, not the window.
+    /// </para>
+    /// </summary>
+    public async Task RestoreCompactModeAsync()
+    {
+        try
+        {
+            ApplyCompactMode(await _settings.GetCompactModeAsync());
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Reading the persisted compact-mode preference failed; opening expanded.");
         }
     }
 

@@ -79,14 +79,33 @@ internal sealed class ThemeService
         }
     }
 
-    public async Task SetActiveAsync(string themeId)
+    /// <summary>
+    /// Applies a theme and reports what happened to the half that outlives the session.
+    /// <para>
+    /// IT USED TO RETURN <c>Task</c> AND SAY NOTHING. The write below has always been wrapped in a
+    /// catch that logs and carries on — deliberately, because a failed write is no reason to leave
+    /// somebody on a theme they just replaced. What it also did was end the story: the theme went on
+    /// screen, the user saw exactly what a successful save looks like, and the old theme was back
+    /// after a restart with nothing having ever said so (<c>prd.md &gt; Story 3.1</c>). The
+    /// live-apply behaviour is unchanged here. Only the silence is.
+    /// </para>
+    /// <para>
+    /// The message is not written here. This returns the outcome and
+    /// <see cref="Preferences.ThemeStatusSummary"/> turns it into words, so the copy is testable
+    /// without an <c>Application</c>, a <c>Dispatcher</c> or a <c>Window</c> — none of which the
+    /// suite constructs.
+    /// </para>
+    /// </summary>
+    public async Task<ThemeChange> SetActiveAsync(string themeId)
     {
         var theme = await _store.GetByIdAsync(themeId).ConfigureAwait(true);
         if (theme is null)
         {
             _log.LogWarning("Theme {Id} not found; ignoring.", themeId);
-            return;
+            return ThemeChange.Missing;
         }
+
+        string? persistError = null;
         try
         {
             await _settings.SetActiveThemeIdAsync(themeId).ConfigureAwait(true);
@@ -94,6 +113,7 @@ internal sealed class ThemeService
         catch (Exception ex)
         {
             _log.LogWarning(ex, "Saving active theme id failed; applying live anyway.");
+            persistError = ex.Message;
         }
 
         bool? answer = null;
@@ -109,6 +129,11 @@ internal sealed class ThemeService
             }
         }
         ApplyToResources(theme, answer);
+
+        // AFTER the apply, on purpose. "It is on now but was not remembered" is only true once it
+        // is actually on, and returning before the apply would let a caller paint that sentence
+        // over a theme change that had not happened yet.
+        return persistError is null ? ThemeChange.Saved : ThemeChange.AppliedButNotSaved(persistError);
     }
 
     /// <summary>
@@ -149,6 +174,39 @@ internal sealed class ThemeService
 
         PendingEdgeQuestion = null;
         ApplyToResources(theme, accepted);
+    }
+
+    /// <summary>
+    /// Puts the edge question back on the table for the theme currently on screen, and reports
+    /// whether there is one to put. Returns <see langword="false"/> — and changes nothing — for a
+    /// built-in, for a theme whose own boundary already clears 3:1, and when no theme has been
+    /// applied at all.
+    /// <para>
+    /// WHY THIS IS NEEDED AT ALL. <see cref="SetActiveAsync"/> reads the stored answer, so a theme
+    /// that has been answered about resolves to <c>DeriveSilently</c> or <c>HonourDecline</c> and
+    /// produces no question — which is exactly right for every automatic path and exactly wrong for
+    /// somebody deliberately asking to see it again. This passes <c>alreadyAnswered: false</c> to
+    /// reach <c>AskFirst</c>, which is the one decision that carries a question.
+    /// </para>
+    /// <para>
+    /// <b>IT WRITES NOTHING.</b> There is one consent path and this is not a second one: the answer
+    /// still goes through <see cref="AnswerEdgeQuestionAsync"/> to
+    /// <c>IAppSettings.SetEdgeRemediationAnswerAsync</c>, the call
+    /// <c>EdgeRemediationWiringTests.AnAnswerCanBeChangedLater</c> already pins as "not write-once"
+    /// against exactly this affordance arriving. Setting the question without applying anything also
+    /// means dismissing the re-asked dialog leaves the theme rendering precisely as it was.
+    /// </para>
+    /// </summary>
+    internal bool ReopenEdgeQuestion()
+    {
+        if (CurrentTheme is not { } theme) return false;
+
+        var decision = EdgeRemediation.Decide(
+            theme.IsBuiltIn, theme.Navy, theme.Divider,
+            alreadyAnswered: false, declined: false);
+
+        PendingEdgeQuestion = QuestionFor(theme, decision);
+        return PendingEdgeQuestion is not null;
     }
 
     /// <summary>
@@ -286,4 +344,33 @@ internal sealed class ThemeService
         }
         return false;
     }
+}
+
+/// <summary>
+/// The outcome of <see cref="ThemeService.SetActiveAsync"/>, split into the two things that can
+/// independently fail: whether the theme was found at all, and whether the choice survived being
+/// written down.
+/// <para>
+/// THREE STATES, NOT A BOOL, because they need three different sentences. A theme that was never
+/// found is not on screen and must not be described as though it were — that is the state a user
+/// reaches by deleting a theme file while Settings is open. A theme that applied but was not saved
+/// IS on screen and comes back wrong tomorrow. A theme that saved says nothing at all.
+/// </para>
+/// <para>
+/// <paramref name="PersistError"/> carries the exception's own message rather than a rewritten one.
+/// The memory section one page over already shows the raw text for a failed settings write
+/// (<c>PreferencesWindow.xaml.cs</c>, "Couldn't save that: {ex.Message}"), and a user who has run
+/// out of disk or hit an ACL is better served by what Windows said than by a paraphrase of it.
+/// </para>
+/// </summary>
+internal readonly record struct ThemeChange(bool Found, bool Persisted, string? PersistError)
+{
+    /// <summary>The id had no theme behind it. Nothing was applied and nothing was written.</summary>
+    internal static ThemeChange Missing => new(false, false, null);
+
+    /// <summary>Applied and written down. The silent case.</summary>
+    internal static ThemeChange Saved => new(true, true, null);
+
+    /// <summary>On screen for this session only.</summary>
+    internal static ThemeChange AppliedButNotSaved(string error) => new(true, false, error);
 }

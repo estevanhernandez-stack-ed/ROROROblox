@@ -391,6 +391,24 @@ public sealed class AppSettings : IAppSettings, IDisposable
         finally { _gate.Release(); }
     }
 
+    public async Task<bool> GetCompactModeAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).CompactMode; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetCompactModeAsync(bool compact)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with { CompactMode = compact }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
     /// <summary>
     /// Re-keys the deserialized answers case-insensitively. System.Text.Json always hands back an
     /// Ordinal dictionary regardless of what was written, so the comparer has to be re-applied on
@@ -461,7 +479,8 @@ public sealed class AppSettings : IAppSettings, IDisposable
     // SettingsBlob: missing fields decode as defaults (System.Text.Json), so older v1 blobs
     // without LaunchMainOnStartup, BloxstrapWarningDismissed, MuteIdleAlerts,
     // IdleWarnThresholdMinutes, CarefulSquadLaunch, StreamerMode, MemoryWatchdogEnabled,
-    // MemoryReserveMb, MemoryCapMb, ProjectionWarnMinutes, or DismissedFpsCapWarningSignature
+    // MemoryReserveMb, MemoryCapMb, ProjectionWarnMinutes, CompactMode, or
+    // DismissedFpsCapWarningSignature
     // load cleanly with those fields at their defaults — no migration step. MemoryReserveMb/
     // MemoryCapMb default to null ("never set" — the composition root derives from installed
     // RAM); they are NOT sentinel-zero because 0 is a real, distinct user choice for MemoryCapMb
@@ -486,5 +505,6 @@ public sealed class AppSettings : IAppSettings, IDisposable
         int ProjectionWarnMinutes = 120,
         string? DismissedFpsCapWarningSignature = null,
         bool AlwaysShowRecycle = false,
+        bool CompactMode = false,
         Dictionary<string, bool>? EdgeRemediationAnswers = null);
 }

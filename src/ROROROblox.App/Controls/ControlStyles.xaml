@@ -70,6 +70,47 @@
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
+    <!-- Destructive — the third rank, added for the three sites v1.18 enumerates: Remove on the
+         account row, Clear history, and the Stop all confirm. Assigned BY NAME, never by sweep.
+         "Destructive by consequence" is unbounded on its face, and F-068's 61 un-migrated call
+         sites are a different cycle's; a fourth button needing a judgement call is the signal to
+         drop the work rather than widen it.
+
+         WHY IT IS NOT A COLOUR. MagentaBrush is the obvious answer and it fails by measurement in
+         two of the four shipped themes. Under magenta-heat the theme sets Magenta and Cyan to the
+         SAME value, so a magenta-edged destructive button and a cyan-edged PrimaryButtonStyle
+         render identically — the rank would not exist as a rank in a theme a user can pick today.
+         Under flatline Magenta is the dark achromatic accent: it measures 3.73:1 against Navy where
+         the derived edge already measures 3.03:1, a difference no reader can name, and a dim grey
+         outline reads as disabled rather than dangerous. RowExpiredAccentBrush — the warning token
+         v1.17 established across expired rows, idle chips and the compat banner — fails the mirror
+         image of the same test, because under flatline it is the same value as Cyan. And Magenta is
+         the CTA fill on 13 inline-styled surfaces, so it already means "primary action" in places;
+         borrowing it here would hand one token two meanings, which is the defect the secondary rank
+         above exists to describe.
+
+         SO THE RANK IS A RELATIONSHIP, not a hue. Two axes, both of which survive greyscale, colour
+         vision deficiency, and any JSON a user drops in the themes folder:
+
+           edge    InteractiveEdgeBrush at BorderThickness 2 — DOUBLE every other rank in this file,
+                   all of which set 1. The derived brush is also the only boundary token guaranteed
+                   to clear WCAG 1.4.11's 3:1 under a theme nobody has authored yet, so the loudest
+                   edge here is also the one a theme cannot quietly turn invisible.
+           weight  Bold — one step above SecondaryStrongButtonStyle's SemiBold, which is itself one
+                   step above the quiet secondary's Normal. Three ranks, three weights, in order.
+
+         Navy fill and a white label, same as the two ranks above, and deliberately so. A
+         destructive control has to be unmistakable, not inviting: an accent FILL would make Remove
+         the loudest thing on an account row, which is the same cycle's Close-button defect wearing
+         the opposite costume. -->
+    <Style x:Key="DestructiveButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="BorderBrush" Value="{DynamicResource InteractiveEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
+
     <!-- ============================ INPUTS (F-029, F-049) ============================
 
          A text box IS a UI component under WCAG 1.4.11, exactly as much as a button is. Wave 5

@@ -189,6 +189,8 @@ public class StreamerIdentityProviderTests
         public Task SetMemoryCapMbAsync(int? c) => throw new NotImplementedException();
         public Task<int> GetProjectionWarnMinutesAsync() => throw new NotImplementedException();
         public Task SetProjectionWarnMinutesAsync(int m) => throw new NotImplementedException();
+        public Task<bool> GetCompactModeAsync() => throw new NotImplementedException();
+        public Task SetCompactModeAsync(bool compact) => throw new NotImplementedException();
     }
 
     private sealed class InMemoryIdentityStore : IStreamerIdentityStore

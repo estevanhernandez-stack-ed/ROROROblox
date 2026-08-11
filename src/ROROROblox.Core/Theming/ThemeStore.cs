@@ -268,7 +268,18 @@ public sealed class ThemeStore : IThemeStore
     };
 
     /// <summary>On-disk shape — same field set as <see cref="Theme"/> minus the id (which comes
-    /// from the filename). Camelcase JSON ↔ PascalCase property via JsonSerializerOptions.</summary>
+    /// from the filename). <b>snake_case JSON ↔ PascalCase property</b> via
+    /// <see cref="JsonOptions"/>'s <c>SnakeCaseLower</c> policy — so the on-disk keys are
+    /// <c>muted_text</c>, <c>row_bg</c>, <c>row_expired_bg</c>, <c>row_expired_accent</c>.
+    /// <para>
+    /// This comment said "Camelcase" until 2026-08-10 and was wrong, which is worth a sentence
+    /// because of how it fails: a camelCase key deserializes to null, <see cref="ToTheme"/> throws,
+    /// and <c>TryLoadFileAsync</c> catches and drops the file — so a theme written to this comment's
+    /// instructions vanishes with no error, which is F-053's exact complaint. Caught when a hand-written
+    /// test theme was rejected during the v1.18 C2 walk. The user-facing docs
+    /// (<c>docs/themes/template.json</c>, <c>AGENT_PROMPT.md</c>, the shipped example) were all
+    /// correct throughout; only this one misled, and only a maintainer.
+    /// </para></summary>
     private sealed record RawTheme(
         string? Name,
         string? Bg,

@@ -79,12 +79,11 @@
                     Style="{StaticResource SecondaryButtonStyle}"
                     FontSize="11"
                     Click="OnResetClick" />
+            <!-- Dismissal takes the secondary treatment (prd Story 4.2). This window's own actions are
+                 the swatches and Apply; Close is not one of them. -->
             <Button Content="Close"
                     Padding="14,6"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="SemiBold"
+                    Style="{StaticResource SecondaryStrongButtonStyle}"
                     IsDefault="True"
                     IsCancel="True"
                     Click="OnCloseClick" />

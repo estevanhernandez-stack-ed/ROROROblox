@@ -42,7 +42,7 @@ namespace ROROROblox.Tests.Rendering;
 /// <para>
 /// SCOPE, stated so nobody reads a green run as "contrast is verified". <c>ControlStyles.xaml</c>'s
 /// own comment says it exists because 63 hand-copied attribute sets across 15 files repeat the same
-/// themed attributes. Seven keyed styles have been extracted so far. Everything not yet migrated is
+/// themed attributes. Eight keyed styles have been extracted so far. Everything not yet migrated is
 /// invisible here — including all 13 magenta CTAs, the surfaces F-050 is about. This gate covers the
 /// styles, and the styles are a minority of the app's surfaces.
 /// </para>
@@ -52,8 +52,9 @@ namespace ROROROblox.Tests.Rendering;
 /// <c>Background="{DynamicResource MagentaBrush}"</c> directly (GamesWindow :242, MainWindow :57,
 /// :174, :424, :996, :1431, :1473, PluginsWindow :108, :218, :258, PreferencesWindow :349, :423,
 /// SquadLaunchWindow :59) and not one of them carries a <c>Style</c> attribute. <c>MagentaBrush</c>
-/// does not appear in <c>ControlStyles.xaml</c> at all. They are Phase 1's to guard, and Phase 1
-/// guards them.
+/// is bound by no setter in <c>ControlStyles.xaml</c> — it is named there only in
+/// <c>DestructiveButtonStyle</c>'s comment, which records why the destructive rank did not take it.
+/// They are Phase 1's to guard, and Phase 1 guards them.
 /// </para>
 /// <para>
 /// NOT COVERED: composition beyond the two surfaces the input styles name, runtime brushes set by a
@@ -76,9 +77,18 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
     /// <summary>
     /// Styles that own their fill: the setter names a background, so foreground-vs-fill and
     /// edge-vs-fill are both relationships the style itself declares.
+    /// <para>
+    /// <c>DestructiveButtonStyle</c> joined in v1.18 and belongs here for the same reason the other
+    /// three do — it names its own <c>NavyBrush</c> fill. It is the first style in the file to set
+    /// <c>BorderThickness</c> to anything but 1, and that is the point of it: the rank is carried by
+    /// a doubled edge and a Bold label rather than by a hue, because no theme slot separates
+    /// destructive from primary in all four built-ins. This gate measures the half of that claim
+    /// that is measurable — the edge still clears 1.4.11 and the label still clears AA under every
+    /// theme. Whether the doubling READS as destructive is a human's call at C2.
+    /// </para>
     /// </summary>
     private static readonly string[] FullyMeasured =
-        ["PrimaryButtonStyle", "SecondaryButtonStyle", "SecondaryStrongButtonStyle"];
+        ["PrimaryButtonStyle", "SecondaryButtonStyle", "SecondaryStrongButtonStyle", "DestructiveButtonStyle"];
 
     /// <summary>
     /// Styles carrying no <c>Background</c> setter, deliberately — see the comment above
@@ -334,11 +344,12 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
         var keys = KeyedStyles();
 
         // Floor first: a path bug returning nothing would make every set comparison below vacuously
-        // agreeable. Seven keyed styles exist today; the file's own comment explains why the ComboBox
-        // style is the one implicit style and therefore carries no key.
-        Assert.True(keys.Count >= 7,
-            $"Found {keys.Count} keyed styles in ControlStyles.xaml; expected at least 7 (7 measured "
-            + "2026-08-10). The scan is broken, not the file.");
+        // agreeable. Eight keyed styles exist today — seven measured 2026-08-10 plus
+        // DestructiveButtonStyle, added by v1.18 item 10. The file's own comment explains why the
+        // ComboBox style is the one implicit style and therefore carries no key.
+        Assert.True(keys.Count >= 8,
+            $"Found {keys.Count} keyed styles in ControlStyles.xaml; expected at least 8 (8 measured "
+            + "2026-08-11). The scan is broken, not the file.");
 
         var classified = FullyMeasured.Concat(SurfaceSupplied).Concat(Excluded).ToList();
 
@@ -391,11 +402,12 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
     {
         var cases = Matrix.Value;
 
-        // 5 styles x 4 themes, with the two surface-supplied styles measured on both of their
-        // legitimate fills: (3 x 4) + (2 x 2 x 4) = 28. A floor rather than an equality so a fifth
-        // built-in theme enrols itself without editing a number here.
-        Assert.True(cases.Count >= 28,
-            $"Rendered {cases.Count} cases; expected at least 28 (5 styles x 4 built-in themes, the "
+        // 6 styles x 4 themes, with the two surface-supplied styles measured on both of their
+        // legitimate fills: (4 x 4) + (2 x 2 x 4) = 32, up from 28 when DestructiveButtonStyle
+        // landed. A floor rather than an equality so a fifth built-in theme enrols itself without
+        // editing a number here.
+        Assert.True(cases.Count >= 32,
+            $"Rendered {cases.Count} cases; expected at least 32 (6 styles x 4 built-in themes, the "
             + "two inputs on 2 surfaces each). A short matrix passes every assertion below while "
             + "measuring less than it claims.");
 
@@ -448,7 +460,7 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
     public void EveryRenderedForegroundClearsAaAgainstTheFillItLandedOn()
     {
         var cases = Matrix.Value;
-        Assert.True(cases.Count >= 28, $"Rendered {cases.Count} cases; expected at least 28.");
+        Assert.True(cases.Count >= 32, $"Rendered {cases.Count} cases; expected at least 32.");
 
         var failures = new List<string>();
 
@@ -480,7 +492,7 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
 
     /// <summary>
     /// Rule 2, applied where the style's edge and the style's fill are the same relationship
-    /// <c>ContrastGuard</c> derived: the three button styles, whose setters name their own fill, and
+    /// <c>ContrastGuard</c> derived: the four button styles, whose setters name their own fill, and
     /// the input styles on <c>NavyBrush</c>, the surface the derived edge is computed against.
     /// <para>
     /// The remaining eight cases — the inputs on <c>RowBgBrush</c> — are not silently dropped. They
@@ -493,9 +505,10 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
     {
         var cases = Matrix.Value.Where(c => c.Surface is null or ThemeSlots.Navy).ToList();
 
-        // (3 styles x 4 themes) + (2 inputs x 4 themes on Navy) = 20.
-        Assert.True(cases.Count >= 20,
-            $"Have {cases.Count} own-fill cases; expected at least 20. A filtered matrix reports no "
+        // (4 styles x 4 themes) + (2 inputs x 4 themes on Navy) = 24, up from 20 when
+        // DestructiveButtonStyle landed.
+        Assert.True(cases.Count >= 24,
+            $"Have {cases.Count} own-fill cases; expected at least 24. A filtered matrix reports no "
             + "failures at all, which reads identically to a passing gate.");
 
         var failures = new List<string>();
@@ -520,8 +533,9 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
             }
         }
 
-        // Every style in this set sets BorderThickness=1 and a BorderBrush. A case with no edge means
-        // the border did not render, which is a template swallowing a setter — the exact class of
+        // Every style in this set sets a BorderBrush and a non-zero BorderThickness — 1 everywhere
+        // except DestructiveButtonStyle, which sets 2 deliberately. A case with no edge means the
+        // border did not render, which is a template swallowing a setter — the exact class of
         // defect this phase exists to catch, and it would otherwise pass as "no edge, no rule".
         Assert.True(edgeless.Count == 0,
             "A style that declares BorderThickness and a BorderBrush rendered no edge at all:\n  "

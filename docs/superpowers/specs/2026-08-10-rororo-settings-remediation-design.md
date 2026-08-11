@@ -1,3 +1,20 @@
+> ## Archived 2026-08-10 — this is the canonical v1.18.0.0 spec
+>
+> Cart authored this cycle's design in `docs/spec.md` directly rather than compressing it to a
+> pointer-stub, as v1.17 did. `docs/spec.md` is overwritten by every Cart round, so a cycle whose
+> design lives there has no durable copy until one is made here. v1.17's was nearly lost that way,
+> and the obligation is now written into `CLAUDE.md`'s file table and into this cycle's own
+> `checklist.md` header. Copied at item 12, before anything could overwrite it.
+>
+> Nothing below is edited by the archiving. The §2 confirmation block and the §10 carry-forward
+> block were both written into `docs/spec.md` at item 12 and are part of the record, in the
+> banner-correct shape `CLAUDE.md` requires: the original reasoning stands as written and the later
+> blocks name where reality landed.
+>
+> **Relative links resolve from `docs/`, not from here** — the file was written there and is
+> preserved verbatim rather than re-pathed, so `[prd.md](prd.md)` means `docs/prd.md`. Same handling
+> the v1.17 archive got.
+
 # RORORO — Technical Spec: Settings becomes a place
 
 Implements [`docs/prd.md`](prd.md). Cycle target **v1.18.0.0** (current shipped: 1.17.0.0, published

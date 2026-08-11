@@ -96,6 +96,13 @@ internal partial class MainWindow : FluentWindow
         if (DataContext is MainViewModel vm)
         {
             await vm.LoadAsync();
+
+            // v1.18 — compact mode is sticky. Restored after LoadAsync so the rows the compact
+            // strip renders already exist, and before the welcome dialog below, which blocks.
+            // The geometry follows for free: the restore raises IsCompact's change notification and
+            // OnViewModelPropertyChanged runs ApplyCompactState off it, the same path the status-bar
+            // toggle takes. The VM swallows a read failure, so this cannot stop the window loading.
+            await vm.RestoreCompactModeAsync();
         }
 
         // First-run welcome — only when there is nothing in the account list.

@@ -337,7 +337,17 @@ public class ThemedStatusColourTests
     /// own rule about a row not being a static thing, enforced here in arithmetic instead of prose.
     /// </para>
     /// </summary>
-    private const int AllowedXamlLiteralCeiling = 97;
+    /// <summary>
+    /// Re-measured 2026-08-11 after v1.18 item 10: <b>95, down from 97</b>. The Stop all confirm's
+    /// destructive button gave up its raw fill and foreground when it took
+    /// <c>DestructiveButtonStyle</c>, so two of <c>Modals/</c>'s 54 occurrences moved onto the
+    /// governed path. F-079 does not close — its other six modals are untouched — but the two
+    /// literals it counted are gone, and the ceiling moves with them for the same reason it moved
+    /// when F-089 closed: slack left inside an allow-listed region is room for a new literal to
+    /// arrive wearing an old row's badge, which is the one thing the offender list above cannot see.
+    /// F-079's own count needs the same correction; that belongs to the register pass, not here.
+    /// </summary>
+    private const int AllowedXamlLiteralCeiling = 95;
 
     /// <summary>
     /// Vacuity floor. Well under the ceiling so that genuinely CLOSING F-079 or F-066 — which would
