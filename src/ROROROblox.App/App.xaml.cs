@@ -817,7 +817,8 @@ public partial class App : Application
             sp.GetRequiredService<ROROROblox.App.Plugins.ConsentStore>()));
         services.AddSingleton<ROROROblox.App.Plugins.IInstalledPluginsLookup>(sp =>
             new ROROROblox.App.Plugins.Adapters.InstalledPluginsLookupAdapter(
-                sp.GetRequiredService<ROROROblox.App.Plugins.PluginRegistry>()));
+                sp.GetRequiredService<ROROROblox.App.Plugins.PluginRegistry>(),
+                loggerFactory.CreateLogger<ROROROblox.App.Plugins.Adapters.InstalledPluginsLookupAdapter>()));
 
         // PluginInstaller takes (HttpClient, pluginsRoot, stopRunningPluginAsync) — register
         // the typed HttpClient with the right UA, then build the installer with the resolved
@@ -2027,7 +2028,8 @@ public partial class App : Application
         catch (Exception ex)
         {
             _pluginHostListening = null;
-            _log?.LogDebug(ex, "Resolving PluginHostStartupService threw; plugins disabled this session.");
+            _log?.LogWarning(ex, "Resolving PluginHostStartupService threw; PLUGINS DISABLED this session. "
+                    + "Every installed plugin is unavailable until this is resolved.");
         }
     }
 
