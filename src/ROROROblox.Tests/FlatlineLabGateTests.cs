@@ -287,7 +287,7 @@ public class FlatlineLabGateTests
         // edgeAnswer: null is "the user has not been asked", the default state and the one that lets
         // a built-in derive its edge. It is also what makes the AskFirst/DeriveSilently split above
         // observable at all — an answered theme would collapse both arms onto the same branch.
-        decision = ROROROblox.App.Theming.ThemeService.ApplyTo(resources, theme, edgeAnswer: null);
+        decision = ROROROblox.App.Theming.ThemeService.ApplyTo(resources, theme, edgeAnswer: null).Decision;
 
         var resolved = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var key in resources.Keys)

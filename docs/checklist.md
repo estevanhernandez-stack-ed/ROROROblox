@@ -64,7 +64,7 @@ on nothing having run. Do not "simplify" these back.
 
 ## Checklist
 
-- [ ] **1. `ResolvedPalette`, and `ApplyTo` returns what it actually wrote**
+- [x] **1. `ResolvedPalette`, and `ApplyTo` returns what it actually wrote**
   Spec ref: `spec.md > §4.1`, `spec.md > §4.2`, `spec.md > §0.2`
   What to build: `src/ROROROblox.Core/Theming/ResolvedPalette.cs` — an 11-slot record beside `Theme`
   and `ThemeSlots`. Change `ThemeService.ApplyTo` to return `(EdgeRemediation.Decision,
