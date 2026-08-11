@@ -81,7 +81,13 @@ public class ContrastPairGateTests
     /// The floors below stay where they are; they are floors, not the measurement.
     /// </summary>
     private const int MinimumElements = 30;
-    private const int MinimumPairs = 6;
+    // Lowered 6 -> 4 at v1.20. The app declared 8 distinct fill/text pairs when every button
+    // wrote its own; it declares 5 now because 107 buttons share seven ranks. That is the cycle's
+    // entire purpose, and it is ALSO indistinguishable at a glance from a scan that stopped
+    // seeing things -- which happened twice earlier in this same cycle. The difference is the
+    // element count, which counts SITES and held steady: consolidation moves sites between pairs,
+    // lost coverage removes them. Check that number before ever lowering this one again.
+    private const int MinimumPairs = 4;
 
     private static readonly Regex ElementTag = new(@"<\s*[A-Za-z:]+\b[^>]*?>", RegexOptions.Singleline | RegexOptions.Compiled);
 

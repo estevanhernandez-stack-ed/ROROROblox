@@ -239,6 +239,12 @@ internal static class ThemedRender
     {
         Style { TargetType: var t } s when t == typeof(Button) =>
             new Button { Content = GlyphText, FontSize = GlyphSize, Padding = new Thickness(24, 12, 24, 12), Style = s },
+        Style { TargetType: var t } s when t == typeof(System.Windows.Controls.Primitives.ToggleButton) =>
+            new System.Windows.Controls.Primitives.ToggleButton
+            {
+                Content = GlyphText, FontSize = GlyphSize,
+                Padding = new Thickness(24, 12, 24, 12), Style = s,
+            },
         Style { TargetType: var t } s when t == typeof(TextBox) =>
             new TextBox { Text = GlyphText, FontSize = GlyphSize, Padding = new Thickness(24, 12, 24, 12), Style = s },
         Style { TargetType: var t } s when t == typeof(PasswordBox) =>

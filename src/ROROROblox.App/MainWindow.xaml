@@ -1195,7 +1195,7 @@
                                       ToolTip="{Binding DefaultGameTooltip}"
                                       IsChecked="{Binding IsDefaultGameDropdownOpen, Mode=TwoWay}">
                             <ToggleButton.Style>
-                                <Style TargetType="ToggleButton">
+                                <Style TargetType="ToggleButton" BasedOn="{StaticResource SecondaryToggleButtonStyle}">
                                     <Setter Property="Visibility" Value="Visible" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding WidgetGames.Count}" Value="0">

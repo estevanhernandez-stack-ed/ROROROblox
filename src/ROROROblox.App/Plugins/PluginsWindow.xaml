@@ -220,14 +220,10 @@
                                                         Command="{Binding DataContext.LaunchPluginCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                         CommandParameter="{Binding}" />
                                             </StackPanel>
-                                            <Button Content="Remove"
+                                            <Button Style="{StaticResource DestructiveButtonStyle}" Content="Remove"
                                                     Margin="0,8,0,0"
                                                     Padding="10,4"
-                                                    Background="{DynamicResource MagentaBrush}"
-                                                    Foreground="{DynamicResource WhiteBrush}"
-                                                    BorderThickness="0"
                                                     FontSize="11"
-                                                    FontWeight="SemiBold"
                                                     HorizontalAlignment="Right"
                                                     Command="{Binding DataContext.RevokeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}" />

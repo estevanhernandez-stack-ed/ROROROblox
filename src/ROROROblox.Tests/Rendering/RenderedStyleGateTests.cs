@@ -97,6 +97,10 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
             // BorderlessFilled instead -- these lists partition the file, and a key in two of them
             // means one is measuring what the other exempted.
             "AccentActionButtonStyle",
+            // v1.20 C2: the default-game widget is a ToggleButton, so no Button rank reached it
+            // and it kept the OS hover. Its rank sets its own fill, label and edge, so it measures
+            // exactly like the others.
+            "SecondaryToggleButtonStyle",
         ];
 
     /// <summary>

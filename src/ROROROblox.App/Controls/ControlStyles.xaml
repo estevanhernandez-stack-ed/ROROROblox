@@ -127,6 +127,62 @@
         </ControlTemplate.Triggers>
     </ControlTemplate>
 
+    <!-- ToggleButton gets its own copy of the template, because a ControlTemplate's TargetType
+         must match the control and ToggleButton is not a Button. Nothing else about it differs.
+
+         This gap was found at C2, in the header: the default-game widget is a ToggleButton, so
+         none of the six Button ranks reached it and it kept the OS template's hardcoded hover.
+         Every other button in the app had stopped flashing #BEE6FD and that one still did, in the
+         middle of the toolbar. The scanner never saw it either, since it counts the Button tag, so
+         broken control sat outside the definition entirely while the count read "1 site left". -->
+    <ControlTemplate x:Key="AppToggleButtonTemplate" TargetType="ToggleButton">
+        <Grid>
+            <Border x:Name="Chrome"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    SnapsToDevicePixels="True" />
+            <Border x:Name="HoverSheen"
+                    Background="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource WhiteBrush}"
+                    BorderThickness="1"
+                    Opacity="0.22"
+                    Visibility="Collapsed"
+                    IsHitTestVisible="False" />
+            <Border x:Name="PressSheen"
+                    Background="{DynamicResource WhiteBrush}"
+                    BorderBrush="{DynamicResource WhiteBrush}"
+                    BorderThickness="1"
+                    Opacity="0.38"
+                    Visibility="Collapsed"
+                    IsHitTestVisible="False" />
+            <ContentPresenter Margin="{TemplateBinding Padding}"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                              RecognizesAccessKey="True" SnapsToDevicePixels="True" />
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="HoverSheen" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <!-- Checked reuses the press sheen: a toggle that is ON is a control being held down,
+                 and giving it a third layer would be a distinction without a difference. -->
+            <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="PressSheen" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style x:Key="SecondaryToggleButtonStyle" TargetType="ToggleButton">
+        <Setter Property="Template" Value="{StaticResource AppToggleButtonTemplate}" />
+        <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource InteractiveEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
     <!-- Primary. Navy field, white text, cyan edge. Measured 9.39:1 in brand, 8.05:1 in midnight,
          4.90:1 in magenta-heat — this recipe was always fine. It is here so it stops being copied
          by hand, not because it was broken. -->

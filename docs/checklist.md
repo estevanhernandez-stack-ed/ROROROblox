@@ -140,7 +140,7 @@ reports success having executed nothing. This checklist uses `FullyQualifiedName
   Verify: run the scanner; open the two or three most-used of these windows.
   → **CHECKPOINT C2.**
 
-- [ ] **7. F-046 closes**
+- [x] **7. F-046 closes**
   Spec ref: `spec.md > §4`
   What to build: `PluginsWindow`'s Remove — a hand-rolled magenta fill and the row's headline
   evidence — takes `DestructiveButtonStyle`. Confirm the by-name destructive list is otherwise
