@@ -155,7 +155,7 @@ off on nothing having run. Do not "simplify" these back.
   and confirm both the count and the rows. Then decline the theme prompt and find your way back
   without editing JSON. Commit: `feat(settings): muted-account count, unmute all, and a theme re-ask`.
 
-- [ ] **6. Compact mode survives a restart**
+- [x] **6. Compact mode survives a restart**
   Spec ref: `spec.md > §7 Persistence`
   What to build: `CompactMode` joins the settings record;
   [`MainViewModel.cs:695-709`](../src/ROROROblox.App/ViewModels/MainViewModel.cs#L695-L709) persists

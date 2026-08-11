@@ -395,11 +395,11 @@ public class SettingsReachabilityTests
         // This clause's own vacuity floor, ahead of the assertion it protects. A scan that
         // enumerates nothing passes every check below while checking nothing — the `--filter "Foo*"`
         // lesson in a different costume, and the reason both sibling fences in this project carry a
-        // floor. 16 properties on the record today; 10 leaves room for churn without leaving room
-        // for a dead reflection call.
+        // floor. 17 properties on the record today, up from 16 when this fence was written — item 6
+        // added CompactMode. 10 leaves room for churn without leaving room for a dead reflection call.
         Assert.True(properties.Count >= 10,
             $"This fence enumerated only {properties.Count} persisted settings. It should be seeing "
-            + "sixteen — AppSettings.SettingsBlob was renamed, un-nested or made public, so the "
+            + "seventeen — AppSettings.SettingsBlob was renamed, un-nested or made public, so the "
             + "reflection lookup is broken. That is a broken fence, not an app with no settings.");
 
         var files = ViewLayer().ToList();
@@ -441,7 +441,7 @@ public class SettingsReachabilityTests
 
         var properties = PersistedProperties();
         Assert.True(properties.Count >= 10,
-            $"Reflection found {properties.Count} persisted settings; the record declares sixteen.");
+            $"Reflection found {properties.Count} persisted settings; the record declares seventeen.");
 
         var files = ViewLayer().ToList();
         Assert.True(files.Count >= 60,
@@ -453,9 +453,11 @@ public class SettingsReachabilityTests
         // matcher reports every setting unreachable, which reads like a real finding.
         var reachable = properties.Count(p => ReachedAt(p, files) is not null);
         Assert.True(reachable >= 6,
-            $"Only {reachable} settings resolved to a view-layer site. Nine do today — under six "
-            + "means the accessor or control pattern stopped matching, not that the app lost its "
-            + "Settings window.");
+            $"Only {reachable} settings resolved to a view-layer site. Fifteen do today, re-measured "
+            + "at item 6 and up from the nine this line was written against — items 3, 4, 4a and 6 "
+            + "added the six. The floor stays at six: it exists to catch a matcher that stopped "
+            + "firing, and under six means the accessor or control pattern broke, not that the app "
+            + "lost its Settings window.");
 
         // An exemption that outlives the property it names is the defect one layer up: a list entry
         // nobody can trace to a field is how a stale permission survives a rename.

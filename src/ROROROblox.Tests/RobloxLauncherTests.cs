@@ -923,6 +923,9 @@ public class RobloxLauncherTests
         public int ProjectionWarnMinutes { get; set; } = 120;
         public Task<int> GetProjectionWarnMinutesAsync() => Task.FromResult(ProjectionWarnMinutes);
         public Task SetProjectionWarnMinutesAsync(int minutes) { ProjectionWarnMinutes = minutes; return Task.CompletedTask; }
+        public bool CompactMode { get; set; }
+        public Task<bool> GetCompactModeAsync() => Task.FromResult(CompactMode);
+        public Task SetCompactModeAsync(bool compact) { CompactMode = compact; return Task.CompletedTask; }
     }
 
     private sealed class RecordingProcessStarter : IProcessStarter
