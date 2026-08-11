@@ -190,7 +190,13 @@
         <Setter Property="Template" Value="{StaticResource AppButtonTemplate}" />
         <Setter Property="Background" Value="{DynamicResource CyanBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource NavyBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource CyanBrush}" />
+        <!-- The edge matches the LABEL, not the fill. Setting it to CyanBrush was the obvious
+             first move and the rendered-edge gate caught it at 1.00:1 in all four themes — an
+             interactive boundary invisible against its own fill, which is exactly what WCAG
+             1.4.11 is about. Navy measures 9.39 / 8.05 / 4.90 / 12.84 against the cyan behind it.
+             The 23 sites this rank replaces had a border brush of null, so this adds a thin dark
+             outline they did not have: a deliberate change, named here rather than discovered. -->
+        <Setter Property="BorderBrush" Value="{DynamicResource NavyBrush}" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 

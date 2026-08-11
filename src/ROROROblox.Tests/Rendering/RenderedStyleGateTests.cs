@@ -88,7 +88,17 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
     /// </para>
     /// </summary>
     private static readonly string[] FullyMeasured =
-        ["PrimaryButtonStyle", "SecondaryButtonStyle", "SecondaryStrongButtonStyle", "DestructiveButtonStyle"];
+        [
+            "PrimaryButtonStyle", "SecondaryButtonStyle", "SecondaryStrongButtonStyle",
+            "DestructiveButtonStyle",
+            // v1.20. Both set their own fill and their own label, so both are measurable exactly
+            // like the four above. CtaButtonStyle is the only rank in this file with a DARK label
+            // on a bright fill, which is why it is here rather than excluded: navy on cyan is the
+            // pair that passes (9.39 / 8.05 / 4.90 / 12.84) where white on cyan fails everywhere,
+            // and a rank whose whole justification is a measurement belongs where the measurement
+            // runs.
+            "CtaButtonStyle", "AccentActionButtonStyle",
+        ];
 
     /// <summary>
     /// Styles carrying no <c>Background</c> setter, deliberately — see the comment above
