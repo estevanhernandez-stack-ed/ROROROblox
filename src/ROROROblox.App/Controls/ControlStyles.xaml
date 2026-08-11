@@ -17,10 +17,72 @@
          button and a dialog footer button are not the same size, and pretending otherwise would
          trade one bug for a layout sweep nobody asked for. -->
 
+    <!-- ============================ THE TEMPLATE (F-068, v1.20) ============================
+
+         Until now these styles set only resting colours and inherited their TEMPLATE from the OS.
+         That template's state triggers are hardcoded literals with no resource binding:
+
+             IsMouseOver == True   ->  Background #BEE6FD, BorderBrush #3C7FB1
+             IsPressed   == True   ->  Background #C4E5F6
+             IsEnabled   == False  ->  Background #F4F4F4, Foreground #838383
+
+         #BEE6FD is Windows Aero light blue. Every button in this app has flashed it on hover, in
+         every theme, for the app's whole life — confirmed by eye on a running v1.19 build. Under
+         flatline, a theme whose entire purpose is carrying no meaning in colour, the pointer paints
+         sky blue on it.
+
+         WHY A TEMPLATE AND NOT Style.Triggers. Layering triggers on top would be smaller and would
+         survive a WPF-UI package bump, and it cannot work: every one of those setters carries
+         TargetName="border", so it targets a named element INSIDE the inherited template. A Style
+         trigger on the Button's own Background sets a different object's property — not a
+         precedence contest, a different element. Exactly one of the seven (Foreground on disabled)
+         is reachable that way, and one of seven is not a fix.
+
+         THE COST, stated rather than discovered later: owning this template means a future WPF-UI
+         improvement to its Button template will not reach these buttons. There is no version of
+         this that fixes the defect and avoids that.
+
+         Hover and pressed reuse EXISTING palette slots. A twelfth slot would be a contract change
+         and every user theme already on disk would need updating to supply it (invariant 6 — the
+         contract does not grow). RowBg is one step up from Navy in every built-in; Divider is a
+         further step. Disabled is opacity plus a muted label rather than a colour, because flatline
+         has no hue to spend — the same reasoning F-032 settled for status colours. -->
+    <ControlTemplate x:Key="AppButtonTemplate" TargetType="Button">
+        <Border x:Name="Chrome"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                SnapsToDevicePixels="True">
+            <ContentPresenter x:Name="Content"
+                              Margin="{TemplateBinding Padding}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              RecognizesAccessKey="True"
+                              SnapsToDevicePixels="True" />
+        </Border>
+        <ControlTemplate.Triggers>
+            <!-- Every state targets Chrome by name, which is precisely what made the inherited
+                 template unreachable. The difference is that this one is ours and its values are
+                 DynamicResource, so a theme switch repaints hover by the same mechanism that
+                 already repaints rest. -->
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RowBgBrush}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource DividerBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Chrome" Property="Opacity" Value="0.45" />
+                <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
     <!-- Primary. Navy field, white text, cyan edge. Measured 9.39:1 in brand, 8.05:1 in midnight,
          4.90:1 in magenta-heat — this recipe was always fine. It is here so it stops being copied
          by hand, not because it was broken. -->
     <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Template" Value="{StaticResource AppButtonTemplate}" />
         <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource CyanBrush}" />
@@ -47,6 +109,7 @@
          label was never illegible: Muted on Navy measures 6.88:1 and passes AA. The defect was
          semantic, not contrast. -->
     <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Template" Value="{StaticResource AppButtonTemplate}" />
         <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
         <Setter Property="FontWeight" Value="Normal" />
@@ -63,6 +126,7 @@
          would have fixed the contrast bug by demoting a dialog's main action to muted text, which
          is a legibility trade nobody asked for. Three recipes existed; three styles name them. -->
     <Style x:Key="SecondaryStrongButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Template" Value="{StaticResource AppButtonTemplate}" />
         <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
         <Setter Property="FontWeight" Value="SemiBold" />
@@ -104,6 +168,7 @@
          the loudest thing on an account row, which is the same cycle's Close-button defect wearing
          the opposite costume. -->
     <Style x:Key="DestructiveButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Template" Value="{StaticResource AppButtonTemplate}" />
         <Setter Property="Background" Value="{DynamicResource NavyBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
         <Setter Property="FontWeight" Value="Bold" />

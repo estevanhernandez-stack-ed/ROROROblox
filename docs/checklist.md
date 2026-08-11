@@ -72,7 +72,7 @@ reports success having executed nothing. This checklist uses `FullyQualifiedName
 
 ## Checklist
 
-- [ ] **1. The template, and states that follow the theme**
+- [x] **1. The template, and states that follow the theme**
   Spec ref: `spec.md > §2`, `spec.md > §0.2`
   What to build: `AppButtonTemplate` in `Controls/ControlStyles.xaml` — a `Border x:Name="Chrome"`
   wrapping a `ContentPresenter`, with `ControlTemplate.Triggers` for `IsMouseOver` → `RowBgBrush`,
