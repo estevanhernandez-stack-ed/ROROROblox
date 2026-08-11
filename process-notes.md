@@ -1222,3 +1222,58 @@ round.
 **Handoff:** `/checklist`. Sequencing note: the host leg is fully releasable on its own and the plugin
 leg lives in another repository, so **the register flip must not sit in the host leg** — F-091's evidence
 is a mis-coloured plugin window and the host merge does not repaint it.
+
+## /checklist
+
+**Nine items, two repositories, two checkpoints.** Within the 8-12 band without consolidating anything.
+Autonomous, commit-per-item, branch `feat/plugin-theme-feed` already carrying reflection + scope + PRD
++ spec.
+
+**Two facts measured before sequencing, each of which removed a risk the spec left open:**
+
+1. **The harness has already exercised a streaming RPC end-to-end.**
+   `SubscribeMemoryPressure_ProductionAccessor_ReceivesRaisedSnapshot`
+   (`EndToEndContractTests.cs:1025`) raises on the real bus and reads from `ResponseStream` over the
+   real pipe. There was a live risk that streams over a named pipe were untested territory and item 4
+   would quietly degrade to in-process stubs while still reporting green. It is not, and there is a
+   proven template to copy. **Third "it already exists" find in this cycle**, after `minHostVersion` and
+   `SectionHeadingStyle` the cycle before.
+2. **`new PluginHostService(...)` appears at 30 call sites** — 17 harness, 13 unit. A required 13th
+   constructor parameter edits all 30 for zero behavioural gain. Invisible from the spec, and the
+   largest mechanical cost in the cycle.
+
+**The 30-call-site problem, and why the cheap answer needed a guard.** An optional trailing parameter
+defaulting to null leaves all 30 untouched. That is obviously right and it opens a hole: **an optional
+dependency silently unwired in production is this session's recurring failure class wearing a new
+costume.** Item 5 therefore carries a test that resolves `PluginHostService` from the real DI container
+and asserts the palette source is not null. The cheap answer ships with the thing that makes it safe,
+in the same item.
+
+**Item 4 exists in its position for one reason.** The harness tests are written *before* the handlers so
+they go red with `UNIMPLEMENTED`, and item 5 turns them green. Its Verify does not say "run the tests"
+— it says **read the failure text and confirm three `UNIMPLEMENTED`s and nothing else**, because a pass,
+a skip, or a failure for any other reason all mean the test never reached the wire. Item 5's Verify then
+requires `git diff` to show those three test bodies unmodified. **Five separate instances of a check
+reporting success while measuring something else shipped across v1.17 and v1.18**; this pair of Verify
+fields is the direct response.
+
+**Item 2 carries a five-minute adversarial check** that is unusual for a checklist item: deliberately
+omit one capability-map entry, confirm the app refuses to start, then restore it. `AssertExhaustive` is
+the guard protecting the highest-consequence property in the cycle, and a guard nobody has watched fire
+is a guard nobody has tested. Same discipline as feeding `flatline-lab` to the contrast gate to prove it
+can fail.
+
+**Item 7 exists so item 8's diff is purely the swap.** Its Verify explicitly requires confirming the bug
+**still reproduces** — brand, midnight and magenta-heat applying while flatline does not — because item
+8 has nothing to prove otherwise.
+
+**The register flip is in item 9, after the plugin leg, and the reasoning is written into the file
+twice.** F-091's evidence is a mis-coloured plugin window; no host merge repaints it. The checklist also
+states the honest fallback out loud: if item 8 cannot land, the host leg ships alone and **F-091 stays
+open**, which is a fine outcome. An item that can only succeed is how scope creeps, and a row that can
+only close is how a register starts describing a state that does not exist.
+
+**Zero deepening rounds**, consistent with builder-mode habit on `/checklist` specifically — the heavy
+thinking happened at `/spec`, and this was translation.
+
+**Handoff:** `/build`. Autonomous, halting at C1 (after item 5) and C2 (after item 8).
