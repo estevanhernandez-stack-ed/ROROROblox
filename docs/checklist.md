@@ -163,7 +163,7 @@ on nothing having run. Do not "simplify" these back.
   Verify: read it against `spec.md > §3.1` and confirm all eleven slot names match the proto exactly.
   A guide with a wrong slot name is worse than no guide.
 
-- [ ] **7. ur-task can call the two new methods**
+- [x] **7. ur-task can call the two new methods**
   Repo: **`../rororo-ur-task`**
   Spec ref: `spec.md > §5.2`
   What to build: bump the `ROROROblox.PluginContract` package reference to 0.8.0 and expose both
@@ -176,7 +176,7 @@ on nothing having run. Do not "simplify" these back.
   brand/midnight/magenta-heat still apply and flatline still does not. **Confirming the bug still
   reproduces is the point** — item 8 has nothing to prove otherwise.
 
-- [ ] **8. The mirror dies**
+- [x] **8. The mirror dies**
   Repo: **`../rororo-ur-task`**
   Spec ref: `spec.md > §5.1`, `spec.md > §5.2`, `spec.md > §5.3`
   What to build: delete `HostThemeReader`'s `BuiltIns` array and three mirrored palettes,
@@ -196,7 +196,7 @@ on nothing having run. Do not "simplify" these back.
   recurring failure one more time.
   → **CHECKPOINT C2.**
 
-- [ ] **9. Documentation, security verification, and the row**
+- [x] **9. Documentation, security verification, and the row**
   Spec ref: `spec.md > §9`
   What to build: RoRoRo `<Version>` → 1.19.0.0 with the `Package.appxmanifest` in lockstep. **Flip
   F-091 to closed in [the findings register](superpowers/research/2026-08-04-rororo-settings-ui-audit-findings.md)
