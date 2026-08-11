@@ -89,9 +89,13 @@ Get-ChildItem -Path $Root -Filter *.xaml -Recurse -File |
 
             # Look just past the opening tag for a <Button.Style> carrying a BasedOn to a rank.
             # 600 chars covers the property element and its <Style ...> line with room to spare.
-            $lookahead = $text.Substring($end + 1, [Math]::Min(600, $text.Length - $end - 1))
+            # Windows are generous on purpose. The first pass used 240/400 and miscounted
+            # MainWindow's follow chip by one: its <Button.Style> sits 217 chars past the opening
+            # tag and its BasedOn a further 300 past that, behind an explanatory comment. A
+            # too-tight window does not fail, it just quietly reports an extra offender.
+            $lookahead = $text.Substring($end + 1, [Math]::Min(1200, $text.Length - $end - 1))
             $bs = $lookahead.IndexOf('<Button.Style>')
-            if ($bs -ge 0 -and $bs -lt 240 -and $basedOn.IsMatch($lookahead.Substring($bs, [Math]::Min(400, $lookahead.Length - $bs)))) {
+            if ($bs -ge 0 -and $bs -lt 400 -and $basedOn.IsMatch($lookahead.Substring($bs, [Math]::Min(800, $lookahead.Length - $bs)))) {
                 continue
             }
 

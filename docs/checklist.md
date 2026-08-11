@@ -130,7 +130,7 @@ reports success having executed nothing. This checklist uses `FullyQualifiedName
   Verify: open each window and compare. `LeftoverProcessesWindow` and `RobloxAlreadyRunningWindow`
   appear during the startup gate, so they are seen at the worst possible moment.
 
-- [ ] **6. The long tail — 16 files, 22 sites**
+- [x] **6. The long tail — 16 files, 22 sites**
   Spec ref: `spec.md > §3`
   What to build: the remaining files, worst-first. **A site needing a look no rank provides opens a
   row and stops the item** — it does not get hand-rolled and it does not grow the vocabulary

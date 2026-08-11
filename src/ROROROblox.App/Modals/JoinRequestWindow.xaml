@@ -44,17 +44,10 @@
                    Margin="0,16,0,0" />
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Content="Cancel" Padding="16,8" IsCancel="True"
-                    Background="{DynamicResource RowBgBrush}"
-                    Foreground="{DynamicResource WhiteBrush}"
-                    BorderThickness="0"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Cancel" Padding="16,8" IsCancel="True"
                     Margin="0,0,8,0"
                     Click="OnCancelClick" />
-            <Button Content="Try anyway" Padding="16,8" IsDefault="True"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="Bold"
+            <Button Style="{StaticResource CtaButtonStyle}" Content="Try anyway" Padding="16,8" IsDefault="True"
                     Click="OnTryAnywayClick" />
         </StackPanel>
     </Grid>

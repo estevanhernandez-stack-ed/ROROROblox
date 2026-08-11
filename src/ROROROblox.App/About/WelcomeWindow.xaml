@@ -182,11 +182,7 @@
         </ScrollViewer>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-            <Button Content="Got it" Padding="22,8"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="SemiBold"
+            <Button Style="{StaticResource CtaButtonStyle}" Content="Got it" Padding="22,8"
                     IsDefault="True"
                     IsCancel="True"
                     Click="OnCloseClick" />

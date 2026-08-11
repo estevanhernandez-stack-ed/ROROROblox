@@ -38,14 +38,10 @@
                        FontSize="12" FontWeight="SemiBold"
                        Foreground="{DynamicResource WhiteBrush}"
                        VerticalAlignment="Center" />
-            <Button Grid.Column="1"
+            <Button Style="{StaticResource CtaButtonStyle}" Grid.Column="1"
                     x:Name="CopyPromptButton"
                     Content="&#x1F4CB; Copy AI prompt"
                     Padding="12,6"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="SemiBold"
                     FontSize="12"
                     Click="OnCopyPromptClick"
                     ToolTip="Copies the prompt to your clipboard. Paste into Claude or ChatGPT, attach a reference image or describe a vibe, and paste the JSON they return into the box below." />
@@ -94,13 +90,9 @@
                     Style="{StaticResource SecondaryStrongButtonStyle}"
                     IsCancel="True"
                     Click="OnCancelClick" />
-            <Button x:Name="SaveButton"
+            <Button Style="{StaticResource CtaButtonStyle}" x:Name="SaveButton"
                     Content="Save and apply"
                     Padding="18,8"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="SemiBold"
                     IsDefault="True"
                     Click="OnSaveClick" />
         </StackPanel>

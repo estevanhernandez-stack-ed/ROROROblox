@@ -53,14 +53,10 @@
                      Padding="8,5"
                      Background="{DynamicResource NavyBrush}"
                      CaretBrush="{DynamicResource CyanBrush}" Style="{StaticResource AppTextBoxStyle}"/>
-            <Button Grid.Column="2"
+            <Button Style="{StaticResource CtaButtonStyle}" Grid.Column="2"
                     x:Name="ApplyHexButton"
                     Content="Apply"
                     Padding="12,5" Margin="6,0,0,0"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="SemiBold"
                     FontSize="11"
                     Click="OnApplyHexClick" />
         </Grid>
