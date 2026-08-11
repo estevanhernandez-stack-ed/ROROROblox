@@ -799,11 +799,12 @@
         </Grid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <!-- Ninth and last of the Close sweep (F-037, spec §6). Dismissal takes the secondary
+                 treatment everywhere; this window's own primary actions keep their fill. IsDefault
+                 and IsCancel are kept as authored — which button Enter fires is a keyboard
+                 affordance, not a rank. -->
             <Button Content="Close" Padding="22,8"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="SemiBold"
+                    Style="{StaticResource SecondaryStrongButtonStyle}"
                     IsDefault="True"
                     IsCancel="True"
                     Click="OnCloseClick" />

@@ -51,15 +51,16 @@
         </Border>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <!-- Clear history is one of the three sites DestructiveButtonStyle is assigned to by name
+                 (spec §6): it destroys the session log and there is no undo. Close takes the
+                 secondary treatment per prd Story 4.2. Nothing in this window is filled, and that is
+                 right — History performs no action, it reports one. -->
             <Button x:Name="ClearButton" Content="Clear history"
                     Padding="12,8" Margin="0,0,8,0"
-                    Style="{StaticResource SecondaryButtonStyle}"
+                    Style="{StaticResource DestructiveButtonStyle}"
                     Click="OnClearClick" />
             <Button Content="Close" Padding="22,8"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="SemiBold"
+                    Style="{StaticResource SecondaryStrongButtonStyle}"
                     IsDefault="True"
                     IsCancel="True"
                     Click="OnCloseClick" />

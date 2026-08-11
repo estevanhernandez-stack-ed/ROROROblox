@@ -204,7 +204,7 @@ off on nothing having run. Do not "simplify" these back.
   five pages aloud — a voice change is heard, not seen.
   Commit: `docs(settings): one voice across every setting on the page`.
 
-- [ ] **9. The loudest control does something**
+- [x] **9. The loudest control does something**
   Spec ref: `spec.md > §6 Voice and weight` (Close-button half)
   What to build: sweep the nine Close buttons to the secondary treatment. Measured today: **5
   accent-filled, 4 secondary** — half the app already does this, so it is a decide-and-sweep, not a
@@ -214,7 +214,7 @@ off on nothing having run. Do not "simplify" these back.
   Verify: open all nine dialogs and confirm the filled control is the one the window exists to
   perform. Commit: `fix(ui): dismissal takes the secondary treatment everywhere`.
 
-- [ ] **10. Destructive actions look destructive** ⚠ boundary item
+- [x] **10. Destructive actions look destructive** ⚠ boundary item
   Spec ref: `spec.md > §6` (destructive variant) + `§9.6`
   What to build: add `DestructiveButtonStyle` to `ControlStyles.xaml` — there are two ranks and no
   destructive one — and **assign it to exactly these three sites, by enumeration, not by sweep**:

@@ -131,11 +131,12 @@
         </StackPanel>
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <!-- Dismissal takes the secondary treatment (prd Story 4.2). About performs nothing, so
+                 nothing here is filled: an accent fill on the only button in the window says the
+                 window exists to be closed. IsDefault stays — which button Enter fires is a
+                 keyboard affordance, not a visual rank. -->
             <Button Content="Close" Padding="20,8"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="SemiBold"
+                    Style="{StaticResource SecondaryStrongButtonStyle}"
                     IsDefault="True"
                     IsCancel="True"
                     Click="OnCloseClick" />
