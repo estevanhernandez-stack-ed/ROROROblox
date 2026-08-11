@@ -1,229 +1,248 @@
-# RORORO — Product Requirements: Settings becomes a place
+# RORORO — Product Requirements: the host tells plugins what colour it is
 
-Expands [`docs/scope.md`](scope.md). Technical design lands in `/spec`; nothing here picks a control,
-a style key or a mechanism.
+Expands [`docs/scope.md`](scope.md). Technical design lands in `/spec`; nothing here picks a message
+field number, a stream capacity or a discovery mechanism.
 
-**Anchor:** every page holds what its name promises.
+**Anchor:** a plugin should never need to know where the host keeps its themes.
 
-Every claim about current behaviour was re-verified against the tree on 2026-08-10 and cites the file
-it came from. Per-row evidence:
-[`2026-08-10-register-reverification/`](superpowers/research/2026-08-10-register-reverification/).
+Every claim about current behaviour below was read against the tree on 2026-08-10. Given that F-091's
+register row has now been corrected twice, nothing in this document is carried forward from the row.
 
 ## Problem statement
 
-v1.16 built the Settings shell and stopped. A clan member who opens Settings today finds a page
-called **"Alerts & memory"** with four persisted memory settings and no memory controls on it
-([`AppSettings.cs:322-392`](../src/ROROROblox.Core/AppSettings.cs#L322-L392) persists them;
-zero `.xaml` references exist). To change how much memory triggers a warning they edit
-`settings.json` in Notepad. If their theme fails to save they watch it apply, see nothing, and find
-the old theme back after restart. Nine cards on one page wear identical chrome whether they hold one
-control or ten.
+RoRoRo ships four built-in themes. A plugin can only see three of them, and the mechanism explains
+why: `626labs.ur-task` reads the host's `settings.json` for an active theme id, matches it against a
+hand-copied table of three palettes, and otherwise loads `themes\<id>.json` off disk. **User themes
+are files, so that path works. Built-in themes are records in host code and never touch the disk, so
+the only way a plugin can have one is to copy it.** Flatline shipped after that copy was written.
 
-None of this is exotic. It is the ordinary cost of shipping a container and not filling it, and it
-lands on a non-technical audience running eight alts who opened Settings to change one thing.
+The person who feels it is the clan member who chose flatline, which is the accessibility theme — the
+one that carries no meaning in colour at all. They now have a host window that is flat grey and a
+plugin window that is brand navy. A theme picked because colour was a problem is being applied to
+half the screen.
+
+The cost compounds in a second direction. To reach around the contract at all, the plugin has to know
+five internal storage details of the host: the settings filename, the camelCase key inside it, the
+themes folder layout, the per-file snake_case naming policy, and the reader's tolerance for comments
+and trailing commas. Any of those can change in a RoRoRo release without anyone touching the plugin,
+and the plugin will simply go the wrong colour. There is no test on either side that would catch it.
 
 ## User stories
 
 Epic headings are stable addresses. `/spec` and `/checklist` reference them by name.
 
-### Epic 1 — A page holds what its name promises
+### Epic 1 — A plugin can ask what colour the host is right now
 
-**Story 1.1 — Setting a memory threshold without a text editor.**
-As a clan member watching an alt climb toward a memory cap, I want to change when the warning fires
-and what counts as too much, from the page already named for it.
+**Story 1.1 — Reading the current palette on connect.**
+As a plugin, I want to ask the host for its active palette at any moment, so that I can paint myself
+correctly the instant I connect rather than waiting for the user to change something.
 
-- [ ] All four persisted watchdog settings are editable in the app: `MemoryWatchdogEnabled`,
-      `MemoryReserveMb`, `MemoryCapMb`, `ProjectionWarnMinutes`
-      ([`AppSettings.cs:322-392`](../src/ROROROblox.Core/AppSettings.cs#L322-L392)).
-- [ ] They live on the **Alerts & memory** page ([`PreferencesWindow.xaml:80`](../src/ROROROblox.App/Preferences/PreferencesWindow.xaml#L80)),
-      beside the alert routing that already ships there. Not a new page.
-- [ ] Values persist across restart and round-trip through the same `IAppSettings` accessors the
-      file already uses. No second source of truth.
-- [ ] A value outside a sensible range is refused or clamped **in the UI**, with the reason visible.
-      A megabyte field that accepts `-1` silently is the same defect one level down.
-- [ ] Editing `settings.json` by hand still works and the UI reflects it on next open.
+- [ ] A single call returns the host's currently applied palette. It is answerable at any time after
+      handshake, not only when something changes.
+- [ ] The palette is returned as **resolved colour values**. No theme id, no theme name, no file path,
+      no enum. A plugin that receives this must have no way to look anything up, because looking
+      things up is the defect.
+- [ ] The response covers **every slot the host theme defines**, not only the seven ur-task currently
+      consumes. Truncating to today's only consumer means a second package release the first time any
+      plugin wants an expired-row colour.
+- [ ] The call succeeds for a built-in theme and for a user-authored theme, and the caller cannot tell
+      which it got. That indistinguishability is the requirement, not a side effect.
+- [ ] The host always has an answer. There is no "no theme applied" state to represent, because the
+      host applies a theme at startup before any plugin can connect.
 
-**Story 1.2 — Changing squad-launch behaviour without launching a squad.**
-As a user who wants careful mode on, I want to set it in Settings, because today the only way to
-change how squad launches behave is to begin one.
+**Why this story exists and the scope did not name it:** the scope described a push. A push alone
+leaves a plugin that connects mid-session painted with its fallback until the user happens to switch
+themes. The existing contract already draws this distinction — `GetRunningAccounts` pairs with the
+launch and exit streams, and `HostInfo.multi_instance_state` pairs with the mutex stream, while
+`SubscribeMemoryPressure` has no paired read at all. **A theme is state; memory pressure is an
+occurrence.** State needs a read.
 
-- [ ] The careful-mode toggle is reachable from Settings, binding the same persisted value
-      `CarefulSquadLaunch` the modal writes ([`SquadLaunchWindow.xaml.cs:59,73,79`](../src/ROROROblox.App/SquadLaunchWindow.xaml.cs#L59)).
-- [ ] Both surfaces stay in sync — changing it in one is visible in the other on next open.
-- [ ] The in-modal toggle stays. This is a mirror, not a move; the modal is where the setting is
-      most often wanted.
+### Epic 2 — A plugin learns when the colour changes, without watching files
 
-**Story 1.3 — Seeing which accounts I muted.**
-As a user who muted an account by right-clicking it three weeks ago, I want the Alerts page to admit
-that, because it owns every other alert decision.
+**Story 2.1 — Repainting when the user switches themes.**
+As a clan member with a plugin window open, I want it to follow the host when I change themes, so that
+the app looks like one app.
 
-- [ ] The Alerts section shows how many accounts are muted.
-- [ ] An unmute-all affordance exists.
-- [ ] Both read from the muted set the view-model already materialises at startup
-      ([`App.xaml.cs:1376`](../src/ROROROblox.App/App.xaml.cs#L1376)). No new persistence.
-- [ ] Zero muted accounts reads as a clean state, not an empty row or a stray "0".
+- [ ] Changing the theme in RoRoRo's Settings causes a connected plugin to receive the new palette
+      without the plugin polling, and without it watching any host file or folder.
+- [ ] The change arrives for **every** theme the host can apply: all four built-ins including
+      flatline, and any theme the user wrote themselves.
+- [ ] Editing a user theme file's colours in place, with that theme active, also produces a fresh
+      palette. Today the plugin gets this for free from a file watcher; it must not be a regression.
+- [ ] A plugin that is slow or briefly stalled catches up to the **current** palette. It must never
+      replay a backlog of intermediate themes the user has already moved past — the only palette that
+      has ever mattered is the latest one.
+- [ ] Disconnecting and reconnecting a plugin re-establishes the feed with no host restart.
+- [ ] When the host shuts down, the stream ends cleanly and the plugin does not crash, hang, or
+      report an error to the user. A plugin outliving its host is a normal state here, not a fault.
 
-**Story 1.4 — Changing my mind about the theme prompt.**
-As someone who dismissed a prompt in the first ten seconds of a launch to get on with playing, I want
-a route back that is not editing JSON.
+**Story 2.2 — The host emits a theme change at all.**
+As a maintainer, I want the host's own theme application to announce itself internally, so that the
+plugin feed has something real to forward and is not reading UI state.
 
-- [ ] A re-ask affordance exists on the Appearance page and calls the existing setter.
-- [ ] It is discoverable without knowing the prompt ever happened.
+- [ ] A theme change raises a signal from the place the theme is actually applied, so that any theme
+      change reaches it — not only one triggered by the Settings picker.
+- [ ] The signal carries the resolved palette, not an id.
+- [ ] The plugin host forwards it. A plugin with no interest in theming is unaffected.
 
-### Epic 2 — A section is not a setting
+**Note on current state, because this is the least obvious item in the cycle:** the host has **no**
+theme-changed signal today. `IPluginEventBus` carries `AccountLaunched`, `AccountExited`,
+`MutexStateChanged` and `MemoryPressure`. A theme change runs from the Settings picker into
+`ThemeService.ApplyTo` and is heard by nothing. This story is net-new plumbing, not a forwarding
+change, and it is the item most likely to be under-estimated.
 
-**Story 2.1 — Telling a group apart from a single control.**
-As a user scanning Settings, I want a section to look like a section and a setting to look like a
-setting, so "split it up" is answerable.
+### Epic 3 — Nothing that exists today breaks
 
-- [ ] A card holding one control and a card holding ten no longer carry identical weight. Measured
-      today: 9 cards at contents 1/1/2/1/2/2/**10**/2/3
-      ([`PreferencesWindow.xaml`](../src/ROROROblox.App/Preferences/PreferencesWindow.xaml)).
-- [ ] The distinction is structural or typographic — **not a second container primitive**, which
-      would reproduce the two-meanings defect this story is about.
-- [ ] It reads correctly in all four built-in themes, flatline included. A hierarchy carried only in
-      colour fails the theme the last cycle shipped.
+**Story 3.1 — An existing plugin is untouched.**
+As someone running ur-task 0.5.0 today, I want a RoRoRo update that adds this to change nothing about
+my plugin, so that an update never costs me a working setup.
 
-**Story 2.2 — Moving between groups with a keyboard.**
-As a keyboard or screen-reader user, I want to move group-to-group rather than through every control
-in order.
+- [ ] A plugin built against the current contract connects, handshakes and runs with **no change to
+      its binary, its manifest, or its declared capabilities.**
+- [ ] The wire contract version string is unchanged. The handshake compares it by exact match, so any
+      change there rejects every existing plugin outright — this is the single highest-consequence
+      line in the cycle.
+- [ ] Existing plugins are not required to consume the feed, and a plugin that ignores it behaves
+      exactly as before, including its current file-watching behaviour.
 
-- [ ] The five-page rail already provides between-page movement
-      ([`:72-83`](../src/ROROROblox.App/Preferences/PreferencesWindow.xaml#L72-L83)); confirm it, do
-      not rebuild it.
-- [ ] The three hand-rolled 13px SemiBold headings adopt the shared `SectionHeadingStyle` that
-      already ships ([`ControlStyles.xaml:143`](../src/ROROROblox.App/Controls/ControlStyles.xaml#L143))
-      and currently has exactly one consumer app-wide.
-- [ ] Worst-case linear focus run does not grow. Measured today: 12, down from the audited 19.
-- [ ] **Whether Preferences gets an accessible-naming layer here is `/spec`'s call and must be stated
-      either way.** F-052 owns the cross-surface naming pass and is not in this cycle; 0 of 137
-      declarations carry an `AutomationProperties.Name`. Doing Preferences alone is defensible; doing
-      it silently is not.
+**Story 3.2 — The host still starts.**
+As a maintainer, I want the new methods registered in the capability map deliberately, so that the
+host does not refuse to boot.
 
-### Epic 3 — Failure says so
+- [ ] Every new host RPC has an explicit entry in the capability map. **A method present in the
+      contract but absent from that map crashes the host at startup by design**, and separately would
+      be denied at call time. "Ungated" here means *registered and deliberately marked as requiring
+      nothing* — the opposite of absent.
+- [ ] The decision to require no capability is written down where the entry lives, in the same shape
+      as the existing free reads.
+- [ ] **Flagged for `/spec` to confirm rather than assume:** every stream that exists today is
+      capability-gated, and the ungated entries are all one-shot reads. An ungated stream would be the
+      first of its kind. The scope's reasoning is that a colour is not sensitive and that gating it
+      would let a plugin be denied the ability to look correct — that reasoning is sound and it is
+      still a deliberate break in an established pattern, which is worth saying out loud once.
 
-**Story 3.1 — Knowing my theme did not save.**
-As someone who picked a theme, I want to be told if it did not persist, rather than discovering it
-after a restart.
+**Story 3.3 — The change is provable in the suite.**
+As a maintainer, I want this proven end-to-end by an automated test, so that it is not one more claim
+owed to a human's eyes.
 
-- [ ] On persist failure the theme still applies live — the session is not degraded.
-- [ ] A message appears in the Theme section, mirroring the `AlertsStatusLine` pattern the page
-      already uses. Not a modal.
-- [ ] The success path stays silent. A status line that speaks on every save is noise.
+- [ ] The integration harness — which runs a real server over a real named pipe against a real client
+      — exercises reading the palette and receiving a change over the wire, not through in-process
+      stubs.
+- [ ] A test proves an old-shaped plugin still handshakes after the addition.
+- [ ] `dotnet test ROROROblox.slnx` is green, unit and harness.
 
-**Story 3.2 — Knowing my theme file was unreadable.**
-As someone who dropped a JSON file in the themes folder, I want to know it failed rather than watch
-it not appear.
+**Why this criterion is written harder than usual:** the v1.18 reflection found that the suite
+constructs no `Window` by design, so every on-screen claim ends up owed to a human. This cycle is the
+rare one where the interesting behaviour is a wire protocol, and the harness already exists to test
+exactly that. Spending it is the point.
 
-- [ ] An unreadable or malformed theme file is reported in the app, naming the file.
-- [ ] The tooltip stops promising a restart the code does not require. **Corrected during item 7:**
-      it must not say "reopen this page" either — the rail's five pages are one window with toggled
-      `Visibility`, so switching pages re-lists nothing. Only closing and reopening Settings does.
-- [ ] A folder with one bad file among good ones still loads the good ones.
+### Epic 4 — The next plugin author does not have to reverse-engineer this
 
-### Epic 4 — One voice, one meaning for weight
+**Story 4.1 — The feed is documented.**
+As a plugin author, I want theming documented in the author guide, so that I do not have to read
+ur-task's source to find out how to match the host.
 
-**Story 4.1 — Settings that sound like one app.**
-As a non-technical clan member, I want Settings to speak the way the rest of the app speaks.
+- [ ] The author guide describes how to read the current palette and how to subscribe to changes,
+      with a worked example.
+- [ ] It names the slots and what each one is for, so an author can map them to their own UI without
+      guessing from names alone.
+- [ ] It states plainly that reading the host's `settings.json` or `themes` folder is **not** a
+      supported integration and will break. That sentence is the whole point of the cycle written
+      down.
+- [ ] The contract package is published at a new version, with the wire version explicitly noted as
+      unchanged so the distinction is not re-blurred later.
 
-- [ ] All settings on the run-on-login and Discord cards are second person with terminal periods.
-      **Corrected during item 8 — two numbers here were wrong.** "Six settings" was right at audit
-      time and is **nine** today (F-008's streamer relocation plus items 3 and 4 added three), and
-      "one setting speaks as I" undercounts: **three** did, which is what F-043's own row cites and
-      what its fix direction names replacements for. All three fixed.
-- [ ] The run-on-login copy states the **effect**, not the registry path. A registry key is
-      implementation, and it is the wrong first read for this audience.
-- [ ] No line duplicates the checkbox label directly above it.
-- [ ] Clan-facing register per `CLAUDE.md`: no jargon, no "seamlessly", no em-dash pile-ups.
+### Epic 5 — ur-task stops keeping a copy
 
-**Story 4.2 — The loudest control does something.**
-As a user scanning a window, I want the filled button to be the thing the window exists to do.
+**Story 5.1 — The mirror is deleted.**
+As a clan member, I want ur-task to take its colours from the host rather than from a copy, so that
+every theme works and the next one works too.
 
-- [ ] Dismissal takes the secondary treatment everywhere. Measured today across the nine Close
-      buttons: **5 accent-filled, 4 secondary** — so half the app already does this and the fix is a
-      decide-and-sweep, not a fix-one-window.
-- [ ] The window's actual primary action keeps the filled treatment.
-- [ ] Diagnostics is the existing precedent and does not change.
+- [ ] ur-task's hardcoded palette table is removed, along with its knowledge of the host's settings
+      filename, key name, themes folder and file naming policy.
+- [ ] Flatline applies to ur-task's window.
+- [ ] A user-authored theme still applies — this works today and must not regress on the way through.
+- [ ] ur-task remains usable with RoRoRo not running. Its own comment describes it as *"fully usable
+      standalone"* and that is a real property, not an accident.
+- [ ] Its manifest's minimum host version reflects the host release that ships the feed.
 
-**Story 4.3 — Destructive actions look destructive.**
-As a user about to remove an account, I want that button to look different from Save.
+**Sequencing:** this epic lives in a different repository and does not have to ship at the same time.
+The host leg is independently releasable and independently useful — it is what makes every *future*
+plugin correct by default.
 
-- [ ] A destructive variant exists in the shared button styles. Today there are two ranks and no
-      destructive one.
-- [ ] It is assigned by **consequence**, not by window.
-- [ ] **Bounded deliberately:** this story defines the variant and applies it where consequence
-      demands on this cycle's surfaces. It does **not** start F-068's migration — 61 un-migrated call
-      sites across 24 files, direction flat. If that line cannot hold, this story drops to F-068's
-      cycle rather than dragging it forward. `/spec` states where the line is.
-
-### Epic 5 — The app remembers
-
-**Story 5.1 — Compact mode survives a restart.**
-As a user who runs RoRoRo on a second monitor, I want compact mode to still be on tomorrow. The
-Welcome tour pitches it as a second-monitor workflow and it is forgotten on every restart.
-
-- [ ] `CompactMode` persists. `MainViewModel`'s property is a plain in-memory `SetField` today
-      ([`:695-709`](../src/ROROROblox.App/ViewModels/MainViewModel.cs#L695-L709)) with nothing
-      writing it to disk.
-- [ ] It restores on load.
-- [ ] No migration step — the settings record's defaulted fields load cleanly on an existing file,
-      which the code already documents.
+**Stated plainly so nobody is surprised at close-out:** **F-091 does not close until Epic 5 ships.**
+The row's evidence is a plugin window that is the wrong colour, and the host leg alone does not repaint
+it. The scope's "register goes to 38" is true at the *end* of both legs, not at the end of the host
+leg. Calling the row closed on the host merge would be exactly the register defect this project
+already wrote a rule about.
 
 ## What we're building
 
-Ordered by dependency, not importance.
-
-1. **Persistence and missing controls** (Epic 1, Epic 5) — the settings that exist but cannot be
-   reached, and the one that can be reached but does not stick. Independent of everything else.
-2. **Hierarchy** (Epic 2) — because the memory controls Epic 1 adds land on the page whose grouping
-   is the defect. Doing Epic 1 first and Epic 2 second means adding to a broken structure and then
-   fixing it; `/spec` decides whether that ordering inverts.
-3. **Failure messaging** (Epic 3) — small, self-contained, and mirrors a pattern already on the page.
-4. **Voice and weight** (Epic 4) — copy is independent; the button work is the only part that
-   touches other windows.
+| # | Deliverable | Repo | Verified by |
+| --- | --- | --- | --- |
+| 1 | A palette message carrying every host theme slot as resolved values | RoRoRo | Contract + harness |
+| 2 | A read RPC returning the currently applied palette | RoRoRo | Harness, real pipe |
+| 3 | A streaming RPC delivering the palette on change | RoRoRo | Harness, real pipe |
+| 4 | A theme-changed signal on the internal plugin event bus, raised at apply time | RoRoRo | Unit |
+| 5 | Capability-map entries for both new methods, explicitly ungated | RoRoRo | Startup assertion + unit |
+| 6 | Contract package version bump, wire version unchanged | RoRoRo | Handshake test |
+| 7 | Author-guide section on theming, including the "do not read our files" statement | RoRoRo | Read it |
+| 8 | ur-task consumes the feed and deletes its mirror + storage assumptions | ur-task | Run it, all four themes |
 
 ## What we'd add with more time
 
-- **The cross-surface accessible-naming pass** (F-052). 0 of 137 declarations named. Real, and
-  bigger than one page.
-- **The button vocabulary migration** (F-068). 61 sites, flat for five days, with the
-  template-trigger half unshipped.
-- **Plugin theming** (F-091). Every user-authored theme is broken in every plugin, not just flatline.
-- **A settings-schema test** so a persisted field with no UI fails a build rather than waiting for an
-  audit. F-023 existed because nothing connected "persisted" to "reachable."
+- **A palette for the host's own plugin-rendered UI.** Row badges, tray items and status panels accept
+  a `color_hex` from the plugin, which is the same defect in miniature: a plugin choosing a colour to
+  paint into the *host's* window. It is not urgent because the UI host is currently a stub that logs
+  and renders nothing, so there is no surface mis-coloured today. When those land, they should default
+  to the active palette and treat a plugin-supplied hex as the exception.
+- **Font and metric tokens.** The palette is colour only. Type scale and spacing are the obvious next
+  thing a plugin would want to match, and the obvious next thing to hand-copy.
+- **A conformance check for plugin authors** — something an author can run to see whether their window
+  actually repaints, rather than eyeballing four themes.
+- **Retiring the three hand-synced palette copies inside RoRoRo itself.** Already an open issue; the
+  plugin mirror was the fourth copy and this cycle removes only that one.
 
 ## Non-goals
 
-1. **F-050 does not close.** Its status cell auto-deletes the contrast gate's exemption and reddens
-   brand (3.79:1), midnight (4.16:1) and magenta-heat (3.29:1) against a 4.5 threshold. Only flatline
-   survives. Untouched by this cycle.
-2. **No plugin-contract change.** F-091 needs a proto message, a NuGet version bump and an external
-   plugin release.
-3. **No 61-site button migration.** Epic 4.3 defines a variant; it does not sweep.
-4. **No new nav page.** The rail has five and the cycle's whole argument is that pages should hold
-   what they are named for, not that there should be more of them.
-5. **Not a register sweep.** Thirteen rows in one cluster. The other 38 keep their own sequencing.
+- **Adding flatline to ur-task's table.** A one-line fix for the visible symptom that creates a fifth
+  copy and leaves the sixth built-in broken the same way.
+- **Writing the host's built-in themes to disk.** The strongest rejected alternative, cut in scope
+  with its reason: it fixes availability while keeping all five storage couplings, and it turns the
+  "a built-in wins an id collision" rule from an in-memory decision into a file-on-disk race.
+- **Letting a plugin author, define, or override a theme.** The host owns the theme. Plugins receive
+  it. A plugin that could write themes is a plugin that can make the host's own window unreadable.
+- **Gating the feed behind a user consent capability.** Capabilities fence things that can cause harm.
+  A colour is not one, and gating it would mean a plugin can be denied the ability to look correct.
+- **Anything beyond colour.** No layout, no fonts, no per-plugin overrides, no theme-conditional
+  behaviour on either side.
+- **F-050, F-068, F-046** — the standing exclusions, unchanged.
+
+## Edge cases surfaced
+
+Behaviours that must be decided rather than discovered during the build:
+
+1. **A plugin connects before the host has applied a theme.** Believed impossible — the host applies at
+   startup, well before the plugin host accepts connections — but "believed impossible" is how a null
+   palette reaches a plugin. `/spec` should either prove the ordering or define the answer.
+2. **A theme is switched while a plugin is mid-repaint.** The requirement is convergence on the latest
+   palette, never a queue of stale ones.
+3. **The user edits the active theme file by hand while a plugin is connected.** Works today via the
+   plugin's file watcher. If the plugin stops watching files, the host must be the one to notice.
+4. **A malformed user theme.** The host already drops unreadable theme files rather than applying
+   them, so the feed can only ever carry something the host itself applied. This is worth an explicit
+   test rather than an assumption.
+5. **A plugin subscribes twice.** Should be harmless.
+6. **The host is closed while a plugin is running.** Clean stream end, plugin keeps working, no error
+   surfaced to the user.
+7. **A brand-new plugin is installed against an older host that lacks the feed.** This is the open
+   question below, and the only edge case with no default.
 
 ## Open questions
 
-**Before `/spec`:**
-
-- **Where careful mode lives.** The rail has no launch page and the row's fix direction assumes one.
-  Startup is the closest existing fit; a sixth page for one checkbox trades one inconsistency for
-  another.
-- **Whether Epic 2 precedes Epic 1.** Adding four memory controls to the page whose grouping is the
-  defect, then fixing the grouping, is rework. Inverting risks designing hierarchy against a page
-  that is about to gain a card.
-- **How far Epic 4.3's destructive variant reaches.** "Assign by consequence" is unbounded on its
-  face. `/spec` names the specific actions.
-
-**During `/spec`, resolved by looking:**
-
-- **What the hierarchy answer actually is.** Typographic, spacing, or a heading level above the card.
-  The rail already supplied the between-page level, so this is narrower than the row's framing.
-- **Whether Preferences gets named for accessibility here or waits for F-052.**
-
-**Can wait until `/build`:**
-
-- Exact copy for the six settings and the two status messages. Register is clan-facing; the shapes
-  are in the fix directions.
+| Question | Needs answering |
+| --- | --- |
+| **How does a plugin discover whether the host supports the feed?** Catch the not-implemented error and fall back, or advertise host capabilities in the existing host-info response. The second is field-additive and safe, and it is also a standing commitment about how this contract advertises every future addition. | **Before `/spec` finishes.** Deliberately left undefaulted — it is small now and load-bearing later. |
+| **Does ur-task keep its disk reader as the no-host fallback, or collapse to a constant?** Keeping it preserves the user's theme when the plugin runs with RoRoRo closed. Dropping it is the only way the five couplings actually die. | At `/spec`, and it may resolve to "keep the reader, delete the mirror," which is a real third answer. |
+| **Does the palette message carry the host's slots one-to-one, or a plugin-facing subset with a derived hover?** ur-task derives its hover by tinting; if every plugin will do that, the derivation may belong in the contract. | At `/spec`. Low consequence either way. |
+| **Does the host leg ship as its own release, or wait for ur-task?** The PRD assumes independent release. | Before the release, not before the build. |

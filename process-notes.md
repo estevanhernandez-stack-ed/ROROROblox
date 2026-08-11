@@ -1108,3 +1108,51 @@ two-repo contract cycle needs instead of a web search. Este had already made the
 direction call this session ("full Cart cycle, additive contract") and set the standing exclusions.
 
 **Handoff:** `/prd`.
+
+## /prd
+
+**Zero deepening rounds.** Same justification as the last two cycles and it holds here for a different
+reason: this is a contract cycle against two trees that can be read, so the value a deepening round
+normally adds came from recon instead. That has now been the pattern twice running — on a remediation
+or contract cycle, **reading is the deepening round.**
+
+**Three expansions the scope did not contain, all from reading `PluginHostService`, `CapabilityInterceptor` and `RpcMethodCapabilityMap`:**
+
+1. **The scope named a push and only a push. A theme is state, and state needs a read.** A
+   subscribe-only design leaves a plugin that connects mid-session painted with its fallback until the
+   user happens to switch themes, which is most of the time. The contract already draws exactly this
+   line: `GetRunningAccounts` pairs with the launch/exit streams and `HostInfo.multi_instance_state`
+   pairs with the mutex stream, while `SubscribeMemoryPressure` has no paired read because pressure is
+   an *occurrence*. Epic 1 is the read; it did not exist an hour ago.
+2. **Adding an RPC to the proto and forgetting the capability map crashes the host at startup.**
+   `RpcMethodCapabilityMap.AssertExhaustive()` refuses to boot on an unmapped method, and
+   `CapabilityInterceptor` fails closed on one at call time — both deliberately, after `UpdateUI` and
+   `RemoveUI` once shipped ungated. So the scope's cut "no capability gate on the theme feed" needed
+   restating precisely: it means **registered and explicitly marked as requiring nothing**, which is
+   the opposite of absent. Absent is a startup crash. Story 3.2.
+3. **An ungated stream would be the first of its kind.** Every existing `Subscribe*` requires a
+   capability; every ungated entry is a one-shot read. The scope's reasoning for not gating colour is
+   sound and it is still a deliberate break in an established pattern, so the PRD flags it for `/spec`
+   to affirm rather than inherit.
+
+**One thing the PRD says out loud that the scope let slide.** Scope closed with "Register: F-091
+closes. 38 open." The row's evidence is a plugin window painted the wrong colour, and the host leg
+alone does not repaint it. **F-091 does not close until the ur-task leg ships.** Calling it closed on
+the host merge would be precisely the register defect this repo already wrote a `CLAUDE.md` rule
+about, one cycle after the reflection named net-register targets as the wrong shape.
+
+**One candidate finding investigated and declined.** `RowBadgeSpec.color_hex` lets a plugin paint a
+colour into the *host's* window, which is the same defect inverted. Not opened as a row and not pulled
+into scope: `WpfPluginUIHost` is still a stub that logs and renders nothing, so there is no surface
+mis-coloured today. Recorded in "What we'd add" so it lands when that UI does. Declining a finding on
+evidence is the same discipline as opening one.
+
+**Acceptance criteria written harder than usual in one place.** Story 3.3 requires the proof to run in
+`PluginTestHarness` — real Kestrel, real named pipe, real client — rather than in-process stubs. The
+v1.18 reflection's sharpest gap was that the suite constructs no `Window`, so on-screen claims end up
+owed to a human. This cycle's interesting behaviour is a wire protocol and the harness for it already
+exists. That is the rare case where the gap closes by spending what is already built.
+
+**Handoff:** `/spec`. Two forks arrive with it: host-capability discovery (deliberately undefaulted)
+and whether ur-task keeps its disk reader as the no-host fallback while deleting the mirror — which
+may resolve to a third answer rather than either horn.
