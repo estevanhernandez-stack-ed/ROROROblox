@@ -86,7 +86,7 @@ reports success having executed nothing. This checklist uses `FullyQualifiedName
   green — those gates measure resting appearance, so **them passing is the proof that rest did not
   move.** Then run the app and hover a button: the fill must be a theme colour, not `#BEE6FD`.
 
-- [ ] **2. The scanner, and the baseline it records**
+- [x] **2. The scanner, and the baseline it records**
   Spec ref: `spec.md > §6`
   What to build: `scripts/count-button-sites.ps1` implementing §6's definition verbatim, printing a
   total, an un-migrated count and a per-file breakdown. Record its **branch-point output** in the
