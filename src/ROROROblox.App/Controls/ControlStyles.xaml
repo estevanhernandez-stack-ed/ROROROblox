@@ -190,14 +190,14 @@
         <Setter Property="Template" Value="{StaticResource AppButtonTemplate}" />
         <Setter Property="Background" Value="{DynamicResource CyanBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource NavyBrush}" />
-        <!-- The edge matches the LABEL, not the fill. Setting it to CyanBrush was the obvious
-             first move and the rendered-edge gate caught it at 1.00:1 in all four themes — an
-             interactive boundary invisible against its own fill, which is exactly what WCAG
-             1.4.11 is about. Navy measures 9.39 / 8.05 / 4.90 / 12.84 against the cyan behind it.
-             The 23 sites this rank replaces had a border brush of null, so this adds a thin dark
-             outline they did not have: a deliberate change, named here rather than discovered. -->
-        <Setter Property="BorderBrush" Value="{DynamicResource NavyBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <!-- BORDERLESS, and the fill is the boundary. Every one of the 23 sites this replaces sets
+             BorderThickness="0" — these are solid blocks, not outlined controls. An earlier draft
+             gave them a 1px edge to satisfy the rendered-edge gate and it was the wrong fix: WCAG
+             1.4.11 asks whether the control is distinguishable from what is adjacent to it, and
+             cyan on the page background measures 9.39 / 8.05 / 4.90 / 12.84. The fill answers the
+             rule; a border would only be decoration, and decoration that changes 23 buttons. -->
+        <Setter Property="BorderThickness" Value="0" />
     </Style>
 
     <!-- Accent action — Stop, Squad Launch, and the six other sites that were solid magenta blocks.
@@ -226,6 +226,46 @@
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="BorderBrush" Value="{DynamicResource MagentaBrush}" />
         <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <!-- Warning — Recycle, Re-authenticate, and the memory-pressure recycle glyph. The warning
+         token v1.17 established across expired rows, idle chips and the compat banner, now
+         carrying the three buttons that ACT on those warnings.
+
+         Dark label, for the same reason CtaButtonStyle has one: navy on the accent measures
+         8.85 / 7.23 / 9.85 / 12.84 while white measures 1.88 / 2.19 / 1.63 / 1.36 — under AA in
+         every theme the app ships. All three existing sites already use the dark label, so this
+         changes nothing about how they look.
+
+         Borderless, and the fill is the boundary: the accent against the page measures
+         8.85 / 7.23 / 9.85 / 12.84, well past 1.4.11's 3:1. -->
+    <Style x:Key="WarningButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Template" Value="{StaticResource AppButtonTemplate}" />
+        <Setter Property="Background" Value="{DynamicResource RowExpiredAccentBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource NavyBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <!-- Ghost — the quiet affordances that sit ON something rather than next to it: the tag's
+         remove glyph, the compact/expand toggle, the set-main swatch, dismiss links. Transparent
+         fill, no border, no chrome at all; the label is the entire control.
+
+         WHY IT IS NOT MEASURED AS A BOUNDARY. There is no fill and no edge to measure, so
+         1.4.11's non-text rule has nothing to govern here — this is text on whatever surface hosts
+         it, and 1.4.3's text contrast is the rule that applies. The label binds WhiteBrush, which
+         is measured against every surface it can land on by the sibling text pairs. A ghost rank
+         that invented a fill to have something to measure would be adding chrome to satisfy a
+         gate, which is the opposite of the point.
+
+         Hover still reads: the shared template tints Chrome to RowBgBrush on IsMouseOver, so a
+         transparent button gains a visible surface exactly when the pointer is over it, and loses
+         it again after. That is the affordance these sites previously had no way to express. -->
+    <Style x:Key="GhostButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Template" Value="{StaticResource AppButtonTemplate}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
     </Style>
 
     <!-- ============================ INPUTS (F-029, F-049) ============================
