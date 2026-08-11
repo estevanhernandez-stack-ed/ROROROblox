@@ -33,7 +33,12 @@ $ErrorActionPreference = 'Stop'
 
 # The opening tag only. Matching the whole element would let a Style set on a CHILD count as
 # migrating the parent, which would undercount the debt and flatter the result.
-$opener = [regex] '<(?:ui:)?Button\b'
+# Negative lookahead on '.' excludes PROPERTY-ELEMENT syntax -- <Button.Style>,
+# <Button.ToolTip>, <Button.ContextMenu> -- which  happily matched. Nine of those exist,
+# all in MainWindow.xaml, and counting them inflated this script's first baseline from 63
+# to 72. A scanner that miscounts by a fixed amount is worse than one that fails: it is
+# reproducible, so it looks right.
+$opener = [regex] '<(?:ui:)?Button(?![.\w])'
 $styled = [regex] 'Style\s*=\s*"\{(?:Static|Dynamic)Resource\s+[A-Za-z0-9_]*ButtonStyle\s*\}"'
 
 if (-not (Test-Path $Root)) { throw "Root '$Root' not found. Run from the repository root." }
