@@ -117,6 +117,32 @@ off on nothing having run. Do not "simplify" these back.
   controls into that structure. Walk all five pages in all four themes before item 5 builds on it.
   Commit: `feat(settings): careful squad launch mirrored into Startup`.
 
+- [x] **4a. Automatic has to say what it picked** *(added at C1, builder's call)*
+  Spec ref: `spec.md > §4.1` — extends item 3
+  Why it exists: item 3's numeric fields accept blank to mean "RoRoRo picks one", and never say what
+  it picked. That is this cycle's own defect one more time — the app knows something and does not say
+  it. The builder caught it on the C1 walk.
+  **The app already knows.** `ISystemMemoryProbe.TryRead` is in DI at
+  [`App.xaml.cs:717`](../src/ROROROblox.App/App.xaml.cs#L717) and gives installed RAM;
+  `MemoryDefaults.ReserveMb` is 8% of it clamped to [1 GB, 4 GB] and `MemoryDefaults.CapMb` is 4 GB
+  clamped **down** by 35%, against a measured `ExpectedClientMb` of 2650.
+  `App.WireMemoryWatchdogAsync` already resolves `settings.Value ?? MemoryDefaults.XMb(total)` at
+  [`:1173-1174`](../src/ROROROblox.App/App.xaml.cs#L1173-L1174). The derivation is not new work —
+  surfacing it is.
+  What to build: the Memory section states the detected installed RAM and what each automatic value
+  resolves to **on this machine**, so a blank box is informative rather than mysterious. Resolve
+  through the same `MemoryDefaults` calls the startup path uses — **no second derivation**, which is
+  the constraint that matters most here.
+  **The probe can fail**, and that is the builder's fallback case: `TryRead` returning false means the
+  app genuinely does not know, and `MemoryDefaults` falls back to its floor. Say so plainly and show
+  the fallback figures in use. Do **not** ask the user to type their RAM size when the probe
+  succeeded — asking for what the machine already reported is the same defect wearing a question mark.
+  Acceptance: `prd.md > Story 1.1`. A blank field explains itself. The stated numbers match what the
+  watchdog actually runs with. Probe failure is stated, not hidden behind a plausible default.
+  Verify: read the section with all boxes blank and confirm the numbers match
+  `MemoryDefaults.ReserveMb` / `CapMb` for this machine's RAM.
+  Commit: `feat(settings): say what automatic resolves to on this machine`.
+
 - [ ] **5. Alerts admits what it owns, and the theme prompt is reversible**
   Spec ref: `spec.md > §4.3 Muted accounts and the theme re-ask`
   What to build: two small additions reading existing state. **(a)** the Alerts section shows a muted-

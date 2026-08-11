@@ -1520,7 +1520,12 @@ public partial class App : Application
             _services.GetRequiredService<AlertDispatcher>(),
             _services.GetRequiredService<DiscordWebhookSender>(),
             _services.GetRequiredService<WebhookProbe>(),
-            _services.GetRequiredService<DiscordConfigCache>());
+            _services.GetRequiredService<DiscordConfigCache>(),
+            // v1.18 item 4a — the Memory section states what a blank box resolves to on this
+            // machine, and it resolves it through the same MemoryDefaults calls
+            // WireMemoryWatchdogAsync uses. Same registration (:717), same singleton, so the
+            // figure on screen and the figure the watchdog runs with cannot come apart.
+            _services.GetRequiredService<ISystemMemoryProbe>());
     }
 
     private static string ReadDiscordApplicationId()

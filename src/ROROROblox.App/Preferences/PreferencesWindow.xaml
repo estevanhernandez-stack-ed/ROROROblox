@@ -495,6 +495,31 @@
                                            Text="RoRoRo checks every running client every 30 seconds and tells you before your PC runs out. Turn it off and the three settings below stop doing anything. All four take effect the next time RoRoRo starts." />
                             </StackPanel>
 
+                            <!-- WHAT BLANK ACTUALLY PICKS, on this machine, said out loud (item 4a).
+                                 The three boxes below accept blank to mean "RoRoRo picks one" and
+                                 said nothing about what it picked, which is this cycle's own defect
+                                 restated: the app knew and did not say.
+
+                                 The text is set from the code-behind rather than written here,
+                                 because the figures are DERIVED and the derivation must be the one
+                                 App.WireMemoryWatchdogAsync already runs. See
+                                 AutomaticMemorySummary — it calls MemoryDefaults, so a number here
+                                 cannot disagree with the number the watchdog uses. A literal in
+                                 this markup would be a second source of truth for a value that
+                                 changes with the PC it runs on.
+
+                                 Muted prose, not the warning vocabulary, even on the probe-failure
+                                 path. A machine whose RAM cannot be read is a standing fact, not an
+                                 event, and MemorySettingsWarning below is where a refusal speaks.
+                                 Painting a permanent line in the warning accent would shout on
+                                 every open and leave the actual refusal nothing louder to be. -->
+                            <TextBlock x:Name="AutomaticMemoryLine"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,14,0,0"
+                                       AutomationProperties.Name="What RoRoRo picks when a box is left blank" />
+
                             <!-- Row separation is a call-site margin, same as the Startup card. -->
                             <StackPanel Margin="0,14,0,0">
                                 <TextBlock Text="Memory to keep free (MB)"

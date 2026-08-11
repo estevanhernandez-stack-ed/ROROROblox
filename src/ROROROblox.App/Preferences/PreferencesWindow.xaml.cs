@@ -8,6 +8,7 @@ using ROROROblox.App.Theming;
 using ROROROblox.App.Transport;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
+using ROROROblox.Core.Diagnostics;
 using ROROROblox.Core.Discord;
 using ROROROblox.Core.Theming;
 using ROROROblox.Core.Transport;
@@ -35,6 +36,14 @@ internal partial class PreferencesWindow : Window
     private readonly DiscordWebhookSender _webhookSender;
     private readonly WebhookProbe _webhookProbe;
     private readonly DiscordConfigCache _discordConfigCache;
+
+    /// <summary>
+    /// What the memory section's blank boxes resolve to on this machine (item 4a). Holds the
+    /// injected <see cref="ISystemMemoryProbe"/> rather than reaching for one, so a test can hand
+    /// it a known RAM figure — or a failing read — and assert what the section says.
+    /// </summary>
+    private readonly AutomaticMemorySummary _automaticMemory;
+
     private bool _suppressClickHandlers; // true while we set the initial check states.
 
     /// <summary>Channel names reported by the probe for each webhook, if it answered.</summary>
@@ -73,8 +82,10 @@ internal partial class PreferencesWindow : Window
         AlertDispatcher alertDispatcher,
         DiscordWebhookSender webhookSender,
         WebhookProbe webhookProbe,
-        DiscordConfigCache discordConfigCache)
+        DiscordConfigCache discordConfigCache,
+        ISystemMemoryProbe systemMemoryProbe)
     {
+        _automaticMemory = new AutomaticMemorySummary(systemMemoryProbe);
         _alertDispatcher = alertDispatcher;
         _webhookSender = webhookSender;
         _webhookProbe = webhookProbe;
@@ -1033,6 +1044,13 @@ internal partial class PreferencesWindow : Window
     /// </summary>
     private async Task PopulateMemoryControlsAsync()
     {
+        // FIRST, and deliberately. This line reads no settings — it reads the machine — so it must
+        // survive a settings read that throws. OnLoaded catches out of this method and paints a
+        // "couldn't read your memory settings" warning; if the automatic line were painted after
+        // the accessors, that path would leave the boxes blank AND unexplained, which is the exact
+        // state this item exists to end.
+        AutomaticMemoryLine.Text = _automaticMemory.Describe().Text;
+
         MemoryWatchdogEnabledToggle.IsChecked = await _settings.GetMemoryWatchdogEnabledAsync();
         MemoryReserveMbInput.Text = FormatOptional(await _settings.GetMemoryReserveMbAsync());
         MemoryCapMbInput.Text = FormatOptional(await _settings.GetMemoryCapMbAsync());
@@ -1232,8 +1250,12 @@ internal partial class PreferencesWindow : Window
         if (_suppressClickHandlers) return;
 
         var saved = (await _settings.GetProjectionWarnMinutesAsync()).ToString(CultureInfo.InvariantCulture);
+        // The fallback the refusal message quotes is the same constant the automatic line states,
+        // and that constant is pinned to Core/AppSettings.cs's real default by a test. A literal
+        // 120 here would be a third place saying it and the only one nothing watches.
         if (!TryReadWholeNumber(ProjectionWarnMinutesInput.Text, ProjectionFloorMinutes,
-                ProjectionCeilingMinutes, fallback: 120, out var minutes, out var refusal))
+                ProjectionCeilingMinutes, fallback: AutomaticMemorySummary.ProjectionDefaultMinutes,
+                out var minutes, out var refusal))
         {
             Refuse(ProjectionWarnMinutesInput, saved, refusal);
             return;
