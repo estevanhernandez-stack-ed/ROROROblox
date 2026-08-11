@@ -1539,16 +1539,13 @@
                      remaining width — same shape as the Bloxstrap banner below, just quieter. -->
                 <DockPanel Margin="0,4,0,0"
                            Visibility="{Binding FpsCapWarningText, Converter={StaticResource StringToVisibilityConverter}}">
-                    <Button DockPanel.Dock="Right"
+                    <Button Style="{StaticResource GhostButtonStyle}" DockPanel.Dock="Right"
                             Content="Dismiss"
                             Command="{Binding DismissFpsCapWarningCommand}"
                             Margin="8,0,0,0"
                             Padding="0"
                             FontSize="11"
                             VerticalAlignment="Top"
-                            Foreground="{DynamicResource CyanBrush}"
-                            Background="Transparent"
-                            BorderThickness="0"
                             Cursor="Hand" />
                     <TextBlock Text="{Binding FpsCapWarningText}"
                                FontSize="11"
@@ -1587,7 +1584,7 @@
                 Padding="16,10"
                 Visibility="{Binding BloxstrapWarningVisible, Converter={StaticResource BoolToVisibilityConverter}}">
             <DockPanel>
-                <Button
+                <Button Style="{StaticResource GhostButtonStyle}"
                     DockPanel.Dock="Right"
                     Content="Dismiss"
                     Margin="12,0,0,0"

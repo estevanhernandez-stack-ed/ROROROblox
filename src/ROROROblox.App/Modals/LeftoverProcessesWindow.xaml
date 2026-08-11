@@ -26,15 +26,11 @@
             <!-- Stray-only cleanup: windowless orphans have nothing to lose (same reasoning as
                  SeamlessTakeover.WindowlessOnly), so no confirmation gate. Hidden entirely when
                  there are no windowless orphans to clear — see code-behind. -->
-            <Button x:Name="ClearStraysButton" Content="Clear strays" Padding="16,8"
-                    Background="#22314A" Foreground="#FFFFFF" BorderThickness="0"
+            <Button Style="{StaticResource SecondaryButtonStyle}" x:Name="ClearStraysButton" Content="Clear strays" Padding="16,8"
                     Margin="0,0,8,0" Click="OnClearStraysClick" />
-            <Button Content="Clean up + continue" Padding="16,8"
-                    Background="#22314A" Foreground="#FFFFFF" BorderThickness="0"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Clean up + continue" Padding="16,8"
                     Margin="0,0,8,0" Click="OnCleanUpClick" />
-            <Button Content="Continue" Padding="16,8" IsDefault="True" IsCancel="True"
-                    Background="#17D4FA" Foreground="#0F1F31" BorderThickness="0"
-                    FontWeight="Bold" Click="OnContinueClick" />
+            <Button Style="{StaticResource CtaButtonStyle}" Content="Continue" Padding="16,8" IsDefault="True" IsCancel="True" Click="OnContinueClick" />
         </StackPanel>
     </Grid>
 </Window>

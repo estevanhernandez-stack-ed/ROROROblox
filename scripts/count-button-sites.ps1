@@ -76,6 +76,17 @@ Get-ChildItem -Path $Root -Filter *.xaml -Recurse -File |
             $script:total++
             if ($styled.IsMatch($head)) { continue }
 
+            # A local keyed style that itself BasedOn's a rank counts as migrated. GamesWindow's
+            # InverseBoolToVisibilityStyle is exactly that: it adds visibility triggers on top of
+            # SecondaryButtonStyle, and the two buttons using it were migrated before this cycle
+            # started. Reading only the resource NAME called them offenders.
+            $named = [regex]::Match($head, 'Style\s*=\s*"\{(?:Static|Dynamic)Resource\s+([A-Za-z0-9_]+)\s*\}"')
+            if ($named.Success) {
+                $localKey = $named.Groups[1].Value
+                $decl = [regex]::Match($text, "<Style[^>]*x:Key=""$([regex]::Escape($localKey))""[^>]*>")
+                if ($decl.Success -and $basedOn.IsMatch($decl.Value)) { continue }
+            }
+
             # Look just past the opening tag for a <Button.Style> carrying a BasedOn to a rank.
             # 600 chars covers the property element and its <Style ...> line with room to spare.
             $lookahead = $text.Substring($end + 1, [Math]::Min(600, $text.Length - $end - 1))

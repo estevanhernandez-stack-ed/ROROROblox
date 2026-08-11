@@ -121,7 +121,7 @@ reports success having executed nothing. This checklist uses `FullyQualifiedName
   this passes 90 minutes.
   → **CHECKPOINT C1.**
 
-- [ ] **5. The top tail — 5 files, 20 sites**
+- [x] **5. The top tail — 5 files, 20 sites**
   Spec ref: `spec.md > §3`
   What to build: `PluginsWindow` (6), `GamesWindow` (4), `RobloxAlreadyRunningWindow` (4),
   `LeftoverProcessesWindow` (3), `PreferencesWindow` (3). **`PluginsWindow`'s Remove belongs to item

@@ -61,14 +61,10 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <Button Grid.Column="2" Content="+ Add"
+                    <Button Style="{StaticResource CtaButtonStyle}" Grid.Column="2" Content="+ Add"
                             Tag="{Binding}"
                             Click="OnAddSearchResultClick"
                             Padding="12,6"
-                            Background="{DynamicResource CyanBrush}"
-                            Foreground="{DynamicResource NavyBrush}"
-                            BorderThickness="0"
-                            FontWeight="SemiBold"
                             FontSize="11" />
                 </Grid>
             </Border>
@@ -324,12 +320,8 @@
                      CaretBrush="{DynamicResource CyanBrush}"
                      KeyDown="OnSearchKeyDown"
                      ToolTip="Search Roblox games by name. Enter to search." Style="{StaticResource AppTextBoxStyle}"/>
-            <Button Grid.Column="1" x:Name="SearchButton" Content="Search"
+            <Button Style="{StaticResource CtaButtonStyle}" Grid.Column="1" x:Name="SearchButton" Content="Search"
                     Padding="14,8" Margin="8,0,0,0"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="Bold"
                     Click="OnSearchClick" />
         </Grid>
 
