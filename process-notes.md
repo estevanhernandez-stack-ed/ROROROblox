@@ -1350,3 +1350,46 @@ RoRoRo's CI does not build it, and ur-task's CI has no RoRoRo checkout. Repaired
 is a standing hazard rather than a fixed one.
 
 **Handoff:** PR both branches. F-091 closes after the eyes-on walk, not before.
+
+---
+
+## /scope — one button vocabulary (v1.20 cycle, opened 2026-08-11)
+
+Opened immediately after v1.19's build, at the builder's request to have the next wave lined up and
+started. Branch `feat/button-vocabulary`, **stacked on `feat/plugin-theme-feed`** because v1.19 is
+still an open PR and the per-cycle docs would otherwise collide.
+
+**The row got reframed by one measurement.** F-068 has been carried for three cycles as a tidiness
+project — 55-odd hand-copied button recipes that ought to be a shared style. The measurement that
+matters is a different one: **`Controls/ControlStyles.xaml` contains zero `ControlTemplate` and zero
+`Style.Triggers`.** Hover and pressed come from WPF-UI's dictionary, which `ThemeService` never
+touches, so **every button in the app breaks its theme the moment the pointer is over it** — migrated
+or not. That is a theming defect with a tidiness project attached, and it is the same class of bug
+v1.17 and v1.19 both shipped fixes for. Third direction, same victim: the person who chose flatline.
+
+That reframing changes the sequencing. Triggers ship first; migration second. Migrating first means
+every migrated button still breaks on hover.
+
+**One number deliberately not asserted.** The register says 55 un-migrated sites after v1.18. A
+scanner run tonight counts **72** by a cruder definition. The file count agrees exactly at **22**,
+which says the two scanners disagree about what a *site* is rather than that anything moved. Scope
+records both and hands `/spec` the job of writing one scanner definition down before any item is
+sized against it. Two earlier cycles cited a "63 across 15 files" figure that reproduces at no
+commit — asserting a number I cannot reconcile is how that gets a fourth life.
+
+**v1.18 supplied the argument for the whole cycle without meaning to.** Its item 9 swept nine Close
+buttons onto `SecondaryStrongButtonStyle` and the offender count went **down** by five. Adopting a
+rank costs nothing; hand-copying attributes to reach the same look adds a recipe. That is the row's
+thesis demonstrated by an unrelated item, and it is why the vocabulary is worth finishing rather than
+replacing.
+
+**F-046 rides along**, and this is the cycle it has been waiting for. It stayed open at the end of
+v1.18 specifically because `PluginsWindow`'s Remove is a hand-rolled magenta fill and holding the
+F-068 line meant not fixing it.
+
+**Zero deepening rounds**, same justification as the last three cycles: on a remediation or contract
+cycle against a readable tree, reading is the deepening round.
+
+**Handoff:** `/prd`. Note for it: the fence in scope item 5 is a genuine open question rather than a
+formality — a fence over 22 files with legitimate exceptions can end up measuring its own allow-list,
+and this session has already seen five checks that reported success while measuring something else.
