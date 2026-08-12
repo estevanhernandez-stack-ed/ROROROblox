@@ -152,12 +152,66 @@ wrong — they get WPF-UI's implicit style, whose setters are `DynamicResource` 
 fixed `Theme="Dark"` dictionary. A ten-line probe killed it before it reached a commit message. No
 gate catches confident-and-nearly-right, and no walk does either. Only checking does.
 
-## Not done
+## Second pass, same day — CI and the scripts
 
-The audit covered the test suite. It did not cover:
+The first pass stopped at the test suite. This covers the two it named as unfinished.
 
-- **`scripts/*.ps1`** — the button scanner and the capture tool both read markup, and the scanner
-  needed five corrections this cycle for exactly this class of reason.
-- **CI configuration** — whether a job's filters exclude files it reports on. The cross-repo prompt's
-  first case was precisely this (`StandaloneTestsOnly=true` never building the file under test), and
-  it is the one shape this repo has *not* checked for itself.
+### CI is clean, and that is the finding
+
+The cross-repo case that prompted all of this was a job whose filters excluded the file under test:
+`StandaloneTestsOnly=true`, a suite reporting 268/268, and the number true but not measuring what
+anyone thought. Checked here against all four doors that shape can come through:
+
+| Door | Result |
+|---|---|
+| A `--filter` or property narrowing the run | none — both jobs run `dotnet test ROROROblox.slnx` whole |
+| A project on disk missing from `.slnx` | none — all five `src/` projects plus `CompatSigner` are listed |
+| Files excluded from compilation | none — no `Compile Remove`, no `EnableDefaultCompileItems` |
+| Failures swallowed by `continue-on-error` | one, on *Fetch prior release*, documented as a first-release tolerance |
+
+Two further checks, since a clean sweep is only as good as its questions: the single skipped test is
+`EndToEndContractTests`' mid-stream consent revocation, skipped **with a reason and a deferral
+target** (v1.5+, plan task 24 step 2) — a legitimate skip, not a hidden one. And no `*Tests.cs` file
+exists outside a test project, so nothing on disk is silently uncompiled. The 1,399 `[Fact]`/
+`[Theory]` attributes against 1,592 executed cases is `Theory` expansion, not a discrepancy.
+
+**Nothing was found, and that is worth writing down rather than deleting.** An audit that only
+records hits teaches the next reader that the clean doors were never checked.
+
+### `count-button-sites.ps1` is not a guard, and read like one
+
+**No workflow invokes it.** The only script CI runs is `build-velopack-release.ps1`. The scanner's
+own header advertises a `-Quiet` mode "for CI or a commit message" — for a CI use that never
+happened.
+
+So F-068's *0 un-migrated* is a number somebody typed once, and between typings the count could
+return to fifty with nothing to say so. The actual guard is `ButtonRankFenceTests`, which runs on
+every push and covers strictly more. That is a fine outcome; the risk was that the scanner's
+presence in the repo, and its citation in a closed register row, read as protection it does not
+provide.
+
+### The 108 / 112 collision
+
+Two committed instruments count buttons and report different totals:
+
+| Instrument | Counts | Total |
+|---|---|---|
+| `count-button-sites.ps1` | `<Button` and `<ui:Button` in XAML | **108** |
+| `ButtonRankFenceTests` | the above plus `ToggleButton`, `RepeatButton` | **112** |
+| `ButtonRankFenceTests` | plus buttons constructed in C# | **+5** |
+
+Neither is wrong. They answer different questions, and the narrow one is deliberate — `spec.md §6`
+fixed it precisely so F-068's branch-point and close figures compare to each other.
+
+But this cycle already burned days on *55 vs 72 vs 115*, three counts under three unwritten
+definitions, and the fix was to write the definition down. Shipping two live instruments with two
+numbers and no stated relationship rebuilds the same trap with better paperwork. **Both files now
+carry the reconciliation**, so the next person reading 108 against 112 finds the answer instead of
+re-deriving it.
+
+## Still not done
+
+- **`capture-ui.ps1`** reads the route file and drives a live app; auditing it means running it
+  against a real profile, which is a walk, not a test pass.
+- The **packaging scripts** were not examined. They assert about MSIX contents and manifests, which
+  is the same question in a different artefact.

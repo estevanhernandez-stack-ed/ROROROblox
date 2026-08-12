@@ -19,6 +19,25 @@
     Record the output alongside any count written into the findings register, so the next
     re-measure compares like with like.
 
+    THIS SCRIPT IS NOT WIRED INTO CI, AND IT IS NOT THE GUARD (F-098, 2026-08-11). The only script
+    any workflow invokes is build-velopack-release.ps1. Nothing re-runs this one, so its number is a
+    point-in-time MEASUREMENT and never a protection: F-068 could regress to fifty sites and this
+    file would say nothing until somebody typed it. The guard is ButtonRankFenceTests, which runs on
+    every push and covers strictly more than this definition does.
+
+    WHY THE TWO NUMBERS DIFFER, so nobody re-derives it a fourth time. This script reports 108. The
+    fence reports 112 declarations plus 5 built in C#. Neither is wrong; they answer different
+    questions:
+
+        this script   <Button and <ui:Button in XAML                        = 108
+        the fence     + ToggleButton and RepeatButton                       = 112
+        the fence     + buttons constructed in code-behind                  = +5
+
+    The narrow definition is deliberate and stays: §6 fixed it so F-068's branch-point and close
+    figures compare to each other. But "108 buttons" is not true of the app, and F-068's row carries
+    that scope correction. If you want the question "how many buttons does this app have", the fence
+    is the instrument; this one answers "how many XAML declarations has the migration not reached".
+
 .EXAMPLE
     pwsh -File scripts/count-button-sites.ps1
     pwsh -File scripts/count-button-sites.ps1 -Quiet   # totals only, for CI or a commit message

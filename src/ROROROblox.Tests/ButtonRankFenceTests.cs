@@ -18,6 +18,19 @@ namespace ROROROblox.Tests;
 /// tree: <b>112 declarations, 1 exemption.</b> A fence at 99.1% coverage is measuring the tree.
 /// </para>
 /// <para>
+/// <b>This file, not <c>scripts/count-button-sites.ps1</c>, is the guard (F-098).</b> That script
+/// is invoked by no workflow — the only one CI runs is <c>build-velopack-release.ps1</c> — so its
+/// number is a measurement somebody types, and F-068 could regress silently between typings. This
+/// runs on every push.
+/// <para>
+/// The two report different totals and both are right, which is worth stating once so it is not
+/// re-derived a fourth time: the script counts <c>&lt;Button</c> and <c>&lt;ui:Button</c> in XAML
+/// and reports <b>108</b>; this fence adds <c>ToggleButton</c> and <c>RepeatButton</c> for
+/// <b>112</b>, plus <b>5</b> constructed in code-behind. The script's narrow definition is
+/// deliberate and stays — <c>spec.md > §6</c> fixed it so F-068's branch-point and close figures
+/// compare to each other — but it is a count of declarations the migration has not reached, not a
+/// count of the app's buttons.
+/// </para>
 /// <b>Why ToggleButton is in scope.</b> Counting only <c>Button</c> is the definition that let the
 /// header's default-game widget keep the OS template's hardcoded <c>#BEE6FD</c> hover through the
 /// entire migration, in the middle of the toolbar, while the count read "1 site left" — the control
