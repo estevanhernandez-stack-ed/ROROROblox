@@ -83,8 +83,15 @@ replace were 3840x2160 with the window upscaled.
 | `06-history.png` | History | Launch history, per-session. |
 | `07-plugins.png` | Plugins | The plugin surface and its consent model. |
 | `08-theme-builder.png` | Theme builder | Users can author their own theme, not just pick one. |
+| `09-compact.png` | **Compact mode, three clients live** | The pinned strip: three accounts, per-client memory, Stop on each, `3 accounts idle > 12m`, and an Expand link back. Captured with `-NoThemeSwitch`, because compact hides the toolbar the theme picker is reached through. |
 
-Eight is inside Partner Center's 1-9. Captions still need writing per the sections above.
+Nine, which is exactly Partner Center's ceiling. Captions still need writing per the sections
+above.
+
+`09-compact.png` sits small on its canvas -- the compact window is about 490x405 against a
+1920x1080 ground. Left as-is deliberately: the negative space IS the feature, and the caption
+says "pin it to the corner of your screen". If it reads as sparse in the carousel, re-shoot it
+with `-CanvasWidth 1280 -CanvasHeight 720` rather than upscaling the window.
 
 ### Two corrections this run made to this file
 
@@ -100,7 +107,6 @@ Eight is inside Partner Center's 1-9. Captions still need writing per the sectio
 - **Multi-instance, tiled desktop** (old #2). Partly told by `01-accounts-running.png`, but the
   three-Roblox-windows-side-by-side frame needs a full-desktop capture. That was attempted and is
   unshippable from this machine — see the route-audit section in `ui-capture-checklist.md`.
-- **Compact mode** (old #4). Reachable via the footer `Compact` button, not a routed surface.
 - **Squad Launch** (old #6). On the route file's deny list, and that entry is asserted by
   `UiRoutesSchemaTests` with a hardcoded count — removing it is a deliberate test edit, not a
   route change.

@@ -40,6 +40,15 @@ param(
     # Tile one surface across every captured theme into a single 2x2 image, so the listing can
     # show the theme range in one screenshot rather than spending four carousel slots on it.
     [switch]$ThemePanel,
+    # Capture in whatever theme is already active, without driving the picker.
+    #
+    # Setting a theme means opening Preferences, which needs the main window's Settings button.
+    # Some states do not have one: COMPACT MODE hides the whole toolbar, so a theme round-trip
+    # cannot run and the capture fails with "no [Button] with name='Settings'". Any transient
+    # state -- compact, a modal already up, a mid-flow dialog -- has the same problem, and the
+    # round-trip would disturb the very state being photographed even where it works.
+    # Pair with -Theme to label the output; it is a LABEL here, not an instruction.
+    [switch]$NoThemeSwitch,
     [switch]$DumpUia,
     [switch]$Watch,
     [switch]$SelfTest
@@ -1134,6 +1143,14 @@ if ($expectedSurfaceCount -eq 0) {
     throw "no captured surfaces matched $filterDesc; the route file resolved to nothing. Refusing to run the theme loop or touch any manifest."
 }
 
+if ($NoThemeSwitch) {
+    # Enumerating themes also opens Preferences, so that is skipped too.
+    # Comma-wrapped: PowerShell unrolls a single-element array returned from an if-block, so
+    # $themes became the STRING "brand" and $themes[0] printed "b" in the message below.
+    $themes = if ($Theme) { ,@($Theme) } else { ,@('current') }
+    Write-Host "No-theme-switch mode: capturing the active theme as-is, labelled '$($themes[0])'."
+}
+else {
 Open-AppearancePage -Scope $appRoot
 $themes = Get-AvailableThemes -Scope $appRoot
 if ($Theme) {
@@ -1143,15 +1160,18 @@ if ($Theme) {
     $themes = $themes | Where-Object { $_ -in $wanted }
 }
 Close-Preferences -Scope $appRoot
+}
 Write-Host "Themes: $($themes -join ', ')"
 
 $all = @()
 foreach ($themeId in $themes) {
     Write-Host ''
     Write-Host "Round: $themeId" -ForegroundColor Cyan
-    Open-AppearancePage -Scope $appRoot
-    Set-ActiveTheme -Scope $appRoot -ThemeId $themeId
-    Close-Preferences -Scope $appRoot
+    if (-not $NoThemeSwitch) {
+        Open-AppearancePage -Scope $appRoot
+        Set-ActiveTheme -Scope $appRoot -ThemeId $themeId
+        Close-Preferences -Scope $appRoot
+    }
 
     $results = Invoke-CaptureRound -Scope $appRoot -Routes $routes -ThemeId $themeId `
                                    -OutDir $OutDir -Proc $proc -Only $Surface -DumpUia:$DumpUia
