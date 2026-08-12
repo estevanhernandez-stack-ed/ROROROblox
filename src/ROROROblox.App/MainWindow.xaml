@@ -1587,10 +1587,22 @@
         </Border>
 
         <!-- Bloxstrap warning banner — visible when BloxstrapWarningVisible is true.
-             Warm amber tone distinct from the red-ish compat banner above it. -->
+             Takes the SAME themed warning recipe as the compat banner one Grid row above, per the
+             v1.21 item 1 ruling recorded on F-085. This banner used to carry its own amber, and its
+             comment called that amber deliberate: "distinct from the red-ish compat banner above
+             it". Read both under flatline and the distinction turned out to be carried by the
+             defect — the compat banner is themed and goes grey, this one was frozen and stayed
+             amber, so the thing telling the reader these were two kinds of warning was the one
+             banner that ignored the theme.
+             The difference is now carried by TEXT and the "▲" glyph, not by hue, which is F-032's
+             precedent: MutedText vs White measured 1.00:1 under flatline, colour could not carry
+             "quiet", and weight took over. Two warnings should look like two warnings and read as
+             two warnings. Measured before the migration, not after — RowExpiredAccent on
+             RowExpiredBg is 7.13 / 6.58 / 7.13 / 7.33 across brand, midnight, magenta-heat and
+             flatline, so no foreground had to move. -->
         <Border Grid.Row="5"
-                Background="#3F3000"
-                BorderBrush="#8F7000"
+                Background="{DynamicResource RowExpiredBgBrush}"
+                BorderBrush="{DynamicResource RowExpiredAccentBrush}"
                 BorderThickness="0,0,0,1"
                 Padding="16,10"
                 Visibility="{Binding BloxstrapWarningVisible, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -1600,11 +1612,12 @@
                     Content="Dismiss"
                     Margin="12,0,0,0"
                     Command="{Binding DismissBloxstrapWarningCommand}" />
+                <!-- Two Runs on one line, matching the compat banner: a line break between them is
+                     significant whitespace and would render as a space after the glyph. -->
                 <TextBlock
                     VerticalAlignment="Center"
                     TextWrapping="Wrap"
-                    Foreground="#FFE3A6"
-                    Text="Bloxstrap is set as your Roblox launcher — it will override per-account FPS. Set FPS in Bloxstrap to match." />
+                    Foreground="{DynamicResource RowExpiredAccentBrush}"><Run Text="▲ " /><Run Text="Bloxstrap is set as your Roblox launcher — it will override per-account FPS. Set FPS in Bloxstrap to match." /></TextBlock>
             </DockPanel>
         </Border>
 

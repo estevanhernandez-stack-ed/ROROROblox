@@ -176,9 +176,52 @@ public class ExpiredRowRedundancyTests
         var banner = bound[0].Ancestors().First(a => a.Name.LocalName == "Border");
         Assert.Contains("RobloxCompatBanner", banner.Attribute("Visibility")?.Value ?? "");
 
-        // Out of scope, and stated so a future reader does not read this file as covering it: the
-        // Bloxstrap banner below this one holds literal #3F3000 / #8F7000 and takes no glyph this
-        // cycle (spec §7). It gets a register row, not a prefix.
+        // The Bloxstrap banner below this one used to be out of scope here, holding literal
+        // #3F3000 / #8F7000 and taking no glyph. v1.21 item 2 brought it onto the same recipe;
+        // TheBloxstrapBannerPrefixesTheSameWarnGlyph now covers it.
+    }
+
+    /// <summary>
+    /// The second half of the v1.21 item 1 ruling, in a gate. Once both banners share one recipe,
+    /// the glyph and the text are the ONLY things separating them, so the glyph is no longer
+    /// decoration on this banner — it is the carrier, and it has to be structurally present.
+    /// <para>
+    /// Deliberately not merged with the compat banner's clause above, because the two banners fail
+    /// differently: the compat banner's text is a bound Run and its glyph could be lost to a
+    /// binding edit, while this one's text is a literal and its glyph could be lost to somebody
+    /// collapsing two Runs back into a Text attribute. A shared assertion would name neither.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void TheBloxstrapBannerPrefixesTheSameWarnGlyph()
+    {
+        var doc = MainWindow();
+
+        // Find the banner by the binding that shows it, not by position or by its copy. Both are
+        // things an edit may legitimately move; the visibility binding is the banner's identity.
+        var banner = doc.Descendants()
+            .Where(e => e.Name.LocalName == "Border")
+            .Where(b => (b.Attribute("Visibility")?.Value ?? "").Contains("BloxstrapWarningVisible"))
+            .ToList();
+
+        Assert.True(banner.Count == 1,
+            $"Expected exactly one Border shown by BloxstrapWarningVisible, found {banner.Count}.");
+
+        var runs = banner[0].Descendants()
+            .Where(e => e.Name.LocalName == "Run")
+            .ToList();
+
+        Assert.True(runs.Count >= 2,
+            $"The Bloxstrap banner's text is {runs.Count} Run(s). It needs at least two — the warn "
+            + "glyph and the message. A single Run, or a Text attribute on the TextBlock, means the "
+            + "glyph was folded into the copy or dropped, and the glyph is half of what tells this "
+            + "banner apart from the compat banner now that they share a recipe.");
+
+        Assert.Equal(WarnGlyph + " ", runs[0].Attribute("Text")?.Value);
+
+        // Same containment argument the compat banner's clause makes: the glyph can never render
+        // alone, because the Border carrying it collapses on the same binding.
+        Assert.Contains("BloxstrapWarningVisible", banner[0].Attribute("Visibility")?.Value ?? "");
     }
 
     [Fact]

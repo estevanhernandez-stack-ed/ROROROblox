@@ -334,12 +334,13 @@ public class ThemedStatusColourTests
             + "third line. Deliberately not fixed here; its fix is F-068's shared banner/button "
             + "recipe, and hand-fixing one of three near-copies is how there came to be three."),
 
-        new("src/ROROROblox.App/MainWindow.xaml", "Bloxstrap warning banner", 20,
-            "F-085, open. Background #3F3000, BorderBrush #8F7000, body Foreground #FFE3A6 — THREE "
-            + "literals, not the two spec §7 names, which is what item 6 corrected when it opened the "
-            + "row. The banner renders the same warm amber under all four built-ins including "
-            + "flatline, whose field is #101010. Same F-068 fix as the row above, and left out of "
-            + "this cycle for the same reason."),
+        // F-085's entry was retired by v1.21 item 2, which rebound the Bloxstrap banner's three
+        // literals — Background #3F3000, BorderBrush #8F7000, body Foreground #FFE3A6 — onto the
+        // same RowExpiredBg / RowExpiredAccent recipe the compat banner already used. Retired the
+        // same way F-089's was and for the same reason: an allow-list entry that outlives the
+        // literals it cites is a standing permission nobody re-earned, so a new hex in that banner
+        // now fails the offender clause instead of inheriting a badge. The row itself stays open
+        // until item 12 flips it, which is the register's rule, not this file's.
 
         new("src/ROROROblox.App/About/AboutWindow.xaml", null, 0,
             "Spec §7 AND F-063, open — this is the one region with both. §7 puts the fixed logo "
@@ -393,7 +394,17 @@ public class ThemedStatusColourTests
     /// arrive wearing an old row's badge, which is the one thing the offender list above cannot see.
     /// F-079's own count needs the same correction; that belongs to the register pass, not here.
     /// </summary>
-    private const int AllowedXamlLiteralCeiling = 95;
+    /// <summary>
+    /// Re-measured 2026-08-11 after v1.21 item 2: <b>92, down from 95</b>. The Bloxstrap banner's
+    /// three literals moved onto the governed path when it took the compat banner's themed warning
+    /// recipe, so <c>MainWindow.xaml</c> drops from 8 occurrences to 5 — the mutex-recovery banner's
+    /// five, and only those. F-085's allow-list entry was retired in the same commit rather than
+    /// left to match nothing, so the ceiling moves with it for the third time and for the reason it
+    /// moved when F-089 and F-079's two closed: slack left inside an allow-listed region is room for
+    /// a new literal to arrive wearing an old row's badge, and that is the one thing the offender
+    /// list cannot see.
+    /// </summary>
+    private const int AllowedXamlLiteralCeiling = 92;
 
     /// <summary>
     /// Vacuity floor. Well under the ceiling so that genuinely CLOSING F-079 or F-066 — which would
