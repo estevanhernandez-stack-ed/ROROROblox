@@ -1502,7 +1502,6 @@ public class MainViewModelTests
         }
 
         public Task<string?> GetDefaultPlaceUrlAsync() => throw new NotImplementedException();
-        public Task SetDefaultPlaceUrlAsync(string url) => throw new NotImplementedException();
         public Task<bool> GetLaunchMainOnStartupAsync() => throw new NotImplementedException();
         public Task SetLaunchMainOnStartupAsync(bool enabled) => throw new NotImplementedException();
         public Task<string?> GetActiveThemeIdAsync() => throw new NotImplementedException();

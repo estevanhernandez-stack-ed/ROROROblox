@@ -54,25 +54,12 @@ public sealed class AppSettings : IAppSettings, IDisposable
         }
     }
 
-    public async Task SetDefaultPlaceUrlAsync(string url)
-    {
-        if (string.IsNullOrWhiteSpace(url))
-        {
-            throw new ArgumentException("Place URL must not be empty.", nameof(url));
-        }
-
-        await _gate.WaitAsync().ConfigureAwait(false);
-        try
-        {
-            var settings = await LoadAsync().ConfigureAwait(false);
-            settings = settings with { DefaultPlaceUrl = url };
-            await SaveAsync(settings).ConfigureAwait(false);
-        }
-        finally
-        {
-            _gate.Release();
-        }
-    }
+    // SetDefaultPlaceUrlAsync was deleted by v1.21 item 9 (F-093). Nothing in the app called it and
+    // IAppSettings documented a Preferences control for it that has never existed. The GETTER stays
+    // so a legacy settings.json still deserializes and SaveAsync round-trips the value instead of
+    // dropping it — DefaultPlaceUrl is still a SettingsBlob property, so the next write preserves
+    // whatever an old file carried. See IAppSettings.GetDefaultPlaceUrlAsync for why deleting the
+    // field entirely is a smaller change than this cycle's spec assumed.
 
     public async Task<bool> GetLaunchMainOnStartupAsync()
     {
