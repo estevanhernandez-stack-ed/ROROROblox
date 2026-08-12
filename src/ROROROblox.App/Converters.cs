@@ -87,7 +87,18 @@ internal sealed class ZeroToVisibilityConverter : IValueConverter
 /// </summary>
 internal sealed class CaptionColorBrushConverter : IMultiValueConverter
 {
-    // Same palette as RobloxWindowDecorator.AutoPalette — keep in sync if either changes.
+    // Same palette as RobloxWindowDecorator.AutoPalette. That used to say "keep in sync if either
+    // changes" and be the only enforcement, and by 2026-08-11 the two had drifted: the "ocean"
+    // entry read 0x07,0x58,0x85 here against the decorator's 0xFF075985, so the Settings swatch
+    // previewed a colour the Roblox title bar never painted. The palette is Tailwind's and sky-800
+    // is #075985, so the decorator was right. CaptionPaletteSyncTests now compares the two copies
+    // by value; the comment is no longer load-bearing.
+    //
+    // KEEP THIS ARRAY COMPACT. ThemedStatusColourTests allow-lists these literals by searching 12
+    // lines back for the "AutoPalette" anchor, so comments interleaved between the declaration and
+    // the last entry push it out of reach and the gate reports governed colours as violations.
+    // It fails loud rather than passing quietly, which is the right direction, but the reach is a
+    // constant sized to this array's current length. Explanations go above the declaration.
     private static readonly System.Windows.Media.Color[] AutoPalette =
     {
         System.Windows.Media.Color.FromRgb(0x1E, 0x40, 0xAF),
@@ -95,7 +106,7 @@ internal sealed class CaptionColorBrushConverter : IMultiValueConverter
         System.Windows.Media.Color.FromRgb(0x14, 0x53, 0x2D),
         System.Windows.Media.Color.FromRgb(0x58, 0x1C, 0x87),
         System.Windows.Media.Color.FromRgb(0x7F, 0x1D, 0x1D),
-        System.Windows.Media.Color.FromRgb(0x07, 0x58, 0x85),
+        System.Windows.Media.Color.FromRgb(0x07, 0x59, 0x85), // was 0x58 — see the note above
         System.Windows.Media.Color.FromRgb(0x71, 0x3F, 0x12),
         System.Windows.Media.Color.FromRgb(0x13, 0x4E, 0x4A),
     };

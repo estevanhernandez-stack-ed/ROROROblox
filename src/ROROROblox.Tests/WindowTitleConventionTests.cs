@@ -55,6 +55,20 @@ public class WindowTitleConventionTests
             }
         }
 
+        // F-098: this rule read XAML only, while its sibling below read XAML AND code-behind. The
+        // instrument already contained the fix and applied it to one of its two assertions — so a
+        // Title = "RoRoRo — Settings" written in code-behind passed the primary rule of the whole
+        // convention. The exempt list is by file name, and a code-behind file is <Window>.xaml.cs,
+        // so the same three exemptions resolve for both halves.
+        foreach (var (label, literal) in RuntimeTitleAssignments())
+        {
+            if (ProductNameAllowed.Any(a => label.Equals(a + ".cs", StringComparison.OrdinalIgnoreCase))) continue;
+            if (literal.Contains("RoRoRo", StringComparison.OrdinalIgnoreCase))
+            {
+                offenders.Add($"{label}: Title = {literal}");
+            }
+        }
+
         Assert.True(offenders.Count == 0,
             "The title bar names the destination, not the product — Windows already shows the app "
             + "name in the taskbar and Alt-Tab:" + Environment.NewLine
@@ -120,6 +134,19 @@ public class WindowTitleConventionTests
     /// <summary>
     /// <c>Title = "…"</c> / <c>Title = $"…"</c> assignments in code-behind — the ones no XAML sweep
     /// would ever see.
+    /// <para>
+    /// <b>Known limit, recorded rather than fixed (F-098).</b> This captures the LITERAL, so for
+    /// <c>Title = $"Friends — {ChromeName(current)}"</c> it reads the interpolation source and not
+    /// the string a user sees. <c>ChromeName</c> returns a streamer alias or an account display
+    /// name, so nothing leaks today — but that is the shape of the very bug this method exists to
+    /// prevent, one level down. Resolving it means executing the app, which this gate deliberately
+    /// does not do; the honest move is to say so here rather than imply coverage it lacks.
+    /// </para>
+    /// <para>
+    /// It also matches <c>Title =</c> on <c>SaveFileDialog</c> and <c>OpenFileDialog</c>, not only
+    /// on Windows. That is deliberate — those captions are user-facing chrome and the naming rule
+    /// applies to them the same way.
+    /// </para>
     /// </summary>
     private static IEnumerable<(string Label, string Literal)> RuntimeTitleAssignments()
     {
