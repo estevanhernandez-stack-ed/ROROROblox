@@ -20,8 +20,13 @@ public static class MultiInstanceCopy
     /// direction to be wrong in, same rationale as the original 15 s figure, updated for the new
     /// ceiling.
     /// </summary>
+    /// <para>
+    /// F-022, v1.21 item 10: the action moved to the front. It used to close with "Set every
+    /// account to the same cap", so the one sentence a reader could act on was the last of three,
+    /// behind two sentences of mechanism. 47 words to 44, same facts, same 20-second figure.
+    /// </para>
     public const string FpsCapMismatchBanner =
-        "Different FPS caps will slow your launches. Roblox keeps one shared settings file for "
-        + "every client, so RoRoRo waits for each account to finish loading before starting the "
-        + "next — up to about 20 seconds each. Set every account to the same cap to launch at full speed.";
+        "Set every account to the same FPS cap to launch at full speed. Roblox keeps one shared "
+        + "settings file for every client, so different caps make RoRoRo wait for each account to "
+        + "finish loading before starting the next, up to about 20 seconds each.";
 }
