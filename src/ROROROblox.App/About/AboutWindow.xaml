@@ -46,14 +46,17 @@
                          Points="16,36.5 32,42.5 32,51.5 16,45.5" />
                 <Polygon Fill="{StaticResource TealBrush}"
                          Points="32,42.5 48,36.5 48,45.5 32,51.5" />
-                <!-- Middle block (magenta). The top face was {DynamicResource MagentaBrush} until
-                     v1.21 item 4 — a theme slot inside the mark. It resolved to #F22F89 in brand
-                     and magenta-heat, #C0407E in midnight and #6E6E6E in flatline, so the block's
-                     lit face recoloured while its two side faces stayed brand magenta: under
-                     flatline a grey top on a magenta body. Bound to MagentaDimBrush, which IS
-                     #F22F89, so brand and magenta-heat are byte-identical to what shipped and the
-                     other two themes are repaired. Top and right sharing one brush with a darker
-                     left is the same three-face pattern the teal block below already uses. -->
+                <!-- Middle block (magenta). This top face was bound to the MagentaBrush THEME SLOT
+                     until v1.21 item 4 — a theme token inside the mark, so the block's lit face
+                     recoloured with the palette while its two side faces stayed fixed: a grey top
+                     on a magenta body under flatline. It now takes MagentaDimBrush, the same value
+                     brand resolved that slot to, so the themes anyone has seen the mark in are
+                     unchanged and the other two are repaired. Top and right sharing one brush over
+                     a darker left is the three-face pattern the teal block already uses.
+                     Ratios and per-theme values live in F-063's register row, not here. A comment
+                     naming a shipped colour is a claim that goes false the moment a theme changes
+                     that value; the literal scanner stopped reading comments in v1.20, so this is a
+                     convention now rather than something enforced. -->
                 <Polygon Fill="{StaticResource MagentaDimBrush}"
                          Points="16,27.5 32,21.5 48,27.5 32,33.5" />
                 <Polygon Fill="{StaticResource MagentaShadowBrush}"

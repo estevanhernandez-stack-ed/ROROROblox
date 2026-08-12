@@ -289,11 +289,19 @@ public class ThemedStatusColourTests
     /// <c>&amp;#x2630;</c> and a six-digit decimal entity are both markup escapes, not colours, and
     /// this app writes ten of the former.
     /// <para>
-    /// It scans lines, so a hex inside an XML comment counts too. That is deliberate and it fired on
-    /// its first run against this item's own comment: a comment naming a shipped colour is a claim
-    /// that goes false the moment the theme changes that value, which is the defect class item 6
-    /// spent a whole item removing from the test project. The hex belongs in the register row, and
-    /// the comment cites the row.
+    /// CORRECTED 2026-08-11 — this paragraph described the opposite of what the file does. It read:
+    /// "It scans lines, so a hex inside an XML comment counts too. That is deliberate and it fired
+    /// on its first run against this item's own comment." True when written at v1.17, and made
+    /// false by v1.20's <see cref="StripXmlComment"/>, which was added for the opposite reason
+    /// entirely — a ControlStyles comment quoting the Aero literals it had just replaced was being
+    /// read as the crime. Comments have not counted since, and the ceiling below went a whole cycle
+    /// without noticing.
+    /// </para>
+    /// <para>
+    /// The ADVICE in the old paragraph is still right even though its mechanism is gone: a comment
+    /// naming a shipped colour is a claim that goes false the moment a theme changes that value, so
+    /// the hex belongs in the register row and the comment cites the row. It is now a convention
+    /// this scanner does not enforce, which is worth knowing before relying on it.
     /// </para>
     /// </summary>
     private static readonly Regex XamlLiteralColour =
@@ -342,14 +350,30 @@ public class ThemedStatusColourTests
         // now fails the offender clause instead of inheriting a badge. The row itself stays open
         // until item 12 flips it, which is the register's rule, not this file's.
 
-        new("src/ROROROblox.App/About/AboutWindow.xaml", null, 0,
-            "Spec §7 AND F-063, open — this is the one region with both. §7 puts the fixed logo "
-            + "hexes out of the theme's reach under invariant 2 (the 626 Labs duo is never split and "
-            + "the logo's own brand hex stays fixed), which covers the eight keyed tint brushes at "
-            + ":13-20 and the magenta glow at :89. F-063 covers the rest of the window and its fix "
-            + "direction says so in as many words — bind the card at :96, drop the canvas fill, "
-            + "'logo tint steps stay fixed hex'. Whole-file because F-063's surface IS the whole "
-            + "window."),
+        // AboutWindow.xaml was a WHOLE-FILE entry until v1.21 item 5, on the grounds that F-063's
+        // surface was the whole window. That is no longer true: item 4 bound the two grounds the row
+        // was actually about, so what remains is artwork, and artwork earns a narrow entry naming
+        // what it is rather than a blanket one. The narrowing is the point — a whole-file exemption
+        // on this file is what let a theme slot sit inside the mark for a cycle and a half
+        // (AboutArtworkTests found it), and it would equally have hidden the next literal typed into
+        // any other part of the window.
+
+        new("src/ROROROblox.App/About/AboutWindow.xaml", "<Window.Resources>", 9,
+            "Spec §7 (invariant 2) — the 626 Labs mark, NOT a finding and not debt. Eight keyed "
+            + "brushes painting the nine faces of the iso voxel stack: the cyan trio, the magenta "
+            + "pair, the teal pair and the soft navy. Same category as the per-account caption "
+            + "palette allow-listed above — these paint WHO this product is, not WHAT STATE "
+            + "something is in, and a themed logo is a broken logo. AboutArtworkTests holds the "
+            + "line in both directions: no face may take a theme slot, and the plate under them "
+            + "must. Anchored on the resource block with a span that reaches the eighth brush, so a "
+            + "ninth added below the anchor's reach is NOT covered and has to justify itself."),
+
+        new("src/ROROROblox.App/About/AboutWindow.xaml", "<TextBlock.Effect>", 2,
+            "Spec §7, same invariant, different surface. The Easter-egg glow is a DropShadow in the "
+            + "brand magenta, deliberately the fixed brand hue rather than the theme's Magenta slot "
+            + "— it is the reward for finding the egg, and under flatline the theme value is a dark "
+            + "achromatic grey that would render the glow invisible. Two-line span: the effect and "
+            + "the element that owns it, nothing else."),
 
         new("src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml", null, 0,
             "F-066, open. That row's surface is literally 'Modals/CookieCapture vs rest' and its "
@@ -395,16 +419,35 @@ public class ThemedStatusColourTests
     /// F-079's own count needs the same correction; that belongs to the register pass, not here.
     /// </summary>
     /// <summary>
-    /// Re-measured 2026-08-11 after v1.21 item 2: <b>92, down from 95</b>. The Bloxstrap banner's
-    /// three literals moved onto the governed path when it took the compat banner's themed warning
-    /// recipe, so <c>MainWindow.xaml</c> drops from 8 occurrences to 5 — the mutex-recovery banner's
-    /// five, and only those. F-085's allow-list entry was retired in the same commit rather than
-    /// left to match nothing, so the ceiling moves with it for the third time and for the reason it
-    /// moved when F-089 and F-079's two closed: slack left inside an allow-listed region is room for
-    /// a new literal to arrive wearing an old row's badge, and that is the one thing the offender
-    /// list cannot see.
+    /// <b>RE-DERIVED FROM THE TREE 2026-08-11 by v1.21 item 5: 58, down from 95 — and 33 of that
+    /// drop had already happened before this cycle touched anything.</b>
+    /// <para>
+    /// THE CEILING HAD BEEN CARRYING SLACK FOR A WHOLE CYCLE, and the mechanism is worth naming
+    /// because this constant exists to prevent exactly it. 95 was measured at v1.18. v1.20 then
+    /// added <see cref="StripXmlComment"/> — because a ControlStyles comment QUOTING the Aero
+    /// literals it had just replaced was being read as the crime — and that change removed every
+    /// commented hex from this count without anyone re-deriving the number. v1.20's button sweep
+    /// separately took four literals out of <c>MainWindow.xaml</c>'s two recovery buttons. The
+    /// assertion is <c>allowed &lt;= ceiling</c>, so both improvements were invisible: the gate went
+    /// green while the room it was leaving grew to 33 unaccounted occurrences. Measured at this
+    /// cycle's branch point the real figure was <b>62</b> against a ceiling of 95.
+    /// </para>
+    /// <para>
+    /// That is this constant's own thesis arriving from the direction it was not watching. The
+    /// doc above says slack "is an open invitation to re-add them" and worries about the count
+    /// growing; nobody considered that a ceiling never lowered after a fix is the same hole, and a
+    /// ceiling is only a ceiling while somebody re-derives it.
+    /// </para>
+    /// <para>
+    /// Derived, not adjusted, per the register's rule — App.xaml 11 + CookieCaptureWindow 14 +
+    /// Modals/ 23 + AboutWindow 9 + MainWindow 1, counted outside comments, reconciling exactly
+    /// with what this clause reports. This cycle's own four: the Bloxstrap banner's three (item 2)
+    /// and AboutWindow's card ground (item 4). <c>MainWindow.xaml</c> is now down to a SINGLE
+    /// literal, <c>#F1B232</c> on the mutex-recovery banner — the F-066 entry below still describes
+    /// five, and four of them left with v1.20's sweep.
+    /// </para>
     /// </summary>
-    private const int AllowedXamlLiteralCeiling = 92;
+    private const int AllowedXamlLiteralCeiling = 58;
 
     /// <summary>
     /// Vacuity floor. Well under the ceiling so that genuinely CLOSING F-079 or F-066 — which would
