@@ -56,7 +56,7 @@ cycle and a damaging one:
 
 ## Wave 1 — the surfaces a flatline screenshot shows
 
-- [ ] **1. The banner ruling, written down before anything moves**
+- [x] **1. The banner ruling, written down before anything moves**
   Spec ref: `spec.md > §1`, `§0.3`
   What to build: nothing yet. Record in the commit message the ruling and its precedent: **both
   banners take the one themed warning recipe; text and the `▲` glyph carry the difference, not hue.**
@@ -65,7 +65,7 @@ cycle and a damaging one:
   Acceptance: the ruling is in the tree before the migration that depends on it.
   Verify: none. This is a decision item and it is deliberately its own commit.
 
-- [ ] **2. The Bloxstrap banner joins the vocabulary**
+- [x] **2. The Bloxstrap banner joins the vocabulary**
   Spec ref: `spec.md > §1`
   What to build: `MainWindow.xaml:1592,1593,1606` — `#3F3000` → `{DynamicResource RowExpiredBgBrush}`,
   `#8F7000` → `{DynamicResource RowExpiredAccentBrush}`, `#FFE3A6` → `{DynamicResource
@@ -78,7 +78,7 @@ cycle and a damaging one:
   check the case that matters: **both banners visible at once.** They will look alike; confirm the
   text and glyph make them readable as two different warnings.
 
-- [ ] **3. History rows get a boundary that survives flatline**
+- [x] **3. History rows get a boundary that survives flatline**
   Spec ref: `spec.md > §3`
   What to build: `SessionHistoryWindow.xaml.cs:150-155`. Keep `Background = RowBgBrush`, add a
   bottom boundary. **The plain `DividerBrush` bind will not do** — measured 1.05-1.16 against 1.4.11's
@@ -89,7 +89,7 @@ cycle and a damaging one:
   Verify: open History under flatline with at least three sessions. **This is code-behind, so no
   XAML-reading gate sees it** — item 8 covers that.
 
-- [ ] **4. About: the ground gets themed, the logo does not**
+- [x] **4. About: the ground gets themed, the logo does not**
   Spec ref: `spec.md > §2`, `§0.1`
   What to build: `AboutWindow.xaml:34` `Canvas Background` → `{DynamicResource RowBgBrush}` (**bind,
   do not remove** — the plate is a ground for a fixed-colour logo and a light user theme would expose
@@ -99,7 +99,7 @@ cycle and a damaging one:
   Verify: open About in all four themes. The logo must look the same in each. If it does not, the
   artwork was themed and the item is wrong.
 
-- [ ] **5. The artwork allow-list, so the next sweep does not undo item 4**
+- [x] **5. The artwork allow-list, so the next sweep does not undo item 4**
   Spec ref: `spec.md > §2`
   What to build: entries in `ThemedStatusColourTests`' `AllowList` for the eight About brushes, each
   with a written reason in the shape the caption-palette entries use. **Note the anchor-lookback
@@ -116,7 +116,7 @@ cycle and a damaging one:
 
 ## Wave 2 — the gate, the small ones, and the close-out
 
-- [ ] **6. F-086: the pairs the gate cannot see, and the failure it finds**
+- [x] **6. F-086: the pairs the gate cannot see, and the failure it finds**
   Spec ref: `spec.md > §4`
   What to build: an **unconditionally measured** named-pair list in `ContrastPairGateTests`,
   independent of what the element scan finds: `MutedText` on `RowBg`, on `Bg`, on `Navy`.
@@ -128,14 +128,14 @@ cycle and a damaging one:
   the midnight failure has a decision attached.
   Verify: break a pair deliberately, confirm red naming the pair, restore. **F-050 does not close here.**
 
-- [ ] **7. F-087: the colour branch moves to XAML**
+- [x] **7. F-087: the colour branch moves to XAML**
   Spec ref: `spec.md > §5`
   What to build: `ConsentSheet.xaml.cs:90-92`'s `NamespaceBrush` becomes a `Style` + `DataTrigger` on
   `IsHostEnforced` in `ConsentSheet.xaml`. Drop the `?? new SolidColorBrush(...)` literal fallbacks.
   Acceptance: no colour literal in the file; the sheet still distinguishes host-enforced capabilities.
   Verify: open the consent sheet for a plugin with both kinds of capability.
 
-- [ ] **8. The code-behind surfaces get a gate**
+- [x] **8. The code-behind surfaces get a gate**
   Spec ref: `spec.md > §3`, `§6`
   What to build: an assertion that the History row carries a non-fill boundary, scanning `.cs` the way
   `ButtonRankFenceTests.NoCodeBehindButtonPaintsItself` does. F-098 established that a markup-only gate
@@ -143,7 +143,7 @@ cycle and a damaging one:
   Acceptance: the gate fails if the boundary is removed.
   Verify: remove the boundary, confirm red, restore.
 
-- [ ] **9. F-093: the ruling, then the smallest change that honours it**
+- [x] **9. F-093: the ruling, then the smallest change that honours it**
   Spec ref: `spec.md > §5`, `§0.2`
   What to build: **recommended option 2** — keep the read path in `RobloxLauncher`, delete
   `SetDefaultPlaceUrlAsync` from `IAppSettings` and the implementation, and correct
@@ -153,7 +153,7 @@ cycle and a damaging one:
   Verify: confirm `JsonOptions` (`AppSettings.cs:15`) does not set `UnmappedMemberHandling.Disallow`,
   then add a test that a legacy `settings.json` carrying `defaultPlaceUrl` round-trips.
 
-- [ ] **10. The copy rows**
+- [x] **10. The copy rows**
   Spec ref: `spec.md > §5`
   What to build: **F-021** `GamesWindow.xaml:396` — "Use the Squad Launch toolbar button to add one"
   points at a closed window for something that saves itself; say what actually happens.
@@ -166,7 +166,7 @@ cycle and a damaging one:
   Acceptance: each row's copy names the real mechanism; no row ships on its register text alone.
   Verify: read each string in the running app.
 
-- [ ] **11. Two rulings, no code**
+- [x] **11. Two rulings, no code**
   Spec ref: `prd.md > Story 2.3`
   What to build: a decision on **F-095** (crash fixed; is a log Warning enough, or is a user-visible
   surface owed?) and **F-098** (partly fixed; does `capture-ui.ps1` + the packaging scripts land here
@@ -174,7 +174,7 @@ cycle and a damaging one:
   Acceptance: both rows carry a decision and a date.
   Verify: neither row is left saying "open" with no reason.
 
-- [ ] **12. Documentation, security, and the numbers**
+- [x] **12. Documentation, security, and the numbers**
   Spec ref: `spec.md > §7`
   What to build: version `1.20.0.0` → `1.21.0.0` in `ROROROblox.App.csproj` and
   `Package.appxmanifest`, **lockstep**. Flip **F-063, F-066, F-085, F-087** to clean; record F-086's
