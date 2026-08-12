@@ -93,6 +93,34 @@ above.
 says "pin it to the corner of your screen". If it reads as sparse in the carousel, re-shoot it
 with `-CanvasWidth 1280 -CanvasHeight 720` rather than upscaling the window.
 
+### Captions, written 2026-08-12 against the frames rather than the brief
+
+Partner Center shows these under each screenshot, and they double as the alt text, so they are
+written to be useful read aloud with no image at all. Second person, sentence case, no
+marketing verbs. **Each one describes what is actually visible in its own frame** — the earlier
+captions in this file were written before the shots existed and promised things the frames do not
+show.
+
+| file | caption |
+|---|---|
+| `01-accounts-running.png` | Three accounts running at once, each with its own memory use and its own Stop button. Cookies are encrypted per user with Windows DPAPI and never leave the machine. |
+| `02-themes.png` | Four built-in themes. Flatline carries no meaning in colour at all, so nothing is lost to colour blindness, a bad panel, or direct sun. |
+| `03-about.png` | Multi-launcher for Windows. Holds the Roblox singleton mutex so the next client opens instead of fighting the first. A clean reimplementation, not a fork. |
+| `04-games.png` | Save the games and private servers you actually play, then pick a different one per account before you launch. |
+| `05-diagnostics.png` | Diagnostics shows what RoRoRo can see right now: versions, health, and where the logs are, for when you need to file something. |
+| `06-history.png` | Every launch is recorded, so you can see which account played what and for how long. |
+| `07-plugins.png` | Plugins run as separate processes and ask first. You grant each capability by name, and you can revoke it later. |
+| `08-theme-builder.png` | Build a theme from ten colours and it shows up in the picker. It is a JSON file, so you can hand it to someone else. |
+| `09-compact.png` | Compact mode shows only what is running. Pin it to a corner of the screen and get back to the game. |
+| `10-multi-instance.png` | Four Roblox clients, four accounts, one PC. Each window title carries the account signed into it, so you always know which is which. |
+
+**Every claim above is checkable in the frame or in the code.** The mutex line is spec section 7.1,
+the DPAPI line is the About box's own text, ten colours is `Theme`'s slot count, and the plugin
+consent line is what `ConsentSheet` actually does. Nothing here claims automation, macros or input
+scripting, which is a deliberate Roblox-relations line and not an oversight — that is MaCro's
+territory and the wall is on purpose.
+
+The names visible in every frame are streamer-mode identities, not real accounts.
 ### Two corrections this run made to this file
 
 - **`docs/store/screenshots/` is NOT gitignored.** The procedure below says it is. The five assets
