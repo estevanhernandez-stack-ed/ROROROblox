@@ -58,6 +58,41 @@ public class ButtonRankFenceTests
         new($@"<\s*(?:ui:)?{type}(?=[\s/>])[^>]*?/?>", RegexOptions.Singleline | RegexOptions.Compiled);
 
     /// <summary>
+    /// A button built in C# that assigns a colour property instead of a Style.
+    /// <para>
+    /// <b>This half exists because the other half was not enough, and the repo already knew.</b>
+    /// <c>SquadLaunchWindow</c>'s Remove carried a comment from wave 5 saying "built in code, so
+    /// wave 5's markup sweep never saw it — and neither does any test in that wave, which all parse
+    /// XAML." That was true, recorded, left at one site, and then v1.20 shipped a markup-only fence
+    /// on top of it whose commit message claimed 99.1% coverage. Five buttons were constructed in
+    /// code at the time, three of them byte-identical to a rank that already existed.
+    /// </para>
+    /// <para>
+    /// The general form, worth asking of every instrument in this suite: <i>does the behaviour this
+    /// asserts actually live in the thing it reads?</i> A gate that reads markup can only ever be
+    /// evidence about markup, and coverage claimed beyond that is coverage invented.
+    /// </para>
+    /// <para>
+    /// What these five got instead of a rank: <c>App.xaml</c> merges <c>ui:ControlsDictionary</c>,
+    /// so a bare <c>new Button</c> picks up WPF-UI's implicit style rather than the OS one — they
+    /// were NOT flashing Aero blue, which was this gate author's first guess and was wrong. Their
+    /// state setters are <c>DynamicResource</c>, but they resolve against
+    /// <c>ui:ThemesDictionary Theme="Dark"</c>, a fixed palette <c>ThemeService</c> never touches.
+    /// Correct at rest, frozen in every state, in every theme.
+    /// </para>
+    /// </summary>
+    private static readonly Regex CsharpConstruction = new(
+        @"new\s+(?:ui\.)?(?:Button|ToggleButton|RepeatButton)\s*(?:\(\s*\))?\s*\{(?<body>[^}]*)\}",
+        RegexOptions.Singleline | RegexOptions.Compiled);
+
+    private static readonly Regex CsharpColourAssignment = new(
+        @"(?<![A-Za-z.])(Background|Foreground|BorderBrush)\s*=",
+        RegexOptions.Compiled);
+
+    private static readonly Regex CsharpStyleAssignment = new(
+        @"(?<![A-Za-z.])Style\s*=", RegexOptions.Compiled);
+
+    /// <summary>
     /// Declarations allowed to paint themselves, each with the reason inline as item 9 requires.
     /// An exemption is a debt with a name on it, not a permission slip: <see
     /// cref="NoExemptionSurvivesItsSite"/> fails when one stops matching anything, so a site that
@@ -77,6 +112,89 @@ public class ButtonRankFenceTests
     ];
 
     private sealed record Site(string File, string Line, int Number, string Tag);
+
+    /// <summary>Buttons built in code-behind, with the property block each one assigns.</summary>
+    private static List<Site> CodeBehindConstructions()
+    {
+        var sites = new List<Site>();
+        var appDir = XamlStyleScanner.AppSourceDirectory();
+        if (appDir is null) return sites;
+
+        // Repo-relative, matching the labels the XAML half prints. An absolute path in a failure
+        // message names a user profile directory, which reads differently on every machine — the
+        // same class of thing the repo's own local-path guard exists to keep out of the tree.
+        // (That guard blocked this comment's first draft, which said so by example.)
+        var root = XamlStyleScanner.FindRepoRoot()?.Replace('\\', '/').TrimEnd('/');
+
+        foreach (var path in Directory.EnumerateFiles(appDir, "*.cs", SearchOption.AllDirectories))
+        {
+            var rel = path.Replace('\\', '/');
+            if (rel.Contains("/obj/", StringComparison.Ordinal) || rel.Contains("/bin/", StringComparison.Ordinal))
+                continue;
+
+            if (root is not null && rel.StartsWith(root + "/", StringComparison.OrdinalIgnoreCase))
+                rel = rel[(root.Length + 1)..];
+
+            var text = File.ReadAllText(path);
+            foreach (Match m in CsharpConstruction.Matches(text))
+            {
+                var number = text[..m.Index].Count(c => c == '\n') + 1;
+                sites.Add(new Site(Path.GetFileName(path), rel, number, m.Groups["body"].Value));
+            }
+        }
+        return sites;
+    }
+
+    /// <summary>
+    /// The same rule, on the half of the app that is not markup. A button built in code takes a
+    /// rank exactly as a declared one does.
+    /// </summary>
+    [Fact]
+    public void NoCodeBehindButtonPaintsItself()
+    {
+        var offenders = CodeBehindConstructions()
+            .Where(s => CsharpColourAssignment.IsMatch(s.Tag) && !CsharpStyleAssignment.IsMatch(s.Tag))
+            .Where(s => !CodeExemptions.Any(e => s.File.Equals(e.File, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        Assert.True(offenders.Count == 0,
+            "These code-built buttons assign a colour instead of taking a rank:\n"
+            + string.Join("\n", offenders.Select(o =>
+                $"  {o.Line}:{o.Number}  " + string.Join(", ", CsharpColourAssignment.Matches(o.Tag)
+                    .Select(m => m.Groups[1].Value).Distinct())))
+            + "\n\nSet Style = (Style)FindResource(\"…ButtonStyle\") and drop the colour properties. "
+            + "A button built in code is not exempt from the vocabulary; it is only harder to see.");
+    }
+
+    /// <summary>
+    /// Vacuity floor for the code half, kept separate from the markup one so a broken .cs walk
+    /// cannot hide behind a healthy XAML walk. Both halves have to be seen to be trusted.
+    /// </summary>
+    [Fact]
+    public void TheCodeBehindWalkActuallyFindsButtons()
+    {
+        var found = CodeBehindConstructions();
+        Assert.True(found.Count >= 4,
+            $"the code-behind walk found {found.Count} constructed buttons; the tree carries 5. "
+            + "A walk that finds nothing passes NoCodeBehindButtonPaintsItself for free, which is "
+            + "precisely how the markup-only version of this fence claimed 99.1% coverage.");
+    }
+
+    /// <summary>
+    /// Code-built buttons allowed to paint themselves. Both entries are decisions, not oversights.
+    /// </summary>
+    private static readonly (string File, string Reason)[] CodeExemptions =
+    [
+        // The palette swatches ARE their colour — Background is the value being picked, not a
+        // theme token, and a rank would paint over the only thing the control communicates.
+        ("CaptionColorPickerWindow.xaml.cs", "the fill is the data being chosen, not a theme slot"),
+
+        // History's Bookmark is a cyan LABEL on a navy fill with a cyan edge. No rank provides
+        // that: every rank pairs a navy fill with a white label. spec.md §3's rule is that a site
+        // needing a look no rank provides opens a row rather than growing the vocabulary
+        // mid-sweep, so it is exempt here and recorded rather than hand-assigned to a near-miss.
+        ("SessionHistoryWindow.xaml.cs", "cyan label on navy — no rank provides it; see F-098"),
+    ];
 
     private static List<Site> Declarations()
     {
