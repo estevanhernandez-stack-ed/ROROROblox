@@ -22,10 +22,15 @@
 > **2. §2 asserts a gate that failed at HEAD.** It says the logo *"renders byte-identical across all
 > four themes"* and calls that assertion the proof the artwork was left alone. `AboutWindow.xaml:44`
 > — the magenta block's top face — was bound to the `MagentaBrush` **theme slot**, resolving
-> `#F22F89` / `#C0407E` / `#6E6E6E` across the built-ins. The mark's lit face recoloured while its
-> two side faces stayed fixed: a grey top on a magenta body under flatline. §0.1 counted the eight
-> declared brushes and never looked at what the polygons pointed to. Fixed in item 4; gated by
-> `AboutArtworkTests`, which is the gate §2 asked for and which caught this on its first run.
+> `#F22F89` / `#C0407E` / `#6E6E6E` across the built-ins. §0.1 counted the eight declared brushes
+> and never looked at what the polygons pointed to. Fixed in item 4; gated by `AboutArtworkTests`,
+> which is the gate §2 asked for and which caught this on its first run.
+>
+> **SYMPTOM CORRECTED 2026-08-12.** Item 4 also claimed this rendered as "a grey top on a magenta
+> body under flatline". It does not — that face is fully occluded by the cyan block stacked on it,
+> proven by painting it `#00FF00` and rendering: zero green pixels. The markup fix stands on
+> principle; the visual consequence was asserted from reading markup and never rendered, which is
+> this banner's own §0-method failure committed one level down.
 >
 > **3. §0.2 (F-093) is itself a bad correction.** It says deleting `DefaultPlaceUrl` would *"silently
 > move those users from their saved place to the home page"*. `IRobloxLauncher` has two `LaunchAsync`

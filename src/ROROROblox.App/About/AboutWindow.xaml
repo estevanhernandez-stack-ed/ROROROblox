@@ -47,12 +47,17 @@
                 <Polygon Fill="{StaticResource TealBrush}"
                          Points="32,42.5 48,36.5 48,45.5 32,51.5" />
                 <!-- Middle block (magenta). This top face was bound to the MagentaBrush THEME SLOT
-                     until v1.21 item 4 — a theme token inside the mark, so the block's lit face
-                     recoloured with the palette while its two side faces stayed fixed: a grey top
-                     on a magenta body under flatline. It now takes MagentaDimBrush, the same value
-                     brand resolved that slot to, so the themes anyone has seen the mark in are
-                     unchanged and the other two are repaired. Top and right sharing one brush over
-                     a darker left is the three-face pattern the teal block already uses.
+                     until v1.21 item 4 — a theme token inside the mark. It now takes
+                     MagentaDimBrush, the same value brand resolved that slot to, so every theme
+                     renders the mark identically. Top and right sharing one brush over a darker
+                     left is the three-face pattern the teal block already uses.
+                     THIS FACE IS OCCLUDED and paints nothing: in an isometric stack only the
+                     topmost block shows its top face, and the cyan block above covers this one
+                     entirely. Measured 2026-08-12 by painting it #00FF00 and rendering the real
+                     window — zero green pixels. So the bind is hygiene rather than a visible fix,
+                     and it matters only if the stack is ever reordered or a block removed. Item 4
+                     claimed a visible grey top under flatline; that was asserted from reading
+                     markup and is not true.
                      Ratios and per-theme values live in F-063's register row, not here. A comment
                      naming a shipped colour is a claim that goes false the moment a theme changes
                      that value; the literal scanner stopped reading comments in v1.20, so this is a

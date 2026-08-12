@@ -21,11 +21,24 @@ namespace ROROROblox.Tests;
 /// WHAT IT FOUND ON ITS FIRST RUN, 2026-08-11. The middle block's top face was
 /// <c>{DynamicResource MagentaBrush}</c> — a theme slot inside the mark, shipped. It resolved to
 /// <c>#F22F89</c> in brand and magenta-heat, <c>#C0407E</c> in midnight and <c>#6E6E6E</c> in
-/// flatline, so the lit face of the magenta block recoloured while its two side faces stayed brand
-/// magenta: a grey top on a magenta body under flatline. Neither the register row nor the cycle's
-/// spec noticed it; spec §2 asserted the logo already rendered identically in all four themes,
-/// which was the one thing about it that was not true. Item 4 rebound that face to
-/// <c>MagentaDimBrush</c>, which is <c>#F22F89</c>, leaving brand and magenta-heat byte-identical.
+/// flatline — a theme token inside brand artwork. Item 4 rebound it to <c>MagentaDimBrush</c>,
+/// which is <c>#F22F89</c>, leaving brand and magenta-heat byte-identical.
+/// </para>
+/// <para>
+/// <b>SYMPTOM CORRECTED 2026-08-12 by the window-render spike, which measured it instead of reading
+/// it.</b> The paragraph above used to end "a grey top on a magenta body under flatline". <b>That
+/// symptom does not exist.</b> The middle block's top face is fully occluded by the cyan block
+/// stacked on it — in an isometric voxel stack only the topmost block's top face is ever visible.
+/// Proven by painting that face pure <c>#00FF00</c> and rendering the real window: zero green
+/// pixels.
+/// </para>
+/// <para>
+/// <b>The rule this gate enforces is unchanged and still worth enforcing.</b> A theme slot inside
+/// brand artwork is wrong whether or not it currently shows, and it becomes visible the moment the
+/// stack is reordered or a block is removed. What was wrong was the claimed visual CONSEQUENCE,
+/// asserted from reading markup and never rendered — the exact error the cycle that wrote it was
+/// convened to stop. <c>AboutMarkRenderTests</c> is the gate that can tell those two apart, and it
+/// caught this one.
 /// </para>
 /// </summary>
 public class AboutArtworkTests

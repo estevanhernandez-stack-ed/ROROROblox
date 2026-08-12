@@ -10,13 +10,25 @@ namespace ROROROblox.Tests;
 /// The expired row and the compat banner say "expired" and "warning" in something other than
 /// colour, in every theme (spec §6.2, §6.3).
 /// <para>
-/// WHAT THIS IS NOT. It does not render. Nothing in this repo renders — the suite is headless
-/// xUnit with no STA thread and no dispatcher, so "an expired row is identifiable with
-/// RowExpiredBg flattened to RowBg" is split into the two halves that CAN be checked without a
-/// screen: the markup carries a rule that is not a fill, and the brush that rule resolves to
-/// separates from the flattened row surface by a measured ratio under every shipped theme. Both
-/// halves together are strong evidence and neither is a pixel. The pixel is owed to a human at
-/// the capture round (spec §11.3 item 6), and this file does not stand in for it.
+/// WHAT THIS IS NOT. It does not render. <b>THIS FILE, not the repo</b> — the second half of that
+/// sentence used to read "Nothing in this repo renders — the suite is headless xUnit with no STA
+/// thread and no dispatcher", and it has been false since the rendered gates shipped.
+/// <c>Rendering/Sta.cs</c> runs a fresh STA thread per call and pumps a <c>DispatcherFrame</c> down
+/// to <c>Loaded</c> priority; <c>ThemedRender</c> samples a <c>RenderTargetBitmap</c>;
+/// <c>WindowRenderHost</c> renders whole app windows. <b>Corrected 2026-08-12, and the correction
+/// matters more than the usual stale comment:</b> this one told every reader that pixel
+/// verification was impossible here, so v1.21 handed four checks to a human without anyone asking
+/// whether they had to be. A comment that understates the suite's capability is a standing
+/// instruction not to try.
+/// <para>
+/// What is true is that THIS file does not render, by choice: "an expired row is identifiable with
+/// RowExpiredBg flattened to RowBg" is split into the two halves checkable without a screen — the
+/// markup carries a rule that is not a fill, and the brush that rule resolves to separates from the
+/// flattened row surface by a measured ratio under every shipped theme. Both halves together are
+/// strong evidence and neither is a pixel. Flattening a theme slot and re-rendering is available
+/// now via the harnesses above and would be a real strengthening of this file; it is simply not
+/// what it does today.
+/// </para>
 /// </para>
 /// <para>
 /// WHY A STRUCTURAL CLAUSE AT ALL. The rule's whole job is to survive a theme that takes the fill
