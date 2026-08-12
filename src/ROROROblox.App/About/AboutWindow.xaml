@@ -30,8 +30,15 @@
 
         <!-- Hero: inline iso voxel stack + wordmark + version + tagline + Easter-egg slot -->
         <StackPanel Grid.Row="0" Orientation="Horizontal">
-            <!-- Direction C iso voxel stack (Canvas, 64x64). Painter's order: bottom -> middle -> top. -->
-            <Canvas Width="64" Height="64" Margin="0,0,18,0" Background="{StaticResource NavySoftBrush}">
+            <!-- Direction C iso voxel stack (Canvas, 64x64). Painter's order: bottom -> middle -> top.
+                 The GROUND is themed; the MARK is not. The nine polygon faces below are brand
+                 identity artwork in the same category as the per-account caption palette — they
+                 paint WHO this is, not WHAT STATE it is in, and a themed logo is a broken logo.
+                 The Canvas fill is the plate they sit on, and it is bound rather than removed on
+                 purpose: the faces are fixed dark-on-light-agnostic hexes, so on a light user theme
+                 a missing plate would leave the mark floating on white with no ground. The four
+                 built-in themes are all dark and would never reveal that. -->
+            <Canvas Width="64" Height="64" Margin="0,0,18,0" Background="{DynamicResource RowBgBrush}">
                 <!-- Bottom block (teal) -->
                 <Polygon Fill="{StaticResource TealBrush}"
                          Points="16,36.5 32,30.5 48,36.5 32,42.5" />
@@ -39,8 +46,15 @@
                          Points="16,36.5 32,42.5 32,51.5 16,45.5" />
                 <Polygon Fill="{StaticResource TealBrush}"
                          Points="32,42.5 48,36.5 48,45.5 32,51.5" />
-                <!-- Middle block (magenta) -->
-                <Polygon Fill="{DynamicResource MagentaBrush}"
+                <!-- Middle block (magenta). The top face was {DynamicResource MagentaBrush} until
+                     v1.21 item 4 — a theme slot inside the mark. It resolved to #F22F89 in brand
+                     and magenta-heat, #C0407E in midnight and #6E6E6E in flatline, so the block's
+                     lit face recoloured while its two side faces stayed brand magenta: under
+                     flatline a grey top on a magenta body. Bound to MagentaDimBrush, which IS
+                     #F22F89, so brand and magenta-heat are byte-identical to what shipped and the
+                     other two themes are repaired. Top and right sharing one brush with a darker
+                     left is the same three-face pattern the teal block below already uses. -->
+                <Polygon Fill="{StaticResource MagentaDimBrush}"
                          Points="16,27.5 32,21.5 48,27.5 32,33.5" />
                 <Polygon Fill="{StaticResource MagentaShadowBrush}"
                          Points="16,27.5 32,33.5 32,42.5 16,36.5" />
@@ -93,7 +107,7 @@
         </StackPanel>
 
         <Border Grid.Row="1" Margin="0,24,0,0" Padding="16,14"
-                Background="#15263A" CornerRadius="8">
+                Background="{DynamicResource RowBgBrush}" CornerRadius="8">
             <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource WhiteBrush}">
                 Run multiple Roblox clients side by side, signed in as different saved accounts.
                 Holds the Roblox singleton mutex so subsequent clients don't fight for it; uses
