@@ -38,6 +38,31 @@
 > restricted to the eight artwork hexes, with the plate asserted to vary in a sibling clause so the
 > identity clause cannot pass by nothing changing.
 >
+> **5.3 SHIPPED. 5.4 DOES NOT WORK, AND WILL NOT UNTIL F-100 IS FIXED.** History rows now render at
+> 96/120/144 DPI across all four themes, and the gutter-exceeds-inset invariant is asserted in
+> laid-out pixels rather than in constants. The banner pair was attempted and backed out.
+>
+> `MainViewModel` has **eight `Application.Current?.Dispatcher.Invoke` call sites** that silently
+> no-op in the ordinary suite, because `Application.Current` is null there and every one of them is
+> null-conditional. On the render host `Application.Current` is deliberately live, so they become
+> real cross-thread marshals: presence, activity and session-expiry events fire on background
+> threads and block against a dispatcher already inside a render. Building more than one view model
+> there wedges the host past its budget.
+>
+> That is **F-100**, and it is a larger finding than the test that surfaced it — those eight
+> delegate bodies have never executed under test at all. The fix is a dispatcher seam, not an
+> Application in the ordinary suite, which would reintroduce the process-global hazard
+> `ThemedRender` documents.
+>
+> The section 3.3 cost estimate was wrong in an unexpected direction: the 29-parameter builder was
+> already `internal` and cost nothing, while the blocker turned out to be the view model's coupling
+> to a live Application, which the design never considered.
+>
+> **A third harness bug, found by MainWindow and fixed.** `Arrange` measured at
+> `double.PositiveInfinity`, so `TextWrapping="Wrap"` never wrapped and `RenderTargetBitmap` tried
+> to allocate a bitmap sized for unwrapped prose. AboutWindow is `NoResize` at 500x460 and never
+> showed it. Windows are now measured at their declared size.
+>
 > **One residue found:** `NavySoftBrush` is declared but paints nothing — it was the Canvas ground
 > until item 4 bound that ground to `RowBgBrush`. Seven of eight artwork brushes actually paint.
 > Wants a register row, not a silent delete.

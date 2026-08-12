@@ -74,44 +74,109 @@ internal static class ThemedWindowRender
         string what,
         Func<Window> build,
         Func<FrameworkElement, FrameworkElement> select,
-        double dpi = 96)
+        double dpi = 96,
+        bool raiseLoaded = false)
         => WindowRenderHost.Run(() =>
         {
-            // Resources FIRST so the pack:// factory is installed before the window parses its XAML.
-            var dict = ThemedRender.Resources(theme);
+            var content = Arrange(theme, what, build, raiseLoaded);
+            return RenderRegion(content, select(content), theme, what, dpi);
+        }, what);
 
-            var window = build();
+    /// <summary>
+    /// Arranges a window under <paramref name="theme"/> and hands the laid-out content tree to
+    /// <paramref name="inspect"/>, without rendering a bitmap.
+    /// <para>
+    /// For the questions a bitmap answers badly. "Do three rows separate, and by how much" is about
+    /// WHERE things landed; sampling colours to find that out would mean inferring geometry from a
+    /// histogram, and a row separated by a gap the same colour as the row is invisible to a colour
+    /// sample while being perfectly measurable as a rectangle. <c>Sample.BoundsOf</c> exists on the
+    /// control harness for the same reason, added after a human found two geometry defects every
+    /// colour assertion had passed over.
+    /// </para>
+    /// <para>
+    /// <paramref name="inspect"/> must not return live visuals — they belong to the host thread and
+    /// touching them from the calling thread throws. Return values (rectangles, counts, strings).
+    /// </para>
+    /// </summary>
+    public static T Inspect<T>(
+        Theme theme,
+        string what,
+        Func<Window> build,
+        Func<FrameworkElement, T> inspect,
+        bool raiseLoaded = false)
+        => WindowRenderHost.Run(() => inspect(Arrange(theme, what, build, raiseLoaded)), what);
 
-            // MERGE, never assign — see the class remarks. AboutWindow declares its own
-            // Window.Resources holding the mark's eight brushes.
-            window.Resources.MergedDictionaries.Add(dict);
+    /// <summary>
+    /// Build → merge → (optionally) raise Loaded → measure → arrange → drain. The shared half of
+    /// both entry points. Must run on the host thread.
+    /// </summary>
+    private static FrameworkElement Arrange(Theme theme, string what, Func<Window> build, bool raiseLoaded)
+    {
+        // Resources FIRST so the pack:// factory is installed before the window parses its XAML.
+        var dict = ThemedRender.Resources(theme);
 
-            if (window.Content is not FrameworkElement content)
-            {
-                throw new InvalidOperationException(
-                    $"'{what}' has Content of type {window.Content?.GetType().Name ?? "null"}, "
-                    + "which cannot be measured. This harness renders the content, not the Window.");
-            }
+        var window = build();
 
-            content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            var size = content.DesiredSize;
-            if (size.Width < 1 || size.Height < 1)
-            {
-                throw new InvalidOperationException(
-                    $"'{what}' under theme '{theme.Id}' measured to {size.Width}x{size.Height}. "
-                    + "A zero-sized visual renders nothing and would sample as a vacuous pass.");
-            }
+        // MERGE, never assign — see the class remarks. AboutWindow declares its own
+        // Window.Resources holding the mark's artwork brushes.
+        window.Resources.MergedDictionaries.Add(dict);
 
-            content.Arrange(new Rect(size));
-            content.UpdateLayout();
+        if (window.Content is not FrameworkElement content)
+        {
+            throw new InvalidOperationException(
+                $"'{what}' has Content of type {window.Content?.GetType().Name ?? "null"}, "
+                + "which cannot be measured. This harness renders the content, not the Window.");
+        }
 
-            // DynamicResource invalidation and template application are QUEUED. Sampling before this
-            // drains measures the default setter rather than the applied value.
+        // MEASURED AT THE WINDOW'S OWN SIZE, NOT AT INFINITY, and the difference is not cosmetic.
+        // An unconstrained measure means TextWrapping="Wrap" never wraps, so a window carrying long
+        // prose reports a DesiredSize hundreds of times wider than it will ever be — and
+        // RenderTargetBitmap then tries to allocate width x height x 4 bytes of it. AboutWindow is
+        // NoResize at 500x460 and never showed this; MainWindow is 900x600 with wrapping banner
+        // copy and wedged the render until each case hit the 60s budget. Arranging at the declared
+        // size is also just more honest: it is the size the window actually opens at.
+        var constraint = new Size(
+            Bounded(window.Width, window.MinWidth, 1280),
+            Bounded(window.Height, window.MinHeight, 900));
+
+        content.Measure(constraint);
+        var size = content.DesiredSize;
+        if (size.Width < 1 || size.Height < 1)
+        {
+            throw new InvalidOperationException(
+                $"'{what}' under theme '{theme.Id}' measured to {size.Width}x{size.Height}. "
+                + "A zero-sized visual renders nothing and would sample as a vacuous pass.");
+        }
+
+        content.Arrange(new Rect(new Size(
+            Math.Min(size.Width, constraint.Width),
+            Math.Min(size.Height, constraint.Height))));
+        content.UpdateLayout();
+
+        // A window that is never shown never raises Loaded, so a window that builds its content
+        // from a Loaded handler renders empty. Raised deliberately rather than by showing the
+        // window, which would need a real HWND and would flash on screen.
+        if (raiseLoaded)
+        {
+            window.RaiseEvent(new RoutedEventArgs(FrameworkElement.LoadedEvent, window));
+
+            // The handler is typically `async void`; its continuation posts at Normal priority,
+            // which is ABOVE Loaded, so draining to Loaded flushes it. A handler awaiting real I/O
+            // would NOT be covered — callers assert their content arrived rather than trusting this.
             WindowRenderHost.DrainQueue();
 
-            var target = select(content);
-            return RenderRegion(content, target, theme, what, dpi);
-        }, what);
+            // Content built during Loaded has not been through a layout pass yet.
+            content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            content.Arrange(new Rect(content.DesiredSize));
+            content.UpdateLayout();
+        }
+
+        // DynamicResource invalidation and template application are QUEUED. Sampling before this
+        // drains measures the default setter rather than the applied value.
+        WindowRenderHost.DrainQueue();
+
+        return content;
+    }
 
     /// <summary>
     /// Renders <paramref name="target"/> alone, through a <see cref="VisualBrush"/> drawn into a
@@ -188,6 +253,12 @@ internal static class ThemedWindowRender
             th,
             ordered);
     }
+
+    /// <summary>Declared size if the window has one, else its minimum, else a sane default.</summary>
+    private static double Bounded(double declared, double minimum, double fallback) =>
+        !double.IsNaN(declared) && declared > 0 ? declared
+        : minimum > 0 ? minimum
+        : fallback;
 
     /// <summary>
     /// Depth-first visual-tree search for the first element matching <paramref name="match"/>.

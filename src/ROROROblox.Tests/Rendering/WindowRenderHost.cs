@@ -1,7 +1,5 @@
 using System.Windows;
 using System.Windows.Threading;
-using Wpf.Ui.Appearance;
-using Wpf.Ui.Markup;
 
 namespace ROROROblox.Tests.Rendering;
 
@@ -20,14 +18,29 @@ namespace ROROROblox.Tests.Rendering;
 /// by the spike on its first run, 2026-08-12.
 /// </para>
 /// <para>
-/// HOW THE HAZARD <c>ThemedRender</c> NAMES IS AVOIDED. Its warning is that an Application makes
-/// <c>Application.Current?.Resources</c> process-global state "altering how every other test in this
-/// assembly resolves a theme". That is about THEME BRUSHES, and this host holds none:
-/// <see cref="Resources"/> carries only the theme-INDEPENDENT vocabulary — WPF-UI's dictionaries and
-/// <c>ControlStyles.xaml</c>, whose own setters reach colours through <c>DynamicResource</c>. It is
-/// populated once and <b>never mutated</b>, so there is no per-theme state here to race over and
-/// nothing for a concurrent render to observe changing. Theme brushes stay on the window, which is
-/// per-render and per-thread.
+/// THE HAZARD <c>ThemedRender</c> NAMES, AND WHAT ACTUALLY CONTAINS IT. Its warning is that an
+/// Application makes <c>Application.Current?.Resources</c> process-global state "altering how every
+/// other test in this assembly resolves a theme". <b>That hazard is real here and is NOT avoided by
+/// keeping theme brushes off the Application</b> — an earlier draft of this file claimed exactly
+/// that and it was wrong, because App.xaml declares the ten theme slots plus the derived edge as
+/// pre-startup seed values, and loading App.xaml is the only way to get the converters that window
+/// markup resolves at parse time.
+/// </para>
+/// <para>
+/// What contains it is that those seeds are <b>never mutated and never reached</b>.
+/// <c>ThemeService.ApplyTo</c> is only ever called on a per-render dictionary — never on
+/// <c>Application.Current.Resources</c> — so nothing here changes between renders and there is
+/// nothing for a concurrent test to observe shifting. And resolution finds the themed value first:
+/// every render puts a dictionary carrying all eleven slots at host or window level, which wins
+/// over the Application. The seeds are a fallback that a correctly-built render never reaches.
+/// </para>
+/// <para>
+/// VERIFIED RATHER THAN ARGUED, by a gate that already existed.
+/// <c>RenderedStyleGateTests.TheDerivedEdgeIsTunedToNavyAndFallsShortOnACard</c> asserts EXACT
+/// per-theme ratios off real bitmaps — 2.28:1 under flatline against 2.82:1 under brand. If the
+/// Application's brand-coloured seeds were leaking into those renders, flatline would report brand's
+/// number and that test would fail. It passes. That is the containment, measured by something with
+/// no stake in this file being right.
 /// </para>
 /// <para>
 /// WHY ONE LONG-LIVED THREAD RATHER THAN <c>Sta</c>'s FRESH-PER-CALL. <see cref="Application"/> is
@@ -49,22 +62,20 @@ internal static class WindowRenderHost
 
         var thread = new Thread(() =>
         {
-            // Application's constructor installs the pack:// WebRequest factory and sets
-            // Application.Current. OnExplicitShutdown so closing a rendered window never tries to
-            // tear the process down mid-run.
-            var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-
-            // Theme-INDEPENDENT only, in App.xaml's own merge order (App.xaml:10-15), which is
-            // load-bearing there: ControlStyles.xaml has BasedOn="{StaticResource {x:Type Button}}"
-            // that resolves at parse time against WPF-UI's dictionary.
-            app.Resources.MergedDictionaries.Add(new ThemesDictionary { Theme = ApplicationTheme.Dark });
-            app.Resources.MergedDictionaries.Add(new ControlsDictionary());
-            app.Resources.MergedDictionaries.Add(new ResourceDictionary
-            {
-                Source = new Uri(
-                    "pack://application:,,,/ROROROblox.App;component/Controls/ControlStyles.xaml",
-                    UriKind.Absolute),
-            });
+            // THE REAL App, loading THE REAL App.xaml. `new App()` does not start anything — WPF
+            // generates a Main() that constructs, calls InitializeComponent, then calls Run(), and
+            // only Run() raises OnStartup. So this loads the shipped resource dictionary and no
+            // startup path: no DI host, no single-instance guard, no tray.
+            //
+            // WHY NOT A HAND-BUILT DICTIONARY. The first version merged WPF-UI + ControlStyles.xaml
+            // by hand, on the theory that only theme-INDEPENDENT vocabulary was needed. That failed
+            // on MainWindow: App.xaml also declares the seven value converters, and
+            // `{StaticResource StringToVisibilityConverter}` resolves at parse time like every other
+            // StaticResource, so the window would not construct. Reproducing App.xaml's contents
+            // here would be a second copy of the app's resource composition, and this repo has been
+            // bitten twice by a definition existing in two places and drifting.
+            var app = new ROROROblox.App.App { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+            app.InitializeComponent();
 
             ready.SetResult(Dispatcher.CurrentDispatcher);
             Dispatcher.Run();
