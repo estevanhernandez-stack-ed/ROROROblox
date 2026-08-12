@@ -1,210 +1,211 @@
-# RORORO — v1.20.0 Button Vocabulary Build Checklist
+# RORORO — v1.21.0 build checklist: the surfaces behind the buttons
 
-**Cycle:** v1.20.0.0 — one button vocabulary (current shipped: 1.19.0.0 on `main`, untagged)
-**Cycle type:** Remediation + one new primitive.
+**Cycle:** v1.21.0.0 (current shipped on `main`: 1.20.0.0, untagged)
+**Cycle type:** Remediation. No new features, no contract change, no spike.
 [`docs/spec.md`](spec.md) is the canonical technical artifact. **Archive it into
-`docs/superpowers/specs/` before the next Cart round** — item 10 owns that.
-**Anchor:** a button should look like the theme in every state, not just at rest.
+`docs/superpowers/specs/` before the next Cart round** — item 12 owns that.
+**Anchor:** v1.20 gave the buttons one vocabulary. This gives the surfaces under them one too.
 
 ## Build Preferences
 
-- **Build mode:** Autonomous
-- **Comprehension checks:** N/A
-- **Git:** Commit after each item. Conventional commits. Branch `feat/button-vocabulary`, already
-  cut and already carrying scope + PRD + spec, rebased onto merged `main`.
-- **Verification:** Yes — **C1 after item 4**, **C2 after item 6**. C1 is the look-at-it gate: the
-  template and the new ranks exist and `MainWindow` uses them, so a regression is visible before 21
-  more files inherit it. C2 is the whole-surface eyes-on before the gates and docs.
-- **TDD:** strict on **item 2** (the scanner is this cycle's measuring instrument and its baseline
-  must be recorded before anything moves) and **item 8** (the state gate must be shown failing
-  against a deliberately broken template). Items 1 and 3 are verify-by-render; 4-6 verify-by-eye;
-  7 is a by-name assignment; 9-10 are audit.
+- **Build mode:** Autonomous. The builder does not have the planning conversation — this file, plus
+  `spec.md` and `prd.md`, is the whole handoff.
+- **Git:** Commit after each item. Conventional commits. Branch `feat/pre-store-remediation`, already
+  cut and already carrying scope + PRD + spec.
+- **Verification:** **C1 after item 5** (end of wave 1). Every wave-1 item is a surface a Store
+  screenshot will show, so a regression there is worth catching before wave 2 buries it.
+- **TDD:** strict on **item 6** (the gate must be shown failing) and **item 2** (measure before you
+  migrate). Items 3-5 are verify-by-render; 7-11 are small and verify-by-read; 12 is audit.
 
 ## Effort
 
-**Total ≈ 6-8 hours.** No new dependencies, no contract change, no spike. Heaviest is **item 4**
-(30 sites in the app's most-looked-at file, spanning five intents) and **item 3** (two new ranks that
-31 sites depend on). Item 4 is flagged for a 4a/4b split if it passes 90 minutes.
+**Total ≈ 5-7 hours.** Heaviest is **item 3** (History, because the boundary must be derived — see
+below) and **item 6** (the gate widening surfaces a live failure that needs a ruling).
 
-## The measurement this checklist is sized against
+## Three measurements already taken, so the build does not repeat them
 
-Run at the branch point with `spec.md > §6`'s definition, before anything moved:
+Run 2026-08-11 against the four built-in themes, through the same arithmetic `ContrastGuard` uses.
+**These are inputs, not tasks.**
 
-**72 un-migrated sites across 22 files, out of 116 total button declarations.**
+| What | brand | midnight | magenta-heat | flatline | Verdict |
+|---|---|---|---|---|---|
+| **§1** banner: `RowExpiredAccent` on `RowExpiredBg` | 7.13 | 6.58 | 7.13 | 7.33 | **clears 4.5 everywhere — migrate as-is** |
+| **§3** boundary: `Divider` on `RowBg` | 1.16 | 1.08 | 1.05 | 1.14 | **fails 3.0 in all four — derive, do not try the plain bind** |
+| **§4** `MutedText` on `RowBg` | 6.33 | **4.19** | 6.07 | 4.98 | **midnight is UNDER AA and shipped** |
 
-Neither 55 (the register) nor any earlier figure is adopted — both were measured under unknown
-definitions, and one of them ("63 across 15 files") reproduces at no commit. Item 2 commits the
-script so this number is reproducible and the closing figure is comparable to this one.
+The third one is a finding, not a chore. **F-086's widening will turn the suite red on a real,
+currently-shipped failure** — muted prose on a row surface in midnight. That is the gate doing its job
+on its first run, and item 6 has to rule on it rather than tune around it.
 
-`MainWindow.xaml` holds **30 of the 72** — 42% of the debt in one file. The next-largest is 6.
+## What recon found that the register did not
 
-## What the recon found that the spec did not
+`spec.md > §0` carries this in full. The short version, because it is the difference between a good
+cycle and a damaging one:
 
-Bucketing the 72 by fill turned up **two intents the vocabulary has no rank for**, which is why item
-3 exists and why it precedes every migration item:
+1. **F-063's "8 literal brushes" are the About logo** — `CyanBright`, `MagentaShadow`, `TealDeep` and
+   five more, painting a 64×64 iso voxel stack. Brand artwork, same category as the caption palette.
+   **Theming them recolours the mark.** The real defect is two sites, not eight.
+2. **F-093's "dead field" is live.** `RobloxLauncher.cs:258` awaits `GetDefaultPlaceUrlAsync()` on the
+   launch path. Deleting it moves legacy users from their saved place to Roblox home.
+3. **F-085's "deliberate distinction" is carried by the defect.** The compat banner one Grid row above
+   is themed and goes grey under flatline; Bloxstrap stays amber only because it ignores the theme.
 
-| Intent | Sites | Rank today |
-| --- | --- | --- |
-| Cyan-filled CTA — `CyanBrush` ×17 plus raw `#17D4FA` ×6 | **23** | **none** |
-| Magenta-filled action — `Stop`, `Squad Launch` | **8** | **none** |
-| Raw `#22314A` — **in no palette slot at all** | **7** | **none, and unthemed** |
-| Transparent / ghost | 5 | none |
-| Navy / Bg / RowBg | 9 | Secondary ranks fit |
-| No `Background` — inherits | 17 | likely fine |
-
-`#17D4FA` **is** `CyanBrush`'s hex, so those six are the same intent written by hand.
-`PrimaryButtonStyle` is a Navy fill with a cyan *border* — migrating a cyan-filled CTA onto it
-**changes how it looks**, which `spec.md > §3` calls a regression. Without item 3, §3's "a site
-needing a look no rank provides stops the item" rule fires on the first file and the cycle stalls at
-item 4.
-
-**`#22314A` is the sharper find.** It is not `Bg` (`#0F1F31`), not `RowBg` (`#15263A`), not `Divider`
-(`#1F3149`). Seven buttons are painted a colour the theme system has never heard of, so they stay
-navy-blue under flatline no matter what this cycle does to the template. That is F-068's actual
-defect in its purest form.
-
-## A note on test filters
-
-`--filter "Foo*|Bar*"` **matches zero tests** — VSTest's grammar has no glob wildcards and the run
-reports success having executed nothing. This checklist uses `FullyQualifiedName~` throughout.
+**Read the site before building the row. Three of ten rows were wrong here.**
 
 ---
 
-## Checklist
+## Wave 1 — the surfaces a flatline screenshot shows
 
-- [x] **1. The template, and states that follow the theme**
-  Spec ref: `spec.md > §2`, `spec.md > §0.2`
-  What to build: `AppButtonTemplate` in `Controls/ControlStyles.xaml` — a `Border x:Name="Chrome"`
-  wrapping a `ContentPresenter`, with `ControlTemplate.Triggers` for `IsMouseOver` → `RowBgBrush`,
-  `IsPressed` → `DividerBrush`, `IsEnabled=False` → `Opacity 0.45` plus `MutedTextBrush` foreground.
-  Every value a `{DynamicResource}`; **no colour literal anywhere in the new content.** All four
-  existing ranks take `Template="{StaticResource AppButtonTemplate}"`.
-  Acceptance (`prd.md > Story 1.1`): the four ranks look **unchanged at rest** in all four built-in
-  themes; hover and pressed differ from rest and from each other; nothing in the new markup is a hex
-  literal.
-  Verify: `dotnet test src/ROROROblox.Tests/ --filter "FullyQualifiedName~Contrast|FullyQualifiedName~Render"`
-  green — those gates measure resting appearance, so **them passing is the proof that rest did not
-  move.** Then run the app and hover a button: the fill must be a theme colour, not `#BEE6FD`.
+- [ ] **1. The banner ruling, written down before anything moves**
+  Spec ref: `spec.md > §1`, `§0.3`
+  What to build: nothing yet. Record in the commit message the ruling and its precedent: **both
+  banners take the one themed warning recipe; text and the `▲` glyph carry the difference, not hue.**
+  Precedent is F-032 — `MutedText` vs `White` measured 1.00:1 under flatline, so colour could not
+  carry "quiet" and weight took over. Same shape.
+  Acceptance: the ruling is in the tree before the migration that depends on it.
+  Verify: none. This is a decision item and it is deliberately its own commit.
 
-- [x] **2. The scanner, and the baseline it records**
-  Spec ref: `spec.md > §6`
-  What to build: `scripts/count-button-sites.ps1` implementing §6's definition verbatim, printing a
-  total, an un-migrated count and a per-file breakdown. Record its **branch-point output** in the
-  commit message and in the F-068 row.
-  Acceptance (`prd.md > Story 3.1`): re-running it now prints **72 across 22 files**, matching the
-  figure this checklist is sized against.
-  Verify: run it; confirm 72/22. **Then hand-edit one file to add a styled button and re-run** — the
-  count must drop by exactly one, then revert. A counter that cannot be moved on demand is not
-  measuring anything, which is the defect this row has suffered from three times.
+- [ ] **2. The Bloxstrap banner joins the vocabulary**
+  Spec ref: `spec.md > §1`
+  What to build: `MainWindow.xaml:1592,1593,1606` — `#3F3000` → `{DynamicResource RowExpiredBgBrush}`,
+  `#8F7000` → `{DynamicResource RowExpiredAccentBrush}`, `#FFE3A6` → `{DynamicResource
+  RowExpiredAccentBrush}`. Add the `▲ ` literal `Run` prefix the compat banner already carries.
+  **Delete the "warm amber tone distinct from" comment** — it documents a decision this item reverses,
+  and leaving it makes the next reader think the migration was a mistake.
+  Acceptance (`prd.md > Story 1.1`): no colour literal remains in the block; the banner is legible in
+  all four themes (already measured — 6.58 worst); the `▲` is present.
+  Verify: run the app, force `BloxstrapWarningVisible`, look at it in **flatline and brand**. Then
+  check the case that matters: **both banners visible at once.** They will look alike; confirm the
+  text and glyph make them readable as two different warnings.
 
-- [x] **3. The two missing ranks**
-  Spec ref: `spec.md > §2`, and the recon table above
-  What to build: `CtaButtonStyle` (cyan fill — the 23-site intent) and a decision on the
-  magenta-filled 8. **Both go through the contrast gate before any site adopts them:** the
-  foreground on `CyanBrush` and on `MagentaBrush` must clear the same floor the resting pairs are
-  held to, and if it cannot, **the rank's foreground changes rather than the floor.** Also decide the
-  `#22314A` seven — they are unthemed and cannot stay literal.
-  Acceptance: each new rank has a measured foreground/fill ratio recorded in the commit; no rank
-  ships whose own pair fails.
-  Verify: `dotnet test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ContrastPairGate"` green
-  with the new ranks included in whatever it enumerates. **If a rank cannot clear its floor, say so
-  and change the rank** — this cycle does not get to lower a bar it inherited.
-
-- [x] **4. `MainWindow.xaml` — 21 sites (30 was a miscount)**
+- [ ] **3. History rows get a boundary that survives flatline**
   Spec ref: `spec.md > §3`
-  What to build: migrate all 30 using the ranks from items 1 and 3. Five intents are present (cyan
-  CTA, magenta, `RowExpiredAccent`, transparent, raw hex) — assign by intent, not by convenience.
-  Acceptance (`prd.md > Story 2.1`): the scanner reports MainWindow at **0**; **nothing looks
-  different at rest**; the two raw-hex sites (`#17D4FA`, `#22314A`) are gone.
-  Verify: run the app in **flatline and brand**, compare against a pre-item screenshot, and hover
-  several buttons. A visible change at rest is a regression to fix, not to accept. Split 4a/4b if
-  this passes 90 minutes.
-  → **CHECKPOINT C1.**
+  What to build: `SessionHistoryWindow.xaml.cs:150-155`. Keep `Background = RowBgBrush`, add a
+  bottom boundary. **The plain `DividerBrush` bind will not do** — measured 1.05-1.16 against 1.4.11's
+  3.0 floor in every theme. **Derive it through `ContrastGuard.Ensure(surface, candidate)`**, the same
+  path `InteractiveEdgeBrush` takes, so it clears 3:1 under any theme including ones users wrote.
+  Acceptance (`prd.md > Story 1.3`): a row is distinguishable from its neighbour in all four themes,
+  and the carrier is not fill alone. Record the derived ratios in the commit.
+  Verify: open History under flatline with at least three sessions. **This is code-behind, so no
+  XAML-reading gate sees it** — item 8 covers that.
 
-- [x] **5. The top tail — 5 files, 20 sites**
-  Spec ref: `spec.md > §3`
-  What to build: `PluginsWindow` (6), `GamesWindow` (4), `RobloxAlreadyRunningWindow` (4),
-  `LeftoverProcessesWindow` (3), `PreferencesWindow` (3). **`PluginsWindow`'s Remove belongs to item
-  7** — leave it.
-  Acceptance: the scanner shows those five at 0 except the one Remove; no resting change.
-  Verify: open each window and compare. `LeftoverProcessesWindow` and `RobloxAlreadyRunningWindow`
-  appear during the startup gate, so they are seen at the worst possible moment.
+- [ ] **4. About: the ground gets themed, the logo does not**
+  Spec ref: `spec.md > §2`, `§0.1`
+  What to build: `AboutWindow.xaml:34` `Canvas Background` → `{DynamicResource RowBgBrush}` (**bind,
+  do not remove** — the plate is a ground for a fixed-colour logo and a light user theme would expose
+  its absence). `:96` `#15263A` → `{DynamicResource RowBgBrush}`. **Do not touch `:13-20`.**
+  Acceptance (`prd.md > Story 1.2`): the eight artwork brushes are byte-identical in all four themes;
+  the plate follows the theme; F-066's second site closes here.
+  Verify: open About in all four themes. The logo must look the same in each. If it does not, the
+  artwork was themed and the item is wrong.
 
-- [x] **6. The long tail — 16 files, 22 sites**
-  Spec ref: `spec.md > §3`
-  What to build: the remaining files, worst-first. **A site needing a look no rank provides opens a
-  row and stops the item** — it does not get hand-rolled and it does not grow the vocabulary
-  mid-sweep.
-  Acceptance: the scanner total reaches **0**, or the shortfall is named alongside the row that
-  explains it.
-  Verify: run the scanner; open the two or three most-used of these windows.
-  → **CHECKPOINT C2.**
+- [ ] **5. The artwork allow-list, so the next sweep does not undo item 4**
+  Spec ref: `spec.md > §2`
+  What to build: entries in `ThemedStatusColourTests`' `AllowList` for the eight About brushes, each
+  with a written reason in the shape the caption-palette entries use. **Note the anchor-lookback
+  constraint** — that file matches allow-list entries by searching 12 lines back for an anchor string,
+  so keep the declarations compact and put explanations above them (`Converters.cs` carries the same
+  warning after this bit the v1.20 cycle).
+  Acceptance: the suite is green with the artwork in place and would fail if the brushes moved out of
+  the allow-list.
+  Verify: `dotnet test src/ROROROblox.Tests/ --filter "FullyQualifiedName~ThemedStatusColour"`.
+  → **CHECKPOINT C1.** Every wave-1 surface is one a screenshot will show. Walk About, History and
+  both banners in flatline and brand before starting wave 2.
 
-- [x] **7. F-046 closes**
+---
+
+## Wave 2 — the gate, the small ones, and the close-out
+
+- [ ] **6. F-086: the pairs the gate cannot see, and the failure it finds**
   Spec ref: `spec.md > §4`
-  What to build: `PluginsWindow`'s Remove — a hand-rolled magenta fill and the row's headline
-  evidence — takes `DestructiveButtonStyle`. Confirm the by-name destructive list is otherwise
-  unchanged: Remove on the account row, Clear history, Stop all confirm.
-  Acceptance (`prd.md > Story 2.3`): Remove carries the rank; no fourth site was added by judgement.
-  Verify: open the Plugins window in flatline. Destructive must read as destructive **without
-  colour** — that is the rank's whole design.
+  What to build: an **unconditionally measured** named-pair list in `ContrastPairGateTests`,
+  independent of what the element scan finds: `MutedText` on `RowBg`, on `Bg`, on `Navy`.
+  **It will go red: `MutedText` on `RowBg` is 4.19 in midnight.** That is a live shipped defect the
+  gate was blind to. **Rule on it in this item** — either the pair is fixed (midnight's `MutedText` or
+  `RowBg` moves) or it is exempted with a finding row and a floor at today's value, the same mechanism
+  F-050 uses. **Do not lower the 4.5 floor.**
+  Acceptance (`prd.md > Story 2.1`): three pairs measured every run, ratios recorded per theme, and
+  the midnight failure has a decision attached.
+  Verify: break a pair deliberately, confirm red naming the pair, restore. **F-050 does not close here.**
 
-- [x] **8. The state gate, written to fail first**
+- [ ] **7. F-087: the colour branch moves to XAML**
   Spec ref: `spec.md > §5`
-  What to build: `Tests/Rendering/ButtonStateGateTests.cs` using §5's option (1) — resolve the
-  `ControlTemplate`, read each trigger's setters, assert no value is a hardcoded literal and that
-  each resolved state pair clears its floor. **Do not attempt `VisualStateManager.GoToState`:** it
-  returns False on this template because it has no visual state groups, and a `/prd` probe already
-  lost twenty minutes to that.
-  Acceptance (`prd.md > Story 1.2`): the gate covers hover, pressed and disabled for all ranks.
-  Verify: **break the template on purpose** — put a literal `#BEE6FD` in the hover trigger — and
-  confirm the gate goes red naming that trigger, then restore it. If it cannot be made to fail, the
-  gate is not shipped and the item closes with that finding recorded.
+  What to build: `ConsentSheet.xaml.cs:90-92`'s `NamespaceBrush` becomes a `Style` + `DataTrigger` on
+  `IsHostEnforced` in `ConsentSheet.xaml`. Drop the `?? new SolidColorBrush(...)` literal fallbacks.
+  Acceptance: no colour literal in the file; the sheet still distinguishes host-enforced capabilities.
+  Verify: open the consent sheet for a plugin with both kinds of capability.
 
-- [x] **9. The fence, or the finding**
-  Spec ref: `spec.md > §0.4`, `prd.md > Story 4.1`
-  What to build: a test that fails the build when a `Button` declaration sets colour properties
-  inline instead of taking a rank. Every exemption names its reason inline.
-  Acceptance: the fence fails on a planted violation and passes on the migrated tree.
-  **Explicit abort:** if the exemption list is large enough that the fence mostly measures its own
-  allow-list, **do not ship it.** Close the story, record how many exemptions it would have needed
-  and why, and say so in the commit. A gate that passes because everything is exempted reports
-  coverage it does not have.
+- [ ] **8. The code-behind surfaces get a gate**
+  Spec ref: `spec.md > §3`, `§6`
+  What to build: an assertion that the History row carries a non-fill boundary, scanning `.cs` the way
+  `ButtonRankFenceTests.NoCodeBehindButtonPaintsItself` does. F-098 established that a markup-only gate
+  is evidence about markup only; item 3's change lives in code and would otherwise be unguarded.
+  Acceptance: the gate fails if the boundary is removed.
+  Verify: remove the boundary, confirm red, restore.
 
-- [x] **10. Documentation, security, and the numbers**
-  Spec ref: `spec.md > §9`
-  What to build: version `1.19.0.0` → `1.20.0.0` in csproj and `Package.appxmanifest`, lockstep.
-  **Flip F-068 and F-046 to closed**, recording the scanner definition beside the closing count and
-  noting plainly that it is comparable to the branch point and to nothing before it. Update
-  `docs/features.md`. Sync `CLAUDE.md`'s file table. **Archive `docs/spec.md` →
-  `docs/superpowers/specs/2026-08-11-rororo-button-vocabulary-design.md`.** Security pass:
-  local-path grep, dependency audit, secret scan.
-  Acceptance: both register rows carry the definition and both counts; versions lockstep; spec
-  archived.
-  Verify: `dotnet test ROROROblox.slnx` green; re-run the scanner and confirm the number in the row
-  matches what the script prints.
+- [ ] **9. F-093: the ruling, then the smallest change that honours it**
+  Spec ref: `spec.md > §5`, `§0.2`
+  What to build: **recommended option 2** — keep the read path in `RobloxLauncher`, delete
+  `SetDefaultPlaceUrlAsync` from `IAppSettings` and the implementation, and correct
+  `IAppSettings.cs:7`'s claim that "the Preferences dialog allows editing" (it does not, and has not
+  for over a cycle). If a different option is taken, record why.
+  Acceptance: no interface lies; nobody's launch target changes; `AppSettingsTests` still green.
+  Verify: confirm `JsonOptions` (`AppSettings.cs:15`) does not set `UnmappedMemberHandling.Disallow`,
+  then add a test that a legacy `settings.json` carrying `defaultPlaceUrl` round-trips.
+
+- [ ] **10. The copy rows**
+  Spec ref: `spec.md > §5`
+  What to build: **F-021** `GamesWindow.xaml:396` — "Use the Squad Launch toolbar button to add one"
+  points at a closed window for something that saves itself; say what actually happens.
+  **F-022** `MultiInstanceCopy.FpsCapMismatchBanner` — **re-read it first, it was rewritten since the
+  register row.** Still ~45 words with the action last; lead with the action, same length or shorter.
+  **F-074** `StopAllConfirmWindow.xaml:36` — "UNSAVED GAME STATE WILL BE LOST" is 10px mono uppercase
+  at `#5A6982`, the dimmest text on the surface carrying the worst news; make it body prose.
+  **F-070** `JoinByLinkWindow.xaml:27-33` + `WelcomeWindow.xaml:38-43` — half the cyan/magenta duo
+  against 12 siblings that ship both; fix or close with evidence.
+  Acceptance: each row's copy names the real mechanism; no row ships on its register text alone.
+  Verify: read each string in the running app.
+
+- [ ] **11. Two rulings, no code**
+  Spec ref: `prd.md > Story 2.3`
+  What to build: a decision on **F-095** (crash fixed; is a log Warning enough, or is a user-visible
+  surface owed?) and **F-098** (partly fixed; does `capture-ui.ps1` + the packaging scripts land here
+  or wait?). Record both in the register with reasoning.
+  Acceptance: both rows carry a decision and a date.
+  Verify: neither row is left saying "open" with no reason.
+
+- [ ] **12. Documentation, security, and the numbers**
+  Spec ref: `spec.md > §7`
+  What to build: version `1.20.0.0` → `1.21.0.0` in `ROROROblox.App.csproj` and
+  `Package.appxmanifest`, **lockstep**. Flip **F-063, F-066, F-085, F-087** to clean; record F-086's
+  ruling; update **F-093**. Re-derive the register scoreboard **from the rows** — do not adjust the
+  previous line, and check every row has 11 pipes before counting (two rows shipped malformed at v1.19
+  and were invisible to the count). Update `docs/features.md` (move v1.21 out of "In flight" and fix
+  the v1.20 line, which still says in-flight). Sync `CLAUDE.md`'s file table. **Archive `docs/spec.md`
+  → `docs/superpowers/specs/2026-08-12-rororo-surface-vocabulary-design.md`** with a banner correction
+  naming what was proposed vs built. Security pass: local-path grep over `src/`, `scripts/`,
+  `.github/`; `dotnet list package --vulnerable --include-transitive`; secret scan.
+  Acceptance: every flipped row carries evidence; versions lockstep; spec archived; scoreboard derived.
+  Verify: `dotnet test ROROROblox.slnx` green.
 
 ---
 
 ## Checkpoints
 
-**C1 (after item 4)** — the look-at-it gate. The template, both new ranks, and the app's most-visible
-file land together. A regression here is cheap; the same regression found after 21 more files is not.
-
-**C2 (after item 6)** — every migration done, before the gates and the close-out. The last point at
-which a wrong rank assignment is cheap to change.
+**C1 (after item 5)** — every wave-1 surface is one the Store screenshots will show, and the recapture
+follows this cycle. A regression found here is cheap; found in a submitted listing it is not.
 
 ## What this cycle must not do
 
-- **Do not migrate to `ui:Button`.** Cut in `spec.md > §0.3`: a 116-site control-type swap with its
-  own regression surface, and §0.2 means we would still need our own template.
-- **Do not change how any button looks at rest**, except `PluginsWindow`'s Remove in item 7.
-- **Do not lower a contrast floor to make a new rank fit.** Change the rank.
-- **Do not ship a fence that passes by exemption**, or a state gate that cannot be made to fail.
-- **Do not touch borders** — 60 of 76 still hand-themed, a real debt and a different cycle.
-- **Do not start on F-050.** Standing exclusion, unchanged. *Re-measured at close-out 2026-08-11 and it
-  holds for a reason nobody expected: the exempted PAIR left the contrast gate's field of view when the
-  magenta buttons migrated to `AccentActionButtonStyle`, which reads as the finding resolving itself. It
-  did not. White-on-magenta still ships on five badges (MAIN ×2, DEFAULT, PRIVATE, plugin update), each a
-  magenta `Border` wrapping a `WhiteBrush` `TextBlock` — a parent/child pair the gate cannot see, because
-  it measures only elements declaring both halves on one tag. Row stays open; see its evidence cell.*
+- **Do not theme the About logo.** `spec.md > §0.1`. Eight brushes at `AboutWindow.xaml:13-20` are the
+  mark, not chrome.
+- **Do not delete `DefaultPlaceUrl` without ruling on the launch path.** `spec.md > §0.2`.
+- **Do not add a theme slot.** Invariant 6 — every user theme on disk supplies ten and an eleventh
+  breaks all of them. Derive instead.
+- **Do not lower a contrast floor** to make a pair fit. Change the pair, or exempt it with a row and a
+  recorded floor.
+- **Do not close F-050.** Item 6 is its prerequisite, not its fix.
+- **Do not start F-052** — borders, 60 of 76 controls, all 26 XAML files. Its own cycle.
+- **Do not ship a gate that cannot be made to fail.**
+- **Do not build a row from its register text.** Three of ten were wrong on this scope, two of them
+  damagingly.

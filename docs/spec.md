@@ -1,255 +1,194 @@
-# RORORO — Technical Spec: one button vocabulary
+# RORORO — Technical Spec: the surfaces behind the buttons
 
-**This file is the canonical technical artifact for the v1.20.0 cycle.** `docs/spec.md` is
-overwritten every Cart round; **archive it into `docs/superpowers/specs/` before the next round.**
-v1.19's is already archived as
-[`2026-08-11-rororo-plugin-theme-feed-design.md`](superpowers/specs/2026-08-11-rororo-plugin-theme-feed-design.md).
+**This file is the canonical technical artifact for the v1.21.0 cycle.** `docs/spec.md` is overwritten
+every Cart round; **archive it into `docs/superpowers/specs/` before the next round.** v1.20's is
+archived as
+[`2026-08-11-rororo-button-vocabulary-design.md`](superpowers/specs/2026-08-11-rororo-button-vocabulary-design.md).
 
-Implements [`docs/prd.md`](prd.md). Closes F-068 and F-046.
+Implements [`docs/prd.md`](prd.md). Closes F-063, F-066, F-085, F-086, F-087 and the copy rows.
+**Does not close F-050 or F-052.**
 
-**Anchor:** a button should look like the theme in every state, not just at rest.
+**Anchor:** v1.20 gave the buttons one vocabulary. This gives the surfaces under them one too.
 
 ---
 
-## §0 — What the measurements settled
+## §0 Three rows the register got wrong, verified at HEAD
 
-Three of the PRD's four open questions closed on evidence. One of them killed the cheap option, and
-one reframed the defect.
+The build must read the site before building the row. On this scope the register was wrong three times
+in ten rows, and two of the three would have caused real damage.
 
-### §0.1 The app runs the OS template, confirmed by eye
+### §0.1 F-063 — the eight "literals" are the logo, and must not be touched
 
-PRD Epic 0 asked whether the hover defect was real in the running app or an artefact of the render
-harness. **It is real.** Este hovered a button on a live v1.19 build and photographed it: pale Aero
-blue fill on a dark themed window, beside an unhovered sibling that is correctly grey.
+`AboutWindow.xaml:13-20` declares eight `SolidColorBrush` resources. They paint the **iso voxel stack
+logo** on a 64×64 `Canvas` at `:33-56`: `CyanBrightBrush` `#6CEAFD`, `CyanDimBrush` `#12BFE3`,
+`CyanShadowBrush` `#0D94B8`, `MagentaDimBrush` `#F22F89`, `MagentaShadowBrush` `#B81F66`,
+`NavySoftBrush` `#0F1F31`, `TealBrush` `#2EE6C9`, `TealDeepBrush` `#1A9F8B`.
 
-Reading (b) is eliminated. **The v1.17 rendered contrast gate resolves the same template the app
-does, so its results stand** — that was the more expensive of the two possibilities and it is not
-what happened.
+That is brand identity artwork — the same category as the per-account caption palette that
+`ThemedStatusColourTests` allow-lists against spec §7, and for the same reason: it paints WHO
+something is, not WHAT STATE it is in. **A themed logo is a broken logo.** Reading the row literally
+and removing these recolours the mark.
 
-### §0.2 `Style.Triggers` cannot fix this, and the reason is one word
+**Real defect, two sites:** `:34`'s `Canvas Background="{StaticResource NavySoftBrush}"`, and `:96`'s
+`Background="#15263A"`.
 
-The PRD left open whether to override the inherited template or add `Style.Triggers` on top of it.
-The second is cheaper, survives a WPF-UI package bump, and **cannot work.**
+### §0.2 F-093 — the field is not dead, and deleting it changes where people launch
 
-Every hover, pressed and disabled setter in the resolved template carries a `TargetName`:
+The row says the App references `DefaultPlaceUrl` **zero** times. True of the UI, false of the app:
+`Core/RobloxLauncher.cs:258` awaits `GetDefaultPlaceUrlAsync()` as **step 3 of the live launch-target
+resolution chain**, after favourites and before falling back to Roblox home.
+
+No UI can set it any more, so only users who set it in an older version still carry a value. Deleting
+the field silently moves those users from their saved place to the home page. That is a behaviour
+change on the launch path, not a tidy-up, and it is why this item is not the 1-effort its row claims.
+
+### §0.3 F-085 — the distinction is carried by the defect
+
+`MainWindow.xaml:1592,1593,1606` hold `#3F3000` / `#8F7000` / `#FFE3A6`. One Grid row above,
+`:1570-1572`, the compat banner is properly themed on `RowExpiredBgBrush` / `RowExpiredAccentBrush`.
+The Bloxstrap comment calls its amber deliberate — "distinct from the red-ish compat banner above it".
+
+Under flatline the compat banner goes grey and Bloxstrap stays amber. **The distinction exists only
+because one banner ignores the theme.**
+
+---
+
+## §1 The warning-banner ruling
+
+**Both banners collapse onto the one themed warning recipe. The distinction is carried by text and the
+`▲` glyph, not by hue.**
+
+This follows the app's own precedent rather than inventing one. F-032 faced exactly this: a control
+label and the prose beside it were separated by colour, `MutedTextBrush` vs `WhiteBrush` measured
+2.42:1 in brand and **1.00:1 under flatline**, so colour could not carry the distinction under a theme
+the app ships. Weight carries it now. Same ruling here: **two warnings should look like two warnings**,
+and what they say is what tells them apart.
+
+The recipe already exists and is already in use at `MainWindow.xaml:1570-1572`:
 
 ```text
-IsMouseOver == True   -> Background   (TargetName=border)
-IsMouseOver == True   -> BorderBrush  (TargetName=border)
-IsPressed   == True   -> Background   (TargetName=border)
-IsPressed   == True   -> BorderBrush  (TargetName=border)
-IsEnabled   == False  -> Background   (TargetName=border)
-IsEnabled   == False  -> BorderBrush  (TargetName=border)
-IsEnabled   == False  -> Foreground   (TargetName=<the button itself>)
+Background   {DynamicResource RowExpiredBgBrush}
+BorderBrush  {DynamicResource RowExpiredAccentBrush}
+Foreground   {DynamicResource RowExpiredAccentBrush}   (banner text)
+prefix       "▲ " as a literal Run
 ```
 
-`TargetName=border` means the setter targets a **named element inside the template**, not the
-Button. A `Style.Triggers` entry on the Button's own `Background` sets a different object's
-property, so it does not compete with these and does not win — it is not a precedence question, it
-is a different element. Only `Foreground` on disabled is reachable, and one of seven is not a fix.
+**Do not add an eleventh theme slot.** Invariant 6 holds: every user theme on disk supplies ten, and an
+eleventh breaks all of them.
 
-**Decision: the cycle owns the template.** `ControlStyles.xaml` gains a `ControlTemplate` whose
-states bind themed brushes.
+**The Bloxstrap banner gains the `▲` prefix** it currently lacks — the same warning vocabulary
+`ExpiredRowRedundancyTests.TheCompatBannerPrefixesTheSameWarnGlyph` already pins for the compat banner
+and the memory/idle chips.
 
-### §0.3 The app declares 116 plain `<Button>` and zero `<ui:Button>`
+**Measurement gate:** banner text on banner surface must clear **4.5:1** in all four built-in themes.
+`RowExpiredAccent` on `RowExpiredBg` — brand `#F1B232` on `#3A2D14`, flatline `#D4D4D4` on `#3D3D3D`.
+**Measure before migrating.** If a theme fails, the foreground changes, not the floor.
 
-Every button in the app is `System.Windows.Controls.Button`. App.xaml merges WPF-UI's
-`ControlsDictionary` before `ControlStyles.xaml` deliberately, with a comment saying it exists so
-`BasedOn="{StaticResource {x:Type Button}}"` picks up the library's implicit Button style — and the
-template that actually resolves is the OS one regardless.
+## §2 About
 
-**This spec does not migrate the app to `ui:Button`.** That would be a 116-site control-type swap
-with its own regression surface, in a cycle whose point is to stop hand-copying. Owning one template
-is smaller, is independent of what the library does or does not style, and is the only option that
-survives §0.2 anyway.
+- `:34` — bind the `Canvas` background to `{DynamicResource RowBgBrush}`. **Bind, do not remove.** The
+  plate is a ground for a fixed-colour logo; removing it risks illegibility on a light user theme,
+  which the four dark built-ins would never reveal. The defect was that the ground was frozen.
+- `:96` — `#15263A` becomes `{DynamicResource RowBgBrush}`. That closes F-066's second site too.
+- The eight artwork brushes stay and gain an **allow-list entry with a written reason** in
+  `ThemedStatusColourTests`, in the same shape as the caption-palette entries.
 
-### §0.4 One question deliberately left to the build
+**Gate:** the logo renders byte-identical across all four themes. That assertion is what proves the
+artwork was left alone, and it is the one that fails if a future sweep themes it.
 
-Whether the hand-copy fence can be written without a disqualifying allow-list (PRD Story 4.1) is not
-decidable from here — it depends on how many of the 22 files hold a genuine exception, which is only
-known once they are migrated. It is item 8, it is allowed to fail, and failing closes the story with
-a recorded finding rather than shipping a gate that passes by exemption.
+## §3 History rows
 
----
+`SessionHistoryWindow.xaml.cs:150-155` builds a per-session `Border` separated only by
+`Background = RowBgBrush`.
 
-## §1 Stack
+Add a **non-fill boundary**: `BorderThickness="0,0,0,1"` on `{DynamicResource DividerBrush}`, keeping
+the themed fill.
 
-No new dependencies. WPF, WPF-UI 4.3.0, the existing `ThemeService` brush-replacement path, and the
-v1.17 render harness which §0.1 has now vindicated.
+**Measure it.** Under flatline `DividerBrush` is `#333333` against `RowBgBrush` `#2A2A2A` — a boundary
+that may not read. If it does not clear **3:1** (WCAG 1.4.11, the floor `ContrastGuard` already
+enforces for interactive boundaries), **derive it through `ContrastGuard.Ensure`** exactly as
+`InteractiveEdgeBrush` is derived. Do not settle for a boundary that measures under the floor.
 
-| Piece | Role here |
-| --- | --- |
-| `Controls/ControlStyles.xaml` | Gains the `ControlTemplate` and the state triggers. Already holds all four ranks. |
-| `ThemeService.ApplyTo` | Unchanged. Writes eleven brushes; the template consumes them by `DynamicResource`. |
-| `Tests/Rendering/` | `ThemedRender` + `Sta` render offscreen and sample pixels. Extended to non-resting states. |
-| `ContrastPairGateTests` | Extended per §5, or explicitly not — see the ruling there. |
+**This is code-behind**, so no XAML-reading gate can see it. Cover it the way `ButtonRankFenceTests`
+covers code-built buttons — by scanning `.cs`, not markup.
 
-**Versions:** app `1.19.0.0` → `1.20.0.0`, csproj and `Package.appxmanifest` in lockstep. No contract
-change, so `ROROROblox.PluginContract` does not move.
+## §4 F-086 — the pairs the gate cannot see
 
-## §2 The template
+`ContrastPairGateTests` measures only elements declaring both halves inline. Since PR #100 rebound the
+last declared `MutedTextBrush` foreground to `WhiteBrush`, **no scanned element pairs the prose token
+with a fill**, leaving ~113 bindings unmeasured.
 
-PRD ref: `prd.md > Story 1.1`.
+Add a list measured **unconditionally**, independent of what the scan happens to find:
 
-One `ControlTemplate` in `ControlStyles.xaml`, set by a base style the four ranks derive from. The
-ranks keep their current identities — they differ by edge and weight, which §0.2's evidence does not
-disturb — and inherit states from the base.
+| Pair | Why |
+|---|---|
+| `MutedTextBrush` on `RowBgBrush` | the most common prose-on-surface pairing |
+| `MutedTextBrush` on `BgBrush` | prose on the page field |
+| `MutedTextBrush` on `NavyBrush` | the disabled-button label, measured 4.50 in midnight — the thinnest margin in the app |
 
-```xml
-<ControlTemplate x:Key="AppButtonTemplate" TargetType="Button">
-    <Border x:Name="Chrome"
-            Background="{TemplateBinding Background}"
-            BorderBrush="{TemplateBinding BorderBrush}"
-            BorderThickness="{TemplateBinding BorderThickness}"
-            SnapsToDevicePixels="True">
-        <ContentPresenter x:Name="Content"
-                          Margin="{TemplateBinding Padding}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          RecognizesAccessKey="True" />
-    </Border>
-    <ControlTemplate.Triggers>
-        <!-- Every state targets Chrome by name, which is the whole reason this template exists:
-             the inherited one did the same thing to an element we could not reach. -->
-        <Trigger Property="IsMouseOver" Value="True">
-            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RowBgBrush}" />
-        </Trigger>
-        <Trigger Property="IsPressed" Value="True">
-            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource DividerBrush}" />
-        </Trigger>
-        <Trigger Property="IsEnabled" Value="False">
-            <Setter TargetName="Chrome" Property="Opacity" Value="0.45" />
-            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
-        </Trigger>
-    </ControlTemplate.Triggers>
-</ControlTemplate>
-```
+Record each ratio per theme. **Show the gate failing** on a deliberately broken pair before it counts.
 
-**Why these slots, and why no new ones.** The eleven-slot palette is fixed and adding a twelfth is a
-contract change this cycle has no reason to make (invariant 6 — the contract does not grow). Hover
-takes `RowBgBrush`, one step up from `NavyBrush` in every built-in and already the app's "surface
-above the field" colour. Pressed takes `DividerBrush`, a further step. Both are `DynamicResource`, so
-they follow a theme switch by the same mechanism the resting colours already use, with no extra
-plumbing.
+**F-050 does not close here.** This is its prerequisite.
 
-**Disabled is opacity plus a muted label, not a colour.** A disabled state expressed as a hue fails
-the same way F-032's status colours did — flatline has no hue to spend. Opacity reads under every
-theme and is the one signal that cannot be confused with a different rank.
+## §5 The small ones
 
-**Risk this design accepts, stated rather than discovered:** owning the template means a WPF-UI
-update that improves its own Button template will not reach these buttons. That is the cost of
-§0.2 and there is no version of this that avoids it while still fixing the defect.
+- **F-087** — `ConsentSheet.xaml.cs:90-92`'s `NamespaceBrush` becomes a XAML `Style` + `DataTrigger` on
+  `IsHostEnforced`. The `TryFindResource(...) ?? new SolidColorBrush(...)` literal fallbacks go; a
+  `DynamicResource` that fails to resolve is a bug to surface, not to paper over.
+- **F-093** — see §0.2. **The decision is the deliverable.** Three options:
+  1. Delete the field and accept that legacy users fall back to home.
+  2. Keep the read path, delete the setter, and correct `IAppSettings.cs:7`'s false claim.
+  3. One-time migrate a legacy value into the default-game mechanism, then delete.
 
-## §3 The migration
+  **Recommended: (2) this cycle** — it removes the lie without changing anyone's launch target, and (3)
+  is a migration that deserves its own row. Whatever is picked, `JsonOptions` (`AppSettings.cs:15`)
+  must be confirmed not to set `UnmappedMemberHandling.Disallow`, and a legacy `settings.json` carrying
+  the property must round-trip in a test.
+- **Copy** — F-021 (`GamesWindow.xaml:396`), F-022 (`MultiInstanceCopy.FpsCapMismatchBanner`,
+  **re-read first, it moved**), F-070 (`JoinByLinkWindow.xaml:27-33`, `WelcomeWindow.xaml:38-43`),
+  F-074 (`StopAllConfirmWindow.xaml:36`).
 
-PRD ref: `prd.md > Story 2.1`, `Story 2.2`.
+## §6 What gets tested
 
-Files in descending order of un-migrated sites, so stopping early banks the most debt:
-`MainWindow.xaml` (30), `PluginsWindow.xaml` (6), `GamesWindow.xaml` (4),
-`RobloxAlreadyRunningWindow.xaml` (4), then the tail of 18 files.
+| Gate | Change |
+|---|---|
+| `ContrastPairGateTests` | + unconditional named pairs (§4); + About artwork allow-list entries |
+| `ExpiredRowRedundancyTests` | extend the `▲` assertion to the Bloxstrap banner |
+| new `BannerRecipeTests` | no colour literal in either banner block; both clear 4.5:1 in all four themes |
+| new `AboutArtworkTests` | the eight artwork brushes resolve identically in all four themes |
+| history-row coverage | a `.cs`-scanning assertion that the row carries a non-fill boundary |
+| `AppSettingsTests` | legacy `settings.json` round-trip for whichever §5 option is taken |
 
-**A migration that changes how a button looks at rest is a regression**, not an improvement, unless
-this spec names that site as a deliberate re-rank. There is exactly one:
-`PluginsWindow`'s Remove takes `DestructiveButtonStyle` (§4).
-
-**A site needing a look no rank provides opens a row and stops the item.** It does not get
-hand-rolled and it does not silently grow the vocabulary mid-sweep.
-
-## §4 F-046
-
-PRD ref: `prd.md > Story 2.3`.
-
-The row stayed open at the end of v1.18 because holding the F-068 line meant not touching
-`PluginsWindow`'s Remove, which is a hand-rolled magenta fill and the row's headline evidence. It
-takes `DestructiveButtonStyle` — the rank v1.18 defined for exactly this and assigned **by name**,
-never by sweep. The by-name list is unchanged: Remove on the account row, Clear history, Stop all
-confirm, plus this one. A fifth site needing a judgement call is the signal to stop, as it was then.
-
-## §5 What gets tested
-
-PRD ref: `prd.md > Story 1.2`, `Story 3.1`.
-
-**The gate extends to non-resting states, and this is the ruling the PRD asked for.**
-`ContrastPairGateTests` measures foreground against its own fill for resting pairs. A hovered button
-is the same measurement against a different fill, so it is an extension rather than a new gate — and
-leaving it out would mean the cycle's own new colours are the only ones in the app nobody checks.
-
-The render harness cannot force `IsMouseOver`: it is set by the input system, and
-`VisualStateManager.GoToState` returns **False** on this template because it uses property triggers
-and has no visual state groups. **This is recorded because a probe during `/prd` did not know it and
-produced a confident wrong answer for twenty minutes.** Two options for item 6, in preference order:
-
-1. **Measure the template's trigger setters directly** — resolve the `ControlTemplate`, read each
-   trigger's setters, and assert both that no value is a hardcoded literal and that the resolved
-   brush pair clears its floor. This is what actually answered §0.2 and it needs no input
-   simulation.
-2. **Reflection onto `IsMouseOverPropertyKey`** to force the property and then render. Higher
-   fidelity, more fragile, and only worth it if (1) proves insufficient.
-
-Start with (1). **If neither can be made to fail against a deliberately broken template, the gate is
-not shipped and item 6 closes with that finding** — the same rule Story 4.1 carries.
-
-## §6 The scanner definition
-
-PRD ref: `prd.md > Story 3.1`. The register says 55 un-migrated sites; a scan during `/scope` counted
-72; the file count agreed exactly at 22. The disagreement is about what a *site* is.
-
-**This spec's definition, which item 2 writes into a committed script:**
-
-> An **un-migrated button site** is an occurrence of `<Button` or `<ui:Button` in a `.xaml` file
-> under `src/ROROROblox.App/`, excluding `obj/` and `bin/`, whose **opening tag** does not contain a
-> `Style="{StaticResource …ButtonStyle}"` or `Style="{DynamicResource …ButtonStyle}"` reference.
-> A button inside a `ControlTemplate` counts, because it is still a declaration someone maintains.
-
-Run at the branch point and again at the end, both numbers recorded with direction. The register row
-records the definition beside the count so the next re-measure compares like with like. **Neither 55
-nor 72 is adopted as "the" number** — the script's first run at the branch point is the baseline, and
-the older figures are noted as measured under unknown definitions.
+**Every new gate must be shown failing before it counts.** That rule earned its place in v1.20 twice.
 
 ## §7 File structure
 
 ```text
 src/ROROROblox.App/
-├── Controls/ControlStyles.xaml          # M template + state triggers (§2); ranks BasedOn it
-├── MainWindow.xaml                      # M 30 sites (§3)
-├── Plugins/PluginsWindow.xaml           # M 6 sites + Remove -> Destructive (§3, §4)
-├── Games/GamesWindow.xaml               # M 4 sites
-├── Modals/*.xaml                        # M the tail
-└── ROROROblox.App.csproj                # M 1.19.0.0 -> 1.20.0.0 (+ Package.appxmanifest)
+├── MainWindow.xaml                       # M Bloxstrap banner -> themed recipe + glyph (§1)
+├── About/AboutWindow.xaml                # M :34 canvas ground, :96 rebind (§2)
+├── History/SessionHistoryWindow.xaml.cs  # M row boundary (§3)
+├── Plugins/ConsentSheet.xaml(.cs)        # M colour branch -> DataTrigger (§5)
+├── Games/GamesWindow.xaml                # M F-021 copy
+├── Modals/StopAllConfirmWindow.xaml      # M F-074 copy
+├── JoinByLink/JoinByLinkWindow.xaml      # M F-070
+└── About/WelcomeWindow.xaml              # M F-070
 
-src/ROROROblox.Tests/
-├── Rendering/ButtonStateGateTests.cs    # + §5 option (1): read the template's own triggers
-├── ContrastPairGateTests.cs             # M extended to hovered/pressed pairs
-└── ButtonVocabularyFenceTests.cs        # + item 8, allowed to not ship
+src/ROROROblox.Core/
+├── AppSettings.cs                        # M per the §5 ruling
+├── IAppSettings.cs                       # M the false comment at :7
+├── RobloxLauncher.cs                     # read-only unless option 1 or 3 is taken
+└── MultiInstanceCopy.cs                  # M F-022
 
-scripts/count-button-sites.ps1           # + §6, committed so the number is reproducible
-docs/spec.md                             # this file -- ARCHIVE before the next round
+src/ROROROblox.Tests/                     # + the gates in §6
 ```
 
-## §8 Key technical decisions
+## §8 What this cycle must not do
 
-1. **Own the template rather than layer `Style.Triggers`.** *Forced by measurement:* the inherited
-   template's state setters carry `TargetName=border` and are unreachable from a Style trigger.
-   *Tradeoff:* a WPF-UI improvement to its Button template will not reach us. Accepted; there is no
-   alternative that fixes the defect.
-2. **Do not migrate to `ui:Button`.** *Tradeoff:* stays on a control type the library may style less
-   well. Accepted: a 116-site control swap has its own regression surface, and §0.2 means we would
-   still need our own template.
-3. **Hover and pressed reuse existing palette slots.** *Tradeoff:* less designer control than
-   dedicated hover slots. Accepted: a twelfth slot is a contract change, and every user theme already
-   on disk would need updating to supply it.
-4. **Disabled is opacity plus a muted label, not a colour.** *Tradeoff:* less distinct than a
-   dedicated grey. Accepted: flatline has no hue to spend, and this is the defect class the last
-   three cycles have each fixed once.
-5. **The state gate reads the template's triggers rather than simulating input.** *Tradeoff:*
-   measures declaration, not rendering. Accepted for now because input simulation is not available on
-   this template at all, and it is the technique that produced §0.2.
-
-## §9 Open issues
-
-- **The fence may not be shippable.** Item 8 is allowed to close with a finding instead of a gate.
-- **F-068's count will not match its history.** §6 adopts a definition rather than a prior number,
-  so the closing figure is comparable to the branch point and to nothing before it. Said plainly in
-  the row.
-- **Borders are untouched** — 60 of 76 still hand-themed, a real debt and a different one.
-- **Owning the template pins us to its structure.** If WPF-UI 5 changes what a Button is expected to
-  contain, this is the file that finds out.
+- **Do not theme the About logo.** §0.1.
+- **Do not delete `DefaultPlaceUrl` without ruling on the launch path.** §0.2.
+- **Do not add a theme slot.** Invariant 6.
+- **Do not close F-050.** §4 is its prerequisite, not its fix.
+- **Do not start F-052.** 60 of 76 controls, its own cycle.
+- **Do not ship a gate that cannot be made to fail.**
+- **Do not build a row from its register text.** Three of ten were wrong here.
