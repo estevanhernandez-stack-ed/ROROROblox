@@ -81,12 +81,11 @@ public class ThemedStatusColourTests
             + "trips neither pattern above; the entry stands because §7 names the surface and a "
             + "future rewrite in Color terms belongs on this list rather than being a surprise."),
 
-        new("src/ROROROblox.App/Plugins/ConsentSheet.xaml.cs", "NamespaceBrush",
-            "NOT in spec §7 — found in the tree at build time, allow-listed rather than absorbed "
-            + "silently. Both literals are TryFindResource FALLBACKS: the themed CyanBrush and "
-            + "MagentaBrush win whenever App.xaml's dictionary is loaded, and the literal is only "
-            + "reached when it is not (design-time, or a host that never merged it). Out of scope for "
-            + "this cycle, which owns the four MainWindow status bindings. Wants a register row."),
+        // ConsentSheet.xaml.cs's entry was retired by v1.21 item 7. It covered NamespaceBrush's two
+        // TryFindResource fallbacks; the property is gone and the branch is now a Style +
+        // DataTrigger on IsHostEnforced in ConsentSheet.xaml. Retired rather than left matching
+        // nothing, the same way F-085's and F-089's were — the register row it wanted got written
+        // as F-087 and closes with this cycle.
     ];
 
     /// <summary>
@@ -239,14 +238,18 @@ public class ThemedStatusColourTests
             }
         }
 
-        // Measured 2026-08-10, after the two converters were deleted: 11 allowed literals — 9 in
-        // Converters.cs (8 AutoPalette entries + MainColor) and 2 in ConsentSheet.xaml.cs's
-        // TryFindResource fallbacks. Floor of 6 leaves room for the caption palette to be retuned
-        // without tripping, and sits far enough above zero to catch a dead scan.
+        // Re-measured 2026-08-11 by v1.21 item 7: 9 allowed literals, all of them in Converters.cs
+        // (8 AutoPalette entries + MainColor). It read 11 until this cycle; the other 2 were
+        // ConsentSheet.xaml.cs's TryFindResource fallbacks, which went with F-087's fix, and their
+        // allow-list entry was retired rather than left matching nothing.
+        // Floor of 6 leaves room for the caption palette to be retuned without tripping, and sits
+        // far enough above zero to catch a dead scan. Left at 6 deliberately: the remaining 9 are
+        // one palette, and a floor that tracks a single allow-listed region this closely would fail
+        // the next legitimate change to it rather than catching a broken scan.
         Assert.True(allowed >= 6,
             $"This clause matched only {allowed} allow-listed colour literals. It should be seeing "
-            + "roughly eleven — a count this low means the regexes or the anchor lookback broke, not "
-            + "that the app stopped constructing colours.");
+            + "nine — a count this low means the regexes or the anchor lookback broke, not that the "
+            + "app stopped constructing colours.");
 
         Assert.True(offenders.Count == 0,
             "A colour literal built in App code is off the governed path: ThemeService.ApplyTo cannot "
