@@ -1531,8 +1531,17 @@
                      multi-instance lock post-startup. Same recovery actions as the startup modal. -->
                 <StackPanel Orientation="Vertical" Margin="0,4,0,0"
                             Visibility="{Binding ContestedBannerText, Converter={StaticResource StringToVisibilityConverter}}">
+                    <!-- The third warning surface on this window, and the last literal in this file.
+                         #F1B232 was brand's RowExpiredAccent value frozen in place, so under
+                         flatline it stayed amber on an achromatic field exactly as the Bloxstrap
+                         banner did. Bound rather than left, per item 1's ruling that warning
+                         surfaces share one themed vocabulary. This text sits on the PAGE field
+                         rather than a banner fill, so it was measured against Bg rather than
+                         RowExpiredBg: 8.85 brand, 7.23 midnight, 9.85 magenta-heat, 12.84 flatline,
+                         all clear of 4.5. Byte-identical in brand and magenta-heat. -->
                     <TextBlock Text="{Binding ContestedBannerText}"
-                               FontSize="11" TextWrapping="Wrap" Foreground="#F1B232" />
+                               FontSize="11" TextWrapping="Wrap"
+                               Foreground="{DynamicResource RowExpiredAccentBrush}" />
                     <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                         <Button Style="{StaticResource CtaButtonStyle}" Content="Close Roblox for me" Command="{Binding CloseRobloxForMeCommand}"
                                 Padding="10,4" Margin="0,0,8,0" FontSize="11" />

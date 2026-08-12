@@ -337,13 +337,17 @@ public class ThemedStatusColourTests
         // so a new literal in that ControlTemplate now fails this clause instead of inheriting a
         // permission it never earned.
 
-        new("src/ROROROblox.App/MainWindow.xaml", "Runtime contested-lock banner", 15,
-            "F-066, open. The mutex-recovery banner: Foreground #F1B232 at :1568, then #17D4FA on "
-            + "#0F1F31 and #FFFFFF on #22314A across the two recovery buttons at :1572 and :1575. "
-            + "Five hex occurrences on three lines — item 6 re-read this row today and recorded both "
-            + "that its citation had drifted (:1474,1477 -> :1572,1575) and that it never counted the "
-            + "third line. Deliberately not fixed here; its fix is F-068's shared banner/button "
-            + "recipe, and hand-fixing one of three near-copies is how there came to be three."),
+        // F-066's MainWindow entry was retired by v1.21 item 12, and the way it emptied is the
+        // point. It covered five hex occurrences on three lines: Foreground #F1B232 on the
+        // contested-lock banner, then #17D4FA on #0F1F31 and #FFFFFF on #22314A across the two
+        // recovery buttons. FOUR of the five left in v1.20 when those buttons took CtaButtonStyle
+        // and SecondaryButtonStyle — a button sweep quietly closing most of a colour row, which
+        // nothing announced and nothing re-counted. Item 12 bound the fifth to RowExpiredAccent,
+        // measured on the page field at 8.85 / 7.23 / 9.85 / 12.84.
+        // MainWindow.xaml now holds ZERO colour literals, so this file's most-watched region is
+        // clean for the first time. Fourth retirement this cycle, on the same rule as F-085's,
+        // About's narrowing and F-087's: an entry that outlives its literals is a permission
+        // nobody re-earned.
 
         // F-085's entry was retired by v1.21 item 2, which rebound the Bloxstrap banner's three
         // literals — Background #3F3000, BorderBrush #8F7000, body Foreground #FFE3A6 — onto the
@@ -443,14 +447,15 @@ public class ThemedStatusColourTests
     /// </para>
     /// <para>
     /// Derived, not adjusted, per the register's rule — App.xaml 11 + CookieCaptureWindow 14 +
-    /// Modals/ 23 + AboutWindow 9 + MainWindow 1, counted outside comments, reconciling exactly
-    /// with what this clause reports. This cycle's own four: the Bloxstrap banner's three (item 2)
-    /// and AboutWindow's card ground (item 4). <c>MainWindow.xaml</c> is now down to a SINGLE
-    /// literal, <c>#F1B232</c> on the mutex-recovery banner — the F-066 entry below still describes
-    /// five, and four of them left with v1.20's sweep.
+    /// Modals/ 23 + AboutWindow 9 + MainWindow 0, counted outside comments, reconciling exactly
+    /// with what this clause reports. This cycle removed five: the Bloxstrap banner's three
+    /// (item 2), AboutWindow's card ground (item 4), and the contested-lock banner's
+    /// <c>#F1B232</c> (item 12, closing F-066's in-scope residue).
+    /// <b><c>MainWindow.xaml</c> now holds ZERO colour literals</b> — the file this fence was built
+    /// to watch, and the one it has never been able to blanket-exempt, is clean for the first time.
     /// </para>
     /// </summary>
-    private const int AllowedXamlLiteralCeiling = 58;
+    private const int AllowedXamlLiteralCeiling = 57;
 
     /// <summary>
     /// Vacuity floor. Well under the ceiling so that genuinely CLOSING F-079 or F-066 — which would
