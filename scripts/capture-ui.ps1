@@ -712,9 +712,21 @@ function Save-SurfaceCapture {
         [Parameter(Mandatory)][string]$Path
     )
     $hwnd = [IntPtr]$Element.Current.NativeWindowHandle
+    # What the blank-frame guard should judge is the CAPTURE, not the frame built around it.
+    # Store-frame mode composites the window onto a large flat navy canvas, and a sparse dark
+    # window -- Diagnostics is mostly background with a little text -- pushes the COMBINED image
+    # over the 95% single-colour threshold even though the capture is perfect. The guard refused
+    # a good asset rather than writing a bad one, which is the right way for it to be wrong.
+    $blankCheckTarget = $null
     if ($script:StoreFrameMode -and $hwnd -ne [IntPtr]::Zero) {
         $shot = Get-WindowBitmap -Hwnd $hwnd
-        try { $bmp = New-StoreFrame -Window $shot -Width $script:CanvasW -Height $script:CanvasH }
+        try {
+            if (Test-BlankFrame -Bmp $shot) {
+                throw "window capture came back blank ($($shot.Width)x$($shot.Height)); refusing to write it as evidence"
+            }
+            $bmp = New-StoreFrame -Window $shot -Width $script:CanvasW -Height $script:CanvasH
+            $blankCheckTarget = 'already-checked'
+        }
         finally { $shot.Dispose() }
     }
     elseif ($hwnd -ne [IntPtr]::Zero) {
@@ -728,7 +740,7 @@ function Save-SurfaceCapture {
     }
 
     try {
-        if (Test-BlankFrame -Bmp $bmp) {
+        if (-not $blankCheckTarget -and (Test-BlankFrame -Bmp $bmp)) {
             throw "capture came back blank ($($bmp.Width)x$($bmp.Height)); refusing to write it as evidence"
         }
         $dir = Split-Path -Parent $Path
