@@ -209,6 +209,30 @@ numbers and no stated relationship rebuilds the same trap with better paperwork.
 carry the reconciliation**, so the next person reading 108 against 112 finds the answer instead of
 re-deriving it.
 
+### One more, found by the audit's own CI run
+
+`14bbd03` failed x64 and passed arm64 at the same commit — two `FpsCapSettlerTests` cases, both at
+exactly the 30-second `PumpObservationCeiling`. Re-run: green. First failure in five runs on the
+branch, and the commit touched only documentation, a script header and a test comment.
+
+The interesting part is not the flake, it is what the failure said:
+
+> The code under test's continuation never resumed — a genuine hang, not a slow test.
+
+**It cannot know that.** `PumpObservationCeiling`'s own summary, six lines above the assertion, says
+a loaded runner "occasionally delays a single continuation's real-world resume by tens of seconds
+for reasons that have nothing to do with this file," and records the isolation run that established
+it. The constant documents starvation as the expected cause; the message rules it out by assertion.
+Elapsed time cannot separate a deadlock from an unscheduled thread.
+
+This is the same defect as everything else in this document, pointed the other way. The gates that
+under-measure ship bugs; this one over-claims and **spends an afternoon** — it tells whoever reads a
+red CI page to go find a deadlock that is not there. I started looking before checking the constant
+directly above it.
+
+**Fixed:** the message now names both possibilities and says to re-run first, because only a
+repeatable failure is evidence of a hang.
+
 ## Still not done
 
 - **`capture-ui.ps1`** reads the route file and drives a live app; auditing it means running it
