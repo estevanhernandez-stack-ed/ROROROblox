@@ -61,6 +61,58 @@ F-012).
 **Still genuinely not routable:** the tray menu (surface 11) and the library picker (22). The route
 file's own `_note` on each states why, and both reasons survive this correction.
 
+## Route audit, 2026-08-12 — F-098's deferred item, run at the Store recapture it was parked for
+
+F-098 left `capture-ui.ps1` unaudited on the grounds that auditing it means driving a live app,
+so it is a walk rather than a test pass. This is that walk.
+
+`-SelfTest` passes. `-Verify` against a live v1.21 build resolved and opened **all 14 routable
+surfaces cleanly**, with 4 documented skips (02 needs a zero-account profile, 11 tray menu, 21
+squad-launch is deny-listed, 22 join-by-link has no addressable anchor). **No route drift** — the
+surface-08 correction made at v1.20 still holds, and nothing else moved under v1.21.
+
+One defect in the harness, found by running it: **the script throws when invoked with a
+POSIX-style relative path** (`powershell -File scripts/capture-ui.ps1`), because `$PSScriptRoot`
+comes back empty and `Join-Path` rejects it. Invoke it by absolute path. Not fixed here; it is a
+one-line guard and belongs to whoever next touches the script.
+
+**The routes are current. What is stale is the output.**
+
+## Store screenshots are staler than the scope note claimed
+
+Measured 2026-08-12 against `docs/store/screenshots/`. All five shipped assets are 3840x2160
+full-desktop captures, and all five predate the UI they depict:
+
+| asset | captured | predates |
+|---|---|---|
+| `01-accounts-streamer-mode.png` | 2026-08-03 | v1.17 flatline through v1.21 |
+| `03-about.png` | **2026-07-10** | v1.16 nav rail through v1.21 — six releases |
+| `05-diagnostics.png` | **2026-07-10** | six releases |
+| `06-squad-launch.png` | 2026-08-03 | v1.17 through v1.21 |
+| `07-friend-follow.png` | **2026-07-10** | six releases |
+
+The v1.21 scope note said the Store shots were "from Aug 3 and predate four releases". Three of
+the five are a month older than that and predate six. The scope was written from the newest file's
+date rather than from each file's.
+
+**Two of the checklist's six were never captured at all** — #2 multi-instance and #4 compact mode,
+which are also the only two requiring real Roblox clients on screen.
+
+## What the capture tool can and cannot do for the Store set
+
+`capture-ui.ps1` uses `PrintWindow` against a single HWND cropped to
+`DWMWA_EXTENDED_FRAME_BOUNDS`. It produces **window** images for design evidence. Every shipped
+Store asset is a **full-desktop 4K** frame. So the tool is not the instrument for this set, and a
+recapture that used it would silently change the listing's visual format.
+
+Two live constraints for whoever shoots them:
+
+- **The profile on this machine has eight real saved accounts.** The account-list shot must run
+  with streamer mode ON — which is exactly what `01-accounts-streamer-mode.png` did, and the
+  checklist's own anti-pattern list forbids shipping real account names.
+- **A full-desktop capture takes the whole desktop**, including whatever else is open. The
+  checklist already says to shoot on a clean VM or fresh user account; that is a privacy
+  requirement here and not a polish note.
 ## In scope
 
 | NN | Surface | Why it is in scope | How to reach it |
