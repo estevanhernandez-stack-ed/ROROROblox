@@ -78,18 +78,13 @@
              a reflexive Enter on a dialog you didn't expect should never destroy state. It stays
              clearly available, just not on the Enter key. Guarded by ModalDefaultButtonSafetyTests. -->
         <StackPanel Grid.Row="5" x:Name="ActionButtons" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Content="Quit RoRoRo" Padding="16,8" IsCancel="True"
-                    Background="#22314A" Foreground="#FFFFFF" BorderThickness="0"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Quit RoRoRo" Padding="16,8" IsCancel="True"
                     Margin="0,0,8,0" Click="OnQuitClick" />
-            <Button Content="Start anyway" Padding="16,8"
-                    Background="#22314A" Foreground="#FFFFFF" BorderThickness="0"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Start anyway" Padding="16,8"
                     Margin="0,0,8,0" Click="OnStartAnywayClick" />
-            <Button Content="Close Roblox for me" Padding="16,8"
-                    Background="#22314A" Foreground="#FFFFFF" BorderThickness="0"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Close Roblox for me" Padding="16,8"
                     Margin="0,0,8,0" Click="OnCloseForMeClick" />
-            <Button Content="Retry" Padding="16,8" IsDefault="True"
-                    Background="#17D4FA" Foreground="#0F1F31" BorderThickness="0"
-                    FontWeight="Bold" Click="OnRetryClick" />
+            <Button Style="{StaticResource CtaButtonStyle}" Content="Retry" Padding="16,8" IsDefault="True" Click="OnRetryClick" />
         </StackPanel>
     </Grid>
 </Window>

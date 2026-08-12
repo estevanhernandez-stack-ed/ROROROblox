@@ -30,12 +30,9 @@
                    Margin="0,12,0,0" />
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Content="Start Fresh" Padding="16,8" Margin="0,0,8,0"
-                    Background="{DynamicResource BgBrush}" Foreground="#FFFFFF" BorderBrush="#5A6982" BorderThickness="1"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Start Fresh" Padding="16,8" Margin="0,0,8,0"
                     Click="OnStartFreshClick" />
-            <Button Content="Quit" Padding="16,8" IsDefault="True"
-                    Background="#17D4FA" Foreground="#0F1F31" BorderThickness="0"
-                    FontWeight="Bold"
+            <Button Style="{StaticResource CtaButtonStyle}" Content="Quit" Padding="16,8" IsDefault="True"
                     Click="OnQuitClick" />
         </StackPanel>
     </Grid>

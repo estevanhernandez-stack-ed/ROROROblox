@@ -109,6 +109,46 @@ public class ThemedStatusColourTests
         }
     }
 
+    /// <summary>
+    /// The part of <paramref name="line"/> outside an XML comment, tracking multi-line
+    /// <c>&lt;!-- --&gt;</c> spans through <paramref name="inComment"/>.
+    /// <para>
+    /// Added when ControlStyles.xaml grew a comment QUOTING the Aero literals the v1.20 template
+    /// replaced (<c>#BEE6FD</c>, <c>#C4E5F6</c>, <c>#F4F4F4</c>) as the evidence for replacing
+    /// them — and this fence read the evidence as the crime. Second time a fence here has read
+    /// prose as code; <c>SettingsReachabilityTests</c> grew <c>WithoutComments</c> in v1.18 for the
+    /// same reason. A scanner over source text has to know which text is source.
+    /// </para>
+    /// </summary>
+    internal static string StripXmlComment(string line, ref bool inComment)
+    {
+        var kept = new System.Text.StringBuilder();
+        var i = 0;
+        while (i < line.Length)
+        {
+            if (inComment)
+            {
+                var close = line.IndexOf("-->", i, StringComparison.Ordinal);
+                if (close < 0) return kept.ToString();
+                inComment = false;
+                i = close + 3;
+                continue;
+            }
+
+            var open = line.IndexOf("<!--", i, StringComparison.Ordinal);
+            if (open < 0)
+            {
+                kept.Append(line, i, line.Length - i);
+                return kept.ToString();
+            }
+
+            kept.Append(line, i, open - i);
+            inComment = true;
+            i = open + 4;
+        }
+        return kept.ToString();
+    }
+
     private static AllowedLiteral? AllowedAt(string relativePath, string[] lines, int index)
     {
         foreach (var entry in AllowList)
@@ -176,10 +216,16 @@ public class ThemedStatusColourTests
 
         foreach (var (relativePath, lines) in AppSource())
         {
+            var inComment = false;
             for (var i = 0; i < lines.Length; i++)
             {
+                // A hex inside <!-- --> renders nothing and no theme change can reach it, so it
+                // cannot be the defect this fence exists to catch. See StripXmlComment.
+                var codeOnly = StripXmlComment(lines[i], ref inComment);
+                if (codeOnly.Trim().Length == 0) continue;
+
                 var match = LiteralColour
-                    .Select(rx => rx.Match(lines[i]))
+                    .Select(rx => rx.Match(codeOnly))
                     .FirstOrDefault(m => m.Success);
                 if (match is null) continue;
 
@@ -397,9 +443,18 @@ public class ThemedStatusColourTests
 
         foreach (var (relativePath, lines) in AppXaml())
         {
+            var inComment = false;
             for (var i = 0; i < lines.Length; i++)
             {
-                var matches = XamlLiteralColour.Matches(lines[i]);
+                // A hex inside <!-- --> renders nothing and no theme change can reach it, so it
+                // cannot be the defect this fence exists to catch. See StripXmlComment — added
+                // when ControlStyles.xaml grew a comment QUOTING the Aero literals the v1.20
+                // template replaced, as the evidence for replacing them, and this fence read the
+                // evidence as the crime.
+                var codeOnly = StripXmlComment(lines[i], ref inComment);
+                if (codeOnly.Trim().Length == 0) continue;
+
+                var matches = XamlLiteralColour.Matches(codeOnly);
                 if (matches.Count == 0) continue;
 
                 if (AllowedXamlAt(relativePath, lines, i) is not null)

@@ -135,12 +135,8 @@
                     Style="{StaticResource SecondaryButtonStyle}"
                     IsCancel="True"
                     Click="OnCancelClick" />
-            <Button Content="Install"
+            <Button Style="{StaticResource CtaButtonStyle}" Content="Install"
                     Padding="22,8"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="SemiBold"
                     IsDefault="True"
                     Click="OnInstallClick" />
         </StackPanel>

@@ -269,11 +269,7 @@
                                         FontSize="12"
                                         Click="OnExportAccountsClick"
                                         ToolTip="Save your accounts to an encrypted file you can move to another PC." />
-                                <Button Content="Import accounts…" Padding="14,8"
-                                        Background="{DynamicResource NavyBrush}"
-                                        Foreground="{DynamicResource WhiteBrush}"
-                                        BorderBrush="{DynamicResource MagentaBrush}"
-                                        BorderThickness="1"
+                                <Button Style="{StaticResource SecondaryButtonStyle}" Content="Import accounts…" Padding="14,8"
                                         FontSize="12"
                                         Click="OnImportAccountsClick"
                                         ToolTip="Add accounts from an encrypted .rororo-accounts file." />
@@ -433,12 +429,19 @@
                                 <TextBox x:Name="MineWebhookInput" Grid.Column="0" Padding="8,6" FontSize="11"
                                          Background="{DynamicResource NavyBrush}"
                                          LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
+                                <!-- Takes the rank rather than repeating it. The four attributes
+                                     removed here were byte-identical to SecondaryToggleButtonStyle's
+                                     setters, so nothing moves at rest; what changes is the TEMPLATE,
+                                     which they were not getting. A ToggleButton with no rank inherits
+                                     the OS template and its hardcoded #BEE6FD hover, so both Show
+                                     buttons on this page still flashed Aero blue after the rest of
+                                     the app stopped. Found by item 9's fence, which counts
+                                     ToggleButton because the C2 gap proved a control type outside
+                                     the definition is where this defect survives. -->
                                 <ToggleButton x:Name="MineWebhookReveal" Grid.Column="1" Content="Show"
                                               Margin="6,0,0,0" Padding="10,5" FontSize="11"
                                               Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
-                                              Background="{DynamicResource NavyBrush}"
-                                              Foreground="{DynamicResource WhiteBrush}"
-                                              BorderBrush="{DynamicResource InteractiveEdgeBrush}" BorderThickness="1"
+                                              Style="{StaticResource SecondaryToggleButtonStyle}"
                                               ToolTip="Reveal the saved webhook so you can read or replace it." />
                             </Grid>
                             <TextBlock x:Name="MineWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
@@ -460,18 +463,14 @@
                                 <ToggleButton x:Name="ClanWebhookReveal" Grid.Column="1" Content="Show"
                                               Margin="6,0,0,0" Padding="10,5" FontSize="11"
                                               Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
-                                              Background="{DynamicResource NavyBrush}"
-                                              Foreground="{DynamicResource WhiteBrush}"
-                                              BorderBrush="{DynamicResource InteractiveEdgeBrush}" BorderThickness="1"
+                                              Style="{StaticResource SecondaryToggleButtonStyle}"
                                               ToolTip="Reveal the saved webhook so you can read or replace it." />
                             </Grid>
                             <TextBlock x:Name="ClanWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
                                        Foreground="{DynamicResource MutedTextBrush}" />
 
                             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                <Button x:Name="SendTestButton" Content="Send test" Padding="12,5" Click="OnSendTestClick"
-                                        Background="{DynamicResource MagentaBrush}" Foreground="{DynamicResource WhiteBrush}"
-                                        BorderThickness="0" FontSize="11" FontWeight="SemiBold" />
+                                <Button Style="{StaticResource AccentActionButtonStyle}" x:Name="SendTestButton" Content="Send test" Padding="12,5" Click="OnSendTestClick" FontSize="11" />
                                 <Button x:Name="NoServerHelpButton" Content="I don't have a Discord server" Padding="12,5" Margin="8,0,0,0"
                                         Style="{StaticResource SecondaryStrongButtonStyle}" FontSize="11"
                                         Click="OnNoServerHelpClick" />
@@ -719,14 +718,10 @@
                                        Margin="0,6,0,0"
                                        Visibility="Collapsed" />
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                <Button x:Name="BuildThemeButton"
+                                <Button Style="{StaticResource AccentActionButtonStyle}" x:Name="BuildThemeButton"
                                         Content="+ Build a theme..."
                                         HorizontalAlignment="Left"
                                         Padding="10,5" Margin="0,0,8,0"
-                                        Background="{DynamicResource MagentaBrush}"
-                                        Foreground="{DynamicResource WhiteBrush}"
-                                        BorderThickness="0"
-                                        FontWeight="SemiBold"
                                         FontSize="11"
                                         Click="OnBuildThemeClick"
                                         ToolTip="Open the theme builder. Copy an AI prompt, paste the result back, save." />

@@ -61,17 +61,10 @@
 
         <!-- Buttons row — matches the existing modal button styling. Save = cyan-fill, Cancel = ghost. -->
         <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Content="Cancel" Padding="16,8" Margin="0,0,8,0"
-                    Background="{DynamicResource BgBrush}"
-                    Foreground="{DynamicResource WhiteBrush}"
-                    BorderBrush="#5A6982" BorderThickness="1"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Cancel" Padding="16,8" Margin="0,0,8,0"
                     IsCancel="True"
                     Click="OnCancelClick" />
-            <Button Content="Save" Padding="16,8"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="Bold"
+            <Button Style="{StaticResource CtaButtonStyle}" Content="Save" Padding="16,8"
                     IsDefault="True"
                     Click="OnSaveClick" />
         </StackPanel>

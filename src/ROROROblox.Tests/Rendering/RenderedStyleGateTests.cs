@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -88,7 +89,19 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
     /// </para>
     /// </summary>
     private static readonly string[] FullyMeasured =
-        ["PrimaryButtonStyle", "SecondaryButtonStyle", "SecondaryStrongButtonStyle", "DestructiveButtonStyle"];
+        [
+            "PrimaryButtonStyle", "SecondaryButtonStyle", "SecondaryStrongButtonStyle",
+            "DestructiveButtonStyle",
+            // v1.20. AccentActionButtonStyle draws a real magenta edge, so it measures like the
+            // four above. CtaButtonStyle and WarningButtonStyle are borderless and live in
+            // BorderlessFilled instead -- these lists partition the file, and a key in two of them
+            // means one is measuring what the other exempted.
+            "AccentActionButtonStyle",
+            // v1.20 C2: the default-game widget is a ToggleButton, so no Button rank reached it
+            // and it kept the OS hover. Its rank sets its own fill, label and edge, so it measures
+            // exactly like the others.
+            "SecondaryToggleButtonStyle",
+        ];
 
     /// <summary>
     /// Styles carrying no <c>Background</c> setter, deliberately — see the comment above
@@ -100,6 +113,23 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
     /// markup, not a hope about ancestors, and rendering these on both surfaces reproduces what
     /// ships.
     /// </summary>
+    /// <summary>
+    /// Filled ranks that draw <b>no border</b>, because their fill IS their boundary.
+    /// <para>
+    /// WCAG 1.4.11 asks whether a control is distinguishable from what is adjacent to it. For a
+    /// solid cyan or amber block on the page background that is answered by the fill — measured in
+    /// <see cref="EveryBorderlessFillClearsNonTextContrastAgainstThePage"/> — and a border would be
+    /// decoration, not compliance. An earlier draft of CtaButtonStyle grew a 1px edge purely to
+    /// satisfy the edge test, which would have put an outline on 23 buttons that never had one.
+    /// Adding chrome to satisfy a gate is the gate driving the design, and the wrong way round.
+    /// </para>
+    /// <para>
+    /// They are excluded from the EDGE test and included in everything else. Excluding them from
+    /// measurement entirely would be the convenience this file's sibling comment warns about.
+    /// </para>
+    /// </summary>
+    private static readonly string[] BorderlessFilled = ["CtaButtonStyle", "WarningButtonStyle"];
+
     private static readonly string[] SurfaceSupplied = ["AppTextBoxStyle", "AppPasswordBoxStyle"];
 
     /// <summary>
@@ -115,7 +145,16 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
     /// <see cref="TextBlock"/>: prose, no fill of its own, no interactive boundary.
     /// </para>
     /// </summary>
-    private static readonly string[] Excluded = ["CardBorderStyle", "SectionHeadingStyle"];
+    private static readonly string[] Excluded =
+        [
+            "CardBorderStyle", "SectionHeadingStyle",
+            // GhostButtonStyle has a transparent fill and no border, so 1.4.11's non-text rule has
+            // nothing to govern: the label is the whole control, and 1.4.3's text contrast is the
+            // rule that applies. Its WhiteBrush label is already measured against every surface it
+            // can land on by the text pairs. Giving it a fill so this file had something to sample
+            // would be inventing chrome to satisfy a gate.
+            "GhostButtonStyle",
+        ];
 
     /// <summary>The two fills the input styles' own comment names, in the order it names them.</summary>
     private static readonly string[] LegitimateSurfaces = [ThemeSlots.RowBg, ThemeSlots.Navy];
@@ -248,7 +287,7 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
 
         foreach (var theme in BuiltInThemes())
         {
-            foreach (var key in FullyMeasured)
+            foreach (var key in FullyMeasured.Concat(BorderlessFilled))
             {
                 var authored = ThemedRender.Measure(theme, $"{key}/{theme.Id}",
                     d => ThemedRender.Styled(d, key));
@@ -351,7 +390,7 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
             $"Found {keys.Count} keyed styles in ControlStyles.xaml; expected at least 8 (8 measured "
             + "2026-08-11). The scan is broken, not the file.");
 
-        var classified = FullyMeasured.Concat(SurfaceSupplied).Concat(Excluded).ToList();
+        var classified = FullyMeasured.Concat(BorderlessFilled).Concat(SurfaceSupplied).Concat(Excluded).ToList();
 
         Assert.True(classified.Count == classified.Distinct().Count(),
             "A style key appears in more than one classification list. The three lists partition the "
@@ -503,7 +542,10 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
     [Fact]
     public void EveryRenderedEdgeClearsNonTextContrastAgainstTheSurfaceItIsDerivedFor()
     {
-        var cases = Matrix.Value.Where(c => c.Surface is null or ThemeSlots.Navy).ToList();
+        var cases = Matrix.Value
+            .Where(c => c.Surface is null or ThemeSlots.Navy)
+            .Where(c => !BorderlessFilled.Contains(c.StyleKey))
+            .ToList();
 
         // (4 styles x 4 themes) + (2 inputs x 4 themes on Navy) = 24, up from 20 when
         // DestructiveButtonStyle landed.
@@ -655,6 +697,18 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
                         + "re-classify it into FullyMeasured.");
                     break;
 
+                case "GhostButtonStyle":
+                    // Transparent by design: the label is the whole control, so 1.4.11's non-text
+                    // rule has no fill and no edge to govern. The host showing through in bulk IS
+                    // that statement, measured — identical in shape to SectionHeadingStyle above.
+                    // A ghost that started painting a fill would stop leaking and would owe the
+                    // same boundary measurement every other filled rank owes.
+                    Assert.True(c.Authored.SentinelLeaked,
+                        $"{c.Label}: the host no longer shows through, so this button now paints a "
+                        + "fill of its own. It is excluded on the grounds that it has none — "
+                        + "re-classify it into BorderlessFilled and measure that fill against the page.");
+                    break;
+
                 default:
                     Assert.Fail($"'{c.StyleKey}' is excluded but this test states no measured reason "
                         + "for it. An exclusion nobody can check is the shape a gate rots into.");
@@ -701,5 +755,68 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
                 + "stopped painting a fill of its own, so Composed no longer needs to set Background "
                 + "and should be simplified to the wrapper alone.");
         }
+    }
+
+    /// <summary>
+    /// The 1.4.11 obligation for a rank that draws no border: its FILL has to be distinguishable
+    /// from the page behind it.
+    /// <para>
+    /// This is the test that let CtaButtonStyle stay borderless. Without it the honest options were
+    /// to give 23 buttons an outline they never had, or to exclude the rank from measurement and
+    /// call it done. Both were worse than measuring the thing that actually carries the boundary.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void EveryBorderlessFillClearsNonTextContrastAgainstThePage()
+    {
+        var themes = BuiltInThemes();
+        var failures = new List<string>();
+        var measured = 0;
+
+        foreach (var theme in themes)
+        {
+            var dict = ThemedRender.Resources(theme);
+            foreach (var key in BorderlessFilled)
+            {
+                var fill = FillSlotOf(key);
+                if (fill is null)
+                {
+                    failures.Add($"{key}: declares no Background setter, so there is no fill to be a boundary.");
+                    continue;
+                }
+
+                var page = ThemedRender.Slot(dict, ThemeSlots.Bg);
+                var fillHex = ThemedRender.Slot(dict, fill);
+                var ratio = ContrastGuard.RatioBetween(fillHex, page);
+                measured++;
+
+                if (ratio < EdgeThreshold)
+                {
+                    failures.Add($"{key} under '{theme.Id}': fill {fillHex} on page {page} = "
+                        + $"{ratio:0.00}:1 (needs {EdgeThreshold}:1). A borderless control whose fill "
+                        + "does not separate from the page has no boundary at all.");
+                }
+            }
+        }
+
+        Assert.True(measured >= BorderlessFilled.Length * 4,
+            $"Measured only {measured} borderless fills; expected at least {BorderlessFilled.Length * 4} "
+            + "(every borderless rank under all four built-in themes). A short matrix reports no "
+            + "failures, which reads identically to a passing gate.");
+
+        Assert.True(failures.Count == 0, string.Join(System.Environment.NewLine + "  ", failures));
+    }
+
+    /// <summary>The theme slot a keyed style sets as its Background, or null if it sets none.</summary>
+    private static string? FillSlotOf(string styleKey)
+    {
+        var path = Path.Combine(XamlStyleScanner.AppSourceDirectory()!, "Controls", "ControlStyles.xaml");
+        var text = File.ReadAllText(path);
+        var m = Regex.Match(text,
+            $@"<Style\s+x:Key=""{Regex.Escape(styleKey)}""(?<body>.*?)</Style>", RegexOptions.Singleline);
+        if (!m.Success) return null;
+        var s = Regex.Match(m.Groups["body"].Value,
+            @"<Setter\s+Property=""Background""\s+Value=""\{DynamicResource (?<slot>\w+)\}""");
+        return s.Success ? s.Groups["slot"].Value : null;
     }
 }

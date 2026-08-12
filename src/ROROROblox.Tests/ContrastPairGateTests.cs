@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using System.Windows;
 using System.Windows.Media;
 using ROROROblox.Core.Theming;
@@ -80,7 +81,13 @@ public class ContrastPairGateTests
     /// The floors below stay where they are; they are floors, not the measurement.
     /// </summary>
     private const int MinimumElements = 30;
-    private const int MinimumPairs = 6;
+    // Lowered 6 -> 4 at v1.20. The app declared 8 distinct fill/text pairs when every button
+    // wrote its own; it declares 5 now because 107 buttons share seven ranks. That is the cycle's
+    // entire purpose, and it is ALSO indistinguishable at a glance from a scan that stopped
+    // seeing things -- which happened twice earlier in this same cycle. The difference is the
+    // element count, which counts SITES and held steady: consolidation moves sites between pairs,
+    // lost coverage removes them. Check that number before ever lowering this one again.
+    private const int MinimumPairs = 4;
 
     private static readonly Regex ElementTag = new(@"<\s*[A-Za-z:]+\b[^>]*?>", RegexOptions.Singleline | RegexOptions.Compiled);
 
@@ -121,6 +128,93 @@ public class ContrastPairGateTests
 
     private sealed record Pair(string Fill, string Text, int Sites);
 
+    // ----------------------------------------------------------------------------------------
+    // Style-setter scanning (v1.20, F-068).
+    //
+    // The inline scan above matches Background="{DynamicResource X}" on an element tag. A style
+    // setter is <Setter Property="Background" Value="{DynamicResource X}" /> -- the literal text
+    // Background= never appears, so setters were invisible here.
+    //
+    // That did not matter while every button carried its colours inline. It matters enormously the
+    // moment a migration moves them into ranks: each migrated button DISAPPEARS from this gate.
+    // Migrating all 72 would have taken the element count from 39 to near zero, dropping F-050's
+    // exempted magenta debt out of measurement entirely, and the gate would have gone on reporting
+    // whatever remained. A cycle whose stated purpose is consistency would have bought it by
+    // deleting the measurement -- which is this project's most frequent defect, arriving this time
+    // as a side effect of the fix.
+    //
+    // So a rank's pair is measured too, weighted by how many call sites use it.
+    /// <summary>
+    /// Every keyed style that sets both a Background and a Foreground, with the number of call
+    /// sites referencing it. A rank nothing uses reports zero sites and is still measured — an
+    /// unused rank with a failing pair is a trap laid for whoever adopts it next.
+    /// <para>
+    /// <b>Parsed, not pattern-matched.</b> The first version of this used a regex over
+    /// <c>&lt;Style ...&gt;...&lt;/Style&gt;</c> and matched <b>nothing</b> — while a byte-identical
+    /// pattern matched all eight blocks outside .NET. It reported zero style pairs and the gate
+    /// stayed green, which is precisely the defect this method exists to prevent, arriving inside
+    /// the fix for it. XAML is XML; parsing it removes a whole class of that.
+    /// </para>
+    /// </summary>
+    /// <summary>
+    /// Shared with <c>FlatlineLabGateTests</c>, which ran its own inline-only copy of this scan and
+    /// therefore lost sight of every pair v1.20 moved into a rank. One definition, so a fix to it
+    /// cannot land in one gate and miss the other — which is exactly what happened first.
+    /// </summary>
+    internal static IReadOnlyList<(string Fill, string Text, int Sites)> ScanStylePairsShared()
+        => ScanStylePairs().Select(p => (p.Fill, p.Text, p.Sites)).ToList();
+
+    private static IReadOnlyList<Pair> ScanStylePairs()
+    {
+        const string Xaml2006 = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var pres = XNamespace.Get("http://schemas.microsoft.com/winfx/2006/xaml/presentation");
+        var x = XNamespace.Get(Xaml2006);
+
+        var files = XamlStyleScanner.EnumerateAppXamlFiles().ToList();
+        var texts = files.ToDictionary(f => f.FullPath, f => File.ReadAllText(f.FullPath));
+
+        var pairs = new List<Pair>();
+        foreach (var (path, text) in texts)
+        {
+            XDocument doc;
+            try { doc = XDocument.Parse(text); }
+            catch (System.Xml.XmlException) { continue; } // a malformed view file is XamlStyleIntegrityTests' problem
+
+            foreach (var style in doc.Descendants(pres + "Style"))
+            {
+                var key = (string?)style.Attribute(x + "Key");
+                if (string.IsNullOrEmpty(key)) continue;
+
+                string? fill = null, fg = null;
+                foreach (var setter in style.Elements(pres + "Setter"))
+                {
+                    var prop = (string?)setter.Attribute("Property");
+                    var value = (string?)setter.Attribute("Value");
+                    if (prop is null || value is null) continue;
+
+                    var token = DynamicToken(value);
+                    if (token is null) continue;
+                    if (prop == "Background") fill = token;
+                    else if (prop == "Foreground") fg = token;
+                }
+                if (fill is null || fg is null) continue;
+
+                var uses = texts.Values.Sum(t2 =>
+                    Regex.Matches(t2, $@"(?:Static|Dynamic)Resource\s+{Regex.Escape(key)}\s*\}}").Count);
+
+                pairs.Add(new Pair(fill, fg, uses));
+            }
+        }
+        return pairs;
+    }
+
+    /// <summary>"{DynamicResource NavyBrush}" -> "NavyBrush"; null for anything else.</summary>
+    private static string? DynamicToken(string value)
+    {
+        var m = Regex.Match(value, @"^\{DynamicResource\s+(\w+)\}$");
+        return m.Success ? m.Groups[1].Value : null;
+    }
+
     private static IReadOnlyList<Pair> ScanPairs(out int elementCount)
     {
         var counts = new Dictionary<(string Fill, string Text), int>();
@@ -141,7 +235,24 @@ public class ContrastPairGateTests
             }
         }
 
-        return counts.Select(kv => new Pair(kv.Key.Fill, kv.Key.Text, kv.Value)).ToList();
+        var inline = counts.Select(kv => new Pair(kv.Key.Fill, kv.Key.Text, kv.Value));
+
+        // Rank sites count as measured elements too. Without this the floor below reads a
+        // migration as lost coverage: v1.20 moved 21 buttons out of inline markup and the inline
+        // element count fell 39 -> 28, through a floor of 30, while the pairs themselves were
+        // still measured -- just through their rank. The floor is there to catch a BROKEN scan,
+        // and a scan that follows colours into styles is the opposite of broken.
+        var styleP = ScanStylePairs();
+        elementCount += styleP.Sum(sp => sp.Sites);
+
+        // Fold in the ranks. A pair declared once in a Style and used by forty buttons is exactly
+        // as load-bearing as the same pair written inline forty times -- more so, since fixing it
+        // is one edit. Merged by (fill, text) so a pair reachable both ways is measured once with
+        // its true site count.
+        return inline.Concat(styleP)
+            .GroupBy(p => (p.Fill, p.Text))
+            .Select(g => new Pair(g.Key.Fill, g.Key.Text, g.Sum(x => x.Sites)))
+            .ToList();
     }
 
     /// <summary>Resolves every theme slot to its #RRGGBB string, through the app's own apply path.</summary>

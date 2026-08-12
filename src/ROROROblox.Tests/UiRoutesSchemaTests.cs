@@ -17,6 +17,20 @@ namespace ROROROblox.Tests;
 /// (those controls stop Roblox clients, delete accounts, or launch game sessions). Safety properties
 /// belong at build time, not discovered while the tool is driving a live app.
 /// </para>
+/// <para>
+/// <b>WHAT THIS FILE DOES NOT CHECK, stated because it already cost a route (F-098).</b> Every
+/// assertion here is about the route file's SHAPE — known verbs, known control types, deny-list
+/// membership, surface count. <b>None asks whether an element a step names actually exists in the
+/// XAML.</b> When v1.20 moved Games out of the Tools menu, surface 08's <c>invoke Games MenuItem</c>
+/// step stopped resolving against anything and all four tests here stayed green; the break would
+/// have surfaced only when someone next drove the live app.
+/// </para>
+/// <para>
+/// Closing that means either a XAML element index or a running app, and neither is cheap enough to
+/// bolt on here. So the gap is named rather than papered over: <b>a green run of this file means the
+/// route file is well-formed, not that the routes work.</b> Treat a control moving between the
+/// toolbar and a popup as a route change, because it is one.
+/// </para>
 /// </summary>
 public class UiRoutesSchemaTests
 {

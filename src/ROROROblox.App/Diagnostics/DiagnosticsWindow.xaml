@@ -49,12 +49,8 @@
                     Padding="12,8" Margin="0,0,8,0"
                     Style="{StaticResource SecondaryStrongButtonStyle}"
                     Click="OnOpenDataFolderClick" />
-            <Button x:Name="SaveBundleButton" Content="Save support bundle (.zip)"
+            <Button Style="{StaticResource CtaButtonStyle}" x:Name="SaveBundleButton" Content="Save support bundle (.zip)"
                     Padding="14,8" Margin="0,0,8,0"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="SemiBold"
                     Click="OnSaveBundleClick"
                     ToolTip="Bundle the latest log files + this snapshot into a zip you can attach to a Discord report. Cookies are never logged; the bundle contains no secrets." />
             <Button Content="Close" Padding="14,8"

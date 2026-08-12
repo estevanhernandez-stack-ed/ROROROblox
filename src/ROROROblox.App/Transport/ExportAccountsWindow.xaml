@@ -148,11 +148,7 @@
                     Style="{StaticResource SecondaryStrongButtonStyle}"
                     IsCancel="True"
                     Click="OnCancelClick" />
-            <Button x:Name="ExportButton" Content="Export…" Padding="16,8"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="Bold"
+            <Button Style="{StaticResource CtaButtonStyle}" x:Name="ExportButton" Content="Export…" Padding="16,8"
                     IsDefault="True"
                     IsEnabled="False"
                     Click="OnExportClick" />

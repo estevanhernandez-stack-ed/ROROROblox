@@ -1350,3 +1350,210 @@ RoRoRo's CI does not build it, and ur-task's CI has no RoRoRo checkout. Repaired
 is a standing hazard rather than a fixed one.
 
 **Handoff:** PR both branches. F-091 closes after the eyes-on walk, not before.
+
+---
+
+## /scope — one button vocabulary (v1.20 cycle, opened 2026-08-11)
+
+Opened immediately after v1.19's build, at the builder's request to have the next wave lined up and
+started. Branch `feat/button-vocabulary`, **stacked on `feat/plugin-theme-feed`** because v1.19 is
+still an open PR and the per-cycle docs would otherwise collide.
+
+**The row got reframed by one measurement.** F-068 has been carried for three cycles as a tidiness
+project — 55-odd hand-copied button recipes that ought to be a shared style. The measurement that
+matters is a different one: **`Controls/ControlStyles.xaml` contains zero `ControlTemplate` and zero
+`Style.Triggers`.** Hover and pressed come from WPF-UI's dictionary, which `ThemeService` never
+touches, so **every button in the app breaks its theme the moment the pointer is over it** — migrated
+or not. That is a theming defect with a tidiness project attached, and it is the same class of bug
+v1.17 and v1.19 both shipped fixes for. Third direction, same victim: the person who chose flatline.
+
+That reframing changes the sequencing. Triggers ship first; migration second. Migrating first means
+every migrated button still breaks on hover.
+
+**One number deliberately not asserted.** The register says 55 un-migrated sites after v1.18. A
+scanner run tonight counts **72** by a cruder definition. The file count agrees exactly at **22**,
+which says the two scanners disagree about what a *site* is rather than that anything moved. Scope
+records both and hands `/spec` the job of writing one scanner definition down before any item is
+sized against it. Two earlier cycles cited a "63 across 15 files" figure that reproduces at no
+commit — asserting a number I cannot reconcile is how that gets a fourth life.
+
+**v1.18 supplied the argument for the whole cycle without meaning to.** Its item 9 swept nine Close
+buttons onto `SecondaryStrongButtonStyle` and the offender count went **down** by five. Adopting a
+rank costs nothing; hand-copying attributes to reach the same look adds a recipe. That is the row's
+thesis demonstrated by an unrelated item, and it is why the vocabulary is worth finishing rather than
+replacing.
+
+**F-046 rides along**, and this is the cycle it has been waiting for. It stayed open at the end of
+v1.18 specifically because `PluginsWindow`'s Remove is a hand-rolled magenta fill and holding the
+F-068 line meant not fixing it.
+
+**Zero deepening rounds**, same justification as the last three cycles: on a remediation or contract
+cycle against a readable tree, reading is the deepening round.
+
+**Handoff:** `/prd`. Note for it: the fence in scope item 5 is a genuine open question rather than a
+formality — a fence over 22 files with legitimate exceptions can end up measuring its own allow-list,
+and this session has already seen five checks that reported success while measuring something else.
+
+## /prd
+
+**The recon found a second half to F-068, and it is not a tidiness problem.** All four button ranks
+declare `BasedOn="{StaticResource {x:Type Button}}"` and set four or five properties. **None of them
+says anything about hover, pressed or disabled.** `ControlStyles.xaml` has zero `ControlTemplate` and
+zero `Style.Triggers`, and `ThemeService` writes eleven brush keys none of which belong to the control
+library. Whatever the inherited template does on hover, RoRoRo has no influence over it and no test
+that looks at it.
+
+**Scope's central claim was measured rather than repeated, and the measuring went wrong twice first.**
+
+Scope asserted "every button breaks its theme on hover" off a grep. The first probe rendered a button
+and forced `VisualStateManager.GoToState(btn, "MouseOver")`: the hovered pixel came back **identical
+to resting**, which read cleanly as "hover changes nothing." It was wrong. A control state added
+afterwards showed `Disabled` and `Pressed` were also identical **and that `GoToState` returned False
+for every state** — WPF-UI 4.3.0's Button template uses classic property triggers and has no visual
+state groups, so nothing was ever being forced. **The probe was measuring my state-forcing, not the
+button.**
+
+**Sixth instance this session of a check reporting something other than what it claims, and the first
+caught inside the instrument rather than downstream of it** — because the control was built before
+the result was believed. That habit is now worth more than any individual finding it produces.
+
+**What did answer it: reading the resolved `ControlTemplate`'s own triggers.**
+
+```text
+IsMouseOver == True   ->  Background=#BEE6FD, BorderBrush=#3C7FB1
+IsPressed   == True   ->  Background=#C4E5F6, BorderBrush=#2C628B
+IsEnabled   == False  ->  Background=#F4F4F4, Foreground=#838383
+```
+
+Hardcoded literals, not resource references. `#BEE6FD` is classic Windows **Aero** light blue.
+
+**And that is where it stops, because the finding forks and I could not close it from inside the
+suite.** That template is the OS Aero one, not WPF-UI's. Either the running app resolves the same
+template — in which case every button in RoRoRo has always flashed Aero blue on hover, and this cycle
+is urgent — or only the harness resolves it, in which case **the v1.17 rendered contrast gate has
+been measuring a different template than the app renders**, which is a worse finding and a different
+cycle. A fourth probe to distinguish them threw, and stopping beat a fifth attempt at 4am.
+
+Both readings justify the cycle. They justify **different** cycles, so the PRD makes settling it
+**Epic 0**, gating everything: launch RoRoRo under flatline, hover a button, record the colour. One
+minute, and it decides whether Epic 1 is "add themed hover states" or "fix the gate first."
+
+**Story 4.1 is written so it can honestly fail.** The fence over 22 files with legitimate exceptions
+may end up measuring its own allow-list, and the acceptance criterion says so: if the exemption list
+is disqualifying, the fence is **not shipped** and the story closes with that finding recorded. A gate
+that passes because everything is exempted reports coverage it does not have — which is the same
+defect as everything else in this section.
+
+**Epic 3 exists because the row's number has never been reproducible.** Register says 55, a scan
+during scope said 72, file count agrees exactly at 22 — so the scanners disagree about what a *site*
+is. Two earlier cycles cited "63 across 15 files", which reproduces at no commit. The epic requires
+the definition written into the spec and run twice, so the next re-measure compares like with like.
+
+**Zero deepening rounds.** The probe work was the deepening round, and it was worth more than four
+questions would have been.
+
+**Handoff:** `/spec`, but **Epic 0 first** — it is eyes-on and one minute, and every other decision
+in the spec depends on its answer.
+
+## /spec — one button vocabulary (v1.20)
+
+**Three of the PRD's four open questions closed on evidence, and one of them killed the cheap
+option.**
+
+**The `Style.Triggers` fork is not a preference, it is impossible.** The PRD offered "override the
+template" versus "add `Style.Triggers` on top", and the second is cheaper and survives a WPF-UI
+package bump. Reading the resolved template's setters ends it: **every** hover, pressed and disabled
+setter carries `TargetName=border`. They target a named element *inside* the template, so a Style
+trigger on the Button's own `Background` sets a different object's property — not a precedence
+contest, a different element. Exactly one of the seven, `Foreground` on disabled, is reachable. The
+cycle owns the template.
+
+That is the second time in two cycles that reading a resolved object settled a fork that reasoning
+had left genuinely open. It is also the same technique that produced the answer at `/prd`, which is
+worth noticing: **on WPF, inspect the resolved template; do not reason about what a style "should"
+inherit.**
+
+**A finding the scope did not have: the app declares 116 plain `<Button>` and zero `<ui:Button>`.**
+App.xaml merges WPF-UI's `ControlsDictionary` first specifically so `BasedOn="{StaticResource
+{x:Type Button}}"` picks up the library's implicit style, and the template that resolves is still the
+OS one. Migrating 116 sites to `ui:Button` was considered and cut in §0.3 — it is a control-type swap
+with its own regression surface, and §0.2 means we would need our own template regardless.
+
+**One probe deleted rather than kept.** It could not construct WPF-UI's `ThemesDictionary` standalone
+(`UriFormatException` from its parameterless constructor outside a pack context), so half of it never
+ran. The half that did run answered the fork. Keeping a probe whose first test cannot execute would
+have been a file that looks like coverage.
+
+**The state gate's technique is recorded with its reason.** The render harness cannot force
+`IsMouseOver` — it is input-driven, and `GoToState` returns **False** on this template because it has
+no visual state groups. A `/prd` probe did not know that and produced a confident wrong answer for
+twenty minutes. §5 therefore prefers reading the template's trigger setters over simulating input,
+and says why, so item 6 does not rediscover it at 2am.
+
+**§6 adopts a scanner definition instead of a number.** Register says 55, a scope-time scan said 72,
+file count agreed exactly at 22. Rather than pick a side, the definition goes into a committed script
+and its first run at the branch point becomes the baseline. The older figures are recorded as
+measured under unknown definitions. This row has been sized against an unreproducible number three
+times.
+
+**Two stories are allowed to fail, deliberately.** Story 4.1's fence closes with a finding if its
+allow-list would be disqualifying, and §5's gate closes the same way if it cannot be made to fail
+against a broken template. An item that can only succeed is how scope creeps, and a gate that passes
+by exemption is this session's recurring defect wearing yet another costume.
+
+**Zero deepening rounds.** Fourth cycle running: on a codebase this readable, reading is the
+deepening round.
+
+**Handoff:** `/checklist`. Sequencing note: the template (§2) lands before any migration, because
+migrating first means every migrated button still breaks on hover and nothing visibly improves.
+
+## /checklist — one button vocabulary (v1.20)
+
+**Ten items, two checkpoints, sized against a number measured at the branch point rather than
+recalled.** Running `spec.md > §6`'s definition before anything moved gives **72 un-migrated sites
+across 22 files** out of 116 total declarations. Neither 55 (the register) nor "63 across 15 files"
+(which reproduces at no commit) is adopted — item 2 commits the script so the closing figure is
+comparable to this one and to nothing before it.
+
+**The recon changed the item list, and would have stalled the build if it had not.** Bucketing the 72
+by fill turned up two intents the vocabulary has **no rank for**:
+
+- **23 cyan-filled CTAs** — 17 on `CyanBrush` plus 6 written as raw `#17D4FA`, which *is*
+  `CyanBrush`'s hex, so they are the same intent hand-written.
+- **8 magenta-filled actions** — `Stop`, `Squad Launch`.
+
+`PrimaryButtonStyle` is a Navy fill with a cyan *border*. Migrating a cyan-filled CTA onto it changes
+how it looks, which `spec.md > §3` calls a regression — and §3's rule is that a site needing a look
+no rank provides **stops the item**. Without a rank-definition item, that rule fires on the first
+file and the cycle stalls at item 4 with 30 sites untouched. **Item 3 exists because of the recon,
+and it precedes every migration item.**
+
+**The sharper find is `#22314A`, used at seven sites.** It is not `Bg` (`#0F1F31`), not `RowBg`
+(`#15263A`), not `Divider` (`#1F3149`) — it is in **no palette slot at all**. Seven buttons are
+painted a colour the theme system has never heard of, so they stay navy-blue under flatline no matter
+what this cycle does to the template. That is F-068's defect in its purest form, and it was invisible
+in every count the row has ever carried, because a count of un-migrated sites does not distinguish
+"uses a themed brush directly" from "uses a colour that does not exist in any theme".
+
+**Item 2's Verify is unusual and deliberate:** run the scanner, then hand-edit a file to add a styled
+button and confirm the count drops by exactly one. A counter that cannot be moved on demand is not
+measuring anything — and this row has been sized against an unreproducible number three times, which
+is the whole reason item 2 exists at all.
+
+**Item 3 carries a rule the cycle is not allowed to break:** if a new rank's foreground cannot clear
+the contrast floor on its own fill, **the rank changes, not the floor.** A cyan or magenta fill with
+white text is exactly the pair most likely to fail, and the cheap escape would be to exempt it. This
+cycle does not get to lower a bar it inherited.
+
+**Items 8 and 9 are both allowed to fail**, carried forward from `/spec`. The state gate must be
+shown going red against a deliberately broken template or it does not ship; the fence does not ship
+if its exemption list would be disqualifying, and closes with the exemption count recorded instead.
+
+**Item 8 also carries an anti-rediscovery note:** do not attempt `VisualStateManager.GoToState`. It
+returns False on this template because it has no visual state groups, and a `/prd` probe already lost
+twenty minutes to exactly that. Writing it into the item is cheaper than learning it twice.
+
+**Zero deepening rounds**, consistent with builder-mode habit on `/checklist` — the thinking happened
+at `/spec`, and this was translation plus one measurement that reshaped it.
+
+**Handoff:** `/build`. Autonomous, halting at C1 (after item 4) and C2 (after item 6).

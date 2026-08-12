@@ -29,19 +29,37 @@ accent; text stays legible so only colour-borne distinctions collapse).
 > before capturing that page, or redact the PNG before it leaves this machine. Tracked as **F-076**,
 > whose fix is to mask the stored value behind an explicit reveal.
 
-**Rail pages are `-Watch` captures, not routes.** `docs/ui-routes.json` drives surfaces by
-`InvokePattern` on a visible name. The rail's pages sit behind `ListBoxItem`s, which expose
-`SelectionItemPattern` and no `InvokePattern`, so they cannot be routed — same rule the routes
-file's own `_note` states for the tray menu and the library picker. Select the rail item, then
-capture the foreground window.
+**Correction, 2026-08-11 — the two paragraphs that used to sit here were wrong, and they were wrong
+in the direction that costs manual work.** They said rail pages and the five Tools destinations
+"cannot be routed" and that those routes were "gone from `ui-routes.json`," leaving `03-preferences`
+as the only route-driven surface. `docs/ui-routes.json` contradicts every part of that: rail pages
+03a-03d carry `select` steps, and 05 / 06 / 07 / 09 carry `expand` steps. The routes were restored
+at some point and this file was never told. Verified by reading the route file and
+`scripts/capture-ui.ps1`, not by reading a wave summary.
 
-**So are the five Tools destinations, as of wave 3.** About / History / Diagnostics / Games /
-Plugins used to be main-window buttons with working routes. They are now `MenuItem`s inside a
-popup, and a popup is **not in the main window's automation subtree even while open** — a driver
-walking down from the window root will not find them, which is why those five routes are gone from
-`ui-routes.json` rather than renamed. Open Tools ▾, pick the item, capture the window that appears.
-Only `03-preferences` is still route-driven, and its invoke name is now `Settings` (the `⚙` glyph
-came off in F-012).
+**The resolver has four verbs, not one.** `docs/ui-routes.json` does not drive everything by
+`InvokePattern` — `$script:VerbPattern` in `scripts/capture-ui.ps1` maps `invoke` → `InvokePattern`,
+`select` → `SelectionItemPattern`, `expand` → `ExpandCollapsePattern`, `close-window` →
+`WindowPattern`, and resolution requires the verb's pattern as well as the type and name. That
+pattern requirement is the disambiguator, not a formality: five elements in this app are named
+"Settings" and only the Button carries Invoke.
+
+**So the rail pages route.** Their `ListBoxItem`s expose `SelectionItemPattern`, which is exactly
+what `select` asks for (surfaces 03a-03d).
+
+**And the Tools destinations route.** A `ContextMenu` popup is genuinely outside the main window's
+automation subtree, but the route never walks down to the `MenuItem` from the window root — it
+resolves `Tools` itself, which is in the subtree, and `expand`s it. That works because
+`ToolsDropDownButton` supplies `IExpandCollapseProvider` (`Controls/ToolsDropDownButton.cs:124-152`)
+on top of the button peer. Wave 3's accessibility fix is the same thing that made these four
+routable; the two were never separate.
+
+**Games left the popup in v1.20** and is a main-window Button again, so surface 08 drops its
+`expand` step entirely. `03-preferences`'s invoke name is `Settings` (the `⚙` glyph came off in
+F-012).
+
+**Still genuinely not routable:** the tray menu (surface 11) and the library picker (22). The route
+file's own `_note` on each states why, and both reasons survive this correction.
 
 ## In scope
 
@@ -58,7 +76,7 @@ came off in F-012).
 | 05 | `about` | ~~Candidate for relocation into Settings~~ — wave 3 answered it: About is not a setting (it writes nothing), so it lives in Tools | **Tools ▾ → About** (`-Watch`) |
 | 06 | `history` | ~~The open question~~ — wave 3 answered it. A tool, not a preference: verb-shaped, episodic, writes nothing to settings.json | **Tools ▾ → History** (`-Watch`) |
 | 07 | `diagnostics` | Same answer as history (F-001) | **Tools ▾ → Diagnostics** (`-Watch`) |
-| 08 | `games` | `Games/GamesWindow.xaml`, titled "Games" — renamed in wave 1 (F-006), product prefix dropped in wave 4 (F-004). Was `Settings/SettingsWindow.xaml` titled "RoRoRo -- Library": a class named SettingsWindow, in a folder named Settings, that is the game library. | **Tools ▾ → Games** (`-Watch`) |
+| 08 | `games` | `Games/GamesWindow.xaml`, titled "Games" — renamed in wave 1 (F-006), product prefix dropped in wave 4 (F-004). Was `Settings/SettingsWindow.xaml` titled "RoRoRo -- Library": a class named SettingsWindow, in a folder named Settings, that is the game library. | **Games button** — route-driven again as of v1.20 |
 | 09 | `plugins` | ~~Reached by a main-window button~~ — moved into Tools by wave 3 (F-009) | **Tools ▾ → Plugins** (`-Watch`) |
 | 10 | `theme-builder` | A settings-adjacent tool that already lives outside Settings | Preferences → theme area |
 | 11 | `tray-menu` | The other navigation surface entirely — it duplicates several main-window buttons | Right-click tray icon |

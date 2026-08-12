@@ -27,6 +27,8 @@ Canonical brand spec lives at `~/.claude/skills/626labs-design/` (globally avail
 | `docs/superpowers/specs/2026-08-10-rororo-flatline-theme-design.md` | v1.17.0.0 flatline — archived from `docs/spec.md`, carries its own banner-corrections |
 | `docs/superpowers/specs/2026-08-10-rororo-settings-remediation-design.md` | v1.18.0.0 Settings becomes a place — archived from `docs/spec.md`, carries the §2 version confirmation and the §10 end-of-cycle carry-forward |
 | `docs/superpowers/specs/2026-08-11-rororo-plugin-theme-feed-design.md` | v1.19.0.0 plugin theme feed — archived from `docs/spec.md`; §0 records the two open questions that closed on inspection |
+| `docs/superpowers/specs/2026-08-11-rororo-button-vocabulary-design.md` | v1.20.0.0 one button vocabulary — archived from `docs/spec.md`; its banner records three templates where the spec proposed one, and the five corrections the scanner definition needed |
+| `docs/ui-routes.json` + `docs/ui-capture-checklist.md` | UIA capture routes and the campaign they serve. **The schema tests validate the file's SHAPE, not that a named element exists in the XAML** — moving a control between the toolbar and the Tools menu breaks its route with a green suite. Check surface 08's history before assuming a route is current. |
 | `docs/prd.md` | Compressed PRD — stories + acceptance criteria + prioritization |
 | `docs/builder-profile.md` | Builder-profile excerpt for this cycle |
 | `docs/checklist.md` | **Active build plan.** Cycle-shaped — current cycle (v1.4 plugin system) ships 18 items across 3 milestones with 3 verification checkpoints. Older cycles overwrite this file each round. |
@@ -47,7 +49,7 @@ Canonical brand spec lives at `~/.claude/skills/626labs-design/` (globally avail
 |---|---|
 | `src/ROROROblox.App/` | WPF process — App, MainWindow + ViewModel, TrayService, CookieCapture, Plugins/ (v1.4) |
 | `src/ROROROblox.Core/` | Interfaces + primitives — `IMutexHolder`, `IAccountStore`, `IRobloxApi`, `IRobloxLauncher` (no UI dependencies) |
-| `src/ROROROblox.Tests/` | xUnit unit-test coverage |
+| `src/ROROROblox.Tests/` | xUnit unit-test coverage. Three gates are worth knowing by name before touching a control's look: `ContrastPairGateTests` (resting pairs, exemptions tied to register rows), `Rendering/ButtonStateGateTests` (hover/pressed/disabled, composited, every rank × every built-in theme), `ButtonRankFenceTests` (a button declaration may not paint itself). |
 | `src/ROROROblox.PluginTestHarness/` | xUnit integration tests — real named-pipe gRPC (v1.4+) |
 | `scripts/build-msix.ps1` + `scripts/finalize-store-build.ps1` | MSIX packaging (Store-unsigned + self-signed sideload flavors) — no wapproj exists; packing is `makeappx` against `src/ROROROblox.App/Package.appxmanifest` |
 | `roblox-compat.json` (in GitHub Releases) | Remote config — known-good Roblox version range + current mutex name; fetched at app startup |

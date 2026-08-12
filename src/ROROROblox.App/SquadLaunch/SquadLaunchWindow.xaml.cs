@@ -202,15 +202,16 @@ internal partial class SquadLaunchWindow : Window
         Grid.SetColumn(info, 0);
         grid.Children.Add(info);
 
+        // Takes the rank, and this one was the sharpest of the five. It is cyan-filled AND it ships
+        // disabled whenever no account is eligible -- which is F-097's exact defect (a muted label
+        // on a bright fill, measured at 1.37:1) at a site F-097's fix could not reach, because the
+        // fix lives in a template this button was not using. Now it is.
         var launchBtn = new Button
         {
             Content = "Launch all",
+            Style = (Style)FindResource("CtaButtonStyle"),
             Padding = new Thickness(14, 6, 14, 6),
             Margin = new Thickness(0, 0, 6, 0),
-            Background = (Brush)FindResource("CyanBrush"),
-            Foreground = (Brush)FindResource("NavyBrush"),
-            BorderThickness = new Thickness(0),
-            FontWeight = FontWeights.SemiBold,
             FontSize = 11,
             IsEnabled = _eligibleAccountCount > 0,
             ToolTip = _eligibleAccountCount > 0
@@ -224,13 +225,14 @@ internal partial class SquadLaunchWindow : Window
         var removeBtn = new Button
         {
             Content = "Remove",
+            // The comment that used to sit here said it plainly at wave 5: "built in code, so wave
+            // 5's markup sweep never saw it — and neither does any test in that wave, which all
+            // parse XAML." That was written, left at one site, and then v1.20 shipped a brand-new
+            // markup-only fence on top of it that claimed 99.1% coverage. The lesson was recorded
+            // and not generalised, which is the more expensive half of missing it.
+            // ButtonRankFenceTests now scans .cs construction too.
+            Style = (Style)FindResource("SecondaryButtonStyle"),
             Padding = new Thickness(10, 6, 10, 6),
-            Background = (Brush)FindResource("NavyBrush"),
-            Foreground = (Brush)FindResource("WhiteBrush"),
-            // Built in code, so wave 5's markup sweep never saw it — and neither does any test in
-            // that wave, which all parse XAML. Found by the review gate.
-            BorderBrush = (Brush)FindResource("InteractiveEdgeBrush"),
-            BorderThickness = new Thickness(1),
             FontSize = 11,
         };
         removeBtn.Click += async (_, _) =>

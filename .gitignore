@@ -81,3 +81,6 @@ Thumbs.db
 
 # vibe-glow capture evidence — regenerated per campaign round, not source of truth.
 docs/ui-evidence/
+
+# NuGet pack output (scripts/local packing of ROROROblox.PluginContract)
+pkg/

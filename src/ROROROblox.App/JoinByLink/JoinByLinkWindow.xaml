@@ -83,13 +83,9 @@
                     Style="{StaticResource SecondaryStrongButtonStyle}"
                     IsCancel="True"
                     Click="OnCancelClick" />
-            <Button x:Name="LaunchButton"
+            <Button Style="{StaticResource CtaButtonStyle}" x:Name="LaunchButton"
                     Content="Launch"
                     Padding="18,8"
-                    Background="{DynamicResource CyanBrush}"
-                    Foreground="{DynamicResource NavyBrush}"
-                    BorderThickness="0"
-                    FontWeight="SemiBold"
                     IsDefault="True"
                     IsEnabled="False"
                     Click="OnLaunchClick" />

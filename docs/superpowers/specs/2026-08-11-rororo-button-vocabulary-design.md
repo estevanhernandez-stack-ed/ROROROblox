@@ -1,13 +1,47 @@
 # RORORO — Technical Spec: one button vocabulary
 
-**This file is the canonical technical artifact for the v1.20.0 cycle.** `docs/spec.md` is
-overwritten every Cart round; **archive it into `docs/superpowers/specs/` before the next round.**
-v1.19's is already archived as
-[`2026-08-11-rororo-plugin-theme-feed-design.md`](superpowers/specs/2026-08-11-rororo-plugin-theme-feed-design.md).
-
-Implements [`docs/prd.md`](prd.md). Closes F-068 and F-046.
-
-**Anchor:** a button should look like the theme in every state, not just at rest.
+> **ARCHIVED 2026-08-11 from `docs/spec.md`, at the close of the v1.20.0.0 cycle.** This is the
+> cycle's canonical technical artifact. Banner-corrected rather than rewritten, per `CLAUDE.md`:
+> what follows below is what was PROPOSED, and this block is what was actually BUILT where the two
+> diverged. Rewriting the body top-to-bottom would destroy the /reflect-time framing.
+>
+> **§2 — the state design changed twice during item 1, both times because the builder looked at it.**
+> The spec proposed hover → `RowBgBrush` and pressed → `DividerBrush` on the chrome. Shipped is a
+> translucent white *sheen layer* with an outline, at 0.22 hover and 0.38 pressed, over an untouched
+> fill. Repainting the chrome is a surface colour: fine under a quiet navy button, and it turned a
+> cyan CTA dark navy, reported at C1 as the button dimming to nothing. The first replacement was a
+> tint alone, which is weakest exactly where the fill is brightest ("now it's not dimming at all").
+> The outline is what carries it, because a boundary appearing does not depend on the fill's
+> luminance. Neither version was found by a test.
+>
+> **§2 — a second template exists that the spec did not anticipate.** `AppToggleButtonTemplate`,
+> because a `ControlTemplate`'s `TargetType` must match the control and `ToggleButton` is not a
+> `Button`. Found at C2 with the header widget still flashing Aero blue in the middle of the toolbar.
+>
+> **§2 — and a third.** `AppFilledButtonTemplate`, added at item 8 when the state gate first
+> measured a state instead of asserting one was themed. The shared template's disabled trigger swaps
+> the label to `MutedTextBrush`, which is correct on a navy fill and lands at 1.29:1–1.95:1 on the
+> two bright-filled ranks items 3 and 4 introduced. Three windows opened with a CTA in that state.
+> The filled template keeps the dark label and washes the fill toward white instead.
+>
+> **§5 — the gate shipped, and the item's acceptance was not met by its first version.** That
+> version asserted the prohibitions (no literal, no opacity, never repaint the fill) and omitted the
+> floor half of option (1) entirely, across four theories whose hand-written rank lists covered 6, 6,
+> 8 and 7 of the then-8 ranks. The floor half is what found the defect above.
+>
+> **§6 — the scanner definition was corrected five times**, every correction prompted by using it
+> rather than reviewing it: phantom `<Button.Style>` property elements, `BasedOn` property elements,
+> local styles inheriting ranks, too-narrow lookahead, and a control type outside the definition.
+> Each version reproduced, which is what made each look right. The branch-point number the cycle is
+> sized against (63 across 22 files) is the corrected definition's, not the first one's.
+>
+> **§0.4 — the fence shipped**, and its abort clause did not fire: 112 declarations, 1 exemption.
+> It was widened to `ToggleButton` and `RepeatButton` on the C2 lesson, and immediately found two
+> more sites.
+>
+> **F-050 did not close and was never going to.** See its register row: the exempted pair left the
+> gate's field of view when the magenta buttons migrated, and the defect stayed on five badges the
+> gate cannot see.
 
 ---
 

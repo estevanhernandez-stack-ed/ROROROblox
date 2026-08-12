@@ -409,14 +409,16 @@ internal partial class FriendFollowWindow : Window
 
         if (isFollowable)
         {
+            // Takes the rank. The four properties this replaces were byte-identical to
+            // CtaButtonStyle's setters, so nothing moves at rest; what it gains is the TEMPLATE.
+            // A bare Button picks up WPF-UI's implicit style, whose state colours resolve against
+            // ui:ThemesDictionary Theme="Dark" -- a fixed palette ThemeService never touches -- so
+            // this button's hover and disabled looks stayed put while the user switched themes.
             var followBtn = new Button
             {
                 Content = "Follow",
+                Style = (Style)FindResource("CtaButtonStyle"),
                 Padding = new Thickness(14, 6, 14, 6),
-                Background = (Brush)FindResource("CyanBrush"),
-                Foreground = (Brush)FindResource("NavyBrush"),
-                BorderThickness = new Thickness(0),
-                FontWeight = FontWeights.SemiBold,
                 FontSize = 11,
                 ToolTip = "Launch this account into the server your friend is in.",
             };

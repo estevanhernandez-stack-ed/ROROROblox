@@ -236,10 +236,22 @@ public sealed class FpsCapSettlerTests
 
             if (budget.Elapsed > PumpObservationCeiling)
             {
+                // This message used to end "a genuine hang, not a slow test." It cannot know that,
+                // and PumpObservationCeiling's own summary six lines up says why: a loaded runner
+                // delays a single continuation's real-world resume by tens of seconds for reasons
+                // that have nothing to do with this file. Elapsed time cannot separate a deadlock
+                // from a starved thread, so the message asserted a conclusion its evidence did not
+                // reach -- and it sends whoever reads it hunting a deadlock that may not exist.
+                // Observed on x64 CI at 14bbd03, green on arm64 at the same commit and green on
+                // re-run. (F-098: an instrument claiming more than it measures, in the direction
+                // that wastes an afternoon rather than the one that ships a bug.)
                 Assert.Fail(
                     $"Pump stalled: the settler never re-read GetLastWriteTimeUtc() within " +
                     $"{PumpObservationCeiling} of real time after the fake clock advanced by {step}. " +
-                    "The code under test's continuation never resumed -- a genuine hang, not a slow test.");
+                    "That is EITHER a genuine hang in the code under test OR a continuation this " +
+                    "runner never scheduled; elapsed time alone cannot tell them apart. Re-run before " +
+                    "investigating: if it passes, it was starvation, and only a repeatable failure " +
+                    "is evidence of a hang.");
             }
 
             clock.Advance(TimeSpan.Zero);
