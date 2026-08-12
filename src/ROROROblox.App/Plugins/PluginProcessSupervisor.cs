@@ -1,3 +1,4 @@
+using System.IO;
 using Microsoft.Extensions.Logging;
 
 namespace ROROROblox.App.Plugins;
@@ -117,6 +118,63 @@ public sealed class PluginProcessSupervisor
             throw new TimeoutException(
                 $"A '{pluginId}' process is still running and won't exit — close it, then try again.");
         }
+    }
+
+    /// <summary>
+    /// Kills plugin processes left over from a PREVIOUS RoRoRo session, before autostart adds more.
+    /// Returns how many it killed.
+    /// <para>
+    /// F-101. <c>PluginJobObject</c> is the real fix and covers a host that crashes; this covers the
+    /// two things a job object cannot. A pile that already exists on disk from versions before the
+    /// job shipped would otherwise survive forever, because the only existing sweep
+    /// (<see cref="StopByInstallDirAsync"/>) runs on install and uninstall — when a plugin's FILES
+    /// need unlocking — and never at session boundaries, which is when orphans are made. And the
+    /// microseconds between <c>Process.Start</c> and job assignment are a real if narrow window.
+    /// </para>
+    /// <para>
+    /// Scoped to the plugins root by image path, the same way <see cref="StopByInstallDirAsync"/>
+    /// finds orphans, so it can only ever kill something running out of RoRoRo's own plugins
+    /// directory. It runs BEFORE autostart, so nothing it kills is something this session started.
+    /// </para>
+    /// </summary>
+    public int SweepOrphans(string pluginsRoot)
+    {
+        if (string.IsNullOrWhiteSpace(pluginsRoot) || !Directory.Exists(pluginsRoot)) return 0;
+
+        IReadOnlyList<int> orphans;
+        try
+        {
+            orphans = _starter.FindRunningUnder(pluginsRoot);
+        }
+        catch (Exception ex)
+        {
+            // Never let a cleanup sweep stop the app starting.
+            _log?.LogWarning(ex, "Orphan sweep could not enumerate processes under {Root}.", pluginsRoot);
+            return 0;
+        }
+
+        if (orphans.Count == 0) return 0;
+
+        _log?.LogWarning(
+            "Killing {Count} plugin process(es) left over from a previous session (pids: {Pids}). "
+            + "These outlived the RoRoRo that started them; see F-101.",
+            orphans.Count, string.Join(", ", orphans));
+
+        var killed = 0;
+        foreach (var pid in orphans)
+        {
+            try
+            {
+                _starter.Kill(pid);
+                killed++;
+            }
+            catch (Exception ex)
+            {
+                _log?.LogWarning(ex, "Could not kill orphan plugin pid {Pid}.", pid);
+            }
+        }
+
+        return killed;
     }
 
     /// <summary>

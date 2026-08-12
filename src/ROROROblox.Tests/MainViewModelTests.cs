@@ -36,7 +36,8 @@ public class MainViewModelTests
         ITrayService? tray = null,
         IRobloxRunningProbe? runningProbe = null,
         IShellOpener? shellOpener = null,
-        FakeAppSettings? settings = null)
+        FakeAppSettings? settings = null,
+        IBloxstrapDetector? bloxstrapDetector = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
@@ -62,7 +63,7 @@ public class MainViewModelTests
             themeStore: new FakeThemeStore(),
             themeService: new ThemeService(new FakeThemeStore(), new FakeAppSettings()),
             windowDecorator: windowDecorator,
-            bloxstrapDetector: new FakeBloxstrapDetector(),
+            bloxstrapDetector: bloxstrapDetector ?? new FakeBloxstrapDetector(),
             updateProbe: new FakeRobloxUpdateProbe(),
             accountTransport: new FakeAccountTransport(),
             activityMonitor: new FakeActivityMonitor(),
@@ -1489,7 +1490,10 @@ public class MainViewModelTests
         // InitializeBloxstrapWarningAsync — must return a benign completed Task, never throw.
         public Task<bool?> GetEdgeRemediationAnswerAsync(string themeId) => Task.FromResult<bool?>(null);
         public Task SetEdgeRemediationAnswerAsync(string themeId, bool accepted) => Task.CompletedTask;
-        public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(true);
+        /// <summary>Defaults to dismissed so the banner stays out of every pre-existing test's
+        /// way; settable because the render gates need it VISIBLE.</summary>
+        public bool BloxstrapWarningDismissed { get; set; } = true;
+        public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(BloxstrapWarningDismissed);
 
         // Backing field (not throw-NotImplemented) so LoadAsync's read/dismiss-signature
         // round trip is exercisable by FPS-cap dismissal tests without a real AppSettings.

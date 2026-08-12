@@ -11,3 +11,9 @@ DwmSetWindowAttribute
 DWMWINDOWATTRIBUTE
 GetCurrentPackageFullName
 SetCurrentProcessExplicitAppUserModelID
+CreateJobObjectW
+SetInformationJobObject
+AssignProcessToJobObject
+JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+JOBOBJECTINFOCLASS

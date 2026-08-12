@@ -19,10 +19,16 @@ namespace ROROROblox.App.Plugins.Adapters;
 public sealed class DefaultPluginProcessStarter : IPluginProcessStarter
 {
     private readonly ILogger<DefaultPluginProcessStarter>? _log;
+    private readonly PluginJobObject? _job;
 
-    public DefaultPluginProcessStarter(ILogger<DefaultPluginProcessStarter>? log = null)
+    /// <param name="job">Ties every started plugin to the host's lifetime (F-101). Null keeps
+    /// the pre-v1.21 behaviour, where a plugin outlived the session that launched it.</param>
+    public DefaultPluginProcessStarter(
+        ILogger<DefaultPluginProcessStarter>? log = null,
+        PluginJobObject? job = null)
     {
         _log = log;
+        _job = job;
     }
 
     public event Action<int>? ProcessExited;
@@ -80,9 +86,14 @@ public sealed class DefaultPluginProcessStarter : IPluginProcessStarter
             _log?.LogError(ex, "Plugin process failed to start: {PluginId} ({ExePath}).", pluginId, exePath);
             throw;
         }
+        // Assign AFTER Start — a process must exist to join a job. The window between the two is
+        // the one case this cannot cover: a host death in those microseconds still strands the
+        // child, which is why the startup sweep exists rather than being redundant.
+        var adopted = _job?.TryAssign(process.Id) ?? false;
+
         _log?.LogInformation(
-            "Plugin process started: {PluginId} pid {Pid} ({ExePath}).",
-            pluginId, process.Id, exePath);
+            "Plugin process started: {PluginId} pid {Pid} ({ExePath}); job-managed: {Adopted}.",
+            pluginId, process.Id, exePath, adopted);
         return process.Id;
     }
 
