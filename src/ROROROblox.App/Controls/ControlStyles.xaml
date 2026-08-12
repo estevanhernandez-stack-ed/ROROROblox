@@ -181,9 +181,16 @@
                  layered over its own wash. It is never hit-testable, and a disabled control does
                  not raise IsMouseOver anyway; the ordering is belt and braces for the case where a
                  rank is disabled while the pointer is already over it. -->
+            <!-- 0.65, raised from 0.55 on the v1.20 walk (2026-08-11). At 0.55 the disabled state
+                 still read as available — Este's call on the Join-by-link Launch button, which is
+                 the one that opens already disabled and so gets judged on first paint.
+                 This is the axis no test can settle: the gate below proves the LABEL stays legible
+                 through the wash, but "does it look unavailable" is a human question, and 0.55
+                 answered it wrong. 0.45 and 0.65 were both measured as clear AA before the walk, so
+                 this direction was pre-cleared rather than guessed. -->
             <Border x:Name="DisabledWash"
                     Background="{DynamicResource WhiteBrush}"
-                    Opacity="0.55"
+                    Opacity="0.65"
                     Visibility="Collapsed"
                     IsHitTestVisible="False" />
             <ContentPresenter x:Name="Content"
