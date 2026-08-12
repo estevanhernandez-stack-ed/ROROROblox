@@ -1,122 +1,136 @@
-# RORORO — Scope: one button vocabulary
+# RORORO — v1.21 scope: the surfaces behind the buttons
 
-The largest consistency debt in the app, and the one three cycles have routed around. F-068 (`2/2`),
-with F-046 (`3/3`) stranded behind it.
+**Cycle:** v1.21.0.0 · **Mode:** autonomous, two waves · **Branch:** `feat/pre-store-remediation`
+**Predecessor:** v1.20.0.0 one button vocabulary, merged as PR #110
+([spec](superpowers/specs/2026-08-11-rororo-button-vocabulary-design.md))
 
-Cycle history: v1.17 shipped flatline and the rendered contrast gate. v1.18 furnished the Settings
-shell, closing 12 of 13 rows. v1.19 gave plugins a theme feed — **built, PRs open, and F-091 still
-open pending an eyes-on walk in a second process.** Last published artifact remains **v1.17.0.0**, a
-pre-release. Store submission still parked.
+**Anchor:** v1.20 gave the app's buttons one vocabulary. Everything they sit *on* still writes its own
+colours, and flatline is where that shows.
 
-## Idea
+## Why now, and why this order
 
-**Three cycles have now stepped around the same 22 files, and each one left the vocabulary a little
-more expensive to adopt.**
+The Store cut needs screenshots. The five in `docs/store/screenshots/` are from **Aug 3** — before
+v1.16's nav rail, v1.17's flatline, v1.18's Settings and v1.20's buttons. Every one shows an app that
+no longer exists, so a full recapture is coming regardless.
 
-`Controls/ControlStyles.xaml` ships `PrimaryButtonStyle`, `SecondaryButtonStyle`,
-`SecondaryStrongButtonStyle` and `DestructiveButtonStyle`. They work. v1.18 proved it: nine Close
-buttons adopted `SecondaryStrongButtonStyle` and the offender count went **down** rather than up,
-because adopting a rank costs nothing while hand-copying attributes to reach the same look adds
-another recipe.
+`docs/ui-capture-checklist.md` shoots **flatline** deliberately: it is the adversarial theme where a
+colour-carried distinction collapses, so it is the frame that exposes an un-themed surface. **The
+rows in wave 1 are precisely what will look broken in those frames.** Capture first and the sequence
+becomes shoot → notice → fix → reshoot. That is the whole sequencing argument: **fix, then shoot.**
 
-But the migration stalled. Wave 5 moved 35 sites in one pass, v1.18 moved six more as a side effect
-of a different row, and nothing else has moved. `MainWindow.xaml` alone still holds **30** of the
-un-migrated declarations — more than the next seven files combined.
+## The problem, stated once
 
-And the half nobody has started is the half that makes the vocabulary worth having:
-**`ControlStyles.xaml` contains zero `ControlTemplate` and zero `Style.Triggers`.** Hover and pressed
-still come from WPF-UI's dictionary, which `ThemeService` never touches. So every button in the app,
-migrated or not, **breaks its theme the moment the pointer is over it.**
+A themed app has one job under a theme it did not anticipate: keep meaning legible without relying on
+hue. v1.17 built flatline to prove it, v1.20 fixed every button. What is left is the *chrome* —
+banners, cards, list rows — and it is still writing hexes by hand. **62 hex literals across 10 XAML
+files** at HEAD, which is the same count F-066 recorded and therefore the one number in this document
+that has not moved.
 
-That last point reframes the row. F-068 has been read as a tidiness project. It is a theming defect
-with a tidiness project attached, and the theming half is the part that is 0% done.
+## Verified at HEAD, 2026-08-11 — because the last cycle was nearly sized against fiction
 
-## Who it's for
+Every row below was re-read against the tree before it entered this scope. v1.20 was scoped against a
+register whose top finding was ~60% already shipped, and the fix for that was to stop trusting rows.
+Two of the five wave-1 candidates changed shape under verification:
 
-**The clan member who picked flatline and hovers over a button.** Same person v1.17 and v1.19 were
-for, hitting the same class of defect from a third direction: they chose the theme that carries no
-meaning in colour, and WPF-UI's stock hover paints brand blue onto it. Not on a plugin window this
-time. On the main window.
+| Row | Register says | Tree says |
+|---|---|---|
+| F-085 | `MainWindow.xaml:1630-1644`, three literals | **Confirmed**, lines now `:1592,1593,1606` |
+| F-066 | in-scope residue at `MainWindow:1474,1477` + `About:96` | **Reduced.** Those MainWindow lines no longer hold literals. Residue is `MainWindow:1535` (`#F1B232`) + `About:96` (`#15263A`) — two, both with existing tokens |
+| F-063 | 8 literal brushes, unbound canvas, `:96` `#15263A` | **Confirmed**, 8 present; `:96` overlaps F-066 |
+| F-065 | rows built on `RowBgBrush` alone | **Confirmed**, `SessionHistoryWindow.xaml.cs:155` |
+| F-022 | 45 words, action buried last | **Partly stale.** The copy has been rewritten since the row; it now leads with impact rather than diagnosis, but the actionable clause is still last and it is still ~45 words |
 
-Secondary: **whoever does the next cycle.** Every cycle that touches a button and hand-copies its
-attributes makes the migration bigger. That has happened three times.
+**F-066 has largely collapsed into F-063.** After verification its only unique site is one literal in
+the mutex-recovery region. It should be scoped as part of the same sweep and closed with it, not
+carried as a separate row.
 
-## The measurement, and one number I will not assert
+## THE QUESTION THIS CYCLE MUST ANSWER FIRST
 
-Re-measured against the tree on 2026-08-11 before scoping, per the register's own rule that an open
-row is not static:
+**F-085 is not a rebind, and finding that out is what makes this a cycle rather than a chore.**
 
-- **22 files carry un-migrated buttons.** Matches the v1.18 re-count exactly.
-- **`MainWindow.xaml` holds 30**, the next-largest is `PluginsWindow.xaml` at 6. This is not evenly
-  distributed work; it is one file and a long tail.
-- **`ControlStyles.xaml`: 0 `ControlTemplate`, 0 `Style.Triggers`.** Independently confirmed. The
-  template-trigger half has not started.
+The app already has a themed banner recipe. `MainWindow.xaml:223-224` binds `RowExpiredBgBrush` as
+the surface and `RowExpiredAccentBrush` as the boundary — v1.17 established that pair across expired
+rows, idle chips and the compat banner. So the obvious move is to point the Bloxstrap banner at it
+and be done.
 
-**The site count does not reconcile and I am not going to pick a side at scope time.** The register
-says 55 un-migrated after v1.18. A scanner run here counts 72 by a cruder definition — any `<Button>`
-whose opening tag lacks a `*ButtonStyle` resource reference. The file count agreeing at 22 while the
-site count differs by 17 means the two scanners disagree about what a site *is*, not that something
-moved. **`/spec` reconciles this with one scanner definition written down, before any item is sized
-against it.** Two prior cycles cited a "63 across 15 files" figure that reproduces at no commit;
-unsourced numbers are how that happens.
+**The Bloxstrap banner's own comment forbids that:**
 
-## In scope
+> Warm amber tone distinct from the red-ish compat banner above it.
 
-**1. The template-trigger half, first, because it is the reason to do any of this.**
-Hover and pressed states for every rank in `ControlStyles.xaml`, driven by themed brushes rather than
-WPF-UI's dictionary. Until this exists, migrating a button buys consistency of resting state only.
+The literal was a decision, not an oversight. Both banners live in the same `Grid`, both are
+independently visible, and **they can show at once.** Rebinding Bloxstrap onto the one warning pair
+the app owns makes two banners that say different things look identical — trading a theming bug for a
+meaning bug, which is the trade v1.20's `DestructiveButtonStyle` note argues against at length.
 
-**2. `MainWindow.xaml`'s 30 sites.** The dominant file. Doing it alone would nearly halve the debt.
+**Half of that fork closed on inspection, and the answer inverts the comment.** Read at HEAD: the
+compat banner is `Grid.Row="4"` and **is** themed — `Background="{DynamicResource RowExpiredBgBrush}"`,
+`BorderBrush` and text on `RowExpiredAccentBrush`. Bloxstrap is `Grid.Row="5"`, directly beneath it,
+frozen. So:
 
-**3. The long tail**, as far as it goes — 21 files, and the honest expectation is that some of them
-reveal a rank the vocabulary does not have yet.
+- **Under brand** the two are genuinely distinct: bright amber border and text against olive border
+  and cream text.
+- **Under flatline** the compat banner goes grey (`#3D3D3D` / `#D4D4D4`) and Bloxstrap stays amber.
 
-**4. F-046, which has been waiting on exactly this.** It stayed open at the end of v1.18 because
-`PluginsWindow`'s Remove is a hand-rolled magenta fill and holding the line meant not fixing it. Its
-fix direction names shared button styles. This is that cycle.
+**The distinction survives flatline only because one banner ignores the theme.** It is not being
+carried by a design decision any more; it is being carried by the defect. Fixing the theming
+necessarily destroys it unless something replaces it — which is the real shape of this item, and it
+is the opposite of "just rebind it."
 
-**5. A fence, if one can be written honestly.** Something that fails the build when a new `Button`
-declaration hand-copies a recipe instead of taking a rank. v1.17's XAML literal fence and v1.18's
-settings-reachability fence are the shape. **Whether this one is writable is a genuine question, not
-a formality** — the 22 files contain legitimate exceptions, and a fence with a large allow-list
-measures its own allow-list.
+What remains open is only *how* to replace it, and that is a measurement wave 1 item 1 owns:
 
-## What "done" looks like
+1. **Does the distinction need to survive at all?** Two stacked banners that can co-show, saying
+   different things, is a case for keeping them apart. Two that never co-show in practice is not.
+2. **If it must survive, it comes from a derived value or a non-colour carrier, never a new slot.**
+   Invariant 6 holds: every user theme on disk supplies ten slots and an eleventh breaks them all.
+   The app already has the pattern for this — `InteractiveEdgeBrush` is derived by `ContrastGuard`
+   from what a theme supplies, and v1.17's own answer to "colour cannot carry this" was the `▲`
+   glyph and a left rule, both of which survive greyscale.
 
-Hovering any button in the app keeps the theme. Under flatline the hover is a grey, not brand blue.
-`MainWindow.xaml` declares no button colours of its own. F-068 and F-046 both close, with the site
-count reported against a scanner definition written into the spec rather than recalled.
+The likely shape, stated so the spec can disagree with something concrete: **one themed warning
+recipe for both banners, with the distinction re-carried by a non-colour difference** rather than by
+a second hue the theme contract cannot supply.
 
-## What's explicitly cut
+## Wave 1 — the surfaces flatline exposes
 
-- **A component library.** This is four button ranks with states, not a design-system rewrite. The
-  moment it starts proposing a `Card` primitive it has left scope.
-- **Inputs and borders.** The register measures 11 of 11 inputs already done and 60 of 76 borders
-  still hand-themed. Borders are a real debt and a different one.
-- **F-050.** Standing exclusion, unchanged: flipping it auto-deletes the contrast gate's exemption
-  and reddens three built-in themes.
-- **Anything in `rororo-ur-task`.** v1.19's plugin leg is unmerged and unverified. Two open
-  cross-repo cycles at once is how both stall.
+Everything here is visible in a Store screenshot.
 
-## Assumptions surfaced
+- **F-085** (2/2) Bloxstrap banner, three literals, no token matches them. Blocked on the question
+  above. **Its stated dependency cleared this cycle** — the row says it "belongs with F-068's shared
+  button/banner style work", and F-068 closed in v1.20.
+- **F-063** (2/2) About: 8 literal `SolidColorBrush` resources, an unbound canvas, and `#15263A`
+  where `RowBgBrush` holds that exact value. Flatline renders "a hard dark rectangle behind the icon".
+- **F-065** (2/2) History rows are `RowBgBrush` alone and vanish under flatline. The date-group
+  heading survives, so the fix is a non-fill boundary, not a new fill.
+- **F-066** (2/2) reduced to two rebinds; closes with F-063.
 
-Per the fully-autonomous contract, filled from the record. Each is a real fork `/spec` should confirm
-or overturn.
+## Wave 2 — polish, copy, and the gate that unblocks F-050
 
-- **Template-triggers ship before any migration** *(default — confirm)*. Migrating first means every
-  migrated button still breaks on hover and nobody can see progress. Triggers first means the sites
-  already migrated improve for free the moment they land.
-- **`MainWindow.xaml` is its own item, probably its own two** *(default — confirm)*. 30 sites in the
-  app's most-looked-at file, and the file where a regression is most visible.
-- **The 22 files are walked in descending order of site count** *(default — confirm)*, so the cycle
-  can stop anywhere and have banked the most debt per item.
-- **A new rank is a finding, not a blocker** *(default — confirm)*. If the tail needs a fifth rank it
-  gets added and recorded, rather than treated as scope creep — the four existing ranks were
-  themselves discovered this way.
+- **F-086** (3/1) The contrast gate measures **no `MutedTextBrush` pair at all** — ~113 bindings
+  unmeasured. A small named-pair list closes it. **This is F-050's prerequisite:** F-050's fix cannot
+  be verified by a gate that cannot see its pairs, which is exactly how it came to look resolved.
+- **F-087** (1/1) A colour branch in C# (`ConsentSheet.xaml.cs:90-92`) that belongs in XAML as a
+  `DataTrigger`. Verified present and unchanged.
+- **F-021** (2/2) Games empty state sends the user to a closed window for something that saves itself.
+- **F-022** (2/2) FPS banner: re-measure first, the copy moved since the row was written.
+- **F-070**, **F-074** (2/2) copy.
+- **Rulings, not builds:** **F-095** is fixed and open only for its surfacing half; **F-098** is
+  partly fixed. Both need a decision recorded rather than work.
 
-## Distribution audience
+## Explicit cuts
 
-Unchanged: Pet Sim 99 clan first, Store second, Store parked. Worth saying that this is the first
-cycle in four whose result is **visible on the main window on first launch** — v1.17 shipped a theme
-most people will not switch to, v1.18 furnished a Settings page most people open twice, and v1.19 is
-invisible unless you run a plugin. This one is the one they see.
+- **F-052 — borders, 60 of 76 controls, all 26 XAML files.** Reads 4/2 and is not a 2-effort job.
+  v1.20's checklist deferred it by name as its own cycle and that call stands.
+- **F-050.** Needs F-086 first. Taking it now means fixing something the suite cannot confirm.
+- **The other ~55 hex literals**, which sit in out-of-scope modals. This cycle takes the surfaces a
+  screenshot shows; the rest is the same sweep on a later pass.
+- **No new theme slot.** Invariant 6 holds — anything this cycle needs is derived from what a theme
+  already supplies.
+- **The screenshot recapture itself.** It follows this cycle; it is not in it.
+
+## What must not happen
+
+- **Do not collapse the two banners' distinction without measuring it.** That is the cycle's opening
+  item, and a wrong answer there is a meaning bug shipped to fix a theming bug.
+- **Do not change a surface's resting look** except where the row is the resting look being wrong.
+- **Do not lower a contrast floor** to make a rebind fit. Change the recipe.
+- **Do not let a copy row ship on its register text.** F-022 already drifted; re-read before rewriting.
