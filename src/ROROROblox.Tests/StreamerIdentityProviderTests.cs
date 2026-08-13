@@ -162,7 +162,6 @@ public class StreamerIdentityProviderTests
         public Task SetStreamerModeAsync(bool on) { _on = on; return Task.CompletedTask; }
         // Remaining IAppSettings members throw NotImplementedException — not exercised here.
         public Task<string?> GetDefaultPlaceUrlAsync() => throw new NotImplementedException();
-        public Task SetDefaultPlaceUrlAsync(string url) => throw new NotImplementedException();
         public Task<bool> GetLaunchMainOnStartupAsync() => throw new NotImplementedException();
         public Task SetLaunchMainOnStartupAsync(bool e) => throw new NotImplementedException();
         public Task<string?> GetActiveThemeIdAsync() => throw new NotImplementedException();

@@ -30,8 +30,15 @@
 
         <!-- Hero: inline iso voxel stack + wordmark + version + tagline + Easter-egg slot -->
         <StackPanel Grid.Row="0" Orientation="Horizontal">
-            <!-- Direction C iso voxel stack (Canvas, 64x64). Painter's order: bottom -> middle -> top. -->
-            <Canvas Width="64" Height="64" Margin="0,0,18,0" Background="{StaticResource NavySoftBrush}">
+            <!-- Direction C iso voxel stack (Canvas, 64x64). Painter's order: bottom -> middle -> top.
+                 The GROUND is themed; the MARK is not. The nine polygon faces below are brand
+                 identity artwork in the same category as the per-account caption palette — they
+                 paint WHO this is, not WHAT STATE it is in, and a themed logo is a broken logo.
+                 The Canvas fill is the plate they sit on, and it is bound rather than removed on
+                 purpose: the faces are fixed dark-on-light-agnostic hexes, so on a light user theme
+                 a missing plate would leave the mark floating on white with no ground. The four
+                 built-in themes are all dark and would never reveal that. -->
+            <Canvas Width="64" Height="64" Margin="0,0,18,0" Background="{DynamicResource RowBgBrush}">
                 <!-- Bottom block (teal) -->
                 <Polygon Fill="{StaticResource TealBrush}"
                          Points="16,36.5 32,30.5 48,36.5 32,42.5" />
@@ -39,8 +46,23 @@
                          Points="16,36.5 32,42.5 32,51.5 16,45.5" />
                 <Polygon Fill="{StaticResource TealBrush}"
                          Points="32,42.5 48,36.5 48,45.5 32,51.5" />
-                <!-- Middle block (magenta) -->
-                <Polygon Fill="{DynamicResource MagentaBrush}"
+                <!-- Middle block (magenta). This top face was bound to the MagentaBrush THEME SLOT
+                     until v1.21 item 4 — a theme token inside the mark. It now takes
+                     MagentaDimBrush, the same value brand resolved that slot to, so every theme
+                     renders the mark identically. Top and right sharing one brush over a darker
+                     left is the three-face pattern the teal block already uses.
+                     THIS FACE IS OCCLUDED and paints nothing: in an isometric stack only the
+                     topmost block shows its top face, and the cyan block above covers this one
+                     entirely. Measured 2026-08-12 by painting it #00FF00 and rendering the real
+                     window — zero green pixels. So the bind is hygiene rather than a visible fix,
+                     and it matters only if the stack is ever reordered or a block removed. Item 4
+                     claimed a visible grey top under flatline; that was asserted from reading
+                     markup and is not true.
+                     Ratios and per-theme values live in F-063's register row, not here. A comment
+                     naming a shipped colour is a claim that goes false the moment a theme changes
+                     that value; the literal scanner stopped reading comments in v1.20, so this is a
+                     convention now rather than something enforced. -->
+                <Polygon Fill="{StaticResource MagentaDimBrush}"
                          Points="16,27.5 32,21.5 48,27.5 32,33.5" />
                 <Polygon Fill="{StaticResource MagentaShadowBrush}"
                          Points="16,27.5 32,33.5 32,42.5 16,36.5" />
@@ -93,7 +115,7 @@
         </StackPanel>
 
         <Border Grid.Row="1" Margin="0,24,0,0" Padding="16,14"
-                Background="#15263A" CornerRadius="8">
+                Background="{DynamicResource RowBgBrush}" CornerRadius="8">
             <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource WhiteBrush}">
                 Run multiple Roblox clients side by side, signed in as different saved accounts.
                 Holds the Roblox singleton mutex so subsequent clients don't fight for it; uses

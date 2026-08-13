@@ -2018,11 +2018,19 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             var strapHandling = _bloxstrapDetector.IsStrapHandlingLaunches();
             if (strapHandling)
             {
-                return PreWarmGate.Decide(strapHandling: true, updatePending: false);
+                return PreWarmGate.Decide(strapHandling: true, updatePending: false, updateChurn: false);
+            }
+
+            // Churn is a local read, so take it first — when versions are already thrashing we hold
+            // regardless, and the CDN round-trip has nothing left to decide (F-104).
+            var updateChurn = _updateProbe.IsUpdateChurnActive();
+            if (updateChurn)
+            {
+                return PreWarmGate.Decide(strapHandling: false, updatePending: false, updateChurn: true);
             }
 
             var updatePending = await _updateProbe.IsUpdatePendingAsync().ConfigureAwait(true);
-            return PreWarmGate.Decide(strapHandling: false, updatePending);
+            return PreWarmGate.Decide(strapHandling: false, updatePending, updateChurn: false);
         }
         catch (Exception ex)
         {

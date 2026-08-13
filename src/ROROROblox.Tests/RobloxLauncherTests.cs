@@ -884,7 +884,6 @@ public class RobloxLauncherTests
         public string? ActiveThemeId { get; set; }
 
         public Task<string?> GetDefaultPlaceUrlAsync() => Task.FromResult(DefaultPlaceUrl);
-        public Task SetDefaultPlaceUrlAsync(string url) { DefaultPlaceUrl = url; return Task.CompletedTask; }
         public Task<bool> GetLaunchMainOnStartupAsync() => Task.FromResult(LaunchMainOnStartup);
         public Task SetLaunchMainOnStartupAsync(bool enabled) { LaunchMainOnStartup = enabled; return Task.CompletedTask; }
         public Task<string?> GetActiveThemeIdAsync() => Task.FromResult(ActiveThemeId);

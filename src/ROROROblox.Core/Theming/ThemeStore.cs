@@ -225,7 +225,15 @@ public sealed class ThemeStore : IThemeStore
             Cyan: "#3FB8D9",
             Magenta: "#C0407E",
             White: "#E6EDF5",
-            MutedText: "#6F7E92",
+            // Was #6F7E92 until v1.21 item 6, which measured 4.19:1 against this theme's own RowBg
+            // — under AA, shipped, and unmeasured by anything: no element declares the prose token
+            // with a fill inline, so the contrast gate could not see the pair at all (F-086). It
+            // also sat at exactly 4.504 on Bg/Navy, the thinnest margin in the app.
+            // #768598 is a 6% blend toward this theme's own White, the smallest step that clears
+            // the floor with headroom: RowBg 4.19 -> 4.60, Bg/Navy 4.50 -> 4.95. Against White it
+            // drops 3.51 -> 3.19, which costs nothing — F-032 moved the quiet/loud distinction off
+            // colour and onto weight, and MutedTextFenceTests is what holds it there.
+            MutedText: "#768598",
             Divider: "#162232",
             RowBg: "#0F1B2B",
             RowExpiredBg: "#241B0E",

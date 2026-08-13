@@ -61,6 +61,10 @@ namespace ROROROblox.Tests;
 /// </summary>
 public class ContrastPairGateTests
 {
+    private readonly Xunit.Abstractions.ITestOutputHelper _output;
+
+    public ContrastPairGateTests(Xunit.Abstractions.ITestOutputHelper output) => _output = output;
+
     /// <summary>WCAG AA for body text. The app's body size is 11px, so the large-text allowance does not apply.</summary>
     private const double AaThreshold = 4.5;
 
@@ -124,6 +128,32 @@ public class ContrastPairGateTests
         // darker and white-on-magenta sliding from 3.79 toward 2-something while this gate stays
         // green. A floor this close to the worst measured value cannot let that happen silently.
         ("MagentaBrush", "WhiteBrush", "F-050", 3.20),
+    ];
+
+    /// <summary>
+    /// F-086. Pairs measured UNCONDITIONALLY, whatever the element scan happens to find.
+    /// <para>
+    /// The scan above can only see an element declaring both halves inline. Since PR #100 rebound
+    /// the last declared <c>MutedTextBrush</c> foreground to <c>WhiteBrush</c>, the prose token is
+    /// the foreground of NO scanned pair — so its ~113 bindings were measured by nothing on any
+    /// run, and the coverage kept shrinking as the token spread. <c>MinimumPairs</c> is 4, so
+    /// losing it failed nothing and announced nothing.
+    /// </para>
+    /// <para>
+    /// A named list does not have the composition problem the scan correctly refuses to guess at.
+    /// The scan cannot know what fill an element inherits from an ancestor; somebody naming a pair
+    /// deliberately can. These three are the prose token against the three surfaces it actually
+    /// lands on, and they are re-derived every run rather than stated once in a spec.
+    /// </para>
+    /// <para>
+    /// <b>F-050 does not close here.</b> This is its prerequisite, not its fix.
+    /// </para>
+    /// </summary>
+    private static readonly (string Fill, string Text, string Why)[] NamedPairs =
+    [
+        (ThemeSlots.RowBg, ThemeSlots.MutedText, "the most common prose-on-surface pairing"),
+        (ThemeSlots.Bg, ThemeSlots.MutedText, "prose on the page field"),
+        (ThemeSlots.Navy, ThemeSlots.MutedText, "the disabled-button label"),
     ];
 
     private sealed record Pair(string Fill, string Text, int Sites);
@@ -398,6 +428,105 @@ public class ContrastPairGateTests
             "Colour pairs below WCAG AA (or an exempted pair's debt got worse — see EXEMPTED PAIR "
             + "GOT WORSE lines). Fix the pair, or add/adjust an exemption naming the register row "
             + "that justifies it:\n  " + string.Join("\n  ", failures));
+    }
+
+    /// <summary>
+    /// F-086's widening. The named pairs, measured every run and recorded per theme.
+    /// <para>
+    /// WHAT THIS FOUND ON ITS FIRST RUN, 2026-08-11. <c>MutedText</c> on <c>RowBg</c> measured
+    /// <b>4.19:1 in midnight</b> — under AA, shipped, and invisible to every instrument in the
+    /// suite because no element declares that pair inline. It had presumably been there since
+    /// midnight was authored. The ruling was to FIX it rather than exempt it: midnight's
+    /// <c>MutedText</c> moved from <c>#6F7E92</c> to <c>#768598</c>, a 6% blend toward that theme's
+    /// own <c>White</c>, which is the smallest step that clears the floor with headroom.
+    /// </para>
+    /// <para>
+    /// WHY FIXED AND NOT EXEMPTED, when F-050 next door is exempted. An exemption is right when the
+    /// fix is unavailable or costs more than the debt — F-050's best theme-derived foreground still
+    /// only reaches 4.40:1 under brand, so exempting it records a real constraint. Nothing
+    /// constrained this one: one slot in one built-in theme moved a few percent and every pair it
+    /// touches improved. Exempting a defect you can simply fix is how an exemption list becomes a
+    /// place to put things.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void EveryNamedPairClearsAaUnderEveryTheme()
+    {
+        Assert.True(NamedPairs.Length >= 3,
+            $"Only {NamedPairs.Length} named pairs. This list is the answer to a gate that lost "
+            + "sight of a token entirely; emptying it re-opens F-086.");
+
+        var failures = new List<string>();
+
+        foreach (var theme in BuiltInThemes())
+        {
+            var slots = ResolveTheme(theme);
+
+            foreach (var (fill, text, why) in NamedPairs)
+            {
+                Assert.True(slots.ContainsKey(fill), $"Theme '{theme.Id}' resolved no brush for {fill}.");
+                Assert.True(slots.ContainsKey(text), $"Theme '{theme.Id}' resolved no brush for {text}.");
+
+                var ratio = ContrastGuard.RatioBetween(slots[fill], slots[text]);
+                Assert.True(ratio.HasValue,
+                    $"Theme '{theme.Id}': could not compute a ratio for {text} on {fill} "
+                    + $"({slots[fill]} / {slots[text]}).");
+
+                // Recorded on every run, pass or fail. The whole complaint behind F-086 is that
+                // these numbers lived in prose in a spec and were re-derived by nobody.
+                _output.WriteLine($"{theme.Id,-14} {text} on {fill,-18} {ratio!.Value,6:F2}:1   ({why})");
+
+                var exemption = Array.Find(Exemptions, e => e.Fill == fill && e.Text == text);
+                if (exemption.Fill is not null)
+                {
+                    if (ratio.Value < exemption.MinimumRatio)
+                    {
+                        failures.Add($"{theme.Id}: EXEMPTED NAMED PAIR GOT WORSE — {text} on {fill} "
+                            + $"({exemption.Finding}) = {ratio.Value:F2}:1, below its recorded floor "
+                            + $"of {exemption.MinimumRatio:F2}:1.");
+                    }
+
+                    continue;
+                }
+
+                if (ratio.Value < AaThreshold)
+                {
+                    failures.Add($"{theme.Id}: {text} on {fill} = {ratio.Value:F2}:1 "
+                        + $"(needs {AaThreshold}:1) — {why}");
+                }
+            }
+        }
+
+        Assert.True(failures.Count == 0,
+            "A named pair is below WCAG AA. These are measured unconditionally precisely because "
+            + "no element declares them inline, so nothing else in this suite is watching them. "
+            + "Move the pair, not the floor — and prefer fixing to exempting, because an exemption "
+            + "here would be forgiving a defect nobody can see:\n  " + string.Join("\n  ", failures));
+    }
+
+    /// <summary>
+    /// The reason the list above has to exist, pinned so it cannot quietly stop being true.
+    /// <para>
+    /// Fails in BOTH directions on purpose, the same discipline
+    /// <c>RenderedStyleGateTests.TheDerivedEdgeIsTunedToNavyAndFallsShortOnACard</c> uses. If the
+    /// prose token becomes the foreground of a scanned pair again, this goes red — not because
+    /// that is bad, but because the named list would then be measuring something the scan already
+    /// covers, and whoever made that true should decide whether it stays.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void TheNamedPairsExistBecauseTheScanCannotSeeThem()
+    {
+        var scanned = ScanPairs(out _);
+        var scannedProse = scanned.Where(p => p.Text == ThemeSlots.MutedText).ToList();
+
+        Assert.True(scannedProse.Count == 0,
+            $"The element scan now reports {scannedProse.Count} pair(s) with {ThemeSlots.MutedText} "
+            + "as the foreground: " + string.Join(", ", scannedProse.Select(p => $"{p.Text} on {p.Fill}"))
+            + ". F-086 exists because that count was zero while the token had ~113 bindings, which "
+            + "is why NamedPairs measures it unconditionally. If a declared pair is back, decide "
+            + "deliberately whether the named entry is still earning its place rather than leaving "
+            + "two mechanisms measuring one thing.");
     }
 
     [Fact]

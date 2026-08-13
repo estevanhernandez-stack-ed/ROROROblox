@@ -38,26 +38,34 @@ internal static class PreWarmGate
     public static readonly TimeSpan MaxWait = TimeSpan.FromSeconds(120);
 
     /// <summary>
-    /// Decide whether to pre-warm. Strap-handling short-circuits regardless of the update signal
+    /// Decide whether to pre-warm. Strap-handling short-circuits regardless of the other signals
     /// (the strap updates Roblox proactively itself, so pre-warming would double-update). Otherwise
-    /// pre-warm only when an update is actually pending — the common no-update path stays full speed.
+    /// pre-warm when EITHER an update is pending OR versions are churning — the common quiet path
+    /// stays full speed.
     /// </summary>
     /// <param name="strapHandling">
     /// <c>IBloxstrapDetector.IsStrapHandlingLaunches()</c> — Bloxstrap/Fishstrap owns the handler.
     /// </param>
     /// <param name="updatePending">
-    /// <c>IRobloxUpdateProbe.IsUpdatePendingAsync()</c> — the installed version differs from latest.
+    /// <c>IRobloxUpdateProbe.IsUpdatePendingAsync()</c> — the version that will actually run, or the
+    /// newest installed one, differs from the CDN's latest.
     /// </param>
-    public static PreWarmDecision Decide(bool strapHandling, bool updatePending)
+    /// <param name="updateChurn">
+    /// <c>IRobloxUpdateProbe.IsUpdateChurnActive()</c> — more than one version installed in the last
+    /// few minutes. A second, network-free reason to hold: when updates are landing on top of each
+    /// other, no single version comparison is stable enough to trust (F-104).
+    /// </param>
+    public static PreWarmDecision Decide(bool strapHandling, bool updatePending, bool updateChurn)
     {
         if (strapHandling)
         {
             // A strap is the handler — it serializes its own update before launching. Don't
-            // double-update; release the batch at normal speed (spec Riders §7).
+            // double-update; release the batch at normal speed (spec Riders §7). Churn under a strap
+            // is the strap's business, so this short-circuit stays ahead of it.
             return PreWarmDecision.LaunchAllNow;
         }
 
-        return updatePending
+        return updatePending || updateChurn
             ? PreWarmDecision.PreWarmThenRelease
             : PreWarmDecision.LaunchAllNow;
     }

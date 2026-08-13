@@ -45,6 +45,8 @@ public sealed class RobloxUpdateProbe : IRobloxUpdateProbe
 
     private readonly Func<bool> _installerRunning;
     private readonly Func<string?> _installedVersionProvider;
+    private readonly Func<string?> _handlerVersionProvider;
+    private readonly Func<int> _recentInstallCounter;
     private readonly HttpClient _httpClient;
     private readonly ILogger<RobloxUpdateProbe> _log;
 
@@ -63,11 +65,16 @@ public sealed class RobloxUpdateProbe : IRobloxUpdateProbe
         HttpClient httpClient,
         Func<bool>? installerRunning = null,
         Func<string?>? installedVersionProvider = null,
+        Func<string?>? handlerVersionProvider = null,
+        Func<int>? recentInstallCounter = null,
         ILogger<RobloxUpdateProbe>? log = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _installerRunning = installerRunning ?? DefaultInstallerScan;
         _installedVersionProvider = installedVersionProvider ?? RobloxCompatChecker.GetInstalledRobloxVersion;
+        _handlerVersionProvider = handlerVersionProvider ?? RobloxCompatChecker.GetHandlerRobloxVersion;
+        _recentInstallCounter = recentInstallCounter
+            ?? (() => RobloxCompatChecker.CountRecentVersionInstalls(RobloxCompatChecker.DefaultChurnWindow));
         _log = log ?? NullLogger<RobloxUpdateProbe>.Instance;
         EnsureUserAgent(_httpClient);
     }
@@ -88,21 +95,15 @@ public sealed class RobloxUpdateProbe : IRobloxUpdateProbe
 
     public async Task<bool> IsUpdatePendingAsync(CancellationToken ct = default)
     {
-        string? installed;
-        try
-        {
-            installed = _installedVersionProvider();
-        }
-        catch (Exception ex)
-        {
-            // Installed-version read failed (disk, permissions). Don't block — degrade to "no update".
-            _log.LogDebug(ex, "Installed-version read failed; treating as no update pending.");
-            return false;
-        }
+        // Two local reads. The handler's pin is what a launch will actually run; the newest install
+        // is what used to be read here alone, and is kept because it still catches the case where
+        // the handler is unreadable or a strap owns it.
+        var handler = ReadVersionSafe(_handlerVersionProvider, "handler");
+        var installed = ReadVersionSafe(_installedVersionProvider, "newest-installed");
 
-        if (string.IsNullOrWhiteSpace(installed))
+        if (string.IsNullOrWhiteSpace(handler) && string.IsNullOrWhiteSpace(installed))
         {
-            // Roblox not installed (or unreadable) — there's nothing to defer. Item 9 owns the
+            // Roblox not installed (or nothing readable) — there's nothing to defer. Item 9 owns the
             // "Roblox not installed" surface; the probe just declines to block.
             return false;
         }
@@ -115,9 +116,48 @@ public sealed class RobloxUpdateProbe : IRobloxUpdateProbe
             return false;
         }
 
-        // Like-for-like string compare (file version vs CDN `version`). Case-insensitive + trimmed
-        // to absorb cosmetic CDN formatting. Differ => an update is pending.
-        return !string.Equals(installed.Trim(), latest.Trim(), StringComparison.OrdinalIgnoreCase);
+        // Pending if EITHER local version disagrees with latest. An unreadable side contributes
+        // nothing rather than voting "no update" — the readable side still decides.
+        return DiffersFromLatest(handler, latest) || DiffersFromLatest(installed, latest);
+    }
+
+    public bool IsUpdateChurnActive()
+    {
+        try
+        {
+            // More than one install inside the window means updates are landing on top of each
+            // other. Exactly one is an ordinary update and the version comparison above owns it.
+            return _recentInstallCounter() > 1;
+        }
+        catch (Exception ex)
+        {
+            // Degrade-safe, same as every other member: a failed count never holds a batch.
+            _log.LogDebug(ex, "Recent-install count failed; treating as no churn.");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Like-for-like string compare (file version vs the CDN's <c>version</c>). Case-insensitive and
+    /// trimmed to absorb cosmetic CDN formatting. A blank local version is "unknown", which is not a
+    /// disagreement — it must not vote either way.
+    /// </summary>
+    private static bool DiffersFromLatest(string? local, string latest)
+        => !string.IsNullOrWhiteSpace(local)
+           && !string.Equals(local.Trim(), latest.Trim(), StringComparison.OrdinalIgnoreCase);
+
+    private string? ReadVersionSafe(Func<string?> provider, string label)
+    {
+        try
+        {
+            return provider();
+        }
+        catch (Exception ex)
+        {
+            // Disk, registry, permissions. Treat as unknown; the other read may still answer.
+            _log.LogDebug(ex, "{Label} version read failed; treating as unknown.", label);
+            return null;
+        }
     }
 
     private async Task<string?> FetchLatestVersionAsync(CancellationToken ct)

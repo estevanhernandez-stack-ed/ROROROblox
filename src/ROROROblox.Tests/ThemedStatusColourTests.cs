@@ -81,12 +81,11 @@ public class ThemedStatusColourTests
             + "trips neither pattern above; the entry stands because §7 names the surface and a "
             + "future rewrite in Color terms belongs on this list rather than being a surprise."),
 
-        new("src/ROROROblox.App/Plugins/ConsentSheet.xaml.cs", "NamespaceBrush",
-            "NOT in spec §7 — found in the tree at build time, allow-listed rather than absorbed "
-            + "silently. Both literals are TryFindResource FALLBACKS: the themed CyanBrush and "
-            + "MagentaBrush win whenever App.xaml's dictionary is loaded, and the literal is only "
-            + "reached when it is not (design-time, or a host that never merged it). Out of scope for "
-            + "this cycle, which owns the four MainWindow status bindings. Wants a register row."),
+        // ConsentSheet.xaml.cs's entry was retired by v1.21 item 7. It covered NamespaceBrush's two
+        // TryFindResource fallbacks; the property is gone and the branch is now a Style +
+        // DataTrigger on IsHostEnforced in ConsentSheet.xaml. Retired rather than left matching
+        // nothing, the same way F-085's and F-089's were — the register row it wanted got written
+        // as F-087 and closes with this cycle.
     ];
 
     /// <summary>
@@ -239,14 +238,18 @@ public class ThemedStatusColourTests
             }
         }
 
-        // Measured 2026-08-10, after the two converters were deleted: 11 allowed literals — 9 in
-        // Converters.cs (8 AutoPalette entries + MainColor) and 2 in ConsentSheet.xaml.cs's
-        // TryFindResource fallbacks. Floor of 6 leaves room for the caption palette to be retuned
-        // without tripping, and sits far enough above zero to catch a dead scan.
+        // Re-measured 2026-08-11 by v1.21 item 7: 9 allowed literals, all of them in Converters.cs
+        // (8 AutoPalette entries + MainColor). It read 11 until this cycle; the other 2 were
+        // ConsentSheet.xaml.cs's TryFindResource fallbacks, which went with F-087's fix, and their
+        // allow-list entry was retired rather than left matching nothing.
+        // Floor of 6 leaves room for the caption palette to be retuned without tripping, and sits
+        // far enough above zero to catch a dead scan. Left at 6 deliberately: the remaining 9 are
+        // one palette, and a floor that tracks a single allow-listed region this closely would fail
+        // the next legitimate change to it rather than catching a broken scan.
         Assert.True(allowed >= 6,
             $"This clause matched only {allowed} allow-listed colour literals. It should be seeing "
-            + "roughly eleven — a count this low means the regexes or the anchor lookback broke, not "
-            + "that the app stopped constructing colours.");
+            + "nine — a count this low means the regexes or the anchor lookback broke, not that the "
+            + "app stopped constructing colours.");
 
         Assert.True(offenders.Count == 0,
             "A colour literal built in App code is off the governed path: ThemeService.ApplyTo cannot "
@@ -289,11 +292,19 @@ public class ThemedStatusColourTests
     /// <c>&amp;#x2630;</c> and a six-digit decimal entity are both markup escapes, not colours, and
     /// this app writes ten of the former.
     /// <para>
-    /// It scans lines, so a hex inside an XML comment counts too. That is deliberate and it fired on
-    /// its first run against this item's own comment: a comment naming a shipped colour is a claim
-    /// that goes false the moment the theme changes that value, which is the defect class item 6
-    /// spent a whole item removing from the test project. The hex belongs in the register row, and
-    /// the comment cites the row.
+    /// CORRECTED 2026-08-11 — this paragraph described the opposite of what the file does. It read:
+    /// "It scans lines, so a hex inside an XML comment counts too. That is deliberate and it fired
+    /// on its first run against this item's own comment." True when written at v1.17, and made
+    /// false by v1.20's <see cref="StripXmlComment"/>, which was added for the opposite reason
+    /// entirely — a ControlStyles comment quoting the Aero literals it had just replaced was being
+    /// read as the crime. Comments have not counted since, and the ceiling below went a whole cycle
+    /// without noticing.
+    /// </para>
+    /// <para>
+    /// The ADVICE in the old paragraph is still right even though its mechanism is gone: a comment
+    /// naming a shipped colour is a claim that goes false the moment a theme changes that value, so
+    /// the hex belongs in the register row and the comment cites the row. It is now a convention
+    /// this scanner does not enforce, which is worth knowing before relying on it.
     /// </para>
     /// </summary>
     private static readonly Regex XamlLiteralColour =
@@ -326,29 +337,50 @@ public class ThemedStatusColourTests
         // so a new literal in that ControlTemplate now fails this clause instead of inheriting a
         // permission it never earned.
 
-        new("src/ROROROblox.App/MainWindow.xaml", "Runtime contested-lock banner", 15,
-            "F-066, open. The mutex-recovery banner: Foreground #F1B232 at :1568, then #17D4FA on "
-            + "#0F1F31 and #FFFFFF on #22314A across the two recovery buttons at :1572 and :1575. "
-            + "Five hex occurrences on three lines — item 6 re-read this row today and recorded both "
-            + "that its citation had drifted (:1474,1477 -> :1572,1575) and that it never counted the "
-            + "third line. Deliberately not fixed here; its fix is F-068's shared banner/button "
-            + "recipe, and hand-fixing one of three near-copies is how there came to be three."),
+        // F-066's MainWindow entry was retired by v1.21 item 12, and the way it emptied is the
+        // point. It covered five hex occurrences on three lines: Foreground #F1B232 on the
+        // contested-lock banner, then #17D4FA on #0F1F31 and #FFFFFF on #22314A across the two
+        // recovery buttons. FOUR of the five left in v1.20 when those buttons took CtaButtonStyle
+        // and SecondaryButtonStyle — a button sweep quietly closing most of a colour row, which
+        // nothing announced and nothing re-counted. Item 12 bound the fifth to RowExpiredAccent,
+        // measured on the page field at 8.85 / 7.23 / 9.85 / 12.84.
+        // MainWindow.xaml now holds ZERO colour literals, so this file's most-watched region is
+        // clean for the first time. Fourth retirement this cycle, on the same rule as F-085's,
+        // About's narrowing and F-087's: an entry that outlives its literals is a permission
+        // nobody re-earned.
 
-        new("src/ROROROblox.App/MainWindow.xaml", "Bloxstrap warning banner", 20,
-            "F-085, open. Background #3F3000, BorderBrush #8F7000, body Foreground #FFE3A6 — THREE "
-            + "literals, not the two spec §7 names, which is what item 6 corrected when it opened the "
-            + "row. The banner renders the same warm amber under all four built-ins including "
-            + "flatline, whose field is #101010. Same F-068 fix as the row above, and left out of "
-            + "this cycle for the same reason."),
+        // F-085's entry was retired by v1.21 item 2, which rebound the Bloxstrap banner's three
+        // literals — Background #3F3000, BorderBrush #8F7000, body Foreground #FFE3A6 — onto the
+        // same RowExpiredBg / RowExpiredAccent recipe the compat banner already used. Retired the
+        // same way F-089's was and for the same reason: an allow-list entry that outlives the
+        // literals it cites is a standing permission nobody re-earned, so a new hex in that banner
+        // now fails the offender clause instead of inheriting a badge. The row itself stays open
+        // until item 12 flips it, which is the register's rule, not this file's.
 
-        new("src/ROROROblox.App/About/AboutWindow.xaml", null, 0,
-            "Spec §7 AND F-063, open — this is the one region with both. §7 puts the fixed logo "
-            + "hexes out of the theme's reach under invariant 2 (the 626 Labs duo is never split and "
-            + "the logo's own brand hex stays fixed), which covers the eight keyed tint brushes at "
-            + ":13-20 and the magenta glow at :89. F-063 covers the rest of the window and its fix "
-            + "direction says so in as many words — bind the card at :96, drop the canvas fill, "
-            + "'logo tint steps stay fixed hex'. Whole-file because F-063's surface IS the whole "
-            + "window."),
+        // AboutWindow.xaml was a WHOLE-FILE entry until v1.21 item 5, on the grounds that F-063's
+        // surface was the whole window. That is no longer true: item 4 bound the two grounds the row
+        // was actually about, so what remains is artwork, and artwork earns a narrow entry naming
+        // what it is rather than a blanket one. The narrowing is the point — a whole-file exemption
+        // on this file is what let a theme slot sit inside the mark for a cycle and a half
+        // (AboutArtworkTests found it), and it would equally have hidden the next literal typed into
+        // any other part of the window.
+
+        new("src/ROROROblox.App/About/AboutWindow.xaml", "<Window.Resources>", 9,
+            "Spec §7 (invariant 2) — the 626 Labs mark, NOT a finding and not debt. Eight keyed "
+            + "brushes painting the nine faces of the iso voxel stack: the cyan trio, the magenta "
+            + "pair, the teal pair and the soft navy. Same category as the per-account caption "
+            + "palette allow-listed above — these paint WHO this product is, not WHAT STATE "
+            + "something is in, and a themed logo is a broken logo. AboutArtworkTests holds the "
+            + "line in both directions: no face may take a theme slot, and the plate under them "
+            + "must. Anchored on the resource block with a span that reaches the eighth brush, so a "
+            + "ninth added below the anchor's reach is NOT covered and has to justify itself."),
+
+        new("src/ROROROblox.App/About/AboutWindow.xaml", "<TextBlock.Effect>", 2,
+            "Spec §7, same invariant, different surface. The Easter-egg glow is a DropShadow in the "
+            + "brand magenta, deliberately the fixed brand hue rather than the theme's Magenta slot "
+            + "— it is the reward for finding the egg, and under flatline the theme value is a dark "
+            + "achromatic grey that would render the glow invisible. Two-line span: the effect and "
+            + "the element that owns it, nothing else."),
 
         new("src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml", null, 0,
             "F-066, open. That row's surface is literally 'Modals/CookieCapture vs rest' and its "
@@ -393,7 +425,37 @@ public class ThemedStatusColourTests
     /// arrive wearing an old row's badge, which is the one thing the offender list above cannot see.
     /// F-079's own count needs the same correction; that belongs to the register pass, not here.
     /// </summary>
-    private const int AllowedXamlLiteralCeiling = 95;
+    /// <summary>
+    /// <b>RE-DERIVED FROM THE TREE 2026-08-11 by v1.21 item 5: 58, down from 95 — and 33 of that
+    /// drop had already happened before this cycle touched anything.</b>
+    /// <para>
+    /// THE CEILING HAD BEEN CARRYING SLACK FOR A WHOLE CYCLE, and the mechanism is worth naming
+    /// because this constant exists to prevent exactly it. 95 was measured at v1.18. v1.20 then
+    /// added <see cref="StripXmlComment"/> — because a ControlStyles comment QUOTING the Aero
+    /// literals it had just replaced was being read as the crime — and that change removed every
+    /// commented hex from this count without anyone re-deriving the number. v1.20's button sweep
+    /// separately took four literals out of <c>MainWindow.xaml</c>'s two recovery buttons. The
+    /// assertion is <c>allowed &lt;= ceiling</c>, so both improvements were invisible: the gate went
+    /// green while the room it was leaving grew to 33 unaccounted occurrences. Measured at this
+    /// cycle's branch point the real figure was <b>62</b> against a ceiling of 95.
+    /// </para>
+    /// <para>
+    /// That is this constant's own thesis arriving from the direction it was not watching. The
+    /// doc above says slack "is an open invitation to re-add them" and worries about the count
+    /// growing; nobody considered that a ceiling never lowered after a fix is the same hole, and a
+    /// ceiling is only a ceiling while somebody re-derives it.
+    /// </para>
+    /// <para>
+    /// Derived, not adjusted, per the register's rule — App.xaml 11 + CookieCaptureWindow 14 +
+    /// Modals/ 23 + AboutWindow 9 + MainWindow 0, counted outside comments, reconciling exactly
+    /// with what this clause reports. This cycle removed five: the Bloxstrap banner's three
+    /// (item 2), AboutWindow's card ground (item 4), and the contested-lock banner's
+    /// <c>#F1B232</c> (item 12, closing F-066's in-scope residue).
+    /// <b><c>MainWindow.xaml</c> now holds ZERO colour literals</b> — the file this fence was built
+    /// to watch, and the one it has never been able to blanket-exempt, is clean for the first time.
+    /// </para>
+    /// </summary>
+    private const int AllowedXamlLiteralCeiling = 57;
 
     /// <summary>
     /// Vacuity floor. Well under the ceiling so that genuinely CLOSING F-079 or F-066 — which would

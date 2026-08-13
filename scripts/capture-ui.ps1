@@ -20,6 +20,35 @@ param(
     [string]$OutDir     = (Join-Path $PSScriptRoot '..\docs\ui-evidence'),
     [string[]]$Surface,
     [switch]$Verify,
+    # Store-listing mode: capture the WINDOW ONLY and composite it onto a flat brand-navy
+    # canvas, which is what the shipped assets in docs/store/screenshots actually are -- they
+    # look like desktop shots and are not.
+    #
+    # A REAL desktop capture was tried first and is unshippable from a working machine: the
+    # 2026-08-12 attempt caught client and employer-tenant folder names, three real Roblox
+    # account names, a dozen unrelated taskbar windows and the Windows Insider evaluation
+    # watermark. PrintWindow reads the window's own device context, so none of that is cropped
+    # out -- it is never captured.
+    [switch]$StoreFrame,
+    # 1920x1080 is what the Store checklist calls preferred; 4K is merely accepted. At this size
+    # the window composites at NATIVE pixels. The shipped 4K assets upscaled it and lost detail.
+    [int]$CanvasWidth  = 1920,
+    [int]$CanvasHeight = 1080,
+    # Restrict the theme rounds. The four-round loop is the glow campaign's contract -- a Store
+    # listing wants one theme per shot, and the theme RANGE is told by -ThemePanel instead.
+    [string[]]$Theme,
+    # Tile one surface across every captured theme into a single 2x2 image, so the listing can
+    # show the theme range in one screenshot rather than spending four carousel slots on it.
+    [switch]$ThemePanel,
+    # Capture in whatever theme is already active, without driving the picker.
+    #
+    # Setting a theme means opening Preferences, which needs the main window's Settings button.
+    # Some states do not have one: COMPACT MODE hides the whole toolbar, so a theme round-trip
+    # cannot run and the capture fails with "no [Button] with name='Settings'". Any transient
+    # state -- compact, a modal already up, a mid-flow dialog -- has the same problem, and the
+    # round-trip would disturb the very state being photographed even where it works.
+    # Pair with -Theme to label the output; it is a LABEL here, not an instruction.
+    [switch]$NoThemeSwitch,
     [switch]$DumpUia,
     [switch]$Watch,
     [switch]$SelfTest
@@ -29,6 +58,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
 
 # A typed exception for deny-list hits, so callers can discriminate "this route step is pointed at
@@ -59,6 +89,10 @@ using System.Runtime.InteropServices;
 public static class Win
 {
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
+    public delegate bool EnumProc(IntPtr hWnd, IntPtr lParam);
+    [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, IntPtr lParam);
+    [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
     [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
     [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr hWnd);
@@ -94,6 +128,7 @@ Add-Type -TypeDefinition $win32
 #region Capture
 
 $script:SW_RESTORE = 9
+$script:SW_MINIMIZE = 6
 $script:PW_RENDERFULLCONTENT = 2
 
 function Get-AppProcess {
@@ -152,6 +187,134 @@ function Get-RegionBitmap {
     try { $g.CopyFromScreen([int]$X, [int]$Y, 0, 0, (New-Object System.Drawing.Size($iw, $ih))) }
     finally { $g.Dispose() }
     return $bmp
+}
+
+function New-ThemePanel {
+    # One surface, every theme, tiled 2x2 on the brand navy. The Store listing gets ONE slot
+    # that says "four built-in themes including an achromatic one" instead of four slots that
+    # each say the same thing about the same window.
+    #
+    # Composed from the per-theme captures already on disk rather than by re-driving the app:
+    # the theme rounds are the expensive part and they have already run.
+    param(
+        [Parameter(Mandatory)][string[]]$Paths,
+        [Parameter(Mandatory)][string[]]$Labels,
+        [Parameter(Mandatory)][int]$Width,
+        [Parameter(Mandatory)][int]$Height
+    )
+
+    if ($Paths.Count -lt 2) { throw "a theme panel needs at least two themes; got $($Paths.Count)." }
+
+    $navy   = [System.Drawing.Color]::FromArgb(255, 15, 31, 49)
+    $muted  = [System.Drawing.Color]::FromArgb(255, 154, 168, 184)   # MutedText, brand
+    $cols   = 2
+    $rows   = [math]::Ceiling($Paths.Count / $cols)
+    $gutter = 32
+    $label  = 34
+
+    $cellW = [int](($Width  - ($gutter * ($cols + 1))) / $cols)
+    $cellH = [int](($Height - ($gutter * ($rows + 1))) / $rows) - $label
+
+    $canvas = New-Object System.Drawing.Bitmap($Width, $Height)
+    $g = [System.Drawing.Graphics]::FromImage($canvas)
+    $font = New-Object System.Drawing.Font('Segoe UI', 15, [System.Drawing.FontStyle]::Bold)
+    $brush = New-Object System.Drawing.SolidBrush($muted)
+    try {
+        $g.Clear($navy)
+        $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+        $g.SmoothingMode     = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+        $g.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::ClearTypeGridFit
+
+        for ($i = 0; $i -lt $Paths.Count; $i++) {
+            $img = [System.Drawing.Image]::FromFile($Paths[$i])
+            try {
+                $c = $i % $cols
+                $r = [math]::Floor($i / $cols)
+                $cx = $gutter + ($c * ($cellW + $gutter))
+                $cy = $gutter + ($r * ($cellH + $label + $gutter))
+
+                # Fit inside the cell, preserving aspect. DOWNSCALE ONLY -- blowing a window up
+                # to fill a tile is how the old 4K assets lost their crispness.
+                $scale = [math]::Min([math]::Min($cellW / $img.Width, $cellH / $img.Height), 1.0)
+                $dw = [int]($img.Width * $scale)
+                $dh = [int]($img.Height * $scale)
+                $dx = $cx + [int](($cellW - $dw) / 2)
+                $dy = $cy + [int](($cellH - $dh) / 2)
+
+                $g.DrawImage($img, $dx, $dy, $dw, $dh)
+                $g.DrawString($Labels[$i], $font, $brush, $cx, ($cy + $cellH + 6))
+            }
+            finally { $img.Dispose() }
+        }
+    }
+    finally { $g.Dispose(); $font.Dispose(); $brush.Dispose() }
+    return $canvas
+}
+
+function New-StoreFrame {
+    # Window bitmap onto a flat brand-navy canvas. #0F1F31 is the same navy
+    # generate-store-assets.ps1 uses for every logo and tile, so the listing's screenshots and
+    # its artwork sit on one ground.
+    param(
+        [Parameter(Mandatory)][System.Drawing.Bitmap]$Window,
+        [Parameter(Mandatory)][int]$Width,
+        [Parameter(Mandatory)][int]$Height
+    )
+
+    if ($Window.Width -gt $Width -or $Window.Height -gt $Height) {
+        throw ("captured window is {0}x{1}, larger than the {2}x{3} canvas. Resize the window or " +
+               'raise -CanvasWidth/-CanvasHeight; upscaling a screenshot is not an option here.') -f `
+              $Window.Width, $Window.Height, $Width, $Height
+    }
+
+    $navy = [System.Drawing.Color]::FromArgb(255, 15, 31, 49)
+    $canvas = New-Object System.Drawing.Bitmap($Width, $Height)
+    $g = [System.Drawing.Graphics]::FromImage($canvas)
+    try {
+        $g.Clear($navy)
+        $x = [int](($Width  - $Window.Width)  / 2)
+        # Slightly above centre: a window sitting dead-centre reads as a floating dialog, and
+        # the listing carousel crops from the bottom on narrow viewports.
+        $y = [int](($Height - $Window.Height) * 0.42)
+
+        # A soft offset shadow so the window reads as sitting ON the ground rather than pasted
+        # against it. Drawn as three decreasing-alpha rectangles; a real blur would need a
+        # convolution pass for a difference nobody would see at listing scale.
+        for ($i = 3; $i -ge 1; $i--) {
+            $a = 18 * $i
+            $brush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb($a, 0, 0, 0))
+            $pad = $i * 6
+            $g.FillRectangle($brush, $x - $pad, $y - $pad + 4, $Window.Width + ($pad * 2), $Window.Height + ($pad * 2))
+            $brush.Dispose()
+        }
+
+        $g.DrawImageUnscaled($Window, $x, $y)
+    }
+    finally { $g.Dispose() }
+    return $canvas
+}
+
+function Clear-Desktop {
+    # Minimise every visible top-level window EXCEPT the app's own.
+    #
+    # The first version called Shell.MinimizeAll, on the reasoning that it is what Win+D does and
+    # therefore behaves the way an operator expects. It minimised RoRoRo too -- and RoRoRo
+    # minimises TO TRAY, which zeroes its MainWindowHandle, so the very next step failed with
+    # 'no running process with a main window'. The tool cleared the desktop of the thing it was
+    # there to photograph.
+    param([Parameter(Mandatory)][int]$KeepPid)
+
+    $cb = [Win+EnumProc]{
+        param([IntPtr]$hwnd, [IntPtr]$lparam)
+        if ([Win]::IsWindowVisible($hwnd)) {
+            $wpid = 0
+            [Win]::GetWindowThreadProcessId($hwnd, [ref]$wpid) | Out-Null
+            if ($wpid -ne $KeepPid) { [Win]::ShowWindow($hwnd, $script:SW_MINIMIZE) | Out-Null }
+        }
+        return $true
+    }
+    [Win]::EnumWindows($cb, [IntPtr]::Zero) | Out-Null
+    Start-Sleep -Milliseconds 700
 }
 
 function Test-BlankFrame {
@@ -558,7 +721,24 @@ function Save-SurfaceCapture {
         [Parameter(Mandatory)][string]$Path
     )
     $hwnd = [IntPtr]$Element.Current.NativeWindowHandle
-    if ($hwnd -ne [IntPtr]::Zero) {
+    # What the blank-frame guard should judge is the CAPTURE, not the frame built around it.
+    # Store-frame mode composites the window onto a large flat navy canvas, and a sparse dark
+    # window -- Diagnostics is mostly background with a little text -- pushes the COMBINED image
+    # over the 95% single-colour threshold even though the capture is perfect. The guard refused
+    # a good asset rather than writing a bad one, which is the right way for it to be wrong.
+    $blankCheckTarget = $null
+    if ($script:StoreFrameMode -and $hwnd -ne [IntPtr]::Zero) {
+        $shot = Get-WindowBitmap -Hwnd $hwnd
+        try {
+            if (Test-BlankFrame -Bmp $shot) {
+                throw "window capture came back blank ($($shot.Width)x$($shot.Height)); refusing to write it as evidence"
+            }
+            $bmp = New-StoreFrame -Window $shot -Width $script:CanvasW -Height $script:CanvasH
+            $blankCheckTarget = 'already-checked'
+        }
+        finally { $shot.Dispose() }
+    }
+    elseif ($hwnd -ne [IntPtr]::Zero) {
         $bmp = Get-WindowBitmap -Hwnd $hwnd
     }
     else {
@@ -569,7 +749,7 @@ function Save-SurfaceCapture {
     }
 
     try {
-        if (Test-BlankFrame -Bmp $bmp) {
+        if (-not $blankCheckTarget -and (Test-BlankFrame -Bmp $bmp)) {
             throw "capture came back blank ($($bmp.Width)x$($bmp.Height)); refusing to write it as evidence"
         }
         $dir = Split-Path -Parent $Path
@@ -730,6 +910,7 @@ function Invoke-CaptureRound {
 
             $results.Add([pscustomobject]@{
                 id = $surface.id; name = $surface.name; status = 'ok'
+                theme = $ThemeId
                 file = Split-Path -Leaf $saved.Path
                 width = $saved.Width; height = $saved.Height
             })
@@ -878,6 +1059,8 @@ if ($SelfTest) { Invoke-SelfTest }
 
 $routes = Read-Routes -Path $RoutesPath
 $proc = Get-AppProcess -ProcessName $routes.processName
+# No desktop sweep is needed: PrintWindow never reads the screen, so nothing behind the app is
+# capturable in the first place. That is the whole reason this mode exists.
 $appRoot = Get-AppRoot -ProcessId $proc.Id
 Write-Host "Attached to $($routes.processName) (pid $($proc.Id))."
 
@@ -934,6 +1117,18 @@ if ($Watch) {
     exit 0
 }
 
+$script:StoreFrameMode = [bool]$StoreFrame
+$script:CanvasW = $CanvasWidth
+$script:CanvasH = $CanvasHeight
+if ($StoreFrame) {
+    # Default the output somewhere that will not be mistaken for design evidence. The caller can
+    # still override -OutDir; this only moves the default.
+    if (-not $PSBoundParameters.ContainsKey('OutDir')) {
+        $OutDir = Join-Path $PSScriptRoot '..\docs\store\screenshots'
+    }
+    Write-Host "Store-frame mode: window composited onto ${CanvasWidth}x${CanvasHeight} navy, to $OutDir"
+}
+
 if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Force -Path $OutDir | Out-Null }
 
 # Vacuity floor, checked before any app interaction or manifest write. A filter that matches
@@ -948,24 +1143,70 @@ if ($expectedSurfaceCount -eq 0) {
     throw "no captured surfaces matched $filterDesc; the route file resolved to nothing. Refusing to run the theme loop or touch any manifest."
 }
 
+if ($NoThemeSwitch) {
+    # Enumerating themes also opens Preferences, so that is skipped too.
+    # Comma-wrapped: PowerShell unrolls a single-element array returned from an if-block, so
+    # $themes became the STRING "brand" and $themes[0] printed "b" in the message below.
+    $themes = if ($Theme) { ,@($Theme) } else { ,@('current') }
+    Write-Host "No-theme-switch mode: capturing the active theme as-is, labelled '$($themes[0])'."
+}
+else {
 Open-AppearancePage -Scope $appRoot
 $themes = Get-AvailableThemes -Scope $appRoot
+if ($Theme) {
+    $wanted = @($Theme)
+    $missing = $wanted | Where-Object { $_ -notin $themes }
+    if ($missing) { throw "theme(s) not available in this build: $($missing -join ', '). Available: $($themes -join ', ')" }
+    $themes = $themes | Where-Object { $_ -in $wanted }
+}
 Close-Preferences -Scope $appRoot
+}
 Write-Host "Themes: $($themes -join ', ')"
 
 $all = @()
 foreach ($themeId in $themes) {
     Write-Host ''
     Write-Host "Round: $themeId" -ForegroundColor Cyan
-    Open-AppearancePage -Scope $appRoot
-    Set-ActiveTheme -Scope $appRoot -ThemeId $themeId
-    Close-Preferences -Scope $appRoot
+    if (-not $NoThemeSwitch) {
+        Open-AppearancePage -Scope $appRoot
+        Set-ActiveTheme -Scope $appRoot -ThemeId $themeId
+        Close-Preferences -Scope $appRoot
+    }
 
     $results = Invoke-CaptureRound -Scope $appRoot -Routes $routes -ThemeId $themeId `
                                    -OutDir $OutDir -Proc $proc -Only $Surface -DumpUia:$DumpUia
     $manifest = Write-RunManifest -OutDir $OutDir -ThemeId $themeId -Results $results -Proc $proc
     Write-Host "  manifest: $manifest"
     $all += $results
+}
+
+if ($ThemePanel) {
+    Write-Host ''
+    Write-Host 'Theme panel' -ForegroundColor Cyan
+    # One panel per captured surface, from the PNGs the rounds just wrote.
+    $bySurface = $all | Where-Object { $_.status -eq 'ok' } | Group-Object name
+    foreach ($grp in $bySurface) {
+        $ordered = @()
+        $labels  = @()
+        foreach ($t in $themes) {
+            $hit = $grp.Group | Where-Object { $_.theme -eq $t } | Select-Object -First 1
+            if ($hit) {
+                $full = Join-Path $OutDir $hit.file
+                if (Test-Path $full) { $ordered += $full; $labels += $t }
+            }
+        }
+        if ($ordered.Count -lt 2) {
+            Write-Warning "  $($grp.Name): only $($ordered.Count) theme capture(s); skipping panel."
+            continue
+        }
+        $panel = New-ThemePanel -Paths $ordered -Labels $labels -Width $CanvasWidth -Height $CanvasHeight
+        try {
+            $out = Join-Path $OutDir ("{0}--themes.png" -f $grp.Name)
+            $panel.Save($out, [System.Drawing.Imaging.ImageFormat]::Png)
+            Write-Host "  wrote $out ($($ordered.Count) themes)"
+        }
+        finally { $panel.Dispose() }
+    }
 }
 
 $ok = @($all | Where-Object { $_.status -eq 'ok' }).Count

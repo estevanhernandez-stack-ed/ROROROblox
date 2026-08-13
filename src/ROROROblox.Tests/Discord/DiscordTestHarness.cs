@@ -326,7 +326,6 @@ internal static class DiscordTestHarness
         }
 
         public Task<string?> GetDefaultPlaceUrlAsync() => throw new NotImplementedException();
-        public Task SetDefaultPlaceUrlAsync(string url) => throw new NotImplementedException();
         public Task<bool> GetLaunchMainOnStartupAsync() => throw new NotImplementedException();
         public Task SetLaunchMainOnStartupAsync(bool enabled) => throw new NotImplementedException();
         public Task<string?> GetActiveThemeIdAsync() => throw new NotImplementedException();
@@ -472,6 +471,7 @@ internal static class DiscordTestHarness
     {
         public bool IsInstallerRunning() => throw new NotImplementedException();
         public Task<bool> IsUpdatePendingAsync(CancellationToken ct = default) => throw new NotImplementedException();
+        public bool IsUpdateChurnActive() => throw new NotImplementedException();
     }
 
     private sealed class FakeAccountTransport : IAccountTransport

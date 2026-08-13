@@ -22,6 +22,17 @@ dotnet run --project src/ROROROblox.App
 dotnet test
 ```
 
+**Close RoRoRo before running the tests.** With an instance up, the render gates fail about a
+hundred at a time with `The URI prefix is not recognized` out of WPF's `pack:` URI resolution, and
+the test host often crashes and aborts the run partway. The suite now detects this and fails with a
+message naming the pid instead of leaving you to read a wall of WPF stack traces, but it cannot fix
+it: the mechanism is unsolved and tracked as F-105 in the findings register. Measured both ways on
+2026-08-12 — app running: 103 / 98 / crash / 99 / 100 / 100 failures; app closed: 1643 of 1643,
+eight runs straight. CI is unaffected, since a runner has no instance running.
+
+Also worth knowing: an aborted run prints `Passed!  - Failed: 0` on one line and `Test Run Aborted.`
+on the next. `dotnet test` does exit non-zero, so CI catches it, but do not read the first line alone.
+
 The pre-commit hooks are git-installed via `.claude/hooks/install.ps1`. They block commits containing the real `.ROBLOSECURITY` cookie prefix or `c:\Users\<name>\` paths in code. False positives are rare — see [.claude/hooks/README.md](.claude/hooks/README.md) before bypassing.
 
 ## Auth-ticket spike (item 1's verification gate)

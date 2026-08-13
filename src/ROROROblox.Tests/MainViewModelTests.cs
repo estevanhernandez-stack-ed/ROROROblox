@@ -36,7 +36,8 @@ public class MainViewModelTests
         ITrayService? tray = null,
         IRobloxRunningProbe? runningProbe = null,
         IShellOpener? shellOpener = null,
-        FakeAppSettings? settings = null)
+        FakeAppSettings? settings = null,
+        IBloxstrapDetector? bloxstrapDetector = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
@@ -62,7 +63,7 @@ public class MainViewModelTests
             themeStore: new FakeThemeStore(),
             themeService: new ThemeService(new FakeThemeStore(), new FakeAppSettings()),
             windowDecorator: windowDecorator,
-            bloxstrapDetector: new FakeBloxstrapDetector(),
+            bloxstrapDetector: bloxstrapDetector ?? new FakeBloxstrapDetector(),
             updateProbe: new FakeRobloxUpdateProbe(),
             accountTransport: new FakeAccountTransport(),
             activityMonitor: new FakeActivityMonitor(),
@@ -1489,7 +1490,10 @@ public class MainViewModelTests
         // InitializeBloxstrapWarningAsync — must return a benign completed Task, never throw.
         public Task<bool?> GetEdgeRemediationAnswerAsync(string themeId) => Task.FromResult<bool?>(null);
         public Task SetEdgeRemediationAnswerAsync(string themeId, bool accepted) => Task.CompletedTask;
-        public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(true);
+        /// <summary>Defaults to dismissed so the banner stays out of every pre-existing test's
+        /// way; settable because the render gates need it VISIBLE.</summary>
+        public bool BloxstrapWarningDismissed { get; set; } = true;
+        public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(BloxstrapWarningDismissed);
 
         // Backing field (not throw-NotImplemented) so LoadAsync's read/dismiss-signature
         // round trip is exercisable by FPS-cap dismissal tests without a real AppSettings.
@@ -1502,7 +1506,6 @@ public class MainViewModelTests
         }
 
         public Task<string?> GetDefaultPlaceUrlAsync() => throw new NotImplementedException();
-        public Task SetDefaultPlaceUrlAsync(string url) => throw new NotImplementedException();
         public Task<bool> GetLaunchMainOnStartupAsync() => throw new NotImplementedException();
         public Task SetLaunchMainOnStartupAsync(bool enabled) => throw new NotImplementedException();
         public Task<string?> GetActiveThemeIdAsync() => throw new NotImplementedException();
@@ -1684,6 +1687,7 @@ public class MainViewModelTests
     {
         public bool IsInstallerRunning() => throw new NotImplementedException();
         public Task<bool> IsUpdatePendingAsync(CancellationToken ct = default) => throw new NotImplementedException();
+        public bool IsUpdateChurnActive() => throw new NotImplementedException();
     }
 
     private sealed class FakeAccountTransport : IAccountTransport
@@ -1706,7 +1710,19 @@ public class MainViewModelTests
         public void Stop() => throw new NotImplementedException();
         public void Sample() => throw new NotImplementedException();
         public void MarkActive(Guid accountId, DateTimeOffset nowUtc) => throw new NotImplementedException();
-        public IReadOnlyList<AccountActivity> GetSnapshot() => throw new NotImplementedException();
+
+        // Returns empty rather than throwing, and that is not laziness — it is the difference
+        // between a green suite and an aborted one. MainViewModel starts a 30s DispatcherTimer in
+        // its constructor whose tick calls GetSnapshot (MainViewModel.cs:320, the v1.8 idle-awareness
+        // projection). The timer outlives the test that built the VM, so it fires into this double
+        // long after the assertions are done, on the dispatcher thread, where nothing catches. A
+        // throwing member there does not fail a test — it takes down the whole test host mid-run and
+        // aborts every test that had not executed yet.
+        //
+        // Observed 2026-08-12: two consecutive full-suite runs printed "Passed! - Failed: 0,
+        // Passed: 1637" immediately above "Test Run Aborted." A live timer calling this is correct
+        // behaviour, so the double has to answer it. See F-105.
+        public IReadOnlyList<AccountActivity> GetSnapshot() => Array.Empty<AccountActivity>();
     }
 
     private sealed class FakeMemoryWatchdog : IMemoryWatchdog

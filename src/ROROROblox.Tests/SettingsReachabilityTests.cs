@@ -100,10 +100,18 @@ public class SettingsReachabilityTests
         new("DefaultPlaceUrl",
             "Legacy, and the code says so twice. RobloxLauncher.cs:246 lists it as '(legacy "
             + "single-URL setting)' third in a fallback chain, and :353 calls it 'vestigial'; "
-            + "RobloxLauncherTests.cs:362 pins that it 'must be ignored'. Per-account favourites "
-            + "replaced it. Zero App references — no window reads it, no window writes it. It is "
-            + "kept so an old settings.json still deserializes, not so anyone can set it. If it is "
-            + "ever genuinely dead, the fix is deleting the field, not adding a control."),
+            + "RobloxLauncherTests pins that the typed path 'must be ignored'. Per-account "
+            + "favourites replaced it. Zero App references — no window reads it, no window writes "
+            + "it. It is kept so an old settings.json still deserializes, not so anyone can set it. "
+            + "**v1.21 item 9 made that literally true: SetDefaultPlaceUrlAsync is deleted, so the "
+            + "field is now read-only and this entry's 'not so anyone can set it' is enforced by "
+            + "the type rather than by convention.** This entry's last sentence — 'if it is ever "
+            + "genuinely dead, the fix is deleting the field, not adding a control' — was more "
+            + "right than the cycle that quoted it: F-093's spec claimed deleting it would move "
+            + "legacy users from their saved place to Roblox home, and that is false, because the "
+            + "app launches exclusively through the typed LaunchTarget path which resolves to Home "
+            + "already. Only the legacy string overload of LaunchAsync still reads it, and nothing "
+            + "calls that. The remaining deletion is F-093's own row, together with the overload."),
 
         new("EdgeRemediationAnswers",
             "A ledger, not a setting. IAppSettings documents it as 'a theme author's answer to \"may "

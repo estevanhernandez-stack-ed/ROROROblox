@@ -33,37 +33,58 @@ public class AppSettingsTests : IDisposable
         Assert.Null(url);
     }
 
+    /// <summary>
+    /// THE ONE THAT MATTERS AFTER v1.21 item 9 removed the setter (F-093). A legacy value can no
+    /// longer be written by anything, so the only question left is whether it SURVIVES — a save
+    /// triggered by some unrelated preference must not silently drop the field and erase a value
+    /// its owner set in an older build.
+    /// <para>
+    /// It survives because DefaultPlaceUrl is still a SettingsBlob property, so LoadAsync reads it
+    /// and SaveAsync writes it back untouched. That is the entire reason the field was kept rather
+    /// than deleted with its setter.
+    /// </para>
+    /// </summary>
     [Fact]
-    public async Task SetThenGet_RoundTrips()
+    public async Task LegacyDefaultPlaceUrl_SurvivesASaveTriggeredByAnotherSetting()
     {
-        using var settings = new AppSettings(_filePath);
+        File.WriteAllText(_filePath, """
+            {
+              "version": 1,
+              "defaultPlaceUrl": "https://www.roblox.com/games/920587237/Adopt-Me"
+            }
+            """);
 
-        await settings.SetDefaultPlaceUrlAsync("https://www.roblox.com/games/920587237/Adopt-Me");
+        using (var settings = new AppSettings(_filePath))
+        {
+            Assert.Equal("https://www.roblox.com/games/920587237/Adopt-Me",
+                await settings.GetDefaultPlaceUrlAsync());
 
-        var url = await settings.GetDefaultPlaceUrlAsync();
-        Assert.Equal("https://www.roblox.com/games/920587237/Adopt-Me", url);
-    }
+            // An unrelated preference change, which rewrites the whole blob.
+            await settings.SetLaunchMainOnStartupAsync(true);
+        }
 
-    [Fact]
-    public async Task SetDefaultPlaceUrlAsync_RejectsEmptyOrWhitespace()
-    {
-        using var settings = new AppSettings(_filePath);
+        // Cold start against the rewritten file: the legacy value is still there.
+        using var reopened = new AppSettings(_filePath);
+        Assert.Equal("https://www.roblox.com/games/920587237/Adopt-Me",
+            await reopened.GetDefaultPlaceUrlAsync());
+        Assert.True(await reopened.GetLaunchMainOnStartupAsync());
 
-        await Assert.ThrowsAsync<ArgumentException>(() => settings.SetDefaultPlaceUrlAsync(""));
-        await Assert.ThrowsAsync<ArgumentException>(() => settings.SetDefaultPlaceUrlAsync("   "));
+        Assert.Contains("defaultPlaceUrl", File.ReadAllText(_filePath), StringComparison.Ordinal);
     }
 
     [Fact]
     public async Task ColdStart_ReadsBackPersistedValue()
     {
+        // Retargeted from SetDefaultPlaceUrlAsync to a string setting that still has a setter; this
+        // test is about the cold-start read path, not about which preference it round-trips.
         var first = new AppSettings(_filePath);
-        await first.SetDefaultPlaceUrlAsync("https://x.example/place");
+        await first.SetActiveThemeIdAsync("midnight");
         first.Dispose();
 
         using var second = new AppSettings(_filePath);
-        var url = await second.GetDefaultPlaceUrlAsync();
+        var themeId = await second.GetActiveThemeIdAsync();
 
-        Assert.Equal("https://x.example/place", url);
+        Assert.Equal("midnight", themeId);
     }
 
     [Fact]
@@ -81,23 +102,11 @@ public class AppSettingsTests : IDisposable
     public async Task SaveAsync_RemovesTempFile_OnSuccess()
     {
         using var settings = new AppSettings(_filePath);
-        await settings.SetDefaultPlaceUrlAsync("https://x");
+        await settings.SetActiveThemeIdAsync("flatline");
 
         var tempPath = _filePath + ".tmp";
         Assert.False(File.Exists(tempPath));
         Assert.True(File.Exists(_filePath));
-    }
-
-    [Fact]
-    public async Task SetDefaultPlaceUrlAsync_OverwritesExistingValue()
-    {
-        using var settings = new AppSettings(_filePath);
-
-        await settings.SetDefaultPlaceUrlAsync("https://first");
-        await settings.SetDefaultPlaceUrlAsync("https://second");
-
-        var url = await settings.GetDefaultPlaceUrlAsync();
-        Assert.Equal("https://second", url);
     }
 
     [Fact]
@@ -135,9 +144,18 @@ public class AppSettingsTests : IDisposable
     [Fact]
     public async Task LaunchMainOnStartup_AndDefaultPlaceUrl_AreIndependent()
     {
+        // The legacy value is seeded from disk now that no setter exists — which makes this a
+        // sharper test than it was: it proves toggling a live preference cannot disturb a field
+        // whose only remaining source is an older build's file.
+        File.WriteAllText(_filePath, """
+            {
+              "version": 1,
+              "defaultPlaceUrl": "https://place"
+            }
+            """);
+
         using var settings = new AppSettings(_filePath);
 
-        await settings.SetDefaultPlaceUrlAsync("https://place");
         await settings.SetLaunchMainOnStartupAsync(true);
 
         Assert.Equal("https://place", await settings.GetDefaultPlaceUrlAsync());

@@ -22,11 +22,27 @@ public interface IRobloxUpdateProbe
     bool IsInstallerRunning();
 
     /// <summary>
-    /// <c>true</c> when the installed Roblox version differs from the latest published version
-    /// (an update is pending pre-launch). Compares <c>RobloxCompatChecker.GetInstalledRobloxVersion()</c>
-    /// against <c>clientsettingscdn.roblox.com/v2/client-version/WindowsPlayer</c>'s <c>version</c>
-    /// field. Returns <c>false</c> on ANY failure (network, parse, missing install) — never blocks
-    /// a launch on a probe error.
+    /// <c>true</c> when an update is pending for the client that is about to launch. Compares
+    /// <c>clientsettingscdn.roblox.com/v2/client-version/WindowsPlayer</c>'s <c>version</c> field
+    /// against BOTH the version the <c>roblox-player</c> handler is pinned to
+    /// (<c>RobloxCompatChecker.GetHandlerRobloxVersion()</c>) and the newest installed version, and
+    /// answers <c>true</c> if EITHER disagrees. Returns <c>false</c> on ANY failure (network, parse,
+    /// missing install) — never blocks a launch on a probe error.
+    ///
+    /// <para><b>The handler version is the load-bearing one (F-104).</b> A launch runs whatever the
+    /// handler points at, which during an update is not the newest thing on disk. Reading only the
+    /// newest install let the gate answer "no update pending" moments before every client in a batch
+    /// self-updated at once.</para>
     /// </summary>
     Task<bool> IsUpdatePendingAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// <c>true</c> when more than one Roblox version was installed in the last few minutes — updates
+    /// are landing on top of each other. A reason to hold a batch on its own, independent of any
+    /// version comparison, and it costs no network at all.
+    ///
+    /// <para>Counted on folder CREATION time. Write time moves when a client runs, so counting on it
+    /// would report churn during every multilaunch — loudest exactly when it is most wrong.</para>
+    /// </summary>
+    bool IsUpdateChurnActive();
 }

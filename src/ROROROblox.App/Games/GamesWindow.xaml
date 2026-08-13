@@ -393,7 +393,13 @@
                     <TextBlock Text="No saved private servers."
                                FontSize="13"
                                Foreground="{DynamicResource MutedTextBrush}" />
-                    <TextBlock Text="Use the Squad Launch toolbar button to add one."
+                    <!-- F-021: this used to read "Use the Squad Launch toolbar button to add one",
+                         which named a window that is not open and an "add" action that does not
+                         exist. There is no way to add a private server here or anywhere else — the
+                         only site that persists one is SquadLaunchWindow's add-and-launch path
+                         (:371), which calls IPrivateServerStore.AddAsync as a side effect of
+                         launching a pasted link. The copy now names that mechanism. -->
+                    <TextBlock Text="Paste a private server link into Squad Launch and launch it. It saves here automatically."
                                FontSize="11"
                                Foreground="{DynamicResource MutedTextBrush}"
                                Margin="0,4,0,0"

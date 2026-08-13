@@ -32,11 +32,22 @@
                    Opacity="0.85"
                    Margin="0,12,0,0" />
 
+        <!-- F-021's sibling, F-074. This was "UNSAVED GAME STATE WILL BE LOST" at 10px mono
+             uppercase on #5A6982 — the smallest, dimmest, hardest-to-read text on the surface,
+             carrying the worst news on it. Uppercase mono at 10px reads as a machine label, which
+             is the register's point: the treatment said "footnote" while the words said
+             "irreversible".
+             It is now body prose at the same size as the body above it, and SemiBold at full
+             opacity rather than the body's 0.85, so the consequence is the most legible thing in
+             the dialog instead of the least. Colour is left as a literal deliberately: every
+             foreground in this modal is one, and F-079 owns migrating the whole file rather than
+             this cycle half-theming it. -->
         <TextBlock Grid.Row="2"
-                   Text="UNSAVED GAME STATE WILL BE LOST"
-                   FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                   FontSize="10"
-                   Foreground="#5A6982"
+                   Text="Unsaved progress in your running games will be lost."
+                   TextWrapping="Wrap"
+                   FontSize="12"
+                   FontWeight="SemiBold"
+                   Foreground="#FFFFFF"
                    VerticalAlignment="Bottom"
                    Margin="0,16,0,0" />
 

@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Media;
 
 namespace ROROROblox.App.Plugins;
 
@@ -83,12 +82,18 @@ internal partial class ConsentSheet : Window
         public bool IsHostEnforced { get; }
         public bool IsGranted { get; set; }
 
+        // NamespaceLabel is what actually tells the two namespaces apart. The colour tint in the
+        // XAML is a second carrier and cannot be the only one: magenta-heat sets Cyan and Magenta
+        // to the same value, so the tint collapses there and these sentences are all that is left.
         public string NamespaceLabel => IsHostEnforced
             ? "RoRoRo enforces this on every call."
             : "Runs on your machine -- RoRoRo cannot sandbox it.";
 
-        public Brush NamespaceBrush => IsHostEnforced
-            ? (Brush)(Application.Current.TryFindResource("CyanBrush") ?? new SolidColorBrush(Color.FromRgb(0x17, 0xD4, 0xFA)))
-            : (Brush)(Application.Current.TryFindResource("MagentaBrush") ?? new SolidColorBrush(Color.FromRgb(0xF2, 0x2F, 0x89)));
+        // NamespaceBrush lived here until v1.21 item 7 (F-087). It resolved CyanBrush/MagentaBrush
+        // through TryFindResource with literal fallbacks; it is now a Style + DataTrigger on
+        // IsHostEnforced in ConsentSheet.xaml, which is the governed path. The property is gone
+        // rather than deprecated because a resolve-at-read-time brush cannot follow a theme change:
+        // ThemeService.ApplySlot replaces the brush instance, so this would have handed back
+        // whatever was current when the row was constructed.
     }
 }

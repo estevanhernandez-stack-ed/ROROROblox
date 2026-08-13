@@ -20,6 +20,22 @@ internal partial class SessionHistoryWindow : Window
     private IReadOnlyList<LaunchSession> _rows = [];
     private bool _hasData;
 
+    /// <summary>
+    /// The gutter BETWEEN two session rows, and the inset WITHIN one. The invariant is
+    /// <c>RowGutter &gt; RowVerticalInset</c>, and it is the whole of F-065's fix — see the block
+    /// comment in <see cref="BuildRow"/> for why this carries the separation instead of a rule.
+    /// <para>
+    /// Named constants rather than inline numbers so the relationship is assertable:
+    /// <c>HistoryRowRhythmTests</c> reads these two and fails if the gutter stops exceeding the
+    /// inset. A gate that matched on the literal <c>6</c> would be checking the spelling; this
+    /// checks the reason.
+    /// </para>
+    /// </summary>
+    internal const double RowGutter = 12;
+
+    /// <inheritdoc cref="RowGutter"/>
+    internal const double RowVerticalInset = 8;
+
     public SessionHistoryWindow(
         ISessionHistoryStore store, IFavoriteGameStore favorites, IRobloxApi api,
         IStreamerIdentityProvider? streamerIdentity = null)
@@ -147,10 +163,41 @@ internal partial class SessionHistoryWindow : Window
         var display = _streamerIdentity?.ForAccount(row.AccountId, row.AccountDisplayName, row.AccountAvatarUrl ?? string.Empty)
                       ?? new DisplayIdentity(row.AccountDisplayName, row.AccountAvatarUrl ?? string.Empty);
 
+        // F-065: "which session is which" must hold when the fill stops carrying it. RowBg against
+        // the page field measures 1.09 brand / 1.08 midnight / 1.08 magenta-heat / 1.33 flatline, so
+        // the card edge is invisible in every theme and the row separation rested on nothing.
+        //
+        // THE ROW TAKES F-065'S SECOND OPTION -- "a baseline rule OR FIXED LEADING RHYTHM" -- and
+        // NOT a boundary. Three reasons, in the order they rule the first option out:
+        //
+        // 1. A row rule is a SEPARATOR, and WCAG 1.4.11's 3:1 does not govern separators. ThemeSlots
+        //    .InteractiveEdge says so in as many words and InteractiveEdgeBindingTests enforces it:
+        //    the derived edge is for interactive control boundaries only, because binding it to a
+        //    card edge or a row rule "would repaint every user's theme from a hairline to mid grey
+        //    to fix a problem those surfaces do not have". Deriving one here measures
+        //    #1F3149 -> #647181 in brand, which is that exact repaint, arrived at from the other
+        //    direction. The plain DividerBrush bind is the alternative and measures 1.05-1.16, a
+        //    boundary that does not read -- chrome added to satisfy a gate.
+        //
+        // 2. A resting border would break the app's own row vocabulary. On the account list a row
+        //    is a card -- fill, radius, gutter, no edge -- and a border means STATE: expired takes
+        //    RowExpiredAccent at 1px, focused takes Cyan at 2px. Spending that channel on rows in no
+        //    state would make History the one list that says "state" when it means "row", in the
+        //    cycle whose whole thesis is one vocabulary.
+        //
+        // 3. Geometry cannot fail a theme. A rule has to be re-measured against every palette a user
+        //    writes; a gutter is the same gutter in all of them, including the ones nobody has
+        //    written yet.
+        //
+        // So the carrier is the rhythm: the gutter BETWEEN rows exceeds the inset WITHIN one, which
+        // is what makes the whitespace between two rows read as the largest vertical gap in the
+        // list. It was the wrong way round before -- a 6px gutter against a 10px inset argued that a
+        // row's own first line belonged to the row above it. At the text layer the ratio is now
+        // 28px between rows against 2px between a row's two lines.
         var border = new Border
         {
-            Margin = new Thickness(0, 0, 0, 6),
-            Padding = new Thickness(12, 10, 12, 10),
+            Margin = new Thickness(0, 0, 0, RowGutter),
+            Padding = new Thickness(12, RowVerticalInset, 12, RowVerticalInset),
             CornerRadius = new CornerRadius(6),
             Background = (Brush)FindResource("RowBgBrush"),
         };

@@ -847,8 +847,15 @@ public partial class App : Application
                 hostVersion);
         });
 
-        services.AddSingleton<ROROROblox.App.Plugins.IPluginProcessStarter,
-            ROROROblox.App.Plugins.Adapters.DefaultPluginProcessStarter>();
+        // F-101: one job object per host, owned by the container so its handle lives exactly as
+        // long as the process. Closing that handle is what makes the kernel kill the plugins.
+        services.AddSingleton<ROROROblox.App.Plugins.Adapters.PluginJobObject>(sp =>
+            new ROROROblox.App.Plugins.Adapters.PluginJobObject(
+                sp.GetService<ILogger<ROROROblox.App.Plugins.Adapters.PluginJobObject>>()));
+        services.AddSingleton<ROROROblox.App.Plugins.IPluginProcessStarter>(sp =>
+            new ROROROblox.App.Plugins.Adapters.DefaultPluginProcessStarter(
+                sp.GetService<ILogger<ROROROblox.App.Plugins.Adapters.DefaultPluginProcessStarter>>(),
+                sp.GetRequiredService<ROROROblox.App.Plugins.Adapters.PluginJobObject>()));
         services.AddSingleton<ROROROblox.App.Plugins.PluginProcessSupervisor>();
 
         // Concrete first, interface mapped onto the SAME instance. Registering
@@ -2067,6 +2074,22 @@ public partial class App : Application
         {
             var registry = _services.GetRequiredService<ROROROblox.App.Plugins.PluginRegistry>();
             var supervisor = _services.GetRequiredService<ROROROblox.App.Plugins.PluginProcessSupervisor>();
+            // F-101: clear anything left by a previous session BEFORE starting more, so a pile
+            // made before the job object shipped (or in the gap between Start and assignment)
+            // does not survive indefinitely. Runs first so it can never kill our own children.
+            try
+            {
+                var swept = supervisor.SweepOrphans(ROROROblox.App.Plugins.PluginRegistry.DefaultPluginsRoot);
+                if (swept > 0)
+                {
+                    _log?.LogInformation("Swept {Count} orphaned plugin process(es) from a previous session.", swept);
+                }
+            }
+            catch (Exception ex)
+            {
+                _log?.LogWarning(ex, "Orphan sweep failed; continuing to autostart.");
+            }
+
             var plugins = await registry.ScanAsync().ConfigureAwait(false);
             var autostartCount = plugins.Count(p => p.Consent.AutostartEnabled);
             _log?.LogDebug(

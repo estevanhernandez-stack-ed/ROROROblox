@@ -86,11 +86,43 @@
                                               VerticalAlignment="Top"
                                               Margin="0,2,12,0" />
                                     <StackPanel Grid.Column="1">
+                                        <!-- The capability id is tinted by which namespace it is in.
+                                             This was a NamespaceBrush property on the row model
+                                             resolving brushes through TryFindResource with literal
+                                             fallbacks (F-087). Two things were wrong with that: a
+                                             converter or property that resolves a brush at read
+                                             time hands back the instance it found, and
+                                             ThemeService.ApplySlot REPLACES instances rather than
+                                             mutating them, so the sheet kept whatever was current
+                                             when the row was built; and the literal fallback
+                                             silently painted brand hues onto a themed field when
+                                             the dictionary was not loaded. A DynamicResource that
+                                             fails to resolve is a bug to surface, not to paper
+                                             over.
+                                             The tint is a SECOND carrier, never the only one: under
+                                             magenta-heat Cyan and Magenta are the same value, so
+                                             the two namespaces render identically there. What
+                                             actually distinguishes them is NamespaceLabel below,
+                                             which says either "RoRoRo enforces this on every call."
+                                             or "Runs on your machine". Same ruling as the warning
+                                             banners this cycle — the words carry it. -->
                                         <TextBlock Text="{Binding Id}"
                                                    FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
                                                    FontSize="10"
-                                                   Foreground="{Binding NamespaceBrush}"
-                                                   TextWrapping="Wrap" />
+                                                   TextWrapping="Wrap">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <!-- system.*: runs on the user's machine. -->
+                                                    <Setter Property="Foreground" Value="{DynamicResource MagentaBrush}" />
+                                                    <Style.Triggers>
+                                                        <!-- host.*: RoRoRo enforces it at the interceptor. -->
+                                                        <DataTrigger Binding="{Binding IsHostEnforced}" Value="True">
+                                                            <Setter Property="Foreground" Value="{DynamicResource CyanBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                         <TextBlock Text="{Binding Display}"
                                                    FontSize="12"
                                                    Foreground="{DynamicResource WhiteBrush}"
