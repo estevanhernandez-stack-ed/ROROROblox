@@ -1739,7 +1739,21 @@ public class MainViewModelTests
         public void Start() => throw new NotImplementedException();
         public void Stop() => throw new NotImplementedException();
         public void Sample() => throw new NotImplementedException();
-        public MemoryPressureSnapshot GetSnapshot() => throw new NotImplementedException();
+
+        // Benign for the same reason FakeActivityMonitor.GetSnapshot is, and this is the second
+        // half of that fix: MainViewModel's 30s ticker calls this TWICE per tick — once through
+        // RefreshMemoryChips and once through MemoryPressureEvaluator.IsClear — on a timer that
+        // outlives the test that started it.
+        //
+        // The first fix only covered the activity monitor, and this one shipped a release-blocking
+        // CI failure 20 minutes later: HistoryRowRenderTests.TheRhythmSurvivesFractionalScaling
+        // failed after 31 seconds with NotImplementedException off the dispatcher. Note the victim
+        // is in a DIFFERENT test class. A leaked timer does not fail the test that leaked it, it
+        // fails whoever happens to be running 30 seconds later, which is why this reads as
+        // unrelated flake every time it lands.
+        //
+        // Anything MainViewModel's ticker can reach has to answer. See F-105.
+        public MemoryPressureSnapshot GetSnapshot() => new(0, 0, 0, false, null, []);
     }
 
     private sealed class FakeTrayService : ITrayService

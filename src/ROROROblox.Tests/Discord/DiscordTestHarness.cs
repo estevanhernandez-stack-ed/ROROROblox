@@ -492,7 +492,12 @@ internal static class DiscordTestHarness
         public void Stop() => throw new NotImplementedException();
         public void Sample() => throw new NotImplementedException();
         public void MarkActive(Guid accountId, DateTimeOffset nowUtc) => throw new NotImplementedException();
-        public IReadOnlyList<AccountActivity> GetSnapshot() => throw new NotImplementedException();
+
+        // Benign, not lazy. MainViewModel's 30s ticker calls this, and the ticker outlives the test
+        // that built the view model — so a throw here lands on the dispatcher during whatever test
+        // is running half a minute later, in some other class. See MainViewModelTests for the full
+        // note and F-105 for the register row.
+        public IReadOnlyList<AccountActivity> GetSnapshot() => Array.Empty<AccountActivity>();
     }
 
     private sealed class FakeMemoryWatchdog : IMemoryWatchdog
@@ -509,7 +514,10 @@ internal static class DiscordTestHarness
         public void Start() => throw new NotImplementedException();
         public void Stop() => throw new NotImplementedException();
         public void Sample() => throw new NotImplementedException();
-        public MemoryPressureSnapshot GetSnapshot() => throw new NotImplementedException();
+
+        // Benign for the same reason as the activity monitor above — and this one is reached TWICE
+        // per tick, through RefreshMemoryChips and again through MemoryPressureEvaluator.IsClear.
+        public MemoryPressureSnapshot GetSnapshot() => new(0, 0, 0, false, null, []);
     }
 
     private sealed class FakeTrayService : ITrayService
