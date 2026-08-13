@@ -68,11 +68,19 @@ while IFS= read -r file; do
   [ "$is_allowed" -eq 1 ] && continue
 
   # Match c:\Users\ or C:/Users/ in any case.
+  #
+  # The separator repeats (\\+ and /+) so an ESCAPED path in source is caught too. Until
+  # 2026-08-12 this matched a single backslash only, which meant a C# string literal —
+  # "C:\\Users\\name\\..." — sailed straight through: after C: comes a backslash and then
+  # another backslash, not a U. Every .cs, .json and .ps1 double-quoted path in the repo was
+  # therefore unguarded, which is most of the places pattern kk actually bites. Found when a
+  # test fixture written that way passed the hook.
+  #
   # -I skips binary files — compiled artifacts (.exe, .pdb, .dll) often have build-path strings
   # baked in by the toolchain that aren't deployment-relevant.
-  if grep -IinE "([cC]:\\\\[uU][sS][eE][rR][sS]\\\\|[cC]:/[uU][sS][eE][rR][sS]/)" "$file" >/dev/null 2>&1; then
+  if grep -IinE "([cC]:\\\\+[uU][sS][eE][rR][sS]\\\\+|[cC]:/+[uU][sS][eE][rR][sS]/+)" "$file" >/dev/null 2>&1; then
     red "[local-path-guard] FAIL: $file contains a c:\\Users\\ reference."
-    grep -IinE "([cC]:\\\\[uU][sS][eE][rR][sS]\\\\|[cC]:/[uU][sS][eE][rR][sS]/)" "$file" | sed 's/^/  /' >&2
+    grep -IinE "([cC]:\\\\+[uU][sS][eE][rR][sS]\\\\+|[cC]:/+[uU][sS][eE][rR][sS]/+)" "$file" | sed 's/^/  /' >&2
     violations=$((violations + 1))
   fi
 done <<< "$staged"
