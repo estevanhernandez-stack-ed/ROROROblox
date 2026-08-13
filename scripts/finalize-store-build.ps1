@@ -166,9 +166,9 @@ if ($buildExit -ne 0) {
     exit $buildExit
 }
 
-# Report the artefact (x64 keeps the historical un-suffixed name).
-$archSuffix = if ($Architecture -eq 'x64') { '' } else { "-$Architecture" }
-$msixPath = Join-Path $RepoRoot "dist\RORORO-Store$archSuffix.msix"
+# Report the artefact. Name must match what build-msix.ps1 packs:
+# RORORO-Store-<arch>-<version>.msix, which is the shape Partner Center already lists.
+$msixPath = Join-Path $RepoRoot "dist\RORORO-Store-$Architecture-$Version.msix"
 if (Test-Path $msixPath) {
     $info = Get-Item $msixPath
     Write-Host ''

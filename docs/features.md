@@ -126,7 +126,7 @@
 | Velopack auto-update | Direct-download builds update from GitHub Releases; Store builds via Store. In-app updater is check-only through v1.11 — download+apply still deferred. | v1.1 | `src/ROROROblox.App/Updates/UpdateChecker.cs` |
 | Remote `roblox-compat.json` | Startup fetch: known-good Roblox range + mutex name. | v1.1 | `src/ROROROblox.Core/RobloxCompatChecker.cs` |
 | Remote plugin-catalog fetch | Marketplace catalog from GitHub Releases — metadata + install URLs only, never code. | v1.9.0 | `Plugins/PluginCatalogClient.cs` |
-| Sideload MSIX + self-signed cert | `RORORO-Sideload.msix` + `dev-cert.cer` alongside `Setup.exe`. | v1.1 | `scripts/build-msix.ps1` |
+| Sideload MSIX + self-signed cert | `RORORO-Sideload-<arch>-<version>.msix` + `dev-cert.cer` alongside `Setup.exe`. | v1.1 | `scripts/build-msix.ps1` |
 | Distribution-mode detection | Packaged vs unpackaged at runtime, gating marketplace visibility (policy 10.2.2). | v1.9.0 | `src/ROROROblox.App/Distribution/` |
 | Run-on-login + single instance | Optional HKCU Run entry; second launch surfaces the existing window. | v1.1 | `src/ROROROblox.App/AppLifecycle/SingleInstanceGuard.cs` |
 | Microsoft Store listing | Live as "RORORO" (renamed from "ROROROblox" for policy 10.1.1.1), Store-signed, SmartScreen-free. | v1.1.2.0 | `docs/store/listing-copy.md` |

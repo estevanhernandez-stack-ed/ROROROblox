@@ -50,7 +50,7 @@ Per Sanduhr playbook 10.1.4.4.a — the disclaimer must appear in MULTIPLE surfa
   ```powershell
   powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Store
   ```
-- [ ] MSIX packed at `dist/RORORO-Store.msix`
+- [ ] MSIX packed for BOTH architectures: `dist/RORORO-Store-x64-<version>.msix` and `dist/RORORO-Store-arm64-<version>.msix` (`finalize-store-build.ps1` run twice, second time with `-Architecture arm64`)
 
 ### Listing materials
 
@@ -74,7 +74,7 @@ Per Sanduhr playbook 10.1.4.4.a — the disclaimer must appear in MULTIPLE surfa
 
 1. Partner Center → Apps → New product → MSIX/PWA app
 2. Pick the reserved app name
-3. Upload `dist/RORORO-Store.msix`
+3. Upload BOTH `dist/RORORO-Store-x64-<version>.msix` and `dist/RORORO-Store-arm64-<version>.msix`
 4. Fill in pricing (Free), markets (Worldwide unless intentional limit), age rating questionnaire
 5. Paste listing copy, screenshots, keywords, privacy policy URL
 6. Submit for certification
@@ -93,7 +93,8 @@ Partner Center status page will move through:
 
 ### Carry to next release (Partner Center surfaced these on the v1.1 submission)
 
-- [ ] **Arm64 (AArch64) build target.** Partner Center flagged: *"Future Windows on Arm devices will no longer support AArch32, therefore we recommend updating your targeted platforms to Arm64 (AArch64), which works on all Windows on Arm devices, as soon as possible in order to ensure your customers can continue to enjoy your experience."* Current MSIX is x64 only (`<Identity ProcessorArchitecture="x64" />`). v1.1.1 or v1.2 should add an Arm64 build flavor + ship a multi-arch package (or two packages — Microsoft accepts either pattern). Action: extend `scripts/build-msix.ps1` to support `-Architecture arm64`, regenerate manifest with arm64 ProcessorArchitecture, and produce `dist/RORORO-Store-arm64.msix` alongside the x64 build. Bump version when shipping.
+- ~~**Arm64 (AArch64) build target.**~~ **Done, and the note was stale from v1.11 onward.** Struck 2026-08-13. The action it asked for — *"extend `scripts/build-msix.ps1` to support `-Architecture arm64`"* — already exists and shipped; `finalize-store-build.ps1 -Architecture arm64` produced `RORORO-Store-arm64-1.21.0.0.msix` this release, and Partner Center has listed `RORORO-Store-arm64-1.15.0.0.msix` since v1.15. Its premise, *"Current MSIX is x64 only"*, has been false for six versions.
+  **And the Partner Center notice it quotes does not apply to this app at all.** AArch32 is 32-bit ARM (MSIX `arm`); RoRoRo has never declared it, and never declared x86 either — verified 2026-08-13 across the csproj, both build scripts, `Package.appxmanifest` and CI. `arm64` (AArch64) is a different architecture, not a newer flavour of the same one, so there was never anything here to migrate *from*. The notice still displays against the v1.15 submission that already shipped arm64, which is what a blanket advisory looks like. **The real Arm concern was never AArch32 — it was x64-on-Arm emulation**, and shipping a native arm64 package is what answers that. Left visible rather than deleted so the next person does not re-derive it from the same notice.
 
 ## Post-flight — if rejected
 

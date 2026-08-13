@@ -2,7 +2,7 @@
 
 > **Recurring per-release runbook.** First-submission bringup (Partner Center reservation, IARC questionnaire, listing copy, screenshots, privacy policy hosting) lives in [`submission-checklist.md`](submission-checklist.md) — that's a one-time setup. This doc is the loop we run every time we ship a new version: v1.3.1.0 → v1.3.2.0 → v1.3.2.1 → v1.3.3.0 → next.
 
-> **Two distribution channels per release.** Microsoft Store (`dist/RORORO-Store.msix`, unsigned — Partner Center signs after upload) and GitHub Release (Velopack `Setup.exe` auto-update + `RORORO-Sideload.msix` + `dev-cert.cer` for cert-import users). Both ship from the same tag.
+> **Two distribution channels per release.** Microsoft Store (`dist/RORORO-Store-<arch>-<version>.msix`, x64 AND arm64, unsigned — Partner Center signs after upload) and GitHub Release (Velopack `Setup.exe` auto-update + `RORORO-Sideload-<arch>-<version>.msix` + `dev-cert.cer` for cert-import users). Both ship from the same tag.
 
 ---
 
@@ -63,7 +63,7 @@ The block between `---` markers in the file gets pasted directly into the GitHub
 
 ## Phase 3 — Build the Store MSIX
 
-One command. `finalize-store-build.ps1` patches the manifest to Partner Center identity, patches the csproj `<Version>`, runs `build-msix.ps1 -Store`, leaves the MSIX at `dist/RORORO-Store.msix` (unsigned — Partner Center signs after upload).
+One command. `finalize-store-build.ps1` patches the manifest to Partner Center identity, patches the csproj `<Version>`, runs `build-msix.ps1 -Store`, leaves the MSIX at `dist/RORORO-Store-<arch>-<version>.msix` (unsigned — Partner Center signs after upload). Run it twice: once as-is for x64, once with `-Architecture arm64`.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/finalize-store-build.ps1 `
@@ -78,7 +78,7 @@ The four identity values are constants — copy them as-is. The Publisher CN is 
 **Self-contained runtime is on by default.** The MSIX bundles .NET 10 Desktop Runtime → ~77 MB instead of ~5 MB, but installs cleanly on a fresh Win11 box without the user having to chase down a .NET install. Don't flip it off (we tried framework-dependent in earlier builds; it broke on systems without .NET 10).
 
 **After this completes successfully:**
-- `dist/RORORO-Store.msix` is your Partner Center upload artifact
+- `dist/RORORO-Store-x64-<version>.msix` and `dist/RORORO-Store-arm64-<version>.msix` are your Partner Center upload artifacts, both of them
 - `src/ROROROblox.App/Package.appxmanifest` is now patched to Partner Center identity (Publisher = `CN=177BCE59-...`)
 - `src/ROROROblox.App/ROROROblox.App.csproj` is patched to the version you just shipped
 
@@ -117,7 +117,7 @@ powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 `
 Copy-Item "$env:TEMP\manifest-store.bak" $manifestPath -Force
 ```
 
-**Output:** `dist/RORORO-Sideload.msix` (~77 MB, signed). The `dev-cert.cer` at repo root is the public half — distributed to clan testers so they can trust the sig.
+**Output:** `dist/RORORO-Sideload-<arch>-<version>.msix` (~91 MB at v1.21, signed). The `dev-cert.cer` at repo root is the public half — distributed to clan testers so they can trust the sig.
 
 **Future improvement** — wrap steps 1-4 in a `scripts/build-sideload-msix.ps1`. We've done it manually 4 times; that's enough repetition to extract.
 
@@ -158,7 +158,7 @@ $repo = 'estevanhernandez-stack-ed/ROROROblox'
 
 # 1. Attach sideload MSIX + dev-cert (so cert-import-flow users can install).
 & $gh release upload vX.Y.Z.0 `
-    dist/RORORO-Sideload.msix `
+    dist/RORORO-Sideload-x64-1.21.0.0.msix `
     dev-cert.cer `
     --repo $repo
 
@@ -181,7 +181,7 @@ $repo = 'estevanhernandez-stack-ed/ROROROblox'
 ## Phase 7 — Microsoft Store submission
 
 1. Open Partner Center → Apps → RORORO → **Packages**.
-2. Drag `dist/RORORO-Store.msix` into the Packages slot. Wait for upload + validation. If validation fails on version (4th component non-zero), bump and re-run from Phase 3.
+2. Drag BOTH `dist/RORORO-Store-x64-<version>.msix` and `dist/RORORO-Store-arm64-<version>.msix` into the Packages slot. Wait for upload + validation. If validation fails on version (4th component non-zero), bump and re-run from Phase 3.
 3. Edit **Notes for certification** — paste the `---` block from `docs/store/reviewer-letter-X.Y.Z.0.md` (the per-version reviewer letter; leads with that release's disclosure-surface change + the trademark disclaimer). This is reviewer-only, not shown to users.
 4. **Edit the Store listing → "What's new in this version"** — paste the `What's new` block from [`docs/store/listing-copy.md`](listing-copy.md). **DO NOT SKIP — this is the public update-note Store users see, and it's the step that keeps getting left off.** It's a *different field* from Notes for certification (step 3): step 3 is private to Microsoft's reviewer; this one is public. Both must be filled every release. (Partner Center: Store listings → [language] → "What's new in this version".)
 5. **Submit to the Store**. Status moves through *In submission* → *Certification* → *Publishing* (success) or *Failed* (rejection). Typical turnaround 24-72h.

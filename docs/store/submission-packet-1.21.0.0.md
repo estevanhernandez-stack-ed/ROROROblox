@@ -21,19 +21,27 @@ Two consequences worth holding:
 
 ---
 
-## 1. Package to upload
+## 1. Packages to upload — both of them
 
-| | |
-|---|---|
-| File | `dist/RORORO-Store.msix` |
-| Size | 91.12 MB |
-| Built from | `0c04ee4` on `main`, tagged `v1.21.0.0` |
-| Identity | `626LabsLLC.RoRoRoBlox` |
-| Publisher | `CN=177BCE59-0966-4975-9962-10E36652141F` |
-| Version | `1.21.0.0` |
-| Architecture | x64 |
-| Capabilities | `runFullTrust` and nothing else |
-| Signing | **Unsigned.** Partner Center signs on upload. Do not sign it locally. |
+| | x64 | arm64 |
+|---|---|---|
+| File | `dist/RORORO-Store-x64-1.21.0.0.msix` | `dist/RORORO-Store-arm64-1.21.0.0.msix` |
+| Size | 91.12 MB | 86.02 MB |
+| `ProcessorArchitecture` | `x64` | `arm64` |
+
+Shared by both: built from `0c04ee4` on `main` (tag `v1.21.0.0`), identity `626LabsLLC.RoRoRoBlox`,
+publisher `CN=177BCE59-0966-4975-9962-10E36652141F`, version `1.21.0.0`, `runFullTrust` and nothing
+else, and **unsigned** — Partner Center signs on upload, do not sign locally.
+
+The filenames match what Partner Center already lists for v1.15.0.0
+(`RORORO-Store-arm64-1.15.0.0.msix` / `RORORO-Store-x64-1.15.0.0.msix`). The scripts emit that shape
+now, so it does not need correcting per release.
+
+**On the AArch32 notice Partner Center shows.** It does not apply. AArch32 is 32-bit ARM (MSIX
+`arm`); this app has never declared it, and neither has x86 — checked across the csproj, both build
+scripts, the manifest and CI. `arm64` is a different architecture, not a newer flavour of the same
+one. v1.15 already shipped arm64 and the notice displays against it anyway, which is what a blanket
+advisory looks like.
 
 **Verified by reading the packed `AppxManifest.xml` back out of the `.msix`**, not by trusting the
 build script's output. Identity, version and the single capability all confirmed after packing.

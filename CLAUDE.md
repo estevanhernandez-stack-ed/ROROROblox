@@ -80,8 +80,8 @@ The full architecture, data flows, error buckets, and decision rationale live in
 | Run unit + integration tests | `dotnet test ROROROblox.slnx` (whole solution) — or scope: `dotnet test src/ROROROblox.Tests/` (unit) + `dotnet test src/ROROROblox.PluginTestHarness/` (integration, v1.4+) |
 | See plugin author guide (v1.4+) | [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR_GUIDE.md) |
 | See v1.4 plugin-system design | [`docs/superpowers/specs/2026-05-09-rororo-plugin-system-design.md`](docs/superpowers/specs/2026-05-09-rororo-plugin-system-design.md) |
-| Build sideload MSIX | `powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertPath dev-cert.pfx -CertPassword <pwd>` → `dist/RORORO-Sideload.msix` (self-signed) |
-| Build Store MSIX | `powershell -ExecutionPolicy Bypass -File scripts/finalize-store-build.ps1 -Version <x.y.z.0> -IdentityName 626LabsLLC.RoRoRoBlox -PublisherCN "CN=177BCE59-0966-4975-9962-10E36652141F" -PublisherDisplayName "626Labs LLC"` → `dist/RORORO-Store.msix` (unsigned; Partner Center signs). Restore manifest after: `-RestoreManifest` |
+| Build sideload MSIX | `powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertPath dev-cert.pfx -CertPassword <pwd>` → `dist/RORORO-Sideload-<arch>-<version>.msix` (self-signed) |
+| Build Store MSIX | `powershell -ExecutionPolicy Bypass -File scripts/finalize-store-build.ps1 -Version <x.y.z.0> -IdentityName 626LabsLLC.RoRoRoBlox -PublisherCN "CN=177BCE59-0966-4975-9962-10E36652141F" -PublisherDisplayName "626Labs LLC"` → `dist/RORORO-Store-<arch>-<version>.msix` (unsigned; Partner Center signs). Add `-Architecture arm64` for the Arm build; **ship both**. Restore manifest after: `-RestoreManifest` |
 | Cut a release | Push tag `vX.Y.Z.0` → `release.yml` runs tests + `scripts/build-velopack-release.ps1` (`vpk pack`) → DRAFT GitHub Release with Setup.exe + `roblox-compat.json` attached; review + publish the draft. Per-release runbook lives at `docs/store/release-runbook-<version>.md` |
 
 ## Conventions

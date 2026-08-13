@@ -206,11 +206,21 @@ New-Item -ItemType Directory -Path $stagingLogosDir -Force | Out-Null
 Copy-Item -Path "$logosDir\*" -Destination $stagingLogosDir -Force
 
 # === Pack. ===
-# x64 keeps the historical un-suffixed name so existing flows and docs stay valid;
-# arm64 gets an explicit suffix (RORORO-Store-arm64.msix).
+# RORORO-<flavor>-<arch>-<version>.msix, matching what Partner Center already shows for the
+# v1.15.0.0 submission (RORORO-Store-arm64-1.15.0.0.msix / RORORO-Store-x64-1.15.0.0.msix).
+#
+# This replaced a scheme where x64 kept a bare RORORO-Store.msix "so existing flows and docs stay
+# valid" and only arm64 carried a suffix. Two problems with that, both real: the two architectures
+# did not sort or read as siblings, and neither name carried a version — so dist/ accumulated
+# packages that looked current and were not. One did: a v1.11.1.0 arm64 build sat next to a v1.21
+# x64 build under names that gave no hint they were ten versions apart, one upload away from
+# shipping to every Windows-on-Arm user.
+#
+# Version comes from the staged manifest rather than a parameter, so it cannot disagree with what
+# is actually inside the package.
 $flavor = if ($Sideload) { 'Sideload' } else { 'Store' }
-$archSuffix = if ($architecture -eq 'x64') { '' } else { "-$architecture" }
-$msixPath = Join-Path $outDir "RORORO-$flavor$archSuffix.msix"
+$packageVersion = $stagedManifest.Package.Identity.Version
+$msixPath = Join-Path $outDir "RORORO-$flavor-$architecture-$packageVersion.msix"
 if (Test-Path $msixPath) { Remove-Item $msixPath -Force }
 
 $makeAppx = Get-MakeAppxPath
