@@ -96,7 +96,7 @@ public class HistoryRowRenderTests
             RowRects,
             raiseLoaded: true);
 
-    [Fact]
+    [WindowRenderFact]
     public void ThreeSessionsProduceThreeSeparatedRows()
     {
         foreach (var theme in BuiltInThemes())
@@ -131,7 +131,7 @@ public class HistoryRowRenderTests
     /// whitespace between rows read as the largest vertical gap in the list, and it was the wrong
     /// way round before v1.21 item 3.
     /// </summary>
-    [Fact]
+    [WindowRenderFact]
     public void TheRenderedGutterExceedsTheRenderedInset()
     {
         var inset = ROROROblox.App.History.SessionHistoryWindow.RowVerticalInset;
@@ -157,7 +157,7 @@ public class HistoryRowRenderTests
     /// scaling — an inset that rounds evenly at 96 splits unevenly at 120 — and neither the
     /// constants gate nor a screenshot at 100% can see that class of bug.
     /// </summary>
-    [Fact]
+    [WindowRenderFact]
     public void TheRhythmSurvivesFractionalScaling()
     {
         var inset = ROROROblox.App.History.SessionHistoryWindow.RowVerticalInset;

@@ -28,7 +28,19 @@ the test host often crashes and aborts the run partway. The suite now detects th
 message naming the pid instead of leaving you to read a wall of WPF stack traces, but it cannot fix
 it: the mechanism is unsolved and tracked as F-105 in the findings register. Measured both ways on
 2026-08-12 — app running: 103 / 98 / crash / 99 / 100 / 100 failures; app closed: 1643 of 1643,
-eight runs straight. CI is unaffected, since a runner has no instance running.
+eight runs straight. That particular failure does not reach CI, since a runner has no instance
+running.
+
+**A different one does, and it is why nine tests are skipped there.** The whole-window render gates
+(`AboutMarkRenderTests`, `BannerPairRenderTests`, `HistoryRowRenderTests`) wedge on a CI runner — a
+single render blows the 60s budget having started immediately, where the same render takes
+milliseconds on a desktop. They carry `[WindowRenderFact]`, which skips with a reason on CI and runs
+everywhere else. A CI run therefore reports **1634 passed, 9 skipped**, and a local run reports
+**1643 passed, 0 skipped**. If you see 9 skipped locally, something is setting `CI` or
+`GITHUB_ACTIONS` in your shell.
+
+Set `RORORO_FORCE_WINDOW_RENDER=1` to run them on CI anyway, which is what you want if you are
+fixing the harness. Also tracked as F-105.
 
 Also worth knowing: an aborted run prints `Passed!  - Failed: 0` on one line and `Test Run Aborted.`
 on the next. `dotnet test` does exit non-zero, so CI catches it, but do not read the first line alone.

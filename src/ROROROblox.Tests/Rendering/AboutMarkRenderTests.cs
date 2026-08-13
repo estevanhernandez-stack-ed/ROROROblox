@@ -74,7 +74,7 @@ public class AboutMarkRenderTests
             .ToDictionary(h => h.Colour.ToUpperInvariant(), h => h.Count),
             StringComparer.Ordinal);
 
-    [Fact]
+    [WindowRenderFact]
     public void TheMarkPaintsTheSamePixelsUnderEveryBuiltInTheme()
     {
         var perTheme = new Dictionary<string, SortedDictionary<string, int>>(StringComparer.Ordinal);
@@ -119,7 +119,7 @@ public class AboutMarkRenderTests
     /// The other half of item 4's ruling, and the clause that stops the one above passing for the
     /// wrong reason: a mark on a plate that never changed would agree across themes trivially.
     /// </summary>
-    [Fact]
+    [WindowRenderFact]
     public void ThePlateBeneathTheMarkFollowsTheTheme()
     {
         var plates = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -157,7 +157,7 @@ public class AboutMarkRenderTests
     /// shared host defensible; if it ever fails, the host is wrong, not this test.
     /// </para>
     /// </summary>
-    [Fact]
+    [WindowRenderFact]
     public void RenderingIsNotContaminatedByThePreviousTheme()
     {
         var themes = BuiltInThemes();
@@ -190,7 +190,7 @@ public class AboutMarkRenderTests
     /// 125% — an inset that rounds evenly at 96 splits unevenly at 120 — so a gate that only renders
     /// at 96 cannot see the bug a user reports on a scaled display.
     /// </summary>
-    [Fact]
+    [WindowRenderFact]
     public void TheMarkPaintsTheSamePixelsAcrossThemesAtFractionalScaling()
     {
         var perTheme = BuiltInThemes()

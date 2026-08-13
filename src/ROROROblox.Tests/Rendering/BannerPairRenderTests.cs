@@ -71,7 +71,7 @@ public class BannerPairRenderTests
             ? BindingOperations.GetBindingExpression(b, UIElement.VisibilityProperty)?.ParentBinding.Path.Path ?? ""
             : "";
 
-    [Fact]
+    [WindowRenderFact]
     public void BothBannersRenderTogetherWithoutOverlapping()
     {
         foreach (var theme in BuiltInThemes())
@@ -132,7 +132,7 @@ public class BannerPairRenderTests
     /// The glyph, in pixels. Renders the compat banner and counts accent-coloured pixels — a claim
     /// about the FONT resolving U+25B2, not about the markup carrying it.
     /// </summary>
-    [Fact]
+    [WindowRenderFact]
     public void TheWarnGlyphActuallyRasterises()
     {
         foreach (var theme in BuiltInThemes())
