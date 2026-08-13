@@ -344,6 +344,29 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _ticker.Start();
     }
 
+    /// <summary>
+    /// Stops the 30s periodic refresh started in the constructor. The view model stays usable for
+    /// direct property access afterwards — this is deliberately NOT <c>Dispose</c>, because nothing
+    /// else is torn down and a method named Dispose would promise that.
+    ///
+    /// <para><b>Why this exists: a timer with no off switch is a test hazard, and it bit twice.</b>
+    /// The ticker outlives whatever built the view model, so it fires on the dispatcher long after a
+    /// test finishes, in whatever test happens to be running 30 seconds later. That does not fail
+    /// the test that leaked it — on 2026-08-13 it failed a render test in a different class, and
+    /// before that it killed the test host outright and aborted the run while the console printed
+    /// <c>Failed: 0</c>.</para>
+    ///
+    /// <para>The tick reads four collaborators. Every one of them was a throwing test double at some
+    /// point, and fixing them one at a time is what took two rounds. Stopping the timer is the fix
+    /// that does not depend on getting the next double right. <c>MainViewModelTests.Build</c> already
+    /// does exactly this for <c>RobloxWindowDecorator</c>'s 1.5s reapply timer, and this is the same
+    /// move for the same reason.</para>
+    ///
+    /// <para>Production never calls this: the app wants the refresh for its whole lifetime, and the
+    /// process exiting is what stops it. See F-105.</para>
+    /// </summary>
+    internal void StopPeriodicRefresh() => _ticker.Stop();
+
     public ObservableCollection<AccountSummary> Accounts { get; } = [];
 
     private readonly ObservableCollectionMirror<AccountSummary> _accountsMirror;

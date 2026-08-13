@@ -73,6 +73,11 @@ internal static class DiscordTestHarness
         // test.
         windowDecorator.Dispose();
 
+        // And MainViewModel's own 30s ticker, for the same reason. It fires on the dispatcher
+        // during whatever test is running half a minute later, so it never fails the one that
+        // leaked it. See MainViewModel.StopPeriodicRefresh and F-105.
+        vm.StopPeriodicRefresh();
+
         var added = accountStore.AddAsync(realName, "", "cookie")
             .GetAwaiter().GetResult();
 
@@ -116,6 +121,7 @@ internal static class DiscordTestHarness
         var vm = BuildVm(accountStore, launcher, processTracker, windowDecorator, trayService);
 
         windowDecorator.Dispose();
+        vm.StopPeriodicRefresh();
 
         accountStore.AddAsync("IdleAccount", "", "cookie").GetAwaiter().GetResult();
         vm.LoadAsync().GetAwaiter().GetResult();

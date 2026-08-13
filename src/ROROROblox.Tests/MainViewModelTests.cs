@@ -80,6 +80,16 @@ public class MainViewModelTests
         // RefreshDecoratorForAccount, so disposing right after construction is safe.
         windowDecorator.Dispose();
 
+        // Same hazard, second timer, and this one was missed for a long time: MainViewModel's ctor
+        // starts a 30s ticker of its own. It outlives the test that built the view model and fires
+        // on the dispatcher during whatever is running half a minute later — so it never fails the
+        // test that leaked it. On 2026-08-13 it failed a render test in another class, and before
+        // that it killed the test host mid-run while the console printed "Failed: 0".
+        //
+        // No test in this file depends on the tick, so stop it at construction, exactly as the line
+        // above does for the decorator's timer.
+        vm.StopPeriodicRefresh();
+
         return (vm, accountStore, processTracker, path);
     }
 
