@@ -36,13 +36,21 @@ Building your own? Start at [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR
 
 ---
 
-## What's new in v1.9
+## What's new in v1.21
 
-**The in-app plugin marketplace.** The Plugins window on direct-download builds now has an **Available** section fed by a remote catalog — browse, install, and get **update badges** when an installed plugin falls behind its latest release. Installs stay SHA-256-verified against each plugin's own manifest; the catalog carries metadata and an install URL, never code.
+If you install from the Store, this one covers **six releases** — the Store edition was last updated at v1.15.
 
-Why unpackaged-only: the Microsoft Store edition can't ship downloadable-code surfaces (Store policy 10.2.2), so Store users get the same catalog through the [web marketplace](https://626labs.dev/rororo-plugins.html) instead.
+**Launching your alts while Roblox is updating.** RoRoRo used to release the whole batch, and then every client would separately discover it was out of date and start updating at once. It now checks the version that is actually about to run, holds the batch, updates once, then releases the rest.
 
-Also in v1.9: the Store build's OS floor drops to **Windows 10 22H2** (previously the Store edition was Windows 11-only).
+**Settings is a real place.** Memory warnings, how much RAM to keep free, how big one client can get before you hear about it, alert timing, careful mode for Squad Launch — all of it had needed a text editor. Leave a box empty and the page tells you what RoRoRo picks for your PC, with the actual numbers.
+
+**A fourth theme, and buttons that behave.** Flatline carries no meaning in colour at all, so nothing is lost to colour blindness, a bad monitor, or direct sun. Buttons stopped flashing pale Windows blue on hover — they had done that in every theme since v1.1. Build your own theme from ten colours and it saves as a file you can hand to someone else.
+
+**Readability.** Text that was too faint to read against its own background is fixed in two places, one of which had been that way since the theme it belongs to was written. Disabled buttons are legible now.
+
+**Smaller things.** Compact mode survives a restart. Plugins shut down with RoRoRo instead of being left running. A theme that fails to save says so, and still applies for the session.
+
+Plugins stay unpackaged-only: the Store edition can't ship downloadable-code surfaces (Store policy 10.2.2), so Store users get the same catalog through the [web marketplace](https://626labs.dev/rororo-plugins.html) instead.
 
 Version-by-version history lives on the [Releases page](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases).
 
@@ -60,15 +68,17 @@ Signed by Microsoft, bypasses SmartScreen entirely, auto-updates through the Sto
 
 If you'd rather skip the Store account flow, or want to install on a PC without Store access:
 
-1. Download the latest `rororo-win-Setup.exe` from [Releases](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases).
+1. Download the latest `RORORO-win-Setup.exe` from [Releases](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases).
 2. Double-click it. SmartScreen will warn (the installer is unsigned) — click **More info** → **Run anyway**. (One-time per machine.)
 3. RORORO installs to your user profile, lands in the Start Menu, and auto-updates from this Releases page going forward — no second SmartScreen prompt on later versions.
 
 A 30-second video walkthrough is linked from each Release page.
 
-**On Windows 10?** This is your path — the Store version needs Windows 11, but `Setup.exe` runs on **Windows 10 22H2, fully updated**. Run Windows Update first: a Windows 10 that's behind on updates can't start modern .NET apps and RoRoRo won't launch (that's the #1 thing to check if it doesn't open). If Roblox login asks for Microsoft's WebView2, the app hands you the free installer — one click, then try again. Best-effort support: the app installs, runs, and manages accounts on a fully-updated Windows 10 22H2; multi-instance uses the exact same code as Windows 11. Windows 10 left Microsoft's support lifecycle in October 2025, so plan the Windows 11 upgrade when you can.
+**On Windows 10?** Either path works. **The Store edition supports Windows 10 22H2** — its package floor is `10.0.19045`, and the "Store needs Windows 11" line that used to sit here was wrong from v1.9 onward, when the floor dropped. `Setup.exe` runs there too.
 
-> Prefer MSIX? `RORORO-Sideload.msix` + `dev-cert.cer` are also attached to each release — same app, slightly more setup (you import the cert once into Trusted People, then double-click the MSIX). Use whichever flow you trust more.
+Run Windows Update first either way: a Windows 10 that's behind can't start modern .NET apps and RoRoRo won't launch — that's the #1 thing to check if it doesn't open. If Roblox login asks for Microsoft's WebView2, the app hands you the free installer; one click, then try again. Multi-instance uses the exact same code on both. Windows 10 left Microsoft's support lifecycle in October 2025, so plan the Windows 11 upgrade when you can.
+
+> Prefer MSIX? A signed `RORORO-Sideload-x64-<version>.msix` plus `dev-cert.cer` can be attached to a release on request — same app, slightly more setup (import the cert once into Trusted People, then double-click the MSIX). There's also a `RORORO-win-Portable.zip` on each release if you'd rather not install anything at all.
 
 ## What it does
 
