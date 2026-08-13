@@ -6,11 +6,15 @@
 > **Written for someone on the Store build at v1.15**, because that is where most of the clan is.
 > They have seen none of 1.16 through 1.20, so this is six releases of news arriving at once.
 >
-> **Honesty is the policy here, including on the accessibility fixes.** Two of them describe defects
-> that shipped and sat for a long time — outlines at 1.26:1 since v1.1, one theme's text under the
-> readable floor since the day it was written. Those are stated plainly, not softened into "improved
-> contrast". The clan installed a free tool from someone they know; the thing that keeps that
-> relationship is being told what was actually wrong.
+> **Honest, not confessional.** An earlier draft led with "this was broken since v1.1" and "under
+> the readable floor since the day that theme shipped". Both true, and both wrong for this channel —
+> it read like a confession, which makes a free tool sound less trustworthy rather than more.
+>
+> The line: say the thing that changes what someone DOES. Nobody's install decision turns on how
+> long an outline was faint; they just get a better app, so state the fix and move on. The Windows 10
+> correction stays and is pointed directly at the person it affects, because someone who took the
+> manual installer on bad information should know they can switch. Same for anything that would
+> affect their accounts or data — that gets said plainly, always.
 >
 > **What is deliberately NOT in here:** the invisible half. 60+ copied attribute sets collapsed into
 > named styles, 63 button attribute sets onto seven ranks, a build fence, a render-gate suite. Real
@@ -57,19 +61,12 @@ your PC, with the real numbers.
 • Compact mode stays on after a restart.
 • Plugins shut down when RoRoRo does, instead of being left running.
 
-**Two things that were broken for a long time**
+**Everything reads better**
 
-Being straight with you, because you'd rather know.
-
-Every button and input outline in the app was far too faint against its
-background, in the default theme, since v1.1. It's been that way about as
-long as RoRoRo has existed. All of them now meet the accessibility standard,
-in every theme.
-
-And one theme's secondary text was under the readable floor from the day that
-theme shipped. Also fixed. Both were caught by new tests that measure the
-actual pixels on screen rather than trusting what the code says it painted,
-which is why they surfaced now and not two years from now.
+Button and input outlines are properly visible now, and some text that was
+too faint got fixed, across every theme. RoRoRo now tests this by rendering
+the actual screen and measuring the pixels, so it catches anything that drifts
+rather than trusting the code to be right.
 
 **Themes**
 
@@ -81,15 +78,15 @@ just a colour, in every theme.
 You can also build your own from ten colours. It saves as a file you can send
 to someone else.
 
-**On Windows 10?** The Store build works on 22H2. The old "Store needs
-Windows 11" note was out of date, sorry about that one.
+**On Windows 10?** The Store build works on 22H2 — if you took the manual
+installer route because you'd heard the Store needed Windows 11, that's no
+longer the case and you can switch over.
 
 Full notes: <https://github.com/estevanhernandez-stack-ed/ROROROblox/releases>
 
-A lot of this release was under the floorboards, honestly. Rewiring how every
-button and surface in the app gets its colours so the next few releases go
-faster and break less. Not much to look at, but it's why the list above
-exists.
+A lot of this one was under the floorboards — rewiring how every button and
+surface gets its colours, so the next few releases go faster and break less.
+Not much to look at, but it's why the list above exists.
 ```
 
 ---
@@ -110,13 +107,11 @@ Close stopped being the brightest button in nine windows, next to Remove and
 Games is back on the toolbar. There's a fourth theme, Flatline, that carries
 no meaning in colour at all.
 
-And two honest ones: every button outline in the app was far too faint in the
-default theme since v1.1, and one theme's text has been under the readable
-floor since the day it shipped. Both fixed, both caught by new tests that
-measure real pixels instead of trusting the code.
+Outlines and faint text read properly now across every theme, and RoRoRo
+tests that by measuring the actual rendered pixels.
 
-On Windows 10? The Store build works on 22H2 — the old "needs Windows 11"
-note was wrong.
+On Windows 10? The Store build works on 22H2 — if you took the manual
+installer because you'd heard it needed Windows 11, you can switch.
 
 Full notes: <https://github.com/estevanhernandez-stack-ed/ROROROblox/releases>
 ```
