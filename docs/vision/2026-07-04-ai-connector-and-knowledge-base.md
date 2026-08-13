@@ -8,12 +8,23 @@
 
 > ## Banner correction — read this before the body
 >
+> **THIS VISION WAS ALREADY SPECCED AND PLANNED. Start there, not here.**
+> [`specs/2026-07-04-mcp-connector-design.md`](../superpowers/specs/2026-07-04-mcp-connector-design.md)
+> is the approved design, with three implementation plans behind it — 2,545 lines written
+> 2026-07-04 to 07-06. It sat on `feat/mcp-connector` until 2026-08-13 and the backlog described
+> this as "NOT yet scoped" the whole time.
+>
+> **Everything in points 1-3 below was already in that spec's §2, verified against the code at the
+> time.** It was re-derived from scratch on 2026-08-13 by someone who had not found it. That is the
+> cost of a plan living on a branch: not that the work is lost, but that it gets done twice.
+>
 > **Merged to `main` 2026-08-13, six weeks after it was written**, having lived until then only on
 > `docs/next-focus-ai-connector` (495 commits behind by the end). The body below is unchanged and
 > still the plan of record. Four things have moved since, and three of them close open questions the
 > body raises.
 >
-> **1. The transport is settled: stdio. Este, 2026-08-13.** That resolves the "load-bearing
+> **1. The transport is settled: stdio.** Confirmed by Este 2026-08-13, and already decided in the
+> spec's §2 on 2026-07-04 — *"Transport: stdio, Claude-launched."* That resolves the "load-bearing
 > architecture question" in §1, and not cleanly onto either option it names. Claude Desktop and
 > Claude Code spawn an MCP server as a **stdio subprocess**, so the connector is a process RoRoRo
 > does not start — that is option **(b)** in lifecycle. But it still needs a plugin id to handshake
@@ -32,7 +43,9 @@
 > `share_url` already accepts any link form the host resolver understands, down to a bare place id.
 > `GetRunningAccounts`, `GetCurrentServer` and `GetAccountActivity` cover the queries around them.
 >
-> **3. A NEW open question the body does not have, and the more important one.** `Handshake`
+> **3. The security question — NOT new, though it was recorded as new.** The spec's §2 already
+> states the feasibility finding under "verified against the code". What follows is the same
+> mechanism, plus the posture question it raises: `Handshake`
 > authenticates on `plugin_id` + `manifest_sha256` against the installed registry and nothing else —
 > there is no spawn-time token or per-process secret (`PluginHostService.cs:75`). That is what makes
 > a Claude-spawned process able to connect at all, so it is load-bearing for this design. It also
