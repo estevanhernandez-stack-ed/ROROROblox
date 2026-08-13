@@ -170,7 +170,14 @@ public sealed class AppStorageDefenderTests : IDisposable
             postAttachGrace: TimeSpan.FromMilliseconds(100));
 
         // Let the cap fire and fully dispose.
-        await defender.Completion.WaitAsync(TimeSpan.FromSeconds(2));
+        //
+        // 15s to wait out a 400ms cap looks absurd and is deliberate. This bound is pure liveness —
+        // it exists so a wedged defender fails the test instead of hanging it, and nothing below
+        // asserts anything about elapsed time, unlike the two tests above this one. So the only
+        // thing a tight bound can do here is fail on a slow machine, which is what it did:
+        // TimeoutException on the x64 CI runner while the arm64 runner passed the same test in the
+        // same run. Widened 2026-08-13 rather than re-run until green.
+        await defender.Completion.WaitAsync(TimeSpan.FromSeconds(15));
         await defender.DisposeAsync();
 
         // A drift after disposal must NOT be corrected — the defender is gone.
