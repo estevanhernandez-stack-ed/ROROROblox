@@ -91,7 +91,7 @@ public sealed class RobloxProcessTrackerTests : IDisposable
         await tracker.TrackLaunchAsync(accountId, trackStart);
 
         Assert.True(tracker.IsTracking(accountId), "Tracker should have attached the install-delayed RPB.");
-        var pid = await attached.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        var pid = await attached.Task.WaitAsync(TestWaits.Liveness);
         Assert.Equal(rpbPid, pid);
         Assert.False(failed, "ProcessAttachFailed must NOT fire when the installer is running and the RPB eventually appears.");
     }
@@ -116,7 +116,7 @@ public sealed class RobloxProcessTrackerTests : IDisposable
         await tracker.TrackLaunchAsync(accountId, DateTimeOffset.UtcNow);
         sw.Stop();
 
-        Assert.True(await failed.Task.WaitAsync(TimeSpan.FromSeconds(2)),
+        Assert.True(await failed.Task.WaitAsync(TestWaits.Liveness),
             "ProcessAttachFailed should fire when no installer is running and no RPB appears.");
         Assert.False(tracker.IsTracking(accountId));
         // Should NOT have waited toward the long extended cap — it bails near the base timeout.
@@ -146,7 +146,7 @@ public sealed class RobloxProcessTrackerTests : IDisposable
         await tracker.TrackLaunchAsync(accountId, DateTimeOffset.UtcNow);
         sw.Stop();
 
-        Assert.True(await failed.Task.WaitAsync(TimeSpan.FromSeconds(2)),
+        Assert.True(await failed.Task.WaitAsync(TestWaits.Liveness),
             "Even with the installer running, the tracker must eventually fail at the extended cap when no RPB appears.");
         Assert.False(tracker.IsTracking(accountId));
         // It DID extend past the base 150ms (proving the extension engaged)...
@@ -177,7 +177,7 @@ public sealed class RobloxProcessTrackerTests : IDisposable
         await tracker.TrackLaunchAsync(accountId, DateTimeOffset.UtcNow);
 
         Assert.True(tracker.IsTracking(accountId));
-        Assert.Equal(rpbPid, await attached.Task.WaitAsync(TimeSpan.FromSeconds(2)));
+        Assert.Equal(rpbPid, await attached.Task.WaitAsync(TestWaits.Liveness));
     }
 
     [Fact]

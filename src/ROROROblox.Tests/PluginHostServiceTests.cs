@@ -173,7 +173,7 @@ public class PluginHostServiceTests
             PlaceId: 606849621, PlaceName: "Pet Simulator"));
 
         // Wait for the event to flow through the channel.
-        await writer.WaitForAtLeastAsync(1, TimeSpan.FromSeconds(2));
+        await writer.WaitForAtLeastAsync(1, TestWaits.Liveness);
 
         cts.Cancel();
         await streamTask; // should complete cleanly on cancel
@@ -239,7 +239,7 @@ public class PluginHostServiceTests
             IsTarget: false,
             ReadOk: false));
 
-        await writer.WaitForAtLeastAsync(2, TimeSpan.FromSeconds(2));
+        await writer.WaitForAtLeastAsync(2, TestWaits.Liveness);
 
         cts.Cancel();
         await streamTask; // should complete cleanly on cancel
