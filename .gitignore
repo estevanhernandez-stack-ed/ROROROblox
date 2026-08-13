@@ -84,3 +84,9 @@ docs/ui-evidence/
 
 # NuGet pack output (scripts/local packing of ROROROblox.PluginContract)
 pkg/
+
+# Git Nexus code index — a local cache, not a shared artifact.
+# meta.json pins an absolute repoPath (machine-specific, so it was never portable) and lbug is a
+# 77 MB binary rewritten on every index run. Untracked 2026-08-13 after the widened local-path
+# guard caught the repoPath on main. Files stay on disk; Git Nexus is unaffected.
+.gitnexus/
