@@ -6,6 +6,55 @@
 
 ---
 
+> ## Banner correction — read this before the body
+>
+> **Merged to `main` 2026-08-13, six weeks after it was written**, having lived until then only on
+> `docs/next-focus-ai-connector` (495 commits behind by the end). The body below is unchanged and
+> still the plan of record. Four things have moved since, and three of them close open questions the
+> body raises.
+>
+> **1. The transport is settled: stdio. Este, 2026-08-13.** That resolves the "load-bearing
+> architecture question" in §1, and not cleanly onto either option it names. Claude Desktop and
+> Claude Code spawn an MCP server as a **stdio subprocess**, so the connector is a process RoRoRo
+> does not start — that is option **(b)** in lifecycle. But it still needs a plugin id to handshake
+> and to carry consent, which is option **(a)** in identity. It is a hybrid: **spawned like a
+> standalone, authorised like a plugin.** Option (c), in-core, stays rejected for the reasons given.
+>
+> **2. The MVP action surface already exists.** §1's "which actions to expose first" is answered by
+> the shipped contract — no host work needed for launch + follow-main + select-game:
+>
+> | MVP verb | RPC | capability |
+> |---|---|---|
+> | launch | `RequestLaunch` | `host.commands.request-launch` |
+> | select-game | `RequestLaunchTarget{share_url}` | `host.commands.launch-target` |
+> | follow-main | `RequestLaunchTarget{follow_user_id}` | same |
+>
+> `share_url` already accepts any link form the host resolver understands, down to a bare place id.
+> `GetRunningAccounts`, `GetCurrentServer` and `GetAccountActivity` cover the queries around them.
+>
+> **3. A NEW open question the body does not have, and the more important one.** `Handshake`
+> authenticates on `plugin_id` + `manifest_sha256` against the installed registry and nothing else —
+> there is no spawn-time token or per-process secret (`PluginHostService.cs:75`). That is what makes
+> a Claude-spawned process able to connect at all, so it is load-bearing for this design. It also
+> means the pipe's real access control is the named-pipe ACL plus an installed-id check. Defensible
+> for a per-user pipe, since anything running as the user could do it anyway — but an MCP connector
+> turns "a process the host did not spawn connects in" from an anomaly into the normal case.
+> **Decide deliberately whether that is acceptable before shipping one.** Related: `manifest_sha256`
+> currently proves the installed artifact matches its manifest, a story written for a supervised
+> plugin, and needs an answer for a binary Claude launches.
+>
+> **4. There is no packaging blocker, contrary to what was briefly recorded elsewhere.**
+> `ROROROblox.PluginContract` **0.8.0 is published** — the registry returns `0.1.0, 0.3.0, 0.4.0,
+> 0.8.0` and 0.8.0 is what this repo declares. A separate project can build against the contract
+> today. `docs/features.md` said otherwise for two days and it reached a dashboard decision as the
+> supposed first move; corrected 2026-08-13 by querying nuget.org. The absent 0.2.0 and 0.5.0-0.7.0
+> do not matter.
+>
+> **Still open and unchanged:** the wall posture (§"The wall still holds" — confirmed, not
+> re-litigated), changelog sourcing, knowledge-base shape, and building-in-public mechanics.
+
+---
+
 ## The idea, in one line
 
 Let **Claude Code / Claude Desktop drive RoRoRo** (launch accounts, pick a game, follow the main / follow a friend, orchestrate the Ur plugins), and layer on a **weekly-changelog + knowledge-base** brain that turns each week's PetSim 99 changes into concrete guidance: *"these macros from last week may need cleanup; here's one worth recording this week."*
