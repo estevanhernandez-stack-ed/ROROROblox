@@ -2,6 +2,13 @@
 
 > Partner Center accepts 1–9 screenshots per device family. Per Sanduhr playbook: 3–6 screenshots showing **different states** of the app proves the multi-feature value claim (10.1.4.4.b). Single-state screenshot reels read as single-view-utility — that's a rejection vector.
 
+> **Count conflict, unresolved as of 2026-08-12.** The line above says 9. The shipped set is **10**.
+> Nobody has re-read Partner Center's current limit — the 9 was copied from the Sanduhr playbook,
+> not from the upload form. **Check the actual cap before uploading.** If it is 9, drop
+> `08-theme-builder.png`: it is the most niche of the ten, and `02-themes.png` already carries the
+> theming story. Do not drop `10-multi-instance.png` — it is the only frame that shows the product
+> doing the thing the listing is about.
+
 ## Required dimensions
 
 | Display family | Resolution | Notes |
@@ -112,7 +119,7 @@ show.
 | `07-plugins.png` | Plugins run as separate processes and ask first. You grant each capability by name, and you can revoke it later. |
 | `08-theme-builder.png` | Build a theme from ten colours and it shows up in the picker. It is a JSON file, so you can hand it to someone else. |
 | `09-compact.png` | Compact mode shows only what is running. Pin it to a corner of the screen and get back to the game. |
-| `10-multi-instance.png` | Four Roblox clients, four accounts, one PC. Each window title carries the account signed into it, so you always know which is which. |
+| `10-multi-instance.png` | Eight Roblox clients, eight accounts, one PC. Each window title carries the account signed into it, so you always know which is which. |
 
 **Every claim above is checkable in the frame or in the code.** The mutex line is spec section 7.1,
 the DPAPI line is the About box's own text, ten colours is `Theme`'s slot count, and the plugin
@@ -121,6 +128,28 @@ scripting, which is a deliberate Roblox-relations line and not an oversight — 
 territory and the wall is on purpose.
 
 The names visible in every frame are streamer-mode identities, not real accounts.
+
+### `10-multi-instance.png` is the one frame that is not raw
+
+Every other shot comes out of `capture-ui.ps1` untouched. Shot 10 could not: it is a real 4K desktop
+with eight live clients in a real Pet Simulator 99 server, and the game renders **other players'
+overhead nameplates**, which streamer mode does not cover. Three real usernames were legible in it.
+
+So the frame is cropped to the tile band and the eight nameplate regions are blurred. Two things
+worth knowing before anyone re-shoots or edits it:
+
+- **Automatic detection failed twice, and both failures looked like successes.** A "near-white text
+  run" detector reported 32 plates and blurred none of them; a rewrite without the merge step
+  reported zero. These scenes are mostly bright, so whiteness does not isolate glyphs — runs either
+  swallow the sky or get filtered out for being too wide. The working version is eight hand-measured
+  boxes.
+- **Verify by magnifying the blurred region, not by looking at the frame.** At review size the
+  redaction looked complete all three times. Only a 4-5x crop showed `PapasbbBri` surviving 30 px
+  above box 4. Any future edit to this asset gets the same check per tile.
+
+The cleaner fix, if this frame is ever re-shot: put the alts in **different servers** so no client
+renders another's nameplate, and no redaction is needed at all.
+
 ### Two corrections this run made to this file
 
 - **`docs/store/screenshots/` is NOT gitignored.** The procedure below says it is. The five assets
@@ -132,9 +161,10 @@ The names visible in every frame are streamer-mode identities, not real accounts
 
 ### Still owed, and none of it is automatable from a working desktop
 
-- **Multi-instance, tiled desktop** (old #2). Partly told by `01-accounts-running.png`, but the
-  three-Roblox-windows-side-by-side frame needs a full-desktop capture. That was attempted and is
-  unshippable from this machine — see the route-audit section in `ui-capture-checklist.md`.
+- ~~**Multi-instance, tiled desktop** (old #2).~~ **Shot 2026-08-12 as `10-multi-instance.png`** —
+  eight clients, hand-tiled by Este, cropped and redacted per the section above. The earlier
+  attempt from this machine caught client folder names and an Insider watermark and was deleted;
+  what shipped is the tile band only, nothing of the desktop behind it.
 - **Squad Launch** (old #6). On the route file's deny list, and that entry is asserted by
   `UiRoutesSchemaTests` with a hardcoded count — removing it is a deliberate test edit, not a
   route change.
@@ -152,4 +182,8 @@ The names visible in every frame are streamer-mode identities, not real accounts
 - Screenshot of an EMPTY account list ("No saved accounts yet") — reads as "this app does nothing."
 - Screenshot of an error dialog — even a tasteful one suggests the app is unstable.
 - Screenshots with personal Roblox account names visible — use throwaway test accounts.
+- **In-game frames where other players are on screen.** Streamer mode renames *your* accounts in
+  RoRoRo's own UI; it has no reach into the game, so strangers' overhead nameplates render in full.
+  Shoot in a private server, or put the alts in separate servers. Redacting afterwards works but is
+  the expensive path — see the shot 10 section.
 - Screenshots of the SmartScreen warning during sideload install — this is a sideload-distribution caveat, not a Store-distribution surface; doesn't apply once the Store path is live.
