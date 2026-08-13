@@ -16,6 +16,13 @@
 > manual installer on bad information should know they can switch. Same for anything that would
 > affect their accounts or data — that gets said plainly, always.
 >
+> **Theme sharing, checked rather than assumed.** An earlier draft said a theme "saves as a file you
+> can send to someone else". True, and it implies an export feature that does not exist. What exists:
+> themes land in %LOCALAPPDATA%\ROROROblox	hemes as .json, the builder has an "Open themes folder"
+> button, and ThemeStore enumerates *.json in that folder so import is drop-in. The post now names
+> the button and the drop-in step, which is both honest and more useful — the vague version is how
+> you get "ok but where is it" replies.
+>
 > **What is deliberately NOT in here:** the invisible half. 60+ copied attribute sets collapsed into
 > named styles, 63 button attribute sets onto seven ranks, a build fence, a render-gate suite. Real
 > work, and none of it belongs in a Pet Sim clan channel beyond the one line acknowledging it.
@@ -75,8 +82,10 @@ nothing is lost on a bad monitor, in sunlight, or if you're colour blind.
 Warning banners and expired rows now use a marker and wording rather than
 just a colour, in every theme.
 
-You can also build your own from ten colours. It saves as a file you can send
-to someone else.
+You can also build your own from ten colours. Hit "Open themes folder" in the
+theme builder to find it — it's a small .json file. Send that to someone and
+they drop it in the same folder on their end, and it shows up in their theme
+picker. No install, no account, nothing to sign up for.
 
 **On Windows 10?** The Store build works on 22H2 — if you took the manual
 installer route because you'd heard the Store needed Windows 11, that's no
@@ -105,7 +114,8 @@ Also: Settings is a real page now instead of a text file you had to edit.
 Close stopped being the brightest button in nine windows, next to Remove and
 "Stop all Roblox instances". Muted accounts have a count and an unmute-all.
 Games is back on the toolbar. There's a fourth theme, Flatline, that carries
-no meaning in colour at all.
+no meaning in colour at all, and you can build your own — "Open themes folder"
+finds the file, and anyone you send it to drops it in the same folder.
 
 Outlines and faint text read properly now across every theme, and RoRoRo
 tests that by measuring the actual rendered pixels.
