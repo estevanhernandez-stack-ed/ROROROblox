@@ -58,6 +58,11 @@ internal static class WindowRenderHost
 
     private static Dispatcher Start()
     {
+        // Before the thread, not inside it: an exception raised on the STA thread below is unhandled
+        // and kills the test host, which is the loud half of the failure this prevents. Raised here
+        // it reaches the calling test as an ordinary, readable failure.
+        RenderEnvironment.RequireClean();
+
         var ready = new TaskCompletionSource<Dispatcher>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var thread = new Thread(() =>
