@@ -49,8 +49,16 @@ while IFS= read -r file; do
   # that one guards SCREENSHOTS and wants recall, because a partial cookie rendered on screen is
   # still worth refusing to capture.
   #
-  # -I skips binary files (cookie strings are text; binary key blobs caught separately below).
-  if grep -qIE "_\|WARNING:-DO-NOT-SHARE-THIS.*\.\|_[A-Za-z0-9_%+/=-]{20,}" "$file"; then
+  # -a, NOT -I: scan binary files too. Skipping them left a hole big enough to drive an index
+  # through — .gitnexus/lbug is a 77 MB tracked database built by slurping the working tree, and it
+  # cleared this scanner while containing 63 occurrences of the string ROBLOSECURITY. Those turned
+  # out to be the identifier from source, not a credential, but the scanner did not establish that;
+  # it never looked. A binary that ingests the repo is exactly where a leaked cookie would land, and
+  # it was the one place guaranteed not to be checked.
+  #
+  # Safe to widen because the pattern is already precise by construction (see above): prefix AND
+  # separator AND a 20+ char blob. That does not occur by accident in compiled output.
+  if grep -qaE "_\|WARNING:-DO-NOT-SHARE-THIS.*\.\|_[A-Za-z0-9_%+/=-]{20,}" "$file"; then
     red "[secret-scan] FAIL: $file contains a real .ROBLOSECURITY cookie — prefix plus session blob."
     violations=$((violations + 1))
   fi
@@ -64,8 +72,11 @@ while IFS= read -r file; do
   esac
 
   # 3. PKCS-12 ASN.1 header bytes inside a non-key-extension file.
+  # No upper size bound. There used to be a 10 MB cap here, which meant the check skipped exactly
+  # the files most worth checking: .gitnexus/lbug is 77 MB and cleared it on size alone. The cap
+  # bought nothing anyway — this reads four bytes, so a 77 MB file costs the same as a 4 KB one.
   size=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file" 2>/dev/null || echo 0)
-  if [ "$size" -gt 0 ] && [ "$size" -lt 10000000 ]; then
+  if [ "$size" -gt 0 ]; then
     if head -c 4 "$file" 2>/dev/null | xxd -p 2>/dev/null | grep -qE "^3082"; then
       red "[secret-scan] FAIL: $file starts with PKCS-12 ASN.1 header (0x3082...) — looks like a private key blob."
       violations=$((violations + 1))
