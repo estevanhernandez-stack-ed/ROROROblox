@@ -1,15 +1,19 @@
 # Microsoft Store submission checklist — RORORO
 
+> **State corrected 2026-08-13, and the correction matters more than the ticks.** This file sat at **0 of 31 checked** while RoRoRo shipped to the Store repeatedly — it is live at Store ID `9NMJCS390KWB` and v1.15.0.0 was submitted from it. A pre-flight that has never been ticked is not a strict pre-flight, it is an unread one: run against it in that state and it reports that the publisher account is unverified, which is false and trains you to ignore the whole list. Same failure the keystone names for the findings register — *a checklist that only tracks the process measures the process, not the app.*
+>
+> Items below are ticked **only where the repo proves it**. Anything whose truth lives inside Partner Center is left unticked and marked `[PC]`, because this file cannot see that account and guessing would put the list straight back where it was. Verified for v1.21.0.0.
+
 > Pre-flight + post-flight procedure for submitting to Partner Center. Lifted from Sanduhr's playbook with RORORO-specific addenda. Run the pre-flight EVERY submission (initial + every resubmission).
 
 ## Pre-flight (in order)
 
 ### Identity & paperwork
 
-- [ ] Partner Center publisher account exists and is verified
-- [ ] App identity reserved in Partner Center (e.g., `626Labs.RORORO` or similar — must be unique across the Store)
-- [ ] Publisher display name decided: **626 Labs LLC** *(or Estevan Hernandez until LLC paperwork lands)*
-- [ ] Identity fields in `Package.appxmanifest` updated to match Partner Center reservation:
+- [x] Partner Center publisher account exists and is verified — proven by the app being live at `9NMJCS390KWB`
+- [x] App identity reserved in Partner Center (e.g., `626Labs.RORORO` or similar — must be unique across the Store)
+- [x] Publisher display name decided: **626 Labs LLC** *(or Estevan Hernandez until LLC paperwork lands)*
+- [x] Identity fields in `Package.appxmanifest` updated to match Partner Center reservation — read back out of the packed `.msix`, not just the source manifest:
   - `<Identity Name="..." Publisher="..." />` matches the reserved name + the Partner-Center-issued publisher CN
   - `<Properties><PublisherDisplayName>...</PublisherDisplayName>` matches the display name above
   - Version bumped per release (track the latest version of the technical-fix PR before locking)
@@ -18,46 +22,46 @@
 
 Per Sanduhr playbook 10.1.4.4.a — the disclaimer must appear in MULTIPLE surfaces. Verify each:
 
-- [ ] **Store description (long form):** trademark paragraph present (`docs/store/listing-copy.md`)
-- [ ] **Store copyright field:** disclaimer appended (`docs/store/listing-copy.md`)
-- [ ] **MSIX manifest `<Description>`:** short disclaimer present (`Package.appxmanifest`)
-- [ ] **About box:** disclaimer present (`AboutWindow.xaml`)
-- [ ] **README:** disclaimer block at top + footer
-- [ ] **Privacy policy:** disclaimer in footer (`docs/PRIVACY.md`)
+- [x] **Store description (long form):** trademark paragraph present (`docs/store/listing-copy.md`)
+- [x] **Store copyright field:** disclaimer appended (`docs/store/listing-copy.md`)
+- [x] **MSIX manifest `<Description>`:** short disclaimer present (`Package.appxmanifest`)
+- [x] **About box:** disclaimer present (`AboutWindow.xaml`)
+- [x] **README:** disclaimer block at top + footer
+- [x] **Privacy policy:** disclaimer in footer (`docs/PRIVACY.md`)
 
 ### Privacy policy
 
 - [ ] `docs/PRIVACY.md` rendered to a public, crawlable URL (GitHub Pages, custom domain, or raw GitHub permalink — domain preferred)
-- [ ] Privacy policy URL added to Partner Center listing
-- [ ] Privacy claims match age-rating answers (no telemetry, no third-party data sharing)
+- [ ] `[PC]` Privacy policy URL added to Partner Center listing
+- [ ] `NOT VERIFIED` Privacy claims match age-rating answers (no telemetry, no third-party data sharing)
 
 ### Build artifacts
 
-- [ ] All Logos PNGs present and pass `scripts/build-msix.ps1 -Verify`
-- [ ] Run `scripts/install-local-msix.ps1` and verify: install succeeds, app launches, basic flow works (add account → launch as), uninstall succeeds, LocalState is gone after uninstall
+- [x] All Logos PNGs present and pass `scripts/build-msix.ps1 -Verify` — re-run 2026-08-13: *all 7 required assets present*
+- [ ] `NOT VERIFIED` Run `scripts/install-local-msix.ps1` and verify: install succeeds, app launches, basic flow works (add account → launch as), uninstall succeeds, LocalState is gone after uninstall
 - [ ] Build the **Store** flavor (unsigned — Partner Center signs after upload):
   ```powershell
   powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Store
   ```
-- [ ] MSIX packed at `dist/RORORO-Store.msix`
+- [x] MSIX packed at `dist/RORORO-Store.msix` — 91.12 MB, built from `0c04ee4` / tag `v1.21.0.0`, `runFullTrust` only
 
 ### Listing materials
 
-- [ ] Screenshots captured per `docs/store/screenshots-checklist.md` (3–6, multi-state)
-- [ ] Long description from `docs/store/listing-copy.md` ready to paste
+- [x] Screenshots captured per `docs/store/screenshots-checklist.md` — **10** shots at 1920x1080 with 10 captions. Note the count: this file says 3-6 and elsewhere 1-9, and neither number was read off the upload form
+- [x] Long description from `docs/store/listing-copy.md` ready to paste
 - [ ] Short description (≤200 chars) ready
-- [ ] Keywords picked (no flagged terms — see listing-copy.md)
-- [ ] What's-new release notes ready (DON'T fill in until version is locked)
+- [ ] `NOT VERIFIED` Keywords picked (no flagged terms — see listing-copy.md)
+- [x] What's-new release notes ready — `release-notes-1.21.0.0.md`; must also cover 1.16-1.20, which were never submitted
 
 ### Age rating
 
-- [ ] `docs/store/age-rating.md` answers ready to enter into the IARC questionnaire
-- [ ] Age rating answers consistent with privacy policy + listing description
+- [x] `docs/store/age-rating.md` answers ready to enter into the IARC questionnaire
+- [ ] `NOT VERIFIED` Age rating answers consistent with privacy policy + listing description
 
 ### Documentation surfaces
 
 - [ ] CONTRIBUTING.md / README.md note Microsoft Store as the primary distribution path
-- [ ] All in-app links work (Repo URL, Issues URL, Open log folder)
+- [ ] `NOT VERIFIED` All in-app links work (Repo URL, Issues URL, Open log folder)
 
 ## Submit
 
@@ -75,7 +79,7 @@ Partner Center status page will move through:
 
 ## Post-flight — if certified
 
-- [ ] Tag the release in git (`git tag v<X.Y.Z>` matching the manifest version)
+- [x] Tag the release in git — `v1.21.0.0` on `0c04ee4`, matching both manifests
 - [ ] Update README.md "Microsoft Store" install section to point to the live listing
 - [ ] Capture the listing URL + add to dashboard
 - [ ] Announce in clan Discord with Store link
