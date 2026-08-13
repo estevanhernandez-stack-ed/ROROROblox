@@ -219,10 +219,24 @@ public sealed class RobloxCompatChecker : IRobloxCompatChecker
     }
 
     /// <summary>
-    /// Reads the file-version string of the newest installed <c>RobloxPlayerBeta.exe</c>
-    /// (the current <c>version-*</c> dir). Returns <c>null</c> when Roblox isn't installed or the
-    /// read fails. Exposed <c>internal</c> so the v1.7.0 <c>RobloxUpdateProbe</c> reuses the exact
-    /// same installed-version read (spec §"Components > 1. Update-pending detection").
+    /// Reads the file-version string of the most-recently-written installed <c>RobloxPlayerBeta.exe</c>.
+    /// Returns <c>null</c> when Roblox isn't installed or the read fails.
+    ///
+    /// <para><b>This does not answer "what will run" and must not be used as if it did (F-104).</b>
+    /// A launch runs whatever the <c>roblox-player</c> handler is pinned to — see
+    /// <see cref="GetHandlerRobloxVersion"/>. Two independent reasons this read cannot substitute:</para>
+    /// <list type="bullet">
+    /// <item><b>The ordering clock is wrong.</b> <c>LastWriteTimeUtc</c> bumps when a client RUNS,
+    /// not when one installs. Measured 2026-08-12: three version folders whose real install dates
+    /// were 08-09, 08-10 and 08-12 all carried write times inside the same three-minute window,
+    /// which was an eight-client launch batch. During a batch this ordering is a coin flip.</item>
+    /// <item><b>No timestamp orders by version anyway.</b> On the same box
+    /// <c>version-7d4de67b</c> is <c>0,733,603</c> created 08-09 while <c>version-082eb75e</c> is
+    /// the LOWER <c>0,733,448</c> created 08-10. Creation order does not track version order, so
+    /// swapping the clock would not fix it either.</item>
+    /// </list>
+    /// <para>It is kept as the compat banner's read and as a fallback for when the handler is
+    /// unreadable or owned by a strap. Exposed <c>internal</c> so <c>RobloxUpdateProbe</c> shares it.</para>
     /// </summary>
     internal static string? GetInstalledRobloxVersion()
     {
@@ -258,6 +272,149 @@ public sealed class RobloxCompatChecker : IRobloxCompatChecker
         catch
         {
             return null;
+        }
+    }
+
+    /// <summary>
+    /// The registry subkey holding the <c>roblox-player:</c> protocol handler command. Same key
+    /// <see cref="BloxstrapDetector"/> reads to classify the handler; here we want the version it
+    /// is pinned to rather than which binary owns it.
+    /// </summary>
+    private const string HandlerCommandSubKey = @"Software\Classes\roblox-player\shell\open\command";
+
+    /// <summary>
+    /// The version a launch will ACTUALLY run: the <c>FileVersion</c> of the
+    /// <c>RobloxPlayerBeta.exe</c> that the <c>roblox-player</c> handler points at. This is the
+    /// number the pre-warm gate needs (F-104) — <see cref="GetInstalledRobloxVersion"/> answers a
+    /// different question and the two disagree exactly during an update, which is the only window
+    /// where the gate matters.
+    ///
+    /// <para>Returns <c>null</c> when the handler is absent, unreadable, owned by a strap (no
+    /// <c>version-*</c> segment in the path), or points at a binary that is gone. Every failure
+    /// degrades to <c>null</c> so the caller falls back rather than blocking a launch.</para>
+    ///
+    /// <para>Posture: one registry read and one file read. No network, no handler takeover, no
+    /// bootstrapper behaviour — clean under spec §7.1.</para>
+    /// </summary>
+    internal static string? GetHandlerRobloxVersion()
+    {
+        try
+        {
+            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(HandlerCommandSubKey);
+            var exePath = ExtractHandlerExePath(key?.GetValue(null) as string);
+            if (exePath is null || !File.Exists(exePath))
+            {
+                return null;
+            }
+
+            var info = FileVersionInfo.GetVersionInfo(exePath);
+            return info.FileVersion ?? info.ProductVersion;
+        }
+        catch
+        {
+            // Registry locked down, path malformed, file vanished mid-read — all "we don't know",
+            // which is the fallback signal, not an error worth surfacing.
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Pure: pull the <c>version-*</c> folder name out of a handler command string. Returns
+    /// <c>null</c> when there is no such segment — which is the normal answer when Bloxstrap or
+    /// Fishstrap owns the handler, since those point at their own binary. Exposed for tests.
+    /// </summary>
+    internal static string? ExtractVersionFolder(string? handlerCommand)
+    {
+        if (string.IsNullOrWhiteSpace(handlerCommand))
+        {
+            return null;
+        }
+
+        // Split on both separators: the registry value uses backslashes, but a hand-written or
+        // migrated value can carry forward slashes and Windows accepts them.
+        var segments = handlerCommand.Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries);
+        foreach (var segment in segments)
+        {
+            var trimmed = segment.Trim('"', ' ');
+            // "version-" prefixed, and something after the dash. A bare "version-" or a lookalike
+            // like "versions" or "notaversion" is not a match.
+            if (trimmed.Length > "version-".Length &&
+                trimmed.StartsWith("version-", StringComparison.OrdinalIgnoreCase))
+            {
+                return trimmed;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Pure-ish: turn a handler command into the full path of the pinned <c>RobloxPlayerBeta.exe</c>,
+    /// or <c>null</c> when the command carries no <c>version-*</c> segment. Rebuilt from the known
+    /// Versions root rather than parsed out of the command line, so a quoted path with spaces and a
+    /// trailing <c>%1</c> needs no argv splitting.
+    /// </summary>
+    private static string? ExtractHandlerExePath(string? handlerCommand)
+    {
+        var folder = ExtractVersionFolder(handlerCommand);
+        if (folder is null)
+        {
+            return null;
+        }
+
+        return Path.Combine(VersionsDirectory, folder, "RobloxPlayerBeta.exe");
+    }
+
+    /// <summary>The per-user Roblox <c>Versions</c> root. Both version reads hang off this.</summary>
+    private static string VersionsDirectory => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Roblox",
+        "Versions");
+
+    /// <summary>
+    /// How far back <see cref="CountRecentVersionInstalls(TimeSpan)"/> looks by default. Long enough
+    /// to span a Roblox update landing mid-batch, short enough that yesterday's update is not still
+    /// counted as churn.
+    /// </summary>
+    internal static readonly TimeSpan DefaultChurnWindow = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// How many Roblox versions were INSTALLED inside <paramref name="window"/>. More than one means
+    /// updates are landing on top of each other, which is a reason to hold a batch regardless of
+    /// what any version comparison says — and it costs no network at all (F-104's second signal).
+    /// </summary>
+    internal static int CountRecentVersionInstalls(TimeSpan window)
+        => CountRecentVersionInstalls(VersionsDirectory, window, DateTime.UtcNow);
+
+    /// <summary>
+    /// Testable core of <see cref="CountRecentVersionInstalls(TimeSpan)"/>.
+    ///
+    /// <para><b>Creation time, deliberately, and this is the whole subtlety.</b>
+    /// <c>LastWriteTimeUtc</c> on a <c>version-*</c> folder moves when a client RUNS. Counting on it
+    /// would report churn every time someone multilaunches — the exact moment the answer must be
+    /// trusted — so it would fire hardest precisely when it is most wrong. <c>CreationTimeUtc</c> is
+    /// the install clock. (It is NOT a "which is newest" clock; see
+    /// <see cref="GetInstalledRobloxVersion"/>. Recency and ordering are different questions and
+    /// only the first one is being asked here.)</para>
+    /// </summary>
+    internal static int CountRecentVersionInstalls(string versionsDir, TimeSpan window, DateTime nowUtc)
+    {
+        try
+        {
+            if (!Directory.Exists(versionsDir))
+            {
+                return 0;
+            }
+
+            var cutoff = nowUtc - window;
+            return new DirectoryInfo(versionsDir)
+                .GetDirectories("version-*")
+                .Count(d => d.CreationTimeUtc >= cutoff);
+        }
+        catch
+        {
+            // Degrade-safe like the rest of this family: unreadable is not churn.
+            return 0;
         }
     }
 }

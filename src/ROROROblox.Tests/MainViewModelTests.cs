@@ -1687,6 +1687,7 @@ public class MainViewModelTests
     {
         public bool IsInstallerRunning() => throw new NotImplementedException();
         public Task<bool> IsUpdatePendingAsync(CancellationToken ct = default) => throw new NotImplementedException();
+        public bool IsUpdateChurnActive() => throw new NotImplementedException();
     }
 
     private sealed class FakeAccountTransport : IAccountTransport

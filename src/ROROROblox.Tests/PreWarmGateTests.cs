@@ -12,12 +12,14 @@ namespace ROROROblox.Tests;
 /// </summary>
 public class PreWarmGateTests
 {
-    // === Decide: strap-handling short-circuits regardless of the update signal ===
+    // === Decide: strap-handling short-circuits regardless of the other signals ===
 
     [Fact]
     public void Decide_StrapHandling_NoUpdate_LaunchAllNow()
     {
-        Assert.Equal(PreWarmDecision.LaunchAllNow, PreWarmGate.Decide(strapHandling: true, updatePending: false));
+        Assert.Equal(
+            PreWarmDecision.LaunchAllNow,
+            PreWarmGate.Decide(strapHandling: true, updatePending: false, updateChurn: false));
     }
 
     [Fact]
@@ -25,22 +27,58 @@ public class PreWarmGateTests
     {
         // A strap updates Roblox proactively itself — pre-warming would double-update. The strap
         // path wins even when an update is pending (spec Riders §7).
-        Assert.Equal(PreWarmDecision.LaunchAllNow, PreWarmGate.Decide(strapHandling: true, updatePending: true));
+        Assert.Equal(
+            PreWarmDecision.LaunchAllNow,
+            PreWarmGate.Decide(strapHandling: true, updatePending: true, updateChurn: false));
     }
 
-    // === Decide: no strap — the update signal drives the decision ===
+    [Fact]
+    public void Decide_StrapHandling_Churning_StillLaunchAllNow()
+    {
+        // Churn under a strap is the strap's own update loop. The short-circuit stays ahead of the
+        // F-104 signal deliberately — widening it here would double-update exactly the users who
+        // already have a bootstrapper serialising for them.
+        Assert.Equal(
+            PreWarmDecision.LaunchAllNow,
+            PreWarmGate.Decide(strapHandling: true, updatePending: false, updateChurn: true));
+    }
+
+    // === Decide: no strap — either update signal drives the decision ===
 
     [Fact]
-    public void Decide_NoStrap_NoUpdate_LaunchAllNow()
+    public void Decide_NoStrap_Quiet_LaunchAllNow()
     {
         // The common path: full multilaunch speed, no pre-warm wait.
-        Assert.Equal(PreWarmDecision.LaunchAllNow, PreWarmGate.Decide(strapHandling: false, updatePending: false));
+        Assert.Equal(
+            PreWarmDecision.LaunchAllNow,
+            PreWarmGate.Decide(strapHandling: false, updatePending: false, updateChurn: false));
     }
 
     [Fact]
     public void Decide_NoStrap_UpdatePending_PreWarmThenRelease()
     {
-        Assert.Equal(PreWarmDecision.PreWarmThenRelease, PreWarmGate.Decide(strapHandling: false, updatePending: true));
+        Assert.Equal(
+            PreWarmDecision.PreWarmThenRelease,
+            PreWarmGate.Decide(strapHandling: false, updatePending: true, updateChurn: false));
+    }
+
+    [Fact]
+    public void Decide_NoStrap_ChurnAloneIsEnoughToHold()
+    {
+        // F-104's second signal, and the one that needs no network. When versions are landing on
+        // top of each other, no single version comparison is stable enough to trust — so a clean
+        // "no update pending" must NOT release the batch on its own.
+        Assert.Equal(
+            PreWarmDecision.PreWarmThenRelease,
+            PreWarmGate.Decide(strapHandling: false, updatePending: false, updateChurn: true));
+    }
+
+    [Fact]
+    public void Decide_NoStrap_BothSignals_PreWarmThenRelease()
+    {
+        Assert.Equal(
+            PreWarmDecision.PreWarmThenRelease,
+            PreWarmGate.Decide(strapHandling: false, updatePending: true, updateChurn: true));
     }
 
     // === PreWarmWaitComplete: done only when installer gone AND first attached ===
