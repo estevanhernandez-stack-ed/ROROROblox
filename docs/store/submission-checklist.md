@@ -5,9 +5,9 @@
 > than no tick. If you find it fully ticked, someone mistook it for a status document and it needs
 > clearing before the next ship. (Done once, on 2026-08-13, by me.)
 >
-> Two things worth knowing before the v1.21 walk: the screenshot count in this file says 3-6 and
-> [screenshots-checklist.md](screenshots-checklist.md) says 1-9, and **neither number was read off
-> the actual upload form** - check it, the current set is 10. And
+> On screenshots: this file said 3-6 and [screenshots-checklist.md](screenshots-checklist.md) said
+> 1-9, and **neither had been read off the upload form**. Settled 2026-08-13 by submitting: 10 were
+> accepted. Both figures are corrected. And
 > [submission-packet-1.21.0.0.md](submission-packet-1.21.0.0.md) carries the upload-order detail
 > this list only gestures at.
 
@@ -54,7 +54,7 @@ Per Sanduhr playbook 10.1.4.4.a — the disclaimer must appear in MULTIPLE surfa
 
 ### Listing materials
 
-- [ ] Screenshots captured per `docs/store/screenshots-checklist.md` (3–6, multi-state)
+- [ ] Screenshots captured per `docs/store/screenshots-checklist.md` — multi-state, and **at least 10 fit**: the v1.21.0.0 submission uploaded 10 and Partner Center took all of them. The "3–6" that used to sit here was a playbook figure, not a form limit.
 - [ ] Long description from `docs/store/listing-copy.md` ready to paste
 - [ ] Short description (≤200 chars) ready
 - [ ] Keywords picked (no flagged terms — see listing-copy.md)

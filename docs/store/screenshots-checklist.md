@@ -1,13 +1,8 @@
 # Store screenshots — RORORO
 
-> Partner Center accepts 1–9 screenshots per device family. Per Sanduhr playbook: 3–6 screenshots showing **different states** of the app proves the multi-feature value claim (10.1.4.4.b). Single-state screenshot reels read as single-view-utility — that's a rejection vector.
+> **Partner Center accepts at least 10 screenshots per device family — measured, not inferred.** All ten of this set uploaded and tagged on the v1.21.0.0 submission, 2026-08-13. The old figure here was 1-9, copied from the Sanduhr playbook rather than read off the upload form; it was wrong and it nearly cost a shot. The true ceiling is still unknown, only that it is not below 10. Per Sanduhr playbook: 3–6 screenshots showing **different states** of the app proves the multi-feature value claim (10.1.4.4.b). Single-state screenshot reels read as single-view-utility — that's a rejection vector.
 
-> **Count conflict, unresolved as of 2026-08-12.** The line above says 9. The shipped set is **10**.
-> Nobody has re-read Partner Center's current limit — the 9 was copied from the Sanduhr playbook,
-> not from the upload form. **Check the actual cap before uploading.** If it is 9, drop
-> `08-theme-builder.png`: it is the most niche of the ten, and `02-themes.png` already carries the
-> theming story. Do not drop `10-multi-instance.png` — it is the only frame that shows the product
-> doing the thing the listing is about.
+> **~~Count conflict, unresolved as of 2026-08-12.~~ Resolved 2026-08-13: all 10 were accepted.** Nothing had to be dropped, and `08-theme-builder.png` — the one earmarked for the chop — shipped. Worth keeping as a pattern rather than a footnote: the limit had been asserted twice in this repo, in two different files, with two different numbers, neither taken from the form that enforces it.
 
 ## Required dimensions
 
