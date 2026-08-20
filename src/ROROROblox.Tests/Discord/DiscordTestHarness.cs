@@ -323,6 +323,10 @@ internal static class DiscordTestHarness
         public Task<bool?> GetEdgeRemediationAnswerAsync(string themeId) => Task.FromResult<bool?>(null);
         public Task SetEdgeRemediationAnswerAsync(string themeId, bool accepted) => Task.CompletedTask;
         public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(true);
+        /// <summary>F-111. Settable so the stop-grace path can be driven both ways.</summary>
+        public bool AutoForceStop { get; set; }
+        public Task<bool> GetAutoForceStopAsync() => Task.FromResult(AutoForceStop);
+        public Task SetAutoForceStopAsync(bool auto) { AutoForceStop = auto; return Task.CompletedTask; }
         public string? DismissedFpsCapWarningSignature { get; set; }
         public Task<string?> GetDismissedFpsCapWarningSignatureAsync() => Task.FromResult(DismissedFpsCapWarningSignature);
         public Task SetDismissedFpsCapWarningSignatureAsync(string? signature)

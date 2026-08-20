@@ -201,6 +201,7 @@ internal partial class PreferencesWindow : Window
             CarefulSquadLaunchToggle.IsChecked = await _settings.GetCarefulSquadLaunchAsync();
 
             AlwaysShowRecycleToggle.IsChecked = await _settings.GetAlwaysShowRecycleAsync();
+            AutoForceStopToggle.IsChecked = await _settings.GetAutoForceStopAsync();
 
             // Streamer mode reads through to IStreamerIdentityProvider via the view model — there is
             // no separate persisted flag here, which is why this reads the VM rather than _settings.
@@ -520,6 +521,27 @@ internal partial class PreferencesWindow : Window
                 MessageBoxImage.Warning);
             _suppressClickHandlers = true;
             CarefulSquadLaunchToggle.IsChecked = await _settings.GetCarefulSquadLaunchAsync();
+            _suppressClickHandlers = false;
+        }
+    }
+
+    private async void OnAutoForceStopToggle(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+        var wanted = AutoForceStopToggle.IsChecked == true;
+        try
+        {
+            // No view-model push needed, unlike the Recycle toggle: StopAccountAsync reads this
+            // per stop rather than caching it, so the next press already has the new answer.
+            await _settings.SetAutoForceStopAsync(wanted);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this,
+                $"Could not save that setting: {ex.Message}",
+                "RoRoRo", MessageBoxButton.OK, MessageBoxImage.Warning);
+            _suppressClickHandlers = true;
+            AutoForceStopToggle.IsChecked = !wanted;
             _suppressClickHandlers = false;
         }
     }

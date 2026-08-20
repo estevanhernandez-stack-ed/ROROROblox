@@ -19,4 +19,11 @@ public interface IGlobalBasicSettingsWriter
     /// write failed for any reason.
     /// </exception>
     Task WriteFramerateCapAsync(int? fps, CancellationToken ct = default);
+
+    /// <summary>
+    /// Writes window geometry and fullscreen back into Roblox's settings (F-109), for the case
+    /// where RoRoRo had to force-close a client and Roblox therefore never got to save them
+    /// itself. A zero-area rect is ignored rather than written.
+    /// </summary>
+    Task WriteWindowStateAsync(bool fullscreen, int x, int y, int width, int height, CancellationToken ct = default);
 }

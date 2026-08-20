@@ -217,6 +217,31 @@ public sealed class AccountSummary : INotifyPropertyChanged
         set => SetField(ref _isLaunching, value);
     }
 
+    private int? _stoppingSecondsRemaining;
+
+    /// <summary>
+    /// Seconds left before Stop gives up waiting and force-closes, or null when no stop is in
+    /// flight (F-111).
+    /// <para>
+    /// This exists because the wait is not ours and cannot be seen from here. Stop sends the client
+    /// the same close its X sends, and an in-game Roblox answers by raising its OWN confirm inside
+    /// the game surface — not an OS window, so nothing on this side can detect it, let alone show
+    /// it. Without a countdown the row would simply sit there looking broken, which is exactly what
+    /// the old Stop did.
+    /// </para>
+    /// </summary>
+    public int? StoppingSecondsRemaining
+    {
+        get => _stoppingSecondsRemaining;
+        set
+        {
+            if (SetField(ref _stoppingSecondsRemaining, value))
+            {
+                OnPropertyChanged(nameof(SecondaryStatusText));
+            }
+        }
+    }
+
     public string StatusText
     {
         get => _statusText;
@@ -703,6 +728,13 @@ public sealed class AccountSummary : INotifyPropertyChanged
     {
         get
         {
+            // 0. A stop the user just asked for outranks everything below, all of which describe
+            //    ambient state. This is feedback for an action taken half a second ago, and its
+            //    absence is what made the old Stop button feel dead.
+            if (_stoppingSecondsRemaining is int stopping)
+            {
+                return stopping > 0 ? $"Closing… {stopping}s (confirm in Roblox)" : "Closing…";
+            }
             // 1. Session expired wins over everything — the cookie is dead, nothing else matters.
             if (_sessionExpired)
             {

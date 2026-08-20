@@ -106,6 +106,11 @@ public sealed class FpsCapSettlerTests
             _probe.Mtime = _clock.GetUtcNow();
             return Task.CompletedTask;
         }
+
+        /// <summary>F-109. Records rather than discards — the fallback write is worth asserting.</summary>
+        public (bool Fullscreen, int X, int Y, int W, int H)? WindowState;
+        public Task WriteWindowStateAsync(bool fullscreen, int x, int y, int width, int height, CancellationToken ct = default)
+        { WindowState = (fullscreen, x, y, width, height); return Task.CompletedTask; }
     }
 
     /// <summary>
@@ -156,6 +161,11 @@ public sealed class FpsCapSettlerTests
             _probe.Mtime = _clock.GetUtcNow();
             return Task.CompletedTask;
         }
+
+        /// <summary>F-109. Records rather than discards — the fallback write is worth asserting.</summary>
+        public (bool Fullscreen, int X, int Y, int W, int H)? WindowState;
+        public Task WriteWindowStateAsync(bool fullscreen, int x, int y, int width, int height, CancellationToken ct = default)
+        { WindowState = (fullscreen, x, y, width, height); return Task.CompletedTask; }
     }
 
     /// <summary>
