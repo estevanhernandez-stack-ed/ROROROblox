@@ -244,10 +244,25 @@ public partial class App : Application
                 var modal = new Modals.RobloxAlreadyRunningWindow(
                     onCloseForMe: () => TryRecoverMultiInstanceAsync(closeRobloxFirst: true),
                     onRetry: () => TryRecoverMultiInstanceAsync(closeRobloxFirst: false));
+
+                // F-108. Say that startup is STOPPING here and why. ShowDialog blocks OnStartup in
+                // a nested message loop, so from the log's point of view the app simply goes quiet
+                // — for as long as it takes a human to notice a window. Six such pauses in seven
+                // minutes were read as six failures to start, by someone holding the source, because
+                // a pause and a death looked identical: no completion lines and no exit line.
+                _log.LogInformation(
+                    "Startup paused: Roblox already holds the singleton name — showing the "
+                    + "already-running dialog and waiting for the user.");
                 modal.ShowDialog();
                 var (proceed, holdsMutex) = AppLifecycle.BlockedStartupDecision.Resolve(modal.Outcome);
+                _log.LogInformation(
+                    "Startup resumed: already-running dialog answered {Outcome} — proceed={Proceed}, "
+                    + "holdsMutex={HoldsMutex}.",
+                    modal.Outcome, proceed, holdsMutex);
                 if (!proceed)
                 {
+                    // The one deliberate stop in the whole gate, and it was invisible.
+                    _log.LogInformation("Startup abandoned at the gate: the user chose not to continue.");
                     Shutdown(0);
                     return;
                 }
@@ -258,7 +273,17 @@ public partial class App : Application
         else if (verdict is StartupGateResult.Leftover leftover)
         {
             var info = new Modals.LeftoverProcessesWindow(leftover.Windowless, leftover.Windowed);
+
+            // F-108, same reason as the branch above — and this is the one that actually bit. The
+            // singleton name IS held here, so multi-instance works and this dialog is purely
+            // informational, which makes the silence behind it even more misleading: nothing is
+            // wrong, and the log says nothing at all.
+            _log.LogInformation(
+                "Startup paused: {Windowless} windowless + {Windowed} windowed leftover Roblox "
+                + "process(es) — showing the leftover-process dialog and waiting for the user.",
+                leftover.Windowless, leftover.Windowed);
             info.ShowDialog();
+            _log.LogInformation("Startup resumed: leftover dialog answered {Action}.", info.Action);
             switch (info.Action)
             {
                 case Modals.LeftoverCleanupAction.StopAll:
