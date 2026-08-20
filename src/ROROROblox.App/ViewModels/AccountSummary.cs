@@ -733,7 +733,7 @@ public sealed class AccountSummary : INotifyPropertyChanged
             //    absence is what made the old Stop button feel dead.
             if (_stoppingSecondsRemaining is int stopping)
             {
-                return stopping > 0 ? $"Closing… {stopping}s (confirm in Roblox)" : "Closing…";
+                return stopping > 0 ? $"Closing… {stopping}s" : "Closing…";
             }
             // 1. Session expired wins over everything — the cookie is dead, nothing else matters.
             if (_sessionExpired)

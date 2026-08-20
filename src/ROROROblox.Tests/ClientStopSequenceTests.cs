@@ -137,4 +137,47 @@ public class ClientStopSequenceTests
         Assert.True(killed);
         Assert.Equal(ClientStopOutcome.Forced, outcome);
     }
+
+    [Fact]
+    public async Task ItAsksASecondTime_BecauseThatIsWhatActuallyClosesAnInGameClient()
+    {
+        // Corrected 2026-08-20 by the user: the first close raises Roblox's confirm, and a SECOND
+        // close dismisses it into a clean exit — which is exactly what double-clicking the X does.
+        // Measured directly: close at 15:34:24 left it alive, close at 15:34:28 exited it, and the
+        // settings file came back holding the on-screen geometry, written by Roblox itself.
+        // A stop that never asks twice waits the full grace and then kills for no reason.
+        var asks = 0;
+        await ClientStopSequence.RunAsync(
+            hasExited: () => false, askToClose: () => { asks++; return true; },
+            forceKill: () => { }, onSecondsRemaining: _ => { }, delay: NoDelay,
+            grace: TimeSpan.FromSeconds(10));
+
+        Assert.Equal(2, asks);
+    }
+
+    [Fact]
+    public async Task ItNeverAsksAThirdTime()
+    {
+        // Twice is what a person does. Repeating on every tick would be hammering a window that
+        // has already answered us, ten times in ten seconds.
+        var asks = 0;
+        await ClientStopSequence.RunAsync(
+            hasExited: () => false, askToClose: () => { asks++; return true; },
+            forceKill: () => { }, onSecondsRemaining: _ => { }, delay: NoDelay,
+            grace: TimeSpan.FromSeconds(60));
+
+        Assert.Equal(2, asks);
+    }
+
+    [Fact]
+    public async Task AClientThatGoesBeforeTheSecondAskIsNotAskedAgain()
+    {
+        var asks = 0;
+        var outcome = await ClientStopSequence.RunAsync(
+            hasExited: ExitsAfter(1), askToClose: () => { asks++; return true; },
+            forceKill: () => { }, onSecondsRemaining: _ => { }, delay: NoDelay);
+
+        Assert.Equal(ClientStopOutcome.ClosedItself, outcome);
+        Assert.Equal(1, asks);
+    }
 }

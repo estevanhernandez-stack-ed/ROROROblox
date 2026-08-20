@@ -47,6 +47,24 @@ public static class ClientStopSequence
     /// <summary>How often the countdown ticks, and therefore how often exit is re-checked.</summary>
     public static readonly TimeSpan Tick = TimeSpan.FromSeconds(1);
 
+    /// <summary>
+    /// How long to wait before asking a SECOND time, which is what actually closes an in-game
+    /// client (F-111, corrected 2026-08-20 by the user).
+    /// <para>
+    /// The first close raises Roblox's confirm; a second one, sent while that confirm is up,
+    /// dismisses it and exits — cleanly, with Roblox persisting its own settings. This is what a
+    /// person does without thinking about it: double-click the X, or hit "close all windows" twice.
+    /// Measured directly: close at 15:34:24 left the client alive, close at 15:34:28 exited it, and
+    /// the settings file came back holding the exact on-screen geometry, written by Roblox rather
+    /// than put back by us.
+    /// </para>
+    /// <para>
+    /// So the common path is now a clean exit in a few seconds, with no kill and nothing lost, and
+    /// without the user having to answer a dialog they never asked for.
+    /// </para>
+    /// </summary>
+    public static readonly TimeSpan SecondAskAfter = TimeSpan.FromSeconds(2);
+
     /// <param name="hasExited">Re-read each tick. The ONLY honest answer to "did it close".</param>
     /// <param name="askToClose">Sends SC_CLOSE. Returns false if there is no window to send to.</param>
     /// <param name="forceKill">Last resort, once the grace is spent.</param>
@@ -80,6 +98,10 @@ public static class ClientStopSequence
         var remaining = (int)Math.Ceiling(budget.TotalSeconds);
         onSecondsRemaining(remaining);
 
+        var elapsedTicks = 0;
+        var askedAgain = false;
+        var secondAskTicks = (int)Math.Ceiling(SecondAskAfter / Tick);
+
         while (remaining > 0)
         {
             if (ct.IsCancellationRequested) break;
@@ -90,6 +112,16 @@ public static class ClientStopSequence
             {
                 onSecondsRemaining(0);
                 return ClientStopOutcome.ClosedItself;
+            }
+
+            // Ask once more, and only once. Twice is what a person does — double-click the X — and
+            // it is what dismisses Roblox's confirm into a clean exit. Repeating it every tick
+            // would be hammering a window we have already been answered by.
+            elapsedTicks++;
+            if (!askedAgain && elapsedTicks >= secondAskTicks)
+            {
+                askedAgain = true;
+                askToClose();
             }
 
             remaining--;
