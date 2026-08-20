@@ -101,10 +101,24 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         set { if (_installUrlInput != value) { _installUrlInput = value; Raise(); RelayCommand.RaiseCanExecuteChanged(); } }
     }
 
+    private string? _duplicateWarning;
+
     public string? StatusBanner
     {
         get => _statusBanner;
         set { if (_statusBanner != value) { _statusBanner = value; Raise(); } }
+    }
+
+    /// <summary>
+    /// Standing description of a plugins root with duplicate folders, or null when there are none
+    /// (F-099). Separate from <see cref="StatusBanner"/> on purpose: that one is the outcome of the
+    /// last install or update and is cleared by the next action, whereas this describes what is on
+    /// disk right now and must survive until a scan says otherwise.
+    /// </summary>
+    public string? DuplicateWarning
+    {
+        get => _duplicateWarning;
+        private set { if (_duplicateWarning != value) { _duplicateWarning = value; Raise(); } }
     }
 
     public bool IsBusy
@@ -135,7 +149,17 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
 
     public async Task LoadAsync()
     {
-        var installed = await _registry.ScanAsync().ConfigureAwait(true);
+        var scanned = await _registry.ScanAsync().ConfigureAwait(true);
+
+        // F-099. ScanAsync returns one entry per FOLDER, so two folders declaring one id used to
+        // produce two identical rows here — same name, same version, both offering Launch, Revoke
+        // and Restart, with nothing saying which copy the host had actually loaded. Acting on the
+        // wrong one operated on a folder the host had already discarded. The host's keep-the-first
+        // rule now applies here too, from the same code, and the copies it drops are named in a
+        // banner instead of only in a log file nobody opens.
+        var (installed, duplicates) = PluginDuplicates.Resolve(scanned);
+        DuplicateWarning = duplicates.Count > 0 ? PluginDuplicates.Describe(duplicates) : null;
+
         var running = _supervisor.RunningPids;
 
         // Fetch the catalog ONLY when unpackaged — the packaged build must never read a curated list

@@ -63,24 +63,26 @@ public sealed class InstalledPluginsLookupAdapter : IInstalledPluginsLookup
             // The trigger is not exotic. Copying a plugin folder to back it up before an update
             // does it, which is exactly how this was found. A duplicate id is a reason to ignore
             // one folder, never a reason to disable plugin support entirely.
-            foreach (var plugin in plugins)
+            //
+            // The keep-the-first rule moved to PluginDuplicates (F-099) because the Plugins window
+            // needs the same answer and had been reaching a different one — it deduplicated
+            // nowhere, so it drew the plugin twice.
+            var (kept, dropped) = PluginDuplicates.Resolve(plugins);
+            foreach (var plugin in kept)
             {
-                var id = plugin.Manifest.Id;
-                if (string.IsNullOrEmpty(id)) continue;
+                fresh[plugin.Manifest.Id] = plugin;
+            }
 
-                if (fresh.TryGetValue(id, out var kept))
-                {
-                    // Warning, not Debug: two folders claim one plugin and one is being ignored.
-                    // Both paths are named so the offending copy is findable.
-                    _log.LogWarning(
-                        "Two installed folders declare plugin id '{Id}'. Using '{Kept}' and ignoring "
-                        + "'{Ignored}'. Delete or move the unused copy — a duplicate id is usually a "
-                        + "leftover backup folder.",
-                        id, kept.InstallDir, plugin.InstallDir);
-                    continue;
-                }
-
-                fresh[id] = plugin;
+            foreach (var d in dropped)
+            {
+                // Warning, not Debug: two folders claim one plugin and one is being ignored.
+                // Both paths are named so the offending copy is findable. The Plugins window now
+                // says the same thing where the user can actually see it.
+                _log.LogWarning(
+                    "Two installed folders declare plugin id '{Id}'. Using '{Kept}' and ignoring "
+                    + "'{Ignored}'. Delete or move the unused copy — a duplicate id is usually a "
+                    + "leftover backup folder.",
+                    d.Id, d.KeptDir, d.IgnoredDir);
             }
         }
         catch (Exception ex)
