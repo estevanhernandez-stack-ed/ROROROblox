@@ -47,9 +47,31 @@ entirely, which is exactly the kind of thing a test cannot see about itself.
   the signal and make the suite slower for everyone.
 - **A Roblox client running during the suite invalidates the render tests.** Anyone chasing a render
   failure should check for `RobloxPlayerBeta` before anything else.
-- Worth considering: have the render fixture refuse to run — loudly — when a Roblox client is
-  detected, rather than timing out and reporting as a failure. A precondition check would name the
-  cause instead of leaving the next person to rediscover this.
+- ~~Worth considering: have the render fixture refuse to run — loudly — when a Roblox client is
+  detected.~~ **Done, same day.** `RenderEnvironment` already refused to render while RoRoRo itself
+  was running; it now covers the client too, in the same place, with its own message. Verified live
+  in both directions: with a client up, 81 gates refuse in **236 ms** naming the pid, instead of
+  timing out one minute at a time.
 
 That last point is the same shape as the smoke instrument that now refuses to measure an idle
 desktop: **a test that cannot produce a valid result should say so, not produce an invalid one.**
+
+## Postscript, same day: this cost a wrong diagnosis before it was fixed
+
+Hours after the table above was measured, a full-suite run reported **103 failed**, and it was
+attributed in writing to a stale-DLL link from a locked build. That was wrong. `RenderEnvironment`
+had a RoRoRo instance running and was doing exactly what it exists to do — and its own header
+already records the signature: *"App running: 103 failed, 98 failed, host crash."* Same number, same
+cause, documented since 2026-08-12.
+
+The diagnosis went wrong because the top line reads `Failed: 103`, which looks like a code
+regression, while the actionable message sat inside failure text nobody opened. The build error from
+the DLL lock was the loudest thing on screen, so it got the blame.
+
+**The guard worked and was still misread.** That residual is filed as F-107 rather than left here:
+when the guard trips it produces ~100 identical failures, and one loud failure would be better.
+xUnit 2.9.3 has no built-in `IAssemblyFixture`, so it is not a free change.
+
+The lesson that generalises: **a check is only as good as the place its answer lands.** This one put
+a correct answer somewhere a hurried reader would not look — the same failure shape as F-099's
+warning going to a log file and F-103's symptom printing at Debug.
