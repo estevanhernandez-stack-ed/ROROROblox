@@ -57,6 +57,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly AccountRecycler _accountRecycler;
     private readonly ITrayService _tray;
     private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
+
+    /// <summary>
+    /// Marshals onto the UI thread (F-100). Was <c>Application.Current?.Dispatcher.Invoke</c> at
+    /// every call site, which no-opped for the whole test suite because <c>Application.Current</c>
+    /// is null there — so the delegate bodies below had never executed in a test.
+    /// </summary>
+    private readonly Core.IUiDispatcher _ui;
     private readonly Core.StreamerMode.IStreamerIdentityProvider? _streamerIdentity;
     private readonly DiscordConfigStore? _discordConfigStore;
     private readonly ILogger<MainViewModel> _log;
@@ -150,6 +157,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         IShellOpener shellOpener,
         ITrayService tray,
         Notifications.IdleAlertPresenter idleAlertPresenter,
+        Core.IUiDispatcher? uiDispatcher = null,
         Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
         DiscordConfigStore? discordConfigStore = null,
         ILogger<MainViewModel>? log = null)
@@ -180,6 +188,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _shellOpener = shellOpener;
         _tray = tray;
         _idleAlertPresenter = idleAlertPresenter;
+        _ui = uiDispatcher ?? new Threading.WpfUiDispatcher();
         _streamerIdentity = streamerIdentity;
         _discordConfigStore = discordConfigStore;
         _log = log ?? NullLogger<MainViewModel>.Instance;
@@ -275,7 +284,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             try
             {
-                Application.Current?.Dispatcher.Invoke(() =>
+                _ui.Invoke(() =>
                 {
                     ApplyMemory(snap);
 
@@ -2704,7 +2713,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
         defender?.NotifyConsumed();
 
-        Application.Current?.Dispatcher.Invoke(() =>
+        _ui.Invoke(() =>
         {
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
             if (summary is null) return;
@@ -2722,7 +2731,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OnProcessExited(object? sender, RobloxProcessEventArgs e)
     {
-        Application.Current?.Dispatcher.Invoke(() =>
+        _ui.Invoke(() =>
         {
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
             if (summary is null) return;
@@ -2776,7 +2785,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// §"Components > 2" + "Data flow."
     /// </summary>
     private void OnAccountPresenceUpdated(object? sender, AccountPresenceEventArgs e)
-        => Application.Current?.Dispatcher.Invoke(() => ApplyPresence(e));
+        => _ui.Invoke(() => ApplyPresence(e));
 
     /// <summary>
     /// UI-thread body of the presence handler (internal for tests — <see cref="OnAccountPresenceUpdated"/>
@@ -2887,7 +2896,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// tag-clear, so a suppressed flip can never resurrect the expired badge.
     /// </summary>
     private void OnAccountSessionExpired(object? sender, AccountSessionExpiredEventArgs e)
-        => Application.Current?.Dispatcher.Invoke(() => ApplySessionExpired(e.AccountId, e.PolledCookieGeneration));
+        => _ui.Invoke(() => ApplySessionExpired(e.AccountId, e.PolledCookieGeneration));
 
     /// <summary>
     /// UI-thread body of the 401 handler (internal for tests — <see cref="OnAccountSessionExpired"/>
@@ -2913,7 +2922,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     private void OnAccountSessionLimited(object? sender, Guid accountId)
-        => Application.Current?.Dispatcher.Invoke(() => ApplySessionLimited(accountId));
+        => _ui.Invoke(() => ApplySessionLimited(accountId));
 
     /// <summary>
     /// UI-thread body of the session-limited handler (internal for tests — <see cref="OnAccountSessionLimited"/>
@@ -2942,7 +2951,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     private void OnActivityWarnCrossed(object? sender, IReadOnlyList<Guid> crossed)
     {
-        Application.Current?.Dispatcher.Invoke(() =>
+        _ui.Invoke(() =>
         {
             _idleAlertPresenter.Notify(crossed.Count, _idleWarnThresholdMinutes, _muteIdleAlerts);
         });
@@ -3212,7 +3221,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // case this cycle targets reads as an intended hold, not a scary AV/never-connected error.
         // IsInstallerRunning() is synchronous and never throws — call it directly.
         var installerRunning = _updateProbe.IsInstallerRunning();
-        Application.Current?.Dispatcher.Invoke(() =>
+        _ui.Invoke(() =>
         {
             var summary = Accounts.FirstOrDefault(a => a.Id == e.AccountId);
             if (summary is null) return;
@@ -3818,16 +3827,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // throws ("CollectionView does not support changes from a thread different from the
         // Dispatcher thread") and leaves the row pickers half-rendered (the dropdown-ghost bug),
         // so marshal onto the UI thread the same way every other store-event handler here does.
-        // CheckAccess keeps the direct call for the UI-thread and no-dispatcher (unit-test) cases.
-        var dispatcher = System.Windows.Application.Current?.Dispatcher;
-        if (dispatcher is null || dispatcher.CheckAccess())
-        {
-            _ = ReloadGamesAsync();
-        }
-        else
-        {
-            dispatcher.Invoke(() => _ = ReloadGamesAsync());
-        }
+        //
+        // This handler used to spell the marshal out by hand — null-or-CheckAccess, then call
+        // directly. It was the only site in the file that got it right, and F-100's fix promoted
+        // exactly that rule into WpfUiDispatcher. Keeping the hand-rolled copy would leave two
+        // implementations of one decision free to drift, which this repo has already paid for
+        // twice in its contrast scanners.
+        _ui.Invoke(() => _ = ReloadGamesAsync());
     }
 
     private async Task RemoveGameAsync(FavoriteGame? game)
