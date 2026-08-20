@@ -133,7 +133,10 @@ internal sealed class RecordingTray : ITrayService
     // existing FakeTrayService reference (src/ROROROblox.Tests/MainViewModelTests.cs).
     public void Show() { }
     public void UpdateStatus(MultiInstanceState state) { }
-    public void ShowToast(string title, string message) { }
+    // Recorded rather than dropped (F-100): the idle-alert path ends at a toast, and a recorder
+    // that discards the only observable effect cannot witness the handler it exists to witness.
+    public readonly List<(string Title, string Message)> Toasts = new();
+    public void ShowToast(string title, string message) => Toasts.Add((title, message));
     public void SetMemoryWarning(bool active) { }
     public void ShowMemoryWarning(string title, string message, Guid accountId) { }
     public void Dispose() { }

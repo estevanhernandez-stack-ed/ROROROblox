@@ -25,7 +25,7 @@ namespace ROROROblox.Tests;
 /// </summary>
 public class MainViewModelTests
 {
-    internal static (MainViewModel Vm, IAccountStore AccountStore, IRobloxProcessTracker ProcessTracker, string AccountStorePath) Build(
+    internal static (MainViewModel Vm, IAccountStore AccountStore, FakeRobloxProcessTracker ProcessTracker, string AccountStorePath) Build(
         IRobloxLauncher? launcher = null,
         ICookieCapture? cookieCapture = null,
         Func<IAccountStore, IAccountStore>? wrapStore = null,
@@ -37,7 +37,9 @@ public class MainViewModelTests
         IRobloxRunningProbe? runningProbe = null,
         IShellOpener? shellOpener = null,
         FakeAppSettings? settings = null,
-        IBloxstrapDetector? bloxstrapDetector = null)
+        IBloxstrapDetector? bloxstrapDetector = null,
+        FakeActivityMonitor? activityMonitor = null,
+        Core.IUiDispatcher? uiDispatcher = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
@@ -66,13 +68,14 @@ public class MainViewModelTests
             bloxstrapDetector: bloxstrapDetector ?? new FakeBloxstrapDetector(),
             updateProbe: new FakeRobloxUpdateProbe(),
             accountTransport: new FakeAccountTransport(),
-            activityMonitor: new FakeActivityMonitor(),
+            activityMonitor: activityMonitor ?? new FakeActivityMonitor(),
             memoryWatchdog: memoryWatchdog ?? new FakeMemoryWatchdog(),
             instanceStopper: instanceStopper ?? new FakeRobloxInstanceStopper(),
             runningProbe: runningProbe ?? new NoRobloxRunningProbe(),
             shellOpener: shellOpener ?? new NullShellOpener(),
             tray: trayService,
-            idleAlertPresenter: new IdleAlertPresenter(trayService));
+            idleAlertPresenter: new IdleAlertPresenter(trayService),
+            uiDispatcher: uiDispatcher);
 
         // MainViewModel never disposes the window decorator (App.xaml.cs's DI container owns
         // that lifetime in production); its ctor starts a real 1.5s reapply Timer that would
@@ -1581,13 +1584,23 @@ public class MainViewModelTests
         public Task UpdateLocalNameAsync(long placeId, string? localName) => throw new NotImplementedException();
     }
 
-    private sealed class FakeRobloxProcessTracker : IRobloxProcessTracker
+    internal sealed class FakeRobloxProcessTracker : IRobloxProcessTracker
     {
-        public IReadOnlyDictionary<Guid, TrackedProcess> Attached { get; } = new Dictionary<Guid, TrackedProcess>();
+        // REAL events, not { add { } remove { } } (F-100). Discarding the subscription is a
+        // second off switch behind the dispatcher one: even after MainViewModel's marshalling was
+        // given a seam, no test could reach OnProcessAttached/Exited/AttachFailed because this
+        // double threw every handler away at subscribe time. A fake that cannot raise its own
+        // events makes the handler bodies unreachable while the suite reports green.
+        public readonly Dictionary<Guid, TrackedProcess> AttachedMap = new();
+        public IReadOnlyDictionary<Guid, TrackedProcess> Attached => AttachedMap;
 
-        public event EventHandler<RobloxProcessEventArgs>? ProcessAttached { add { } remove { } }
-        public event EventHandler<RobloxProcessEventArgs>? ProcessAttachFailed { add { } remove { } }
-        public event EventHandler<RobloxProcessEventArgs>? ProcessExited { add { } remove { } }
+        public event EventHandler<RobloxProcessEventArgs>? ProcessAttached;
+        public event EventHandler<RobloxProcessEventArgs>? ProcessAttachFailed;
+        public event EventHandler<RobloxProcessEventArgs>? ProcessExited;
+
+        public void RaiseAttached(RobloxProcessEventArgs e) => ProcessAttached?.Invoke(this, e);
+        public void RaiseAttachFailed(RobloxProcessEventArgs e) => ProcessAttachFailed?.Invoke(this, e);
+        public void RaiseExited(RobloxProcessEventArgs e) => ProcessExited?.Invoke(this, e);
 
         // Fire-and-forget from LaunchAccountAsync's Started case (`_ = _processTracker.TrackLaunchAsync(...)`,
         // not awaited) -- a synchronous throw here would still surface (the call itself throws
@@ -1693,9 +1706,15 @@ public class MainViewModelTests
         public bool IsStrapHandlingLaunches() => throw new NotImplementedException();
     }
 
-    private sealed class FakeRobloxUpdateProbe : IRobloxUpdateProbe
+    internal sealed class FakeRobloxUpdateProbe : IRobloxUpdateProbe
     {
-        public bool IsInstallerRunning() => throw new NotImplementedException();
+        // Answers instead of throwing (F-100). OnProcessAttachFailed calls this to decide whether a
+        // client that never appeared is a real failure or an install in progress, and it threw here
+        // for as long as this double has existed — safely, because no test had ever reached that
+        // handler. The first test to enter the body found it immediately. A throwing member in a
+        // double is only ever "unused" until the code path it serves is finally covered.
+        public bool InstallerRunning;
+        public bool IsInstallerRunning() => InstallerRunning;
         public Task<bool> IsUpdatePendingAsync(CancellationToken ct = default) => throw new NotImplementedException();
         public bool IsUpdateChurnActive() => throw new NotImplementedException();
     }
@@ -1706,13 +1725,16 @@ public class MainViewModelTests
         public IReadOnlyList<AccountExportRecord> Import(byte[] bundle, string passphrase) => throw new NotImplementedException();
     }
 
-    private sealed class FakeActivityMonitor : IActivityMonitor
+    internal sealed class FakeActivityMonitor : IActivityMonitor
     {
         // Real auto-property — MainViewModel both reads and writes WarnThreshold from its
         // (non-ctor) idle-settings init path.
         public TimeSpan WarnThreshold { get; set; }
 
-        public event EventHandler<IReadOnlyList<Guid>>? WarnThresholdCrossed { add { } remove { } }
+        // Real event — see FakeRobloxProcessTracker's note (F-100).
+        public event EventHandler<IReadOnlyList<Guid>>? WarnThresholdCrossed;
+
+        public void RaiseWarnCrossed(IReadOnlyList<Guid> crossed) => WarnThresholdCrossed?.Invoke(this, crossed);
 
         public void OnAccountLaunched(Guid accountId) => throw new NotImplementedException();
         public void OnAccountExited(Guid accountId) => throw new NotImplementedException();
@@ -1735,13 +1757,16 @@ public class MainViewModelTests
         public IReadOnlyList<AccountActivity> GetSnapshot() => Array.Empty<AccountActivity>();
     }
 
-    private sealed class FakeMemoryWatchdog : IMemoryWatchdog
+    internal sealed class FakeMemoryWatchdog : IMemoryWatchdog
     {
         public long CapBytes { get; set; }
         public long ReserveBytes { get; set; }
         public int ProjectionWarnMinutes { get; set; }
 
-        public event EventHandler<MemoryPressureSnapshot>? PressureCrossed { add { } remove { } }
+        // Real event — see FakeRobloxProcessTracker's note (F-100).
+        public event EventHandler<MemoryPressureSnapshot>? PressureCrossed;
+
+        public void RaisePressureCrossed(MemoryPressureSnapshot snapshot) => PressureCrossed?.Invoke(this, snapshot);
 
         public void OnAccountLaunched(Guid accountId, int pid) => throw new NotImplementedException();
         public void OnAccountExited(Guid accountId, int pid) => throw new NotImplementedException();

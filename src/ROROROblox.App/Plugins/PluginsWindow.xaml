@@ -83,6 +83,26 @@
                             Visibility="{Binding BannerIsRestartable, Converter={StaticResource BoolToVisibilityConverter}}" />
                 </Grid>
             </Border>
+
+            <!-- Duplicate-folder banner (F-099). Magenta because it is actionable — the user has to
+                 delete a folder — matching this window's existing "info is cyan, actionable is
+                 magenta" split. Affordance rests on the bottom border rather than the fill, so it
+                 still reads under flatline, where fills collapse. Separate from StatusBanner
+                 because that line is the last install's outcome and gets cleared by the next
+                 action, while this describes what is on disk until a scan says otherwise. -->
+            <Border Padding="14,10"
+                    Margin="0,8,0,0"
+                    Background="{DynamicResource RowBgBrush}"
+                    BorderBrush="{DynamicResource MagentaBrush}"
+                    BorderThickness="0,0,0,2"
+                    CornerRadius="6"
+                    Visibility="{Binding DuplicateWarning, Converter={StaticResource StringToVisibilityConverterLocal}}">
+                <TextBlock Text="{Binding DuplicateWarning}"
+                           Foreground="{DynamicResource WhiteBrush}"
+                           FontSize="12"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap" />
+            </Border>
         </StackPanel>
 
         <!-- Install row -->

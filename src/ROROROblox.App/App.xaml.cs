@@ -35,6 +35,8 @@ public partial class App : Application
     /// <see cref="InboundJoinRelay"/>'s remarks for why the guard lives there and not inline here.
     /// </summary>
     private InboundJoinRelay? _joinRelay;
+    /// <summary>F-103. Adopts clients Roblox restarts for itself; see OrphanedClientSweeper.</summary>
+    private Tray.OrphanedClientSweeper? _orphanSweeper;
 
     /// <summary>
     /// The plugin-host listener's bind task, set by <see cref="StartPluginHostListener"/> and
@@ -1115,10 +1117,30 @@ public partial class App : Application
                 decorator.Track(e.Pid, summary);
                 watchdog.OnAccountLaunched(e.AccountId, e.Pid);
             };
+            // F-103. Roblox restarts itself after an update, and the replacement is a process we
+            // never launched: the decorator keys by launched pid, so the new window keeps the bare
+            // "Roblox" title forever. That title is also the re-attach key, so the client counts
+            // toward the running total and the memory watchdog while no row owns it and no row's
+            // Stop can reach it.
+            //
+            // Adoption goes through AttachExisting deliberately, because that raises ProcessAttached
+            // — so an adopted client takes the exact same path a freshly launched one does, picking
+            // up decoration and watchdog tracking from the handler above rather than a second,
+            // drifting copy of that wiring here.
+            _orphanSweeper = new Tray.OrphanedClientSweeper(
+                _services.GetRequiredService<IClock>(),
+                isTracked: pid => tracker.Attached.Values.Any(p => p.Pid == pid),
+                adopt: (accountId, pid) => tracker.AttachExisting(accountId, pid),
+                log: _loggerFactory?.CreateLogger<Tray.OrphanedClientSweeper>());
+            _orphanSweeper.Start();
+
             tracker.ProcessExited += (_, e) =>
             {
                 decorator.Untrack(e.Pid);
                 watchdog.OnAccountExited(e.AccountId, e.Pid);
+                // The successor carries nothing linking it back to an account. This record is the
+                // only reason attribution is possible at all.
+                _orphanSweeper?.OnClientExited(e.AccountId, e.Pid);
             };
         }
         catch (Exception ex)
@@ -2202,6 +2224,19 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _log?.LogDebug(ex, "PresenceService.Stop threw on exit; ignoring.");
+            }
+
+            // Stop the orphan sweep's timer before anything it calls into goes away. It is not in
+            // the container (constructed with closures over tracker/vm), so nothing else disposes
+            // it — unlike the timers below, which _services.Dispose() would also catch.
+            try
+            {
+                _orphanSweeper?.Dispose();
+                _orphanSweeper = null;
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "Orphan sweeper dispose threw on exit; ignoring.");
             }
 
             // Stop the activity-monitor sample timer before the provider disposes (same shape
