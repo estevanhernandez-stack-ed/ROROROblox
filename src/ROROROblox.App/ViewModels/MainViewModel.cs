@@ -2194,10 +2194,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var running = breakdown.Breakdown.Running;
         var expired = breakdown.Breakdown.Expired;
 
-        var window = new SquadLaunchWindow(_privateServerStore, _api, _settings, url => ResolveShareUrlAsync(url), eligible, running, expired)
-        {
-            Owner = Application.Current.MainWindow,
-        };
+        var window = Parented(new SquadLaunchWindow(_privateServerStore, _api, _settings, url => ResolveShareUrlAsync(url), eligible, running, expired));
         var dialogResult = window.ShowDialog();
         if (dialogResult == true && window.SelectedTarget is { } target)
         {
@@ -2452,10 +2449,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         if (summary is null) return;
 
-        var window = new JoinByLinkWindow(_api, url => ResolveShareUrlAsync(url), summary.RenderName)
-        {
-            Owner = Application.Current.MainWindow,
-        };
+        var window = Parented(new JoinByLinkWindow(_api, url => ResolveShareUrlAsync(url), summary.RenderName));
         if (window.ShowDialog() == true && window.SelectedTarget is { } target)
         {
             var saveToLibrary = window.SaveToLibrary;
@@ -2584,10 +2578,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var mainSource = await TryResolveMainFriendSourceAsync(summary);
         var (sources, defaultIndex) = FriendSourcePlan.Build(rowSource, mainSource);
 
-        var window = new FriendFollowWindow(_api, _accountStore, sources, defaultIndex, summary.Id, _streamerIdentity)
-        {
-            Owner = Application.Current.MainWindow,
-        };
+        var window = Parented(new FriendFollowWindow(_api, _accountStore, sources, defaultIndex, summary.Id, _streamerIdentity));
         if (window.ShowDialog() == true && window.SelectedTarget is { } target)
         {
             // Re-run the same land-at-home guard FollowAltAsync uses, against the friend's presence
@@ -3396,6 +3387,41 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Parents a dialog to the main window when the main window can actually be seen, and centres
+    /// it on screen when it cannot (F-084).
+    /// <para>
+    /// Every site used to say <c>Owner = Application.Current.MainWindow</c> flat. RoRoRo is
+    /// tray-resident, so that window is often hidden, and a dialog owned by a hidden window
+    /// inherits an invisible z-order and hands activation back to nothing when dismissed. The rule
+    /// was already written down correctly in <c>StopAllConfirmWindow.xaml</c> and applied nowhere.
+    /// </para>
+    /// <para>
+    /// Setting <see cref="Window.WindowStartupLocation"/> is not optional here: twenty-one windows
+    /// declare <c>CenterOwner</c>, and with no owner WPF degrades that to <c>Manual</c> — the
+    /// top-left corner — not to the screen centre. Dropping the owner alone would trade an
+    /// invisible parent for a dialog in the corner of the display.
+    /// </para>
+    /// </summary>
+    private static TWindow Parented<TWindow>(TWindow dialog) where TWindow : Window
+    {
+        var owner = Application.Current?.MainWindow;
+        var placement = AppLifecycle.DialogOwnershipDecision.Decide(
+            ownerExists: owner is not null,
+            ownerIsVisible: owner?.IsVisible == true);
+
+        if (placement == AppLifecycle.DialogPlacement.OwnedByMainWindow)
+        {
+            dialog.Owner = owner;
+        }
+        else
+        {
+            dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        }
+
+        return dialog;
+    }
+
+    /// <summary>
     /// Opens the saved-games + private-servers window. Named for what it opens: until 2026-08-04
     /// this was <c>OpenSettings</c> opening <c>Settings.SettingsWindow</c> titled "Library" behind
     /// a button labelled "Games" — one destination with three names, and a class called
@@ -3404,7 +3430,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     private void OpenGames()
     {
-        var window = new GamesWindow(_favorites, _privateServerStore, _api) { Owner = Application.Current.MainWindow };
+        var window = Parented(new GamesWindow(_favorites, _privateServerStore, _api));
         window.ShowDialog();
         // Refresh in case the user added / removed / set-default'd a game.
         _ = ReloadGamesAsync();
@@ -3412,13 +3438,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OpenDiagnostics()
     {
-        var window = new DiagnosticsWindow(_diagnostics) { Owner = Application.Current.MainWindow };
+        var window = Parented(new DiagnosticsWindow(_diagnostics));
         window.ShowDialog();
     }
 
     private void OpenAbout()
     {
-        var window = new AboutWindow { Owner = Application.Current.MainWindow };
+        var window = Parented(new AboutWindow());
         window.ShowDialog();
     }
 
@@ -3675,10 +3701,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OpenHistory()
     {
-        var window = new SessionHistoryWindow(_sessionHistory, _favorites, _api, _streamerIdentity)
-        {
-            Owner = Application.Current.MainWindow,
-        };
+        var window = Parented(new SessionHistoryWindow(_sessionHistory, _favorites, _api, _streamerIdentity));
         window.ShowDialog();
         // The user may have bookmarked games from history; refresh the per-row dropdowns so
         // they appear without a restart.
@@ -3703,7 +3726,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
 
         var window = PreferencesWindowFactory();
-        window.Owner = Application.Current.MainWindow;
+        Parented(window);
         window.ShowDialog();
     }
 
@@ -3756,21 +3779,21 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private static void ShowWebView2NotInstalledModal()
     {
         var window = new WebView2NotInstalledWindow();
-        window.Owner = Application.Current.MainWindow;
+        Parented(window);
         window.ShowDialog();
     }
 
     private static void ShowRobloxNotInstalledModal()
     {
         var window = new RobloxNotInstalledWindow();
-        window.Owner = Application.Current.MainWindow;
+        Parented(window);
         window.ShowDialog();
     }
 
     private void ShowDpapiCorruptModal()
     {
         var window = new DpapiCorruptWindow();
-        window.Owner = Application.Current.MainWindow;
+        Parented(window);
         var startFresh = window.ShowDialog() == true;
         if (startFresh)
         {

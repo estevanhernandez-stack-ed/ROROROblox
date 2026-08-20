@@ -49,6 +49,13 @@ internal partial class CookieCaptureWindow : Window
         _api = api;
         _log = log;
         InitializeComponent();
+
+        // F-054. Esc cancels the capture. This window has no buttons at all — it is a browser
+        // frame — so there was nothing for IsCancel to hang on and the gesture did nothing. The
+        // verdict it produces was already written for it: OnClosed's comment says "Closed before
+        // completion (X / ESC). A clean close is a deliberate Cancelled."
+        Controls.EscapeToDismiss.Wire(this);
+
         Loaded += OnLoaded;
         Closed += OnClosed;
     }
