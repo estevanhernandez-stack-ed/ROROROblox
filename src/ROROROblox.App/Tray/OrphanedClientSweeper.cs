@@ -41,6 +41,13 @@ internal sealed class OrphanedClientSweeper : IDisposable
     private readonly Action<Guid, int> _adopt;
 
     private readonly List<ClientSuccession.Exit> _recentExits = [];
+    /// <summary>
+    /// Pids already reported as unowned. The sweep runs every 5s and an orphan the user chose to
+    /// leave open is permanent, so warning per tick would bury the log in identical lines and
+    /// train everyone to skip them — the same way a cap that fires four times in eight minutes
+    /// gets muted. Latched on the SET, so a new orphan still speaks up immediately.
+    /// </summary>
+    private HashSet<int> _reportedUnowned = [];
     private readonly object _exitsLock = new();
     private Timer? _timer;
     private int _sweeping;
@@ -115,7 +122,14 @@ internal sealed class OrphanedClientSweeper : IDisposable
             .Select(c => new ClientSuccession.Orphan(c.Pid, c.StartedAt))
             .ToList();
 
-        if (orphans.Count == 0) return;
+        if (orphans.Count == 0)
+        {
+            // Clear the latch as well as bailing. Leaving it populated after everything is owned
+            // again means the state no longer describes reality, and a later orphan set that
+            // happens to match the stale one would pass silently.
+            _reportedUnowned = [];
+            return;
+        }
 
         var attributions = ClientSuccession.Attribute(exits, orphans, now);
 
@@ -140,15 +154,17 @@ internal sealed class OrphanedClientSweeper : IDisposable
         // found by a human and none by an instrument — and the app had been printing this exact
         // symptom at Debug the whole time, where nobody reads it. Anything still unowned after a
         // sweep gets said out loud.
-        var unowned = orphans.Count - attributions.Count;
-        if (unowned > 0)
+        var stillUnowned = orphans.Select(o => o.Pid).Except(attributions.Select(a => a.Pid)).ToHashSet();
+        if (stillUnowned.Count > 0 && !stillUnowned.SetEquals(_reportedUnowned))
         {
             _log.LogWarning(
                 "{Count} Roblox client(s) running that no account owns. They count toward the running total "
                 + "and the memory watchdog, but no row can Stop them. Pids: {Pids}",
-                unowned,
-                string.Join(", ", orphans.Select(o => o.Pid).Except(attributions.Select(a => a.Pid))));
+                stillUnowned.Count, string.Join(", ", stillUnowned));
         }
+        // Re-arms by difference: an orphan going away, or a new one arriving, is news again. Found
+        // in live verification 2026-08-20 — the first wiring logged this every 5s forever.
+        _reportedUnowned = stillUnowned;
     }
 
     private void PruneStale()

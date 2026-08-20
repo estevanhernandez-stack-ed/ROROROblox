@@ -180,4 +180,72 @@ public class OrphanedClientSweeperTests
 
         Assert.Empty(adopted);
     }
+
+    [Fact]
+    public void APersistentOrphanIsReportedOnceNotEveryTick()
+    {
+        // FOUND IN LIVE VERIFICATION, not by the suite: the first wiring logged this warning every
+        // 5 seconds forever. A client the user left open is permanent, so per-tick warnings bury
+        // the log and train everyone to skip them — the same way a cap firing four times in eight
+        // minutes gets muted. The single-Sweep tests above could not see it by construction.
+        var clock = new FixedClock();
+        var logged = new List<string>();
+        var clients = new List<OrphanedClientSweeper.ClientSnapshot> { new(200, clock.UtcNow, "Roblox") };
+        var sweeper = new OrphanedClientSweeper(
+            clock, _ => false, (_, _) => { }, () => clients, new CountingLogger(logged));
+
+        sweeper.Sweep();
+        sweeper.Sweep();
+        sweeper.Sweep();
+
+        Assert.Single(logged);
+    }
+
+    [Fact]
+    public void ANewOrphanIsStillNewsAfterOneWasAlreadyReported()
+    {
+        // Latching must not go silent about something it has never seen.
+        var clock = new FixedClock();
+        var logged = new List<string>();
+        var clients = new List<OrphanedClientSweeper.ClientSnapshot> { new(200, clock.UtcNow, "Roblox") };
+        var sweeper = new OrphanedClientSweeper(
+            clock, _ => false, (_, _) => { }, () => clients, new CountingLogger(logged));
+
+        sweeper.Sweep();
+        clients.Add(new(201, clock.UtcNow, "Roblox"));
+        sweeper.Sweep();
+
+        Assert.Equal(2, logged.Count);
+    }
+
+    [Fact]
+    public void TheLatchClearsWhenEverythingIsOwnedAgain()
+    {
+        // Otherwise the remembered set outlives the situation it described.
+        var clock = new FixedClock();
+        var logged = new List<string>();
+        var clients = new List<OrphanedClientSweeper.ClientSnapshot> { new(200, clock.UtcNow, "Roblox") };
+        var sweeper = new OrphanedClientSweeper(
+            clock, _ => false, (_, _) => { }, () => clients, new CountingLogger(logged));
+
+        sweeper.Sweep();
+        clients.Clear();
+        sweeper.Sweep();
+        clients.Add(new(200, clock.UtcNow, "Roblox"));
+        sweeper.Sweep();
+
+        Assert.Equal(2, logged.Count);
+    }
+
+    /// <summary>Records only the warning text, which is what the latch governs.</summary>
+    private sealed class CountingLogger(List<string> sink) : Microsoft.Extensions.Logging.ILogger<OrphanedClientSweeper>
+    {
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+        public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, Microsoft.Extensions.Logging.EventId eventId,
+            TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+            if (logLevel == Microsoft.Extensions.Logging.LogLevel.Warning) sink.Add(formatter(state, exception));
+        }
+    }
 }
