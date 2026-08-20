@@ -3016,6 +3016,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal static readonly TimeSpan ExpectedCloseWindow = TimeSpan.FromSeconds(60);
 
     /// <summary>Mark a close as user-initiated so it does not raise a dropped-out alert.</summary>
+    /// <summary>Persists the main window's placement (F-060). Never throws — a failed write must not stop a close.</summary>
+    internal async Task SaveWindowPlacementAsync(Core.WindowPlacement placement)
+    {
+        try { await _settings.SetMainWindowPlacementAsync(placement).ConfigureAwait(false); }
+        catch (Exception ex) { _log.LogDebug(ex, "Saving window placement failed; the next launch uses the default."); }
+    }
+
+    /// <summary>Reads the saved placement, or null if there is none or it cannot be read (F-060).</summary>
+    internal async Task<Core.WindowPlacement?> LoadWindowPlacementAsync()
+    {
+        try { return await _settings.GetMainWindowPlacementAsync().ConfigureAwait(true); }
+        catch (Exception ex) { _log.LogDebug(ex, "Reading window placement failed; using the default."); return null; }
+    }
+
     internal void ExpectClose(Guid accountId) => _expectedCloses[accountId] = DateTimeOffset.UtcNow;
 
     /// <summary>Mark every running account as expected — app shutdown closes them all at once.</summary>

@@ -355,6 +355,11 @@ internal static class DiscordTestHarness
         public Task SetMemoryCapMbAsync(int? capMb) => throw new NotImplementedException();
         public Task<int> GetProjectionWarnMinutesAsync() => throw new NotImplementedException();
         public Task SetProjectionWarnMinutesAsync(int minutes) => throw new NotImplementedException();
+        /// <summary>F-060. Records rather than discards, so the round trip is assertable.</summary>
+        public WindowPlacement? Placement;
+        public Task<WindowPlacement?> GetMainWindowPlacementAsync() => Task.FromResult(Placement);
+        public Task SetMainWindowPlacementAsync(WindowPlacement? placement) { Placement = placement; return Task.CompletedTask; }
+
         public Task<bool> GetCompactModeAsync() => Task.FromResult(false);
         public Task SetCompactModeAsync(bool compact) => Task.CompletedTask;
     }

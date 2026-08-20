@@ -172,6 +172,17 @@ public interface IAppSettings
     /// and its home is where it is used.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// The main window's last position and size, or null when nothing has been saved yet (F-060).
+    /// <para>
+    /// Restored only when <see cref="WindowPlacement.IsRestorableOnto"/> still says it lands on a
+    /// screen — a window saved on a monitor that has since been unplugged would otherwise come back
+    /// somewhere nobody can reach, which is worse than the forgetting this replaces.
+    /// </para>
+    /// </summary>
+    Task<WindowPlacement?> GetMainWindowPlacementAsync();
+    Task SetMainWindowPlacementAsync(WindowPlacement? placement);
+
     Task<bool> GetCompactModeAsync();
     Task SetCompactModeAsync(bool compact);
 }
