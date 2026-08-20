@@ -110,6 +110,17 @@
         "F-099"
       ],
       "notes": "F-095 and F-101 were re-checked against the tree first and were already clean, so the wave is three rows, not five. Two of the three were understated by their own row: F-100 had a second off switch behind the one it named (the doubles discarded every subscription), and F-099's window drew the ignored plugin copy as a real row rather than merely staying silent. F-106 was split out of F-100 rather than absorbed into its close-out."
+    },
+    {
+      "id": 10,
+      "name": "Window conventions — ownership, Esc, placement",
+      "status": "open",
+      "findings": [
+        "F-084",
+        "F-054",
+        "F-060"
+      ],
+      "notes": "F-054 was re-measured and had overstated itself — 22 windows already dismissed on Esc; the real gap was four. Its [new-mechanism] half became F-112. F-041/F-048/F-079, the style-consolidation trio originally planned for this wave, are NOT in it and stay open."
     }
   ],
   "scope": {
