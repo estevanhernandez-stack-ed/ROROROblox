@@ -2,6 +2,20 @@
 
 **Date:** 2026-08-20 · **Status:** cause identified, reproduced, and cleared
 
+> **CORRECTION 2026-08-21 (F-107 re-measurement): the cause named below did not survive F-105.**
+> These measurements were taken roughly 27 hours before commit `7dbe997` stopped the render
+> harness from executing the real `App.OnStartup`, so every client-up run below ran real startup
+> inside the test host — and a live client is exactly what routes that startup into its blocked
+> branch: the singleton event reads as held, which reaches seamless takeover and the
+> already-running modal's `ShowDialog()` on the shared render thread, plus a network update check
+> inside the same 60s budget. The client below was idle at a desktop window, which saturates no
+> GPU, and full 16-core CPU saturation had already been measured clean on 2026-08-12.
+> Re-measured at HEAD on 2026-08-21 with startup suppressed: a real windowed client up, the guard
+> bypassed, three consecutive full-suite runs — **1798/1798 in 7 seconds, every run**. The
+> starvation theory was F-105 wearing a third disguise, and the client half of the render guard
+> was removed the same day. The table below stays as evidence of what confounding looks like:
+> "the only variable" was never the only variable.
+
 ## The standing mystery
 
 `Rendering/*` tests have failed intermittently for weeks with
