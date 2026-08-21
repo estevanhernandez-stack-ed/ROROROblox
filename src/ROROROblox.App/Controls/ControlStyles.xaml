@@ -295,6 +295,11 @@
          they would have to fill in, and without touching DividerBrush, which is still correct
          everywhere it draws a separator rather than a control boundary.
 
+         SINCE F-090 the derivation clears 3:1 against every surface a control can sit on, not just
+         NavyBrush. It used to take Navy alone, and the same edge on a card measured 2.82:1 in three
+         built-ins and 2.28:1 in flatline — under the floor at eight of the fourteen call sites for
+         the input styles. RenderedStyleGateTests measures both surfaces now, in pixels.
+
          F-032: the label was MutedTextBrush, the same token helper prose uses. Muted-vs-White is
          2.42:1 in brand and 1.00:1 under flatline, so colour could not carry "quiet" under a theme
          this app supports — a control label and the paragraph beside it became the same thing.

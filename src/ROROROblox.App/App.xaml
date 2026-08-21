@@ -53,7 +53,14 @@
                  DividerBrush — a separator is not a component boundary, 1.4.11 does not govern it,
                  and the author's faint hairline is what they chose. Binding this to a card edge
                  repaints every user's theme to fix a problem that surface does not have. -->
-            <SolidColorBrush x:Key="InteractiveEdgeBrush" Color="#5E6B7C" />
+            <SolidColorBrush x:Key="InteractiveEdgeBrush" Color="#707B8B" />
+
+            <!-- DERIVED like the edge above (F-050): the label on anything filled with MagentaBrush.
+                 Neither WhiteBrush nor NavyBrush is readable on magenta in every theme — white
+                 measures 3.79:1 on brand, navy 3.79:1 on midnight, and the better of the two still
+                 falls short of AA's 4.5:1 in brand and midnight. ThemeService picks per theme and
+                 nudges the winner. Value here is only the pre-startup fallback (brand's). -->
+            <SolidColorBrush x:Key="OnMagentaBrush" Color="#0E1C2D" />
 
             <!-- Small round toggle for "include this account in batch launches."
                  Selected = filled cyan; deselected = hollow grey ring. ~14px, lives inline with

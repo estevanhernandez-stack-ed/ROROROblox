@@ -532,27 +532,29 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
     }
 
     /// <summary>
-    /// Rule 2, applied where the style's edge and the style's fill are the same relationship
-    /// <c>ContrastGuard</c> derived: the four button styles, whose setters name their own fill, and
-    /// the input styles on <c>NavyBrush</c>, the surface the derived edge is computed against.
+    /// Rule 2, applied to every surface an interactive boundary actually lands on: the four button
+    /// styles, whose setters name their own fill, and the input styles on BOTH <c>NavyBrush</c> and
+    /// <c>RowBgBrush</c>.
     /// <para>
-    /// The remaining eight cases — the inputs on <c>RowBgBrush</c> — are not silently dropped. They
-    /// are measured and asserted in <see cref="TheDerivedEdgeIsTunedToNavyAndFallsShortOnACard"/>,
-    /// which fails if that gap closes as well as if it widens.
+    /// The card cases used to be excluded here and pinned separately by a test named
+    /// <c>TheDerivedEdgeIsTunedToNavyAndFallsShortOnACard</c>, which asserted them BELOW the floor
+    /// and at a recorded value — a live defect held still rather than forgiven. F-090 fixed the
+    /// derivation (it now takes every surface, not just Navy), that pin failed exactly as it was
+    /// designed to, and it has been deleted. These eight cases belong to the general rule now, and
+    /// this is the deletion its own failure message asked for.
     /// </para>
     /// </summary>
     [Fact]
     public void EveryRenderedEdgeClearsNonTextContrastAgainstTheSurfaceItIsDerivedFor()
     {
         var cases = Matrix.Value
-            .Where(c => c.Surface is null or ThemeSlots.Navy)
             .Where(c => !BorderlessFilled.Contains(c.StyleKey))
             .ToList();
 
-        // (4 styles x 4 themes) + (2 inputs x 4 themes on Navy) = 24, up from 20 when
-        // DestructiveButtonStyle landed.
-        Assert.True(cases.Count >= 24,
-            $"Have {cases.Count} own-fill cases; expected at least 24. A filtered matrix reports no "
+        // (4 styles x 4 themes) + (2 inputs x 4 themes x 2 surfaces) = 32, up from 24 when F-090
+        // brought the card cases in and from 20 when DestructiveButtonStyle landed.
+        Assert.True(cases.Count >= 32,
+            $"Have {cases.Count} own-fill cases; expected at least 32. A filtered matrix reports no "
             + "failures at all, which reads identically to a passing gate.");
 
         var failures = new List<string>();
@@ -591,72 +593,39 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
     }
 
     /// <summary>
-    /// A LIVE DEFECT, pinned rather than forgiven. Found by this phase on its first run, 2026-08-10.
-    /// <para>
-    /// <c>InteractiveEdgeBrush</c> is derived by <c>ContrastGuard.Ensure(theme.Navy, theme.Divider)</c>
-    /// — against <c>Navy</c>, and it clears 3:1 against Navy by exactly as much as the walk needed
-    /// (3.02-3.07 across the four built-ins). Every built-in also ships <c>RowBg</c> lighter than
-    /// <c>Navy</c>, so the same edge on a card lands UNDER the floor: 2.82:1 in brand, midnight and
-    /// magenta-heat, 2.28:1 in flatline, where RowBg is furthest from Navy. Eight of the fourteen
-    /// call sites using these two styles sit on RowBg.
-    /// </para>
-    /// <para>
-    /// Neither existing gate could see this. Phase 1 pairs a <c>Background</c> with a
-    /// <c>Foreground</c> and never reads a <c>BorderBrush</c>. <c>InteractiveEdgeBindingTests</c>
-    /// asserts the derived edge is bound to the right ROLE, not that the value clears its floor
-    /// against the surface it actually lands on. F-031 is clean and records the derivation reaching
-    /// 3.03:1 — true, and true only of Navy.
-    /// </para>
-    /// <para>
-    /// WHY THIS IS NOT AN EXEMPTION. An exemption grants permission and lets the gate stay green
-    /// while the number drifts. This asserts the number in both directions: it fails if the ratio
-    /// improves, because then the fix landed and these eight cases belong in
-    /// <see cref="EveryRenderedEdgeClearsNonTextContrastAgainstTheSurfaceItIsDerivedFor"/> and this
-    /// test should be deleted; and it fails if the ratio worsens, because a recorded defect getting
-    /// deeper is news. A theme shipped later with no entry here fails too — measure it and record it
-    /// with its direction, the same discipline the register's own rows are held to.
-    /// </para>
+    /// F-090's fix, asserted where it was measured. The card cases used to sit under the floor and
+    /// were pinned by <c>TheDerivedEdgeIsTunedToNavyAndFallsShortOnACard</c>, recorded at 2.82:1 in
+    /// brand, midnight and magenta-heat and 2.28:1 in flatline. That test asserted the gap in both
+    /// directions and told whoever closed it to delete it; this is that deletion, and this test is
+    /// what stands in its place — the same eight cases, now inside the general rule above, plus a
+    /// direct statement that the derivation is no longer tuned to one surface.
     /// </summary>
     [Fact]
-    public void TheDerivedEdgeIsTunedToNavyAndFallsShortOnACard()
+    public void TheDerivedEdgeNowClearsTheCardItSitsOnToo()
     {
-        // Measured 2026-08-10 by this file, in pixels, through ContrastGuard.RatioBetween. Not
-        // tunable: these are the output of the shipped derivation over the shipped theme hexes.
-        var recorded = new Dictionary<string, double>(StringComparer.Ordinal)
-        {
-            ["brand"] = 2.82,
-            ["midnight"] = 2.81,
-            ["magenta-heat"] = 2.81,
-            ["flatline"] = 2.28,
-        };
-
         var cases = Matrix.Value.Where(c => c.Surface == ThemeSlots.RowBg).ToList();
+
         Assert.True(cases.Count >= 8,
             $"Have {cases.Count} card-surface cases; expected at least 8 (2 input styles x 4 themes).");
 
+        var failures = new List<string>();
         foreach (var c in cases)
         {
             var ratio = c.Authored.EdgeRatio;
             Assert.True(ratio.HasValue,
                 $"{c.Label}: no ratio computable for edge {c.Authored.Edge} on {c.Authored.Fill}.");
 
-            Assert.True(ratio!.Value < EdgeThreshold,
-                $"{c.Label}: the derived edge now measures {ratio.Value:F2}:1, at or above "
-                + $"{EdgeThreshold}:1. If the derivation learned about the surface a control actually "
-                + "sits on, this defect is fixed — delete this test and let "
-                + "EveryRenderedEdgeClearsNonTextContrastAgainstTheSurfaceItIsDerivedFor cover these "
-                + "cases, which it will do automatically once its filter stops excluding them.");
-
-            Assert.True(recorded.ContainsKey(c.ThemeId),
-                $"{c.Label}: no ratio recorded for theme '{c.ThemeId}'. A theme that ships after this "
-                + "was written enrols itself in the matrix automatically and has to be measured here "
-                + $"deliberately — it renders at {ratio.Value:F2}:1 today.");
-
-            Assert.True(Math.Round(ratio.Value, 2) == recorded[c.ThemeId],
-                $"{c.Label}: measured {ratio.Value:F4}:1, recorded {recorded[c.ThemeId]:F2}:1 "
-                + $"(edge {c.Authored.Edge} on {c.Authored.Fill}). A recorded defect moved. Re-measure "
-                + "and record the new number with its direction rather than widening the tolerance.");
+            if (ratio!.Value < EdgeThreshold)
+            {
+                failures.Add($"{c.Label}: edge {c.Authored.Edge} on {c.Authored.Fill} = {ratio.Value:F2}:1");
+            }
         }
+
+        Assert.True(failures.Count == 0,
+            $"The derived edge is back under {EdgeThreshold}:1 on a card. F-090 was exactly this, and "
+            + "the derivation taking every surface is what closed it — check ThemeService.EdgeSurfacesOf "
+            + "still passes RowBg:" + Environment.NewLine + "  "
+            + string.Join(Environment.NewLine + "  ", failures));
     }
 
     /// <summary>

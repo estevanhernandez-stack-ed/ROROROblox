@@ -36,6 +36,47 @@ public static class ContrastGuard
     public const double MinimumBoundaryRatio = 3.0;
 
     /// <summary>
+    /// WCAG 1.4.3 AA — text against its background. 4.5:1, the normal-text figure; the 3:1
+    /// large-text allowance needs 18pt, or 14pt bold, and the labels this guards are 8-9px.
+    /// </summary>
+    public const double MinimumTextRatio = 4.5;
+
+    /// <summary>
+    /// Picks the most readable of several theme-supplied foregrounds against a fill, and nudges it
+    /// only if the best of them still falls short (F-050).
+    /// <para>
+    /// WHY PICK BEFORE DERIVING. The theme already supplies two colours meant to sit on things —
+    /// <c>White</c> and <c>Navy</c> — and which one wins depends entirely on the fill: white reads
+    /// better on midnight's muted magenta, navy reads better on brand's hot one. Choosing per theme
+    /// is most of the fix and costs nothing in character, because both options are the author's own.
+    /// The walk is the remainder: brand's best option reaches 4.40:1 and midnight's 4.16:1, so
+    /// picking alone closes two themes of four. Measured 2026-08-20.
+    /// </para>
+    /// </summary>
+    /// <returns>The winning candidate unchanged when it already clears
+    /// <paramref name="minimumRatio"/>; otherwise that candidate nudged away from the fill until it
+    /// does. Unparseable input degrades to the first candidate, matching the rest of this class.</returns>
+    public static string BestForeground(string? fill, IReadOnlyList<string?> candidates, double minimumRatio)
+    {
+        var fallback = candidates.Count > 0 ? candidates[0] ?? "" : "";
+        if (!TryParse(fill, out var bg, out _)) return fallback;
+
+        string? best = null;
+        var bestRatio = -1.0;
+        foreach (var candidate in candidates)
+        {
+            if (!TryParse(candidate, out var raw, out var alpha)) continue;
+            var r = Ratio(bg, Composite(raw, alpha, bg));
+            if (r > bestRatio) (best, bestRatio) = (candidate, r);
+        }
+
+        if (best is null) return fallback;
+        if (bestRatio >= minimumRatio) return best;
+
+        return Nudge(bg, best, minimumRatio);
+    }
+
+    /// <summary>
     /// Returns <paramref name="candidate"/> when it already clears <see cref="MinimumBoundaryRatio"/>
     /// against <paramref name="surface"/>; otherwise nudges it away from the surface until it does.
     /// <para>
@@ -47,19 +88,70 @@ public static class ContrastGuard
     /// </summary>
     /// <returns>An <c>#RRGGBB</c> string. Input that cannot be parsed is returned unchanged, so a
     /// malformed theme degrades to today's behaviour rather than throwing on a render path.</returns>
-    public static string Ensure(string? surface, string? candidate)
+    public static string Ensure(string? surface, string? candidate) =>
+        EnsureAgainstAll([surface], candidate);
+
+    /// <summary>
+    /// <see cref="Ensure"/> for a boundary that lands on more than one surface: returns a colour
+    /// clearing <see cref="MinimumBoundaryRatio"/> against <b>every</b> surface given.
+    /// <para>
+    /// WHY THIS EXISTS (F-090). The derived edge was computed against <c>Navy</c> and only Navy,
+    /// where it cleared 3:1 by the width of the walk — 3.02 to 3.07 across the four built-ins. Every
+    /// built-in also ships <c>RowBg</c> lighter than Navy, so the same edge on a card measured 2.82
+    /// in brand, midnight and magenta-heat and 2.28 in flatline, the accessibility theme. Eight of
+    /// the fourteen call sites using those styles sit on a card. Nothing was wrong with the
+    /// arithmetic; the arithmetic was answering a question about one surface and the answer was
+    /// being painted on two.
+    /// </para>
+    /// <para>
+    /// It returns ONE opaque colour rather than one per surface, because what it feeds is a single
+    /// brush in a single style. That is also why the walk measures the snapped opaque value against
+    /// each surface rather than compositing per surface: the thing that lands on screen is the
+    /// opaque colour, and the composite matters only for reading the candidate that came in.
+    /// </para>
+    /// </summary>
+    /// <param name="surfaces">Surfaces the boundary can sit on. Unparseable and empty entries are
+    /// skipped — <c>ThemeStore</c> does no format validation, so a named colour does reach here, and
+    /// honouring the surfaces we can read beats refusing to derive at all. No parseable surface at
+    /// all returns the candidate untouched, matching this class's degrade-quietly contract.</param>
+    public static string EnsureAgainstAll(IReadOnlyList<string?> surfaces, string? candidate)
     {
-        if (!TryParse(surface, out var bg, out _) || !TryParse(candidate, out var raw, out var alpha))
+        var fields = new List<(double R, double G, double B)>();
+        foreach (var s in surfaces)
+        {
+            if (TryParse(s, out var parsed, out _)) fields.Add(parsed);
+        }
+
+        if (fields.Count == 0 || !TryParse(candidate, out var raw, out var alpha))
         {
             return candidate ?? "";
         }
 
-        var fg = Composite(raw, alpha, bg);
-        if (Ratio(bg, fg) >= MinimumBoundaryRatio) return candidate!;
+        // Already good enough everywhere — including the case this method exists for, where it is
+        // good enough on the first surface and not on the second. Composited per surface, because a
+        // translucent candidate lands differently on each.
+        if (fields.All(bg => Ratio(bg, Composite(raw, alpha, bg)) >= MinimumBoundaryRatio))
+        {
+            return candidate!;
+        }
 
         // Toward white on a dark field, toward black on a light one. 0.179 is the luminance at which
         // white and black are equally readable against a surface — the standard crossover.
-        var target = Luminance(bg) > 0.179 ? (0.0, 0.0, 0.0) : (1.0, 1.0, 1.0);
+        (double, double, double) TargetFor((double R, double G, double B) bg) =>
+            Luminance(bg) > 0.179 ? (0.0, 0.0, 0.0) : (1.0, 1.0, 1.0);
+
+        var target = TargetFor(fields[0]);
+
+        // Surfaces that pull opposite ways have no common answer: a near-black field wants a light
+        // boundary and a near-white field wants a dark one, and one opaque colour cannot be both.
+        // Fall back to the first surface — the pre-F-090 behaviour — so a theme in that shape is no
+        // worse off than it was, and say so here rather than returning an extreme that fails both.
+        if (fields.Any(bg => TargetFor(bg) != target))
+        {
+            return EnsureAgainstAll([FormatSurface(fields[0])], candidate);
+        }
+
+        var start = Composite(raw, alpha, fields[0]);
 
         // Walk the blend rather than solving it: the relationship between blend fraction and
         // contrast ratio is monotonic here but not linear, and 100 steps lands within 1% of the
@@ -68,9 +160,9 @@ public static class ContrastGuard
         {
             var t = step / 100.0;
             var mixed = (
-                fg.R + (target.Item1 - fg.R) * t,
-                fg.G + (target.Item2 - fg.G) * t,
-                fg.B + (target.Item3 - fg.B) * t);
+                start.R + (target.Item1 - start.R) * t,
+                start.G + (target.Item2 - start.G) * t,
+                start.B + (target.Item3 - start.B) * t);
 
             // MEASURE WHAT WE RETURN. Snap to bytes BEFORE the check, because ToHex rounds and that
             // rounding can drop the result back under the floor — the un-quantized triple passing is
@@ -80,11 +172,48 @@ public static class ContrastGuard
             // (midnight by 0.019), which is exactly why the tests were green. Snapping first takes
             // that to zero and leaves every built-in byte-identical.
             var snapped = Snap(mixed);
-            if (Ratio(bg, snapped) >= MinimumBoundaryRatio) return ToHex(snapped);
+            if (fields.All(bg => Ratio(bg, snapped) >= MinimumBoundaryRatio)) return ToHex(snapped);
         }
 
         // Unreachable for any real surface — pure white and pure black cannot both fail 3:1 against
         // the same colour — but returning the extreme beats returning something that still fails.
+        return ToHex(target);
+    }
+
+    /// <summary>Round-trips a parsed surface back to hex so the single-surface fallback can reuse
+    /// the public entry point instead of duplicating the walk.</summary>
+    private static string FormatSurface((double R, double G, double B) c) => ToHex(c);
+
+    /// <summary>
+    /// Walks <paramref name="candidate"/> away from <paramref name="bg"/> until it clears
+    /// <paramref name="minimumRatio"/>. Same walk <see cref="EnsureAgainstAll"/> uses, at a
+    /// different floor and against one surface — text sits on the control it labels, so there is no
+    /// second field to satisfy.
+    /// </summary>
+    private static string Nudge((double R, double G, double B) bg, string candidate, double minimumRatio)
+    {
+        if (!TryParse(candidate, out var raw, out var alpha)) return candidate;
+
+        var fg = Composite(raw, alpha, bg);
+
+        // The candidate is already the better of the theme's two, so it is already heading the right
+        // way: keep going the way it points rather than the way the fill points. On brand's magenta
+        // that means navy gets darker, not white getting lighter — nudging the loser would undo the
+        // pick.
+        var target = Luminance(fg) < Luminance(bg) ? (0.0, 0.0, 0.0) : (1.0, 1.0, 1.0);
+
+        for (var step = 1; step <= 100; step++)
+        {
+            var t = step / 100.0;
+            var mixed = (
+                fg.R + (target.Item1 - fg.R) * t,
+                fg.G + (target.Item2 - fg.G) * t,
+                fg.B + (target.Item3 - fg.B) * t);
+
+            var snapped = Snap(mixed);
+            if (Ratio(bg, snapped) >= minimumRatio) return ToHex(snapped);
+        }
+
         return ToHex(target);
     }
 

@@ -239,7 +239,7 @@
                                     Margin="10,2,0,0" Padding="6,1">
                                 <TextBlock Text="PRIVATE"
                                            FontSize="9" FontWeight="Bold"
-                                           Foreground="{DynamicResource WhiteBrush}" />
+                                           Foreground="{DynamicResource OnMagentaBrush}" />
                             </Border>
                             <Border Background="{DynamicResource CyanBrush}" CornerRadius="3"
                                     Margin="6,2,0,0" Padding="6,1"

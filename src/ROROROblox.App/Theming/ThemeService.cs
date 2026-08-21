@@ -222,7 +222,7 @@ internal sealed class ThemeService : IThemeAppliedSource
         if (CurrentTheme is not { } theme) return false;
 
         var decision = EdgeRemediation.Decide(
-            theme.IsBuiltIn, theme.Navy, theme.Divider,
+            theme.IsBuiltIn, EdgeSurfacesOf(theme), theme.Divider,
             alreadyAnswered: false, declined: false);
 
         PendingEdgeQuestion = QuestionFor(theme, decision);
@@ -339,10 +339,21 @@ internal sealed class ThemeService : IThemeAppliedSource
         // Whether we derive at all is EdgeRemediation's call, not ours: our own themes get fixed
         // silently, somebody else's gets asked about first. See EdgeRemediation for the rules.
         var decision = EdgeRemediation.Decide(
-            theme.IsBuiltIn, theme.Navy, theme.Divider,
+            theme.IsBuiltIn, EdgeSurfacesOf(theme), theme.Divider,
             alreadyAnswered: edgeAnswer.HasValue,
             declined: edgeAnswer == false);
-        ApplySlot(resources, ThemeSlots.InteractiveEdge, EdgeRemediation.Resolve(decision, theme.Navy, theme.Divider));
+        ApplySlot(resources, ThemeSlots.InteractiveEdge, EdgeRemediation.Resolve(decision, EdgeSurfacesOf(theme), theme.Divider));
+
+        // Also derived, and for the same reason the edge is: the theme supplies the ingredients and
+        // no single one of them is right everywhere (F-050). Magenta is the only fill in the palette
+        // where the label has to be chosen rather than assumed — white loses on brand and
+        // magenta-heat, navy loses on midnight and flatline. Not gated by EdgeRemediation: that
+        // consent flow is about ALTERING an author's boundary colour, and this alters nothing they
+        // wrote — it picks between two colours they already supplied, and nudges only when their
+        // own better option still cannot be read.
+        ApplySlot(resources, ThemeSlots.OnMagenta,
+            ContrastGuard.BestForeground(theme.Magenta, [theme.White, theme.Navy], ContrastGuard.MinimumTextRatio));
+
         return (decision, ReadBack(resources));
     }
 
@@ -365,6 +376,24 @@ internal sealed class ThemeService : IThemeAppliedSource
         RowExpiredAccent: HexAt(resources, ThemeSlots.RowExpiredAccent),
         Navy: HexAt(resources, ThemeSlots.Navy),
         InteractiveEdge: HexAt(resources, ThemeSlots.InteractiveEdge));
+
+    /// <summary>
+    /// The surfaces an interactive boundary can land on, worst-case first (F-090).
+    /// <para>
+    /// The derivation used to take <c>Navy</c> alone, which is the chrome behind a control on the
+    /// window field. Eight of the fourteen call sites for the input styles sit on a CARD instead,
+    /// and every built-in ships <c>RowBg</c> lighter than <c>Navy</c> — so an edge tuned to Navy
+    /// landed at 2.82:1 in brand, midnight and magenta-heat and 2.28:1 in flatline, under the 3:1
+    /// floor the whole mechanism exists to clear. One list, one derivation, one brush: a per-surface
+    /// brush would mean a second style vocabulary for every input, which is F-068's problem and not
+    /// a fix for this one.
+    /// </para>
+    /// <para>
+    /// <c>Navy</c> stays first because it is the fallback when the two pull in opposite directions,
+    /// and it is the surface the original derivation was correct about.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyList<string?> EdgeSurfacesOf(Theme theme) => [theme.Navy, theme.RowBg];
 
     private static string HexAt(ResourceDictionary resources, string key)
     {
