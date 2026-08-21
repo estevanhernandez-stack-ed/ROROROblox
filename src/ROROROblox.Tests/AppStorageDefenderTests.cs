@@ -133,10 +133,28 @@ public sealed class AppStorageDefenderTests : IDisposable
         await using var defender = NewDefender("LaunchedAccount", maxCap: cap, postAttachGrace: TimeSpan.FromMilliseconds(100));
 
         var sw = Stopwatch.StartNew();
-        // Without NotifyConsumed, completion must NOT happen before the cap.
+        // Without NotifyConsumed, completion must NOT happen before the cap. This one is safe as
+        // written: nothing has been awaited yet, so no amount of load can move it.
         Assert.False(defender.Completion.IsCompleted, "Defender completed before the max cap with no consume signal.");
+
+        // F-116. THE MID-FLIGHT PROBE IS THE FRAGILE ONE, and the distinction is worth stating
+        // because it decides which timing assertions need work and which do not:
+        //
+        //   safe   — an assertion load can only make MORE true. `sw.Elapsed >= 700ms` below cannot
+        //            fail because a runner stalled; stalling makes elapsed LARGER.
+        //   unsafe — an assertion load can FALSIFY. This one claims "still running at 300ms" of an
+        //            800ms cap. A stalled continuation resuming at 850ms finds the defender
+        //            correctly finished and reports it as winding down early — a pass condition
+        //            reported as a failure. It blocked PR #126 on exactly that.
+        //
+        // So the probe now asserts only when it actually landed inside the window it was meant to
+        // probe. Overrunning means NOT MEASURED, which is the honest outcome; it does not mean
+        // broken. Not a longer delay — a delay cannot be made reliable, only its claim can.
         await Task.Delay(TimeSpan.FromMilliseconds(300));
-        Assert.False(defender.Completion.IsCompleted, "Defender wound down well before the max cap with no consume signal.");
+        if (sw.Elapsed < cap)
+        {
+            Assert.False(defender.Completion.IsCompleted, "Defender wound down well before the max cap with no consume signal.");
+        }
 
         // Eventually it completes at the cap.
         await defender.Completion.WaitAsync(TimeSpan.FromSeconds(2));
