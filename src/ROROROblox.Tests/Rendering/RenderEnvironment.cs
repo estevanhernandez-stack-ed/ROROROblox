@@ -111,10 +111,24 @@ internal static class RenderEnvironment
     /// </summary>
     private static string? FindBlocker()
     {
-        if (FindPids(AppProcessName) is { Count: > 0 } app)
-        {
-            return AppMessage(Describe(app));
-        }
+        // THE APP HALF IS GONE, because the defect it guarded is fixed rather than avoided (F-105).
+        //
+        // Root cause: WindowRenderHost builds the real App for App.xaml's resources, and startup RAN
+        // — contrary to the comment that said it could not. With a RoRoRo instance up, the
+        // single-instance guard found the mutex held and called Shutdown(0), disposing the
+        // Application underneath renders in flight. The pack-URI exception was the symptom.
+        // App.SuppressStartupForRenderHarness stops startup, and the full suite now passes with an
+        // instance running — measured, 1796/1796, and 128/128 render gates on four of five repeats.
+        //
+        // What replaced this guard is StartupSuppressionFenceTests: guarding the CONDITION is worth
+        // nothing once the condition is fixed, and guarding the FIX is what stops it regressing into
+        // a hundred failures nobody can read.
+        //
+        // The client half below stays, and is now UNVERIFIED rather than proven: it was added by
+        // analogy with the app case in wave 7, and if the app case was always Shutdown-under-render
+        // then the client case may never have had a mechanism at all. Nobody has tested it with a
+        // client up since. Kept because removing an untested guard on the strength of a neighbouring
+        // fix is exactly the reasoning this row has punished twice.
 
         if (FindPids(ClientProcessName) is { Count: > 0 } client)
         {
