@@ -39,14 +39,14 @@
                            Margin="8,0,0,0" />
             </StackPanel>
             <TextBlock Text="Paste a Roblox game URL or a private server share link. We figure out which kind it is."
-                       FontSize="11"
+                       FontSize="{DynamicResource BodyFontSize}"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0"
                        TextWrapping="Wrap" />
         </StackPanel>
 
         <TextBox Grid.Row="1" x:Name="UrlInput"
-                 Padding="10,8" FontSize="12" Margin="0,18,0,0"
+                 Padding="10,8" FontSize="{DynamicResource BodyFontSize}" Margin="0,18,0,0"
                  Background="{DynamicResource RowBgBrush}"
                  VerticalContentAlignment="Center"
                  TextChanged="OnUrlChanged" Style="{StaticResource AppTextBoxStyle}"/>
@@ -59,12 +59,12 @@
                 x:Name="PreviewBorder">
             <StackPanel Orientation="Horizontal">
                 <TextBlock x:Name="PreviewLabel"
-                           FontSize="11" FontWeight="SemiBold"
+                           FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
                            Foreground="{DynamicResource CyanBrush}"
                            Margin="0,0,8,0"
                            VerticalAlignment="Center" />
                 <TextBlock x:Name="PreviewDetail"
-                           FontSize="11"
+                           FontSize="{DynamicResource BodyFontSize}"
                            Foreground="{DynamicResource WhiteBrush}"
                            VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis" />
@@ -72,7 +72,7 @@
         </Border>
 
         <TextBlock Grid.Row="3" x:Name="StatusText"
-                   FontSize="11"
+                   FontSize="{DynamicResource BodyFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,12,0,0"
                    TextWrapping="Wrap"

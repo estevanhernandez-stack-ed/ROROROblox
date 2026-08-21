@@ -23,7 +23,7 @@
         <StackPanel Orientation="Horizontal">
             <!-- Wordmark: cyan + magenta separator, never one without the other (invariant 2). -->
             <TextBlock Text="RoRoRo"
-                       FontSize="22" FontWeight="Bold"
+                       FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
                        Foreground="{DynamicResource CyanBrush}">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
@@ -38,7 +38,7 @@
             </TextBlock>
 
             <TextBlock Text=" / "
-                       FontSize="22" FontWeight="Bold"
+                       FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
                        Foreground="{DynamicResource MagentaBrush}">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
@@ -53,7 +53,7 @@
             </TextBlock>
 
             <TextBlock Text="{Binding Heading, ElementName=Root}"
-                       FontSize="22" FontWeight="Bold"
+                       FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
                        Foreground="{DynamicResource WhiteBrush}" />
         </StackPanel>
 
@@ -61,7 +61,7 @@
              before, so it absorbed a 55-word help paragraph on one page and a table of contents on
              another. Windows with nothing worth saying here now say nothing by construction. -->
         <TextBlock Text="{Binding Descriptor, ElementName=Root}"
-                   FontSize="11"
+                   FontSize="{DynamicResource BodyFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
                    TextWrapping="Wrap"
                    Margin="0,4,0,0">

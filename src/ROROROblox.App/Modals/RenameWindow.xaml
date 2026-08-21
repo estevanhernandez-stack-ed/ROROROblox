@@ -44,7 +44,7 @@
              Focused on load with all-text-selected for fast retype. -->
         <TextBox Grid.Row="2"
                  x:Name="NameTextBox"
-                 FontSize="14"
+                 FontSize="{DynamicResource HeadingFontSize}"
                  Padding="8,6"
                  MaxLines="1"
                  Background="{DynamicResource RowBgBrush}"
@@ -56,7 +56,7 @@
                    x:Name="ResetRow"
                    Margin="0,8,0,0"
                    Visibility="Collapsed"
-                   FontSize="11">
+                   FontSize="{DynamicResource BodyFontSize}">
             <Hyperlink x:Name="ResetLink"
                        Foreground="{DynamicResource MagentaBrush}"
                        Click="OnResetClick"

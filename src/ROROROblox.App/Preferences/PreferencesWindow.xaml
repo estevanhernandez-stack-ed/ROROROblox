@@ -72,7 +72,7 @@
             <ListBox x:Name="SettingsNav" Grid.Column="0"
                      Background="Transparent"
                      BorderThickness="0"
-                     FontSize="13"
+                     FontSize="{DynamicResource HeadingFontSize}"
                      ItemContainerStyle="{StaticResource NavItemStyle}"
                      SelectionChanged="OnNavSelectionChanged">
                     <ListBoxItem Content="Startup" />
@@ -122,12 +122,12 @@
                             <StackPanel>
                                 <CheckBox x:Name="RunOnLoginToggle"
                                           Foreground="{DynamicResource WhiteBrush}"
-                                          FontSize="13"
+                                          FontSize="{DynamicResource HeadingFontSize}"
                                           FontWeight="SemiBold"
                                           Click="OnRunOnLoginToggle">
                                     <TextBlock Text="Start RoRoRo when Windows starts." />
                                 </CheckBox>
-                                <TextBlock FontSize="11"
+                                <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"
                                            Margin="22,4,0,0"
@@ -141,13 +141,13 @@
                             <StackPanel Margin="0,14,0,0">
                                 <CheckBox x:Name="LaunchMainToggle"
                                           Foreground="{DynamicResource WhiteBrush}"
-                                          FontSize="13"
+                                          FontSize="{DynamicResource HeadingFontSize}"
                                           FontWeight="SemiBold"
                                           Click="OnLaunchMainToggle">
                                     <TextBlock Text="Launch your main account when RoRoRo starts." />
                                 </CheckBox>
                                 <TextBlock x:Name="LaunchMainHint"
-                                           FontSize="11"
+                                           FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"
                                            Margin="22,4,0,0"
@@ -173,13 +173,13 @@
                             <StackPanel Margin="0,14,0,0">
                                 <CheckBox x:Name="CarefulSquadLaunchToggle"
                                           Foreground="{DynamicResource WhiteBrush}"
-                                          FontSize="13"
+                                          FontSize="{DynamicResource HeadingFontSize}"
                                           FontWeight="SemiBold"
                                           AutomationProperties.Name="Launch a squad one account at a time"
                                           Click="OnCarefulSquadLaunchToggle">
                                     <TextBlock Text="Launch a squad one account at a time." TextWrapping="Wrap" />
                                 </CheckBox>
-                                <TextBlock FontSize="11"
+                                <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"
                                            Margin="22,4,0,0"
@@ -208,11 +208,11 @@
                             <StackPanel>
                                 <CheckBox x:Name="StreamerModeToggle"
                                           Foreground="{DynamicResource WhiteBrush}"
-                                          FontSize="13"
+                                          FontSize="{DynamicResource HeadingFontSize}"
                                           FontWeight="SemiBold">
                                     <TextBlock Text="Streamer mode." />
                                 </CheckBox>
-                                <TextBlock FontSize="11"
+                                <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"
                                            Margin="22,4,0,8"
@@ -224,7 +224,7 @@
                                         Margin="22,0,0,0"
                                         Padding="10,6"
                                         Style="{StaticResource SecondaryButtonStyle}"
-                                        FontSize="11"
+                                        FontSize="{DynamicResource BodyFontSize}"
                                         ToolTip="Assign every fake name and avatar a fresh pick." />
                             </StackPanel>
 
@@ -233,12 +233,12 @@
                             <StackPanel Margin="0,14,0,0">
                                 <CheckBox x:Name="AlwaysShowRecycleToggle"
                                           Foreground="{DynamicResource WhiteBrush}"
-                                          FontSize="13"
+                                          FontSize="{DynamicResource HeadingFontSize}"
                                           FontWeight="SemiBold"
                                           Click="OnAlwaysShowRecycleToggle">
                                     <TextBlock Text="Always show Recycle on running accounts." TextWrapping="Wrap" />
                                 </CheckBox>
-                                <TextBlock FontSize="11"
+                                <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"
                                            Margin="22,4,0,0"
@@ -253,12 +253,12 @@
                             <StackPanel Margin="0,14,0,0">
                                 <CheckBox x:Name="AutoForceStopToggle"
                                           Foreground="{DynamicResource WhiteBrush}"
-                                          FontSize="13"
+                                          FontSize="{DynamicResource HeadingFontSize}"
                                           FontWeight="SemiBold"
                                           Click="OnAutoForceStopToggle">
                                     <TextBlock Text="Stop clients immediately, without waiting." TextWrapping="Wrap" />
                                 </CheckBox>
-                                <TextBlock FontSize="11"
+                                <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"
                                            Margin="22,4,0,0"
@@ -277,7 +277,7 @@
                                AutomationProperties.HeadingLevel="Level2" />
                     <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
-                            <TextBlock FontSize="11"
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                        Foreground="{DynamicResource MutedTextBrush}"
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,8"
@@ -285,11 +285,11 @@
                             <StackPanel Orientation="Horizontal">
                                 <Button Content="Export accounts…" Padding="14,8" Margin="0,0,8,0"
                                         Style="{StaticResource PrimaryButtonStyle}"
-                                        FontSize="12"
+                                        FontSize="{DynamicResource BodyFontSize}"
                                         Click="OnExportAccountsClick"
                                         ToolTip="Save your accounts to an encrypted file you can move to another PC." />
                                 <Button Style="{StaticResource SecondaryButtonStyle}" Content="Import accounts…" Padding="14,8"
-                                        FontSize="12"
+                                        FontSize="{DynamicResource BodyFontSize}"
                                         Click="OnImportAccountsClick"
                                         ToolTip="Add accounts from an encrypted .rororo-accounts file." />
                             </StackPanel>
@@ -308,18 +308,18 @@
                         <StackPanel>
                             <CheckBox x:Name="MuteIdleAlertsToggle"
                                       Foreground="{DynamicResource WhiteBrush}"
-                                      FontSize="13"
+                                      FontSize="{DynamicResource HeadingFontSize}"
                                       FontWeight="SemiBold"
                                       Click="OnMuteIdleAlertsToggle">
                                 <TextBlock Text="Mute idle alerts." />
                             </CheckBox>
-                            <TextBlock FontSize="11"
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                        Foreground="{DynamicResource MutedTextBrush}"
                                        TextWrapping="Wrap"
                                        Margin="22,4,0,8"
                                        Text="RoRoRo shows one tray toast when a running account crosses the idle threshold below. Checking this keeps the row chip but skips the toast." />
                             <TextBlock Text="Idle warn threshold"
-                                       FontSize="12"
+                                       FontSize="{DynamicResource BodyFontSize}"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource WhiteBrush}"
                                        Margin="22,0,0,4" />
@@ -329,7 +329,7 @@
                                       HorizontalAlignment="Left"
                                       SelectionChanged="OnIdleWarnThresholdChanged"
                                       Padding="8,6"
-                                      FontSize="12">
+                                      FontSize="{DynamicResource BodyFontSize}">
                                 <ComboBoxItem Content="10 minutes" Tag="10" />
                                 <ComboBoxItem Content="12 minutes" Tag="12" />
                                 <ComboBoxItem Content="15 minutes" Tag="15" />
@@ -350,7 +350,7 @@
                                AutomationProperties.HeadingLevel="Level2" />
                     <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
-                            <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                        Margin="0,0,0,10"
                                        Text="Get told when something happens to an account while you're away from the PC. Sending to a Discord channel takes about a minute to set up — there's a walkthrough below if you've never made a webhook." />
 
@@ -359,7 +359,7 @@
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="An account drops out" FontSize="12" VerticalAlignment="Center"
+                                <TextBlock Grid.Column="0" Text="An account drops out" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center"
                                            Foreground="{DynamicResource WhiteBrush}" Width="180" />
                                 <ComboBox Grid.Column="1" x:Name="DroppedOutDestination" Width="170" HorizontalAlignment="Left"
                                           SelectionChanged="OnAlertRoutingChanged">
@@ -375,7 +375,7 @@
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="An account eats memory" FontSize="12" VerticalAlignment="Center"
+                                <TextBlock Grid.Column="0" Text="An account eats memory" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center"
                                            Foreground="{DynamicResource WhiteBrush}" Width="180" />
                                 <ComboBox Grid.Column="1" x:Name="MemoryWarningDestination" Width="170" HorizontalAlignment="Left"
                                           SelectionChanged="OnAlertRoutingChanged">
@@ -408,7 +408,7 @@
                                  a fourth as the signal to drop that work rather than widen it. -->
                             <StackPanel x:Name="MutedAccountsRow" Margin="0,4,0,6" Visibility="Collapsed">
                                 <TextBlock x:Name="MutedAccountsLine"
-                                           FontSize="11"
+                                           FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"
                                            AutomationProperties.Name="Muted accounts" />
@@ -417,7 +417,7 @@
                                         HorizontalAlignment="Left"
                                         Margin="0,6,0,0"
                                         Padding="10,5"
-                                        FontSize="11"
+                                        FontSize="{DynamicResource BodyFontSize}"
                                         Style="{StaticResource SecondaryButtonStyle}"
                                         AutomationProperties.Name="Unmute every muted account"
                                         Click="OnUnmuteAllClick"
@@ -430,9 +430,9 @@
                                  to themselves and only the interesting things to the clan — and it is
                                  why the payload type has no field a private-server link could live in
                                  (see WebhookPayload). One shared field would collapse that choice. -->
-                            <TextBlock Text="My channel — webhook URL" FontSize="11" FontWeight="SemiBold"
+                            <TextBlock Text="My channel — webhook URL" FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
                                        Foreground="{DynamicResource WhiteBrush}" Margin="0,10,0,2" />
-                            <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                        Margin="0,0,0,4"
                                        Text="A server only you read. Saved encrypted on this PC and never leaves it except to post your alerts." />
                             <!-- F-076. The saved value renders masked and read-only; Show reveals it
@@ -445,7 +445,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBox x:Name="MineWebhookInput" Grid.Column="0" Padding="8,6" FontSize="11"
+                                <TextBox x:Name="MineWebhookInput" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
                                          LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
                                 <!-- Takes the rank rather than repeating it. The four attributes
@@ -458,17 +458,17 @@
                                      ToggleButton because the C2 gap proved a control type outside
                                      the definition is where this defect survives. -->
                                 <ToggleButton x:Name="MineWebhookReveal" Grid.Column="1" Content="Show"
-                                              Margin="6,0,0,0" Padding="10,5" FontSize="11"
+                                              Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
                                               Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
                                               Style="{StaticResource SecondaryToggleButtonStyle}"
                                               ToolTip="Reveal the saved webhook so you can read or replace it." />
                             </Grid>
-                            <TextBlock x:Name="MineWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
+                            <TextBlock x:Name="MineWebhookVerdict" FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap" Margin="0,4,0,0"
                                        Foreground="{DynamicResource MutedTextBrush}" />
 
-                            <TextBlock Text="Clan channel — webhook URL" FontSize="11" FontWeight="SemiBold"
+                            <TextBlock Text="Clan channel — webhook URL" FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
                                        Foreground="{DynamicResource WhiteBrush}" Margin="0,12,0,2" />
-                            <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                        Margin="0,0,0,4"
                                        Text="A shared room. Anything routed here is read by everyone in that channel, now and later — so send what the clan should see, not everything." />
                             <Grid>
@@ -476,26 +476,26 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBox x:Name="ClanWebhookInput" Grid.Column="0" Padding="8,6" FontSize="11"
+                                <TextBox x:Name="ClanWebhookInput" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
                                          LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
                                 <ToggleButton x:Name="ClanWebhookReveal" Grid.Column="1" Content="Show"
-                                              Margin="6,0,0,0" Padding="10,5" FontSize="11"
+                                              Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
                                               Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
                                               Style="{StaticResource SecondaryToggleButtonStyle}"
                                               ToolTip="Reveal the saved webhook so you can read or replace it." />
                             </Grid>
-                            <TextBlock x:Name="ClanWebhookVerdict" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
+                            <TextBlock x:Name="ClanWebhookVerdict" FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap" Margin="0,4,0,0"
                                        Foreground="{DynamicResource MutedTextBrush}" />
 
                             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                <Button Style="{StaticResource AccentActionButtonStyle}" x:Name="SendTestButton" Content="Send test" Padding="12,5" Click="OnSendTestClick" FontSize="11" />
+                                <Button Style="{StaticResource AccentActionButtonStyle}" x:Name="SendTestButton" Content="Send test" Padding="12,5" Click="OnSendTestClick" FontSize="{DynamicResource BodyFontSize}" />
                                 <Button x:Name="NoServerHelpButton" Content="I don't have a Discord server" Padding="12,5" Margin="8,0,0,0"
-                                        Style="{StaticResource SecondaryStrongButtonStyle}" FontSize="11"
+                                        Style="{StaticResource SecondaryStrongButtonStyle}" FontSize="{DynamicResource BodyFontSize}"
                                         Click="OnNoServerHelpClick" />
                             </StackPanel>
 
-                            <TextBlock x:Name="AlertsStatusLine" FontSize="11" Margin="0,10,0,0" TextWrapping="Wrap"
+                            <TextBlock x:Name="AlertsStatusLine" FontSize="{DynamicResource BodyFontSize}" Margin="0,10,0,0" TextWrapping="Wrap"
                                        Foreground="{DynamicResource CyanBrush}" />
                         </StackPanel>
                     </Border>
@@ -538,13 +538,13 @@
                             <StackPanel>
                                 <CheckBox x:Name="MemoryWatchdogEnabledToggle"
                                           Foreground="{DynamicResource WhiteBrush}"
-                                          FontSize="13"
+                                          FontSize="{DynamicResource HeadingFontSize}"
                                           FontWeight="SemiBold"
                                           AutomationProperties.Name="Watch memory while accounts are running"
                                           Click="OnMemoryWatchdogEnabledToggle">
                                     <TextBlock Text="Watch memory while accounts are running." TextWrapping="Wrap" />
                                 </CheckBox>
-                                <TextBlock FontSize="11"
+                                <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"
                                            Margin="22,4,0,0"
@@ -570,7 +570,7 @@
                                  Painting a permanent line in the warning accent would shout on
                                  every open and leave the actual refusal nothing louder to be. -->
                             <TextBlock x:Name="AutomaticMemoryLine"
-                                       FontSize="11"
+                                       FontSize="{DynamicResource BodyFontSize}"
                                        Foreground="{DynamicResource MutedTextBrush}"
                                        TextWrapping="Wrap"
                                        Margin="0,14,0,0"
@@ -579,7 +579,7 @@
                             <!-- Row separation is a call-site margin, same as the Startup card. -->
                             <StackPanel Margin="0,14,0,0">
                                 <TextBlock Text="Memory to keep free (MB)"
-                                           FontSize="12"
+                                           FontSize="{DynamicResource BodyFontSize}"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource WhiteBrush}"
                                            Margin="0,0,0,4" />
@@ -587,13 +587,13 @@
                                          Width="120"
                                          HorizontalAlignment="Left"
                                          Padding="8,6"
-                                         FontSize="12"
+                                         FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
                                          Style="{StaticResource AppTextBoxStyle}"
                                          AutomationProperties.Name="Memory to keep free, in megabytes"
                                          AutomationProperties.HelpText="A whole number from 256 to 65536, or blank to let RoRoRo pick."
                                          LostFocus="OnMemoryReserveCommitted" />
-                                <TextBlock FontSize="11"
+                                <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"
                                            Margin="0,4,0,0"
@@ -602,7 +602,7 @@
 
                             <StackPanel Margin="0,14,0,0">
                                 <TextBlock Text="Warn when one account passes (MB)"
-                                           FontSize="12"
+                                           FontSize="{DynamicResource BodyFontSize}"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource WhiteBrush}"
                                            Margin="0,0,0,4" />
@@ -610,13 +610,13 @@
                                          Width="120"
                                          HorizontalAlignment="Left"
                                          Padding="8,6"
-                                         FontSize="12"
+                                         FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
                                          Style="{StaticResource AppTextBoxStyle}"
                                          AutomationProperties.Name="Warn when one account passes this many megabytes"
                                          AutomationProperties.HelpText="A whole number from 256 to 65536, 0 to turn this warning off, or blank to let RoRoRo pick."
                                          LostFocus="OnMemoryCapCommitted" />
-                                <TextBlock FontSize="11"
+                                <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"
                                            Margin="0,4,0,0"
@@ -625,7 +625,7 @@
 
                             <StackPanel Margin="0,14,0,0">
                                 <TextBlock Text="Warn this far ahead (minutes)"
-                                           FontSize="12"
+                                           FontSize="{DynamicResource BodyFontSize}"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource WhiteBrush}"
                                            Margin="0,0,0,4" />
@@ -633,13 +633,13 @@
                                          Width="120"
                                          HorizontalAlignment="Left"
                                          Padding="8,6"
-                                         FontSize="12"
+                                         FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
                                          Style="{StaticResource AppTextBoxStyle}"
                                          AutomationProperties.Name="Warn this many minutes ahead of running out"
                                          AutomationProperties.HelpText="A whole number of minutes from 1 to 1440. The default is 120."
                                          LostFocus="OnProjectionWarnCommitted" />
-                                <TextBlock FontSize="11"
+                                <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"
                                            Margin="0,4,0,0"
@@ -661,7 +661,7 @@
                                  Collapsed until something is refused. A status line that speaks on
                                  every save is noise, and the refusal has to arrive as a change. -->
                             <TextBlock x:Name="MemorySettingsWarning"
-                                       FontSize="11"
+                                       FontSize="{DynamicResource BodyFontSize}"
                                        Foreground="{DynamicResource RowExpiredAccentBrush}"
                                        TextWrapping="Wrap"
                                        Margin="0,12,0,0"
@@ -682,11 +682,11 @@
                     <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel>
                             <CheckBox x:Name="DiscordPresenceToggle"
-                                      Foreground="{DynamicResource WhiteBrush}" FontSize="13" FontWeight="SemiBold"
+                                      Foreground="{DynamicResource WhiteBrush}" FontSize="{DynamicResource HeadingFontSize}" FontWeight="SemiBold"
                                       Click="OnDiscordPresenceToggle">
                                 <TextBlock Text="Show what you're playing on Discord." TextWrapping="Wrap" />
                             </CheckBox>
-                            <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                        Margin="22,4,0,8"
                                        Text="Your Discord status shows the game, how many accounts you have in it, and how long you've been going. Nothing to set up — it uses the Discord app already on this PC." />
                             <!-- Said here because otherwise every user who turns this on asks a friend
@@ -694,15 +694,15 @@
                                  "playing" slot to a game it detects, and RoRoRo is an application, not
                                  a detected game — nothing we can toggle. Detection is earned by
                                  installs over time, so the last line is a real path, not a consolation. -->
-                            <TextBlock FontSize="11" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                        Margin="22,0,0,8"
                                        Text="Worth knowing: while Roblox is running, your friends see Roblox on your profile instead of RoRoRo — Discord gives that spot to games it recognizes. You'll always see your own card. RoRoRo gets recognized once enough people are running it." />
                             <CheckBox x:Name="DiscordJoinToggle"
-                                      Foreground="{DynamicResource WhiteBrush}" FontSize="12"
+                                      Foreground="{DynamicResource WhiteBrush}" FontSize="{DynamicResource BodyFontSize}"
                                       Margin="22,0,0,0" Click="OnDiscordJoinToggle">
                                 <TextBlock Text="Let friends join your server from Discord." TextWrapping="Wrap" />
                             </CheckBox>
-                            <TextBlock x:Name="DiscordStatusLine" FontSize="11"
+                            <TextBlock x:Name="DiscordStatusLine" FontSize="{DynamicResource BodyFontSize}"
                                        Foreground="{DynamicResource CyanBrush}" TextWrapping="Wrap" Margin="22,8,0,0" />
                         </StackPanel>
                     </Border>
@@ -717,7 +717,7 @@
                          spacing is wrong rather than the one place someone forgot it. -->
                     <Border Style="{StaticResource CardBorderStyle}" Margin="0">
                         <StackPanel>
-                            <TextBlock FontSize="11"
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                        Foreground="{DynamicResource MutedTextBrush}"
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,8"
@@ -726,12 +726,12 @@
                                       DisplayMemberPath="Name"
                                       SelectionChanged="OnThemeChanged"
                                       Padding="8,6"
-                                      FontSize="12" />
+                                      FontSize="{DynamicResource BodyFontSize}" />
                             <!-- One sentence per built-in, keyed by id via ThemeDescriptions.For.
                                  User themes return null: Collapsed, not Hidden, so no empty gap
                                  is left where the line would have been. -->
                             <TextBlock x:Name="ThemeDescriptionText"
-                                       FontSize="11"
+                                       FontSize="{DynamicResource BodyFontSize}"
                                        Foreground="{DynamicResource MutedTextBrush}"
                                        TextWrapping="Wrap"
                                        Margin="0,6,0,0"
@@ -741,7 +741,7 @@
                                         Content="+ Build a theme..."
                                         HorizontalAlignment="Left"
                                         Padding="10,5" Margin="0,0,8,0"
-                                        FontSize="11"
+                                        FontSize="{DynamicResource BodyFontSize}"
                                         Click="OnBuildThemeClick"
                                         ToolTip="Open the theme builder. Copy an AI prompt, paste the result back, save." />
                                 <Button x:Name="OpenThemesFolderButton"
@@ -749,7 +749,7 @@
                                         HorizontalAlignment="Left"
                                         Padding="10,5"
                                         Style="{StaticResource SecondaryButtonStyle}"
-                                        FontSize="11"
+                                        FontSize="{DynamicResource BodyFontSize}"
                                         Click="OnOpenThemesFolderClick"
                                         ToolTip="Drop a *.json file in here, then close and reopen Settings to see it in the picker." />
                                 <!-- The way back to the outline question (F-078, spec 4.3). It used
@@ -771,12 +771,12 @@
                                         HorizontalAlignment="Left"
                                         Padding="10,5" Margin="8,0,0,0"
                                         Style="{StaticResource SecondaryButtonStyle}"
-                                        FontSize="11"
+                                        FontSize="{DynamicResource BodyFontSize}"
                                         AutomationProperties.Name="Review button outlines on this theme"
                                         Click="OnReviewEdgeClick"
                                         ToolTip="See both versions of this theme's button outlines and pick the one it uses." />
                             </StackPanel>
-                            <TextBlock FontSize="11"
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                        Foreground="{DynamicResource MutedTextBrush}"
                                        TextWrapping="Wrap"
                                        Margin="0,8,0,0"
@@ -798,7 +798,7 @@
 
                                  Collapsed until there is something wrong. Success stays silent. -->
                             <TextBlock x:Name="ThemeStatusLine"
-                                       FontSize="11"
+                                       FontSize="{DynamicResource BodyFontSize}"
                                        Foreground="{DynamicResource RowExpiredAccentBrush}"
                                        TextWrapping="Wrap"
                                        Margin="0,12,0,0"

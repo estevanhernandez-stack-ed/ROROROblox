@@ -29,7 +29,7 @@
         <TextBlock Grid.Row="1"
                    Text="RoRoRo uses Microsoft's WebView2 runtime to manage Roblox logins. It's free and made by Microsoft. Most Windows 11 PCs already have it; if yours doesn't, install it and try again."
                    TextWrapping="Wrap"
-                   FontSize="12"
+                   FontSize="{DynamicResource BodyFontSize}"
                    Foreground="{DynamicResource WhiteBrush}"
                    Opacity="0.85"
                    Margin="0,12,0,0" />

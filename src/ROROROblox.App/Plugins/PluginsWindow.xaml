@@ -35,7 +35,7 @@
         <StackPanel Grid.Row="0">
             <controls:PageHeader Heading="Plugins" />
             <TextBlock Text="Each plugin runs in its own process and only sees what you grant."
-                       FontSize="11"
+                       FontSize="{DynamicResource BodyFontSize}"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0"
                        TextWrapping="Wrap" />
@@ -71,14 +71,14 @@
                     <TextBlock Grid.Column="0"
                                Text="{Binding StatusBanner}"
                                Foreground="{DynamicResource WhiteBrush}"
-                               FontSize="12"
+                               FontSize="{DynamicResource BodyFontSize}"
                                VerticalAlignment="Center"
                                TextWrapping="Wrap" />
                     <Button Style="{StaticResource AccentActionButtonStyle}" Grid.Column="1"
                             Content="Restart"
                             Margin="12,0,0,0"
                             Padding="14,4"
-                            FontSize="11"
+                            FontSize="{DynamicResource BodyFontSize}"
                             Command="{Binding RestartCommand}"
                             Visibility="{Binding BannerIsRestartable, Converter={StaticResource BoolToVisibilityConverter}}" />
                 </Grid>
@@ -99,7 +99,7 @@
                     Visibility="{Binding DuplicateWarning, Converter={StaticResource StringToVisibilityConverterLocal}}">
                 <TextBlock Text="{Binding DuplicateWarning}"
                            Foreground="{DynamicResource WhiteBrush}"
-                           FontSize="12"
+                           FontSize="{DynamicResource BodyFontSize}"
                            VerticalAlignment="Center"
                            TextWrapping="Wrap" />
             </Border>
@@ -126,7 +126,7 @@
                              Text="{Binding InstallUrlInput, UpdateSourceTrigger=PropertyChanged}"
                              Background="{DynamicResource NavyBrush}"
                              Padding="8,6"
-                             FontSize="12"
+                             FontSize="{DynamicResource BodyFontSize}"
                              VerticalContentAlignment="Center"
                              IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverterLocal}}" Style="{StaticResource AppTextBoxStyle}"/>
                     <Button Grid.Column="1"
@@ -137,7 +137,7 @@
                             Command="{Binding InstallFromUrlCommand}" />
                 </Grid>
                 <TextBlock Text="Paste the base URL of a plugin release (the folder containing manifest.json, manifest.sha256, and plugin.zip)."
-                           FontSize="11"
+                           FontSize="{DynamicResource BodyFontSize}"
                            Foreground="{DynamicResource MutedTextBrush}"
                            TextWrapping="Wrap"
                            Margin="0,6,0,0" />
@@ -169,7 +169,7 @@
                                         <StackPanel Grid.Column="0">
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="{Binding Name}"
-                                                           FontSize="14" FontWeight="SemiBold"
+                                                           FontSize="{DynamicResource HeadingFontSize}" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource WhiteBrush}" />
                                                 <TextBlock Text="{Binding Version}"
                                                            Margin="8,2,0,0"
@@ -179,11 +179,11 @@
                                                            VerticalAlignment="Center" />
                                             </StackPanel>
                                             <TextBlock Text="{Binding Publisher}"
-                                                       FontSize="11"
+                                                       FontSize="{DynamicResource BodyFontSize}"
                                                        Foreground="{DynamicResource MutedTextBrush}"
                                                        Margin="0,2,0,0" />
                                             <TextBlock Text="{Binding Description}"
-                                                       FontSize="11"
+                                                       FontSize="{DynamicResource BodyFontSize}"
                                                        Foreground="{DynamicResource MutedTextBrush}"
                                                        TextWrapping="Wrap"
                                                        Opacity="0.85"
@@ -227,7 +227,7 @@
                                                 <CheckBox IsChecked="{Binding AutostartEnabled, Mode=OneWay}"
                                                           Content="Autostart"
                                                           Foreground="{DynamicResource WhiteBrush}"
-                                                          FontSize="11"
+                                                          FontSize="{DynamicResource BodyFontSize}"
                                                           VerticalAlignment="Center"
                                                           Command="{Binding DataContext.ToggleAutostartCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                           CommandParameter="{Binding}" />
@@ -235,7 +235,7 @@
                                                         Margin="10,0,0,0"
                                                         Padding="12,4"
                                                         Style="{StaticResource CtaButtonStyle}"
-                                                        FontSize="11"
+                                                        FontSize="{DynamicResource BodyFontSize}"
                                                         IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBoolConverterLocal}}"
                                                         Command="{Binding DataContext.LaunchPluginCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                         CommandParameter="{Binding}" />
@@ -243,7 +243,7 @@
                                             <Button Style="{StaticResource DestructiveButtonStyle}" Content="Remove"
                                                     Margin="0,8,0,0"
                                                     Padding="10,4"
-                                                    FontSize="11"
+                                                    FontSize="{DynamicResource BodyFontSize}"
                                                     HorizontalAlignment="Right"
                                                     Command="{Binding DataContext.RevokeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}" />
@@ -251,7 +251,7 @@
                                                     Margin="0,8,0,0"
                                                     Padding="12,4"
                                                     Style="{StaticResource CtaButtonStyle}"
-                                                    FontSize="11"
+                                                    FontSize="{DynamicResource BodyFontSize}"
                                                     HorizontalAlignment="Right"
                                                     Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVisibilityConverter}}"
                                                     Command="{Binding DataContext.UpdatePluginCommand, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -295,7 +295,7 @@
                                             <StackPanel Grid.Column="0">
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock Text="{Binding Name}"
-                                                               FontSize="14" FontWeight="SemiBold"
+                                                               FontSize="{DynamicResource HeadingFontSize}" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource WhiteBrush}" />
                                                     <TextBlock Text="{Binding Version}"
                                                                Margin="8,2,0,0"
@@ -305,11 +305,11 @@
                                                                VerticalAlignment="Center" />
                                                 </StackPanel>
                                                 <TextBlock Text="{Binding Publisher}"
-                                                           FontSize="11"
+                                                           FontSize="{DynamicResource BodyFontSize}"
                                                            Foreground="{DynamicResource MutedTextBrush}"
                                                            Margin="0,2,0,0" />
                                                 <TextBlock Text="{Binding Description}"
-                                                           FontSize="11"
+                                                           FontSize="{DynamicResource BodyFontSize}"
                                                            Foreground="{DynamicResource MutedTextBrush}"
                                                            TextWrapping="Wrap"
                                                            Opacity="0.85"
@@ -320,7 +320,7 @@
                                                     Padding="14,6"
                                                     VerticalAlignment="Top"
                                                     Style="{StaticResource CtaButtonStyle}"
-                                                    FontSize="11"
+                                                    FontSize="{DynamicResource BodyFontSize}"
                                                     IsEnabled="{Binding Installable}"
                                                     Command="{Binding DataContext.InstallFromCatalogCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}" />
@@ -337,11 +337,11 @@
                             VerticalAlignment="Center"
                             Visibility="{Binding Plugins.Count, Converter={StaticResource ZeroToVisibilityConverterLocal}}">
                     <TextBlock Text="No plugins installed."
-                               FontSize="13"
+                               FontSize="{DynamicResource HeadingFontSize}"
                                Foreground="{DynamicResource MutedTextBrush}"
                                HorizontalAlignment="Center" />
                     <TextBlock Text="Paste a release URL above to add one."
-                               FontSize="11"
+                               FontSize="{DynamicResource BodyFontSize}"
                                Foreground="{DynamicResource MutedTextBrush}"
                                HorizontalAlignment="Center"
                                Margin="0,4,0,0"

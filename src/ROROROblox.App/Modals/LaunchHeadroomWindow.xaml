@@ -33,7 +33,7 @@
         <TextBlock Grid.Row="1"
                    x:Name="BodyText"
                    TextWrapping="Wrap"
-                   FontSize="12"
+                   FontSize="{DynamicResource BodyFontSize}"
                    LineHeight="18"
                    Foreground="{DynamicResource WhiteBrush}"
                    Opacity="0.85"

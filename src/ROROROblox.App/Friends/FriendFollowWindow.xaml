@@ -23,7 +23,7 @@
         <StackPanel Grid.Row="0">
             <controls:PageHeader x:Name="Header" />
             <TextBlock Text="Pick a friend to follow into their server. Roblox does the permission check — works for public AND private servers if your friend's privacy + server allowlist permit."
-                       FontSize="11"
+                       FontSize="{DynamicResource BodyFontSize}"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0"
                        TextWrapping="Wrap" />
@@ -31,11 +31,11 @@
                     HorizontalAlignment="Left"
                     Padding="12,5"
                     Margin="0,12,0,0"
-                    FontSize="11"
+                    FontSize="{DynamicResource BodyFontSize}"
                     Visibility="Collapsed"
                     Click="OnSourceSwitchClick" />
             <TextBlock x:Name="LauncherHint"
-                       FontSize="11"
+                       FontSize="{DynamicResource BodyFontSize}"
                        Foreground="{DynamicResource CyanBrush}"
                        Margin="0,8,0,0"
                        TextWrapping="Wrap"
@@ -48,7 +48,7 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" x:Name="StatusText"
-                       FontSize="11"
+                       FontSize="{DynamicResource BodyFontSize}"
                        Foreground="{DynamicResource MutedTextBrush}"
                        VerticalAlignment="Center"
                        TextWrapping="Wrap" />
@@ -56,7 +56,7 @@
                     Content="Refresh"
                     Padding="12,6"
                     Style="{StaticResource SecondaryStrongButtonStyle}"
-                    FontSize="11"
+                    FontSize="{DynamicResource BodyFontSize}"
                     Click="OnRefreshClick" />
         </Grid>
 

@@ -24,7 +24,7 @@
         <StackPanel Grid.Row="0">
             <controls:PageHeader Heading="Diagnostics" />
             <TextBlock Text="Save the bundle when filing a bug — log files redact secrets."
-                       FontSize="11"
+                       FontSize="{DynamicResource BodyFontSize}"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0"
                        TextWrapping="Wrap" />
@@ -35,7 +35,7 @@
         </ScrollViewer>
 
         <TextBlock Grid.Row="2" x:Name="StatusText"
-                   FontSize="11"
+                   FontSize="{DynamicResource BodyFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,12,0,0"
                    TextWrapping="Wrap" />
