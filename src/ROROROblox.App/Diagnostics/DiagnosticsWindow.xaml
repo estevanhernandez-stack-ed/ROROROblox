@@ -53,10 +53,7 @@
                     Padding="14,8" Margin="0,0,8,0"
                     Click="OnSaveBundleClick"
                     ToolTip="Bundle the latest log files + this snapshot into a zip you can attach to a Discord report. Cookies are never logged; the bundle contains no secrets." />
-            <Button Content="Close" Padding="14,8"
-                    Style="{StaticResource SecondaryStrongButtonStyle}"
-                    IsCancel="True"
-                    Click="OnCloseClick" />
+            <Button Content="Close" Click="OnCloseClick" Style="{StaticResource DialogCloseButtonStyle}" />
         </StackPanel>
     </Grid>
 </Window>

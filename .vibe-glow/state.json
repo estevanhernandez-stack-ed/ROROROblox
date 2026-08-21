@@ -41,6 +41,17 @@
       "notes": "F-054 was re-measured and had overstated itself — 22 windows already dismissed on Esc; the real gap was four. Its [new-mechanism] half became F-112. F-041/F-048/F-079, the style-consolidation trio originally planned for this wave, are NOT in it and stay open."
     },
     {
+      "id": 11,
+      "name": "Chrome consolidation — Close, window classes, modal theming",
+      "status": "open",
+      "findings": [
+        "F-041",
+        "F-048",
+        "F-079"
+      ],
+      "notes": "All three had moved since they were written and none had been flipped. F-079's stated claim was already fully resolved; F-048's headline example (Preferences locked) was fixed by wave 2; F-041's rank was settled by wave 5. Two new fences so the conventions stop depending on anyone remembering them."
+    },
+    {
       "id": 2,
       "name": "Settings nav rail — five pages, shape-based selection, resizable",
       "status": "clean",

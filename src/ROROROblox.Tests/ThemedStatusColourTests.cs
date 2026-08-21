@@ -454,8 +454,19 @@ public class ThemedStatusColourTests
     /// <b><c>MainWindow.xaml</c> now holds ZERO colour literals</b> — the file this fence was built
     /// to watch, and the one it has never been able to blanket-exempt, is clean for the first time.
     /// </para>
+    /// <para>
+    /// <b>2026-08-20, F-079's residue converted (wave 11): 57 to 35.</b> Twenty-two literals left
+    /// <c>Modals/</c> in one pass — every <c>Foreground</c> hex across six windows became
+    /// <c>CyanBrush</c>, <c>MagentaBrush</c>, <c>WhiteBrush</c> or <c>MutedTextBrush</c>. The
+    /// ceiling moves with them for the reason this clause has always given: slack left inside an
+    /// allow-listed region is room for a new literal to arrive wearing an old row's badge. One
+    /// literal remains in that folder, <c>#F1B232</c> on <c>RobloxAlreadyRunningWindow</c>'s
+    /// still-locked tick, and it stays because the theme has no amber and an eleventh slot would
+    /// break every user theme on disk — the same reasoning <c>ContrastGuard</c> records for not
+    /// adding one.
+    /// </para>
     /// </summary>
-    private const int AllowedXamlLiteralCeiling = 57;
+    private const int AllowedXamlLiteralCeiling = 35;
 
     /// <summary>
     /// Vacuity floor. Well under the ceiling so that genuinely CLOSING F-079 or F-066 — which would

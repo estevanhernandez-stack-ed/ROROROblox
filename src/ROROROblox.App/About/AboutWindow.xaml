@@ -157,11 +157,7 @@
                  nothing here is filled: an accent fill on the only button in the window says the
                  window exists to be closed. IsDefault stays — which button Enter fires is a
                  keyboard affordance, not a visual rank. -->
-            <Button Content="Close" Padding="20,8"
-                    Style="{StaticResource SecondaryStrongButtonStyle}"
-                    IsDefault="True"
-                    IsCancel="True"
-                    Click="OnCloseClick" />
+            <Button Content="Close" Click="OnCloseClick" Style="{StaticResource DialogCloseButtonStyle}" />
         </StackPanel>
     </Grid>
 </Window>

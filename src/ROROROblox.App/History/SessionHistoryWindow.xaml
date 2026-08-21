@@ -59,11 +59,7 @@
                     Padding="12,8" Margin="0,0,8,0"
                     Style="{StaticResource DestructiveButtonStyle}"
                     Click="OnClearClick" />
-            <Button Content="Close" Padding="22,8"
-                    Style="{StaticResource SecondaryStrongButtonStyle}"
-                    IsDefault="True"
-                    IsCancel="True"
-                    Click="OnCloseClick" />
+            <Button Content="Close" Click="OnCloseClick" Style="{StaticResource DialogCloseButtonStyle}" />
         </StackPanel>
     </Grid>
 </Window>

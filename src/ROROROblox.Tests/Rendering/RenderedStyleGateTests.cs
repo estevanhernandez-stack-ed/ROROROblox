@@ -91,6 +91,8 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
     private static readonly string[] FullyMeasured =
         [
             "PrimaryButtonStyle", "SecondaryButtonStyle", "SecondaryStrongButtonStyle",
+            // F-041. Inherits SecondaryStrong's bordered surface, so it measures with it.
+            "DialogCloseButtonStyle",
             "DestructiveButtonStyle",
             // v1.20. AccentActionButtonStyle draws a real magenta edge, so it measures like the
             // four above. CtaButtonStyle and WarningButtonStyle are borderless and live in

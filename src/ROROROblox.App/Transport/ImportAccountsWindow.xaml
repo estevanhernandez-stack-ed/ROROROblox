@@ -7,7 +7,7 @@
         Height="360" Width="500"
         MinHeight="340" MinWidth="460"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         Background="{DynamicResource BgBrush}"
         Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
     <Grid Margin="28,24">

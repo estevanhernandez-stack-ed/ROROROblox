@@ -18,14 +18,14 @@
         <TextBlock Grid.Row="0"
                    Text="Your saved accounts can't be unlocked on this PC"
                    FontSize="18" FontWeight="Bold"
-                   Foreground="#F22F89"
+                   Foreground="{DynamicResource MagentaBrush}"
                    TextWrapping="Wrap" />
 
         <TextBlock Grid.Row="1"
                    Text="This usually means Windows was restored from a backup that didn't preserve the encryption key, or the saved-accounts file was copied from another machine. We need to start your account list fresh — your Roblox accounts themselves are fine, you'll just need to log in again."
                    TextWrapping="Wrap"
                    FontSize="12"
-                   Foreground="#FFFFFF"
+                   Foreground="{DynamicResource WhiteBrush}"
                    Opacity="0.85"
                    Margin="0,12,0,0" />
 
