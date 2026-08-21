@@ -56,6 +56,13 @@ internal static class WindowRenderHost
 {
     private static readonly Lazy<Dispatcher> Host = new(Start, LazyThreadSafetyMode.ExecutionAndPublication);
 
+    /// <summary>
+    /// How many times WPF-UI's context-menu decoration was caught and swallowed (F-105). Exposed so
+    /// a test can assert this is a real, counted event rather than a silent catch — a swallow
+    /// nobody can see is indistinguishable from a bug nobody has found.
+    /// </summary>
+    internal static int SwallowedContextMenuFailures;
+
     private static Dispatcher Start()
     {
         // Before the thread, not inside it: an exception raised on the STA thread below is unhandled
@@ -80,6 +87,29 @@ internal static class WindowRenderHost
             // here would be a second copy of the app's resource composition, and this repo has been
             // bitten twice by a definition existing in two places and drifting.
             var app = new ROROROblox.App.App { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+
+            // F-105. WPF-UI's ContextMenuLoader posts OnResourceDictionaryLoaded to this dispatcher
+            // when ControlsDictionary loads, and that callback resolves a pack:// URI for an editor
+            // context-menu style NOTHING here renders. With a RoRoRo instance running it throws
+            // NotSupportedException from WebRequest.Create — and because it arrives on the
+            // dispatcher rather than on a render's call stack, it took the whole TEST HOST down,
+            // aborting the run wherever it happened to be.
+            //
+            // THE MECHANISM IS STILL UNKNOWN and this does not claim to fix it. What it fixes is the
+            // BLAST RADIUS: a decoration this harness never asks for must not be able to kill the
+            // process. Scoped as narrowly as the evidence allows — this exact exception type, from
+            // this exact WPF-UI type — so a genuine pack:// failure in anything we DO render still
+            // fails the test that caused it, which is the whole point of the gates.
+            app.DispatcherUnhandledException += (_, args) =>
+            {
+                if (args.Exception is NotSupportedException
+                    && args.Exception.StackTrace?.Contains("ContextMenuLoader", StringComparison.Ordinal) == true)
+                {
+                    SwallowedContextMenuFailures++;
+                    args.Handled = true;
+                }
+            };
+
             app.InitializeComponent();
 
             ready.SetResult(Dispatcher.CurrentDispatcher);
