@@ -22,6 +22,18 @@
 
         <StackPanel Grid.Row="0">
             <controls:PageHeader Heading="History" />
+
+            <!-- F-038. Diagnostics has carried a line like this since it shipped ("Collecting…",
+                 then a capture time or "Couldn't collect diagnostics: {message}") and History never
+                 did — so a read that failed and a user with no launches produced the identical
+                 screen. LiveSetting is Polite because this text changes without focus moving:
+                 a screen reader would otherwise announce nothing at all when a load fails. -->
+            <TextBlock x:Name="StatusText"
+                       FontSize="11"
+                       Foreground="{DynamicResource MutedTextBrush}"
+                       TextWrapping="Wrap"
+                       Margin="0,8,0,0"
+                       AutomationProperties.LiveSetting="Polite" />
         </StackPanel>
 
         <Border Grid.Row="1" Margin="0,20,0,0"
@@ -36,14 +48,24 @@
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Visibility="Collapsed">
-                    <TextBlock Text="No launches yet."
+                    <!-- Text is set in code from SessionHistoryStatus.Placeholder — an empty
+                         history and an unreadable one say different things (F-038). The literals
+                         that used to live here were the "no launches yet" arm, which was shown for
+                         both. TextWrapping matters now: the unreadable arm is two sentences. -->
+                    <TextBlock x:Name="EmptyHeadline"
                                FontSize="13"
                                Foreground="{DynamicResource MutedTextBrush}"
-                               HorizontalAlignment="Center" />
-                    <TextBlock Text="Click Launch As on any account and you'll see entries here."
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               MaxWidth="420" />
+                    <TextBlock x:Name="EmptyDetail"
                                FontSize="11"
                                Foreground="{DynamicResource MutedTextBrush}"
                                HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               MaxWidth="420"
                                Margin="0,4,0,0"
                                Opacity="0.7" />
                 </StackPanel>

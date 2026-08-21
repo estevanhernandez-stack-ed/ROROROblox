@@ -35,6 +35,7 @@ public class AlertDispatcherTests
         public event EventHandler? RequestOpenPlugins { add { } remove { } }
         public event EventHandler? RequestActivateMain { add { } remove { } }
         public event EventHandler<Guid>? RequestFocusAccount { add { } remove { } }
+        public event EventHandler<MultiInstanceState>? StatusChanged { add { } remove { } }
     }
 
     private const string MineUrl = "https://discord.com/api/webhooks/1/mine";

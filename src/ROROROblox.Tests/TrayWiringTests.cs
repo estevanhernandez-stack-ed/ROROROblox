@@ -82,7 +82,19 @@ public class TrayWiringTests
         // "has a handler" now genuinely means.
         var (tray, _) = Connect();
 
-        var eventNames = typeof(ITrayService).GetEvents().Select(e => e.Name).ToHashSet();
+        // OUTBOUND events are excluded by name, and the list is asserted rather than assumed —
+        // a typo here would silently drop a real Request event out of the check. StatusChanged
+        // reports state TO subscribers (F-018's footer); TrayWiring.Connect has no business
+        // subscribing to it, so requiring a handler would be requiring the wrong thing.
+        string[] outbound = [nameof(ITrayService.StatusChanged)];
+        var allNames = typeof(ITrayService).GetEvents().Select(e => e.Name).ToHashSet();
+        Assert.All(outbound, name => Assert.Contains(name, allNames));
+
+        var eventNames = allNames.Except(outbound).ToHashSet();
+
+        // And everything left really is a request, so a future outbound event cannot quietly join
+        // the inbound set and be demanded a handler it should never have.
+        Assert.All(eventNames, name => Assert.StartsWith("Request", name, StringComparison.Ordinal));
 
         var backingFields = typeof(RecordingTray)
             .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
@@ -117,6 +129,10 @@ internal sealed class RecordingTray : ITrayService
     public event EventHandler? RequestOpenPlugins;
     public event EventHandler<Guid>? RequestFocusAccount;
 
+    // OUTBOUND, not a request: the tray reporting a state change rather than relaying a click.
+    // EveryTrayRequestEventHasAHandler excludes it by name for exactly that reason.
+    public event EventHandler<MultiInstanceState>? StatusChanged;
+
     public void RaiseOpenMainWindow() => RequestOpenMainWindow?.Invoke(this, EventArgs.Empty);
     public void RaiseToggleMutex() => RequestToggleMutex?.Invoke(this, EventArgs.Empty);
     public void RaiseStopAllInstances() => RequestStopAllInstances?.Invoke(this, EventArgs.Empty);
@@ -128,6 +144,7 @@ internal sealed class RecordingTray : ITrayService
     public void RaiseOpenHistory() => RequestOpenHistory?.Invoke(this, EventArgs.Empty);
     public void RaiseOpenPlugins() => RequestOpenPlugins?.Invoke(this, EventArgs.Empty);
     public void RaiseFocusAccount(Guid id) => RequestFocusAccount?.Invoke(this, id);
+    public void RaiseStatusChanged(MultiInstanceState state) => StatusChanged?.Invoke(this, state);
 
     // Remaining ITrayService members are no-ops for wiring tests, copied verbatim from the
     // existing FakeTrayService reference (src/ROROROblox.Tests/MainViewModelTests.cs).

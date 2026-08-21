@@ -1820,6 +1820,7 @@ public class MainViewModelTests
         public void SetMemoryWarning(bool active) { }
         public void ShowMemoryWarning(string title, string message, Guid accountId) { }
         public event EventHandler<Guid>? RequestFocusAccount { add { } remove { } }
+        public event EventHandler<MultiInstanceState>? StatusChanged { add { } remove { } }
     }
 
     private sealed class NoRobloxRunningProbe : IRobloxRunningProbe

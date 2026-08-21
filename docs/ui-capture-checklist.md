@@ -163,7 +163,13 @@ and does not need a screenshot to be true:
 - **Prose with the app name** — "About RoRoRo", "Welcome to RoRoRo"
 - **Bare noun** — "Join by link", "Squad Launch", "Rename", "Export accounts", "Import accounts", "Private server"
 - **Problem statement** — "Roblox is already running", "Roblox needed", "Saved accounts can't be unlocked", "Microsoft WebView2 needed", "Leftover Roblox processes"
-- **Imperative** — "Pick a title-bar color", "Add Roblox account — log in", "Stop all Roblox instances"
+- **Imperative** — "Pick a title-bar color", ~~"Add Roblox account — log in"~~, "Stop all Roblox instances"
+  **Partly retired by wave 13 (F-061).** The cookie-capture window now reads `Add account`, a bare
+  noun, because that window showed three casings of one action at once — "Add Roblox account — log
+  in" in the title bar, "Add Roblox Account" in its own header, "+ Add Account" on the button that
+  opened it. The other two examples still stand, so the convention is not gone, only smaller. Struck
+  rather than edited: this list is the goal-4 evidence, and evidence that gets quietly updated stops
+  being evidence.
 - ~~**Absent** — `FriendFollowWindow.xaml` sets no `Title`~~ **Wrong, and the reason the count
   was seven not six.** It sets one in code-behind: `FriendFollowWindow.xaml.cs:133` built
   `"ROROROblox -- Friends -- {name}"` at runtime — the only three-part title, the only one

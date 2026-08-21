@@ -88,5 +88,6 @@ public class TypedHttpClientRegistrationTests
         public event EventHandler? RequestOpenPlugins { add { } remove { } }
         public event EventHandler? RequestActivateMain { add { } remove { } }
         public event EventHandler<Guid>? RequestFocusAccount { add { } remove { } }
+        public event EventHandler<MultiInstanceState>? StatusChanged { add { } remove { } }
     }
 }

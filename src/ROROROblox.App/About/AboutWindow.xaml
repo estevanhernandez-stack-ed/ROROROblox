@@ -135,9 +135,16 @@
                 <Hyperlink x:Name="IssuesLink" Foreground="{DynamicResource WhiteBrush}"
                            Click="OnIssuesClick">Report an issue</Hyperlink>
             </TextBlock>
-            <TextBlock FontSize="11">
+            <TextBlock FontSize="11" Margin="0,0,0,4">
                 <Hyperlink x:Name="LicenseLink" Foreground="{DynamicResource WhiteBrush}"
                            Click="OnLicenseClick">Open log folder</Hyperlink>
+            </TextBlock>
+            <!-- F-039. The tour explains six row affordances that carry no labels, and it is shown
+                 once, on a first run that by definition has no rows in it. Sits beside Open log
+                 folder because that entry is an action too — this list has never been only links. -->
+            <TextBlock FontSize="11">
+                <Hyperlink x:Name="WelcomeTourLink" Foreground="{DynamicResource WhiteBrush}"
+                           Click="OnWelcomeTourClick">Show the welcome tour</Hyperlink>
             </TextBlock>
 
             <TextBlock Margin="0,16,0,0" FontSize="10" Foreground="{DynamicResource MutedTextBrush}"
