@@ -798,11 +798,7 @@
                  treatment everywhere; this window's own primary actions keep their fill. IsDefault
                  and IsCancel are kept as authored — which button Enter fires is a keyboard
                  affordance, not a rank. -->
-            <Button Content="Close" Padding="22,8"
-                    Style="{StaticResource SecondaryStrongButtonStyle}"
-                    IsDefault="True"
-                    IsCancel="True"
-                    Click="OnCloseClick" />
+            <Button Content="Close" Click="OnCloseClick" Style="{StaticResource DialogCloseButtonStyle}" />
         </StackPanel>
     </Grid>
 </Window>

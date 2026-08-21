@@ -327,6 +327,27 @@
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
+    <!--
+        F-041. The dialog Close button, in one place.
+
+        Nine windows carry one, and wave 5 already settled its RANK — every one of them is
+        SecondaryStrongButtonStyle. What never got settled was the rest of it. Padding came in four
+        values (14,8 / 16,8 / 20,8 / 22,8), and IsDefault split four-to-four with nothing behind
+        the split: the four windows whose Close is NOT the default turned out to have no default
+        button at all, so Enter did nothing in Diagnostics, Friends, Games and Squad Launch.
+
+        Enter and Esc both dismiss, and that is safe everywhere precisely because dismissing a
+        dialog is the one action that never destroys anything. A window that wants Enter for a real
+        submission — Join by link, Rename — does not use this style and keeps its own default.
+    -->
+    <Style x:Key="DialogCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryStrongButtonStyle}">
+        <Setter Property="Padding" Value="22,8" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="IsDefault" Value="True" />
+        <Setter Property="IsCancel" Value="True" />
+    </Style>
+
+
     <!-- Destructive — the third rank, added for the three sites v1.18 enumerates: Remove on the
          account row, Clear history, and the Stop all confirm. Assigned BY NAME, never by sweep.
          "Destructive by consequence" is unbounded on its face, and F-068's 61 un-migrated call

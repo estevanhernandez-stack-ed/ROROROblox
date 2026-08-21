@@ -89,10 +89,7 @@
                        Foreground="{DynamicResource MutedTextBrush}"
                        VerticalAlignment="Center"
                        TextWrapping="Wrap" />
-            <Button Grid.Column="1" Content="Close" Padding="14,8"
-                    Style="{StaticResource SecondaryStrongButtonStyle}"
-                    IsCancel="True"
-                    Click="OnCloseClick" />
+            <Button Grid.Column="1" Content="Close" Click="OnCloseClick" Style="{StaticResource DialogCloseButtonStyle}" />
         </Grid>
     </Grid>
 </Window>

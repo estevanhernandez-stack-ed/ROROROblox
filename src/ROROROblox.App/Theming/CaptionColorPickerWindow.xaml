@@ -76,13 +76,10 @@
                     FontSize="11"
                     Click="OnResetClick" />
             <!-- Dismissal takes the secondary treatment (prd Story 4.2). This window's own actions are
-                 the swatches and Apply; Close is not one of them. -->
-            <Button Content="Close"
-                    Padding="14,6"
-                    Style="{StaticResource SecondaryStrongButtonStyle}"
-                    IsDefault="True"
-                    IsCancel="True"
-                    Click="OnCloseClick" />
+                 the swatches and Apply; Close is not one of them. F-041: the treatment now comes from
+                 DialogCloseButtonStyle rather than being restated here, which is what made this the
+                 fifth distinct padding among nine Close buttons. -->
+            <Button Content="Close" Click="OnCloseClick" Style="{StaticResource DialogCloseButtonStyle}" />
         </StackPanel>
     </Grid>
 </Window>

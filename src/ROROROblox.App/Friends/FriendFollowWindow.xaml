@@ -65,10 +65,7 @@
         </ScrollViewer>
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-            <Button Content="Close" Padding="14,8"
-                    Style="{StaticResource SecondaryStrongButtonStyle}"
-                    IsCancel="True"
-                    Click="OnCloseClick" />
+            <Button Content="Close" Click="OnCloseClick" Style="{StaticResource DialogCloseButtonStyle}" />
         </StackPanel>
     </Grid>
 </Window>

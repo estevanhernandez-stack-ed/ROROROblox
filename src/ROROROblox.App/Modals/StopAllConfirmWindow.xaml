@@ -22,13 +22,13 @@
         <TextBlock Grid.Row="0"
                    Text="Stop all Roblox instances?"
                    FontSize="18" FontWeight="Bold"
-                   Foreground="#17D4FA" />
+                   Foreground="{DynamicResource CyanBrush}" />
 
         <TextBlock Grid.Row="1"
                    x:Name="BodyText"
                    TextWrapping="Wrap"
                    FontSize="12"
-                   Foreground="#FFFFFF"
+                   Foreground="{DynamicResource WhiteBrush}"
                    Opacity="0.85"
                    Margin="0,12,0,0" />
 
@@ -47,7 +47,7 @@
                    TextWrapping="Wrap"
                    FontSize="12"
                    FontWeight="SemiBold"
-                   Foreground="#FFFFFF"
+                   Foreground="{DynamicResource WhiteBrush}"
                    VerticalAlignment="Bottom"
                    Margin="0,16,0,0" />
 

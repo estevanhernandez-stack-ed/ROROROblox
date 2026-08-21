@@ -28,34 +28,34 @@
 
         <!-- Heading -->
         <TextBlock Grid.Row="0" Text="Roblox is already running"
-                   FontSize="18" FontWeight="Bold" Foreground="#17D4FA" />
+                   FontSize="18" FontWeight="Bold" Foreground="{DynamicResource CyanBrush}" />
 
         <!-- Body: the tray-residence explanation -->
         <TextBlock Grid.Row="1"
                    Text="RoRoRo needs the multi-instance lock, but Roblox is holding it — it may be running with no window at all, hidden in your system tray."
-                   TextWrapping="Wrap" FontSize="12" Foreground="#FFFFFF" Opacity="0.85"
+                   TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource WhiteBrush}" Opacity="0.85"
                    Margin="0,12,0,0" />
 
         <!-- Steps: how to quit from the tray -->
         <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,12,0,0">
             <TextBlock FontSize="12" Margin="0,2,0,0">
-                <Run Text="1." Foreground="#F22F89" FontWeight="Bold" />
-                <Run Text=" Click the ^ near the clock (bottom-right)" Foreground="#FFFFFF" />
+                <Run Text="1." Foreground="{DynamicResource MagentaBrush}" FontWeight="Bold" />
+                <Run Text=" Click the ^ near the clock (bottom-right)" Foreground="{DynamicResource WhiteBrush}" />
             </TextBlock>
             <TextBlock FontSize="12" Margin="0,2,0,0">
-                <Run Text="2." Foreground="#F22F89" FontWeight="Bold" />
-                <Run Text=" Right-click the Roblox icon" Foreground="#FFFFFF" />
+                <Run Text="2." Foreground="{DynamicResource MagentaBrush}" FontWeight="Bold" />
+                <Run Text=" Right-click the Roblox icon" Foreground="{DynamicResource WhiteBrush}" />
             </TextBlock>
             <TextBlock FontSize="12" Margin="0,2,0,0">
-                <Run Text="3." Foreground="#F22F89" FontWeight="Bold" />
-                <Run Text=" Choose Quit Roblox — then hit Retry" Foreground="#FFFFFF" />
+                <Run Text="3." Foreground="{DynamicResource MagentaBrush}" FontWeight="Bold" />
+                <Run Text=" Choose Quit Roblox — then hit Retry" Foreground="{DynamicResource WhiteBrush}" />
             </TextBlock>
         </StackPanel>
 
         <!-- Start-with-Windows note -->
         <TextBlock Grid.Row="3"
                    Text="Roblox can start itself with Windows. You can turn that off in Roblox's tray settings — but you don't have to; RoRoRo will catch it here either way."
-                   TextWrapping="Wrap" FontSize="11" Foreground="#8A93A0" Margin="0,12,0,0" />
+                   TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource MutedTextBrush}" Margin="0,12,0,0" />
 
         <!-- Bottom-of-body notes: still-locked tick (hidden until a failed retry) + the
              Start-anyway explanation -->
@@ -64,7 +64,7 @@
                        FontFamily="JetBrains Mono, Cascadia Mono, Consolas" FontSize="10"
                        Foreground="#F1B232" Margin="0,12,0,0" Visibility="Collapsed" />
             <TextBlock Text="Already have another copy of RoRoRo or a compatible tool holding the lock? Start anyway — multi-instance keeps working, and RoRoRo will show a banner while it doesn't hold the lock."
-                       TextWrapping="Wrap" FontSize="11" Foreground="#8A93A0" Margin="0,12,0,0" />
+                       TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource MutedTextBrush}" Margin="0,12,0,0" />
         </StackPanel>
 
         <!-- Four actions.

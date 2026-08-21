@@ -50,6 +50,11 @@ public class ButtonStateGateTests
         "PrimaryButtonStyle",
         "SecondaryButtonStyle",
         "SecondaryStrongButtonStyle",
+        // F-041. Not a new rank — it IS SecondaryStrong, plus the padding, alignment and
+        // Enter/Esc behaviour that nine Close buttons used to restate five different ways.
+        // Measured anyway, because BasedOn is exactly how a rank quietly acquires a
+        // different resting pair without anyone deciding to give it one.
+        "DialogCloseButtonStyle",
         "DestructiveButtonStyle",
         "CtaButtonStyle",
         "AccentActionButtonStyle",

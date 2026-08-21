@@ -5,7 +5,7 @@
         Title="Welcome to RoRoRo"
         Height="760" Width="600"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="CanResize"
+        MinHeight="600" MinWidth="520" ResizeMode="CanResize"
         Background="{DynamicResource BgBrush}"
         Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
 

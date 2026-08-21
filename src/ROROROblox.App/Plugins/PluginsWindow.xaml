@@ -354,11 +354,7 @@
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
             <!-- Dismissal takes the secondary treatment (prd Story 4.2). The filled control on this
                  window is Install, which is what it exists to perform. -->
-            <Button Content="Close" Padding="22,8"
-                    Style="{StaticResource SecondaryStrongButtonStyle}"
-                    IsDefault="True"
-                    IsCancel="True"
-                    Click="OnCloseClick" />
+            <Button Content="Close" Click="OnCloseClick" Style="{StaticResource DialogCloseButtonStyle}" />
         </StackPanel>
     </Grid>
 </Window>

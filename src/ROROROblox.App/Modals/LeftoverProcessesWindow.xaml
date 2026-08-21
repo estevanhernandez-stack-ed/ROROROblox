@@ -19,9 +19,9 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <TextBlock Grid.Row="0" Text="Leftover Roblox processes"
-                   FontSize="18" FontWeight="Bold" Foreground="#17D4FA" />
+                   FontSize="18" FontWeight="Bold" Foreground="{DynamicResource CyanBrush}" />
         <TextBlock Grid.Row="1" x:Name="BodyText" TextWrapping="Wrap"
-                   FontSize="12" Foreground="#FFFFFF" Opacity="0.85" Margin="0,12,0,0" />
+                   FontSize="12" Foreground="{DynamicResource WhiteBrush}" Opacity="0.85" Margin="0,12,0,0" />
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <!-- Stray-only cleanup: windowless orphans have nothing to lose (same reasoning as
                  SeamlessTakeover.WindowlessOnly), so no confirmation gate. Hidden entirely when
