@@ -1577,15 +1577,29 @@
                      mismatch doesn't silence a genuinely new one later. DockPanel (not a Grid
                      row) so the button docks right while the text keeps wrapping in the
                      remaining width — same shape as the Bloxstrap banner below, just quieter. -->
-                <DockPanel Margin="0,4,0,0"
-                           Visibility="{Binding FpsCapWarningText, Converter={StaticResource StringToVisibilityConverter}}">
-                    <!-- F-073. Named for what it dismisses. A screen reader reaches this button
-                         BEFORE the banner's text — DockPanel declares the action first so it can dock
-                         right — so a bare "Dismiss" is offered before there is anything to dismiss.
-                         The declaration order is deliberately NOT swapped: LastChildFill makes the
-                         last child fill the remaining width, which is what lets the message wrap, and
-                         reordering would need the layout re-proved rather than reasoned about. -->
-                    <Button Style="{StaticResource GhostButtonStyle}" DockPanel.Dock="Right"
+                <!-- F-073's second half, and the reason a Grid replaced the DockPanel here.
+                     A screen reader and the Tab key both follow DECLARATION order, and DockPanel
+                     forced the action to be declared first so it could dock right — so "Dismiss the
+                     frame-rate cap warning" was offered before the warning it dismisses had been
+                     read. The earlier pass named both buttons and then stopped, recording that
+                     swapping the order under LastChildFill would need the layout re-proved rather
+                     than reasoned about. That was the right call and this is the other half of it:
+                     a Grid decouples declaration order from visual position entirely, which is
+                     precisely what DockPanel cannot do. Star column wraps the message, Auto column
+                     holds the button, and the pixels are unchanged. -->
+                <Grid Margin="0,4,0,0"
+                      Visibility="{Binding FpsCapWarningText, Converter={StaticResource StringToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding FpsCapWarningText}"
+                               FontSize="{DynamicResource BodyFontSize}"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource MutedTextBrush}" />
+                    <Button Grid.Column="1"
+                            Style="{StaticResource GhostButtonStyle}"
                             Content="Dismiss"
                             AutomationProperties.Name="Dismiss the frame-rate cap warning"
                             Command="{Binding DismissFpsCapWarningCommand}"
@@ -1594,11 +1608,7 @@
                             FontSize="{DynamicResource BodyFontSize}"
                             VerticalAlignment="Top"
                             Cursor="Hand" />
-                    <TextBlock Text="{Binding FpsCapWarningText}"
-                               FontSize="{DynamicResource BodyFontSize}"
-                               TextWrapping="Wrap"
-                               Foreground="{DynamicResource MutedTextBrush}" />
-                </DockPanel>
+                </Grid>
             </StackPanel>
         </Border>
 
@@ -1642,21 +1652,27 @@
                 BorderThickness="0,0,0,1"
                 Padding="16,10"
                 Visibility="{Binding BloxstrapWarningVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-            <DockPanel>
-                <!-- F-073, same shape as the frame-rate banner above. -->
-                <Button Style="{StaticResource GhostButtonStyle}"
-                    DockPanel.Dock="Right"
+            <!-- F-073, same shape and same fix as the frame-rate banner above: a Grid so the
+                 message is DECLARED before the action that dismisses it, which is the order a screen
+                 reader and the Tab key follow, while the button still sits on the right. -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <!-- Two Runs on one line, matching the compat banner: a line break between them is
+                     significant whitespace and would render as a space after the glyph. -->
+                <TextBlock Grid.Column="0"
+                    VerticalAlignment="Center"
+                    TextWrapping="Wrap"
+                    Foreground="{DynamicResource RowExpiredAccentBrush}"><Run Text="▲ " /><Run Text="Bloxstrap is set as your Roblox launcher — it will override per-account FPS. Set FPS in Bloxstrap to match." /></TextBlock>
+                <Button Grid.Column="1"
+                    Style="{StaticResource GhostButtonStyle}"
                     Content="Dismiss"
                     AutomationProperties.Name="Dismiss the Bloxstrap warning"
                     Margin="12,0,0,0"
                     Command="{Binding DismissBloxstrapWarningCommand}" />
-                <!-- Two Runs on one line, matching the compat banner: a line break between them is
-                     significant whitespace and would render as a space after the glyph. -->
-                <TextBlock
-                    VerticalAlignment="Center"
-                    TextWrapping="Wrap"
-                    Foreground="{DynamicResource RowExpiredAccentBrush}"><Run Text="▲ " /><Run Text="Bloxstrap is set as your Roblox launcher — it will override per-account FPS. Set FPS in Bloxstrap to match." /></TextBlock>
-            </DockPanel>
+            </Grid>
         </Border>
 
         <!-- Row 6 — switches between full account list (normal) and compact strip (compact mode). -->

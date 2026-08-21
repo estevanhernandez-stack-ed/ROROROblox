@@ -24,55 +24,6 @@ public class AppSettingsTests : IDisposable
     }
 
     [Fact]
-    public async Task GetDefaultPlaceUrlAsync_ReturnsNull_WhenFileDoesNotExist()
-    {
-        using var settings = new AppSettings(_filePath);
-
-        var url = await settings.GetDefaultPlaceUrlAsync();
-
-        Assert.Null(url);
-    }
-
-    /// <summary>
-    /// THE ONE THAT MATTERS AFTER v1.21 item 9 removed the setter (F-093). A legacy value can no
-    /// longer be written by anything, so the only question left is whether it SURVIVES — a save
-    /// triggered by some unrelated preference must not silently drop the field and erase a value
-    /// its owner set in an older build.
-    /// <para>
-    /// It survives because DefaultPlaceUrl is still a SettingsBlob property, so LoadAsync reads it
-    /// and SaveAsync writes it back untouched. That is the entire reason the field was kept rather
-    /// than deleted with its setter.
-    /// </para>
-    /// </summary>
-    [Fact]
-    public async Task LegacyDefaultPlaceUrl_SurvivesASaveTriggeredByAnotherSetting()
-    {
-        File.WriteAllText(_filePath, """
-            {
-              "version": 1,
-              "defaultPlaceUrl": "https://www.roblox.com/games/920587237/Adopt-Me"
-            }
-            """);
-
-        using (var settings = new AppSettings(_filePath))
-        {
-            Assert.Equal("https://www.roblox.com/games/920587237/Adopt-Me",
-                await settings.GetDefaultPlaceUrlAsync());
-
-            // An unrelated preference change, which rewrites the whole blob.
-            await settings.SetLaunchMainOnStartupAsync(true);
-        }
-
-        // Cold start against the rewritten file: the legacy value is still there.
-        using var reopened = new AppSettings(_filePath);
-        Assert.Equal("https://www.roblox.com/games/920587237/Adopt-Me",
-            await reopened.GetDefaultPlaceUrlAsync());
-        Assert.True(await reopened.GetLaunchMainOnStartupAsync());
-
-        Assert.Contains("defaultPlaceUrl", File.ReadAllText(_filePath), StringComparison.Ordinal);
-    }
-
-    [Fact]
     public async Task ColdStart_ReadsBackPersistedValue()
     {
         // Retargeted from SetDefaultPlaceUrlAsync to a string setting that still has a setter; this
@@ -93,9 +44,11 @@ public class AppSettingsTests : IDisposable
         File.WriteAllText(_filePath, "{ this is not valid JSON");
         using var settings = new AppSettings(_filePath);
 
-        var url = await settings.GetDefaultPlaceUrlAsync();
+        // Retargeted by F-093 from GetDefaultPlaceUrlAsync, which no longer exists. This test is
+        // about the degrade path for unreadable JSON, not about which preference it happens to read.
+        var themeId = await settings.GetActiveThemeIdAsync();
 
-        Assert.Null(url);
+        Assert.Null(themeId);
     }
 
     [Fact]
@@ -139,31 +92,6 @@ public class AppSettingsTests : IDisposable
 
         using var second = new AppSettings(_filePath);
         Assert.True(await second.GetLaunchMainOnStartupAsync());
-    }
-
-    [Fact]
-    public async Task LaunchMainOnStartup_AndDefaultPlaceUrl_AreIndependent()
-    {
-        // The legacy value is seeded from disk now that no setter exists — which makes this a
-        // sharper test than it was: it proves toggling a live preference cannot disturb a field
-        // whose only remaining source is an older build's file.
-        File.WriteAllText(_filePath, """
-            {
-              "version": 1,
-              "defaultPlaceUrl": "https://place"
-            }
-            """);
-
-        using var settings = new AppSettings(_filePath);
-
-        await settings.SetLaunchMainOnStartupAsync(true);
-
-        Assert.Equal("https://place", await settings.GetDefaultPlaceUrlAsync());
-        Assert.True(await settings.GetLaunchMainOnStartupAsync());
-
-        // Toggling one doesn't disturb the other.
-        await settings.SetLaunchMainOnStartupAsync(false);
-        Assert.Equal("https://place", await settings.GetDefaultPlaceUrlAsync());
     }
 
     [Fact]
@@ -247,7 +175,12 @@ public class AppSettingsTests : IDisposable
 
         Assert.Null(await settings.GetDismissedFpsCapWarningSignatureAsync());
         // And the older fields the file DID carry still load correctly alongside the new default.
-        Assert.Equal("https://www.roblox.com/games/920587237/Adopt-Me", await settings.GetDefaultPlaceUrlAsync());
+        //
+        // F-093: this file also carries "defaultPlaceUrl", a key the app no longer has a property
+        // for. It is deliberately NOT asserted, because there is nothing to assert against — and
+        // that is the deletion's whole answer to the deserialization question. System.Text.Json
+        // ignores unknown members, so the file loads clean, and the dead value is dropped on the
+        // next write rather than being carried forever by a property nothing could read.
         Assert.True(await settings.GetBloxstrapWarningDismissedAsync());
     }
 

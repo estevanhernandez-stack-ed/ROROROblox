@@ -4,36 +4,20 @@ namespace ROROROblox.Core;
 /// Per-user app preferences — theme, startup toggles, dismissed warnings and the rest.
 /// <para>
 /// This summary claimed "First-launch UX prompts to seed; the Preferences dialog allows editing"
-/// until v1.21 item 9. Neither had been true for over a cycle: no window reads
-/// <see cref="GetDefaultPlaceUrlAsync"/> and none ever wrote it, and per-account favourites
-/// (<c>IFavoriteGameStore</c>) replaced the single-URL model entirely. An interface comment
-/// describing a dialog that does not exist is worse than no comment, because it is the first thing
-/// a reader trusts.
+/// until v1.21 item 9. Neither had been true for over a cycle: no window read <c>DefaultPlaceUrl</c>
+/// and none ever wrote it, and per-account favourites (<c>IFavoriteGameStore</c>) replaced the
+/// single-URL model entirely. An interface comment describing a dialog that does not exist is worse
+/// than no comment, because it is the first thing a reader trusts. F-093 deleted the field rather
+/// than correcting the sentence a second time.
 /// </para>
 /// </summary>
 public interface IAppSettings
 {
-    /// <summary>
-    /// The legacy single-URL default place. <b>Read-only by design — there is deliberately no
-    /// setter</b> (F-093, v1.21 item 9).
-    /// <para>
-    /// It survives so an old <c>settings.json</c> still deserializes and its owner's value is not
-    /// silently erased on the next write. Nothing in the app can set it, and nothing in the app
-    /// reads it either: <c>MainViewModel</c> launches through
-    /// <c>IRobloxLauncher.LaunchAsync(cookie, LaunchTarget, …)</c>, and that path resolves
-    /// favourites then falls through to <c>LaunchTarget.Home</c>, ignoring this value on purpose
-    /// (<c>RobloxLauncher.cs:353</c>, pinned by
-    /// <c>RobloxLauncherTests.LaunchAsync_TypedApi_NoFavoriteDefault_IgnoresLegacySettingsUrl_ResolvesToHome</c>).
-    /// The only remaining reader is the legacy string overload of <c>LaunchAsync</c>, which the app
-    /// never calls.
-    /// </para>
-    /// <para>
-    /// So deleting the field outright changes nobody's launch target — which is NOT what this
-    /// cycle's spec believed when it recommended keeping the read path. That belongs to F-093's
-    /// final pass along with the legacy overload it serves, not to a comment fix.
-    /// </para>
-    /// </summary>
-    Task<string?> GetDefaultPlaceUrlAsync();
+    // DefaultPlaceUrl was DELETED by F-093, along with the legacy LaunchAsync overload that was
+    // its only reader. It had been documented as editable in the Preferences dialog for more than a
+    // cycle while the App referenced it zero times. System.Text.Json ignores unknown keys, so an old
+    // settings.json still loads clean; the dead value is dropped on the next write, which is correct
+    // because nothing could read it back and no UI could set it again.
 
     /// <summary>
     /// True when ROROROblox should launch the user's main account into its current per-row

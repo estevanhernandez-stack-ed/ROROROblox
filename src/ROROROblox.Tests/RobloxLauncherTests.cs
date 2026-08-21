@@ -127,169 +127,12 @@ public class RobloxLauncherTests
     }
 
     [Fact]
-    public async Task LaunchAsync_TransformsPublicUrlBeforeBuildingLaunchUri()
-    {
-        var (launcher, _, processStarter) = CreateLauncher(
-            ticket: "T",
-            defaultPlaceUrl: null,
-            startResult: 1);
-
-        await launcher.LaunchAsync(TestCookie, placeUrl: "https://www.roblox.com/games/920587237/Adopt-Me");
-
-        // The roblox-player URI's placelauncherurl segment should contain the URL-encoded
-        // PlaceLauncher.ashx form, not the public web URL.
-        Assert.Contains(Uri.EscapeDataString("PlaceLauncher.ashx"), processStarter.LastUri);
-        Assert.Contains(Uri.EscapeDataString("placeId=920587237"), processStarter.LastUri);
-        Assert.DoesNotContain(Uri.EscapeDataString("/games/920587237/Adopt-Me"), processStarter.LastUri);
-    }
-
-    // === LaunchAsync ===
-
-    [Fact]
-    public async Task LaunchAsync_HappyPath_ReturnsStartedWithPid()
-    {
-        var (launcher, _, processStarter) = CreateLauncher(
-            ticket: "TICKET-1",
-            defaultPlaceUrl: TestPlaceUrl,
-            startResult: 12345);
-
-        var result = await launcher.LaunchAsync(TestCookie);
-
-        var started = Assert.IsType<LaunchResult.Started>(result);
-        Assert.Equal(12345, started.Pid);
-        Assert.NotNull(processStarter.LastUri);
-        Assert.Contains("roblox-player:1", processStarter.LastUri);
-        Assert.Contains("+gameinfo:TICKET-1", processStarter.LastUri);
-        Assert.Contains("+placelauncherurl:", processStarter.LastUri);
-    }
-
-    [Fact]
-    public async Task LaunchAsync_UsesExplicitPlaceUrl_OverSettingsDefault()
-    {
-        var (launcher, _, processStarter) = CreateLauncher(
-            ticket: "T",
-            defaultPlaceUrl: "https://settings-default",
-            startResult: 1);
-
-        await launcher.LaunchAsync(TestCookie, placeUrl: "https://explicit-place");
-
-        Assert.Contains(Uri.EscapeDataString("https://explicit-place"), processStarter.LastUri);
-        Assert.DoesNotContain(Uri.EscapeDataString("https://settings-default"), processStarter.LastUri);
-    }
-
-    [Fact]
-    public async Task LaunchAsync_NullPlaceUrl_FallsBackToSettingsDefault()
-    {
-        var (launcher, _, processStarter) = CreateLauncher(
-            ticket: "T",
-            defaultPlaceUrl: TestPlaceUrl,
-            startResult: 1);
-
-        await launcher.LaunchAsync(TestCookie, placeUrl: null);
-
-        Assert.Contains(Uri.EscapeDataString(TestPlaceUrl), processStarter.LastUri);
-    }
-
-    [Fact]
-    public async Task LaunchAsync_NoPlaceUrl_AndNoDefault_ReturnsFailed()
-    {
-        var (launcher, _, _) = CreateLauncher(
-            ticket: "T",
-            defaultPlaceUrl: null,
-            startResult: 1);
-
-        var result = await launcher.LaunchAsync(TestCookie, placeUrl: null);
-
-        var failed = Assert.IsType<LaunchResult.Failed>(result);
-        Assert.Contains("default", failed.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public async Task LaunchAsync_CookieExpired_ReturnsCookieExpiredResult()
-    {
-        var api = new StubRobloxApi(_ => throw new CookieExpiredException());
-        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
-        var processStarter = new RecordingProcessStarter(_ => 1);
-        var launcher = new RobloxLauncher(api, settings, processStarter);
-
-        var result = await launcher.LaunchAsync(TestCookie);
-
-        Assert.IsType<LaunchResult.CookieExpired>(result);
-    }
-
-    [Fact]
-    public async Task LaunchAsync_SessionLimited_ReturnsLimitedResult()
-    {
-        var api = new StubRobloxApi(_ => throw new SessionLimitedException());
-        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
-        var processStarter = new RecordingProcessStarter(_ => 1);
-        var launcher = new RobloxLauncher(api, settings, processStarter);
-
-        var result = await launcher.LaunchAsync(TestCookie);
-
-        Assert.IsType<LaunchResult.Limited>(result);
-    }
-
-    [Fact]
-    public async Task LaunchAsync_Win32Exception_ReturnsFailedWithRobloxNotInstalledMessage()
-    {
-        var (launcher, _, _) = CreateLauncher(
-            ticket: "T",
-            defaultPlaceUrl: TestPlaceUrl,
-            startThrows: new Win32Exception("No application is associated with the specified file."));
-
-        var result = await launcher.LaunchAsync(TestCookie);
-
-        var failed = Assert.IsType<LaunchResult.Failed>(result);
-        Assert.Contains("Roblox does not appear to be installed", failed.Message);
-    }
-
-    [Fact]
     public async Task LaunchAsync_RejectsEmptyCookie()
     {
-        var (launcher, _, _) = CreateLauncher("T", TestPlaceUrl, startResult: 1);
+        var (launcher, _, _) = CreateLauncher("T", startResult: 1);
 
-        await Assert.ThrowsAsync<ArgumentException>(() => launcher.LaunchAsync(""));
-    }
-
-    [Fact]
-    public async Task LaunchAsync_UriIncludesAllRequiredSegments()
-    {
-        var (launcher, _, processStarter) = CreateLauncher(
-            ticket: "T-EXPECT",
-            defaultPlaceUrl: TestPlaceUrl,
-            startResult: 1);
-
-        await launcher.LaunchAsync(TestCookie);
-
-        Assert.StartsWith("roblox-player:1+launchmode:play", processStarter.LastUri);
-        Assert.Contains("+gameinfo:T-EXPECT", processStarter.LastUri);
-        Assert.Contains("+launchtime:", processStarter.LastUri);
-        Assert.Contains("+placelauncherurl:", processStarter.LastUri);
-        Assert.Contains("+browsertrackerid:", processStarter.LastUri);
-        Assert.EndsWith("+robloxLocale:en_us+gameLocale:en_us", processStarter.LastUri);
-    }
-
-    [Fact]
-    public async Task LaunchAsync_StableBrowserTrackerId_WinsOverRandomFactory()
-    {
-        // v1.8.1 trust hygiene: a caller-supplied stable btid must reach the launch URI
-        // verbatim on BOTH overloads — the random per-launch factory is the fallback only.
-        var (launcher, _, processStarter) = CreateLauncher(
-            ticket: "T",
-            defaultPlaceUrl: TestPlaceUrl,
-            startResult: 1);
-
-        await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(920587237), browserTrackerId: 7777777777777);
-        // The btid rides TWICE in a launch URI: the outer +browsertrackerid: segment AND the
-        // browserTrackerId= query param embedded in the (escaped) placelauncherurl. Assert both
-        // so a regression that reverts one source to the random factory — leaving a single URI
-        // carrying two different tracker ids — fails the test.
-        Assert.Contains("+browsertrackerid:7777777777777", processStarter.LastUri);
-        Assert.Contains("browserTrackerId%3D7777777777777", processStarter.LastUri);
-
-        await launcher.LaunchAsync(TestCookie, placeUrl: TestPlaceUrl, browserTrackerId: 8888888888888);
-        Assert.Contains("+browsertrackerid:8888888888888", processStarter.LastUri);
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => launcher.LaunchAsync("", new LaunchTarget.Place(920587237)));
     }
 
     [Fact]
@@ -297,7 +140,6 @@ public class RobloxLauncherTests
     {
         var (launcher, _, processStarter) = CreateLauncher(
             ticket: "T",
-            defaultPlaceUrl: TestPlaceUrl,
             startResult: 1);
 
         await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(920587237));
@@ -326,7 +168,6 @@ public class RobloxLauncherTests
     {
         var (launcher, _, processStarter) = CreateLauncher(
             ticket: "TKT",
-            defaultPlaceUrl: null,
             startResult: 1);
 
         var result = await launcher.LaunchAsync(
@@ -346,7 +187,6 @@ public class RobloxLauncherTests
     {
         var (launcher, _, processStarter) = CreateLauncher(
             ticket: "TKT",
-            defaultPlaceUrl: null,
             startResult: 1);
 
         var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.FollowFriend(98765));
@@ -363,8 +203,7 @@ public class RobloxLauncherTests
         // No favorite default is configured (CreateLauncher wires favorites: null), but a legacy
         // settings value IS present — resolution must not fall back to it; it must resolve to Home.
         var (launcher, _, processStarter) = CreateLauncher(
-            ticket: "TKT",
-            defaultPlaceUrl: "920587237", // legacy settings default present — must be ignored
+            ticket: "TKT", // legacy settings default present — must be ignored
             startResult: 1);
 
         var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.DefaultGame());
@@ -381,7 +220,7 @@ public class RobloxLauncherTests
     [Fact]
     public async Task LaunchAsync_TypedApi_DefaultGame_WithNoDefaultAnywhere_LaunchesHome()
     {
-        var (launcher, _, processStarter) = CreateLauncher(ticket: "TKT", defaultPlaceUrl: null, startResult: 1);
+        var (launcher, _, processStarter) = CreateLauncher(ticket: "TKT", startResult: 1);
         var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.DefaultGame());
 
         Assert.IsType<LaunchResult.Started>(result);
@@ -407,7 +246,7 @@ public class RobloxLauncherTests
     [Fact]
     public async Task LaunchAsync_TypedApi_Home_BuildsAppLaunchUri()
     {
-        var (launcher, _, processStarter) = CreateLauncher(ticket: "TKT", defaultPlaceUrl: null, startResult: 1);
+        var (launcher, _, processStarter) = CreateLauncher(ticket: "TKT", startResult: 1);
         var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Home());
 
         Assert.IsType<LaunchResult.Started>(result);
@@ -420,7 +259,7 @@ public class RobloxLauncherTests
     public async Task LaunchAsync_TypedApi_CookieExpired_ReturnsCookieExpired()
     {
         var api = new StubRobloxApi(_ => throw new CookieExpiredException());
-        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
+        var settings = new InMemoryAppSettings();
         var processStarter = new RecordingProcessStarter(_ => 1);
         var launcher = new RobloxLauncher(api, settings, processStarter);
 
@@ -433,7 +272,7 @@ public class RobloxLauncherTests
     public async Task LaunchAsync_TypedApi_SessionLimited_ReturnsLimitedResult()
     {
         var api = new StubRobloxApi(_ => throw new SessionLimitedException());
-        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
+        var settings = new InMemoryAppSettings();
         var processStarter = new RecordingProcessStarter(_ => 1);
         var launcher = new RobloxLauncher(api, settings, processStarter);
 
@@ -445,7 +284,7 @@ public class RobloxLauncherTests
     [Fact]
     public async Task LaunchAsync_TypedApi_RejectsEmptyCookie()
     {
-        var (launcher, _, _) = CreateLauncher("T", TestPlaceUrl, startResult: 1);
+        var (launcher, _, _) = CreateLauncher("T", startResult: 1);
 
         await Assert.ThrowsAsync<ArgumentException>(() =>
             launcher.LaunchAsync("", new LaunchTarget.Place(1)));
@@ -454,7 +293,7 @@ public class RobloxLauncherTests
     [Fact]
     public async Task LaunchAsync_TypedApi_RejectsNullTarget()
     {
-        var (launcher, _, _) = CreateLauncher("T", TestPlaceUrl, startResult: 1);
+        var (launcher, _, _) = CreateLauncher("T", startResult: 1);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
             launcher.LaunchAsync(TestCookie, target: null!));
@@ -531,7 +370,6 @@ public class RobloxLauncherTests
         var gbs = new RecordingGlobalBasicWriter();
         var (launcher, _, _) = CreateLauncher(
             ticket: "T",
-            defaultPlaceUrl: TestPlaceUrl,
             startResult: 1,
             globalBasicSettings: gbs,
             settingsProbe: probe);
@@ -565,7 +403,6 @@ public class RobloxLauncherTests
         var starter = new OrderRecordingStarter(gbs);
         var (launcher, _, _) = CreateLauncher(
             ticket: "T",
-            defaultPlaceUrl: TestPlaceUrl,
             startResult: 1,
             globalBasicSettings: gbs,
             settingsProbe: probe,
@@ -621,7 +458,7 @@ public class RobloxLauncherTests
         // tests above (both of which also pass a probe) but had no test proving the no-probe path
         // itself, nor that the degrade is visible anywhere.
         var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket("T", DateTimeOffset.UtcNow)));
-        var settings = new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl };
+        var settings = new InMemoryAppSettings();
         var processStarter = new RecordingProcessStarter(_ => 1);
         var gbs = new RecordingGlobalBasicWriter();
         var log = new CapturingLogger<RobloxLauncher>();
@@ -705,7 +542,6 @@ public class RobloxLauncherTests
         var starter = new RecordingProcessStarter(_ => 1);
         var (launcher, _, _) = CreateLauncher(
             ticket: "T",
-            defaultPlaceUrl: TestPlaceUrl,
             globalBasicSettings: gbs,
             settingsProbe: probe,
             processStarter: starter,
@@ -811,7 +647,7 @@ public class RobloxLauncherTests
         services.Replace(ServiceDescriptor.Singleton<IRobloxApi>(
             new StubRobloxApi(_ => Task.FromResult(new AuthTicket("T", DateTimeOffset.UtcNow)))));
         services.Replace(ServiceDescriptor.Singleton<IAppSettings>(
-            new InMemoryAppSettings { DefaultPlaceUrl = TestPlaceUrl }));
+            new InMemoryAppSettings()));
         services.Replace(ServiceDescriptor.Singleton<IProcessStarter>(new RecordingProcessStarter(_ => 1)));
         services.Replace(ServiceDescriptor.Singleton<IGlobalBasicSettingsProbe>(probe));
 
@@ -831,7 +667,6 @@ public class RobloxLauncherTests
 
     private static (RobloxLauncher, InMemoryAppSettings, RecordingProcessStarter) CreateLauncher(
         string ticket,
-        string? defaultPlaceUrl,
         int startResult = 1,
         Exception? startThrows = null,
         IClientAppSettingsWriter? clientAppSettings = null,
@@ -841,7 +676,7 @@ public class RobloxLauncherTests
         TimeProvider? timeProvider = null)
     {
         var api = new StubRobloxApi(_ => Task.FromResult(new AuthTicket(ticket, DateTimeOffset.UtcNow)));
-        var settings = new InMemoryAppSettings { DefaultPlaceUrl = defaultPlaceUrl };
+        var settings = new InMemoryAppSettings { };
         var recordingStarter = new RecordingProcessStarter(_ =>
         {
             if (startThrows is not null) throw startThrows;
@@ -889,11 +724,8 @@ public class RobloxLauncherTests
 
     private sealed class InMemoryAppSettings : IAppSettings
     {
-        public string? DefaultPlaceUrl { get; set; }
         public bool LaunchMainOnStartup { get; set; }
         public string? ActiveThemeId { get; set; }
-
-        public Task<string?> GetDefaultPlaceUrlAsync() => Task.FromResult(DefaultPlaceUrl);
         public Task<bool> GetLaunchMainOnStartupAsync() => Task.FromResult(LaunchMainOnStartup);
         public Task SetLaunchMainOnStartupAsync(bool enabled) { LaunchMainOnStartup = enabled; return Task.CompletedTask; }
         public Task<string?> GetActiveThemeIdAsync() => Task.FromResult(ActiveThemeId);
@@ -972,12 +804,13 @@ public class RobloxLauncherTests
         var writer = new RecordingWriter(writeOrder);
         var (launcher, _, _) = CreateLauncher(
             ticket: "T",
-            defaultPlaceUrl: TestPlaceUrl,
             startResult: 1,
             clientAppSettings: writer);
 
-        var firstTask = launcher.LaunchAsync("cookie-a", placeUrl: null, fpsCap: 30);
-        var secondTask = launcher.LaunchAsync("cookie-b", placeUrl: null, fpsCap: 144);
+        // Retargeted to the typed overload by F-093. The serialization this asserts is the launch
+        // gate's, which both overloads always shared — the one that survived is the one the app uses.
+        var firstTask = launcher.LaunchAsync("cookie-a", new LaunchTarget.Home(), fpsCap: 30);
+        var secondTask = launcher.LaunchAsync("cookie-b", new LaunchTarget.Home(), fpsCap: 144);
 
         await Task.WhenAll(firstTask, secondTask);
 
@@ -993,4 +826,42 @@ public class RobloxLauncherTests
         }
     }
 
+    // ---- ported by F-093, not lost with the legacy overload ----
+    //
+    // Deleting LaunchAsync(cookie, placeUrl, ...) took ten tests with it. Eight were either testing
+    // the place-URL tier logic that went with it, or had a TypedApi twin already asserting the same
+    // thing. TWO DID NOT, and they are here rather than gone: a deletion that quietly drops coverage
+    // is how a suite stops meaning anything, and the count of what went is easy not to check.
+
+    [Fact]
+    public async Task LaunchAsync_TypedApi_Win32Exception_ReturnsFailedWithRobloxNotInstalledMessage()
+    {
+        // The message a user sees when the roblox-player handler is not registered — Roblox not
+        // installed, or its protocol association broken. Only the legacy overload covered it.
+        var (launcher, _, _) = CreateLauncher(
+            ticket: "T",
+            startThrows: new Win32Exception("No application is associated with the specified file."));
+
+        var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(920587237));
+
+        var failed = Assert.IsType<LaunchResult.Failed>(result);
+        Assert.Contains("Roblox does not appear to be installed", failed.Message);
+    }
+
+    [Fact]
+    public async Task LaunchAsync_TypedApi_StableBrowserTrackerId_WinsOverRandomFactory()
+    {
+        // v1.8.1 trust hygiene. The original asserted this "on BOTH overloads"; one of them is gone,
+        // and the surviving half is the one the app actually calls.
+        var (launcher, _, processStarter) = CreateLauncher(ticket: "T", startResult: 1);
+
+        await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(920587237), browserTrackerId: 7777777777777);
+
+        // The btid rides TWICE in a launch URI: the outer +browsertrackerid: segment AND the
+        // browserTrackerId= query param inside the escaped placelauncherurl. Both are asserted so a
+        // regression reverting one source to the random factory — leaving a single URI carrying two
+        // different tracker ids — fails rather than half-passes.
+        Assert.Contains("+browsertrackerid:7777777777777", processStarter.LastUri);
+        Assert.Contains("browserTrackerId%3D7777777777777", processStarter.LastUri);
+    }
 }

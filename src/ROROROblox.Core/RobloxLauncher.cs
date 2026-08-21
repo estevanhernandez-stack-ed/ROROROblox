@@ -233,111 +233,13 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
     }
 
-    public async Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null, long? browserTrackerId = null)
-    {
-        if (string.IsNullOrEmpty(cookie))
-        {
-            throw new ArgumentException("Cookie must not be empty.", nameof(cookie));
-        }
+    // F-093: LaunchAsync(string cookie, string? placeUrl, ...) and ExecuteLegacyLaunchAsync
+    // were deleted here. The overload resolved a place URL through three tiers and the last was
+    // AppSettings.DefaultPlaceUrl, a setting nothing read and no UI could write. Nothing called
+    // the overload either — MainViewModel has always used the LaunchTarget one. Removing the
+    // setting alone would have left that tier calling a method that no longer exists, so the row
+    // asked for both and both went.
 
-        // Place-URL resolution tiers (legacy path, kept for back-compat):
-        //   1. Explicit placeUrl param (caller picked a specific game).
-        //   2. The default favorite (IFavoriteGameStore -- new in v1.x: multi-game library).
-        //   3. AppSettings.DefaultPlaceUrl (legacy single-URL setting).
-        var resolvedPlaceUrl = placeUrl;
-        if (string.IsNullOrEmpty(resolvedPlaceUrl) && _favorites is not null)
-        {
-            var defaultFavorite = await _favorites.GetDefaultAsync().ConfigureAwait(false);
-            if (defaultFavorite is not null)
-            {
-                resolvedPlaceUrl = defaultFavorite.PlaceId.ToString();
-            }
-        }
-        if (string.IsNullOrEmpty(resolvedPlaceUrl))
-        {
-            resolvedPlaceUrl = await _settings.GetDefaultPlaceUrlAsync().ConfigureAwait(false);
-        }
-        if (string.IsNullOrEmpty(resolvedPlaceUrl))
-        {
-            return new LaunchResult.Failed(
-                "No default Roblox game configured. Add one in Games (header button), or pass a place URL.");
-        }
-
-        await _launchGate.WaitAsync().ConfigureAwait(false);
-        try
-        {
-            if (fpsCap.HasValue)
-            {
-                if (_clientAppSettings is not null)
-                {
-                    try
-                    {
-                        await _clientAppSettings.WriteFpsAsync(fpsCap.Value).ConfigureAwait(false);
-                    }
-                    catch (ClientAppSettingsWriteException)
-                    {
-                        // Spec §7.7: degraded, non-blocking. Continue with the launch.
-                    }
-                }
-                await ApplyFpsCapAsync(fpsCap.Value).ConfigureAwait(false);
-            }
-
-            var result = await ExecuteLegacyLaunchAsync(cookie, resolvedPlaceUrl, browserTrackerId).ConfigureAwait(false);
-            return result;
-        }
-        finally
-        {
-            _launchGate.Release();
-        }
-    }
-
-    private async Task<LaunchResult> ExecuteLegacyLaunchAsync(string cookie, string resolvedPlaceUrl, long? stableBrowserTrackerId)
-    {
-        AuthTicket ticket;
-        try
-        {
-            ticket = await _api.GetAuthTicketAsync(cookie).ConfigureAwait(false);
-        }
-        catch (CookieExpiredException)
-        {
-            return new LaunchResult.CookieExpired();
-        }
-        catch (SessionLimitedException)
-        {
-            return new LaunchResult.Limited();
-        }
-        catch (Exception ex)
-        {
-            return new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}");
-        }
-
-        var launchTime = _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
-        var browserTrackerId = (stableBrowserTrackerId ?? _browserTrackerIdFactory()).ToString();
-
-        // Normalize: a "public" roblox.com/games/<id>/<slug> URL (what users copy from their browser
-        // address bar) is NOT what RobloxPlayerLauncher expects in placelauncherurl. The launcher
-        // hits that URL with the auth ticket expecting a JSON game-server connection blob; pointing
-        // it at the HTML game page makes Roblox open then exit silently (caught empirically 2026-05-04).
-        // Transform to the assetgame.roblox.com/game/PlaceLauncher.ashx form.
-        var normalizedPlaceUrl = NormalizeToPlaceLauncherUrl(resolvedPlaceUrl, browserTrackerId);
-        var uri = BuildLaunchUri(ticket.Ticket, launchTime, browserTrackerId, normalizedPlaceUrl);
-
-        try
-        {
-            var launchedAtUtc = _timeProvider.GetUtcNow();
-            var pid = _processStarter.StartViaShell(uri);
-            RecordLaunchBaseline();
-            return new LaunchResult.Started(pid, launchedAtUtc);
-        }
-        catch (Win32Exception)
-        {
-            return new LaunchResult.Failed(RobloxNotInstalledMessage);
-        }
-        catch (Exception ex)
-        {
-            return new LaunchResult.Failed($"Process.Start failed: {ex.Message}");
-        }
-    }
 
     private async Task<LaunchTarget?> ResolveDefaultAsync()
     {
