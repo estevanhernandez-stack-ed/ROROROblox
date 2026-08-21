@@ -149,8 +149,10 @@ internal static class DiscordTestHarness
 
     /// <summary>
     /// One account plus a real <see cref="DiscordConfigStore"/> over a temp file, wired into the
-    /// view model — for the per-account mute, where the point of the test is that the preference
-    /// actually round-trips through DPAPI storage rather than living in memory.
+    /// view model through the owner (<see cref="DiscordConfigService"/>) — for the per-account
+    /// mute, where the point of the test is that the preference actually round-trips through DPAPI
+    /// storage rather than living in memory. The returned store reads the same file the owner
+    /// writes, so assertions against it are assertions about the disk.
     /// </summary>
     public static (MainViewModel Vm, AccountSummary Row, DiscordConfigStore ConfigStore) VmWithConfigStore()
     {
@@ -167,7 +169,7 @@ internal static class DiscordTestHarness
         windowDecorator.Dispose();
 
         var configStore = new DiscordConfigStore(Path.Combine(dir, "discord.dat"));
-        vm.DiscordConfigStoreOverride = configStore;
+        vm.DiscordConfigServiceOverride = new DiscordConfigService(configStore);
 
         accountStore.AddAsync("MutableAccount", "", "cookie").GetAwaiter().GetResult();
         vm.LoadAsync().GetAwaiter().GetResult();

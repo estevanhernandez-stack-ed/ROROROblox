@@ -68,7 +68,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <summary>Used only to put back what a forced stop destroys (F-109). Null-tolerant.</summary>
     private readonly IGlobalBasicSettingsWriter? _globalBasicSettings;
     private readonly Core.StreamerMode.IStreamerIdentityProvider? _streamerIdentity;
-    private readonly DiscordConfigStore? _discordConfigStore;
+    private readonly DiscordConfigService? _discordConfigService;
     private readonly ILogger<MainViewModel> _log;
 
     /// <summary>
@@ -82,14 +82,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal DiscordPresenceService? DiscordPresence { get; set; }
 
     /// <summary>
-    /// Test seam over the ctor-injected <see cref="_discordConfigStore"/>, so a fixture can supply
+    /// Test seam over the ctor-injected <see cref="_discordConfigService"/>, so a fixture can supply
     /// one without threading another argument through every construction site. Production always
     /// takes the constructor path.
     /// </summary>
-    internal DiscordConfigStore? DiscordConfigStoreOverride { get; set; }
+    internal DiscordConfigService? DiscordConfigServiceOverride { get; set; }
 
-    /// <summary>The store per-account mute writes through — ctor-injected, or a test override.</summary>
-    private DiscordConfigStore? AlertConfigStore => _discordConfigStore ?? DiscordConfigStoreOverride;
+    /// <summary>The owner per-account mute writes through — ctor-injected, or a test override.</summary>
+    private DiscordConfigService? AlertConfig => _discordConfigService ?? DiscordConfigServiceOverride;
 
     /// <summary>
     /// Builds the Preferences dialog. Set by the composition root, which is the only place that
@@ -163,7 +163,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         Core.IUiDispatcher? uiDispatcher = null,
         IGlobalBasicSettingsWriter? globalBasicSettings = null,
         Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
-        DiscordConfigStore? discordConfigStore = null,
+        DiscordConfigService? discordConfigService = null,
         ILogger<MainViewModel>? log = null)
     {
         _cookieCapture = cookieCapture;
@@ -195,7 +195,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _ui = uiDispatcher ?? new Threading.WpfUiDispatcher();
         _globalBasicSettings = globalBasicSettings;
         _streamerIdentity = streamerIdentity;
-        _discordConfigStore = discordConfigStore;
+        _discordConfigService = discordConfigService;
         _log = log ?? NullLogger<MainViewModel>.Instance;
 
         // AccountRecycler (Task 8) is built here, not injected — its LaunchDelegate needs to call
@@ -3169,11 +3169,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Mute or unmute Discord alerts for one account, persisting through the config store.
+    /// Mute or unmute Discord alerts for one account, persisting through the config owner.
     /// <para>
-    /// Read-modify-write of the whole <see cref="DiscordConfig"/> record, deliberately explicit:
-    /// getting this wrong silently wipes the user's webhook URL or presence toggle — settings they
-    /// would then have to re-enter without ever being told why. Pinned by a test.
+    /// The mutation edits only <see cref="DiscordConfig.MutedAccountIds"/> and the owner serializes
+    /// it against every other writer — getting this wrong used to silently wipe the user's webhook
+    /// URL or presence toggle, which is why the whole-record preservation is pinned by a test. The
+    /// owner also publishes the change to <see cref="Discord.AlertDispatcher"/>'s per-dispatch read
+    /// immediately; the old cache-based design left a context-menu mute invisible to alert routing
+    /// until a Preferences close or a restart.
     /// </para>
     /// </summary>
     internal async Task SetAlertsMutedAsync(AccountSummary summary, bool muted)
@@ -3181,14 +3184,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         ArgumentNullException.ThrowIfNull(summary);
         summary.AlertsMuted = muted;
 
-        if (AlertConfigStore is not { } store) return;
+        if (AlertConfig is not { } service) return;
 
         try
         {
-            var config = await store.LoadAsync().ConfigureAwait(true);
-            var ids = config.MutedAccountIds.ToHashSet();
-            if (muted) { ids.Add(summary.Id); } else { ids.Remove(summary.Id); }
-            await store.SaveAsync(config with { MutedAccountIds = [.. ids] }).ConfigureAwait(true);
+            await service.MutateAsync(config =>
+            {
+                var ids = config.MutedAccountIds.ToHashSet();
+                if (muted) { ids.Add(summary.Id); } else { ids.Remove(summary.Id); }
+                return config with { MutedAccountIds = [.. ids] };
+            }).ConfigureAwait(true);
         }
         catch (Exception ex)
         {

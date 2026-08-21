@@ -15,7 +15,7 @@ namespace ROROROblox.Core.Discord;
 /// On tamper or a wrong-user envelope, returns defaults rather than throwing: a stray file must
 /// not break startup.
 /// </summary>
-public sealed class DiscordConfigStore
+public sealed class DiscordConfigStore : IDiscordConfigStore
 {
     private readonly string _filePath;
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = false };
