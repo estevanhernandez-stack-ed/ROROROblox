@@ -306,7 +306,11 @@
                         <!-- Streamer mode (v1.10, Task 10) — per-row reroll. CommandParameter binds
                              straight to the row's Id (a Guid), not the AccountSummary itself, so
                              RerollAccountCommand can't hold a dangling row reference. -->
-                        <MenuItem Header="🎲 Reroll identity"
+                        <!-- F-045. The glyph STAYS — the campaign ruling is that the die and the clipboard are
+                             thematic, not decoration. What changes is the announcement: without a name a
+                             screen reader reads the emoji aloud before the words. -->
+                        <MenuItem AutomationProperties.Name="Reroll identity"
+                                  Header="🎲 Reroll identity"
                                   Command="{Binding Data.RerollAccountCommand, Source={StaticResource VmProxy}}"
                                   CommandParameter="{Binding PlacementTarget.DataContext.Id, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                   ToolTip="Assign this account a fresh fake name and avatar for streamer mode." />
@@ -1559,8 +1563,15 @@
                      remaining width — same shape as the Bloxstrap banner below, just quieter. -->
                 <DockPanel Margin="0,4,0,0"
                            Visibility="{Binding FpsCapWarningText, Converter={StaticResource StringToVisibilityConverter}}">
+                    <!-- F-073. Named for what it dismisses. A screen reader reaches this button
+                         BEFORE the banner's text — DockPanel declares the action first so it can dock
+                         right — so a bare "Dismiss" is offered before there is anything to dismiss.
+                         The declaration order is deliberately NOT swapped: LastChildFill makes the
+                         last child fill the remaining width, which is what lets the message wrap, and
+                         reordering would need the layout re-proved rather than reasoned about. -->
                     <Button Style="{StaticResource GhostButtonStyle}" DockPanel.Dock="Right"
                             Content="Dismiss"
+                            AutomationProperties.Name="Dismiss the frame-rate cap warning"
                             Command="{Binding DismissFpsCapWarningCommand}"
                             Margin="8,0,0,0"
                             Padding="0"
@@ -1616,9 +1627,11 @@
                 Padding="16,10"
                 Visibility="{Binding BloxstrapWarningVisible, Converter={StaticResource BoolToVisibilityConverter}}">
             <DockPanel>
+                <!-- F-073, same shape as the frame-rate banner above. -->
                 <Button Style="{StaticResource GhostButtonStyle}"
                     DockPanel.Dock="Right"
                     Content="Dismiss"
+                    AutomationProperties.Name="Dismiss the Bloxstrap warning"
                     Margin="12,0,0,0"
                     Command="{Binding DismissBloxstrapWarningCommand}" />
                 <!-- Two Runs on one line, matching the compat banner: a line break between them is
