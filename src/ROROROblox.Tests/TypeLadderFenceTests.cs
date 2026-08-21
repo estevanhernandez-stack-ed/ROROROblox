@@ -8,7 +8,7 @@ namespace ROROROblox.Tests;
 /// Before this the app had <b>eleven distinct font sizes across 326 declarations and no size
 /// resource of any kind</b>. That is cause and effect, not coincidence: with nothing to inherit
 /// from, every new control picked a number that looked right beside its neighbour, and eleven is
-/// where that lands. Four steps now live in <c>App.xaml</c> — Display 22, Heading 14, Body 12,
+/// where that lands. Four steps now live in <c>ControlStyles.xaml</c> — Display 22, Heading 14, Body 12,
 /// Meta 11 — with roles rather than just numbers, because a ladder whose steps mean nothing is
 /// just a shorter list of magic numbers.
 /// </para>
@@ -29,7 +29,7 @@ public class TypeLadderFenceTests
 {
     private static readonly Regex FontSizeLiteral = new(@"FontSize=""(\d+(?:\.\d+)?)""", RegexOptions.Compiled);
 
-    /// <summary>The meta step, and the floor for everything. Mirrors <c>MetaFontSize</c> in App.xaml.</summary>
+    /// <summary>The meta step, and the floor for everything. Mirrors <c>MetaFontSize</c> in ControlStyles.xaml.</summary>
     private const double MetaStep = 11;
 
     /// <summary>
@@ -73,7 +73,7 @@ public class TypeLadderFenceTests
             $"The app now uses {distinct.Count} raw font sizes ({string.Join(", ", distinct)}), up "
             + $"from the {DistinctRawSizeCeiling} measured on 2026-08-21. A new number means a step "
             + "was invented rather than used — the ladder is Display 22 / Heading 14 / Body 12 / "
-            + "Meta 11 in App.xaml. If a step genuinely needs adding, add it there with its role and "
+            + "Meta 11 in ControlStyles.xaml. If a step genuinely needs adding, add it there with its role and "
             + "move this constant deliberately.");
     }
 
@@ -82,9 +82,13 @@ public class TypeLadderFenceTests
     {
         // The rules above are meaningless if the resources they point at do not exist — a reader
         // told to "use MetaFontSize" needs MetaFontSize to resolve.
-        var appXaml = XamlStyleScanner.EnumerateAppXamlFiles()
-            .First(f => f.FullPath.EndsWith("App.xaml", StringComparison.OrdinalIgnoreCase));
-        var text = File.ReadAllText(appXaml.FullPath);
+        // ControlStyles.xaml, NOT App.xaml. The ladder was written into App.xaml first and arm64 CI
+        // caught it: App.xaml is the Application, not a mergeable dictionary, so a render gate
+        // parsing a real subtree against ThemesDictionary + ControlsDictionary + ControlStyles.xaml
+        // could not resolve the keys and threw. A shared token has to live where consumers merge.
+        var dictionary = XamlStyleScanner.EnumerateAppXamlFiles()
+            .First(f => f.FullPath.EndsWith("ControlStyles.xaml", StringComparison.OrdinalIgnoreCase));
+        var text = File.ReadAllText(dictionary.FullPath);
 
         foreach (var key in new[] { "DisplayFontSize", "HeadingFontSize", "BodyFontSize", "MetaFontSize" })
         {

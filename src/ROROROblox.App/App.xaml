@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:ROROROblox.App"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
         <ResourceDictionary>
@@ -15,33 +14,6 @@
                      library's dictionary has to be merged first or the lookup fails. -->
                 <ResourceDictionary Source="/ROROROblox.App;component/Controls/ControlStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
-
-            <!-- ================= THE TYPE LADDER (F-057, F-044) =================
-                 Four steps, and before this there were ELEVEN sizes and no resource of any kind:
-                 326 FontSize declarations, every one a raw number typed into markup. That is why
-                 there were eleven — nothing existed to inherit from, so each new control picked a
-                 number that looked right next to its neighbour.
-
-                 The roles, which are what actually stop the twelfth size appearing:
-
-                   Display  22  page identity and hero wordmarks. About, Welcome. Rare on purpose.
-                   Heading  14  section headings inside a surface.
-                   Body     12  prose. The floor: anything a person READS sits here or above.
-                   Meta     11  short, uppercase, tracked labels only - the C8 convention. NOT a
-                                smaller body size, and using it for a sentence is the defect F-044
-                                names.
-
-                 Meta is the floor for everything, and that is the F-044 fix: 38 declarations sat
-                 at 8, 9 and 10px, including two 8px pills. The row said "six places."
-
-                 STILL TO DO, recorded rather than implied: 163 declarations sit at 11px and most of
-                 them are prose that belongs at Body, not Meta. Sorting those is per-site judgement
-                 across 22 files and is its own row - see F-118. This defines the ladder and raises
-                 the floor; it does not claim the app is on four sizes yet. -->
-            <sys:Double x:Key="DisplayFontSize">22</sys:Double>
-            <sys:Double x:Key="HeadingFontSize">14</sys:Double>
-            <sys:Double x:Key="BodyFontSize">12</sys:Double>
-            <sys:Double x:Key="MetaFontSize">11</sys:Double>
 
 
             <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
