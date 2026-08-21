@@ -51,6 +51,7 @@ internal sealed class TrayService : ITrayService
     public event EventHandler? RequestOpenHistory;
     public event EventHandler? RequestOpenPlugins;
     public event EventHandler<Guid>? RequestFocusAccount;
+    public event EventHandler<MultiInstanceState>? StatusChanged;
 
     public TrayService(IStreamerIdentityProvider streamerIdentity, ILogger<TrayService>? log = null)
     {
@@ -93,23 +94,21 @@ internal sealed class TrayService : ITrayService
     {
         _currentState = state;
         _taskbarIcon.Icon = ResolveIconForState(state);
-        _taskbarIcon.ToolTipText = state switch
-        {
-            MultiInstanceState.On => "ROROROblox — Multi-Instance ON",
-            MultiInstanceState.Off => "ROROROblox — Multi-Instance OFF",
-            MultiInstanceState.Error => "ROROROblox — Multi-Instance ERROR (mutex lost)",
-            _ => "ROROROblox",
-        };
-        _toggleItem.Header = state switch
-        {
-            MultiInstanceState.On => "Multi-Instance: ON ✓",
-            MultiInstanceState.Error => "Multi-Instance: ERROR — click to reload",
-            _ => "Multi-Instance: OFF",
-        };
+        // Wording lives in Core (F-034). The tooltip shipped the REPO name in all three states
+        // while the menu item two pixels away did not, because they were two hand-written switches
+        // that nobody read side by side. There is one now, and MainWindow's footer reads from it too.
+        _taskbarIcon.ToolTipText = MultiInstanceStatusLine.Tooltip(state);
+        _toggleItem.Header = MultiInstanceStatusLine.MenuHeader(state);
         // Error is a one-click reload (re-acquire), not a dead end: on MutexLost the handle is
         // released (IsHeld == false), so the toggle's Acquire path re-acquires in place — no app
         // restart needed. Keep it enabled so the user can recover from the tray.
         _toggleItem.IsEnabled = true;
+
+        // LAST, deliberately. A subscriber that reads back off the tray sees the state already
+        // applied rather than the one being replaced. Raised unconditionally, including when the
+        // state did not change, because a caller re-asserting ON after a recovery attempt is
+        // information — it means the re-acquire worked.
+        StatusChanged?.Invoke(this, state);
     }
 
     /// <summary>
@@ -230,7 +229,9 @@ internal sealed class TrayService : ITrayService
 
         menu.Items.Add(new Separator());
 
-        var open = new MenuItem { Header = "Open ROROROblox" };
+        // F-034. The repo name is ROROROblox; the product is RoRoRo. This is the entry a
+        // tray-resident app shows more often than any other surface it has.
+        var open = new MenuItem { Header = $"Open {Branding.ProductName}" };
         open.Click += (_, _) => RequestOpenMainWindow?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(open);
 

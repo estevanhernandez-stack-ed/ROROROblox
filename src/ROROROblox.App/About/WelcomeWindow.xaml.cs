@@ -78,11 +78,17 @@ internal partial class WelcomeWindow : Window
     /// main window hidden that way, and an invisible owner would otherwise still receive activation
     /// back on dismissal.
     /// </para>
+    /// <para>
+    /// <paramref name="owner"/> is for the second door About grew in F-039. About is itself shown
+    /// modally over the main window, so a tour parented to the main window would be a modal opened
+    /// behind the modal that asked for it. The caller that has a window passes it; the Tools menu,
+    /// which has none, does not.
+    /// </para>
     /// </summary>
-    internal static void ShowTour()
+    internal static void ShowTour(Window? requestedOwner = null)
     {
         var dialog = new WelcomeWindow();
-        var owner = Application.Current?.MainWindow;
+        var owner = requestedOwner ?? Application.Current?.MainWindow;
         if (owner is not null && owner.IsLoaded && owner.IsVisible)
         {
             dialog.Owner = owner;

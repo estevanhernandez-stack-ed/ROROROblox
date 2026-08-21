@@ -10,7 +10,24 @@ public interface ITrayService : IDisposable
     void Show();
     void UpdateStatus(MultiInstanceState state);
 
-    /// <summary>Fired when the user picks "Open ROROROblox" from the tray menu (or left-clicks).</summary>
+    /// <summary>
+    /// Raised by <see cref="UpdateStatus"/> whenever the multi-instance state is set — the one
+    /// funnel every caller already goes through (F-018).
+    /// <para>
+    /// The main window's footer reports this state, and this is how it hears about it. Six places
+    /// in the composition root call <see cref="UpdateStatus"/>; notifying a second surface from
+    /// each of them would be six chances to forget one, and the state that would go stale is the
+    /// ERROR arm — the transition that only happens when something has already gone wrong.
+    /// </para>
+    /// <para>
+    /// Fires on every call, not only on a change, and carries no thread guarantee: at least one
+    /// caller raises it off the UI thread (<c>MutexLost</c>). Subscribers that touch bound state
+    /// marshal it themselves.
+    /// </para>
+    /// </summary>
+    event EventHandler<MultiInstanceState> StatusChanged;
+
+    /// <summary>Fired when the user picks "Open RoRoRo" from the tray menu (or left-clicks).</summary>
     event EventHandler RequestOpenMainWindow;
 
     /// <summary>Fired when the user toggles the "Multi-Instance" menu item.</summary>

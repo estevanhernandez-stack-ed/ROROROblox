@@ -285,6 +285,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // both already guarded), so an unhandled throw here (e.g. a TaskCanceledException from
         // Dispatcher.Invoke during shutdown) would abort the whole multicast delegate and starve
         // every subscriber behind it of the crossing.
+        // The tray is the single funnel every multi-instance transition already goes through, so
+        // the footer follows it rather than being notified separately at each of the six call
+        // sites (F-018). Never unsubscribed: both objects live for the process, and MainViewModel
+        // has no disposal path to hang it off.
+        _tray.StatusChanged += OnTrayStatusChanged;
+
         _memoryWatchdog.PressureCrossed += (_, snap) =>
         {
             try
@@ -612,7 +618,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal Func<int, bool> StopAllConfirm { get; set; } = Modals.StopAllConfirmWindow.Confirm;
 
     /// <summary>How the tour is shown. Same reasoning as <see cref="StopAllConfirm"/>.</summary>
-    internal Action ShowWelcomeTour { get; set; } = About.WelcomeWindow.ShowTour;
+    internal Action ShowWelcomeTour { get; set; } = () => About.WelcomeWindow.ShowTour();
 
     /// <summary>Test hook: fires immediately after <see cref="ExpectCloseForAll"/> inside stop-all.</summary>
     internal Action? ExpectCloseForAllObserved { get; set; }
@@ -4114,6 +4120,55 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     public void SetContested(bool contested)
         => ContestedBannerText = contested ? MultiInstanceCopy.ContestedBanner : string.Empty;
+
+    private MultiInstanceState _multiInstanceState = MultiInstanceState.Off;
+
+    /// <summary>
+    /// The multi-instance readout in the main window's footer (F-018).
+    /// <para>
+    /// The product's core switch lived only in the tray's right-click menu, which Windows hides
+    /// behind an overflow chevron on a default install — so the one thing RoRoRo exists to do had
+    /// no indicator on the window the user actually looks at. This is state only: the switch itself
+    /// stays in the tray, and <see cref="MultiInstanceTooltip"/> is what says so.
+    /// </para>
+    /// <para>
+    /// Distinct from <see cref="ContestedBannerText"/>, which is about a specific failure — Roblox
+    /// holding the lock first. This reports the ordinary state, including when nothing is wrong.
+    /// </para>
+    /// </summary>
+    public string MultiInstanceSummary => MultiInstanceStatusLine.StatusBar(_multiInstanceState);
+
+    /// <inheritdoc cref="MultiInstanceStatusLine.StatusBarTooltip"/>
+    public string MultiInstanceTooltip => MultiInstanceStatusLine.StatusBarTooltip(_multiInstanceState);
+
+    /// <summary>Drives the footer line's emphasis only — see <see cref="MultiInstanceStatusLine.IsHealthy"/>.</summary>
+    public bool MultiInstanceIsHealthy => MultiInstanceStatusLine.IsHealthy(_multiInstanceState);
+
+    /// <summary>
+    /// True only for <see cref="MultiInstanceState.Error"/> — the footer renders that one at full
+    /// strength and SemiBold.
+    /// <para>
+    /// Weight, not colour. A third foreground here would be a fifth status-colour site for
+    /// <c>ThemedStatusColourTests</c> to govern, and invariant 1 puts identity in structure
+    /// anyway: ON is white and regular, ERROR is white and heavier, OFF is muted. Three states,
+    /// two existing brushes, no new token for a user theme to have to supply.
+    /// </para>
+    /// </summary>
+    public bool MultiInstanceNeedsAttention => _multiInstanceState == MultiInstanceState.Error;
+
+    /// <summary>
+    /// Follows <see cref="ITrayService.StatusChanged"/>. Marshalled because at least one caller
+    /// raises it off the UI thread (the MutexLost watcher), and a bound property written from a
+    /// worker thread is the cross-thread exception this app has already paid for once.
+    /// </summary>
+    private void OnTrayStatusChanged(object? sender, MultiInstanceState state) => _ui.Invoke(() =>
+    {
+        _multiInstanceState = state;
+        OnPropertyChanged(nameof(MultiInstanceSummary));
+        OnPropertyChanged(nameof(MultiInstanceTooltip));
+        OnPropertyChanged(nameof(MultiInstanceIsHealthy));
+        OnPropertyChanged(nameof(MultiInstanceNeedsAttention));
+    });
 
     private string _fpsCapWarningText = string.Empty;
 

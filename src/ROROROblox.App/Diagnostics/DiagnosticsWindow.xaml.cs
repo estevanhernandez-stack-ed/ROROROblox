@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using Microsoft.Win32;
 using ROROROblox.App.Logging;
+using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
 
 namespace ROROROblox.App.Diagnostics;
@@ -219,7 +220,9 @@ internal partial class DiagnosticsWindow : Window
         var snapshotEntry = archive.CreateEntry("snapshot.txt");
         using (var writer = new StreamWriter(snapshotEntry.Open(), Encoding.UTF8))
         {
-            writer.WriteLine($"ROROROblox support snapshot");
+            // F-034: the header of the file a clan member attaches to a bug report. Everything
+            // else in this bundle is an identifier; this line is read by a person.
+            writer.WriteLine($"{Branding.ProductName} support snapshot");
             writer.WriteLine($"Captured (UTC): {snapshot.CapturedAtUtc:O}");
             writer.WriteLine();
             writer.WriteLine($"App version       : {snapshot.AppVersion}");

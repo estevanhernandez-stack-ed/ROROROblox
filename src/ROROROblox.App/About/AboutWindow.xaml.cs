@@ -45,6 +45,19 @@ internal partial class AboutWindow : Window
         }
     }
 
+    /// <summary>
+    /// F-039's remaining half. The tour is the only documentation of six unlabelled row
+    /// affordances, and it is shown exactly once — before the user has any accounts, i.e. before
+    /// any of those affordances exist to look at. Wave 3 gave it a door in the Tools menu; this is
+    /// the one the row also asked for, in the window a person opens when they want to know what
+    /// something is.
+    /// <para>
+    /// Owned by About rather than the main window: About is itself modal, and a tour parented past
+    /// it would open behind the window that launched it.
+    /// </para>
+    /// </summary>
+    private void OnWelcomeTourClick(object sender, RoutedEventArgs e) => WelcomeWindow.ShowTour(this);
+
     private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
 
     private void OnVersionClicked(object sender, MouseButtonEventArgs e)

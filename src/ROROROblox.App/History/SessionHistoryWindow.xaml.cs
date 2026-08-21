@@ -20,6 +20,11 @@ internal partial class SessionHistoryWindow : Window
     private IReadOnlyList<LaunchSession> _rows = [];
     private bool _hasData;
 
+    // F-038: what the last read actually did, kept because "zero rows" answers two very different
+    // questions and the window used to give the reassuring answer to both.
+    private SessionHistoryOutcome _outcome = SessionHistoryOutcome.Empty;
+    private string? _readError;
+
     /// <summary>
     /// The gutter BETWEEN two session rows, and the inset WITHIN one. The invariant is
     /// <c>RowGutter &gt; RowVerticalInset</c>, and it is the whole of F-065's fix — see the block
@@ -77,14 +82,25 @@ internal partial class SessionHistoryWindow : Window
 
     private async Task ReloadAsync()
     {
+        StatusText.Text = SessionHistoryStatus.Loading;
+
         IReadOnlyList<LaunchSession> rows;
         try
         {
             rows = await _store.ListAsync();
+            _outcome = rows.Count == 0 ? SessionHistoryOutcome.Empty : SessionHistoryOutcome.Loaded;
+            _readError = null;
         }
-        catch
+        catch (Exception ex)
         {
+            // F-038. This catch used to end at `rows = []`, and an empty list renders "No launches
+            // yet." A file that could not be opened — locked by another process, damaged — was
+            // therefore reported to the user as a confident statement that they had never launched
+            // anything. The exception is kept, not just the fact of it: "in use by another process"
+            // is the difference between a shrug and a fix.
             rows = [];
+            _outcome = SessionHistoryOutcome.Unreadable;
+            _readError = ex.Message;
         }
 
         // Snapshot the favorites place ids so each row can decide whether to show "+ Bookmark"
@@ -113,9 +129,13 @@ internal partial class SessionHistoryWindow : Window
     private void RenderRows()
     {
         HistoryList.Children.Clear();
+        StatusText.Text = SessionHistoryStatus.StatusLine(_outcome, _rows.Count, _readError);
 
         if (_rows.Count == 0)
         {
+            var (headline, detail) = SessionHistoryStatus.Placeholder(_outcome);
+            EmptyHeadline.Text = headline;
+            EmptyDetail.Text = detail;
             EmptyState.Visibility = Visibility.Visible;
             return;
         }
@@ -421,10 +441,22 @@ internal partial class SessionHistoryWindow : Window
         {
             await _store.ClearAsync();
             await ReloadAsync();
+
+            // AFTER the reload, which sets its own status line. A clear that worked and a clear
+            // that did nothing both used to leave the window looking identical — the rows vanish
+            // either way when the store is unreadable, because an unreadable store lists as empty.
+            //
+            // Unless that reload ITSELF failed. Saying "History cleared." over a placeholder that
+            // reads "History couldn't be read." would be two answers to one question, and the
+            // reload's is the one the user can act on.
+            if (_outcome != SessionHistoryOutcome.Unreadable)
+            {
+                StatusText.Text = SessionHistoryStatus.Cleared;
+            }
         }
-        catch
+        catch (Exception ex)
         {
-            // best-effort
+            StatusText.Text = SessionHistoryStatus.ClearFailed(ex.Message);
         }
     }
 

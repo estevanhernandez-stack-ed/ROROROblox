@@ -1047,7 +1047,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- VerticalAlignment matters now that the subtitle below is gone: without it
-                         this panel stretches to the row height set by the + Add Account button and
+                         this panel stretches to the row height set by the + Add account button and
                          the title top-aligns a few pixels above that button's centreline. -->
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
                         <controls:PageHeader ShowWordmark="True" Heading="Accounts" />
@@ -1069,7 +1069,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Style="{StaticResource CtaButtonStyle}" Content="+ Add Account"
+                        <Button Style="{StaticResource CtaButtonStyle}" Content="+ Add account"
                                 Command="{Binding AddAccountCommand}"
                                 Padding="16,8"
                                 FontSize="13" />
@@ -1701,7 +1701,7 @@
                                    FontSize="14"
                                    Foreground="{DynamicResource MutedTextBrush}"
                                    HorizontalAlignment="Center" />
-                        <TextBlock Text="Click + Add Account to log in to your first Roblox account."
+                        <TextBlock Text="Click + Add account to log in to your first Roblox account."
                                    FontSize="11"
                                    Foreground="{DynamicResource MutedTextBrush}"
                                    HorizontalAlignment="Center"
@@ -1905,8 +1905,47 @@
                 <!-- F-011: Grid.Column="2" held "Multi-launcher for Windows. A 626 Labs product."
                      Every other cell in this status bar reports live state; that one sold the app to
                      someone already running it. The line is the actual subject of the About window,
-                     which is where it still lives. Column left empty so the surrounding columns keep
-                     their positions. -->
+                     which is where it still lives.
+
+                     F-018 puts live state back in the cell, which is what the column was for. The
+                     product's core switch was reported ONLY inside the tray's right-click menu —
+                     a menu Windows hides behind an overflow chevron on a default install — so the
+                     one thing RoRoRo exists to do had no indicator on the window the user looks at.
+                     This is a READOUT, not the switch: the toggle stays in the tray, and the
+                     tooltip is what says where to find it.
+
+                     Left-aligned inside a star column so the right-hand hint keeps its position.
+
+                     THREE STATES, TWO BRUSHES, NO NEW TOKEN. ON takes WhiteBrush at regular weight
+                     — the same "this is live" reading the client-count cell to its left uses. OFF
+                     takes MutedTextBrush. ERROR takes WhiteBrush at SemiBold: a third foreground
+                     would be a new status-colour site for ThemedStatusColourTests to govern and a
+                     token every user theme would have to supply, when weight already separates it. -->
+                <TextBlock Grid.Column="2"
+                           Text="{Binding MultiInstanceSummary}"
+                           ToolTip="{Binding MultiInstanceTooltip}"
+                           AutomationProperties.Name="{Binding MultiInstanceSummary}"
+                           AutomationProperties.HelpText="{Binding MultiInstanceTooltip}"
+                           FontSize="11"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center"
+                           Margin="18,0,0,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                            <Setter Property="FontWeight" Value="Normal" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding MultiInstanceIsHealthy}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding MultiInstanceNeedsAttention}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
 
                 <TextBlock Grid.Column="3"
                            Text="X minimizes to tray. Quit from the tray to exit."

@@ -14,6 +14,10 @@ public sealed class IdleAlertPresenter
         var msg = crossedCount == 1
             ? $"1 account idle > {thresholdMinutes}m — it may reconnect soon."
             : $"{crossedCount} accounts idle > {thresholdMinutes}m — they may reconnect together.";
-        _tray.ShowToast("ROROROblox", msg);
+        // F-034, FOURTH leak site — the row named three and this was not among them, found by
+        // re-measuring on 2026-08-20. The memory-warning balloon three files away already titles
+        // itself "RoRoRo — memory warning", so the app was announcing itself under two different
+        // names in the same notification tray.
+        _tray.ShowToast(Branding.ProductName, msg);
     }
 }

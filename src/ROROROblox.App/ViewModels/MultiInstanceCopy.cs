@@ -1,7 +1,17 @@
 namespace ROROROblox.App.ViewModels;
 
-/// <summary>User-facing copy for the multi-instance lock states (spec §5/§6). Centralized so the
-/// startup modal (Task 6) and the runtime banner (Task 8) share exact strings.</summary>
+/// <summary>
+/// User-facing copy for the multi-instance lock states (spec §5/§6). Centralized so the startup
+/// modal (Task 6) and the runtime banner (Task 8) share exact strings.
+/// <para>
+/// NOT the same subject as <see cref="ROROROblox.Core.MultiInstanceStatusLine"/>, which arrived
+/// with F-018 and is easy to mistake for this. That one is the STATE READOUT — the tray tooltip,
+/// the tray menu header and the main window's footer, all saying which of ON/OFF/ERROR is current.
+/// This one is the FAILURE COPY: the specific situation where Roblox holds the lock and RoRoRo
+/// does not, plus the FPS-cap mismatch banner. If you are writing "the app should say what state
+/// it is in", you want the other file.
+/// </para>
+/// </summary>
 public static class MultiInstanceCopy
 {
     /// <summary>Runtime banner shown when Roblox holds the lock post-startup.</summary>

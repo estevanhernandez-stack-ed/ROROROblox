@@ -30,6 +30,7 @@ public class IdleAlertPresenterTests
         public void SetMemoryWarning(bool active) { }
         public void ShowMemoryWarning(string title, string message, System.Guid accountId) { }
         public event System.EventHandler<System.Guid>? RequestFocusAccount { add { } remove { } }
+        public event System.EventHandler<ROROROblox.Core.MultiInstanceState>? StatusChanged { add { } remove { } }
     }
 
     [Fact]
