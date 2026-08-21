@@ -91,7 +91,15 @@ public class HistoryRowRhythmTests
     }
 
     /// <summary>
-    /// The <c>var border = new Border { … };</c> initializer inside <c>BuildRow</c>. Scoped to the
+    /// The <c>var border = new HistoryRowPresenter { … };</c> initializer inside <c>BuildRow</c>.
+    /// <para>
+    /// Re-pointed 2026-08-21 by F-072, which changed the row's type from <c>Border</c> to a
+    /// <c>HistoryRowPresenter</c> subclass so the row could carry an automation peer. This gate
+    /// caught the change immediately and its own message asked to be re-pointed rather than
+    /// re-derived, which is what happened — the CLAIM it makes is unchanged, only the locator moved.
+    /// A gate that silently stopped matching would have gone green while measuring nothing.
+    /// </para>
+    /// Scoped to the
     /// initializer rather than the file on purpose: the row also builds a Bookmark button, and a
     /// BUTTON's boundary is a component boundary that 1.4.11 does govern, so a file-wide ban on
     /// <c>BorderBrush</c> would be asserting the opposite of the rule this file is about.
@@ -106,11 +114,11 @@ public class HistoryRowRhythmTests
 
         var source = File.ReadAllText(path);
 
-        var match = Regex.Match(source, @"var\s+border\s*=\s*new\s+Border\s*\{(?<body>.*?)\};",
+        var match = Regex.Match(source, @"var\s+border\s*=\s*new\s+HistoryRowPresenter\s*\{(?<body>.*?)\};",
             RegexOptions.Singleline);
 
         Assert.True(match.Success,
-            "Could not find `var border = new Border { … };` in SessionHistoryWindow.BuildRow. The "
+            "Could not find `var border = new HistoryRowPresenter { … };` in SessionHistoryWindow.BuildRow. The "
             + "row construction was restructured; re-point this gate rather than assuming it still "
             + "measures the row.");
 

@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
 using ROROROblox.Core;
@@ -171,7 +172,7 @@ internal partial class SessionHistoryWindow : Window
         Margin = new Thickness(4, 12, 0, 6),
     };
 
-    private Border BuildRow(LaunchSession row)
+    private HistoryRowPresenter BuildRow(LaunchSession row)
     {
         // Streamer-mode-aware display identity (mirrors AccountSummary.RenderName /
         // AvatarDisplaySource and FriendFollowWindow's per-row ForFriend/ForAccount calls). One
@@ -214,7 +215,7 @@ internal partial class SessionHistoryWindow : Window
         // list. It was the wrong way round before -- a 6px gutter against a 10px inset argued that a
         // row's own first line belonged to the row above it. At the text layer the ratio is now
         // 28px between rows against 2px between a row's two lines.
-        var border = new Border
+        var border = new HistoryRowPresenter
         {
             Margin = new Thickness(0, 0, 0, RowGutter),
             Padding = new Thickness(12, RowVerticalInset, 12, RowVerticalInset),
@@ -365,6 +366,29 @@ internal partial class SessionHistoryWindow : Window
         grid.Children.Add(rightPanel);
 
         border.Child = grid;
+
+        // F-072. Five TextBlocks inside an unnamed Border meant the automation tree showed 503
+        // unpaired Text nodes across 100 sessions and not one container carrying a name — so a
+        // screen reader announced "estehernandez", "Pet Sim", "4:57 PM", "1 min", "Saved" as five
+        // unrelated fragments and left its listener to reassemble the row, a hundred times over.
+        // Sighted users get that grouping free from geometry, which is exactly why it survived.
+        //
+        // The name is composed from what the row RENDERS, including the streamer-mode display
+        // identity: announcing the real account while the screen shows an alias would defeat
+        // streamer mode through the accessibility tree, which is the one route nobody watches.
+        // The name goes on the row itself, which is a HistoryRowPresenter precisely so it HAS an
+        // automation peer to carry it. Two earlier attempts are recorded there: a name on a plain
+        // Border and then on a ContentControl both produced literally nothing in the tree, because
+        // WPF builds peers for controls and neither is one.
+        AutomationProperties.SetName(border, SessionHistoryRowName.Compose(
+            display.Name,
+            row.GameName,
+            row.IsPrivateServer,
+            row.LaunchedAtUtc.ToLocalTime().ToString("h:mm tt"),
+            FormatDuration(row),
+            row.OutcomeHint,
+            row.PlaceId is { } placeId && _knownPlaceIds.Contains(placeId)));
+
         return border;
     }
 
