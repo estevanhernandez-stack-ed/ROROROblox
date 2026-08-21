@@ -659,6 +659,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         set
         {
             if (_streamerIdentity is null) return;
+
+            // F-102. Equality guard, added when this became a two-way binding target: the binding
+            // echoes the current value back on load and on every change notification, and without
+            // this each echo would fire another SetActiveAsync — a write, a disk touch and a
+            // Changed event per round trip, feeding itself.
+            if (_streamerIdentity.IsActive == value) return;
+
             _ = _streamerIdentity.SetActiveAsync(value);
         }
     }

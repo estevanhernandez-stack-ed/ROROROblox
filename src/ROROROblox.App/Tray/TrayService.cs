@@ -208,8 +208,20 @@ internal sealed class TrayService : ITrayService
         // so the tray reflects state at a glance; Click reads the CURRENT provider state (not the
         // checkbox's own auto-toggled IsChecked) to decide the new value, then OnStreamerModeChanged
         // resyncs IsChecked once the provider's Changed event confirms the flip landed.
-        var streamerMode = new MenuItem { Header = "Streamer mode", IsCheckable = true, IsChecked = _streamerIdentity.IsActive };
-        streamerMode.Click += (_, _) => _ = _streamerIdentity.SetActiveAsync(!_streamerIdentity.IsActive);
+        var streamerMode = new MenuItem { Header = "Streamer mode", IsCheckable = true };
+
+        // F-102. BOUND, not clicked. MenuItemAutomationPeer.Toggle() raises no Click at all —
+        // measured, not assumed, in TogglePatternReachesTheHandlerTests — so the previous handler
+        // never ran for an assistive technology or automation caller, and streamer mode silently
+        // stayed off while the tick appeared. Same defect the Settings checkbox had, found by
+        // asking the question F-102 said to ask.
+        streamerMode.SetBinding(
+            MenuItem.IsCheckedProperty,
+            new System.Windows.Data.Binding(nameof(StreamerModeFlag.On))
+            {
+                Source = new StreamerModeFlag(_streamerIdentity),
+                Mode = System.Windows.Data.BindingMode.TwoWay,
+            });
         menu.Items.Add(streamerMode);
 
         var stopAll = new MenuItem { Header = "Stop all Roblox instances" };
