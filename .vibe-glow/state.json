@@ -261,6 +261,15 @@
         "F-105"
       ],
       "notes": "Research, not a wave. Mechanism STILL UNKNOWN and recorded as such. What the session produced: (1) the full stack trace, which nobody had - the throw is in WPF-UI's ContextMenuLoader resolving a pack URI for an editor context-menu style nothing here renders, arriving via ExceptionWrapper as a DISPATCHER callback, which is exactly why it killed the host rather than failing a test. (2) Four more eliminations by measurement: the tray icon, RobloxWindowDecorator, the deferred startup checks (WebView2 sweep + Velopack), and file-locks/output-folder - RoRoRo run from %TEMP% crashes identically, so it is the process, not the files. (3) The row's own 'crash after exactly 3 tests' regularity DOES NOT HOLD: 15, 71, 14, 128 observed. (4) Blast radius closed: the host now survives that dispatcher exception, so the run COMPLETES (128, twice) where it ABORTED - which kills the reporting hazard the row's verdict calls the real danger, without claiming the bug is fixed. (5) RORORO_RENDER_IGNORE_APP=1 study seam, because a guard you cannot switch off is a guard nobody can investigate. Production code untouched: App.xaml.cs was instrumented for the bisect and reverted byte-for-byte."
+    },
+    {
+      "id": "f105-closed",
+      "name": "F-105 root cause, both halves",
+      "status": "open",
+      "findings": [
+        "F-105"
+      ],
+      "notes": "Root cause: WindowRenderHost builds the real App for App.xaml's resources, on a comment asserting that new App() cannot raise OnStartup. It can, and did. With an instance running, startup hit the single-instance guard and called Shutdown(0), disposing the Application underneath renders in flight - the pack-URI exception was a disposed Application, not a scheme registration. Found by staging OnStartup (clean before the guard, crashing after) and confirmed by a bare PowerShell process holding ONLY that mutex name, with no RoRoRo running at all; an unrelated name is clean. Every earlier probe fits the explanation. The CI half had the same cause - real startup means a network update check inside a 60s render budget - tested by lifting the skip as one revertible commit: CI returned Skipped:0 Total:1798 on both legs. Nine gates back on CI. Second defect found on the way: every render run was writing to the user's real log, scanning the plugin registry and STARTING A REAL PLUGIN PROCESS."
     }
   ],
   "scope": {
