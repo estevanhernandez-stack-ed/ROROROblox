@@ -118,22 +118,13 @@ public class SettingsReachabilityTests
         new("MainWindowHeight", WindowGeometryReason),
         new("MainWindowMaximized", WindowGeometryReason),
 
-        new("DefaultPlaceUrl",
-            "Legacy, and the code says so twice. RobloxLauncher.cs:246 lists it as '(legacy "
-            + "single-URL setting)' third in a fallback chain, and :353 calls it 'vestigial'; "
-            + "RobloxLauncherTests pins that the typed path 'must be ignored'. Per-account "
-            + "favourites replaced it. Zero App references — no window reads it, no window writes "
-            + "it. It is kept so an old settings.json still deserializes, not so anyone can set it. "
-            + "**v1.21 item 9 made that literally true: SetDefaultPlaceUrlAsync is deleted, so the "
-            + "field is now read-only and this entry's 'not so anyone can set it' is enforced by "
-            + "the type rather than by convention.** This entry's last sentence — 'if it is ever "
-            + "genuinely dead, the fix is deleting the field, not adding a control' — was more "
-            + "right than the cycle that quoted it: F-093's spec claimed deleting it would move "
-            + "legacy users from their saved place to Roblox home, and that is false, because the "
-            + "app launches exclusively through the typed LaunchTarget path which resolves to Home "
-            + "already. Only the legacy string overload of LaunchAsync still reads it, and nothing "
-            + "calls that. The remaining deletion is F-093's own row, together with the overload."),
-
+        // DefaultPlaceUrl's entry was RETIRED 2026-08-21 by F-093, which deleted the field it
+        // exempted along with the legacy LaunchAsync overload that was its only reader. The entry
+        // had run to a dozen lines of increasingly careful explanation for why an unreachable
+        // setting was allowed to stay unreachable — and its own last sentence said the fix was
+        // "deleting the field, not adding a control". That turned out to be right, and the entry
+        // outlived being right by a cycle. This fence is what refused to let it outlive the field:
+        // "a permission for a field that does not exist grants nothing and hides the next rename."
         new("EdgeRemediationAnswers",
             "A ledger, not a setting. IAppSettings documents it as 'a theme author's answer to \"may "
             + "we raise this theme's interactive-control edge...\", keyed by theme id... the question "

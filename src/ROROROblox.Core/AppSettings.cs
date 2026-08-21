@@ -40,27 +40,10 @@ public sealed class AppSettings : IAppSettings, IDisposable
         return Path.Combine(localAppData, "ROROROblox", "settings.json");
     }
 
-    public async Task<string?> GetDefaultPlaceUrlAsync()
-    {
-        await _gate.WaitAsync().ConfigureAwait(false);
-        try
-        {
-            var settings = await LoadAsync().ConfigureAwait(false);
-            return string.IsNullOrEmpty(settings.DefaultPlaceUrl) ? null : settings.DefaultPlaceUrl;
-        }
-        finally
-        {
-            _gate.Release();
-        }
-    }
-
-    // SetDefaultPlaceUrlAsync was deleted by v1.21 item 9 (F-093). Nothing in the app called it and
-    // IAppSettings documented a Preferences control for it that has never existed. The GETTER stays
-    // so a legacy settings.json still deserializes and SaveAsync round-trips the value instead of
-    // dropping it — DefaultPlaceUrl is still a SettingsBlob property, so the next write preserves
-    // whatever an old file carried. See IAppSettings.GetDefaultPlaceUrlAsync for why deleting the
-    // field entirely is a smaller change than this cycle's spec assumed.
-
+    // GetDefaultPlaceUrlAsync and the DefaultPlaceUrl blob property were DELETED by F-093,
+    // together with the legacy LaunchAsync overload that was their only reader. An old settings.json
+    // carrying the key still deserializes — System.Text.Json ignores unknown members — and the value
+    // is simply not carried forward, which is right: nothing could read it and no UI could set it.
     public async Task<bool> GetLaunchMainOnStartupAsync()
     {
         await _gate.WaitAsync().ConfigureAwait(false);
@@ -462,7 +445,7 @@ public sealed class AppSettings : IAppSettings, IDisposable
     {
         if (!File.Exists(_filePath))
         {
-            return new SettingsBlob(Version: 1, DefaultPlaceUrl: null, LaunchMainOnStartup: false, ActiveThemeId: null);
+            return new SettingsBlob(Version: 1, LaunchMainOnStartup: false, ActiveThemeId: null);
         }
 
         byte[] bytes;
@@ -472,24 +455,24 @@ public sealed class AppSettings : IAppSettings, IDisposable
         }
         catch (IOException)
         {
-            return new SettingsBlob(Version: 1, DefaultPlaceUrl: null, LaunchMainOnStartup: false, ActiveThemeId: null);
+            return new SettingsBlob(Version: 1, LaunchMainOnStartup: false, ActiveThemeId: null);
         }
 
         if (bytes.Length == 0)
         {
-            return new SettingsBlob(Version: 1, DefaultPlaceUrl: null, LaunchMainOnStartup: false, ActiveThemeId: null);
+            return new SettingsBlob(Version: 1, LaunchMainOnStartup: false, ActiveThemeId: null);
         }
 
         try
         {
             return JsonSerializer.Deserialize<SettingsBlob>(bytes, JsonOptions)
-                ?? new SettingsBlob(Version: 1, DefaultPlaceUrl: null);
+                ?? new SettingsBlob(Version: 1);
         }
         catch (JsonException)
         {
             // Corrupt settings file — return defaults rather than fail. The user can re-set in
             // the settings UI; we log nothing because we have no logger surface in Core yet.
-            return new SettingsBlob(Version: 1, DefaultPlaceUrl: null, LaunchMainOnStartup: false, ActiveThemeId: null);
+            return new SettingsBlob(Version: 1, LaunchMainOnStartup: false, ActiveThemeId: null);
         }
     }
 
@@ -532,7 +515,6 @@ public sealed class AppSettings : IAppSettings, IDisposable
     // absent key is exactly the state the remediation prompt is designed to handle.
     private sealed record SettingsBlob(
         int Version,
-        string? DefaultPlaceUrl,
         bool LaunchMainOnStartup = false,
         string? ActiveThemeId = null,
         bool BloxstrapWarningDismissed = false,

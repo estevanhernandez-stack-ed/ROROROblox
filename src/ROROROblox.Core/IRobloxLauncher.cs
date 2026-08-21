@@ -19,10 +19,10 @@ public interface IRobloxLauncher
     /// </summary>
     Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null);
 
-    /// <summary>
-    /// Legacy string-based overload. Pasted URLs run through <see cref="LaunchTarget.FromUrl"/>
-    /// — a private-server share URL becomes a <see cref="LaunchTarget.PrivateServer"/> automatically.
-    /// Null/empty placeUrl falls back to <see cref="LaunchTarget.DefaultGame"/>.
-    /// </summary>
-    Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null, long? browserTrackerId = null);
+    // The legacy string overload was DELETED by F-093. It existed to resolve a place URL through
+    // three tiers, the last of which was AppSettings.DefaultPlaceUrl — a setting the app referenced
+    // zero times and had no UI to write. Nothing called this overload either: MainViewModel launches
+    // through the LaunchTarget one above and always has. Deleting the setting without the overload
+    // it served would have left a tier resolving against a method that no longer exists, so they
+    // went together, which is what F-093's row asked for.
 }
