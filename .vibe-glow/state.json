@@ -151,6 +151,18 @@
         "F-076"
       ],
       "note": "Not a wave — a single standalone finding, fixed and verified in one PR (merged 9587ee6b). F-076 was itself added BY wave 2, whose capture tooling photographed a live webhook token. Masking logic lives in Core with nine unit tests; the reveal toggle is wired to Checked/Unchecked rather than Click because UI Automation's TogglePattern never raises Click — the first version looked right and did nothing under automation. Este declined rotating the exposed webhook (2026-08-04); it never left the machine and was never committed."
+    },
+    {
+      "id": 12,
+      "name": "Accessibility floor — automation reaches the controls",
+      "status": "open",
+      "findings": [
+        "F-102",
+        "F-045",
+        "F-073",
+        "F-052"
+      ],
+      "notes": "F-102 closed and its tray twin found by asking the question the row said to ask — the assumption that MenuItem was fine was wrong and a test measured it. F-045 was almost entirely already fixed. F-073 and F-052 stay open on purpose: one needs a layout re-proved on a render, the other is a 49-control [new-mechanism] remediation now held by a ceiling."
     }
   ],
   "scope": {
