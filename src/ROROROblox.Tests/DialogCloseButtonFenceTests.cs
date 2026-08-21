@@ -74,8 +74,11 @@ public class DialogCloseButtonFenceTests
     public void TheFenceIsActuallyLookingAtSomething()
     {
         // Without this, a regex that stopped matching would report a clean app forever — the same
-        // vacuity trap ThemedStatusColourTests guards with its floor.
-        Assert.True(CloseButtons().Count() >= 8,
-            $"Expected the nine known Close buttons; found {CloseButtons().Count()}. The scan broke.");
+        // vacuity trap ThemedStatusColourTests guards with its floor. The floor was nine until
+        // F-013: six Close buttons left with the windows the shell absorbed — a shell page is a
+        // destination, not a dialog, and the shell's title bar owns closing. The dialogs that
+        // remain dialogs keep theirs.
+        Assert.True(CloseButtons().Count() >= 3,
+            $"Expected at least the three known Close buttons; found {CloseButtons().Count()}. The scan broke.");
     }
 }

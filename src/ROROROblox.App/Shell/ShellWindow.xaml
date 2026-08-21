@@ -1,0 +1,41 @@
+<Window x:Class="ROROROblox.App.Shell.ShellWindow"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Games"
+        Height="640" Width="920"
+        MinHeight="480" MinWidth="800"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BgBrush}"
+        Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
+
+    <!-- The one non-modal secondary window (F-013): six former modal islands as pages behind a
+         persistent left rail. The rail is PreferencesWindow's SettingsNav pattern promoted to a
+         shared style — selection is a SHAPE (3px bar + weight), never a fill, for the reason that
+         style's own comment records. The Title tracks the active page (code-behind), so the
+         header-matches-title-bar rule holds at every moment; the XAML default names the first
+         page. Pages carry their own PageHeader — this window adds no chrome of its own. -->
+    <Grid Margin="28,24">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="164" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <ListBox x:Name="ShellNav" Grid.Column="0"
+                 AutomationProperties.Name="Destinations"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 FontSize="{DynamicResource HeadingFontSize}"
+                 ItemContainerStyle="{StaticResource NavItemStyle}"
+                 SelectionChanged="OnNavSelectionChanged">
+            <ListBoxItem Content="Games" />
+            <ListBoxItem Content="Settings" />
+            <ListBoxItem Content="History" />
+            <ListBoxItem Content="Diagnostics" />
+            <ListBoxItem Content="Plugins" />
+            <ListBoxItem Content="About" />
+        </ListBox>
+
+        <ContentControl Grid.Column="1" x:Name="PageHost" Margin="16,0,0,0" Focusable="False" />
+    </Grid>
+</Window>

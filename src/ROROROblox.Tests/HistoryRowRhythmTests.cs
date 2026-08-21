@@ -37,9 +37,9 @@ public class HistoryRowRhythmTests
     [Fact]
     public void TheGutterBetweenRowsExceedsTheInsetWithinOne()
     {
-        Assert.True(SessionHistoryWindow.RowGutter > SessionHistoryWindow.RowVerticalInset,
-            $"History row gutter is {SessionHistoryWindow.RowGutter} and the inset within a row is "
-            + $"{SessionHistoryWindow.RowVerticalInset}. The gutter has to be the larger of the two "
+        Assert.True(SessionHistoryPage.RowGutter > SessionHistoryPage.RowVerticalInset,
+            $"History row gutter is {SessionHistoryPage.RowGutter} and the inset within a row is "
+            + $"{SessionHistoryPage.RowVerticalInset}. The gutter has to be the larger of the two "
             + "or the whitespace argues that a row's first line belongs to the row above it. This "
             + "relationship IS F-065's fix: the fill carries nothing (RowBg against the page field "
             + "measures 1.08–1.33 across the four built-ins), so the geometry is what separates two "
@@ -109,7 +109,7 @@ public class HistoryRowRhythmTests
         var appDir = XamlStyleScanner.AppSourceDirectory();
         Assert.NotNull(appDir);
 
-        var path = Path.Combine(appDir!, "History", "SessionHistoryWindow.xaml.cs");
+        var path = Path.Combine(appDir!, "History", "SessionHistoryPage.xaml.cs");
         Assert.True(File.Exists(path), $"{path} not found — this gate would pass vacuously.");
 
         var source = File.ReadAllText(path);
@@ -118,7 +118,7 @@ public class HistoryRowRhythmTests
             RegexOptions.Singleline);
 
         Assert.True(match.Success,
-            "Could not find `var border = new HistoryRowPresenter { … };` in SessionHistoryWindow.BuildRow. The "
+            "Could not find `var border = new HistoryRowPresenter { … };` in SessionHistoryPage.BuildRow. The "
             + "row construction was restructured; re-point this gate rather than assuming it still "
             + "measures the row.");
 

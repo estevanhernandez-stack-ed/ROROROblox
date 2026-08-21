@@ -206,7 +206,7 @@ public class ButtonRankFenceTests
         // that: every rank pairs a navy fill with a white label. spec.md §3's rule is that a site
         // needing a look no rank provides opens a row rather than growing the vocabulary
         // mid-sweep, so it is exempt here and recorded rather than hand-assigned to a near-miss.
-        ("SessionHistoryWindow.xaml.cs", "cyan label on navy — no rank provides it; see F-098"),
+        ("SessionHistoryPage.xaml.cs", "cyan label on navy — no rank provides it; see F-098"),
     ];
 
     private static List<Site> Declarations()

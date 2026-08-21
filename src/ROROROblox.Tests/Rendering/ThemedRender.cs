@@ -258,6 +258,8 @@ internal static class ThemedRender
             new TextBlock { Text = GlyphText, FontSize = GlyphSize, Style = s },
         Style { TargetType: var t } s when t == typeof(Border) =>
             new Border { Width = 200, Height = 100, Style = s },
+        Style { TargetType: var t } s when t == typeof(ListBoxItem) =>
+            new ListBoxItem { Content = GlyphText, FontSize = GlyphSize, Style = s },
         var other => throw new NotSupportedException(
             $"'{styleKey}' resolved to {other?.GetType().Name ?? "null"}. Every keyed style in "
             + "ControlStyles.xaml must be constructible here, or the enumeration is measuring less "

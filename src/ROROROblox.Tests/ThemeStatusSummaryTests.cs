@@ -429,7 +429,7 @@ public class ThemeStatusSummaryTests : IDisposable
     /// </summary>
     [Theory]
     [InlineData("src/ROROROblox.App/Preferences/ThemeStatusSummary.cs")]
-    [InlineData("src/ROROROblox.App/Preferences/PreferencesWindow.xaml.cs")]
+    [InlineData("src/ROROROblox.App/Preferences/SettingsPage.xaml.cs")]
     [InlineData("src/ROROROblox.App/ViewModels/MemoryChipFormatter.cs")]
     [InlineData("src/ROROROblox.App/ViewModels/AccountSummary.cs")]
     public void TheGlyphSurvivedBeingWrittenToDisk(string relativePath)
@@ -469,7 +469,7 @@ public class ThemeStatusSummaryTests : IDisposable
     public void TheThemesFolderTooltipDoesNotPromiseARestart()
     {
         var file = XamlStyleScanner.EnumerateAppXamlFiles()
-            .FirstOrDefault(f => Path.GetFileName(f.FullPath) == "PreferencesWindow.xaml");
+            .FirstOrDefault(f => Path.GetFileName(f.FullPath) == "SettingsPage.xaml");
         Assert.NotNull(file.FullPath);
 
         XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
@@ -478,7 +478,7 @@ public class ThemeStatusSummaryTests : IDisposable
             .SingleOrDefault(e => e.Attribute(x + "Name")?.Value == "OpenThemesFolderButton");
 
         Assert.True(button is not null,
-            "OpenThemesFolderButton was not found in PreferencesWindow.xaml, so this test asserted "
+            "OpenThemesFolderButton was not found in SettingsPage.xaml, so this test asserted "
             + "nothing about its tooltip.");
 
         var tooltip = button!.Attribute("ToolTip")?.Value ?? "";

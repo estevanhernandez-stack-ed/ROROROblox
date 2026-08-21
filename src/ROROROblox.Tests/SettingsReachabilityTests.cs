@@ -108,7 +108,7 @@ public class SettingsReachabilityTests
             "Not a preference — the blob's schema discriminator, written as 1 by every LoadAsync "
             + "fallback in AppSettings.cs and never read back by a control. Listed rather than left "
             + "to the matcher because it would otherwise pass BY ACCIDENT: 'VersionText' in "
-            + "AboutWindow.xaml and '{Binding Version}' in PluginsWindow.xaml are the app's own "
+            + "AboutPage.xaml and '{Binding Version}' in PluginsPage.xaml are the app's own "
             + "version and a plugin's, neither of which is this field. A silent accidental pass is "
             + "the same shape as the defect this fence exists for."),
 
@@ -153,7 +153,7 @@ public class SettingsReachabilityTests
     /// THE SECONDARY EDGE: a control named for the setting. Needed because exactly one shipped
     /// setting reaches its UI without the App ever naming its accessor — <c>StreamerMode</c> is
     /// read and written by <c>Core/StreamerMode/StreamerIdentityProvider.cs</c>, and what the App
-    /// holds instead is <c>x:Name="StreamerModeToggle"</c> in <c>PreferencesWindow.xaml</c> and
+    /// holds instead is <c>x:Name="StreamerModeToggle"</c> in <c>SettingsPage.xaml</c> and
     /// <c>MainViewModel.StreamerModeOn</c>. An accessor-only fence would call that unreachable and
     /// be wrong.
     /// <para>

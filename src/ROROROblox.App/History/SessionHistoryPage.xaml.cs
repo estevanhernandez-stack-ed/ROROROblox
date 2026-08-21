@@ -7,7 +7,12 @@ using ROROROblox.Core.StreamerMode;
 
 namespace ROROROblox.App.History;
 
-internal partial class SessionHistoryWindow : Window
+/// <summary>
+/// The History destination, hosted by the shell (F-013 — formerly <c>SessionHistoryWindow</c>).
+/// Implements <see cref="IDisposable"/> for the streamer-identity unsubscribe the window used to
+/// do on <c>Closed</c>; the shell disposes its pages when it closes.
+/// </summary>
+internal partial class SessionHistoryPage : UserControl, IDisposable
 {
     private readonly ISessionHistoryStore _store;
     private readonly IFavoriteGameStore _favorites;
@@ -42,34 +47,48 @@ internal partial class SessionHistoryWindow : Window
     /// <inheritdoc cref="RowGutter"/>
     internal const double RowVerticalInset = 8;
 
-    public SessionHistoryWindow(
+    // A bookmark writes the favorites store, and the old modal refreshed the view model's library
+    // when ShowDialog returned. A page has no close moment; the composition root hands in the
+    // refresh instead (F-013).
+    private readonly Action? _libraryChanged;
+
+    public SessionHistoryPage(
         ISessionHistoryStore store, IFavoriteGameStore favorites, IRobloxApi api,
-        IStreamerIdentityProvider? streamerIdentity = null)
+        IStreamerIdentityProvider? streamerIdentity = null,
+        Action? libraryChanged = null)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _favorites = favorites ?? throw new ArgumentNullException(nameof(favorites));
         _api = api ?? throw new ArgumentNullException(nameof(api));
         _streamerIdentity = streamerIdentity;
+        _libraryChanged = libraryChanged;
         InitializeComponent();
         Loaded += OnLoaded;
 
-        // Streamer mode can be toggled (or rerolled) while this modal is open — re-render the
+        // Streamer mode can be toggled (or rerolled) while this page is visible — re-render the
         // already-fetched rows with the new fake/real identities instead of forcing a reload.
-        // Unsubscribe on Closed so a discarded window never keeps this instance rooted via the
-        // provider's Changed event (same leak concern AccountSummary.DetachIdentityProvider
-        // guards against for account rows, and FriendFollowWindow mirrors for its own modal).
+        // Unsubscribed in Dispose (the shell disposes pages on close) so a discarded page never
+        // stays rooted via the provider's Changed event (same leak concern
+        // AccountSummary.DetachIdentityProvider guards against for account rows).
         if (_streamerIdentity is not null)
         {
             _streamerIdentity.Changed += OnStreamerIdentityChanged;
         }
-        Closed += (_, _) =>
-        {
-            if (_streamerIdentity is not null)
-            {
-                _streamerIdentity.Changed -= OnStreamerIdentityChanged;
-            }
-        };
     }
+
+    public void Dispose()
+    {
+        if (_streamerIdentity is not null)
+        {
+            _streamerIdentity.Changed -= OnStreamerIdentityChanged;
+        }
+    }
+
+    /// <summary>Owner for message boxes: the shell when attached, else the plain overload.</summary>
+    private MessageBoxResult ShowMessage(string text, string caption, MessageBoxButton button, MessageBoxImage image)
+        => Window.GetWindow(this) is { } owner
+            ? MessageBox.Show(owner, text, caption, button, image)
+            : MessageBox.Show(text, caption, button, image);
 
     private async void OnLoaded(object sender, RoutedEventArgs e) => await ReloadAsync();
 
@@ -430,13 +449,14 @@ internal partial class SessionHistoryWindow : Window
             }
 
             await _favorites.AddAsync(placeId, universeId, name, thumbnail);
+            _libraryChanged?.Invoke();
             await ReloadAsync();
         }
         catch (Exception ex)
         {
             btn.Content = oldContent;
             btn.IsEnabled = true;
-            MessageBox.Show(this, $"Couldn't bookmark: {ex.Message}", "Bookmark game",
+            ShowMessage($"Couldn't bookmark: {ex.Message}", "Bookmark game",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -451,8 +471,7 @@ internal partial class SessionHistoryWindow : Window
 
     private async void OnClearClick(object sender, RoutedEventArgs e)
     {
-        var confirm = MessageBox.Show(
-            this,
+        var confirm = ShowMessage(
             "Clear all session history? This can't be undone.",
             "Clear history",
             MessageBoxButton.YesNo,
@@ -483,6 +502,4 @@ internal partial class SessionHistoryWindow : Window
             StatusText.Text = SessionHistoryStatus.ClearFailed(ex.Message);
         }
     }
-
-    private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
 }

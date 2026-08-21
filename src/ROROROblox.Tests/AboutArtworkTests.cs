@@ -44,7 +44,7 @@ namespace ROROROblox.Tests;
 public class AboutArtworkTests
 {
     /// <summary>
-    /// The eight keyed brushes at <c>AboutWindow.xaml:13-20</c> that paint the mark. Named here
+    /// The eight keyed brushes at <c>AboutPage.xaml:13-20</c> that paint the mark. Named here
     /// rather than discovered, because "whatever is declared in Window.Resources" would silently
     /// absorb a ninth brush added later for something that is not artwork.
     /// </summary>
@@ -131,7 +131,7 @@ public class AboutArtworkTests
     [Fact]
     public void TheArtworkBrushesAreFixedAndCannotCollideWithAThemeSlot()
     {
-        var doc = AboutWindow();
+        var doc = AboutPage();
         var slots = ThemeSlotNames();
         var problems = new List<string>();
 
@@ -147,7 +147,7 @@ public class AboutArtworkTests
         {
             if (!declared.TryGetValue(key, out var colour))
             {
-                problems.Add($"{key} is no longer declared in AboutWindow.xaml.");
+                problems.Add($"{key} is no longer declared in AboutPage.xaml.");
                 continue;
             }
 
@@ -189,24 +189,24 @@ public class AboutArtworkTests
     /// </summary>
     private static XElement LogoCanvas()
     {
-        var matches = AboutWindow().Descendants()
+        var matches = AboutPage().Descendants()
             .Where(e => e.Name.LocalName == "Canvas")
             .Where(e => e.Attribute("Width")?.Value == "64" && e.Attribute("Height")?.Value == "64")
             .ToList();
 
         Assert.True(matches.Count == 1,
-            $"Expected exactly one 64x64 Canvas in AboutWindow.xaml, found {matches.Count}.");
+            $"Expected exactly one 64x64 Canvas in AboutPage.xaml, found {matches.Count}.");
 
         return matches[0];
     }
 
-    private static XDocument AboutWindow()
+    private static XDocument AboutPage()
     {
         var file = XamlStyleScanner.EnumerateAppXamlFiles()
-            .FirstOrDefault(f => Path.GetFileName(f.FullPath) == "AboutWindow.xaml");
+            .FirstOrDefault(f => Path.GetFileName(f.FullPath) == "AboutPage.xaml");
 
         Assert.True(file.FullPath is not null,
-            "AboutWindow.xaml was not found by the XAML walk — every clause here would pass vacuously.");
+            "AboutPage.xaml was not found by the XAML walk — every clause here would pass vacuously.");
 
         return XDocument.Load(file.FullPath, LoadOptions.SetLineInfo);
     }

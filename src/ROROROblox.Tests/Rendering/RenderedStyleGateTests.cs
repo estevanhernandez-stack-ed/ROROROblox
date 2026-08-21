@@ -156,6 +156,12 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
             // can land on by the text pairs. Giving it a fill so this file had something to sample
             // would be inventing chrome to satisfy a gate.
             "GhostButtonStyle",
+            // NavItemStyle (the shell + Settings rail, F-013) is the same shape as the two above,
+            // deliberately: selection is a 3px accent bar plus a weight change — geometry, not a
+            // fill — precisely so a theme that flattens fills cannot erase it (the F-002 lesson its
+            // own comment records). No fill, no boundary, so 1.4.11 has no subject; the WhiteBrush
+            // label is the app's standard text pair.
+            "NavItemStyle",
         ];
 
     /// <summary>The two fills the input styles' own comment names, in the order it names them.</summary>
@@ -678,6 +684,19 @@ public class RenderedStyleGateTests(ITestOutputHelper output)
                         $"{c.Label}: the host no longer shows through, so this button now paints a "
                         + "fill of its own. It is excluded on the grounds that it has none — "
                         + "re-classify it into BorderlessFilled and measure that fill against the page.");
+                    break;
+
+                case "NavItemStyle":
+                    // A rail item at rest: transparent template, host showing through in bulk IS
+                    // the exclusion's claim, measured — selection lives in geometry (the 3px bar),
+                    // never in a fill, per the style's own comment. A rail item that started
+                    // painting a resting or selected fill would stop leaking, and would be
+                    // rebuilding the flatline failure the shape-not-fill rule exists to prevent —
+                    // re-classify AND re-read F-002 before believing that fill.
+                    Assert.True(c.Authored.SentinelLeaked,
+                        $"{c.Label}: the host no longer shows through, so this ListBoxItem now "
+                        + "paints a fill of its own. It is excluded on the grounds that selection "
+                        + "is a shape, not a fill.");
                     break;
 
                 default:

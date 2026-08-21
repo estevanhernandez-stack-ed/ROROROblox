@@ -55,8 +55,8 @@ public class AboutMarkRenderTests
     private static RegionSample MarkUnder(Theme theme, double dpi = 96) =>
         ThemedWindowRender.MeasureRegion(
             theme,
-            $"AboutWindow mark [{theme.Id}] @{dpi}dpi",
-            () => new ROROROblox.App.About.AboutWindow(),
+            $"AboutPage mark [{theme.Id}] @{dpi}dpi",
+            () => ThemedWindowRender.HostPage(new ROROROblox.App.About.AboutPage(), 500, 600),
             content => ThemedWindowRender.Find(
                 content,
                 fe => fe is Canvas { Width: 64, Height: 64 },

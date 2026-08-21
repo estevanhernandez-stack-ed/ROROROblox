@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
 using ROROROblox.App.Discord;
 using ROROROblox.App.Modals;
 using ROROROblox.App.Startup;
@@ -16,13 +17,14 @@ using ROROROblox.Core.Transport;
 namespace ROROROblox.App.Preferences;
 
 /// <summary>
-/// Two persistent toggles: "Start ROROROblox when Windows starts" (HKCU Run via
-/// <see cref="IStartupRegistration"/>) and "Launch your main account when ROROROblox starts"
-/// (<see cref="IAppSettings.SetLaunchMainOnStartupAsync"/>). Read both at open, write each
-/// independently on click. No Apply button — toggles persist immediately, like Windows
-/// Settings.
+/// The Settings destination, hosted by the shell (F-013 — formerly <c>PreferencesWindow</c>, a
+/// modal dialog). Toggles read at load and persist immediately on click, like Windows Settings —
+/// no Apply button. Going modeless is safe because every shared record this page edits now has a
+/// single owner (<see cref="DiscordConfigService"/> for Discord; <see cref="IAppSettings"/>'
+/// internal gate for the rest). Implements <see cref="IDisposable"/> for the subscriptions the
+/// window used to release on <c>Closed</c>; the shell disposes pages when it closes.
 /// </summary>
-internal partial class PreferencesWindow : Window
+internal partial class SettingsPage : UserControl, IDisposable
 {
     private readonly IAppSettings _settings;
     private readonly IStartupRegistration _startupRegistration;
@@ -76,7 +78,7 @@ internal partial class PreferencesWindow : Window
     // (subscribe/unsubscribe) both have a reference without re-touching MainViewModel each time.
     private DiscordPresenceService? _discordPresence;
 
-    public PreferencesWindow(
+    public SettingsPage(
         IAppSettings settings,
         IStartupRegistration startupRegistration,
         IThemeStore themeStore,
@@ -124,7 +126,6 @@ internal partial class PreferencesWindow : Window
             });
 
         Loaded += OnLoaded;
-        Closed += OnClosed;
     }
 
     /// <summary>
@@ -134,7 +135,7 @@ internal partial class PreferencesWindow : Window
     /// keeps firing (and marshalling through this closed window's <see cref="Window.Dispatcher"/>)
     /// for the rest of the process.
     /// </summary>
-    private void OnClosed(object? sender, EventArgs e)
+    public void Dispose()
     {
         if (_discordPresence is { } presence)
         {
@@ -380,7 +381,7 @@ internal partial class PreferencesWindow : Window
             ShowThemeStatus(line.Any ? line : _themeFolderStatus);
             // Switching TO a user theme whose edge had to be raised is the same question startup
             // asks — put here too, or the only way to see it would be to restart.
-            await EdgeRemediationWindow.AskIfPendingAsync(_themeService, this);
+            await EdgeRemediationWindow.AskIfPendingAsync(_themeService, Window.GetWindow(this));
         }
         catch
         {
@@ -450,7 +451,7 @@ internal partial class PreferencesWindow : Window
 
     private async void OnBuildThemeClick(object sender, RoutedEventArgs e)
     {
-        var builder = new ThemeBuilderWindow(_themeStore, _themeService) { Owner = this };
+        var builder = new ThemeBuilderWindow(_themeStore, _themeService) { Owner = Window.GetWindow(this) };
         if (builder.ShowDialog() == true && builder.SavedTheme is { } saved)
         {
             // Refresh the picker so the brand-new theme shows up + is selected.
@@ -477,7 +478,7 @@ internal partial class PreferencesWindow : Window
 
             // Asked here rather than inside the builder: the builder is closing at the moment it
             // applies the theme, and a dialog parented to a window on its way out is a flicker.
-            await EdgeRemediationWindow.AskIfPendingAsync(_themeService, this);
+            await EdgeRemediationWindow.AskIfPendingAsync(_themeService, Window.GetWindow(this));
         }
     }
 
@@ -515,7 +516,7 @@ internal partial class PreferencesWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this,
+            MessageBox.Show(Window.GetWindow(this),
                 $"Couldn't update Windows startup entry: {ex.Message}",
                 "Preferences",
                 MessageBoxButton.OK,
@@ -536,7 +537,7 @@ internal partial class PreferencesWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this,
+            MessageBox.Show(Window.GetWindow(this),
                 $"Couldn't save preference: {ex.Message}",
                 "Preferences",
                 MessageBoxButton.OK,
@@ -566,7 +567,7 @@ internal partial class PreferencesWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this,
+            MessageBox.Show(Window.GetWindow(this),
                 $"Couldn't save preference: {ex.Message}",
                 "Preferences",
                 MessageBoxButton.OK,
@@ -589,7 +590,7 @@ internal partial class PreferencesWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this,
+            MessageBox.Show(Window.GetWindow(this),
                 $"Could not save that setting: {ex.Message}",
                 "RoRoRo", MessageBoxButton.OK, MessageBoxImage.Warning);
             _suppressClickHandlers = true;
@@ -611,7 +612,7 @@ internal partial class PreferencesWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this,
+            MessageBox.Show(Window.GetWindow(this),
                 $"Couldn't save preference: {ex.Message}",
                 "Preferences",
                 MessageBoxButton.OK,
@@ -676,7 +677,7 @@ internal partial class PreferencesWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this,
+            MessageBox.Show(Window.GetWindow(this),
                 $"Couldn't save preference: {ex.Message}",
                 "Preferences",
                 MessageBoxButton.OK,
@@ -700,7 +701,7 @@ internal partial class PreferencesWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this,
+            MessageBox.Show(Window.GetWindow(this),
                 $"Couldn't save preference: {ex.Message}",
                 "Preferences",
                 MessageBoxButton.OK,
@@ -821,7 +822,7 @@ internal partial class PreferencesWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, $"Couldn't save alert routing: {ex.Message}",
+            MessageBox.Show(Window.GetWindow(this), $"Couldn't save alert routing: {ex.Message}",
                 "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -964,7 +965,7 @@ internal partial class PreferencesWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, $"Couldn't save the webhook: {ex.Message}",
+            MessageBox.Show(Window.GetWindow(this), $"Couldn't save the webhook: {ex.Message}",
                 "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -1049,7 +1050,7 @@ internal partial class PreferencesWindow : Window
     /// joined one. A server you make for yourself is free, private, and takes three clicks.
     /// </summary>
     private void OnNoServerHelpClick(object sender, RoutedEventArgs e) =>
-        MessageBox.Show(this,
+        MessageBox.Show(Window.GetWindow(this),
             """
             You need a Discord server of your own. It's free, it can be just you, and nobody else can see it.
 
@@ -1120,7 +1121,7 @@ internal partial class PreferencesWindow : Window
             }
 
             RefreshMutedAccounts();
-            MessageBox.Show(this,
+            MessageBox.Show(Window.GetWindow(this),
                 $"Couldn't save that: {ex.Message}",
                 "Preferences",
                 MessageBoxButton.OK,
@@ -1154,7 +1155,7 @@ internal partial class PreferencesWindow : Window
     {
         if (!_themeService.ReopenEdgeQuestion())
         {
-            MessageBox.Show(this,
+            MessageBox.Show(Window.GetWindow(this),
                 "There's nothing to choose for this theme.\n\n"
                 + "RoRoRo only asks about button outlines on themes people write themselves, and "
                 + "only when the outline a theme sets would be too faint to tell a button apart "
@@ -1166,7 +1167,7 @@ internal partial class PreferencesWindow : Window
             return;
         }
 
-        await EdgeRemediationWindow.AskIfPendingAsync(_themeService, this);
+        await EdgeRemediationWindow.AskIfPendingAsync(_themeService, Window.GetWindow(this));
     }
 
     /// <summary>
@@ -1197,10 +1198,15 @@ internal partial class PreferencesWindow : Window
         try
         {
             await _settings.SetMuteIdleAlertsAsync(MuteIdleAlertsToggle.IsChecked == true);
+            // Push the change into the live monitor + VM. The tray path used to do this once, on
+            // dialog close; a shell page has no close moment, and the main-window path never did
+            // it at all — an edit here silently waited for a restart. Per-edit is the fix for
+            // both (F-013).
+            await _mainViewModel.InitializeIdleSettingsAsync(_settings);
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this,
+            MessageBox.Show(Window.GetWindow(this),
                 $"Couldn't save preference: {ex.Message}",
                 "Preferences",
                 MessageBoxButton.OK,
@@ -1222,10 +1228,12 @@ internal partial class PreferencesWindow : Window
         try
         {
             await _settings.SetIdleWarnThresholdMinutesAsync(minutes);
+            // Same per-edit re-push as the mute toggle above (F-013).
+            await _mainViewModel.InitializeIdleSettingsAsync(_settings);
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this,
+            MessageBox.Show(Window.GetWindow(this),
                 $"Couldn't save preference: {ex.Message}",
                 "Preferences",
                 MessageBoxButton.OK,
@@ -1530,7 +1538,7 @@ internal partial class PreferencesWindow : Window
         if (accounts.Count == 0)
         {
             MessageBox.Show(
-                this,
+                Window.GetWindow(this),
                 "You don't have any saved accounts to export yet.",
                 "Nothing to export",
                 MessageBoxButton.OK,
@@ -1538,13 +1546,13 @@ internal partial class PreferencesWindow : Window
             return;
         }
 
-        var window = new ExportAccountsWindow(_accountStore, _transport, accounts) { Owner = this };
+        var window = new ExportAccountsWindow(_accountStore, _transport, accounts) { Owner = Window.GetWindow(this) };
         window.ShowDialog();
     }
 
     private void OnImportAccountsClick(object sender, RoutedEventArgs e)
     {
-        var window = new ImportAccountsWindow(_accountStore, _transport, _mainViewModel) { Owner = this };
+        var window = new ImportAccountsWindow(_accountStore, _transport, _mainViewModel) { Owner = Window.GetWindow(this) };
         window.ShowDialog();
     }
 
@@ -1580,5 +1588,4 @@ internal partial class PreferencesWindow : Window
         }
     }
 
-    private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
 }
