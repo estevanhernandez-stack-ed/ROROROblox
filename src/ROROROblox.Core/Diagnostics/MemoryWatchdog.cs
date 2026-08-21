@@ -30,6 +30,17 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
     private const double CapReArmFactor = 0.95;
 
     /// <summary>
+    /// F-083. Learns this machine's real per-client footprint from the samples this class is
+    /// already taking. Fed only from the SETTLED branch below — the same
+    /// <c>elapsed &gt;= MinimumObservation</c> gate the growth slope uses, asked once rather than
+    /// twice — and never while the machine is below its reserve.
+    /// </summary>
+    private readonly ClientFootprintLearner _footprint = new();
+
+    /// <inheritdoc />
+    public int ExpectedClientMb => _footprint.EstimateMb;
+
+    /// <summary>
     /// Projection re-arm deadband. Same reasoning, opposite direction: a HIGHER minutes-to-ceiling
     /// is healthier, so recovery must clear the threshold by 15% before the latch re-arms.
     /// </summary>
@@ -138,6 +149,10 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
     {
         var now = _clock.UtcNow;
         var accounts = new List<AccountMemory>(_records.Count);
+
+        // F-083: settled readings this tick, fed to the footprint learner once `belowReserve`
+        // is known below. See the note at the Add call.
+        var settledSamples = new List<long>();
         double aggregateGrowth = 0;
 
         foreach (var kv in _records)
@@ -185,6 +200,16 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
                 growth = (bytes - rec.BaselineBytes) / elapsed.TotalHours;
                 if (growth < 0) growth = 0;
                 aggregateGrowth += growth;
+
+                // F-083. A client observed past MinimumObservation has stopped loading and is doing
+                // whatever it does steadily — exactly the reading worth learning from, and exactly
+                // the gate this branch already computes, so it is asked once rather than twice.
+                //
+                // BUFFERED rather than fed here, because whether the machine is below its reserve
+                // is not known until `available` is read after this loop, and that is half the
+                // discard rule. Reordering the read to suit the learner would move existing
+                // pressure logic to serve a new consumer, which is the wrong way round.
+                settledSamples.Add(bytes);
             }
 
             accounts.Add(new AccountMemory(kv.Key, bytes, growth, 0, false, false, ReadOk: true));
@@ -224,6 +249,14 @@ public sealed class MemoryWatchdog : IMemoryWatchdog, IDisposable
         }
 
         var belowReserve = systemOk && ReserveBytes > 0 && available < ReserveBytes;
+
+        // F-083. Now that pressure is known, the settled readings can be learned from — or
+        // discarded wholesale, which is what happens under pressure: a squeezed client's footprint
+        // describes the squeeze, not the client.
+        foreach (var sample in settledSamples)
+        {
+            _footprint.Observe(sample, belowReserve);
+        }
         if (belowReserve && !_headroomLatched)
         {
             _headroomLatched = true;

@@ -127,6 +127,8 @@ public class DiagnosticsCollectorTests
         public bool ThrowOnGetSnapshot;
 
         public long CapBytes { get; set; }
+
+        public int ExpectedClientMb => ROROROblox.Core.Diagnostics.ClientFootprintLearner.SeedMb;
         public long ReserveBytes { get; set; }
         public int ProjectionWarnMinutes { get; set; }
 

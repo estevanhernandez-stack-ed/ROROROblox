@@ -1887,7 +1887,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             if (targets.Count > 0
                 && !Modals.LaunchHeadroomWindow.ShouldProceed(
                     _memoryWatchdog.GetSnapshot(), _memoryWatchdog.ReserveBytes, targets.Count,
-                    Application.Current?.MainWindow))
+                    Application.Current?.MainWindow, _memoryWatchdog.ExpectedClientMb))
             {
                 _log.LogInformation("LaunchMultiple: cancelled at the headroom warning ({Count} targets)", targets.Count);
                 return;

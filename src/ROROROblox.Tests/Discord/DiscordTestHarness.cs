@@ -518,6 +518,7 @@ internal static class DiscordTestHarness
     private sealed class FakeMemoryWatchdog : IMemoryWatchdog
     {
         public long CapBytes { get; set; }
+        public int ExpectedClientMb => ROROROblox.Core.Diagnostics.ClientFootprintLearner.SeedMb;
         public long ReserveBytes { get; set; }
         public int ProjectionWarnMinutes { get; set; }
 

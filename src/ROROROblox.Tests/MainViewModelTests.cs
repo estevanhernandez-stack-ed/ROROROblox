@@ -1009,6 +1009,7 @@ public class MainViewModelTests
         public readonly List<(Guid Id, int Pid)> Resets = new();
         public MemoryPressureSnapshot Snapshot = new(0, 0, 0, false, null, []);
         public long CapBytes { get; set; }
+        public int ExpectedClientMb => ROROROblox.Core.Diagnostics.ClientFootprintLearner.SeedMb;
         public long ReserveBytes { get; set; }
         public int ProjectionWarnMinutes { get; set; }
         public event EventHandler<MemoryPressureSnapshot>? PressureCrossed { add { } remove { } }
@@ -1477,6 +1478,7 @@ public class MainViewModelTests
     private sealed class FakeMemoryWatchdogWithProjectionMinutes : IMemoryWatchdog
     {
         public long CapBytes { get; set; }
+        public int ExpectedClientMb => ROROROblox.Core.Diagnostics.ClientFootprintLearner.SeedMb;
         public long ReserveBytes { get; set; }
         public int ProjectionWarnMinutes { get; set; }
         public event EventHandler<MemoryPressureSnapshot>? PressureCrossed { add { } remove { } }
@@ -1769,6 +1771,7 @@ public class MainViewModelTests
     internal sealed class FakeMemoryWatchdog : IMemoryWatchdog
     {
         public long CapBytes { get; set; }
+        public int ExpectedClientMb => ROROROblox.Core.Diagnostics.ClientFootprintLearner.SeedMb;
         public long ReserveBytes { get; set; }
         public int ProjectionWarnMinutes { get; set; }
 

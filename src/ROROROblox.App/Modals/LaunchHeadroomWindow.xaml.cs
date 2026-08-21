@@ -49,8 +49,14 @@ internal partial class LaunchHeadroomWindow : Window
     /// when the launch should go ahead — including every case where there is nothing to warn about,
     /// so callers can treat this as a plain "may I continue?".
     /// </summary>
+    /// <param name="expectedClientMb">What one client costs on THIS machine — the watchdog's
+    /// learned figure (F-083), not the constant measured on somebody else's hardware. Passed in
+    /// rather than read from the snapshot because the snapshot describes a moment and this
+    /// describes the machine; conflating them would put an estimate inside a record whose whole
+    /// contract is "what was true at this instant".</param>
     internal static bool ShouldProceed(
-        MemoryPressureSnapshot snapshot, long reserveBytes, int requested, Window? owner)
+        MemoryPressureSnapshot snapshot, long reserveBytes, int requested, Window? owner,
+        int expectedClientMb)
     {
         // Reads the watchdog's own sample rather than taking a fresh probe: the view model already
         // holds it, memory does not move meaningfully in 30 seconds, and this avoids adding a
@@ -61,7 +67,7 @@ internal partial class LaunchHeadroomWindow : Window
         // failed read would fire this dialog on every launch for anyone whose probe is broken.
         var available = snapshot.AvailableBytes;
         var aggregateClientBytes = snapshot.AggregateClientBytes;
-        var (verdict, roomFor) = LaunchHeadroomAdvisor.Evaluate(available > 0, available, reserveBytes, requested);
+        var (verdict, roomFor) = LaunchHeadroomAdvisor.Evaluate(available > 0, available, reserveBytes, requested, expectedClientMb);
 
         // Fits, or we could not measure. An UNKNOWN reading must not manufacture a warning any more
         // than it may manufacture reassurance — it simply has nothing to say.
