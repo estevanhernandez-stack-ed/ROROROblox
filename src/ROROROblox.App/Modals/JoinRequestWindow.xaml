@@ -44,7 +44,7 @@
         <TextBlock Grid.Row="2"
                    Text="ROBLOX CHECKS ACCESS SERVER-SIDE"
                    FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                   FontSize="10"
+                   FontSize="{StaticResource MetaFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
                    VerticalAlignment="Bottom"
                    Margin="0,16,0,0" />

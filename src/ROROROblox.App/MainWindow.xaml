@@ -59,7 +59,7 @@
                                     VerticalAlignment="Center"
                                     Visibility="{Binding IsMain, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <TextBlock Text="MAIN"
-                                           FontSize="8" FontWeight="Bold"
+                                           FontSize="{StaticResource MetaFontSize}" FontWeight="Bold"
                                            Foreground="{DynamicResource OnMagentaBrush}" />
                             </Border>
                             <!-- Memory chip (compact mode) — same MemoryText/MemoryWarning + the same
@@ -74,7 +74,7 @@
                                     Margin="6,0,0,0"
                                     VerticalAlignment="Center">
                                 <TextBlock Text="{Binding MemoryText}"
-                                           FontSize="9">
+                                           FontSize="{StaticResource MetaFontSize}">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
@@ -88,7 +88,7 @@
                                 </TextBlock>
                             </Border>
                         </StackPanel>
-                        <TextBlock FontSize="10" Foreground="{DynamicResource MutedTextBrush}"
+                        <TextBlock FontSize="{StaticResource MetaFontSize}" Foreground="{DynamicResource MutedTextBrush}"
                                    Margin="0,2,0,0"
                                    TextTrimming="CharacterEllipsis">
                             <Run Text="{Binding SelectedGame.Name, FallbackValue='(default game)', TargetNullValue='(default game)'}" />
@@ -122,7 +122,7 @@
                                             BorderBrush="{DynamicResource CyanBrush}"
                                             BorderThickness="1">
                                         <TextBlock Text="{Binding}"
-                                                   FontSize="9"
+                                                   FontSize="{StaticResource MetaFontSize}"
                                                    Foreground="{DynamicResource WhiteBrush}"
                                                    TextTrimming="CharacterEllipsis"
                                                    MaxWidth="120" />
@@ -171,7 +171,7 @@
                                 Command="{Binding DataContext.StopAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="10,4"
-                                FontSize="10"
+                                FontSize="{StaticResource MetaFontSize}"
                                 ToolTip="Close the Roblox window for this account."
                                 Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}" />
                     </StackPanel>
@@ -422,7 +422,7 @@
                                     VerticalAlignment="Center"
                                     Visibility="{Binding IsMain, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <TextBlock Text="MAIN"
-                                           FontSize="9" FontWeight="Bold"
+                                           FontSize="{StaticResource MetaFontSize}" FontWeight="Bold"
                                            Foreground="{DynamicResource OnMagentaBrush}" />
                             </Border>
                         </StackPanel>
@@ -568,7 +568,7 @@
                                 </Style>
                             </StackPanel.Style>
                             <TextBlock Text="Follow:"
-                                       FontSize="10"
+                                       FontSize="{StaticResource MetaFontSize}"
                                        Foreground="{DynamicResource MutedTextBrush}"
                                        VerticalAlignment="Center"
                                        Margin="0,0,6,0"
@@ -618,7 +618,7 @@
                                                 <Image Source="{Binding AvatarDisplaySource}" Stretch="UniformToFill" />
                                             </Border>
                                             <TextBlock Text="{Binding RenderName}"
-                                                       FontSize="10"
+                                                       FontSize="{StaticResource MetaFontSize}"
                                                        Foreground="{DynamicResource WhiteBrush}"
                                                        VerticalAlignment="Center"
                                                        TextTrimming="CharacterEllipsis"
@@ -654,7 +654,7 @@
                                                 BorderThickness="1">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding}"
-                                                           FontSize="10"
+                                                           FontSize="{StaticResource MetaFontSize}"
                                                            Foreground="{DynamicResource WhiteBrush}"
                                                            VerticalAlignment="Center"
                                                            TextTrimming="CharacterEllipsis"
@@ -719,7 +719,7 @@
                                         Tag="{Binding}"
                                         Width="84"
                                         MaxLength="24"
-                                        FontSize="10"
+                                        FontSize="{StaticResource MetaFontSize}"
                                         Margin="0,0,0,5"
                                         Padding="6,1"
                                         VerticalContentAlignment="Center"
@@ -1237,7 +1237,7 @@
                                 <TextBlock Grid.Column="1"
                                            Text="DEFAULT"
                                            FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                                           FontSize="9"
+                                           FontSize="{StaticResource MetaFontSize}"
                                            Foreground="{DynamicResource MagentaBrush}"
                                            VerticalAlignment="Center"
                                            Margin="0,0,8,0" />
@@ -1420,7 +1420,7 @@
                                                             </Border.Style>
                                                             <TextBlock Text="DEFAULT"
                                                                        FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                                                                       FontSize="8"
+                                                                       FontSize="{StaticResource MetaFontSize}"
                                                                        FontWeight="Bold"
                                                                        Foreground="{DynamicResource OnMagentaBrush}" />
                                                         </Border>
@@ -1898,7 +1898,7 @@
                         Command="{Binding ToggleCompactCommand}"
                         Content="{Binding CompactToggleLabel}"
                         Padding="10,4" Margin="14,0,0,0"
-                        FontSize="10"
+                        FontSize="{StaticResource MetaFontSize}"
                         VerticalAlignment="Center"
                         ToolTip="Shrink to a small ops view that only shows running accounts. Click again to expand." />
 
@@ -1949,7 +1949,7 @@
 
                 <TextBlock Grid.Column="3"
                            Text="X minimizes to tray. Quit from the tray to exit."
-                           FontSize="10"
+                           FontSize="{StaticResource MetaFontSize}"
                            Foreground="{DynamicResource MutedTextBrush}"
                            Opacity="0.7"
                            VerticalAlignment="Center">

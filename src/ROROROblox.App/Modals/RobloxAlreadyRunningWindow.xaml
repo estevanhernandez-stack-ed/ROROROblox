@@ -67,7 +67,7 @@
              Start-anyway explanation -->
         <StackPanel Grid.Row="4" VerticalAlignment="Bottom">
             <TextBlock x:Name="StillLockedTick"
-                       FontFamily="JetBrains Mono, Cascadia Mono, Consolas" FontSize="10"
+                       FontFamily="JetBrains Mono, Cascadia Mono, Consolas" FontSize="{StaticResource MetaFontSize}"
                        Foreground="#F1B232" Margin="0,12,0,0" Visibility="Collapsed" />
             <TextBlock Text="Already have another copy of RoRoRo or a compatible tool holding the lock? Start anyway — multi-instance keeps working, and RoRoRo will show a banner while it doesn't hold the lock."
                        TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource MutedTextBrush}" Margin="0,12,0,0" />
