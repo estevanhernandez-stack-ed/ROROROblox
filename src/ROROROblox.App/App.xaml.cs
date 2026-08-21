@@ -272,26 +272,44 @@ public partial class App : Application
         }
         else if (verdict is StartupGateResult.Leftover leftover)
         {
-            var info = new Modals.LeftoverProcessesWindow(leftover.Windowless, leftover.Windowed);
-
-            // F-108, same reason as the branch above — and this is the one that actually bit. The
-            // singleton name IS held here, so multi-instance works and this dialog is purely
-            // informational, which makes the silence behind it even more misleading: nothing is
-            // wrong, and the log says nothing at all.
-            _log.LogInformation(
-                "Startup paused: {Windowless} windowless + {Windowed} windowed leftover Roblox "
-                + "process(es) — showing the leftover-process dialog and waiting for the user.",
-                leftover.Windowless, leftover.Windowed);
-            info.ShowDialog();
-            _log.LogInformation("Startup resumed: leftover dialog answered {Action}.", info.Action);
-            switch (info.Action)
+            // F-110. A windowless-only leftover is not an event, it is the aftermath of a normal
+            // session. Measured 2026-08-20: stopping a client CLEANLY spawns a fresh headless
+            // RobloxPlayerBeta about two seconds later — hwnd 0, no title, ~120-180 MB, still there
+            // minutes later. Every time. Raising a dialog about that put an interruption on the
+            // ordinary path and taught the user to dismiss dialogs unread, which is a debt the
+            // BLOCKED modal beside it then pays. Clear it and say so; do not ask.
+            var disposition = AppLifecycle.LeftoverStartupDecision.Decide(leftover.Windowless, leftover.Windowed);
+            if (disposition == AppLifecycle.LeftoverDisposition.ClearSilently)
             {
-                case Modals.LeftoverCleanupAction.StopAll:
-                    CleanUpLeftoverRoblox(leftover.Windowed > 0);
-                    break;
-                case Modals.LeftoverCleanupAction.ClearStrays:
-                    ClearLeftoverStrays();
-                    break;
+                _log.LogInformation(
+                    "Startup: {Windowless} headless Roblox stray(s) left over from a previous "
+                    + "session — clearing without asking (nothing is at stake and it happens every time).",
+                    leftover.Windowless);
+                ClearLeftoverStrays();
+            }
+            else if (disposition == AppLifecycle.LeftoverDisposition.Ask)
+            {
+                var info = new Modals.LeftoverProcessesWindow(leftover.Windowless, leftover.Windowed);
+
+                // F-108, same reason as the branch above — and this is the one that actually bit. The
+                // singleton name IS held here, so multi-instance works and this dialog is purely
+                // informational, which makes the silence behind it even more misleading: nothing is
+                // wrong, and the log says nothing at all.
+                _log.LogInformation(
+                    "Startup paused: {Windowless} windowless + {Windowed} windowed leftover Roblox "
+                    + "process(es) — showing the leftover-process dialog and waiting for the user.",
+                    leftover.Windowless, leftover.Windowed);
+                info.ShowDialog();
+                _log.LogInformation("Startup resumed: leftover dialog answered {Action}.", info.Action);
+                switch (info.Action)
+                {
+                    case Modals.LeftoverCleanupAction.StopAll:
+                        CleanUpLeftoverRoblox(leftover.Windowed > 0);
+                        break;
+                    case Modals.LeftoverCleanupAction.ClearStrays:
+                        ClearLeftoverStrays();
+                        break;
+                }
             }
             // mutex already held — proceed regardless
         }
