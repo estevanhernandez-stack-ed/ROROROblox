@@ -76,12 +76,18 @@ internal static class WindowRenderAvailability
                 return null;
             }
 
-            return IsContinuousIntegration
-                ? "Whole-window rendering does not work on a CI runner: a single render exceeds the "
-                  + "60s budget having started immediately, where the same render takes milliseconds "
-                  + "on a desktop. Tracked as F-105. These gates DO run locally and before every "
-                  + "release. Set RORORO_FORCE_WINDOW_RENDER=1 to run them here anyway."
-                : null;
+            // EXPERIMENT, 2026-08-21: the CI skip is lifted to test whether it shared F-105's root
+            // cause. The skip was added because "a single render exceeds the 60s budget having
+            // started immediately" — and we now know every render run was also executing the app's
+            // REAL startup inside the test host, which scans the plugin registry, starts a plugin
+            // process and performs an UPDATE CHECK OVER THE NETWORK. On a runner, that is a very
+            // plausible way to burn a 60s budget without the render itself being slow.
+            //
+            // If CI is green, the skip was a symptom of the same defect and this line stays gone,
+            // returning nine gates to CI. If CI fails, the causes are genuinely separate, this
+            // commit is reverted on its own, and F-105 keeps its CI half with one more thing ruled
+            // out. Either answer is worth the run.
+            return null;
         }
     }
 
