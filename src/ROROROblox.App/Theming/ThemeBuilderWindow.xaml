@@ -59,7 +59,7 @@
                            Foreground="{DynamicResource WhiteBrush}"
                            Margin="0,0,0,8" />
                 <TextBox Grid.Row="1"
-                         x:Name="JsonInput"
+                         x:Name="JsonInput" AutomationProperties.Name="Theme JSON"
                          AcceptsReturn="True"
                          AcceptsTab="True"
                          FontFamily="{DynamicResource MonoFontFamily}"

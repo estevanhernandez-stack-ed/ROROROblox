@@ -52,7 +52,7 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBox x:Name="UrlInput" Grid.Column="0"
+                    <TextBox x:Name="UrlInput" AutomationProperties.Name="Private server link" Grid.Column="0"
                              Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                              Background="{DynamicResource NavyBrush}"
                              VerticalContentAlignment="Center" Style="{StaticResource AppTextBoxStyle}"/>

@@ -123,7 +123,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBox Grid.Column="0"
-                             Text="{Binding InstallUrlInput, UpdateSourceTrigger=PropertyChanged}"
+                             Text="{Binding InstallUrlInput, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Plugin manifest URL"
                              Background="{DynamicResource NavyBrush}"
                              Padding="8,6"
                              FontSize="{DynamicResource BodyFontSize}"
@@ -317,6 +317,7 @@
                                             </StackPanel>
                                             <Button Grid.Column="1"
                                                     Content="{Binding ActionLabel}"
+                                                    AutomationProperties.Name="{Binding ActionLabel}"
                                                     Padding="14,6"
                                                     VerticalAlignment="Top"
                                                     Style="{StaticResource CtaButtonStyle}"

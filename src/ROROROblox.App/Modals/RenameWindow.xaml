@@ -43,7 +43,7 @@
         <!-- The actual rename input. Pre-filled by code-behind with CurrentLocalName ?? OriginalName.
              Focused on load with all-text-selected for fast retype. -->
         <TextBox Grid.Row="2"
-                 x:Name="NameTextBox"
+                 x:Name="NameTextBox" AutomationProperties.Name="New name"
                  FontSize="{DynamicResource HeadingFontSize}"
                  Padding="8,6"
                  MaxLines="1"

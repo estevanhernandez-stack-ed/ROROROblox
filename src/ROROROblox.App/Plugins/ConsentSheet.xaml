@@ -95,7 +95,7 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox Grid.Column="0"
-                                              IsChecked="{Binding IsGranted, Mode=TwoWay}"
+                                              IsChecked="{Binding IsGranted, Mode=TwoWay}" AutomationProperties.Name="Grant this capability"
                                               VerticalAlignment="Top"
                                               Margin="0,2,12,0" />
                                     <StackPanel Grid.Column="1">

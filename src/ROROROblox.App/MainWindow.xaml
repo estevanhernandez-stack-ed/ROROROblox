@@ -524,7 +524,7 @@
                             <!-- Selection toggle for batch launches. Filled cyan = included; hollow = skipped.
                                  Defaults to selected; user toggles to exclude an account from Launch multiple
                                  / Private server runs. Persisted to accounts.dat so the choice sticks. -->
-                            <ToggleButton Style="{StaticResource SelectionDotStyle}"
+                            <ToggleButton Style="{StaticResource SelectionDotStyle}" AutomationProperties.Name="Include this account in Launch multiple and Squad Launch"
                                           IsChecked="{Binding IsSelected}"
                                           Margin="12,0,4,0"
                                           VerticalAlignment="Center"
@@ -598,6 +598,7 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type vm:AccountSummary}">
                                     <Button Click="OnFollowChipClick"
+                                            AutomationProperties.Name="{Binding RenderName}"
                                             Tag="{Binding}"
                                             Margin="0,0,6,0"
                                             Padding="6,3"
@@ -678,7 +679,7 @@
                                                 <!-- Remove "×". DataContext here is the tag string; reach
                                                      up to the ItemsControl whose DataContext is the row's
                                                      AccountSummary for the command. -->
-                                                <Button Style="{StaticResource GhostButtonStyle}" Content="&#x00D7;"
+                                                <Button Style="{StaticResource GhostButtonStyle}" Content="&#x00D7;" AutomationProperties.Name="Remove this tag"
                                                         Command="{Binding DataContext.RemoveTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding}"
                                                         Margin="4,0,0,0"
@@ -730,7 +731,7 @@
                                            HorizontalAlignment="Center"
                                            IsHitTestVisible="False" />
                             </Border>
-                            <ui:TextBox x:Name="AddTagBox"
+                            <ui:TextBox x:Name="AddTagBox" AutomationProperties.Name="Add a tag to this account"
                                         PlaceholderText="add tag"
                                         Tag="{Binding}"
                                         Width="84"
@@ -778,7 +779,7 @@
                         <!-- Set / unset main. Magenta filled star = main; outlined grey star = not.
                              Click toggles. Lives leftmost so it groups visually with the MAIN pill on
                              the name line above. -->
-                        <Button Style="{StaticResource GhostButtonStyle}" Command="{Binding DataContext.SetMainCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        <Button Style="{StaticResource GhostButtonStyle}" AutomationProperties.Name="Set as main account" Command="{Binding DataContext.SetMainCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="6,4" Margin="0,0,8,0"
                                 Cursor="Hand">
@@ -847,7 +848,8 @@
                              MinWidth tuned down from 200 to give the name column room to breathe;
                              ComboBox grows naturally if the row width allows. -->
                         <Grid Margin="0,0,8,0" MinWidth="160" VerticalAlignment="Center">
-                            <ComboBox ItemsSource="{Binding DataContext.AvailableGames, RelativeSource={RelativeSource AncestorType=Window}}"
+                            <ComboBox AutomationProperties.Name="Game or private server to launch this account into"
+                                      ItemsSource="{Binding DataContext.AvailableGames, RelativeSource={RelativeSource AncestorType=Window}}"
                                       SelectedItem="{Binding SelectedGame}"
                                       DisplayMemberPath="DropdownLabel"
                                       VerticalAlignment="Center"
@@ -905,7 +907,7 @@
                             Width="120"
                             Margin="0,0,8,0"
                             VerticalAlignment="Center"
-                            SelectionChanged="FpsCombo_SelectionChanged"
+                            SelectionChanged="FpsCombo_SelectionChanged" AutomationProperties.Name="FPS cap applied at launch"
                             Loaded="FpsCombo_Loaded"
                             ToolTip="FPS cap applied at launch (DFIntTaskSchedulerTargetFps + GlobalBasicSettings FramerateCap)">
                             <ComboBoxItem Content="— FPS"         Tag="{x:Null}" />
@@ -1215,6 +1217,7 @@
                     <Grid Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <!-- Filled state: ToggleButton + dropdown Popup. -->
                         <ToggleButton x:Name="DefaultGameWidget"
+                                      AutomationProperties.Name="Default game — pick which game new launches use"
                                       MinWidth="220" MaxWidth="340"
                                       Padding="12,6"
                                       Background="{DynamicResource RowBgBrush}"
@@ -1346,6 +1349,7 @@
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
                                                 <Button Style="{StaticResource GhostButtonStyle}" Padding="10,6"
+                                                        AutomationProperties.Name="{Binding RenderName}"
                                                         HorizontalContentAlignment="Stretch"
                                                         Cursor="Hand"
                                                         Command="{Binding DataContext.SetDefaultGameCommand, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -1712,7 +1716,7 @@
                             </Style.Triggers>
                         </Style>
                     </Grid.Style>
-                    <ui:TextBox PlaceholderText="Filter accounts by tag or name…"
+                    <ui:TextBox PlaceholderText="Filter accounts by tag or name…" AutomationProperties.Name="Filter accounts"
                                 Text="{Binding AccountFilter, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                                 Icon="{ui:SymbolIcon Filter24}"
                                 ClearButtonEnabled="True"
@@ -1928,7 +1932,7 @@
                 <!-- Compact / Expand toggle, sitting next to the count on the left. -->
                 <Button Style="{StaticResource GhostButtonStyle}" Grid.Column="1"
                         Command="{Binding ToggleCompactCommand}"
-                        Content="{Binding CompactToggleLabel}"
+                        Content="{Binding CompactToggleLabel}" AutomationProperties.Name="{Binding CompactToggleLabel}"
                         Padding="10,4" Margin="14,0,0,0"
                         FontSize="{DynamicResource MetaFontSize}"
                         VerticalAlignment="Center"

@@ -59,7 +59,7 @@
 
                                     <CheckBox Grid.Column="0"
                                               VerticalAlignment="Center"
-                                              IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                              IsChecked="{Binding IsChecked, Mode=TwoWay}" AutomationProperties.Name="Include this account in the export"
                                               IsEnabled="{Binding CanExport}"
                                               Foreground="{DynamicResource WhiteBrush}" />
 
@@ -100,7 +100,7 @@
                    Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,16,0,6" />
 
-        <PasswordBox Grid.Row="5" x:Name="PassphraseBox"
+        <PasswordBox Grid.Row="5" x:Name="PassphraseBox" AutomationProperties.Name="Passphrase, at least 12 characters"
                      FontSize="{DynamicResource HeadingFontSize}"
                      Padding="10,8"
                      Background="{DynamicResource RowBgBrush}"
@@ -129,7 +129,7 @@
                        VerticalAlignment="Center" />
         </Grid>
 
-        <PasswordBox Grid.Row="7" x:Name="ConfirmBox"
+        <PasswordBox Grid.Row="7" x:Name="ConfirmBox" AutomationProperties.Name="Confirm passphrase"
                      FontSize="{DynamicResource HeadingFontSize}"
                      Padding="10,8"
                      Margin="0,10,0,0"

@@ -53,7 +53,7 @@
                        VerticalAlignment="Center"
                        Margin="0,0,8,0" />
             <TextBox Grid.Column="1"
-                     x:Name="HexInput"
+                     x:Name="HexInput" AutomationProperties.Name="Custom hex colour"
                      FontFamily="{DynamicResource MonoFontFamily}"
                      FontSize="{DynamicResource BodyFontSize}"
                      Padding="8,5"
