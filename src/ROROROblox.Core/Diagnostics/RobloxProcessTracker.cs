@@ -1,3 +1,4 @@
+using Windows.Win32;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
@@ -202,6 +203,31 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
         ProcessAttachFailed?.Invoke(this, new RobloxProcessEventArgs(accountId, 0));
     }
 
+    /// <summary>
+    /// Asks the client to close, the way clicking its X asks (F-111).
+    /// </summary>
+    /// <returns>
+    /// Whether we had a window to ask. <b>Never</b> whether it closed — that question has exactly
+    /// one honest answer, <c>HasExited</c>, and callers must ask it themselves.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This used to be <c>Process.CloseMainWindow()</c>, which posts <c>WM_CLOSE</c>. Roblox ignores
+    /// <c>WM_CLOSE</c>. Measured 2026-08-20 against a live in-game client: the message posts,
+    /// <c>CloseMainWindow</c> returns <c>true</c>, and the client is still running, still titled,
+    /// thirty seconds later. Because the caller's guard was <c>if (!RequestClose(…)) Kill(…)</c>,
+    /// that <c>true</c> meant Stop escalated to nothing and did nothing — the first press of the
+    /// button was inert for as long as the button has existed.
+    /// </para>
+    /// <para>
+    /// <c>WM_SYSCOMMAND</c>/<c>SC_CLOSE</c> is what clicking the X actually sends, and Roblox does
+    /// act on it: a client with no session exits; an in-game client raises Roblox's own confirm
+    /// ("Close Roblox" / "Back to Home") and waits for a person. That dialog is drawn by the Roblox
+    /// engine inside the game surface, so it is not an OS window — UI Automation cannot see it and
+    /// nothing here can detect it, which is why the caller waits on a human-sized budget rather
+    /// than a teardown-sized one.
+    /// </para>
+    /// </remarks>
     public bool RequestClose(Guid accountId)
     {
         if (!_attachedByAccount.TryGetValue(accountId, out var slot))
@@ -215,7 +241,20 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
             {
                 return false;
             }
-            return slot.Process.CloseMainWindow();
+
+            slot.Process.Refresh();
+            var hwnd = slot.Process.MainWindowHandle;
+            if (hwnd == IntPtr.Zero)
+            {
+                // Windowless client — nothing to ask. The caller's escalation is the only route.
+                return false;
+            }
+
+            return PInvoke.PostMessage(
+                new Windows.Win32.Foundation.HWND(hwnd),
+                PInvoke.WM_SYSCOMMAND,
+                new Windows.Win32.Foundation.WPARAM(PInvoke.SC_CLOSE),
+                default);
         }
         catch (Exception ex)
         {
