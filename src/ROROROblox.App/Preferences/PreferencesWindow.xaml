@@ -245,6 +245,26 @@
                                            Margin="22,4,0,0"
                                            Text="Recycle closes a client and puts it straight back into the server it was in — useful for a client that's gone sideways, not just one eating memory. Off, it appears only when RoRoRo warns about that account's memory." />
                             </StackPanel>
+
+                            <!-- F-111 / F-109. Stop now asks the client to close the way its own X does,
+                                 then waits ten seconds before forcing. An in-game Roblox answers by
+                                 raising its own confirm INSIDE the game, which RoRoRo cannot see or
+                                 click. Only that clean exit persists Roblox's settings, so waiting is
+                                 the default and skipping it is the opt-in. -->
+                            <StackPanel Margin="0,14,0,0">
+                                <CheckBox x:Name="AutoForceStopToggle"
+                                          Foreground="{DynamicResource WhiteBrush}"
+                                          FontSize="13"
+                                          FontWeight="SemiBold"
+                                          Click="OnAutoForceStopToggle">
+                                    <TextBlock Text="Stop clients immediately, without waiting." TextWrapping="Wrap" />
+                                </CheckBox>
+                                <TextBlock FontSize="11"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="22,4,0,0"
+                                           Text="Normally Stop gives Roblox ten seconds to close itself, counting down on the row, because Roblox asks you to confirm inside the game and only a clean exit saves your Roblox settings — window size, fullscreen, graphics quality. Turn this on and Stop closes the client at once, and those settings go back to whatever was last saved." />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 

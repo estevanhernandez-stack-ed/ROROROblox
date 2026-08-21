@@ -10,3 +10,9 @@ GetLastInputInfo
 LASTINPUTINFO
 GlobalMemoryStatusEx
 MEMORYSTATUSEX
+PostMessageW
+WM_SYSCOMMAND
+SC_CLOSE
+GetWindowRect
+GetWindowLongW
+WS_CAPTION
