@@ -218,6 +218,18 @@
         "F-117"
       ],
       "notes": "Scoped to two rows, not the four infra rows offered at wave 15. F-107 is tagged [new-mechanism] (xUnit 2.9.3 has no assembly-level skip) and gets its own wave; F-105's own row says the next step is a bisect of App.OnStartup, which is a research session rather than a wave item. F-116 was chosen because it had stopped being theoretical - it blocked TWO merges today, both RobloxProcessTrackerTests, both green on re-run. Fixed by sub-shape exactly as the row directed: assert-a-bound got an injected IClock and wait so tests drive virtual time (and the bounded test's tolerance TIGHTENED from 1800ms against a 600ms cap to cap plus one poll - the old slack existed only to survive a loaded runner); wait-for-an-effect got a poke-until-it-answers loop instead of a 600ms guess at when a FileSystemWatcher is armed. FpsCapSettlerTests deliberately untouched: it already uses FakeTimeProvider and its residue is its own pump's real-time observation budget, a thread-pool scheduling problem whose prior diagnosis is recorded in that file down to ThreadPool.PendingWorkItemCount and 18->36 thread injection. F-116 stays open on that family."
+    },
+    {
+      "id": 18,
+      "name": "The vocabulary finishes",
+      "status": "open",
+      "findings": [
+        "F-067",
+        "F-094",
+        "F-075",
+        "F-092"
+      ],
+      "notes": "F-093 and F-073 were announced in this batch and did NOT ship - said plainly rather than quietly dropped; they carry to the next wave. F-067: MonoFontFamily and DisplayFontFamily declared beside the size ladder, 25 mono declarations unified, and the display role given its first expression anywhere in the app. Both fallback stacks, no font files, so this stayed a vocabulary change rather than a packaging one. The seven bare-Consolas sites survived because neither brand font is installed on the authoring machine - both recipes fall through to Consolas and look identical, so the defect was invisible exactly where it was being written. Written with DynamicResource from the start; the StaticResource mistake that cost two CI runs on MetaFontSize was caught in review this time. F-094: Compose returns a severity, and THREE arms are failures rather than the two the row named - the never-pasted-a-webhook case is the least obvious, because nothing is broken and the user simply believes they finished. Brush driven from a Tag trigger in XAML so the colour stays visible to the theme gates. F-075 and F-092 closed-as-ruled with no code: both were rulings sitting in the open column, and counting them as work overstated the backlog by two."
     }
   ],
   "scope": {

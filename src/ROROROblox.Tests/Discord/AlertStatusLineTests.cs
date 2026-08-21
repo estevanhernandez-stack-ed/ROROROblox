@@ -17,7 +17,7 @@ public class AlertStatusLineTests
     {
         var line = AlertStatusLine.Compose(new DiscordConfig());
 
-        Assert.Contains("No alerts yet", line, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("No alerts yet", line.Text, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -29,8 +29,8 @@ public class AlertStatusLineTests
             DroppedOutDestination = AlertDestination.Local,
         });
 
-        Assert.Contains("phone", line, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("nothing", line, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("phone", line.Text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("nothing", line.Text, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -42,8 +42,8 @@ public class AlertStatusLineTests
             MineWebhookUrl = null,
         });
 
-        Assert.Contains("haven't pasted a webhook", line, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("away from it", line, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("haven't pasted a webhook", line.Text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("away from it", line.Text, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -58,8 +58,8 @@ public class AlertStatusLineTests
             new DiscordConfig { DroppedOutDestination = AlertDestination.Mine, MineWebhookUrl = Webhook },
             mineWebhookRejected: true);
 
-        Assert.Contains("deleted", line, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("nothing is reaching your phone", line, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("deleted", line.Text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("nothing is reaching your phone", line.Text, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class AlertStatusLineTests
             },
             clanWebhookRejected: true);
 
-        Assert.DoesNotContain("deleted", line, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("deleted", line.Text, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public class AlertStatusLineTests
             new DiscordConfig { DroppedOutDestination = AlertDestination.Mine, MineWebhookUrl = Webhook },
             mineChannelName: "rororo-alerts");
 
-        Assert.Equal("Sending to #rororo-alerts.", line);
+        Assert.Equal("Sending to #rororo-alerts.", line.Text);
     }
 
     [Fact]
@@ -99,8 +99,8 @@ public class AlertStatusLineTests
         var line = AlertStatusLine.Compose(
             new DiscordConfig { DroppedOutDestination = AlertDestination.Mine, MineWebhookUrl = Webhook });
 
-        Assert.Contains("Sending", line, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("nothing", line, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Sending", line.Text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("nothing", line.Text, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -120,8 +120,8 @@ public class AlertStatusLineTests
             mineChannelName: "rororo-alerts",
             clanChannelName: "clan-general");
 
-        Assert.Contains("#rororo-alerts", line, StringComparison.Ordinal);
-        Assert.Contains("#clan-general", line, StringComparison.Ordinal);
+        Assert.Contains("#rororo-alerts", line.Text, StringComparison.Ordinal);
+        Assert.Contains("#clan-general", line.Text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -137,7 +137,7 @@ public class AlertStatusLineTests
             ClanWebhookUrl = null,
         });
 
-        Assert.Contains("haven't pasted a webhook", line, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("haven't pasted a webhook", line.Text, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -152,6 +152,58 @@ public class AlertStatusLineTests
             MineWebhookUrl = Webhook,
         });
 
-        Assert.Contains("Sending", line, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Sending", line.Text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // ---- F-094: severity travels with the sentence ----
+
+    [Fact]
+    public void EveryArmThatReportsAFailureSaysSo()
+    {
+        // The whole of F-094. Each of these is a state where the user believes alerts are routed to
+        // Discord and they are not arriving; each used to render in CyanBrush, the colour a success
+        // gets. The sentence said one thing and the styling said another.
+        var deletedMine = AlertStatusLine.Compose(
+            new DiscordConfig { DroppedOutDestination = AlertDestination.Mine, MineWebhookUrl = "https://discord.com/api/webhooks/x" },
+            mineWebhookRejected: true);
+        var deletedClan = AlertStatusLine.Compose(
+            new DiscordConfig { DroppedOutDestination = AlertDestination.Clan, ClanWebhookUrl = "https://discord.com/api/webhooks/x" },
+            clanWebhookRejected: true);
+        var neverPasted = AlertStatusLine.Compose(
+            new DiscordConfig { DroppedOutDestination = AlertDestination.Mine });
+
+        Assert.True(deletedMine.IsFailure, deletedMine.Text);
+        Assert.True(deletedClan.IsFailure, deletedClan.Text);
+        Assert.True(neverPasted.IsFailure, neverPasted.Text);
+    }
+
+    [Fact]
+    public void ReportingAChoiceIsNotReportingAFailure()
+    {
+        // "Desktop only" and "no alerts yet" are exactly what the dropdowns say. Painting those as
+        // failures would be the same defect pointed the other way — and a line that cries wolf is
+        // how the deleted-webhook case above ends up ignored.
+        var nothing = AlertStatusLine.Compose(new DiscordConfig());
+        var desktop = AlertStatusLine.Compose(new DiscordConfig { DroppedOutDestination = AlertDestination.Local });
+        var sending = AlertStatusLine.Compose(
+            new DiscordConfig { DroppedOutDestination = AlertDestination.Mine, MineWebhookUrl = "https://discord.com/api/webhooks/x" },
+            mineChannelName: "rororo-alerts");
+
+        Assert.False(nothing.IsFailure, nothing.Text);
+        Assert.False(desktop.IsFailure, desktop.Text);
+        Assert.False(sending.IsFailure, sending.Text);
+    }
+
+    [Fact]
+    public void TheComposerCarriesNoPresentationGlyph()
+    {
+        // The triangle belongs to the view, for the reason MainWindow.xaml already records about the
+        // compat banner. A composer that bakes in a glyph cannot be reused by anything that renders
+        // differently, and the glyph then shows up in logs and test output as noise.
+        var failure = AlertStatusLine.Compose(
+            new DiscordConfig { DroppedOutDestination = AlertDestination.Mine, MineWebhookUrl = "https://discord.com/api/webhooks/x" },
+            mineWebhookRejected: true);
+
+        Assert.DoesNotContain("▲", failure.Text, StringComparison.Ordinal);
     }
 }

@@ -62,7 +62,7 @@
                          x:Name="JsonInput"
                          AcceptsReturn="True"
                          AcceptsTab="True"
-                         FontFamily="Consolas"
+                         FontFamily="{DynamicResource MonoFontFamily}"
                          FontSize="{DynamicResource BodyFontSize}"
                          Background="{DynamicResource NavyBrush}"
                          CaretBrush="{DynamicResource CyanBrush}"

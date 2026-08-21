@@ -127,6 +127,49 @@ public class TypeLadderFenceTests
             + "there is nothing to inherit from.");
     }
 
+    [Fact]
+    public void NoFontFamilyIsSpelledOutInMarkup()
+    {
+        // F-067, the same defect one axis over. The mono role was declared two ways — the full
+        // fallback stack at 18 sites and a bare "Consolas" at 7 — so seven meta labels skipped
+        // JetBrains Mono wherever it was installed. It survived because on a machine WITHOUT
+        // JetBrains Mono both recipes fall through to Consolas and render identically: the defect
+        // is invisible precisely where it is being written, which no amount of care catches.
+        var offenders = new List<string>();
+
+        foreach (var file in XamlStyleScanner.EnumerateAppXamlFiles())
+        {
+            var lines = File.ReadAllLines(file.FullPath);
+            for (var i = 0; i < lines.Length; i++)
+            {
+                foreach (Match m in Regex.Matches(lines[i], @"FontFamily=""([^""{][^""]*)"""))
+                {
+                    offenders.Add($"{file.Label}:{i + 1} FontFamily=\"{m.Groups[1].Value}\"");
+                }
+            }
+        }
+
+        Assert.True(offenders.Count == 0,
+            "A font family spelled out in markup is a second declaration of a role that already has "
+            + "one. Use {DynamicResource MonoFontFamily} or {DynamicResource DisplayFontFamily} — "
+            + "and if a genuinely new role is needed, declare it in ControlStyles.xaml beside the "
+            + "others so the next site inherits it instead of inventing a stack:" + Environment.NewLine
+            + string.Join(Environment.NewLine, offenders));
+    }
+
+    [Fact]
+    public void BothFamilyRolesAreDeclared()
+    {
+        var dictionary = XamlStyleScanner.EnumerateAppXamlFiles()
+            .First(f => f.FullPath.EndsWith("ControlStyles.xaml", StringComparison.OrdinalIgnoreCase));
+        var text = File.ReadAllText(dictionary.FullPath);
+
+        foreach (var key in new[] { "MonoFontFamily", "DisplayFontFamily" })
+        {
+            Assert.Contains($"x:Key=\"{key}\"", text, StringComparison.Ordinal);
+        }
+    }
+
     /// <summary>Every <c>FontSize=</c> attribute, whether it holds a number or a resource reference.</summary>
     private static int AllFontSizeAttributes() =>
         XamlStyleScanner.EnumerateAppXamlFiles()

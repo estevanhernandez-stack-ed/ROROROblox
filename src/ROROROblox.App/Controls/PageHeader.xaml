@@ -23,7 +23,7 @@
         <StackPanel Orientation="Horizontal">
             <!-- Wordmark: cyan + magenta separator, never one without the other (invariant 2). -->
             <TextBlock Text="RoRoRo"
-                       FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
+                       FontFamily="{DynamicResource DisplayFontFamily}" FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
                        Foreground="{DynamicResource CyanBrush}">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
@@ -38,7 +38,7 @@
             </TextBlock>
 
             <TextBlock Text=" / "
-                       FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
+                       FontFamily="{DynamicResource DisplayFontFamily}" FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
                        Foreground="{DynamicResource MagentaBrush}">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
@@ -53,7 +53,7 @@
             </TextBlock>
 
             <TextBlock Text="{Binding Heading, ElementName=Root}"
-                       FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
+                       FontFamily="{DynamicResource DisplayFontFamily}" FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
                        Foreground="{DynamicResource WhiteBrush}" />
         </StackPanel>
 

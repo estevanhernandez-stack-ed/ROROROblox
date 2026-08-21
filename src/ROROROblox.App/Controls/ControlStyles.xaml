@@ -614,6 +614,31 @@
          DynamicResource defers the lookup to render time and walks the tree it ends up in, by which
          point the dictionary is there. Two CI runs were spent learning this: the first fix moved the
          keys here from App.xaml, which was necessary and not sufficient. -->
+    <!-- ================= THE FAMILY ROLES (F-067) =================
+         Same argument as the size ladder above, one axis over. The mono role was declared TWO ways
+         — "JetBrains Mono, Cascadia Mono, Consolas" at 18 sites and a bare "Consolas" at 7 — so
+         seven meta labels skipped JetBrains Mono anywhere it was installed. It went unnoticed for an
+         ordinary reason: on a machine without JetBrains Mono both recipes fall through to Consolas
+         and look identical, so the defect is invisible exactly where it is being written.
+
+         The display role had NO expression anywhere in the app. Invariant 3 fixes the type roles —
+         Space Grotesk display, Inter body, JetBrains Mono for small meta labels — and F-067
+         explicitly refuses the "declare it intentionally system-font" branch, so the role gets a
+         name here rather than being quietly conceded.
+
+         BOTH ARE FALLBACK STACKS, not bundled fonts. Nothing here ships a font file: each names the
+         brand face first and degrades through faces Windows already has. That is what the mono
+         declaration has always done, and it keeps this a vocabulary change rather than a packaging
+         one. A machine with the brand fonts installed gets the brand; a machine without gets the
+         closest system equivalent instead of an arbitrary one. -->
+    <!-- CONSUMED WITH {DynamicResource}, for the reason recorded above the size ladder: several
+         render gates hand a real subtree to XamlReader.Parse as a standalone string and attach the
+         dictionary afterwards, which is too late for a parse-time StaticResource lookup. Two CI
+         runs were spent learning that with MetaFontSize; this one is written that way from the
+         start rather than being taught the same lesson twice. -->
+    <FontFamily x:Key="MonoFontFamily">JetBrains Mono, Cascadia Mono, Consolas</FontFamily>
+    <FontFamily x:Key="DisplayFontFamily">Space Grotesk, Segoe UI Variable Display, Segoe UI</FontFamily>
+
     <sys:Double x:Key="DisplayFontSize">22</sys:Double>
     <sys:Double x:Key="HeadingFontSize">14</sys:Double>
     <sys:Double x:Key="BodyFontSize">12</sys:Double>

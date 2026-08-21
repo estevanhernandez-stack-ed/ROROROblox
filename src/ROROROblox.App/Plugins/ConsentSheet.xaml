@@ -36,7 +36,7 @@
                        TextWrapping="Wrap" />
             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                 <TextBlock x:Name="HeaderVersion"
-                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                           FontFamily="{DynamicResource MonoFontFamily}"
                            FontSize="{DynamicResource MetaFontSize}"
                            Foreground="{DynamicResource CyanBrush}" />
                 <TextBlock Text=" -- "
@@ -67,7 +67,7 @@
         <!-- Capability heading -->
         <TextBlock Grid.Row="2"
                    Text="THIS PLUGIN ASKS FOR"
-                   FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                   FontFamily="{DynamicResource MonoFontFamily}"
                    FontSize="{DynamicResource MetaFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,18,0,8" />
@@ -120,7 +120,7 @@
                                              or "Runs on your machine". Same ruling as the warning
                                              banners this cycle — the words carry it. -->
                                         <TextBlock Text="{Binding Id}"
-                                                   FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                                   FontFamily="{DynamicResource MonoFontFamily}"
                                                    FontSize="{DynamicResource MetaFontSize}"
                                                    TextWrapping="Wrap">
                                             <TextBlock.Style>

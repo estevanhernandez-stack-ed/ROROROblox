@@ -123,7 +123,7 @@
             <TextBlock Grid.Column="1" x:Name="StrengthLabel"
                        Text=""
                        FontSize="{DynamicResource MetaFontSize}"
-                       FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                       FontFamily="{DynamicResource MonoFontFamily}"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="10,0,0,0"
                        VerticalAlignment="Center" />

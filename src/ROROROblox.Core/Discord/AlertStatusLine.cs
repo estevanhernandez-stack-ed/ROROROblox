@@ -28,7 +28,31 @@ public static class AlertStatusLine
     /// slot before the first alert lands in the wrong place.
     /// </para>
     /// </summary>
-    public static string Compose(
+    /// <summary>
+    /// A composed status sentence and whether it reports a FAILURE (F-094).
+    /// <para>
+    /// <c>Compose</c> returned a bare string and the view painted every arm in <c>CyanBrush</c> —
+    /// the accent, which is the treatment a success gets. So "your webhook was deleted, so nothing
+    /// is reaching your phone" was rendered in exactly the same colour as "sending to #alerts". The
+    /// sentence said one thing and the styling said another, and styling is what a user reads first.
+    /// </para>
+    /// <para>
+    /// Severity travels with the sentence rather than being re-derived by the caller, which would
+    /// mean the arm list existing in two places. The shape is copied from
+    /// <c>ThemeStatusSummary.Line</c> rather than invented. NO GLYPH HERE: the triangle belongs to
+    /// the view, for the reason <c>MainWindow.xaml</c> already records about the compat banner —
+    /// presentation glyphs do not belong in a composer's result.
+    /// </para>
+    /// </summary>
+    public readonly record struct Line(bool IsFailure, string Text);
+
+    /// <summary>Reports a state the user believes is working and is not.</summary>
+    private static Line Failure(string text) => new(true, text);
+
+    /// <summary>Reports a state that is what the user asked for, including "nothing configured".</summary>
+    private static Line Info(string text) => new(false, text);
+
+    public static Line Compose(
         DiscordConfig config,
         bool mineWebhookRejected = false,
         bool clanWebhookRejected = false,
@@ -41,19 +65,19 @@ public static class AlertStatusLine
 
         if (routed.All(d => d == AlertDestination.None))
         {
-            return "No alerts yet. Pick what you want to hear about above.";
+            return Info("No alerts yet. Pick what you want to hear about above.");
         }
 
         // A dead webhook outranks everything else here. The user believes alerts are configured,
         // the routing dropdown still says "My channel," and nothing is arriving.
         if (mineWebhookRejected && routed.Contains(AlertDestination.Mine))
         {
-            return "Your webhook was deleted, so nothing is reaching your phone. Alerts are falling back to desktop only — make a new webhook and paste it below.";
+            return Failure("Your webhook was deleted, so nothing is reaching your phone. Alerts are falling back to desktop only — make a new webhook and paste it below.");
         }
 
         if (clanWebhookRejected && routed.Contains(AlertDestination.Clan))
         {
-            return "The clan webhook was deleted, so nothing is reaching that channel. Alerts are falling back to desktop only.";
+            return Failure("The clan webhook was deleted, so nothing is reaching that channel. Alerts are falling back to desktop only.");
         }
 
         var needsMine = routed.Contains(AlertDestination.Mine) && string.IsNullOrWhiteSpace(config.MineWebhookUrl);
@@ -61,12 +85,17 @@ public static class AlertStatusLine
 
         if (needsMine || needsClan)
         {
-            return "You've routed alerts to a Discord channel but haven't pasted a webhook, so they'll only show on this PC — which won't help when you're away from it.";
+            // A failure too, and the least obvious of the three: nothing is broken, the user simply
+            // believes they finished configuring and did not. The outcome is identical — alerts are
+            // not arriving where they think they are.
+            return Failure("You've routed alerts to a Discord channel but haven't pasted a webhook, so they'll only show on this PC — which won't help when you're away from it.");
         }
 
         if (routed.All(d => d is AlertDestination.None or AlertDestination.Local))
         {
-            return "Desktop only. You'll see these at the PC, but nothing will reach your phone.";
+            // NOT a failure: this is exactly what the routing dropdowns say, so it is a report of a
+            // choice rather than a report of a problem.
+            return Info("Desktop only. You'll see these at the PC, but nothing will reach your phone.");
         }
 
         // Name every channel actually in use. With two webhooks configured, "Sending to #alerts"
@@ -83,8 +112,8 @@ public static class AlertStatusLine
             channels.Add(clanChannelName is { Length: > 0 } ? $"#{clanChannelName}" : "the clan channel");
         }
 
-        return channels.Count == 0
+        return Info(channels.Count == 0
             ? "Sending to your Discord channel."
-            : $"Sending to {string.Join(" and ", channels)}.";
+            : $"Sending to {string.Join(" and ", channels)}.");
     }
 }

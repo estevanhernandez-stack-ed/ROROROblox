@@ -73,7 +73,7 @@
                  a colour that means "this did not work" belongs to the slot that means that, not to
                  the slot that happens to look the same today. -->
             <TextBlock x:Name="StillLockedTick"
-                       FontFamily="JetBrains Mono, Cascadia Mono, Consolas" FontSize="{DynamicResource MetaFontSize}"
+                       FontFamily="{DynamicResource MonoFontFamily}" FontSize="{DynamicResource MetaFontSize}"
                        Foreground="{DynamicResource RowExpiredAccentBrush}" Margin="0,12,0,0" Visibility="Collapsed" />
             <TextBlock Text="Already have another copy of RoRoRo or a compatible tool holding the lock? Start anyway — multi-instance keeps working, and RoRoRo will show a banner while it doesn't hold the lock."
                        TextWrapping="Wrap" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,12,0,0" />
