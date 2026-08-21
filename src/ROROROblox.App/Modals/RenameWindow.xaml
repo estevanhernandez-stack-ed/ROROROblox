@@ -3,17 +3,23 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Rename"
-        Height="220" Width="400"
+        Width="400"
+        SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="{DynamicResource BgBrush}">
     <Grid Margin="24">
+        <!-- F-115: SizeToContent instead of a fixed height. The star row below was a SPACER that
+             pushed the buttons to the bottom of a guessed frame, and it is what made clipping
+             silent - a * row absorbs a shortfall by giving its child less than it asked for, so
+             the layout succeeds and the text disappears. About shipped a trademark disclaimer cut
+             mid-sentence that way (F-113). Every row is Auto now and the frame asks the content. -->
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
