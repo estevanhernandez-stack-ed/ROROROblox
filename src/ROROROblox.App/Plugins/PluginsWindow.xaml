@@ -209,7 +209,7 @@
                                                 <TextBlock Text="{Binding UpdateLabel}"
                                                            FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
                                                            FontSize="10"
-                                                           Foreground="{DynamicResource WhiteBrush}" />
+                                                           Foreground="{DynamicResource OnMagentaBrush}" />
                                             </Border>
                                         </StackPanel>
 

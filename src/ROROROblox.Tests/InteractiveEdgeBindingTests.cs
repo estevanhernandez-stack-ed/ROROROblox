@@ -13,7 +13,8 @@ namespace ROROROblox.Tests;
 /// </para>
 /// <para>
 /// The first version of this wave's plan missed the distinction and would have replaced
-/// <c>DividerBrush</c> app-wide — measured at <c>#1F3149 -> #5E6B7C</c> in brand, which repaints
+/// <c>DividerBrush</c> app-wide — measured at <c>#1F3149 -> #707B8B</c> in brand since F-090 made
+/// the derivation clear every surface rather than Navy alone (it read <c>#5E6B7C</c> before), which repaints
 /// every row rule and card edge in every user's theme from a dark hairline to mid grey, to fix a
 /// problem those surfaces do not have. The correction only holds while the derived brush stays on
 /// controls, and "just use the visible one everywhere, it looks cleaner" is a very easy edit to

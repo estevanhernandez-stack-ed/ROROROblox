@@ -17,7 +17,23 @@ public class EdgeRemediationWiringTests : IDisposable
 {
     private const string Navy = "#0F1F31";
     private const string FaintDivider = "#1F3149";   // 1.26:1 — below the 3:1 floor
-    private const string GoodDivider = "#5E6B7C";
+
+    /// <summary>
+    /// Clears 3:1 on BOTH surfaces this theme puts a control on: 3.26:1 against <see cref="Navy"/>
+    /// and 3.06:1 against its <c>RowBg</c> of <c>#152438</c>.
+    /// <para>
+    /// It was <c>#5E6B7C</c> until F-090, and that value was named "good" because it measures
+    /// 3.07:1 against Navy — while measuring <b>2.89:1 against the same theme's cards</b>. So the
+    /// fixture standing for "a theme with nothing wrong with it" had the exact defect F-090
+    /// describes, and the test asserting such a theme is never questioned was asserting that a
+    /// theme which SHOULD be questioned is not. The finding was inside its own control group.
+    /// </para>
+    /// </summary>
+    private const string GoodDivider = "#626F80";
+
+    /// <summary>Clears Navy (3.07:1) and fails the card (2.89:1) — the F-090 shape, kept as a
+    /// fixture now that it is no longer mistaken for a compliant theme.</summary>
+    private const string NavyOnlyDivider = "#5E6B7C";
 
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "rororo-edge-" + Guid.NewGuid().ToString("N"));
 
@@ -130,10 +146,25 @@ public class EdgeRemediationWiringTests : IDisposable
         // question. Decide() already returns LeaveAlone here; this pins the pairing.
         var theme = UserTheme(GoodDivider);
         var decision = EdgeRemediation.Decide(
-            theme.IsBuiltIn, theme.Navy, theme.Divider, alreadyAnswered: false, declined: false);
+            theme.IsBuiltIn, [theme.Navy, theme.RowBg], theme.Divider, alreadyAnswered: false, declined: false);
 
         Assert.Equal(EdgeRemediation.Decision.LeaveAlone, decision);
         Assert.Null(ThemeService.QuestionFor(theme, decision));
+    }
+
+    [Fact]
+    public void AThemeThatOnlyPassesOnTheWindowFieldIsStillAsked()
+    {
+        // F-090 at the consent layer. `#5E6B7C` clears 3:1 against Navy and lands at 2.89:1 on this
+        // theme's cards, where eight of the fourteen input call sites actually sit — so before the
+        // fix Decide() said LeaveAlone and the shortfall was never derived away and never raised.
+        // A boundary that fails on one of the two surfaces it lands on is not a compliant boundary.
+        var theme = UserTheme(NavyOnlyDivider);
+        var decision = EdgeRemediation.Decide(
+            theme.IsBuiltIn, [theme.Navy, theme.RowBg], theme.Divider, alreadyAnswered: false, declined: false);
+
+        Assert.Equal(EdgeRemediation.Decision.AskFirst, decision);
+        Assert.NotNull(ThemeService.QuestionFor(theme, decision));
     }
 
     private static Theme UserTheme(string divider) => new(

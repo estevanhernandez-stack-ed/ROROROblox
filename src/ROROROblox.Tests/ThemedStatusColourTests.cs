@@ -324,11 +324,12 @@ public class ThemedStatusColourTests
     private static readonly AllowedXamlLiteral[] XamlAllowList =
     [
         new("src/ROROROblox.App/App.xaml", "<SolidColorBrush x:Key=", 0,
-            "NOT a finding, and the only entry here that has none. These eleven instances are the "
-            + "governed path's own origin: ten theme slots plus the derived InteractiveEdgeBrush "
-            + "fallback, and ThemeService.ApplySlot REPLACES each instance on every theme change "
-            + "(ThemeService.cs:262-269). The hex in the markup is the pre-startup value of a brush "
-            + "the theme owns, not a colour that escaped it. Flagging these would flag the mechanism."),
+            "NOT a finding, and the only entry here that has none. These TWELVE instances are the "
+            + "governed path's own origin: ten theme slots plus two derived fallbacks — "
+            + "InteractiveEdgeBrush, and OnMagentaBrush since F-050 — and ThemeService.ApplySlot "
+            + "REPLACES each instance on every theme change (ThemeService.cs:262-269). The hex in "
+            + "the markup is the pre-startup value of a brush the theme owns, not a colour that "
+            + "escaped it. Flagging these would flag the mechanism. Was eleven until 2026-08-20."),
 
         // F-089's entry was retired by item 3b, which rebound SelectionDotStyle's four hexes to
         // MutedTextBrush and CyanBrush. It is deliberately not replaced by a narrower entry: an
@@ -382,10 +383,13 @@ public class ThemedStatusColourTests
             + "achromatic grey that would render the glow invisible. Two-line span: the effect and "
             + "the element that owns it, nothing else."),
 
-        new("src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml", null, 0,
-            "F-066, open. That row's surface is literally 'Modals/CookieCapture vs rest' and its "
-            + "62-hex count is where these fourteen live. Whole-file for the same reason: the row "
-            + "owns the file, not a line in it."),
+        // CookieCaptureWindow's entry was retired on 2026-08-20 by F-114, which bound all fourteen
+        // of its literals and took the file to zero. Not replaced by a narrower entry, for the same
+        // reason F-089's was not: an allow-list entry that outlives the finding it cites is exactly
+        // the defect NoExemptionOutlivesItsFinding catches one layer up. Worth recording that the
+        // entry it replaced cited F-066 — which went clean on 2026-08-12 against a NARROWED scope
+        // that had written this file off as out-of-scope modals, so the permission had already
+        // outlived its row by eight days and nothing noticed. The ceiling is what noticed.
 
         new("src/ROROROblox.App/Modals/", null, 0,
             "F-079 and F-066, both open. F-079 names StopAllConfirmWindow, LeftoverProcessesWindow, "
@@ -466,14 +470,41 @@ public class ThemedStatusColourTests
     /// adding one.
     /// </para>
     /// </summary>
-    private const int AllowedXamlLiteralCeiling = 35;
+    // 35 -> 36 -> 22 on 2026-08-20, both moves in one wave and in opposite directions.
+    //
+    // UP by one: OnMagentaBrush's pre-startup fallback in App.xaml, added by F-050 alongside the
+    // derived slot itself. That is the one allow-list entry with no finding behind it, so there is
+    // no row to re-count — the governed path grew by one brush and its origin grew with it.
+    //
+    // DOWN by fourteen: F-114 bound every literal in CookieCaptureWindow and its entry is retired.
+    //
+    // DERIVED, not adjusted: App.xaml 12 + AboutWindow 9 + Modals/ 1 = 22, counted against the tree
+    // rather than subtracted from the line above. And the Modals/ figure is the news — that entry's
+    // comment still describes six windows opting out of theming, and the folder is down to a SINGLE
+    // literal, `Foreground="#F1B232"` at RobloxAlreadyRunningWindow.xaml:65. F-079 and F-066 both
+    // went clean while that entry stayed, so it now grants permission almost nothing uses. Left in
+    // place rather than retired blind: one literal is a real literal and retiring the entry is a
+    // separate measurement, recorded as a register row instead of done in passing here.
+    private const int AllowedXamlLiteralCeiling = 22;
 
     /// <summary>
-    /// Vacuity floor. Well under the ceiling so that genuinely CLOSING F-079 or F-066 — which would
-    /// delete 53 and 14 hits respectively — does not turn a fix into a red build, while still
-    /// catching a repo-root walk that found nothing.
+    /// Vacuity floor — it catches a repo-root walk that found nothing, and nothing else.
+    /// <para>
+    /// 25 -> 15 on 2026-08-20, and the reason is worth keeping. This constant was set "well under
+    /// the ceiling so that genuinely CLOSING F-079 or F-066 does not turn a fix into a red build."
+    /// Both of those closed. The ceiling came down 97 -> 22 with them and the floor did not move,
+    /// so a floor written to protect a fix from failing the build ended up ABOVE its own ceiling
+    /// and failed the next fix outright — F-114, on the very file it was sized around. The guard
+    /// did exactly what it was built to prevent, because half of it was maintained and half was not.
+    /// </para>
+    /// <para>
+    /// 15 leaves room for retiring the Modals/ entry (one literal) and About's nine without this
+    /// tripping again. If the allow-list is ever emptied outright, this assertion is what should
+    /// change shape — a count is a proxy for "the walk ran", and the honest version asserts the walk
+    /// visited files.
+    /// </para>
     /// </summary>
-    private const int AllowedXamlLiteralFloor = 25;
+    private const int AllowedXamlLiteralFloor = 15;
 
     private static IEnumerable<(string RelativePath, string[] Lines)> AppXaml()
     {

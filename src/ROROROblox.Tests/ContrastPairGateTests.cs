@@ -112,22 +112,21 @@ public class ContrastPairGateTests
     /// </summary>
     private static readonly (string Fill, string Text, string Finding, double MinimumRatio)[] Exemptions =
     [
-        // F-050: white on magenta. Measured 2026-08-09 through this same resolution path
-        // (ContrastGuard.RatioBetween on ResolveTheme output, not hand arithmetic): 3.79:1 brand,
-        // 4.16:1 midnight, 3.29:1 magenta-heat. Flatline joined in v1.17 at 4.68:1 — above AA, so
-        // this exemption is not load-bearing for that theme, and F-050 stays open anyway because
-        // shipping a theme that does not need the exemption is not the same as resolving CTA
-        // foreground at brush-application time, which is the row's actual fix direction.
-        // The best theme-derived foreground still only reaches
-        // 4.40:1 under brand — under AA even after the obvious fix, which is why this is exempted
-        // rather than fixed outright. 8 elements use this pair. Open at the time of writing.
+        // EMPTY on 2026-08-20, for the first time since this gate was built.
         //
-        // MinimumRatio 3.20 sits a little below the worst measured theme (magenta-heat, 3.2858),
-        // leaving ~0.09 of headroom for measurement noise while still catching a real regression —
-        // the scenario this exemption exists to guard against is brand's Magenta getting retuned
-        // darker and white-on-magenta sliding from 3.79 toward 2-something while this gate stays
-        // green. A floor this close to the worst measured value cannot let that happen silently.
-        ("MagentaBrush", "WhiteBrush", "F-050", 3.20),
+        // The single entry was F-050, white on magenta: 3.79:1 brand, 4.16:1 midnight, 3.29:1
+        // magenta-heat, 4.68:1 flatline, forgiven down to a 3.20 floor. It is gone because the pair
+        // is gone — the five elements still using it now bind OnMagentaBrush, derived per theme by
+        // ContrastGuard.BestForeground and clearing AA in all four built-ins.
+        //
+        // WORTH KNOWING WHY IT TOOK A DERIVATION. The row's fix direction was "pick the higher-ratio
+        // of the two required slots", and by its own numbers that closes two themes of four: brand's
+        // best is 4.40:1 and midnight's is 4.16:1, both under AA. Picking is most of the fix and the
+        // walk is the rest. Two themes were already compliant and their colours are untouched.
+        //
+        // Leaving the array declared rather than deleting it: the next finding that needs contrast
+        // debt should record it here with a floor, not invent a second mechanism. An empty list is
+        // the honest state, and NoExemptionOutlivesItsFinding still guards whatever lands next.
     ];
 
     /// <summary>

@@ -28,14 +28,28 @@ public static class EdgeRemediation
     }
 
     /// <param name="isBuiltIn">Built-ins are ours; user themes belong to whoever wrote them.</param>
+    /// <param name="surfaces">
+    /// Every surface an interactive boundary can land on. Was a single <c>navy</c> until F-090,
+    /// which is the whole of that finding: a divider that clears 3:1 against Navy and fails against
+    /// <c>RowBg</c> returned <see cref="Decision.LeaveAlone"/>, so the shortfall on cards was never
+    /// derived away and never asked about. The worst surface decides — anything else means shipping
+    /// a boundary that fails somewhere and calling it remediated.
+    /// </param>
     /// <param name="alreadyAnswered">
     /// Whether this specific theme id has been answered before. Tracked per theme, not per app, so
     /// switching themes can ask again about a different theme while the same one never asks twice.
     /// </param>
     /// <param name="declined">The answer, when there was one.</param>
-    public static Decision Decide(bool isBuiltIn, string? navy, string? divider, bool alreadyAnswered, bool declined)
+    public static Decision Decide(bool isBuiltIn, IReadOnlyList<string?> surfaces, string? divider, bool alreadyAnswered, bool declined)
     {
-        var ratio = ContrastGuard.RatioBetween(navy, divider);
+        // The worst surface, not the first. Unparseable surfaces contribute nothing rather than
+        // forcing a decision — ThemeStore does no format validation, so a named colour does arrive.
+        double? ratio = null;
+        foreach (var surface in surfaces)
+        {
+            if (ContrastGuard.RatioBetween(surface, divider) is not { } r) continue;
+            ratio = ratio is null ? r : Math.Min(ratio.Value, r);
+        }
 
         // Unparseable values are not a contrast problem and are not a question worth asking; the
         // guard already returns such input unchanged.
@@ -55,10 +69,10 @@ public static class EdgeRemediation
     /// derived edge while the dialog is up — the question is whether to KEEP it, so showing the
     /// change is what makes the question answerable.
     /// </summary>
-    public static string Resolve(Decision decision, string? navy, string? divider) => decision switch
+    public static string Resolve(Decision decision, IReadOnlyList<string?> surfaces, string? divider) => decision switch
     {
         Decision.HonourDecline => divider ?? "",
         Decision.LeaveAlone => divider ?? "",
-        _ => ContrastGuard.Ensure(navy, divider),
+        _ => ContrastGuard.EnsureAgainstAll(surfaces, divider),
     };
 }

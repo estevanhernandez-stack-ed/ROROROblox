@@ -7,21 +7,34 @@
         Height="700" Width="1024"
         MinHeight="560" MinWidth="800" ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
-        Background="#0F1F31"
+        Background="{DynamicResource BgBrush}"
         Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
+    <!-- F-114. This window bound ZERO theme brushes and carried 14 hex literals — the one surface
+         every new user meets, rendering the brand palette on a field they may have themed to
+         something else, and the only window in the app that did not change under flatline. It was
+         counted in F-066's "out of scope modals" bucket and came into scope when wave 13 put its
+         copy on the table.
+
+         TWO CALLS WORTH STATING, because both had a nearest-match answer that would have been
+         wrong. #5CE6FF was a brighter cyan than any slot holds and is now CyanBrush: no eleventh
+         slot (invariant 6 — the contract does not grow), and "brighter than the theme's cyan" is
+         not a thing a user theme can promise. #F22F89 on the rejection hint is now
+         RowExpiredAccentBrush rather than MagentaBrush — that line is a FAILURE message, and the
+         expired accent is the app's failure colour. It happens to be byte-identical in brand, which
+         is exactly why binding it to the brand duo would have looked correct and meant nothing. -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Background="#0F1F31" Padding="16,12">
+        <Border Grid.Row="0" Background="{DynamicResource NavyBrush}" Padding="16,12">
             <StackPanel>
                 <TextBlock Text="Add a Roblox account"
                            FontSize="14" FontWeight="Bold"
-                           Foreground="#17D4FA" />
+                           Foreground="{DynamicResource CyanBrush}" />
                 <TextBlock FontSize="11"
-                           Foreground="#FFFFFF"
+                           Foreground="{DynamicResource WhiteBrush}"
                            Opacity="0.9"
                            Margin="0,4,0,0"
                            TextWrapping="Wrap">
@@ -30,21 +43,21 @@
                     <Run Text=" over HTTPS, inside this embedded browser. RoRoRo never sees it." />
                 </TextBlock>
                 <TextBlock FontSize="11"
-                           Foreground="#FFFFFF"
+                           Foreground="{DynamicResource WhiteBrush}"
                            Opacity="0.7"
                            Margin="0,2,0,0"
                            TextWrapping="Wrap">
                     <Run Text="We capture only the session cookie that Roblox sets after a successful login, then encrypt it on disk via Windows DPAPI tied to your user." />
                 </TextBlock>
                 <Border Margin="0,8,0,0" Padding="10,8"
-                        Background="#15263A" CornerRadius="4">
+                        Background="{DynamicResource RowBgBrush}" CornerRadius="4">
                     <StackPanel>
                         <TextBlock FontSize="11" FontWeight="SemiBold"
-                                   Foreground="#5CE6FF">
+                                   Foreground="{DynamicResource CyanBrush}">
                             <Run Text="If the page is blank, click Reload (F5)." />
                         </TextBlock>
                         <TextBlock FontSize="11"
-                                   Foreground="#FFFFFF"
+                                   Foreground="{DynamicResource WhiteBrush}"
                                    Opacity="0.85"
                                    Margin="0,2,0,0"
                                    TextWrapping="Wrap">
@@ -54,7 +67,7 @@
                              (mid-2FA partial login, or a session Roblox won't honor). -->
                         <TextBlock x:Name="RejectionHint"
                                    FontSize="11" FontWeight="SemiBold"
-                                   Foreground="#F22F89"
+                                   Foreground="{DynamicResource RowExpiredAccentBrush}"
                                    Margin="0,6,0,0"
                                    TextWrapping="Wrap"
                                    Visibility="Collapsed">
@@ -72,20 +85,20 @@
                  Covers the slow CoreWebView2Environment.CreateAsync + EnsureCoreWebView2Async
                  + first Navigate pre-render window. Hidden in code-behind once roblox.com paints. -->
             <Border x:Name="LoadingOverlay"
-                    Background="#0F1F31">
+                    Background="{DynamicResource BgBrush}">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                     <TextBlock Text="Loading roblox.com..."
-                               Foreground="#17D4FA"
+                               Foreground="{DynamicResource CyanBrush}"
                                FontSize="14" FontWeight="SemiBold"
                                HorizontalAlignment="Center"
                                Margin="0,0,0,12" />
                     <ProgressBar IsIndeterminate="True"
                                  Width="200" Height="4"
-                                 Foreground="#17D4FA"
-                                 Background="#15263A"
+                                 Foreground="{DynamicResource CyanBrush}"
+                                 Background="{DynamicResource RowBgBrush}"
                                  BorderThickness="0" />
                     <TextBlock Text="First open can take a few seconds on a fresh WebView2 install."
-                               Foreground="#FFFFFF"
+                               Foreground="{DynamicResource WhiteBrush}"
                                Opacity="0.65"
                                FontSize="11"
                                Margin="0,12,0,0"

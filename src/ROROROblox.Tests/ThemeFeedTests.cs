@@ -72,7 +72,7 @@ public class ThemeFeedTests
         var (decision, palette) = ROROROblox.App.Theming.ThemeService.ApplyTo(
             resources, theme, edgeAnswer: null);
 
-        var expected = EdgeRemediation.Resolve(decision, theme.Navy, theme.Divider);
+        var expected = EdgeRemediation.Resolve(decision, [theme.Navy, theme.RowBg], theme.Divider);
         Assert.Equal(expected.ToUpperInvariant(), palette.InteractiveEdge.ToUpperInvariant());
     }
 

@@ -60,7 +60,7 @@
                                     Visibility="{Binding IsMain, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <TextBlock Text="MAIN"
                                            FontSize="8" FontWeight="Bold"
-                                           Foreground="{DynamicResource WhiteBrush}" />
+                                           Foreground="{DynamicResource OnMagentaBrush}" />
                             </Border>
                             <!-- Memory chip (compact mode) — same MemoryText/MemoryWarning + the same
                                  warn/quiet Style as the full row template (below). Compact rows are
@@ -423,7 +423,7 @@
                                     Visibility="{Binding IsMain, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <TextBlock Text="MAIN"
                                            FontSize="9" FontWeight="Bold"
-                                           Foreground="{DynamicResource WhiteBrush}" />
+                                           Foreground="{DynamicResource OnMagentaBrush}" />
                             </Border>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
@@ -1422,7 +1422,7 @@
                                                                        FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
                                                                        FontSize="8"
                                                                        FontWeight="Bold"
-                                                                       Foreground="{DynamicResource WhiteBrush}" />
+                                                                       Foreground="{DynamicResource OnMagentaBrush}" />
                                                         </Border>
                                                     </Grid>
                                                 </Button>

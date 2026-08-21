@@ -1,7 +1,13 @@
 namespace ROROROblox.Core.Theming;
 
 /// <summary>
-/// The eleven brush values a theme resolves to <b>once applied</b>, in <c>#RRGGBB</c> form.
+/// Eleven of the twelve brush values a theme resolves to <b>once applied</b>, in <c>#RRGGBB</c>
+/// form. <c>OnMagentaBrush</c>, derived alongside the interactive edge by F-050, is deliberately
+/// NOT here: this record is the payload of <c>ThemePalette</c> in the plugin contract proto, and
+/// adding a field to that is a versioned contract change with an author guide behind it — additive
+/// and backwards-compatible, but a decision of its own rather than a side effect of a contrast fix.
+/// Stated rather than quietly left out; a plugin reading this palette gets eleven and the app
+/// renders twelve.
 /// <para>
 /// Deliberately distinct from <see cref="Theme"/>, and the distinction is the whole reason this
 /// type exists. <c>Theme</c> is what an author wrote; this is what the app is showing. They differ
