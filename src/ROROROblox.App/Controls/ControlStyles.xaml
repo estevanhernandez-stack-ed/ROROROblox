@@ -578,7 +578,7 @@
          outside the running app can reach what is declared inline in it. Every render gate
          builds its scope from ThemesDictionary + ControlsDictionary + THIS FILE by pack URI
          (ThemedRender.Resources), extracts a subtree of real markup and parses it against
-         that scope — so a {StaticResource MetaFontSize} in MainWindow.xaml threw
+         that scope — so a {DynamicResource MetaFontSize} in MainWindow.xaml threw
          "Cannot find resource named 'MetaFontSize'" the moment a gate sampled a site
          carrying one. A shared token has to live somewhere shared consumers can merge.
 
@@ -606,6 +606,14 @@
          them are prose that belongs at Body, not Meta. Sorting those is per-site judgement
          across 22 files and is its own row - see F-118. This defines the ladder and raises
          the floor; it does not claim the app is on four sizes yet. -->
+    <!-- CONSUME THESE WITH {DynamicResource}, NOT {StaticResource}, and the reason is the same one
+         that makes every brush in this app dynamic. StaticResource resolves at PARSE time against
+         whatever scope the element is being parsed into. Several render gates sample a real subtree
+         out of a window and hand it to XamlReader.Parse as a standalone string - no parent, no
+         scope - then attach the theme dictionary to a host afterwards, which is already too late.
+         DynamicResource defers the lookup to render time and walks the tree it ends up in, by which
+         point the dictionary is there. Two CI runs were spent learning this: the first fix moved the
+         keys here from App.xaml, which was necessary and not sufficient. -->
     <sys:Double x:Key="DisplayFontSize">22</sys:Double>
     <sys:Double x:Key="HeadingFontSize">14</sys:Double>
     <sys:Double x:Key="BodyFontSize">12</sys:Double>

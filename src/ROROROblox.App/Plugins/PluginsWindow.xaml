@@ -114,7 +114,7 @@
             <StackPanel>
                 <TextBlock Text="INSTALL FROM URL"
                            FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                           FontSize="{StaticResource MetaFontSize}"
+                           FontSize="{DynamicResource MetaFontSize}"
                            Foreground="{DynamicResource MutedTextBrush}"
                            Margin="0,0,0,6" />
                 <Grid>
@@ -174,7 +174,7 @@
                                                 <TextBlock Text="{Binding Version}"
                                                            Margin="8,2,0,0"
                                                            FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                                                           FontSize="{StaticResource MetaFontSize}"
+                                                           FontSize="{DynamicResource MetaFontSize}"
                                                            Foreground="{DynamicResource MutedTextBrush}"
                                                            VerticalAlignment="Center" />
                                             </StackPanel>
@@ -196,7 +196,7 @@
                                                     Margin="0,8,0,0">
                                                 <TextBlock Text="{Binding CapabilitySummary}"
                                                            FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                                                           FontSize="{StaticResource MetaFontSize}"
+                                                           FontSize="{DynamicResource MetaFontSize}"
                                                            Foreground="{DynamicResource CyanBrush}" />
                                             </Border>
 
@@ -208,7 +208,7 @@
                                                     Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVisibilityConverter}}">
                                                 <TextBlock Text="{Binding UpdateLabel}"
                                                            FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                                                           FontSize="{StaticResource MetaFontSize}"
+                                                           FontSize="{DynamicResource MetaFontSize}"
                                                            Foreground="{DynamicResource OnMagentaBrush}" />
                                             </Border>
                                         </StackPanel>
@@ -277,7 +277,7 @@
                              behavior for the "empty until plugins catalog ships" period. -->
                         <TextBlock Text="AVAILABLE"
                                    FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                                   FontSize="{StaticResource MetaFontSize}"
+                                   FontSize="{DynamicResource MetaFontSize}"
                                    Foreground="{DynamicResource MutedTextBrush}"
                                    Margin="0,8,0,6" />
                         <ItemsControl ItemsSource="{Binding Available}">
@@ -300,7 +300,7 @@
                                                     <TextBlock Text="{Binding Version}"
                                                                Margin="8,2,0,0"
                                                                FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                                                               FontSize="{StaticResource MetaFontSize}"
+                                                               FontSize="{DynamicResource MetaFontSize}"
                                                                Foreground="{DynamicResource MutedTextBrush}"
                                                                VerticalAlignment="Center" />
                                                 </StackPanel>

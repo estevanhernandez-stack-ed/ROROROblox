@@ -42,7 +42,7 @@
         <TextBlock Grid.Row="2"
                    x:Name="Numbers"
                    FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                   FontSize="{StaticResource MetaFontSize}"
+                   FontSize="{DynamicResource MetaFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
                    TextWrapping="Wrap"
                    Margin="0,16,0,0" />

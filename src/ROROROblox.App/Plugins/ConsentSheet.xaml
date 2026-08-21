@@ -68,7 +68,7 @@
         <TextBlock Grid.Row="2"
                    Text="THIS PLUGIN ASKS FOR"
                    FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                   FontSize="{StaticResource MetaFontSize}"
+                   FontSize="{DynamicResource MetaFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,18,0,8" />
 
@@ -121,7 +121,7 @@
                                              banners this cycle — the words carry it. -->
                                         <TextBlock Text="{Binding Id}"
                                                    FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                                                   FontSize="{StaticResource MetaFontSize}"
+                                                   FontSize="{DynamicResource MetaFontSize}"
                                                    TextWrapping="Wrap">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
@@ -142,7 +142,7 @@
                                                    TextWrapping="Wrap"
                                                    Margin="0,3,0,0" />
                                         <TextBlock Text="{Binding NamespaceLabel}"
-                                                   FontSize="{StaticResource MetaFontSize}"
+                                                   FontSize="{DynamicResource MetaFontSize}"
                                                    Foreground="{DynamicResource MutedTextBrush}"
                                                    Margin="0,4,0,0" />
                                     </StackPanel>

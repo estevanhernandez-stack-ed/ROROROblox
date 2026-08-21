@@ -55,7 +55,7 @@ public class TypeLadderFenceTests
         Assert.True(offenders.Count == 0,
             $"Text below the {MetaStep}px meta step. The smallest step is for short, uppercase, "
             + "tracked labels — it is not a smaller body size, and there is nothing under it. Use "
-            + "{StaticResource MetaFontSize}, or MetaFontSize's larger siblings for anything a "
+            + "{DynamicResource MetaFontSize}, or its larger siblings for anything a "
             + "person reads as a sentence (F-044):" + Environment.NewLine
             + string.Join(Environment.NewLine, offenders));
     }
