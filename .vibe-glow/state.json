@@ -208,6 +208,16 @@
         "F-119"
       ],
       "notes": "Both rows were wrong about their own size and measuring settled each in minutes. F-118 was priced as per-site judgement over 163 sites; classifying them by the ladder's own meta definition (mono, uppercase, tracked) returned 2 mono and 0 uppercase, one of those a scanner false positive - so the tier was 162 prose and 1 label and the judgement did not exist. Migration went past the row's ask because stopping at 11px leaves the ladder half-used: 12 to Body, 13 and 14 to Heading, 22 to Display. 326 raw declarations in 11 sizes became 16 in 3, the remainder being hero chrome where the value carries brand identity. F-119 went the other way: recorded as a truncated name, it was HIDING THREE ENTIRE ACCOUNTS from a seven-target follow strip, so following them was impossible from the main window - cosmetic row, functional defect. Two wrong fixes before the right one, and the first is the lesson: a WrapPanel changed NOTHING because a horizontal StackPanel measures children with infinite width, so it never saw a boundary. The fix had to be the parent (DockPanel). It looked correct in the diff and was inert on screen; only the capture said so."
+    },
+    {
+      "id": 17,
+      "name": "The suite tells the truth",
+      "status": "open",
+      "findings": [
+        "F-116",
+        "F-117"
+      ],
+      "notes": "Scoped to two rows, not the four infra rows offered at wave 15. F-107 is tagged [new-mechanism] (xUnit 2.9.3 has no assembly-level skip) and gets its own wave; F-105's own row says the next step is a bisect of App.OnStartup, which is a research session rather than a wave item. F-116 was chosen because it had stopped being theoretical - it blocked TWO merges today, both RobloxProcessTrackerTests, both green on re-run. Fixed by sub-shape exactly as the row directed: assert-a-bound got an injected IClock and wait so tests drive virtual time (and the bounded test's tolerance TIGHTENED from 1800ms against a 600ms cap to cap plus one poll - the old slack existed only to survive a loaded runner); wait-for-an-effect got a poke-until-it-answers loop instead of a 600ms guess at when a FileSystemWatcher is armed. FpsCapSettlerTests deliberately untouched: it already uses FakeTimeProvider and its residue is its own pump's real-time observation budget, a thread-pool scheduling problem whose prior diagnosis is recorded in that file down to ThreadPool.PendingWorkItemCount and 18->36 thread injection. F-116 stays open on that family."
     }
   ],
   "scope": {

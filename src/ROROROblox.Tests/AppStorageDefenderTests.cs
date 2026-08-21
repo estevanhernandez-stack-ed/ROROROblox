@@ -98,14 +98,28 @@ public sealed class AppStorageDefenderTests : IDisposable
 
         await using var defender = NewDefender("LaunchedAccount", maxCap: TimeSpan.FromSeconds(8));
 
-        // Wait past the defender's 250ms self-write-suppression window (the initial stamp
-        // primed it) AND give the FSW a beat to be fully armed, then simulate a sibling RPB
-        // writing a different identity (drift). The defender should re-stamp back.
-        await Task.Delay(600);
-        WriteAppStorage("SiblingAccount");
-
-        // Poll for the re-stamp — FSW delivery is async + the re-stamp runs on a worker.
-        var restamped = await WaitForUsernameAsync("LaunchedAccount", TimeSpan.FromSeconds(5));
+        // POKE UNTIL IT ANSWERS, rather than sleeping a guess at how long it needs (F-116).
+        //
+        // This was `await Task.Delay(600)` followed by one drift write and a single five-second
+        // wait, and it failed twice in roughly eight full-suite runs while passing every time in
+        // isolation. The 600ms was doing two jobs at once: clearing the defender's 250ms
+        // self-write-suppression window, and "giving the FSW a beat to be fully armed". The first is
+        // a real interval; the second is a guess about thread scheduling, and on a loaded machine
+        // 600ms of wall clock can pass with the watcher not yet armed. The single drift write then
+        // lands in a window nobody is listening to, and no amount of waiting afterwards recovers it
+        // — the event it was waiting for already happened and was missed.
+        //
+        // Re-poking is what makes that harmless: a drift suppressed or unobserved is simply written
+        // again, and the first one the defender actually sees produces the re-stamp. The budget
+        // below bounds the FAILURE path only; on a healthy machine the first or second poke answers
+        // immediately. Not a longer timeout — a different question.
+        var restamped = false;
+        var deadline = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(15);
+        while (!restamped && DateTimeOffset.UtcNow < deadline)
+        {
+            WriteAppStorage("SiblingAccount");
+            restamped = await WaitForUsernameAsync("LaunchedAccount", TimeSpan.FromMilliseconds(750));
+        }
         Assert.True(restamped, $"Expected re-stamp back to LaunchedAccount but file held: {ReadUsername()}");
         Assert.True(defender.RestampCount >= 1, "Expected at least one re-stamp to be recorded.");
     }

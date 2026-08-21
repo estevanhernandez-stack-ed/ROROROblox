@@ -391,14 +391,12 @@ public class ThemedStatusColourTests
         // that had written this file off as out-of-scope modals, so the permission had already
         // outlived its row by eight days and nothing noticed. The ceiling is what noticed.
 
-        new("src/ROROROblox.App/Modals/", null, 0,
-            "F-079 and F-066, both open. F-079 names StopAllConfirmWindow, LeftoverProcessesWindow, "
-            + "RobloxAlreadyRunningWindow, RobloxNotInstalledWindow, WebView2NotInstalledWindow and "
-            + "RenameWindow, and its verdict is exactly this defect — modals that opt out of theming "
-            + "and render brand colours on a themed field. DpapiCorruptWindow is the one file in the "
-            + "folder F-079 does not name; F-066's 'mostly in out-of-scope modals' count owns it. "
-            + "Directory prefix rather than seven near-identical entries, and the ceiling below is "
-            + "what stops a new modal quietly widening it."),
+        // Modals/ RETIRED 2026-08-20 by F-117. Its entry cited F-079 and F-066, both of which
+        // went clean, and described "six windows that opt out of theming" - a folder that by then
+        // held ONE literal. F-117 bound it (RobloxAlreadyRunningWindow's still-locked tick, now
+        // RowExpiredAccentBrush) and the entry with it. A directory-prefix entry is the worst kind
+        // to leave lying around: it grants permission to every file added under it, so the next
+        // modal would have inherited a licence from two closed rows.
     ];
 
     /// <summary>
@@ -470,6 +468,9 @@ public class ThemedStatusColourTests
     /// adding one.
     /// </para>
     /// </summary>
+    // 22 -> 21 on 2026-08-20 by F-117, which retired the Modals/ entry and bound the single literal
+    // it still covered. History of this number, kept because each move had a different cause:
+    //
     // 35 -> 36 -> 22 on 2026-08-20, both moves in one wave and in opposite directions.
     //
     // UP by one: OnMagentaBrush's pre-startup fallback in App.xaml, added by F-050 alongside the
@@ -485,7 +486,7 @@ public class ThemedStatusColourTests
     // went clean while that entry stayed, so it now grants permission almost nothing uses. Left in
     // place rather than retired blind: one literal is a real literal and retiring the entry is a
     // separate measurement, recorded as a register row instead of done in passing here.
-    private const int AllowedXamlLiteralCeiling = 22;
+    private const int AllowedXamlLiteralCeiling = 21;
 
     /// <summary>
     /// Vacuity floor — it catches a repo-root walk that found nothing, and nothing else.
