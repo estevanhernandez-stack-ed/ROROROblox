@@ -74,10 +74,25 @@ internal static class WindowRenderHost
 
         var thread = new Thread(() =>
         {
-            // THE REAL App, loading THE REAL App.xaml. `new App()` does not start anything — WPF
-            // generates a Main() that constructs, calls InitializeComponent, then calls Run(), and
-            // only Run() raises OnStartup. So this loads the shipped resource dictionary and no
-            // startup path: no DI host, no single-instance guard, no tray.
+            // THE REAL App, loading THE REAL App.xaml — for its resources, and for nothing else.
+            //
+            // THE COMMENT THAT USED TO BE HERE WAS WRONG, AND IT WAS F-105's ROOT CAUSE. It said
+            // "`new App()` does not start anything — only Run() raises OnStartup", and on that
+            // basis nobody suspected startup. But with a dispatcher pumping on this thread, startup
+            // DOES run: the app's own log file, written by this test host during a render run,
+            // reads "ROROROblox starting", "Another instance is running; signaling and exiting",
+            // "ROROROblox exiting (code 0)".
+            //
+            // So with a RoRoRo instance up, the single-instance guard found the mutex held and
+            // called Shutdown(0) — disposing the Application underneath renders in flight. The
+            // NotSupportedException everyone chased is what pack-URI resolution does against a
+            // disposed Application. Four isolation probes hunted a symptom.
+            //
+            // It also meant every render run executed real startup: writing to the user's real log,
+            // scanning the plugin registry, STARTING A REAL PLUGIN PROCESS, and running an update
+            // check. A test suite with production side effects, invisible because the failure it
+            // caused looked like something else entirely.
+            ROROROblox.App.App.SuppressStartupForRenderHarness = true;
             //
             // WHY NOT A HAND-BUILT DICTIONARY. The first version merged WPF-UI + ControlStyles.xaml
             // by hand, on the theory that only theme-INDEPENDENT vocabulary was needed. That failed

@@ -58,38 +58,26 @@ public sealed class WindowRenderTheoryAttribute : TheoryAttribute
 internal static class WindowRenderAvailability
 {
     /// <summary>
-    /// Set to <c>1</c> to run the window-render gates even on CI — for whoever is fixing the
-    /// harness and needs to see it fail there rather than skip.
-    /// </summary>
-    private const string OverrideVariable = "RORORO_FORCE_WINDOW_RENDER";
-
-    /// <summary>
     /// Non-null when these tests should be skipped, and the value is the reason the runner prints.
     /// Null on a normal desktop, which is every developer machine.
     /// </summary>
-    public static string? SkipReason
-    {
-        get
-        {
-            if (Environment.GetEnvironmentVariable(OverrideVariable) == "1")
-            {
-                return null;
-            }
-
-            return IsContinuousIntegration
-                ? "Whole-window rendering does not work on a CI runner: a single render exceeds the "
-                  + "60s budget having started immediately, where the same render takes milliseconds "
-                  + "on a desktop. Tracked as F-105. These gates DO run locally and before every "
-                  + "release. Set RORORO_FORCE_WINDOW_RENDER=1 to run them here anyway."
-                : null;
-        }
-    }
-
     /// <summary>
-    /// GitHub Actions sets both of these. `CI` alone is the broad convention and is honoured too, so
-    /// this keeps working if the runner ever moves.
+    /// Always null since 2026-08-21: these gates run everywhere, including CI.
+    /// <para>
+    /// They were skipped on CI because "a single render exceeds the 60s budget having started
+    /// immediately", and that turned out to be F-105 wearing a second disguise. The harness was
+    /// running the app's REAL startup inside the test host — plugin registry scan, plugin process
+    /// launch, and an update check over the network — which will burn sixty seconds on a runner
+    /// without the render being slow at all. With startup suppressed, CI returns
+    /// <c>Skipped: 0, Total: 1798</c> on both x64 and arm64.
+    /// </para>
+    /// <para>
+    /// The property is KEPT rather than the attributes rewritten: nine call sites say
+    /// <c>[WindowRenderFact]</c>, and this is the one place a future environment-specific skip would
+    /// belong. <c>RORORO_FORCE_WINDOW_RENDER</c> is gone with the branch it overrode — an escape
+    /// hatch from a door that is no longer locked.
+    /// </para>
     /// </summary>
-    private static bool IsContinuousIntegration =>
-        string.Equals(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"), "true", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(Environment.GetEnvironmentVariable("CI"), "true", StringComparison.OrdinalIgnoreCase);
+    public static string? SkipReason => null;
+
 }

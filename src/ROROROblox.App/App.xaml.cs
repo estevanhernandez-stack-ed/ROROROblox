@@ -77,9 +77,42 @@ public partial class App : Application
     /// </summary>
     internal event EventHandler<LaunchTarget>? JoinRequested;
 
+    /// <summary>
+    /// Set by the render harness before it constructs this class, so <see cref="OnStartup"/> does
+    /// nothing (F-105).
+    /// <para>
+    /// <b>THIS IS THE ROOT CAUSE OF F-105, and it is not what anyone thought.</b>
+    /// <c>WindowRenderHost</c> builds the REAL <c>App</c> to get App.xaml's converters and styles,
+    /// and its comment said "`new App()` does not start anything — only Run() raises OnStartup".
+    /// That is false: with a dispatcher pumping on that thread, startup runs. Proven from the app's
+    /// own log file, written by the TEST HOST during a render run — "ROROROblox starting", then
+    /// "Another instance is running; signaling and exiting", then "ROROROblox exiting (code 0)".
+    /// </para>
+    /// <para>
+    /// So every render run executed real startup. With a RoRoRo instance up, the single-instance
+    /// guard found the mutex held and called <c>Shutdown(0)</c> — tearing the Application down
+    /// underneath the renders in flight. The famous
+    /// <c>NotSupportedException: The URI prefix is not recognized</c> is what pack-URI resolution
+    /// does against a disposed Application. It is a symptom, and four probes chased it as a cause.
+    /// </para>
+    /// <para>
+    /// A field rather than an environment variable: this must be impossible to switch on by
+    /// accident on a user's machine, and a static that only the harness can set cannot leak.
+    /// </para>
+    /// </summary>
+    internal static bool SuppressStartupForRenderHarness { get; set; }
+
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // The render harness wants App.xaml's resources and none of the app's behaviour. Returning
+        // here is what makes "construct the real App" mean only that — no logging to the user's real
+        // log file, no plugin processes started, no update check, and no single-instance decision.
+        if (SuppressStartupForRenderHarness)
+        {
+            return;
+        }
 
         // Configure logging FIRST — every other failure mode below benefits from a written record.
         var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
