@@ -62,17 +62,47 @@ public sealed class RobloxProcessTrackerTests : IDisposable
         return list;
     }
 
+    /// <summary>
+    /// Time the test controls, instead of time the test races (F-116).
+    /// <para>
+    /// Both deadline tests below blocked a merge on 2026-08-21 and both passed on re-run. They were
+    /// measuring the CI runner: the tracker read <c>DateTimeOffset.UtcNow</c> and slept on
+    /// <c>Task.Delay</c>, so a stalled agent could burn the whole extended cap between two polls.
+    /// Advancing a fake clock from the wait itself makes the loop's arithmetic exact and its
+    /// duration irrelevant — the assertions become claims about the DECISION rather than about how
+    /// busy the machine was. No timeout was lengthened to achieve it; lengthening one would have
+    /// hidden the sensitivity rather than removed it.
+    /// </para>
+    /// </summary>
+    private sealed class VirtualTime : IClock
+    {
+        public DateTimeOffset UtcNow { get; private set; } = new(2026, 8, 21, 12, 0, 0, TimeSpan.Zero);
+
+        /// <summary>How many times the tracker waited. The poll count IS the loop's progress.</summary>
+        public int Waits { get; private set; }
+
+        public Task Advance(TimeSpan by, CancellationToken ct)
+        {
+            Waits++;
+            UtcNow += by;
+            return Task.CompletedTask;
+        }
+    }
+
     [Fact]
     public async Task InstallerRunning_ExtendsDeadline_AttachesLateRpb_NoAttachFailed()
     {
         // Base timeout 200ms, extended cap 1s, fast poll. The "RPB" only appears at ~400ms — past
         // the base 200ms deadline — so without the extension the tracker would have already failed.
         var rpbPid = SpawnSleeperPid();
-        var trackStart = DateTimeOffset.UtcNow;
-        var revealAfter = TimeSpan.FromMilliseconds(400);
+        var time = new VirtualTime();
+        var trackStart = time.UtcNow;
 
+        // Revealed after 8 polls — 400ms of VIRTUAL time, past the 200ms base deadline and inside
+        // the 1s extension. Keyed to the poll count rather than to a stopwatch, so a runner that
+        // stalls for a second between polls changes nothing.
         IReadOnlyList<Process> Candidates() =>
-            DateTimeOffset.UtcNow - trackStart >= revealAfter ? ByIds(rpbPid) : Array.Empty<Process>();
+            time.Waits >= 8 ? ByIds(rpbPid) : Array.Empty<Process>();
 
         using var tracker = new RobloxProcessTracker(
             log: NullLogger<RobloxProcessTracker>.Instance,
@@ -80,7 +110,9 @@ public sealed class RobloxProcessTrackerTests : IDisposable
             installerExtendedTimeout: TimeSpan.FromSeconds(1),
             pollInterval: TimeSpan.FromMilliseconds(50),
             isInstallerRunning: () => true,
-            candidateProcesses: Candidates);
+            candidateProcesses: Candidates,
+            clock: time,
+            delay: time.Advance);
 
         var accountId = Guid.NewGuid();
         var attached = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -130,31 +162,39 @@ public sealed class RobloxProcessTrackerTests : IDisposable
         // Installer runs the whole time but the RPB never shows. The extension must be BOUNDED:
         // it waits to the extended cap (~600ms here), then fails — it does not wait forever.
         var cap = TimeSpan.FromMilliseconds(600);
+        var time = new VirtualTime();
+        var start = time.UtcNow;
         using var tracker = new RobloxProcessTracker(
             log: NullLogger<RobloxProcessTracker>.Instance,
             attachTimeout: TimeSpan.FromMilliseconds(150),
             installerExtendedTimeout: cap,
             pollInterval: TimeSpan.FromMilliseconds(50),
             isInstallerRunning: () => true,
-            candidateProcesses: Array.Empty<Process>);
+            candidateProcesses: Array.Empty<Process>,
+            clock: time,
+            delay: time.Advance);
 
         var accountId = Guid.NewGuid();
         var failed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         tracker.ProcessAttachFailed += (_, _) => failed.TrySetResult(true);
 
-        var sw = Stopwatch.StartNew();
-        await tracker.TrackLaunchAsync(accountId, DateTimeOffset.UtcNow);
-        sw.Stop();
+        await tracker.TrackLaunchAsync(accountId, start);
+        var waited = time.UtcNow - start;
 
         Assert.True(await failed.Task.WaitAsync(TestWaits.Liveness),
             "Even with the installer running, the tracker must eventually fail at the extended cap when no RPB appears.");
         Assert.False(tracker.IsTracking(accountId));
-        // It DID extend past the base 150ms (proving the extension engaged)...
-        Assert.True(sw.Elapsed >= TimeSpan.FromMilliseconds(450),
-            $"Extension didn't engage — bailed at ~{sw.ElapsedMilliseconds}ms, near the base timeout instead of the extended cap.");
-        // ...but did NOT run away past the cap (proving the bound holds).
-        Assert.True(sw.Elapsed < TimeSpan.FromMilliseconds(1800),
-            $"Extension was not bounded — ran {sw.ElapsedMilliseconds}ms, well past the {cap.TotalMilliseconds}ms cap.");
+
+        // VIRTUAL elapsed, so these are statements about the loop's arithmetic rather than about
+        // the machine. It DID extend past the base 150ms (the extension engaged)...
+        Assert.True(waited >= TimeSpan.FromMilliseconds(450),
+            $"Extension didn't engage — bailed after {waited.TotalMilliseconds}ms of virtual time, near the base timeout.");
+
+        // ...and did NOT run past the cap. The old bound was 1800ms against a 600ms cap, three times
+        // the real limit, because it had to tolerate a loaded runner; virtual time needs no slack, so
+        // this now asserts the cap the code actually promises plus one poll.
+        Assert.True(waited <= cap + TimeSpan.FromMilliseconds(50),
+            $"Extension was not bounded — ran {waited.TotalMilliseconds}ms of virtual time past the {cap.TotalMilliseconds}ms cap.");
     }
 
     [Fact]

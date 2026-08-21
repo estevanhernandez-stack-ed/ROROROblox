@@ -64,7 +64,9 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
         TimeSpan installerExtendedTimeout,
         TimeSpan pollInterval,
         Func<bool> isInstallerRunning,
-        Func<IReadOnlyList<Process>> candidateProcesses)
+        Func<IReadOnlyList<Process>> candidateProcesses,
+        IClock? clock = null,
+        Func<TimeSpan, CancellationToken, Task>? delay = null)
     {
         _log = log ?? throw new ArgumentNullException(nameof(log));
         _attachTimeout = attachTimeout;
@@ -72,7 +74,30 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
         _pollInterval = pollInterval;
         _isInstallerRunning = isInstallerRunning ?? throw new ArgumentNullException(nameof(isInstallerRunning));
         _candidateProcesses = candidateProcesses ?? throw new ArgumentNullException(nameof(candidateProcesses));
+        _clock = clock ?? new SystemClock();
+        _delay = delay ?? Task.Delay;
     }
+
+    /// <summary>
+    /// Where "now" comes from, and how waiting happens (F-116).
+    /// <para>
+    /// This class decides whether to give up by comparing wall-clock readings to a deadline, and it
+    /// waits with <see cref="Task.Delay(TimeSpan, CancellationToken)"/>. On a developer machine both
+    /// are invisible; on a loaded CI runner they are the test. Two of this file's tests blocked
+    /// merges on 2026-08-21 — one asserting the extension stays inside a 600ms cap, one asserting a
+    /// process revealed at 400ms still gets attached — and both passed on re-run, which is the
+    /// signature that trains people to press the button instead of reading the failure.
+    /// </para>
+    /// <para>
+    /// The fix is NOT a longer timeout. A longer timeout hides load sensitivity, which is the
+    /// opposite of what a deadline test is for. Injecting the clock and the wait lets a test advance
+    /// time by hand and assert the DECISION — "it kept polling because the installer was running" —
+    /// which is true on any machine at any load. Production passes neither argument and behaves
+    /// exactly as before.
+    /// </para>
+    /// </summary>
+    private readonly IClock _clock;
+    private readonly Func<TimeSpan, CancellationToken, Task> _delay;
 
     public IReadOnlyDictionary<Guid, TrackedProcess> Attached =>
         _attachedByAccount.ToDictionary(
@@ -135,7 +160,7 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        var startUtc = DateTimeOffset.UtcNow;
+        var startUtc = _clock.UtcNow;
         // Base deadline = today's 30s behavior. The extended ceiling is only ever USED when the
         // Roblox installer is found running as the base deadline elapses — an install can delay the
         // real RobloxPlayerBeta past 30s, and the v1.6.0 defender holds identity to ~120s, so the
@@ -153,7 +178,7 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
         {
             ct.ThrowIfCancellationRequested();
 
-            var now = DateTimeOffset.UtcNow;
+            var now = _clock.UtcNow;
             // Past the base deadline: extend ONLY while the installer is running, and only up to the
             // bounded extended cap. Re-check the installer signal each pass so a finished install
             // doesn't keep us waiting needlessly past the base window.
@@ -187,7 +212,7 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
 
             try
             {
-                await Task.Delay(_pollInterval, ct).ConfigureAwait(false);
+                await _delay(_pollInterval, ct).ConfigureAwait(false);
             }
             catch (TaskCanceledException)
             {
@@ -394,7 +419,7 @@ public sealed class RobloxProcessTracker : IRobloxProcessTracker, IForegroundAcc
             //  4. EnableRaisingEvents arms delivery;
             //  5. HasExited double-check synthesizes the exit if it happened before 4
             //     took effect — the once-guard makes the two paths converge.
-            var slot = new AttachedSlot(process, DateTimeOffset.UtcNow);
+            var slot = new AttachedSlot(process, _clock.UtcNow);
             _attachedByAccount[accountId] = slot;
             process.Exited += (_, _) => OnExitedOnce();
             _log.LogInformation("Attached to RobloxPlayerBeta pid {Pid} for account {AccountId}", process.Id, accountId);
