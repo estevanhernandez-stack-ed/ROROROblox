@@ -80,8 +80,25 @@ internal static class RenderEnvironment
     /// someone typed the command.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Set to <c>1</c> to let the render gates run anyway with RoRoRo up, so the failure this guard
+    /// prevents can be OBSERVED (F-105).
+    /// <para>
+    /// A guard you cannot switch off is a guard you cannot study. The mechanism behind F-105 is
+    /// still unknown after four isolation probes, and its own row says the next step is a bisect —
+    /// which is impossible while the only way to reach the crash is to delete the guard and
+    /// remember to put it back. Defaults to enforcing; nothing sets this but a human diagnosing.
+    /// </para>
+    /// </summary>
+    private const string StudyVariable = "RORORO_RENDER_IGNORE_APP";
+
     public static void RequireClean()
     {
+        if (string.Equals(Environment.GetEnvironmentVariable(StudyVariable), "1", StringComparison.Ordinal))
+        {
+            return;
+        }
+
         if (Blocker.Value is { } reason)
         {
             throw new InvalidOperationException(reason);

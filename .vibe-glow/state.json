@@ -252,6 +252,15 @@
         "F-096"
       ],
       "notes": "Asked to take every remaining row that could be finished in a wave. Four candidates; TWO said in their own rows that they could not be, and were scoped out with their own words as the evidence: F-098's remainder is under a standing ruling to wait for the Store submission run (auditing capture-ui.ps1 means driving a live app; auditing the packaging scripts means building an MSIX to audit the script that builds it), and F-106 is [new-mechanism] with an explicit 'do not batch it'. F-083 shipped in full to its own spec - p75 of settled clients, pressure samples discarded, clamped, seeded, version-reset - and feeds the ADVISOR ONLY, enforced by where the value is threaded rather than by a comment. A test of mine was wrong before the code was: the p75 case expected 3000 from a 15/5 split, which is simply the wrong arithmetic, and the failure said so. F-096 is partly closed: its named-mutex fix lives in rororo-ur-task, a different repo, but the row's own second sentence asks whether the author guide should require it of every plugin - it now does, with the real symptom, and with a verbatim-string bug caught in the sample while writing it."
+    },
+    {
+      "id": "f105-research",
+      "name": "F-105 research session",
+      "status": "open",
+      "findings": [
+        "F-105"
+      ],
+      "notes": "Research, not a wave. Mechanism STILL UNKNOWN and recorded as such. What the session produced: (1) the full stack trace, which nobody had - the throw is in WPF-UI's ContextMenuLoader resolving a pack URI for an editor context-menu style nothing here renders, arriving via ExceptionWrapper as a DISPATCHER callback, which is exactly why it killed the host rather than failing a test. (2) Four more eliminations by measurement: the tray icon, RobloxWindowDecorator, the deferred startup checks (WebView2 sweep + Velopack), and file-locks/output-folder - RoRoRo run from %TEMP% crashes identically, so it is the process, not the files. (3) The row's own 'crash after exactly 3 tests' regularity DOES NOT HOLD: 15, 71, 14, 128 observed. (4) Blast radius closed: the host now survives that dispatcher exception, so the run COMPLETES (128, twice) where it ABORTED - which kills the reporting hazard the row's verdict calls the real danger, without claiming the bug is fixed. (5) RORORO_RENDER_IGNORE_APP=1 study seam, because a guard you cannot switch off is a guard nobody can investigate. Production code untouched: App.xaml.cs was instrumented for the bisect and reverted byte-for-byte."
     }
   ],
   "scope": {
