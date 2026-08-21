@@ -192,6 +192,11 @@ public class StreamerIdentityProviderTests
         public Task SetMemoryCapMbAsync(int? c) => throw new NotImplementedException();
         public Task<int> GetProjectionWarnMinutesAsync() => throw new NotImplementedException();
         public Task SetProjectionWarnMinutesAsync(int m) => throw new NotImplementedException();
+        /// <summary>F-060. Records rather than discards, so the round trip is assertable.</summary>
+        public WindowPlacement? Placement;
+        public Task<WindowPlacement?> GetMainWindowPlacementAsync() => Task.FromResult(Placement);
+        public Task SetMainWindowPlacementAsync(WindowPlacement? placement) { Placement = placement; return Task.CompletedTask; }
+
         public Task<bool> GetCompactModeAsync() => throw new NotImplementedException();
         public Task SetCompactModeAsync(bool compact) => throw new NotImplementedException();
     }

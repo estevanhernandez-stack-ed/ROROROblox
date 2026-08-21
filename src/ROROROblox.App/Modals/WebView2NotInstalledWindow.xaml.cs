@@ -11,6 +11,9 @@ internal partial class WebView2NotInstalledWindow : Window
     public WebView2NotInstalledWindow()
     {
         InitializeComponent();
+
+        // F-054. Informational — its ShowDialog result is ignored — so Esc simply dismisses.
+        Controls.EscapeToDismiss.Wire(this);
     }
 
     private void OnInstallClick(object sender, RoutedEventArgs e)

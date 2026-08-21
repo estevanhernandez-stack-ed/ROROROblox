@@ -103,6 +103,14 @@ internal partial class MainWindow : FluentWindow
             // OnViewModelPropertyChanged runs ApplyCompactState off it, the same path the status-bar
             // toggle takes. The VM swallows a read failure, so this cannot stop the window loading.
             await vm.RestoreCompactModeAsync();
+
+            // F-060. After the compact restore, which also moves the geometry — applying placement
+            // first would have it immediately overwritten. Same hook the compact restore already
+            // uses, so the two stay in one order rather than racing from two places.
+            if (await vm.LoadWindowPlacementAsync() is { } placement)
+            {
+                RestoreWindowPlacement(placement);
+            }
         }
 
         // First-run welcome — only when there is nothing in the account list.
@@ -155,12 +163,67 @@ internal partial class MainWindow : FluentWindow
     /// </summary>
     protected override void OnClosing(CancelEventArgs e)
     {
+        // F-060, and it must run BEFORE the branch below. Closing the X hides to tray rather than
+        // quitting, which is the common case by a wide margin — saving only on real shutdown would
+        // miss almost every time the user actually finishes with the window.
+        SaveWindowPlacement();
+
         if (!App.IsShuttingDown)
         {
             e.Cancel = true;
             Hide();
         }
         base.OnClosing(e);
+    }
+
+    /// <summary>
+    /// Records where the window is, so the next launch can put it back (F-060).
+    /// </summary>
+    /// <remarks>
+    /// <see cref="Window.RestoreBounds"/> when maximized, because <c>Left</c>/<c>Width</c> then
+    /// describe the maximized frame — saving those would restore a window that is maximized-shaped
+    /// but not maximized, and un-maximizing it would leave it filling the screen with no way back
+    /// to its old size.
+    /// </remarks>
+    private void SaveWindowPlacement()
+    {
+        if (DataContext is not MainViewModel vm) return;
+
+        try
+        {
+            var maximized = WindowState == WindowState.Maximized;
+            var bounds = maximized ? RestoreBounds : new Rect(Left, Top, Width, Height);
+            _ = vm.SaveWindowPlacementAsync(
+                new Core.WindowPlacement(bounds.Left, bounds.Top, bounds.Width, bounds.Height, maximized));
+        }
+        catch
+        {
+            // Reading our own geometry can throw while the window is tearing down. A lost
+            // placement is not worth a crash on exit.
+        }
+    }
+
+    /// <summary>
+    /// Puts the window back where it was, when that is still somewhere reachable (F-060).
+    /// </summary>
+    private void RestoreWindowPlacement(Core.WindowPlacement placement)
+    {
+        // The virtual screen is the union of every display, so this is the multi-monitor-aware
+        // question: is any meaningful part of the saved rect still on SOME screen.
+        var restorable = placement.IsRestorableOnto(
+            SystemParameters.VirtualScreenLeft,
+            SystemParameters.VirtualScreenTop,
+            SystemParameters.VirtualScreenWidth,
+            SystemParameters.VirtualScreenHeight);
+
+        if (!restorable) return;   // leave the XAML defaults; centred and visible beats remembered and lost
+
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        Left = placement.Left;
+        Top = placement.Top;
+        Width = placement.Width;
+        Height = placement.Height;
+        if (placement.Maximized) WindowState = WindowState.Maximized;
     }
 
     /// <summary>

@@ -1556,6 +1556,11 @@ public class MainViewModelTests
         public List<bool> CompactModeWrites { get; } = [];
         public Exception? CompactModeWriteFailure { get; set; }
         public Exception? CompactModeReadFailure { get; set; }
+        /// <summary>F-060. Records rather than discards, so the round trip is assertable.</summary>
+        public WindowPlacement? Placement;
+        public Task<WindowPlacement?> GetMainWindowPlacementAsync() => Task.FromResult(Placement);
+        public Task SetMainWindowPlacementAsync(WindowPlacement? placement) { Placement = placement; return Task.CompletedTask; }
+
 
         public Task<bool> GetCompactModeAsync() => CompactModeReadFailure is not null
             ? Task.FromException<bool>(CompactModeReadFailure)

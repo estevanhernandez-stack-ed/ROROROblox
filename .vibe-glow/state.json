@@ -12,12 +12,12 @@
     "magenta-heat"
   ],
   "invariants": [
-    "Color belongs to the theme system; identity lives in structure â€” every surface binds DynamicResource brushes and users ship their own JSON themes, so a finding that prescribes a color is invalid. Findings must argue layout, weight, spacing, or shape.",
-    "The 626 Labs duo is never split â€” cyan #17d4fa and magenta #f22f89 appear together or not at all. CORRECTED 2026-08-04: JoinByLinkWindow.xaml:27-33 and WelcomeWindow.xaml:38-43 already breach this.",
-    "Type roles are fixed â€” Space Grotesk display, Inter body, JetBrains Mono for small meta labels only (uppercase, 0.12em tracking). Findings may argue size, weight, and hierarchy, never a different family.",
-    "WPF-UI (lepoco) owns control chrome â€” findings target our composition, not the library's control internals. The themed MenuItem check-glyph behavior is already worked around deliberately in two places and is not a defect to re-litigate.",
-    "No emoji in UI copy. AMENDED 2026-08-04 by Este: the die on Reroll identity and the clipboard on Copy AI prompt STAY â€” thematic to streamer mode's deliberately silly naming, not decoration. The defect at that site is placement, not the glyph; moving Reroll identity off the dashboard (goal 1) is the fix. Do not strip them in a copy wave.",
-    "Token-contract extensions must be optional-with-fallback â€” Theme has exactly ten required slots and user themes on disk supply all of them. A new slot breaks every existing user theme unless it defaults."
+    "Color belongs to the theme system; identity lives in structure — every surface binds DynamicResource brushes and users ship their own JSON themes, so a finding that prescribes a color is invalid. Findings must argue layout, weight, spacing, or shape.",
+    "The 626 Labs duo is never split — cyan #17d4fa and magenta #f22f89 appear together or not at all. CORRECTED 2026-08-04: JoinByLinkWindow.xaml:27-33 and WelcomeWindow.xaml:38-43 already breach this.",
+    "Type roles are fixed — Space Grotesk display, Inter body, JetBrains Mono for small meta labels only (uppercase, 0.12em tracking). Findings may argue size, weight, and hierarchy, never a different family.",
+    "WPF-UI (lepoco) owns control chrome — findings target our composition, not the library's control internals. The themed MenuItem check-glyph behavior is already worked around deliberately in two places and is not a defect to re-litigate.",
+    "No emoji in UI copy. AMENDED 2026-08-04 by Este: the die on Reroll identity and the clipboard on Copy AI prompt STAY — thematic to streamer mode's deliberately silly naming, not decoration. The defect at that site is placement, not the glyph; moving Reroll identity off the dashboard (goal 1) is the fix. Do not strip them in a copy wave.",
+    "Token-contract extensions must be optional-with-fallback — Theme has exactly ten required slots and user themes on disk supply all of them. A new slot breaks every existing user theme unless it defaults."
   ],
   "waves": [
     {
@@ -30,18 +30,29 @@
       ]
     },
     {
+      "id": 10,
+      "name": "Window conventions — ownership, Esc, placement",
+      "status": "open",
+      "findings": [
+        "F-084",
+        "F-054",
+        "F-060"
+      ],
+      "notes": "F-054 was re-measured and had overstated itself — 22 windows already dismissed on Esc; the real gap was four. Its [new-mechanism] half became F-112. F-041/F-048/F-079, the style-consolidation trio originally planned for this wave, are NOT in it and stay open."
+    },
+    {
       "id": 2,
-      "name": "Settings nav rail â€” five pages, shape-based selection, resizable",
+      "name": "Settings nav rail — five pages, shape-based selection, resizable",
       "status": "clean",
       "findings": [
         "F-002",
         "F-003"
       ],
-      "note": "Merged as 159fe4b. Residue recorded, not hidden: C5 is still unmet INSIDE a page â€” the nine section cards remain fill-only and collapse under flatline. Splitting them across five pages did not make cards load-bearing. That is a C5 conformance gap, not an F-002 miss, and it stays open."
+      "note": "Merged as 159fe4b. Residue recorded, not hidden: C5 is still unmet INSIDE a page — the nine section cards remain fill-only and collapse under flatline. Splitting them across five pages did not make cards load-bearing. That is a C5 conformance gap, not an F-002 miss, and it stays open."
     },
     {
       "id": 3,
-      "name": "Tools container â€” six nav buttons become Settings + Tools, and the ad copy goes",
+      "name": "Tools container — six nav buttons become Settings + Tools, and the ad copy goes",
       "status": "clean",
       "findings": [
         "F-009",
@@ -49,11 +60,11 @@
         "F-011",
         "F-012"
       ],
-      "note": "Merged as 3fc838b. F-001 was in the batch and did NOT close: its fix direction also lists Stop all, Open log folder and the Welcome tour, none of which has a view-model command (the tray raises events handled in App.xaml.cs). F-001 stays open with exactly those three named. The gate also caught an accessibility regression â€” the first Tools control announced as a plain button with no ExpandCollapse â€” fixed with a custom peer after all three stock controls each failed a different half."
+      "note": "Merged as 3fc838b. F-001 was in the batch and did NOT close: its fix direction also lists Stop all, Open log folder and the Welcome tour, none of which has a view-model command (the tray raises events handled in App.xaml.cs). F-001 stays open with exactly those three named. The gate also caught an accessibility regression — the first Tools control announced as a plain button with no ExpandCollapse — fixed with a custom peer after all three stock controls each failed a different half."
     },
     {
       "id": 4,
-      "name": "Page chrome â€” goal 4, the window-title system and the two header grammars",
+      "name": "Page chrome — goal 4, the window-title system and the two header grammars",
       "status": "clean",
       "findings": [
         "F-004",
@@ -64,11 +75,11 @@
         "F-016",
         "F-017"
       ],
-      "note": "Merged as 3d41846 (PR #92). LEDGER ENTRY WRITTEN LATE, 2026-08-05: that merge updated the register rows to clean and added the f076 entry but never wrote wave 4's own entry here, so the ledger claimed three waves while the register showed four waves' worth of closed rows. Recorded now from the register rows rather than from memory. The wave itself: a title rule made enforceable by a test that scans XAML AND code-behind Title= assignments (the one runtime-assembled title had shipped the repo name for months), plus a shared PageHeader replacing 12 of 13 hand-rolled headers. About keeps its own, deliberately â€” its heading is a clickable named TextBlock with a handler."
+      "note": "Merged as 3d41846 (PR #92). LEDGER ENTRY WRITTEN LATE, 2026-08-05: that merge updated the register rows to clean and added the f076 entry but never wrote wave 4's own entry here, so the ledger claimed three waves while the register showed four waves' worth of closed rows. Recorded now from the register rows rather than from memory. The wave itself: a title rule made enforceable by a test that scans XAML AND code-behind Title= assignments (the one runtime-assembled title had shipped the repo name for months), plus a shared PageHeader replacing 12 of 13 hand-rolled headers. About keeps its own, deliberately — its heading is a clickable named TextBlock with a handler."
     },
     {
       "id": 5,
-      "name": "The component vocabulary â€” secondary buttons get an edge that clears 3:1",
+      "name": "The component vocabulary — secondary buttons get an edge that clears 3:1",
       "status": "clean",
       "findings": [
         "F-025",
@@ -76,11 +87,11 @@
         "F-031",
         "F-035"
       ],
-      "note": "Merged as bf1fdef (PR #94). All four rows closed. Scope was REVISED mid-wave after Este's constraint about users who already authored their own themes: the original plan would have repainted every separator and card edge in every user theme. Divider turned out to do two jobs â€” decorative separator and control boundary â€” and WCAG 1.4.11 governs only the second. The fix derives InteractiveEdgeBrush via ContrastGuard rather than adding an eleventh slot (invariant 6 holds), a role-based test fences it off from decoration, and a per-theme consent prompt asks before changing a theme somebody wrote. REVIEW GATE (two Opus reviewers, local): ten findings addressed, one disagreed with on the merits. The two worst were cases where a test agreed with a false claim â€” ContrastGuard checked the ratio of an un-quantized triple then rounded on the way out, so 9,569 of 147,511 failing pairs came back under 3:1 (all three built-ins cleared it by luck, midnight by 0.019); and the sweep commit's 'zero Buttons left on DividerBrush' was true of the markup and false of the app, since two buttons are built in C# and every test in the wave parses XAML. Also: the answer could be persisted against the wrong theme across the modal's message pump, and dismissing the dialog with the title-bar X wrote a permanent decline â€” the first fix for that DID NOT WORK (WPF closes a modal with DialogResult false, not null) and only live WM_CLOSE testing caught it. DISAGREED: the gate flagged that our own theme template ships a 1.26:1 divider so anyone following our docs trips the dialog. Real, but changing the template hex would rebuild the bug â€” a faint divider is CORRECT for a hairline. Fixed the dialog copy and AGENT_PROMPT instead, so it no longer implies the author erred. CLOSE-OUT: re-captured main window and the Alerts page under brand and flatline (87-90). Under flatline the converted controls carry visible edges and the webhook TextBox beside the converted Show toggle has none â€” the stage-5 residue is now visible rather than theoretical. Comment drift: ControlStyles.xaml implied the dictionary reached every button; corrected to name the two code-behind exceptions. Gate surfaced three register additions: F-077, F-078, F-079."
+      "note": "Merged as bf1fdef (PR #94). All four rows closed. Scope was REVISED mid-wave after Este's constraint about users who already authored their own themes: the original plan would have repainted every separator and card edge in every user theme. Divider turned out to do two jobs — decorative separator and control boundary — and WCAG 1.4.11 governs only the second. The fix derives InteractiveEdgeBrush via ContrastGuard rather than adding an eleventh slot (invariant 6 holds), a role-based test fences it off from decoration, and a per-theme consent prompt asks before changing a theme somebody wrote. REVIEW GATE (two Opus reviewers, local): ten findings addressed, one disagreed with on the merits. The two worst were cases where a test agreed with a false claim — ContrastGuard checked the ratio of an un-quantized triple then rounded on the way out, so 9,569 of 147,511 failing pairs came back under 3:1 (all three built-ins cleared it by luck, midnight by 0.019); and the sweep commit's 'zero Buttons left on DividerBrush' was true of the markup and false of the app, since two buttons are built in C# and every test in the wave parses XAML. Also: the answer could be persisted against the wrong theme across the modal's message pump, and dismissing the dialog with the title-bar X wrote a permanent decline — the first fix for that DID NOT WORK (WPF closes a modal with DialogResult false, not null) and only live WM_CLOSE testing caught it. DISAGREED: the gate flagged that our own theme template ships a 1.26:1 divider so anyone following our docs trips the dialog. Real, but changing the template hex would rebuild the bug — a faint divider is CORRECT for a hairline. Fixed the dialog copy and AGENT_PROMPT instead, so it no longer implies the author erred. CLOSE-OUT: re-captured main window and the Alerts page under brand and flatline (87-90). Under flatline the converted controls carry visible edges and the webhook TextBox beside the converted Show toggle has none — the stage-5 residue is now visible rather than theoretical. Comment drift: ControlStyles.xaml implied the dictionary reached every button; corrected to name the two code-behind exceptions. Gate surfaced three register additions: F-077, F-078, F-079."
     },
     {
       "id": 6,
-      "name": "Text inputs are controls too â€” surfaces, inputs, and the heading hiding in C#",
+      "name": "Text inputs are controls too — surfaces, inputs, and the heading hiding in C#",
       "status": "clean",
       "findings": [
         "F-029",
@@ -89,11 +100,11 @@
         "F-064",
         "F-077"
       ],
-      "note": "Merged as deb8d23 (PR #95). All five rows closed. Wave 5's own close-out capture is what scoped this: under flatline the Alerts panel showed a converted Show button with a clear outline beside a webhook field with no boundary at all. 16 interactive controls (11 TextBox, 3 PasswordBox, 2 ComboBox) moved to the derived edge; the 7 card Borders and one ContextMenu stayed on DividerBrush, because those are separators and 1.4.11 does not govern separators. THREE DELIBERATE CALLS. (1) The input styles set no Background â€” two fills are in use and both are right, RowBg on a card and Navy on chrome, so forcing one would flatten a real distinction. (2) The ComboBox style is IMPLICIT and is the only one here that is: F-049 IS 'somebody added a ComboBox and it inherited nothing', so keying it would have preserved the exact failure mode. Buttons and text boxes stay keyed because each has more than one legitimate recipe. (3) F-026 was NOT slipped in. CardBorderStyle consolidates nine hand-copies but does not fix C5 â€” a card is a fill and a radius, and under RowBg == Bg the grouping still vanishes. The structural fix is F-026, tagged [new-mechanism], and it now costs one edit instead of nine. NO REVIEW GATE ON THIS ONE â€” Este's call to merge directly. The two blast-radius risks I had flagged were verified by hand instead: the implicit style turned out to govern all 6 ComboBoxes app-wide including 4 never touched (the per-row game and FPS pickers, and both alert routers), so those were captured and checked before merge (93); and the C# FindResource key, which fails at runtime rather than compile time, was exercised by opening Diagnostics through Tools (92). CLOSE-OUT: comment drift clean â€” the only stale-looking mentions of the old 12px/cyan heading are inside the comment describing its removal. C8 updated: the card line now points at the style and says plainly that the recipe is still fill-only, and an input line was ADDED, since C8 never named one â€” which is why two input recipes drifted and why every input sat below 3:1 through wave 5."
+      "note": "Merged as deb8d23 (PR #95). All five rows closed. Wave 5's own close-out capture is what scoped this: under flatline the Alerts panel showed a converted Show button with a clear outline beside a webhook field with no boundary at all. 16 interactive controls (11 TextBox, 3 PasswordBox, 2 ComboBox) moved to the derived edge; the 7 card Borders and one ContextMenu stayed on DividerBrush, because those are separators and 1.4.11 does not govern separators. THREE DELIBERATE CALLS. (1) The input styles set no Background — two fills are in use and both are right, RowBg on a card and Navy on chrome, so forcing one would flatten a real distinction. (2) The ComboBox style is IMPLICIT and is the only one here that is: F-049 IS 'somebody added a ComboBox and it inherited nothing', so keying it would have preserved the exact failure mode. Buttons and text boxes stay keyed because each has more than one legitimate recipe. (3) F-026 was NOT slipped in. CardBorderStyle consolidates nine hand-copies but does not fix C5 — a card is a fill and a radius, and under RowBg == Bg the grouping still vanishes. The structural fix is F-026, tagged [new-mechanism], and it now costs one edit instead of nine. NO REVIEW GATE ON THIS ONE — Este's call to merge directly. The two blast-radius risks I had flagged were verified by hand instead: the implicit style turned out to govern all 6 ComboBoxes app-wide including 4 never touched (the per-row game and FPS pickers, and both alert routers), so those were captured and checked before merge (93); and the C# FindResource key, which fails at runtime rather than compile time, was exercised by opening Diagnostics through Tools (92). CLOSE-OUT: comment drift clean — the only stale-looking mentions of the old 12px/cyan heading are inside the comment describing its removal. C8 updated: the card line now points at the style and says plainly that the recipe is still fill-only, and an input line was ADDED, since C8 never named one — which is why two input recipes drifted and why every input sat below 3:1 through wave 5."
     },
     {
       "id": 7,
-      "name": "Client lifetime â€” the ones a human found and no instrument did",
+      "name": "Client lifetime — the ones a human found and no instrument did",
       "status": "open",
       "findings": [
         "F-103",
@@ -128,12 +139,12 @@
       "findings": [
         "F-076"
       ],
-      "note": "Not a wave â€” a single standalone finding, fixed and verified in one PR (merged 9587ee6b). F-076 was itself added BY wave 2, whose capture tooling photographed a live webhook token. Masking logic lives in Core with nine unit tests; the reveal toggle is wired to Checked/Unchecked rather than Click because UI Automation's TogglePattern never raises Click â€” the first version looked right and did nothing under automation. Este declined rotating the exposed webhook (2026-08-04); it never left the machine and was never committed."
+      "note": "Not a wave — a single standalone finding, fixed and verified in one PR (merged 9587ee6b). F-076 was itself added BY wave 2, whose capture tooling photographed a live webhook token. Masking logic lives in Core with nine unit tests; the reveal toggle is wired to Checked/Unchecked rather than Click because UI Automation's TogglePattern never raises Click — the first version looked right and did nothing under automation. Este declined rotating the exposed webhook (2026-08-04); it never left the machine and was never committed."
     }
   ],
   "scope": {
     "area": "Settings, plus the app's navigation and page chrome around it",
-    "goal": "1) Get the items that are really settings INTO Settings â€” streamer mode, and probably About, History, Diagnostics, which currently hang off the main window. 2) Settings was already getting tall before Discord and alerts landed on it, so work out how to split it up. 3) Main-window buttons are fine to keep or change â€” including a separate container for tools if that is the right answer â€” but each one has to lead where it says it leads. 4) Fix the page titles: they read like an app being readied for a hackathon, explaining each page at the top like an ad rather than reading as app chrome. OPEN: History and Diagnostics are tools, not preferences â€” 'under Settings' may be the wrong home for them; the user's word was 'maybe' and this campaign decides it on evidence.",
+    "goal": "1) Get the items that are really settings INTO Settings — streamer mode, and probably About, History, Diagnostics, which currently hang off the main window. 2) Settings was already getting tall before Discord and alerts landed on it, so work out how to split it up. 3) Main-window buttons are fine to keep or change — including a separate container for tools if that is the right answer — but each one has to lead where it says it leads. 4) Fix the page titles: they read like an app being readied for a hackathon, explaining each page at the top like an ad rather than reading as app chrome. OPEN: History and Diagnostics are tools, not preferences — 'under Settings' may be the wrong home for them; the user's word was 'maybe' and this campaign decides it on evidence.",
     "surfaces": [
       "main-window",
       "main-window-empty",
