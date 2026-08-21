@@ -93,6 +93,7 @@
             <StackPanel VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="RoRoRo"
+                               FontFamily="{DynamicResource DisplayFontFamily}"
                                FontSize="24" FontWeight="Bold"
                                Foreground="{DynamicResource CyanBrush}" />
                     <TextBlock Text=" / "

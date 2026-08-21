@@ -34,7 +34,7 @@
              installed get Cascadia (Win11 default). Brand-aligned uppercase + tracking. -->
         <TextBlock Grid.Row="1"
                    x:Name="OriginalNameLine"
-                   FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                   FontFamily="{DynamicResource MonoFontFamily}"
                    FontSize="{DynamicResource MetaFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,12,0,4"

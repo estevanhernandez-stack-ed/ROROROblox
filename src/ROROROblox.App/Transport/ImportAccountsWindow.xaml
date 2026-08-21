@@ -45,7 +45,7 @@
             </Grid.ColumnDefinitions>
             <TextBox Grid.Column="0" x:Name="FilePathBox"
                      FontSize="{DynamicResource BodyFontSize}"
-                     FontFamily="Consolas"
+                     FontFamily="{DynamicResource MonoFontFamily}"
                      Padding="10,8"
                      IsReadOnly="True"
                      Background="{DynamicResource RowBgBrush}" Style="{StaticResource AppTextBoxStyle}"/>

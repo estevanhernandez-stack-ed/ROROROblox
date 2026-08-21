@@ -43,8 +43,8 @@
                 <TextBlock TextWrapping="Wrap" FontSize="{DynamicResource MetaFontSize}"
                            Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,8">
                     Private server link —
-                    <Run FontFamily="Consolas">https://www.roblox.com/games/&lt;id&gt;/&lt;name&gt;?privateServerLinkCode=&lt;code&gt;</Run>
-                    — gets saved for next time. A plain game link (<Run FontFamily="Consolas">roblox.com/games/&lt;id&gt;</Run>)
+                    <Run FontFamily="{DynamicResource MonoFontFamily}">https://www.roblox.com/games/&lt;id&gt;/&lt;name&gt;?privateServerLinkCode=&lt;code&gt;</Run>
+                    — gets saved for next time. A plain game link (<Run FontFamily="{DynamicResource MonoFontFamily}">roblox.com/games/&lt;id&gt;</Run>)
                     puts the squad in one public server together instead.
                 </TextBlock>
                 <Grid>

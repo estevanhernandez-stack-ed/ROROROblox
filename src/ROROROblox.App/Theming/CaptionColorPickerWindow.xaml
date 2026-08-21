@@ -54,7 +54,7 @@
                        Margin="0,0,8,0" />
             <TextBox Grid.Column="1"
                      x:Name="HexInput"
-                     FontFamily="Consolas"
+                     FontFamily="{DynamicResource MonoFontFamily}"
                      FontSize="{DynamicResource BodyFontSize}"
                      Padding="8,5"
                      Background="{DynamicResource NavyBrush}"

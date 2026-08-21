@@ -36,10 +36,10 @@
         <StackPanel Grid.Row="0">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Welcome to "
-                           FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
+                           FontFamily="{DynamicResource DisplayFontFamily}" FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
                            Foreground="{DynamicResource WhiteBrush}" />
                 <TextBlock Text="RoRoRo"
-                           FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
+                           FontFamily="{DynamicResource DisplayFontFamily}" FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
                            Foreground="{DynamicResource CyanBrush}" />
             </StackPanel>
             <TextBlock Text="Run multiple Roblox clients side by side. Three steps and you're set."

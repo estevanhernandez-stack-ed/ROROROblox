@@ -55,7 +55,7 @@
                                Foreground="{DynamicResource MutedTextBrush}" />
                 </Border>
                 <TextBlock x:Name="AuthoredRatio"
-                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                           FontFamily="{DynamicResource MonoFontFamily}"
                            FontSize="{DynamicResource MetaFontSize}"
                            Foreground="{DynamicResource MutedTextBrush}"
                            Margin="0,6,0,0" />
@@ -71,7 +71,7 @@
                                Foreground="{DynamicResource MutedTextBrush}" />
                 </Border>
                 <TextBlock x:Name="DerivedRatio"
-                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                           FontFamily="{DynamicResource MonoFontFamily}"
                            FontSize="{DynamicResource MetaFontSize}"
                            Foreground="{DynamicResource MutedTextBrush}"
                            Margin="0,6,0,0" />

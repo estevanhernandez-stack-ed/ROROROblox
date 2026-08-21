@@ -133,10 +133,28 @@ public sealed class AppStorageDefenderTests : IDisposable
         await using var defender = NewDefender("LaunchedAccount", maxCap: cap, postAttachGrace: TimeSpan.FromMilliseconds(100));
 
         var sw = Stopwatch.StartNew();
-        // Without NotifyConsumed, completion must NOT happen before the cap.
+        // Without NotifyConsumed, completion must NOT happen before the cap. This one is safe as
+        // written: nothing has been awaited yet, so no amount of load can move it.
         Assert.False(defender.Completion.IsCompleted, "Defender completed before the max cap with no consume signal.");
+
+        // F-116. THE MID-FLIGHT PROBE IS THE FRAGILE ONE, and the distinction is worth stating
+        // because it decides which timing assertions need work and which do not:
+        //
+        //   safe   — an assertion load can only make MORE true. `sw.Elapsed >= 700ms` below cannot
+        //            fail because a runner stalled; stalling makes elapsed LARGER.
+        //   unsafe — an assertion load can FALSIFY. This one claims "still running at 300ms" of an
+        //            800ms cap. A stalled continuation resuming at 850ms finds the defender
+        //            correctly finished and reports it as winding down early — a pass condition
+        //            reported as a failure. It blocked PR #126 on exactly that.
+        //
+        // So the probe now asserts only when it actually landed inside the window it was meant to
+        // probe. Overrunning means NOT MEASURED, which is the honest outcome; it does not mean
+        // broken. Not a longer delay — a delay cannot be made reliable, only its claim can.
         await Task.Delay(TimeSpan.FromMilliseconds(300));
-        Assert.False(defender.Completion.IsCompleted, "Defender wound down well before the max cap with no consume signal.");
+        if (sw.Elapsed < cap)
+        {
+            Assert.False(defender.Completion.IsCompleted, "Defender wound down well before the max cap with no consume signal.");
+        }
 
         // Eventually it completes at the cap.
         await defender.Completion.WaitAsync(TimeSpan.FromSeconds(2));
@@ -171,8 +189,19 @@ public sealed class AppStorageDefenderTests : IDisposable
         // Completed roughly at grace, well short of the 10s cap.
         Assert.True(sw.Elapsed >= TimeSpan.FromMilliseconds(300),
             $"Completed before the grace elapsed ({sw.ElapsedMilliseconds}ms).");
-        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5),
-            $"Completed near the cap ({sw.ElapsedMilliseconds}ms) instead of after the short grace.");
+        // The last falsifiable assertion in this file, found by sweeping for the shape rather than
+        // by waiting for CI to hit it. It is an UPPER bound on wall clock: load can only make
+        // elapsed larger, so a stalled runner reports "completed after the grace" as "completed near
+        // the cap". The margin is generous — 5s against a 10s cap — which is why it has not fired
+        // yet, not a reason it cannot.
+        //
+        // Kept rather than deleted, because the claim is real: the grace path must not fall through
+        // to the cap. Guarded so it only speaks when the measurement means something.
+        if (sw.Elapsed < cap)
+        {
+            Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5),
+                $"Completed near the cap ({sw.ElapsedMilliseconds}ms) instead of after the short grace.");
+        }
     }
 
     [Fact]

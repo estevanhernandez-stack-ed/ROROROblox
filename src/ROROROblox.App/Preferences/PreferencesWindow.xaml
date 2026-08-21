@@ -495,8 +495,29 @@
                                         Click="OnNoServerHelpClick" />
                             </StackPanel>
 
-                            <TextBlock x:Name="AlertsStatusLine" FontSize="{DynamicResource BodyFontSize}" Margin="0,10,0,0" TextWrapping="Wrap"
-                                       Foreground="{DynamicResource CyanBrush}" />
+                            <!-- F-094. Every arm of this line used to be CyanBrush — the accent, which
+                                 is the treatment a SUCCESS gets — so "your webhook was deleted, so
+                                 nothing is reaching your phone" rendered identically to "sending to
+                                 #alerts". The sentence said one thing and the styling said another,
+                                 and styling is what gets read first.
+
+                                 The failure arms take RowExpiredAccentBrush and the "▲ " prefix, which
+                                 is the pair MainWindow already uses for the compat and Bloxstrap
+                                 banners. Driven from a Tag rather than assigned in code-behind so the
+                                 colour stays visible to the theme gates — code-behind colour
+                                 assignment is exactly the blind spot F-098 records. -->
+                            <TextBlock x:Name="AlertsStatusLine" FontSize="{DynamicResource BodyFontSize}" Margin="0,10,0,0" TextWrapping="Wrap">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource CyanBrush}" />
+                                        <Style.Triggers>
+                                            <Trigger Property="Tag" Value="failure">
+                                                <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
                     </Border>
 

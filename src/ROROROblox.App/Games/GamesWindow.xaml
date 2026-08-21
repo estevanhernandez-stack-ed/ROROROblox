@@ -137,7 +137,7 @@
                         </StackPanel>
                         <TextBlock Text="{Binding PlaceId, StringFormat='Place ID {0}'}"
                                    FontSize="{DynamicResource BodyFontSize}"
-                                   FontFamily="Consolas"
+                                   FontFamily="{DynamicResource MonoFontFamily}"
                                    Foreground="{DynamicResource MutedTextBrush}"
                                    Margin="0,2,0,0" />
                     </StackPanel>
@@ -345,7 +345,7 @@
             </Grid.ColumnDefinitions>
             <TextBox Grid.Column="0" x:Name="UrlInput"
                      FontSize="{DynamicResource BodyFontSize}"
-                     FontFamily="Consolas"
+                     FontFamily="{DynamicResource MonoFontFamily}"
                      Padding="10,8"
                      Background="{DynamicResource RowBgBrush}"
                      CaretBrush="{DynamicResource CyanBrush}"

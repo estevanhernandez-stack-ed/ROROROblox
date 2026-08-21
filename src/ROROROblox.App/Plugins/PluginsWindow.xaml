@@ -113,7 +113,7 @@
                 CornerRadius="8">
             <StackPanel>
                 <TextBlock Text="INSTALL FROM URL"
-                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                           FontFamily="{DynamicResource MonoFontFamily}"
                            FontSize="{DynamicResource MetaFontSize}"
                            Foreground="{DynamicResource MutedTextBrush}"
                            Margin="0,0,0,6" />
@@ -173,7 +173,7 @@
                                                            Foreground="{DynamicResource WhiteBrush}" />
                                                 <TextBlock Text="{Binding Version}"
                                                            Margin="8,2,0,0"
-                                                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                                           FontFamily="{DynamicResource MonoFontFamily}"
                                                            FontSize="{DynamicResource MetaFontSize}"
                                                            Foreground="{DynamicResource MutedTextBrush}"
                                                            VerticalAlignment="Center" />
@@ -195,7 +195,7 @@
                                                     HorizontalAlignment="Left"
                                                     Margin="0,8,0,0">
                                                 <TextBlock Text="{Binding CapabilitySummary}"
-                                                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                                           FontFamily="{DynamicResource MonoFontFamily}"
                                                            FontSize="{DynamicResource MetaFontSize}"
                                                            Foreground="{DynamicResource CyanBrush}" />
                                             </Border>
@@ -207,7 +207,7 @@
                                                     Margin="0,6,0,0"
                                                     Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVisibilityConverter}}">
                                                 <TextBlock Text="{Binding UpdateLabel}"
-                                                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                                           FontFamily="{DynamicResource MonoFontFamily}"
                                                            FontSize="{DynamicResource MetaFontSize}"
                                                            Foreground="{DynamicResource OnMagentaBrush}" />
                                             </Border>
@@ -276,7 +276,7 @@
                              whole block is visible (MarketplaceEnabled), which is also the correct
                              behavior for the "empty until plugins catalog ships" period. -->
                         <TextBlock Text="AVAILABLE"
-                                   FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                   FontFamily="{DynamicResource MonoFontFamily}"
                                    FontSize="{DynamicResource MetaFontSize}"
                                    Foreground="{DynamicResource MutedTextBrush}"
                                    Margin="0,8,0,6" />
@@ -299,7 +299,7 @@
                                                                Foreground="{DynamicResource WhiteBrush}" />
                                                     <TextBlock Text="{Binding Version}"
                                                                Margin="8,2,0,0"
-                                                               FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                                               FontFamily="{DynamicResource MonoFontFamily}"
                                                                FontSize="{DynamicResource MetaFontSize}"
                                                                Foreground="{DynamicResource MutedTextBrush}"
                                                                VerticalAlignment="Center" />

@@ -764,13 +764,21 @@ internal partial class PreferencesWindow : Window
         await _discordConfigStore.SaveAsync(updated);
     }
 
-    private void RefreshAlertsStatus() =>
-        AlertsStatusLine.Text = AlertStatusLine.Compose(
+    private void RefreshAlertsStatus()
+    {
+        var line = AlertStatusLine.Compose(
             _discordConfig,
             _alertDispatcher.MineWebhookRejected,
             _alertDispatcher.ClanWebhookRejected,
             _mineChannelName,
             _clanChannelName);
+
+        // The glyph is the view's, not the composer's — same rule MainWindow.xaml records for the
+        // compat banner. The Tag drives the brush from the Style so the colour stays in markup where
+        // the theme gates can see it (F-094, F-098).
+        AlertsStatusLine.Text = line.IsFailure ? $"▲ {line.Text}" : line.Text;
+        AlertsStatusLine.Tag = line.IsFailure ? "failure" : null;
+    }
 
     private async void OnAlertRoutingChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {

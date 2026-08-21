@@ -1252,7 +1252,7 @@
                                 <!-- Mono-micro label. Brand: uppercase + tracking, magenta tint. -->
                                 <TextBlock Grid.Column="1"
                                            Text="DEFAULT"
-                                           FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                           FontFamily="{DynamicResource MonoFontFamily}"
                                            FontSize="{DynamicResource MetaFontSize}"
                                            Foreground="{DynamicResource MagentaBrush}"
                                            VerticalAlignment="Center"
@@ -1435,7 +1435,7 @@
                                                                 </Style>
                                                             </Border.Style>
                                                             <TextBlock Text="DEFAULT"
-                                                                       FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
+                                                                       FontFamily="{DynamicResource MonoFontFamily}"
                                                                        FontSize="{DynamicResource MetaFontSize}"
                                                                        FontWeight="Bold"
                                                                        Foreground="{DynamicResource OnMagentaBrush}" />
