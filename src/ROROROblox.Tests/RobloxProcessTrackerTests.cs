@@ -132,28 +132,41 @@ public sealed class RobloxProcessTrackerTests : IDisposable
     public async Task InstallerAbsent_GivesUpAtBaseTimeout_FiresAttachFailed()
     {
         // No installer, RPB never appears: unchanged behavior — give up at the base timeout and fail.
+        //
+        // THE THIRD TEST IN THIS FILE TO NEED VIRTUAL TIME, and it blocked PR #126 while the two
+        // beside it were already fixed. Its assertion was an UPPER bound on a Stopwatch — "gave up
+        // in under 2 seconds" — which is the falsifiable kind: load can only make elapsed larger,
+        // so a stalled runner reports correct behaviour as a failure. It read 3026ms against a
+        // 200ms base timeout, which measures the agent, not the tracker.
+        var time = new VirtualTime();
+        var start = time.UtcNow;
         using var tracker = new RobloxProcessTracker(
             log: NullLogger<RobloxProcessTracker>.Instance,
             attachTimeout: TimeSpan.FromMilliseconds(200),
             installerExtendedTimeout: TimeSpan.FromSeconds(5),
             pollInterval: TimeSpan.FromMilliseconds(50),
             isInstallerRunning: () => false,
-            candidateProcesses: Array.Empty<Process>);
+            candidateProcesses: Array.Empty<Process>,
+            clock: time,
+            delay: time.Advance);
 
         var accountId = Guid.NewGuid();
         var failed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         tracker.ProcessAttachFailed += (_, _) => failed.TrySetResult(true);
 
-        var sw = Stopwatch.StartNew();
-        await tracker.TrackLaunchAsync(accountId, DateTimeOffset.UtcNow);
-        sw.Stop();
+        await tracker.TrackLaunchAsync(accountId, start);
+        var waited = time.UtcNow - start;
 
         Assert.True(await failed.Task.WaitAsync(TestWaits.Liveness),
             "ProcessAttachFailed should fire when no installer is running and no RPB appears.");
         Assert.False(tracker.IsTracking(accountId));
-        // Should NOT have waited toward the long extended cap — it bails near the base timeout.
-        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(2),
-            $"Gave up too late ({sw.ElapsedMilliseconds}ms) — base-timeout behavior should be unextended when no installer runs.");
+
+        // Virtual, so this is a statement about the loop rather than the machine — and it can now be
+        // tight. The old bound was 2 SECONDS against a 200ms timeout, ten times the real limit,
+        // because it had to survive a loaded agent. This is the base timeout plus one poll, which is
+        // what the code actually promises, and it catches an accidental extension of even one tick.
+        Assert.True(waited <= TimeSpan.FromMilliseconds(250),
+            $"Gave up too late ({waited.TotalMilliseconds}ms of virtual time) — base-timeout behavior should be unextended when no installer runs.");
     }
 
     [Fact]
