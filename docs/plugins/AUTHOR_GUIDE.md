@@ -33,6 +33,38 @@ Why this shape: Microsoft Store policy 10.2.2 forbids dynamic inclusion of code 
 
 Reference the contract NuGet, take a dependency on `Grpc.Net.Client` for the wire transport, and you're set.
 
+## Run one copy — the single-instance guard
+
+**Do this before anything else in `Main`.** It is not a nicety, and RoRoRo's own first-party plugin
+shipped without it and produced a bug nobody could diagnose from the symptom.
+
+What happened: a manual launch raced the host's own autostart, so two copies of the plugin started.
+The first took the global hotkeys. The second could not, showed its **full window**, and reported
+*"Not connected to RoRoRo"* with 0 macros and *"Startup failed: Failed to register hotkeys"*. That
+window is indistinguishable from a genuine connection failure — so the user sees a broken plugin and
+a working plugin side by side, and nothing on screen says which is which or why.
+
+Global resources are the trap: hotkeys, ports, named pipes, single-file logs, a lock on a settings
+file. All of them are first-come-first-served, and the loser has no vocabulary for "I lost a race
+with myself".
+
+```csharp
+// VERBATIM ($@), not $. In an ordinary interpolated string `\r` is a carriage return, so
+// "Local\rororo-..." silently becomes a mutex name with a control character in it — which still
+// "works" in the sense that it compiles and never collides, and therefore never guards anything.
+using var single = new Mutex(initiallyOwned: true, $@"Local\rororo-plugin-{PluginId}", out var isFirst);
+if (!isFirst)
+{
+    // Focus the copy that is already running if you can, or exit quietly. Do NOT open a window and
+    // report an error: the host is fine, and saying otherwise sends the user to debug the wrong end.
+    return 0;
+}
+```
+
+The `Local\` prefix scopes the mutex to the user's session, which is what you want — two different
+Windows users each get their own copy. Key it on the plugin id so two DIFFERENT plugins never
+collide.
+
 ## Connect — minimal handshake
 
 ```csharp

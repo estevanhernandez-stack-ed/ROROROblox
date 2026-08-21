@@ -4,6 +4,19 @@ namespace ROROROblox.Core.Diagnostics;
 
 public interface IMemoryWatchdog
 {
+    /// <summary>
+    /// What one client costs on THIS machine, learned from settled samples (F-083). Falls back to
+    /// the measured-elsewhere seed until there is enough evidence.
+    /// <para>
+    /// Exposed here because the watchdog is the only thing already sampling every client every 30
+    /// seconds — it had this machine's real answer in hand and nothing was reading it. **For the
+    /// launch advisor only.** Feeding it to the anomaly cap would let a heavy machine teach itself
+    /// that heavy is normal, which is F-082 by a new route, and the headroom trigger reads free
+    /// memory directly, so replacing a measurement with an estimate there is a downgrade.
+    /// </para>
+    /// </summary>
+    int ExpectedClientMb { get; }
+
     long CapBytes { get; set; }
     long ReserveBytes { get; set; }
     int ProjectionWarnMinutes { get; set; }

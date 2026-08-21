@@ -242,6 +242,16 @@
         "F-059"
       ],
       "notes": "F-072 took THREE attempts and the first two failed silently, which is the lesson. AutomationProperties.SetName on the row's Border produced nothing (510 Text nodes, 0 named rows); on a ContentControl, nothing either (one Custom element for a hundred rows). WPF builds automation peers for CONTROLS, so a name on a decorator is a name nowhere - both diffs read as correct and only the automation tree disagreed. HistoryRowPresenter, a Border subclass whose peer reports ListItem and IsControlElement, is the same answer wave 3 reached for the Tools control. Verified live: 620 elements / 0 named rows became 720 / 100. HistoryRowRhythmTests caught the type rename immediately and its own failure message asked to be re-pointed rather than re-derived, which is exactly what a good gate does. F-059 closed by re-measurement alone: it describes six nav buttons with inconsistent icons and the app has three with none, satisfying the row's own 'or none do'. F-098 was considered and NOT taken - its remaining piece is button rank, not History structure."
+    },
+    {
+      "id": 20,
+      "name": "The remainder that could actually be finished",
+      "status": "open",
+      "findings": [
+        "F-083",
+        "F-096"
+      ],
+      "notes": "Asked to take every remaining row that could be finished in a wave. Four candidates; TWO said in their own rows that they could not be, and were scoped out with their own words as the evidence: F-098's remainder is under a standing ruling to wait for the Store submission run (auditing capture-ui.ps1 means driving a live app; auditing the packaging scripts means building an MSIX to audit the script that builds it), and F-106 is [new-mechanism] with an explicit 'do not batch it'. F-083 shipped in full to its own spec - p75 of settled clients, pressure samples discarded, clamped, seeded, version-reset - and feeds the ADVISOR ONLY, enforced by where the value is threaded rather than by a comment. A test of mine was wrong before the code was: the p75 case expected 3000 from a 15/5 split, which is simply the wrong arithmetic, and the failure said so. F-096 is partly closed: its named-mutex fix lives in rororo-ur-task, a different repo, but the row's own second sentence asks whether the author guide should require it of every plugin - it now does, with the real symptom, and with a verbatim-string bug caught in the sample while writing it."
     }
   ],
   "scope": {
