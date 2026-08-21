@@ -3,7 +3,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="About RoRoRo"
-        Height="540" Width="500"
+        Width="500"
+        SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="{DynamicResource BgBrush}"
@@ -20,11 +21,23 @@
         <SolidColorBrush x:Key="TealDeepBrush" Color="#1A9F8B" />
     </Window.Resources>
 
+    <!-- F-113. This window was `Height="460"` with `ResizeMode="NoResize"` and a star row that
+         absorbed the slack — so when the content grew past the frame, the star row simply gave the
+         legal text less space than it needed and clipped it. Silently: nothing throws, nothing
+         logs, and every render gate measures pixels INSIDE the frame rather than content past its
+         bottom edge. The trademark disclaimer had been cut mid-sentence for as long as the current
+         copy has existed, on a Store-listed product, and the only reason anybody noticed is that
+         wave 13 added one 11px line and pushed the DPAPI paragraph over the same edge.
+
+         Raising the number to 540 fixed that instance and left the class alone — a fixed height is
+         a guess about font metrics, DPI and how a specific sentence happens to wrap. So the window
+         asks its content instead: every row is Auto and SizeToContent grows the frame to fit. There
+         is no height here to be wrong. -->
     <Grid Margin="32,28">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
