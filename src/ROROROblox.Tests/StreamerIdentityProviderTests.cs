@@ -169,6 +169,10 @@ public class StreamerIdentityProviderTests
         public Task<bool?> GetEdgeRemediationAnswerAsync(string themeId) => throw new NotImplementedException();
         public Task SetEdgeRemediationAnswerAsync(string themeId, bool accepted) => throw new NotImplementedException();
         public Task<bool> GetBloxstrapWarningDismissedAsync() => throw new NotImplementedException();
+        /// <summary>F-111. Settable so the stop-grace path can be driven both ways.</summary>
+        public bool AutoForceStop { get; set; }
+        public Task<bool> GetAutoForceStopAsync() => Task.FromResult(AutoForceStop);
+        public Task SetAutoForceStopAsync(bool auto) { AutoForceStop = auto; return Task.CompletedTask; }
         public Task SetBloxstrapWarningDismissedAsync(bool v) => throw new NotImplementedException();
         public Task<string?> GetDismissedFpsCapWarningSignatureAsync() => throw new NotImplementedException();
         public Task SetDismissedFpsCapWarningSignatureAsync(string? s) => throw new NotImplementedException();
@@ -188,6 +192,11 @@ public class StreamerIdentityProviderTests
         public Task SetMemoryCapMbAsync(int? c) => throw new NotImplementedException();
         public Task<int> GetProjectionWarnMinutesAsync() => throw new NotImplementedException();
         public Task SetProjectionWarnMinutesAsync(int m) => throw new NotImplementedException();
+        /// <summary>F-060. Records rather than discards, so the round trip is assertable.</summary>
+        public WindowPlacement? Placement;
+        public Task<WindowPlacement?> GetMainWindowPlacementAsync() => Task.FromResult(Placement);
+        public Task SetMainWindowPlacementAsync(WindowPlacement? placement) { Placement = placement; return Task.CompletedTask; }
+
         public Task<bool> GetCompactModeAsync() => throw new NotImplementedException();
         public Task SetCompactModeAsync(bool compact) => throw new NotImplementedException();
     }

@@ -288,6 +288,24 @@ public sealed class AppSettings : IAppSettings, IDisposable
         finally { _gate.Release(); }
     }
 
+    public async Task<bool> GetAutoForceStopAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).AutoForceStop; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetAutoForceStopAsync(bool auto)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with { AutoForceStop = auto }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
     public async Task<bool> GetStreamerModeAsync()
     {
         await _gate.WaitAsync().ConfigureAwait(false);
@@ -374,6 +392,42 @@ public sealed class AppSettings : IAppSettings, IDisposable
         {
             var s = await LoadAsync().ConfigureAwait(false);
             await SaveAsync(s with { ProjectionWarnMinutes = minutes }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
+    public async Task<WindowPlacement?> GetMainWindowPlacementAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            // All four or nothing: a half-written record is not a placement, and filling the gaps
+            // from defaults would put the window somewhere the user never left it.
+            if (s.MainWindowLeft is not double l || s.MainWindowTop is not double tp
+                || s.MainWindowWidth is not double w || s.MainWindowHeight is not double h)
+            {
+                return null;
+            }
+            return new WindowPlacement(l, tp, w, h, s.MainWindowMaximized);
+        }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetMainWindowPlacementAsync(WindowPlacement? placement)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with
+            {
+                MainWindowLeft = placement?.Left,
+                MainWindowTop = placement?.Top,
+                MainWindowWidth = placement?.Width,
+                MainWindowHeight = placement?.Height,
+                MainWindowMaximized = placement?.Maximized ?? false,
+            }).ConfigureAwait(false);
         }
         finally { _gate.Release(); }
     }
@@ -493,5 +547,11 @@ public sealed class AppSettings : IAppSettings, IDisposable
         string? DismissedFpsCapWarningSignature = null,
         bool AlwaysShowRecycle = false,
         bool CompactMode = false,
+        bool AutoForceStop = false,
+        double? MainWindowLeft = null,
+        double? MainWindowTop = null,
+        double? MainWindowWidth = null,
+        double? MainWindowHeight = null,
+        bool MainWindowMaximized = false,
         Dictionary<string, bool>? EdgeRemediationAnswers = null);
 }

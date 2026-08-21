@@ -163,6 +163,26 @@ public interface IAppSettings
     Task SetProjectionWarnMinutesAsync(int minutes);
 
     /// <summary>
+    /// True when Stop should force-close a client immediately instead of giving Roblox its ten
+    /// seconds to close itself (F-111).
+    /// <para>
+    /// Defaults to false, which is the safer default rather than the tidier one. Pressing Stop
+    /// sends the client the same close its X sends; an in-game client answers by raising Roblox's
+    /// OWN confirm dialog, drawn inside the game surface where RoRoRo cannot see or click it. The
+    /// ten seconds are for a person to answer that. Only a clean exit persists Roblox's settings —
+    /// window size, fullscreen, graphics quality — so waiting is what keeps them.
+    /// </para>
+    /// <para>
+    /// Turning this on trades those settings for immediacy, which is a reasonable trade for someone
+    /// who stops clients constantly and never touches Roblox's own options. RoRoRo still asks
+    /// first: if Roblox takes the close immediately (no session, or the confirm suppressed via its
+    /// "Don't Show Again"), the clean exit is free and nothing is lost.
+    /// </para>
+    /// </summary>
+    Task<bool> GetAutoForceStopAsync();
+    Task SetAutoForceStopAsync(bool auto);
+
+    /// <summary>
     /// True when the main window opens in compact mode — the fixed-width, live-rows-only strip the
     /// status bar's Compact button toggles. Defaults to false (expanded).
     /// <para>
@@ -172,6 +192,17 @@ public interface IAppSettings
     /// and its home is where it is used.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// The main window's last position and size, or null when nothing has been saved yet (F-060).
+    /// <para>
+    /// Restored only when <see cref="WindowPlacement.IsRestorableOnto"/> still says it lands on a
+    /// screen — a window saved on a monitor that has since been unplugged would otherwise come back
+    /// somewhere nobody can reach, which is worse than the forgetting this replaces.
+    /// </para>
+    /// </summary>
+    Task<WindowPlacement?> GetMainWindowPlacementAsync();
+    Task SetMainWindowPlacementAsync(WindowPlacement? placement);
+
     Task<bool> GetCompactModeAsync();
     Task SetCompactModeAsync(bool compact);
 }

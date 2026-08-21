@@ -64,6 +64,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// is null there — so the delegate bodies below had never executed in a test.
     /// </summary>
     private readonly Core.IUiDispatcher _ui;
+
+    /// <summary>Used only to put back what a forced stop destroys (F-109). Null-tolerant.</summary>
+    private readonly IGlobalBasicSettingsWriter? _globalBasicSettings;
     private readonly Core.StreamerMode.IStreamerIdentityProvider? _streamerIdentity;
     private readonly DiscordConfigStore? _discordConfigStore;
     private readonly ILogger<MainViewModel> _log;
@@ -158,6 +161,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         ITrayService tray,
         Notifications.IdleAlertPresenter idleAlertPresenter,
         Core.IUiDispatcher? uiDispatcher = null,
+        IGlobalBasicSettingsWriter? globalBasicSettings = null,
         Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
         DiscordConfigStore? discordConfigStore = null,
         ILogger<MainViewModel>? log = null)
@@ -189,6 +193,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _tray = tray;
         _idleAlertPresenter = idleAlertPresenter;
         _ui = uiDispatcher ?? new Threading.WpfUiDispatcher();
+        _globalBasicSettings = globalBasicSettings;
         _streamerIdentity = streamerIdentity;
         _discordConfigStore = discordConfigStore;
         _log = log ?? NullLogger<MainViewModel>.Instance;
@@ -213,7 +218,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         ReauthenticateCommand = new RelayCommand(p => ReauthenticateAsync(p as AccountSummary), _ => !IsBusy);
         OpenGamesCommand = new RelayCommand(OpenGames);
         LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !a.SessionLimited && !(a.InGame || a.IsRunning)));
-        StopAccountCommand = new RelayCommand(p => StopAccount(p as AccountSummary));
+        StopAccountCommand = new RelayCommand(p => _ = StopAccountAsync(p as AccountSummary));
         RecycleAccountCommand = new RelayCommand(p => _ = RecycleAccountAsync(p as AccountSummary));
         OpenDiagnosticsCommand = new RelayCommand(OpenDiagnostics);
         OpenAboutCommand = new RelayCommand(OpenAbout);
@@ -2194,10 +2199,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var running = breakdown.Breakdown.Running;
         var expired = breakdown.Breakdown.Expired;
 
-        var window = new SquadLaunchWindow(_privateServerStore, _api, _settings, url => ResolveShareUrlAsync(url), eligible, running, expired)
-        {
-            Owner = Application.Current.MainWindow,
-        };
+        var window = Parented(new SquadLaunchWindow(_privateServerStore, _api, _settings, url => ResolveShareUrlAsync(url), eligible, running, expired));
         var dialogResult = window.ShowDialog();
         if (dialogResult == true && window.SelectedTarget is { } target)
         {
@@ -2452,10 +2454,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         if (summary is null) return;
 
-        var window = new JoinByLinkWindow(_api, url => ResolveShareUrlAsync(url), summary.RenderName)
-        {
-            Owner = Application.Current.MainWindow,
-        };
+        var window = Parented(new JoinByLinkWindow(_api, url => ResolveShareUrlAsync(url), summary.RenderName));
         if (window.ShowDialog() == true && window.SelectedTarget is { } target)
         {
             var saveToLibrary = window.SaveToLibrary;
@@ -2584,10 +2583,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var mainSource = await TryResolveMainFriendSourceAsync(summary);
         var (sources, defaultIndex) = FriendSourcePlan.Build(rowSource, mainSource);
 
-        var window = new FriendFollowWindow(_api, _accountStore, sources, defaultIndex, summary.Id, _streamerIdentity)
-        {
-            Owner = Application.Current.MainWindow,
-        };
+        var window = Parented(new FriendFollowWindow(_api, _accountStore, sources, defaultIndex, summary.Id, _streamerIdentity));
         if (window.ShowDialog() == true && window.SelectedTarget is { } target)
         {
             // Re-run the same land-at-home guard FollowAltAsync uses, against the friend's presence
@@ -2609,18 +2605,88 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// Send the tracked Roblox window for this account a graceful close (CloseMainWindow).
     /// Falls back to Kill if a second click arrives while still tracking.
     /// </summary>
-    private void StopAccount(AccountSummary? summary)
+    /// <summary>
+    /// Stops a client, and actually checks whether it stopped (F-111, F-109).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// THE OLD SHAPE WAS <c>if (!RequestClose(id)) Kill(id);</c>, and it was inert. RequestClose
+    /// returned <c>Process.CloseMainWindow()</c>, which says whether the message was POSTED, not
+    /// whether the window closed — so it returned true, the escalation never ran, and the first
+    /// press of Stop did nothing at all. Measured 2026-08-20 against a live in-game client: still
+    /// running, still titled, thirty seconds after the click. The second press worked only because
+    /// CloseMainWindow happened to return false by then, which is why this looked like a
+    /// two-click button rather than a broken one.
+    /// </para>
+    /// <para>
+    /// Now: ask the way clicking the X asks, then WAIT and re-check, then force. The wait is ten
+    /// seconds because an in-game Roblox answers a close by raising its own confirm dialog — drawn
+    /// inside the game surface, invisible to this process — and a person has to click it. Only that
+    /// clean exit persists Roblox's own settings, which is why forcing immediately is opt-in
+    /// rather than the default.
+    /// </para>
+    /// </remarks>
+    internal async Task StopAccountAsync(AccountSummary? summary)
     {
         if (summary is null || !_processTracker.IsTracking(summary.Id))
         {
             return;
         }
-        _log.LogInformation("StopAccount {AccountId} (pid {Pid})", summary.Id, summary.RunningPid);
+
+        var pid = summary.RunningPid;
+        _log.LogInformation("StopAccount {AccountId} (pid {Pid})", summary.Id, pid);
         ExpectClose(summary.Id);
-        if (!_processTracker.RequestClose(summary.Id))
+
+        var auto = false;
+        try { auto = await _settings.GetAutoForceStopAsync().ConfigureAwait(true); }
+        catch (Exception ex) { _log.LogDebug(ex, "Auto-force-stop read failed; using the default wait."); }
+
+        Core.Diagnostics.ClientWindowState? snapshot = null;
+
+        try
         {
-            // Window unresponsive — escalate.
-            _processTracker.Kill(summary.Id);
+            var outcome = await Core.Diagnostics.ClientStopSequence.RunAsync(
+                hasExited: () => !_processTracker.IsTracking(summary.Id),
+                askToClose: () => _processTracker.RequestClose(summary.Id),
+                forceKill: () =>
+                {
+                    // Read the window BEFORE killing — a dead process has none. This is the only
+                    // chance to keep what Roblox will never get to save.
+                    if (pid is int p) snapshot = Core.Diagnostics.ClientWindowState.Read(p);
+                    _processTracker.Kill(summary.Id);
+                },
+                onSecondsRemaining: secs => _ui.Invoke(() =>
+                    summary.StoppingSecondsRemaining = secs > 0 ? secs : null),
+                delay: (d, ct) => Task.Delay(d, ct),
+                grace: auto ? TimeSpan.Zero : Core.Diagnostics.ClientStopSequence.DefaultGrace)
+                .ConfigureAwait(true);
+
+            _log.LogInformation("StopAccount {AccountId} finished: {Outcome}.", summary.Id, outcome);
+
+            if (outcome == Core.Diagnostics.ClientStopOutcome.Forced
+                && snapshot is { IsUsable: true } s
+                && _globalBasicSettings is not null)
+            {
+                try
+                {
+                    await _globalBasicSettings
+                        .WriteWindowStateAsync(s.Fullscreen, s.X, s.Y, s.Width, s.Height)
+                        .ConfigureAwait(true);
+                    _log.LogInformation(
+                        "Put back the window state our force-close destroyed: fullscreen={Full}, {W}x{H} at ({X},{Y}).",
+                        s.Fullscreen, s.Width, s.Height, s.X, s.Y);
+                }
+                catch (Exception ex)
+                {
+                    // Best-effort. Failing to restore a window size must never surface as a failed
+                    // Stop — the client is already gone, which is what the user asked for.
+                    _log.LogWarning(ex, "Could not write back the window state after a forced stop.");
+                }
+            }
+        }
+        finally
+        {
+            _ui.Invoke(() => summary.StoppingSecondsRemaining = null);
         }
     }
 
@@ -3025,6 +3091,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal static readonly TimeSpan ExpectedCloseWindow = TimeSpan.FromSeconds(60);
 
     /// <summary>Mark a close as user-initiated so it does not raise a dropped-out alert.</summary>
+    /// <summary>Persists the main window's placement (F-060). Never throws — a failed write must not stop a close.</summary>
+    internal async Task SaveWindowPlacementAsync(Core.WindowPlacement placement)
+    {
+        try { await _settings.SetMainWindowPlacementAsync(placement).ConfigureAwait(false); }
+        catch (Exception ex) { _log.LogDebug(ex, "Saving window placement failed; the next launch uses the default."); }
+    }
+
+    /// <summary>Reads the saved placement, or null if there is none or it cannot be read (F-060).</summary>
+    internal async Task<Core.WindowPlacement?> LoadWindowPlacementAsync()
+    {
+        try { return await _settings.GetMainWindowPlacementAsync().ConfigureAwait(true); }
+        catch (Exception ex) { _log.LogDebug(ex, "Reading window placement failed; using the default."); return null; }
+    }
+
     internal void ExpectClose(Guid accountId) => _expectedCloses[accountId] = DateTimeOffset.UtcNow;
 
     /// <summary>Mark every running account as expected — app shutdown closes them all at once.</summary>
@@ -3396,6 +3476,41 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Parents a dialog to the main window when the main window can actually be seen, and centres
+    /// it on screen when it cannot (F-084).
+    /// <para>
+    /// Every site used to say <c>Owner = Application.Current.MainWindow</c> flat. RoRoRo is
+    /// tray-resident, so that window is often hidden, and a dialog owned by a hidden window
+    /// inherits an invisible z-order and hands activation back to nothing when dismissed. The rule
+    /// was already written down correctly in <c>StopAllConfirmWindow.xaml</c> and applied nowhere.
+    /// </para>
+    /// <para>
+    /// Setting <see cref="Window.WindowStartupLocation"/> is not optional here: twenty-one windows
+    /// declare <c>CenterOwner</c>, and with no owner WPF degrades that to <c>Manual</c> — the
+    /// top-left corner — not to the screen centre. Dropping the owner alone would trade an
+    /// invisible parent for a dialog in the corner of the display.
+    /// </para>
+    /// </summary>
+    private static TWindow Parented<TWindow>(TWindow dialog) where TWindow : Window
+    {
+        var owner = Application.Current?.MainWindow;
+        var placement = AppLifecycle.DialogOwnershipDecision.Decide(
+            ownerExists: owner is not null,
+            ownerIsVisible: owner?.IsVisible == true);
+
+        if (placement == AppLifecycle.DialogPlacement.OwnedByMainWindow)
+        {
+            dialog.Owner = owner;
+        }
+        else
+        {
+            dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        }
+
+        return dialog;
+    }
+
+    /// <summary>
     /// Opens the saved-games + private-servers window. Named for what it opens: until 2026-08-04
     /// this was <c>OpenSettings</c> opening <c>Settings.SettingsWindow</c> titled "Library" behind
     /// a button labelled "Games" — one destination with three names, and a class called
@@ -3404,7 +3519,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     private void OpenGames()
     {
-        var window = new GamesWindow(_favorites, _privateServerStore, _api) { Owner = Application.Current.MainWindow };
+        var window = Parented(new GamesWindow(_favorites, _privateServerStore, _api));
         window.ShowDialog();
         // Refresh in case the user added / removed / set-default'd a game.
         _ = ReloadGamesAsync();
@@ -3412,13 +3527,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OpenDiagnostics()
     {
-        var window = new DiagnosticsWindow(_diagnostics) { Owner = Application.Current.MainWindow };
+        var window = Parented(new DiagnosticsWindow(_diagnostics));
         window.ShowDialog();
     }
 
     private void OpenAbout()
     {
-        var window = new AboutWindow { Owner = Application.Current.MainWindow };
+        var window = Parented(new AboutWindow());
         window.ShowDialog();
     }
 
@@ -3675,10 +3790,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     private void OpenHistory()
     {
-        var window = new SessionHistoryWindow(_sessionHistory, _favorites, _api, _streamerIdentity)
-        {
-            Owner = Application.Current.MainWindow,
-        };
+        var window = Parented(new SessionHistoryWindow(_sessionHistory, _favorites, _api, _streamerIdentity));
         window.ShowDialog();
         // The user may have bookmarked games from history; refresh the per-row dropdowns so
         // they appear without a restart.
@@ -3703,7 +3815,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
 
         var window = PreferencesWindowFactory();
-        window.Owner = Application.Current.MainWindow;
+        Parented(window);
         window.ShowDialog();
     }
 
@@ -3756,21 +3868,21 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private static void ShowWebView2NotInstalledModal()
     {
         var window = new WebView2NotInstalledWindow();
-        window.Owner = Application.Current.MainWindow;
+        Parented(window);
         window.ShowDialog();
     }
 
     private static void ShowRobloxNotInstalledModal()
     {
         var window = new RobloxNotInstalledWindow();
-        window.Owner = Application.Current.MainWindow;
+        Parented(window);
         window.ShowDialog();
     }
 
     private void ShowDpapiCorruptModal()
     {
         var window = new DpapiCorruptWindow();
-        window.Owner = Application.Current.MainWindow;
+        Parented(window);
         var startFresh = window.ShowDialog() == true;
         if (startFresh)
         {

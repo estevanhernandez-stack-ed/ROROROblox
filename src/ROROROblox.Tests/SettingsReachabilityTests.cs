@@ -87,6 +87,21 @@ public class SettingsReachabilityTests
     /// </summary>
     private sealed record UnreachableByDesign(string Property, string Reason);
 
+    /// <summary>
+    /// Shared by the five window-geometry fields (F-060), which are unreachable for a reason that
+    /// applies identically to all of them — so it is written once rather than five times, which
+    /// would invite the copies to drift apart.
+    /// </summary>
+    private const string WindowGeometryReason =
+        "Set by dragging the window, not by a control, and that IS the interface. A Left/Top/Width/"
+        + "Height field in Settings would be a worse way to move a window than moving the window, "
+        + "and a 'remember my size' toggle would be a preference about a preference — the app "
+        + "already reverts to its default whenever the saved rect no longer lands on a screen "
+        + "(WindowPlacement.IsRestorableOnto), which is the only case where forgetting is what the "
+        + "user wants. MainWindow.xaml.cs reads and writes these through "
+        + "LoadWindowPlacementAsync/SaveWindowPlacementAsync; they are view-layer state that "
+        + "happens to persist, not a setting anyone chooses.";
+
     private static readonly UnreachableByDesign[] Exemptions =
     [
         new("Version",
@@ -96,6 +111,12 @@ public class SettingsReachabilityTests
             + "AboutWindow.xaml and '{Binding Version}' in PluginsWindow.xaml are the app's own "
             + "version and a plugin's, neither of which is this field. A silent accidental pass is "
             + "the same shape as the defect this fence exists for."),
+
+        new("MainWindowLeft", WindowGeometryReason),
+        new("MainWindowTop", WindowGeometryReason),
+        new("MainWindowWidth", WindowGeometryReason),
+        new("MainWindowHeight", WindowGeometryReason),
+        new("MainWindowMaximized", WindowGeometryReason),
 
         new("DefaultPlaceUrl",
             "Legacy, and the code says so twice. RobloxLauncher.cs:246 lists it as '(legacy "

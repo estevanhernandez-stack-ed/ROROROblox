@@ -480,6 +480,11 @@ public class RobloxLauncherTests
             Writes.Add(fps);
             return Task.CompletedTask;
         }
+
+        /// <summary>F-109. Records rather than discards — the fallback write is worth asserting.</summary>
+        public (bool Fullscreen, int X, int Y, int W, int H)? WindowState;
+        public Task WriteWindowStateAsync(bool fullscreen, int x, int y, int width, int height, CancellationToken ct = default)
+        { WindowState = (fullscreen, x, y, width, height); return Task.CompletedTask; }
     }
 
     /// <summary>
@@ -674,6 +679,11 @@ public class RobloxLauncherTests
             _probe.Mtime = _clock.GetUtcNow();
             return Task.CompletedTask;
         }
+
+        /// <summary>F-109. Records rather than discards — the fallback write is worth asserting.</summary>
+        public (bool Fullscreen, int X, int Y, int W, int H)? WindowState;
+        public Task WriteWindowStateAsync(bool fullscreen, int x, int y, int width, int height, CancellationToken ct = default)
+        { WindowState = (fullscreen, x, y, width, height); return Task.CompletedTask; }
     }
 
     /// <summary>
@@ -892,6 +902,10 @@ public class RobloxLauncherTests
         public Task<bool?> GetEdgeRemediationAnswerAsync(string themeId) => Task.FromResult<bool?>(null);
         public Task SetEdgeRemediationAnswerAsync(string themeId, bool accepted) => Task.CompletedTask;
         public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(BloxstrapWarningDismissed);
+        /// <summary>F-111. Settable so the stop-grace path can be driven both ways.</summary>
+        public bool AutoForceStop { get; set; }
+        public Task<bool> GetAutoForceStopAsync() => Task.FromResult(AutoForceStop);
+        public Task SetAutoForceStopAsync(bool auto) { AutoForceStop = auto; return Task.CompletedTask; }
         public Task SetBloxstrapWarningDismissedAsync(bool value) { BloxstrapWarningDismissed = value; return Task.CompletedTask; }
         public string? DismissedFpsCapWarningSignature { get; set; }
         public Task<string?> GetDismissedFpsCapWarningSignatureAsync() => Task.FromResult(DismissedFpsCapWarningSignature);
@@ -923,6 +937,11 @@ public class RobloxLauncherTests
         public Task<int> GetProjectionWarnMinutesAsync() => Task.FromResult(ProjectionWarnMinutes);
         public Task SetProjectionWarnMinutesAsync(int minutes) { ProjectionWarnMinutes = minutes; return Task.CompletedTask; }
         public bool CompactMode { get; set; }
+        /// <summary>F-060. Records rather than discards, so the round trip is assertable.</summary>
+        public WindowPlacement? Placement;
+        public Task<WindowPlacement?> GetMainWindowPlacementAsync() => Task.FromResult(Placement);
+        public Task SetMainWindowPlacementAsync(WindowPlacement? placement) { Placement = placement; return Task.CompletedTask; }
+
         public Task<bool> GetCompactModeAsync() => Task.FromResult(CompactMode);
         public Task SetCompactModeAsync(bool compact) { CompactMode = compact; return Task.CompletedTask; }
     }

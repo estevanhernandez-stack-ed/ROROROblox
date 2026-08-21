@@ -32,7 +32,9 @@
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button Style="{StaticResource SecondaryButtonStyle}" Content="Start Fresh" Padding="16,8" Margin="0,0,8,0"
                     Click="OnStartFreshClick" />
-            <Button Style="{StaticResource CtaButtonStyle}" Content="Quit" Padding="16,8" IsDefault="True"
+            <!-- F-054. IsCancel so Esc lands on the SAFE answer. The other button renames accounts.dat
+                 and starts empty; Esc must never be able to reach that. -->
+            <Button Style="{StaticResource CtaButtonStyle}" Content="Quit" Padding="16,8" IsDefault="True" IsCancel="True"
                     Click="OnQuitClick" />
         </StackPanel>
     </Grid>

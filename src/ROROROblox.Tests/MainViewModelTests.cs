@@ -1507,6 +1507,10 @@ public class MainViewModelTests
         /// way; settable because the render gates need it VISIBLE.</summary>
         public bool BloxstrapWarningDismissed { get; set; } = true;
         public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(BloxstrapWarningDismissed);
+        /// <summary>F-111. Settable so the stop-grace path can be driven both ways.</summary>
+        public bool AutoForceStop { get; set; }
+        public Task<bool> GetAutoForceStopAsync() => Task.FromResult(AutoForceStop);
+        public Task SetAutoForceStopAsync(bool auto) { AutoForceStop = auto; return Task.CompletedTask; }
 
         // Backing field (not throw-NotImplemented) so LoadAsync's read/dismiss-signature
         // round trip is exercisable by FPS-cap dismissal tests without a real AppSettings.
@@ -1552,6 +1556,11 @@ public class MainViewModelTests
         public List<bool> CompactModeWrites { get; } = [];
         public Exception? CompactModeWriteFailure { get; set; }
         public Exception? CompactModeReadFailure { get; set; }
+        /// <summary>F-060. Records rather than discards, so the round trip is assertable.</summary>
+        public WindowPlacement? Placement;
+        public Task<WindowPlacement?> GetMainWindowPlacementAsync() => Task.FromResult(Placement);
+        public Task SetMainWindowPlacementAsync(WindowPlacement? placement) { Placement = placement; return Task.CompletedTask; }
+
 
         public Task<bool> GetCompactModeAsync() => CompactModeReadFailure is not null
             ? Task.FromException<bool>(CompactModeReadFailure)

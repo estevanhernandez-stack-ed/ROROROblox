@@ -11,6 +11,9 @@ internal partial class RobloxNotInstalledWindow : Window
     public RobloxNotInstalledWindow()
     {
         InitializeComponent();
+
+        // F-054. Informational — its ShowDialog result is ignored — so Esc simply dismisses.
+        Controls.EscapeToDismiss.Wire(this);
     }
 
     private void OnDownloadClick(object sender, RoutedEventArgs e)
