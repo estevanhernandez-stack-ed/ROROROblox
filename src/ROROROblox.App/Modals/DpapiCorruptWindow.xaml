@@ -30,7 +30,7 @@
         <TextBlock Grid.Row="1"
                    Text="This usually means Windows was restored from a backup that didn't preserve the encryption key, or the saved-accounts file was copied from another machine. We need to start your account list fresh — your Roblox accounts themselves are fine, you'll just need to log in again."
                    TextWrapping="Wrap"
-                   FontSize="12"
+                   FontSize="{DynamicResource BodyFontSize}"
                    Foreground="{DynamicResource WhiteBrush}"
                    Opacity="0.85"
                    Margin="0,12,0,0" />

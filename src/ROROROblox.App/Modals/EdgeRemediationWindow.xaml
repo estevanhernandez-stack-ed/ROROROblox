@@ -36,7 +36,7 @@
         <TextBlock Grid.Row="1"
                    x:Name="BodyText"
                    TextWrapping="Wrap"
-                   FontSize="12"
+                   FontSize="{DynamicResource BodyFontSize}"
                    LineHeight="18"
                    Foreground="{DynamicResource WhiteBrush}"
                    Opacity="0.85"
@@ -51,7 +51,7 @@
                         BorderThickness="1" CornerRadius="4">
                     <TextBlock Text="Your theme"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                               FontSize="12"
+                               FontSize="{DynamicResource BodyFontSize}"
                                Foreground="{DynamicResource MutedTextBrush}" />
                 </Border>
                 <TextBlock x:Name="AuthoredRatio"
@@ -67,7 +67,7 @@
                         BorderThickness="1" CornerRadius="4">
                     <TextBlock Text="With the fix"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                               FontSize="12"
+                               FontSize="{DynamicResource BodyFontSize}"
                                Foreground="{DynamicResource MutedTextBrush}" />
                 </Border>
                 <TextBlock x:Name="DerivedRatio"
@@ -85,7 +85,7 @@
         <TextBlock Grid.Row="3"
                    Text="Separators, card edges and row rules are untouched either way, and so is every text box and dropdown — this is the outline on buttons."
                    TextWrapping="Wrap"
-                   FontSize="11"
+                   FontSize="{DynamicResource BodyFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,20,0,0" />
 

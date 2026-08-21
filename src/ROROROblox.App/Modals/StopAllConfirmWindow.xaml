@@ -33,7 +33,7 @@
         <TextBlock Grid.Row="1"
                    x:Name="BodyText"
                    TextWrapping="Wrap"
-                   FontSize="12"
+                   FontSize="{DynamicResource BodyFontSize}"
                    Foreground="{DynamicResource WhiteBrush}"
                    Opacity="0.85"
                    Margin="0,12,0,0" />
@@ -51,7 +51,7 @@
         <TextBlock Grid.Row="2"
                    Text="Unsaved progress in your running games will be lost."
                    TextWrapping="Wrap"
-                   FontSize="12"
+                   FontSize="{DynamicResource BodyFontSize}"
                    FontWeight="SemiBold"
                    Foreground="{DynamicResource WhiteBrush}"
                    VerticalAlignment="Bottom"

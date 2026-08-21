@@ -37,15 +37,15 @@
             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                 <TextBlock x:Name="HeaderVersion"
                            FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                           FontSize="11"
+                           FontSize="{DynamicResource MetaFontSize}"
                            Foreground="{DynamicResource CyanBrush}" />
                 <TextBlock Text=" -- "
-                           FontSize="11"
+                           FontSize="{DynamicResource BodyFontSize}"
                            Foreground="{DynamicResource MutedTextBrush}"
                            VerticalAlignment="Center"
                            Margin="6,0,6,0" />
                 <TextBlock x:Name="HeaderPublisher"
-                           FontSize="11"
+                           FontSize="{DynamicResource BodyFontSize}"
                            Foreground="{DynamicResource MutedTextBrush}"
                            VerticalAlignment="Center" />
             </StackPanel>
@@ -60,7 +60,7 @@
             <TextBlock x:Name="HeaderDescription"
                        Foreground="{DynamicResource WhiteBrush}"
                        Opacity="0.85"
-                       FontSize="12"
+                       FontSize="{DynamicResource BodyFontSize}"
                        TextWrapping="Wrap" />
         </Border>
 
@@ -137,7 +137,7 @@
                                             </TextBlock.Style>
                                         </TextBlock>
                                         <TextBlock Text="{Binding Display}"
-                                                   FontSize="12"
+                                                   FontSize="{DynamicResource BodyFontSize}"
                                                    Foreground="{DynamicResource WhiteBrush}"
                                                    TextWrapping="Wrap"
                                                    Margin="0,3,0,0" />
@@ -165,7 +165,7 @@
                 CornerRadius="6">
             <TextBlock Text="This plugin starts as soon as you install it. Use the Autostart toggle on the Plugins page to control whether it also launches with RoRoRo."
                        Foreground="{DynamicResource WhiteBrush}"
-                       FontSize="11"
+                       FontSize="{DynamicResource BodyFontSize}"
                        TextWrapping="Wrap"
                        Opacity="0.9" />
         </Border>

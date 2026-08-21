@@ -30,7 +30,7 @@
         <TextBlock Grid.Row="1"
                    Text="RoRoRo launches Roblox via the standard roblox-player: handler. We can't find that handler on this PC, which usually means Roblox isn't installed yet."
                    TextWrapping="Wrap"
-                   FontSize="12"
+                   FontSize="{DynamicResource BodyFontSize}"
                    Foreground="{DynamicResource WhiteBrush}"
                    Opacity="0.85"
                    Margin="0,12,0,0" />
@@ -38,7 +38,7 @@
         <TextBlock Grid.Row="2"
                    Text="If you use Bloxstrap, make sure it's set as the default Roblox launcher in its settings — Bloxstrap should also handle our launches."
                    TextWrapping="Wrap"
-                   FontSize="11"
+                   FontSize="{DynamicResource BodyFontSize}"
                    Foreground="{DynamicResource WhiteBrush}"
                    Opacity="0.7"
                    Margin="0,8,0,0" />

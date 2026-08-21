@@ -198,6 +198,16 @@
         "F-044"
       ],
       "notes": "F-105 was in the batch and did NOT close. Its reproducer was re-confirmed at HEAD in both directions — 115 of 120 render tests fail with RoRoRo running, 120/120 with it closed — but every one of those failures is wave 7's RequireClean guard naming the cause, not the raw pack:// crash. So the local half is handled loudly and what remains is the CI-headless half plus an unknown mechanism with four prior negative probes and a documented failed fix. Not attempted here; the wave spent its budget on the three rows that could move. F-115: eleven windows to SizeToContent, plus TWO instruments — a markup fence for the condition and WindowContentFitsTests for the consequence, the latter being what F-113 said did not exist. Pointed at About's shipped 460px it quantifies the bug at 28.6px undrawn. F-057 and F-044 each closed HALF of what their row claimed and the halves became F-118: MainWindow went nine sizes to four and app-wide eleven to eight, but 163 declarations still sit at 11px, which is 50% of the app's text and under F-044's own 12px prose floor. The structural cause no row had named: 326 font-size declarations and no size resource of any kind. F-119 recorded as CAUSED by this wave, not discovered — raising the 9px follow chips pushed a strip that was already truncating names into truncating one more, and the fix for that is a layout decision on the densest surface rather than a side effect of a type wave."
+    },
+    {
+      "id": 16,
+      "name": "Finish the type",
+      "status": "open",
+      "findings": [
+        "F-118",
+        "F-119"
+      ],
+      "notes": "Both rows were wrong about their own size and measuring settled each in minutes. F-118 was priced as per-site judgement over 163 sites; classifying them by the ladder's own meta definition (mono, uppercase, tracked) returned 2 mono and 0 uppercase, one of those a scanner false positive - so the tier was 162 prose and 1 label and the judgement did not exist. Migration went past the row's ask because stopping at 11px leaves the ladder half-used: 12 to Body, 13 and 14 to Heading, 22 to Display. 326 raw declarations in 11 sizes became 16 in 3, the remainder being hero chrome where the value carries brand identity. F-119 went the other way: recorded as a truncated name, it was HIDING THREE ENTIRE ACCOUNTS from a seven-target follow strip, so following them was impossible from the main window - cosmetic row, functional defect. Two wrong fixes before the right one, and the first is the lesson: a WrapPanel changed NOTHING because a horizontal StackPanel measures children with infinite width, so it never saw a boundary. The fix had to be the parent (DockPanel). It looked correct in the diff and was inert on screen; only the capture said so."
     }
   ],
   "scope": {

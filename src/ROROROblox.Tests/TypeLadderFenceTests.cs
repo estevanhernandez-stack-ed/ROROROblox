@@ -33,11 +33,25 @@ public class TypeLadderFenceTests
     private const double MetaStep = 11;
 
     /// <summary>
-    /// Distinct raw sizes still typed into markup. 8 as measured on 2026-08-21, down from 11 when
-    /// the ladder landed — 8, 9 and 10 went to <c>MetaFontSize</c>. A CEILING: it falls as F-118
-    /// migrates the rest, and a rise means somebody invented a step instead of using one.
+    /// Distinct raw sizes still typed into markup. **3** as measured on 2026-08-21 — 18, 20 and 24,
+    /// all display-tier and all in hero chrome. Was 11 before the ladder, 8 after the floor raise,
+    /// 3 once F-118 migrated the prose. A CEILING: a rise means somebody invented a step instead of
+    /// using one.
+    /// <para>
+    /// The three that remain are a design decision, not an oversight: 18, 20 and 24 sit between
+    /// Heading 14 and Display 22 in About's and Welcome's hero blocks, where the exact value carries
+    /// brand identity rather than a role. Collapsing them is a judgement about the mark, which is
+    /// not something a type sweep gets to make. Recorded in F-118 rather than forced.
+    /// </para>
     /// </summary>
-    private const int DistinctRawSizeCeiling = 8;
+    private const int DistinctRawSizeCeiling = 3;
+
+    /// <summary>
+    /// Declarations that reference a ladder step rather than a number. 304 of 320 as measured on
+    /// 2026-08-21. A FLOOR: it may rise and must not fall, so a migrated site cannot quietly go
+    /// back to a literal — which is the direction this whole row drifted in for years.
+    /// </summary>
+    private const int LadderReferenceFloor = 300;
 
     [Fact]
     public void NothingIsSmallerThanTheMetaStep()
@@ -65,9 +79,12 @@ public class TypeLadderFenceTests
     {
         var distinct = Literals().Select(x => x.Size).Distinct().OrderBy(x => x).ToList();
 
-        // Vacuity guard: this walks the filesystem, and an empty walk would report a tidy app.
-        Assert.True(Literals().Count() >= 200,
-            $"Found only {Literals().Count()} FontSize declarations. That is the scan breaking.");
+        // Vacuity guard. It counts EVERY FontSize declaration, literal or resource-bound, because
+        // counting literals stopped proving anything the moment literals became the exception —
+        // sixteen is now a healthy number and would have read as a broken walk.
+        var allDeclarations = AllFontSizeAttributes();
+        Assert.True(allDeclarations >= 250,
+            $"Found only {allDeclarations} FontSize declarations of any kind. That is the scan breaking.");
 
         Assert.True(distinct.Count <= DistinctRawSizeCeiling,
             $"The app now uses {distinct.Count} raw font sizes ({string.Join(", ", distinct)}), up "
@@ -95,6 +112,25 @@ public class TypeLadderFenceTests
             Assert.Contains($"x:Key=\"{key}\"", text, StringComparison.Ordinal);
         }
     }
+
+    [Fact]
+    public void TheLadderIsActuallyUsed()
+    {
+        // The point of the other two rules is that the ladder REPLACED the numbers. Without this,
+        // an app could satisfy both by having three literals and no ladder references at all.
+        var references = AllFontSizeAttributes() - Literals().Count();
+
+        Assert.True(references >= LadderReferenceFloor,
+            $"Only {references} FontSize declarations reference a ladder step, below the "
+            + $"{LadderReferenceFloor} floor. A site that went back to a literal is the drift this "
+            + "row spent four waves undoing — 326 declarations in 11 sizes is what happens when "
+            + "there is nothing to inherit from.");
+    }
+
+    /// <summary>Every <c>FontSize=</c> attribute, whether it holds a number or a resource reference.</summary>
+    private static int AllFontSizeAttributes() =>
+        XamlStyleScanner.EnumerateAppXamlFiles()
+            .Sum(f => Regex.Matches(File.ReadAllText(f.FullPath), @"FontSize=""").Count);
 
     private static IEnumerable<(string Label, double Size, int Line)> Literals()
     {

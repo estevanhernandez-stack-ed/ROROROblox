@@ -106,7 +106,7 @@
                                MouseLeftButtonDown="OnVersionClicked" />
                 </StackPanel>
                 <TextBlock Text="Multi-launcher for Windows."
-                           FontSize="11" FontWeight="SemiBold"
+                           FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
                            Foreground="{DynamicResource CyanBrush}"
                            Margin="0,4,0,0" />
                 <TextBlock Text="A 626 Labs product"
@@ -115,7 +115,7 @@
                            Margin="0,2,0,0" />
                 <TextBlock x:Name="EasterEggText"
                            Text="Koii 4 eva"
-                           FontSize="13" FontWeight="SemiBold"
+                           FontSize="{DynamicResource HeadingFontSize}" FontWeight="SemiBold"
                            Foreground="{DynamicResource MagentaBrush}"
                            Margin="0,8,0,0"
                            Visibility="Collapsed"
@@ -129,7 +129,7 @@
 
         <Border Grid.Row="1" Margin="0,24,0,0" Padding="16,14"
                 Background="{DynamicResource RowBgBrush}" CornerRadius="8">
-            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource WhiteBrush}">
+            <TextBlock TextWrapping="Wrap" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}">
                 Run multiple Roblox clients side by side, signed in as different saved accounts.
                 Holds the Roblox singleton mutex so subsequent clients don't fight for it; uses
                 Roblox's documented authentication-ticket flow for per-account launches. Clean
@@ -138,24 +138,24 @@
         </Border>
 
         <StackPanel Grid.Row="2" Margin="0,20,0,0">
-            <TextBlock Text="Links" FontSize="11" FontWeight="SemiBold"
+            <TextBlock Text="Links" FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
                        Foreground="{DynamicResource CyanBrush}" Margin="0,0,0,6" />
-            <TextBlock FontSize="11" Margin="0,0,0,4">
+            <TextBlock FontSize="{DynamicResource BodyFontSize}" Margin="0,0,0,4">
                 <Hyperlink x:Name="RepoLink" Foreground="{DynamicResource WhiteBrush}"
                            Click="OnRepoClick">github.com/estevanhernandez-stack-ed/ROROROblox</Hyperlink>
             </TextBlock>
-            <TextBlock FontSize="11" Margin="0,0,0,4">
+            <TextBlock FontSize="{DynamicResource BodyFontSize}" Margin="0,0,0,4">
                 <Hyperlink x:Name="IssuesLink" Foreground="{DynamicResource WhiteBrush}"
                            Click="OnIssuesClick">Report an issue</Hyperlink>
             </TextBlock>
-            <TextBlock FontSize="11" Margin="0,0,0,4">
+            <TextBlock FontSize="{DynamicResource BodyFontSize}" Margin="0,0,0,4">
                 <Hyperlink x:Name="LicenseLink" Foreground="{DynamicResource WhiteBrush}"
                            Click="OnLicenseClick">Open log folder</Hyperlink>
             </TextBlock>
             <!-- F-039. The tour explains six row affordances that carry no labels, and it is shown
                  once, on a first run that by definition has no rows in it. Sits beside Open log
                  folder because that entry is an action too — this list has never been only links. -->
-            <TextBlock FontSize="11">
+            <TextBlock FontSize="{DynamicResource BodyFontSize}">
                 <Hyperlink x:Name="WelcomeTourLink" Foreground="{DynamicResource WhiteBrush}"
                            Click="OnWelcomeTourClick">Show the welcome tour</Hyperlink>
             </TextBlock>

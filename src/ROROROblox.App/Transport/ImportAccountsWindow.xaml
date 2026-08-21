@@ -27,14 +27,14 @@
 
         <TextBlock Grid.Row="1"
                    Text="Pick a .rororo-accounts file and enter its passphrase. Accounts already on this PC are kept as-is — only new ones are added."
-                   FontSize="11"
+                   FontSize="{DynamicResource BodyFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
                    TextWrapping="Wrap"
                    Margin="0,6,0,0" />
 
         <TextBlock Grid.Row="2"
                    Text="File"
-                   FontSize="12" FontWeight="SemiBold"
+                   FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
                    Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,18,0,6" />
 
@@ -44,7 +44,7 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBox Grid.Column="0" x:Name="FilePathBox"
-                     FontSize="12"
+                     FontSize="{DynamicResource BodyFontSize}"
                      FontFamily="Consolas"
                      Padding="10,8"
                      IsReadOnly="True"
@@ -57,19 +57,19 @@
 
         <TextBlock Grid.Row="4"
                    Text="Passphrase"
-                   FontSize="12" FontWeight="SemiBold"
+                   FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
                    Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,16,0,6" />
 
         <PasswordBox Grid.Row="5" x:Name="PassphraseBox"
-                     FontSize="13"
+                     FontSize="{DynamicResource HeadingFontSize}"
                      Padding="10,8"
                      Background="{DynamicResource RowBgBrush}"
                      CaretBrush="{DynamicResource CyanBrush}"
                      PasswordChanged="OnInputChanged" Style="{StaticResource AppPasswordBoxStyle}"/>
 
         <TextBlock Grid.Row="6" x:Name="StatusText"
-                   FontSize="11"
+                   FontSize="{DynamicResource BodyFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
                    TextWrapping="Wrap"
                    Margin="0,10,0,0" />

@@ -27,12 +27,12 @@
 
         <TextBlock Grid.Row="0"
                    x:Name="HeaderText"
-                   FontSize="14" FontWeight="SemiBold"
+                   FontSize="{DynamicResource HeadingFontSize}" FontWeight="SemiBold"
                    Foreground="{DynamicResource WhiteBrush}" />
 
         <TextBlock Grid.Row="1"
                    Text="Click a swatch to apply. The Roblox window updates within ~1.5s."
-                   FontSize="11"
+                   FontSize="{DynamicResource BodyFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
                    TextWrapping="Wrap"
                    Margin="0,4,0,12" />
@@ -48,14 +48,14 @@
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0"
                        Text="Custom hex:"
-                       FontSize="11"
+                       FontSize="{DynamicResource BodyFontSize}"
                        Foreground="{DynamicResource MutedTextBrush}"
                        VerticalAlignment="Center"
                        Margin="0,0,8,0" />
             <TextBox Grid.Column="1"
                      x:Name="HexInput"
                      FontFamily="Consolas"
-                     FontSize="12"
+                     FontSize="{DynamicResource BodyFontSize}"
                      Padding="8,5"
                      Background="{DynamicResource NavyBrush}"
                      CaretBrush="{DynamicResource CyanBrush}" Style="{StaticResource AppTextBoxStyle}"/>
@@ -63,13 +63,13 @@
                     x:Name="ApplyHexButton"
                     Content="Apply"
                     Padding="12,5" Margin="6,0,0,0"
-                    FontSize="11"
+                    FontSize="{DynamicResource BodyFontSize}"
                     Click="OnApplyHexClick" />
         </Grid>
 
         <TextBlock Grid.Row="4"
                    x:Name="StatusText"
-                   FontSize="11"
+                   FontSize="{DynamicResource BodyFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,8,0,0"
                    TextWrapping="Wrap" />
@@ -79,7 +79,7 @@
                     Content="Reset to auto"
                     Padding="12,6" Margin="0,0,8,0"
                     Style="{StaticResource SecondaryButtonStyle}"
-                    FontSize="11"
+                    FontSize="{DynamicResource BodyFontSize}"
                     Click="OnResetClick" />
             <!-- Dismissal takes the secondary treatment (prd Story 4.2). This window's own actions are
                  the swatches and Apply; Close is not one of them. F-041: the treatment now comes from

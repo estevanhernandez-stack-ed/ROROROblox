@@ -51,7 +51,7 @@
                         <StackPanel Orientation="Horizontal">
                             <!-- v1.3.x — RenderName = LocalName ?? DisplayName. Compact-mode row. -->
                             <TextBlock Text="{Binding RenderName}"
-                                       FontSize="12" FontWeight="SemiBold"
+                                       FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
                                        Foreground="{DynamicResource WhiteBrush}"
                                        TextTrimming="CharacterEllipsis" />
                             <Border Background="{DynamicResource MagentaBrush}" CornerRadius="2"
@@ -143,7 +143,7 @@
                                 Command="{Binding DataContext.RecycleAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="7,3" Margin="0,0,6,0"
-                                FontSize="11"
+                                FontSize="{DynamicResource BodyFontSize}"
                                 ToolTip="Recycle — close and relaunch this client back into the server it's in now, and reclaim leaked memory.">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource WarningButtonStyle}">
@@ -377,7 +377,7 @@
                             PreviewMouseLeftButtonDown="OnAccountGripMouseDown"
                             PreviewMouseMove="OnAccountGripMouseMove">
                         <TextBlock Text="&#x2630;"
-                                   FontSize="12"
+                                   FontSize="{DynamicResource BodyFontSize}"
                                    Foreground="{DynamicResource MutedTextBrush}"
                                    Opacity="0.5"
                                    HorizontalAlignment="Center"
@@ -411,7 +411,7 @@
                             <!-- v1.3.x — RenderName = LocalName ?? DisplayName. Regular row primary
                                  label + tooltip both flip; tooltip shows the un-truncated rename. -->
                             <TextBlock Text="{Binding RenderName}"
-                                       FontSize="14" FontWeight="SemiBold"
+                                       FontSize="{DynamicResource HeadingFontSize}" FontWeight="SemiBold"
                                        Foreground="{DynamicResource WhiteBrush}"
                                        TextTrimming="CharacterEllipsis"
                                        ToolTip="{Binding RenderName}" />
@@ -457,7 +457,7 @@
                                 </Ellipse.Style>
                             </Ellipse>
                             <TextBlock Text="{Binding SecondaryStatusText}"
-                                       FontSize="11"
+                                       FontSize="{DynamicResource BodyFontSize}"
                                        VerticalAlignment="Center">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
@@ -483,7 +483,7 @@
                                     Margin="8,0,0,0"
                                     VerticalAlignment="Center">
                                 <TextBlock Text="{Binding IdleText}"
-                                           FontSize="11">
+                                           FontSize="{DynamicResource BodyFontSize}">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
@@ -508,7 +508,7 @@
                                     Margin="8,0,0,0"
                                     VerticalAlignment="Center">
                                 <TextBlock Text="{Binding MemoryText}"
-                                           FontSize="11">
+                                           FontSize="{DynamicResource BodyFontSize}">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
@@ -529,7 +529,7 @@
                                           Margin="12,0,4,0"
                                           VerticalAlignment="Center"
                                           ToolTip="Include this account in Launch multiple / Squad Launch batches. Click to skip." />
-                            <TextBlock FontSize="11"
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                        VerticalAlignment="Center"
                                        ToolTip="Whether this account joins Launch multiple / Squad Launch batch launches. Click the dot to flip.">
                                 <TextBlock.Style>
@@ -553,9 +553,14 @@
                              (LaunchTarget.FollowFriend). Self-chip hides via EqualsToCollapseConverter
                              on Id. Whole strip (label + chips) collapses when there's nothing to
                              follow (≤ 1 saved account). -->
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                            <StackPanel.Style>
-                                <Style TargetType="StackPanel">
+                        <!-- F-119: DockPanel, not a horizontal StackPanel. A horizontal StackPanel
+                             measures its children with INFINITE width, so the WrapPanel below never
+                             saw a boundary and never wrapped — the chips just ran past the column
+                             edge and were clipped. DockPanel gives its last child the width that is
+                             actually left, which is the number the WrapPanel needs. -->
+                        <DockPanel Margin="0,6,0,0" LastChildFill="True">
+                            <DockPanel.Style>
+                                <Style TargetType="DockPanel">
                                     <Setter Property="Visibility" Value="Visible" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding DataContext.Accounts.Count, RelativeSource={RelativeSource AncestorType=Window}}" Value="0">
@@ -566,17 +571,28 @@
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
-                            </StackPanel.Style>
+                            </DockPanel.Style>
                             <TextBlock Text="Follow:"
+                                       DockPanel.Dock="Left"
                                        FontSize="{DynamicResource MetaFontSize}"
                                        Foreground="{DynamicResource MutedTextBrush}"
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,6,0"
+                                       VerticalAlignment="Top"
+                                       Margin="0,3,6,0"
                                        ToolTip="Click a chip to launch this account into another account's current Roblox server." />
                             <ItemsControl ItemsSource="{Binding DataContext.Accounts, RelativeSource={RelativeSource AncestorType=Window}}">
+                            <!-- F-119. A horizontal StackPanel gives its children infinite width and
+                                 lets the container clip whatever does not fit, so it never wraps and
+                                 never scrolls — it just stops drawing the end of an account name,
+                                 with nothing reporting that it did. Same class as F-113.
+                                 It was already truncating before the type ladder; raising the row's
+                                 buttons from 11px to 12px widened them, squeezed this column, and
+                                 took the tail chip down to four characters. A WrapPanel costs row
+                                 height when somebody follows many accounts and costs nothing when
+                                 they follow few — and a name nobody can read is not cheaper than a
+                                 taller row. -->
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal" />
+                                    <WrapPanel Orientation="Horizontal" />
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
@@ -628,7 +644,7 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        </StackPanel>
+                        </DockPanel>
 
                         <!-- Tags strip (v1.5.0) — free-text per-account labels (PS99, RCU, PLAZA).
                              Chips wrap; the AccountSummary normalization caps them at 8 tags / 24
@@ -667,7 +683,7 @@
                                                         CommandParameter="{Binding}"
                                                         Margin="4,0,0,0"
                                                         Padding="3,0"
-                                                        FontSize="11"
+                                                        FontSize="{DynamicResource BodyFontSize}"
                                                         Cursor="Hand"
                                                         ToolTip="Remove this tag." />
                                             </StackPanel>
@@ -707,7 +723,7 @@
                                     </Style>
                                 </Border.Style>
                                 <TextBlock Text="+"
-                                           FontSize="11"
+                                           FontSize="{DynamicResource BodyFontSize}"
                                            FontWeight="Bold"
                                            Foreground="{DynamicResource CyanBrush}"
                                            VerticalAlignment="Center"
@@ -780,7 +796,7 @@
                                     </TextBlock.Style>
                                 </TextBlock>
                             </Button.ToolTip>
-                            <TextBlock FontSize="14" VerticalAlignment="Center">
+                            <TextBlock FontSize="{DynamicResource HeadingFontSize}" VerticalAlignment="Center">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Text" Value="&#x2606;" />
@@ -822,7 +838,7 @@
                                 CommandParameter="{Binding}"
                                 Padding="10,6" Margin="0,0,8,0"
                                 Style="{StaticResource SecondaryButtonStyle}"
-                                FontSize="11"
+                                FontSize="{DynamicResource BodyFontSize}"
                                 ToolTip="See this account's friends and follow one into their server (works for public + private)."
                                 IsEnabled="{Binding SessionExpired, Converter={StaticResource InverseBoolConverter}}" />
 
@@ -871,7 +887,7 @@
                             <!-- Wave 3 moved Games off the toolbar into the Tools menu. This line
                                  tells a user where to go, so it has to name where the thing now is. -->
                             <TextBlock Text="Add games from Tools → Games"
-                                       FontSize="11"
+                                       FontSize="{DynamicResource BodyFontSize}"
                                        FontStyle="Italic"
                                        Foreground="{DynamicResource MutedTextBrush}"
                                        Opacity="0.85"
@@ -939,7 +955,7 @@
                                 Command="{Binding DataContext.RecycleAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="12,6" Margin="0,0,8,0"
-                                FontSize="11"
+                                FontSize="{DynamicResource BodyFontSize}"
                                 ToolTip="Close and relaunch this client — back into the same server it's in now, and the only guaranteed way to reclaim memory Roblox has leaked.">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource WarningButtonStyle}">
@@ -1072,7 +1088,7 @@
                         <Button Style="{StaticResource CtaButtonStyle}" Content="+ Add account"
                                 Command="{Binding AddAccountCommand}"
                                 Padding="16,8"
-                                FontSize="13" />
+                                FontSize="{DynamicResource HeadingFontSize}" />
                     </StackPanel>
                 </Grid>
 
@@ -1123,13 +1139,13 @@
                                 Command="{Binding OpenGamesCommand}"
                                 Padding="10,6" Margin="0,0,6,0"
                                 Style="{StaticResource SecondaryButtonStyle}"
-                                FontSize="11"
+                                FontSize="{DynamicResource BodyFontSize}"
                                 ToolTip="Saved games and private servers for the launch picker." />
                         <Button Content="Settings"
                                 Command="{Binding OpenPreferencesCommand}"
                                 Padding="10,6" Margin="0,0,6,0"
                                 Style="{StaticResource SecondaryButtonStyle}"
-                                FontSize="11"
+                                FontSize="{DynamicResource BodyFontSize}"
                                 ToolTip="Startup, accounts, alerts, Discord, and theme." />
                         <!-- A real Menu, not a Button that opens a ContextMenu. The first version was
                              the latter, and a screen reader announced it as a plain button: no
@@ -1146,7 +1162,7 @@
                                            AutomationProperties.Name="Tools"
                                            Padding="10,6" Margin="0,0,6,0"
                                            Style="{StaticResource SecondaryButtonStyle}"
-                                           FontSize="11"
+                                           FontSize="{DynamicResource BodyFontSize}"
                                            ToolTip="History, Diagnostics, Plugins, log folder, Stop all, tour, About.">
                             <controls:ToolsDropDownButton.ContextMenu>
                                 <ContextMenu Background="{DynamicResource NavyBrush}"
@@ -1246,7 +1262,7 @@
                                      Bound to MainViewModel.DefaultGameDisplay. -->
                                 <TextBlock Grid.Column="2"
                                            Text="{Binding DefaultGameDisplay}"
-                                           FontSize="12"
+                                           FontSize="{DynamicResource BodyFontSize}"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource WhiteBrush}"
                                            VerticalAlignment="Center"
@@ -1257,7 +1273,7 @@
                                      a static down-pointing glyph. -->
                                 <TextBlock Grid.Column="3"
                                            Text="&#x25BE;"
-                                           FontSize="12"
+                                           FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            VerticalAlignment="Center"
                                            Margin="8,0,0,0" />
@@ -1272,7 +1288,7 @@
                                 Command="{Binding OpenGamesCommand}"
                                 MinWidth="220" MaxWidth="340"
                                 Padding="12,6"
-                                FontSize="11"
+                                FontSize="{DynamicResource BodyFontSize}"
                                 Cursor="Hand">
                             <Button.Style>
                                 <!-- BasedOn rather than an attribute: this button already carries an
@@ -1311,7 +1327,7 @@
                                             Padding="10,6"
                                             Margin="0,4,0,0"
                                             HorizontalContentAlignment="Left"
-                                            FontSize="11"
+                                            FontSize="{DynamicResource BodyFontSize}"
                                             Cursor="Hand" />
                                     <ListBox ItemsSource="{Binding WidgetGames}"
                                              SelectedItem="{Binding CurrentDefaultGame, Mode=OneWay}"
@@ -1397,7 +1413,7 @@
                                                              fall-through trigger. -->
                                                         <TextBlock Grid.Column="1"
                                                                    Text="{Binding RenderName}"
-                                                                   FontSize="12"
+                                                                   FontSize="{DynamicResource BodyFontSize}"
                                                                    Foreground="{DynamicResource WhiteBrush}"
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis" />
@@ -1439,7 +1455,7 @@
                                 Command="{Binding LaunchAllCommand}"
                                 Padding="14,6" Margin="0,0,8,0"
                                 Style="{StaticResource PrimaryButtonStyle}"
-                                FontSize="12"
+                                FontSize="{DynamicResource BodyFontSize}"
                                 FontWeight="SemiBold"
                                 ToolTip="Launch every selected account into its own per-row game, one at a time about 5 seconds apart — the gap makes sure each window lands on the right account. Use the dot next to each account's status to deselect." />
                         <!-- Labelled "Private server" until v1.14, when the modal stopped being
@@ -1448,7 +1464,7 @@
                         <Button Style="{StaticResource AccentActionButtonStyle}" Content="Squad Launch"
                                 Command="{Binding OpenSquadLaunchCommand}"
                                 Padding="14,6"
-                                FontSize="12"
+                                FontSize="{DynamicResource BodyFontSize}"
                                 ToolTip="Send every selected account into the SAME server — a private server link, or a plain game link to share one public server. Launch multiple, next to this, sends each account into its own game instead. Use the dot next to each account's status to deselect." />
                     </StackPanel>
                 </Grid>
@@ -1477,12 +1493,12 @@
                              Fill="{DynamicResource MagentaBrush}" />
                     <TextBlock Text="Roblox is updating"
                                VerticalAlignment="Center"
-                               FontSize="13" FontWeight="SemiBold"
+                               FontSize="{DynamicResource HeadingFontSize}" FontWeight="SemiBold"
                                Foreground="{DynamicResource CyanBrush}" />
                 </StackPanel>
                 <TextBlock Text="Holding your other accounts until it finishes — this only happens when Roblox needs a fresh client."
                            Margin="0,4,0,0"
-                           FontSize="11"
+                           FontSize="{DynamicResource BodyFontSize}"
                            TextWrapping="Wrap"
                            Foreground="{DynamicResource WhiteBrush}" />
                 <!-- Indeterminate spinner — same pattern as CookieCapture's loading overlay. -->
@@ -1520,14 +1536,14 @@
             </Border.Style>
             <StackPanel>
                 <TextBlock Text="{Binding StatusBanner}"
-                           FontSize="11"
+                           FontSize="{DynamicResource BodyFontSize}"
                            Foreground="{DynamicResource WhiteBrush}"
                            Visibility="{Binding StatusBanner, Converter={StaticResource StringToVisibilityConverter}}" />
                 <!-- Passive idle-summary strip (v1.8) — "N accounts idle > Mm". Driven by
                      ActivitySnapshotApplier + IdleSummary on the 30s ticker; never blocks or
                      acts on the client, display-only. -->
                 <TextBlock Text="{Binding IdleSummaryText}"
-                           FontSize="11"
+                           FontSize="{DynamicResource BodyFontSize}"
                            Margin="0,2,0,0"
                            Foreground="{DynamicResource MutedTextBrush}"
                            Visibility="{Binding IdleSummaryText, Converter={StaticResource StringToVisibilityConverter}}" />
@@ -1544,13 +1560,13 @@
                          RowExpiredBg: 8.85 brand, 7.23 midnight, 9.85 magenta-heat, 12.84 flatline,
                          all clear of 4.5. Byte-identical in brand and magenta-heat. -->
                     <TextBlock Text="{Binding ContestedBannerText}"
-                               FontSize="11" TextWrapping="Wrap"
+                               FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap"
                                Foreground="{DynamicResource RowExpiredAccentBrush}" />
                     <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                         <Button Style="{StaticResource CtaButtonStyle}" Content="Close Roblox for me" Command="{Binding CloseRobloxForMeCommand}"
-                                Padding="10,4" Margin="0,0,8,0" FontSize="11" />
+                                Padding="10,4" Margin="0,0,8,0" FontSize="{DynamicResource BodyFontSize}" />
                         <Button Style="{StaticResource SecondaryButtonStyle}" Content="Retry" Command="{Binding RetryMutexCommand}"
-                                Padding="10,4" FontSize="11" />
+                                Padding="10,4" FontSize="{DynamicResource BodyFontSize}" />
                     </StackPanel>
                 </StackPanel>
                 <!-- FPS-cap mismatch (2026-08-02). Roblox keeps one shared settings file per
@@ -1575,11 +1591,11 @@
                             Command="{Binding DismissFpsCapWarningCommand}"
                             Margin="8,0,0,0"
                             Padding="0"
-                            FontSize="11"
+                            FontSize="{DynamicResource BodyFontSize}"
                             VerticalAlignment="Top"
                             Cursor="Hand" />
                     <TextBlock Text="{Binding FpsCapWarningText}"
-                               FontSize="11"
+                               FontSize="{DynamicResource BodyFontSize}"
                                TextWrapping="Wrap"
                                Foreground="{DynamicResource MutedTextBrush}" />
                 </DockPanel>
@@ -1601,7 +1617,7 @@
                  Same glyph the memory and idle chips use — one warning vocabulary across the
                  window (spec §6.3). The two Runs sit on one line deliberately; a line break between
                  them is significant whitespace. -->
-            <TextBlock FontSize="11"
+            <TextBlock FontSize="{DynamicResource BodyFontSize}"
                        Foreground="{DynamicResource RowExpiredAccentBrush}"
                        TextWrapping="Wrap"><Run Text="▲ " /><Run Text="{Binding RobloxCompatBanner}" /></TextBlock>
         </Border>
@@ -1684,7 +1700,7 @@
                                 Text="{Binding AccountFilter, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                                 Icon="{ui:SymbolIcon Filter24}"
                                 ClearButtonEnabled="True"
-                                FontSize="12"
+                                FontSize="{DynamicResource BodyFontSize}"
                                 ToolTip="Show only accounts whose tag or name contains this text. Drag-reorder is paused while filtering — clear the box to reorder again." />
                 </Grid>
 
@@ -1698,11 +1714,11 @@
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
                                 Visibility="{Binding Accounts.Count, Converter={StaticResource ZeroToVisibilityConverter}}">
                         <TextBlock Text="No saved accounts yet."
-                                   FontSize="14"
+                                   FontSize="{DynamicResource HeadingFontSize}"
                                    Foreground="{DynamicResource MutedTextBrush}"
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="Click + Add account to log in to your first Roblox account."
-                                   FontSize="11"
+                                   FontSize="{DynamicResource BodyFontSize}"
                                    Foreground="{DynamicResource MutedTextBrush}"
                                    HorizontalAlignment="Center"
                                    Margin="0,4,0,0"
@@ -1768,13 +1784,13 @@
                                     </Style>
                                 </StackPanel.Style>
                                 <TextBlock Text="No Roblox running."
-                                           FontSize="11"
+                                           FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            HorizontalAlignment="Center"
                                            Margin="0,0,0,8" />
                                 <Button Style="{StaticResource CtaButtonStyle}" Command="{Binding StartMainCommand}"
                                         Padding="14,10"
-                                        FontSize="13"
+                                        FontSize="{DynamicResource HeadingFontSize}"
                                         HorizontalAlignment="Stretch"
                                         ToolTip="Launch your main account into its current per-row game.">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -1797,12 +1813,12 @@
                                     </Style>
                                 </StackPanel.Style>
                                 <TextBlock Text="No main account picked."
-                                           FontSize="12" FontWeight="SemiBold"
+                                           FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
                                            Foreground="{DynamicResource WhiteBrush}"
                                            HorizontalAlignment="Center"
                                            Margin="0,0,0,4" />
                                 <TextBlock Text="Expand and click the &#x2606; on a row to set one."
-                                           FontSize="11"
+                                           FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            HorizontalAlignment="Center"
                                            TextWrapping="Wrap"
@@ -1828,14 +1844,14 @@
                                     </Style>
                                 </StackPanel.Style>
                                 <TextBlock Text="No accounts saved."
-                                           FontSize="12" FontWeight="SemiBold"
+                                           FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
                                            Foreground="{DynamicResource WhiteBrush}"
                                            HorizontalAlignment="Center"
                                            Margin="0,0,0,8" />
                                 <Button Style="{StaticResource CtaButtonStyle}" Command="{Binding AddAccountCommand}"
                                         Content="+ Add your first account"
                                         Padding="14,10"
-                                        FontSize="12"
+                                        FontSize="{DynamicResource BodyFontSize}"
                                         HorizontalAlignment="Stretch" />
                             </StackPanel>
                         </Grid>
@@ -1888,7 +1904,7 @@
                         </Ellipse.Style>
                     </Ellipse>
                     <TextBlock Text="{Binding LiveProcessSummary}"
-                               FontSize="11"
+                               FontSize="{DynamicResource BodyFontSize}"
                                Foreground="{DynamicResource WhiteBrush}"
                                VerticalAlignment="Center" />
                 </StackPanel>
@@ -1926,7 +1942,7 @@
                            ToolTip="{Binding MultiInstanceTooltip}"
                            AutomationProperties.Name="{Binding MultiInstanceSummary}"
                            AutomationProperties.HelpText="{Binding MultiInstanceTooltip}"
-                           FontSize="11"
+                           FontSize="{DynamicResource BodyFontSize}"
                            HorizontalAlignment="Left"
                            VerticalAlignment="Center"
                            Margin="18,0,0,0">
