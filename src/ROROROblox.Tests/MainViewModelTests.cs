@@ -1507,6 +1507,10 @@ public class MainViewModelTests
         /// way; settable because the render gates need it VISIBLE.</summary>
         public bool BloxstrapWarningDismissed { get; set; } = true;
         public Task<bool> GetBloxstrapWarningDismissedAsync() => Task.FromResult(BloxstrapWarningDismissed);
+        /// <summary>F-111. Settable so the stop-grace path can be driven both ways.</summary>
+        public bool AutoForceStop { get; set; }
+        public Task<bool> GetAutoForceStopAsync() => Task.FromResult(AutoForceStop);
+        public Task SetAutoForceStopAsync(bool auto) { AutoForceStop = auto; return Task.CompletedTask; }
 
         // Backing field (not throw-NotImplemented) so LoadAsync's read/dismiss-signature
         // round trip is exercisable by FPS-cap dismissal tests without a real AppSettings.

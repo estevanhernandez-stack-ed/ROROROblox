@@ -169,6 +169,10 @@ public class StreamerIdentityProviderTests
         public Task<bool?> GetEdgeRemediationAnswerAsync(string themeId) => throw new NotImplementedException();
         public Task SetEdgeRemediationAnswerAsync(string themeId, bool accepted) => throw new NotImplementedException();
         public Task<bool> GetBloxstrapWarningDismissedAsync() => throw new NotImplementedException();
+        /// <summary>F-111. Settable so the stop-grace path can be driven both ways.</summary>
+        public bool AutoForceStop { get; set; }
+        public Task<bool> GetAutoForceStopAsync() => Task.FromResult(AutoForceStop);
+        public Task SetAutoForceStopAsync(bool auto) { AutoForceStop = auto; return Task.CompletedTask; }
         public Task SetBloxstrapWarningDismissedAsync(bool v) => throw new NotImplementedException();
         public Task<string?> GetDismissedFpsCapWarningSignatureAsync() => throw new NotImplementedException();
         public Task SetDismissedFpsCapWarningSignatureAsync(string? s) => throw new NotImplementedException();

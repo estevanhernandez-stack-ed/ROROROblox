@@ -64,6 +64,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// is null there — so the delegate bodies below had never executed in a test.
     /// </summary>
     private readonly Core.IUiDispatcher _ui;
+
+    /// <summary>Used only to put back what a forced stop destroys (F-109). Null-tolerant.</summary>
+    private readonly IGlobalBasicSettingsWriter? _globalBasicSettings;
     private readonly Core.StreamerMode.IStreamerIdentityProvider? _streamerIdentity;
     private readonly DiscordConfigStore? _discordConfigStore;
     private readonly ILogger<MainViewModel> _log;
@@ -158,6 +161,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         ITrayService tray,
         Notifications.IdleAlertPresenter idleAlertPresenter,
         Core.IUiDispatcher? uiDispatcher = null,
+        IGlobalBasicSettingsWriter? globalBasicSettings = null,
         Core.StreamerMode.IStreamerIdentityProvider? streamerIdentity = null,
         DiscordConfigStore? discordConfigStore = null,
         ILogger<MainViewModel>? log = null)
@@ -189,6 +193,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _tray = tray;
         _idleAlertPresenter = idleAlertPresenter;
         _ui = uiDispatcher ?? new Threading.WpfUiDispatcher();
+        _globalBasicSettings = globalBasicSettings;
         _streamerIdentity = streamerIdentity;
         _discordConfigStore = discordConfigStore;
         _log = log ?? NullLogger<MainViewModel>.Instance;
@@ -213,7 +218,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         ReauthenticateCommand = new RelayCommand(p => ReauthenticateAsync(p as AccountSummary), _ => !IsBusy);
         OpenGamesCommand = new RelayCommand(OpenGames);
         LaunchAllCommand = new RelayCommand(LaunchAllAsync, () => !IsBusy && Accounts.Any(a => a.IsSelected && !a.SessionExpired && !a.SessionLimited && !(a.InGame || a.IsRunning)));
-        StopAccountCommand = new RelayCommand(p => StopAccount(p as AccountSummary));
+        StopAccountCommand = new RelayCommand(p => _ = StopAccountAsync(p as AccountSummary));
         RecycleAccountCommand = new RelayCommand(p => _ = RecycleAccountAsync(p as AccountSummary));
         OpenDiagnosticsCommand = new RelayCommand(OpenDiagnostics);
         OpenAboutCommand = new RelayCommand(OpenAbout);
@@ -2600,18 +2605,88 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// Send the tracked Roblox window for this account a graceful close (CloseMainWindow).
     /// Falls back to Kill if a second click arrives while still tracking.
     /// </summary>
-    private void StopAccount(AccountSummary? summary)
+    /// <summary>
+    /// Stops a client, and actually checks whether it stopped (F-111, F-109).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// THE OLD SHAPE WAS <c>if (!RequestClose(id)) Kill(id);</c>, and it was inert. RequestClose
+    /// returned <c>Process.CloseMainWindow()</c>, which says whether the message was POSTED, not
+    /// whether the window closed — so it returned true, the escalation never ran, and the first
+    /// press of Stop did nothing at all. Measured 2026-08-20 against a live in-game client: still
+    /// running, still titled, thirty seconds after the click. The second press worked only because
+    /// CloseMainWindow happened to return false by then, which is why this looked like a
+    /// two-click button rather than a broken one.
+    /// </para>
+    /// <para>
+    /// Now: ask the way clicking the X asks, then WAIT and re-check, then force. The wait is ten
+    /// seconds because an in-game Roblox answers a close by raising its own confirm dialog — drawn
+    /// inside the game surface, invisible to this process — and a person has to click it. Only that
+    /// clean exit persists Roblox's own settings, which is why forcing immediately is opt-in
+    /// rather than the default.
+    /// </para>
+    /// </remarks>
+    internal async Task StopAccountAsync(AccountSummary? summary)
     {
         if (summary is null || !_processTracker.IsTracking(summary.Id))
         {
             return;
         }
-        _log.LogInformation("StopAccount {AccountId} (pid {Pid})", summary.Id, summary.RunningPid);
+
+        var pid = summary.RunningPid;
+        _log.LogInformation("StopAccount {AccountId} (pid {Pid})", summary.Id, pid);
         ExpectClose(summary.Id);
-        if (!_processTracker.RequestClose(summary.Id))
+
+        var auto = false;
+        try { auto = await _settings.GetAutoForceStopAsync().ConfigureAwait(true); }
+        catch (Exception ex) { _log.LogDebug(ex, "Auto-force-stop read failed; using the default wait."); }
+
+        Core.Diagnostics.ClientWindowState? snapshot = null;
+
+        try
         {
-            // Window unresponsive — escalate.
-            _processTracker.Kill(summary.Id);
+            var outcome = await Core.Diagnostics.ClientStopSequence.RunAsync(
+                hasExited: () => !_processTracker.IsTracking(summary.Id),
+                askToClose: () => _processTracker.RequestClose(summary.Id),
+                forceKill: () =>
+                {
+                    // Read the window BEFORE killing — a dead process has none. This is the only
+                    // chance to keep what Roblox will never get to save.
+                    if (pid is int p) snapshot = Core.Diagnostics.ClientWindowState.Read(p);
+                    _processTracker.Kill(summary.Id);
+                },
+                onSecondsRemaining: secs => _ui.Invoke(() =>
+                    summary.StoppingSecondsRemaining = secs > 0 ? secs : null),
+                delay: (d, ct) => Task.Delay(d, ct),
+                grace: auto ? TimeSpan.Zero : Core.Diagnostics.ClientStopSequence.DefaultGrace)
+                .ConfigureAwait(true);
+
+            _log.LogInformation("StopAccount {AccountId} finished: {Outcome}.", summary.Id, outcome);
+
+            if (outcome == Core.Diagnostics.ClientStopOutcome.Forced
+                && snapshot is { IsUsable: true } s
+                && _globalBasicSettings is not null)
+            {
+                try
+                {
+                    await _globalBasicSettings
+                        .WriteWindowStateAsync(s.Fullscreen, s.X, s.Y, s.Width, s.Height)
+                        .ConfigureAwait(true);
+                    _log.LogInformation(
+                        "Put back the window state our force-close destroyed: fullscreen={Full}, {W}x{H} at ({X},{Y}).",
+                        s.Fullscreen, s.Width, s.Height, s.X, s.Y);
+                }
+                catch (Exception ex)
+                {
+                    // Best-effort. Failing to restore a window size must never surface as a failed
+                    // Stop — the client is already gone, which is what the user asked for.
+                    _log.LogWarning(ex, "Could not write back the window state after a forced stop.");
+                }
+            }
+        }
+        finally
+        {
+            _ui.Invoke(() => summary.StoppingSecondsRemaining = null);
         }
     }
 

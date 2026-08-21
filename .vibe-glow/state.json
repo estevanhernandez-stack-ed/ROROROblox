@@ -30,6 +30,17 @@
       ]
     },
     {
+      "id": 10,
+      "name": "Window conventions — ownership, Esc, placement",
+      "status": "open",
+      "findings": [
+        "F-084",
+        "F-054",
+        "F-060"
+      ],
+      "notes": "F-054 was re-measured and had overstated itself — 22 windows already dismissed on Esc; the real gap was four. Its [new-mechanism] half became F-112. F-041/F-048/F-079, the style-consolidation trio originally planned for this wave, are NOT in it and stay open."
+    },
+    {
       "id": 2,
       "name": "Settings nav rail — five pages, shape-based selection, resizable",
       "status": "clean",
@@ -50,15 +61,6 @@
         "F-012"
       ],
       "note": "Merged as 3fc838b. F-001 was in the batch and did NOT close: its fix direction also lists Stop all, Open log folder and the Welcome tour, none of which has a view-model command (the tray raises events handled in App.xaml.cs). F-001 stays open with exactly those three named. The gate also caught an accessibility regression — the first Tools control announced as a plain button with no ExpandCollapse — fixed with a custom peer after all three stock controls each failed a different half."
-    },
-    {
-      "id": "f076",
-      "name": "Mask the saved webhook credential in Settings",
-      "status": "clean",
-      "findings": [
-        "F-076"
-      ],
-      "note": "Not a wave — a single standalone finding, fixed and verified in one PR (merged 9587ee6b). F-076 was itself added BY wave 2, whose capture tooling photographed a live webhook token. Masking logic lives in Core with nine unit tests; the reveal toggle is wired to Checked/Unchecked rather than Click because UI Automation's TogglePattern never raises Click — the first version looked right and did nothing under automation. Este declined rotating the exposed webhook (2026-08-04); it never left the machine and was never committed."
     },
     {
       "id": 4,
@@ -112,15 +114,32 @@
       "notes": "F-095 and F-101 were re-checked against the tree first and were already clean, so the wave is three rows, not five. Two of the three were understated by their own row: F-100 had a second off switch behind the one it named (the doubles discarded every subscription), and F-099's window drew the ignored plugin copy as a real row rather than merely staying silent. F-106 was split out of F-100 rather than absorbed into its close-out."
     },
     {
-      "id": 10,
-      "name": "Window conventions — ownership, Esc, placement",
+      "id": 8,
+      "name": "Stop actually stops",
       "status": "open",
       "findings": [
-        "F-084",
-        "F-054",
-        "F-060"
+        "F-111",
+        "F-109"
       ],
-      "notes": "F-054 was re-measured and had overstated itself — 22 windows already dismissed on Esc; the real gap was four. Its [new-mechanism] half became F-112. F-041/F-048/F-079, the style-consolidation trio originally planned for this wave, are NOT in it and stay open."
+      "notes": "Both fixed by asking a different question. RoRoRo had been sending WM_CLOSE, which Roblox ignores, and trusting a return value that means 'message posted'. Scoped from eight probes because two designs died in them â€” SC_CLOSE closes a bare client and only raises a confirm on an in-game one, and that confirm is drawn inside the game surface where no automated probe can see it. The user's screenshot is what corrected it."
+    },
+    {
+      "id": 9,
+      "name": "The leftover that happens every time",
+      "status": "open",
+      "findings": [
+        "F-110"
+      ],
+      "notes": "Fixed by establishing the premise first, which the row demanded: a clean stop deterministically spawns a headless client, so the dialog about it was firing on the ordinary path. Also corrected the row's own account of its origin â€” the six modals came from a windowed test client, not this."
+    },
+    {
+      "id": "f076",
+      "name": "Mask the saved webhook credential in Settings",
+      "status": "clean",
+      "findings": [
+        "F-076"
+      ],
+      "note": "Not a wave — a single standalone finding, fixed and verified in one PR (merged 9587ee6b). F-076 was itself added BY wave 2, whose capture tooling photographed a live webhook token. Masking logic lives in Core with nine unit tests; the reveal toggle is wired to Checked/Unchecked rather than Click because UI Automation's TogglePattern never raises Click — the first version looked right and did nothing under automation. Este declined rotating the exposed webhook (2026-08-04); it never left the machine and was never committed."
     }
   ],
   "scope": {

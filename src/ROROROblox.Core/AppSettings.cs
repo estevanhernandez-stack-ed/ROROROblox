@@ -288,6 +288,24 @@ public sealed class AppSettings : IAppSettings, IDisposable
         finally { _gate.Release(); }
     }
 
+    public async Task<bool> GetAutoForceStopAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).AutoForceStop; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetAutoForceStopAsync(bool auto)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with { AutoForceStop = auto }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
     public async Task<bool> GetStreamerModeAsync()
     {
         await _gate.WaitAsync().ConfigureAwait(false);
@@ -529,6 +547,7 @@ public sealed class AppSettings : IAppSettings, IDisposable
         string? DismissedFpsCapWarningSignature = null,
         bool AlwaysShowRecycle = false,
         bool CompactMode = false,
+        bool AutoForceStop = false,
         double? MainWindowLeft = null,
         double? MainWindowTop = null,
         double? MainWindowWidth = null,
