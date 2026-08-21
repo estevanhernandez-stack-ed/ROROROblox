@@ -111,6 +111,26 @@ internal partial class PreferencesWindow : Window
         _mainViewModel = mainViewModel;
         _discordConfigStore = discordConfigStore;
         InitializeComponent();
+
+        // F-102. Two-way binding, NOT a Click handler. TogglePattern.Toggle() — the only pattern a
+        // CheckBox exposes, and the one every assistive technology and automation path uses — goes
+        // through WPF's ToggleButtonAutomationPeer, which raises Checked/Unchecked and never Click.
+        // So the old handler never ran for those callers: IsChecked flipped, UIA reported On, and
+        // streamer mode stayed OFF. A privacy control reporting engaged while disengaged, observed
+        // end to end in the Store capture run — toggled via UIA, read back On, and the captured PNG
+        // showed real account names.
+        //
+        // Binding is immune to the whole Click-versus-programmatic split, including automation
+        // paths nobody has thought of yet, which is why it beats moving the handler to
+        // Checked/Unchecked.
+        StreamerModeToggle.SetBinding(
+            System.Windows.Controls.Primitives.ToggleButton.IsCheckedProperty,
+            new System.Windows.Data.Binding(nameof(MainViewModel.StreamerModeOn))
+            {
+                Source = _mainViewModel,
+                Mode = System.Windows.Data.BindingMode.TwoWay,
+            });
+
         Loaded += OnLoaded;
         Closed += OnClosed;
     }
@@ -173,7 +193,6 @@ internal partial class PreferencesWindow : Window
         try
         {
             _suppressClickHandlers = true;
-            StreamerModeToggle.IsChecked = _mainViewModel.StreamerModeOn;
         }
         catch (Exception)
         {
@@ -206,7 +225,6 @@ internal partial class PreferencesWindow : Window
             // Streamer mode reads through to IStreamerIdentityProvider via the view model — there is
             // no separate persisted flag here, which is why this reads the VM rather than _settings.
             // The SUBSCRIPTION is the load-bearing half: see OnViewModelPropertyChanged.
-            StreamerModeToggle.IsChecked = _mainViewModel.StreamerModeOn;
             _mainViewModel.PropertyChanged += OnViewModelPropertyChanged;
 
             // Discord presence + Join (v1.14+ plan). DiscordPresence is only non-null when
@@ -1133,19 +1151,6 @@ internal partial class PreferencesWindow : Window
     /// rendering end up as three views of one source of truth rather than three flags that drift.
     /// </para>
     /// </summary>
-    private void OnStreamerModeToggle(object sender, RoutedEventArgs e)
-    {
-        // NO _suppressClickHandlers guard here, deliberately — it would only ever swallow a real
-        // user. Click is raised by ToggleButton.OnClick, which programmatic IsChecked assignment
-        // never reaches (that raises Checked/Unchecked instead), so the flag can never protect
-        // this handler from our own populate. What it CAN do is eat a genuine click: OnLoaded
-        // holds the flag across seven awaits — settings reads, a DPAPI decrypt of discord.dat,
-        // theme enumeration — while the window is already visible and interactive. Clicking the
-        // box in that window flipped IsChecked (WPF toggles before raising Click) and then hit the
-        // guard, so the box looked checked and streamer mode never engaged. Reported live by Este
-        // on the wave-1 build, and predicted by the cold review as "failure trace B".
-        _mainViewModel.StreamerModeOn = StreamerModeToggle.IsChecked == true;
-    }
 
     /// <summary>Reroll every fake name and avatar at once. Same command the main window used to
     /// invoke; the button moved with the toggle it belongs to.</summary>

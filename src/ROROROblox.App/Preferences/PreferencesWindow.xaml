@@ -209,8 +209,7 @@
                                 <CheckBox x:Name="StreamerModeToggle"
                                           Foreground="{DynamicResource WhiteBrush}"
                                           FontSize="13"
-                                          FontWeight="SemiBold"
-                                          Click="OnStreamerModeToggle">
+                                          FontWeight="SemiBold">
                                     <TextBlock Text="Streamer mode." />
                                 </CheckBox>
                                 <TextBlock FontSize="11"
