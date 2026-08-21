@@ -3,18 +3,27 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Install plugin"
-        Height="560" Width="560"
+        Width="560"
+        SizeToContent="Height"
+        MaxHeight="620"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BgBrush}"
         Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
 
     <Grid Margin="32,28">
+        <!-- F-115, and this one is NOT like the other ten. Row 3 holds a real scroller: the
+             capability list is as long as the plugin's manifest says, so it cannot become Auto and
+             grow the window without bound. But a star row under SizeToContent collapses to its
+             minimum, which would hide the list entirely — so the cap moves onto the Border itself
+             (MaxHeight there, below) and the row becomes Auto. A short manifest now gets a compact
+             sheet instead of 560px of empty; a long one grows to the cap and the ScrollViewer takes
+             over, which is what it was always for. The window MaxHeight is the backstop. -->
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -59,12 +68,16 @@
         <TextBlock Grid.Row="2"
                    Text="THIS PLUGIN ASKS FOR"
                    FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                   FontSize="10"
+                   FontSize="{DynamicResource MetaFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,18,0,8" />
 
         <!-- Capability list -->
+        <!-- MaxHeight lives HERE rather than on the row, because SizeToContent collapses a star row
+             to its minimum and would have hidden this list entirely. The Border grows with the
+             manifest up to this cap and the ScrollViewer takes it from there (F-115). -->
         <Border Grid.Row="3"
+                MaxHeight="280"
                 BorderBrush="{DynamicResource DividerBrush}"
                 BorderThickness="1"
                 CornerRadius="8">
@@ -108,7 +121,7 @@
                                              banners this cycle — the words carry it. -->
                                         <TextBlock Text="{Binding Id}"
                                                    FontFamily="JetBrains Mono, Cascadia Mono, Consolas"
-                                                   FontSize="10"
+                                                   FontSize="{DynamicResource MetaFontSize}"
                                                    TextWrapping="Wrap">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
@@ -129,7 +142,7 @@
                                                    TextWrapping="Wrap"
                                                    Margin="0,3,0,0" />
                                         <TextBlock Text="{Binding NamespaceLabel}"
-                                                   FontSize="10"
+                                                   FontSize="{DynamicResource MetaFontSize}"
                                                    Foreground="{DynamicResource MutedTextBrush}"
                                                    Margin="0,4,0,0" />
                                     </StackPanel>

@@ -131,7 +131,7 @@
                                     Margin="10,2,0,0" Padding="6,1"
                                     Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <TextBlock Text="DEFAULT"
-                                           FontSize="9" FontWeight="Bold"
+                                           FontSize="{DynamicResource MetaFontSize}" FontWeight="Bold"
                                            Foreground="{DynamicResource NavyBrush}" />
                             </Border>
                         </StackPanel>
@@ -238,14 +238,14 @@
                             <Border Background="{DynamicResource MagentaBrush}" CornerRadius="3"
                                     Margin="10,2,0,0" Padding="6,1">
                                 <TextBlock Text="PRIVATE"
-                                           FontSize="9" FontWeight="Bold"
+                                           FontSize="{DynamicResource MetaFontSize}" FontWeight="Bold"
                                            Foreground="{DynamicResource OnMagentaBrush}" />
                             </Border>
                             <Border Background="{DynamicResource CyanBrush}" CornerRadius="3"
                                     Margin="6,2,0,0" Padding="6,1"
                                     Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <TextBlock Text="DEFAULT"
-                                           FontSize="9" FontWeight="Bold"
+                                           FontSize="{DynamicResource MetaFontSize}" FontWeight="Bold"
                                            Foreground="{DynamicResource NavyBrush}" />
                             </Border>
                         </StackPanel>

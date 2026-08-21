@@ -35,6 +35,23 @@ public sealed class WindowRenderFactAttribute : FactAttribute
 }
 
 /// <summary>
+/// The <see cref="TheoryAttribute"/> twin of <see cref="WindowRenderFactAttribute"/>, for a gate
+/// that runs the same measurement over several windows. Same environment rule, same reason string —
+/// declared here rather than in the test file so there is one place that knows when whole-window
+/// rendering is available, and deleting this file still gets everything back at once.
+/// </summary>
+public sealed class WindowRenderTheoryAttribute : TheoryAttribute
+{
+    public WindowRenderTheoryAttribute()
+    {
+        if (WindowRenderAvailability.SkipReason is { } reason)
+        {
+            Skip = reason;
+        }
+    }
+}
+
+/// <summary>
 /// Decides whether whole-window rendering is available in the current environment. Separate from
 /// the attribute so the reason string has one home and can be asserted against.
 /// </summary>

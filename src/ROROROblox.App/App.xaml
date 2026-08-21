@@ -15,6 +15,7 @@
                 <ResourceDictionary Source="/ROROROblox.App;component/Controls/ControlStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
+
             <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <local:InverseBoolConverter x:Key="InverseBoolConverter" />
             <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
