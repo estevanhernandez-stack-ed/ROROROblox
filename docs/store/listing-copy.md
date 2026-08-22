@@ -63,18 +63,27 @@ Important: trademark and affiliation notice.
 A 626 Labs product.
 ```
 
-## Product features (paste each as one feature; up to 7)
+## Product features (paste each as one feature; Partner Center accepts up to 20, ≤200 chars each)
 
-> Refreshed 2026-08-22 (v1.22.0.0) — and trimmed to the stated cap of 7; the old list had 8.
+> Refreshed 2026-08-22 (v1.22.0.0). The "up to 7" cap this section used to claim was wrong —
+> the live field held 12 entries with room for more; Microsoft's actual cap is 20. The live
+> field had also drifted from this file: it carried three internal changelog lines pasted as
+> features, one of which said "Internal: improved cookie capture compatibility" — changelog
+> voice AND "cookie capture" phrasing in a public field. This list replaces the live set 1:1.
 
 ```
 One-click multi-instance launcher for Roblox on Windows
 DPAPI-encrypted account vault with passphrase-protected export
-Squad Launch, Friend Follow, and same-server Recycle rejoin
-Memory watchdog that learns each client's real RAM cost on your PC
-Live presence status — which account is in which game, idle times
+Live status for every account — which game it's in, idle time, and per-account frame-rate caps
+Memory watchdog that learns each client's real RAM cost, plus one-click Recycle back into the same server
+Squad Launch and Friend Follow — same private server, or one public server together
+Join-by-link from any roblox.com URL, with saved private servers per account
+One tools window for Games, Settings, History and more, with keyboard shortcuts throughout
 Four built-in themes plus a build-your-own theme editor
+Optional Discord alerts to a webhook you create
+System tray with state-coloured icon and double-click main launch
 Plugin system with per-capability consent and out-of-process isolation
+Auto-update that keeps working when Roblox changes underneath
 ```
 
 ## Copyright (single line)
