@@ -10,8 +10,53 @@ using Xunit;
 
 namespace ROROROblox.Tests;
 
+/// <summary>
+/// F-116's last family, closed by removing the condition instead of surviving it. The pump below
+/// advances a fake clock and then waits, in real time, for the settler's continuation to resume —
+/// and that continuation is a plain thread-pool work item. Run in parallel with the rest of the
+/// suite, the pool is contended in exactly the way this file's own diagnosis measured: a sibling
+/// test's work drains LIFO from local queues ahead of the global queue where FakeTimeProvider's
+/// timer callback sits, and the pool's injection ramp (watched climbing 18 → 36 while the awaited
+/// continuation never ran) adds roughly one thread per 500ms — far slower than the pump's
+/// patience. Two mitigations were tried and measured: raising SetMinThreads 4x did nothing (3
+/// failures in ~8 runs before, 2 in 7 after — reverted), and the pump's own 30s observation
+/// ceiling only converts the stall into a loud failure. What was ALSO measured, and is the whole
+/// basis of this fix: the same tests run 25/25 clean in isolation with no generous ceiling needed.
+/// So this collection opts out of parallel execution — the settler's continuations get a quiet
+/// pool, which is the "scheduler of their own" the register row said was the untested hypothesis.
+/// The cost is these tests' own wall time (~1s of real time) running serially, and
+/// <see cref="FpsCapSettlerTests.ThePumpKeepsItsQuietPool"/> fails the build if the attribute is
+/// ever tidied away.
+/// </summary>
+[CollectionDefinition(QuietPoolCollectionName, DisableParallelization = true)]
+public sealed class FpsCapSettlerQuietPoolCollection
+{
+    public const string QuietPoolCollectionName = "FpsCapSettler quiet pool";
+}
+
+[Collection(FpsCapSettlerQuietPoolCollection.QuietPoolCollectionName)]
 public sealed class FpsCapSettlerTests
 {
+    /// <summary>
+    /// The fence on the fix above: this class must stay in a parallel-disabled collection. If this
+    /// fails, someone removed or renamed the attribute pair, and the pump is back to sharing a
+    /// contended pool — re-read the collection definition's summary before deciding that is fine.
+    /// </summary>
+    [Fact]
+    public void ThePumpKeepsItsQuietPool()
+    {
+        var collection = (CollectionAttribute?)Attribute.GetCustomAttribute(
+            typeof(FpsCapSettlerTests), typeof(CollectionAttribute));
+        Assert.NotNull(collection);
+
+        var definition = (CollectionDefinitionAttribute?)Attribute.GetCustomAttribute(
+            typeof(FpsCapSettlerQuietPoolCollection), typeof(CollectionDefinitionAttribute));
+        Assert.NotNull(definition);
+        Assert.True(definition.DisableParallelization,
+            "The FpsCapSettler collection no longer disables parallelization — the pump is back on "
+            + "a contended pool, which is the F-116 flake condition.");
+    }
+
     private static readonly TimeSpan TestBound = TimeSpan.FromSeconds(5);
 
     /// <summary>

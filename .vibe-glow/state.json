@@ -297,6 +297,15 @@
         "F-013"
       ],
       "notes": "PR B. ShellWindow (non-modal destination, MinW/MinH, dynamic title = active page) hosts Games/Settings/History/Diagnostics/Plugins/About as lazily-created pages behind a persistent 164px rail; NavItemStyle promoted to ControlStyles.xaml and classified Excluded in the rendered style gate with a measured no-fill reason. One App.OpenShellPage is every door (toolbar, Tools menu, tray, plugins command) - single instance, retires the double-Preferences class. Close-moment reconciliations became event-driven or per-edit; the main-window idle re-push gap fixed on the way. Pages dispose via the shell. Six Close buttons retired (page is a destination, not a dialog). Routes survived on the dynamic title; one literal change (About). F-106 re-measured 12 to 7 and recorded. Suite 1798 unit + 22 integration green after the fold."
+    },
+    {
+      "id": "f116-quiet-pool",
+      "name": "F-116 closed: the pump gets a quiet pool",
+      "status": "open",
+      "findings": [
+        "F-116"
+      ],
+      "notes": "The last flake family closed by removing its condition: FpsCapSettlerTests now runs in the suite first parallel-disabled xUnit collection, so the pump continuations no longer share a contended pool with the parallel suite - the scheduler-of-their-own hypothesis the row left untested, shipped without touching production code. Evidence: the row own recorded isolation delta (isolated 25/25 clean vs in-suite intermittent locally and on CI x64) plus the refuted SetMinThreads mitigation; a fresh local reproduction attempt (six full-suite runs under twelve CPU burners) was clean BEFORE the fix too, so no local delta exists - consistent with in-process contention as the mechanism. Fence ThePumpKeepsItsQuietPool proven failable by mutation. Twelve loaded runs green. Suite 1799 unit after (one new fence test). Same commit annotates F-096: guard authored in rororo-ur-task PR, row flips on its merge."
     }
   ],
   "scope": {
