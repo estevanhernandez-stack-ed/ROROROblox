@@ -11,25 +11,67 @@
         Background="{DynamicResource BgBrush}"
         Icon="/ROROROblox.App;component/Tray/Resources/tray-on.ico">
 
-    <Grid Margin="32,28">
-        <!-- F-115, and this one is NOT like the other ten. Row 3 holds a real scroller: the
-             capability list is as long as the plugin's manifest says, so it cannot become Auto and
-             grow the window without bound. But a star row under SizeToContent collapses to its
-             minimum, which would hide the list entirely — so the cap moves onto the Border itself
-             (MaxHeight there, below) and the row becomes Auto. A short manifest now gets a compact
-             sheet instead of 560px of empty; a long one grows to the cap and the ScrollViewer takes
-             over, which is what it was always for. The window MaxHeight is the backstop. -->
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <!-- F-120: the FOOTER is laid out first, and that ordering is the fix. This was a six-row Grid,
+         all rows Auto, buttons in the last row — and when ur-mcp's manifest (the tallest in the
+         family: longest description, six capabilities) pushed desired height past the window's
+         MaxHeight, WPF clipped bottom rows first. The Install button fell off a NoResize window
+         with nothing reporting it; Enter reached it only because it is IsDefault. A DockPanel
+         measures docked children in declaration order, so the buttons and the starts-now note —
+         declared first, docked Bottom — always get their space, and the flexible content above
+         absorbs any shortfall instead. The one thing a dialog footer must never do is lose. -->
+    <DockPanel Margin="32,28" LastChildFill="True">
 
-        <!-- Header — plugin name + version -->
-        <StackPanel Grid.Row="0">
+        <!-- Footer buttons — first in declaration, bottom of the window, unclippable (F-120). -->
+        <StackPanel DockPanel.Dock="Bottom"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="0,16,0,0">
+            <Button x:Name="CancelButton" Content="Cancel"
+                    Padding="18,8" Margin="0,0,8,0"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    IsCancel="True"
+                    Click="OnCancelClick" />
+            <Button x:Name="InstallButton" Style="{StaticResource CtaButtonStyle}" Content="Install"
+                    Padding="22,8"
+                    IsDefault="True"
+                    Click="OnInstallClick" />
+        </StackPanel>
+
+        <!-- Starts-now hint. The plugin process launches immediately once consent is granted;
+             the per-row Autostart toggle on the Plugins page governs future RoRoRo launches. -->
+        <Border DockPanel.Dock="Bottom"
+                Margin="0,14,0,0"
+                Padding="12,8"
+                Background="{DynamicResource RowBgBrush}"
+                BorderBrush="{DynamicResource CyanBrush}"
+                BorderThickness="0,0,0,2"
+                CornerRadius="6">
+            <TextBlock Text="This plugin starts as soon as you install it. Use the Autostart toggle on the Plugins page to control whether it also launches with RoRoRo."
+                       Foreground="{DynamicResource WhiteBrush}"
+                       FontSize="{DynamicResource BodyFontSize}"
+                       TextWrapping="Wrap"
+                       Opacity="0.9" />
+        </Border>
+
+        <!-- Everything that can flex fills what the footer left. -->
+        <Grid>
+            <!-- F-115 (amended by F-120): the list row is the star row now. F-115 feared a star row
+                 under SizeToContent would collapse the list, so it capped the Border instead; the
+                 cap stays (MaxHeight below), and under an infinite measure a star row is treated as
+                 Auto anyway, so a short manifest still gets a compact sheet. What the star adds is
+                 the CONSTRAINED case: when the window hits its MaxHeight, this row receives what is
+                 actually left after the docked footer, and the ScrollViewer takes over — which is
+                 what it was always for. MinHeight keeps a pathological description from squeezing
+                 the list to nothing; ConsentSheetFooterTests holds both ends of the bargain. -->
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Header — plugin name + version -->
+            <StackPanel Grid.Row="0">
             <TextBlock x:Name="HeaderTitle"
                        FontSize="20" FontWeight="Bold"
                        Foreground="{DynamicResource WhiteBrush}"
@@ -77,7 +119,10 @@
              to its minimum and would have hidden this list entirely. The Border grows with the
              manifest up to this cap and the ScrollViewer takes it from there (F-115). -->
         <Border Grid.Row="3"
+                x:Name="CapabilityFrame"
                 MaxHeight="280"
+                MinHeight="96"
+                VerticalAlignment="Top"
                 BorderBrush="{DynamicResource DividerBrush}"
                 BorderThickness="1"
                 CornerRadius="8">
@@ -154,36 +199,6 @@
             </ScrollViewer>
         </Border>
 
-        <!-- Starts-now hint. The plugin process launches immediately once consent is granted;
-             the per-row Autostart toggle on the Plugins page governs future RoRoRo launches. -->
-        <Border Grid.Row="4"
-                Margin="0,14,0,0"
-                Padding="12,8"
-                Background="{DynamicResource RowBgBrush}"
-                BorderBrush="{DynamicResource CyanBrush}"
-                BorderThickness="0,0,0,2"
-                CornerRadius="6">
-            <TextBlock Text="This plugin starts as soon as you install it. Use the Autostart toggle on the Plugins page to control whether it also launches with RoRoRo."
-                       Foreground="{DynamicResource WhiteBrush}"
-                       FontSize="{DynamicResource BodyFontSize}"
-                       TextWrapping="Wrap"
-                       Opacity="0.9" />
-        </Border>
-
-        <!-- Footer buttons -->
-        <StackPanel Grid.Row="5"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Right"
-                    Margin="0,16,0,0">
-            <Button Content="Cancel"
-                    Padding="18,8" Margin="0,0,8,0"
-                    Style="{StaticResource SecondaryButtonStyle}"
-                    IsCancel="True"
-                    Click="OnCancelClick" />
-            <Button Style="{StaticResource CtaButtonStyle}" Content="Install"
-                    Padding="22,8"
-                    IsDefault="True"
-                    Click="OnInstallClick" />
-        </StackPanel>
-    </Grid>
+        </Grid>
+    </DockPanel>
 </Window>
