@@ -315,6 +315,15 @@
         "F-112"
       ],
       "notes": "One table (Input/KeyboardVocabulary.cs) consumed by three surfaces: MainWindow KeyBindings (Ctrl+N/L/J/F + six destinations: Ctrl+G, Ctrl+Comma, Ctrl+H, Ctrl+D, Ctrl+P, F1), ShellWindow page navigation + Ctrl+1-6 along the rail, and the About page discoverable list (where F1 lands from either window). Hints layered per Windows convention: InputGestureText in Tools, tooltip suffixes + AcceleratorKey on toolbar/CTAs. Fences: gesture uniqueness, Ur Task global-hotkey denylist (Ctrl+Shift+R/P/A/L - RegisterHotKey wins system-wide), markup-hint drift fence with vacuity floor - drift fence proven failable by mutation. Deliberate absences documented in the table: Stop all (destructive), per-row actions, smallness itself. Fits-matrix enrollment for the shell reframed to chrome-only: pages scroll by design (F-113 carried into the fold), so a page taller than the frame is reachable, not clipped. Suite 1805 unit green."
+    },
+    {
+      "id": "f106-dialog-seams",
+      "name": "F-106 closed: every remaining dialog behind a seam",
+      "status": "open",
+      "findings": [
+        "F-106"
+      ],
+      "notes": "Closed with the codebase ruling, not the row sketch: one delegate seam per dialog (StopAllConfirm pattern, which ShellPageOpener already extended) instead of an IWindowHost factory. SquadLaunchPicker / JoinByLinkPicker / FriendFollowPicker (result-bearing; the friend pick carries presence + name because EvaluateFollow owns the launch decision), RenamePrompt, the two not-installed interruptions, DpapiCorruptPrompt, and a QuitApplication seam. Ten tests in MainViewModelWindowSeamTests are the first these flows have ever had - cancel paths, picked-target dispatch, the privacy-hidden follow block, corrupt-store start-fresh vs quit, rename round-trip. Suite 1815 unit green. Register scoreboard 110 clean / 2 open (F-096 waits on rororo-ur-task PR 32; F-098 waits on the Store run by ruling)."
     }
   ],
   "scope": {

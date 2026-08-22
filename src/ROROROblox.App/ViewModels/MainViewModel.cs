@@ -204,6 +204,41 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // later, well after construction finishes.
         _accountRecycler = new AccountRecycler(_instanceStopper, LaunchForRecycleAsync, _memoryWatchdog, _log);
 
+        // F-106 seam defaults — the real dialogs. Assigned here rather than at the property
+        // because they capture instance state (stores, the API client, the share-URL resolver).
+        SquadLaunchPicker = (eligible, running, expired) =>
+        {
+            var window = Parented(new SquadLaunchWindow(
+                _privateServerStore, _api, _settings, url => ResolveShareUrlAsync(url), eligible, running, expired));
+            return window.ShowDialog() == true ? window.SelectedTarget : null;
+        };
+        JoinByLinkPicker = renderName =>
+        {
+            var window = Parented(new JoinByLinkWindow(_api, url => ResolveShareUrlAsync(url), renderName));
+            return window.ShowDialog() == true && window.SelectedTarget is { } target
+                ? (target, window.SaveToLibrary)
+                : null;
+        };
+        FriendFollowPicker = (sources, defaultIndex, openedRowId) =>
+        {
+            var window = Parented(new FriendFollowWindow(
+                _api, _accountStore, sources, defaultIndex, openedRowId, _streamerIdentity));
+            return window.ShowDialog() == true && window.SelectedTarget is { } target
+                ? new FriendFollowPick(target, window.SelectedPresence, window.SelectedFriendName)
+                : null;
+        };
+        RenamePrompt = async target =>
+        {
+            var owner = Application.Current.MainWindow;
+            if (owner is null)
+            {
+                _log.LogWarning("RenameItemAsync invoked with no MainWindow available.");
+                return new RenameResult(RenameResultKind.Cancel, null);
+            }
+
+            return await Modals.RenameWindow.ShowAsync(owner, target);
+        };
+
         // Mirror must exist before any off-thread reader (presence loop, plugin host) can
         // resolve this VM — the ctor runs on the UI thread, so wiring it here is race-free.
         _accountsMirror = new ObservableCollectionMirror<AccountSummary>(Accounts);
@@ -618,6 +653,53 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     /// <summary>How the tour is shown. Same reasoning as <see cref="StopAllConfirm"/>.</summary>
     internal Action ShowWelcomeTour { get; set; } = () => About.WelcomeWindow.ShowTour();
+
+    // ---------- F-106: the remaining dialogs, behind seams ----------
+    // The StopAllConfirm pattern applied to every window this VM still constructs: each property
+    // holds the real dialog by default, tests replace it, and the flow AROUND the dialog — which
+    // is where the logic lives — becomes assertable without an STA thread. The three pickers and
+    // the rename prompt capture instance state, so their defaults are assigned at the end of the
+    // ctor; the interruptions are static and initialize inline.
+
+    /// <summary>Squad Launch picker: (eligible, running, expired) → the picked target, null on cancel.</summary>
+    internal Func<int, int, int, LaunchTarget?> SquadLaunchPicker { get; set; }
+
+    /// <summary>Join-by-link picker: the row's render name → (target, save to library), null on cancel.</summary>
+    internal Func<string, (LaunchTarget Target, bool SaveToLibrary)?> JoinByLinkPicker { get; set; }
+
+    /// <summary>Friend-follow picker: (sources, default index, opened row id) → the pick, null on cancel.</summary>
+    internal Func<IReadOnlyList<FriendSource>, int, Guid, FriendFollowPick?> FriendFollowPicker { get; set; }
+
+    /// <summary>The rename prompt. The default resolves the owner window and answers Cancel when none exists.</summary>
+    internal Func<RenameTarget, Task<RenameResult>> RenamePrompt { get; set; }
+
+    /// <summary>The WebView2-missing interruption.</summary>
+    internal Action WebView2NotInstalledPrompt { get; set; } = static () =>
+    {
+        var window = new WebView2NotInstalledWindow();
+        Parented(window);
+        window.ShowDialog();
+    };
+
+    /// <summary>The Roblox-missing interruption.</summary>
+    internal Action RobloxNotInstalledPrompt { get; set; } = static () =>
+    {
+        var window = new RobloxNotInstalledWindow();
+        Parented(window);
+        window.ShowDialog();
+    };
+
+    /// <summary>The corrupt-store question: true = start fresh, false = quit to restore a backup.</summary>
+    internal Func<bool> DpapiCorruptPrompt { get; set; } = static () =>
+    {
+        var window = new DpapiCorruptWindow();
+        Parented(window);
+        return window.ShowDialog() == true;
+    };
+
+    /// <summary>How "quit so the user can restore a backup" happens. A seam because the recovery
+    /// logic around it is exactly what wants testing, and <c>Application.Current</c> is null there.</summary>
+    internal Action QuitApplication { get; set; } = static () => Application.Current.Shutdown(0);
 
     /// <summary>Test hook: fires immediately after <see cref="ExpectCloseForAll"/> inside stop-all.</summary>
     internal Action? ExpectCloseForAllObserved { get; set; }
@@ -2200,7 +2282,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// Open the Squad Launch modal. After the modal closes, if the user picked a target,
     /// dispatch every eligible account into it via <see cref="SquadLaunchAsync"/>.
     /// </summary>
-    private async Task OpenSquadLaunchAsync()
+    internal async Task OpenSquadLaunchAsync()
     {
         // Eligibility for the Private server modal counts SELECTED accounts only. Deselected
         // rows are surfaced in the modal's status line so the user knows why the count is low. The
@@ -2211,9 +2293,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var running = breakdown.Breakdown.Running;
         var expired = breakdown.Breakdown.Expired;
 
-        var window = Parented(new SquadLaunchWindow(_privateServerStore, _api, _settings, url => ResolveShareUrlAsync(url), eligible, running, expired));
-        var dialogResult = window.ShowDialog();
-        if (dialogResult == true && window.SelectedTarget is { } target)
+        if (SquadLaunchPicker(eligible, running, expired) is { } target)
         {
             await SquadLaunchAsync(target);
         }
@@ -2466,10 +2546,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         if (summary is null) return;
 
-        var window = Parented(new JoinByLinkWindow(_api, url => ResolveShareUrlAsync(url), summary.RenderName));
-        if (window.ShowDialog() == true && window.SelectedTarget is { } target)
+        if (JoinByLinkPicker(summary.RenderName) is { } pick)
         {
-            var saveToLibrary = window.SaveToLibrary;
+            var (target, saveToLibrary) = pick;
             await JoinByLinkSave.ApplyAsync(_api, _favorites, _privateServerStore, target, saveToLibrary, _log);
             if (saveToLibrary && target is LaunchTarget.Place)
             {
@@ -2532,7 +2611,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// (cached on <see cref="AccountSummary"/> for subsequent opens). After the modal closes,
     /// if the user picked a friend to follow, fire the launch with that target.
     /// </summary>
-    private async Task OpenFriendFollowAsync(AccountSummary? summary)
+    internal async Task OpenFriendFollowAsync(AccountSummary? summary)
     {
         if (summary is null) return;
 
@@ -2595,21 +2674,20 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var mainSource = await TryResolveMainFriendSourceAsync(summary);
         var (sources, defaultIndex) = FriendSourcePlan.Build(rowSource, mainSource);
 
-        var window = Parented(new FriendFollowWindow(_api, _accountStore, sources, defaultIndex, summary.Id, _streamerIdentity));
-        if (window.ShowDialog() == true && window.SelectedTarget is { } target)
+        if (FriendFollowPicker(sources, defaultIndex, summary.Id) is { } pick)
         {
             // Re-run the same land-at-home guard FollowAltAsync uses, against the friend's presence
             // snapshot carried out of the modal. The modal already gates the button on this, but we
             // re-check here so the launch decision is owned by one shared rule (EvaluateFollow) and
             // a privacy-hidden / stale-presence target gets a clear message instead of a silent
             // bounce to the Roblox home page.
-            var decision = EvaluateFollow(window.SelectedPresence, window.SelectedFriendName ?? "that friend");
+            var decision = EvaluateFollow(pick.Presence, pick.FriendName ?? "that friend");
             if (!decision.CanFollow)
             {
                 StatusBanner = decision.BlockedMessage!; // non-null whenever CanFollow is false (see FollowDecision.Block)
                 return;
             }
-            await LaunchAccountAsync(summary, overrideTarget: target);
+            await LaunchAccountAsync(summary, overrideTarget: pick.Target);
         }
     }
 
@@ -3864,25 +3942,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         await LaunchAccountAsync(main);
     }
 
-    private static void ShowWebView2NotInstalledModal()
-    {
-        var window = new WebView2NotInstalledWindow();
-        Parented(window);
-        window.ShowDialog();
-    }
+    private void ShowWebView2NotInstalledModal() => WebView2NotInstalledPrompt();
 
-    private static void ShowRobloxNotInstalledModal()
-    {
-        var window = new RobloxNotInstalledWindow();
-        Parented(window);
-        window.ShowDialog();
-    }
+    private void ShowRobloxNotInstalledModal() => RobloxNotInstalledPrompt();
 
-    private void ShowDpapiCorruptModal()
+    /// <summary>
+    /// Corrupt-store recovery, assertable since F-106: the dialog is <see cref="DpapiCorruptPrompt"/>,
+    /// the quit is <see cref="QuitApplication"/>, and this method owns everything between them.
+    /// </summary>
+    internal void ShowDpapiCorruptModal()
     {
-        var window = new DpapiCorruptWindow();
-        Parented(window);
-        var startFresh = window.ShowDialog() == true;
+        var startFresh = DpapiCorruptPrompt();
         if (startFresh)
         {
             // The store's load already failed; renaming + creating-empty is the recovery path.
@@ -3899,7 +3969,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         else
         {
             // User chose Quit — let the app exit so they can restore from a backup.
-            Application.Current.Shutdown(0);
+            QuitApplication();
         }
     }
 
@@ -3994,21 +4064,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private async Task RenameItemAsync(RenameTarget? target)
+    internal async Task RenameItemAsync(RenameTarget? target)
     {
         if (target is null)
         {
             return;
         }
 
-        var owner = Application.Current.MainWindow;
-        if (owner is null)
-        {
-            _log.LogWarning("RenameItemAsync invoked with no MainWindow available.");
-            return;
-        }
-
-        var result = await Modals.RenameWindow.ShowAsync(owner, target);
+        var result = await RenamePrompt(target);
         if (result.Kind == RenameResultKind.Cancel)
         {
             return;
