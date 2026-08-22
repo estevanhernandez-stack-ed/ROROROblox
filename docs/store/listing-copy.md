@@ -14,7 +14,7 @@
 
 | Field | Value | Notes |
 |---|---|---|
-| **App name (Product Name)** | RORORO | The fix for 10.1.1.1. Drops `blox` entirely; keeps the stutter pattern that ties to the three-block voxel icon. |
+| **App name (Product Name)** | RORORO | The fix for 10.1.1.1. Drops `blox` entirely; keeps the stutter pattern that ties to the three-block voxel icon. **Open question (2026-08-22):** every other user-facing surface now spells it **RoRoRo** (About box, README, release names, this file's description body). If the reserved Product Name still displays all-caps, changing its casing is a listing-side edit worth making at a convenient submission — casing-only, so 10.1.1.1 is not re-opened. Este's call. |
 | **Publisher display name** | 626Labs LLC | Matches Partner Center reservation. |
 | **Copyright** | © 2026 626 Labs LLC. "Roblox" is a trademark of Roblox Corporation. RORORO is not affiliated with, endorsed by, or sponsored by Roblox Corporation. | Disclaimer in copyright field. |
 | **Category** | Utilities & tools | Not "Games" — RORORO is a launcher, not a game. |
@@ -22,47 +22,59 @@
 
 ## Short description (under 200 chars — Store snippet)
 
+> Refreshed 2026-08-22 for the v1.22.0.0 submission — the previous block predated the memory
+> watchdog, presence status, themes, and the tools window.
+
 ```
-Multi-launcher for Windows. Run multiple Roblox clients side by side as different saved accounts. DPAPI-encrypted account vault, per-game launch routing, system tray controls, auto-update.
+Multi-launcher for Windows. Run several Roblox clients side by side as different saved accounts. Encrypted account vault, Squad Launch, memory watchdog, live status, themes, auto-update.
 ```
 
 ## Long description
 
+> Refreshed 2026-08-22 (v1.22.0.0). The old block described the v1.4-era app. Brand casing
+> updated RORORO → RoRoRo to match the About box, README, and release names; the Partner
+> Center *Product Name field* is a separate question — see the note under Identity.
+
 ```
 Multi-launcher for Windows.
 
-RORORO is a Windows launcher that lets you run several Roblox clients on one PC simultaneously, each signed in as a different saved account. You add accounts once via an embedded login window, then launch any of them with a single click — into a default Roblox game URL or a per-account custom one.
+RoRoRo is a Windows launcher that lets you run several Roblox clients on one PC at the same time, each signed in as a different saved account you own. Add accounts once through Roblox's own login page, then launch any of them with one click — into their default game, a saved private server, or any game link you paste.
 
 What you get:
 • Multi-instance with one click. Holds the Roblox singleton mutex so additional clients open instead of focusing the first one.
-• DPAPI-encrypted account vault. Saved cookies are encrypted with Windows' Data Protection API, tied to your Windows user account. A copy of the vault file moved to another PC will not decrypt.
-• Per-game launch routing. Set a default Roblox game URL, or pick a different one per saved account.
-• System tray UX. State-coloured tray icon (cyan = on, slate = off, magenta = error) shows the multi-instance state at a glance. Double-click launches your designated main account.
-• Squad Launch + Friend Follow. Launch every selected account into the same Roblox private server, or follow a friend into theirs.
-• Join by link. Paste any roblox.com/games URL into a saved account's row to launch that account into that specific game.
-• Auto-update via Velopack. Drift-compatible with Roblox-side changes; remote config tells the app the current known-good Roblox version + mutex name so a Roblox-side rename doesn't break you for long.
-• Diagnostics + structured logging. A bug-report bundle is one button away.
+• DPAPI-encrypted account vault. Saved cookies are encrypted with Windows' Data Protection API, tied to your Windows user account — a copy of the vault file moved to another PC will not decrypt. Moving accounts between your own PCs is a deliberate, passphrase-protected export.
+• Live status for every account. See which account is in which game, who is idle and for how long, and per-account frame-rate caps that stick.
+• Squad Launch + Friend Follow. Send every selected account into the same private server, follow a friend into theirs, or land your accounts together in one public server.
+• Memory watchdog + Recycle. RoRoRo learns what a Roblox client actually costs in RAM on your machine and warns before you run out. One click closes a heavy client and puts it back in the same server it was in.
+• One tools window. Games, Settings, History, Diagnostics, Plugins and About are pages of one window that sits beside your accounts. Keyboard shortcuts throughout — F1 shows the list.
+• Themes. Four built-in, including one that carries no meaning in colour alone, plus a builder to make your own from ten colours and share it as a file.
+• Optional Discord alerts. Only if you paste in a webhook you created — a fresh install makes no Discord calls at all.
+• System tray UX. A state-coloured tray icon shows the multi-instance state at a glance; double-click launches your main account.
+• Plugin system. Optional plugins run as separate processes and hold no permissions until you grant each one by name.
+• Auto-update via Velopack. Remote config tracks the current known-good Roblox version and mutex name, so a Roblox-side rename doesn't break you for long.
+• Accessible by measurement. Every control announces its name to assistive tech, and contrast is verified against rendered pixels in every theme.
 
 Privacy & security:
-Your Roblox password is never seen by RORORO. Login happens entirely inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame — same HTML, same HTTPS connection your browser would make. RORORO captures only the session cookie that Roblox sets after successful login, and encrypts it before writing it to disk. No telemetry. No analytics. No data leaves your machine except the Roblox-side calls during launch — the same calls Roblox.com makes from your browser.
+Your Roblox password is never seen by RoRoRo. Login happens entirely inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame — same HTML, same HTTPS connection your browser would make. RoRoRo captures only the session cookie that Roblox sets after successful login, and encrypts it before writing it to disk. No telemetry. No analytics. Nothing leaves your machine except the Roblox-side calls during launch — the same calls Roblox.com makes from your browser — and, only if you set one up yourself, alerts to your own Discord webhook.
 
 Important: trademark and affiliation notice.
-"Roblox" and the Roblox logo are trademarks of Roblox Corporation. RORORO is an independent third-party tool, not affiliated with, endorsed by, or sponsored by Roblox Corporation. The trademarked term is used solely to describe compatibility with the Roblox platform. RORORO launches the official Roblox client unmodified — it does not inject into, hook into, or alter the Roblox process in any way; it only holds a Windows named-mutex before launch so that subsequent client instances see the singleton check as already-claimed.
+"Roblox" and the Roblox logo are trademarks of Roblox Corporation. RoRoRo is an independent third-party tool, not affiliated with, endorsed by, or sponsored by Roblox Corporation. The trademarked term is used solely to describe compatibility with the Roblox platform. RoRoRo launches the official Roblox client unmodified — it does not inject into, hook into, or alter the Roblox process in any way; it only holds a Windows named-mutex before launch so that subsequent client instances see the singleton check as already-claimed.
 
 A 626 Labs product.
 ```
 
 ## Product features (paste each as one feature; up to 7)
 
+> Refreshed 2026-08-22 (v1.22.0.0) — and trimmed to the stated cap of 7; the old list had 8.
+
 ```
 One-click multi-instance launcher for Roblox on Windows
-DPAPI-encrypted vault for saved Roblox accounts (per-Windows-user)
-Per-account game launch routing — default URL or custom per account
-System tray with state-coloured icon and double-click main launch
-Squad Launch and Friend Follow into private servers
-Join-by-link from any roblox.com URL
-Plugin system with per-capability consent and out-of-process isolation (v1.4+)
-Auto-update via Velopack with Roblox-compat drift detection
+DPAPI-encrypted account vault with passphrase-protected export
+Squad Launch, Friend Follow, and same-server Recycle rejoin
+Memory watchdog that learns each client's real RAM cost on your PC
+Live presence status — which account is in which game, idle times
+Four built-in themes plus a build-your-own theme editor
+Plugin system with per-capability consent and out-of-process isolation
 ```
 
 ## Copyright (single line)
@@ -103,41 +115,18 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 
 > Avoid "cheat", "exploit", "bypass" — those will trigger reviewer concerns even if irrelevant.
 
-## What's new (release notes for v1.14.0.0)
+## What's new in this version
 
-> Store field only. Do NOT mention the plugin marketplace here. Lead with the same-server
-> rejoin: it's the change users asked for by name. Say "the server you were in," not "the
-> server instance" — nobody outside this repo says instance. Do not describe the queue
-> mechanics here; that belongs in the app and the GitHub notes, and in a Store field it reads
-> as a warning about a defect. This block bundles v1.13's FPS-cap fix, which never shipped
-> on its own.
-
-```
-v1.14.0.0:
-• Recycle now puts an account back in the same server it was in, not just the same game — so closing and reopening a client no longer costs you your spot with everyone else.
-• Squad Launch can send your accounts into one public server together. Paste a game link instead of a private server link; the first account goes in and the rest join it there.
-• RoRoRo checks where each account actually ended up after a launch, and tells you by name if one didn't make it.
-• Recycle can now sit on every running account, not just ones RoRoRo is warning about — turn it on in Settings.
-• Frame-rate caps stick. Setting different caps on different accounts used to be a coin flip when you launched them close together; now each client gets the cap you chose for it.
-```
-
-## What's new — v1.12.0.0 (superseded, kept for reference)
-
-> The memory watchdog led this one: it solved a problem users actually reported, and
-> "we watch for it and give you one click to fix it" is a clean user-benefit framing.
-> Keep it about the user's machine filling up — do not editorialise about the Roblox
-> client, which reads as blame-shifting to a reviewer.
-
-```
-v1.12.0.0:
-• Long sessions used to end with alt windows closing on their own. The cause is memory: each Roblox client slowly uses more the longer it runs, and several at once will fill your machine. RoRoRo now shows what each one is using and warns you before you run out.
-• Recycle: one click closes a heavy account and reopens it right back into the same game or private server. Memory drops to a fresh start, your other accounts keep running.
-• Thresholds set themselves from how much RAM your PC has, so a 16 GB laptop and a 64 GB desktop each get sensible numbers with nothing to configure.
-• Clear strays: Roblox leaves invisible leftover processes behind when a client closes. RoRoRo can now tidy up just those, and never touches a game you have open.
-• Safer cleanup: when RoRoRo can't tell whether a Roblox process is a leftover or a game you're playing, it now assumes you're playing and asks first.
-```
-
-(Historical "What's new" blocks for prior releases live in their respective `docs/store/release-notes-*.md` files.)
+> **This section moved.** Since v1.21 the paste-ready What's-new block lives in a per-version
+> file, `docs/store/whats-new-<version>.md`, written next to that release's reviewer letter so
+> the two are drafted against the same facts. Current:
+> [`whats-new-1.22.0.0.md`](whats-new-1.22.0.0.md). Previous:
+> [`whats-new-1.21.0.0.md`](whats-new-1.21.0.0.md). The v1.14 and v1.12 blocks that used to sit
+> here are preserved in git history and in their `release-notes-*.md` files.
+>
+> House rules that carry across versions: Store field only; do not mention the plugin
+> marketplace or contract versions; write for the customer's vocabulary ("the server you were
+> in," never "instance"); do not describe defect mechanics in a public field.
 
 ## Multi-feature value justification (10.1.4.4.b — DO NOT SKIP)
 
@@ -153,6 +142,10 @@ A reviewer reading our description must see **multiple** features spanning disco
 | Join by link | Engagement | Reduces switch-cost from any Roblox URL to a launch action. |
 | Velopack auto-update + remote config | Retention + reliability | Drift-resistance is a feature; users who installed v1.0 keep working when Roblox renames its mutex. |
 | Diagnostics bundle | Retention | Bug-report ergonomics — users stay through a Roblox-side break. |
+| Memory watchdog + Recycle (v1.12+, learns per-machine v1.22) | Retention | Solves the reported "alts close on their own" failure; keeps long sessions alive. |
+| Presence status + idle times (v1.5+) | Engagement | The main window is a live dashboard, not just a launcher list. |
+| Themes incl. builder (v1.17+) | Engagement | Personalization + a shareable artifact (theme files travel between users). |
+| One tools window + keyboard shortcuts (v1.22) | Engagement | Daily-driver ergonomics; the app stays open beside the game. |
 
 ## Response protocol if rejected (post-rename)
 
