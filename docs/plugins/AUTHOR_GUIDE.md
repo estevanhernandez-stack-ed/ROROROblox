@@ -135,6 +135,7 @@ Gated by the gRPC interceptor. If you call a method whose required capability is
 | `host.commands.launch-target` | `RequestLaunchTarget(accountId, share_url \| follow_user_id)` — launch an account into a *specific* server: a private-server link, a public place, or by following a friend (NuGet 0.2.0+) |
 | `host.queries.current-server` | `GetCurrentServer()` — read the user's most-recently-launched private-server share link (NuGet 0.2.0+) |
 | `host.queries.account-activity` | `GetAccountActivity()` — pull per-account idle time (NuGet 0.3.0+) |
+| `host.queries.accounts` | `GetAccounts()` — all saved accounts: id, Roblox user id, display name, which is main. Never cookies. (NuGet 0.9.0+) |
 | `host.commands.mark-account-active` | `MarkAccountActive(accountId)` — tell RoRoRo an account is still active after you act on its window, so idle warnings don't misfire (NuGet 0.5.0+) |
 | `host.commands.stop-accounts` | `StopAccounts(accountIds)` — close Roblox clients RoRoRo launched. Graceful close, hard kill as fallback. Destructive: unsaved in-game progress is lost (NuGet 0.6.0+) |
 | `host.events.memory-pressure` | `SubscribeMemoryPressure` (server-streaming) — memory-watchdog crossings, per tracked account (NuGet 0.7.0+) |

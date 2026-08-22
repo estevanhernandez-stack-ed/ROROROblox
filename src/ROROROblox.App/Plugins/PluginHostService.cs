@@ -35,12 +35,20 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     /// Null means "this host has no theme feed configured" — GetTheme fails cleanly and the
     /// subscription ends rather than hanging. That is correct for a test that does not care about
     /// theming and <b>wrong everywhere else</b>, so an optional dependency silently unwired in
-    /// production would be a real defect. <c>ThemeFeedIsWiredInProductionTests</c> resolves this
-    /// service from the real DI container and asserts this field is not null; that test is the
-    /// price of the convenience.
+    /// production would be a real defect. <c>ThemeFeedWiringTests</c> reads the app's real
+    /// registration and asserts the source is supplied; that test is the price of the convenience.
     /// </para>
     /// </summary>
     private readonly Adapters.IThemePaletteSource? _themePalettes;
+
+    /// <summary>
+    /// All-saved-accounts source for <c>GetAccounts</c> (contract 0.9.0). Optional for the same
+    /// reason as <see cref="_themePalettes"/> above — 30 construction sites, 29 of which do not
+    /// care — and guarded the same way: <c>SavedAccountsWiringTests</c> asserts the production
+    /// registration supplies it. Null makes GetAccounts fail with FailedPrecondition rather than
+    /// answer "no accounts", because an empty roster and an unwired provider are different claims.
+    /// </summary>
+    private readonly ISavedAccountsProvider? _savedAccounts;
 
     public PluginHostService(
         IInstalledPluginsLookup registry,
@@ -54,7 +62,8 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         IActivitySnapshotProvider activityProvider,
         IAccountActivityMarker activityMarker,
         IPluginAccountStopper accountStopper,
-        Adapters.IThemePaletteSource? themePalettes = null)
+        Adapters.IThemePaletteSource? themePalettes = null,
+        ISavedAccountsProvider? savedAccounts = null)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _hostVersion = hostVersion ?? throw new ArgumentNullException(nameof(hostVersion));
@@ -68,6 +77,7 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         _activityMarker = activityMarker ?? throw new ArgumentNullException(nameof(activityMarker));
         _accountStopper = accountStopper ?? throw new ArgumentNullException(nameof(accountStopper));
         _themePalettes = themePalettes;
+        _savedAccounts = savedAccounts;
     }
 
     public override Task<HandshakeResponse> Handshake(HandshakeRequest request, ServerCallContext context)
@@ -141,6 +151,31 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
                 AccountId = a.AccountId,
                 LastActivityUnixMs = a.LastActivityUnixMs,
                 SecondsSinceActivity = a.SecondsSinceActivity,
+            });
+        }
+        return Task.FromResult(list);
+    }
+
+    public override Task<SavedAccountsList> GetAccounts(Empty request, ServerCallContext context)
+    {
+        if (_savedAccounts is null)
+        {
+            // Unwired provider, not an empty roster — same distinction GetTheme draws for its
+            // optional source. Reachable only from a test host; SavedAccountsWiringTests pins
+            // the production registration.
+            throw new RpcException(new Status(StatusCode.FailedPrecondition,
+                "Saved accounts are not available on this host."));
+        }
+
+        var list = new SavedAccountsList();
+        foreach (var a in _savedAccounts.Snapshot())
+        {
+            list.Accounts.Add(new SavedAccount
+            {
+                AccountId = a.AccountId,
+                RobloxUserId = a.RobloxUserId,
+                DisplayName = a.DisplayName,
+                IsMain = a.IsMain,
             });
         }
         return Task.FromResult(list);

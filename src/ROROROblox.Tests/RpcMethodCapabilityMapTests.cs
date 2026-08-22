@@ -28,6 +28,10 @@ public class RpcMethodCapabilityMapTests
     public void StopAccounts_RequiresStopAccountsCapability()
         => Assert.Equal(PluginCapability.HostCommandsStopAccounts, RpcMethodCapabilityMap.Required("StopAccounts"));
 
+    [Fact]
+    public void GetAccounts_RequiresAccountsCapability()
+        => Assert.Equal(PluginCapability.HostQueriesAccounts, RpcMethodCapabilityMap.Required("GetAccounts"));
+
     // =====================================================================
     // Absence is not permission. Required() returns null for BOTH an ungated
     // method and an unknown one; TryGetRequired is what separates them, and the

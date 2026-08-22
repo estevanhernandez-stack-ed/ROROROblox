@@ -45,6 +45,55 @@ public class PluginHostServiceTests
 
     private static IPluginAccountStopper NoStopper() => new FakeAccountStopper();
 
+    private sealed class FakeSavedAccountsProvider : ISavedAccountsProvider
+    {
+        private readonly List<SavedAccountSnapshot> _snapshots;
+        public FakeSavedAccountsProvider(IEnumerable<SavedAccountSnapshot> snapshots) => _snapshots = snapshots.ToList();
+        public IReadOnlyList<SavedAccountSnapshot> Snapshot() => _snapshots;
+    }
+
+    [Fact]
+    public async Task GetAccounts_ReturnsSavedListFromProvider()
+    {
+        var registry = new InMemoryRegistry(Array.Empty<InstalledPlugin>());
+        var saved = new FakeSavedAccountsProvider(new[]
+        {
+            new SavedAccountSnapshot("00000000-0000-0000-0000-000000000001", 12345, "Pokey", IsMain: true),
+            new SavedAccountSnapshot("00000000-0000-0000-0000-000000000002", 0, "Spud", IsMain: false),
+        });
+        var service = new PluginHostService(
+            registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(),
+            NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper(),
+            savedAccounts: saved);
+
+        var list = await service.GetAccounts(new Empty(), FakeServerCallContext.Create());
+
+        Assert.Equal(2, list.Accounts.Count);
+        var main = Assert.Single(list.Accounts, a => a.IsMain);
+        Assert.Equal("Pokey", main.DisplayName);
+        Assert.Equal(12345L, main.RobloxUserId);
+        Assert.Equal("00000000-0000-0000-0000-000000000001", main.AccountId);
+        var spud = Assert.Single(list.Accounts, a => a.DisplayName == "Spud");
+        Assert.Equal(0L, spud.RobloxUserId);
+        Assert.False(spud.IsMain);
+    }
+
+    [Fact]
+    public async Task GetAccounts_WithoutAProvider_FailsPreconditionRatherThanAnsweringEmpty()
+    {
+        // An unwired provider and an empty roster are different claims — same distinction
+        // GetTheme draws for its optional source. SavedAccountsWiringTests pins production.
+        var registry = new InMemoryRegistry(Array.Empty<InstalledPlugin>());
+        var service = new PluginHostService(
+            registry, "1.4.0", "1.0", HostStateOff(), NoAccounts(), new InProcessPluginEventBus(),
+            NoOpLauncher(), NoUITranslator(), NoActivity(), NoActivityMarker(), NoStopper());
+
+        var ex = await Assert.ThrowsAsync<RpcException>(
+            () => service.GetAccounts(new Empty(), FakeServerCallContext.Create()));
+
+        Assert.Equal(StatusCode.FailedPrecondition, ex.StatusCode);
+    }
+
     [Fact]
     public async Task Handshake_AcceptsMatchingContractVersion()
     {

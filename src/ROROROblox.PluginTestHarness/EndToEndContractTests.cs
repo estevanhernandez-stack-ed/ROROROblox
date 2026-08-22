@@ -226,6 +226,147 @@ public class EndToEndContractTests
     }
 
     [Fact]
+    public async Task GetAccounts_ConsentedPlugin_ReturnsSnapshot()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+        var mainId = Guid.NewGuid().ToString();
+
+        var registry = new SingleInstalledPluginLookup(new InstalledPlugin
+        {
+            Manifest = new PluginManifest
+            {
+                SchemaVersion = 1,
+                Id = "626labs.test",
+                Name = "Test",
+                Version = "1.0",
+                ContractVersion = "1.0",
+                Publisher = "626",
+                Description = "x",
+                Capabilities = new[] { "host.queries.accounts" },
+            },
+            InstallDir = Path.GetTempPath(),
+            Consent = new ConsentRecord
+            {
+                PluginId = "626labs.test",
+                GrantedCapabilities = new[] { "host.queries.accounts" },
+                AutostartEnabled = false,
+            },
+        });
+
+        var hostService = new PluginHostService(
+            registry, "1.4.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            new InProcessPluginEventBus(),
+            new NoOpLauncher(),
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider(),
+            new StubActivityMarker(),
+            new StubAccountStopper(),
+            savedAccounts: new StubSavedAccountsProvider(
+                new SavedAccountSnapshot(mainId, 12345, "Pokey", IsMain: true),
+                new SavedAccountSnapshot(Guid.NewGuid().ToString(), 0, "Spud", IsMain: false)));
+
+        var interceptor = new CapabilityInterceptor(
+            currentPluginAccessor: () => "626labs.test",
+            consentLookup: id => new[] { "host.queries.accounts" });
+
+        var startup = new PluginHostStartupService(
+            hostService, interceptor,
+            NullLogger<PluginHostStartupService>.Instance,
+            pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+
+            var resp = await client.GetAccountsAsync(new Empty());
+
+            Assert.Equal(2, resp.Accounts.Count);
+            var main = Assert.Single(resp.Accounts, a => a.IsMain);
+            Assert.Equal(mainId, main.AccountId);
+            Assert.Equal("Pokey", main.DisplayName);
+            Assert.Equal(12345L, main.RobloxUserId);
+            var spud = Assert.Single(resp.Accounts, a => !a.IsMain);
+            Assert.Equal(0L, spud.RobloxUserId);
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task GetAccounts_DeniedWhenCapabilityNotGranted()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+
+        var registry = new SingleInstalledPluginLookup(new InstalledPlugin
+        {
+            Manifest = new PluginManifest
+            {
+                SchemaVersion = 1,
+                Id = "626labs.test",
+                Name = "Test",
+                Version = "1.0",
+                ContractVersion = "1.0",
+                Publisher = "626",
+                Description = "x",
+                // host.queries.accounts is required by GetAccounts and is NOT granted.
+                Capabilities = new[] { "host.events.account-launched" },
+            },
+            InstallDir = Path.GetTempPath(),
+            Consent = new ConsentRecord
+            {
+                PluginId = "626labs.test",
+                GrantedCapabilities = new[] { "host.events.account-launched" },
+                AutostartEnabled = false,
+            },
+        });
+
+        var hostService = new PluginHostService(
+            registry, "1.4.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            new InProcessPluginEventBus(),
+            new NoOpLauncher(),
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider(),
+            new StubActivityMarker(),
+            new StubAccountStopper(),
+            savedAccounts: new StubSavedAccountsProvider(
+                new SavedAccountSnapshot(Guid.NewGuid().ToString(), 1, "X", IsMain: true)));
+
+        var interceptor = new CapabilityInterceptor(
+            currentPluginAccessor: () => "626labs.test",
+            consentLookup: id => new[] { "host.events.account-launched" });
+
+        var startup = new PluginHostStartupService(
+            hostService, interceptor,
+            NullLogger<PluginHostStartupService>.Instance,
+            pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+
+            var ex = await Assert.ThrowsAsync<RpcException>(async () =>
+                await client.GetAccountsAsync(new Empty()));
+            Assert.Equal(StatusCode.PermissionDenied, ex.StatusCode);
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    [Fact]
     public async Task GetAccountActivity_DeniedWhenCapabilityNotGranted()
     {
         var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";

@@ -20,6 +20,7 @@ public static class PluginCapability
     public const string HostCommandsStopAccounts = "host.commands.stop-accounts";
     public const string HostQueriesCurrentServer = "host.queries.current-server";
     public const string HostQueriesAccountActivity = "host.queries.account-activity";
+    public const string HostQueriesAccounts = "host.queries.accounts";
     public const string HostUITrayMenu = "host.ui.tray-menu";
     public const string HostUIRowBadge = "host.ui.row-badge";
     public const string HostUIStatusPanel = "host.ui.status-panel";
@@ -43,6 +44,7 @@ public static class PluginCapability
         [HostCommandsStopAccounts] = "Allow the plugin to close Roblox clients that RoRoRo launched. Any unsaved in-game progress in those clients is lost.",
         [HostQueriesCurrentServer] = "Allow the plugin to read the private-server link you most recently launched, so it can share it.",
         [HostQueriesAccountActivity] = "See how long each account has been idle — timestamps only, never what you type or do.",
+        [HostQueriesAccounts] = "See your saved accounts — names and which one is your main. Never reads cookies or passwords.",
         [HostUITrayMenu] = "Allow the plugin to add tray menu items.",
         [HostUIRowBadge] = "Allow the plugin to add a badge on each saved-account row.",
         [HostUIStatusPanel] = "Allow the plugin to add a status panel to the main window.",

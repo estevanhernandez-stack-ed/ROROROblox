@@ -73,4 +73,17 @@ public class PluginCapabilityTests
         Assert.Contains("idle", desc, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Unknown capability", desc, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void Accounts_HasCapabilityConstAndDescription()
+    {
+        Assert.Equal("host.queries.accounts", PluginCapability.HostQueriesAccounts);
+        Assert.True(PluginCapability.IsKnown(PluginCapability.HostQueriesAccounts));
+        Assert.True(PluginCapability.IsHostEnforced(PluginCapability.HostQueriesAccounts));
+        var desc = PluginCapability.Display(PluginCapability.HostQueriesAccounts);
+        Assert.False(string.IsNullOrWhiteSpace(desc));
+        // The consent-sheet sentence has to carry the boundary a user cares about.
+        Assert.Contains("cookies", desc, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Unknown capability", desc, StringComparison.OrdinalIgnoreCase);
+    }
 }
