@@ -88,38 +88,37 @@ The manifest stays in this state for Phase 5's commit. Sideload build next, then
 
 ## Phase 4 — Build the Sideload MSIX
 
-Sideload requires the manifest's Publisher to match `dev-cert.pfx`'s subject (`CN=Estevan Hernandez`). Partner Center's Publisher CN won't sign with the dev cert — `signtool` errors out with `0x8007000b` (publisher mismatch).
+> **Corrected 2026-08-22 (v1.22.0.0 cut).** This phase used to prescribe a manifest "dance" —
+> temp-patch Publisher to `CN=Estevan Hernandez`, build, restore — because the original dev cert
+> carried that subject. The current `dev-cert.pfx` (generated ~2026-05-14, expires 2029) carries
+> the **Partner Center CN as its subject** — that's `generate-dev-cert.ps1`'s default (line 19),
+> so sideload and Store installs share a package identity. Same subject string, still a different
+> key from the Store cert; the never-the-same-key rule is intact. Running the old dance against
+> this cert produces exactly the `0x8007000b` it claimed to prevent — that's what it did on the
+> v1.22.0.0 cut. No dance: build straight from the finalize-patched manifest.
 
-**The dance** — temp-edit the manifest, build, restore.
+One command, straight after Phase 3 (the manifest is already in Partner Center identity state,
+which now matches the dev cert's subject):
 
 ```powershell
-# 1. Snapshot the Partner Center manifest state (you'll restore after the sideload build).
-$manifestPath = 'src\ROROROblox.App\Package.appxmanifest'
-Copy-Item $manifestPath "$env:TEMP\manifest-store.bak"
-
-# 2. Patch Publisher to dev-cert CN.
-[xml]$m = Get-Content $manifestPath
-$m.Package.Identity.Publisher = 'CN=Estevan Hernandez'
-$utf8NoBom = New-Object System.Text.UTF8Encoding $false
-$writerSettings = New-Object System.Xml.XmlWriterSettings
-$writerSettings.Indent = $true
-$writerSettings.IndentChars = '    '
-$writerSettings.Encoding = $utf8NoBom
-$w = [System.Xml.XmlWriter]::Create($manifestPath, $writerSettings)
-try { $m.Save($w) } finally { $w.Close() }
-
-# 3. Build + sign sideload MSIX.
-$pwd = [Environment]::GetEnvironmentVariable('ROROROBLOX_DEV_CERT_PASSWORD','User')
+$certPwd = [Environment]::GetEnvironmentVariable('ROROROBLOX_DEV_CERT_PASSWORD','User')
 powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 `
-    -Sideload -CertPath dev-cert.pfx -CertPassword $pwd
-
-# 4. Restore Partner Center manifest state.
-Copy-Item "$env:TEMP\manifest-store.bak" $manifestPath -Force
+    -Sideload -CertPath dev-cert.pfx -CertPassword $certPwd
 ```
 
-**Output:** `dist/RORORO-Sideload-<arch>-<version>.msix` (~91 MB at v1.21, signed). The `dev-cert.cer` at repo root is the public half — distributed to clan testers so they can trust the sig.
+(Don't name the password variable `$pwd` — it shadows PowerShell's automatic current-path
+variable.)
 
-**Future improvement** — wrap steps 1-4 in a `scripts/build-sideload-msix.ps1`. We've done it manually 4 times; that's enough repetition to extract.
+**Verify before shipping:** `Get-AuthenticodeSignature dist/RORORO-Sideload-<arch>-<version>.msix`
+— expect the signer subject to equal the packed manifest's Publisher. `Status: UnknownError` is
+normal on a box that hasn't imported the cert; a missing signature is not.
+
+**Output:** `dist/RORORO-Sideload-<arch>-<version>.msix` (~91 MB, signed). The `dev-cert.cer` at
+repo root is the public half — distributed to clan testers so they can trust the sig.
+
+**If the dev cert is ever regenerated with a different subject**, the manifest Publisher and cert
+subject must agree at signing time — that's what `0x8007000b` means. With the current generator
+default they agree by construction.
 
 ---
 
@@ -210,7 +209,7 @@ These are the failure modes we hit. Hit one of these again, recognize it, and mo
 |---|---|---|
 | `dotnet publish` errors on `Core.dll` locked file | Dev RoRoRo is running and holding the DLL | Quit RoRoRo from the tray, re-run |
 | Store validation rejects: "revision number other than zero" | 4th version component is non-zero (e.g., `1.3.2.1`) | Bump 3rd component instead (`1.3.3.0`); `finalize-store-build.ps1` now hard-fails on this |
-| `signtool` errors with `0x8007000b` on sideload | Manifest's Publisher CN is Partner Center's, not dev-cert's | Phase 4 dance — temp-patch Publisher to `CN=Estevan Hernandez`, build, restore |
+| `signtool` errors with `0x8007000b` on sideload | Manifest Publisher CN ≠ dev-cert subject. Since ~2026-05 the dev cert's subject IS the Partner Center CN, so the old "patch to `CN=Estevan Hernandez`" dance now CAUSES this error instead of fixing it (v1.22.0.0 hit this) | No manifest patch — build sideload straight from the finalize-patched manifest (Phase 4, corrected 2026-08-22) |
 | Setup.exe install on fresh Win11 fails with .NET-missing error | MSIX was framework-dependent, not self-contained | Already fixed — `build-msix.ps1` line 157 has `--self-contained true`. Don't flip it off |
 | `gh` command "not recognized" inside Claude Code | `gh` binary isn't on the harness PATH | Invoke via full path: `& "C:\Program Files\GitHub CLI\gh.exe"` |
 | GitHub plugin MCP tools don't surface | Plugin manifest loads, transport doesn't until full Claude Code restart | Use `gh` CLI binary via full path; same auth, same scopes |
