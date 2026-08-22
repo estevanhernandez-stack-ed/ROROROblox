@@ -40,6 +40,33 @@ internal partial class MainWindow : FluentWindow
         }
         Loaded += OnLoaded;
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
+
+        // The keyboard vocabulary (F-112), built from the one shared table so the bindings here,
+        // the menu hints, and the About page's list cannot drift apart. Editing controls keep
+        // their own keys: a window-level KeyBinding is only consulted after the focused control
+        // declines the keystroke, so Ctrl+F while typing in a TextBox stays the TextBox's.
+        foreach (var binding in Input.KeyboardVocabulary.BuildBindings(action => action switch
+        {
+            Input.ShortcutAction.AddAccount => viewModel.AddAccountCommand,
+            Input.ShortcutAction.LaunchAll => viewModel.LaunchAllCommand,
+            Input.ShortcutAction.SquadLaunch => viewModel.OpenSquadLaunchCommand,
+            Input.ShortcutAction.FocusFilter => new ViewModels.RelayCommand(() =>
+            {
+                FilterBox.Focus();
+                FilterBox.SelectAll();
+            }),
+            Input.ShortcutAction.OpenGames => viewModel.OpenGamesCommand,
+            Input.ShortcutAction.OpenSettings => viewModel.OpenPreferencesCommand,
+            Input.ShortcutAction.OpenHistory => viewModel.OpenHistoryCommand,
+            Input.ShortcutAction.OpenDiagnostics => viewModel.OpenDiagnosticsCommand,
+            Input.ShortcutAction.OpenPlugins => viewModel.OpenPluginsCommand,
+            // The discoverable list lives on the About page (F-112's second half).
+            Input.ShortcutAction.OpenShortcutsList => viewModel.OpenAboutCommand,
+            _ => null,
+        }))
+        {
+            InputBindings.Add(binding);
+        }
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

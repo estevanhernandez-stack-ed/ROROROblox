@@ -39,7 +39,36 @@ internal sealed partial class ShellWindow : Window
         _createPage = createPage ?? throw new ArgumentNullException(nameof(createPage));
         InitializeComponent();
         Closed += OnShellClosed;
+
+        // The same vocabulary the main window binds (F-112), scoped to what makes sense here:
+        // destination shortcuts navigate this window's pages, and Ctrl+1..6 walk the rail in
+        // order. Actions that need the main window (add account, launches, the filter) are not
+        // mapped — BuildBindings skips what a window does not answer for.
+        foreach (var binding in Input.KeyboardVocabulary.BuildBindings(action => action switch
+        {
+            Input.ShortcutAction.OpenGames => NavigateCommand(ShellPage.Games),
+            Input.ShortcutAction.OpenSettings => NavigateCommand(ShellPage.Settings),
+            Input.ShortcutAction.OpenHistory => NavigateCommand(ShellPage.History),
+            Input.ShortcutAction.OpenDiagnostics => NavigateCommand(ShellPage.Diagnostics),
+            Input.ShortcutAction.OpenPlugins => NavigateCommand(ShellPage.Plugins),
+            Input.ShortcutAction.OpenShortcutsList => NavigateCommand(ShellPage.About),
+            _ => null,
+        }))
+        {
+            InputBindings.Add(binding);
+        }
+
+        for (var i = 0; i < RailOrder.Length; i++)
+        {
+            InputBindings.Add(new System.Windows.Input.KeyBinding(
+                NavigateCommand(RailOrder[i]),
+                System.Windows.Input.Key.D1 + i,
+                System.Windows.Input.ModifierKeys.Control));
+        }
     }
+
+    private ViewModels.RelayCommand NavigateCommand(ShellPage page)
+        => new(() => NavigateTo(page));
 
     /// <summary>Select a page, creating it on first visit. Also the initial-navigation entry.</summary>
     public void NavigateTo(ShellPage page)

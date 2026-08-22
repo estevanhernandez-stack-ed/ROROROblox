@@ -146,6 +146,38 @@
                                Click="OnWelcomeTourClick">Show the welcome tour</Hyperlink>
                 </TextBlock>
 
+                <!-- F-112's discoverable half. Rendered FROM KeyboardVocabulary.Shortcuts (set in
+                     code-behind), the same table both windows build their KeyBindings from — the
+                     list a user reads and the binding that fires cannot drift apart. F1 lands
+                     here from either window. -->
+                <TextBlock Text="Keyboard shortcuts" FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
+                           Foreground="{DynamicResource CyanBrush}" Margin="0,20,0,6" />
+                <ItemsControl x:Name="ShortcutsList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,0,0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="72" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding GestureText}"
+                                           FontFamily="{DynamicResource MonoFontFamily}"
+                                           FontSize="{DynamicResource MetaFontSize}"
+                                           Foreground="{DynamicResource WhiteBrush}"
+                                           VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding Label}"
+                                           FontSize="{DynamicResource BodyFontSize}"
+                                           Foreground="{DynamicResource WhiteBrush}"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource MetaFontSize}" Foreground="{DynamicResource MutedTextBrush}"
+                           TextWrapping="Wrap">
+                    Inside the tools window, Ctrl+1 through Ctrl+6 also jump straight to a page.
+                </TextBlock>
+
                 <TextBlock Margin="0,16,0,0" FontSize="{DynamicResource MetaFontSize}" Foreground="{DynamicResource MutedTextBrush}"
                            TextWrapping="Wrap">
                     Cookies are encrypted with Windows DPAPI per user. They never leave this machine.

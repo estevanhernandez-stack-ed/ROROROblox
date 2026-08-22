@@ -306,6 +306,15 @@
         "F-116"
       ],
       "notes": "The last flake family closed by removing its condition: FpsCapSettlerTests now runs in the suite first parallel-disabled xUnit collection, so the pump continuations no longer share a contended pool with the parallel suite - the scheduler-of-their-own hypothesis the row left untested, shipped without touching production code. Evidence: the row own recorded isolation delta (isolated 25/25 clean vs in-suite intermittent locally and on CI x64) plus the refuted SetMinThreads mitigation; a fresh local reproduction attempt (six full-suite runs under twelve CPU burners) was clean BEFORE the fix too, so no local delta exists - consistent with in-process contention as the mechanism. Fence ThePumpKeepsItsQuietPool proven failable by mutation. Twelve loaded runs green. Suite 1799 unit after (one new fence test). Same commit annotates F-096: guard authored in rororo-ur-task PR, row flips on its merge."
+    },
+    {
+      "id": "f112-keyboard-vocabulary",
+      "name": "F-112 closed: the keyboard vocabulary",
+      "status": "open",
+      "findings": [
+        "F-112"
+      ],
+      "notes": "One table (Input/KeyboardVocabulary.cs) consumed by three surfaces: MainWindow KeyBindings (Ctrl+N/L/J/F + six destinations: Ctrl+G, Ctrl+Comma, Ctrl+H, Ctrl+D, Ctrl+P, F1), ShellWindow page navigation + Ctrl+1-6 along the rail, and the About page discoverable list (where F1 lands from either window). Hints layered per Windows convention: InputGestureText in Tools, tooltip suffixes + AcceleratorKey on toolbar/CTAs. Fences: gesture uniqueness, Ur Task global-hotkey denylist (Ctrl+Shift+R/P/A/L - RegisterHotKey wins system-wide), markup-hint drift fence with vacuity floor - drift fence proven failable by mutation. Deliberate absences documented in the table: Stop all (destructive), per-row actions, smallness itself. Fits-matrix enrollment for the shell reframed to chrome-only: pages scroll by design (F-113 carried into the fold), so a page taller than the frame is reachable, not clipped. Suite 1805 unit green."
     }
   ],
   "scope": {

@@ -43,13 +43,20 @@ public class WindowContentFitsTests
         { "WebView2NotInstalledWindow", () => new App.Modals.WebView2NotInstalledWindow() },
         { "StopAllConfirmWindow", () => new App.Modals.StopAllConfirmWindow(3) },
         { "LeftoverProcessesWindow", () => new App.Modals.LeftoverProcessesWindow(2, 1) },
-        // The shell measured with its cheapest real page (About needs no services). The other
-        // five pages need stores/VMs the fits doctrine forbids faking here; they are covered by
-        // their own render gates.
+        // The shell measured with a minimal page, and that is a statement about scope, not a
+        // dodge: the shell's PAGES scroll by design (F-113's lesson carried into the F-013 fold —
+        // a page cannot grow its host, so it scrolls instead of clipping), which means a real
+        // page's desired height legitimately exceeds the frame whenever its content does, and a
+        // ScrollViewer measured at infinity reports all of it. What this row can honestly assert
+        // is the shell's OWN chrome — rail, margins, host — fitting its frame. Page content past
+        // the fold is reachable, not clipped, and each destination has its own render coverage.
         {
             "ShellWindow", () =>
             {
-                var shell = new App.Shell.ShellWindow(_ => new App.About.AboutPage());
+                var shell = new App.Shell.ShellWindow(_ => new System.Windows.Controls.UserControl
+                {
+                    Content = new System.Windows.Controls.TextBlock { Text = "chrome-measure page" },
+                });
                 shell.NavigateTo(App.Shell.ShellPage.About);
                 return shell;
             }

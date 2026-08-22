@@ -31,6 +31,9 @@ internal partial class AboutPage : UserControl
         InitializeComponent();
         var version = typeof(AboutPage).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
         VersionText.Text = $"v{version}";
+
+        // One source of truth (F-112): the same table the windows build their bindings from.
+        ShortcutsList.ItemsSource = Input.KeyboardVocabulary.Shortcuts;
     }
 
     private void OnRepoClick(object sender, RoutedEventArgs e) => OpenUrl(RepoUrl);
