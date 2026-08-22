@@ -41,6 +41,7 @@ public static class RpcMethodCapabilityMap
         ["RequestLaunchTarget"] = PluginCapability.HostCommandsLaunchTarget,
         ["GetCurrentServer"] = PluginCapability.HostQueriesCurrentServer,
         ["GetAccountActivity"] = PluginCapability.HostQueriesAccountActivity,
+        ["GetAccounts"] = PluginCapability.HostQueriesAccounts,
         ["MarkAccountActive"] = PluginCapability.HostCommandsMarkAccountActive,
         ["StopAccounts"] = PluginCapability.HostCommandsStopAccounts,
         ["AddTrayMenuItem"] = PluginCapability.HostUITrayMenu,

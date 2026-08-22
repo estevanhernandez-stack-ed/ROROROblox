@@ -57,6 +57,9 @@ service RoRoRoHost {
   rpc GetCurrentServer(Empty) returns (CurrentServer);
   // Query surface (additive, NuGet 0.3.0): per-account idle awareness.
   rpc GetAccountActivity(Empty) returns (AccountActivityList);
+  // Query surface (additive, NuGet 0.9.0): ALL saved accounts + is_main, so a connector can
+  // resolve human names and "the main" before launching. GetRunningAccounts lists running only.
+  rpc GetAccounts(Empty) returns (SavedAccountsList);
 
   // Command surface (additive, NuGet 0.5.0): a keep-alive plugin credits an account as
   // active after it acts on that account's window (idle heuristic can't see plugin input).
@@ -275,6 +278,19 @@ message StopAccountsResult {
   int32 stopped_count = 1;
   // Unknown id, no tracked client, or the close+kill sequence failed.
   repeated string failed_account_ids = 2;
+}
+
+message SavedAccountsList {
+  repeated SavedAccount accounts = 1;
+}
+
+// Place-free on purpose: a saved-but-not-running account is not in a game. Live game
+// identity comes from the enriched GetRunningAccounts (0.4.0).
+message SavedAccount {
+  string account_id = 1;       // RoRoRo internal Guid as string
+  int64  roblox_user_id = 2;   // 0 when not yet resolved
+  string display_name = 3;     // what the app shows; streamer mode masks here too
+  bool   is_main = 4;
 }
 
 message UIHandle {

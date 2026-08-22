@@ -965,6 +965,8 @@ public partial class App : Application
             ROROROblox.App.Plugins.Adapters.MutexHostStateAdapter>();
         services.AddSingleton<ROROROblox.App.Plugins.IRunningAccountsProvider,
             ROROROblox.App.Plugins.Adapters.MainViewModelRunningAccountsAdapter>();
+        services.AddSingleton<ROROROblox.App.Plugins.ISavedAccountsProvider,
+            ROROROblox.App.Plugins.Adapters.MainViewModelSavedAccountsAdapter>();
         services.AddSingleton<ROROROblox.App.Plugins.IActivitySnapshotProvider,
             ROROROblox.App.Plugins.ActivitySnapshotProvider>();
         services.AddSingleton<ROROROblox.App.Plugins.IAccountActivityMarker>(sp =>
@@ -991,7 +993,8 @@ public partial class App : Application
             sp.GetRequiredService<ROROROblox.App.Plugins.IActivitySnapshotProvider>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.IAccountActivityMarker>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.IPluginAccountStopper>(),
-            sp.GetRequiredService<ROROROblox.App.Plugins.Adapters.IThemePaletteSource>()));
+            sp.GetRequiredService<ROROROblox.App.Plugins.Adapters.IThemePaletteSource>(),
+            sp.GetRequiredService<ROROROblox.App.Plugins.ISavedAccountsProvider>()));
 
         // CapabilityInterceptor: per-connection plugin id binding is deferred to v1.5+
         // (the gRPC interceptor sees the call before any plugin-id metadata is bound).
