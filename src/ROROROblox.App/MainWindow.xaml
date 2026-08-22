@@ -1090,6 +1090,8 @@
                         <Button Style="{StaticResource CtaButtonStyle}" Content="+ Add account"
                                 Command="{Binding AddAccountCommand}"
                                 Padding="16,8"
+                                AutomationProperties.AcceleratorKey="Ctrl+N"
+                                ToolTip="Log in to a Roblox account and save it here. (Ctrl+N)"
                                 FontSize="{DynamicResource HeadingFontSize}" />
                     </StackPanel>
                 </Grid>
@@ -1142,13 +1144,15 @@
                                 Padding="10,6" Margin="0,0,6,0"
                                 Style="{StaticResource SecondaryButtonStyle}"
                                 FontSize="{DynamicResource BodyFontSize}"
-                                ToolTip="Saved games and private servers for the launch picker." />
+                                AutomationProperties.AcceleratorKey="Ctrl+G"
+                                ToolTip="Saved games and private servers for the launch picker. (Ctrl+G)" />
                         <Button Content="Settings"
                                 Command="{Binding OpenPreferencesCommand}"
                                 Padding="10,6" Margin="0,0,6,0"
                                 Style="{StaticResource SecondaryButtonStyle}"
                                 FontSize="{DynamicResource BodyFontSize}"
-                                ToolTip="Startup, accounts, alerts, Discord, and theme." />
+                                AutomationProperties.AcceleratorKey="Ctrl+,"
+                                ToolTip="Startup, accounts, alerts, Discord, and theme. (Ctrl+,)" />
                         <!-- A real Menu, not a Button that opens a ContextMenu. The first version was
                              the latter, and a screen reader announced it as a plain button: no
                              ExpandCollapse pattern, no expanded/collapsed state, no indication that
@@ -1173,12 +1177,15 @@
                                              Foreground="{DynamicResource WhiteBrush}">
                                 <MenuItem Header="History"
                                           Command="{Binding OpenHistoryCommand}"
+                                          InputGestureText="Ctrl+H"
                                           ToolTip="Recent sessions per account: what game/server, when, how long." />
                                 <MenuItem Header="Diagnostics"
                                           Command="{Binding OpenDiagnosticsCommand}"
+                                          InputGestureText="Ctrl+D"
                                           ToolTip="System health, Roblox + WebView2 versions, log location." />
                                 <MenuItem Header="Plugins"
                                           Command="{Binding OpenPluginsCommand}"
+                                          InputGestureText="Ctrl+P"
                                           ToolTip="Install and manage RoRoRo plugins." />
                                 <!-- F-001 group 2 — verbs that reach outside the app. Kept apart
                                      from the destinations above so the one destructive item is not
@@ -1203,6 +1210,7 @@
                                               ToolTip="Replay the first-run tour of the account row." />
                                     <MenuItem Header="About"
                                               Command="{Binding OpenAboutCommand}"
+                                              InputGestureText="F1"
                                               ToolTip="Version, links, license." />
                                 </ContextMenu>
                             </controls:ToolsDropDownButton.ContextMenu>
@@ -1461,7 +1469,8 @@
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 FontSize="{DynamicResource BodyFontSize}"
                                 FontWeight="SemiBold"
-                                ToolTip="Launch every selected account into its own per-row game, one at a time about 5 seconds apart — the gap makes sure each window lands on the right account. Use the dot next to each account's status to deselect." />
+                                ToolTip="Launch every selected account into its own per-row game, one at a time about 5 seconds apart — the gap makes sure each window lands on the right account. Use the dot next to each account's status to deselect. (Ctrl+L)"
+                                AutomationProperties.AcceleratorKey="Ctrl+L" />
                         <!-- Labelled "Private server" until v1.14, when the modal stopped being
                              private-server-only: a plain game link now puts the squad in one public
                              server. The old label described the input, not what the button does. -->
@@ -1469,7 +1478,8 @@
                                 Command="{Binding OpenSquadLaunchCommand}"
                                 Padding="14,6"
                                 FontSize="{DynamicResource BodyFontSize}"
-                                ToolTip="Send every selected account into the SAME server — a private server link, or a plain game link to share one public server. Launch multiple, next to this, sends each account into its own game instead. Use the dot next to each account's status to deselect." />
+                                ToolTip="Send every selected account into the SAME server — a private server link, or a plain game link to share one public server. Launch multiple, next to this, sends each account into its own game instead. Use the dot next to each account's status to deselect. (Ctrl+J)"
+                                AutomationProperties.AcceleratorKey="Ctrl+J" />
                     </StackPanel>
                 </Grid>
 
@@ -1716,7 +1726,8 @@
                             </Style.Triggers>
                         </Style>
                     </Grid.Style>
-                    <ui:TextBox PlaceholderText="Filter accounts by tag or name…" AutomationProperties.Name="Filter accounts"
+                    <ui:TextBox x:Name="FilterBox" PlaceholderText="Filter accounts by tag or name…" AutomationProperties.Name="Filter accounts"
+                                AutomationProperties.AcceleratorKey="Ctrl+F"
                                 Text="{Binding AccountFilter, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                                 Icon="{ui:SymbolIcon Filter24}"
                                 ClearButtonEnabled="True"
