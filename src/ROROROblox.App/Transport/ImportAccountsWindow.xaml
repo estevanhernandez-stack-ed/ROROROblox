@@ -43,7 +43,7 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBox Grid.Column="0" x:Name="FilePathBox"
+            <TextBox Grid.Column="0" x:Name="FilePathBox" AutomationProperties.Name="Backup file path"
                      FontSize="{DynamicResource BodyFontSize}"
                      FontFamily="{DynamicResource MonoFontFamily}"
                      Padding="10,8"
@@ -61,7 +61,7 @@
                    Foreground="{DynamicResource MutedTextBrush}"
                    Margin="0,16,0,6" />
 
-        <PasswordBox Grid.Row="5" x:Name="PassphraseBox"
+        <PasswordBox Grid.Row="5" x:Name="PassphraseBox" AutomationProperties.Name="Passphrase"
                      FontSize="{DynamicResource HeadingFontSize}"
                      Padding="10,8"
                      Background="{DynamicResource RowBgBrush}"

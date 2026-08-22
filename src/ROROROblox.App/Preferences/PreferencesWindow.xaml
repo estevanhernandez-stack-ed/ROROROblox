@@ -323,7 +323,7 @@
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource WhiteBrush}"
                                        Margin="22,0,0,4" />
-                            <ComboBox x:Name="IdleWarnThresholdPicker"
+                            <ComboBox x:Name="IdleWarnThresholdPicker" AutomationProperties.Name="Idle warn threshold"
                                       Margin="22,0,0,0"
                                       Width="160"
                                       HorizontalAlignment="Left"
@@ -361,7 +361,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="An account drops out" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center"
                                            Foreground="{DynamicResource WhiteBrush}" Width="180" />
-                                <ComboBox Grid.Column="1" x:Name="DroppedOutDestination" Width="170" HorizontalAlignment="Left"
+                                <ComboBox Grid.Column="1" x:Name="DroppedOutDestination" AutomationProperties.Name="Where to send the alert when an account drops out" Width="170" HorizontalAlignment="Left"
                                           SelectionChanged="OnAlertRoutingChanged">
                                     <ComboBoxItem Content="Off" Tag="None" />
                                     <ComboBoxItem Content="Desktop only" Tag="Local" />
@@ -377,7 +377,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="An account eats memory" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center"
                                            Foreground="{DynamicResource WhiteBrush}" Width="180" />
-                                <ComboBox Grid.Column="1" x:Name="MemoryWarningDestination" Width="170" HorizontalAlignment="Left"
+                                <ComboBox Grid.Column="1" x:Name="MemoryWarningDestination" AutomationProperties.Name="Where to send the alert when an account eats memory" Width="170" HorizontalAlignment="Left"
                                           SelectionChanged="OnAlertRoutingChanged">
                                     <ComboBoxItem Content="Off" Tag="None" />
                                     <ComboBoxItem Content="Desktop only" Tag="Local" />
@@ -445,7 +445,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBox x:Name="MineWebhookInput" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
+                                <TextBox x:Name="MineWebhookInput" AutomationProperties.Name="My channel webhook URL" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
                                          LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
                                 <!-- Takes the rank rather than repeating it. The four attributes
@@ -476,7 +476,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBox x:Name="ClanWebhookInput" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
+                                <TextBox x:Name="ClanWebhookInput" AutomationProperties.Name="Clan channel webhook URL" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
                                          LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
                                 <ToggleButton x:Name="ClanWebhookReveal" Grid.Column="1" Content="Show"
@@ -743,7 +743,7 @@
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,8"
                                        Text="Pick a built-in or drop your own JSON in the themes folder. The main window updates immediately; secondary dialogs (this one, Diagnostics, About) adopt the theme on next open." />
-                            <ComboBox x:Name="ThemePicker"
+                            <ComboBox x:Name="ThemePicker" AutomationProperties.Name="Theme"
                                       DisplayMemberPath="Name"
                                       SelectionChanged="OnThemeChanged"
                                       Padding="8,6"

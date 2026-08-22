@@ -313,7 +313,7 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBox Grid.Column="0" x:Name="SearchInput"
+            <TextBox Grid.Column="0" x:Name="SearchInput" AutomationProperties.Name="Search Roblox games by name"
                      FontSize="{DynamicResource HeadingFontSize}"
                      Padding="10,8"
                      Background="{DynamicResource RowBgBrush}"
@@ -343,7 +343,7 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBox Grid.Column="0" x:Name="UrlInput"
+            <TextBox Grid.Column="0" x:Name="UrlInput" AutomationProperties.Name="Roblox game URL or place id"
                      FontSize="{DynamicResource BodyFontSize}"
                      FontFamily="{DynamicResource MonoFontFamily}"
                      Padding="10,8"

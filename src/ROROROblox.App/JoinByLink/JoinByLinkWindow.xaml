@@ -45,7 +45,7 @@
                        TextWrapping="Wrap" />
         </StackPanel>
 
-        <TextBox Grid.Row="1" x:Name="UrlInput"
+        <TextBox Grid.Row="1" x:Name="UrlInput" AutomationProperties.Name="Roblox game or private server link"
                  Padding="10,8" FontSize="{DynamicResource BodyFontSize}" Margin="0,18,0,0"
                  Background="{DynamicResource RowBgBrush}"
                  VerticalContentAlignment="Center"

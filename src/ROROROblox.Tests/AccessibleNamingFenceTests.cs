@@ -22,12 +22,33 @@ namespace ROROROblox.Tests;
 public class AccessibleNamingFenceTests
 {
     /// <summary>Interactive kinds — the ones a person operates, so the ones a name is load-bearing for.</summary>
-    private static readonly string[] Kinds = ["Button", "ToggleButton", "ComboBox", "TextBox", "CheckBox"];
+    // PasswordBox added 2026-08-21. Its absence was a blind spot with teeth: the three unnamed
+    // controls it hid are the passphrase fields on account export and import — the most sensitive
+    // inputs in the app, and the ones where "which box am I typing in" matters most.
+    private static readonly string[] Kinds =
+        ["Button", "ToggleButton", "ComboBox", "TextBox", "CheckBox", "PasswordBox"];
 
     /// <summary>
-    /// Measured 2026-08-20. MUST NOT RISE. Lower it whenever you name something; that is the point.
+    /// MUST NOT RISE. Lower it whenever you name something; that is the point.
+    /// <para>
+    /// <b>ONE, and it is deliberate.</b> The survivor is <c>FriendFollowWindow</c>'s
+    /// <c>SourceSwitchButton</c>, whose <c>Content</c> is assigned in code-behind —
+    /// <c>$"View {ChromeName(other)}'s friends"</c>. It IS named at runtime, and better than a
+    /// constant could name it; setting <c>AutomationProperties.Name</c> here would OVERRIDE an
+    /// accurate label with a stale one. A scanner reading XAML cannot see that, so the honest
+    /// ceiling is one rather than a lie of zero.
+    /// </para>
+    /// <para>
+    /// <b>THE NUMBER THIS REPLACED WAS MOSTLY THE SCANNER.</b> It stood at 49, and 26 of those were
+    /// artifacts of how this file measured rather than anything a person could hear: 15 controls
+    /// labelled by child content the scanner only credited as an attribute (UI Automation on the
+    /// running Settings window reported every one of them named), and 7 property-element tags —
+    /// <c>&lt;Button.Style&gt;</c>, <c>&lt;ComboBox.ItemContainerStyle&gt;</c> — that are not
+    /// controls at all and could never have been named. Two years of this row would have been spent
+    /// chasing a regex. Fix the instrument before working the number it reports.
+    /// </para>
     /// </summary>
-    private const int UnnamedCeiling = 49;
+    private const int UnnamedCeiling = 1;
 
     /// <summary>
     /// Guards the walk itself. If the regex stops matching, a broken scan would report a perfectly
@@ -39,7 +60,14 @@ public class AccessibleNamingFenceTests
     {
         var named = 0;
         var unnamed = new List<string>();
-        var pattern = new Regex(@"<(?:ui:)?(" + string.Join("|", Kinds) + @")\b([^>]*?)/?>", RegexOptions.Singleline);
+        // (?=[\s/>]) rather than \b, corrected 2026-08-21 with the child-content rule above.
+        // \b matches between "Button" and the dot in `<Button.Style>`, so every property-element
+        // tag in the app — `<Button.Style>`, `<Button.ToolTip>`, `<ComboBox.ItemContainerStyle>` —
+        // scanned as a nameless control with an attribute list of ".Style". MainWindow alone has
+        // ten. They are not controls, they cannot carry a name, and no amount of work on the app
+        // could ever have removed them from the count.
+        var pattern = new Regex(
+            @"<(?:ui:)?(" + string.Join("|", Kinds) + @")(?=[\s/>])([^>]*?)/?>", RegexOptions.Singleline);
 
         foreach (var file in XamlStyleScanner.EnumerateAppXamlFiles())
         {
@@ -52,7 +80,47 @@ public class AccessibleNamingFenceTests
                 // Literal text content IS an accessible name — WPF exposes it as one. A glyph or a
                 // binding is not, which is exactly the distinction the row draws.
                 var content = Regex.Match(attrs, @"Content\s*=\s*""([^""]*)""");
-                var literalText = content.Success && Regex.IsMatch(content.Groups[1].Value, "[A-Za-z]{2}");
+                // !Contains('{') because `Content="{Binding ActionLabel}"` is letters, and letters
+                // were the whole test. A bound Content is an OBJECT at runtime, and
+                // ButtonAutomationPeer names a button from its content only when that content is a
+                // string — so the bound ones announce nothing while scanning as labelled.
+                var literalText = content.Success
+                    && !content.Groups[1].Value.Contains('{')
+                    && Regex.IsMatch(content.Groups[1].Value, "[A-Za-z]{2}");
+
+                // AND SO IS CHILD CONTENT, which this scanner used to miss entirely (F-052, corrected
+                // 2026-08-21). Half the app writes `<CheckBox ...><TextBlock Text="…" /></CheckBox>`
+                // rather than `Content="…"`, and WPF derives the accessible name from that child just
+                // as happily. MEASURED, not reasoned: UI Automation on the running Settings window
+                // reports every one of those checkboxes named — "Start RoRoRo when Windows starts."
+                // — while this scanner counted them as bare. The row's headline number was a
+                // property of the regex, not of the app.
+                // TWO FENCES ON THIS CREDIT, both measured on the running app rather than reasoned.
+                //
+                // ONLY CONTENT CONTROLS. A ComboBox's inner XAML is its items and templates, and WPF
+                // derives no name from them — the eight account game-pickers proved it, sitting
+                // silent at runtime while this rule scored them labelled.
+                //
+                // AND ONLY LITERAL TEXT. `Text="{Binding DisplayName}"` contains letters, so a naive
+                // letters-anywhere check reads a binding as a label. It is not one: when Content is
+                // an object with a template rather than a string, ButtonAutomationPeer returns no
+                // name at all. That is 62 buttons on the main window showing an account name and
+                // announcing nothing — the chips a screen-reader user cannot tell apart.
+                var namesFromContent = m.Groups[1].Value is "Button" or "ToggleButton" or "CheckBox";
+                if (!literalText && !hasName && namesFromContent
+                    && !m.Value.TrimEnd().EndsWith("/>", StringComparison.Ordinal))
+                {
+                    var close = text.IndexOf($"</{m.Groups[1].Value}>", m.Index, StringComparison.Ordinal);
+                    if (close > 0)
+                    {
+                        var inner = text[(m.Index + m.Length)..close];
+                        var attrText = Regex.Match(inner, @"Text\s*=\s*""([^""]*)""");
+                        literalText =
+                            (attrText.Success && !attrText.Groups[1].Value.Contains('{')
+                                && Regex.IsMatch(attrText.Groups[1].Value, "[A-Za-z]{2}"))
+                            || Regex.IsMatch(Regex.Replace(inner, "<[^>]*>", ""), "[A-Za-z]{2}");
+                    }
+                }
 
                 if (hasName || literalText) named++;
                 else unnamed.Add($"{file.Label}: {m.Groups[1].Value}");
