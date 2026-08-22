@@ -324,6 +324,15 @@
         "F-106"
       ],
       "notes": "Closed with the codebase ruling, not the row sketch: one delegate seam per dialog (StopAllConfirm pattern, which ShellPageOpener already extended) instead of an IWindowHost factory. SquadLaunchPicker / JoinByLinkPicker / FriendFollowPicker (result-bearing; the friend pick carries presence + name because EvaluateFollow owns the launch decision), RenamePrompt, the two not-installed interruptions, DpapiCorruptPrompt, and a QuitApplication seam. Ten tests in MainViewModelWindowSeamTests are the first these flows have ever had - cancel paths, picked-target dispatch, the privacy-hidden follow block, corrupt-store start-fresh vs quit, rename round-trip. Suite 1815 unit green. Register scoreboard 110 clean / 2 open (F-096 waits on rororo-ur-task PR 32; F-098 waits on the Store run by ruling)."
+    },
+    {
+      "id": "f096-flipped",
+      "name": "F-096 closed: the plugin guards itself",
+      "status": "open",
+      "findings": [
+        "F-096"
+      ],
+      "notes": "rororo-ur-task PR 32 merged 2026-08-22 (unit + host-integration CI green); guard verified at that repo origin tip by reading the tree. Named mutex on the plugin id as the first act of OnStartup, before the evidence layer; quiet loser skips the shared log on exit; verbatim-string mutex name pinned by a test asserting the CR trap this row documented. Register: 111 clean / 1 open (F-098, Store-run-gated) / 7 closed-as-ruled."
     }
   ],
   "scope": {
