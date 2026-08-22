@@ -95,12 +95,6 @@ internal static class ThemedRender
 
     static ThemedRender()
     {
-        // Refuse early and legibly if a RoRoRo instance is up, rather than throwing "The URI prefix
-        // is not recognized" out of the ThemesDictionary ctor below, ~100 times, with nothing in the
-        // message naming the cause. See RenderEnvironment for the measurements and F-105 for the
-        // unsolved mechanism.
-        RenderEnvironment.RequireClean();
-
         // Triggers Application's static ctor, which installs the pack WebRequest factory. Reading
         // the property does NOT create an Application — verified in stage 1, where Current stayed
         // null through the whole probe.
