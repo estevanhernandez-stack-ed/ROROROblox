@@ -857,12 +857,15 @@ public partial class App : Application
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         });
 
-        services.AddSingleton<DiscordConfigCache>();
+        // The single owner of the Discord record (F-013 prerequisite): every write goes through
+        // its gate, every reader sees its Current, and Changed is how views stay current. It
+        // replaced DiscordConfigCache, whose one job (a torn-free synchronous read) it absorbed.
+        services.AddSingleton(sp => new DiscordConfigService(sp.GetRequiredService<DiscordConfigStore>()));
 
         services.AddSingleton(sp => new AlertDispatcher(
             sp.GetRequiredService<DiscordWebhookSender>(),
             sp.GetRequiredService<ITrayService>(),
-            () => sp.GetRequiredService<DiscordConfigCache>().Current,
+            () => sp.GetRequiredService<DiscordConfigService>().Current,
             TimeProvider.System,
             sp.GetRequiredService<ILogger<AlertDispatcher>>()));
 
@@ -1491,7 +1494,8 @@ public partial class App : Application
         if (_services is null) return;
         try
         {
-            await RefreshDiscordConfigAsync().ConfigureAwait(true);
+            var configService = _services.GetRequiredService<DiscordConfigService>();
+            await configService.InitializeAsync().ConfigureAwait(true);
 
             var vm = _services.GetRequiredService<MainViewModel>();
             var dispatcher = _services.GetRequiredService<AlertDispatcher>();
@@ -1499,7 +1503,7 @@ public partial class App : Application
             // Paint the saved mutes onto the rows. Without this the preference persists but the
             // row shows unmuted after every restart — the user re-mutes an account that was never
             // going to alert, and stops trusting the toggle.
-            var muted = _services.GetRequiredService<DiscordConfigCache>().Current.MutedAccountIds.ToHashSet();
+            var muted = configService.Current.MutedAccountIds.ToHashSet();
             foreach (var row in vm.Accounts)
             {
                 row.AlertsMuted = muted.Contains(row.Id);
@@ -1514,22 +1518,6 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogWarning(ex, "Couldn't wire Discord alerts; the app runs without them.");
-        }
-    }
-
-    /// <summary>Reload <see cref="DiscordConfigCache"/> from the store. Called at startup and on
-    /// Preferences close — the only two moments these settings change.</summary>
-    private async Task RefreshDiscordConfigAsync()
-    {
-        if (_services is null) return;
-        try
-        {
-            _services.GetRequiredService<DiscordConfigCache>().Current =
-                await _services.GetRequiredService<DiscordConfigStore>().LoadAsync().ConfigureAwait(true);
-        }
-        catch (Exception ex)
-        {
-            _log?.LogWarning(ex, "Couldn't read Discord settings; alerts stay at their defaults (off).");
         }
     }
 
@@ -1548,8 +1536,9 @@ public partial class App : Application
             }
 
             var vm = _services.GetRequiredService<MainViewModel>();
-            var configStore = _services.GetRequiredService<DiscordConfigStore>();
-            var config = await configStore.LoadAsync().ConfigureAwait(true);
+            var configService = _services.GetRequiredService<DiscordConfigService>();
+            await configService.InitializeAsync().ConfigureAwait(true);
+            var config = configService.Current;
 
             var client = new LacheeDiscordRpcClientAdapter(
                 applicationId, _services.GetRequiredService<ILogger<LacheeDiscordRpcClientAdapter>>());
@@ -1560,6 +1549,14 @@ public partial class App : Application
             vm.DiscordPresence = presence;
 
             await presence.ApplyAsync(config).ConfigureAwait(true);
+
+            // Views, not snapshots: every future write reaches the live presence service through
+            // the owner's Changed event, whoever the writer is — the Preferences toggles no
+            // longer call ApplyAsync themselves. Marshalled: the owner raises inside its write
+            // gate, on whatever thread the mutation completed on, and ApplyAsync has only ever
+            // been called from the UI thread.
+            configService.Changed += (_, updated) =>
+                _ = Dispatcher.InvokeAsync(() => _ = presence.ApplyAsync(updated));
 
             // Fix round 1, Finding 1: both inbound-join paths gate on the LIVE JoinEnabled setting.
             // Fix round 2: they're two SEPARATE InboundJoinDispatcher instances now, not one shared
@@ -1642,11 +1639,10 @@ public partial class App : Application
             _services.GetRequiredService<IAccountStore>(),
             _services.GetRequiredService<ROROROblox.Core.Transport.IAccountTransport>(),
             _services.GetRequiredService<MainViewModel>(),
-            _services.GetRequiredService<DiscordConfigStore>(),
+            _services.GetRequiredService<DiscordConfigService>(),
             _services.GetRequiredService<AlertDispatcher>(),
             _services.GetRequiredService<DiscordWebhookSender>(),
             _services.GetRequiredService<WebhookProbe>(),
-            _services.GetRequiredService<DiscordConfigCache>(),
             // v1.18 item 4a — the Memory section states what a blank box resolves to on this
             // machine, and it resolves it through the same MemoryDefaults calls
             // WireMemoryWatchdogAsync uses. Same registration (:717), same singleton, so the
@@ -1720,7 +1716,6 @@ public partial class App : Application
             var accountStore = _services.GetRequiredService<IAccountStore>();
             var transport = _services.GetRequiredService<ROROROblox.Core.Transport.IAccountTransport>();
             var mainViewModel = _services.GetRequiredService<MainViewModel>();
-            var discordConfigStore = _services.GetRequiredService<DiscordConfigStore>();
             var window = BuildPreferencesWindow();
             if (owner.IsLoaded) window.Owner = owner;
             SurfaceMainWindow(owner);
@@ -1730,12 +1725,10 @@ public partial class App : Application
             // immediately on click, mirroring every other toggle in that window. Re-push into
             // the monitor + VM on close so a changed threshold/mute takes effect without a
             // restart, regardless of which control the user touched last.
+            //
+            // No Discord re-read here any more: the owner (DiscordConfigService) publishes every
+            // write the moment it lands, so there is nothing left that only becomes true on close.
             _ = InitializeIdleSettingsAsync();
-
-            // Same reasoning as the idle re-push above: Preferences persists Discord alert routing
-            // and webhook edits on click, so re-read them on close or the dispatcher keeps routing
-            // against whatever was loaded at startup until the next restart.
-            _ = RefreshDiscordConfigAsync();
         }
         catch (Exception ex)
         {

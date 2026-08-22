@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using ROROROblox.Core;
 using ROROROblox.App.Discord;
 using ROROROblox.Core.Diagnostics;
+using ROROROblox.Core.Discord;
 
 namespace ROROROblox.Tests;
 
@@ -57,11 +58,12 @@ public class TypedHttpClientRegistrationTests
         services.AddLogging();
         services.AddHttpClient<DiscordWebhookSender>();
         services.AddSingleton<ITrayService, NoOpTrayService>();
-        services.AddSingleton<DiscordConfigCache>();
+        services.AddSingleton(_ => new DiscordConfigService(
+            new DiscordConfigStore(Path.Combine(Path.GetTempPath(), $"rororo-reg-test-{Guid.NewGuid():N}.dat"))));
         services.AddSingleton(sp => new AlertDispatcher(
             sp.GetRequiredService<DiscordWebhookSender>(),
             sp.GetRequiredService<ITrayService>(),
-            () => sp.GetRequiredService<DiscordConfigCache>().Current,
+            () => sp.GetRequiredService<DiscordConfigService>().Current,
             TimeProvider.System,
             sp.GetRequiredService<ILogger<AlertDispatcher>>()));
         using var provider = services.BuildServiceProvider();

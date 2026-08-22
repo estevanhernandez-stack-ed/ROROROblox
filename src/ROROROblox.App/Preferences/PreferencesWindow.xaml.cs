@@ -31,11 +31,10 @@ internal partial class PreferencesWindow : Window
     private readonly IAccountStore _accountStore;
     private readonly IAccountTransport _transport;
     private readonly MainViewModel _mainViewModel;
-    private readonly DiscordConfigStore _discordConfigStore;
+    private readonly DiscordConfigService _discordConfigService;
     private readonly AlertDispatcher _alertDispatcher;
     private readonly DiscordWebhookSender _webhookSender;
     private readonly WebhookProbe _webhookProbe;
-    private readonly DiscordConfigCache _discordConfigCache;
 
     /// <summary>
     /// What the memory section's blank boxes resolve to on this machine (item 4a). Holds the
@@ -63,20 +62,15 @@ internal partial class PreferencesWindow : Window
 
     private string? _clanChannelName;
 
-    // Loaded once at OnLoaded, mutated on each Discord toggle click, saved whole. A compound
-    // record (Presence + Join + webhook fields live in one encrypted blob) needs an in-memory
-    // canonical copy — re-reading the store fresh on every click risks a lost-update race if
-    // the two Discord checkboxes are clicked in quick succession (the UI message pump can
-    // interleave a second click into the first click's await).
-    //
-    // 2026-08-03: the alert controls below join this same snapshot rather than each doing their
-    // own load-modify-save, for exactly the reason above — a fresh read per control would REVERSE
-    // this decision and reintroduce the interleave it was written to prevent. The one other writer
-    // of this record is MainViewModel.SetAlertsMutedAsync (the row context menu), which cannot run
-    // while this dialog is open because the dialog is modal. If Preferences ever becomes
-    // modeless, that becomes a real lost update and this whole scheme needs a single owner
-    // instead — it is the modality, not the code, that makes this safe today.
-    private DiscordConfig _discordConfig = new();
+    // The single owner replaced the snapshot that used to live here (F-013 prerequisite,
+    // 2026-08-21). The old design kept an in-memory copy, mutated it on every click, and saved it
+    // whole — safe only because this dialog was modal and the one other writer (the row context
+    // menu's mute) could not run underneath it. Its own comment said so: "it is the modality, not
+    // the code, that makes this safe today." DiscordConfigService serializes every writer's
+    // read-modify-write inside one gate, so the interleave that comment feared — two checkbox
+    // clicks in quick succession, or a row mute landing mid-save — composes instead of racing.
+    // This window reads Current per use and repaints on Changed: a view, not a snapshot.
+    private DiscordConfig CurrentDiscordConfig => _discordConfigService.Current;
 
     // Set in OnLoaded when DiscordPresence is available, so OnDiscordStatusChanged and OnClosed
     // (subscribe/unsubscribe) both have a reference without re-touching MainViewModel each time.
@@ -90,18 +84,16 @@ internal partial class PreferencesWindow : Window
         IAccountStore accountStore,
         IAccountTransport transport,
         MainViewModel mainViewModel,
-        DiscordConfigStore discordConfigStore,
+        DiscordConfigService discordConfigService,
         AlertDispatcher alertDispatcher,
         DiscordWebhookSender webhookSender,
         WebhookProbe webhookProbe,
-        DiscordConfigCache discordConfigCache,
         ISystemMemoryProbe systemMemoryProbe)
     {
         _automaticMemory = new AutomaticMemorySummary(systemMemoryProbe);
         _alertDispatcher = alertDispatcher;
         _webhookSender = webhookSender;
         _webhookProbe = webhookProbe;
-        _discordConfigCache = discordConfigCache;
         _settings = settings;
         _startupRegistration = startupRegistration;
         _themeStore = themeStore;
@@ -109,7 +101,7 @@ internal partial class PreferencesWindow : Window
         _accountStore = accountStore;
         _transport = transport;
         _mainViewModel = mainViewModel;
-        _discordConfigStore = discordConfigStore;
+        _discordConfigService = discordConfigService;
         InitializeComponent();
 
         // F-102. Two-way binding, NOT a Click handler. TogglePattern.Toggle() — the only pattern a
@@ -153,6 +145,43 @@ internal partial class PreferencesWindow : Window
         // MainViewModel is a singleton, so an unsubscribed handler would fire through a closed
         // window's Dispatcher for the rest of the process.
         _mainViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+
+        // And the config owner outlives this window the same way.
+        _discordConfigService.Changed -= OnDiscordConfigChanged;
+    }
+
+    /// <summary>
+    /// Repaint the Discord controls from a published change, whoever wrote it — this window's own
+    /// saves included, and the row context menu's mute, which can now land while this window is
+    /// open. Queued rather than inlined: the owner raises inside its write gate, possibly off the
+    /// UI thread, and a change raised by this window's own save must not re-enter the handler that
+    /// saved it.
+    /// <para>
+    /// Deliberately does NOT repaint the webhook fields: a repaint mid-edit would stomp a URL being
+    /// typed, and the only out-of-window writer today touches <c>MutedAccountIds</c>. If a second
+    /// out-of-window writer ever edits webhooks, this is the line to revisit.
+    /// </para>
+    /// </summary>
+    private void OnDiscordConfigChanged(object? sender, DiscordConfig config)
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            _suppressClickHandlers = true;
+            try
+            {
+                DiscordPresenceToggle.IsChecked = config.PresenceEnabled;
+                DiscordJoinToggle.IsChecked = config.JoinEnabled;
+                DiscordJoinToggle.IsEnabled = config.PresenceEnabled;
+                SelectDestination(DroppedOutDestination, config.DroppedOutDestination);
+                SelectDestination(MemoryWarningDestination, config.MemoryWarningDestination);
+                RefreshAlertsStatus();
+                RefreshMutedAccounts();
+            }
+            finally
+            {
+                _suppressClickHandlers = false;
+            }
+        });
     }
 
     /// <summary>
@@ -234,23 +263,28 @@ internal partial class PreferencesWindow : Window
             //
             // Fix round 1, Finding 3: this block has its own try/catch, separate from the outer
             // one (which has none — an async void Loaded handler with no catch takes the whole
-            // app down). DiscordConfigStore.LoadAsync only maps CryptographicException/
+            // app down). The store underneath InitializeAsync only maps CryptographicException/
             // JsonException to defaults; a locked or ACL-blocked discord.dat throws IOException/
             // UnauthorizedAccessException straight through, and this block runs BEFORE idle +
             // theme population below — an unguarded throw here would blank the rest of the dialog,
             // not just the Discord section.
             try
             {
-                _discordConfig = await _discordConfigStore.LoadAsync();
-                DiscordPresenceToggle.IsChecked = _discordConfig.PresenceEnabled;
-                DiscordJoinToggle.IsChecked = _discordConfig.JoinEnabled;
+                await _discordConfigService.InitializeAsync();
+                var discordConfig = CurrentDiscordConfig;
+                DiscordPresenceToggle.IsChecked = discordConfig.PresenceEnabled;
+                DiscordJoinToggle.IsChecked = discordConfig.JoinEnabled;
                 // FIX 7 (final whole-branch review, 2026-08-03): Join has no effect while presence
                 // is off (DiscordPresenceService.JoinEnabled is now PresenceEnabled && JoinEnabled)
                 // — disabling the checkbox here says so instead of leaving it checkable-but-inert.
-                DiscordJoinToggle.IsEnabled = _discordConfig.PresenceEnabled;
-                // Alerts share this loaded snapshot — and, unlike presence, work with no Discord
+                DiscordJoinToggle.IsEnabled = discordConfig.PresenceEnabled;
+                // Alerts read the same owner — and, unlike presence, work with no Discord
                 // application id, so they are populated outside the DiscordPresence null-check below.
                 PopulateAlertControls();
+                // A view, not a snapshot: the row context menu can now mute an account while this
+                // window is open (it goes through the same owner), and this window has to show it.
+                // Unsubscribed in OnClosed, same leak discipline as the presence subscription.
+                _discordConfigService.Changed += OnDiscordConfigChanged;
                 if (_mainViewModel.DiscordPresence is { } presence)
                 {
                     // Fix round 1, Finding 2: subscribe so the status line stays honest for the
@@ -620,30 +654,25 @@ internal partial class PreferencesWindow : Window
     }
 
     /// <summary>
-    /// "Show what you're playing on Discord." Mirrors <see cref="OnAlwaysShowRecycleToggle"/>'s shape:
-    /// save, then push the change into the live service. The status line is NOT read here after
-    /// <c>ApplyAsync</c> returns — see <see cref="OnDiscordStatusChanged"/>'s remarks for why a
-    /// one-time read would show a stale value; the subscription set up in <see cref="OnLoaded"/>
-    /// is what keeps <see cref="DiscordStatusLine"/> correct through both the immediate transient
-    /// and whatever Lachee reports afterward.
+    /// "Show what you're playing on Discord." The mutation goes through the owner, and the owner's
+    /// <c>Changed</c> event is what pushes it into the live presence service (App wires that
+    /// subscription) — this handler no longer calls <c>ApplyAsync</c> itself, so a writer that
+    /// isn't this window reaches presence exactly the same way. The status line is NOT read here
+    /// either — see <see cref="OnDiscordStatusChanged"/>'s remarks for why a one-time read would
+    /// show a stale value; the subscription set up in <see cref="OnLoaded"/> is what keeps
+    /// <see cref="DiscordStatusLine"/> correct through both the immediate transient and whatever
+    /// Lachee reports afterward.
     /// </summary>
     private async void OnDiscordPresenceToggle(object sender, RoutedEventArgs e)
     {
         if (_suppressClickHandlers) return;
         var wanted = DiscordPresenceToggle.IsChecked == true;
-        var updated = _discordConfig with { PresenceEnabled = wanted };
-        _discordConfig = updated; // update the in-memory copy before the first await — see field doc
-        _discordConfigCache.Current = updated;
         // FIX 7: keep the Join checkbox's enabled state tracking presence live, not just at
         // OnLoaded — Join has no effect while presence is off (DiscordPresenceService.JoinEnabled).
         DiscordJoinToggle.IsEnabled = wanted;
         try
         {
-            await _discordConfigStore.SaveAsync(updated);
-            if (_mainViewModel.DiscordPresence is { } presence)
-            {
-                await presence.ApplyAsync(updated);
-            }
+            await _discordConfigService.MutateAsync(c => c with { PresenceEnabled = wanted });
         }
         catch (Exception ex)
         {
@@ -652,10 +681,10 @@ internal partial class PreferencesWindow : Window
                 "Preferences",
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
+            // A failed mutate publishes nothing, so Current still matches the disk — repaint from it.
             _suppressClickHandlers = true;
-            _discordConfig = await _discordConfigStore.LoadAsync();
-            DiscordPresenceToggle.IsChecked = _discordConfig.PresenceEnabled;
-            DiscordJoinToggle.IsEnabled = _discordConfig.PresenceEnabled;
+            DiscordPresenceToggle.IsChecked = CurrentDiscordConfig.PresenceEnabled;
+            DiscordJoinToggle.IsEnabled = CurrentDiscordConfig.PresenceEnabled;
             _suppressClickHandlers = false;
         }
     }
@@ -665,16 +694,9 @@ internal partial class PreferencesWindow : Window
     {
         if (_suppressClickHandlers) return;
         var wanted = DiscordJoinToggle.IsChecked == true;
-        var updated = _discordConfig with { JoinEnabled = wanted };
-        _discordConfig = updated;
-        _discordConfigCache.Current = updated;
         try
         {
-            await _discordConfigStore.SaveAsync(updated);
-            if (_mainViewModel.DiscordPresence is { } presence)
-            {
-                await presence.ApplyAsync(updated);
-            }
+            await _discordConfigService.MutateAsync(c => c with { JoinEnabled = wanted });
         }
         catch (Exception ex)
         {
@@ -684,8 +706,7 @@ internal partial class PreferencesWindow : Window
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             _suppressClickHandlers = true;
-            _discordConfig = await _discordConfigStore.LoadAsync();
-            DiscordJoinToggle.IsChecked = _discordConfig.JoinEnabled;
+            DiscordJoinToggle.IsChecked = CurrentDiscordConfig.JoinEnabled;
             _suppressClickHandlers = false;
         }
     }
@@ -698,28 +719,30 @@ internal partial class PreferencesWindow : Window
     /// </summary>
     private void PopulateAlertControls()
     {
-        SelectDestination(DroppedOutDestination, _discordConfig.DroppedOutDestination);
-        SelectDestination(MemoryWarningDestination, _discordConfig.MemoryWarningDestination);
-        ShowWebhookMasked(MineWebhookInput, MineWebhookReveal, _discordConfig.MineWebhookUrl);
-        ShowWebhookMasked(ClanWebhookInput, ClanWebhookReveal, _discordConfig.ClanWebhookUrl);
+        var discordConfig = CurrentDiscordConfig;
+        SelectDestination(DroppedOutDestination, discordConfig.DroppedOutDestination);
+        SelectDestination(MemoryWarningDestination, discordConfig.MemoryWarningDestination);
+        ShowWebhookMasked(MineWebhookInput, MineWebhookReveal, discordConfig.MineWebhookUrl);
+        ShowWebhookMasked(ClanWebhookInput, ClanWebhookReveal, discordConfig.ClanWebhookUrl);
         RefreshAlertsStatus();
         // Called from HERE and nowhere earlier, on purpose. The count itself reads only the view
         // model's rows and would survive a failed config load — but Unmute all writes the whole
-        // DiscordConfig record, and on that path _discordConfig is still the empty default rather
-        // than what is on disk. Offering the button there would let one click wipe somebody's
-        // webhook URLs. Inside this method it can only appear once the real config is loaded.
+        // DiscordConfig record, and on the failed-InitializeAsync path the owner may still hold
+        // startup's read rather than what is on disk now. Offering the button there would let one
+        // click wipe somebody's webhook URLs. Inside this method it can only appear once the
+        // fresh config is loaded.
         RefreshMutedAccounts();
 
         // Best-effort, fire-and-forget: name the channel each saved webhook posts to, so a clan
         // webhook sitting in the personal slot is visible on open rather than after it matters.
-        if (!string.IsNullOrWhiteSpace(_discordConfig.MineWebhookUrl))
+        if (!string.IsNullOrWhiteSpace(discordConfig.MineWebhookUrl))
         {
-            _ = ProbeWebhookAsync(_discordConfig.MineWebhookUrl, isClan: false);
+            _ = ProbeWebhookAsync(discordConfig.MineWebhookUrl, isClan: false);
         }
 
-        if (!string.IsNullOrWhiteSpace(_discordConfig.ClanWebhookUrl))
+        if (!string.IsNullOrWhiteSpace(discordConfig.ClanWebhookUrl))
         {
-            _ = ProbeWebhookAsync(_discordConfig.ClanWebhookUrl, isClan: true);
+            _ = ProbeWebhookAsync(discordConfig.ClanWebhookUrl, isClan: true);
         }
     }
 
@@ -747,27 +770,26 @@ internal partial class PreferencesWindow : Window
     /// see its remarks for why that decision does not live here.
     /// </summary>
     /// <summary>
-    /// Persist a settings change AND make it live immediately.
+    /// Persist a settings change through the owner, which makes it live immediately — the owner's
+    /// <c>Current</c> is what <see cref="AlertDispatcher"/> reads on every dispatch. Before the
+    /// owner existed the dispatcher's cache was refreshed only when this dialog closed. That meant
+    /// a user who set a destination and then sat watching for an alert with Settings still open got
+    /// nothing — the dispatcher was still reading the config from app startup. Measured live:
+    /// webhook saved 00:07:26, a real memory crossing at 00:08:46 logged "routed nowhere." A
+    /// setting that does not take effect until you close the window it lives in is
+    /// indistinguishable from a broken feature.
     /// <para>
-    /// The cache is what <see cref="AlertDispatcher"/> reads on every dispatch, and it used to be
-    /// refreshed only when this dialog closed. That meant a user who set a destination and then sat
-    /// watching for an alert with Settings still open got nothing — the dispatcher was still reading
-    /// the config from app startup. Measured live: webhook saved 00:07:26, a real memory crossing at
-    /// 00:08:46 logged "routed nowhere." A setting that does not take effect until you close the
-    /// window it lives in is indistinguishable from a broken feature.
+    /// The mutation runs inside the owner's gate, possibly off the UI thread — callers capture
+    /// control state into locals FIRST and close over values, never over controls.
     /// </para>
     /// </summary>
-    private async Task SaveDiscordConfigAsync(DiscordConfig updated)
-    {
-        _discordConfig = updated;
-        _discordConfigCache.Current = updated;
-        await _discordConfigStore.SaveAsync(updated);
-    }
+    private Task SaveDiscordConfigAsync(Func<DiscordConfig, DiscordConfig> mutate)
+        => _discordConfigService.MutateAsync(mutate);
 
     private void RefreshAlertsStatus()
     {
         var line = AlertStatusLine.Compose(
-            _discordConfig,
+            CurrentDiscordConfig,
             _alertDispatcher.MineWebhookRejected,
             _alertDispatcher.ClanWebhookRejected,
             _mineChannelName,
@@ -784,16 +806,18 @@ internal partial class PreferencesWindow : Window
     {
         if (_suppressClickHandlers) return;
 
-        var updated = _discordConfig with
-        {
-            DroppedOutDestination = ReadDestination(DroppedOutDestination),
-            MemoryWarningDestination = ReadDestination(MemoryWarningDestination),
-        };
+        // Read the combos here, on the UI thread — the mutate lambda may run off it.
+        var droppedOut = ReadDestination(DroppedOutDestination);
+        var memoryWarning = ReadDestination(MemoryWarningDestination);
         RefreshAlertsStatus();
 
         try
         {
-            await SaveDiscordConfigAsync(updated);
+            await SaveDiscordConfigAsync(c => c with
+            {
+                DroppedOutDestination = droppedOut,
+                MemoryWarningDestination = memoryWarning,
+            });
         }
         catch (Exception ex)
         {
@@ -872,7 +896,7 @@ internal partial class PreferencesWindow : Window
         var isClan = ReferenceEquals(sender, ClanWebhookReveal);
         var input = isClan ? ClanWebhookInput : MineWebhookInput;
         var reveal = isClan ? ClanWebhookReveal : MineWebhookReveal;
-        var saved = isClan ? _discordConfig.ClanWebhookUrl : _discordConfig.MineWebhookUrl;
+        var saved = isClan ? CurrentDiscordConfig.ClanWebhookUrl : CurrentDiscordConfig.MineWebhookUrl;
 
         if (reveal.IsChecked == true)
         {
@@ -895,7 +919,7 @@ internal partial class PreferencesWindow : Window
         var isClan = ReferenceEquals(sender, ClanWebhookInput);
         var input = isClan ? ClanWebhookInput : MineWebhookInput;
         var verdictLine = isClan ? ClanWebhookVerdict : MineWebhookVerdict;
-        var saved = isClan ? _discordConfig.ClanWebhookUrl : _discordConfig.MineWebhookUrl;
+        var saved = isClan ? CurrentDiscordConfig.ClanWebhookUrl : CurrentDiscordConfig.MineWebhookUrl;
 
         // A mask is not an edit. Tabbing past a hidden field must leave the saved value alone and
         // say nothing — without this the mask reaches the validator, fails, and reports "that isn't
@@ -914,17 +938,14 @@ internal partial class PreferencesWindow : Window
         if (url == saved) return;
 
         // A newly pasted webhook is a fresh chance for a destination the user previously killed.
-        DiscordConfig updated;
         if (isClan)
         {
             _clanChannelName = null;
-            updated = _discordConfig with { ClanWebhookUrl = url };
             _alertDispatcher.ResetClanRejection();
         }
         else
         {
             _mineChannelName = null;
-            updated = _discordConfig with { MineWebhookUrl = url };
             _alertDispatcher.ResetMineRejection();
         }
 
@@ -936,7 +957,9 @@ internal partial class PreferencesWindow : Window
 
         try
         {
-            await SaveDiscordConfigAsync(updated);
+            await SaveDiscordConfigAsync(c => isClan
+                ? c with { ClanWebhookUrl = url }
+                : c with { MineWebhookUrl = url });
             if (url is not null) await ProbeWebhookAsync(url, isClan);
         }
         catch (Exception ex)
@@ -973,15 +996,16 @@ internal partial class PreferencesWindow : Window
         // Test every webhook that is configured, not just the personal one. A clan webhook that
         // silently does not work is the worse failure of the two — nobody notices a channel that
         // never gets posts, and the person who set it up is the last to find out.
+        var discordConfig = CurrentDiscordConfig;
         var targets = new List<(string Label, string Url)>();
-        if (!string.IsNullOrWhiteSpace(_discordConfig.MineWebhookUrl))
+        if (!string.IsNullOrWhiteSpace(discordConfig.MineWebhookUrl))
         {
-            targets.Add(("My channel", _discordConfig.MineWebhookUrl));
+            targets.Add(("My channel", discordConfig.MineWebhookUrl));
         }
 
-        if (!string.IsNullOrWhiteSpace(_discordConfig.ClanWebhookUrl))
+        if (!string.IsNullOrWhiteSpace(discordConfig.ClanWebhookUrl))
         {
-            targets.Add(("Clan channel", _discordConfig.ClanWebhookUrl));
+            targets.Add(("Clan channel", discordConfig.ClanWebhookUrl));
         }
 
         if (targets.Count == 0)
@@ -1073,13 +1097,10 @@ internal partial class PreferencesWindow : Window
     /// that never had one.
     /// </para>
     /// <para>
-    /// The write goes through <see cref="SaveDiscordConfigAsync"/> and the in-memory
-    /// <c>_discordConfig</c> snapshot rather than through
-    /// <c>MainViewModel.SetAlertsMutedAsync</c> per row. The snapshot exists because this record is
-    /// compound and a second writer doing its own load-modify-save is the lost update this window's
-    /// field doc describes; calling the view model's per-row writer from inside the dialog would be
-    /// that second writer, once per account. It also keeps the alert dispatcher's cache honest
-    /// immediately, which the per-row path does not.
+    /// The write goes through the owner as ONE mutation rather than through
+    /// <c>MainViewModel.SetAlertsMutedAsync</c> per row — not for safety any more (the owner
+    /// serializes writers, so per-row calls would compose correctly), but because one write is one
+    /// disk round-trip and one <c>Changed</c> event instead of N of each.
     /// </para>
     /// </summary>
     private async void OnUnmuteAllClick(object sender, RoutedEventArgs e)
@@ -1089,7 +1110,7 @@ internal partial class PreferencesWindow : Window
 
         try
         {
-            await SaveDiscordConfigAsync(MutedAccountsSummary.WithoutMutes(_discordConfig));
+            await SaveDiscordConfigAsync(MutedAccountsSummary.WithoutMutes);
         }
         catch (Exception ex)
         {

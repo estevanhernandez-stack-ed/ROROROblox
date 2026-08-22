@@ -279,6 +279,15 @@
         "F-107"
       ],
       "notes": "The dirty-environment premise no longer reproduces. RoRoRo half: fixed and fenced by F-105 (wave 20). Client half re-measured at HEAD three ways: stub RobloxPlayerBeta process fails 126 of 1798 at once, every failure the guard own throw; guard bypassed with the stub is 1798/1798; a REAL windowed client (1.1 GB WS, alive across runs) with guard bypassed is 1798/1798 three consecutive runs at 7s. Founding evidence was confounded: the 2026-08-20 client-up measurements predate startup suppression by 27 hours, so real OnStartup ran inside the test host, and a live client routes it into the blocked branch (already-running modal ShowDialog on the render thread, network update check in the 60s budget). The measured client was idle, which saturates no GPU; CPU saturation was already clean 2026-08-12. Client guard removed with its tests; StartupSuppressionFenceTests stays; investigation doc banner-corrected. Same PR records F-096 re-measurement: guide half verified complete, rororo-ur-task at origin tip still has no mutex, row stays open for the cross-repo half."
+    },
+    {
+      "id": "f013-prereq-discord-owner",
+      "name": "F-013 prerequisite: DiscordConfig single owner",
+      "status": "open",
+      "findings": [
+        "F-013"
+      ],
+      "notes": "PR A of the F-013 wave. DiscordConfigService (Core) replaces the two whole-record writers that modality used to serialize: MutateAsync is the only write path (gated read-modify-write, persist-then-publish, throw leaves Current untouched), Current is the torn-free synchronous read, Changed keeps views current. PreferencesWindow dropped its snapshot and repaints on Changed; the row mute goes through the gate; presence subscribes via App wiring; DiscordConfigCache deleted. Lazy first-load inside the gate so a mutation racing startup composes against disk, not defaults. Fixed three pre-existing defects: mid-session mute invisible to AlertDispatcher, failed-save cache incoherence, ordering-mistake wipe class. Suite 1798 unit + 22 integration green. Row stays open for PR B, the shell fold."
     }
   ],
   "scope": {
