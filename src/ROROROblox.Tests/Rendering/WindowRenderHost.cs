@@ -9,7 +9,7 @@ namespace ROROROblox.Tests.Rendering;
 /// <para>
 /// WHY AN APPLICATION IS UNAVOIDABLE HERE, when <c>ThemedRender</c> is emphatic that none is ever
 /// constructed. A window's markup resolves app styles with <c>{StaticResource}</c> —
-/// <c>AboutWindow.xaml:155</c> takes <c>SecondaryStrongButtonStyle</c> that way, and 26 App XAML
+/// <c>DiagnosticsPage.xaml</c> takes <c>SecondaryStrongButtonStyle</c> that way, and 26 App XAML
 /// files do the same. <b><c>StaticResource</c> resolves at PARSE time, inside
 /// <c>InitializeComponent()</c></b>, before any caller can merge a dictionary into the finished
 /// window. Element → window → application is the whole lookup chain, so with no Application and

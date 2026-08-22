@@ -366,7 +366,7 @@ public class ThemedStatusColourTests
         // (AboutArtworkTests found it), and it would equally have hidden the next literal typed into
         // any other part of the window.
 
-        new("src/ROROROblox.App/About/AboutWindow.xaml", "<Window.Resources>", 9,
+        new("src/ROROROblox.App/About/AboutPage.xaml", "<UserControl.Resources>", 9,
             "Spec §7 (invariant 2) — the 626 Labs mark, NOT a finding and not debt. Eight keyed "
             + "brushes painting the nine faces of the iso voxel stack: the cyan trio, the magenta "
             + "pair, the teal pair and the soft navy. Same category as the per-account caption "
@@ -376,7 +376,7 @@ public class ThemedStatusColourTests
             + "must. Anchored on the resource block with a span that reaches the eighth brush, so a "
             + "ninth added below the anchor's reach is NOT covered and has to justify itself."),
 
-        new("src/ROROROblox.App/About/AboutWindow.xaml", "<TextBlock.Effect>", 2,
+        new("src/ROROROblox.App/About/AboutPage.xaml", "<TextBlock.Effect>", 2,
             "Spec §7, same invariant, different surface. The Easter-egg glow is a DropShadow in the "
             + "brand magenta, deliberately the fixed brand hue rather than the theme's Magenta slot "
             + "— it is the reward for finding the egg, and under flatline the theme value is a dark "

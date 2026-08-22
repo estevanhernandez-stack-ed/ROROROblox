@@ -372,12 +372,13 @@ public partial class App : Application
         // by then, or it's silently dropped. mainWindow and the DI graph are both available by
         // this point (mainWindow resolved above at var mainWindow = ...), so there's no ordering
         // reason to push this any later.
-        // Preferences must never depend on an optional feature wiring up. This assignment lived
-        // inside WireAlertsAsync for one build, and when a DI resolve failed in there (a
-        // non-generic ILogger parameter), the factory was never set and the whole Settings window
-        // stopped opening — an alerts problem taking out a core window. Alerts are a passenger;
-        // this is not. Set it first, unconditionally, before anything that can fail.
-        _services.GetRequiredService<MainViewModel>().PreferencesWindowFactory = BuildPreferencesWindow;
+        // The shell opener must never depend on an optional feature wiring up. Its predecessor
+        // (PreferencesWindowFactory) lived inside WireAlertsAsync for one build, and when a DI
+        // resolve failed in there (a non-generic ILogger parameter), the factory was never set and
+        // the whole Settings window stopped opening — an alerts problem taking out a core surface.
+        // Alerts are a passenger; this is not. Set it first, unconditionally, before anything that
+        // can fail.
+        _services.GetRequiredService<MainViewModel>().ShellPageOpener = OpenShellPage;
 
         await WireDiscordPresenceAsync(mainWindow, discordApplicationId);
 
@@ -1054,74 +1055,117 @@ public partial class App : Application
     {
         if (_services is null) return;
         var vm = _services.GetRequiredService<MainViewModel>();
-        vm.RequestOpenPlugins += (_, _) => OpenPluginsFromTray(mainWindow);
+        vm.RequestOpenPlugins += (_, _) => OpenShellPage(Shell.ShellPage.Plugins);
     }
 
-    private void OpenPluginsFromTray(Window owner)
+    /// <summary>The one shell window (F-013). Null when closed; recreated on the next door.</summary>
+    private Shell.ShellWindow? _shell;
+
+    /// <summary>
+    /// Every door to the six former modal islands — toolbar buttons, Tools menu items, tray items,
+    /// the VM's commands — lands here: one shell, surfaced and navigated. One route per
+    /// destination now means one WINDOW per six destinations, which also retires the tray-vs-VM
+    /// double-door class (two Preferences with independent snapshots was statically reachable
+    /// before this).
+    /// </summary>
+    internal void OpenShellPage(Shell.ShellPage page)
     {
         if (_services is null) return;
         try
         {
-            var registry = _services.GetRequiredService<ROROROblox.App.Plugins.PluginRegistry>();
-            var registryAdapter = (ROROROblox.App.Plugins.Adapters.InstalledPluginsLookupAdapter)
-                _services.GetRequiredService<ROROROblox.App.Plugins.IInstalledPluginsLookup>();
-            var consentStore = _services.GetRequiredService<ROROROblox.App.Plugins.ConsentStore>();
-            var installer = _services.GetRequiredService<ROROROblox.App.Plugins.PluginInstaller>();
-            var supervisor = _services.GetRequiredService<ROROROblox.App.Plugins.PluginProcessSupervisor>();
+            if (_shell is null)
+            {
+                var shell = new Shell.ShellWindow(CreateShellPage);
+                shell.Closed += (_, _) => _shell = null;
+                _shell = shell;
+            }
 
-            // Show the manifest consent sheet so the user can review + per-capability opt
-            // out (system.* default-off, host.* default-on). Cancel returns null and the VM
-            // rolls back the install dir.
-            Func<ROROROblox.App.Plugins.PluginManifest, Task<IReadOnlyList<string>?>> showSheet =
-                manifest => ROROROblox.App.Plugins.ConsentSheet.ShowAndAwaitDecisionAsync(owner, manifest);
+            _shell.NavigateTo(page);
+            if (!_shell.IsVisible)
+            {
+                _shell.Show();
+            }
+            else
+            {
+                if (_shell.WindowState == WindowState.Minimized)
+                {
+                    _shell.WindowState = WindowState.Normal;
+                }
 
-            var catalogHttp = _services.GetRequiredService<IHttpClientFactory>().CreateClient();
-            catalogHttp.DefaultRequestHeaders.UserAgent.Clear();
-            var catalogVersion = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
-            catalogHttp.DefaultRequestHeaders.UserAgent.Add(
-                new System.Net.Http.Headers.ProductInfoHeaderValue("RORORO", catalogVersion));
-            var catalogClient = new ROROROblox.App.Plugins.PluginCatalogClient(
-                catalogHttp,
-                "https://github.com/estevanhernandez-stack-ed/ROROROblox/releases/latest/download/plugins-catalog.json");
-            var vm = new ROROROblox.App.Plugins.PluginsViewModel(
-                registry, registryAdapter, consentStore, installer, supervisor, showSheet,
-                new ROROROblox.App.Distribution.Win32DistributionMode(),
-                catalogClient,
-                typeof(App).Assembly.GetName().Version ?? new Version(0, 0, 0, 0),
-                _services.GetRequiredService<ILogger<ROROROblox.App.Plugins.PluginsViewModel>>());
-            var window = new ROROROblox.App.Plugins.PluginsWindow(vm);
-            if (owner.IsLoaded) window.Owner = owner;
-            SurfaceMainWindow(owner);
-            window.ShowDialog();
+                _shell.Activate();
+            }
         }
         catch (Exception ex)
         {
-            _log?.LogWarning(ex, "Couldn't open Plugins window from tray");
+            _log?.LogWarning(ex, "Couldn't open the {Page} page.", page);
         }
     }
 
-    private void OpenHistoryFromTray(Window owner)
+    /// <summary>
+    /// The composition root's page factory — the one place that knows what each destination
+    /// needs, the role BuildPreferencesWindow used to play for Settings alone.
+    /// </summary>
+    private System.Windows.Controls.UserControl CreateShellPage(Shell.ShellPage page)
     {
-        if (_services is null) return;
-        try
+        ArgumentNullException.ThrowIfNull(_services);
+        return page switch
         {
-            var store = _services.GetRequiredService<ISessionHistoryStore>();
-            var favorites = _services.GetRequiredService<IFavoriteGameStore>();
-            var api = _services.GetRequiredService<IRobloxApi>();
-            // Same streamer-identity singleton MainViewModel.OpenHistory threads through — the tray
-            // entry point is the OTHER way to open this window, and without this it would show the
-            // real roster even while streamer mode is active (the exact "one tray-click reveals the
-            // whole real roster" leak).
-            var streamerIdentity = _services.GetRequiredService<ROROROblox.Core.StreamerMode.IStreamerIdentityProvider>();
-            var window = new History.SessionHistoryWindow(store, favorites, api, streamerIdentity);
-            if (owner.IsLoaded) window.Owner = owner;
-            SurfaceMainWindow(owner);
-            window.ShowDialog();
-        }
-        catch (Exception ex)
-        {
-            _log?.LogWarning(ex, "Couldn't open History window from tray");
-        }
+            Shell.ShellPage.Games => new Games.GamesPage(
+                _services.GetRequiredService<IFavoriteGameStore>(),
+                _services.GetRequiredService<IPrivateServerStore>(),
+                _services.GetRequiredService<IRobloxApi>(),
+                // The refresh the modal did on close, now done when the data changes.
+                libraryChanged: () => _ = _services.GetRequiredService<MainViewModel>().ReloadGamesAsync()),
+            Shell.ShellPage.Settings => BuildSettingsPage(),
+            Shell.ShellPage.History => new History.SessionHistoryPage(
+                _services.GetRequiredService<ISessionHistoryStore>(),
+                _services.GetRequiredService<IFavoriteGameStore>(),
+                _services.GetRequiredService<IRobloxApi>(),
+                // Same streamer-identity singleton the VM's opener always threaded through — the
+                // page must never show the real roster while streamer mode is active.
+                _services.GetRequiredService<ROROROblox.Core.StreamerMode.IStreamerIdentityProvider>(),
+                libraryChanged: () => _ = _services.GetRequiredService<MainViewModel>().ReloadGamesAsync()),
+            Shell.ShellPage.Diagnostics => new Diagnostics.DiagnosticsPage(
+                _services.GetRequiredService<IDiagnosticsCollector>()),
+            Shell.ShellPage.Plugins => BuildPluginsPage(),
+            Shell.ShellPage.About => new About.AboutPage(),
+            _ => throw new ArgumentOutOfRangeException(nameof(page), page, null),
+        };
+    }
+
+    private Plugins.PluginsPage BuildPluginsPage()
+    {
+        ArgumentNullException.ThrowIfNull(_services);
+        var registry = _services.GetRequiredService<ROROROblox.App.Plugins.PluginRegistry>();
+        var registryAdapter = (ROROROblox.App.Plugins.Adapters.InstalledPluginsLookupAdapter)
+            _services.GetRequiredService<ROROROblox.App.Plugins.IInstalledPluginsLookup>();
+        var consentStore = _services.GetRequiredService<ROROROblox.App.Plugins.ConsentStore>();
+        var installer = _services.GetRequiredService<ROROROblox.App.Plugins.PluginInstaller>();
+        var supervisor = _services.GetRequiredService<ROROROblox.App.Plugins.PluginProcessSupervisor>();
+
+        // Show the manifest consent sheet so the user can review + per-capability opt
+        // out (system.* default-off, host.* default-on). Cancel returns null and the VM
+        // rolls back the install dir. Owned by the shell — the surface the user is installing
+        // from — falling back to the main window if the shell closed mid-install.
+        Func<ROROROblox.App.Plugins.PluginManifest, Task<IReadOnlyList<string>?>> showSheet =
+            manifest => ROROROblox.App.Plugins.ConsentSheet.ShowAndAwaitDecisionAsync(
+                (Window?)_shell ?? Current.MainWindow, manifest);
+
+        var catalogHttp = _services.GetRequiredService<IHttpClientFactory>().CreateClient();
+        catalogHttp.DefaultRequestHeaders.UserAgent.Clear();
+        var catalogVersion = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        catalogHttp.DefaultRequestHeaders.UserAgent.Add(
+            new System.Net.Http.Headers.ProductInfoHeaderValue("RORORO", catalogVersion));
+        var catalogClient = new ROROROblox.App.Plugins.PluginCatalogClient(
+            catalogHttp,
+            "https://github.com/estevanhernandez-stack-ed/ROROROblox/releases/latest/download/plugins-catalog.json");
+        var vm = new ROROROblox.App.Plugins.PluginsViewModel(
+            registry, registryAdapter, consentStore, installer, supervisor, showSheet,
+            new ROROROblox.App.Distribution.Win32DistributionMode(),
+            catalogClient,
+            typeof(App).Assembly.GetName().Version ?? new Version(0, 0, 0, 0),
+            _services.GetRequiredService<ILogger<ROROROblox.App.Plugins.PluginsViewModel>>());
+        return new Plugins.PluginsPage(vm);
     }
 
     /// <summary>
@@ -1379,9 +1423,9 @@ public partial class App : Application
     /// Pushes the cached idle-warn threshold + mute flag from <see cref="IAppSettings"/> into
     /// <see cref="MainViewModel"/> (which forwards the threshold into
     /// <see cref="IActivityMonitor.WarnThreshold"/>). Called once at startup after
-    /// <see cref="WireActivityMonitor"/> has started the monitor, and again from
-    /// <see cref="OpenPreferencesFromTray"/> after the Preferences dialog closes so an edited
-    /// threshold/mute takes effect without a restart. Wrapped defensively — a settings-read
+    /// <see cref="WireActivityMonitor"/> has started the monitor; after that, the Settings page
+    /// re-pushes per edit (F-013 — a shell page has no close moment to ride). Wrapped
+    /// defensively — a settings-read
     /// failure must not block startup; idle awareness just falls back to the 15-minute default.
     /// </summary>
     private async Task InitializeIdleSettingsAsync()
@@ -1623,15 +1667,14 @@ public partial class App : Application
     /// tamper-tolerant shape as <see cref="DiscordConfigStore"/>.
     /// </summary>
     /// <summary>
-    /// The single place that knows what the Preferences dialog needs. Both entry points — the tray
-    /// menu and the main window's own command (via
-    /// <see cref="MainViewModel.PreferencesWindowFactory"/>) — go through here, so a dependency
-    /// added to that window is added once, in the composition root, rather than in every caller.
+    /// The single place that knows what the Settings page needs. Every door goes through the
+    /// shell (<see cref="CreateShellPage"/>), so a dependency added to the page is added once,
+    /// in the composition root, rather than in every caller.
     /// </summary>
-    private Preferences.PreferencesWindow BuildPreferencesWindow()
+    private Preferences.SettingsPage BuildSettingsPage()
     {
         ArgumentNullException.ThrowIfNull(_services);
-        return new Preferences.PreferencesWindow(
+        return new Preferences.SettingsPage(
             _services.GetRequiredService<IAppSettings>(),
             _services.GetRequiredService<IStartupRegistration>(),
             _services.GetRequiredService<IThemeStore>(),
@@ -1704,51 +1747,20 @@ public partial class App : Application
         }
     }
 
-    private void OpenPreferencesFromTray(Window owner)
-    {
-        if (_services is null) return;
-        try
-        {
-            var settings = _services.GetRequiredService<IAppSettings>();
-            var startup = _services.GetRequiredService<IStartupRegistration>();
-            var themeStore = _services.GetRequiredService<IThemeStore>();
-            var themeService = _services.GetRequiredService<ThemeService>();
-            var accountStore = _services.GetRequiredService<IAccountStore>();
-            var transport = _services.GetRequiredService<ROROROblox.Core.Transport.IAccountTransport>();
-            var mainViewModel = _services.GetRequiredService<MainViewModel>();
-            var window = BuildPreferencesWindow();
-            if (owner.IsLoaded) window.Owner = owner;
-            SurfaceMainWindow(owner);
-            window.ShowDialog();
+    // The idle-settings re-push that used to ride this door's close now happens per-edit inside
+    // the Settings page itself, which also covers the main-window door (it never re-pushed at
+    // all); the Discord re-read died with the owner rework (PR A of this wave).
+    private void OpenPreferencesFromTray(Window owner) => OpenShellPage(Shell.ShellPage.Settings);
 
-            // v1.8 — the Preferences dialog persists idle-awareness edits (mute + threshold)
-            // immediately on click, mirroring every other toggle in that window. Re-push into
-            // the monitor + VM on close so a changed threshold/mute takes effect without a
-            // restart, regardless of which control the user touched last.
-            //
-            // No Discord re-read here any more: the owner (DiscordConfigService) publishes every
-            // write the moment it lands, so there is nothing left that only becomes true on close.
-            _ = InitializeIdleSettingsAsync();
-        }
-        catch (Exception ex)
-        {
-            _log?.LogWarning(ex, "Couldn't open Preferences window from tray");
-        }
-    }
+    private void OpenHistoryFromTray(Window owner) => OpenShellPage(Shell.ShellPage.History);
+
+    private void OpenPluginsFromTray(Window owner) => OpenShellPage(Shell.ShellPage.Plugins);
 
     private void OpenDiagnosticsFromTray(Window owner)
     {
-        if (_services is null) return;
         try
         {
-            var collector = _services.GetRequiredService<IDiagnosticsCollector>();
-            var window = new Diagnostics.DiagnosticsWindow(collector);
-            if (owner.IsLoaded)
-            {
-                window.Owner = owner;
-            }
-            SurfaceMainWindow(owner);
-            window.ShowDialog();
+            OpenShellPage(Shell.ShellPage.Diagnostics);
         }
         catch (Exception ex)
         {

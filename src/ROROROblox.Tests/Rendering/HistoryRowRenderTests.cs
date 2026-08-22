@@ -6,7 +6,7 @@ using ROROROblox.Core.Theming;
 namespace ROROROblox.Tests.Rendering;
 
 /// <summary>
-/// F-065's carrier, measured in pixels off a real <c>SessionHistoryWindow</c>.
+/// F-065's carrier, measured in pixels off a real <c>SessionHistoryPage</c>.
 /// <para>
 /// <c>HistoryRowRhythmTests</c> asserts the RELATIONSHIP between two constants —
 /// <c>RowGutter &gt; RowVerticalInset</c> — which is the right shape for a rule that has to survive
@@ -19,7 +19,7 @@ namespace ROROROblox.Tests.Rendering;
 /// gate from constants to pixels, and it retires the third of v1.21's four eyes-on checks.
 /// </para>
 /// <para>
-/// WHY THE ROWS EXIST AT ALL HERE. <c>SessionHistoryWindow</c> builds its rows in code from
+/// WHY THE ROWS EXIST AT ALL HERE. <c>SessionHistoryPage</c> builds its rows in code from
 /// <c>OnLoaded</c>, and a window that is never shown never raises <c>Loaded</c>. The harness raises
 /// it deliberately and then drains the dispatcher, because <c>OnLoaded</c> is <c>async void</c> and
 /// its continuation posts at <c>Normal</c> priority — above <c>Loaded</c>, so the drain flushes it.
@@ -55,8 +55,11 @@ public class HistoryRowRenderTests
             OutcomeHint: "closed normally")).ToList();
     }
 
-    private static ROROROblox.App.History.SessionHistoryWindow BuildWindow() =>
-        new(new FakeHistoryStore(ThreeSessions()), new FakeFavourites(), new ThrowingApi());
+    private static Window BuildWindow() =>
+        ThemedWindowRender.HostPage(
+            new ROROROblox.App.History.SessionHistoryPage(
+                new FakeHistoryStore(ThreeSessions()), new FakeFavourites(), new ThrowingApi()),
+            700, 600);
 
     /// <summary>
     /// The rendered row borders, top to bottom. A row is identified by the corner radius and padding
@@ -76,7 +79,7 @@ public class HistoryRowRenderTests
                 var child = System.Windows.Media.VisualTreeHelper.GetChild(node, i);
                 if (child is Border b
                     && b.CornerRadius.TopLeft == 6
-                    && b.Margin.Bottom == ROROROblox.App.History.SessionHistoryWindow.RowGutter
+                    && b.Margin.Bottom == ROROROblox.App.History.SessionHistoryPage.RowGutter
                     && b.ActualHeight > 0)
                 {
                     var origin = b.TransformToAncestor(content).Transform(new Point(0, 0));
@@ -91,7 +94,7 @@ public class HistoryRowRenderTests
     private static List<Rect> RowsUnder(Theme theme) =>
         ThemedWindowRender.Inspect(
             theme,
-            $"SessionHistoryWindow rows [{theme.Id}]",
+            $"SessionHistoryPage rows [{theme.Id}]",
             BuildWindow,
             RowRects,
             raiseLoaded: true);
@@ -134,7 +137,7 @@ public class HistoryRowRenderTests
     [WindowRenderFact]
     public void TheRenderedGutterExceedsTheRenderedInset()
     {
-        var inset = ROROROblox.App.History.SessionHistoryWindow.RowVerticalInset;
+        var inset = ROROROblox.App.History.SessionHistoryPage.RowVerticalInset;
 
         foreach (var theme in BuiltInThemes())
         {
@@ -160,7 +163,7 @@ public class HistoryRowRenderTests
     [WindowRenderFact]
     public void TheRhythmSurvivesFractionalScaling()
     {
-        var inset = ROROROblox.App.History.SessionHistoryWindow.RowVerticalInset;
+        var inset = ROROROblox.App.History.SessionHistoryPage.RowVerticalInset;
         var theme = BuiltInThemes().Single(t => t.Id == "flatline");
 
         // Layout is DPI-independent in WPF's device-independent units, so the assertion is that the
@@ -168,7 +171,7 @@ public class HistoryRowRenderTests
         foreach (var dpi in new[] { 96.0, 120.0, 144.0 })
         {
             var rows = ThemedWindowRender.Inspect(
-                theme, $"SessionHistoryWindow rows [flatline] @{dpi}dpi", BuildWindow, RowRects, raiseLoaded: true);
+                theme, $"SessionHistoryPage rows [flatline] @{dpi}dpi", BuildWindow, RowRects, raiseLoaded: true);
 
             Assert.True(rows.Count == 3, $"@{dpi}dpi: expected 3 rows, got {rows.Count}.");
 

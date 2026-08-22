@@ -644,4 +644,44 @@
     <sys:Double x:Key="BodyFontSize">12</sys:Double>
     <sys:Double x:Key="MetaFontSize">11</sys:Double>
 
+    <!-- Nav rail item, shared by the shell (F-013) and Settings' inner rail. SELECTION IS A
+         SHAPE, NOT A FILL — deliberately, and it is the whole reason a rail replaces a scroll of
+         cards. The audit's flatline theme collapses RowBgBrush into BgBrush, which erased the old
+         section cards entirely (finding F-002); a rail whose selected state were a highlight fill
+         would rebuild that same failure in a new shape. So selection is carried by an accent BAR
+         plus a weight change, two cues that both survive a theme with one background colour. Do
+         not add a Background setter to the selected trigger. -->
+    <Style x:Key="NavItemStyle" TargetType="ListBoxItem">
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Grid Background="Transparent">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="3" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Rectangle x:Name="Marker" Grid.Column="0"
+                                   Fill="{DynamicResource CyanBrush}"
+                                   RadiusX="1.5" RadiusY="1.5"
+                                   Visibility="Hidden" />
+                        <ContentPresenter Grid.Column="1" Margin="12,9"
+                                          VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Marker" Property="Visibility" Value="Visible" />
+                            <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

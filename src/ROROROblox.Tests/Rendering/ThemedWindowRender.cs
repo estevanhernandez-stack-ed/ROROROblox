@@ -107,6 +107,22 @@ internal static class ThemedWindowRender
         => WindowRenderHost.Run(() => inspect(Arrange(theme, what, build, raiseLoaded)), what);
 
     /// <summary>
+    /// Hosts a shell page in a bare window for this harness (F-013: six former windows are now
+    /// <see cref="System.Windows.Controls.UserControl"/> pages, and this harness renders windows).
+    /// The window takes the shell's themed ground and the page as content, and forwards the
+    /// harness-raised Loaded to the page — Loaded is a direct event, so raising it on the window
+    /// (the only element <see cref="Arrange"/> can see) never reaches a child that builds its
+    /// content from its own Loaded handler.
+    /// </summary>
+    public static Window HostPage(System.Windows.Controls.UserControl page, double width, double height)
+    {
+        var window = new Window { Content = page, Width = width, Height = height };
+        window.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, "BgBrush");
+        window.Loaded += (_, _) => page.RaiseEvent(new RoutedEventArgs(FrameworkElement.LoadedEvent, page));
+        return window;
+    }
+
+    /// <summary>
     /// Build → merge → (optionally) raise Loaded → measure → arrange → drain. The shared half of
     /// both entry points. Must run on the host thread.
     /// </summary>

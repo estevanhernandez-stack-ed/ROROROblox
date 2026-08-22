@@ -2,6 +2,7 @@
   "app": "RoRoRo",
   "processName": "ROROROblox.App",
   "_note": "Every step names a control TYPE as well as a name or AutomationId, and the resolver additionally requires the UIA pattern the verb needs. This is not decoration: five elements in this app are named 'Settings' (a Window, a TitleBar, two Texts and the Button), and a name-only FindFirst returns the Window, which carries no InvokePattern. Steps that resolve to zero or to more than one element are errors, never a silent first-match.",
+  "_note_f013": "Since the F-013 shell fold (2026-08-21), Games/Settings/History/Diagnostics/Plugins/About are PAGES of one non-modal ShellWindow whose title tracks the active page. The routes below survive because the shell answers to the same Window names the six windows carried (the title IS the destination noun), and Settings' inner rail keeps its SettingsNav name. Only About's captured name changed: the About WINDOW was allowed the product name, the shell page is titled plain 'About'. close-window on a destination name now closes the whole shell, which is what resets state between routes.",
   "deny": [
     "Stop all Roblox instances",
     "Remove",
@@ -80,8 +81,8 @@
         { "do": "expand", "name": "Tools", "type": "Button" },
         { "do": "invoke", "name": "About", "type": "MenuItem" }
       ],
-      "capture": { "type": "Window", "name": "About RoRoRo" },
-      "close": [ { "do": "close-window", "name": "About RoRoRo", "type": "Window" } ]
+      "capture": { "type": "Window", "name": "About" },
+      "close": [ { "do": "close-window", "name": "About", "type": "Window" } ]
     },
     {
       "id": "06",

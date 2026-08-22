@@ -288,6 +288,15 @@
         "F-013"
       ],
       "notes": "PR A of the F-013 wave. DiscordConfigService (Core) replaces the two whole-record writers that modality used to serialize: MutateAsync is the only write path (gated read-modify-write, persist-then-publish, throw leaves Current untouched), Current is the torn-free synchronous read, Changed keeps views current. PreferencesWindow dropped its snapshot and repaints on Changed; the row mute goes through the gate; presence subscribes via App wiring; DiscordConfigCache deleted. Lazy first-load inside the gate so a mutation racing startup composes against disk, not defaults. Fixed three pre-existing defects: mid-session mute invisible to AlertDispatcher, failed-save cache incoherence, ordering-mistake wipe class. Suite 1798 unit + 22 integration green. Row stays open for PR B, the shell fold."
+    },
+    {
+      "id": "f013-shell",
+      "name": "F-013 closed: six modal islands become one shell",
+      "status": "open",
+      "findings": [
+        "F-013"
+      ],
+      "notes": "PR B. ShellWindow (non-modal destination, MinW/MinH, dynamic title = active page) hosts Games/Settings/History/Diagnostics/Plugins/About as lazily-created pages behind a persistent 164px rail; NavItemStyle promoted to ControlStyles.xaml and classified Excluded in the rendered style gate with a measured no-fill reason. One App.OpenShellPage is every door (toolbar, Tools menu, tray, plugins command) - single instance, retires the double-Preferences class. Close-moment reconciliations became event-driven or per-edit; the main-window idle re-push gap fixed on the way. Pages dispose via the shell. Six Close buttons retired (page is a destination, not a dialog). Routes survived on the dynamic title; one literal change (About). F-106 re-measured 12 to 7 and recorded. Suite 1798 unit + 22 integration green after the fold."
     }
   ],
   "scope": {

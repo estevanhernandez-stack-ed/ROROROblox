@@ -212,7 +212,7 @@ public class AutomaticMemorySummaryTests
         var root = XamlStyleScanner.FindRepoRoot();
         Assert.NotNull(root);
 
-        var xaml = Path.Combine(root!, "src", "ROROROblox.App", "Preferences", "PreferencesWindow.xaml");
+        var xaml = Path.Combine(root!, "src", "ROROROblox.App", "Preferences", "SettingsPage.xaml");
         Assert.True(File.Exists(xaml), $"{xaml} is missing; this test scanned nothing.");
 
         var stated = Regex.Matches(File.ReadAllText(xaml), @"The default is (\d+)\.")

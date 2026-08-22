@@ -32,7 +32,6 @@ public class WindowTitleConventionTests
     private static readonly string[] ProductNameAllowed =
     [
         "MainWindow.xaml",
-        "AboutWindow.xaml",
         "WelcomeWindow.xaml",
     ];
 

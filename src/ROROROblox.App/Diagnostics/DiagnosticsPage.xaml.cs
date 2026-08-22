@@ -13,12 +13,17 @@ using ROROROblox.Core.Diagnostics;
 
 namespace ROROROblox.App.Diagnostics;
 
-internal partial class DiagnosticsWindow : Window
+/// <summary>
+/// The Diagnostics destination, hosted by the shell (F-013 — formerly <c>DiagnosticsWindow</c>).
+/// <c>Loaded</c> refires every time the shell navigates back here, which preserves the old
+/// window's per-open semantics: every visit collects a fresh snapshot.
+/// </summary>
+internal partial class DiagnosticsPage : UserControl
 {
     private readonly IDiagnosticsCollector _collector;
     private DiagnosticsSnapshot? _snapshot;
 
-    public DiagnosticsWindow(IDiagnosticsCollector collector)
+    public DiagnosticsPage(IDiagnosticsCollector collector)
     {
         _collector = collector;
         InitializeComponent();
@@ -178,7 +183,7 @@ internal partial class DiagnosticsWindow : Window
             Filter = "Zip archives (*.zip)|*.zip",
             FileName = $"rororoblox-support-{DateTime.Now:yyyyMMdd-HHmm}.zip",
         };
-        if (dialog.ShowDialog(this) != true)
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true)
         {
             return;
         }
@@ -292,10 +297,5 @@ internal partial class DiagnosticsWindow : Window
             return line[..(idx + cookieName.Length)] + "=[REDACTED]";
         }
         return line;
-    }
-
-    private void OnCloseClick(object sender, RoutedEventArgs e)
-    {
-        Close();
     }
 }

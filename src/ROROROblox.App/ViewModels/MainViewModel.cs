@@ -92,13 +92,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private DiscordConfigService? AlertConfig => _discordConfigService ?? DiscordConfigServiceOverride;
 
     /// <summary>
-    /// Builds the Preferences dialog. Set by the composition root, which is the only place that
-    /// should know what that window needs — it now takes eleven services, and having this view
-    /// model construct it meant every dependency added to Preferences also had to be added here,
-    /// to a constructor that is already the largest in the app. The factory keeps that growth in
-    /// the one place designed to absorb it.
+    /// Opens (or surfaces) the shell window at a destination (F-013). Set by the composition
+    /// root, which is the only place that knows what each page needs — the same growth-absorbing
+    /// role the old <c>PreferencesWindowFactory</c> played, generalized to all six former modal
+    /// islands.
     /// </summary>
-    internal Func<Preferences.PreferencesWindow>? PreferencesWindowFactory { get; set; }
+    internal Action<Shell.ShellPage>? ShellPageOpener { get; set; }
 
     /// <summary>
     /// In-flight session-history rows keyed by account id. Populated when LaunchAccountAsync
@@ -3535,24 +3534,33 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// SettingsWindow that was never settings (audit finding F-006). Settings is
     /// <see cref="OpenPreferencesCommand"/>.
     /// </summary>
-    private void OpenGames()
-    {
-        var window = Parented(new GamesWindow(_favorites, _privateServerStore, _api));
-        window.ShowDialog();
-        // Refresh in case the user added / removed / set-default'd a game.
-        _ = ReloadGamesAsync();
-    }
+    private void OpenGames() => OpenShellPage(Shell.ShellPage.Games);
 
-    private void OpenDiagnostics()
-    {
-        var window = Parented(new DiagnosticsWindow(_diagnostics));
-        window.ShowDialog();
-    }
+    private void OpenDiagnostics() => OpenShellPage(Shell.ShellPage.Diagnostics);
 
-    private void OpenAbout()
+    private void OpenAbout() => OpenShellPage(Shell.ShellPage.About);
+
+    /// <summary>
+    /// Route to a destination in the non-modal shell (F-013). The six former modal openers all
+    /// come through here. The old post-close refreshes these openers carried (Games and History
+    /// reloading the library after <c>ShowDialog</c> returned) have no close moment any more;
+    /// the composition root wires the two library-writing pages back to
+    /// <see cref="ReloadGamesAsync"/> instead, so the refresh now happens when the data changes
+    /// rather than when a window closes.
+    /// </summary>
+    private void OpenShellPage(Shell.ShellPage page)
     {
-        var window = Parented(new AboutWindow());
-        window.ShowDialog();
+        // Same fixture contract PreferencesWindowFactory carried (Fix round 1, Finding 4): null
+        // means a test constructed this VM directly and is exercising an Open*Command without
+        // supplying an opener — a fixture bug to surface, not a case to paper over.
+        if (ShellPageOpener is null)
+        {
+            throw new InvalidOperationException(
+                "Opening a shell destination requires ShellPageOpener. The composition root sets " +
+                "it in production; a test exercising an Open*Command must supply one.");
+        }
+
+        ShellPageOpener(page);
     }
 
     /// <summary>
@@ -3806,36 +3814,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private void OpenHistory()
-    {
-        var window = Parented(new SessionHistoryWindow(_sessionHistory, _favorites, _api, _streamerIdentity));
-        window.ShowDialog();
-        // The user may have bookmarked games from history; refresh the per-row dropdowns so
-        // they appear without a restart.
-        _ = ReloadGamesAsync();
-    }
+    private void OpenHistory() => OpenShellPage(Shell.ShellPage.History);
 
-    private void OpenPreferences()
-    {
-        // Fix round 1, Finding 4: no fallback here. _discordConfigStore is DI-supplied
-        // unconditionally in production (App.ConfigureServices registers it regardless of whether
-        // Discord:ApplicationId is configured — see that registration's remarks), so this is never
-        // null at either real call site (this method, and App.OpenPreferencesFromTray). A
-        // hand-rolled fallback that recomposed the same discord.dat path here was dead code that
-        // could never run in production and left two places knowing where that file lives — a null
-        // here means a test constructed this VM directly and is exercising OpenPreferencesCommand
-        // without supplying one, which is a fixture bug to fix, not a case to paper over.
-        if (PreferencesWindowFactory is null)
-        {
-            throw new InvalidOperationException(
-                "OpenPreferences requires PreferencesWindowFactory. The composition root sets it " +
-                "in production; a test exercising OpenPreferencesCommand must supply one.");
-        }
-
-        var window = PreferencesWindowFactory();
-        Parented(window);
-        window.ShowDialog();
-    }
+    private void OpenPreferences() => OpenShellPage(Shell.ShellPage.Settings);
 
     /// <summary>
     /// Set the given account as the user's main. Persists via <see cref="IAccountStore.SetMainAsync"/>;

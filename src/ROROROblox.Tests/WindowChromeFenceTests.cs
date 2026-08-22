@@ -31,11 +31,7 @@ public class WindowChromeFenceTests
     private static readonly string[] Destinations =
     [
         "MainWindow",
-        "PreferencesWindow",
-        "GamesWindow",
-        "DiagnosticsWindow",
-        "SessionHistoryWindow",
-        "PluginsWindow",
+        "ShellWindow",
         "ThemeBuilderWindow",
         "SquadLaunchWindow",
         "FriendFollowWindow",
@@ -48,7 +44,6 @@ public class WindowChromeFenceTests
     /// <summary>Asks one thing and goes away. Fixed, no minimums.</summary>
     private static readonly string[] Interruptions =
     [
-        "AboutWindow",
         "JoinByLinkWindow",
         "CaptionColorPickerWindow",
         "DpapiCorruptWindow",

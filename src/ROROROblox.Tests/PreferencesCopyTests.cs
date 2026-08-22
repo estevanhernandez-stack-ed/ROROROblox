@@ -69,7 +69,7 @@ namespace ROROROblox.Tests;
 /// </summary>
 public class PreferencesCopyTests
 {
-    private const string PagePath = "src/ROROROblox.App/Preferences/PreferencesWindow.xaml";
+    private const string PagePath = "src/ROROROblox.App/Preferences/SettingsPage.xaml";
 
     private static readonly XNamespace Xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
 

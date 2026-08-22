@@ -1,5 +1,14 @@
 # Capture checklist — glow campaign: Settings + navigation
 
+> **F-013 shell fold, 2026-08-21.** Games, Settings, History, Diagnostics, Plugins and About are
+> now PAGES of one non-modal shell window with a persistent left rail; the six windows are gone.
+> The routes still resolve because the shell's title tracks the active page (the captured Window
+> name IS the destination noun), Settings keeps its inner `SettingsNav` rail, and the toolbar and
+> Tools-menu doors are unchanged — they navigate the shell instead of opening a dialog. One
+> captured name changed: About is now titled `About`, not `About RoRoRo` (the product-name
+> exemption belonged to the window, and retired with it). Rows below that name the old window
+> files describe where the surface CAME from; the current files are `*Page.xaml` beside them.
+
 > **Corrected 2026-08-09 by measurement against the running app.** Three constraints below are
 > false and the capture tool does not honour them.
 >

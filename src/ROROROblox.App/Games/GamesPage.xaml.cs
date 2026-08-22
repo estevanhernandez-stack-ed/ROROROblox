@@ -7,7 +7,12 @@ using ROROROblox.Core;
 
 namespace ROROROblox.App.Games;
 
-internal partial class GamesWindow : Window
+/// <summary>
+/// The Games destination, hosted by the shell (F-013 — formerly <c>GamesWindow</c>). <c>Loaded</c>
+/// refires on every navigation back here, so each visit reloads the stores — the same freshness
+/// the per-open window had.
+/// </summary>
+internal partial class GamesPage : UserControl
 {
     private readonly IFavoriteGameStore _favorites;
     private readonly IPrivateServerStore _servers;
@@ -16,11 +21,19 @@ internal partial class GamesWindow : Window
     private readonly ObservableCollection<GameSearchResult> _searchItems = [];
     private readonly ObservableCollection<SavedPrivateServer> _serverItems = [];
 
-    public GamesWindow(IFavoriteGameStore favorites, IPrivateServerStore servers, IRobloxApi api)
+    // The old modal reloaded the view model's library once, when ShowDialog returned. A shell page
+    // has no close moment, so the composition root hands in the refresh and the page invokes it
+    // whenever its own lists reload — every mutation path already reloads, so every mutation
+    // reaches the main window without waiting for anything to close (F-013).
+    private readonly Action? _libraryChanged;
+
+    public GamesPage(IFavoriteGameStore favorites, IPrivateServerStore servers, IRobloxApi api,
+        Action? libraryChanged = null)
     {
         _favorites = favorites;
         _servers = servers;
         _api = api;
+        _libraryChanged = libraryChanged;
         InitializeComponent();
         FavoritesList.ItemsSource = _items;
         SearchResultsList.ItemsSource = _searchItems;
@@ -114,6 +127,7 @@ internal partial class GamesWindow : Window
             _items.Add(fav);
         }
         EmptyState.Visibility = _items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        _libraryChanged?.Invoke();
     }
 
     private async Task ReloadServersAsync()
@@ -125,6 +139,7 @@ internal partial class GamesWindow : Window
             _serverItems.Add(server);
         }
         ServersEmptyState.Visibility = _serverItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        _libraryChanged?.Invoke();
     }
 
     private async void OnAddClick(object sender, RoutedEventArgs e)
@@ -241,7 +256,7 @@ internal partial class GamesWindow : Window
 
         var game = _items.FirstOrDefault(f => f.PlaceId == placeId);
         var confirm = MessageBox.Show(
-            this,
+            Window.GetWindow(this),
             $"Remove {game?.RenderName ?? "this game"} from your saved games?",
             "Remove game",
             MessageBoxButton.YesNo,
@@ -272,7 +287,7 @@ internal partial class GamesWindow : Window
 
         var server = _serverItems.FirstOrDefault(s => s.Id == id);
         var confirm = MessageBox.Show(
-            this,
+            Window.GetWindow(this),
             $"Remove {server?.RenderName ?? "this server"} from your saved servers?",
             "Remove server",
             MessageBoxButton.YesNo,
@@ -308,7 +323,7 @@ internal partial class GamesWindow : Window
             game.PlaceId,
             game.Name,
             game.LocalName);
-        var result = await RenameWindow.ShowAsync(this, target);
+        var result = await RenameWindow.ShowAsync(Window.GetWindow(this)!, target);
         if (result.Kind == RenameResultKind.Cancel)
         {
             return;
@@ -359,7 +374,7 @@ internal partial class GamesWindow : Window
             server.Id,
             server.Name,
             server.LocalName);
-        var result = await RenameWindow.ShowAsync(this, target);
+        var result = await RenameWindow.ShowAsync(Window.GetWindow(this)!, target);
         if (result.Kind == RenameResultKind.Cancel)
         {
             return;
@@ -396,10 +411,5 @@ internal partial class GamesWindow : Window
             StatusText.Text = "That server isn't saved any more.";
             await ReloadServersAsync();
         }
-    }
-
-    private void OnCloseClick(object sender, RoutedEventArgs e)
-    {
-        Close();
     }
 }

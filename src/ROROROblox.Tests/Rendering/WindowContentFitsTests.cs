@@ -43,7 +43,17 @@ public class WindowContentFitsTests
         { "WebView2NotInstalledWindow", () => new App.Modals.WebView2NotInstalledWindow() },
         { "StopAllConfirmWindow", () => new App.Modals.StopAllConfirmWindow(3) },
         { "LeftoverProcessesWindow", () => new App.Modals.LeftoverProcessesWindow(2, 1) },
-        { "AboutWindow", () => new App.About.AboutWindow() },
+        // The shell measured with its cheapest real page (About needs no services). The other
+        // five pages need stores/VMs the fits doctrine forbids faking here; they are covered by
+        // their own render gates.
+        {
+            "ShellWindow", () =>
+            {
+                var shell = new App.Shell.ShellWindow(_ => new App.About.AboutPage());
+                shell.NavigateTo(App.Shell.ShellPage.About);
+                return shell;
+            }
+        },
     };
 
     [WindowRenderTheory]
