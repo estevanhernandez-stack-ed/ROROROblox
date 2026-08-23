@@ -51,7 +51,7 @@
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `SessionStats`, `AccountStat`, `GameStat`, `DayStat`, `MonthStat`, `StreakRecord`, `LongestSession`, `StatsEvent` (with `LaunchRecorded` / `SessionEnded` / `ConcurrencyObserved` cases). Every later task uses these names.
+- Produces: `SessionStats`, `AccountStat`, `GameStat`, `DayStat`, `MonthStat`, `StreakRecord`, `LongestSession`, `StatsEvent` (with `LaunchRecorded` / `SessionEnded` / `ConcurrencyObserved` / `SessionMissingEnd` cases), and `DayKey` (`For`, `IsNextDay`, `MonthOf`). Every later task uses these names.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -79,6 +79,23 @@ public class SessionStatsModelTests
         Assert.Equal(0, s.Streak.CurrentDays);
         Assert.Equal(0, s.Streak.LongestDays);
     }
+
+    [Theory]
+    // Spring forward 2026-03-08 (a 23-hour local day) and fall back 2026-11-01 (25 hours).
+    // Both are consecutive calendar days and must chain a streak. An elapsed-hours check
+    // gets both of these wrong, in opposite directions.
+    [InlineData("2026-03-07", "2026-03-08", true)]
+    [InlineData("2026-11-01", "2026-11-02", true)]
+    [InlineData("2026-12-31", "2027-01-01", true)]   // year boundary
+    [InlineData("2026-02-28", "2026-03-01", true)]   // non-leap month boundary
+    [InlineData("2026-03-07", "2026-03-09", false)]  // a real gap
+    [InlineData("2026-03-08", "2026-03-08", false)]  // same day is not a new day
+    public void NextDayIsACalendarQuestionNotAnElapsedTimeOne(string a, string b, bool expected)
+        => Assert.Equal(expected, DayKey.IsNextDay(a, b));
+
+    [Fact]
+    public void MonthOfTakesTheYearAndMonthOfADayKey()
+        => Assert.Equal("2026-03", DayKey.MonthOf("2026-03-08"));
 }
 ```
 
@@ -143,6 +160,32 @@ public sealed record StreakRecord(
 
 public sealed record LongestSession(
     TimeSpan Duration, Guid AccountId, long? PlaceId, DateTimeOffset WhenUtc);
+
+/// <summary>
+/// Day bucket keys, and the only place "is this the next day" is decided.
+///
+/// <para>This exists as a seam because the alternative — subtracting two timestamps and comparing
+/// to 24 hours — is wrong twice a year. A spring-forward local day is 23 hours and a fall-back one
+/// is 25, so an elapsed-time check silently breaks a streak in March and silently extends one in
+/// November. Comparing calendar dates cannot have that bug.</para>
+/// </summary>
+public static class DayKey
+{
+    /// <summary>Local calendar day. Local because "days in a row I played" is a human notion — spec §6.</summary>
+    public static string For(DateTimeOffset at) => at.ToLocalTime().ToString("yyyy-MM-dd");
+
+    public static string MonthOf(string dayKey) => dayKey[..7];
+
+    /// <summary>
+    /// Whether <paramref name="next"/> is the calendar day immediately after <paramref name="previous"/>.
+    /// Operates on date strings, so its answer does not depend on the machine's time zone — which
+    /// matters because CI runs UTC and developers do not.
+    /// </summary>
+    public static bool IsNextDay(string previous, string next)
+        => DateOnly.TryParse(previous, out var p)
+        && DateOnly.TryParse(next, out var n)
+        && p.AddDays(1) == n;
+}
 
 /// <summary>What the store is told. One case per thing that can move a number.</summary>
 public abstract record StatsEvent
@@ -284,6 +327,45 @@ public class SessionStatsStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task AStreakChainsAcrossADaylightSavingBoundary()
+    {
+        // Through the store this time, not just the helper: three launches on consecutive
+        // local calendar days spanning the spring-forward transition. Deterministic in any
+        // time zone because the assertion is about the chain, not about wall-clock spacing.
+        var store = NewStore();
+        var days = new[]
+        {
+            new DateTimeOffset(2026, 3, 7, 12, 0, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 3, 8, 12, 0, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 3, 9, 12, 0, 0, TimeSpan.Zero),
+        };
+        foreach (var d in days)
+        {
+            await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", d));
+        }
+
+        var s = await store.ReadAsync();
+
+        Assert.Equal(3, s.Streak.CurrentDays);
+        Assert.Equal(3, s.Streak.LongestDays);
+    }
+
+    [Fact]
+    public async Task AGapBreaksTheStreakButKeepsTheRecord()
+    {
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", Day(1)));
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", Day(2)));
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", Day(3)));
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", Day(9)));  // gap
+
+        var s = await store.ReadAsync();
+
+        Assert.Equal(1, s.Streak.CurrentDays);
+        Assert.Equal(3, s.Streak.LongestDays);
+    }
+
+    [Fact]
     public async Task ACorruptFileStartsFreshInsteadOfThrowing()
     {
         await File.WriteAllTextAsync(_tempPath, "{ this is not json");
@@ -324,12 +406,12 @@ Mirror `SessionHistoryStore` exactly: same `JsonSerializerOptions` (camelCase, i
 
 Key detail for `SessionEnded`: compute `var d = EndedUtc - StartedUtc; if (d < TimeSpan.Zero) d = TimeSpan.Zero;` **before** touching any total.
 
-Key detail for streak: on a `LaunchRecorded` whose local day differs from `Streak.LastPlayedDay`, extend when the new day is exactly one after, otherwise restart at 1; update `LongestDays` when `CurrentDays` exceeds it.
+Key detail for streak: on a `LaunchRecorded` whose local day differs from `Streak.LastPlayedDay`, extend when `DayKey.IsNextDay(last, today)`, otherwise restart at 1; update `LongestDays` when `CurrentDays` exceeds it. **Every day-key derivation and every consecutiveness question goes through `DayKey`** — do not subtract timestamps and compare to 24 hours anywhere in this file, which is the bug that seam exists to prevent.
 
 - [ ] **Step 5: Run them and watch them pass**
 
 Run: `dotnet test src/ROROROblox.Tests/ --filter "FullyQualifiedName~SessionStatsStoreTests"`
-Expected: PASS, 6 tests.
+Expected: PASS, 8 tests.
 
 - [ ] **Step 6: Commit**
 
@@ -984,4 +1066,8 @@ Confirm the history list still populates — the decorator has not broken the th
 
 **Spec coverage.** §0 → Tasks 2, 3 (the rollup exists because of the cap). §1 → Tasks 2, 7. §2 → Tasks 1, 2. §2.1 → Task 1 model, Task 7 presenter test. §2.2 → Task 3. §3.1 → Task 2. §3.2 → Task 4. §3.3 → Task 6 step 4. §4 → Task 5. §5 → Task 2 (clamping, missing-end), Task 7 (integrity note, "since install"). §6 → Task 2 (local days), Task 7 (roster, uptime ranking). §7 → every task's tests. §8 → File Structure. §9 → Global Constraints.
 
-**Known gap, deliberate.** Spec §7 lists a DST-transition streak test. It is not a separate task step because it belongs in Task 2's streak logic; add it there as a sixth test if the implementer's streak code branches on anything timezone-shaped. Flagged rather than silently dropped.
+**DST coverage.** Spec §7's DST-transition streak requirement is covered twice and in a way that
+does not depend on the machine's time zone: `DayKey.IsNextDay` is pinned by a `[Theory]` in Task 1
+covering both transitions plus year and month boundaries, and Task 2 chains a streak through the
+store across the spring-forward date. The seam is the point — CI runs UTC and has no DST at all, so
+a test written against ambient local time would pass on a developer's machine and prove nothing in CI.
