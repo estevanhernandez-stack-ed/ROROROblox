@@ -74,6 +74,28 @@ corrected twice.
 A rollup keyed by name would be worse than the original defect, because a rename would not merely
 mislabel a row, it would **split a lifetime total in two**.
 
+### §2.2 The rollup needs one fold tier of its own
+
+Per-account is bounded by how many accounts exist; per-game by how many games are actually played.
+**Per-day is the only collection that grows forever**, at 365 entries a year.
+
+That is a write-path problem before it is a disk problem. `ApplyAsync` is read-modify-write on every
+session end (§3.1), so a file growing linearly forever recreates the exact objection this design
+raised against simply raising `MaxRows`: a five-year file is roughly 365 KB rewritten every time a
+client closes. Slower clock, same mistake.
+
+**Decision: keep ~400 days raw, fold older days into per-month buckets.** Four hundred covers
+thirteen months, which is what "this year" and any year-over-year comparison need. Months accrue at
+twelve a year. The file goes effectively flat — after ten years, ~400 daily plus ~120 monthly
+entries.
+
+**Streaks must therefore be records, not derivations.** A streak spanning the fold boundary cannot
+be recovered from monthly totals, so current-streak-start and longest-streak-ever are maintained
+incrementally as days land and are never recomputed from buckets. With that, folding is lossless
+for every stat in §1, and day buckets exist only to serve recent detail such as busiest day.
+
+Folding runs at most once per session end, and only when the raw-day count exceeds the threshold.
+
 ## §3 Components
 
 Three, each with one job.
@@ -157,6 +179,10 @@ more played than one session of three hours.
 - **Decorator pass-through**: the inner `ISessionHistoryStore` receives every call unchanged, and an
   exception from the stats side does not prevent the history write. This is the F-121 guard — the
   test exists because the failure it catches is invisible until someone's history stops recording.
+- Folding: days beyond the threshold collapse into the right month, totals survive the fold, and
+  the fold is idempotent.
+- **Streak records survive a fold.** A streak established before the boundary still reads correctly
+  after older days become months — the test that proves streaks are records rather than derivations.
 - Backfill is idempotent: running it twice does not double any total.
 - Backfill runs against a **committed fixture** shaped like §0's measurement — 100 rows, 93 with
   end timestamps, 3 games, 8 accounts — and produces that fixture's known totals. The fixture is
