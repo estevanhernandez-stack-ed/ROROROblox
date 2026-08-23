@@ -186,4 +186,99 @@ public class SessionStatsStoreTests : IDisposable
         Assert.Empty(s.Accounts);
         Assert.Equal(0, s.PeakConcurrentAlts);
     }
+
+    // =====================================================================
+    // The fold (§2.2). Per-day is the only collection that grows forever,
+    // and ApplyAsync is read-modify-write on every session end.
+    // =====================================================================
+
+    [Fact]
+    public async Task DaysBeyondTheLimitFoldIntoMonthsWithTotalsIntact()
+    {
+        var store = NewStore();
+        var start = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        const int extra = 50;
+
+        for (var i = 0; i < SessionStatsStore.RawDayLimit + extra; i++)
+        {
+            var at = start.AddDays(i);
+            await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", at));
+            await store.ApplyAsync(new StatsEvent.SessionEnded(Alt, 1L, at, at.AddMinutes(10)));
+        }
+
+        var s = await store.ReadAsync();
+
+        Assert.True(s.Days.Count <= SessionStatsStore.RawDayLimit,
+            $"raw days should be capped at {SessionStatsStore.RawDayLimit}, found {s.Days.Count}");
+        Assert.NotEmpty(s.Months);
+
+        // The fold moves detail, never totals.
+        var expected = TimeSpan.FromMinutes(10 * (SessionStatsStore.RawDayLimit + extra));
+        Assert.Equal(expected, s.Accounts[Alt].Uptime);
+
+        var folded = s.Days.Values.Aggregate(TimeSpan.Zero, (a, d) => a + d.Uptime)
+                   + s.Months.Values.Aggregate(TimeSpan.Zero, (a, m) => a + m.Uptime);
+        Assert.Equal(expected, folded);
+
+        var foldedLaunches = s.Days.Values.Sum(d => d.Launches) + s.Months.Values.Sum(m => m.Launches);
+        Assert.Equal(SessionStatsStore.RawDayLimit + extra, foldedLaunches);
+    }
+
+    [Fact]
+    public async Task AStreakSurvivesTheFold()
+    {
+        // The test that proves streaks are records, not derivations. A streak established before
+        // the fold boundary cannot be recomputed from monthly totals -- so if anyone ever
+        // "simplifies" streaks into a scan over Days, this fails. Spec §2.2.
+        var store = NewStore();
+        var start = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        const int total = SessionStatsStore.RawDayLimit + 50;
+
+        for (var i = 0; i < total; i++)
+        {
+            await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", start.AddDays(i)));
+        }
+
+        var s = await store.ReadAsync();
+
+        Assert.True(s.Days.Count <= SessionStatsStore.RawDayLimit);
+        Assert.Equal(total, s.Streak.LongestDays);
+        Assert.Equal(total, s.Streak.CurrentDays);
+    }
+
+    [Fact]
+    public async Task FoldingIsIdempotent()
+    {
+        var store = NewStore();
+        var start = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        for (var i = 0; i < SessionStatsStore.RawDayLimit + 10; i++)
+        {
+            await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", start.AddDays(i)));
+        }
+
+        var first = await store.ReadAsync();
+        await store.ApplyAsync(new StatsEvent.ConcurrencyObserved(1)); // triggers another save
+        var second = await store.ReadAsync();
+
+        Assert.Equal(first.Months.Count, second.Months.Count);
+        Assert.Equal(first.Months.Values.Sum(m => m.Launches), second.Months.Values.Sum(m => m.Launches));
+        Assert.Equal(first.Days.Count, second.Days.Count);
+    }
+
+    [Fact]
+    public async Task TheOldestDaysAreTheOnesThatFold()
+    {
+        var store = NewStore();
+        var start = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        for (var i = 0; i < SessionStatsStore.RawDayLimit + 5; i++)
+        {
+            await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", start.AddDays(i)));
+        }
+
+        var s = await store.ReadAsync();
+
+        // The first five days are gone from Days; the most recent one is still there.
+        Assert.DoesNotContain(DayKey.For(start), s.Days.Keys);
+        Assert.Contains(DayKey.For(start.AddDays(SessionStatsStore.RawDayLimit + 4)), s.Days.Keys);
+    }
 }
