@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
+using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 using ROROROblox.Core.StreamerMode;
 
@@ -52,11 +53,20 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
     // refresh instead (F-013).
     private readonly Action? _libraryChanged;
 
+    // v1.23 session stats (spec §1). Both optional so every existing construction — tests
+    // included — keeps compiling; a page built without them simply never shows the block.
+    private readonly ISessionStatsStore? _stats;
+    private readonly Func<IReadOnlyList<AccountSummary>>? _roster;
+
     public SessionHistoryPage(
         ISessionHistoryStore store, IFavoriteGameStore favorites, IRobloxApi api,
         IStreamerIdentityProvider? streamerIdentity = null,
-        Action? libraryChanged = null)
+        Action? libraryChanged = null,
+        ISessionStatsStore? stats = null,
+        Func<IReadOnlyList<AccountSummary>>? roster = null)
     {
+        _stats = stats;
+        _roster = roster;
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _favorites = favorites ?? throw new ArgumentNullException(nameof(favorites));
         _api = api ?? throw new ArgumentNullException(nameof(api));
@@ -90,7 +100,76 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
             ? MessageBox.Show(owner, text, caption, button, image)
             : MessageBox.Show(text, caption, button, image);
 
-    private async void OnLoaded(object sender, RoutedEventArgs e) => await ReloadAsync();
+    private async void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        await ReloadAsync();
+        await RenderStatsAsync();
+    }
+
+    /// <summary>
+    /// Fill the stats block from the rollup. Failure collapses the block and says nothing louder
+    /// than a log line — stats must never take the history page down with them (spec §5).
+    /// </summary>
+    private async Task RenderStatsAsync()
+    {
+        if (_stats is null || _roster is null) return;
+
+        SessionStats snapshot;
+        try
+        {
+            snapshot = await _stats.ReadAsync();
+        }
+        catch
+        {
+            StatsBlock.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        // RenderName inside the presenter is streamer-aware, so this block follows the same rule
+        // as the rows below: never the real roster while streamer mode is active.
+        var view = SessionStatsPresenter.Build(snapshot, _roster());
+
+        if (!view.HasAnything)
+        {
+            StatsBlock.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        StatsBlock.Visibility = Visibility.Visible;
+        PeakAltsText.Text = view.PeakConcurrentAlts.ToString();
+        TotalUptimeText.Text = view.TotalUptime;
+        MostPlayedText.Text = $"most played: {view.MostPlayedGame}";
+        StreakText.Text = view.StreakDays.ToString();
+        StreakCaption.Text = view.LongestStreakDays > view.StreakDays
+            ? $"best: {view.LongestStreakDays} days · longest session {view.LongestSession}"
+            : $"longest session {view.LongestSession}";
+
+        LeaderboardList.Children.Clear();
+        foreach (var row in view.Leaderboard)
+        {
+            var line = new DockPanel { Margin = new Thickness(2, 2, 2, 0) };
+            var uptime = new TextBlock
+            {
+                Text = $"{SessionStatsPresenter.FormatUptime(row.Uptime)} · {row.Launches} launches",
+                FontSize = (double)FindResource("MetaFontSize"),
+                Foreground = (Brush)FindResource("MutedTextBrush"),
+            };
+            DockPanel.SetDock(uptime, Dock.Right);
+            line.Children.Add(uptime);
+            line.Children.Add(new TextBlock
+            {
+                Text = row.Name,
+                FontSize = (double)FindResource("BodyFontSize"),
+                Foreground = (Brush)FindResource("WhiteBrush"),
+                TextTrimming = TextTrimming.CharacterEllipsis,
+            });
+            LeaderboardList.Children.Add(line);
+        }
+
+        IntegrityNoteText.Text = view.IntegrityNote;
+        IntegrityNoteText.Visibility = view.IntegrityNote.Length > 0
+            ? Visibility.Visible : Visibility.Collapsed;
+    }
 
     private void OnStreamerIdentityChanged(object? sender, EventArgs e)
     {
@@ -98,6 +177,9 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
         {
             RenderRows();
         }
+        // The leaderboard shows account names, so it follows the same toggle (the roster's
+        // RenderName re-resolves through the identity provider on every Build).
+        _ = RenderStatsAsync();
     }
 
     private async Task ReloadAsync()

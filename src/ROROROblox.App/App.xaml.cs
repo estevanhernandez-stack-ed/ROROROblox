@@ -1151,7 +1151,11 @@ public partial class App : Application
                 // Same streamer-identity singleton the VM's opener always threaded through — the
                 // page must never show the real roster while streamer mode is active.
                 _services.GetRequiredService<ROROROblox.Core.StreamerMode.IStreamerIdentityProvider>(),
-                libraryChanged: () => _ = _services.GetRequiredService<MainViewModel>().ReloadGamesAsync()),
+                libraryChanged: () => _ = _services.GetRequiredService<MainViewModel>().ReloadGamesAsync(),
+                stats: _services.GetRequiredService<ISessionStatsStore>(),
+                // A Func, not a snapshot: the roster can change while the page is open, and
+                // AccountsSnapshot is the VM's lock-free point-in-time copy (safe off-thread).
+                roster: () => _services.GetRequiredService<MainViewModel>().AccountsSnapshot),
             Shell.ShellPage.Diagnostics => new Diagnostics.DiagnosticsPage(
                 _services.GetRequiredService<IDiagnosticsCollector>()),
             Shell.ShellPage.Plugins => BuildPluginsPage(),
