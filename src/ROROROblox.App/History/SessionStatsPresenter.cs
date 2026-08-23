@@ -19,10 +19,10 @@ internal static class SessionStatsPresenter
     internal sealed record LeaderboardRow(string Name, int Launches, TimeSpan Uptime, int StreakDays)
     {
         /// <summary>
-        /// Empty at zero, deliberately: per-alt streaks start accruing at install (history rows
+        /// Empty at zero, deliberately: per-alt streaks start when history begins (rows
         /// record where a launch was AIMED, not whether it landed, so backfill cannot seed a
         /// truthful chain), and eight rows of "0d streak" on day one reads as broken rather
-        /// than new.
+        /// than new. "History begins" rather than "install": Clear history clears stats too.
         /// </summary>
         public string StreakSuffix => StreakDays > 0 ? $" · {StreakDays}d streak" : string.Empty;
     }

@@ -60,7 +60,7 @@
                                        FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
                                        Foreground="{DynamicResource CyanBrush}"
                                        Margin="0,2,0,0" />
-                            <TextBlock x:Name="PeakAltsCaption" Text="since install"
+                            <TextBlock x:Name="PeakAltsCaption" Text="since history began"
                                        FontSize="{DynamicResource MetaFontSize}"
                                        Foreground="{DynamicResource MutedTextBrush}" />
                         </StackPanel>

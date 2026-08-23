@@ -139,7 +139,7 @@ Without this the page reads zero on the day it ships, which is a bad first impre
 whose entire appeal is an accumulated number. With it, the author's machine starts at ~20 days and
 18.9 hours. The backfill is explicitly best-effort: it recovers uptime, per-account, per-game, and
 per-day, and it **cannot** recover peak concurrency (§3.3) — that record starts at the highest
-concurrency observed after install, and the UI must not imply otherwise.
+concurrency observed after the rollup begins, and the UI must not imply otherwise.
 
 ## §5 Honesty rules
 
@@ -152,8 +152,11 @@ unfalsifiable from the user's side and erodes trust in every other number on the
 - **Durations clamp at zero.** A clock change or a bad row must not poison a lifetime total.
 - **A corrupt or unreadable stats file starts fresh and logs.** It never blocks a launch. Stats are
   the least important thing this app does.
-- **Peak concurrency is labelled as "since install"** where backfill could not reach, rather than
-  implied to be all-time.
+- **Peak concurrency is labelled "since history began"** rather than implied to be all-time.
+  Not "since install": Clear history clears the stats file with it (the two must agree — a
+  cleared history with lifetime totals still standing reads as the confirmation dialog having
+  lied), so the epoch is the history's epoch, and the caption must be true in both the
+  fresh-install case and the post-clear case.
 
 ## §6 Decisions taken, with their costs
 
@@ -237,7 +240,7 @@ again the next day without launching again, which is correct: it was there.
 Consequences accepted with the ruling:
 
 - **Backfill cannot seed these chains.** History rows record where a launch was aimed, not whether
-  it landed. Per-alt streaks start at install, like peak concurrency, and the leaderboard omits
+  it landed. Per-alt streaks start when history begins, like peak concurrency, and the leaderboard omits
   the suffix at zero — eight rows of "0d streak" on day one reads as broken rather than new.
 - **Two chains, two definitions, one algorithm.** Global streak = "you played today" (any launch);
   per-alt = "this alt landed today." A test pins that neither trigger moves the other's chain,
