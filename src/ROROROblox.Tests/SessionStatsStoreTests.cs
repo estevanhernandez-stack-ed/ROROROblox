@@ -1,0 +1,366 @@
+using System.IO;
+using ROROROblox.Core;
+using Xunit;
+
+namespace ROROROblox.Tests;
+
+/// <summary>
+/// The rollup store: arithmetic, records, streaks, and the honesty rules from spec §5.
+/// Every test uses a temp file — none reads a developer's live session-stats.json.
+/// </summary>
+public class SessionStatsStoreTests : IDisposable
+{
+    private readonly string _tempPath;
+    private static readonly Guid Alt = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid Other = Guid.Parse("22222222-2222-2222-2222-222222222222");
+
+    public SessionStatsStoreTests()
+        => _tempPath = Path.Combine(Path.GetTempPath(), $"rororoblox-stats-test-{Guid.NewGuid():N}.json");
+
+    public void Dispose()
+    {
+        try { if (File.Exists(_tempPath)) File.Delete(_tempPath); } catch { }
+    }
+
+    private SessionStatsStore NewStore() => new(_tempPath);
+
+    private static DateTimeOffset Day(int d, int hour = 12)
+        => new(2026, 3, d, hour, 0, 0, TimeSpan.Zero);
+
+    [Fact]
+    public async Task LaunchesAndUptimeAccumulatePerAccount()
+    {
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 999L, "Pet Sim", Day(1)));
+        await store.ApplyAsync(new StatsEvent.SessionEnded(Alt, 999L, Day(1), Day(1).AddMinutes(90)));
+
+        var s = await store.ReadAsync();
+
+        Assert.Equal(1, s.Accounts[Alt].Launches);
+        Assert.Equal(TimeSpan.FromMinutes(90), s.Accounts[Alt].Uptime);
+        Assert.Equal(TimeSpan.FromMinutes(90), s.TotalUptime);
+        Assert.Equal(TimeSpan.FromMinutes(90), s.Games[999L].Uptime);
+        Assert.Equal("Pet Sim", s.Games[999L].LastKnownName);
+    }
+
+    [Fact]
+    public async Task TotalsSpanAccountsRatherThanTrackingOnlyTheLastOne()
+    {
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.SessionEnded(Alt, 1L, Day(1), Day(1).AddMinutes(30)));
+        await store.ApplyAsync(new StatsEvent.SessionEnded(Other, 1L, Day(1), Day(1).AddMinutes(45)));
+
+        var s = await store.ReadAsync();
+
+        Assert.Equal(2, s.Accounts.Count);
+        Assert.Equal(TimeSpan.FromMinutes(75), s.TotalUptime);
+    }
+
+    [Fact]
+    public async Task PeakConcurrencyOnlyRises()
+    {
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.ConcurrencyObserved(3));
+        await store.ApplyAsync(new StatsEvent.ConcurrencyObserved(7));
+        await store.ApplyAsync(new StatsEvent.ConcurrencyObserved(2));
+
+        Assert.Equal(7, (await store.ReadAsync()).PeakConcurrentAlts);
+    }
+
+    [Fact]
+    public async Task ANegativeDurationContributesZeroRatherThanPoisoningTheTotal()
+    {
+        // Clock moved backwards mid-session. Spec §5 — a bad row must not poison a lifetime total.
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.SessionEnded(Alt, 1L, Day(2), Day(1)));
+
+        var s = await store.ReadAsync();
+
+        Assert.Equal(TimeSpan.Zero, s.TotalUptime);
+        Assert.True(s.Accounts[Alt].Uptime >= TimeSpan.Zero);
+    }
+
+    [Fact]
+    public async Task TheLongestSessionIsKeptAsARecord()
+    {
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.SessionEnded(Alt, 1L, Day(1), Day(1).AddMinutes(30)));
+        await store.ApplyAsync(new StatsEvent.SessionEnded(Alt, 2L, Day(2), Day(2).AddMinutes(200)));
+        await store.ApplyAsync(new StatsEvent.SessionEnded(Alt, 3L, Day(3), Day(3).AddMinutes(10)));
+
+        var longest = (await store.ReadAsync()).Longest;
+
+        Assert.NotNull(longest);
+        Assert.Equal(TimeSpan.FromMinutes(200), longest!.Duration);
+        Assert.Equal(2L, longest.PlaceId);
+    }
+
+    [Fact]
+    public async Task SessionsMissingAnEndAreCountedNotGuessed()
+    {
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.SessionMissingEnd());
+        await store.ApplyAsync(new StatsEvent.SessionMissingEnd());
+
+        var s = await store.ReadAsync();
+
+        Assert.Equal(2, s.SessionsMissingAnEnd);
+        Assert.Equal(TimeSpan.Zero, s.TotalUptime);
+    }
+
+    [Fact]
+    public async Task AStreakChainsAcrossADaylightSavingBoundary()
+    {
+        // Through the store this time, not just the helper: three launches on consecutive local
+        // calendar days spanning the spring-forward transition. Deterministic in any time zone
+        // because the assertion is about the chain, not about wall-clock spacing.
+        var store = NewStore();
+        foreach (var d in new[] { Day(7), Day(8), Day(9) })
+        {
+            await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", d));
+        }
+
+        var s = await store.ReadAsync();
+
+        Assert.Equal(3, s.Streak.CurrentDays);
+        Assert.Equal(3, s.Streak.LongestDays);
+    }
+
+    [Fact]
+    public async Task AGapBreaksTheStreakButKeepsTheRecord()
+    {
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", Day(1)));
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", Day(2)));
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", Day(3)));
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", Day(9)));  // gap
+
+        var s = await store.ReadAsync();
+
+        Assert.Equal(1, s.Streak.CurrentDays);
+        Assert.Equal(3, s.Streak.LongestDays);
+    }
+
+    [Fact]
+    public async Task TwoLaunchesOnOneDayDoNotAdvanceTheStreak()
+    {
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", Day(1, hour: 9)));
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", Day(1, hour: 21)));
+
+        var s = await store.ReadAsync();
+
+        Assert.Equal(1, s.Streak.CurrentDays);
+        Assert.Equal(2, s.Days[DayKey.For(Day(1))].Launches);
+    }
+
+    [Fact]
+    public async Task ACorruptFileStartsFreshInsteadOfThrowing()
+    {
+        await File.WriteAllTextAsync(_tempPath, "{ this is not json");
+
+        var s = await NewStore().ReadAsync();
+
+        Assert.Equal(0, s.PeakConcurrentAlts);
+        Assert.Empty(s.Accounts);
+    }
+
+    [Fact]
+    public async Task StatsSurviveAcrossStoreInstances()
+    {
+        await NewStore().ApplyAsync(new StatsEvent.ConcurrencyObserved(4));
+
+        Assert.Equal(4, (await NewStore().ReadAsync()).PeakConcurrentAlts);
+    }
+
+    [Fact]
+    public async Task ClearDropsEverything()
+    {
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", Day(1)));
+        await store.ApplyAsync(new StatsEvent.ConcurrencyObserved(5));
+
+        await store.ClearAsync();
+        var s = await store.ReadAsync();
+
+        Assert.Empty(s.Accounts);
+        Assert.Equal(0, s.PeakConcurrentAlts);
+    }
+
+    // =====================================================================
+    // The fold (§2.2). Per-day is the only collection that grows forever,
+    // and ApplyAsync is read-modify-write on every session end.
+    // =====================================================================
+
+    [Fact]
+    public async Task DaysBeyondTheLimitFoldIntoMonthsWithTotalsIntact()
+    {
+        var store = NewStore();
+        var start = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        const int extra = 50;
+
+        for (var i = 0; i < SessionStatsStore.RawDayLimit + extra; i++)
+        {
+            var at = start.AddDays(i);
+            await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", at));
+            await store.ApplyAsync(new StatsEvent.SessionEnded(Alt, 1L, at, at.AddMinutes(10)));
+        }
+
+        var s = await store.ReadAsync();
+
+        Assert.True(s.Days.Count <= SessionStatsStore.RawDayLimit,
+            $"raw days should be capped at {SessionStatsStore.RawDayLimit}, found {s.Days.Count}");
+        Assert.NotEmpty(s.Months);
+
+        // The fold moves detail, never totals.
+        var expected = TimeSpan.FromMinutes(10 * (SessionStatsStore.RawDayLimit + extra));
+        Assert.Equal(expected, s.Accounts[Alt].Uptime);
+
+        var folded = s.Days.Values.Aggregate(TimeSpan.Zero, (a, d) => a + d.Uptime)
+                   + s.Months.Values.Aggregate(TimeSpan.Zero, (a, m) => a + m.Uptime);
+        Assert.Equal(expected, folded);
+
+        var foldedLaunches = s.Days.Values.Sum(d => d.Launches) + s.Months.Values.Sum(m => m.Launches);
+        Assert.Equal(SessionStatsStore.RawDayLimit + extra, foldedLaunches);
+    }
+
+    [Fact]
+    public async Task AStreakSurvivesTheFold()
+    {
+        // The test that proves streaks are records, not derivations. A streak established before
+        // the fold boundary cannot be recomputed from monthly totals -- so if anyone ever
+        // "simplifies" streaks into a scan over Days, this fails. Spec §2.2.
+        var store = NewStore();
+        var start = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        const int total = SessionStatsStore.RawDayLimit + 50;
+
+        for (var i = 0; i < total; i++)
+        {
+            await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", start.AddDays(i)));
+        }
+
+        var s = await store.ReadAsync();
+
+        Assert.True(s.Days.Count <= SessionStatsStore.RawDayLimit);
+        Assert.Equal(total, s.Streak.LongestDays);
+        Assert.Equal(total, s.Streak.CurrentDays);
+    }
+
+    [Fact]
+    public async Task FoldingIsIdempotent()
+    {
+        var store = NewStore();
+        var start = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        for (var i = 0; i < SessionStatsStore.RawDayLimit + 10; i++)
+        {
+            await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", start.AddDays(i)));
+        }
+
+        var first = await store.ReadAsync();
+        await store.ApplyAsync(new StatsEvent.ConcurrencyObserved(1)); // triggers another save
+        var second = await store.ReadAsync();
+
+        Assert.Equal(first.Months.Count, second.Months.Count);
+        Assert.Equal(first.Months.Values.Sum(m => m.Launches), second.Months.Values.Sum(m => m.Launches));
+        Assert.Equal(first.Days.Count, second.Days.Count);
+    }
+
+    [Fact]
+    public async Task TheOldestDaysAreTheOnesThatFold()
+    {
+        var store = NewStore();
+        var start = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        for (var i = 0; i < SessionStatsStore.RawDayLimit + 5; i++)
+        {
+            await store.ApplyAsync(new StatsEvent.LaunchRecorded(Alt, 1L, "G", start.AddDays(i)));
+        }
+
+        var s = await store.ReadAsync();
+
+        // The first five days are gone from Days; the most recent one is still there.
+        Assert.DoesNotContain(DayKey.For(start), s.Days.Keys);
+        Assert.Contains(DayKey.For(start.AddDays(SessionStatsStore.RawDayLimit + 4)), s.Days.Keys);
+    }
+
+    // =====================================================================
+    // Per-alt landing streaks (v1.23 addendum). The chain requires presence-
+    // confirmed landing, NOT a launch: an alt that launched into a privacy
+    // wall and sat at Roblox home did not log in anywhere.
+    // =====================================================================
+
+    [Fact]
+    public async Task AnAltsLandingStreakChainsAcrossConsecutiveDays()
+    {
+        var store = NewStore();
+        foreach (var d in new[] { Day(1), Day(2), Day(3) })
+        {
+            await store.ApplyAsync(new StatsEvent.AccountLanded(Alt, d));
+        }
+
+        var a = (await store.ReadAsync()).Accounts[Alt];
+
+        Assert.Equal(3, a.StreakDays);
+        Assert.Equal(3, a.LongestStreakDays);
+    }
+
+    [Fact]
+    public async Task OneAltsDailyLandingDoesNotHealAnotherAltsGap()
+    {
+        // The test with teeth. A shared chain would make eight alts look faithful because one
+        // was — which is the opposite of what "which alt broke its streak" exists to answer.
+        var store = NewStore();
+        foreach (var d in new[] { Day(1), Day(2), Day(3) })
+        {
+            await store.ApplyAsync(new StatsEvent.AccountLanded(Alt, d));
+        }
+        await store.ApplyAsync(new StatsEvent.AccountLanded(Other, Day(1)));
+        await store.ApplyAsync(new StatsEvent.AccountLanded(Other, Day(3)));   // skipped Day(2)
+
+        var s = await store.ReadAsync();
+
+        Assert.Equal(3, s.Accounts[Alt].StreakDays);
+        Assert.Equal(1, s.Accounts[Other].StreakDays);
+        Assert.Equal(1, s.Accounts[Other].LongestStreakDays);
+    }
+
+    [Fact]
+    public async Task LandingTwiceInOneDayDoesNotAdvanceTheAltsStreak()
+    {
+        // The presence heartbeat reports InGame every ~25 seconds; a day is a day.
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.AccountLanded(Alt, Day(1, hour: 9)));
+        await store.ApplyAsync(new StatsEvent.AccountLanded(Alt, Day(1, hour: 21)));
+
+        Assert.Equal(1, (await store.ReadAsync()).Accounts[Alt].StreakDays);
+    }
+
+    [Fact]
+    public async Task ALandingAloneDoesNotInventALaunch()
+    {
+        // Presence marks the day for the streak; launches are counted by the history decorator.
+        // An alt left in-game overnight lands again next day without launching again.
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.AccountLanded(Alt, Day(1)));
+
+        var a = (await store.ReadAsync()).Accounts[Alt];
+
+        Assert.Equal(0, a.Launches);
+        Assert.Equal(1, a.StreakDays);
+    }
+
+    [Fact]
+    public async Task TheGlobalStreakDoesNotMoveOnALandingNorTheAltStreakOnALaunch()
+    {
+        // Two chains, two triggers, one algorithm. Global = "you played today" (any launch);
+        // per-alt = "this alt LANDED today". Cross-firing would quietly merge the definitions.
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.AccountLanded(Alt, Day(1)));
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Other, 1L, "G", Day(2)));
+
+        var s = await store.ReadAsync();
+
+        Assert.Equal(1, s.Streak.CurrentDays);            // the launch, only
+        Assert.Equal(1, s.Accounts[Alt].StreakDays);      // the landing, only
+        Assert.Equal(0, s.Accounts[Other].StreakDays);    // launched, never landed
+    }
+}

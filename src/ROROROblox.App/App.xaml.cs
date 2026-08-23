@@ -408,6 +408,24 @@ public partial class App : Application
         _singleInstance.StartListening(mainWindow);
         mainWindow.Show();
 
+        // Seed session stats from whatever history survives, once (spec §4). After Show() and
+        // fire-and-forget: it reads up to a hundred rows, nobody is looking at the stats page in
+        // the first second of a cold start, and stats are the least important thing this app does
+        // — a failure here must never be visible on the startup path.
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await ROROROblox.Core.SessionStatsBackfill.RunOnceAsync(
+                    _services.GetRequiredService<ISessionHistoryStore>(),
+                    _services.GetRequiredService<ISessionStatsStore>()).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "Session-stats backfill failed; stats will accrue from here.");
+            }
+        });
+
         // Cold-start Discord Join: this process itself was launched with the join URI (Discord
         // handed it straight to us rather than to an already-running instance). Raised after
         // mainWindow.Show() so anything Task 8 wires up earlier in OnStartup is already
@@ -605,7 +623,13 @@ public partial class App : Application
         services.AddSingleton<IAppSettings>(_ => new AppSettings());
         services.AddSingleton<IFavoriteGameStore>(_ => new FavoriteGameStore());
         services.AddSingleton<IPrivateServerStore>(_ => new PrivateServerStore());
-        services.AddSingleton<ISessionHistoryStore>(_ => new SessionHistoryStore());
+        services.AddSingleton<ISessionStatsStore>(_ => new SessionStatsStore());
+        // The history store is WRAPPED rather than called alongside a stats service. Two call
+        // sites that must agree forever is F-121's shape; one call path cannot drift from itself.
+        services.AddSingleton<ISessionHistoryStore>(sp => new StatsRecordingSessionHistoryStore(
+            new SessionHistoryStore(),
+            sp.GetRequiredService<ISessionStatsStore>(),
+            sp.GetService<ILogger<StatsRecordingSessionHistoryStore>>()));
         services.AddSingleton<IThemeStore>(_ => new ThemeStore());
         services.AddSingleton<ThemeService>();
         services.AddSingleton<IAccountStore>(_ => new AccountStore());
@@ -1127,7 +1151,11 @@ public partial class App : Application
                 // Same streamer-identity singleton the VM's opener always threaded through — the
                 // page must never show the real roster while streamer mode is active.
                 _services.GetRequiredService<ROROROblox.Core.StreamerMode.IStreamerIdentityProvider>(),
-                libraryChanged: () => _ = _services.GetRequiredService<MainViewModel>().ReloadGamesAsync()),
+                libraryChanged: () => _ = _services.GetRequiredService<MainViewModel>().ReloadGamesAsync(),
+                stats: _services.GetRequiredService<ISessionStatsStore>(),
+                // A Func, not a snapshot: the roster can change while the page is open, and
+                // AccountsSnapshot is the VM's lock-free point-in-time copy (safe off-thread).
+                roster: () => _services.GetRequiredService<MainViewModel>().AccountsSnapshot),
             Shell.ShellPage.Diagnostics => new Diagnostics.DiagnosticsPage(
                 _services.GetRequiredService<IDiagnosticsCollector>()),
             Shell.ShellPage.Plugins => BuildPluginsPage(),
@@ -1242,6 +1270,59 @@ public partial class App : Application
                 if (summary is null) return;
                 decorator.Track(e.Pid, summary);
                 watchdog.OnAccountLaunched(e.AccountId, e.Pid);
+            };
+
+            // Peak concurrent alts, sampled here because it is a property of a MOMENT rather than
+            // of any session (spec §3.3). It cannot be reconstructed from history later: rows for
+            // the third and fourth simultaneous alt may already have been pruned by the time
+            // anyone asks. Fire-and-forget with a logged catch — this must never delay an attach.
+            var statsStore = _services.GetRequiredService<ISessionStatsStore>();
+            tracker.ProcessAttached += (_, _) =>
+            {
+                var concurrent = tracker.Attached.Count;
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await statsStore.ApplyAsync(new StatsEvent.ConcurrencyObserved(concurrent))
+                            .ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        _log?.LogDebug(ex, "Recording peak concurrency failed; stats only.");
+                    }
+                });
+            };
+
+            // Per-alt landing streaks (v1.23 addendum). The chain marks presence-confirmed
+            // landings, never launches: ProcessAttached fires for a client that lands at Roblox
+            // home, and "logged in today" for daily-reward purposes means IN A GAME. Presence is
+            // the signal v1.5 made authoritative, so it is the signal the streak trusts.
+            //
+            // Deduped per (account, local day) in memory before touching the store — the
+            // heartbeat reports InGame roughly every 25 seconds per account, and a day is a day.
+            // The dictionary is process-lifetime; a restart re-emits at most one redundant event
+            // per alt, which the store's own same-day check absorbs.
+            var presenceForStats = _services.GetRequiredService<IPresenceService>();
+            var landedDays = new System.Collections.Concurrent.ConcurrentDictionary<Guid, string>();
+            presenceForStats.AccountPresenceUpdated += (_, e) =>
+            {
+                if (e.PresenceType != UserPresenceType.InGame) return;
+                var day = ROROROblox.Core.DayKey.For(e.OccurredAtUtc);
+                if (landedDays.TryGetValue(e.AccountId, out var seen) && seen == day) return;
+                landedDays[e.AccountId] = day;
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await statsStore.ApplyAsync(new StatsEvent.AccountLanded(e.AccountId, e.OccurredAtUtc))
+                            .ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        _log?.LogDebug(ex, "Recording a landing failed; stats only.");
+                    }
+                });
             };
             // F-103. Roblox restarts itself after an update, and the replacement is a process we
             // never launched: the decorator keys by launched pid, so the new window keeps the bare

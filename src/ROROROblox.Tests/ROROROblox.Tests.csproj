@@ -39,4 +39,11 @@
     <None Include="..\ROROROblox.App\Modals\LaunchHeadroomWindow.xaml" Link="Modals\LaunchHeadroomWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Anonymised 100-row history sample shaped like spec 0 (93 ended, 8 accounts).
+         Committed so backfill tests never read a developer's live session-history.json,
+         which differs per machine and is empty in CI. -->
+    <None Include="Fixtures\session-history-sample.json" Link="Fixtures\session-history-sample.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

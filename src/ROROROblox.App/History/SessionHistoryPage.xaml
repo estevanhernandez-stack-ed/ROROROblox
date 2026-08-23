@@ -27,7 +27,92 @@
                        AutomationProperties.LiveSetting="Polite" />
         </StackPanel>
 
-        <Border Grid.Row="1" Margin="0,20,0,0"
+        <Grid Grid.Row="1" Margin="0,20,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Session stats (v1.23, spec §1). Six numbers from the local rollup — nothing here
+                 leaves the machine. Collapsed until the presenter reports HasAnything, so a fresh
+                 install shows the history empty-state alone rather than a wall of zeros
+                 pretending to be data.
+
+                 Peak concurrent alts is the flagship — it is this product's entire thesis as one
+                 number, so it gets the cyan and the biggest type. The streak carries magenta so
+                 the signature duo appears together, per brand. Labels are mono + meta-size
+                 uppercase, the app's established small-label idiom.
+
+                 Fills and text here are existing measured pairings only (RowBg under White /
+                 Muted is the contrast gate's first named pair); no new Background+Foreground
+                 combination is introduced on any single element, so the gate's scan sees nothing
+                 unvetted. -->
+            <StackPanel x:Name="StatsBlock" Grid.Row="0" Visibility="Collapsed" Margin="0,0,0,16">
+                <UniformGrid Columns="3" x:Name="StatsCards">
+                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8"
+                            Margin="0,0,8,0" Padding="14,10">
+                        <StackPanel>
+                            <TextBlock Text="PEAK ALTS AT ONCE"
+                                       FontFamily="{DynamicResource MonoFontFamily}"
+                                       FontSize="{DynamicResource MetaFontSize}"
+                                       Foreground="{DynamicResource MutedTextBrush}" />
+                            <TextBlock x:Name="PeakAltsText"
+                                       FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
+                                       Foreground="{DynamicResource CyanBrush}"
+                                       Margin="0,2,0,0" />
+                            <TextBlock x:Name="PeakAltsCaption" Text="since history began"
+                                       FontSize="{DynamicResource MetaFontSize}"
+                                       Foreground="{DynamicResource MutedTextBrush}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8"
+                            Margin="0,0,8,0" Padding="14,10">
+                        <StackPanel>
+                            <TextBlock Text="TOTAL UPTIME"
+                                       FontFamily="{DynamicResource MonoFontFamily}"
+                                       FontSize="{DynamicResource MetaFontSize}"
+                                       Foreground="{DynamicResource MutedTextBrush}" />
+                            <TextBlock x:Name="TotalUptimeText"
+                                       FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
+                                       Foreground="{DynamicResource WhiteBrush}"
+                                       Margin="0,2,0,0" />
+                            <TextBlock x:Name="MostPlayedText"
+                                       FontSize="{DynamicResource MetaFontSize}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Border>
+                    <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8"
+                            Padding="14,10">
+                        <StackPanel>
+                            <TextBlock Text="DAY STREAK"
+                                       FontFamily="{DynamicResource MonoFontFamily}"
+                                       FontSize="{DynamicResource MetaFontSize}"
+                                       Foreground="{DynamicResource MutedTextBrush}" />
+                            <TextBlock x:Name="StreakText"
+                                       FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
+                                       Foreground="{DynamicResource MagentaBrush}"
+                                       Margin="0,2,0,0" />
+                            <TextBlock x:Name="StreakCaption"
+                                       FontSize="{DynamicResource MetaFontSize}"
+                                       Foreground="{DynamicResource MutedTextBrush}" />
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+
+                <!-- The per-alt leaderboard and longest session, one quiet line each; rows are
+                     built in code the same way HistoryList's are. -->
+                <StackPanel x:Name="LeaderboardList" Margin="2,10,2,0" />
+
+                <TextBlock x:Name="IntegrityNoteText"
+                           FontSize="{DynamicResource MetaFontSize}"
+                           Foreground="{DynamicResource MutedTextBrush}"
+                           TextWrapping="Wrap"
+                           Margin="2,6,2,0"
+                           Visibility="Collapsed" />
+            </StackPanel>
+
+            <Border Grid.Row="1"
                 BorderBrush="{DynamicResource DividerBrush}"
                 BorderThickness="1"
                 CornerRadius="8">
@@ -61,7 +146,8 @@
                                Opacity="0.7" />
                 </StackPanel>
             </Grid>
-        </Border>
+            </Border>
+        </Grid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
             <!-- Clear history is one of the three sites DestructiveButtonStyle is assigned to by name
