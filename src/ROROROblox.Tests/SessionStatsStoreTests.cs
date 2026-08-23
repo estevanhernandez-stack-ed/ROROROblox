@@ -281,4 +281,86 @@ public class SessionStatsStoreTests : IDisposable
         Assert.DoesNotContain(DayKey.For(start), s.Days.Keys);
         Assert.Contains(DayKey.For(start.AddDays(SessionStatsStore.RawDayLimit + 4)), s.Days.Keys);
     }
+
+    // =====================================================================
+    // Per-alt landing streaks (v1.23 addendum). The chain requires presence-
+    // confirmed landing, NOT a launch: an alt that launched into a privacy
+    // wall and sat at Roblox home did not log in anywhere.
+    // =====================================================================
+
+    [Fact]
+    public async Task AnAltsLandingStreakChainsAcrossConsecutiveDays()
+    {
+        var store = NewStore();
+        foreach (var d in new[] { Day(1), Day(2), Day(3) })
+        {
+            await store.ApplyAsync(new StatsEvent.AccountLanded(Alt, d));
+        }
+
+        var a = (await store.ReadAsync()).Accounts[Alt];
+
+        Assert.Equal(3, a.StreakDays);
+        Assert.Equal(3, a.LongestStreakDays);
+    }
+
+    [Fact]
+    public async Task OneAltsDailyLandingDoesNotHealAnotherAltsGap()
+    {
+        // The test with teeth. A shared chain would make eight alts look faithful because one
+        // was — which is the opposite of what "which alt broke its streak" exists to answer.
+        var store = NewStore();
+        foreach (var d in new[] { Day(1), Day(2), Day(3) })
+        {
+            await store.ApplyAsync(new StatsEvent.AccountLanded(Alt, d));
+        }
+        await store.ApplyAsync(new StatsEvent.AccountLanded(Other, Day(1)));
+        await store.ApplyAsync(new StatsEvent.AccountLanded(Other, Day(3)));   // skipped Day(2)
+
+        var s = await store.ReadAsync();
+
+        Assert.Equal(3, s.Accounts[Alt].StreakDays);
+        Assert.Equal(1, s.Accounts[Other].StreakDays);
+        Assert.Equal(1, s.Accounts[Other].LongestStreakDays);
+    }
+
+    [Fact]
+    public async Task LandingTwiceInOneDayDoesNotAdvanceTheAltsStreak()
+    {
+        // The presence heartbeat reports InGame every ~25 seconds; a day is a day.
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.AccountLanded(Alt, Day(1, hour: 9)));
+        await store.ApplyAsync(new StatsEvent.AccountLanded(Alt, Day(1, hour: 21)));
+
+        Assert.Equal(1, (await store.ReadAsync()).Accounts[Alt].StreakDays);
+    }
+
+    [Fact]
+    public async Task ALandingAloneDoesNotInventALaunch()
+    {
+        // Presence marks the day for the streak; launches are counted by the history decorator.
+        // An alt left in-game overnight lands again next day without launching again.
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.AccountLanded(Alt, Day(1)));
+
+        var a = (await store.ReadAsync()).Accounts[Alt];
+
+        Assert.Equal(0, a.Launches);
+        Assert.Equal(1, a.StreakDays);
+    }
+
+    [Fact]
+    public async Task TheGlobalStreakDoesNotMoveOnALandingNorTheAltStreakOnALaunch()
+    {
+        // Two chains, two triggers, one algorithm. Global = "you played today" (any launch);
+        // per-alt = "this alt LANDED today". Cross-firing would quietly merge the definitions.
+        var store = NewStore();
+        await store.ApplyAsync(new StatsEvent.AccountLanded(Alt, Day(1)));
+        await store.ApplyAsync(new StatsEvent.LaunchRecorded(Other, 1L, "G", Day(2)));
+
+        var s = await store.ReadAsync();
+
+        Assert.Equal(1, s.Streak.CurrentDays);            // the launch, only
+        Assert.Equal(1, s.Accounts[Alt].StreakDays);      // the landing, only
+        Assert.Equal(0, s.Accounts[Other].StreakDays);    // launched, never landed
+    }
 }

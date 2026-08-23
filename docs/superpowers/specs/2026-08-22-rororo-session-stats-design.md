@@ -220,3 +220,27 @@ src/ROROROblox.Tests/
 - **Do not fix F-A in this cycle.** It is a real defect and the roster dependency added in §6 is the
   seam it needs, but a name-resolution change to the history writer is its own row and its own test.
   Adding it here would let a stats cycle quietly change what History displays.
+
+## §10 Addendum, same cycle — per-alt landing streaks
+
+Added after the six-number surface was verified live, on the user's ask ("it would help a user
+track") and the user's ruling on what counts: **the accounts need to land.**
+
+Each alt carries its own chain — current and longest — advanced by presence-confirmed landings,
+never launches. `ProcessAttached` fires for a client that lands at Roblox home behind a privacy
+wall; for daily-reward purposes that alt did not log in anywhere, so the truthful signal is the
+presence state v1.5 made authoritative. The hook subscribes `AccountPresenceUpdated`, emits on
+`InGame` only, and dedupes per (account, local day) in memory before touching the store — the
+heartbeat reports every ~25 seconds and a day is a day. An alt left in-game across midnight lands
+again the next day without launching again, which is correct: it was there.
+
+Consequences accepted with the ruling:
+
+- **Backfill cannot seed these chains.** History rows record where a launch was aimed, not whether
+  it landed. Per-alt streaks start at install, like peak concurrency, and the leaderboard omits
+  the suffix at zero — eight rows of "0d streak" on day one reads as broken rather than new.
+- **Two chains, two definitions, one algorithm.** Global streak = "you played today" (any launch);
+  per-alt = "this alt landed today." A test pins that neither trigger moves the other's chain,
+  and both route through the same `AdvanceChain` so a consecutiveness fix cannot land on one and
+  miss the other — the F-121 shape, pre-empted. Both ride `DayKey`, so DST cannot touch either.
+- **A landing does not invent a launch.** Launch counts stay the decorator's job.

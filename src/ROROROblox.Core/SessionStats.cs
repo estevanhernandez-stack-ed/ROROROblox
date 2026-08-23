@@ -37,7 +37,14 @@ public sealed record SessionStats(
         Accounts.Values.Aggregate(TimeSpan.Zero, (acc, a) => acc + a.Uptime);
 }
 
-public sealed record AccountStat(int Launches, TimeSpan Uptime, DateTimeOffset? LastSeenUtc);
+/// <summary>
+/// Per-alt landing streak included (v1.23 addendum): the chain marks presence-confirmed landings,
+/// never launches — an alt that launched into a privacy wall and sat at home did not log in
+/// anywhere. Chains are independent per alt; that independence is the feature.
+/// </summary>
+public sealed record AccountStat(
+    int Launches, TimeSpan Uptime, DateTimeOffset? LastSeenUtc,
+    int StreakDays = 0, int LongestStreakDays = 0);
 
 /// <summary>Name is "last known" and purely for display — never a key (§2.1).</summary>
 public sealed record GameStat(string? LastKnownName, int Launches, TimeSpan Uptime);
@@ -100,4 +107,11 @@ public abstract record StatsEvent
 
     /// <summary>Latches the one-time seed so it never runs twice (§4).</summary>
     public sealed record BackfillCompleted() : StatsEvent;
+
+    /// <summary>
+    /// Presence confirmed this alt in a game. Fired from the presence poll, deduped per local
+    /// day by the emitter — the heartbeat reports InGame every ~25s and a day is a day. Marks
+    /// the alt's landing streak only; it does not invent a launch.
+    /// </summary>
+    public sealed record AccountLanded(Guid AccountId, DateTimeOffset AtUtc) : StatsEvent;
 }

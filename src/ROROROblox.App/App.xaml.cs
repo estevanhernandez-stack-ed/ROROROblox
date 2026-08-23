@@ -1293,6 +1293,37 @@ public partial class App : Application
                     }
                 });
             };
+
+            // Per-alt landing streaks (v1.23 addendum). The chain marks presence-confirmed
+            // landings, never launches: ProcessAttached fires for a client that lands at Roblox
+            // home, and "logged in today" for daily-reward purposes means IN A GAME. Presence is
+            // the signal v1.5 made authoritative, so it is the signal the streak trusts.
+            //
+            // Deduped per (account, local day) in memory before touching the store — the
+            // heartbeat reports InGame roughly every 25 seconds per account, and a day is a day.
+            // The dictionary is process-lifetime; a restart re-emits at most one redundant event
+            // per alt, which the store's own same-day check absorbs.
+            var presenceForStats = _services.GetRequiredService<IPresenceService>();
+            var landedDays = new System.Collections.Concurrent.ConcurrentDictionary<Guid, string>();
+            presenceForStats.AccountPresenceUpdated += (_, e) =>
+            {
+                if (e.PresenceType != UserPresenceType.InGame) return;
+                var day = ROROROblox.Core.DayKey.For(e.OccurredAtUtc);
+                if (landedDays.TryGetValue(e.AccountId, out var seen) && seen == day) return;
+                landedDays[e.AccountId] = day;
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await statsStore.ApplyAsync(new StatsEvent.AccountLanded(e.AccountId, e.OccurredAtUtc))
+                            .ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        _log?.LogDebug(ex, "Recording a landing failed; stats only.");
+                    }
+                });
+            };
             // F-103. Roblox restarts itself after an update, and the replacement is a process we
             // never launched: the decorator keys by launched pid, so the new window keeps the bare
             // "Roblox" title forever. That title is also the re-attach key, so the client counts

@@ -150,7 +150,7 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
             var line = new DockPanel { Margin = new Thickness(2, 2, 2, 0) };
             var uptime = new TextBlock
             {
-                Text = $"{SessionStatsPresenter.FormatUptime(row.Uptime)} · {row.Launches} launches",
+                Text = $"{SessionStatsPresenter.FormatUptime(row.Uptime)} · {row.Launches} launches{row.StreakSuffix}",
                 FontSize = (double)FindResource("MetaFontSize"),
                 Foreground = (Brush)FindResource("MutedTextBrush"),
             };

@@ -16,7 +16,16 @@ namespace ROROROblox.App.History;
 /// </summary>
 internal static class SessionStatsPresenter
 {
-    internal sealed record LeaderboardRow(string Name, int Launches, TimeSpan Uptime);
+    internal sealed record LeaderboardRow(string Name, int Launches, TimeSpan Uptime, int StreakDays)
+    {
+        /// <summary>
+        /// Empty at zero, deliberately: per-alt streaks start accruing at install (history rows
+        /// record where a launch was AIMED, not whether it landed, so backfill cannot seed a
+        /// truthful chain), and eight rows of "0d streak" on day one reads as broken rather
+        /// than new.
+        /// </summary>
+        public string StreakSuffix => StreakDays > 0 ? $" · {StreakDays}d streak" : string.Empty;
+    }
 
     internal sealed record StatsView(
         string TotalUptime,
@@ -38,7 +47,7 @@ internal static class SessionStatsPresenter
             .OrderByDescending(kv => kv.Value.Uptime)
             .ThenByDescending(kv => kv.Value.Launches)
             .Select(kv => new LeaderboardRow(
-                ResolveName(kv.Key, roster), kv.Value.Launches, kv.Value.Uptime))
+                ResolveName(kv.Key, roster), kv.Value.Launches, kv.Value.Uptime, kv.Value.StreakDays))
             .ToList();
 
         // Uptime, not launch count: a game opened and quit five times is not more played than

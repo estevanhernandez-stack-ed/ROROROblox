@@ -152,4 +152,31 @@ public class SessionStatsPresenterTests
         Assert.False(view.HasAnything);
         Assert.Empty(view.Leaderboard);
     }
+
+    [Fact]
+    public void ALandingStreakAppearsOnTheAltsRow()
+    {
+        var stats = SessionStats.Empty with
+        {
+            Accounts = new Dictionary<Guid, AccountStat>
+            {
+                [Id] = new(Launches: 5, Uptime: TimeSpan.FromHours(2), LastSeenUtc: null,
+                           StreakDays: 12, LongestStreakDays: 14),
+            },
+        };
+
+        var view = SessionStatsPresenter.Build(stats, Array.Empty<AccountSummary>());
+
+        Assert.Contains("12d streak", view.Leaderboard.Single().StreakSuffix);
+    }
+
+    [Fact]
+    public void AZeroStreakSaysNothingRatherThanZero()
+    {
+        // Per-alt chains start at install (backfill cannot prove a landing), and eight rows of
+        // "0d streak" on day one reads as broken rather than new.
+        var view = SessionStatsPresenter.Build(WithAccount(Id), Array.Empty<AccountSummary>());
+
+        Assert.Equal(string.Empty, view.Leaderboard.Single().StreakSuffix);
+    }
 }

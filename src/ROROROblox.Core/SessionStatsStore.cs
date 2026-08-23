@@ -172,6 +172,22 @@ public sealed class SessionStatsStore : ISessionStatsStore, IDisposable
             case StatsEvent.BackfillCompleted:
                 b.Backfilled = true;
                 break;
+
+            case StatsEvent.AccountLanded landed:
+            {
+                // Marks the day for THIS alt's chain only. Deliberately does not touch Launches,
+                // the day buckets, or the global streak: global answers "did you play today",
+                // this answers "did this alt land today", and cross-firing would quietly merge
+                // two definitions that the user experiences as different questions.
+                var acc = b.Accounts.TryGetValue(landed.AccountId, out var a) ? a : new AccountRow();
+                var (streak, longest, last) = AdvanceChain(
+                    acc.StreakDays, acc.LongestStreakDays, acc.LastLandedDay, DayKey.For(landed.AtUtc));
+                acc.StreakDays = streak;
+                acc.LongestStreakDays = longest;
+                acc.LastLandedDay = last;
+                b.Accounts[landed.AccountId] = acc;
+                break;
+            }
         }
     }
 
@@ -183,19 +199,26 @@ public sealed class SessionStatsStore : ISessionStatsStore, IDisposable
     private static void AdvanceStreak(Blob b, string dayKey)
     {
         if (b.LastPlayedDay == dayKey) return;   // same day again — not a new day
+        var (streak, longest, last) = AdvanceChain(
+            b.CurrentStreakDays, b.LongestStreakDays, b.LastPlayedDay, dayKey);
+        if (streak == 1) b.CurrentStreakStartDay = dayKey;
+        b.CurrentStreakDays = streak;
+        b.LongestStreakDays = longest;
+        b.LastPlayedDay = last;
+    }
 
-        if (b.LastPlayedDay is not null && DayKey.IsNextDay(b.LastPlayedDay, dayKey))
-        {
-            b.CurrentStreakDays++;
-        }
-        else
-        {
-            b.CurrentStreakDays = 1;
-            b.CurrentStreakStartDay = dayKey;
-        }
-
-        b.LastPlayedDay = dayKey;
-        if (b.CurrentStreakDays > b.LongestStreakDays) b.LongestStreakDays = b.CurrentStreakDays;
+    /// <summary>
+    /// One algorithm for every chain — the global played-today streak and each alt's landing
+    /// streak advance through here, so a consecutiveness fix cannot land on one and miss the
+    /// other (the F-121 shape, pre-empted). Consecutiveness is DayKey's calendar question,
+    /// never elapsed hours.
+    /// </summary>
+    private static (int Streak, int Longest, string LastDay) AdvanceChain(
+        int streak, int longest, string? lastDay, string dayKey)
+    {
+        if (lastDay == dayKey) return (streak, longest, dayKey);
+        var next = lastDay is not null && DayKey.IsNextDay(lastDay, dayKey) ? streak + 1 : 1;
+        return (next, Math.Max(next, longest), dayKey);
     }
 
     /// <summary>
@@ -289,7 +312,7 @@ public sealed class SessionStatsStore : ISessionStatsStore, IDisposable
         public SessionStats ToStats() => new(
             Accounts.ToDictionary(
                 kv => kv.Key,
-                kv => new AccountStat(kv.Value.Launches, TimeSpan.FromTicks(kv.Value.UptimeTicks), kv.Value.LastSeenUtc)),
+                kv => new AccountStat(kv.Value.Launches, TimeSpan.FromTicks(kv.Value.UptimeTicks), kv.Value.LastSeenUtc, kv.Value.StreakDays, kv.Value.LongestStreakDays)),
             Games.ToDictionary(
                 kv => kv.Key,
                 kv => new GameStat(kv.Value.LastKnownName, kv.Value.Launches, TimeSpan.FromTicks(kv.Value.UptimeTicks))),
@@ -313,6 +336,9 @@ public sealed class SessionStatsStore : ISessionStatsStore, IDisposable
         public int Launches { get; set; }
         public long UptimeTicks { get; set; }
         public DateTimeOffset? LastSeenUtc { get; set; }
+        public int StreakDays { get; set; }
+        public int LongestStreakDays { get; set; }
+        public string? LastLandedDay { get; set; }
     }
 
     private sealed class GameRow
