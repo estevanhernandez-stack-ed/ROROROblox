@@ -619,7 +619,15 @@ public partial class App : Application
         // Falls back to MutexHolder.DefaultMutexName when resolution hasn't run or yielded the default.
         services.AddSingleton<ResolvedMutexName>();
         services.AddSingleton<IMutexHolder>(sp => new MutexHolder(sp.GetRequiredService<ResolvedMutexName>().Value));
-        services.AddSingleton<ITrayService, TrayService>();
+        // NOT a plain AddSingleton<ITrayService, TrayService>: the ctor builds TaskbarIcon /
+        // ContextMenu / MenuItem, and a plain singleton constructs on whichever thread resolves it
+        // first. On 2026-08-20 that was a threadpool continuation (StartPluginHostListener →
+        // AlertDispatcher → ITrayService) and startup died cross-thread on a Freezable (F-122).
+        services.AddSingleton<ITrayService>(sp => UiBoundFactory.Create(
+            System.Windows.Application.Current?.Dispatcher,
+            () => new TrayService(
+                sp.GetRequiredService<ROROROblox.Core.StreamerMode.IStreamerIdentityProvider>(),
+                sp.GetService<ILogger<TrayService>>())));
         services.AddSingleton<IAppSettings>(_ => new AppSettings());
         services.AddSingleton<IFavoriteGameStore>(_ => new FavoriteGameStore());
         services.AddSingleton<IPrivateServerStore>(_ => new PrivateServerStore());
