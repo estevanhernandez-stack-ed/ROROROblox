@@ -62,6 +62,6 @@ means, ignore it.
 Also fixed: the plugin install window no longer hides its own buttons on
 long descriptions, and a rare crash that could stop the app from starting.
 
-Setup.exe: <link to release>
+Setup.exe: https://github.com/estevanhernandez-stack-ed/ROROROblox/releases/latest
 Something broken? Ping me or open an issue.
 ```
