@@ -143,7 +143,7 @@ internal sealed class RobloxWindowDecorator : IDisposable
             // streamer mode is active; null/inactive passes the real name through.
             ApplyTitle(hwnd, RobloxWindowTitle.Format(
                 _identity, target.Summary.Id,
-                target.Summary.LocalName ?? target.Summary.DisplayName,
+                target.Summary.RealRenderName,
                 target.Summary.AvatarUrl));
             ApplyCaptionColor(hwnd, ResolveCaptionColor(target.Summary));
         }

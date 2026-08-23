@@ -2821,7 +2821,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             var session = new LaunchSession(
                 Id: Guid.NewGuid(),
                 AccountId: summary.Id,
-                AccountDisplayName: summary.DisplayName,
+                AccountDisplayName: summary.RealRenderName,
                 AccountAvatarUrl: summary.AvatarUrl,
                 GameName: gameName,
                 PlaceId: placeId,

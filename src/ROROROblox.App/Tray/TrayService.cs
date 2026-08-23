@@ -280,10 +280,11 @@ internal sealed class TrayService : ITrayService
         Application.Current?.Dispatcher.Invoke(() => _streamerModeItem.IsChecked = _streamerIdentity.IsActive);
     }
 
-    // Task 8: the memory-warning ring. Not yet in the csproj's <Resource> list — see the comment
-    // there. Application.GetResourceStream is a runtime lookup, so referencing this filename here
-    // compiles and builds fine today; it only throws InvalidOperationException if SetMemoryWarning(true)
-    // is actually invoked before the real asset + csproj <Resource> line are added.
+    // The memory-warning ring. Shipped: the asset exists at Tray/Resources/tray-warn.ico and the
+    // csproj <Resource> line includes it. (F-124: this comment previously described the asset as
+    // not-yet-added and warned of a runtime throw — a landmine that had already been defused. The
+    // logs show 29 cap-crossings with no exception; a comment describing a hazard that is not
+    // there trains readers to skip the comments that describe ones that are.)
     private const string WarnIconFilename = "tray-warn.ico";
 
     private static string StateIconFilename(MultiInstanceState state) => state switch
