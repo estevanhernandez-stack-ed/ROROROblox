@@ -168,6 +168,10 @@ public sealed class SessionStatsStore : ISessionStatsStore, IDisposable
             case StatsEvent.SessionMissingEnd:
                 b.SessionsMissingAnEnd++;
                 break;
+
+            case StatsEvent.BackfillCompleted:
+                b.Backfilled = true;
+                break;
         }
     }
 

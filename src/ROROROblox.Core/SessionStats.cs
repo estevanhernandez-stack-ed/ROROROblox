@@ -97,4 +97,7 @@ public abstract record StatsEvent
     public sealed record ConcurrencyObserved(int Count) : StatsEvent;
 
     public sealed record SessionMissingEnd() : StatsEvent;
+
+    /// <summary>Latches the one-time seed so it never runs twice (§4).</summary>
+    public sealed record BackfillCompleted() : StatsEvent;
 }
