@@ -19,11 +19,12 @@ transmitted, privacy policy unchanged.
 | | x64 | arm64 |
 |---|---|---|
 | File | `dist/RORORO-Store-x64-1.23.0.0.msix` | `dist/RORORO-Store-arm64-1.23.0.0.msix` |
+| Size | 91.25 MB | 86.15 MB |
 | `ProcessorArchitecture` | `x64` | `arm64` |
 
 Shared by both: tag `v1.23.0.0` on `main`, identity `626LabsLLC.RoRoRoBlox`, publisher
 `CN=177BCE59-0966-4975-9962-10E36652141F`, `PublisherDisplayName` `626Labs LLC` (no space),
-unsigned — Partner Center signs after upload. Sizes: fill in from `dist/` after Phase 3.
+unsigned — Partner Center signs after upload.
 
 ## 2. Notes for certification
 
