@@ -96,6 +96,19 @@ public sealed class AccountSummary : INotifyPropertyChanged
     /// when no provider is attached or the mode is inactive — <see cref="DisplayName"/> itself is
     /// never mutated, since the provider needs the real value to pass through.
     /// </summary>
+    /// <summary>
+    /// The real display label — <c>LocalName ?? DisplayName</c> — with NO streamer-mode
+    /// substitution. This is what gets PERSISTED (history rows) and what gets handed to
+    /// <c>RobloxWindowTitle.ResolveName</c>, which applies the streamer fake at render time.
+    ///
+    /// <para>F-123: three sites computed this inline and the third (the history writer) dropped
+    /// the LocalName half, so History showed the stale Roblox name after a local rename — the
+    /// same drift the v1.10 window-title fix closed for the decorator and scanner. Never persist
+    /// <see cref="RenderName"/> instead: it is streamer-aware, and a row written during a stream
+    /// would bake the fake name into history permanently.</para>
+    /// </summary>
+    public string RealRenderName => _localName ?? DisplayName;
+
     public string RenderName =>
         _identity is { } p ? p.ForAccount(Id, _localName ?? DisplayName, AvatarUrl).Name
                             : (_localName ?? DisplayName);

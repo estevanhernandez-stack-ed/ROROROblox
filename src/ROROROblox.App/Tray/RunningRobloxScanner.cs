@@ -52,7 +52,7 @@ internal sealed class RunningRobloxScanner
     internal static AccountSummary? MatchAccountByTitleName(
         IReadOnlyList<AccountSummary> accounts, string parsedTitleName, IStreamerIdentityProvider? identity)
         => accounts.FirstOrDefault(a => string.Equals(
-            RobloxWindowTitle.ResolveName(identity, a.Id, a.LocalName ?? a.DisplayName, a.AvatarUrl),
+            RobloxWindowTitle.ResolveName(identity, a.Id, a.RealRenderName, a.AvatarUrl),
             parsedTitleName,
             StringComparison.OrdinalIgnoreCase));
 
