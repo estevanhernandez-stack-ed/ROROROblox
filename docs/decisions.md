@@ -400,7 +400,7 @@ Format:
 
 ### 2026-08-30 — A compat-only workflow gives the signed feed a no-binary push path
 **Context:** The only signed upload was `release.yml` on a tag push, so "a config update within hours" meant a release cycle; the key exists only as a CI secret.
-**Consequences:** `.github/workflows/compat.yml` (`workflow_dispatch`, Windows runner because `CompatSigner` references Core) validates the four keys, signs with `ROBLOXCOMPAT_SIGNING_KEY`, and `gh release upload --clobber`s to the current latest release. Not yet exercised; first run should be a no-op push of the current file. Clients apply on next start.
+**Consequences:** `.github/workflows/compat.yml` (`workflow_dispatch`, Windows runner because `CompatSigner` references Core) validates the four keys, signs with `ROBLOXCOMPAT_SIGNING_KEY`, and `gh release upload --clobber`s to the current latest release. Exercised the same day: the first dispatch (run 33330524023) no-op re-signed v1.23.0.0's assets, and a client-style download of the new pair verified against the pinned key via `RobloxCompatSignature.Verify` — the acceptance the local suite can only test for rejection. Clients apply on next start (today's startup logs already show `source="RemoteConfig"`, a verified fetch).
 **Evidence:** `.github/workflows/compat.yml`; `tools/CompatSigner/Program.cs`.
 
 ### 2026-08-30 — Packaged builds: registry writes are virtualized (Join/run-on-login inert), file writes are not (one shared data folder)
