@@ -12,7 +12,7 @@
          dev cert that is exactly what produces signtool 0x8007000b (see the Phase 4
          correction dated 2026-08-22 in docs/store/release-playbook.md).
          Version increments on every release submission; align with Velopack release tags. -->
-    <Identity Name="626LabsLLC.RoRoRoBlox" Publisher="CN=177BCE59-0966-4975-9962-10E36652141F" Version="1.23.0.0" ProcessorArchitecture="x64" />
+    <Identity Name="626LabsLLC.RoRoRoBlox" Publisher="CN=177BCE59-0966-4975-9962-10E36652141F" Version="1.24.0.0" ProcessorArchitecture="x64" />
     <Properties>
         <DisplayName>RoRoRo</DisplayName>
         <PublisherDisplayName>626Labs LLC</PublisherDisplayName>
