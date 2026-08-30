@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" IgnorableNamespaces="uap rescap">
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10" xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10" IgnorableNamespaces="uap rescap desktop uap10">
     <!-- Identity: production values from the Partner Center reservation for ROROROblox under
          626 Labs LLC (Store ID 9NMJCS390KWB). Update via scripts/finalize-store-build.ps1 on
          every release; it patches Name / Publisher / Version / PublisherDisplayName in one
@@ -41,6 +41,30 @@
                 </uap:DefaultTile>
                 <uap:SplashScreen Image="Package\Logos\SplashScreen.png" BackgroundColor="#0F1F31" />
             </uap:VisualElements>
+            <!-- Packaged activation (v1.24.0.0, spec 2026-08-30-packaged-activation-design.md).
+                 A packaged process's registry writes land in the package's virtual hive
+                 (verified live 2026-08-30), so the HKCU Run value and URI-scheme registrations
+                 the unpackaged builds write are invisible to winlogon and Explorer here. These
+                 extensions are the packaged equivalents. StartupTask backs the Settings
+                 run-on-login toggle via Windows.ApplicationModel.StartupTask; Enabled="false"
+                 keeps it opt-in, matching the unpackaged default. The protocols route
+                 cold-start URI activation; Parameters="%1" delivers the URI as a plain argv
+                 token, the exact shape the unpackaged registry command produces, so
+                 JoinUriParser stays the single inbound-URI code path. The discord protocol
+                 mirrors the scheme Lachee's RegisterUriScheme owns on unpackaged installs; its
+                 name must stay in lockstep with Discord:ApplicationId in appsettings.json
+                 (PackagedActivationManifestTests pins both protocols and the task id). -->
+            <Extensions>
+                <desktop:Extension Category="windows.startupTask" Executable="ROROROblox.App.exe" EntryPoint="Windows.FullTrustApplication">
+                    <desktop:StartupTask TaskId="RoRoRo" Enabled="false" DisplayName="RoRoRo" />
+                </desktop:Extension>
+                <uap10:Extension Category="windows.protocol">
+                    <uap10:Protocol Name="roblox-rororo" Parameters="%1" />
+                </uap10:Extension>
+                <uap10:Extension Category="windows.protocol">
+                    <uap10:Protocol Name="discord-1501748116985221272" Parameters="%1" />
+                </uap10:Extension>
+            </Extensions>
         </Application>
     </Applications>
     <Capabilities>

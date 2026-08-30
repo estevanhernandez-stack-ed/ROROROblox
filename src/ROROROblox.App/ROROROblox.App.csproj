@@ -34,7 +34,12 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- The 10.0.19041.0 platform version exposes the WinRT projections that
+         Windows.ApplicationModel.StartupTask needs (packaged run-on-login, spec
+         2026-08-30-packaged-activation-design.md). Projects referencing this one
+         (Tests, PluginTestHarness) must target the same or a higher windows version;
+         Core stays bare net10.0-windows and is referenced downlevel, which is fine. -->
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
