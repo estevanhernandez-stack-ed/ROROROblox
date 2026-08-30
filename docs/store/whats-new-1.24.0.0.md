@@ -17,9 +17,10 @@
   time. It stays off unless you turn it on.
 
 Discord joins reach a closed RoRoRo
-• Clicking Join in Discord now starts RoRoRo even when it isn't
-  running, then asks you to confirm before anything launches.
-  Before, joins only worked if RoRoRo was already open.
+• Clicking Join in Discord now works even when RoRoRo isn't
+  running — it starts itself and takes the join. Private-server
+  joins ask you first, same as always. Before, joins only
+  worked if RoRoRo was already open.
 
 Your hours got more honest
 • A launch that never made it into a game no longer counts as a

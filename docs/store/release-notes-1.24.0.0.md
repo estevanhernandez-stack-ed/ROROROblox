@@ -40,8 +40,9 @@ toggle won't fight you; it will tell you where to turn it back on.
 
 A Join click in Discord launches RoRoRo by its join link. On Store installs that link resolved
 to nothing, so joins only worked if RoRoRo already happened to be running. Both join link types
-are declared in the app package now, so a cold Join click starts RoRoRo, which then asks you to
-confirm before anything launches — same confirmation as always.
+are declared in the app package now, so a cold Join click starts RoRoRo and the join goes
+through. The confirmations are the same as they've always been: a join link always asks first,
+and a join arriving through Discord itself asks before entering a private server.
 
 ### Your stats got more honest
 

@@ -37,10 +37,12 @@ is IN THE MANIFEST, so this letter starts there.
    packaged app should:
 
    - uap10:Protocol for "roblox-rororo" and
-     "discord-1501748116985221272". An inbound join always shows
-     the user a confirmation dialog before anything launches,
-     and join handling is inactive unless the user has enabled
-     the Discord features in Settings. This behavior is
+     "discord-1501748116985221272". Join handling is entirely
+     inactive unless the user has enabled the Discord features
+     in Settings (they default off). A join delivered by URI
+     always shows a confirmation dialog before anything
+     launches; a join delivered over Discord's own local IPC
+     confirms before entering a private server. This behavior is
      unchanged from prior certified versions.
 
    - desktop:StartupTask, TaskId "RoRoRo", Enabled="false" —
