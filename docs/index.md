@@ -12,7 +12,7 @@ description: Multi-launcher for Windows. Run multiple Roblox clients side by sid
     <a href="https://apps.microsoft.com/detail/9NMJCS390KWB" class="btn btn-primary">Install on Microsoft Store</a>
     <a href="https://github.com/estevanhernandez-stack-ed/ROROROblox/releases/latest/download/rororo-win-Setup.exe" class="btn btn-secondary">Download Setup.exe</a>
   </div>
-  <p class="hero__meta">Windows 11 · .NET 10 LTS · WPF</p>
+  <p class="hero__meta">Windows 11 · Windows 10 22H2 · .NET 10 LTS · WPF</p>
   <figure class="hero__shot">
     <img src="{{ '/screenshots/main.png' | relative_url }}" alt="RORORO main window — saved accounts list with Launch As buttons" />
   </figure>

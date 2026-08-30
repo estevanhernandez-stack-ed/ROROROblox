@@ -110,10 +110,10 @@ public interface IAppSettings
 
     /// <summary>
     /// True when the memory watchdog should sample and react to system/process memory pressure.
-    /// Defaults to true. File-only today — there is no Preferences dialog wiring for this or the
-    /// three memory settings below it (corrected 2026-08-01, final-branch review finding 6; a
-    /// prior version of this comment claimed a Preferences-dialog opt-out that does not exist).
-    /// Editable only by hand-editing <c>settings.json</c> until that UI ships.
+    /// Defaults to true. Editable on the Settings page ("Alerts and memory" section) together with
+    /// the three memory settings below it, since commit 067fcfa (2026-08-10, register row F-023).
+    /// From 2026-08-01 to then this comment correctly said "file-only"; it was not updated when the
+    /// UI shipped and stayed wrong until 2026-08-30.
     /// </summary>
     Task<bool> GetMemoryWatchdogEnabledAsync();
     Task SetMemoryWatchdogEnabledAsync(bool enabled);
@@ -122,8 +122,8 @@ public interface IAppSettings
     /// MB of physical memory the watchdog reserves for the system before triggering. <c>null</c>
     /// means the user has never set this — the composition root derives it from installed RAM via
     /// <see cref="Diagnostics.MemoryDefaults.ReserveMb"/>. A non-null value is a deliberate user
-    /// override and must never be silently re-derived over. File-only today — no Preferences
-    /// dialog wiring exists yet (see <see cref="GetMemoryWatchdogEnabledAsync"/>).
+    /// override and must never be silently re-derived over. Editable on the Settings page (see
+    /// <see cref="GetMemoryWatchdogEnabledAsync"/>); a blank box there means "derive".
     /// </summary>
     Task<int?> GetMemoryReserveMbAsync();
     Task SetMemoryReserveMbAsync(int? reserveMb);
@@ -132,16 +132,16 @@ public interface IAppSettings
     /// Per-client MB cap the watchdog enforces. <c>null</c> means the user has never set this —
     /// derived from installed RAM via <see cref="Diagnostics.MemoryDefaults.CapMb"/>. <c>0</c> is a
     /// distinct, meaningful user choice: it disables the cap trigger entirely, which is why this is
-    /// nullable rather than sentinel-zero — zero and unset must stay distinguishable. File-only
-    /// today — no Preferences dialog wiring exists yet (see <see cref="GetMemoryWatchdogEnabledAsync"/>).
+    /// nullable rather than sentinel-zero — zero and unset must stay distinguishable. Editable on
+    /// the Settings page (see <see cref="GetMemoryWatchdogEnabledAsync"/>).
     /// </summary>
     Task<int?> GetMemoryCapMbAsync();
     Task SetMemoryCapMbAsync(int? capMb);
 
     /// <summary>
     /// Minutes of projected time-to-cap below which the watchdog surfaces a warning. Defaults to
-    /// 120. Not hardware-derived — this is a UX pacing knob, not a hardware constraint. File-only
-    /// today — no Preferences dialog wiring exists yet (see <see cref="GetMemoryWatchdogEnabledAsync"/>).
+    /// 120. Not hardware-derived — this is a UX pacing knob, not a hardware constraint. Editable on
+    /// the Settings page (see <see cref="GetMemoryWatchdogEnabledAsync"/>).
     /// </summary>
     Task<int> GetProjectionWarnMinutesAsync();
     Task SetProjectionWarnMinutesAsync(int minutes);
@@ -167,16 +167,6 @@ public interface IAppSettings
     Task SetAutoForceStopAsync(bool auto);
 
     /// <summary>
-    /// True when the main window opens in compact mode — the fixed-width, live-rows-only strip the
-    /// status bar's Compact button toggles. Defaults to false (expanded).
-    /// <para>
-    /// Sticky because the Welcome tour pitches compact as a second-monitor workflow, and a
-    /// second-monitor layout that resets on every launch is not a workflow. The toggle is on the
-    /// main window, not in Preferences: this is a per-session view state the user flips constantly,
-    /// and its home is where it is used.
-    /// </para>
-    /// </summary>
-    /// <summary>
     /// The main window's last position and size, or null when nothing has been saved yet (F-060).
     /// <para>
     /// Restored only when <see cref="WindowPlacement.IsRestorableOnto"/> still says it lands on a
@@ -187,6 +177,16 @@ public interface IAppSettings
     Task<WindowPlacement?> GetMainWindowPlacementAsync();
     Task SetMainWindowPlacementAsync(WindowPlacement? placement);
 
+    /// <summary>
+    /// True when the main window opens in compact mode — the fixed-width, live-rows-only strip the
+    /// status bar's Compact button toggles. Defaults to false (expanded).
+    /// <para>
+    /// Sticky because the Welcome tour pitches compact as a second-monitor workflow, and a
+    /// second-monitor layout that resets on every launch is not a workflow. The toggle is on the
+    /// main window, not in Preferences: this is a per-session view state the user flips constantly,
+    /// and its home is where it is used.
+    /// </para>
+    /// </summary>
     Task<bool> GetCompactModeAsync();
     Task SetCompactModeAsync(bool compact);
 }

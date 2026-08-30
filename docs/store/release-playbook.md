@@ -2,7 +2,7 @@
 
 > **Recurring per-release runbook.** First-submission bringup (Partner Center reservation, IARC questionnaire, listing copy, screenshots, privacy policy hosting) lives in [`submission-checklist.md`](submission-checklist.md) — that's a one-time setup. This doc is the loop we run every time we ship a new version: v1.3.1.0 → v1.3.2.0 → v1.3.2.1 → v1.3.3.0 → next.
 
-> **Two distribution channels per release.** Microsoft Store (`dist/RORORO-Store-<arch>-<version>.msix`, x64 AND arm64, unsigned — Partner Center signs after upload) and GitHub Release (Velopack `Setup.exe` auto-update + `RORORO-Sideload-<arch>-<version>.msix` + `dev-cert.cer` for cert-import users). Both ship from the same tag.
+> **Two distribution channels per release.** Microsoft Store (`dist/RORORO-Store-<arch>-<version>.msix`, x64 AND arm64, unsigned — Partner Center signs after upload) and GitHub Release (Velopack `Setup.exe`, which checks for but does not apply updates, + `RORORO-Sideload-<arch>-<version>.msix` + `dev-cert.cer` for cert-import users). Both ship from the same tag.
 
 ---
 
@@ -26,7 +26,7 @@
 
 > "Apps are not allowed to have a Version with a revision number other than zero specified in the app manifest."
 
-This bit us on v1.3.2.1 → had to bump to v1.3.3.0 mid-flight. `scripts/finalize-store-build.ps1` now hard-fails if you pass a non-`.0` version (line 69-71), but the rule is on you to remember when picking.
+This bit us on v1.3.2.1 → had to bump to v1.3.3.0 mid-flight. `scripts/finalize-store-build.ps1` now hard-fails if you pass a non-`.0` version (the version check near the top of the script), but the rule is on you to remember when picking.
 
 **Bump rules:**
 
@@ -48,7 +48,7 @@ This bit us on v1.3.2.1 → had to bump to v1.3.3.0 mid-flight. `scripts/finaliz
 
 Create `docs/store/release-notes-X.Y.Z.0.md`. Tone: clan-facing, builder-to-builder, not Microsoft-reviewer formal. The Pet Sim 99 audience reads these in Discord — second person, sentence case, no jargon, no apologies.
 
-**Required sections** (model after `release-notes-1.3.3.0.md`):
+**Required sections** (model after `release-notes-1.23.0.0.md`):
 
 - **Download** — link to `rororo-win-Setup.exe` on the latest release
 - **What changed** — one or two H3 sections per user-visible fix/feature, written as the *outcome* the user feels, not the diff
@@ -157,7 +157,7 @@ $repo = 'estevanhernandez-stack-ed/ROROROblox'
 
 # 1. Attach sideload MSIX + dev-cert (so cert-import-flow users can install).
 & $gh release upload vX.Y.Z.0 `
-    dist/RORORO-Sideload-x64-1.21.0.0.msix `
+    dist/RORORO-Sideload-x64-X.Y.Z.0.msix `
     dev-cert.cer `
     --repo $repo
 
@@ -173,7 +173,7 @@ $repo = 'estevanhernandez-stack-ed/ROROROblox'
     --repo $repo
 ```
 
-**Auto-update rolls out within 24h** of publishing — Velopack debounces. Existing installs poll `releases.win.json` and pick up the delta.
+**Existing direct-download installs do not update themselves.** `UpdateChecker` polls the release once a day and only logs "Update available"; nothing in the app downloads or applies a package (Velopack's download/apply calls were never wired: build-plan item 11, open since 2026-05-04). Direct users get the new version by running the new `Setup.exe`, so the Discord post has to say so. Store users update through the Store. (This line promised "auto-update within 24h" until 2026-08-30.)
 
 ---
 
@@ -226,7 +226,7 @@ These are the failure modes we hit. Hit one of these again, recognize it, and mo
 - [`submission-checklist.md`](submission-checklist.md) — first-submission bringup (run once)
 - [`listing-copy.md`](listing-copy.md) — Store listing description (mostly stable)
 - [`reviewer-letter.md`](reviewer-letter.md) — Notes-for-cert template
-- [`release-notes-1.3.3.0.md`](release-notes-1.3.3.0.md) — most recent release notes (model new ones after this)
+- [`release-notes-1.23.0.0.md`](release-notes-1.23.0.0.md) — most recent release notes (model new ones after this)
 - [`scripts/finalize-store-build.ps1`](../../scripts/finalize-store-build.ps1) — Phase 3
 - [`scripts/build-msix.ps1`](../../scripts/build-msix.ps1) — Phase 4 (called by finalize)
 - [`scripts/generate-dev-cert.ps1`](../../scripts/generate-dev-cert.ps1) — dev-cert rotation

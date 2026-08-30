@@ -110,8 +110,10 @@
     <Resource Include="StreamerMode\Avatars\*.png" />
   </ItemGroup>
 
-  <!-- Discord:ApplicationId lives here, empty by default (feature unavailable, never a crash).
-       Must be present next to the exe at runtime for config binding to find it. -->
+  <!-- Discord:ApplicationId lives here. The committed appsettings.json ships the real, public
+       application id (1501748116985221272) since commit 8c75544 (2026-08-03); an empty value
+       still means the feature is off with no crash. Must be present next to the exe at
+       runtime for config binding to find it. -->
   <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

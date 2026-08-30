@@ -207,7 +207,8 @@ public sealed class RobloxUpdateProbe : IRobloxUpdateProbe
 
     private static void EnsureUserAgent(HttpClient client)
     {
-        // ROROROblox/<version> — never a browser spoof (CLAUDE.md hard rule + Store narrative).
+        // RORORO/<version> — never a browser spoof (CLAUDE.md hard rule + Store narrative). The
+        // product token matches RobloxApi's ctor; ruled the contract 2026-08-30.
         // Idempotent: a shared HttpClient may already carry the UA from RobloxApi's ctor.
         if (!client.DefaultRequestHeaders.UserAgent.Any())
         {

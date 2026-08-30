@@ -22,6 +22,9 @@ public class StatsRecordingSessionHistoryStoreTests
         public Task AddAsync(LaunchSession s) { Added.Add(s); return Task.CompletedTask; }
         public Task MarkEndedAsync(Guid id, DateTimeOffset at, string? hint = null)
         { Ended.Add(id); return Task.CompletedTask; }
+        public readonly List<(Guid Id, string Hint)> Outcomes = new();
+        public Task MarkOutcomeAsync(Guid id, string hint)
+        { Outcomes.Add((id, hint)); return Task.CompletedTask; }
         public Task ClearAsync() { ClearCalls++; return Task.CompletedTask; }
     }
 

@@ -21,10 +21,11 @@ namespace ROROROblox.Tests.Rendering;
 /// </para>
 /// <para>
 /// <c>WindowSizingFenceTests</c> is the cheap half of the same rule and runs everywhere, including
-/// CI. This one needs a real WPF measure pass, so it carries <c>[WindowRenderFact]</c> and skips on
-/// CI with the other nine (F-105). Both exist because the fence checks the CONDITION — an
-/// unresizable frame with a number in it — and this checks the CONSEQUENCE, which is the thing that
-/// actually reaches a user.
+/// CI. This one needs a real WPF measure pass, so it carries <c>[WindowRenderTheory]</c>. It skipped
+/// on CI with the other window-render gates until 2026-08-21, when F-105's root cause closed
+/// (commit 57a7660); it runs everywhere since. Both exist because the fence checks the CONDITION —
+/// an unresizable frame with a number in it — and this checks the CONSEQUENCE, which is the thing
+/// that actually reaches a user.
 /// </para>
 /// </summary>
 public class WindowContentFitsTests

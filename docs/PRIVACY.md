@@ -17,9 +17,9 @@ permalink: /privacy/
 
 - **Your Roblox password is never seen by RORORO.** Login happens inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame.
 - **Roblox session cookies are stored locally only**, encrypted with the Windows Data Protection API (DPAPI), tied to your Windows user account. Copying the file to another PC won't work — *unless you deliberately export your accounts* (Account export, v1.6), which re-encrypts them under a passphrase you choose into a file you save where you want. No cloud, no upload.
-- **No telemetry. No analytics. No third-party tracking.** RORORO makes network calls to Roblox-owned endpoints while it runs, not just at launch, including a presence heartbeat about every 25 seconds per saved account, and to GitHub Releases (for auto-update checks and the compatibility feed).
+- **No telemetry. No analytics. No third-party tracking.** RORORO makes network calls to Roblox-owned endpoints while it runs, not just at launch, including a presence heartbeat about every 25 seconds per saved account, and to GitHub Releases (for the daily update check, the compatibility feed, and, in direct-download builds only, the plugin catalog when you open the Plugins page).
 - **No data leaves your PC** except the Roblox-side calls described below — the same calls Roblox.com would make from your browser — and, if you choose to use it, a passphrase-encrypted account-export file that you save yourself (never auto-uploaded).
-- **You can delete everything** by uninstalling the app. The Store-installed MSIX automatically removes the encrypted vault on uninstall.
+- **You can delete everything**, but uninstalling alone does not do it: for every install type the data folder is `%LOCALAPPDATA%\ROROROblox\` and Windows leaves it behind on uninstall — delete that folder yourself for a full clean. (Until 2026-08-30 this bullet claimed the Store uninstall auto-removed the vault; a live test showed the Store build uses the same real folder.)
 
 ---
 
@@ -28,16 +28,19 @@ permalink: /privacy/
 | Location | Contents | Encryption |
 |---|---|---|
 | `accounts.dat` (in the app's local data folder) | Your saved Roblox session cookies and minimal account metadata (display name, account ID, avatar URL) | **DPAPI-encrypted** per Windows user |
-| `settings.json` (in the app's local data folder) | UI preferences (default game URL, compact-mode state, etc.) | Plain text — no secrets |
-| WebView2 cache (in the app's local data folder) | Embedded-browser cache used during Add Account | Wiped before every Add Account |
+| `settings.json` (in the app's local data folder) | UI preferences: theme, window placement, compact-mode state, memory thresholds, toggles | Plain text — no secrets |
+| `webview2-data\` (in the app's local data folder) | Embedded-browser profiles used during Add Account. Every Add Account gets a fresh folder and older ones are swept afterwards, so a login never inherits the previous account's cookie. | Plain — swept, never reused across accounts |
 | `last-update-check.txt` (in the app's local data folder) | Timestamp of the most recent update check | Plain text — no secrets |
 | Logs (in the app's local data folder) | Structured operational logs. Cookie values are **never** logged — only redacted indicators. | Plain text — no secrets |
 | `consent.dat` *(v1.4+)* (in the app's local data folder) | Per-plugin consent records — which plugins you installed, which capabilities you granted, autostart toggles | **DPAPI-encrypted** per Windows user |
 | `plugins\<plugin-id>\` *(v1.4+)* (in the app's local data folder) | Files for plugins you installed (manifest, EXE, dependencies). Plugins are SHA-256-verified against the publisher's hash before extraction; the unpacked files are plain on disk. | Plain — integrity is enforced at install time, not at rest |
+| `favorites.json`, `private-servers.json` | Your games library and saved private-server links (a private-server link is a soft credential: anyone with it can join that server) | Plain text |
+| `session-history.json`, `session-stats.json` *(v1.23+)* | Your launch history (last 100 rows) and the stats rollup built from it. Local only; nothing is transmitted. | Plain text — no secrets |
+| `themes\` | Custom theme files you added or built | Plain text — no secrets |
+| `streamer-identities.dat` *(v1.11+)* | The invented names streamer mode assigns to your friends (account identities live in `accounts.dat`) | Plain text — holds no secrets despite the extension |
+| `last-known-mutex.txt`, `.welcome-shown` | The last verified singleton name from the compatibility feed; a marker that the welcome tour has been shown | Plain text — no secrets |
 
-For Microsoft Store installs, the "app's local data folder" is the package's virtualized LocalState directory, which Windows automatically removes when the app is uninstalled.
-
-For sideload installs (the alternative pre-Store distribution path), the folder is `%LOCALAPPDATA%\ROROROblox\`. Sideload uninstalls do not auto-clean this folder; you can delete it manually.
+For every install type — Microsoft Store, sideload MSIX, and direct download — the "app's local data folder" is `%LOCALAPPDATA%\ROROROblox\`. Verified live on 2026-08-30: the Store build writes to this same real folder (Windows does not virtualize the app's file writes), so an uninstall of any flavor leaves it in place; delete the folder yourself for a full clean. (Until that date this section said Store installs used a virtualized LocalState folder that uninstall removes.)
 
 ---
 
@@ -58,10 +61,10 @@ RORORO initiates HTTPS connections **only** to:
 | `auth.roblox.com` | During *Launch As* | Roblox's documented authentication-ticket endpoint — exchanges the saved cookie for a one-time launch ticket. The same endpoint Bloxstrap and other launchers use. |
 | `users.roblox.com` | When listing accounts | Public account metadata (display name, ID). Used to confirm the saved cookie still maps to a real account. |
 | `thumbnails.roblox.com` | When listing accounts | Public avatar imagery. |
-| `presence.roblox.com` and related Roblox endpoints (games, friends, universes) | Continuously while RORORO is running, including a presence heartbeat about every 25 seconds per saved account | Keeps each saved account's online status, game details, and friends list current. The same kind of ongoing call the Roblox website makes while you're signed in there. |
-| `api.github.com` | At app startup | Velopack auto-update checks against the public RORORO GitHub Releases. |
-| `objects.githubusercontent.com` | When applying an update **or** installing a plugin (v1.4+) | Velopack downloads update packages from GitHub Releases; plugin installs download from the GitHub release URL you paste into Plugins → Install. |
-| `github.com` (Releases) | At app startup | Fetches `roblox-compat.json` (current known-good Roblox version + mutex name) from `releases/latest/download/`. Used so we can ship config updates within hours when Roblox renames the singleton mutex. Signed (ECDSA P-256/SHA-256) as of the first release built after this signing change lands — the app verifies the raw bytes against a pinned public key before trusting anything the feed returns; a missing or invalid signature is treated as no update available, never a crash and never a fallback to unverified content. |
+| `presence.roblox.com` and related Roblox endpoints (games, friends, universes, `apis.roblox.com` for pasted share links, `clientsettingscdn.roblox.com` for the current client version before a batch launch) | Continuously while RORORO is running, including a presence heartbeat about every 25 seconds per saved account | Keeps each saved account's online status, game details, and friends list current. The same kind of ongoing call the Roblox website makes while you're signed in there. |
+| `api.github.com` | At app startup, at most once a day | The update check against the public RORORO GitHub Releases. RoRoRo only checks and notes a newer version in its log; it does not download or install updates on its own. Direct-download users get a new version by running the new `Setup.exe`; Store users update through the Store. |
+| `objects.githubusercontent.com` | When installing a plugin (v1.4+) | Plugin installs download `manifest.json`, `manifest.sha256`, and `plugin.zip` from the GitHub release URL you paste into Plugins → Install (or pick from the in-app marketplace in direct-download builds). |
+| `github.com` (Releases) | At app startup | Fetches `roblox-compat.json` (current known-good Roblox version + mutex name) from `releases/latest/download/`. Used so we can ship config updates within hours when Roblox renames the singleton mutex. Signed (ECDSA P-256/SHA-256) since v1.14.1.0 (2026-08-03): the app verifies the raw bytes against a pinned public key before trusting anything the feed returns; a missing or invalid signature is treated as no update available, never a crash and never a fallback to unverified content. In direct-download builds (v1.9+), opening the Plugins page also fetches `plugins-catalog.json` from the same location for the in-app marketplace; the Store edition never does. |
 | Plugin-publisher URLs *(v1.4+)* | Only when **you** paste a plugin install URL | RoRoRo fetches `manifest.json`, `manifest.sha256`, and `plugin.zip` from the exact URL you provide. Never auto-fetched. Each plugin's own network behavior after install is governed by that plugin's policy, not this one. |
 
 RORORO sends a `User-Agent` header of `RORORO/<version>` on every request. We do **not** spoof a browser UA. We are transparent and identifiable to the receiving servers.
@@ -93,7 +96,7 @@ RoRoRo v1.6 added the ability to move your saved accounts to another PC. This is
 
 ## Plugins (v1.4 and later)
 
-RoRoRo v1.4 introduced a plugin system. Plugins are **separate products** — separate Windows programs you choose to install by pasting a GitHub release URL into the Plugins page. RoRoRo never auto-fetches plugins, never polls a curated list, and never bundles plugin code in its own MSIX.
+RoRoRo v1.4 introduced a plugin system. Plugins are **separate products** — separate Windows programs you choose to install by pasting a GitHub release URL into the Plugins page. The Microsoft Store edition never auto-fetches plugins, never polls a curated list, and never bundles plugin code in its own MSIX. Direct-download builds (v1.9+) also offer an in-app marketplace: opening the Plugins page fetches `plugins-catalog.json` from the RoRoRo GitHub release; installing still happens only when you click Install.
 
 What this means for your privacy:
 
@@ -151,7 +154,7 @@ There are two halves and they are independent — you can use either, both, or n
 - **What it publishes.** The game name, how many of your accounts are in it, and how long the session has been going. If you also turn on Join, a friend clicking Join receives a code that points at the server your accounts are in.
 - **Streamer mode holds.** With streamer mode on, presence publishes your masked names and hides the roster count — the same promise the app makes on screen, kept on the way out.
 - **A visibility limit worth knowing.** While Roblox is running, Discord shows *Roblox* to your friends rather than RoRoRo, because Discord gives the "playing" slot to a game it detects and RoRoRo is an application, not a detected game. Your own card is always correct. This is a Discord platform rule, not a setting we can change.
-- **URI registration.** Turning on Join registers a `roblox-rororo:` link handler for your Windows user, so Discord can hand a join back to the app. Every inbound join shows a confirmation naming what is about to launch before anything starts.
+- **URI registration.** Every build that carries a Discord application id (all releases since v1.15) registers a `roblox-rororo:` link handler for your Windows user at startup, whether or not Join is on, so Discord can hand a join back to the app; with Join off, an inbound link is ignored. Every inbound join shows a confirmation naming what is about to launch before anything starts.
 
 ### Alerts
 

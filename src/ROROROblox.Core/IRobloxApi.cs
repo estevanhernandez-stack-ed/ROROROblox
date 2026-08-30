@@ -2,7 +2,8 @@ namespace ROROROblox.Core;
 
 /// <summary>
 /// Thin wrapper over Roblox's documented public web endpoints. Spec §5.7 + §6.2 steps 1-4.
-/// User-Agent is <c>ROROROblox/&lt;version&gt;</c> — never a browser spoof.
+/// User-Agent is <c>RORORO/&lt;version&gt;</c>, the product token every typed client sends (set in
+/// <c>RobloxApi</c>'s ctor; ruled the contract 2026-08-30) — never a browser spoof.
 /// 401 from any endpoint becomes <see cref="CookieExpiredException"/>.
 /// </summary>
 public interface IRobloxApi

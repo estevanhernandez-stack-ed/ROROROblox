@@ -1,5 +1,7 @@
 # RoRoRo — Feature Ledger
 
+> **Moved 2026-08-30.** This file was `docs/features.md` until the feature registry took that name. The current-state inventory (every feature, its paths, gating, and status) is now [features.md](features.md); this ledger keeps the per-release history and stops at v1.21 (v1.22 and v1.23 are not recorded here).
+
 > **What this is.** The canonical inventory of every user-facing feature RoRoRo ships, with the version it landed in and where it lives in the tree. Three consumers: the 626labs.dev product page (`626labs-hub/rororo.html`), vibe-iterate (this is the shipped-feature baseline `/vibe-iterate:competitive` and `/vibe-iterate:feature-add` diff against), and marketing copy (Store listing, TikTok, Discord posts).
 >
 > **Maintenance rule.** Update this file in the same session a release tags — add the row, move anything from In-flight to its area table, bump the Current version line. A ship that outruns its ledger costs a re-discovery later (see the Projects keystone's 2026-07-06 Sanduhr case).

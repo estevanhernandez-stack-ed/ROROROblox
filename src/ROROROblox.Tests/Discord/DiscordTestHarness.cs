@@ -460,6 +460,7 @@ internal static class DiscordTestHarness
         public Task<IReadOnlyList<LaunchSession>> ListAsync() => throw new NotImplementedException();
         public Task AddAsync(LaunchSession session) => throw new NotImplementedException();
         public Task MarkEndedAsync(Guid sessionId, DateTimeOffset endedAtUtc, string? outcomeHint = null) => throw new NotImplementedException();
+        public Task MarkOutcomeAsync(Guid sessionId, string outcomeHint) => throw new NotImplementedException();
         public Task ClearAsync() => throw new NotImplementedException();
     }
 

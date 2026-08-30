@@ -8,9 +8,11 @@ namespace ROROROblox.App.Plugins.Adapters;
 /// capability paths need a synchronous <see cref="IInstalledPluginsLookup.FindById"/>;
 /// PluginRegistry is async because manifest parsing + consent decryption both touch
 /// disk. Bridge: scan once at construction, cache the snapshot, expose a manual
-/// <see cref="Refresh"/> hook for items that mutate the registry (install, uninstall).
-/// v1.4 wires Refresh from the Plugins page in item 16; for now construction-time
-/// snapshot is enough for handshake + capability lookup.
+/// <see cref="Refresh"/> hook for anything that mutates the registry. The construction-time
+/// snapshot covers handshake + capability lookup on its own; <c>PluginsViewModel</c> calls
+/// Refresh after install, update, uninstall, an autostart toggle, and a first-launch consent
+/// grant, so the index tracks the Plugins page without a restart. (This comment used to say
+/// that wiring was still to come in v1.4 item 16; it has been in place since then.)
 /// </summary>
 public sealed class InstalledPluginsLookupAdapter : IInstalledPluginsLookup
 {
@@ -41,8 +43,9 @@ public sealed class InstalledPluginsLookupAdapter : IInstalledPluginsLookup
     }
 
     /// <summary>
-    /// Re-scan the plugins root and rebuild the in-memory index. Item 16 (Plugins
-    /// page) calls this after install / uninstall / consent changes.
+    /// Re-scan the plugins root and rebuild the in-memory index. <c>PluginsViewModel</c>
+    /// (the Plugins page) calls this after install, update, uninstall, an autostart toggle,
+    /// and a first-launch consent grant.
     /// </summary>
     public void Refresh()
     {

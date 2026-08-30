@@ -39,7 +39,8 @@ public class MainViewModelTests
         FakeAppSettings? settings = null,
         IBloxstrapDetector? bloxstrapDetector = null,
         FakeActivityMonitor? activityMonitor = null,
-        Core.IUiDispatcher? uiDispatcher = null)
+        Core.IUiDispatcher? uiDispatcher = null,
+        ISessionHistoryStore? sessionHistory = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
@@ -60,7 +61,7 @@ public class MainViewModelTests
             presenceService: new FakePresenceService(),
             diagnostics: new FakeDiagnosticsCollector(),
             privateServerStore: new FakePrivateServerStore(),
-            sessionHistory: new FakeSessionHistoryStore(),
+            sessionHistory: sessionHistory ?? new FakeSessionHistoryStore(),
             startupRegistration: new FakeStartupRegistration(),
             themeStore: new FakeThemeStore(),
             themeService: new ThemeService(new FakeThemeStore(), new FakeAppSettings()),
@@ -1637,7 +1638,7 @@ public class MainViewModelTests
     /// instance passed for each account — Task 8's recycle test needs to assert the SAME target
     /// reaches the launcher, not merely that a launch happened.
     /// </summary>
-    private sealed class RecordingSuccessLauncher : IRobloxLauncher
+    internal sealed class RecordingSuccessLauncher : IRobloxLauncher  // internal: SessionHistoryEndStampTests drives launches with it too
     {
         private int _nextPid = 5000;
         public readonly List<LaunchTarget> Launches = new();
@@ -1661,7 +1662,8 @@ public class MainViewModelTests
         public void Start() => throw new NotImplementedException();
         public void Stop() => throw new NotImplementedException();
         public Task PollOnceAsync(CancellationToken ct = default) => throw new NotImplementedException();
-        public Task RequestImmediateRefreshAsync(Guid accountId) => throw new NotImplementedException();
+        // OnProcessExited fires this fire-and-forget on the exit path; answer instead of throwing (F-100).
+        public Task RequestImmediateRefreshAsync(Guid accountId) => Task.CompletedTask;
     }
 
     private sealed class FakeDiagnosticsCollector : IDiagnosticsCollector
@@ -1690,6 +1692,26 @@ public class MainViewModelTests
         public Task<IReadOnlyList<LaunchSession>> ListAsync() => throw new NotImplementedException();
         public Task AddAsync(LaunchSession session) => throw new NotImplementedException();
         public Task MarkEndedAsync(Guid sessionId, DateTimeOffset endedAtUtc, string? outcomeHint = null) => throw new NotImplementedException();
+        public Task MarkOutcomeAsync(Guid sessionId, string outcomeHint) => throw new NotImplementedException();
+        public Task ClearAsync() => throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Records every history call so a test can assert WHEN the end-stamp lands (SessionHistoryEndStampTests).
+    /// The throwing fake above is right for tests that never launch; this one is for tests that do.
+    /// </summary>
+    internal sealed class RecordingSessionHistoryStore : ISessionHistoryStore
+    {
+        public readonly List<LaunchSession> Added = new();
+        public readonly List<(Guid SessionId, DateTimeOffset EndedAtUtc, string? Hint)> Ended = new();
+        public readonly List<(Guid SessionId, string Hint)> Outcomes = new();
+
+        public Task<IReadOnlyList<LaunchSession>> ListAsync() => Task.FromResult<IReadOnlyList<LaunchSession>>(Added);
+        public Task AddAsync(LaunchSession session) { Added.Add(session); return Task.CompletedTask; }
+        public Task MarkEndedAsync(Guid sessionId, DateTimeOffset endedAtUtc, string? outcomeHint = null)
+        { Ended.Add((sessionId, endedAtUtc, outcomeHint)); return Task.CompletedTask; }
+        public Task MarkOutcomeAsync(Guid sessionId, string outcomeHint)
+        { Outcomes.Add((sessionId, outcomeHint)); return Task.CompletedTask; }
         public Task ClearAsync() => throw new NotImplementedException();
     }
 

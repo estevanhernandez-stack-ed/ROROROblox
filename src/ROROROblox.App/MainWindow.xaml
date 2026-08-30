@@ -25,8 +25,10 @@
              silently resolved to null. -->
         <app:BindingProxy x:Key="VmProxy" Data="{Binding}" />
 
-        <!-- Themed brushes are now app-level (App.xaml). The ThemeService mutates them in
-             place so every {StaticResource} reference re-renders on theme change. -->
+        <!-- Themed brushes are app-level (App.xaml). ThemeService.ApplySlot REPLACES each brush
+             instance on theme change, so every themed reference in this file must be
+             {DynamicResource}; a {StaticResource} would keep the discarded instance and stop
+             repainting after first paint. (This comment said "mutates in place" until 2026-08-30.) -->
 
         <!-- Compact-mode row template: tighter, single-line, only the live ops info.
              Used by the ItemsControl that renders CompactRows in the compact strip. -->
@@ -1153,14 +1155,14 @@
                                 FontSize="{DynamicResource BodyFontSize}"
                                 AutomationProperties.AcceleratorKey="Ctrl+,"
                                 ToolTip="Startup, accounts, alerts, Discord, and theme. (Ctrl+,)" />
-                        <!-- A real Menu, not a Button that opens a ContextMenu. The first version was
-                             the latter, and a screen reader announced it as a plain button: no
-                             ExpandCollapse pattern, no expanded/collapsed state, no indication that
-                             five destinations sat behind it. Six discoverable buttons would have
-                             become one that announces as a dead end. A top-level MenuItem reports
-                             ExpandCollapse, highlights its first item on keyboard open, and toggles
-                             shut on a second click — all behaviour the Button pattern needed
-                             hand-written and got wrong.
+                        <!-- A ToolsDropDownButton: a Button that owns its ContextMenu and adds what a
+                             bare Button-with-ContextMenu lacked. The first cut announced to a screen
+                             reader as a plain button (no ExpandCollapse pattern, no expanded state,
+                             no hint that five destinations sat behind it); a real Menu was tried next
+                             and rejected (Controls/ToolsDropDownButton.cs records why). The control
+                             reports ExpandCollapse, focuses its first item on keyboard open, and
+                             toggles shut on a second click. This comment said "a real Menu, not a
+                             Button" until 2026-08-30; the element below is authoritative.
 
                              AutomationProperties.Name strips the chevron from what gets announced;
                              the glyph is a visual affordance, not part of the name. -->

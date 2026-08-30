@@ -5,10 +5,11 @@
 # anyway") on first install -- that's the v1 trade for shipping without a code-sign cert.
 #
 # Output (under dist/release/):
-#   - rororo-win-Setup.exe        installer the clan downloads
-#   - rororo-<v>-win-full.nupkg   full package (auto-updater consumes this)
-#   - rororo-<v>-win-delta.nupkg  delta vs prior release (only after release #2)
-#   - releases.win.json           manifest the Velopack auto-updater pings
+#   - RORORO-win-Setup.exe        installer the clan downloads (packId RORORO sets the name)
+#   - RORORO-<v>-full.nupkg       full package (the in-app update check reads this)
+#   - RORORO-<v>-delta.nupkg      delta vs prior release (only after release #2)
+#   - releases.win.json, RELEASES manifests the in-app update check pings
+#   - RORORO-win-Portable.zip     portable layout (vpk pack emits it by default)
 #
 # Run from repo root:
 #   pwsh scripts/build-velopack-release.ps1 -Version 1.1.2.0
@@ -20,7 +21,10 @@
 #     src/ROROROblox.App/Package/Logos/. Run scripts/generate-store-assets.ps1 first
 #     if missing.
 #
-# Upload flow (manual, v1):
+# Upload flow. NORMAL PATH (since 2026-05-06): push the tag and .github/workflows/release.yml runs
+# this script, uploads a DRAFT GitHub Release (vpk upload github --merge), then signs and attaches
+# roblox-compat.json + .sig and plugins-catalog.json. Do not also upload a local pack for that tag.
+# MANUAL FALLBACK, only when CI is unavailable:
 #   1. Run this script with the target version.
 #   2. git tag v<version> && git push origin v<version>
 #   3. github.com -> Releases -> Draft a new release from the tag.
@@ -192,7 +196,8 @@ foreach ($a in $artifacts) {
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  1. git tag v$Version && git push origin v$Version"
-Write-Host "  2. github.com -> Releases -> Draft from the tag"
+Write-Host "  2. Normally STOP here: release.yml drafts the release from the tag push."
+Write-Host "     Manual fallback only: github.com -> Releases -> Draft from the tag, then"
 Write-Host "  3. Upload EVERY file from dist/release/ as a Release asset."
 Write-Host "     (Setup.exe is the install entry point; releases.win.json + *-full.nupkg"
-Write-Host "      are what the in-app auto-updater pings.)"
+Write-Host "      are what the in-app update check pings; it logs a newer version, nothing more.)"

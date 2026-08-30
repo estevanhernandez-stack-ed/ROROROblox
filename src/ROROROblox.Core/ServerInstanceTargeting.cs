@@ -1,7 +1,11 @@
 namespace ROROROblox.Core;
 
 /// <summary>
-/// The single place a <see cref="LaunchTarget.GameJob"/> is ever constructed in production.
+/// The one place the launch path constructs a <see cref="LaunchTarget.GameJob"/> in production.
+/// The Discord join-secret path builds one too: <c>DiscordPresenceService</c> (App) encodes a
+/// GameJob from a presence reading and <see cref="Discord.JoinSecretCodec"/> decodes it back. Both
+/// still pair place id and job id from one and the same presence reading, which is the rule this
+/// class exists to enforce.
 /// <para>
 /// Deciding "should this launch go to one specific server, and which" is one rule, and it is easy
 /// to get subtly wrong (see <see cref="ServerInstance"/> for the failure the 2026-08-02 spike hit).

@@ -26,7 +26,7 @@
 
             <!-- Themed brushes — single source of truth at app level, and these hexes are only the
                  pre-startup values. ThemeService.ApplySlot REPLACES each brush instance on startup
-                 and on every theme change (ThemeService.cs:261-268); it does not mutate the held
+                 and on every theme change (ThemeService.ApplySlot); it does not mutate the held
                  brush's Color.
 
                  So reference these with {DynamicResource}, never {StaticResource}. A StaticResource

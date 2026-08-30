@@ -1566,9 +1566,52 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// Bridges <see cref="MainViewModel.AlertsRaised"/> to <see cref="AlertDispatcher"/>.
+    /// <para>
+    /// Deliberately independent of Discord presence: this runs whether or not Discord is
+    /// installed, configured, or running, because the desktop-notification destination is the one
+    /// that needs no setup and therefore the one most users will actually have.
+    /// </para>
+    /// </summary>
+    private async Task WireAlertsAsync()
+    {
+        if (_services is null) return;
+        try
+        {
+            var configService = _services.GetRequiredService<DiscordConfigService>();
+            await configService.InitializeAsync().ConfigureAwait(true);
+
+            var vm = _services.GetRequiredService<MainViewModel>();
+            var dispatcher = _services.GetRequiredService<AlertDispatcher>();
+
+            // Paint the saved mutes onto the rows. Without this the preference persists but the
+            // row shows unmuted after every restart — the user re-mutes an account that was never
+            // going to alert, and stops trusting the toggle.
+            var muted = configService.Current.MutedAccountIds.ToHashSet();
+            foreach (var row in vm.Accounts)
+            {
+                row.AlertsMuted = muted.Contains(row.Id);
+            }
+
+            // Fire-and-forget on purpose: AlertsRaised is raised from ApplyPresence and the
+            // watchdog's crossing handler, both of which are on the UI thread and neither of which
+            // may be made to wait on an HTTP POST to Discord. DispatchAsync swallows its own
+            // failures (see its remarks), so there is no unobserved-exception hazard here.
+            vm.AlertsRaised += (_, triggers) => _ = dispatcher.DispatchAsync(triggers);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Couldn't wire Discord alerts; the app runs without them.");
+        }
+    }
+
+    /// <summary>
     /// Discord presence + Join, startup half (Task 9). Skips the whole feature — no client, no
     /// presence service, nothing assigned to <see cref="MainViewModel.DiscordPresence"/> — when
-    /// <c>Discord:ApplicationId</c> (appsettings.json) is empty, which it is by default.
+    /// <c>Discord:ApplicationId</c> (appsettings.json) is empty. The committed file ships the real
+    /// public id since commit 8c75544 (2026-08-03), so on a normal install this branch is not taken;
+    /// a stripped or hand-edited config still lands here (this line said "which it is by default"
+    /// until 2026-08-30).
     /// <see cref="LacheeDiscordRpcClientAdapter.Initialize"/> already guards the same case
     /// defensively, but constructing and starting a presence service that can never connect is
     /// pointless ceremony, and Preferences needs to know NOW (not discover it lazily on first
@@ -1617,46 +1660,6 @@ public partial class App : Application
     /// saved account (and take over a running session) whether or not the user ever turned Join on.
     /// </para>
     /// </summary>
-    /// <summary>
-    /// Bridges <see cref="MainViewModel.AlertsRaised"/> to <see cref="AlertDispatcher"/>.
-    /// <para>
-    /// Deliberately independent of Discord presence: this runs whether or not Discord is
-    /// installed, configured, or running, because the desktop-notification destination is the one
-    /// that needs no setup and therefore the one most users will actually have.
-    /// </para>
-    /// </summary>
-    private async Task WireAlertsAsync()
-    {
-        if (_services is null) return;
-        try
-        {
-            var configService = _services.GetRequiredService<DiscordConfigService>();
-            await configService.InitializeAsync().ConfigureAwait(true);
-
-            var vm = _services.GetRequiredService<MainViewModel>();
-            var dispatcher = _services.GetRequiredService<AlertDispatcher>();
-
-            // Paint the saved mutes onto the rows. Without this the preference persists but the
-            // row shows unmuted after every restart — the user re-mutes an account that was never
-            // going to alert, and stops trusting the toggle.
-            var muted = configService.Current.MutedAccountIds.ToHashSet();
-            foreach (var row in vm.Accounts)
-            {
-                row.AlertsMuted = muted.Contains(row.Id);
-            }
-
-            // Fire-and-forget on purpose: AlertsRaised is raised from ApplyPresence and the
-            // watchdog's crossing handler, both of which are on the UI thread and neither of which
-            // may be made to wait on an HTTP POST to Discord. DispatchAsync swallows its own
-            // failures (see its remarks), so there is no unobserved-exception hazard here.
-            vm.AlertsRaised += (_, triggers) => _ = dispatcher.DispatchAsync(triggers);
-        }
-        catch (Exception ex)
-        {
-            _log?.LogWarning(ex, "Couldn't wire Discord alerts; the app runs without them.");
-        }
-    }
-
     private async Task WireDiscordPresenceAsync(MainWindow mainWindow, string applicationId)
     {
         if (_services is null) return;
@@ -1749,16 +1752,6 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Reads <c>Discord:ApplicationId</c> straight out of appsettings.json next to the exe. No
-    /// <c>IConfiguration</c> binder runs anywhere in this process —
-    /// <see cref="ROROROblox.App.Plugins.PluginHostStartupService"/> deliberately uses
-    /// <c>WebApplication.CreateSlimBuilder</c> specifically to skip that config stack (see its own
-    /// remarks) — so this is a direct, minimal JSON read rather than pulling in
-    /// Microsoft.Extensions.Configuration.Json for one string. A missing file, malformed JSON, or
-    /// a missing/non-string key all resolve to <see cref="string.Empty"/> (feature off), same
-    /// tamper-tolerant shape as <see cref="DiscordConfigStore"/>.
-    /// </summary>
-    /// <summary>
     /// The single place that knows what the Settings page needs. Every door goes through the
     /// shell (<see cref="CreateShellPage"/>), so a dependency added to the page is added once,
     /// in the composition root, rather than in every caller.
@@ -1785,6 +1778,16 @@ public partial class App : Application
             _services.GetRequiredService<ISystemMemoryProbe>());
     }
 
+    /// <summary>
+    /// Reads <c>Discord:ApplicationId</c> straight out of appsettings.json next to the exe. No
+    /// <c>IConfiguration</c> binder runs anywhere in this process —
+    /// <see cref="ROROROblox.App.Plugins.PluginHostStartupService"/> deliberately uses
+    /// <c>WebApplication.CreateSlimBuilder</c> specifically to skip that config stack (see its own
+    /// remarks) — so this is a direct, minimal JSON read rather than pulling in
+    /// Microsoft.Extensions.Configuration.Json for one string. A missing file, malformed JSON, or
+    /// a missing/non-string key all resolve to <see cref="string.Empty"/> (feature off), same
+    /// tamper-tolerant shape as <see cref="DiscordConfigStore"/>.
+    /// </summary>
     private static string ReadDiscordApplicationId()
     {
         try

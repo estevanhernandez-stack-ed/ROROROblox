@@ -1,143 +1,69 @@
-# RORORO
+# RoRoRo (repo: ROROROblox)
 
-> **Persona:** This repo inherits **The Architect** from `~/.claude/CLAUDE.md`. No need to re-establish — just adds project context below.
+> **Persona:** inherits **The Architect** from `~/.claude/CLAUDE.md`. Nothing below re-establishes it.
 
-RORORO is a Windows desktop app that lets a Roblox player run multiple clients side by side and quick-launch them as different saved accounts. Distributed first to Este's Pet Sim 99 clan, then to the Microsoft Store. Free product, branded under 626 Labs — every install spreads the umbrella.
+RoRoRo is a Windows desktop app that runs several Roblox clients side by side, each signed in as a different saved account. Free, a 626 Labs product, shipped to a Pet Sim 99 clan and the Microsoft Store (ID `9NMJCS390KWB`, on v1.23.0.0). The user-facing name is **RoRoRo**; `ROROROblox` and `RORORO` stay in identifiers, paths, the Velopack packId, and the HTTP User-Agent.
 
-## Tech Stack & Voice
+Maps live next door: [docs/architecture.md](docs/architecture.md) (modules, startup order, data flow), [docs/features.md](docs/features.md) (every feature: paths, gating, status), [docs/decisions.md](docs/decisions.md) (why; append-only), [docs/feature-ledger.md](docs/feature-ledger.md) (what shipped when).
 
-- **Stack (locked, see spec §3):** .NET 10 LTS + C# 14, WPF + WPF-UI by lepoco, Hardcodet.NotifyIcon.Wpf (tray), Microsoft.Windows.CsWin32 (Win32 source generator), Microsoft.Web.WebView2 (cookie capture), `System.Security.Cryptography.ProtectedData` (DPAPI), Velopack (auto-update), Windows Application Packaging Project → MSIX, xUnit. WPF chosen over WinUI 3 for v1 because tray + Win32 interop is more battle-tested; WinUI 3 is a v2 conversation, not a v1 hack.
-- **Brand:** Cyan `#17d4fa` + magenta `#f22f89`, always paired. Navy `#0f1f31` field. Space Grotesk display, Inter body, JetBrains Mono code/meta (uppercase + 0.12em tracking on small labels). Tagline: *Imagine Something Else.* Apply across icon, Store listing, About box, README, splash, and any user-facing surface — this product is brand-spread to a non-626 audience, so the brand has to land on first contact.
-- **Voice (user-facing copy: README, Store listing, modals, About box):** Builder-to-builder, second person, sentence case. No "empower / leverage / seamlessly / unlock / unleash." Em-dashes minimal; commas, periods, colons by default. No emoji in UI copy or marketing surfaces. Lead with the verdict, then unpack. Specific over generic — "second client opens in under 2 seconds" not "fast multi-instance."
-- **Voice (clan-facing copy specifically — README short pitch, Discord post when shipping):** still 626 voice but warmer. The Pet Sim 99 audience is non-technical Windows users; explain the "More info → Run anyway" SmartScreen click-through plainly, no apologies, no jargon.
+## Build, test, run (verified 2026-08-30, SDK 10.0.203)
 
-## Design system
+```powershell
+dotnet build ROROROblox.slnx -c Release                              # 0 errors; ~43 warnings are known noise
+dotnet test  ROROROblox.slnx -c Release --no-build                   # 1899 unit + 24 harness pass; 1 harness [Skip] by design
+dotnet test  src/ROROROblox.Tests/ -c Release --no-build             # unit only
+dotnet test  src/ROROROblox.PluginTestHarness/ -c Release --no-build # named-pipe gRPC integration only
+dotnet run --project src/ROROROblox.App                              # not re-verified this pass: the single-instance guard surfaces an existing window
+powershell -ExecutionPolicy Bypass -File .claude/hooks/install.ps1   # once per box: pre-commit secret scan + local-path guard
+```
 
-Canonical brand spec lives at `~/.claude/skills/626labs-design/` (globally available — same skill across every 626 Labs repo). Use `colors_and_type.css` as the token source and `ui_kits/` as the pattern reference. **Apply via the design skill before producing icons, Store tile graphics, splash, or About-box artwork** — programmatic placeholders are disqualifying for the "won't ship a broken-looking tile even if the rest works" bar (pattern x from SnipSnap retro). For RORORO specifically: the `Square150x150Logo`, `Square44x44Logo`, `Wide310x150Logo`, splash, and tray icon set must all go through the skill.
+- **Always name `ROROROblox.slnx`.** Qodo regenerates a gitignored legacy `ROROROblox.sln` beside it; bare `dotnet build` errors MSB1011 while both exist. CI runs the whole solution on x64 and native arm64; unit-green is not landable.
+- **A running dev-build RoRoRo locks `bin\Debug`**, so a Debug build fails at the copy step. Build Release or quit it from the tray. `Get-Process ROROROblox.App | Select-Object Path` tells you which build is up; a Store build and a dev build can coexist.
+- There is no `.editorconfig`. Style is csproj flags (`Nullable`, `ImplicitUsings`) plus the fence tests.
+- Tests read the source tree from disk (they walk up to the `.slnx`), and `ContrastPairGateTests` parses `docs/superpowers/research/2026-08-04-rororo-settings-ui-audit-findings.md`. A docs edit can fail the suite.
 
-## What's where
+**Ship:** push tag `vX.Y.Z.0` → `release.yml` drafts the Velopack release, then signs and attaches `roblox-compat.json` + `.sig` + `plugins-catalog.json`. Do **not** also upload a local `vpk pack` for that tag (`vpk upload github` / `gh release create` against a release `release.yml` already drafted makes a duplicate). `release.yml` runs the tests but not the `guards` job, so get `ci.yml` green on main first. Leave the manifest patched through the sideload build; `-RestoreManifest` is for iterating, not mid-flow. Store MSIX: `powershell -ExecutionPolicy Bypass -File scripts/finalize-store-build.ps1 -Version x.y.z.0 -IdentityName 626LabsLLC.RoRoRoBlox -PublisherCN "CN=177BCE59-0966-4975-9962-10E36652141F" -PublisherDisplayName "626Labs LLC"`, then again with `-Architecture arm64`; ship both. Sideload: `scripts/build-msix.ps1 -Sideload -CertPath dev-cert.pfx -CertPassword <pwd>`. Runbook: `docs/store/release-playbook.md`. Compat-only push (no binary): edit `roblox-compat.json` on main, then Actions → **compat** → Run workflow; it signs and re-attaches the json + `.sig` to the current latest release.
 
-**What exists today:**
+## Hard rules
 
-| Path | What it is |
-|---|---|
-| `docs/superpowers/specs/2026-05-03-RORORO-design.md` | **CANONICAL design spec.** Every architectural decision lives here. Other `docs/*.md` are pointer-stubs. |
-| `docs/scope.md` | Spec-first Cart pointer-stub |
-| `docs/spec.md` | **Per-cycle, and overwritten each Cart round.** Usually a spec-first pointer-stub; when Cart authors the design directly it is that cycle's canonical artifact and must be archived into `docs/superpowers/specs/` before the next round overwrites it. v1.17 was the first cycle to hit that case. |
-| `docs/superpowers/specs/2026-08-10-rororo-flatline-theme-design.md` | v1.17.0.0 flatline — archived from `docs/spec.md`, carries its own banner-corrections |
-| `docs/superpowers/specs/2026-08-10-rororo-settings-remediation-design.md` | v1.18.0.0 Settings becomes a place — archived from `docs/spec.md`, carries the §2 version confirmation and the §10 end-of-cycle carry-forward |
-| `docs/superpowers/specs/2026-08-11-rororo-plugin-theme-feed-design.md` | v1.19.0.0 plugin theme feed — archived from `docs/spec.md`; §0 records the two open questions that closed on inspection |
-| `docs/superpowers/specs/2026-08-11-rororo-button-vocabulary-design.md` | v1.20.0.0 one button vocabulary — archived from `docs/spec.md`; its banner records three templates where the spec proposed one, and the five corrections the scanner definition needed |
-| `docs/superpowers/specs/2026-08-12-rororo-surface-vocabulary-design.md` | v1.21.0.0 the surfaces behind the buttons — archived from `docs/spec.md`. **Read its banner before trusting its §0.** That spec opens by correcting three register rows, and its banner corrects four things in the spec itself, three of them the same shape — including a §3 fix direction the codebase had already ruled against, and a §2 gate that failed at HEAD |
-| `docs/ui-routes.json` + `docs/ui-capture-checklist.md` | UIA capture routes and the campaign they serve. **The schema tests validate the file's SHAPE, not that a named element exists in the XAML** — moving a control between the toolbar and the Tools menu breaks its route with a green suite. Check surface 08's history before assuming a route is current. |
-| `docs/prd.md` | Compressed PRD — stories + acceptance criteria + prioritization |
-| `docs/builder-profile.md` | Builder-profile excerpt for this cycle |
-| `docs/checklist.md` | **Active build plan.** Cycle-shaped — current cycle (v1.4 plugin system) ships 18 items across 3 milestones with 3 verification checkpoints. Older cycles overwrite this file each round. |
-| `process-notes.md` | Cart cycle notes — sequencing rationale + risk callouts |
-| `PROVENANCE.txt` | Source/hash/caveats for the reference binary; load-bearing for "this is a clean reimplementation, not a fork" |
-| `MultiBloxy.exe` | Reference binary (Zgoly's MultiBloxy v1.1.0.0). Read-only — DO NOT modify or replace. |
-| `src/ROROROblox.PluginContract/` | Shared NuGet (v0.1.0+) — `.proto` + generated C# bindings consumed by both RoRoRo and plugin authors. Versioned independently from RoRoRo's app version. |
-| `src/ROROROblox.App/Plugins/` | Plugin host module — `PluginManifest`, `PluginCapability` vocab, `ConsentStore` (DPAPI), `PluginRegistry`, `PluginInstaller` (SHA-verified GitHub URL flow), `PluginProcessSupervisor`, `PluginHostService` (gRPC server impl), `CapabilityInterceptor`, `PluginUITranslator`, `PluginHostStartupService` (Kestrel + named pipe). |
-| `src/ROROROblox.App/Plugins/Adapters/` | Adapters bridging existing RoRoRo singletons to plugin interfaces (mutex state, running accounts, launch invoker, WPF UI host). |
-| `src/ROROROblox.PluginTestHarness/` | Integration test project — real Kestrel + named-pipe gRPC against real RoRoRoHostClient. |
-| `docs/plugins/AUTHOR_GUIDE.md` | Plugin author guide — contract NuGet, capability vocabulary, manifest format, GitHub release shape (manifest.json + manifest.sha256 + plugin.zip), recipes. |
-| `docs/store/reviewer-letter-1.4.0.0.md` | Partner Center submission letter for v1.4 — leads with the policy 10.2.2 alignment narrative. |
-| `.superpowers/brainstorm/` | Pre-onboard brainstorming session artifacts |
+- **The singleton is a name race, not a lock** (our Mutex vs Roblox's Event; see [architecture.md](docs/architecture.md#the-two-core-ideas)). `ERROR_ALREADY_EXISTS` means a peer tool holds it and multi-instance already works; never block on it.
+- **The mutex name comes from `roblox-compat.json`** (remote, signed): resolution is remote → last-known-good cache (`last-known-mutex.txt`) → the hardcoded default in `MutexHolder`. Never hardcode it elsewhere.
+- **`UseCookies=false` on the `IRobloxApi` HttpClient is load-bearing.** With a cookie container every alt launches as the first account. No test guards it; a refactor to a shared handler regresses it with a green suite.
+- **User-Agent is `RORORO/<version>`.** No `Mozilla/`, no browser spoofing, documented public endpoints only. (The plugin installer sends `ROROROblox-PluginInstaller/<version>`.)
+- **Never commit `dev-cert.pfx`/`.cer`, `accounts.dat`, `consent.dat`, `discord.dat`, `webview2-data/`, `/plugins/`, `spike/`, or any `.ROBLOSECURITY` value.** The pre-commit hooks and the CI `guards` job fail on cookie prefixes, key files, and `c:\Users\<name>\` paths. Test fixtures use obviously fake cookies.
+- **The macro wall:** the Store binary never synthesizes input or injects into the client. Consented out-of-process plugins (Ur Task, Ur AFK, ur-mcp) may; that is what the plugin system exists for (Store policy 10.2.2). Core observes, plugins act.
+- **Typed HttpClient classes have exactly one applicable ctor and take `ILogger<T>`**, or startup crashes at resolve time with a green suite (`TypedHttpClientRegistrationTests`).
+- **Themed brushes are replaced, not mutated.** Reference them and the type-ladder tokens with `DynamicResource` only. `ControlStyles.xaml` merges after WPF-UI's dictionaries.
+- **A button may not paint itself** (`ButtonRankFenceTests`); hover/pressed are sheens, never Opacity or a Chrome repaint (`ButtonStateGateTests`). A button that needs triggers uses `<Button.Style><Style BasedOn="{StaticResource …ButtonStyle}">` with Visibility/IsEnabled setters only. Fences have vacuity floors and ratchet ceilings that move in the same commit as the change: `AccessibleNamingFenceTests` unnamed ceiling 1 (asserted as equality), `ThemedStatusColourTests` literal ceiling 21, `TypeLadderFenceTests` 3 raw sizes.
+- **Off the UI thread read `MainViewModel.AccountsSnapshot`, never `Accounts`.** WPF-affine singletons register through `UiBoundFactory`. Marshal through `IUiDispatcher`, not `Application.Current?.Dispatcher`.
+- **Startup order is load-bearing:** theme → resolve mutex name → `TryAcquire` → gate; the plugin pipe binds before the gate modals, autostart after. Resolving `IMutexHolder` earlier freezes the hardcoded name.
+- **Every gRPC method needs an `RpcMethodCapabilityMap` entry.** Absence is denial. A missed entry fails `RpcMethodCapabilityMapTests` and the harness's `CapabilityMap_CoversEveryHostMethod`; at runtime the bind task faults, is logged at Debug, and plugins are silently off for the session (the code comments saying it "crashes" are stale). A new RPC also needs a `PluginCapability` entry, a `PluginHostService` override, and usually a provider interface added as an optional ctor parameter so the two test construction sites keep compiling.
+- **A new modal must be linked into `src/ROROROblox.Tests/ROROROblox.Tests.csproj`** or `ModalDefaultButtonSafetyTests` never sees it; a new window must be listed in `WindowChromeFenceTests`.
+- **A test that builds a `MainViewModel` must dispose the window decorator and call `StopPeriodicRefresh()`;** two ctor timers otherwise leak into other tests.
+- **A new setting** is a default parameter on the private `SettingsBlob` record at the bottom of `Core/AppSettings.cs` plus an `IAppSettings` member. Four test files carry private fakes of `IAppSettings` (`MainViewModelTests`, `RobloxLauncherTests`, `StreamerIdentityProviderTests`, `Discord/DiscordTestHarness`) and stop compiling until updated; `SettingsReachabilityTests` requires the key to be reachable from a control or allow-listed.
+- **Version lives in the csproj `<Version>`, `Package.appxmanifest`, and the tag;** only `finalize-store-build.ps1` syncs the first two. Fourth component is always `0`. `packId RORORO` and `PublisherDisplayName "626Labs LLC"` (no space) are frozen identities.
+- **A GitHub pre-release reaches nobody** (`GithubSource(prerelease:false)`).
+- **Don't rewrite the canonical spec on drift; banner-correct it at the top.** Canonical: `docs/superpowers/specs/2026-05-03-rororoblox-design.md` (its body is wrong about the mutex; its banners are right). Later cycle specs sit beside it, dated.
+- **Findings register** (`docs/superpowers/research/2026-08-04-rororo-settings-ui-audit-findings.md`): a PR that closes a row flips it in the same PR; verify against the tree, never a changelog; re-record counts with direction; the "Rulings by the user" section overrides rows (the two emoji stay; "Multi-Instance" keeps its name).
+- **Store assets go through the `626labs-design` skill;** `build-msix.ps1` refuses placeholder logos. The Store-signed cert and the sideload cert are never the same key.
+- **No end-to-end automation against real roblox.com.** Manual smoke on a clean VM.
+- `MultiBloxy.exe` and `PROVENANCE.txt` are immutable reference files.
 
-**Source tree shipped (v1.0 onward):**
+## Voice and brand (README, Store listing, modals, About)
 
-| Path | What it is |
-|---|---|
-| `src/ROROROblox.App/` | WPF process — App, MainWindow + ViewModel, TrayService, CookieCapture, Plugins/ (v1.4) |
-| `src/ROROROblox.Core/` | Interfaces + primitives — `IMutexHolder`, `IAccountStore`, `IRobloxApi`, `IRobloxLauncher` (no UI dependencies) |
-| `src/ROROROblox.Tests/` | xUnit unit-test coverage. Three gates are worth knowing by name before touching a control's look: `ContrastPairGateTests` (resting pairs, exemptions tied to register rows), `Rendering/ButtonStateGateTests` (hover/pressed/disabled, composited, every rank × every built-in theme), `ButtonRankFenceTests` (a button declaration may not paint itself). |
-| `src/ROROROblox.PluginTestHarness/` | xUnit integration tests — real named-pipe gRPC (v1.4+) |
-| `scripts/build-msix.ps1` + `scripts/finalize-store-build.ps1` | MSIX packaging (Store-unsigned + self-signed sideload flavors) — no wapproj exists; packing is `makeappx` against `src/ROROROblox.App/Package.appxmanifest` |
-| `roblox-compat.json` (in GitHub Releases) | Remote config — known-good Roblox version range + current mutex name; fetched at app startup |
-| `dev-cert.pfx` | Self-signed sideload cert; **gitignored**, regenerated per dev box (see [`CONTRIBUTING.md`](CONTRIBUTING.md)) |
+Cyan `#17d4fa` + magenta `#f22f89` on navy `#0f1f31`; Space Grotesk display, Inter body, JetBrains Mono meta. Tagline *Imagine Something Else.* Builder-to-builder, second person, sentence case, verdict first, specific over generic, no emoji in UI copy, no "seamlessly / unlock / empower". Clan-facing copy (Discord posts, the SmartScreen walkthrough) is the same voice, warmer, no jargon. Tokens: `~/.claude/skills/626labs-design/`.
 
-## How the system works at runtime
+## Decisions
 
-Two technical core ideas. Everything else is the wrapper that makes them safe and approachable.
+Log significant decisions to the 626 Labs dashboard (`mcp__626labs-cloud__manage_decisions log`) and mirror them in [docs/decisions.md](docs/decisions.md). The bar: would someone asking "why this approach?" in six months want it? Especially architecture choices, Roblox-side compatibility events (mutex rename, endpoint shifts, handler behaviour), distribution outcomes (Store accept/reject, cert rotation), and deviations from the canonical spec. Skip the routine.
 
-1. **Hold the named mutex `Local\ROBLOX_singletonEvent`** so subsequent Roblox launches don't see themselves as the singleton — same trick MultiBloxy uses. The mutex name is read from remote config, NOT hardcoded — when Roblox renames it we ship a config update + Velopack release within hours rather than rebuild the binary.
-2. **Use Roblox's documented authentication-ticket flow** (cookie → CSRF dance against `auth.roblox.com/v1/authentication-ticket` → `RBX-Authentication-Ticket` → `roblox-player:` URI → `Process.Start`) to launch a specific saved account. Same path Bloxstrap and earlier account managers use. We hit only documented public endpoints — UA is `ROROROblox/<version>`, no browser spoofing.
+## Open questions and known stale spots (2026-08-30)
 
-DPAPI per-machine, per-user is the access boundary for saved cookies. A `accounts.dat` file copied between PCs cannot be decrypted on the destination — that's intentional v1 design, not a bug. v1.2 will introduce per-cookie encryption + per-account WebView2 profiles; v1 deliberately ships whole-blob encryption + wipe-userdata-per-capture for simplicity.
-
-The full architecture, data flows, error buckets, and decision rationale live in the canonical spec. Read it before asking "how should X work?"
-
-## Common tasks
-
-| You want to… | Path / command |
-|---|---|
-| See architectural intent | [`docs/superpowers/specs/2026-05-03-RORORO-design.md`](docs/superpowers/specs/2026-05-03-RORORO-design.md) |
-| See the active build sequence | [`docs/checklist.md`](docs/checklist.md) |
-| See sequencing rationale + risk callouts | [`process-notes.md`](process-notes.md) |
-| See reference-impl provenance | [`PROVENANCE.txt`](PROVENANCE.txt) |
-| Run the auth-ticket spike (item 1 HARD gate) | `dotnet run --project spike/auth-ticket` *(after item 1 lands)* |
-| Build the app | `dotnet build ROROROblox.slnx` — **`.slnx` is the canonical solution** (tracked + used by CI `release.yml`). Qodo IDE regenerates a legacy `ROROROblox.sln` stray (gitignored, missing the PluginTestHarness project) — never build it. Bare `dotnet build` errors MSB1011 while both files exist. |
-| Run unit + integration tests | `dotnet test ROROROblox.slnx` (whole solution) — or scope: `dotnet test src/ROROROblox.Tests/` (unit) + `dotnet test src/ROROROblox.PluginTestHarness/` (integration, v1.4+) |
-| See plugin author guide (v1.4+) | [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR_GUIDE.md) |
-| See v1.4 plugin-system design | [`docs/superpowers/specs/2026-05-09-rororo-plugin-system-design.md`](docs/superpowers/specs/2026-05-09-rororo-plugin-system-design.md) |
-| Build sideload MSIX | `powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertPath dev-cert.pfx -CertPassword <pwd>` → `dist/RORORO-Sideload-<arch>-<version>.msix` (self-signed) |
-| Build Store MSIX | `powershell -ExecutionPolicy Bypass -File scripts/finalize-store-build.ps1 -Version <x.y.z.0> -IdentityName 626LabsLLC.RoRoRoBlox -PublisherCN "CN=177BCE59-0966-4975-9962-10E36652141F" -PublisherDisplayName "626Labs LLC"` → `dist/RORORO-Store-<arch>-<version>.msix` (unsigned; Partner Center signs). Add `-Architecture arm64` for the Arm build; **ship both**. Restore manifest after: `-RestoreManifest` |
-| Cut a release | Push tag `vX.Y.Z.0` → `release.yml` runs tests + `scripts/build-velopack-release.ps1` (`vpk pack`) → DRAFT GitHub Release with Setup.exe + `roblox-compat.json` attached; review + publish the draft. Per-release runbook lives at `docs/store/release-runbook-<version>.md` |
-
-## Conventions
-
-- **Commits:** conventional commits (`feat` / `fix` / `docs` / `refactor` / `test` / `chore` / `build` / `ci`). Item 1 (spike) is gitignored — first real commit is item 2's `feat: solution scaffold + AppLifecycle (single-instance + DI + run-on-login)`.
-- **Style:** .NET defaults via `.editorconfig` (lands at item 2). C# 14 features welcome where they earn their place — no novelty for novelty's sake.
-- **File rules:**
-  - `docs/superpowers/specs/2026-05-03-RORORO-design.md` is canonical. When build reality drifts from the spec, **banner-correct** at the top of the doc (per pattern v from Vibe Thesis) — name what was originally proposed vs what was actually built. Do NOT rewrite top-to-bottom; that destroys /reflect-time framing.
-  - `MultiBloxy.exe` and `PROVENANCE.txt` are reference-only. Treat as immutable — they're load-bearing for the "clean reimplementation, not a fork" framing.
-  - `accounts.dat`, `consent.dat`, `webview2-data/`, `/plugins/`, `*.pfx`, `spike/`, `bin/`, `obj/`, `*.user`, `last-update-check.txt` are gitignored at all times. (`/plugins/` is anchored to root so it doesn't shadow `docs/plugins/`.)
-  - The singleton mutex name lives in `roblox-compat.json` (remote config). Hardcoded fallback is OK in `MutexHolder`'s constructor as a last-resort default; the runtime read is always from config.
-- **Manifests:**
-  - `Package.appxmanifest` declares `runFullTrust` ONLY. No `broadFileSystemAccess`, no `internetClient` (outgoing HTTPS doesn't need declaration).
-  - Partner Center identity is the Store-signed cert; sideload uses a separately generated self-signed cert. **The two keys are never the same.**
-- **Findings register:** `docs/superpowers/research/2026-08-04-rororo-settings-ui-audit-findings.md` is the VibeGlow register.
-  - **A PR that closes a register row flips that row in the same PR — wave or not.** Not the next wave's close-out, not a later status doc. The same PR.
-  - **Why:** glow waves already maintain their own rows; everything else did not, so by 2026-08-09 six rows described a state that no longer existed. That is not bookkeeping — F-001 was picked as the top open finding at 5/5 and roughly 60% of it had already shipped in wave 3. The build cycle was scoped against fiction. A register that only tracks wave activity measures the process, not the app.
-  - **Verify against the tree, never a changelog.** "Wave N said it closed this" is not evidence. Read the code.
-  - **An open row is not static.** F-032 measured 11 offending controls at audit and had 15 by the time anyone re-read it, while two waves built machinery around it. When a row's count is re-measured, record the new number and the direction.
-  - **Rulings override rows.** The register's own "Rulings by the user" section wins. F-040 sat open for five days against a decision already made because nobody re-checked it.
-- **Roblox compat:** every architectural decision that depends on a Roblox-side contract (mutex name, auth-ticket endpoint, URI format, RobloxPlayerLauncher behavior) gets logged to the dashboard with the caveat. When Roblox ships a breaking update, the decisions log is how we trace what assumed-stable.
-
-## Decisions log
-
-Significant decisions log to the **626 Labs Dashboard** via MCP — `mcp__626Labs__manage_decisions log`. Tag with the bound project ID. The bar: *would future-you (or someone asking "why this approach?") want to know this in 3-6 months?*
-
-Especially log:
-
-- **Architectural choices.** Examples already locked in spec §11: WPF over WinUI 3, whole-blob over per-cookie encryption for v1.1, wipe-userdata-per-capture, `roblox-player:` URI over direct launcher exec, remote config for known-good Roblox versions.
-- **Roblox-side compatibility events.** Mutex rename, auth-ticket endpoint shift, Hyperion adding a non-mutex check, RobloxPlayerLauncher protocol-handler behavior change. These are the events that make `roblox-compat.json` shift; each warrants a decision entry.
-- **Distribution decisions.** Microsoft Store submission outcome (accept / reject / cert request), sideload cert rotation, SmartScreen escalation strategy if AV heuristic flags surface.
-- **Deviations from the canonical spec.** Any time build reality requires drifting from `docs/superpowers/specs/2026-05-03-RORORO-design.md`, log the *why* — banner-correct the spec separately.
-- **Overcame momentous hurdle.** Hyperion-shape changes that almost killed multi-instance, DPAPI envelope shifts, packaging breakdowns. Per global Architect rules: not "we fixed a bug," but "we found out the bar was higher and met it anyway."
-
-Skip the routine: ran tests, fixed typo, renamed a variable.
-
-If unbound (no 626 Labs Dashboard project yet): tag with `RORORO` in the description and set `projectId: null`. First session in this repo should attempt `mcp__626Labs__manage_projects findByRepo` against `https://github.com/estevanhernandez-stack-ed/ROROROblox` to bind, and offer to create a Dashboard project if no match.
-
-## What NOT to do
-
-- **Don't commit `dev-cert.pfx`, `accounts.dat`, `webview2-data/`, or any file containing a `.ROBLOSECURITY` value.** These are user-secret-equivalent. The pre-commit hook (lands at item 12) and CI must fail loud if they appear. If you find one in working tree, scrub it before next commit.
-- **Don't hardcode the singleton mutex name in source.** It lives in `roblox-compat.json`. Hardcoded fallback is OK as a last-resort default in `MutexHolder`'s constructor; the runtime read is always from config. This is the reason we can ship a config update in hours when Roblox renames the mutex (spec §7.1).
-- **Don't masquerade as a browser in HTTP requests.** User-Agent is `ROROROblox/<version>` — no `Mozilla/5.0`, no Edge spoofing. Roblox treats spoofed UAs as a flag; we want to be transparent and identifiable, both for compatibility and for the "we're a tool, not malware" Store narrative.
-- **Don't ship programmatic icon placeholders to the Store.** All icons / Store tile graphics / splash / tray icons go through the `626labs-design` skill (pattern x from SnipSnap retro). The Store reviewers AND the Pet Sim 99 clan eyes will both notice. Brand-spreads-for-free only works when the brand actually shows up.
-- **Don't rewrite the canonical spec on drift — banner-correct it.** When build reality diverges from `docs/superpowers/specs/2026-05-03-RORORO-design.md`, add a top-of-doc warning block naming what was originally proposed vs what was actually built (pattern v from Vibe Thesis). Top-to-bottom rewrites destroy /reflect-time framing and bury the original architectural reasoning.
-- **Don't add macros, input automation, or any client-injection capability.** That product is **MaCro** (separate macOS product) and the wall is intentional. Roblox treats macro-tooling as far higher-risk than mutex-fiddling. Keeping RORORO macro-free is a deliberate Roblox-relations move, not a feature gap. If a clan member asks for it: "MaCro handles that — different product, different platform."
-- **Don't push to main without item 12's local-path audit.** Per pattern kk from wbp-azure: a `c:\Users\<name>\` reference in committable code breaks CI on every machine that isn't yours. The grep is one line; run it before push.
-- **Don't run end-to-end automation against real roblox.com.** Bot accounts get flagged; flaky CI eats trust. Manual smoke from spec §8 on a clean Win11 VM is the v1 trade. If automated coverage of the auth-ticket flow becomes load-bearing later, that's a v1.2 conversation about owning a dedicated test-account with appropriate isolation.
-- **Don't ship the Store-signed cert and the sideload cert as the same key.** Store-signed identity is owned by Microsoft Partner Center; sideload cert is generated locally per dev box and gitignored. Cross-contamination of the two keys is an immediate distribution-trust incident.
-
-## References
-
-- Canonical design spec: [`docs/superpowers/specs/2026-05-03-RORORO-design.md`](docs/superpowers/specs/2026-05-03-RORORO-design.md)
-- Active build plan: [`docs/checklist.md`](docs/checklist.md)
-- Cart process notes: [`process-notes.md`](process-notes.md)
-- Reference-impl provenance: [`PROVENANCE.txt`](PROVENANCE.txt)
-- 626 Labs design system (global): `~/.claude/skills/626labs-design/`
-- Global persona (The Architect): `~/.claude/CLAUDE.md`
-- Repo: https://github.com/estevanhernandez-stack-ed/ROROROblox
+- **Auto-update: answered, check-only.** Velopack's own API docs: `CheckForUpdatesAsync` only returns an `UpdateInfo`; applying needs `DownloadUpdatesAsync` then `ApplyUpdatesAndRestart`, and the "apply on startup" option only applies packages already downloaded. Nothing in `src` downloads, so direct-download installs stay on the version they installed until the user runs a newer `Setup.exe`. Wiring download + apply (build-plan item 11, open since 2026-05-04) is the top product follow-up; docs no longer promise auto-update.
+- **Plugin pipe ACL: answered, verified live.** On 2026-08-30 the running host's `rororo-plugin-host` pipe had owner = current user and exactly one ACE, `Allow FullControl` to that user (Kestrel's `CurrentUserOnly` default). No code sets it; a Kestrel default change would silently widen it.
+- **Compat feed ops: answered with a new path.** `.github/workflows/compat.yml` (manual, added 2026-08-30, not yet exercised) signs and re-attaches `roblox-compat.json` + `.sig` to the current latest release. Failure shape is unchanged: a bad signature or a slow startup network keeps the old name via `last-known-mutex.txt` at Debug level, and `knownGoodVersionMax` is still 0.729.24 from 2026-07-10.
+- **Packaged builds: answered, verified live.** The Store 1.23 build was launched alone on 2026-08-30: its startup registered the URI schemes, yet the real `HKCU\Software\Classes` entries still pointed at the dev build — packaged registry writes land in the virtual hive, so **Join-by-URI and run-on-login are inert on Store/sideload installs** (fixes would be `uap:Protocol` and `StartupTask` manifest declarations; not scheduled). File writes are NOT virtualized: the same run wrote its log banner and cache files into the real `%LOCALAPPDATA%\ROROROblox`, so Store and dev builds share one data folder and **a Store uninstall does not remove the vault** (`docs/PRIVACY.md` corrected).
+- **History end-stamp: fixed (F-125, 2026-08-30).** The end now fires from exactly the branches that stamp the row's close (both signals for presence-capable accounts, exit alone for the rest), and a never-attached launch keeps a null end via `MarkOutcomeAsync` instead of a phantom 30-120 s session. `SessionHistoryEndStampTests` covers store, decorator, backfill and VM. Rows written before the fix keep their old stamps.
+- **Code discrepancies left alone:** `ThemeService.QuestionFor` previews the edge against Navy only while `ApplyTo` derives against Navy and RowBg (`EdgeQuestion.cs` documents the Navy-only contract); `DiagnosticsCollector` re-implements the installed-version scan instead of calling `RobloxCompatChecker`.
+- **Stale comments were corrected on 2026-08-30** (theme "mutates brushes", Tools "is a Menu", the manifest CN swap, `IAppSettings` "no UI", the F-105-era harness headers, "empty" appsettings, the capability map "crashes", tray placeholders, and a dozen more); each corrected comment now names the date it went stale. `docs/PRIVACY.md` and `docs/store/release-playbook.md` were patched the same day; PRIVACY's Store-uninstall claim was disproven by the packaged-build live test and corrected.
+- **Docs to treat as history:** `docs/scope.md`, `prd.md`, `spec.md`, `checklist.md`, `reflection.md` (retired Cart snapshots, v1.18/v1.21), `docs/superpowers/plans/`, `docs/superpowers/HANDOFF-*.md`, `docs/testing/`, `docs/security-audit-2026-05-04.md`, `docs/build-story-*.md`.

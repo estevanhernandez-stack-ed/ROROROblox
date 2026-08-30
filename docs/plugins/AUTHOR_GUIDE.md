@@ -1,6 +1,6 @@
 # RoRoRo Plugin Author Guide
 
-> **Audience:** developers who want to write a plugin that runs alongside RoRoRo on Windows. **Status:** v1.4 contract (`ROROROblox.PluginContract` v0.1.0). The contract will receive a major bump if it changes incompatibly; minor bumps for additive changes.
+> **Audience:** developers who want to write a plugin that runs alongside RoRoRo on Windows. **Status:** wire contract `1.0` (introduced with v1.4), `ROROROblox.PluginContract` v0.9.0 on nuget.org. This line read v0.1.0 until 2026-08-30, eight additive minors after that stopped being true. The contract will receive a major bump if it changes incompatibly; minor bumps for additive changes. Every RPC added since 0.1.0 is additive and gated by your manifest's `minHostVersion`, so declare the RoRoRo version that first shipped the newest RPC you call and the installer refuses older hosts for you.
 
 ## What a plugin is
 
@@ -25,7 +25,7 @@ Why this shape: Microsoft Store policy 10.2.2 forbids dynamic inclusion of code 
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="ROROROblox.PluginContract" Version="0.1.0" />
+    <PackageReference Include="ROROROblox.PluginContract" Version="0.9.0" />
     <PackageReference Include="Grpc.Net.Client" Version="2.70.0" />
   </ItemGroup>
 </Project>

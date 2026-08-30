@@ -13,7 +13,10 @@ namespace ROROROblox.App.Tray;
 /// System-tray surface backed by Hardcodet's <see cref="TaskbarIcon"/>. Spec §5.2.
 /// Doesn't own the mutex — fires <see cref="RequestToggleMutex"/> and lets the composition
 /// root wire that to <see cref="IMutexHolder"/>. Icon swaps between cyan (ON) / grey (OFF) /
-/// magenta (Error). Placeholder icons today; design-skill replaces before ship.
+/// magenta (Error), with a warn overlay for memory pressure. The icon set is final art: the
+/// on/off/error ICOs and title-bar PNGs are rendered by scripts/generate-tray-icons.ps1 (last
+/// regenerated 2026-07-08, commit c2a1454) and the tray-warn pair was added by hand through the
+/// design pass on 2026-08-01 (commit 74271fa). This line said "placeholder icons" until 2026-08-30.
 /// </summary>
 internal sealed class TrayService : ITrayService
 {
@@ -178,9 +181,10 @@ internal sealed class TrayService : ITrayService
             }
             catch (Exception ex)
             {
-                // tray-warn.ico isn't in the tree yet (626labs-design asset still pending) --
-                // degrade to whatever's currently showing rather than crash the one code path
-                // that only runs when a user is already in trouble.
+                // tray-warn.ico IS in the tree (a csproj Resource since 2026-08-01, commit 74271fa;
+                // register row F-124 retired the comment that said otherwise). This catch is for a
+                // corrupt or unloadable resource: degrade to whatever's currently showing rather
+                // than crash the one code path that only runs when a user is already in trouble.
                 _log.LogWarning(ex, "Memory-warning tray icon unavailable; keeping the current icon.");
                 return _taskbarIcon.Icon ?? LoadIcon(StateIconFilename(state));
             }

@@ -1,0 +1,101 @@
+# RORORO -- push a signed roblox-compat.json to an EXISTING release, without a new binary.
+#
+# The app fetches releases/latest/download/roblox-compat.json (+ .sig) at every startup and
+# verifies the raw bytes against the public key pinned in src/ROROROblox.Core/RobloxCompatSigningKey.cs,
+# so replacing those two assets on whichever release is currently "latest" is all a Roblox-side
+# singleton rename or a known-good range bump needs. Until this workflow existed (2026-08-30) the
+# only signed upload was release.yml's full job on a tag push, which made the "config update within
+# hours" promise in CLAUDE.md a release cycle in practice.
+#
+# How to use: edit roblox-compat.json on main (bump generatedAt), merge, then Actions -> compat ->
+# Run workflow against main. The tag defaults to the current latest non-prerelease release.
+# Clients pick the new config up on their next start (RobloxCompatChecker has a 2 s fetch budget);
+# a client that cannot fetch or verify keeps its last-known-good name, logged at Debug only.
+#
+# Why a Windows runner: tools/CompatSigner references ROROROblox.Core (net10.0-windows), same as
+# release.yml.
+
+name: compat
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to attach the assets to (blank = current latest non-prerelease)'
+        required: false
+        type: string
+
+permissions:
+  contents: write   # upload assets to Releases
+
+env:
+  DOTNET_NOLOGO: 'true'
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+
+jobs:
+  push-compat:
+    name: sign + upload roblox-compat.json
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET (pinned by global.json)
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Resolve target release
+        id: rel
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $tag = '${{ inputs.tag }}'
+          if ([string]::IsNullOrWhiteSpace($tag)) {
+            $tag = gh release view --repo $env:GITHUB_REPOSITORY --json tagName --jq .tagName
+          }
+          if ([string]::IsNullOrWhiteSpace($tag)) { throw "No release found to attach to." }
+          "tag=$tag" | Out-File $env:GITHUB_OUTPUT -Append
+          Write-Host "Target release: $tag"
+
+      - name: Validate roblox-compat.json shape
+        shell: pwsh
+        run: |
+          # The four keys RobloxCompatConfig deserializes. A typo here would reach every client as
+          # "no update available", silently, so refuse to sign a file the app would not accept.
+          $c = Get-Content roblox-compat.json -Raw | ConvertFrom-Json
+          foreach ($k in 'knownGoodVersionMin', 'knownGoodVersionMax', 'mutexName', 'generatedAt') {
+            if ([string]::IsNullOrWhiteSpace($c.$k)) { throw "roblox-compat.json is missing '$k'." }
+          }
+          if ($c.mutexName -notlike 'Local\*') { throw "mutexName must be a Local\ kernel name, got '$($c.mutexName)'." }
+          Write-Host "mutexName=$($c.mutexName) knownGood=$($c.knownGoodVersionMin)..$($c.knownGoodVersionMax) generatedAt=$($c.generatedAt)"
+
+      - name: Sign compat config
+        env:
+          ROBLOXCOMPAT_SIGNING_KEY: ${{ secrets.ROBLOXCOMPAT_SIGNING_KEY }}
+        shell: pwsh
+        run: |
+          $compatPath = (Resolve-Path 'roblox-compat.json').Path
+          dotnet run --project tools/CompatSigner --configuration Release -- $compatPath
+          if ($LASTEXITCODE -ne 0) { throw "CompatSigner failed (exit $LASTEXITCODE)" }
+          if (-not (Test-Path 'roblox-compat.json.sig') -or (Get-Item 'roblox-compat.json.sig').Length -eq 0) { throw "No signature written." }
+
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          gh release upload '${{ steps.rel.outputs.tag }}' roblox-compat.json roblox-compat.json.sig --clobber --repo $env:GITHUB_REPOSITORY
+          if ($LASTEXITCODE -ne 0) { throw "gh release upload failed (exit $LASTEXITCODE)" }
+          @"
+          ## roblox-compat.json pushed to ${{ steps.rel.outputs.tag }}
+
+          Clients apply it on their next start. Contents:
+
+          ``````json
+          $(Get-Content roblox-compat.json -Raw)
+          ``````
+          "@ | Out-File $env:GITHUB_STEP_SUMMARY -Append
