@@ -1,3 +1,7 @@
+#Requires -Version 7.0
+# ^ Added 2026-08-30 (F-098 verification walk). Under Windows PowerShell 5.1 the param defaults
+#   below evaluate with an empty $PSScriptRoot and die in Join-Path with an error that names the
+#   symptom, not the host. This line makes the real requirement speak first.
 <#
 .SYNOPSIS
     Captures RoRoRo's UI surfaces to per-theme evidence PNGs, driven by docs/ui-routes.json.
@@ -382,6 +386,36 @@ function Get-AppRoot {
     return $el
 }
 
+function Search-AppScopes {
+    # Search $Scope's subtree first; on zero hits, widen to every top-level window of the same
+    # process, deduplicated by runtime id, so the exactly-one contract is enforced across the
+    # AGGREGATE rather than per-window. Added 2026-08-30 (F-098 verification walk): the F-013
+    # shell fold moved Preferences and the five Tools destinations into a separate unowned
+    # window, and every single-window search over them had been failing ever since — unobserved,
+    # because nothing had driven this harness between the fold and the walk.
+    param(
+        [Parameter(Mandatory)]$Scope,
+        [Parameter(Mandatory)][System.Windows.Automation.Condition]$Condition
+    )
+    $hits = @($Scope.FindAll([System.Windows.Automation.TreeScope]::Subtree, $Condition))
+    if ($hits.Count -gt 0) { return $hits }
+
+    $procId = $Scope.Current.ProcessId
+    $windows = [System.Windows.Automation.AutomationElement]::RootElement.FindAll(
+        [System.Windows.Automation.TreeScope]::Children,
+        (New-Object System.Windows.Automation.PropertyCondition(
+            [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $procId)))
+    $seen = New-Object System.Collections.Generic.HashSet[string]
+    $agg = New-Object System.Collections.Generic.List[System.Windows.Automation.AutomationElement]
+    foreach ($w in $windows) {
+        foreach ($h in $w.FindAll([System.Windows.Automation.TreeScope]::Subtree, $Condition)) {
+            $rid = ($h.GetRuntimeId() -join '.')
+            if ($seen.Add($rid)) { $agg.Add($h) }
+        }
+    }
+    return $agg
+}
+
 function Resolve-UiaElement {
     param(
         [Parameter(Mandatory)]$Scope,
@@ -405,10 +439,12 @@ function Resolve-UiaElement {
         # FindAll, not FindFirst: a mis-scoped -Within silently searches the wrong ancestor's
         # subtree and can still return a clean single hit from the wrong part of the tree, which
         # is worse than failing outright. Same exactly-one contract as the element match below.
-        $ancestorHits = $Scope.FindAll([System.Windows.Automation.TreeScope]::Descendants,
-            (New-Object System.Windows.Automation.PropertyCondition(
+        # Search-AppScopes (2026-08-30): the ancestor may live in a different top-level window of
+        # the same app since the F-013 shell fold — the shell is unowned, so it is NOT in the
+        # main window's subtree.
+        $ancestorHits = @(Search-AppScopes -Scope $Scope -Condition (New-Object System.Windows.Automation.PropertyCondition(
                 [System.Windows.Automation.AutomationElement]::AutomationIdProperty, $Within)))
-        if ($ancestorHits.Count -eq 0) { throw "within-scope AutomationId '$Within' not found" }
+        if ($ancestorHits.Count -eq 0) { throw "within-scope AutomationId '$Within' not found in any window of the app" }
         if ($ancestorHits.Count -gt 1) {
             throw "$($ancestorHits.Count) elements matched within-scope AutomationId '$Within'. Ambiguous; use a more specific scope."
         }
@@ -429,7 +465,14 @@ function Resolve-UiaElement {
     $cond = New-Object System.Windows.Automation.AndCondition($conds.ToArray())
 
     # Subtree, not Descendants: the main window must be resolvable as its own capture target.
+    # And when the scope-rooted search finds nothing AND no -Within narrowed the root, widen to
+    # the app's other top-level windows (2026-08-30, F-098 walk): shell pages, About, History and
+    # the theme picker all live in the unowned shell window since the F-013 fold. A -Within that
+    # resolved keeps its narrow root — widening past an explicit ancestor would defeat it.
     $found = $searchRoot.FindAll([System.Windows.Automation.TreeScope]::Subtree, $cond)
+    if ($found.Count -eq 0 -and -not $Within) {
+        $found = @(Search-AppScopes -Scope $Scope -Condition $cond)
+    }
 
     $required = $null
     if ($Verb) {

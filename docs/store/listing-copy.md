@@ -65,6 +65,9 @@ A 626 Labs product.
 
 ## Product features (paste each as one feature; Partner Center accepts up to 20, ≤200 chars each)
 
+> Two entries added 2026-08-30 (v1.24.0.0): run-on-login and Discord join activation — both
+> newly working on Store installs, which is what earns them a listing claim now and not before.
+>
 > Refreshed 2026-08-22 (v1.22.0.0). The "up to 7" cap this section used to claim was wrong —
 > the live field held 12 entries with room for more; Microsoft's actual cap is 20. The live
 > field had also drifted from this file: it carried three internal changelog lines pasted as
@@ -84,6 +87,8 @@ Optional Discord alerts to a webhook you create
 System tray with state-coloured icon and double-click main launch
 Plugin system with per-capability consent and out-of-process isolation
 Auto-update that keeps working when Roblox changes underneath
+Start with Windows if you want — one toggle, and Windows' own Startup list stays in control
+Discord Join starts RoRoRo even when it's closed, and always asks before launching anything
 ```
 
 ## Copyright (single line)

@@ -145,6 +145,25 @@ worth knowing before anyone re-shoots or edits it:
 The cleaner fix, if this frame is ever re-shot: put the alts in **different servers** so no client
 renders another's nameplate, and no redaction is needed at all.
 
+### Recaptured 2026-08-30 (v1.24.0.0 submission) — seven files refreshed
+
+The 2026-08-12 set predated the F-013 shell fold, so the carousel showed Games / Diagnostics /
+History / Plugins / About as separate windows while the shipping app has them as pages of one
+shell. Refreshed 1:1 by filename via `capture-ui.ps1 -StoreFrame -Theme brand`:
+
+- `02-themes.png` (4-theme panel: brand, flatline, magenta-heat, midnight), `03-about.png`
+  (reads v1.24.0), `04-games.png`, `05-diagnostics.png`, `06-history.png` (now opens on the
+  v1.23 stats block — peak alts, total uptime, day streak, the honest didn't-record-an-end
+  note), `07-plugins.png`, `08-theme-builder.png`.
+- **Kept from 2026-08-12:** `01-accounts-running.png`, `09-compact.png`, `10-multi-instance.png`
+  — the three running-state shots need live clients, which an unattended capture doesn't get to
+  launch (deny list, and policy). Their surfaces are visually unchanged.
+- Caption update for `06-history.png`: **"History opens with your numbers — peak alts at once,
+  total hours, streaks — then every launch, who played what and for how long."** Every claim is
+  in the frame. All other captions stand.
+- The walk found and fixed two harness defects (silent pwsh-7 requirement; cross-window
+  resolution dead since the shell fold) — recorded on F-098 in the findings register.
+
 ### Two corrections this run made to this file
 
 - **`docs/store/screenshots/` is NOT gitignored.** The procedure below says it is. The five assets
