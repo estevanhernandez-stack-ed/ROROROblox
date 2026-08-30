@@ -9,6 +9,15 @@
 **Builds on:** `PresenceService` (25s poll, already tracks `InGame`/`CurrentPlaceId`/`CurrentGameName`/`InGameSinceUtc` per `AccountSummary`).
 ---
 
+> ## Superseded (2026-08-22) — session stats shipped under a different design; do not build from this
+>
+> v1.23.0.0 shipped session stats as `2026-08-22-rororo-session-stats-design.md`: a durable rollup
+> recorded through a decorator over `SessionHistoryStore` (launch-to-end durations, streaks, peak
+> concurrency, per-alt landing streaks advanced on presence-confirmed InGame), keyed by account id.
+> The presence-driven per-place session accumulation into `stats.json` described below was not built.
+> The reasoning about attribution honesty (§2, point 4) survives in the shipped design's rule that a
+> landing counts only on presence. Banner added 2026-08-30 by maintainer ruling.
+
 ## 1. Problem & the opportunity
 
 There's no history of how long accounts have been playing, or where. The insight Este names: presence is ALREADY online-aware (it polls each account's state every 25s and records `CurrentPlaceId`/`InGameSinceUtc`), so uptime and per-game play time are a **recording + aggregation layer on top of the presence stream that already exists** — not new instrumentation. The hard part isn't detection; it's durable accumulation and honest attribution across sessions.

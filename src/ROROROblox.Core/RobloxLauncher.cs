@@ -34,9 +34,9 @@ public sealed class RobloxLauncher : IRobloxLauncher
     /// session (or when no <see cref="IGlobalBasicSettingsProbe"/> is wired). Fed into the NEXT
     /// launch's <see cref="FpsCapSettler.SettleAsync"/> call as the proof-of-read baseline — see
     /// <see cref="ApplyFpsCapAsync"/>. Every access is already serialized by <see cref="_launchGate"/>
-    /// (both <see cref="LaunchAsync(string, LaunchTarget, int?, long?)"/> and
-    /// <see cref="LaunchAsync(string, string?, int?, long?)"/> hold it for the full launch), so no
-    /// separate lock is needed here.
+    /// (<see cref="LaunchAsync(string, LaunchTarget, int?, long?)"/> holds it for the full launch;
+    /// the string-URL overload that also held it was deleted by F-093, commit c66ffc8, 2026-08-21),
+    /// so no separate lock is needed here.
     /// </summary>
     private DateTimeOffset? _lastLaunchMtimeUtc;
 
@@ -252,9 +252,11 @@ public sealed class RobloxLauncher : IRobloxLauncher
             }
         }
 
-        // No favorite default -> open Roblox home (signed in). The legacy settings DefaultPlaceUrl is
-        // vestigial per spec §5 and intentionally ignored by resolution; a user sets a real default game
-        // to launch straight into it. Encourages, doesn't require, a default.
+        // No favorite default -> open Roblox home (signed in). There is no settings-level fallback
+        // any more: spec §5 had already marked AppSettings.DefaultPlaceUrl as vestigial, and F-093
+        // (commit c66ffc8, 2026-08-21) deleted it along with the string-URL LaunchAsync overload, so
+        // nothing reads it. A user sets a real default game to launch straight into it. Encourages,
+        // doesn't require, a default.
         return new LaunchTarget.Home();
     }
 

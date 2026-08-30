@@ -101,8 +101,9 @@ internal partial class EdgeRemediationWindow : Window
         }
 
         // Dismissed is not answered. One reflexive click on the title-bar X must not permanently opt
-        // somebody's theme out of the fix without them reading a word of it — there is no re-ask
-        // affordance anywhere.
+        // somebody's theme out of the fix without them reading a word of it. (A re-ask affordance now
+        // exists, the Settings page's review-edge button via ThemeService.ReopenEdgeQuestion, F-078;
+        // this comment said there was none until 2026-08-30. The rule here stands regardless.)
         //
         // MEASURED, because the obvious version of this check does not work: a first attempt tested
         // `ShowDialog() is null`, on the assumption that closing via the X leaves DialogResult unset.

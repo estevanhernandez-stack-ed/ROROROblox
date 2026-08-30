@@ -42,8 +42,10 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
         if (string.IsNullOrWhiteSpace(_applicationId))
         {
             // Defense-in-depth: Task 6 owns the "skip the feature when unconfigured" decision
-            // upstream, but `new DiscordRpcClient("")` throws ArgumentNullException synchronously,
-            // and Discord:ApplicationId ships empty today. One guard is too sharp an edge to rely on.
+            // upstream, but `new DiscordRpcClient("")` throws ArgumentNullException synchronously.
+            // Discord:ApplicationId shipped empty when this guard was written; since commit 8c75544
+            // (2026-08-03) appsettings.json carries the public id, but a stripped or hand-edited
+            // config can still blank it. One guard is too sharp an edge to rely on.
             _log.LogWarning("Discord presence unavailable: no application id configured.");
             return;
         }

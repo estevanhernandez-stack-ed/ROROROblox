@@ -9,9 +9,12 @@ namespace ROROROblox.App.Theming;
 
 /// <summary>
 /// App-side theme orchestrator. Reads the saved theme id at startup, looks it up via
-/// <see cref="IThemeStore"/>, and mutates the application-level brush <c>Color</c> properties
-/// so every <c>{StaticResource}</c> reference re-renders with the new colors. SolidColorBrush
-/// is unfrozen by default — assigning to <c>Color</c> triggers WPF's render invalidation.
+/// <see cref="IThemeStore"/>, and applies it by REPLACING each application-level brush instance
+/// in <c>Application.Current.Resources</c> (see <c>ApplySlot</c>), so only
+/// <c>{DynamicResource}</c> references repaint; a <c>{StaticResource}</c> keeps the discarded
+/// instance and silently never repaints after first paint. Until 2026-08-30 this header said the
+/// service mutated the brushes' <c>Color</c> in place; App.xaml's brush comment has carried the
+/// correct account since replacement became the mechanism.
 /// </summary>
 internal sealed class ThemeService : IThemeAppliedSource
 {

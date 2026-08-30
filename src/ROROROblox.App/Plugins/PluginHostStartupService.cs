@@ -46,7 +46,15 @@ public sealed class PluginHostStartupService : IHostedService, IAsyncDisposable
     {
         // Refuse to serve a surface we can't gate. An rpc added to plugin_contract.proto
         // without an RpcMethodCapabilityMap entry would otherwise reach plugins ungated —
-        // the bug class behind PR #60. Crash here instead, loudly, before the pipe binds.
+        // the bug class behind PR #60. Throw here, before the pipe binds.
+        //
+        // This is a refusal, not a loud one. The comment used to say "crash here, loudly";
+        // as of v1.23.0.0 (2026-08-30) App.StartPluginHostListener runs this method
+        // fire-and-forget and its continuation logs a faulted task at Debug, so the throw
+        // means plugins are silently disabled for the session and StartPluginAutostart
+        // skips. The loud gate is the two tests that call AssertExhaustive directly:
+        // RpcMethodCapabilityMapTests.EveryRoRoRoHostMethod_HasACapabilityMapEntry and the
+        // harness's CapabilityMap_CoversEveryHostMethod.
         RpcMethodCapabilityMap.AssertExhaustive();
 
         var builder = WebApplication.CreateSlimBuilder();

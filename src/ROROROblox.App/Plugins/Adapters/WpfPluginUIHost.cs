@@ -3,9 +3,13 @@ using Microsoft.Extensions.Logging;
 namespace ROROROblox.App.Plugins.Adapters;
 
 /// <summary>
-/// v1.4 stub for <see cref="IPluginUIHost"/>. Logs every Add/Remove/Update call but does
-/// NOT actually wire to <see cref="Tray.ITrayService"/> or MainWindow surfaces yet — that
-/// landing surface is item 16 (Plugins page UI + tray menu wiring + row-badge plumbing).
+/// Logging-only stub for <see cref="IPluginUIHost"/>, and still the registered production
+/// implementation. Logs every Add/Remove/Update call but does NOT wire to
+/// <see cref="Tray.ITrayService"/> or any MainWindow surface: handles are issued and
+/// nothing paints. This comment used to say the real surface "lands in item 16"; item 16
+/// shipped the Plugins page without it, and as of v1.23.0.0 (2026-08-30) host-side plugin
+/// UI rendering is parked with no cycle assigned. A plugin that calls AddTrayMenuItem,
+/// AddRowBadge, or AddStatusPanel gets a valid handle back and no visible result.
 ///
 /// Behavior:
 /// <list type="bullet">
@@ -13,10 +17,10 @@ namespace ROROROblox.App.Plugins.Adapters;
 ///   <item>Remove silently no-ops on unknown handles (the gRPC interceptor + translator
 ///         already enforce ownership; defensive at this layer).</item>
 ///   <item>Update logs and stamps the new label on the cached spec — read-back is for
-///         tests; the user-visible surface lands in item 16.</item>
+///         tests; there is no user-visible surface.</item>
 /// </list>
-/// Tracked Dictionary keeps Remove path-testable and provides a hook for item 16's
-/// real surface — the replacement implementation can mirror the same handle ids.
+/// Tracked Dictionary keeps Remove path-testable and is the hook for a real surface if
+/// one is ever built — a replacement implementation can mirror the same handle ids.
 /// </summary>
 public sealed class WpfPluginUIHost : IPluginUIHost
 {

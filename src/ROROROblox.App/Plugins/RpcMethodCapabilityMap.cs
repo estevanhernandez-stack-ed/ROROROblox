@@ -12,8 +12,18 @@ namespace ROROROblox.App.Plugins;
 /// That distinction is why <see cref="IsKnown"/> exists alongside
 /// <see cref="Required"/>: <c>Required</c> returning null is ambiguous on its own,
 /// and reading it as "no capability needed" is exactly how UpdateUI and RemoveUI
-/// shipped ungated (PR #60). <see cref="AssertExhaustive"/> makes the failure
-/// mode a startup crash instead of a silent hole.</para>
+/// shipped ungated (PR #60). <see cref="AssertExhaustive"/> throws on a missing
+/// entry, so the hole can never be served.</para>
+///
+/// <para><b>Where the failure is loud.</b> This comment used to say AssertExhaustive
+/// turns a missing entry into a startup crash. It does not, and as of v1.23.0.0
+/// (2026-08-30) it never has in production: <c>App.StartPluginHostListener</c> runs
+/// <see cref="PluginHostStartupService.StartAsync"/> fire-and-forget and its
+/// continuation logs the faulted task at Debug, so a missing entry means plugins are
+/// silently disabled for the session and autostart skips. Nothing the user sees. The
+/// gate that actually goes red is the two tests that call AssertExhaustive directly:
+/// <c>RpcMethodCapabilityMapTests.EveryRoRoRoHostMethod_HasACapabilityMapEntry</c>
+/// and the harness's <c>CapabilityMap_CoversEveryHostMethod</c>.</para>
 /// </summary>
 public static class RpcMethodCapabilityMap
 {
@@ -76,9 +86,11 @@ public static class RpcMethodCapabilityMap
         => Map.TryGetValue(methodName, out capability);
 
     /// <summary>
-    /// Every method on the RoRoRoHost service must have an entry here. Called at host
-    /// startup so a method added to the .proto but forgotten in this map crashes the app
-    /// instead of shipping ungated.
+    /// Every method on the RoRoRoHost service must have an entry here. Throws when one is
+    /// missing. Called from <see cref="PluginHostStartupService.StartAsync"/> before the pipe
+    /// binds, and from the two exhaustiveness tests named in the class summary. In the app the
+    /// throw disables plugins for the session (logged at Debug); it is the tests, not startup,
+    /// that make a forgotten entry visible. See the class summary for the correction.
     /// </summary>
     public static void AssertExhaustive()
     {

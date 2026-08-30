@@ -12,7 +12,7 @@ _Multi-launcher for Windows — run multiple Roblox clients on Windows, signed i
 [![Platform: Windows 11 · 10](https://img.shields.io/badge/platform-Windows%2011%20·%2010-f22f89?style=flat-square)](https://www.microsoft.com/windows/windows-11)
 [![Stack: .NET 10 LTS](https://img.shields.io/badge/.NET-10%20LTS-17d4fa?style=flat-square)](https://dotnet.microsoft.com/)
 
-**Windows 11** · **Windows 10 22H2** (direct download) · **.NET 10 LTS** · **WPF**
+**Windows 11** · **Windows 10 22H2** · **.NET 10 LTS** · **WPF**
 
 </div>
 
@@ -38,7 +38,7 @@ Building your own? Start at [`docs/plugins/AUTHOR_GUIDE.md`](docs/plugins/AUTHOR
 
 ## What's new in v1.21
 
-If you install from the Store, this one covers **six releases** — the Store edition was last updated at v1.15.
+When v1.21 reached the Store it covered **six releases** (the Store edition had been on v1.15). The Store edition is on **v1.23.0.0** as of 2026-08-23; the [Releases page](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases) carries the notes for every version since.
 
 **Launching your alts while Roblox is updating.** RoRoRo used to release the whole batch, and then every client would separately discover it was out of date and start updating at once. It now checks the version that is actually about to run, holds the batch, updates once, then releases the rest.
 
@@ -70,7 +70,7 @@ If you'd rather skip the Store account flow, or want to install on a PC without 
 
 1. Download the latest `RORORO-win-Setup.exe` from [Releases](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases).
 2. Double-click it. SmartScreen will warn (the installer is unsigned) — click **More info** → **Run anyway**. (One-time per machine.)
-3. RORORO installs to your user profile, lands in the Start Menu, and auto-updates from this Releases page going forward — no second SmartScreen prompt on later versions.
+3. RORORO installs to your user profile and lands in the Start Menu. It checks this Releases page for a newer version once a day; if you find yourself behind, download and run the latest `Setup.exe` again (no second SmartScreen prompt on later versions).
 
 A 30-second video walkthrough is linked from each Release page.
 
@@ -85,9 +85,9 @@ Run Windows Update first either way: a Windows 10 that's behind can't start mode
 - **One-click multi-instance.** Tray toggle holds the Roblox singleton mutex so multiple clients can run side by side. Same trick MultiBloxy and other tools use, just packaged for the rest of us.
 - **Saved Roblox accounts.** Add your alts once via an embedded login window. Click *Launch As* to spawn each one.
 - **DPAPI-encrypted account vault.** Saved cookies are tied to your Windows user. A copy of `accounts.dat` moved to another PC won't decrypt.
-- **Per-game launch routing.** Set a default Roblox game URL once; *Launch As* lands every alt in that game.
+- **Per-game launch routing.** Pick a default game or private server in the Games library and *Launch As* lands every alt there; with none set, it opens Roblox home.
 - **System tray UX.** State-coloured ring shows mutex status at a glance (cyan = on, slate = off, magenta = error).
-- **Velopack auto-update.** Drift-compatible with Roblox-side changes; remote `roblox-compat.json` config tells the app the current known-good Roblox version + mutex name.
+- **Remote compat config.** A signed `roblox-compat.json` on the latest release tells the app the known-good Roblox version range and the current singleton name, so a Roblox-side rename is a config push, not a rebuild.
 - **No DevTools, no registry edits.** Common-Windows-user UX from install through launch.
 
 ## How to use
@@ -98,17 +98,23 @@ Run Windows Update first either way: a Windows 10 that's behind can't start mode
 4. Right-click the tray icon → toggle **Multi-Instance: ON**.
 5. Click **Launch As** next to any saved account. Repeat for any other account to spawn another client.
 
-The first time you Launch As, you'll be prompted for a default Roblox game URL. Paste any Roblox game's `roblox.com/games/...` link — that's where Launch As will land your alts. Edit it later in Settings.
+With no default game set, Launch As opens the account at Roblox home. Set a default game or private server in the Games library (the Games button in the main window, Ctrl+G) and every Launch As lands there.
 
 ## What gets stored on your PC
 
 | Where | What |
 |---|---|
 | `%LOCALAPPDATA%\ROROROblox\accounts.dat` | Your saved Roblox cookies. **DPAPI-encrypted** (Windows-issued; tied to your Windows user). Cannot be moved between PCs. |
-| `%LOCALAPPDATA%\ROROROblox\settings.json` | Your default game URL + UI preferences. Plain text (no secrets). |
-| `%LOCALAPPDATA%\ROROROblox\webview2-data\` | Embedded-browser cache. Wiped before every Add Account so the next login starts on a fresh page. |
+| `%LOCALAPPDATA%\ROROROblox\settings.json` | UI preferences: theme, window placement, memory thresholds, toggles. Plain text (no secrets). |
+| `%LOCALAPPDATA%\ROROROblox\webview2-data\` | Embedded-browser profiles. Every Add Account gets a fresh folder and older ones are swept, so a login never inherits the previous account's cookie. |
 | `%LOCALAPPDATA%\ROROROblox\consent.dat` | Per-plugin consent records (capabilities granted, autostart toggle). **DPAPI-encrypted**, same secrecy contract as `accounts.dat`. Empty until you install your first plugin. |
 | `%LOCALAPPDATA%\ROROROblox\plugins\<plugin-id>\` | Installed plugin files (the EXE + `manifest.json` from each plugin you installed). Plain files — plugins are not encrypted, but each plugin's behavior is gated by your `consent.dat` capability grants. |
+| `%LOCALAPPDATA%\ROROROblox\discord.dat` | Discord presence and alert settings, including webhook URLs. **DPAPI-encrypted.** |
+| `%LOCALAPPDATA%\ROROROblox\favorites.json`, `private-servers.json` | Your games library and saved private servers. Plain text. |
+| `%LOCALAPPDATA%\ROROROblox\session-history.json`, `session-stats.json` | Launch history (last 100 rows) and the stats rollup. Plain text, local only, no telemetry. |
+| `%LOCALAPPDATA%\ROROROblox\themes\` | Your custom theme files. Plain text. |
+| `%LOCALAPPDATA%\ROROROblox\streamer-identities.dat` | Streamer-mode fake names for friends. Plain text; holds no secrets despite the extension. |
+| `%LOCALAPPDATA%\ROROROblox\logs\` | Daily log files. Cookies and webhook URLs are never written to them. |
 
 ## What about my Roblox password?
 
@@ -130,7 +136,7 @@ We never log the cookie value. We never send the cookie to anyone other than Rob
 - **Microsoft.Web.WebView2** (login capture)
 - **Microsoft.Windows.CsWin32** (typed P/Invokes for the singleton-mutex hold)
 - **System.Security.Cryptography.ProtectedData** (DPAPI envelope on saved cookies)
-- **Velopack** (auto-update via GitHub Releases)
+- **Velopack** (installer, delta packages, and the daily update check via GitHub Releases)
 - **xUnit** (unit + integration tests)
 
 ## Provenance
@@ -147,24 +153,24 @@ The named-mutex defeat technique originated with **MultiBloxy** by [Zgoly](https
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the dev setup, spike re-run, and MSIX packaging walkthroughs. Short version:
 
 ```powershell
-# Day-to-day
-dotnet build
-dotnet test
+# Day-to-day (always name the .slnx)
+dotnet build ROROROblox.slnx -c Release
+dotnet test ROROROblox.slnx -c Release --no-build
 dotnet run --project src/ROROROblox.App
 
 # Regenerate Store-bound logo assets (Direction C iso voxel stack)
 powershell -ExecutionPolicy Bypass -File scripts/generate-store-assets.ps1
 powershell -ExecutionPolicy Bypass -File scripts/generate-tray-icons.ps1
 
-# Build sideload MSIX (after items 11-12 from docs/checklist.md land)
+# Build sideload MSIX (needs dev-cert.pfx from scripts/generate-dev-cert.ps1)
 powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertPath dev-cert.pfx -CertPassword '...'
 ```
 
 ## Documentation
 
 - **Privacy policy:** [`docs/PRIVACY.md`](docs/PRIVACY.md)
-- **Architecture & decisions:** [`docs/superpowers/specs/2026-05-03-RORORO-design.md`](docs/superpowers/specs/2026-05-03-RORORO-design.md)
-- **Build plan:** [`docs/checklist.md`](docs/checklist.md)
+- **Architecture:** [`docs/architecture.md`](docs/architecture.md) · **Feature registry:** [`docs/features.md`](docs/features.md) · **Decisions:** [`docs/decisions.md`](docs/decisions.md) · **Release history:** [`docs/feature-ledger.md`](docs/feature-ledger.md)
+- **Canonical design spec (banner-corrected, never rewritten):** [`docs/superpowers/specs/2026-05-03-rororoblox-design.md`](docs/superpowers/specs/2026-05-03-rororoblox-design.md)
 - **Cycle process notes:** [`process-notes.md`](process-notes.md)
 - **Security audit:** [`docs/security-audit-2026-05-04.md`](docs/security-audit-2026-05-04.md)
 - **Microsoft Store submission:** [`docs/store/submission-checklist.md`](docs/store/submission-checklist.md) — pre/post-flight procedure, listing copy, age rating, screenshots
@@ -178,7 +184,7 @@ powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertP
 - [x] DPAPI-encrypted account vault
 - [x] Per-account *Launch As* via documented authentication-ticket flow
 - [x] System tray with state-coloured ring
-- [x] Velopack auto-update via GitHub Releases
+- [x] Velopack installer + daily update check via GitHub Releases
 - [x] Remote `roblox-compat.json` config (mutex name + known-good Roblox versions)
 - [x] Sideload MSIX with self-signed cert
 - [x] Squad Launch + Friend Follow surfaces
@@ -188,14 +194,14 @@ powershell -ExecutionPolicy Bypass -File scripts/build-msix.ps1 -Sideload -CertP
 - [x] Plugin marketplace — in-app (direct builds, v1.9) + [on the web](https://626labs.dev/rororo-plugins.html)
 
 **Up next**
-- [ ] **NEXT STORE PUSH #1 — ship the signed roblox-compat feed.** Client-side signature verification is merged (PR #77: ECDSA P-256/SHA-256, pinned public key, verify-before-deserialize, reject-and-fail-quiet). No tagged release has published a `roblox-compat.json.sig` asset yet, so the feed is not actually signed in the wild today. Cut a tagged release, confirm the `.sig` asset is attached to the GitHub Release alongside `roblox-compat.json`, and confirm the running client verifies against it successfully before calling this closed. See `docs/PRIVACY.md`'s network table for the current wording, and update it plus the matching `privacy-rororo` section on `626labs.dev/privacy.html` once it ships.
-- [ ] **Arm64 (AArch64) build target.** Partner Center flagged that future Windows on Arm devices will not support AArch32; current MSIX is x64-only. Add an Arm64 build flavor + manifest variant so customers on Arm devices can install. Track for v1.1.1 or v1.2.
-- [ ] **About-box version pulls from manifest, not `Assembly.GetName().Version`.** Currently shows `v1.0.0` because the .NET-default assembly version was never overridden; the MSIX manifest's `<Identity Version>` is the source of truth. Pivot to `Package.Current.Id.Version` at runtime. See [`docs/store/next-revision-followups.md`](docs/store/next-revision-followups.md) §3.
+- [x] **Signed roblox-compat feed.** Every tagged release since PR #77 attaches `roblox-compat.json.sig`; the client verifies the raw bytes against a pinned ECDSA P-256 key before trusting the feed (shipped v1.14.1.0+). Still unconfirmed from a log: a running client reporting a successful verified fetch.
+- [x] **Arm64 build target.** Native arm64 Store MSIX and a `windows-11-arm` CI lane since v1.12; every submission ships both architectures.
+- [x] **About-box version.** The csproj `<Version>` and the manifest `<Identity Version>` are patched together by `scripts/finalize-store-build.ps1`, so About and the Store agree.
 - [ ] **Add Account WebView2 white-screen affordance.** Sometimes the embedded login page renders blank on first load and the user has to refresh; add a visible reload hint. See [`docs/store/next-revision-followups.md`](docs/store/next-revision-followups.md) §1.
 - [ ] **Games / Settings tab — make scrollability obvious.** Content can extend past the default window viewport with no scrollbar affordance. See [`docs/store/next-revision-followups.md`](docs/store/next-revision-followups.md) §2.
 - [ ] **Session "expired" vs "needs Roblox 2FA re-verify" — distinguish them.** Today using Friends / Squad Launch / presence-fetching endpoints can surprise-trigger Roblox's anti-fraud re-auth flow within minutes of saving an account; we incorrectly mark the cookie as expired and force a full re-login, when Roblox just wanted a 2FA re-confirm. Add a `NeedsReverification` state distinct from `SessionExpired`, lazy-validate (skip startup pass), better re-auth-flow messaging. See [`docs/store/next-revision-followups.md`](docs/store/next-revision-followups.md) §4.
 - [ ] Per-cookie encryption envelope (today: whole-blob; v1.2: per-account)
-- [ ] Per-account WebView2 profile isolation (today: shared cache, wiped pre-login)
+- [ ] Per-account WebView2 profile isolation (today: a fresh per-capture profile folder, swept afterwards)
 - [ ] Crash report opt-in (today: local logs only)
 - [ ] Winget manifest (`winget install RORORO`)
 - [ ] Auto-detect when Roblox renames the singleton mutex; warn with current `roblox-compat.json` version

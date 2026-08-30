@@ -140,6 +140,8 @@ if (-not $Quiet -and $perFile.Count -gt 0) {
 }
 
 # Non-zero exit when everything is migrated is NOT wanted -- this is a measuring instrument, not a
-# gate. The gate is ButtonVocabularyFenceTests, and conflating the two would mean a green build
-# depended on a count nobody had agreed was correct yet.
+# gate. The gate is ButtonRankFenceTests (src/ROROROblox.Tests/ButtonRankFenceTests.cs), the same
+# one the header names. "ButtonVocabularyFenceTests" was the file name the v1.20 spec's tree
+# proposed for it; nothing ever shipped under that name (corrected 2026-08-30). Conflating the two
+# would mean a green build depended on a count nobody had agreed was correct yet.
 exit 0

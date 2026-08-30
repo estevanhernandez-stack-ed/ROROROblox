@@ -89,14 +89,6 @@ public sealed class AccountSummary : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// What the UI should show wherever it used to show <see cref="DisplayName"/>. v1.3.x.
-    /// Streamer-mode-aware (v1.10 — see <see cref="AttachIdentityProvider"/>): when the attached
-    /// <see cref="IStreamerIdentityProvider"/> is active, returns the fake per-account name instead
-    /// of the real <see cref="LocalName"/>/<see cref="DisplayName"/>. Falls back to the real value
-    /// when no provider is attached or the mode is inactive — <see cref="DisplayName"/> itself is
-    /// never mutated, since the provider needs the real value to pass through.
-    /// </summary>
-    /// <summary>
     /// The real display label — <c>LocalName ?? DisplayName</c> — with NO streamer-mode
     /// substitution. This is what gets PERSISTED (history rows) and what gets handed to
     /// <c>RobloxWindowTitle.ResolveName</c>, which applies the streamer fake at render time.
@@ -109,6 +101,14 @@ public sealed class AccountSummary : INotifyPropertyChanged
     /// </summary>
     public string RealRenderName => _localName ?? DisplayName;
 
+    /// <summary>
+    /// What the UI should show wherever it used to show <see cref="DisplayName"/>. v1.3.x.
+    /// Streamer-mode-aware (v1.10 — see <see cref="AttachIdentityProvider"/>): when the attached
+    /// <see cref="IStreamerIdentityProvider"/> is active, returns the fake per-account name instead
+    /// of the real <see cref="LocalName"/>/<see cref="DisplayName"/>. Falls back to the real value
+    /// when no provider is attached or the mode is inactive — <see cref="DisplayName"/> itself is
+    /// never mutated, since the provider needs the real value to pass through.
+    /// </summary>
     public string RenderName =>
         _identity is { } p ? p.ForAccount(Id, _localName ?? DisplayName, AvatarUrl).Name
                             : (_localName ?? DisplayName);

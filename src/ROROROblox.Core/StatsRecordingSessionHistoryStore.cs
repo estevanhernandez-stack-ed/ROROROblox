@@ -72,6 +72,10 @@ public sealed class StatsRecordingSessionHistoryStore : ISessionHistoryStore
             .ConfigureAwait(false);
     }
 
+    // A launch that never ran has no duration, so there is nothing to fold: LaunchRecorded already
+    // counted the attempt when the row was added, and uptime must not grow. Forward only.
+    public Task MarkOutcomeAsync(Guid sessionId, string outcomeHint) => _inner.MarkOutcomeAsync(sessionId, outcomeHint);
+
     public async Task ClearAsync()
     {
         await _inner.ClearAsync().ConfigureAwait(false);

@@ -109,6 +109,28 @@ public sealed class SessionHistoryStore : ISessionHistoryStore, IDisposable
         }
     }
 
+    public async Task MarkOutcomeAsync(Guid sessionId, string outcomeHint)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(outcomeHint);
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var idx = blob.Sessions.FindIndex(s => s.Id == sessionId);
+            if (idx < 0)
+            {
+                return; // pruned already; harmless.
+            }
+            // EndedAtUtc deliberately untouched: a launch that never ran has no duration.
+            blob.Sessions[idx] = blob.Sessions[idx] with { OutcomeHint = outcomeHint };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async Task ClearAsync()
     {
         await _gate.WaitAsync().ConfigureAwait(false);

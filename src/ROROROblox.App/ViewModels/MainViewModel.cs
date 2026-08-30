@@ -359,7 +359,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
         _ = InitializeBloxstrapWarningAsync();
 
-        // Tick once a minute to keep "5 min ago" / "Running for 12 min" current.
+        // Tick every 30 s to keep "5 min ago" / "Running for 12 min" current (this comment said
+        // "once a minute" until 2026-08-30; the interval below is the truth).
         _ticker = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
         _ticker.Tick += (_, _) =>
         {
@@ -1816,9 +1817,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
 
         // Started != landed. When we asked for one specific server, check with presence and say so
-        // if Roblox put the account somewhere else. Fire-and-forget: the answer is up to 90 s away
-        // and nothing downstream waits on it. The launch timestamp is taken HERE, after the
-        // relaunch fired, so the row's pre-recycle reading can't be mistaken for a confirmation.
+        // if Roblox put the account somewhere else. Fire-and-forget: the answer is up to four
+        // minutes away (ServerLandingGate.MaxWait; it was 90 s until the 2026-08-02 measurement
+        // showed a full server queues rather than rejects) and nothing downstream waits on it.
+        // The launch timestamp is taken HERE, after the relaunch fired, so the row's pre-recycle
+        // reading can't be mistaken for a confirmation.
         if (target is LaunchTarget.GameJob job)
         {
             PendingServerVerification = VerifyRecycleLandingAsync(
@@ -2447,7 +2450,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             StatusBanner = result.PartialBanner(targets.Count, "Squad launch finished");
 
             // Everyone was aimed at one specific server — check with presence who actually made it.
-            // Fire-and-forget: the verdict is up to 90 s out and the batch is done either way.
+            // Fire-and-forget: the verdict is up to four minutes out (ServerLandingGate.MaxWait,
+            // raised from 90 s after the 2026-08-02 squad queued instead of being rejected) and the
+            // batch is done either way.
             if (squadServer is not null)
             {
                 var dispatched = plan.Direct.Concat(plan.Flagged).ToList();
@@ -2839,6 +2844,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Stamps the history row's end. Called from exactly the places that stamp the row's
+    /// <c>LastClosedAtUtc</c> under the v1.5 both-signals rule (process gone AND presence not
+    /// in-game, or process gone for an account presence can never see), so History and the stats
+    /// rollup measure the same session the row does. Until 2026-08-30 this fired unconditionally on
+    /// <see cref="OnProcessExited"/>, sixteen days older than the both-signals rule and never
+    /// revisited: a bootstrapper-respawned client ended its row at the old pid's death.
+    /// </summary>
     private async Task RecordSessionEndAsync(Guid accountId, DateTimeOffset endedAtUtc, string? outcomeHint)
     {
         if (!_pendingSessionByAccountId.TryGetValue(accountId, out var sessionId))
@@ -2853,6 +2866,28 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             _log.LogDebug(ex, "Stamping session end threw for account {AccountId}; continuing.", accountId);
+        }
+    }
+
+    /// <summary>
+    /// Records how a launch turned out when it never ran: the row keeps a null end (no duration,
+    /// nothing folds into uptime) and shows the hint. Retires the pending session so a later exit
+    /// event for the account cannot stamp an end on a session that never started.
+    /// </summary>
+    private async Task RecordSessionOutcomeAsync(Guid accountId, string outcomeHint)
+    {
+        if (!_pendingSessionByAccountId.TryGetValue(accountId, out var sessionId))
+        {
+            return;
+        }
+        _pendingSessionByAccountId.Remove(accountId);
+        try
+        {
+            await _sessionHistory.MarkOutcomeAsync(sessionId, outcomeHint);
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Recording session outcome threw for account {AccountId}; continuing.", accountId);
         }
     }
 
@@ -2907,7 +2942,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 // Process gone but presence still in-game (the ghost case). Don't stamp Closed.
                 // Fire a fast-confirm re-poll: if the window is truly gone the next presence
                 // event will stamp the close via OnAccountPresenceUpdated; if it's still up the
-                // row keeps showing "In <game>".
+                // row keeps showing "In <game>". The history end-stamp is deferred with it (see
+                // ApplyPresence): the respawned client is the same session, still running.
                 _ = _presenceService.RequestImmediateRefreshAsync(e.AccountId);
             }
             else if (summary.RobloxUserId is > 0)
@@ -2915,6 +2951,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 // Presence-capable account, currently not in-game — both signals agree it's
                 // closed, so stamp it now. Still fast-confirm to keep presence current.
                 summary.LastClosedAtUtc = e.OccurredAtUtc;
+                _ = RecordSessionEndAsync(e.AccountId, e.OccurredAtUtc, outcomeHint: null);
                 _ = _presenceService.RequestImmediateRefreshAsync(e.AccountId);
             }
             else
@@ -2922,6 +2959,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 // No RobloxUserId — presence can never run for this account, so process tracking
                 // is the only signal. Keep the pre-v1.5.0 behavior: stamp the close immediately.
                 summary.LastClosedAtUtc = e.OccurredAtUtc;
+                _ = RecordSessionEndAsync(e.AccountId, e.OccurredAtUtc, outcomeHint: null);
             }
 
             LiveProcessCount = _processTracker.Attached.Count;
@@ -2930,8 +2968,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             RelayCommand.RaiseCanExecuteChanged();
             DiscordPresence?.Refresh();
         });
-        // Fire-and-forget the history end-stamp; persistence isn't on the UI critical path.
-        _ = RecordSessionEndAsync(e.AccountId, e.OccurredAtUtc, outcomeHint: null);
+        // The history end-stamp rides the same both-signals rule as LastClosedAtUtc above (fired
+        // fire-and-forget from inside the branches that stamp the close). Until 2026-08-30 it was
+        // stamped here unconditionally, so a bootstrapper-respawned client ended its history row
+        // and its uptime at the OLD pid's death while the row correctly stayed "In <game>".
     }
 
     /// <summary>
@@ -3004,6 +3044,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 if (wasActive && !summary.IsRunning)
                 {
                     summary.LastClosedAtUtc = e.OccurredAtUtc;
+                    // Same rule, same moment, for History and the stats rollup: this is where the
+                    // ghost case's deferred end-stamp lands (a no-op when no launch of ours is
+                    // pending, e.g. a client that was only ever re-attached).
+                    _ = RecordSessionEndAsync(summary.Id, e.OccurredAtUtc, outcomeHint: null);
 
                     // The dropped-out alert rides the SAME both-signals-agree rule, deliberately.
                     // The ghost case (process killed by the anti-multilaunch bootstrapper, client
@@ -3405,9 +3449,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // the install is the reason. PreWarmGate.AttachFailedMessage owns the branch (tested).
             summary.StatusText = PreWarmGate.AttachFailedMessage(installerRunning);
         });
-        // Stamp the session row with an outcome hint instead of an end timestamp — the launch
-        // never actually ran. Useful when scrolling history later: "this one never connected."
-        _ = RecordSessionEndAsync(e.AccountId, e.OccurredAtUtc, outcomeHint: "Never connected");
+        // Stamp the session row with an outcome hint and NO end timestamp — the launch never
+        // actually ran, so it has no duration and must not reach the uptime rollup. Useful when
+        // scrolling history later: "this one never connected." (Until 2026-08-30 this went through
+        // MarkEndedAsync with the failure time as the end, which this comment already claimed it
+        // did not do; every never-connected launch added a 30-120 s phantom session to v1.23 stats.)
+        _ = RecordSessionOutcomeAsync(e.AccountId, "Never connected");
     }
 
     private async Task RemoveAccountAsync(AccountSummary? summary)

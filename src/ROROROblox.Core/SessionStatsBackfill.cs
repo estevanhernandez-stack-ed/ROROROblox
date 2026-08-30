@@ -37,12 +37,15 @@ public static class SessionStatsBackfill
                 await stats.ApplyAsync(new StatsEvent.SessionEnded(
                     row.AccountId, row.PlaceId, row.LaunchedAtUtc, ended)).ConfigureAwait(false);
             }
-            else
+            else if (row.OutcomeHint is null)
             {
                 // Still in flight, or its client died without recording an end. Either way the
                 // duration is unknowable, so count it rather than invent one (§5).
                 await stats.ApplyAsync(new StatsEvent.SessionMissingEnd()).ConfigureAwait(false);
             }
+            // else: an end-less row WITH an outcome hint is a launch that never ran ("Never
+            // connected", MarkOutcomeAsync). Its end is not missing; there was never a session to
+            // end, so it is neither uptime nor a missing-end count.
         }
 
         // Latched even when there was nothing to read, so a user with no history does not re-run

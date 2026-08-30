@@ -5,13 +5,18 @@ using ROROROblox.PluginContract;
 namespace ROROROblox.App.Plugins;
 
 /// <summary>
-/// gRPC server-side implementation of the RoRoRoHost service. Plugins connect over the
-/// per-plugin named pipe and call into this surface.
+/// gRPC server-side implementation of the RoRoRoHost service. Every plugin connects over
+/// the one shared named pipe (<see cref="PluginHostStartupService.DefaultPipeName"/>,
+/// <c>rororo-plugin-host</c>) and calls into this surface. There is no per-plugin pipe,
+/// and this comment used to say there was: a plugin identifies itself with the
+/// <c>x-plugin-id</c> request header, which <see cref="CapabilityInterceptor"/> reads on
+/// every call and <c>ResolveCurrentPluginId</c> reads for the UI RPCs.
 ///
-/// Marked partial — items 11-14 will extend the same class with the capability gate
-/// (RpcMethodCapabilityMap + interceptor), event streaming (SubscribeAccountLaunched,
-/// etc.), command surface (RequestLaunch), and UI surface (AddTrayMenuItem, etc.).
-/// Keeping each surface in its own file keeps blast radius tight when the spec shifts.
+/// The class is complete. It was declared partial during the v1.4 build (items 11-14)
+/// with the intent of splitting the capability gate, event streams, command surface, and
+/// UI surface into their own files; all of that landed in this one file instead, and as
+/// of v1.23.0.0 (2026-08-30) no other file extends it. The <c>partial</c> keyword is a
+/// leftover, not a promise.
 /// </summary>
 public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
 {

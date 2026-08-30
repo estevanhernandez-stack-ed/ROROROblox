@@ -27,9 +27,13 @@ Scoped campaign. In-scope surfaces are the ones the goal names; neighbors are ca
 context for the consistency lens, not as fix targets. Evidence lands in `docs/ui-evidence/`
 (gitignored) as `NN-<surface>--<theme>.png`.
 
-**Themes, three rounds:** `brand` (default) · `magenta-heat` (built-in, flips the emphasis) ·
-`flatline` (adversarial, authored for this campaign — one background colour, one text colour, one
-accent; text stays legible so only colour-borne distinctions collapse).
+**Themes, four rounds, enumerated from the ThemePicker at runtime:** `brand` (default) ·
+`midnight` (built-in, cooler and dimmer) · `magenta-heat` (built-in, flips the emphasis) ·
+`flatline` (built-in since v1.17, 2026-08-10; it began as this campaign's adversarial theme and
+shipped as the fourth built-in: achromatic throughout, one page surface, one row surface, one text
+colour, one light and one dark accent; text stays legible so only colour-borne distinctions
+collapse). This paragraph said "three rounds" and called `flatline` campaign-only until
+2026-08-30; the tool never hardcoded the list, so it captured all four the day `flatline` shipped.
 
 > **Before you capture `preferences-alerts` (03b): that page renders live webhook URLs in full.**
 > A Discord webhook URL is a bearer credential — the token segment is the entire auth, and anyone

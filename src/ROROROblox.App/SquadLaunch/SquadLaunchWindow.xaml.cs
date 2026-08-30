@@ -367,7 +367,8 @@ internal partial class SquadLaunchWindow : Window
             var placeName = meta?.Name ?? $"Place {ps.PlaceId}";
             var thumbnail = meta?.IconUrl ?? string.Empty;
 
-            // Default user-given name to the place name; users can rename later by remove + re-add.
+            // Default user-given name to the place name; the server row's Rename context-menu item
+            // changes it later (no remove + re-add, which is what this comment said until 2026-08-30).
             var saved = await _store.AddAsync(ps.PlaceId, ps.Code, ps.Kind, placeName, placeName, thumbnail);
             await _store.TouchLastLaunchedAsync(saved.Id);
 

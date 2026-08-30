@@ -34,6 +34,7 @@ public class SessionStatsBackfillTests : IDisposable
             => Task.FromResult<IReadOnlyList<LaunchSession>>(_rows);
         public Task AddAsync(LaunchSession s) => Task.CompletedTask;
         public Task MarkEndedAsync(Guid id, DateTimeOffset at, string? hint = null) => Task.CompletedTask;
+        public Task MarkOutcomeAsync(Guid id, string hint) => Task.CompletedTask;
         public Task ClearAsync() => Task.CompletedTask;
     }
 

@@ -57,9 +57,10 @@ internal static class WindowRenderHost
     private static readonly Lazy<Dispatcher> Host = new(Start, LazyThreadSafetyMode.ExecutionAndPublication);
 
     /// <summary>
-    /// How many times WPF-UI's context-menu decoration was caught and swallowed (F-105). Exposed so
-    /// a test can assert this is a real, counted event rather than a silent catch — a swallow
-    /// nobody can see is indistinguishable from a bug nobody has found.
+    /// How many times WPF-UI's context-menu decoration was caught and swallowed (F-105). Counted so
+    /// a swallow is a visible event rather than a silent catch — a swallow nobody can see is
+    /// indistinguishable from a bug nobody has found. No test asserts on it: since 2026-08-21 the
+    /// handler below has nothing to catch, and the fence lives in <c>StartupSuppressionFenceTests</c>.
     /// </summary>
     internal static int SwallowedContextMenuFailures;
 
@@ -100,16 +101,23 @@ internal static class WindowRenderHost
 
             // F-105. WPF-UI's ContextMenuLoader posts OnResourceDictionaryLoaded to this dispatcher
             // when ControlsDictionary loads, and that callback resolves a pack:// URI for an editor
-            // context-menu style NOTHING here renders. With a RoRoRo instance running it throws
-            // NotSupportedException from WebRequest.Create — and because it arrives on the
+            // context-menu style NOTHING here renders. With a RoRoRo instance running it threw
+            // NotSupportedException from WebRequest.Create — and because it arrived on the
             // dispatcher rather than on a render's call stack, it took the whole TEST HOST down,
             // aborting the run wherever it happened to be.
             //
-            // THE MECHANISM IS STILL UNKNOWN and this does not claim to fix it. What it fixes is the
-            // BLAST RADIUS: a decoration this harness never asks for must not be able to kill the
-            // process. Scoped as narrowly as the evidence allows — this exact exception type, from
-            // this exact WPF-UI type — so a genuine pack:// failure in anything we DO render still
-            // fails the test that caused it, which is the whole point of the gates.
+            // THE MECHANISM IS KNOWN as of 2026-08-21 (commit 57a7660), and it is the story told
+            // above: real startup ran inside the test host, the single-instance guard called
+            // Shutdown(0), and pack-URI resolution against a disposed Application is what throws
+            // NotSupportedException. SuppressStartupForRenderHarness is the fix, and
+            // StartupSuppressionFenceTests fences it. With startup suppressed this handler has
+            // nothing to catch, and nothing asserts on SwallowedContextMenuFailures.
+            //
+            // The handler stays as a BLAST-RADIUS guard, not a fix: a decoration this harness never
+            // asks for must not be able to kill the process, whatever the next cause turns out to
+            // be. Scoped as narrowly as the evidence allows — this exact exception type, from this
+            // exact WPF-UI type — so a genuine pack:// failure in anything we DO render still fails
+            // the test that caused it, which is the whole point of the gates.
             app.DispatcherUnhandledException += (_, args) =>
             {
                 if (args.Exception is NotSupportedException
