@@ -20,12 +20,14 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
 {
     private readonly string _applicationId;
     private readonly ILogger _log;
+    private readonly bool _packagedInstall;
     private DiscordRpcClient? _client;
 
-    public LacheeDiscordRpcClientAdapter(string applicationId, ILogger log)
+    public LacheeDiscordRpcClientAdapter(string applicationId, ILogger log, bool packagedInstall = false)
     {
         _applicationId = applicationId;
         _log = log;
+        _packagedInstall = packagedInstall;
     }
 
     public bool IsInitialized => _client?.IsInitialized == true;
@@ -88,15 +90,26 @@ internal sealed class LacheeDiscordRpcClientAdapter : IDiscordRpcClient
 
                 // Lachee's RegisterUriScheme writes the registry command WITHOUT the "%1"
                 // argument placeholder, so Windows launches us with no argument when Discord
-                // dispatches the discord-{applicationId} scheme. Fix the value it just wrote.
-                var exePath = Environment.ProcessPath;
-                if (exePath is not null)
+                // dispatches the discord-{applicationId} scheme. Fix the value it just wrote —
+                // unless this install is packaged, where the manifest's uap10:Protocol owns the
+                // scheme (already with Parameters="%1") and the value Lachee wrote only landed
+                // in the package's virtual registry hive that Explorer never reads (spec
+                // 2026-08-30-packaged-activation-design.md).
+                if (_packagedInstall)
                 {
-                    JoinUriScheme.FixupDiscordSchemeCommand(_applicationId, exePath);
+                    _log.LogDebug("Packaged install: skipping Discord scheme command fixup; the manifest protocol owns the scheme.");
                 }
                 else
                 {
-                    _log.LogDebug("Environment.ProcessPath was null; skipped Discord URI scheme command fixup.");
+                    var exePath = Environment.ProcessPath;
+                    if (exePath is not null)
+                    {
+                        JoinUriScheme.FixupDiscordSchemeCommand(_applicationId, exePath);
+                    }
+                    else
+                    {
+                        _log.LogDebug("Environment.ProcessPath was null; skipped Discord URI scheme command fixup.");
+                    }
                 }
             }
             catch (Exception ex)

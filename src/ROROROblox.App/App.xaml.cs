@@ -168,6 +168,15 @@ public partial class App : Application
         {
             _log.LogDebug("Discord:ApplicationId is empty; skipping join URI scheme registration — the feature can't run in this build.");
         }
+        else if (new Distribution.Win32DistributionMode().IsPackaged)
+        {
+            // Packaged installs (Store + sideload): the manifest's uap10:Protocol entries own
+            // roblox-rororo and Discord's launch scheme, delivering the URI as argv via
+            // Parameters="%1". A registry write here would only land in the package's virtual
+            // hive, which Explorer never reads (verified live 2026-08-30; spec
+            // docs/superpowers/specs/2026-08-30-packaged-activation-design.md).
+            _log.LogDebug("Packaged install: join URI schemes are declared in the manifest; skipping registry registration.");
+        }
         else
         {
             try
@@ -677,7 +686,21 @@ public partial class App : Application
         // stateless, so a singleton is fine. The export/import dialogs consume this + IAccountStore.
         services.AddSingleton<ROROROblox.Core.Transport.IAccountTransport,
             ROROROblox.Core.Transport.AccountTransportService>();
-        services.AddSingleton<IStartupRegistration, StartupRegistration>();
+        // Distribution mode gates three things now: the plugin marketplace (policy 10.2.2),
+        // which startup-registration implementation backs the run-on-login toggle, and whether
+        // the join URI schemes live in HKCU or in the manifest. Registered once so every
+        // consumer answers the question the same way.
+        services.AddSingleton<Distribution.IDistributionMode, Distribution.Win32DistributionMode>();
+
+        // Packaged installs write HKCU into the package's virtual hive where winlogon never
+        // looks (verified live 2026-08-30), so the Run-key implementation silently does nothing
+        // there — and worse, reads its own virtual value back, so the toggle lies. The manifest
+        // StartupTask is the packaged equivalent. Spec:
+        // docs/superpowers/specs/2026-08-30-packaged-activation-design.md.
+        services.AddSingleton<IStartupRegistration>(sp =>
+            sp.GetRequiredService<Distribution.IDistributionMode>().IsPackaged
+                ? new PackagedStartupRegistration()
+                : new StartupRegistration());
         services.AddSingleton<IProcessStarter, ProcessStarter>();
 
         // RobloxApi over a managed HttpClient (factory handles lifetime + DNS rotation).
@@ -1200,7 +1223,7 @@ public partial class App : Application
             "https://github.com/estevanhernandez-stack-ed/ROROROblox/releases/latest/download/plugins-catalog.json");
         var vm = new ROROROblox.App.Plugins.PluginsViewModel(
             registry, registryAdapter, consentStore, installer, supervisor, showSheet,
-            new ROROROblox.App.Distribution.Win32DistributionMode(),
+            _services.GetRequiredService<ROROROblox.App.Distribution.IDistributionMode>(),
             catalogClient,
             typeof(App).Assembly.GetName().Version ?? new Version(0, 0, 0, 0),
             _services.GetRequiredService<ILogger<ROROROblox.App.Plugins.PluginsViewModel>>());
@@ -1680,7 +1703,9 @@ public partial class App : Application
             var config = configService.Current;
 
             var client = new LacheeDiscordRpcClientAdapter(
-                applicationId, _services.GetRequiredService<ILogger<LacheeDiscordRpcClientAdapter>>());
+                applicationId,
+                _services.GetRequiredService<ILogger<LacheeDiscordRpcClientAdapter>>(),
+                packagedInstall: _services.GetRequiredService<Distribution.IDistributionMode>().IsPackaged);
             var presence = new DiscordPresenceService(
                 client,
                 vm.BuildRosterSnapshot,
