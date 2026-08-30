@@ -14,7 +14,8 @@
 # (scale-100, scale-125, scale-150, scale-200, scale-400) plus targetsize variants for
 # Square44x44Logo (16, 24, 32, 48, 256 -- both plated and altform-unplated dark theme).
 #
-# File count: 45 PNGs. Manifest references bare names (Square150x150Logo.png etc); Windows
+# File count: 52 PNGs into Package/Logos (7 logos x 5 scales + bare, plus 10 targetsize) and 9
+# listing graphics into docs/store/graphics. Manifest references bare names (Square150x150Logo.png etc); Windows
 # auto-resolves the appropriate scale-N variant at runtime.
 
 param(
