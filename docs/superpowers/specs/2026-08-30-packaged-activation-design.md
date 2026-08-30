@@ -2,7 +2,7 @@
 
 ---
 **Date:** 2026-08-30
-**Status:** Approved design — implementation in the same session
+**Status:** Shipped — implemented, merged (PR #149, `20a9772`), and live-smoked the same day (`docs/store/smoke-2026-08-30-packaged-activation.md`)
 **Author:** The Architect + Este
 **Scope:** Make the two features that silently do nothing on packaged (MSIX) installs work: the Settings run-on-login toggle, and cold-start URI activation (`roblox-rororo:` joins and Discord's `discord-<appid>` launch scheme). Ships as v1.24.0.0 with F-125 and the corrected privacy policy.
 **Origin:** The 2026-08-30 onboarding pass's live test: the Store 1.23 build, launched alone, registered its URI schemes and Run key into the package's virtual registry hive — invisible to Explorer, Discord, and winlogon.
@@ -54,3 +54,7 @@
 2. Full suite on the bumped TFMs, x64 + arm64 via CI.
 3. `scripts/build-msix.ps1 -Sideload` — makeappx validates the new manifest elements.
 4. Live packaged test (replaces the installed Store build with the sideload build until the next Store update; maintainer consent per step): toggle run-on-login → the task appears in Task Manager → Startup apps; sign out/in → RoRoRo starts; `start roblox-rororo://join/<secret>` cold-starts the app with the confirm dialog; Windows Settings → Apps → Startup shows "RoRoRo".
+
+### §4 executed, 2026-08-30 — PASS
+
+Run the same afternoon with Este's consent; full record in `docs/store/smoke-2026-08-30-packaged-activation.md`. Deviation: the machine does not trust the current dev cert and elevation was unavailable, so the signed MSIX's payload was registered loose via Developer Mode (`Add-AppxPackage -Register`) — same `PackageFullName`, same manifest ingestion and activation routing. All seven legs passed: both skip-branch log lines, enable → Windows `State=2`, restart read-back On, disable → `State=0`, and both protocols cold-started the packaged app with the classic HKCU keys deleted (manifest-only resolution); the synthetic join secret reached `JoinUriParser` via argv. Not exercised, still owed to a future pass: a signed-sideload install on a cert-trusting box, and an actual sign-out/sign-in to watch the task fire.
