@@ -7,6 +7,11 @@ public enum AlertDestination
     Local,
     Mine,
     Clan,
+
+    /// <summary>The user's phone via a push provider (Pushover/ntfy — see
+    /// <c>ROROROblox.Core.Notify.PhoneNotifyConfig</c>). Appended after Clan: this enum is
+    /// serialized numerically inside discord.dat, so member order is a wire format.</summary>
+    Phone,
 }
 
 /// <summary>

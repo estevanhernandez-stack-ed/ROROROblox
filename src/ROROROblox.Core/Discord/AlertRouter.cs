@@ -34,7 +34,8 @@ public static class AlertRouter
         IReadOnlyList<AlertTrigger> pending,
         DiscordConfig config,
         IReadOnlyDictionary<(Guid AccountId, AlertKind Kind), DateTimeOffset> lastSentPerAccount,
-        DateTimeOffset nowUtc)
+        DateTimeOffset nowUtc,
+        bool phoneConfigured = false)
     {
         ArgumentNullException.ThrowIfNull(pending);
         ArgumentNullException.ThrowIfNull(config);
@@ -46,13 +47,13 @@ public static class AlertRouter
             .Where(t => !muted.Contains(t.AccountId))
             .Where(t => !lastSentPerAccount.TryGetValue((t.AccountId, t.Kind), out var last) || nowUtc - last > Cooldown)
             .GroupBy(t => t.Kind)
-            .Select(group => new { group.Key, Triggers = group.ToList(), Destination = Resolve(group.Key, config) })
+            .Select(group => new { group.Key, Triggers = group.ToList(), Destination = Resolve(group.Key, config, phoneConfigured) })
             .Where(x => x.Destination != AlertDestination.None)
             .Select(x => new RoutedAlert(x.Destination, x.Key, x.Triggers))
             .ToList();
     }
 
-    private static AlertDestination Resolve(AlertKind kind, DiscordConfig config)
+    private static AlertDestination Resolve(AlertKind kind, DiscordConfig config, bool phoneConfigured)
     {
         var wanted = kind switch
         {
@@ -67,6 +68,10 @@ public static class AlertRouter
         {
             AlertDestination.Mine when string.IsNullOrWhiteSpace(config.MineWebhookUrl) => AlertDestination.Local,
             AlertDestination.Clan when string.IsNullOrWhiteSpace(config.ClanWebhookUrl) => AlertDestination.Local,
+            // "Configured" is the caller's composite: provider credentials present AND the
+            // endpoint not rejected this session. The phone config lives in its own record
+            // (notify.dat), so it arrives as a bool rather than widening this type's coupling.
+            AlertDestination.Phone when !phoneConfigured => AlertDestination.Local,
             _ => wanted,
         };
     }

@@ -322,6 +322,7 @@
                                     <ComboBoxItem Content="Desktop only" Tag="Local" />
                                     <ComboBoxItem Content="My channel" Tag="Mine" />
                                     <ComboBoxItem Content="Clan channel" Tag="Clan" />
+                                    <ComboBoxItem Content="My phone" Tag="Phone" />
                                 </ComboBox>
                             </Grid>
 
@@ -338,6 +339,7 @@
                                     <ComboBoxItem Content="Desktop only" Tag="Local" />
                                     <ComboBoxItem Content="My channel" Tag="Mine" />
                                     <ComboBoxItem Content="Clan channel" Tag="Clan" />
+                                    <ComboBoxItem Content="My phone" Tag="Phone" />
                                 </ComboBox>
                             </Grid>
 
@@ -442,6 +444,104 @@
                             </Grid>
                             <TextBlock x:Name="ClanWebhookVerdict" FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap" Margin="0,4,0,0"
                                        Foreground="{DynamicResource MutedTextBrush}" />
+
+                            <!-- Phone push (spec 2026-09-04). Same card because it answers the same
+                                 question as the rows above - where do alerts go - but a separate
+                                 mechanism on purpose: the Discord webhook stays its own piece
+                                 (Este's ruling, decisions.md 2026-09-04). Pushover is the app most
+                                 of the clan already carries; ntfy is the free option. Every field
+                                 here is a bearer credential and takes the F-076 masked/reveal
+                                 treatment wholesale. -->
+                            <TextBlock Text="My phone — push service" FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource WhiteBrush}" Margin="0,12,0,2" />
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                       Margin="0,0,0,4"
+                                       Text="Buzzes your phone directly — no Discord needed. Pushover is the app most of the clan already uses; ntfy is free. Route an alert to My phone above, set the service up once here." />
+                            <ComboBox x:Name="PhoneProviderPicker" AutomationProperties.Name="Which push service sends phone alerts" Width="170" HorizontalAlignment="Left"
+                                      SelectionChanged="OnPhoneProviderChanged">
+                                <ComboBoxItem Content="Off" Tag="None" />
+                                <ComboBoxItem Content="Pushover" Tag="Pushover" />
+                                <ComboBoxItem Content="ntfy" Tag="Ntfy" />
+                            </ComboBox>
+
+                            <StackPanel x:Name="PushoverFields" Visibility="Collapsed" Margin="0,8,0,0">
+                                <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                           Margin="0,0,0,4"
+                                           Text="Both codes come from pushover.net: your user key is on the dashboard, and creating an application there (name it anything) gives you its token. The phone app is a one-time purchase after the trial." />
+                                <TextBlock Text="User key" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,0,0,2" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="PushoverUserKeyInput" AutomationProperties.Name="Pushover user key" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
+                                             Background="{DynamicResource NavyBrush}"
+                                             LostFocus="OnPushoverKeyCommitted" Style="{StaticResource AppTextBoxStyle}"/>
+                                    <ToggleButton x:Name="PushoverUserKeyReveal" Grid.Column="1" Content="Show"
+                                                  Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                                  Checked="OnRevealPhoneToggled" Unchecked="OnRevealPhoneToggled"
+                                                  Style="{StaticResource SecondaryToggleButtonStyle}"
+                                                  ToolTip="Reveal the saved key so you can read or replace it." />
+                                </Grid>
+                                <TextBlock Text="Application token" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,6,0,2" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="PushoverAppTokenInput" AutomationProperties.Name="Pushover application token" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
+                                             Background="{DynamicResource NavyBrush}"
+                                             LostFocus="OnPushoverKeyCommitted" Style="{StaticResource AppTextBoxStyle}"/>
+                                    <ToggleButton x:Name="PushoverAppTokenReveal" Grid.Column="1" Content="Show"
+                                                  Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                                  Checked="OnRevealPhoneToggled" Unchecked="OnRevealPhoneToggled"
+                                                  Style="{StaticResource SecondaryToggleButtonStyle}"
+                                                  ToolTip="Reveal the saved token so you can read or replace it." />
+                                </Grid>
+                                <TextBlock x:Name="PhonePushoverVerdict" FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                           Foreground="{DynamicResource MutedTextBrush}" />
+                            </StackPanel>
+
+                            <StackPanel x:Name="NtfyFields" Visibility="Collapsed" Margin="0,8,0,0">
+                                <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                           Margin="0,0,0,4"
+                                           Text="Free, no account: install the ntfy app, subscribe to your topic below, done. The topic is a secret — anyone holding it can read and fake your alerts, which is why RoRoRo makes it long and random. On iPhone, delivery is best-effort; Pushover is the reliable choice there." />
+                                <TextBlock Text="Topic" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,0,0,2" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="NtfyTopicInput" AutomationProperties.Name="ntfy topic" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
+                                             Background="{DynamicResource NavyBrush}" IsReadOnly="True"
+                                             Style="{StaticResource AppTextBoxStyle}"/>
+                                    <ToggleButton x:Name="NtfyTopicReveal" Grid.Column="1" Content="Show"
+                                                  Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                                  Checked="OnRevealPhoneToggled" Unchecked="OnRevealPhoneToggled"
+                                                  Style="{StaticResource SecondaryToggleButtonStyle}"
+                                                  ToolTip="Reveal the topic so you can subscribe to it on your phone." />
+                                    <Button x:Name="NtfyNewTopicButton" Grid.Column="2" Content="New topic"
+                                            Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            AutomationProperties.Name="Generate a new ntfy topic"
+                                            Click="OnGenerateNtfyTopicClick"
+                                            ToolTip="Makes a fresh random topic. Your phone stops getting alerts until you subscribe to the new one." />
+                                </Grid>
+                                <TextBlock Text="Server" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,6,0,2" />
+                                <TextBox x:Name="NtfyServerInput" AutomationProperties.Name="ntfy server address" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
+                                         Background="{DynamicResource NavyBrush}"
+                                         LostFocus="OnNtfyServerCommitted" Style="{StaticResource AppTextBoxStyle}"
+                                         ToolTip="Leave as ntfy.sh unless you run your own server." />
+                                <TextBlock x:Name="PhoneNtfyVerdict" FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                           Foreground="{DynamicResource MutedTextBrush}" />
+                            </StackPanel>
+
+                            <Button x:Name="PhoneTestButton" Content="Test my phone" Padding="12,5" Margin="0,8,0,0"
+                                    HorizontalAlignment="Left" Visibility="Collapsed"
+                                    Style="{StaticResource SecondaryStrongButtonStyle}" FontSize="{DynamicResource BodyFontSize}"
+                                    AutomationProperties.Name="Send a test notification to my phone"
+                                    Click="OnPhoneTestClick" />
 
                             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                                 <Button Style="{StaticResource AccentActionButtonStyle}" x:Name="SendTestButton" Content="Send test" Padding="12,5" Click="OnSendTestClick" FontSize="{DynamicResource BodyFontSize}" />

@@ -22,7 +22,9 @@ public sealed class AlertDispatcher(
     ITrayService tray,
     Func<DiscordConfig> config,
     TimeProvider time,
-    ILogger<AlertDispatcher> log)
+    ILogger<AlertDispatcher> log,
+    ROROROblox.App.Notify.PhoneAlertSender? phoneSender = null,
+    Func<ROROROblox.Core.Notify.PhoneNotifyConfig>? phoneConfig = null)
 {
     /// <summary>Keyed by (account, KIND) — see <see cref="AlertRouter.Route"/> for why the kind
     /// belongs in the key.</summary>
@@ -34,6 +36,10 @@ public sealed class AlertDispatcher(
 
     public bool ClanWebhookRejected { get; private set; }
 
+    /// <summary>True once the push provider has rejected the saved credentials (a Pushover 4xx
+    /// naming the key, an ntfy 403). Same terminal-for-the-session contract as a webhook 404.</summary>
+    public bool PhoneRejected { get; private set; }
+
     /// <summary>
     /// Clear the rejection so a newly pasted webhook gets a real chance. Without this, a user who
     /// deletes a webhook, sees the warning, makes a new one, and pastes it would still be routed
@@ -42,6 +48,10 @@ public sealed class AlertDispatcher(
     public void ResetMineRejection() => MineWebhookRejected = false;
 
     public void ResetClanRejection() => ClanWebhookRejected = false;
+
+    /// <summary>Clear the phone rejection so newly saved credentials get a real chance — the
+    /// same fixing-it-must-work rule the webhook resets exist for.</summary>
+    public void ResetPhoneRejection() => PhoneRejected = false;
 
     public async Task DispatchAsync(IReadOnlyList<AlertTrigger> triggers)
     {
@@ -52,7 +62,9 @@ public sealed class AlertDispatcher(
         {
             var current = EffectiveConfig(config());
             var now = time.GetUtcNow();
-            var routed = AlertRouter.Route(triggers, current, _lastSent, now);
+            var phone = phoneConfig?.Invoke() ?? new ROROROblox.Core.Notify.PhoneNotifyConfig();
+            var phoneReady = phoneSender is not null && !PhoneRejected && phone.IsConfigured;
+            var routed = AlertRouter.Route(triggers, current, _lastSent, now, phoneReady);
 
             // Same diagnostic gap that cost three sessions on the presence side: without this, a
             // delivered alert and a swallowed one look identical in the log (both silent). The
@@ -88,6 +100,14 @@ public sealed class AlertDispatcher(
                         break;
                     case AlertDestination.Clan when current.ClanWebhookUrl is { } clan:
                         ClanWebhookRejected |= await SendAsync(clan, payload).ConfigureAwait(false);
+                        break;
+                    case AlertDestination.Phone when phoneSender is not null:
+                        var phoneResult = await phoneSender.SendAsync(phone, alert.Kind, payload).ConfigureAwait(false);
+                        if (phoneResult == Notify.PhoneSendResult.EndpointRejected)
+                        {
+                            log.LogInformation("The push provider rejected the saved credentials; disabling the phone destination.");
+                            PhoneRejected = true;
+                        }
                         break;
                 }
 

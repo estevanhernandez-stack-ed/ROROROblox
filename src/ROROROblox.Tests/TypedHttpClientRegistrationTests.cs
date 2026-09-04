@@ -24,6 +24,8 @@ public class TypedHttpClientRegistrationTests
     [InlineData(typeof(IRobloxUpdateProbe))]
     [InlineData(typeof(DiscordWebhookSender))]
     [InlineData(typeof(WebhookProbe))]
+    [InlineData(typeof(ROROROblox.App.Notify.PushoverSender))]
+    [InlineData(typeof(ROROROblox.App.Notify.NtfySender))]
     public void TypedHttpClient_Resolves_WithExactlyOneApplicableCtor(Type serviceType)
     {
         var services = new ServiceCollection();
@@ -33,6 +35,8 @@ public class TypedHttpClientRegistrationTests
         services.AddHttpClient<IRobloxUpdateProbe, RobloxUpdateProbe>();
         services.AddHttpClient<DiscordWebhookSender>();
         services.AddHttpClient<WebhookProbe>();
+        services.AddHttpClient<ROROROblox.App.Notify.PushoverSender>();
+        services.AddHttpClient<ROROROblox.App.Notify.NtfySender>();
         using var provider = services.BuildServiceProvider();
 
         var resolved = provider.GetRequiredService(serviceType);

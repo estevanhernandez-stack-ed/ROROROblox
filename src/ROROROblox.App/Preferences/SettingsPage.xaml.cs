@@ -37,6 +37,8 @@ internal partial class SettingsPage : UserControl, IDisposable
     private readonly AlertDispatcher _alertDispatcher;
     private readonly DiscordWebhookSender _webhookSender;
     private readonly WebhookProbe _webhookProbe;
+    private readonly ROROROblox.Core.Notify.PhoneNotifyConfigService _phoneNotifyService;
+    private readonly ROROROblox.App.Notify.PhoneAlertSender _phoneAlertSender;
 
     /// <summary>
     /// What the memory section's blank boxes resolve to on this machine (item 4a). Holds the
@@ -90,12 +92,16 @@ internal partial class SettingsPage : UserControl, IDisposable
         AlertDispatcher alertDispatcher,
         DiscordWebhookSender webhookSender,
         WebhookProbe webhookProbe,
+        ROROROblox.Core.Notify.PhoneNotifyConfigService phoneNotifyService,
+        ROROROblox.App.Notify.PhoneAlertSender phoneAlertSender,
         ISystemMemoryProbe systemMemoryProbe)
     {
         _automaticMemory = new AutomaticMemorySummary(systemMemoryProbe);
         _alertDispatcher = alertDispatcher;
         _webhookSender = webhookSender;
         _webhookProbe = webhookProbe;
+        _phoneNotifyService = phoneNotifyService;
+        _phoneAlertSender = phoneAlertSender;
         _settings = settings;
         _startupRegistration = startupRegistration;
         _themeStore = themeStore;
@@ -725,6 +731,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         SelectDestination(MemoryWarningDestination, discordConfig.MemoryWarningDestination);
         ShowWebhookMasked(MineWebhookInput, MineWebhookReveal, discordConfig.MineWebhookUrl);
         ShowWebhookMasked(ClanWebhookInput, ClanWebhookReveal, discordConfig.ClanWebhookUrl);
+        PopulatePhoneControls();
         RefreshAlertsStatus();
         // Called from HERE and nowhere earlier, on purpose. The count itself reads only the view
         // model's rows and would survive a failed config load — but Unmute all writes the whole
@@ -789,18 +796,273 @@ internal partial class SettingsPage : UserControl, IDisposable
 
     private void RefreshAlertsStatus()
     {
+        var phone = _phoneNotifyService.Current;
         var line = AlertStatusLine.Compose(
             CurrentDiscordConfig,
             _alertDispatcher.MineWebhookRejected,
             _alertDispatcher.ClanWebhookRejected,
             _mineChannelName,
-            _clanChannelName);
+            _clanChannelName,
+            _alertDispatcher.PhoneRejected,
+            phone.IsConfigured,
+            phone.Provider switch
+            {
+                ROROROblox.Core.Notify.PhoneProvider.Pushover => "Pushover",
+                ROROROblox.Core.Notify.PhoneProvider.Ntfy => "ntfy",
+                _ => null,
+            });
 
         // The glyph is the view's, not the composer's — same rule MainWindow.xaml records for the
         // compat banner. The Tag drives the brush from the Style so the colour stays in markup where
         // the theme gates can see it (F-094, F-098).
         AlertsStatusLine.Text = line.IsFailure ? $"▲ {line.Text}" : line.Text;
         AlertsStatusLine.Tag = line.IsFailure ? "failure" : null;
+    }
+
+    // ---------- Phone push (spec 2026-09-04) ----------
+
+    private ROROROblox.Core.Notify.PhoneNotifyConfig CurrentPhoneConfig => _phoneNotifyService.Current;
+
+    /// <summary>Paint the phone controls from the loaded config. Called from
+    /// <see cref="PopulateAlertControls"/>, inside the same suppression guard.</summary>
+    private void PopulatePhoneControls()
+    {
+        var phone = CurrentPhoneConfig;
+        foreach (var item in PhoneProviderPicker.Items.OfType<System.Windows.Controls.ComboBoxItem>())
+        {
+            if (Equals(item.Tag as string, phone.Provider.ToString()))
+            {
+                PhoneProviderPicker.SelectedItem = item;
+                break;
+            }
+        }
+
+        UpdatePhonePanels(phone.Provider);
+        ShowWebhookMasked(PushoverUserKeyInput, PushoverUserKeyReveal, phone.PushoverUserKey);
+        ShowWebhookMasked(PushoverAppTokenInput, PushoverAppTokenReveal, phone.PushoverAppToken);
+        ShowWebhookMasked(NtfyTopicInput, NtfyTopicReveal, phone.NtfyTopic);
+        // The reveal helper unlocks fields for editing; the topic is generated, never hand-edited.
+        NtfyTopicInput.IsReadOnly = true;
+        NtfyServerInput.Text = phone.NtfyServerUrl;
+    }
+
+    private void UpdatePhonePanels(ROROROblox.Core.Notify.PhoneProvider provider)
+    {
+        PushoverFields.Visibility = provider == ROROROblox.Core.Notify.PhoneProvider.Pushover
+            ? Visibility.Visible : Visibility.Collapsed;
+        NtfyFields.Visibility = provider == ROROROblox.Core.Notify.PhoneProvider.Ntfy
+            ? Visibility.Visible : Visibility.Collapsed;
+        PhoneTestButton.Visibility = provider == ROROROblox.Core.Notify.PhoneProvider.None
+            ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private async void OnPhoneProviderChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+
+        var provider = PhoneProviderPicker.SelectedItem is System.Windows.Controls.ComboBoxItem { Tag: string tag }
+            && Enum.TryParse<ROROROblox.Core.Notify.PhoneProvider>(tag, out var parsed)
+                ? parsed
+                : ROROROblox.Core.Notify.PhoneProvider.None;
+
+        UpdatePhonePanels(provider);
+
+        try
+        {
+            await _phoneNotifyService.MutateAsync(c => c with { Provider = provider });
+            RefreshAlertsStatus();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Window.GetWindow(this), $"Couldn't save the phone setting: {ex.Message}",
+                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    /// <summary>Show / Hide on a saved phone credential — <see cref="OnRevealWebhookToggled"/>'s
+    /// contract (Checked/Unchecked, not Click; see that handler for why), over three fields.</summary>
+    private void OnRevealPhoneToggled(object sender, RoutedEventArgs e)
+    {
+        if (_syncingWebhookReveal) return;
+
+        var (input, reveal, saved) = PhoneFieldFor(sender);
+        if (reveal.IsChecked == true)
+        {
+            input.Text = saved ?? "";
+            // The topic stays read-only even revealed — it is generated, and a hand-edited topic
+            // is a weaker secret. The Pushover fields unlock like the webhook fields do.
+            input.IsReadOnly = ReferenceEquals(input, NtfyTopicInput);
+            reveal.Content = "Hide";
+            input.Focus();
+            input.SelectAll();
+        }
+        else
+        {
+            ShowWebhookMasked(input, reveal, saved);
+            NtfyTopicInput.IsReadOnly = true;
+        }
+    }
+
+    private (System.Windows.Controls.TextBox Input, System.Windows.Controls.Primitives.ToggleButton Reveal, string? Saved)
+        PhoneFieldFor(object sender)
+    {
+        if (ReferenceEquals(sender, PushoverAppTokenReveal) || ReferenceEquals(sender, PushoverAppTokenInput))
+        {
+            return (PushoverAppTokenInput, PushoverAppTokenReveal, CurrentPhoneConfig.PushoverAppToken);
+        }
+
+        if (ReferenceEquals(sender, NtfyTopicReveal) || ReferenceEquals(sender, NtfyTopicInput))
+        {
+            return (NtfyTopicInput, NtfyTopicReveal, CurrentPhoneConfig.NtfyTopic);
+        }
+
+        return (PushoverUserKeyInput, PushoverUserKeyReveal, CurrentPhoneConfig.PushoverUserKey);
+    }
+
+    /// <summary>One commit handler for both Pushover fields — same anti-drift reasoning as
+    /// <see cref="OnWebhookCommitted"/>, and the same mask-is-not-an-edit and
+    /// wrong-paste-leaves-saved-value rules.</summary>
+    private async void OnPushoverKeyCommitted(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+
+        var isToken = ReferenceEquals(sender, PushoverAppTokenInput);
+        var (input, reveal, saved) = PhoneFieldFor(sender);
+
+        if (WebhookUrlMasker.IsMasked(input.Text)) return;
+
+        var verdict = ROROROblox.Core.Notify.PhoneCredentialValidator.InspectPushoverKey(
+            input.Text, isToken ? "application token" : "user key");
+        PhonePushoverVerdict.Text = verdict.Message;
+
+        if (verdict.Kind is not (ROROROblox.Core.Notify.PhoneCredentialKind.Valid
+            or ROROROblox.Core.Notify.PhoneCredentialKind.Empty))
+        {
+            return;
+        }
+
+        var value = verdict.Kind == ROROROblox.Core.Notify.PhoneCredentialKind.Valid ? verdict.Normalized : null;
+        if (value == saved) return;
+
+        // Fresh credentials get a fresh chance, same as a newly pasted webhook.
+        _alertDispatcher.ResetPhoneRejection();
+        ShowWebhookMasked(input, reveal, value);
+
+        try
+        {
+            await _phoneNotifyService.MutateAsync(c => isToken
+                ? c with { PushoverAppToken = value }
+                : c with { PushoverUserKey = value });
+            RefreshAlertsStatus();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Window.GetWindow(this), $"Couldn't save the key: {ex.Message}",
+                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private async void OnGenerateNtfyTopicClick(object sender, RoutedEventArgs e)
+    {
+        if (!string.IsNullOrWhiteSpace(CurrentPhoneConfig.NtfyTopic))
+        {
+            var answer = MessageBox.Show(Window.GetWindow(this),
+                "A new topic disconnects your phone until you subscribe to the new one in the ntfy app. Make a new topic?",
+                "Preferences", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+            if (answer != MessageBoxResult.OK) return;
+        }
+
+        var topic = ROROROblox.Core.Notify.NtfyTopicGenerator.NewTopic();
+        _alertDispatcher.ResetPhoneRejection();
+
+        try
+        {
+            await _phoneNotifyService.MutateAsync(c => c with { NtfyTopic = topic });
+
+            // Revealed on purpose: the user's next act is subscribing to this exact string on
+            // their phone. Hide puts it back behind the mask.
+            NtfyTopicReveal.IsChecked = true;
+            PhoneNtfyVerdict.Text = "Subscribe to this exact topic in the ntfy app on your phone, then hit Test my phone.";
+            RefreshAlertsStatus();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Window.GetWindow(this), $"Couldn't save the new topic: {ex.Message}",
+                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private async void OnNtfyServerCommitted(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+
+        var verdict = ROROROblox.Core.Notify.PhoneCredentialValidator.InspectNtfyServer(NtfyServerInput.Text);
+        PhoneNtfyVerdict.Text = verdict.Message;
+
+        // Empty restores the default rather than saving a blank — a blank server is not a choice,
+        // it is an accident on the way to one.
+        var value = verdict.Kind switch
+        {
+            ROROROblox.Core.Notify.PhoneCredentialKind.Valid => verdict.Normalized!,
+            ROROROblox.Core.Notify.PhoneCredentialKind.Empty => "https://ntfy.sh",
+            _ => null,
+        };
+        if (value is null || value == CurrentPhoneConfig.NtfyServerUrl) return;
+
+        NtfyServerInput.Text = value;
+        _alertDispatcher.ResetPhoneRejection();
+
+        try
+        {
+            await _phoneNotifyService.MutateAsync(c => c with { NtfyServerUrl = value });
+            RefreshAlertsStatus();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Window.GetWindow(this), $"Couldn't save the server: {ex.Message}",
+                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    /// <summary>
+    /// Sends a real notification down the real path, like <see cref="OnSendTestClick"/> — "it
+    /// says configured but nothing buzzes" is the failure that otherwise surfaces at 3am. A test
+    /// is a MemoryWarning-kind send on purpose: it must not carry the drop's quiet-hours-bypass
+    /// priority.
+    /// </summary>
+    private async void OnPhoneTestClick(object sender, RoutedEventArgs e)
+    {
+        var phone = CurrentPhoneConfig;
+        if (!phone.IsConfigured)
+        {
+            AlertsStatusLine.Text = "Finish the phone setup above first — there's nowhere to send a test yet.";
+            return;
+        }
+
+        PhoneTestButton.IsEnabled = false;
+        AlertsStatusLine.Text = "Sending…";
+        try
+        {
+            var result = await _phoneAlertSender.SendAsync(phone, AlertKind.MemoryWarning,
+                new WebhookPayload("RoRoRo test", "If your phone buzzed, phone alerts work."));
+
+            AlertsStatusLine.Text = result switch
+            {
+                ROROROblox.App.Notify.PhoneSendResult.Sent =>
+                    "Sent — your phone should buzz within a few seconds.",
+                ROROROblox.App.Notify.PhoneSendResult.EndpointRejected =>
+                    phone.Provider == ROROROblox.Core.Notify.PhoneProvider.Pushover
+                        ? "Pushover rejected the saved keys — re-check both on pushover.net and paste them again."
+                        : "The ntfy server refused that topic — generate a new one and re-subscribe on your phone.",
+                ROROROblox.App.Notify.PhoneSendResult.RateLimited =>
+                    "The push service is rate-limiting us. Wait a minute; the setup itself looks fine.",
+                _ => "Couldn't reach the push service.",
+            };
+        }
+        finally
+        {
+            PhoneTestButton.IsEnabled = true;
+        }
     }
 
     private async void OnAlertRoutingChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)

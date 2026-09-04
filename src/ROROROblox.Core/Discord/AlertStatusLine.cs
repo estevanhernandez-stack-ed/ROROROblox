@@ -57,7 +57,10 @@ public static class AlertStatusLine
         bool mineWebhookRejected = false,
         bool clanWebhookRejected = false,
         string? mineChannelName = null,
-        string? clanChannelName = null)
+        string? clanChannelName = null,
+        bool phoneRejected = false,
+        bool phoneConfigured = false,
+        string? phoneProviderName = null)
     {
         ArgumentNullException.ThrowIfNull(config);
 
@@ -80,8 +83,21 @@ public static class AlertStatusLine
             return Failure("The clan webhook was deleted, so nothing is reaching that channel. Alerts are falling back to desktop only.");
         }
 
+        if (phoneRejected && routed.Contains(AlertDestination.Phone))
+        {
+            return Failure("Your push service rejected the saved key, so nothing is reaching your phone. Alerts are falling back to desktop only — check the key below and save it again.");
+        }
+
         var needsMine = routed.Contains(AlertDestination.Mine) && string.IsNullOrWhiteSpace(config.MineWebhookUrl);
         var needsClan = routed.Contains(AlertDestination.Clan) && string.IsNullOrWhiteSpace(config.ClanWebhookUrl);
+
+        var needsPhone = routed.Contains(AlertDestination.Phone) && !phoneConfigured;
+        if (needsPhone)
+        {
+            // Same failure class as the missing-webhook arm below: nothing is broken, the user
+            // simply believes they finished configuring and did not.
+            return Failure("You've routed alerts to your phone but haven't finished setting up the push service below, so they'll only show on this PC.");
+        }
 
         if (needsMine || needsClan)
         {
@@ -110,6 +126,11 @@ public static class AlertStatusLine
         if (routed.Contains(AlertDestination.Clan))
         {
             channels.Add(clanChannelName is { Length: > 0 } ? $"#{clanChannelName}" : "the clan channel");
+        }
+
+        if (routed.Contains(AlertDestination.Phone))
+        {
+            channels.Add(phoneProviderName is { Length: > 0 } ? $"your phone ({phoneProviderName})" : "your phone");
         }
 
         return Info(channels.Count == 0

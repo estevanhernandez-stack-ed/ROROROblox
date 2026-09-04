@@ -889,6 +889,15 @@ public partial class App : Application
         services.AddSingleton(_ => new DiscordConfigStore(
             System.IO.Path.Combine(dataDir, "discord.dat")));
 
+        // Phone-alert settings: its own DPAPI blob, deliberately NOT inside discord.dat — the
+        // 2026-09-04 ruling keeps the Discord webhook feature separate, and a file's name should
+        // not lie about what it holds. Spec: docs/superpowers/specs/2026-09-04-phone-alerts-design.md.
+        services.AddSingleton<ROROROblox.Core.Notify.IPhoneNotifyConfigStore>(_ =>
+            new ROROROblox.Core.Notify.PhoneNotifyConfigStore(
+                System.IO.Path.Combine(dataDir, "notify.dat")));
+        services.AddSingleton(sp => new ROROROblox.Core.Notify.PhoneNotifyConfigService(
+            sp.GetRequiredService<ROROROblox.Core.Notify.IPhoneNotifyConfigStore>()));
+
         // Alerts are registered unconditionally and — unlike presence — do NOT depend on
         // Discord:ApplicationId or on Discord being installed at all. The desktop-notification
         // destination is the whole point: someone who never makes a webhook still gets told when
@@ -913,6 +922,28 @@ public partial class App : Application
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         });
 
+        // The two push senders take the webhook sender's contract wholesale: ten-second timeout
+        // (an alert that has not landed in ten seconds has missed its moment), our own UA, and
+        // exactly one (HttpClient, ILogger<T>) ctor — TypedHttpClientRegistrationTests pins both.
+        services.AddHttpClient<Notify.PushoverSender>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(10);
+            client.DefaultRequestHeaders.UserAgent.Clear();
+            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
+        });
+        services.AddHttpClient<Notify.NtfySender>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(10);
+            client.DefaultRequestHeaders.UserAgent.Clear();
+            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
+        });
+        services.AddSingleton(sp => new Notify.PhoneAlertSender(
+            sp.GetRequiredService<Notify.PushoverSender>(),
+            sp.GetRequiredService<Notify.NtfySender>(),
+            sp.GetRequiredService<ILogger<Notify.PhoneAlertSender>>()));
+
         // The single owner of the Discord record (F-013 prerequisite): every write goes through
         // its gate, every reader sees its Current, and Changed is how views stay current. It
         // replaced DiscordConfigCache, whose one job (a torn-free synchronous read) it absorbed.
@@ -923,7 +954,9 @@ public partial class App : Application
             sp.GetRequiredService<ITrayService>(),
             () => sp.GetRequiredService<DiscordConfigService>().Current,
             TimeProvider.System,
-            sp.GetRequiredService<ILogger<AlertDispatcher>>()));
+            sp.GetRequiredService<ILogger<AlertDispatcher>>(),
+            sp.GetRequiredService<Notify.PhoneAlertSender>(),
+            () => sp.GetRequiredService<ROROROblox.Core.Notify.PhoneNotifyConfigService>().Current));
 
         services.AddSingleton<IDiagnosticsCollector>(sp => new DiagnosticsCollector(
             sp.GetRequiredService<IAccountStore>(),
@@ -1603,6 +1636,8 @@ public partial class App : Application
         {
             var configService = _services.GetRequiredService<DiscordConfigService>();
             await configService.InitializeAsync().ConfigureAwait(true);
+            await _services.GetRequiredService<ROROROblox.Core.Notify.PhoneNotifyConfigService>()
+                .InitializeAsync().ConfigureAwait(true);
 
             var vm = _services.GetRequiredService<MainViewModel>();
             var dispatcher = _services.GetRequiredService<AlertDispatcher>();
@@ -1796,6 +1831,8 @@ public partial class App : Application
             _services.GetRequiredService<AlertDispatcher>(),
             _services.GetRequiredService<DiscordWebhookSender>(),
             _services.GetRequiredService<WebhookProbe>(),
+            _services.GetRequiredService<ROROROblox.Core.Notify.PhoneNotifyConfigService>(),
+            _services.GetRequiredService<Notify.PhoneAlertSender>(),
             // v1.18 item 4a — the Memory section states what a blank box resolves to on this
             // machine, and it resolves it through the same MemoryDefaults calls
             // WireMemoryWatchdogAsync uses. Same registration (:717), same singleton, so the
