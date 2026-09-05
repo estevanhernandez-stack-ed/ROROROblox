@@ -10,6 +10,8 @@
 ---
 
 ```
+v1.25.0.0
+
 Your phone can buzz now
 • Settings > Alerts has a new push section: route any alert to your
   phone through Pushover or ntfy. An alt drops out — your phone
