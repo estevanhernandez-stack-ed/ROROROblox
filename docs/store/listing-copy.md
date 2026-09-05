@@ -65,6 +65,8 @@ A 626 Labs product.
 
 ## Product features (paste each as one feature; Partner Center accepts up to 20, ≤200 chars each)
 
+> Three entries added 2026-09-05 (v1.25.0.0): phone alerts, uptime marks, and alert fan-out.
+>
 > Two entries added 2026-08-30 (v1.24.0.0): run-on-login and Discord join activation — both
 > newly working on Store installs, which is what earns them a listing claim now and not before.
 >
@@ -89,6 +91,9 @@ Plugin system with per-capability consent and out-of-process isolation
 Auto-update that keeps working when Roblox changes underneath
 Start with Windows if you want — one toggle, and Windows' own Startup list stays in control
 Discord Join starts RoRoRo even when it's closed, and always asks before launching anything
+Phone alerts through Pushover or ntfy — an alt drops and your phone buzzes, even with Discord closed
+Uptime marks — an all-good buzz every two hours while your accounts run, so silence means something's wrong
+Alerts fan out — desktop, Discord channels, and your phone in any mix, per alert
 ```
 
 ## Copyright (single line)
