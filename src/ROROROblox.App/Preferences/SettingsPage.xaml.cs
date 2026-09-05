@@ -1710,8 +1710,11 @@ internal partial class SettingsPage : UserControl, IDisposable
         // shows (Este, 2026-09-05: a blank box read as "nothing is happening"). Set before the
         // settings reads for the same reason the sentence is: a throwing settings load must
         // still leave the boxes explained.
-        MemoryReserveGhost.Text = $"{automatic.ReserveMb} — picked for this PC";
-        MemoryCapGhost.Text = $"{automatic.CapMb} — picked for this PC";
+        // "(auto)" and not a sentence: the box is 184px and the number is the payload — the
+        // sentence above and the hint below carry the words (Este, 2026-09-05: the first ghost
+        // overflowed its box).
+        MemoryReserveGhost.Text = $"{automatic.ReserveMb} (auto)";
+        MemoryCapGhost.Text = $"{automatic.CapMb} (auto)";
         UpdateMemoryGhosts();
 
         MemoryWatchdogEnabledToggle.IsChecked = await _settings.GetMemoryWatchdogEnabledAsync();
