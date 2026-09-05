@@ -40,10 +40,19 @@ internal sealed partial class ShellWindow : Window
         InitializeComponent();
 
         // The global RegisterGlobalDarkTitleBar hook fires on Loaded — AFTER the first frame,
-        // which is exactly the bright flash Este kept seeing on a 920px window (2026-09-05).
+        // which was half the bright flash Este kept seeing on a 920px window (2026-09-05).
         // Calling the helper here defers to SourceInitialized instead: the HWND exists, nothing
         // has painted, and the chrome is dark from frame one.
         Theming.WindowTheming.ApplyDarkTitleBar(this);
+
+        // The other half (still bright after the chrome fix, same day): the HWND's surface is
+        // on screen before WPF presents its first frame of a heavy page, and an unpresented
+        // surface shows white regardless of Background. So the window holds Opacity 0 until
+        // ContentRendered — it appears a beat later WITH its pixels, instead of appearing
+        // instantly as a white rectangle. No animation on purpose; a fade would turn a fix
+        // into a flourish.
+        Opacity = 0;
+        ContentRendered += (_, _) => Opacity = 1;
         Closed += OnShellClosed;
 
         // The same vocabulary the main window binds (F-112), scoped to what makes sense here:
