@@ -26,6 +26,24 @@ Watches memory on long sessions. The Roblox client uses more RAM the longer it r
 
 No DevTools. No registry edits. No telemetry. The Roblox client launches unmodified.
 
+<!-- Feature list refreshed 2026-09-05 (v1.25.0.0). Keep in step with listing-copy.md's
+     features block — the release playbook's Phase 2 listing audit covers this page too. -->
+
+## What you get
+
+- **One-click multi-instance** — extra clients open instead of focusing the first one.
+- **Encrypted account vault** — cookies DPAPI-encrypted to your Windows user; moving accounts between your own PCs is a deliberate, passphrase-protected export.
+- **Live status per account** — which game it's in, idle for how long, and per-account frame-rate caps that stick.
+- **Memory watchdog + Recycle** — learns what a client really costs in RAM on your machine, warns before you run out, and one click puts a heavy account right back in its server.
+- **Squad Launch + Friend Follow** — same private server, or one public server together.
+- **Join by link** — paste any roblox.com URL; saved games and private servers per account.
+- **Alerts wherever you want them** — desktop, a Discord webhook you create, or your phone through Pushover or ntfy, in any mix per alert: drops, memory warnings, recycle completions, and an every-two-hours all-good mark while your accounts run.
+- **History that keeps score** — most alts at once, total hours, longest session, and per-alt login streaks that only count days the account actually landed in a game.
+- **Themes** — four built in, plus a builder to make your own and share it as a file.
+- **Plugin system** — optional plugins run as separate processes and hold no permissions until you grant each one by name.
+- **Start with Windows + Discord Join** — one toggle Windows stays in control of, and Join links that start RoRoRo even when it's closed.
+- **Auto-update that survives Roblox renames** — a signed remote feed tracks the current known-good Roblox version and mutex name.
+
 ## Install it
 
 **Easiest:** [**install RoRoRo on the Microsoft Store**](https://apps.microsoft.com/detail/9NMJCS390KWB). Signed by Microsoft, no SmartScreen, auto-updates through the Store.
