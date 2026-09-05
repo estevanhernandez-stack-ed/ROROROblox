@@ -693,7 +693,6 @@
                                      sentence quotes, hidden the moment real text exists. -->
                                 <Grid Width="184" HorizontalAlignment="Left">
                                 <TextBox x:Name="MemoryReserveMbInput"
-                                         HorizontalAlignment="Left"
                                          Padding="8,6"
                                          FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
@@ -723,7 +722,6 @@
                                            Margin="0,0,0,4" />
                                 <Grid Width="184" HorizontalAlignment="Left">
                                 <TextBox x:Name="MemoryCapMbInput"
-                                         HorizontalAlignment="Left"
                                          Padding="8,6"
                                          FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
