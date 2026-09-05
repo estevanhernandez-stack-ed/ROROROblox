@@ -2,7 +2,7 @@
 
 > **Persona:** inherits **The Architect** from `~/.claude/CLAUDE.md`. Nothing below re-establishes it.
 
-RoRoRo is a Windows desktop app that runs several Roblox clients side by side, each signed in as a different saved account. Free, a 626 Labs product, shipped to a Pet Sim 99 clan and the Microsoft Store (ID `9NMJCS390KWB`, on v1.24.0.0; v1.25.0.0 submitted 2026-09-05). The user-facing name is **RoRoRo**; `ROROROblox` and `RORORO` stay in identifiers, paths, the Velopack packId, and the HTTP User-Agent.
+RoRoRo is a Windows desktop app that runs several Roblox clients side by side, each signed in as a different saved account. Free, a 626 Labs product, shipped to a Pet Sim 99 clan and the Microsoft Store (ID `9NMJCS390KWB`, on v1.25.0.0). The user-facing name is **RoRoRo**; `ROROROblox` and `RORORO` stay in identifiers, paths, the Velopack packId, and the HTTP User-Agent.
 
 Maps live next door: [docs/architecture.md](docs/architecture.md) (modules, startup order, data flow), [docs/features.md](docs/features.md) (every feature: paths, gating, status), [docs/decisions.md](docs/decisions.md) (why; append-only), [docs/feature-ledger.md](docs/feature-ledger.md) (what shipped when).
 
