@@ -316,14 +316,16 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="An account drops out" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center"
                                            Foreground="{DynamicResource WhiteBrush}" Width="180" />
-                                <ComboBox Grid.Column="1" x:Name="DroppedOutDestination" AutomationProperties.Name="Where to send the alert when an account drops out" Width="170" HorizontalAlignment="Left"
-                                          SelectionChanged="OnAlertRoutingChanged">
-                                    <ComboBoxItem Content="Off" Tag="None" />
-                                    <ComboBoxItem Content="Desktop only" Tag="Local" />
-                                    <ComboBoxItem Content="My channel" Tag="Mine" />
-                                    <ComboBoxItem Content="Clan channel" Tag="Clan" />
-                                    <ComboBoxItem Content="My phone" Tag="Phone" />
-                                </ComboBox>
+                                <!-- Checkboxes, not a picker (Este's smoke feedback, 2026-09-05): an alert
+                                     can fan out — desktop AND phone AND a channel. Nothing ticked = off.
+                                     Checked/Unchecked rather than Click, for the F-102 reason: automation's
+                                     TogglePattern never raises Click. -->
+                                <WrapPanel Grid.Column="1">
+                                    <CheckBox x:Name="DroppedOutLocalCheck" Content="Desktop" AutomationProperties.Name="Send drop-out alerts to the desktop" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="DroppedOutMineCheck" Content="My channel" AutomationProperties.Name="Send drop-out alerts to my Discord channel" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="DroppedOutClanCheck" Content="Clan channel" AutomationProperties.Name="Send drop-out alerts to the clan Discord channel" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="DroppedOutPhoneCheck" Content="My phone" AutomationProperties.Name="Send drop-out alerts to my phone" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                </WrapPanel>
                             </Grid>
 
                             <Grid Margin="0,0,0,6">
@@ -333,15 +335,16 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="An account eats memory" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Center"
                                            Foreground="{DynamicResource WhiteBrush}" Width="180" />
-                                <ComboBox Grid.Column="1" x:Name="MemoryWarningDestination" AutomationProperties.Name="Where to send the alert when an account eats memory" Width="170" HorizontalAlignment="Left"
-                                          SelectionChanged="OnAlertRoutingChanged">
-                                    <ComboBoxItem Content="Off" Tag="None" />
-                                    <ComboBoxItem Content="Desktop only" Tag="Local" />
-                                    <ComboBoxItem Content="My channel" Tag="Mine" />
-                                    <ComboBoxItem Content="Clan channel" Tag="Clan" />
-                                    <ComboBoxItem Content="My phone" Tag="Phone" />
-                                </ComboBox>
+                                <WrapPanel Grid.Column="1">
+                                    <CheckBox x:Name="MemoryWarningLocalCheck" Content="Desktop" AutomationProperties.Name="Send memory warnings to the desktop" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="MemoryWarningMineCheck" Content="My channel" AutomationProperties.Name="Send memory warnings to my Discord channel" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="MemoryWarningClanCheck" Content="Clan channel" AutomationProperties.Name="Send memory warnings to the clan Discord channel" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="MemoryWarningPhoneCheck" Content="My phone" AutomationProperties.Name="Send memory warnings to my phone" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                </WrapPanel>
                             </Grid>
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                       Margin="0,0,0,6"
+                                       Text="Tick every place each alert should go. Nothing ticked means that alert is off." />
 
                             <!-- Muted accounts (F-024, spec 4.3). Muting is per-account and lives on
                                  the row context menu; this page owned every OTHER alert decision and
@@ -445,6 +448,13 @@
                             <TextBlock x:Name="ClanWebhookVerdict" FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap" Margin="0,4,0,0"
                                        Foreground="{DynamicResource MutedTextBrush}" />
 
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <Button Style="{StaticResource AccentActionButtonStyle}" x:Name="SendTestButton" Content="Send test" Padding="12,5" Click="OnSendTestClick" FontSize="{DynamicResource BodyFontSize}" />
+                                <Button x:Name="NoServerHelpButton" Content="I don't have a Discord server" Padding="12,5" Margin="8,0,0,0"
+                                        Style="{StaticResource SecondaryStrongButtonStyle}" FontSize="{DynamicResource BodyFontSize}"
+                                        Click="OnNoServerHelpClick" />
+                            </StackPanel>
+
                             <!-- Phone push (spec 2026-09-04). Same card because it answers the same
                                  question as the rows above - where do alerts go - but a separate
                                  mechanism on purpose: the Discord webhook stays its own piece
@@ -456,7 +466,7 @@
                                        Foreground="{DynamicResource WhiteBrush}" Margin="0,12,0,2" />
                             <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                        Margin="0,0,0,4"
-                                       Text="Buzzes your phone directly — no Discord needed. Pushover is the app most of the clan already uses; ntfy is free. Route an alert to My phone above, set the service up once here." />
+                                       Text="Buzzes your phone directly — no Discord needed. Pushover is the app most of the clan already uses; ntfy is free. Tick My phone on an alert above, set the service up once here." />
                             <ComboBox x:Name="PhoneProviderPicker" AutomationProperties.Name="Which push service sends phone alerts" Width="170" HorizontalAlignment="Left"
                                       SelectionChanged="OnPhoneProviderChanged">
                                 <ComboBoxItem Content="Off" Tag="None" />
@@ -468,6 +478,12 @@
                                 <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                            Margin="0,0,0,4"
                                            Text="Both codes come from pushover.net: your user key is on the dashboard, and creating an application there (name it anything) gives you its token. The phone app is a one-time purchase after the trial." />
+                                <Button x:Name="SavePushoverIconButton" Content="Save the RoRoRo icon" Padding="10,5" Margin="0,0,0,8"
+                                        HorizontalAlignment="Left"
+                                        Style="{StaticResource SecondaryButtonStyle}" FontSize="{DynamicResource BodyFontSize}"
+                                        AutomationProperties.Name="Save the RoRoRo icon for the Pushover application form"
+                                        Click="OnSavePushoverIconClick"
+                                        ToolTip="The application form on pushover.net has an icon slot — this saves the 128 by 128 RoRoRo mark for it." />
                                 <TextBlock Text="User key" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,0,0,2" />
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -507,7 +523,7 @@
                             <StackPanel x:Name="NtfyFields" Visibility="Collapsed" Margin="0,8,0,0">
                                 <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                            Margin="0,0,0,4"
-                                           Text="Free, no account: install the ntfy app, subscribe to your topic below, done. The topic is a secret — anyone holding it can read and fake your alerts, which is why RoRoRo makes it long and random. On iPhone, delivery is best-effort; Pushover is the reliable choice there." />
+                                           Text="1. Get the free ntfy app from your phone's app store — no account needed.  2. In it, subscribe to the exact topic below.  3. Hit the test button. The topic is a secret — anyone holding it can read and fake your alerts, which is why RoRoRo makes it long and random. On iPhone, delivery is best-effort; Pushover is the reliable choice there." />
                                 <TextBlock Text="Topic" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,0,0,2" />
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -545,13 +561,6 @@
                                     Style="{StaticResource SecondaryStrongButtonStyle}" FontSize="{DynamicResource BodyFontSize}"
                                     AutomationProperties.Name="Send a test notification to my phone"
                                     Click="OnPhoneTestClick" />
-
-                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                <Button Style="{StaticResource AccentActionButtonStyle}" x:Name="SendTestButton" Content="Send test" Padding="12,5" Click="OnSendTestClick" FontSize="{DynamicResource BodyFontSize}" />
-                                <Button x:Name="NoServerHelpButton" Content="I don't have a Discord server" Padding="12,5" Margin="8,0,0,0"
-                                        Style="{StaticResource SecondaryStrongButtonStyle}" FontSize="{DynamicResource BodyFontSize}"
-                                        Click="OnNoServerHelpClick" />
-                            </StackPanel>
 
                             <!-- F-094. Every arm of this line used to be CyanBrush — the accent, which
                                  is the treatment a SUCCESS gets — so "your webhook was deleted, so

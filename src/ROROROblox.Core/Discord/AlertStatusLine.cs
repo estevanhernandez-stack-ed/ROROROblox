@@ -64,7 +64,9 @@ public static class AlertStatusLine
     {
         ArgumentNullException.ThrowIfNull(config);
 
-        var routed = new[] { config.DroppedOutDestination, config.MemoryWarningDestination };
+        var routed = config.DestinationsFor(AlertKind.AccountDroppedOut)
+            .Concat(config.DestinationsFor(AlertKind.MemoryWarning))
+            .ToArray();
 
         if (routed.All(d => d == AlertDestination.None))
         {

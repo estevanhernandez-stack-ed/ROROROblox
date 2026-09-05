@@ -179,8 +179,7 @@ internal partial class SettingsPage : UserControl, IDisposable
                 DiscordPresenceToggle.IsChecked = config.PresenceEnabled;
                 DiscordJoinToggle.IsChecked = config.JoinEnabled;
                 DiscordJoinToggle.IsEnabled = config.PresenceEnabled;
-                SelectDestination(DroppedOutDestination, config.DroppedOutDestination);
-                SelectDestination(MemoryWarningDestination, config.MemoryWarningDestination);
+                SetRoutingChecks(config);
                 RefreshAlertsStatus();
                 RefreshMutedAccounts();
             }
@@ -732,8 +731,7 @@ internal partial class SettingsPage : UserControl, IDisposable
     private void PopulateAlertControls()
     {
         var discordConfig = CurrentDiscordConfig;
-        SelectDestination(DroppedOutDestination, discordConfig.DroppedOutDestination);
-        SelectDestination(MemoryWarningDestination, discordConfig.MemoryWarningDestination);
+        SetRoutingChecks(discordConfig);
         ShowWebhookMasked(MineWebhookInput, MineWebhookReveal, discordConfig.MineWebhookUrl);
         ShowWebhookMasked(ClanWebhookInput, ClanWebhookReveal, discordConfig.ClanWebhookUrl);
         PopulatePhoneControls();
@@ -759,23 +757,42 @@ internal partial class SettingsPage : UserControl, IDisposable
         }
     }
 
-    private static void SelectDestination(System.Windows.Controls.ComboBox combo, AlertDestination destination)
+    /// <summary>Paint the routing checkboxes from the EFFECTIVE sets — <c>DestinationsFor</c>
+    /// migrates a pre-fanout blob's singular field on read, so an old config shows its one
+    /// destination ticked rather than everything off.</summary>
+    private void SetRoutingChecks(DiscordConfig config)
     {
-        foreach (var item in combo.Items.OfType<System.Windows.Controls.ComboBoxItem>())
-        {
-            if (Equals(item.Tag as string, destination.ToString()))
-            {
-                combo.SelectedItem = item;
-                return;
-            }
-        }
+        var dropped = config.DestinationsFor(AlertKind.AccountDroppedOut);
+        var memory = config.DestinationsFor(AlertKind.MemoryWarning);
+        DroppedOutLocalCheck.IsChecked = dropped.Contains(AlertDestination.Local);
+        DroppedOutMineCheck.IsChecked = dropped.Contains(AlertDestination.Mine);
+        DroppedOutClanCheck.IsChecked = dropped.Contains(AlertDestination.Clan);
+        DroppedOutPhoneCheck.IsChecked = dropped.Contains(AlertDestination.Phone);
+        MemoryWarningLocalCheck.IsChecked = memory.Contains(AlertDestination.Local);
+        MemoryWarningMineCheck.IsChecked = memory.Contains(AlertDestination.Mine);
+        MemoryWarningClanCheck.IsChecked = memory.Contains(AlertDestination.Clan);
+        MemoryWarningPhoneCheck.IsChecked = memory.Contains(AlertDestination.Phone);
     }
 
-    private static AlertDestination ReadDestination(System.Windows.Controls.ComboBox combo) =>
-        combo.SelectedItem is System.Windows.Controls.ComboBoxItem { Tag: string tag }
-            && Enum.TryParse<AlertDestination>(tag, out var parsed)
-                ? parsed
-                : AlertDestination.None;
+    private IReadOnlyList<AlertDestination> ReadChecks(bool droppedOut)
+    {
+        var boxes = droppedOut
+            ? new (System.Windows.Controls.CheckBox Box, AlertDestination Destination)[]
+            {
+                (DroppedOutLocalCheck, AlertDestination.Local),
+                (DroppedOutMineCheck, AlertDestination.Mine),
+                (DroppedOutClanCheck, AlertDestination.Clan),
+                (DroppedOutPhoneCheck, AlertDestination.Phone),
+            }
+            : new (System.Windows.Controls.CheckBox Box, AlertDestination Destination)[]
+            {
+                (MemoryWarningLocalCheck, AlertDestination.Local),
+                (MemoryWarningMineCheck, AlertDestination.Mine),
+                (MemoryWarningClanCheck, AlertDestination.Clan),
+                (MemoryWarningPhoneCheck, AlertDestination.Phone),
+            };
+        return boxes.Where(b => b.Box.IsChecked == true).Select(b => b.Destination).ToList();
+    }
 
     /// <summary>
     /// The status line is the feature's honesty, so it is recomputed after every change rather
@@ -1134,22 +1151,58 @@ internal partial class SettingsPage : UserControl, IDisposable
         }
     }
 
-    private async void OnAlertRoutingChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    /// <summary>
+    /// Pushover's application form has an icon slot; this hands the member the same 128x128
+    /// mark Este's own registration uses, so nobody hunts a repo for it (Este, 2026-09-05).
+    /// The PNG is embedded from docs/store/graphics — one source of truth.
+    /// </summary>
+    private void OnSavePushoverIconClick(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            FileName = "rororo-icon-128.png",
+            Filter = "PNG image|*.png",
+            Title = "Save the icon",
+        };
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+
+        try
+        {
+            using var resource = typeof(SettingsPage).Assembly
+                .GetManifestResourceStream("ROROROblox.App.Notify.pushover-icon-128.png")
+                ?? throw new InvalidOperationException("The embedded icon resource is missing.");
+            using var file = System.IO.File.Create(dialog.FileName);
+            resource.CopyTo(file);
+            PhonePushoverVerdict.Text = "Icon saved — upload it in the icon slot on pushover.net's application form.";
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Window.GetWindow(this), $"Couldn't save the icon: {ex.Message}",
+                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private async void OnAlertRoutingChanged(object sender, RoutedEventArgs e)
     {
         if (_suppressClickHandlers) return;
 
-        // Read the combos here, on the UI thread — the mutate lambda may run off it.
-        var droppedOut = ReadDestination(DroppedOutDestination);
-        var memoryWarning = ReadDestination(MemoryWarningDestination);
-        RefreshAlertsStatus();
+        // Read the checkboxes here, on the UI thread — the mutate lambda may run off it.
+        var droppedOut = ReadChecks(droppedOut: true);
+        var memoryWarning = ReadChecks(droppedOut: false);
 
         try
         {
             await SaveDiscordConfigAsync(c => c with
             {
-                DroppedOutDestination = droppedOut,
-                MemoryWarningDestination = memoryWarning,
+                DroppedOutDestinations = droppedOut,
+                MemoryWarningDestinations = memoryWarning,
+                // The singular fields are the rollback mirror: an older binary reads only them,
+                // and "first ticked destination" beats "silently dropped" — the destination-4
+                // hazard the phone spec records.
+                DroppedOutDestination = droppedOut.Count > 0 ? droppedOut[0] : AlertDestination.None,
+                MemoryWarningDestination = memoryWarning.Count > 0 ? memoryWarning[0] : AlertDestination.None,
             });
+            RefreshAlertsStatus();
         }
         catch (Exception ex)
         {
