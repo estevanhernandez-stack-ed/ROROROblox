@@ -793,25 +793,52 @@ internal partial class SettingsPage : UserControl, IDisposable
         MemoryWarningMineCheck.IsChecked = memory.Contains(AlertDestination.Mine);
         MemoryWarningClanCheck.IsChecked = memory.Contains(AlertDestination.Clan);
         MemoryWarningPhoneCheck.IsChecked = memory.Contains(AlertDestination.Phone);
+        var recycled = config.DestinationsFor(AlertKind.Recycled);
+        RecycledLocalCheck.IsChecked = recycled.Contains(AlertDestination.Local);
+        RecycledMineCheck.IsChecked = recycled.Contains(AlertDestination.Mine);
+        RecycledClanCheck.IsChecked = recycled.Contains(AlertDestination.Clan);
+        RecycledPhoneCheck.IsChecked = recycled.Contains(AlertDestination.Phone);
+        var uptime = config.DestinationsFor(AlertKind.UptimeMark);
+        UptimeMarkLocalCheck.IsChecked = uptime.Contains(AlertDestination.Local);
+        UptimeMarkMineCheck.IsChecked = uptime.Contains(AlertDestination.Mine);
+        UptimeMarkClanCheck.IsChecked = uptime.Contains(AlertDestination.Clan);
+        UptimeMarkPhoneCheck.IsChecked = uptime.Contains(AlertDestination.Phone);
     }
 
-    private IReadOnlyList<AlertDestination> ReadChecks(bool droppedOut)
+    private IReadOnlyList<AlertDestination> ReadChecks(AlertKind kind)
     {
-        var boxes = droppedOut
-            ? new (System.Windows.Controls.CheckBox Box, AlertDestination Destination)[]
+        var boxes = kind switch
+        {
+            AlertKind.AccountDroppedOut => new (System.Windows.Controls.CheckBox Box, AlertDestination Destination)[]
             {
                 (DroppedOutLocalCheck, AlertDestination.Local),
                 (DroppedOutMineCheck, AlertDestination.Mine),
                 (DroppedOutClanCheck, AlertDestination.Clan),
                 (DroppedOutPhoneCheck, AlertDestination.Phone),
-            }
-            : new (System.Windows.Controls.CheckBox Box, AlertDestination Destination)[]
+            },
+            AlertKind.MemoryWarning => new (System.Windows.Controls.CheckBox Box, AlertDestination Destination)[]
             {
                 (MemoryWarningLocalCheck, AlertDestination.Local),
                 (MemoryWarningMineCheck, AlertDestination.Mine),
                 (MemoryWarningClanCheck, AlertDestination.Clan),
                 (MemoryWarningPhoneCheck, AlertDestination.Phone),
-            };
+            },
+            AlertKind.Recycled => new (System.Windows.Controls.CheckBox Box, AlertDestination Destination)[]
+            {
+                (RecycledLocalCheck, AlertDestination.Local),
+                (RecycledMineCheck, AlertDestination.Mine),
+                (RecycledClanCheck, AlertDestination.Clan),
+                (RecycledPhoneCheck, AlertDestination.Phone),
+            },
+            AlertKind.UptimeMark => new (System.Windows.Controls.CheckBox Box, AlertDestination Destination)[]
+            {
+                (UptimeMarkLocalCheck, AlertDestination.Local),
+                (UptimeMarkMineCheck, AlertDestination.Mine),
+                (UptimeMarkClanCheck, AlertDestination.Clan),
+                (UptimeMarkPhoneCheck, AlertDestination.Phone),
+            },
+            _ => throw new ArgumentOutOfRangeException(nameof(kind)),
+        };
         return boxes.Where(b => b.Box.IsChecked == true).Select(b => b.Destination).ToList();
     }
 
@@ -1208,8 +1235,10 @@ internal partial class SettingsPage : UserControl, IDisposable
         if (_suppressClickHandlers) return;
 
         // Read the checkboxes here, on the UI thread — the mutate lambda may run off it.
-        var droppedOut = ReadChecks(droppedOut: true);
-        var memoryWarning = ReadChecks(droppedOut: false);
+        var droppedOut = ReadChecks(AlertKind.AccountDroppedOut);
+        var memoryWarning = ReadChecks(AlertKind.MemoryWarning);
+        var recycled = ReadChecks(AlertKind.Recycled);
+        var uptimeMarks = ReadChecks(AlertKind.UptimeMark);
 
         try
         {
@@ -1217,9 +1246,12 @@ internal partial class SettingsPage : UserControl, IDisposable
             {
                 DroppedOutDestinations = droppedOut,
                 MemoryWarningDestinations = memoryWarning,
+                RecycledDestinations = recycled,
+                UptimeMarkDestinations = uptimeMarks,
                 // The singular fields are the rollback mirror: an older binary reads only them,
                 // and "first ticked destination" beats "silently dropped" — the destination-4
-                // hazard the phone spec records.
+                // hazard the phone spec records. The two new kinds need no mirror: they postdate
+                // the singular fields entirely.
                 DroppedOutDestination = droppedOut.Count > 0 ? droppedOut[0] : AlertDestination.None,
                 MemoryWarningDestination = memoryWarning.Count > 0 ? memoryWarning[0] : AlertDestination.None,
             });

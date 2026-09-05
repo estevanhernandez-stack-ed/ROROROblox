@@ -41,6 +41,13 @@ public sealed record DiscordConfig
 
     public IReadOnlyList<AlertDestination> MemoryWarningDestinations { get; init; } = [];
 
+    /// <summary>Fan-out sets for the 2026-09-05 kinds. List-only — these kinds postdate the
+    /// singular fields, so there is no legacy value to mirror and nothing for an older binary
+    /// to misroute (it ignores unknown JSON fields and unknown kinds alike).</summary>
+    public IReadOnlyList<AlertDestination> RecycledDestinations { get; init; } = [];
+
+    public IReadOnlyList<AlertDestination> UptimeMarkDestinations { get; init; } = [];
+
     public IReadOnlyList<Guid> MutedAccountIds { get; init; } = [];
 
     /// <summary>The effective destination set for a kind — the list when present, else the
@@ -51,6 +58,8 @@ public sealed record DiscordConfig
         {
             AlertKind.AccountDroppedOut => (DroppedOutDestinations, DroppedOutDestination),
             AlertKind.MemoryWarning => (MemoryWarningDestinations, MemoryWarningDestination),
+            AlertKind.Recycled => (RecycledDestinations, AlertDestination.None),
+            AlertKind.UptimeMark => (UptimeMarkDestinations, AlertDestination.None),
             _ => ((IReadOnlyList<AlertDestination>)[], AlertDestination.None),
         };
 
