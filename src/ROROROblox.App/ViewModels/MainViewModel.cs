@@ -118,6 +118,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly Dictionary<Guid, AppStorageDefender> _defendersByAccountId = new();
     private readonly object _defendersLock = new();
     private readonly DispatcherTimer _ticker;
+    private readonly UptimeMarkTracker _uptimeMarks = new();
 
     /// <summary>The one row currently highlighted via <see cref="SetFocusedAccount"/> (Task 8), if any.</summary>
     private Guid? _focusedAccountId;
@@ -394,6 +395,21 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             if (MemoryPressureEvaluator.IsClear(_memoryWatchdog.GetSnapshot(), _memoryWatchdog.ProjectionWarnMinutes))
             {
                 _tray.SetMemoryWarning(false);
+            }
+
+            // Uptime marks (Este, 2026-09-05): one "still up" page per two hours of continuous
+            // running time — and, by its absence, the only dead-PC signal a PC-fired alert can
+            // give. Rides this same 30s cadence; the tracker owns the boundary math and the
+            // reset-on-zero rule. Guid.Empty is the carrier id on purpose: a global mark must
+            // not be silenced by any one account's mute.
+            var runningNow = Accounts.Count(a => a.IsRunning);
+            if (_uptimeMarks.Observe(DateTimeOffset.UtcNow, runningNow) is { } hours)
+            {
+                var label = $"{hours}h up";
+                var detail = runningNow == 1 ? "1 account in" : $"{runningNow} accounts in";
+                RaiseAlerts([new AlertTrigger(
+                    AlertKind.UptimeMark, Guid.Empty, label, label, detail,
+                    PrivateBytes: null, DateTimeOffset.UtcNow)]);
             }
         };
         _ticker.Start();
@@ -1815,6 +1831,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             StatusBanner = $"Couldn't recycle {summary.RenderName} — relaunch failed.";
             return false;
         }
+
+        // The recycle page (Este, 2026-09-05): a recycle is exactly the away-from-PC event — the
+        // user clicked-and-walked, or a plugin drove it — and the completion notice carries the
+        // RAM it clawed back (the same pre-recycle reading the log line above records). Both
+        // names travel, same contract as the dropped-out trigger.
+        RaiseAlerts([new AlertTrigger(
+            AlertKind.Recycled, summary.Id, summary.RenderName, summary.DisplayName,
+            GameName: null, preRecycleBytes, DateTimeOffset.UtcNow)]);
 
         // Started != landed. When we asked for one specific server, check with presence and say so
         // if Roblox put the account somewhere else. Fire-and-forget: the answer is up to four

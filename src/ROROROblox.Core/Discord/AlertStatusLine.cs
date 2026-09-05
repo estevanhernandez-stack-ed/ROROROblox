@@ -66,6 +66,8 @@ public static class AlertStatusLine
 
         var routed = config.DestinationsFor(AlertKind.AccountDroppedOut)
             .Concat(config.DestinationsFor(AlertKind.MemoryWarning))
+            .Concat(config.DestinationsFor(AlertKind.Recycled))
+            .Concat(config.DestinationsFor(AlertKind.UptimeMark))
             .ToArray();
 
         if (routed.All(d => d == AlertDestination.None))

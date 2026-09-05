@@ -103,4 +103,46 @@ public class AlertFanoutTests
         Assert.NotNull(stream);
         Assert.True(stream!.Length > 500, "embedded icon is suspiciously small");
     }
+
+    [Fact]
+    public void DestinationsFor_NewKinds_ReadTheirListsWithNoLegacyMirror()
+    {
+        var config = new DiscordConfig
+        {
+            RecycledDestinations = [AlertDestination.Phone],
+            UptimeMarkDestinations = [AlertDestination.Phone, AlertDestination.Local],
+        };
+
+        Assert.Equal([AlertDestination.Phone], config.DestinationsFor(AlertKind.Recycled));
+        Assert.Equal(
+            [AlertDestination.Phone, AlertDestination.Local],
+            config.DestinationsFor(AlertKind.UptimeMark));
+        Assert.Empty(new DiscordConfig().DestinationsFor(AlertKind.Recycled));
+    }
+
+    [Fact]
+    public void Payload_Recycled_CarriesTheReclaimedRam()
+    {
+        var payload = WebhookPayload.ForAlert(AlertKind.Recycled,
+            [new AlertTrigger(AlertKind.Recycled, Guid.NewGuid(), "BaronBloxwell", "Real",
+                null, 4_402_341_478, DateTimeOffset.UnixEpoch)]);
+
+        Assert.Equal("BaronBloxwell — recycled", payload.Title);
+        Assert.Contains("4.1 GB", payload.Body, StringComparison.Ordinal);
+        Assert.Contains("back in its server", payload.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Payload_UptimeMark_ReadsHoursAndCount()
+    {
+        // The tracker's caller composes the synthetic trigger: DisplayName carries the hours,
+        // GameName the count. No identity in either — streamer mode has nothing to mask.
+        var payload = WebhookPayload.ForAlert(AlertKind.UptimeMark,
+            [new AlertTrigger(AlertKind.UptimeMark, Guid.Empty, "4h up", "4h up",
+                "6 accounts in", null, DateTimeOffset.UnixEpoch)]);
+
+        Assert.Equal("4h up — 6 accounts in", payload.Title);
+        Assert.Contains("all-good mark", payload.Body, StringComparison.Ordinal);
+    }
+
 }

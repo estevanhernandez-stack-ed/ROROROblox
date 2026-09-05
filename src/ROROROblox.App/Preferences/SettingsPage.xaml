@@ -358,9 +358,39 @@
                                     <CheckBox x:Name="MemoryWarningPhoneCheck" Content="My phone" AutomationProperties.Name="Send memory warnings to my phone" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
                                 </WrapPanel>
                             </Grid>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="An account gets recycled" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Top" Margin="0,2,0,0"
+                                           Foreground="{DynamicResource WhiteBrush}" Width="180" />
+                                <WrapPanel Grid.Column="1">
+                                    <CheckBox x:Name="RecycledLocalCheck" Content="Desktop" AutomationProperties.Name="Send recycle notices to the desktop" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="RecycledMineCheck" Content="My channel" AutomationProperties.Name="Send recycle notices to my Discord channel" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="RecycledClanCheck" Content="Clan channel" AutomationProperties.Name="Send recycle notices to the clan Discord channel" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="RecycledPhoneCheck" Content="My phone" AutomationProperties.Name="Send recycle notices to my phone" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                </WrapPanel>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Uptime marks (every 2 hours)" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Top" Margin="0,2,0,0" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource WhiteBrush}" Width="180" />
+                                <WrapPanel Grid.Column="1">
+                                    <CheckBox x:Name="UptimeMarkLocalCheck" Content="Desktop" AutomationProperties.Name="Send uptime marks to the desktop" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="UptimeMarkMineCheck" Content="My channel" AutomationProperties.Name="Send uptime marks to my Discord channel" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="UptimeMarkClanCheck" Content="Clan channel" AutomationProperties.Name="Send uptime marks to the clan Discord channel" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="UptimeMarkPhoneCheck" Content="My phone" AutomationProperties.Name="Send uptime marks to my phone" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                </WrapPanel>
+                            </Grid>
+
                             <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                        Margin="0,0,0,6"
-                                       Text="Tick every place each alert should go. Nothing ticked means that alert is off." />
+                                       Text="Tick every place each alert should go. Nothing ticked means that alert is off. While anything runs, an uptime mark says all's well every two hours — and a mark that doesn't arrive means the PC or RoRoRo died." />
 
                             <!-- Muted accounts (F-024, spec 4.3). Muting is per-account and lives on
                                  the row context menu; this page owned every OTHER alert decision and

@@ -6,6 +6,16 @@ public enum AlertKind
 {
     AccountDroppedOut,
     MemoryWarning,
+
+    /// <summary>A recycle completed — row button, plugin, or any future auto path. The
+    /// away-from-PC completion notice (Este, 2026-09-05).</summary>
+    Recycled,
+
+    /// <summary>The periodic all-good mark while accounts are running (every 2 hours,
+    /// <c>UptimeMarkTracker</c>). Its ABSENCE is the only dead-PC signal a PC-fired alert
+    /// system can give. Carrier AccountId is Guid.Empty — a global mark must not be silenced
+    /// by any one account's mute.</summary>
+    UptimeMark,
 }
 
 /// <summary>

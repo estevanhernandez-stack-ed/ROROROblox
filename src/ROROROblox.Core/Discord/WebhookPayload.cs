@@ -29,6 +29,11 @@ public sealed record WebhookPayload(string Title, string Body)
         {
             AlertKind.AccountDroppedOut => $"{noun} dropped out",
             AlertKind.MemoryWarning => $"{noun} — memory warning",
+            AlertKind.Recycled => $"{noun} — recycled",
+            // The uptime mark is one synthetic trigger: its DisplayName carries "4h up" and its
+            // GameName carries "6 accounts in", composed by the tracker's caller. No identity in
+            // either, so streamer mode has nothing to mask.
+            AlertKind.UptimeMark => $"{Name(triggers[0])} — {triggers[0].GameName}",
             _ => noun,
         };
 
@@ -36,6 +41,12 @@ public sealed record WebhookPayload(string Title, string Body)
         {
             AlertKind.MemoryWarning when t.PrivateBytes is { } b =>
                 $"• {Name(t)} — {b / 1024 / 1024 / 1024.0:0.0} GB · Recycle suggested",
+            AlertKind.Recycled when t.PrivateBytes is { } b =>
+                $"• {Name(t)} — was {b / 1024 / 1024 / 1024.0:0.0} GB · back in its server",
+            AlertKind.Recycled =>
+                $"• {Name(t)} — back in its server",
+            AlertKind.UptimeMark =>
+                "• The scheduled all-good mark. A missing one is worth a look.",
             _ => $"• {Name(t)}{(t.GameName is null ? "" : $" — {t.GameName}")}",
         });
 
