@@ -35,6 +35,9 @@ accounts.dat
 *.rororo-accounts
 # Per-plugin user consent (DPAPI-encrypted, lives next to accounts.dat in %LOCALAPPDATA%\ROROROblox\)
 consent.dat
+# Discord + phone-alert settings (DPAPI-encrypted; webhook URLs / push keys are bearer credentials)
+discord.dat
+notify.dat
 last-update-check.txt
 webview2-data/
 # Plugin install root — sideloaded plugins land at %LOCALAPPDATA%\ROROROblox\plugins\.

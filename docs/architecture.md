@@ -83,13 +83,14 @@ One folder for every install type — verified live 2026-08-30: the Store build 
 | `accounts.dat` | `Core/AccountStore` | DPAPI CurrentUser, whole blob; holds the cookies |
 | `consent.dat` | `App/Plugins/ConsentStore` | DPAPI |
 | `discord.dat` | `Core/Discord/DiscordConfigStore` | DPAPI (webhook URLs are bearer credentials) |
+| `notify.dat` *(v1.25)* | `Core/Notify/PhoneNotifyConfigStore` | DPAPI (Pushover keys and the ntfy topic are bearer credentials) |
 | `streamer-identities.dat` | `Core/StreamerMode/FileStreamerIdentityStore` | **plaintext** despite the suffix; never a secret store |
 | `settings.json`, `favorites.json`, `private-servers.json`, `session-history.json`, `session-stats.json` | one sealed store class each in Core | plaintext JSON, `Version: 1` stamped (nothing branches on it yet; `PrivateServerStore` migrates legacy rows by field shape) |
 | `themes\*.json` | `Core/Theming/ThemeStore` | plaintext, snake_case keys |
 | `plugins\<id>\` | `App/Plugins/PluginRegistry` | plain files |
 | `logs\`, `webview2-data\<guid>\`, `last-update-check.txt`, `last-known-mutex.txt`, `.welcome-shown` | `AppLogging`, `Core/WebView2UserDataDirectory` (used by `CookieCapture`), `UpdateChecker`, `RobloxCompatChecker`, `WelcomeWindow` | plaintext |
 
-The JSON stores and `accounts.dat` are `SemaphoreSlim`-gated load-modify-save with a tmp-file + `File.Move` atomic write. `themes\*.json` is tmp+Move without a gate; `streamer-identities.dat` is gated but writes in place; `discord.dat` and `consent.dat` write directly.
+The JSON stores and `accounts.dat` are `SemaphoreSlim`-gated load-modify-save with a tmp-file + `File.Move` atomic write. `themes\*.json` is tmp+Move without a gate; `streamer-identities.dat` is gated but writes in place; `discord.dat` and `consent.dat` write directly; `notify.dat` writes tmp+Move (its ntfy topic is the one credential a torn file cannot get back by re-pasting).
 
 Roblox-side files the app writes: `%LOCALAPPDATA%\Roblox\GlobalBasicSettings_<N>.xml` (`FramerateCap`, the lever that actually wins), `ClientAppSettings.json` under the newest active version folder of each install kind, standalone and UWP (`DFIntTaskSchedulerTargetFps`), and `LocalStorage\appStorage.json` (identity stamp).
 

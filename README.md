@@ -110,6 +110,7 @@ With no default game set, Launch As opens the account at Roblox home. Set a defa
 | `%LOCALAPPDATA%\ROROROblox\consent.dat` | Per-plugin consent records (capabilities granted, autostart toggle). **DPAPI-encrypted**, same secrecy contract as `accounts.dat`. Empty until you install your first plugin. |
 | `%LOCALAPPDATA%\ROROROblox\plugins\<plugin-id>\` | Installed plugin files (the EXE + `manifest.json` from each plugin you installed). Plain files — plugins are not encrypted, but each plugin's behavior is gated by your `consent.dat` capability grants. |
 | `%LOCALAPPDATA%\ROROROblox\discord.dat` | Discord presence and alert settings, including webhook URLs. **DPAPI-encrypted.** |
+| `%LOCALAPPDATA%\ROROROblox\notify.dat` | Phone-alert settings: the push service you picked, your Pushover user key and application token, your ntfy topic and server. **DPAPI-encrypted.** |
 | `%LOCALAPPDATA%\ROROROblox\favorites.json`, `private-servers.json` | Your games library and saved private servers. Plain text. |
 | `%LOCALAPPDATA%\ROROROblox\session-history.json`, `session-stats.json` | Launch history (last 100 rows) and the stats rollup. Plain text, local only, no telemetry. |
 | `%LOCALAPPDATA%\ROROROblox\themes\` | Your custom theme files. Plain text. |
