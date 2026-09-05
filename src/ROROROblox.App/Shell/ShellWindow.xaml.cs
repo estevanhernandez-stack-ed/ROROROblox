@@ -47,12 +47,10 @@ internal sealed partial class ShellWindow : Window
 
         // The other half (still bright after the chrome fix, same day): the HWND's surface is
         // on screen before WPF presents its first frame of a heavy page, and an unpresented
-        // surface shows white regardless of Background. So the window holds Opacity 0 until
-        // ContentRendered — it appears a beat later WITH its pixels, instead of appearing
-        // instantly as a white rectangle. No animation on purpose; a fade would turn a fix
-        // into a flourish.
-        Opacity = 0;
-        ContentRendered += (_, _) => Opacity = 1;
+        // surface shows white regardless of Background. Round 2's Window.Opacity attempt was a
+        // silent no-op — WPF ignores it without AllowsTransparency — so the guard is native
+        // layered-alpha; see RevealAfterFirstRender's own comment for the full journey.
+        Theming.WindowTheming.RevealAfterFirstRender(this);
         Closed += OnShellClosed;
 
         // The same vocabulary the main window binds (F-112), scoped to what makes sense here:
