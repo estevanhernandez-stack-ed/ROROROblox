@@ -59,6 +59,8 @@ Create `docs/store/release-notes-X.Y.Z.0.md`. Tone: clan-facing, builder-to-buil
 
 The block between `---` markers in the file gets pasted directly into the GitHub Release body in Phase 6.
 
+**Then audit the three listing surfaces against what shipped** (standing rule per Este, 2026-09-05): with the fresh release notes beside you, re-read `listing-copy.md`'s **short description**, **long description**, and **product features** blocks. A shipped feature that earns a listing claim gets a feature entry (cap 20, ≤200 chars each); a change that makes an existing public claim incomplete gets the description edited — the motivating case is v1.25, where the long description's privacy paragraph said nothing leaves your machine except Roblox calls and your webhook until phone alerts made that incomplete. Record the outcome either way in the submission packet's listing section: what changed, or "listing audited, unchanged."
+
 ---
 
 ## Phase 3 — Build the Store MSIX
@@ -183,7 +185,8 @@ $repo = 'estevanhernandez-stack-ed/ROROROblox'
 2. Drag BOTH `dist/RORORO-Store-x64-<version>.msix` and `dist/RORORO-Store-arm64-<version>.msix` into the Packages slot. Wait for upload + validation. If validation fails on version (4th component non-zero), bump and re-run from Phase 3.
 3. Edit **Notes for certification** — paste the `---` block from `docs/store/reviewer-letter-X.Y.Z.0.md` (the per-version reviewer letter; leads with that release's disclosure-surface change + the trademark disclaimer). This is reviewer-only, not shown to users.
 4. **Edit the Store listing → "What's new in this version"** — paste the fenced block from `docs/store/whats-new-X.Y.Z.0.md` (per-version file since v1.21; `listing-copy.md`'s What's-new section is now just a pointer). **DO NOT SKIP — this is the public update-note Store users see, and it's the step that keeps getting left off.** It's a *different field* from Notes for certification (step 3): step 3 is private to Microsoft's reviewer; this one is public. Both must be filled every release. (Partner Center: Store listings → [language] → "What's new in this version".)
-5. **Submit to the Store**. Status moves through *In submission* → *Certification* → *Publishing* (success) or *Failed* (rejection). Typical turnaround 24-72h.
+5. **Apply the listing changes from the submission packet's listing section** (Store listings → [language]) — the Phase 2 audit recorded them there: feature entries to add, and any short/long description replacement (paste blocks live in `listing-copy.md`). If the packet says "listing audited, unchanged," skip.
+6. **Submit to the Store**. Status moves through *In submission* → *Certification* → *Publishing* (success) or *Failed* (rejection). Typical turnaround 24-72h.
 
 If the previous version is still pending certification, Partner Center stages this submission to replace it (you don't get duplicate submissions). The new MSIX takes over the slot; the previous one is implicitly withdrawn.
 
@@ -224,7 +227,7 @@ These are the failure modes we hit. Hit one of these again, recognize it, and mo
 ## Reference
 
 - [`submission-checklist.md`](submission-checklist.md) — first-submission bringup (run once)
-- [`listing-copy.md`](listing-copy.md) — Store listing description (mostly stable)
+- [`listing-copy.md`](listing-copy.md) — Store listing copy; its short-description, long-description, and features blocks are audited every release in Phase 2
 - [`reviewer-letter.md`](reviewer-letter.md) — Notes-for-cert template
 - [`release-notes-1.23.0.0.md`](release-notes-1.23.0.0.md) — most recent release notes (model new ones after this)
 - [`scripts/finalize-store-build.ps1`](../../scripts/finalize-store-build.ps1) — Phase 3

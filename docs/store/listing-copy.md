@@ -22,15 +22,23 @@
 
 ## Short description (under 200 chars — Store snippet)
 
+> Refreshed 2026-09-05 (v1.25.0.0) — phone alerts joined the list; "account vault" tightened to
+> "vault" to stay under the cap. 192/200 chars.
+>
 > Refreshed 2026-08-22 for the v1.22.0.0 submission — the previous block predated the memory
 > watchdog, presence status, themes, and the tools window.
 
 ```
-Multi-launcher for Windows. Run several Roblox clients side by side as different saved accounts. Encrypted account vault, Squad Launch, memory watchdog, live status, themes, auto-update.
+Multi-launcher for Windows. Run several Roblox clients side by side as different saved accounts. Encrypted vault, Squad Launch, memory watchdog, phone alerts, live status, themes, auto-update.
 ```
 
 ## Long description
 
+> Refreshed 2026-09-05 (v1.25.0.0): the Discord-alerts bullet became the multi-destination
+> alerts bullet (phone via Pushover/ntfy, fan-out, the new alert kinds), and the privacy
+> paragraph now names the push services — it claimed nothing leaves your machine except Roblox
+> calls and your webhook, which stopped being the whole truth the moment phone alerts shipped.
+>
 > Refreshed 2026-08-22 (v1.22.0.0). The old block described the v1.4-era app. Brand casing
 > updated RORORO → RoRoRo to match the About box, README, and release names; the Partner
 > Center *Product Name field* is a separate question — see the note under Identity.
@@ -48,14 +56,14 @@ What you get:
 • Memory watchdog + Recycle. RoRoRo learns what a Roblox client actually costs in RAM on your machine and warns before you run out. One click closes a heavy client and puts it back in the same server it was in.
 • One tools window. Games, Settings, History, Diagnostics, Plugins and About are pages of one window that sits beside your accounts. Keyboard shortcuts throughout — F1 shows the list.
 • Themes. Four built-in, including one that carries no meaning in colour alone, plus a builder to make your own from ten colours and share it as a file.
-• Optional Discord alerts. Only if you paste in a webhook you created — a fresh install makes no Discord calls at all.
+• Optional alerts — desktop, Discord, or your phone. Route each alert to any mix of desktop notifications, a Discord webhook you create, and your phone through Pushover or ntfy. Drops, memory warnings, recycle completions, and an every-two-hours all-good mark while your accounts run. A fresh install makes no alert calls at all — nothing fires until you set a destination up.
 • System tray UX. A state-coloured tray icon shows the multi-instance state at a glance; double-click launches your main account.
 • Plugin system. Optional plugins run as separate processes and hold no permissions until you grant each one by name.
 • Auto-update via Velopack. Remote config tracks the current known-good Roblox version and mutex name, so a Roblox-side rename doesn't break you for long.
 • Accessible by measurement. Every control announces its name to assistive tech, and contrast is verified against rendered pixels in every theme.
 
 Privacy & security:
-Your Roblox password is never seen by RoRoRo. Login happens entirely inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame — same HTML, same HTTPS connection your browser would make. RoRoRo captures only the session cookie that Roblox sets after successful login, and encrypts it before writing it to disk. No telemetry. No analytics. Nothing leaves your machine except the Roblox-side calls during launch — the same calls Roblox.com makes from your browser — and, only if you set one up yourself, alerts to your own Discord webhook.
+Your Roblox password is never seen by RoRoRo. Login happens entirely inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame — same HTML, same HTTPS connection your browser would make. RoRoRo captures only the session cookie that Roblox sets after successful login, and encrypts it before writing it to disk. No telemetry. No analytics. Nothing leaves your machine except the Roblox-side calls during launch — the same calls Roblox.com makes from your browser — and, only if you set them up yourself, alerts to your own Discord webhook or to the phone push service you chose (Pushover or ntfy).
 
 Important: trademark and affiliation notice.
 "Roblox" and the Roblox logo are trademarks of Roblox Corporation. RoRoRo is an independent third-party tool, not affiliated with, endorsed by, or sponsored by Roblox Corporation. The trademarked term is used solely to describe compatibility with the Roblox platform. RoRoRo launches the official Roblox client unmodified — it does not inject into, hook into, or alter the Roblox process in any way; it only holds a Windows named-mutex before launch so that subsequent client instances see the singleton check as already-claimed.
@@ -165,6 +173,7 @@ A reviewer reading our description must see **multiple** features spanning disco
 | Presence status + idle times (v1.5+) | Engagement | The main window is a live dashboard, not just a launcher list. |
 | Themes incl. builder (v1.17+) | Engagement | Personalization + a shareable artifact (theme files travel between users). |
 | One tools window + keyboard shortcuts (v1.22) | Engagement | Daily-driver ergonomics; the app stays open beside the game. |
+| Phone alerts + fan-out routing (v1.25) | Retention | The app reaches you when an alt drops or a two-hour all-good mark goes missing — long unattended sessions become safe to walk away from. |
 
 ## Response protocol if rejected (post-rename)
 

@@ -55,10 +55,20 @@ must be filled.
   Alerts fan out — desktop, Discord channels, and your phone in any mix, per alert
   ```
 
-- **Unchanged:** short description, long description, screenshots (the carousel shows no
-  Settings page, and no carousel surface changed this cycle), IARC rating, pricing (free),
-  markets, privacy policy URL (the policy TEXT already names both push services and is live —
-  GitHub Pages rebuilds from `main` on push).
+- **Short description** — REPLACE with the fenced block in
+  [`listing-copy.md`](listing-copy.md) → *Short description* (192/200 chars; phone alerts
+  joined the list).
+
+- **Long description** — REPLACE with the fenced block in [`listing-copy.md`](listing-copy.md)
+  → *Long description*. Two changes: the Discord-alerts bullet is now the multi-destination
+  alerts bullet, and the privacy paragraph names the push services — the old text claimed
+  nothing leaves your machine except Roblox calls and your webhook, which this release made
+  incomplete. That paragraph and the reviewer letter must tell the same story.
+
+- **Unchanged:** screenshots (the carousel shows no Settings page, and no carousel surface
+  changed this cycle), IARC rating, pricing (free), markets, privacy policy URL (the policy
+  TEXT already names both push services and is live — GitHub Pages rebuilds from `main` on
+  push).
 
 ## 5. After submission
 
