@@ -72,6 +72,34 @@ public sealed class AppSettings : IAppSettings, IDisposable
             _gate.Release();
         }
     }
+    public async Task<bool> GetLaunchWindowedAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var settings = await LoadAsync().ConfigureAwait(false);
+            return settings.LaunchWindowed;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task SetLaunchWindowedAsync(bool enabled)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var settings = await LoadAsync().ConfigureAwait(false);
+            settings = settings with { LaunchWindowed = enabled };
+            await SaveAsync(settings).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
 
     public async Task<string?> GetActiveThemeIdAsync()
     {
@@ -530,6 +558,7 @@ public sealed class AppSettings : IAppSettings, IDisposable
         bool AlwaysShowRecycle = false,
         bool CompactMode = false,
         bool AutoForceStop = false,
+        bool LaunchWindowed = true,
         double? MainWindowLeft = null,
         double? MainWindowTop = null,
         double? MainWindowWidth = null,

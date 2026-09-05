@@ -164,6 +164,8 @@ public class StreamerIdentityProviderTests
         public Task<string?> GetDefaultPlaceUrlAsync() => throw new NotImplementedException();
         public Task<bool> GetLaunchMainOnStartupAsync() => throw new NotImplementedException();
         public Task SetLaunchMainOnStartupAsync(bool e) => throw new NotImplementedException();
+        public Task<bool> GetLaunchWindowedAsync() => throw new NotImplementedException();
+        public Task SetLaunchWindowedAsync(bool e) => throw new NotImplementedException();
         public Task<string?> GetActiveThemeIdAsync() => throw new NotImplementedException();
         public Task SetActiveThemeIdAsync(string t) => throw new NotImplementedException();
         public Task<bool?> GetEdgeRemediationAnswerAsync(string themeId) => throw new NotImplementedException();

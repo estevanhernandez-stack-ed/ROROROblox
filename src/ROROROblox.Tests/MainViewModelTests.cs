@@ -1528,6 +1528,8 @@ public class MainViewModelTests
         public Task<string?> GetDefaultPlaceUrlAsync() => throw new NotImplementedException();
         public Task<bool> GetLaunchMainOnStartupAsync() => throw new NotImplementedException();
         public Task SetLaunchMainOnStartupAsync(bool enabled) => throw new NotImplementedException();
+        public Task<bool> GetLaunchWindowedAsync() => throw new NotImplementedException();
+        public Task SetLaunchWindowedAsync(bool enabled) => throw new NotImplementedException();
         public Task<string?> GetActiveThemeIdAsync() => throw new NotImplementedException();
         public Task SetActiveThemeIdAsync(string themeId) => throw new NotImplementedException();
         public Task SetBloxstrapWarningDismissedAsync(bool value) => throw new NotImplementedException();

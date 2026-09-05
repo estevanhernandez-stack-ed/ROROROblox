@@ -140,6 +140,22 @@
                                            Margin="22,4,0,0"
                                            Text="Each account finishes landing in the game before the next one starts. It takes longer, but no two accounts are ever joining at once, which is what sets off Roblox's verification prompts. You can also flip this in the Squad Launch window." />
                             </StackPanel>
+
+                            <StackPanel Margin="0,14,0,0">
+                                <CheckBox x:Name="LaunchWindowedToggle"
+                                          Foreground="{DynamicResource WhiteBrush}"
+                                          FontSize="{DynamicResource HeadingFontSize}"
+                                          FontWeight="SemiBold"
+                                          AutomationProperties.Name="Keep Roblox windowed"
+                                          Click="OnLaunchWindowedToggle">
+                                    <TextBlock Text="Keep Roblox windowed." TextWrapping="Wrap" />
+                                </CheckBox>
+                                <TextBlock FontSize="{DynamicResource BodyFontSize}"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Margin="22,4,0,0"
+                                           Text="Roblox remembers fullscreen from last time — a crash, or Alt+Enter mid-game, and the next client swallows a whole screen. With this on, RoRoRo turns that off right before every launch. Untick it if you actually want fullscreen clients." />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -671,8 +687,12 @@
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource WhiteBrush}"
                                            Margin="0,0,0,4" />
+                                <!-- Blank means "RoRoRo picks" — and the pick is now IN the box as a
+                                     ghost (Este, 2026-09-05): a blank field looked like nothing was
+                                     happening. The ghost is the same MemoryDefaults figure the intro
+                                     sentence quotes, hidden the moment real text exists. -->
+                                <Grid Width="184" HorizontalAlignment="Left">
                                 <TextBox x:Name="MemoryReserveMbInput"
-                                         Width="120"
                                          HorizontalAlignment="Left"
                                          Padding="8,6"
                                          FontSize="{DynamicResource BodyFontSize}"
@@ -680,7 +700,14 @@
                                          Style="{StaticResource AppTextBoxStyle}"
                                          AutomationProperties.Name="Memory to keep free, in megabytes"
                                          AutomationProperties.HelpText="A whole number from 256 to 65536, or blank to let RoRoRo pick."
-                                         LostFocus="OnMemoryReserveCommitted" />
+                                         LostFocus="OnMemoryReserveCommitted"
+                                         TextChanged="OnMemoryInputTextChanged" />
+                                <TextBlock x:Name="MemoryReserveGhost"
+                                           FontSize="{DynamicResource BodyFontSize}"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           Margin="10,0,0,0" VerticalAlignment="Center"
+                                           IsHitTestVisible="False" />
+                                </Grid>
                                 <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"
@@ -694,8 +721,8 @@
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource WhiteBrush}"
                                            Margin="0,0,0,4" />
+                                <Grid Width="184" HorizontalAlignment="Left">
                                 <TextBox x:Name="MemoryCapMbInput"
-                                         Width="120"
                                          HorizontalAlignment="Left"
                                          Padding="8,6"
                                          FontSize="{DynamicResource BodyFontSize}"
@@ -703,7 +730,14 @@
                                          Style="{StaticResource AppTextBoxStyle}"
                                          AutomationProperties.Name="Warn when one account passes this many megabytes"
                                          AutomationProperties.HelpText="A whole number from 256 to 65536, 0 to turn this warning off, or blank to let RoRoRo pick."
-                                         LostFocus="OnMemoryCapCommitted" />
+                                         LostFocus="OnMemoryCapCommitted"
+                                         TextChanged="OnMemoryInputTextChanged" />
+                                <TextBlock x:Name="MemoryCapGhost"
+                                           FontSize="{DynamicResource BodyFontSize}"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           Margin="10,0,0,0" VerticalAlignment="Center"
+                                           IsHitTestVisible="False" />
+                                </Grid>
                                 <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"

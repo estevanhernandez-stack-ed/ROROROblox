@@ -742,7 +742,10 @@ public partial class App : Application
         });
 
         services.AddSingleton<IClientAppSettingsWriter, ClientAppSettingsWriter>();
-        services.AddSingleton<IGlobalBasicSettingsWriter, GlobalBasicSettingsWriter>();
+        // Factory, not open registration: the writer's optional windowed enforcement reads the
+        // "Keep Roblox windowed" setting per write (Este, 2026-09-05).
+        services.AddSingleton<IGlobalBasicSettingsWriter>(sp => new GlobalBasicSettingsWriter(
+            forceWindowed: () => sp.GetRequiredService<IAppSettings>().GetLaunchWindowedAsync()));
         services.AddSingleton<IGlobalBasicSettingsProbe, GlobalBasicSettingsProbe>();
 
         // Explicit factory (2026-08-02, settings-quiet-window fix, Task 3) rather than bare

@@ -20,18 +20,31 @@ public sealed class GlobalBasicSettingsWriter : IGlobalBasicSettingsWriter
 
     private readonly string _robloxAppDataRoot;
 
-    public GlobalBasicSettingsWriter() : this(DefaultRobloxAppDataRoot()) { }
+    /// <summary>Asked per write; null means the windowed enforcement is not wired (tests,
+    /// plugin hosts). The App passes the "Keep Roblox windowed" setting here — a Func because
+    /// the answer can change without this singleton being rebuilt.</summary>
+    private readonly Func<Task<bool>>? _forceWindowed;
+
+    public GlobalBasicSettingsWriter(Func<Task<bool>>? forceWindowed = null)
+        : this(DefaultRobloxAppDataRoot(), forceWindowed) { }
 
     // Visible for tests — accept arbitrary roots.
-    public GlobalBasicSettingsWriter(string robloxAppDataRoot)
+    public GlobalBasicSettingsWriter(string robloxAppDataRoot, Func<Task<bool>>? forceWindowed = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(robloxAppDataRoot);
         _robloxAppDataRoot = robloxAppDataRoot;
+        _forceWindowed = forceWindowed;
     }
 
     public async Task WriteFramerateCapAsync(int? fps, CancellationToken ct = default)
     {
-        if (fps is null)
+        // "Keep Roblox windowed" rides the same pre-launch write the cap uses (Este,
+        // 2026-09-05): Roblox resurrects Fullscreen from a clean-exit save (alt+enter mid-game
+        // persists it), and a crash skips F-109's restore entirely — enforcing on the way IN
+        // covers every path a fullscreen True can arrive by.
+        var wantWindowed = _forceWindowed is not null && await _forceWindowed().ConfigureAwait(false);
+
+        if (fps is null && !wantWindowed)
         {
             // null = leave the file alone. We don't know what the user's "default"
             // would be; clearing the FramerateCap node would either delete a
@@ -42,6 +55,13 @@ public sealed class GlobalBasicSettingsWriter : IGlobalBasicSettingsWriter
         var path = GlobalBasicSettingsFile.Resolve(_robloxAppDataRoot)?.FullName;
         if (path is null)
         {
+            if (fps is null)
+            {
+                // The windowed-only pass is best-effort: Roblox has never run on this
+                // machine, so there is no saved fullscreen preference to correct yet.
+                return;
+            }
+
             throw new GlobalBasicSettingsWriteException(
                 $"GlobalBasicSettings_<N>.xml not found under {_robloxAppDataRoot}. " +
                 "Roblox may not have been run yet on this machine.");
@@ -69,23 +89,31 @@ public sealed class GlobalBasicSettingsWriter : IGlobalBasicSettingsWriter
                 $"{path} does not contain a <roblox><Item><Properties> structure.");
         }
 
-        var frameRateNode = properties
-            .Elements("int")
-            .FirstOrDefault(e => (string?)e.Attribute("name") == FramerateCapName);
+        if (fps is not null)
+        {
+            var frameRateNode = properties
+                .Elements("int")
+                .FirstOrDefault(e => (string?)e.Attribute("name") == FramerateCapName);
 
-        if (frameRateNode is null)
-        {
-            // Roblox writes FramerateCap on first session, so absence is unusual but not
-            // fatal — insert it. Place at end of <Properties> to minimize diff against
-            // Roblox's typical output.
-            frameRateNode = new XElement("int",
-                new XAttribute("name", FramerateCapName),
-                fps.Value.ToString());
-            properties.Add(frameRateNode);
+            if (frameRateNode is null)
+            {
+                // Roblox writes FramerateCap on first session, so absence is unusual but not
+                // fatal — insert it. Place at end of <Properties> to minimize diff against
+                // Roblox's typical output.
+                frameRateNode = new XElement("int",
+                    new XAttribute("name", FramerateCapName),
+                    fps.Value.ToString());
+                properties.Add(frameRateNode);
+            }
+            else
+            {
+                frameRateNode.Value = fps.Value.ToString();
+            }
         }
-        else
+
+        if (wantWindowed)
         {
-            frameRateNode.Value = fps.Value.ToString();
+            SetSimple(properties, "bool", "Fullscreen", "false");
         }
 
         var tempPath = path + ".tmp";

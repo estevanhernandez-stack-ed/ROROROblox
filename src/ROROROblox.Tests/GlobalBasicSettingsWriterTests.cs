@@ -174,4 +174,62 @@ public sealed class GlobalBasicSettingsWriterTests : IDisposable
 
         Assert.False(File.Exists(path + ".tmp"));
     }
+
+    private string SeedFullscreenTrue() => SeedSettings("GlobalBasicSettings_13.xml",
+        RealisticSettingsXml(60).Replace(
+            "<bool name=\"Fullscreen\">false</bool>",
+            "<bool name=\"Fullscreen\">true</bool>"));
+
+    [Fact]
+    public async Task WriteFramerateCapAsync_ForceWindowed_TurnsSavedFullscreenOffWithTheCap()
+    {
+        // "Keep Roblox windowed" (Este, 2026-09-05): a clean-exit alt+enter save or a crash can
+        // leave Fullscreen true; the pre-launch cap write is the moment that fixes it.
+        var path = SeedFullscreenTrue();
+        var writer = new GlobalBasicSettingsWriter(_tempRoot, forceWindowed: () => Task.FromResult(true));
+
+        await writer.WriteFramerateCapAsync(20);
+
+        var doc = XDocument.Load(path);
+        Assert.Equal("false", doc.Descendants("bool").Single(e => (string?)e.Attribute("name") == "Fullscreen").Value);
+        Assert.Equal("20", doc.Descendants("int").Single(e => (string?)e.Attribute("name") == "FramerateCap").Value);
+    }
+
+    [Fact]
+    public async Task WriteFramerateCapAsync_NullCapWithForceWindowed_WritesFullscreenOnly()
+    {
+        // A launch with no FPS cap still owes the windowed pass; the user's cap value stays theirs.
+        var path = SeedFullscreenTrue();
+        var writer = new GlobalBasicSettingsWriter(_tempRoot, () => Task.FromResult(true));
+
+        await writer.WriteFramerateCapAsync(null);
+
+        var doc = XDocument.Load(path);
+        Assert.Equal("false", doc.Descendants("bool").Single(e => (string?)e.Attribute("name") == "Fullscreen").Value);
+        Assert.Equal("60", doc.Descendants("int").Single(e => (string?)e.Attribute("name") == "FramerateCap").Value);
+    }
+
+    [Fact]
+    public async Task WriteFramerateCapAsync_NullCapEnforcementOff_LeavesTheFileAlone()
+    {
+        // The pre-fanout contract survives: null cap and no enforcement means no write at all.
+        var path = SeedFullscreenTrue();
+        var before = File.ReadAllText(path);
+        var writer = new GlobalBasicSettingsWriter(_tempRoot, () => Task.FromResult(false));
+
+        await writer.WriteFramerateCapAsync(null);
+
+        Assert.Equal(before, File.ReadAllText(path));
+    }
+
+    [Fact]
+    public async Task WriteFramerateCapAsync_NullCapForceWindowed_MissingFileIsSilent()
+    {
+        // Roblox has never run: nothing to correct, and the enforcement pass must not turn a
+        // fresh machine into a launch-blocking throw the plain null path never had.
+        var writer = new GlobalBasicSettingsWriter(_tempRoot, () => Task.FromResult(true));
+
+        await writer.WriteFramerateCapAsync(null);
+    }
+
 }
