@@ -46,6 +46,7 @@
 - The alert kinds: the shipped two. New kinds are their own cycle.
 - Router semantics: mute, cooldown, coalescing, fallback-to-Local, streamer masking.
 - The plugin surface: no new RPC, no contract bump.
+- **Accepted rollback hazard (review 2026-09-04):** `AlertDestination.Phone` serializes as the numeric value 4 into `discord.dat`, which older binaries share. A pre-phone binary routes value 4 through its `_ => wanted` arm, matches no dispatch case, and drops the alert silently — no phone, no toast, cooldown stamped. No cheap fix exists in already-shipped binaries; the release notes carry a "set your alert routing again if you roll back" line, and the shared-data-folder coexistence note in CLAUDE.md already warns that a Store build and a dev build share one config.
 
 ## §4 Test plan
 

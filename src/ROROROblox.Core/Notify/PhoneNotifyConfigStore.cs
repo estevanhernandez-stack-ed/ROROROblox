@@ -47,6 +47,13 @@ public sealed class PhoneNotifyConfigStore : IPhoneNotifyConfigStore
         var json = JsonSerializer.SerializeToUtf8Bytes(config, JsonOptions);
         var encrypted = ProtectedData.Protect(json, optionalEntropy: null, DataProtectionScope.CurrentUser);
         Directory.CreateDirectory(Path.GetDirectoryName(_filePath)!);
-        await File.WriteAllBytesAsync(_filePath, encrypted).ConfigureAwait(false);
+
+        // tmp + rename (the AccountStore pattern): a torn notify.dat silently resets to defaults
+        // on the next load, and unlike a webhook URL the ntfy topic inside cannot be re-pasted —
+        // it would have to be regenerated and re-subscribed on the phone, the exact cost the
+        // Settings page puts behind a confirm dialog (review 2026-09-04).
+        var tmp = _filePath + ".tmp";
+        await File.WriteAllBytesAsync(tmp, encrypted).ConfigureAwait(false);
+        File.Move(tmp, _filePath, overwrite: true);
     }
 }

@@ -32,11 +32,13 @@ public sealed class PhoneAlertSender(PushoverSender pushover, NtfySender ntfy, I
 
         if (!config.IsConfigured)
         {
-            // The router already falls back to Local for an unconfigured phone; reaching here
-            // means config changed between routing and dispatch. Dropping is correct — the
-            // desktop toast for this alert already went nowhere, and half a credential must not
-            // be sent anywhere.
-            log.LogDebug("Phone alert dropped: provider no longer configured at dispatch time.");
+            // Unreachable from today's two callers — the dispatcher snapshots ONE immutable
+            // record and hands the same instance to routing and to this call, and the Settings
+            // test button pre-checks IsConfigured on the snapshot it passes (review 2026-09-04
+            // corrected an earlier comment that claimed a routing/dispatch race exists; it does
+            // not). Kept as a belt for future callers: half a credential must never be sent
+            // anywhere, whoever forgets the pre-check.
+            log.LogDebug("Phone alert dropped: the config handed in was not fully configured.");
             return Task.FromResult(PhoneSendResult.Failed);
         }
 

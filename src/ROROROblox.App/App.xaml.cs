@@ -1635,9 +1635,12 @@ public partial class App : Application
         try
         {
             var configService = _services.GetRequiredService<DiscordConfigService>();
-            await configService.InitializeAsync().ConfigureAwait(true);
-            await _services.GetRequiredService<ROROROblox.Core.Notify.PhoneNotifyConfigService>()
-                .InitializeAsync().ConfigureAwait(true);
+            var phoneConfigService = _services.GetRequiredService<ROROROblox.Core.Notify.PhoneNotifyConfigService>();
+            // Together, not sequentially: two independent DPAPI blobs (separate files, separate
+            // gates) on the startup critical path, and neither load should wait on the other
+            // (review 2026-09-04).
+            await Task.WhenAll(configService.InitializeAsync(), phoneConfigService.InitializeAsync())
+                .ConfigureAwait(true);
 
             var vm = _services.GetRequiredService<MainViewModel>();
             var dispatcher = _services.GetRequiredService<AlertDispatcher>();

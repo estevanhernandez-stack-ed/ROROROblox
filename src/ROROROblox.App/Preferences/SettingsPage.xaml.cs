@@ -278,6 +278,11 @@ internal partial class SettingsPage : UserControl, IDisposable
             try
             {
                 await _discordConfigService.InitializeAsync();
+                // The phone owner gets the same self-heal: WireAlertsAsync's shared try/catch can
+                // skip the phone load when the Discord init throws first, and nothing else ever
+                // re-initializes it — without this, the phone section would paint defaults over a
+                // populated notify.dat for the rest of the session (review 2026-09-04).
+                await _phoneNotifyService.InitializeAsync();
                 var discordConfig = CurrentDiscordConfig;
                 DiscordPresenceToggle.IsChecked = discordConfig.PresenceEnabled;
                 DiscordJoinToggle.IsChecked = discordConfig.JoinEnabled;
@@ -865,17 +870,36 @@ internal partial class SettingsPage : UserControl, IDisposable
                 ? parsed
                 : ROROROblox.Core.Notify.PhoneProvider.None;
 
-        UpdatePhonePanels(provider);
+        // A different provider is a different endpoint whose credentials were never rejected —
+        // without this, a Pushover 401 latched earlier silently killed a switch to ntfy whose
+        // topic was already saved in an earlier session (review 2026-09-04).
+        _alertDispatcher.ResetPhoneRejection();
 
         try
         {
             await _phoneNotifyService.MutateAsync(c => c with { Provider = provider });
+            UpdatePhonePanels(provider);
             RefreshAlertsStatus();
         }
         catch (Exception ex)
         {
             MessageBox.Show(Window.GetWindow(this), $"Couldn't save the phone setting: {ex.Message}",
                 "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+            // Persist failed: put the picker back on what notify.dat actually holds, so the UI
+            // cannot show a provider the saved config does not have. Sibling handlers paint only
+            // after the persist; this one now does too (review 2026-09-04).
+            _suppressClickHandlers = true;
+            foreach (var item in PhoneProviderPicker.Items.OfType<System.Windows.Controls.ComboBoxItem>())
+            {
+                if (Equals(item.Tag as string, CurrentPhoneConfig.Provider.ToString()))
+                {
+                    PhoneProviderPicker.SelectedItem = item;
+                    break;
+                }
+            }
+            _suppressClickHandlers = false;
+            UpdatePhonePanels(CurrentPhoneConfig.Provider);
         }
     }
 
@@ -916,7 +940,18 @@ internal partial class SettingsPage : UserControl, IDisposable
             return (NtfyTopicInput, NtfyTopicReveal, CurrentPhoneConfig.NtfyTopic);
         }
 
-        return (PushoverUserKeyInput, PushoverUserKeyReveal, CurrentPhoneConfig.PushoverUserKey);
+        if (ReferenceEquals(sender, PushoverUserKeyReveal) || ReferenceEquals(sender, PushoverUserKeyInput))
+        {
+            return (PushoverUserKeyInput, PushoverUserKeyReveal, CurrentPhoneConfig.PushoverUserKey);
+        }
+
+        // Loud, not silent: a catch-all here once mapped ANY unrecognised sender to the Pushover
+        // user key, so a future fourth field wired to the shared handlers without extending this
+        // map would have revealed — and could then save over — the wrong credential (review
+        // 2026-09-04). A throw fails on the first dev click instead.
+        throw new ArgumentException(
+            "Unmapped phone credential control — extend PhoneFieldFor before wiring a new field to the shared handlers.",
+            nameof(sender));
     }
 
     /// <summary>One commit handler for both Pushover fields — same anti-drift reasoning as
@@ -979,6 +1014,16 @@ internal partial class SettingsPage : UserControl, IDisposable
         {
             await _phoneNotifyService.MutateAsync(c => c with { NtfyTopic = topic });
 
+            // Repaint through the helper FIRST: it restores the Show/Hide toggle's visibility
+            // (Collapsed until a first topic exists) and forces IsChecked to false, so the
+            // assignment below is a real false-to-true transition whose Checked handler paints
+            // the NEW topic. A bare IsChecked=true was a no-op while the field was already
+            // revealed — the OLD topic stayed on screen under a "subscribe to this exact topic"
+            // instruction, and on a first-ever topic the Hide button stayed Collapsed over a
+            // revealed bearer credential (review 2026-09-04).
+            ShowWebhookMasked(NtfyTopicInput, NtfyTopicReveal, topic);
+            NtfyTopicInput.IsReadOnly = true;
+
             // Revealed on purpose: the user's next act is subscribing to this exact string on
             // their phone. Hide puts it back behind the mask.
             NtfyTopicReveal.IsChecked = true;
@@ -1007,9 +1052,14 @@ internal partial class SettingsPage : UserControl, IDisposable
             ROROROblox.Core.Notify.PhoneCredentialKind.Empty => "https://ntfy.sh",
             _ => null,
         };
-        if (value is null || value == CurrentPhoneConfig.NtfyServerUrl) return;
+        if (value is null) return;
 
+        // Repaint BEFORE the no-change return: clearing the field back to the default must put
+        // the default on screen even when the saved value already is the default — the early
+        // return used to leave a blank box over a configured server (review 2026-09-04).
         NtfyServerInput.Text = value;
+        if (value == CurrentPhoneConfig.NtfyServerUrl) return;
+
         _alertDispatcher.ResetPhoneRejection();
 
         try
@@ -1036,15 +1086,27 @@ internal partial class SettingsPage : UserControl, IDisposable
         if (!phone.IsConfigured)
         {
             AlertsStatusLine.Text = "Finish the phone setup above first — there's nowhere to send a test yet.";
+            AlertsStatusLine.Tag = null;
             return;
         }
 
         PhoneTestButton.IsEnabled = false;
         AlertsStatusLine.Text = "Sending…";
+        AlertsStatusLine.Tag = null;
         try
         {
             var result = await _phoneAlertSender.SendAsync(phone, AlertKind.MemoryWarning,
                 new WebhookPayload("RoRoRo test", "If your phone buzzed, phone alerts work."));
+
+            if (result == ROROROblox.App.Notify.PhoneSendResult.Sent)
+            {
+                // A delivered test is proof the saved credentials work — clear any stale session
+                // latch so real alerts flow again without a re-paste. Unlike a 404'd webhook, a
+                // latched phone rejection CAN coexist with working credentials (a transient 403
+                // from a self-hosted server, the pre-cap oversize 400), so the passing test is
+                // the honest reset signal (review 2026-09-04).
+                _alertDispatcher.ResetPhoneRejection();
+            }
 
             AlertsStatusLine.Text = result switch
             {
@@ -1058,6 +1120,13 @@ internal partial class SettingsPage : UserControl, IDisposable
                     "The push service is rate-limiting us. Wait a minute; the setup itself looks fine.",
                 _ => "Couldn't reach the push service.",
             };
+
+            // Text and colour must agree: the style paints Tag="failure" red and everything else
+            // cyan, and this handler writes Text without going through RefreshAlertsStatus — a
+            // stale failure Tag was painting "Sent — your phone should buzz" in the warning red
+            // (review 2026-09-04).
+            AlertsStatusLine.Tag =
+                result == ROROROblox.App.Notify.PhoneSendResult.Sent ? null : "failure";
         }
         finally
         {

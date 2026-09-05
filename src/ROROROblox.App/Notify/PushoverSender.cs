@@ -18,7 +18,11 @@ namespace ROROROblox.App.Notify;
 /// Nothing here ever logs the user key or application token — both are bearer credentials, and
 /// log files are what users paste into Discord when they ask why alerts stopped. A 4xx naming
 /// bad credentials is terminal for the session (<see cref="PhoneSendResult.EndpointRejected"/>);
-/// our payload shape is fixed, so a 400 means the credentials, not the message.
+/// the body is capped under the API's message limit by <see cref="TruncateForPushover"/>,
+/// so a 400 means the credentials, not the message. (Before the cap, a mass drop's coalesced
+/// body could exceed Pushover's 1024-character limit, whose plain 400 would have latched
+/// EndpointRejected against valid keys on exactly the alert that mattered most — review
+/// 2026-09-04.)
 /// </para>
 /// </summary>
 /// <remarks>
@@ -29,6 +33,39 @@ namespace ROROROblox.App.Notify;
 public sealed class PushoverSender(HttpClient client, ILogger<PushoverSender> log)
 {
     private const string Endpoint = "https://api.pushover.net/1/messages.json";
+
+    /// <summary>Pushover's documented message cap.</summary>
+    private const int MessageLimit = 1024;
+
+    /// <summary>
+    /// Cut an over-long coalesced body at a line break and say how many accounts went unnamed.
+    /// One line per dropped account is unbounded (the payload's shape is fixed, its LENGTH is
+    /// not), and Pushover answers an over-limit message with the same bare 400 a bad credential
+    /// gets — which the caller treats as terminal for the session.
+    /// </summary>
+    internal static string TruncateForPushover(string body)
+    {
+        if (body.Length <= MessageLimit) return body;
+
+        var lines = body.Split('\n');
+        var kept = new List<string>();
+        var length = 0;
+        foreach (var line in lines)
+        {
+            if (length + line.Length + 1 > MessageLimit - 32) break;
+            kept.Add(line);
+            length += line.Length + 1;
+        }
+
+        if (kept.Count == 0)
+        {
+            // A single monster line; keep the front of it.
+            return body[..(MessageLimit - 2)] + "…";
+        }
+
+        kept.Add($"…and {lines.Length - kept.Count} more");
+        return string.Join("\n", kept);
+    }
 
     public async Task<PhoneSendResult> SendAsync(
         string userKey, string appToken, AlertKind kind, WebhookPayload payload, CancellationToken ct = default)
@@ -44,7 +81,7 @@ public sealed class PushoverSender(HttpClient client, ILogger<PushoverSender> lo
                 ["token"] = appToken,
                 ["user"] = userKey,
                 ["title"] = payload.Title,
-                ["message"] = payload.Body,
+                ["message"] = TruncateForPushover(payload.Body),
                 ["priority"] = kind == AlertKind.AccountDroppedOut ? "1" : "0",
             });
             using var response = await client.PostAsync(Endpoint, form, ct).ConfigureAwait(false);

@@ -478,6 +478,7 @@
                                              Background="{DynamicResource NavyBrush}"
                                              LostFocus="OnPushoverKeyCommitted" Style="{StaticResource AppTextBoxStyle}"/>
                                     <ToggleButton x:Name="PushoverUserKeyReveal" Grid.Column="1" Content="Show"
+                                                  AutomationProperties.Name="Show or hide the saved Pushover user key"
                                                   Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
                                                   Checked="OnRevealPhoneToggled" Unchecked="OnRevealPhoneToggled"
                                                   Style="{StaticResource SecondaryToggleButtonStyle}"
@@ -493,6 +494,7 @@
                                              Background="{DynamicResource NavyBrush}"
                                              LostFocus="OnPushoverKeyCommitted" Style="{StaticResource AppTextBoxStyle}"/>
                                     <ToggleButton x:Name="PushoverAppTokenReveal" Grid.Column="1" Content="Show"
+                                                  AutomationProperties.Name="Show or hide the saved Pushover application token"
                                                   Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
                                                   Checked="OnRevealPhoneToggled" Unchecked="OnRevealPhoneToggled"
                                                   Style="{StaticResource SecondaryToggleButtonStyle}"
@@ -517,6 +519,7 @@
                                              Background="{DynamicResource NavyBrush}" IsReadOnly="True"
                                              Style="{StaticResource AppTextBoxStyle}"/>
                                     <ToggleButton x:Name="NtfyTopicReveal" Grid.Column="1" Content="Show"
+                                                  AutomationProperties.Name="Show or hide the ntfy topic"
                                                   Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
                                                   Checked="OnRevealPhoneToggled" Unchecked="OnRevealPhoneToggled"
                                                   Style="{StaticResource SecondaryToggleButtonStyle}"

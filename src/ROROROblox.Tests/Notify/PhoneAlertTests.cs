@@ -234,6 +234,62 @@ public class PushoverSenderTests
     }
 }
 
+public class PushoverTruncationTests
+{
+    [Fact]
+    public void TruncateForPushover_CapsAtTheApiLimitAndCountsTheRest()
+    {
+        // One line per coalesced account is unbounded; Pushover 400s an over-limit message with
+        // the same bare status a bad credential gets, which the dispatcher treats as terminal.
+        var body = string.Join("\n", Enumerable.Range(1, 60).Select(i => $"• Account{i:D2} — Pet Simulator 99!"));
+
+        var cut = PushoverSender.TruncateForPushover(body);
+
+        Assert.True(cut.Length <= 1024, $"still {cut.Length} chars");
+        Assert.Contains("more", cut, StringComparison.Ordinal);
+        Assert.StartsWith("• Account01", cut, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TruncateForPushover_ShortBodyPassesThroughUntouched()
+    {
+        Assert.Equal("• One — Pet Sim", PushoverSender.TruncateForPushover("• One — Pet Sim"));
+    }
+
+    [Fact]
+    public void TruncateForPushover_SingleMonsterLineIsHardCut()
+    {
+        var cut = PushoverSender.TruncateForPushover(new string('x', 5000));
+        Assert.True(cut.Length <= 1024);
+    }
+}
+
+/// <summary>
+/// The phone wiring rides appended-optional ctor and Route parameters, so dropping the arguments
+/// from the composition root compiles and stays suite-green while phone alerts silently downgrade
+/// to desktop toasts — the UseCookies=false regression shape CLAUDE.md warns about. This fence
+/// reads the source the way the repo's other source fences do.
+/// </summary>
+public class PhoneWiringFenceTests
+{
+    [Fact]
+    public void AlertDispatcher_Factory_PassesThePhoneArguments()
+    {
+        var root = XamlStyleScanner.FindRepoRoot();
+        Assert.False(root is null, "Could not locate the repo root from the test bin directory.");
+        var source = File.ReadAllText(Path.Combine(root!, "src", "ROROROblox.App", "App.xaml.cs"));
+
+        var start = source.IndexOf("new AlertDispatcher(", StringComparison.Ordinal);
+        Assert.True(start >= 0, "The AlertDispatcher factory is gone from App.xaml.cs — update this fence with its new home.");
+        var end = source.IndexOf("));", start, StringComparison.Ordinal);
+        Assert.True(end > start);
+        var factory = source[start..end];
+
+        Assert.Contains("PhoneAlertSender", factory, StringComparison.Ordinal);
+        Assert.Contains("PhoneNotifyConfigService", factory, StringComparison.Ordinal);
+    }
+}
+
 public class NtfySenderTests
 {
     private static readonly WebhookPayload Payload = new("BaronBloxwell dropped out", "• BaronBloxwell — Pet Sim");
