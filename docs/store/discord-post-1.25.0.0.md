@@ -14,6 +14,11 @@
 > **The hub link does the feature-list work.** The page's "What you get" list was refreshed for
 > v1.25 in the same commit as this draft, so the post stays short and points there.
 >
+> **The Setup.exe line was corrected before posting** — the first draft said direct users were
+> "already current," but direct installs don't self-update (`UpdateChecker` only logs; playbook
+> correction 2026-08-30). Every post carries the run-the-new-Setup.exe instruction until
+> Velopack download+apply is actually wired (build-plan item 11).
+>
 > **What is deliberately NOT in here:** the fan-out routing mechanics (people find checkboxes),
 > fullscreen enforcement details, the rollback warning (release-notes reader's problem), ntfy
 > topic secrecy (Settings copy's job), and all of 1.23/1.24's smaller fixes.
@@ -24,7 +29,8 @@
 **Here's what's been brewing** ☕
 
 Three updates since the last post. Store installs pick them up on their
-own; Setup.exe folks are already current.
+own. Setup.exe folks: grab the newest Setup.exe from the link at the
+bottom — direct installs don't update themselves yet.
 
 **Your phone can buzz now** (new in 1.25)
 Settings > Alerts can route any alert to your phone through Pushover —

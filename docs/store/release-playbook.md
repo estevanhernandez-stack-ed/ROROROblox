@@ -228,6 +228,7 @@ These are the failure modes we hit. Hit one of these again, recognize it, and mo
 
 - [`submission-checklist.md`](submission-checklist.md) — first-submission bringup (run once)
 - [`listing-copy.md`](listing-copy.md) — Store listing copy; its short-description, long-description, and features blocks are audited every release in Phase 2
+- [`localization-plan.md`](localization-plan.md) — listing-language expansion (Este's cross-app ruling 2026-09-05): listing translations first, manifest languages never before real UI localization; once listing languages exist, Phase 2 translates each release's whats-new per language
 - [`reviewer-letter.md`](reviewer-letter.md) — Notes-for-cert template
 - [`release-notes-1.23.0.0.md`](release-notes-1.23.0.0.md) — most recent release notes (model new ones after this)
 - [`scripts/finalize-store-build.ps1`](../../scripts/finalize-store-build.ps1) — Phase 3
