@@ -249,6 +249,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             SettingsNav.SelectedIndex = 0;
             RunOnLoginToggle.IsChecked = SafeIsStartupEnabled();
             LaunchMainToggle.IsChecked = await _settings.GetLaunchMainOnStartupAsync();
+            LaunchWindowedToggle.IsChecked = await _settings.GetLaunchWindowedAsync();
             // v1.18 — the mirror of the Squad Launch modal's careful-mode toggle (F-020). Read on
             // every open, exactly as SquadLaunchWindow.OnLoaded reads it, so the two surfaces agree
             // without either one holding a copy of the value.
@@ -534,6 +535,26 @@ internal partial class SettingsPage : UserControl, IDisposable
             // Revert visual state.
             _suppressClickHandlers = true;
             RunOnLoginToggle.IsChecked = SafeIsStartupEnabled();
+            _suppressClickHandlers = false;
+        }
+    }
+
+    private async void OnLaunchWindowedToggle(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+        try
+        {
+            await _settings.SetLaunchWindowedAsync(LaunchWindowedToggle.IsChecked == true);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Window.GetWindow(this),
+                $"Couldn't save preference: {ex.Message}",
+                "Preferences",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            _suppressClickHandlers = true;
+            LaunchWindowedToggle.IsChecked = await _settings.GetLaunchWindowedAsync();
             _suppressClickHandlers = false;
         }
     }
@@ -1682,19 +1703,42 @@ internal partial class SettingsPage : UserControl, IDisposable
         // "couldn't read your memory settings" warning; if the automatic line were painted after
         // the accessors, that path would leave the boxes blank AND unexplained, which is the exact
         // state this item exists to end.
-        AutomaticMemoryLine.Text = _automaticMemory.Describe().Text;
+        var automatic = _automaticMemory.Describe();
+        AutomaticMemoryLine.Text = automatic.Text;
+
+        // The ghost is the same figure the sentence above quotes — one derivation, two places it
+        // shows (Este, 2026-09-05: a blank box read as "nothing is happening"). Set before the
+        // settings reads for the same reason the sentence is: a throwing settings load must
+        // still leave the boxes explained.
+        MemoryReserveGhost.Text = $"{automatic.ReserveMb} — picked for this PC";
+        MemoryCapGhost.Text = $"{automatic.CapMb} — picked for this PC";
+        UpdateMemoryGhosts();
 
         MemoryWatchdogEnabledToggle.IsChecked = await _settings.GetMemoryWatchdogEnabledAsync();
         MemoryReserveMbInput.Text = FormatOptional(await _settings.GetMemoryReserveMbAsync());
         MemoryCapMbInput.Text = FormatOptional(await _settings.GetMemoryCapMbAsync());
         ProjectionWarnMinutesInput.Text =
             (await _settings.GetProjectionWarnMinutesAsync()).ToString(CultureInfo.InvariantCulture);
+        UpdateMemoryGhosts();
         ClearMemoryWarning();
     }
 
     /// <summary>Blank is not empty, it is "never set" — the state App.xaml.cs derives from.</summary>
     private static string FormatOptional(int? value) =>
         value?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+
+    /// <summary>A ghost shows exactly while its box is blank — the picked value stays visible
+    /// without becoming an explicit setting (blank still means "RoRoRo picks").</summary>
+    private void UpdateMemoryGhosts()
+    {
+        MemoryReserveGhost.Visibility = string.IsNullOrEmpty(MemoryReserveMbInput.Text)
+            ? Visibility.Visible : Visibility.Collapsed;
+        MemoryCapGhost.Visibility = string.IsNullOrEmpty(MemoryCapMbInput.Text)
+            ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void OnMemoryInputTextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        => UpdateMemoryGhosts();
 
     private void ShowMemoryWarning(string message)
     {

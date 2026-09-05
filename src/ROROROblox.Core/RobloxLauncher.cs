@@ -107,6 +107,21 @@ public sealed class RobloxLauncher : IRobloxLauncher
 
                 await ApplyFpsCapAsync(fpsCap.Value).ConfigureAwait(false);
             }
+            else if (_globalBasicSettings is not null)
+            {
+                // No cap for this account, but the pre-launch write may still owe the windowed
+                // enforcement (Este, 2026-09-05) — the writer no-ops unless "Keep Roblox
+                // windowed" is on. Best-effort like the cap itself: a settings-file problem
+                // must never block a launch.
+                try
+                {
+                    await _globalBasicSettings.WriteFramerateCapAsync(null).ConfigureAwait(false);
+                }
+                catch (GlobalBasicSettingsWriteException)
+                {
+                    // Non-blocking; the client launches with whatever the file holds.
+                }
+            }
 
             var result = await ExecuteLaunchAsync(cookie, target, browserTrackerId).ConfigureAwait(false);
             return result;

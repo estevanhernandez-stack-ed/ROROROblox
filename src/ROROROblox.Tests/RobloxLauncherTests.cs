@@ -547,12 +547,14 @@ public class RobloxLauncherTests
             processStarter: starter,
             timeProvider: clock);
 
-        // Launch A -- no cap requested, so nothing is written; only Process.Start (and the baseline
-        // it seeds) matters here.
+        // Launch A -- no cap requested, so no CAP is written. Since the windowed enforcement
+        // (2026-09-05) the launcher still offers the writer one null write -- the writer's
+        // decision point for "Keep Roblox windowed" -- so the assertion is "no cap values",
+        // not "no calls".
         var firstResult = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(1))
             .WaitAsync(TimeSpan.FromSeconds(5));
         Assert.IsType<LaunchResult.Started>(firstResult);
-        Assert.Empty(gbs.Writes);
+        Assert.DoesNotContain(gbs.Writes, w => w is not null);
 
         // Launch B wants cap 20; the probe currently reports 9999 -- the slow path.
         var secondTask = launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(2), fpsCap: 20);
@@ -567,7 +569,7 @@ public class RobloxLauncherTests
             elapsed += FpsCapSettler.QuietPollInterval;
             for (var i = 0; i < 8; i++) { await Task.Yield(); }
         }
-        Assert.Empty(gbs.Writes);
+        Assert.DoesNotContain(gbs.Writes, w => w is not null);
 
         // A's client finally writes its own value back -- proof it read the file. Mutated directly
         // on the probe (not through `gbs`, which only records OUR writes): this models the OTHER
@@ -587,7 +589,7 @@ public class RobloxLauncherTests
         var secondResult = await secondTask.WaitAsync(TimeSpan.FromSeconds(5));
 
         Assert.IsType<LaunchResult.Started>(secondResult);
-        Assert.Equal(new int?[] { 20 }, gbs.Writes);
+        Assert.Equal(new int?[] { 20 }, gbs.Writes.Where(w => w is not null).ToArray());
     }
 
     /// <summary>Captures how many cap writes had happened at the moment Process.Start was called.</summary>
@@ -728,6 +730,9 @@ public class RobloxLauncherTests
         public string? ActiveThemeId { get; set; }
         public Task<bool> GetLaunchMainOnStartupAsync() => Task.FromResult(LaunchMainOnStartup);
         public Task SetLaunchMainOnStartupAsync(bool enabled) { LaunchMainOnStartup = enabled; return Task.CompletedTask; }
+        public bool LaunchWindowed = true;
+        public Task<bool> GetLaunchWindowedAsync() => Task.FromResult(LaunchWindowed);
+        public Task SetLaunchWindowedAsync(bool enabled) { LaunchWindowed = enabled; return Task.CompletedTask; }
         public Task<string?> GetActiveThemeIdAsync() => Task.FromResult(ActiveThemeId);
         public Task SetActiveThemeIdAsync(string themeId) { ActiveThemeId = themeId; return Task.CompletedTask; }
         public bool BloxstrapWarningDismissed { get; set; }

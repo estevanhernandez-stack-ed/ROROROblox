@@ -27,6 +27,12 @@ public interface IAppSettings
     Task<bool> GetLaunchMainOnStartupAsync();
     Task SetLaunchMainOnStartupAsync(bool enabled);
 
+    /// <summary>"Keep Roblox windowed": before each launch, a saved Fullscreen preference is
+    /// turned off in Roblox's own settings file. Defaults ON — for multi-instance, a client
+    /// swallowing the whole screen is almost never what the user meant (Este, 2026-09-05).</summary>
+    Task<bool> GetLaunchWindowedAsync();
+    Task SetLaunchWindowedAsync(bool enabled);
+
     /// <summary>
     /// Active theme id from <c>%LOCALAPPDATA%\ROROROblox\themes\</c> (or a built-in id like
     /// "brand"). Empty / unknown id falls back to the "brand" built-in at startup.

@@ -38,6 +38,12 @@ internal sealed partial class ShellWindow : Window
     {
         _createPage = createPage ?? throw new ArgumentNullException(nameof(createPage));
         InitializeComponent();
+
+        // The global RegisterGlobalDarkTitleBar hook fires on Loaded — AFTER the first frame,
+        // which is exactly the bright flash Este kept seeing on a 920px window (2026-09-05).
+        // Calling the helper here defers to SourceInitialized instead: the HWND exists, nothing
+        // has painted, and the chrome is dark from frame one.
+        Theming.WindowTheming.ApplyDarkTitleBar(this);
         Closed += OnShellClosed;
 
         // The same vocabulary the main window binds (F-112), scoped to what makes sense here:
