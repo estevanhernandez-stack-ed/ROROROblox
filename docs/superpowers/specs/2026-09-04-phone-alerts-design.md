@@ -54,4 +54,6 @@
 2. Fences: `TypedHttpClientRegistrationTests` rows for both senders; `AccessibleNamingFenceTests` on the new Settings controls; no new modal, no new window.
 3. Full suite x64 + arm64 via CI.
 4. Live smoke (needs Este): a real Pushover page and a real ntfy buzz to his phone from a dev build — enable, trigger a synthetic alert, phone buzzes, test button works, bad-token path surfaces in Settings. Same gate discipline as the packaged-activation smoke.
+
+   **Delivery legs executed 2026-09-05 — PASS on both providers.** ntfy first ("ntfy worked"), then Pushover ("pushover works"), both via Test my phone on Este's devices from the dev build at `main`. Still open from this plan: a real alt-drop page end to end (launch an alt, hard-kill the client, phone buzzes) — worth running once on the fan-out build. The smoke's UX feedback (Discord test buttons reading as phone controls, the ntfy install step buried, single-destination routing too narrow) shipped as the alert fan-out change the same day.
 5. The reviewer-letter fragment and PRIVACY rows ride the release PR, not a later one — a PR that adds an outbound host updates the disclosure surfaces in the same change.

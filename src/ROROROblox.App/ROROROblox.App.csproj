@@ -102,6 +102,10 @@
        Assembly.GetManifestResourceStream() looks up. -->
   <ItemGroup>
     <EmbeddedResource Include="..\..\docs\themes\AGENT_PROMPT.md" LogicalName="ROROROblox.App.Themes.AGENT_PROMPT.md" />
+    <!-- The 128x128 mark the Pushover setup hands out (Settings > Alerts > Save the RoRoRo
+         icon). Embedded from docs/store/graphics so the file members upload matches the one
+         Este's own application registration uses. -->
+    <EmbeddedResource Include="..\..\docs\store\graphics\pushover-icon-128.png" LogicalName="ROROROblox.App.Notify.pushover-icon-128.png" />
   </ItemGroup>
 
   <!-- Streamer-mode banked avatar tiles — FINAL brand art (2026-07-10 design pass through

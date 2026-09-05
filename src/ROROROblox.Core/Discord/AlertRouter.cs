@@ -47,32 +47,44 @@ public static class AlertRouter
             .Where(t => !muted.Contains(t.AccountId))
             .Where(t => !lastSentPerAccount.TryGetValue((t.AccountId, t.Kind), out var last) || nowUtc - last > Cooldown)
             .GroupBy(t => t.Kind)
-            .Select(group => new { group.Key, Triggers = group.ToList(), Destination = Resolve(group.Key, config, phoneConfigured) })
-            .Where(x => x.Destination != AlertDestination.None)
-            .Select(x => new RoutedAlert(x.Destination, x.Key, x.Triggers))
+            .SelectMany(group =>
+            {
+                // One RoutedAlert per destination (fan-out, 2026-09-05): the dispatcher's switch
+                // and its cooldown stamping are unchanged — stamping the same (account, kind) at
+                // the same instant once per destination is idempotent.
+                var triggers = group.ToList();
+                return Resolve(group.Key, config, phoneConfigured)
+                    .Select(destination => new RoutedAlert(destination, group.Key, triggers));
+            })
             .ToList();
     }
 
-    private static AlertDestination Resolve(AlertKind kind, DiscordConfig config, bool phoneConfigured)
+    private static IReadOnlyList<AlertDestination> Resolve(AlertKind kind, DiscordConfig config, bool phoneConfigured)
     {
-        var wanted = kind switch
+        var resolved = new List<AlertDestination>();
+        foreach (var wanted in config.DestinationsFor(kind))
         {
-            AlertKind.AccountDroppedOut => config.DroppedOutDestination,
-            AlertKind.MemoryWarning => config.MemoryWarningDestination,
-            _ => AlertDestination.None,
-        };
+            // Routed somewhere that isn't configured yet -> fall back to the desktop
+            // notification rather than dropping it. A silently vanishing alert is the worst
+            // outcome here. ("Configured" for phone is the caller's composite: provider
+            // credentials present AND the endpoint not rejected this session — the phone config
+            // lives in its own record, notify.dat, so it arrives as a bool.)
+            var effective = wanted switch
+            {
+                AlertDestination.Mine when string.IsNullOrWhiteSpace(config.MineWebhookUrl) => AlertDestination.Local,
+                AlertDestination.Clan when string.IsNullOrWhiteSpace(config.ClanWebhookUrl) => AlertDestination.Local,
+                AlertDestination.Phone when !phoneConfigured => AlertDestination.Local,
+                _ => wanted,
+            };
 
-        // Routed somewhere that isn't configured yet -> fall back to the desktop notification
-        // rather than dropping it. A silently vanishing alert is the worst outcome here.
-        return wanted switch
-        {
-            AlertDestination.Mine when string.IsNullOrWhiteSpace(config.MineWebhookUrl) => AlertDestination.Local,
-            AlertDestination.Clan when string.IsNullOrWhiteSpace(config.ClanWebhookUrl) => AlertDestination.Local,
-            // "Configured" is the caller's composite: provider credentials present AND the
-            // endpoint not rejected this session. The phone config lives in its own record
-            // (notify.dat), so it arrives as a bool rather than widening this type's coupling.
-            AlertDestination.Phone when !phoneConfigured => AlertDestination.Local,
-            _ => wanted,
-        };
+            // Dedupe, order-preserving: two unconfigured destinations both falling back must
+            // page the desktop once, not twice.
+            if (effective != AlertDestination.None && !resolved.Contains(effective))
+            {
+                resolved.Add(effective);
+            }
+        }
+
+        return resolved;
     }
 }
