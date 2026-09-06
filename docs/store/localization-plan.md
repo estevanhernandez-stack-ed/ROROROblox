@@ -75,14 +75,26 @@ language at first (the UI is English regardless — honest either way).
   cap, and the source commit — whenever the `listing-copy*.md` files change. The tool
   ingests that JSON; corrections come back as edits to the per-language `.md` files (the
   source of truth stays in this repo), then the JSON is regenerated. The same gate applies
-  to every future release's translated what's-new blocks.
+  to every future release's translated what's-new blocks. Both ends of the loop are built:
+  the build brief for the tool-builder agent is
+  [`translation-verification-prompt.md`](translation-verification-prompt.md) (rubric
+  embedded), and `scripts/apply-translation-verdicts.py` applies a verdicts JSON back to
+  the `.md` files — quote→suggestedFix inside the right language/field block, missing or
+  ambiguous quotes refused, caps re-checked, export regenerated.
 - **Standing per-release cost:** each `whats-new-X.Y.Z.0.md` must be translated for every
   listing language at Phase 2 time, and Phase 7 pastes each language's block. The Phase 2
   listing audit covers the translated listings the same as the English one.
 - The privacy policy stays English unless separately translated; the URL is shared. If a
   reviewer asks, the letter says listing translation precedes UI translation.
 
-## Phase B — the Core boundary (SPEC'D 2026-09-05: [`2026-09-05-core-string-boundary-design.md`](../superpowers/specs/2026-09-05-core-string-boundary-design.md))
+## Phase B — the Core boundary — **DONE 2026-09-05** (PR #157; spec [`2026-09-05-core-string-boundary-design.md`](../superpowers/specs/2026-09-05-core-string-boundary-design.md))
+
+> Merged same day it was spec'd: all six inventory rows crossed in one move,
+> `CoreMessageCatalog` is the single App-side prose home (byte-for-byte English preserved),
+> and `CoreStringBoundaryFenceTests` holds the boundary at zero. Bonus payoff:
+> `MainViewModel` no longer branches on message TEXT (the `Contains("WebV2...")` /
+> not-installed checks became Kind matches). Phase C is unblocked and waits only on the
+> `/vibe-lingual` WPF adapter.
 
 Core produces English display copy with no stable key beside it —
 `CookieCaptureResult.Failed(string Message)` is the shape. Core is pure and cannot reach the
