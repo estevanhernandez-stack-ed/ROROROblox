@@ -71,7 +71,7 @@ language at first (the UI is English regardless — honest either way).
 - The privacy policy stays English unless separately translated; the URL is shared. If a
   reviewer asks, the letter says listing translation precedes UI translation.
 
-## Phase B — the Core boundary (decision made; first code phase)
+## Phase B — the Core boundary (SPEC'D 2026-09-05: [`2026-09-05-core-string-boundary-design.md`](../superpowers/specs/2026-09-05-core-string-boundary-design.md))
 
 Core produces English display copy with no stable key beside it —
 `CookieCaptureResult.Failed(string Message)` is the shape. Core is pure and cannot reach the
