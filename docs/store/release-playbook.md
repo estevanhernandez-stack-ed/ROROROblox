@@ -2,7 +2,7 @@
 
 > **Recurring per-release runbook.** First-submission bringup (Partner Center reservation, IARC questionnaire, listing copy, screenshots, privacy policy hosting) lives in [`submission-checklist.md`](submission-checklist.md) — that's a one-time setup. This doc is the loop we run every time we ship a new version: v1.3.1.0 → v1.3.2.0 → v1.3.2.1 → v1.3.3.0 → next.
 
-> **Two distribution channels per release.** Microsoft Store (`dist/RORORO-Store-<arch>-<version>.msix`, x64 AND arm64, unsigned — Partner Center signs after upload) and GitHub Release (Velopack `Setup.exe`, which checks for but does not apply updates, + `RORORO-Sideload-<arch>-<version>.msix` + `dev-cert.cer` for cert-import users). Both ship from the same tag.
+> **Two distribution channels per release.** Microsoft Store (`dist/RORORO-Store-<arch>-<version>.msix`, x64 AND arm64, unsigned — Partner Center signs after upload) and GitHub Release (Velopack `Setup.exe` — self-updating from wired versions, see the Phase 6 note — + `RORORO-Sideload-<arch>-<version>.msix` + `dev-cert.cer` for cert-import users). Both ship from the same tag.
 
 ---
 
@@ -175,7 +175,7 @@ $repo = 'estevanhernandez-stack-ed/ROROROblox'
     --repo $repo
 ```
 
-**Existing direct-download installs do not update themselves.** `UpdateChecker` polls the release once a day and only logs "Update available"; nothing in the app downloads or applies a package (Velopack's download/apply calls were never wired: build-plan item 11, open since 2026-05-04). Direct users get the new version by running the new `Setup.exe`, so the Discord post has to say so. Store users update through the Store. (This line promised "auto-update within 24h" until 2026-08-30.)
+**Direct-download installs self-update only from wired versions.** Download+apply was wired on 2026-09-05 (build-plan item 11): a wired version finds an update within 24h, downloads it, and applies it silently when the app exits. But anyone on the check-only versions (v1.0 through v1.25) still gets nothing automatically — they must run one newer `Setup.exe` by hand, and the Discord post has to say so until the clan is over that hump. The first wired release's post says "one last Setup.exe." Store users update through the Store. (This line promised "auto-update within 24h" until 2026-08-30, then denied it until 2026-09-05.)
 
 ---
 
