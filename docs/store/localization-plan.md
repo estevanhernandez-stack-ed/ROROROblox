@@ -119,6 +119,26 @@ per-file backups, safe re-runs. It won't handle this XAML natively; it has an ad
 and reports not-yet-implemented rather than mangling anything. Build the **WPF adapter**
 against that seam, then let the tool sweep.
 
+**Live run 2026-09-05** (engine v0.1.0 cloned from the Vibe-Lingual repo and run against
+this repo — the plugin itself is not installed on this box): `detect` returns
+`framework: "none"` honestly; `scan` inventories **0 sites across 0 files** (the scanner is
+JSX/TSX-bound and does not see XAML at all); `wire --locales fr,de,ru,pt-BR,pl,es` stands
+down exactly as `adapter.contract.md` promises — `status: not-yet-implemented`, exit 1,
+zero mutation. Two consequences for the adapter work (which lives in the Vibe-Lingual
+repo, not here):
+
+1. **The WPF gap is wider than the adapter seam.** The seam covers the mutating side
+   (`wire` / `transform` / `emitParityTest` / `emitGuard`), but `detect` and `scan` are
+   also JS-ecosystem-bound — WPF support needs a detector arm (csproj + XAML presence) and
+   a XAML/C# scanner (literal inventory by kind: Text, Content, Header, ToolTip,
+   AutomationProperties.Name, code-behind strings) before any adapter method runs.
+2. **What the adapter's four methods mean here:** wire = resx infrastructure + culture
+   selection; transform = XAML literal → resource reference and C# literal →
+   `Resources.Key`; parity guard = resx key parity across languages (the engine's
+   "highest-value guard" translates directly); guard ratchet = this repo already has the
+   fence-test culture the ratchet wants — the copy fences learn the resource baseline in
+   the same commit, per the hazards above.
+
 Repo-specific hazards the sweep must respect, or the suite goes red:
 
 - The copy fences (`PreferencesCopyTests` first-person rule, `WindowTitleConventionTests`,
