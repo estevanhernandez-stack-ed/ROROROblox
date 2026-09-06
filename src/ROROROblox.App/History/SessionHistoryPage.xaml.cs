@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
+using ROROROblox.App.Localization;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 using ROROROblox.Core.StreamerMode;
@@ -184,7 +185,7 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
 
     private async Task ReloadAsync()
     {
-        StatusText.Text = SessionHistoryStatus.Loading;
+        StatusText.Text = CoreMessageCatalog.SessionHistory.Loading;
 
         IReadOnlyList<LaunchSession> rows;
         try
@@ -231,11 +232,11 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
     private void RenderRows()
     {
         HistoryList.Children.Clear();
-        StatusText.Text = SessionHistoryStatus.StatusLine(_outcome, _rows.Count, _readError);
+        StatusText.Text = CoreMessageCatalog.SessionHistory.StatusLine(_outcome, _rows.Count, _readError);
 
         if (_rows.Count == 0)
         {
-            var (headline, detail) = SessionHistoryStatus.Placeholder(_outcome);
+            var (headline, detail) = CoreMessageCatalog.SessionHistory.Placeholder(_outcome);
             EmptyHeadline.Text = headline;
             EmptyDetail.Text = detail;
             EmptyState.Visibility = Visibility.Visible;
@@ -576,12 +577,12 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
             // reload's is the one the user can act on.
             if (_outcome != SessionHistoryOutcome.Unreadable)
             {
-                StatusText.Text = SessionHistoryStatus.Cleared;
+                StatusText.Text = CoreMessageCatalog.SessionHistory.Cleared;
             }
         }
         catch (Exception ex)
         {
-            StatusText.Text = SessionHistoryStatus.ClearFailed(ex.Message);
+            StatusText.Text = CoreMessageCatalog.SessionHistory.ClearFailed(ex.Message);
         }
     }
 }

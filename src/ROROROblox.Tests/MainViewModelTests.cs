@@ -608,7 +608,7 @@ public class MainViewModelTests
     public async Task ReauthenticateAsync_FailedCapture_KeepsTagAndSurfacesBanner()
     {
         var (vm, store, _, path) = Build(cookieCapture: new StubCookieCapture(
-            new CookieCaptureResult.Failed("Login was unsuccessful.")));
+            new CookieCaptureResult.Failed(CookieCaptureFailureKind.LoginRejected)));
         try
         {
             var row = await SeedExpiredAccountAsync(store, 111);
@@ -616,7 +616,7 @@ public class MainViewModelTests
             await vm.ReauthenticateAsync(row);
 
             Assert.True(row.SessionExpired);
-            Assert.Equal("Re-authentication didn't complete: Login was unsuccessful.", vm.StatusBanner);
+            Assert.Equal("Re-authentication didn't complete: Roblox didn't accept the login session.", vm.StatusBanner);
             Assert.Equal("original-cookie", await store.RetrieveCookieAsync(row.Id));
         }
         finally { if (File.Exists(path)) File.Delete(path); }
@@ -993,7 +993,7 @@ public class MainViewModelTests
         public Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null)
         {
             BrowserTrackerIds.Add(browserTrackerId);
-            return Task.FromResult<LaunchResult>(new LaunchResult.Failed("test launch refused"));
+            return Task.FromResult<LaunchResult>(new LaunchResult.Failed(LaunchFailureKind.ProcessStartFailed, "test launch refused"));
         }
 
         public Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null, long? browserTrackerId = null)

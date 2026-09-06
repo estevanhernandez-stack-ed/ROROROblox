@@ -850,7 +850,7 @@ public class RobloxLauncherTests
         var result = await launcher.LaunchAsync(TestCookie, new LaunchTarget.Place(920587237));
 
         var failed = Assert.IsType<LaunchResult.Failed>(result);
-        Assert.Contains("Roblox does not appear to be installed", failed.Message);
+        Assert.Equal(LaunchFailureKind.RobloxNotInstalled, failed.Kind);
     }
 
     [Fact]

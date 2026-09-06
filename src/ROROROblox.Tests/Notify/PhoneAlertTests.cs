@@ -142,7 +142,7 @@ public class PhoneCredentialValidatorTests
     [Fact]
     public void InspectPushoverKey_AcceptsThirtyAlnum()
     {
-        var verdict = PhoneCredentialValidator.InspectPushoverKey(" u2345678901234567890123456789A ", "user key");
+        var verdict = PhoneCredentialValidator.InspectPushoverKey(" u2345678901234567890123456789A ");
         Assert.Equal(PhoneCredentialKind.Valid, verdict.Kind);
         Assert.Equal("u2345678901234567890123456789A", verdict.Normalized);
     }
@@ -154,14 +154,17 @@ public class PhoneCredentialValidatorTests
     [InlineData("", PhoneCredentialKind.Empty)]
     public void InspectPushoverKey_NamesTheMistakeWithoutEchoingIt(string pasted, PhoneCredentialKind expected)
     {
-        var verdict = PhoneCredentialValidator.InspectPushoverKey(pasted, "user key");
+        var verdict = PhoneCredentialValidator.InspectPushoverKey(pasted);
 
         Assert.Equal(expected, verdict.Kind);
         if (pasted.Length > 0)
         {
             // The contract inherited from WebhookUrlValidator: the message never repeats the
-            // paste — these strings get screenshotted into clan channels.
-            Assert.DoesNotContain(pasted, verdict.Message, StringComparison.OrdinalIgnoreCase);
+            // paste — these strings get screenshotted into clan channels. Structural since the
+            // boundary move (the catalog's sentence never sees the paste), stated where relied on.
+            Assert.DoesNotContain(pasted,
+                ROROROblox.App.Localization.CoreMessageCatalog.ForPushoverKey(verdict.Kind, "user key"),
+                StringComparison.OrdinalIgnoreCase);
         }
     }
 

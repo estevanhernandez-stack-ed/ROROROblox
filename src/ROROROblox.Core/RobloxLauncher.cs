@@ -13,7 +13,6 @@ namespace ROROROblox.Core;
 /// </summary>
 public sealed class RobloxLauncher : IRobloxLauncher
 {
-    private const string RobloxNotInstalledMessage = "Roblox does not appear to be installed.";
     private const string PlaceLauncherEndpoint = "https://assetgame.roblox.com/game/PlaceLauncher.ashx";
 
     private readonly IRobloxApi _api;
@@ -199,8 +198,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
             // returns non-null (falls back to LaunchTarget.Home per spec §5). This still catches null
             // from explicit-selection callers upstream (JoinByLinkWindow, MainViewModel) that resolve
             // a pasted/typed URL via LaunchTarget.FromUrl before reaching ExecuteLaunchAsync.
-            return new LaunchResult.Failed(
-                "No default Roblox game configured. Add one in Games (header button), or pass an explicit target.");
+            return new LaunchResult.Failed(LaunchFailureKind.NoDefaultGame);
         }
 
         AuthTicket ticket;
@@ -218,7 +216,7 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
         catch (Exception ex)
         {
-            return new LaunchResult.Failed($"Failed to obtain auth ticket: {ex.Message}");
+            return new LaunchResult.Failed(LaunchFailureKind.AuthTicketFailed, ex.Message);
         }
 
         // Stable per-account btid when the caller has one persisted (v1.8.1 trust hygiene);
@@ -240,11 +238,11 @@ public sealed class RobloxLauncher : IRobloxLauncher
         }
         catch (Win32Exception)
         {
-            return new LaunchResult.Failed(RobloxNotInstalledMessage);
+            return new LaunchResult.Failed(LaunchFailureKind.RobloxNotInstalled);
         }
         catch (Exception ex)
         {
-            return new LaunchResult.Failed($"Process.Start failed: {ex.Message}");
+            return new LaunchResult.Failed(LaunchFailureKind.ProcessStartFailed, ex.Message);
         }
     }
 

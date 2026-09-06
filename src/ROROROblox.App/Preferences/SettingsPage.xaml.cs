@@ -1031,9 +1031,9 @@ internal partial class SettingsPage : UserControl, IDisposable
 
         if (WebhookUrlMasker.IsMasked(input.Text)) return;
 
-        var verdict = ROROROblox.Core.Notify.PhoneCredentialValidator.InspectPushoverKey(
-            input.Text, isToken ? "application token" : "user key");
-        PhonePushoverVerdict.Text = verdict.Message;
+        var verdict = ROROROblox.Core.Notify.PhoneCredentialValidator.InspectPushoverKey(input.Text);
+        PhonePushoverVerdict.Text = Localization.CoreMessageCatalog.ForPushoverKey(
+            verdict.Kind, isToken ? "application token" : "user key");
 
         if (verdict.Kind is not (ROROROblox.Core.Notify.PhoneCredentialKind.Valid
             or ROROROblox.Core.Notify.PhoneCredentialKind.Empty))
@@ -1107,7 +1107,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         if (_suppressClickHandlers) return;
 
         var verdict = ROROROblox.Core.Notify.PhoneCredentialValidator.InspectNtfyServer(NtfyServerInput.Text);
-        PhoneNtfyVerdict.Text = verdict.Message;
+        PhoneNtfyVerdict.Text = Localization.CoreMessageCatalog.ForNtfyServer(verdict.Kind);
 
         // Empty restores the default rather than saving a blank — a blank server is not a choice,
         // it is an accident on the way to one.
@@ -1365,7 +1365,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         if (WebhookUrlMasker.IsMasked(input.Text)) return;
 
         var verdict = WebhookUrlValidator.Inspect(input.Text);
-        verdictLine.Text = verdict.Message;
+        verdictLine.Text = Localization.CoreMessageCatalog.For(verdict.Kind);
 
         // Anything that isn't a webhook leaves the SAVED value alone. Clobbering a working webhook
         // because someone pasted an invite over it and then tabbed away is a silent downgrade to
