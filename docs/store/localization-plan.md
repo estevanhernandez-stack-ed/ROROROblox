@@ -132,6 +132,11 @@ repo, not here):
    also JS-ecosystem-bound — WPF support needs a detector arm (csproj + XAML presence) and
    a XAML/C# scanner (literal inventory by kind: Text, Content, Header, ToolTip,
    AutomationProperties.Name, code-behind strings) before any adapter method runs.
+   **→ Built the same day: Vibe-Lingual PR #1 (`feat/wpf-stack-readonly`) ships the read
+   side — detect arm, whitelist XAML scanner, honest stand-downs. Its dogfood run on THIS
+   repo: 530 sites across 30 XAML files — 385 xaml-text (vs the hand-measured 395; two
+   independent methods within ten) + 81 automation names + 62 tooltips + 2 placeholders.
+   The mutating wpf-resx adapter remains the open half of Phase C.**
 2. **What the adapter's four methods mean here:** wire = resx infrastructure + culture
    selection; transform = XAML literal → resource reference and C# literal →
    `Resources.Key`; parity guard = resx key parity across languages (the engine's
