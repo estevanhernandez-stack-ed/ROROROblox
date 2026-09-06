@@ -4,6 +4,15 @@
 > this repo, same day). Referenced from `release-playbook.md`. This file is the plan of record;
 > the phases land as their own cycles.
 
+## The stake
+
+Este, 2026-09-05: "I think localization could be big in RoRoRo." The audience argument:
+Roblox's player base is global, young, and heavily non-English (Brazil and Southeast Asia are
+among its largest markets; Roblox itself ships in ~16 languages), while the multi-instance
+tool ecosystem is English-only — a localized multi-launcher would be first-in-category, the
+same position phone alerts just took. Partner Center's acquisitions-by-market report on the
+existing English listing is the cheapest evidence for which languages earn Phase A slots.
+
 ## The rule (verbatim intent)
 
 Three separate things get called "languages":
