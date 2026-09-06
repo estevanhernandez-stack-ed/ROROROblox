@@ -8,6 +8,26 @@
 > contract lives in `localization-plan.md` (Phase A approval gate) and
 > `scripts/export-listing-translations.py`.
 
+## Dogfood feedback — first connection attempt, 2026-09-05 (relay to the builder agent)
+
+The tool deployed (dashboard + connect portal + 2nd-gen Cloud Function + SSE endpoint) and a
+remote agent tried to connect the same day. Three findings, in severity order:
+
+1. **The token surface was unauthenticated.** The `/connect` page rendered for an anonymous
+   fetch (no sign-in) with the token slot wired to load — and the bearer token is the
+   APPROVAL credential, so an ungated token endpoint hands strangers the one integrity
+   property the gate exists for. Token issuance/display must sit behind the OAuth identity
+   the portal already mentions. (Este rotated the exposed token on discovery.)
+2. **The advertised SSE URL cannot stream.** `https://project-626labs-translations.web.app/sse`
+   hangs with zero bytes (20s+): Firebase Hosting rewrites buffer responses through the CDN,
+   so SSE never flushes — a platform limit, not a bug in the function. The direct function
+   URL (`https://us-central1-project-626labs.cloudfunctions.net/translationVerifier/sse`,
+   Cloud Run underneath) responds instantly and is the URL the portal should advertise for
+   SSE.
+3. **Auth plumbing works** — both `?token=` and `Authorization: Bearer` reach validation
+   (clean `{"error":"Unauthorized: Invalid token"}` on a stale token). Consider scoping:
+   a read-only token for review sessions vs. the approval token.
+
 ---
 
 ```
