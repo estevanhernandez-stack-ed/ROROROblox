@@ -8,6 +8,12 @@ namespace ROROROblox.App.Updates;
 
 /// <summary>
 /// Wraps <see cref="UpdateManager"/> with a 24-hour debounce stamp. Spec §9.
+/// A found update is downloaded in the background and staged with
+/// <c>WaitExitThenApplyUpdates</c> (build-plan item 11, wired 2026-09-05 after being
+/// check-only since v1.0): Update.exe watches this process and applies the staged package
+/// when RoRoRo exits — clean quit or crash alike — so a running session is never restarted
+/// out from under its accounts, and the next launch is the new version. Roblox clients are
+/// separate processes and ride through the apply untouched.
 /// Failures are non-fatal — auto-update is comfort, not load-bearing — but every failure
 /// logs at Debug so a support bundle can show whether the check ran at all.
 /// </summary>
@@ -55,8 +61,16 @@ internal sealed class UpdateChecker : IUpdateChecker
             if (update is not null)
             {
                 _log.LogInformation("Update available: {Version}", update.TargetFullRelease.Version);
-                // Item 10 closes here — no UI surface yet for "Update Available."
-                // Item 11 (MSIX/packaging) wires download + apply via the tray menu.
+                await manager.DownloadUpdatesAsync(update).ConfigureAwait(false);
+
+                // silent: the applier shows no UI when it runs at exit. restart: false — the
+                // user chose to quit; don't resurrect the app under them. A newer update
+                // found on a later day re-stages over this one; Velopack applies the last
+                // staged package.
+                manager.WaitExitThenApplyUpdates(update.TargetFullRelease, silent: true, restart: false);
+                _log.LogInformation(
+                    "Update {Version} downloaded and staged; it installs when RoRoRo closes.",
+                    update.TargetFullRelease.Version);
             }
             else
             {
