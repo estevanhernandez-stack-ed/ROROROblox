@@ -63,8 +63,19 @@ language at first (the UI is English regardless — honest either way).
   verified against its limit. The trademark disclaimer is in every language (certification
   surface), product nouns stay English, and each long description states plainly that the
   app's interface is currently English — the never-lie rule applied to listings. What
-  remains is Este's Partner Center pass: add each language, paste its file's blocks, submit
-  (listing-only submission, no new package).
+  remains is the approval gate below, then Este's Partner Center pass: add each language,
+  paste its file's blocks, submit (listing-only submission, no new package).
+- **Approval gate (Este, 2026-09-05): translations are verified before anything is
+  submitted.** Este is building a translation verification tool (Gemini, on Google Cloud +
+  Firebase); every translated block is presented there for approval first — no translated
+  listing reaches Partner Center unapproved. The repo's side of the contract:
+  `scripts/export-listing-translations.py` regenerates
+  `docs/store/listing-translations.json` — every field (short, long, features, what's-new,
+  copyright, trademark) with the English source beside each translation, its Partner Center
+  cap, and the source commit — whenever the `listing-copy*.md` files change. The tool
+  ingests that JSON; corrections come back as edits to the per-language `.md` files (the
+  source of truth stays in this repo), then the JSON is regenerated. The same gate applies
+  to every future release's translated what's-new blocks.
 - **Standing per-release cost:** each `whats-new-X.Y.Z.0.md` must be translated for every
   listing language at Phase 2 time, and Phase 7 pastes each language's block. The Phase 2
   listing audit covers the translated listings the same as the English one.
