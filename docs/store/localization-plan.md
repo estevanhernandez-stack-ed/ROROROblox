@@ -47,8 +47,16 @@ Partner Center → Store listings → add a language; each added language gets i
 description, features, and what's-new fields. Screenshots may carry over from the default
 language at first (the UI is English regardless — honest either way).
 
-- **Open decision (Este):** the language set. Nothing is measured about the clan's locales;
-  pick small and deliberate rather than broad.
+- **The language set (measured 2026-09-05):** Este pulled Partner Center's
+  acquisitions-by-market CSV — 577 installs, ~43% from non-English markets against an
+  English-only listing. Grouped by language, the clusters are French ~35 (FR+BE+CA),
+  Russian ~20 (RU+CIS), German ~20, Portuguese 19 (pt-BR; Brazil is a top-3 Roblox market,
+  so its modest count reads as discovery friction — the upside pick), Polish 13, Spanish
+  ~15 spread across a dozen markets. **Wave 1: fr, de, ru, pt-BR, pl, es.** Deliberately
+  skipped: Filipino (PH is the #2 country at 38, but English is official and demonstrably
+  converts), the Nordics (four languages, 25 installs, best English proficiency in the
+  data), Thai/Vietnamese/Indonesian/zh-TW (wave 2 if wave 1 moves numbers; zh-TW's 8 is
+  first in line). Ukrainian (uk, 7 installs) alongside ru is a goodwill call left to Este.
 - Translate from `listing-copy.md`'s three blocks (short description, long description,
   features) — the audited-every-release surfaces. Keep the trademark disclaimer in every
   language; it is a certification surface.
