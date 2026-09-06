@@ -71,7 +71,7 @@ public sealed class CookieCapture : ICookieCapture
         }
         catch (Exception ex)
         {
-            return new CookieCaptureResult.Failed($"Cookie capture failed to allocate user-data dir: {ex.Message}");
+            return new CookieCaptureResult.Failed(CookieCaptureFailureKind.UserDataDirFailed, ex.Message);
         }
 
         // Sweep siblings AFTER allocation so we don't accidentally race ourselves out of the
@@ -85,7 +85,7 @@ public sealed class CookieCapture : ICookieCapture
         }
         catch (Exception ex)
         {
-            return new CookieCaptureResult.Failed($"Cookie capture failed to start: {ex.Message}");
+            return new CookieCaptureResult.Failed(CookieCaptureFailureKind.StartFailed, ex.Message);
         }
         finally
         {

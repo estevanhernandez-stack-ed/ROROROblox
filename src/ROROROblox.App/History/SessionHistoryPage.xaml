@@ -124,7 +124,7 @@
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Visibility="Collapsed">
-                    <!-- Text is set in code from SessionHistoryStatus.Placeholder — an empty
+                    <!-- Text is set in code from CoreMessageCatalog.SessionHistory.Placeholder — an empty
                          history and an unreadable one say different things (F-038). The literals
                          that used to live here were the "no launches yet" arm, which was shown for
                          both. TextWrapping matters now: the unreadable arm is two sentences. -->

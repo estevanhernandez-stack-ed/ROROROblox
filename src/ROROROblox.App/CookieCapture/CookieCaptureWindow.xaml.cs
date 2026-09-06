@@ -40,7 +40,7 @@ internal partial class CookieCaptureWindow : Window
     // so the caller can tell "login never took" apart from a deliberate cancel.
     private string? _rejectedCookie;
     private long _rejectedAtTicks;
-    private string? _pendingFailure;
+    private CookieCaptureResult.Failed? _pendingFailure;
     private System.Windows.Threading.DispatcherTimer? _debounceRetryTimer;
 
     public CookieCaptureWindow(string userDataDir, IRobloxApi api, ILogger<CookieCaptureWindow> log)
@@ -86,12 +86,12 @@ internal partial class CookieCaptureWindow : Window
         catch (WebView2RuntimeNotFoundException)
         {
             _log.LogWarning("WebView2 runtime missing.");
-            CompleteAndClose(new CookieCaptureResult.Failed("WebView2 runtime missing"));
+            CompleteAndClose(new CookieCaptureResult.Failed(CookieCaptureFailureKind.WebView2RuntimeMissing));
         }
         catch (Exception ex)
         {
             _log.LogError(ex, "WebView2 init failed.");
-            CompleteAndClose(new CookieCaptureResult.Failed($"WebView2 init failed: {ex.Message}"));
+            CompleteAndClose(new CookieCaptureResult.Failed(CookieCaptureFailureKind.WebView2InitFailed, ex.Message));
         }
     }
 
@@ -204,7 +204,8 @@ internal partial class CookieCaptureWindow : Window
                 _log.LogWarning(
                     "CookieCapture: cookie rejected by Roblox API on path={Path} — staying open for the login to complete (2FA / partial login).",
                     uri.AbsolutePath);
-                RearmAfterRejection(roblosec!.Value, "Roblox didn't accept the login session.");
+                RearmAfterRejection(roblosec!.Value,
+                    new CookieCaptureResult.Failed(CookieCaptureFailureKind.LoginRejected));
             }
             catch (Exception ex)
             {
@@ -212,13 +213,14 @@ internal partial class CookieCaptureWindow : Window
                 // cookie above: closing mid-2FA reproduces the original bug on a different
                 // exception type, so re-arm and let the close-time verdict carry the message.
                 _log.LogError(ex, "CookieCapture: profile fetch failed — staying open for a later re-check.");
-                RearmAfterRejection(roblosec!.Value, $"Profile fetch failed: {ex.Message}");
+                RearmAfterRejection(roblosec!.Value,
+                    new CookieCaptureResult.Failed(CookieCaptureFailureKind.ProfileFetchFailed, ex.Message));
             }
         }
         catch (Exception ex)
         {
             _log.LogError(ex, "CookieCapture: handler threw on trigger={Trigger}.", trigger);
-            CompleteAndClose(new CookieCaptureResult.Failed($"Cookie capture failed: {ex.Message}"));
+            CompleteAndClose(new CookieCaptureResult.Failed(CookieCaptureFailureKind.CaptureFailed, ex.Message));
         }
     }
 
@@ -231,7 +233,7 @@ internal partial class CookieCaptureWindow : Window
     /// the top of TryCaptureAsync. Re-reading now picks up a cookie that changed mid-flight;
     /// an unchanged value stops at the debounce, so this cannot spin.
     /// </summary>
-    private void RearmAfterRejection(string rejectedCookieValue, string pendingFailure)
+    private void RearmAfterRejection(string rejectedCookieValue, CookieCaptureResult.Failed pendingFailure)
     {
         _rejectedCookie = rejectedCookieValue;
         _rejectedAtTicks = Environment.TickCount64;
@@ -277,7 +279,7 @@ internal partial class CookieCaptureWindow : Window
         // pretending the user changed their mind.
         _tcs.TrySetResult(_pendingFailure is null
             ? new CookieCaptureResult.Cancelled()
-            : new CookieCaptureResult.Failed(_pendingFailure));
+            : _pendingFailure);
     }
 
     private void CompleteAndClose(CookieCaptureResult result)

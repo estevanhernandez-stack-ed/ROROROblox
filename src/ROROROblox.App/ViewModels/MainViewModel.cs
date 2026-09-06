@@ -13,6 +13,7 @@ using ROROROblox.App.Discord;
 using ROROROblox.App.History;
 using ROROROblox.App.Friends;
 using ROROROblox.App.JoinByLink;
+using ROROROblox.App.Localization;
 using ROROROblox.App.Logging;
 using ROROROblox.App.Modals;
 using ROROROblox.App.Games;
@@ -1449,11 +1450,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     break;
                 case CookieCaptureResult.Cancelled:
                     return;
-                case CookieCaptureResult.Failed failed when failed.Message.Contains("WebView2", StringComparison.OrdinalIgnoreCase):
+                case CookieCaptureResult.Failed { Kind: CookieCaptureFailureKind.WebView2RuntimeMissing or CookieCaptureFailureKind.WebView2InitFailed }:
                     ShowWebView2NotInstalledModal();
                     break;
                 case CookieCaptureResult.Failed failed:
-                    StatusBanner = failed.Message;
+                    StatusBanner = CoreMessageCatalog.For(failed);
                     break;
             }
         }
@@ -1744,14 +1745,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     summary.InGameSinceUtc = null;
                     summary.StatusText = string.Empty;                 // copy comes from SecondaryStatusText
                     return 0;
-                case LaunchResult.Failed failed when failed.Message.Contains("Roblox does not appear to be installed", StringComparison.OrdinalIgnoreCase):
+                case LaunchResult.Failed { Kind: LaunchFailureKind.RobloxNotInstalled }:
                     _log.LogWarning("Roblox not installed at launch time for account {AccountId}", summary.Id);
                     summary.StatusText = "Roblox not installed.";
                     ShowRobloxNotInstalledModal();
                     return 0;
                 case LaunchResult.Failed failed:
-                    _log.LogWarning("Launch failed for account {AccountId}: {Message}", summary.Id, failed.Message);
-                    summary.StatusText = failed.Message;
+                    _log.LogWarning("Launch failed for account {AccountId}: {Kind} {Detail}", summary.Id, failed.Kind, failed.Detail);
+                    summary.StatusText = CoreMessageCatalog.For(failed);
                     return 0;
                 default:
                     return 0;
@@ -3557,11 +3558,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     // SessionLimited rows, where "still expired" would be the wrong diagnosis.
                     StatusBanner = $"Re-authentication cancelled — {summary.RenderName}'s saved session is unchanged.";
                     return;
-                case CookieCaptureResult.Failed failed when failed.Message.Contains("WebView2", StringComparison.OrdinalIgnoreCase):
+                case CookieCaptureResult.Failed { Kind: CookieCaptureFailureKind.WebView2RuntimeMissing or CookieCaptureFailureKind.WebView2InitFailed }:
                     ShowWebView2NotInstalledModal();
                     return;
                 case CookieCaptureResult.Failed failed:
-                    StatusBanner = $"Re-authentication didn't complete: {failed.Message}";
+                    StatusBanner = $"Re-authentication didn't complete: {CoreMessageCatalog.For(failed)}";
                     return;
             }
 

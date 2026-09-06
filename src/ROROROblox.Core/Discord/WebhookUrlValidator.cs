@@ -13,12 +13,15 @@ public enum WebhookUrlKind
 }
 
 /// <summary>
-/// What the paste field decided, and what to tell the user about it. <see cref="Message"/> never
-/// echoes the rejected paste — this string renders in Settings and gets screenshotted into a clan
-/// channel when someone asks for help, and the paste most worth diagnosing (a bot token) is
-/// exactly the one most worth not repeating.
+/// What the paste field decided. The sentence shown for each kind is the App's
+/// (<c>CoreMessageCatalog</c>), per the Core string boundary
+/// (docs/superpowers/specs/2026-09-05-core-string-boundary-design.md) — and that sentence
+/// must never echo the rejected paste: it renders in Settings and gets screenshotted into a
+/// clan channel when someone asks for help, and the paste most worth diagnosing (a bot token)
+/// is exactly the one most worth not repeating. (Until 2026-09-05 this record carried the
+/// composed <c>Message</c> itself.)
 /// </summary>
-public sealed record WebhookUrlVerdict(WebhookUrlKind Kind, string? NormalizedUrl, string Message);
+public sealed record WebhookUrlVerdict(WebhookUrlKind Kind, string? NormalizedUrl);
 
 /// <summary>
 /// Names what the user actually pasted. Nobody gets a webhook URL right the first time, and
@@ -37,7 +40,7 @@ public static partial class WebhookUrlValidator
     {
         if (string.IsNullOrWhiteSpace(pasted))
         {
-            return new WebhookUrlVerdict(WebhookUrlKind.Empty, null, "");
+            return new WebhookUrlVerdict(WebhookUrlKind.Empty, null);
         }
 
         var text = pasted.Trim();
@@ -45,28 +48,24 @@ public static partial class WebhookUrlValidator
         var match = WebhookRegex().Match(text);
         if (match.Success)
         {
-            return new WebhookUrlVerdict(WebhookUrlKind.Valid, match.Value, "");
+            return new WebhookUrlVerdict(WebhookUrlKind.Valid, match.Value);
         }
 
         if (text.Contains("discord.gg/", StringComparison.OrdinalIgnoreCase))
         {
-            return new WebhookUrlVerdict(WebhookUrlKind.ServerInvite, null,
-                "That's a server invite. You need a webhook — in Discord: Server Settings → Integrations → Webhooks → New Webhook, then Copy Webhook URL.");
+            return new WebhookUrlVerdict(WebhookUrlKind.ServerInvite, null);
         }
 
         if (text.Contains("/channels/", StringComparison.OrdinalIgnoreCase))
         {
-            return new WebhookUrlVerdict(WebhookUrlKind.ChannelLink, null,
-                "That's a link to the channel, not a webhook. Same channel, different button: Server Settings → Integrations → Webhooks → New Webhook.");
+            return new WebhookUrlVerdict(WebhookUrlKind.ChannelLink, null);
         }
 
         if (BotTokenRegex().IsMatch(text))
         {
-            return new WebhookUrlVerdict(WebhookUrlKind.BotToken, null,
-                "That looks like a bot token — don't share that anywhere, and reset it if you pasted it somewhere public. A webhook URL starts with discord.com/api/webhooks/.");
+            return new WebhookUrlVerdict(WebhookUrlKind.BotToken, null);
         }
 
-        return new WebhookUrlVerdict(WebhookUrlKind.Unrecognized, null,
-            "That doesn't look like a webhook URL. It should start with discord.com/api/webhooks/ — Server Settings → Integrations → Webhooks → Copy Webhook URL.");
+        return new WebhookUrlVerdict(WebhookUrlKind.Unrecognized, null);
     }
 }

@@ -2,6 +2,8 @@ using ROROROblox.Core.Discord;
 
 namespace ROROROblox.Tests.Discord;
 
+using CoreMessageCatalog = ROROROblox.App.Localization.CoreMessageCatalog;
+
 public class WebhookUrlValidatorTests
 {
     [Fact]
@@ -40,8 +42,9 @@ public class WebhookUrlValidatorTests
         var verdict = WebhookUrlValidator.Inspect("https://discord.gg/abc123");
 
         Assert.Equal(WebhookUrlKind.ServerInvite, verdict.Kind);
-        Assert.Contains("invite", verdict.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Integrations", verdict.Message, StringComparison.OrdinalIgnoreCase);
+        var message = CoreMessageCatalog.For(verdict.Kind);
+        Assert.Contains("invite", message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Integrations", message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -50,7 +53,7 @@ public class WebhookUrlValidatorTests
         var verdict = WebhookUrlValidator.Inspect("https://discord.com/channels/123456/789012");
 
         Assert.Equal(WebhookUrlKind.ChannelLink, verdict.Kind);
-        Assert.Contains("not a webhook", verdict.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("not a webhook", CoreMessageCatalog.For(verdict.Kind), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -60,7 +63,7 @@ public class WebhookUrlValidatorTests
         var verdict = WebhookUrlValidator.Inspect("EXAMPLE-NOT-A-REAL-TOKEN-00000.EXAMPL.EXAMPLE-NOT-A-REAL-TOKEN-00000");
 
         Assert.Equal(WebhookUrlKind.BotToken, verdict.Kind);
-        Assert.Contains("don't share", verdict.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("don't share", CoreMessageCatalog.For(verdict.Kind), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -68,12 +71,14 @@ public class WebhookUrlValidatorTests
     {
         // The message renders in Settings and gets screenshotted into a clan channel when someone
         // asks for help. Echoing the rejected paste would put a credential in that screenshot —
-        // the bot-token case above is exactly the paste most worth NOT repeating.
+        // the bot-token case above is exactly the paste most worth NOT repeating. Since the
+        // boundary move the guarantee is structural (the catalog's sentence is fixed per kind and
+        // never sees the paste), but the contract is worth stating where it is depended on.
         const string secretish = "EXAMPLE-NOT-A-REAL-TOKEN-11111.EXAMPL.EXAMPLE-NOT-A-REAL-TOKEN-11111";
 
         var verdict = WebhookUrlValidator.Inspect(secretish);
 
-        Assert.DoesNotContain(secretish, verdict.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(secretish, CoreMessageCatalog.For(verdict.Kind), StringComparison.OrdinalIgnoreCase);
         Assert.Null(verdict.NormalizedUrl);
     }
 
