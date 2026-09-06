@@ -1,5 +1,10 @@
 # Microsoft Store listing copy — RORORO
 
+> **Translations (wave 1, added 2026-09-05):** this file is the English source of truth; the
+> paste-ready translations live beside it as `listing-copy-fr.md`, `-de`, `-ru`, `-pt-br`,
+> `-pl`, `-es` (per `localization-plan.md`). An edit to a block here owes the same edit to all
+> six — the Phase 2 listing audit covers them together.
+
 > **Stake:** v1.1.0.0 was rejected under clause **10.1.1.1 Inaccurate Representation** for containing the name of another product (Roblox) in the Product Name field. The fix was to rename the product to **RORORO** (drops the `blox` suffix entirely; keeps the stutter that ties to the icon and the brand DNA). v1.1.2.0 ships with the new name across every user-visible surface; nominative use of "Roblox" in the description body is permitted under fair-use precedent and is clearly disclaimed.
 
 ## Pre-submission checklist (do this BEFORE Partner Center)

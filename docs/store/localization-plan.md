@@ -57,9 +57,14 @@ language at first (the UI is English regardless — honest either way).
   converts), the Nordics (four languages, 25 installs, best English proficiency in the
   data), Thai/Vietnamese/Indonesian/zh-TW (wave 2 if wave 1 moves numbers; zh-TW's 8 is
   first in line). Ukrainian (uk, 7 installs) alongside ru is a goodwill call left to Este.
-- Translate from `listing-copy.md`'s three blocks (short description, long description,
-  features) — the audited-every-release surfaces. Keep the trademark disclaimer in every
-  language; it is a certification surface.
+- **Translations drafted 2026-09-05** — `listing-copy-<code>.md` beside `listing-copy.md`,
+  one per wave-1 language, in Partner Center field order (short description, long
+  description, 17 features, v1.25 what's-new, copyright, trademark), every capped field
+  verified against its limit. The trademark disclaimer is in every language (certification
+  surface), product nouns stay English, and each long description states plainly that the
+  app's interface is currently English — the never-lie rule applied to listings. What
+  remains is Este's Partner Center pass: add each language, paste its file's blocks, submit
+  (listing-only submission, no new package).
 - **Standing per-release cost:** each `whats-new-X.Y.Z.0.md` must be translated for every
   listing language at Phase 2 time, and Phase 7 pastes each language's block. The Phase 2
   listing audit covers the translated listings the same as the English one.
