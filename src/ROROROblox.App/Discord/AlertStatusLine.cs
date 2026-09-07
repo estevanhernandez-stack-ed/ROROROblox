@@ -1,4 +1,7 @@
-namespace ROROROblox.Core.Discord;
+using ROROROblox.App.Localization;
+using ROROROblox.Core.Discord;
+
+namespace ROROROblox.App.Discord;
 
 /// <summary>
 /// One honest sentence about whether alerts will actually reach the user.
@@ -14,20 +17,17 @@ namespace ROROROblox.Core.Discord;
 /// is the substance of the feature's honesty, so it belongs in a table of cases a test can pin
 /// rather than in a chain of UI branches nobody reads again.
 /// </para>
+/// <para>
+/// WHY IT LIVES IN THE APP (Core string boundary, localization Phase D, 2026-09-07). Every arm is
+/// a sentence a viewer reads, and its only caller is the App (the Settings alerts line). It was raw
+/// English prose in Core; each arm resolves from resx now (<see cref="Loc"/>), so a live culture
+/// toggle re-narrates it. The dynamic "sending to X and Y" arm joins localized channel fragments
+/// with a localized connector; a channel's own name (<c>#alerts</c>) and the push provider name are
+/// data and pass through verbatim. Product names (Pushover, ntfy, Discord) stay English.
+/// </para>
 /// </summary>
 public static class AlertStatusLine
 {
-    /// <summary>
-    /// <paramref name="mineWebhookRejected"/> / <paramref name="clanWebhookRejected"/> come from
-    /// <c>AlertDispatcher</c> — a webhook that returned 404. That state has NO other discovery
-    /// path: Discord never tells the user they deleted it, the alerts fall back to desktop, and
-    /// everything looks configured. It has to be the loudest thing this line can say.
-    /// <para>
-    /// <paramref name="mineChannelName"/> is the channel a working webhook reports posting to
-    /// (from <c>WebhookProbe</c>), so the user can catch a clan webhook pasted into the personal
-    /// slot before the first alert lands in the wrong place.
-    /// </para>
-    /// </summary>
     /// <summary>
     /// A composed status sentence and whether it reports a FAILURE (F-094).
     /// <para>
@@ -38,10 +38,9 @@ public static class AlertStatusLine
     /// </para>
     /// <para>
     /// Severity travels with the sentence rather than being re-derived by the caller, which would
-    /// mean the arm list existing in two places. The shape is copied from
-    /// <c>ThemeStatusSummary.Line</c> rather than invented. NO GLYPH HERE: the triangle belongs to
-    /// the view, for the reason <c>MainWindow.xaml</c> already records about the compat banner —
-    /// presentation glyphs do not belong in a composer's result.
+    /// mean the arm list existing in two places. NO GLYPH HERE: the triangle belongs to the view,
+    /// for the reason <c>MainWindow.xaml</c> already records about the compat banner — presentation
+    /// glyphs do not belong in a composer's result.
     /// </para>
     /// </summary>
     public readonly record struct Line(bool IsFailure, string Text);
@@ -72,24 +71,24 @@ public static class AlertStatusLine
 
         if (routed.All(d => d == AlertDestination.None))
         {
-            return Info("No alerts yet. Pick what you want to hear about above.");
+            return Info(Loc.Get("AlertStatus_NoAlertsYet"));
         }
 
         // A dead webhook outranks everything else here. The user believes alerts are configured,
         // the routing dropdown still says "My channel," and nothing is arriving.
         if (mineWebhookRejected && routed.Contains(AlertDestination.Mine))
         {
-            return Failure("Your webhook was deleted, so nothing is reaching your phone. Alerts are falling back to desktop only — make a new webhook and paste it below.");
+            return Failure(Loc.Get("AlertStatus_MineWebhookDeleted"));
         }
 
         if (clanWebhookRejected && routed.Contains(AlertDestination.Clan))
         {
-            return Failure("The clan webhook was deleted, so nothing is reaching that channel. Alerts are falling back to desktop only.");
+            return Failure(Loc.Get("AlertStatus_ClanWebhookDeleted"));
         }
 
         if (phoneRejected && routed.Contains(AlertDestination.Phone))
         {
-            return Failure("Your push service rejected the saved key, so nothing is reaching your phone. Alerts are falling back to desktop only — check the key below and save it again.");
+            return Failure(Loc.Get("AlertStatus_PhoneRejected"));
         }
 
         var needsMine = routed.Contains(AlertDestination.Mine) && string.IsNullOrWhiteSpace(config.MineWebhookUrl);
@@ -100,7 +99,7 @@ public static class AlertStatusLine
         {
             // Same failure class as the missing-webhook arm below: nothing is broken, the user
             // simply believes they finished configuring and did not.
-            return Failure("You've routed alerts to your phone but haven't finished setting up the push service below, so they'll only show on this PC.");
+            return Failure(Loc.Get("AlertStatus_PhoneUnfinished"));
         }
 
         if (needsMine || needsClan)
@@ -108,37 +107,40 @@ public static class AlertStatusLine
             // A failure too, and the least obvious of the three: nothing is broken, the user simply
             // believes they finished configuring and did not. The outcome is identical — alerts are
             // not arriving where they think they are.
-            return Failure("You've routed alerts to a Discord channel but haven't pasted a webhook, so they'll only show on this PC — which won't help when you're away from it.");
+            return Failure(Loc.Get("AlertStatus_WebhookMissing"));
         }
 
         if (routed.All(d => d is AlertDestination.None or AlertDestination.Local))
         {
             // NOT a failure: this is exactly what the routing dropdowns say, so it is a report of a
             // choice rather than a report of a problem.
-            return Info("Desktop only. You'll see these at the PC, but nothing will reach your phone.");
+            return Info(Loc.Get("AlertStatus_DesktopOnly"));
         }
 
         // Name every channel actually in use. With two webhooks configured, "Sending to #alerts"
         // would be a true statement that hides half of where things are going — and the half it
-        // would hide is the clan channel, the one with an audience.
+        // would hide is the clan channel, the one with an audience. A channel's own name is data;
+        // the fallbacks and the connector are localized.
         var channels = new List<string>();
         if (routed.Contains(AlertDestination.Mine))
         {
-            channels.Add(mineChannelName is { Length: > 0 } ? $"#{mineChannelName}" : "your channel");
+            channels.Add(mineChannelName is { Length: > 0 } ? $"#{mineChannelName}" : Loc.Get("AlertStatus_Channel_Mine"));
         }
 
         if (routed.Contains(AlertDestination.Clan))
         {
-            channels.Add(clanChannelName is { Length: > 0 } ? $"#{clanChannelName}" : "the clan channel");
+            channels.Add(clanChannelName is { Length: > 0 } ? $"#{clanChannelName}" : Loc.Get("AlertStatus_Channel_Clan"));
         }
 
         if (routed.Contains(AlertDestination.Phone))
         {
-            channels.Add(phoneProviderName is { Length: > 0 } ? $"your phone ({phoneProviderName})" : "your phone");
+            channels.Add(phoneProviderName is { Length: > 0 }
+                ? Loc.Format("AlertStatus_Channel_PhoneNamed", phoneProviderName)
+                : Loc.Get("AlertStatus_Channel_Phone"));
         }
 
         return Info(channels.Count == 0
-            ? "Sending to your Discord channel."
-            : $"Sending to {string.Join(" and ", channels)}.");
+            ? Loc.Get("AlertStatus_SendingToDiscord")
+            : Loc.Format("AlertStatus_SendingToChannels", string.Join(Loc.Get("AlertStatus_ListConnector"), channels)));
     }
 }
