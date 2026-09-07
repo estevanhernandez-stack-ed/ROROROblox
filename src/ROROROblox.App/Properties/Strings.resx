@@ -2278,4 +2278,24 @@
     <value>{0} accounts idle &gt; {1}m</value>
     <comment>Idle-strip; many-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment>
   </data>
+  <data name="Shell_MemFooter_None" xml:space="preserve">
+    <value>No Roblox clients running</value>
+    <comment>Memory footer; composed by MemoryChipFormatter. "Roblox" stays English (localized Phase D step 3)</comment>
+  </data>
+  <data name="Shell_MemFooter_Clients_one" xml:space="preserve">
+    <value>{0} Roblox client running</value>
+    <comment>Memory footer; via Loc.Plural (localized Phase D step 3)</comment>
+  </data>
+  <data name="Shell_MemFooter_Clients_other" xml:space="preserve">
+    <value>{0} Roblox clients running</value>
+    <comment>Memory footer; via Loc.Plural (localized Phase D step 3)</comment>
+  </data>
+  <data name="Shell_MemFooter_Clients_few" xml:space="preserve">
+    <value>{0} Roblox clients running</value>
+    <comment>Memory footer; few-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment>
+  </data>
+  <data name="Shell_MemFooter_Clients_many" xml:space="preserve">
+    <value>{0} Roblox clients running</value>
+    <comment>Memory footer; many-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment>
+  </data>
 </root>

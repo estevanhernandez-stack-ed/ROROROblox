@@ -42,4 +42,17 @@ public class ShellLocalizationTests
             Assert.Equal("3 accounts idle > 5m", IdleSummary.Format(3, 5));
         });
     }
+
+    [Fact]
+    public void MemoryFooter_ZeroOneMany_Localized()
+    {
+        InEnglish(() =>
+        {
+            Assert.Equal("No Roblox clients running", MemoryChipFormatter.FormatFooter(0, 0, false));
+            Assert.Equal("1 Roblox client running", MemoryChipFormatter.FormatFooter(1, 0, false));
+            Assert.Equal("3 Roblox clients running", MemoryChipFormatter.FormatFooter(3, 0, false));
+            Assert.Equal("2 Roblox clients running · 5.0 GB",
+                MemoryChipFormatter.FormatFooter(2, 5L * 1024 * 1024 * 1024, false));
+        });
+    }
 }
