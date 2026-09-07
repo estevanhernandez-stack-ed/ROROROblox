@@ -2086,4 +2086,24 @@
     <value>Roblox {0} {1}. We've tested up to {2}. Multi-instance might not work — let us know at https://github.com/estevanhernandez-stack-ed/ROROROblox/issues.</value>
     <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
   </data>
+  <data name="SessionHistoryRow_UnknownAccount" xml:space="preserve">
+    <value>Unknown account</value>
+    <comment>Row accessibility name; composed by SessionHistoryRowName (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="SessionHistoryRow_UnknownGame" xml:space="preserve">
+    <value>(unknown game)</value>
+    <comment>Row accessibility name; composed by SessionHistoryRowName (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="SessionHistoryRow_PrivateServer" xml:space="preserve">
+    <value>private server</value>
+    <comment>Row accessibility name; composed by SessionHistoryRowName (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="SessionHistoryRow_Started" xml:space="preserve">
+    <value>started {0}</value>
+    <comment>Row accessibility name; composed by SessionHistoryRowName (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="SessionHistoryRow_Saved" xml:space="preserve">
+    <value>saved</value>
+    <comment>Row accessibility name; composed by SessionHistoryRowName (localized Phase D 2026-09-07)</comment>
+  </data>
 </root>
