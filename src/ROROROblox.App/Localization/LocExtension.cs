@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Markup;
 
@@ -21,6 +22,16 @@ public sealed class LocExtension : MarkupExtension
 
     public override object ProvideValue(IServiceProvider serviceProvider)
     {
+        // A Binding is illegal in a Setter.Value (WPF throws at load). For those — conditional
+        // style/trigger copy — hand back the resolved string instead: correct at load under the
+        // current culture, just not live-toggled (a small, bounded set). Everything else gets the
+        // live binding.
+        if (serviceProvider?.GetService(typeof(IProvideValueTarget)) is IProvideValueTarget target
+            && target.TargetObject is Setter)
+        {
+            return Loc.Get(Key);
+        }
+
         var binding = new Binding($"[{Key}]")
         {
             Source = TranslationSource.Instance,

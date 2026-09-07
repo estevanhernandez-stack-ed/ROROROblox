@@ -1,9 +1,9 @@
 <Window x:Class="ROROROblox.App.Modals.EdgeRemediationWindow"
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:loc="clr-namespace:ROROROblox.App.Properties"
+        xmlns:loc="clr-namespace:ROROROblox.App.Localization"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="{x:Static loc:Strings.EdgeRemediationWindow_ThemeContrast}"
+        Title="{loc:Loc EdgeRemediationWindow_ThemeContrast}"
         SizeToContent="Height" Width="520"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
@@ -29,7 +29,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0"
-                   Text="{x:Static loc:Strings.EdgeRemediationWindow_WeChangedOneColourIn}"
+                   Text="{loc:Loc EdgeRemediationWindow_WeChangedOneColourIn}"
                    FontSize="18" FontWeight="Bold"
                    TextWrapping="Wrap"
                    Foreground="{DynamicResource CyanBrush}" />
@@ -50,7 +50,7 @@
                 <Border x:Name="AuthoredSwatch"
                         Width="160" Height="34"
                         BorderThickness="1" CornerRadius="4">
-                    <TextBlock Text="{x:Static loc:Strings.EdgeRemediationWindow_YourTheme}"
+                    <TextBlock Text="{loc:Loc EdgeRemediationWindow_YourTheme}"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                FontSize="{DynamicResource BodyFontSize}"
                                Foreground="{DynamicResource MutedTextBrush}" />
@@ -66,7 +66,7 @@
                 <Border x:Name="DerivedSwatch"
                         Width="160" Height="34"
                         BorderThickness="1" CornerRadius="4">
-                    <TextBlock Text="{x:Static loc:Strings.EdgeRemediationWindow_WithTheFix}"
+                    <TextBlock Text="{loc:Loc EdgeRemediationWindow_WithTheFix}"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                FontSize="{DynamicResource BodyFontSize}"
                                Foreground="{DynamicResource MutedTextBrush}" />
@@ -84,7 +84,7 @@
              dropdowns and password fields all still draw their own edge from your theme's divider.
              Promising more than shipped is the one thing a consent dialog cannot do. -->
         <TextBlock Grid.Row="3"
-                   Text="{x:Static loc:Strings.EdgeRemediationWindow_SeparatorsCardEdgesAndRow}"
+                   Text="{loc:Loc EdgeRemediationWindow_SeparatorsCardEdgesAndRow}"
                    TextWrapping="Wrap"
                    FontSize="{DynamicResource BodyFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
@@ -94,12 +94,12 @@
              that changes somebody's work for them — the same reasoning as the Stop all confirm,
              where Cancel is default. The recommended action is one deliberate click away. -->
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
-            <Button Content="{x:Static loc:Strings.EdgeRemediationWindow_KeepMyThemeAsI}"
+            <Button Content="{loc:Loc EdgeRemediationWindow_KeepMyThemeAsI}"
                     Style="{StaticResource SecondaryStrongButtonStyle}"
                     Padding="16,8" Margin="0,0,8,0"
                     IsCancel="True" IsDefault="True"
                     Click="OnKeepClick" />
-            <Button Content="{x:Static loc:Strings.EdgeRemediationWindow_UseTheReadableEdge}"
+            <Button Content="{loc:Loc EdgeRemediationWindow_UseTheReadableEdge}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Padding="16,8"
                     FontWeight="Bold"

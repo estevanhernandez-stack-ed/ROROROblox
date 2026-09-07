@@ -15,8 +15,13 @@ namespace ROROROblox.Tests;
 /// </summary>
 internal static class ResxCatalog
 {
+    // Phase C left {x:Static loc:Strings.Key}; the Phase D codemod (2026-09-07) moved these to the
+    // live-toggle form {loc:Loc Key}. Both resolve to the same catalog value; the fences accept either.
     private static readonly Regex XStaticRef =
         new(@"^\{x:Static\s+\w+:Strings\.([A-Za-z_][A-Za-z0-9_]*)\}$", RegexOptions.Compiled);
+
+    private static readonly Regex LocRef =
+        new(@"^\{\w+:Loc\s+(?:Key=)?([A-Za-z_][A-Za-z0-9_]*)\}$", RegexOptions.Compiled);
 
     private static readonly Lazy<IReadOnlyDictionary<string, string>> Neutral = new(Load);
 
@@ -34,6 +39,7 @@ internal static class ResxCatalog
         if (attrValue is null) return null;
         var trimmed = attrValue.Trim();
         var m = XStaticRef.Match(trimmed);
+        if (!m.Success) m = LocRef.Match(trimmed);
         if (m.Success)
         {
             return Entries.TryGetValue(m.Groups[1].Value, out var v) ? v : null;
@@ -43,9 +49,14 @@ internal static class ResxCatalog
         return trimmed.StartsWith("{}") ? trimmed[2..] : attrValue;
     }
 
-    /// <summary>True when the value is an x:Static reference into the Strings catalog.</summary>
-    public static bool IsLocalizedRef(string? attrValue) =>
-        attrValue is not null && XStaticRef.IsMatch(attrValue.Trim());
+    /// <summary>True when the value is a localized reference into the catalog — either the legacy
+    /// <c>{x:Static loc:Strings.Key}</c> or the current <c>{loc:Loc Key}</c> form.</summary>
+    public static bool IsLocalizedRef(string? attrValue)
+    {
+        if (attrValue is null) return false;
+        var t = attrValue.Trim();
+        return XStaticRef.IsMatch(t) || LocRef.IsMatch(t);
+    }
 
     private static IReadOnlyDictionary<string, string> Load()
     {

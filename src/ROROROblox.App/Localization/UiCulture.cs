@@ -89,7 +89,8 @@ internal static class UiCulture
             if (string.IsNullOrWhiteSpace(saved) || !HasCatalog(saved)) return;
             var culture = CultureInfo.GetCultureInfo(saved);
             Thread.CurrentThread.CurrentUICulture = culture;
-            CultureInfo.DefaultThreadCurrentUICulture = culture;
+            CultureInfo.DefaultThreadCurrentUICulture = culture; // startup owns the process default
+            TranslationSource.Instance.CurrentCulture = culture;  // so {loc:Loc} renders it from the first frame
         }
         catch
         {

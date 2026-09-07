@@ -1,13 +1,13 @@
 <ui:FluentWindow x:Class="ROROROblox.App.MainWindow"
                  x:ClassModifier="internal"
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                 xmlns:loc="clr-namespace:ROROROblox.App.Properties"
+                 xmlns:loc="clr-namespace:ROROROblox.App.Localization"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:vm="clr-namespace:ROROROblox.App.ViewModels"
                  xmlns:app="clr-namespace:ROROROblox.App"
                  xmlns:controls="clr-namespace:ROROROblox.App.Controls"
-                 Title="{x:Static loc:Strings.MainWindow_Rororo}"
+                 Title="{loc:Loc MainWindow_Rororo}"
                  Height="600" Width="900"
                  MinHeight="400" MinWidth="860"
                  WindowStartupLocation="CenterScreen"
@@ -147,7 +147,7 @@
                                 CommandParameter="{Binding}"
                                 Padding="7,3" Margin="0,0,6,0"
                                 FontSize="{DynamicResource BodyFontSize}"
-                                ToolTip="{x:Static loc:Strings.MainWindow_RecycleCloseAndRelaunchThis}">
+                                ToolTip="{loc:Loc MainWindow_RecycleCloseAndRelaunchThis}">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource WarningButtonStyle}">
                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -170,12 +170,12 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Button Style="{StaticResource AccentActionButtonStyle}" Content="{x:Static loc:Strings.MainWindow_Stop}"
+                        <Button Style="{StaticResource AccentActionButtonStyle}" Content="{loc:Loc MainWindow_Stop}"
                                 Command="{Binding DataContext.StopAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="10,4"
                                 FontSize="{DynamicResource MetaFontSize}"
-                                ToolTip="{x:Static loc:Strings.MainWindow_CloseTheRobloxWindowFor}"
+                                ToolTip="{loc:Loc MainWindow_CloseTheRobloxWindowFor}"
                                 Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}" />
                     </StackPanel>
                 </Grid>
@@ -245,10 +245,10 @@
                      is the row's data context (AccountSummary). -->
                 <Border.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Header="{x:Static loc:Strings.MainWindow_Rename}"
+                        <MenuItem Header="{loc:Loc MainWindow_Rename}"
                                   Command="{Binding Data.RenameItemCommand, Source={StaticResource VmProxy}}"
                                   CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
-                        <MenuItem Header="{x:Static loc:Strings.MainWindow_ResetName}"
+                        <MenuItem Header="{loc:Loc MainWindow_ResetName}"
                                   Command="{Binding Data.ResetItemNameCommand, Source={StaticResource VmProxy}}"
                                   CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
                             <MenuItem.Style>
@@ -271,13 +271,13 @@
                              Header text via a DataTrigger on the row's JoinViaFriend instead. -->
                         <MenuItem Command="{Binding Data.ToggleJoinViaFriendCommand, Source={StaticResource VmProxy}}"
                                   CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                  ToolTip="{x:Static loc:Strings.MainWindow_SquadLaunchesRouteThisAccount}">
+                                  ToolTip="{loc:Loc MainWindow_SquadLaunchesRouteThisAccount}">
                             <MenuItem.Style>
                                 <Style TargetType="MenuItem">
-                                    <Setter Property="Header" Value="{x:Static loc:Strings.MainWindow_JoinViaFriendChallengeProne}" />
+                                    <Setter Property="Header" Value="{loc:Loc MainWindow_JoinViaFriendChallengeProne}" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding PlacementTarget.DataContext.JoinViaFriend, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Value="True">
-                                            <Setter Property="Header" Value="{x:Static loc:Strings.MainWindow_JoinViaFriendChallengeProne_2}" />
+                                            <Setter Property="Header" Value="{loc:Loc MainWindow_JoinViaFriendChallengeProne_2}" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -291,13 +291,13 @@
                              themed MenuItem only draws a glyph when IsCheckable="True"). -->
                         <MenuItem Command="{Binding Data.ToggleAlertsMutedCommand, Source={StaticResource VmProxy}}"
                                   CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                  ToolTip="{x:Static loc:Strings.MainWindow_StopDiscordAlertsForThis}">
+                                  ToolTip="{loc:Loc MainWindow_StopDiscordAlertsForThis}">
                             <MenuItem.Style>
                                 <Style TargetType="MenuItem">
-                                    <Setter Property="Header" Value="{x:Static loc:Strings.MainWindow_MuteDiscordAlerts}" />
+                                    <Setter Property="Header" Value="{loc:Loc MainWindow_MuteDiscordAlerts}" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding PlacementTarget.DataContext.AlertsMuted, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Value="True">
-                                            <Setter Property="Header" Value="{x:Static loc:Strings.MainWindow_MutedNoDiscordAlerts}" />
+                                            <Setter Property="Header" Value="{loc:Loc MainWindow_MutedNoDiscordAlerts}" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -312,11 +312,11 @@
                         <!-- F-045. The glyph STAYS — the campaign ruling is that the die and the clipboard are
                              thematic, not decoration. What changes is the announcement: without a name a
                              screen reader reads the emoji aloud before the words. -->
-                        <MenuItem AutomationProperties.Name="{x:Static loc:Strings.MainWindow_RerollIdentity}"
-                                  Header="{x:Static loc:Strings.MainWindow_RerollIdentity_2}"
+                        <MenuItem AutomationProperties.Name="{loc:Loc MainWindow_RerollIdentity}"
+                                  Header="{loc:Loc MainWindow_RerollIdentity_2}"
                                   Command="{Binding Data.RerollAccountCommand, Source={StaticResource VmProxy}}"
                                   CommandParameter="{Binding PlacementTarget.DataContext.Id, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                  ToolTip="{x:Static loc:Strings.MainWindow_AssignThisAccountAFresh}" />
+                                  ToolTip="{loc:Loc MainWindow_AssignThisAccountAFresh}" />
                     </ContextMenu>
                 </Border.ContextMenu>
 
@@ -376,7 +376,7 @@
                             Background="Transparent"
                             Cursor="SizeAll"
                             Tag="{Binding}"
-                            ToolTip="{x:Static loc:Strings.MainWindow_DragToReorderThisAccount}"
+                            ToolTip="{loc:Loc MainWindow_DragToReorderThisAccount}"
                             PreviewMouseLeftButtonDown="OnAccountGripMouseDown"
                             PreviewMouseMove="OnAccountGripMouseMove">
                         <TextBlock Text="&#x2630;"
@@ -527,21 +527,21 @@
                             <!-- Selection toggle for batch launches. Filled cyan = included; hollow = skipped.
                                  Defaults to selected; user toggles to exclude an account from Launch multiple
                                  / Private server runs. Persisted to accounts.dat so the choice sticks. -->
-                            <ToggleButton Style="{StaticResource SelectionDotStyle}" AutomationProperties.Name="{x:Static loc:Strings.MainWindow_IncludeThisAccountInLaunch}"
+                            <ToggleButton Style="{StaticResource SelectionDotStyle}" AutomationProperties.Name="{loc:Loc MainWindow_IncludeThisAccountInLaunch}"
                                           IsChecked="{Binding IsSelected}"
                                           Margin="12,0,4,0"
                                           VerticalAlignment="Center"
-                                          ToolTip="{x:Static loc:Strings.MainWindow_IncludeThisAccountInLaunch_2}" />
+                                          ToolTip="{loc:Loc MainWindow_IncludeThisAccountInLaunch_2}" />
                             <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                        VerticalAlignment="Center"
-                                       ToolTip="{x:Static loc:Strings.MainWindow_WhetherThisAccountJoinsLaunch}">
+                                       ToolTip="{loc:Loc MainWindow_WhetherThisAccountJoinsLaunch}">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="Text" Value="{x:Static loc:Strings.MainWindow_InBatches}" />
+                                        <Setter Property="Text" Value="{loc:Loc MainWindow_InBatches}" />
                                         <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsSelected}" Value="False">
-                                                <Setter Property="Text" Value="{x:Static loc:Strings.MainWindow_Skipped}" />
+                                                <Setter Property="Text" Value="{loc:Loc MainWindow_Skipped}" />
                                                 <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
                                                 <Setter Property="Opacity" Value="0.65" />
                                             </DataTrigger>
@@ -575,13 +575,13 @@
                                     </Style.Triggers>
                                 </Style>
                             </DockPanel.Style>
-                            <TextBlock Text="{x:Static loc:Strings.MainWindow_Follow}"
+                            <TextBlock Text="{loc:Loc MainWindow_Follow}"
                                        DockPanel.Dock="Left"
                                        FontSize="{DynamicResource MetaFontSize}"
                                        Foreground="{DynamicResource MutedTextBrush}"
                                        VerticalAlignment="Top"
                                        Margin="0,3,6,0"
-                                       ToolTip="{x:Static loc:Strings.MainWindow_ClickAChipToLaunch}" />
+                                       ToolTip="{loc:Loc MainWindow_ClickAChipToLaunch}" />
                             <ItemsControl ItemsSource="{Binding DataContext.Accounts, RelativeSource={RelativeSource AncestorType=Window}}">
                             <!-- F-119. A horizontal StackPanel gives its children infinite width and
                                  lets the container clip whatever does not fit, so it never wraps and
@@ -626,7 +626,7 @@
                                         </Button.Style>
                                         <Button.ToolTip>
                                             <TextBlock>
-                                                <Run Text="{x:Static loc:Strings.MainWindow_Follow_2}" /><Run Text="{Binding RenderName, Mode=OneWay}" /><Run Text="{x:Static loc:Strings.MainWindow_IntoTheirServer}" />
+                                                <Run Text="{loc:Loc MainWindow_Follow_2}" /><Run Text="{Binding RenderName, Mode=OneWay}" /><Run Text="{loc:Loc MainWindow_IntoTheirServer}" />
                                             </TextBlock>
                                         </Button.ToolTip>
                                         <StackPanel Orientation="Horizontal">
@@ -682,14 +682,14 @@
                                                 <!-- Remove "×". DataContext here is the tag string; reach
                                                      up to the ItemsControl whose DataContext is the row's
                                                      AccountSummary for the command. -->
-                                                <Button Style="{StaticResource GhostButtonStyle}" Content="&#x00D7;" AutomationProperties.Name="{x:Static loc:Strings.MainWindow_RemoveThisTag}"
+                                                <Button Style="{StaticResource GhostButtonStyle}" Content="&#x00D7;" AutomationProperties.Name="{loc:Loc MainWindow_RemoveThisTag}"
                                                         Command="{Binding DataContext.RemoveTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding}"
                                                         Margin="4,0,0,0"
                                                         Padding="3,0"
                                                         FontSize="{DynamicResource BodyFontSize}"
                                                         Cursor="Hand"
-                                                        ToolTip="{x:Static loc:Strings.MainWindow_RemoveThisTag_2}" />
+                                                        ToolTip="{loc:Loc MainWindow_RemoveThisTag_2}" />
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>
@@ -713,7 +713,7 @@
                                     Cursor="Hand"
                                     Tag="{Binding}"
                                     MouseLeftButtonUp="OnAddTagPlusClick"
-                                    ToolTip="{x:Static loc:Strings.MainWindow_AddALabelPs99Rcu}"
+                                    ToolTip="{loc:Loc MainWindow_AddALabelPs99Rcu}"
                                     Visibility="{Binding IsAddingTag, Converter={StaticResource InverseBoolToVisibilityConverter}}">
                                 <Border.Style>
                                     <Style TargetType="Border">
@@ -734,8 +734,8 @@
                                            HorizontalAlignment="Center"
                                            IsHitTestVisible="False" />
                             </Border>
-                            <ui:TextBox x:Name="AddTagBox" AutomationProperties.Name="{x:Static loc:Strings.MainWindow_AddATagToThis}"
-                                        PlaceholderText="{x:Static loc:Strings.MainWindow_AddTag}"
+                            <ui:TextBox x:Name="AddTagBox" AutomationProperties.Name="{loc:Loc MainWindow_AddATagToThis}"
+                                        PlaceholderText="{loc:Loc MainWindow_AddTag}"
                                         Tag="{Binding}"
                                         Width="84"
                                         MaxLength="24"
@@ -747,7 +747,7 @@
                                         LostFocus="OnAddTagBoxLostFocus"
                                         IsVisibleChanged="OnAddTagBoxVisibleChanged"
                                         Visibility="{Binding IsAddingTag, Converter={StaticResource BoolToVisibilityConverter}}"
-                                        ToolTip="{x:Static loc:Strings.MainWindow_TypeALabelPs99Rcu}" />
+                                        ToolTip="{loc:Loc MainWindow_TypeALabelPs99Rcu}" />
                         </WrapPanel>
                     </StackPanel>
 
@@ -767,7 +767,7 @@
                                 BorderBrush="{DynamicResource InteractiveEdgeBrush}"
                                 BorderThickness="1"
                                 Cursor="Hand"
-                                ToolTip="{x:Static loc:Strings.MainWindow_PickARobloxWindowTitle}"
+                                ToolTip="{loc:Loc MainWindow_PickARobloxWindowTitle}"
                                 MouseLeftButtonUp="OnCaptionColorSwatchClick"
                                 Tag="{Binding}">
                             <Border.Background>
@@ -782,7 +782,7 @@
                         <!-- Set / unset main. Magenta filled star = main; outlined grey star = not.
                              Click toggles. Lives leftmost so it groups visually with the MAIN pill on
                              the name line above. -->
-                        <Button Style="{StaticResource GhostButtonStyle}" AutomationProperties.Name="{x:Static loc:Strings.MainWindow_SetAsMainAccount}" Command="{Binding DataContext.SetMainCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        <Button Style="{StaticResource GhostButtonStyle}" AutomationProperties.Name="{loc:Loc MainWindow_SetAsMainAccount}" Command="{Binding DataContext.SetMainCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="6,4" Margin="0,0,8,0"
                                 Cursor="Hand">
@@ -790,10 +790,10 @@
                                 <TextBlock>
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="{x:Static loc:Strings.MainWindow_SetAsMainAccountDrives}" />
+                                            <Setter Property="Text" Value="{loc:Loc MainWindow_SetAsMainAccountDrives}" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsMain}" Value="True">
-                                                    <Setter Property="Text" Value="{x:Static loc:Strings.MainWindow_ThisIsYourMainAccount}" />
+                                                    <Setter Property="Text" Value="{loc:Loc MainWindow_ThisIsYourMainAccount}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -817,7 +817,7 @@
                         </Button>
 
                         <!-- Re-authenticate (visible when SessionExpired OR SessionLimited) -->
-                        <Button Content="{x:Static loc:Strings.MainWindow_Reauthenticate}"
+                        <Button Content="{loc:Loc MainWindow_Reauthenticate}"
                                 Command="{Binding DataContext.ReauthenticateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="12,6" Margin="0,0,8,0">
@@ -837,13 +837,13 @@
                         </Button>
 
                         <!-- Friends — opens per-account follow modal. Disabled when expired. -->
-                        <Button Content="{x:Static loc:Strings.MainWindow_Friends}"
+                        <Button Content="{loc:Loc MainWindow_Friends}"
                                 Command="{Binding DataContext.OpenFriendFollowCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="10,6" Margin="0,0,8,0"
                                 Style="{StaticResource SecondaryButtonStyle}"
                                 FontSize="{DynamicResource BodyFontSize}"
-                                ToolTip="{x:Static loc:Strings.MainWindow_SeeThisAccountSFriends}"
+                                ToolTip="{loc:Loc MainWindow_SeeThisAccountSFriends}"
                                 IsEnabled="{Binding SessionExpired, Converter={StaticResource InverseBoolConverter}}" />
 
                         <!-- Per-account game picker. Empty-state hint overlays the ComboBox until
@@ -851,13 +851,13 @@
                              MinWidth tuned down from 200 to give the name column room to breathe;
                              ComboBox grows naturally if the row width allows. -->
                         <Grid Margin="0,0,8,0" MinWidth="160" VerticalAlignment="Center">
-                            <ComboBox AutomationProperties.Name="{x:Static loc:Strings.MainWindow_GameOrPrivateServerTo}"
+                            <ComboBox AutomationProperties.Name="{loc:Loc MainWindow_GameOrPrivateServerTo}"
                                       ItemsSource="{Binding DataContext.AvailableGames, RelativeSource={RelativeSource AncestorType=Window}}"
                                       SelectedItem="{Binding SelectedGame}"
                                       DisplayMemberPath="DropdownLabel"
                                       VerticalAlignment="Center"
                                       SelectionChanged="OnGameComboBoxSelectionChanged"
-                                      ToolTip="{x:Static loc:Strings.MainWindow_GameOrSavedPrivateServer}">
+                                      ToolTip="{loc:Loc MainWindow_GameOrSavedPrivateServer}">
                                 <!-- v1.3.x — right-click any item in the dropdown for Rename / Reset.
                                      Skips the JoinByLink sentinel because BuildRenameTarget guards on
                                      PlaceId > 0 and returns null for the sentinel. -->
@@ -866,10 +866,10 @@
                                         <Setter Property="ContextMenu">
                                             <Setter.Value>
                                                 <ContextMenu>
-                                                    <MenuItem Header="{x:Static loc:Strings.MainWindow_Rename}"
+                                                    <MenuItem Header="{loc:Loc MainWindow_Rename}"
                                                               Command="{Binding Data.RenameItemCommand, Source={StaticResource VmProxy}}"
                                                               CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
-                                                    <MenuItem Header="{x:Static loc:Strings.MainWindow_ResetName}"
+                                                    <MenuItem Header="{loc:Loc MainWindow_ResetName}"
                                                               Command="{Binding Data.ResetItemNameCommand, Source={StaticResource VmProxy}}"
                                                               CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
                                                         <MenuItem.Style>
@@ -891,7 +891,7 @@
                             </ComboBox>
                             <!-- Wave 3 moved Games off the toolbar into the Tools menu. This line
                                  tells a user where to go, so it has to name where the thing now is. -->
-                            <TextBlock Text="{x:Static loc:Strings.MainWindow_AddGamesFromToolsGames}"
+                            <TextBlock Text="{loc:Loc MainWindow_AddGamesFromToolsGames}"
                                        FontSize="{DynamicResource BodyFontSize}"
                                        FontStyle="Italic"
                                        Foreground="{DynamicResource MutedTextBrush}"
@@ -910,24 +910,24 @@
                             Width="120"
                             Margin="0,0,8,0"
                             VerticalAlignment="Center"
-                            SelectionChanged="FpsCombo_SelectionChanged" AutomationProperties.Name="{x:Static loc:Strings.MainWindow_FpsCapAppliedAtLaunch}"
+                            SelectionChanged="FpsCombo_SelectionChanged" AutomationProperties.Name="{loc:Loc MainWindow_FpsCapAppliedAtLaunch}"
                             Loaded="FpsCombo_Loaded"
-                            ToolTip="{x:Static loc:Strings.MainWindow_FpsCapAppliedAtLaunch_2}">
-                            <ComboBoxItem Content="{x:Static loc:Strings.MainWindow_Fps}"         Tag="{x:Null}" />
-                            <ComboBoxItem Content="{x:Static loc:Strings.MainWindow_20Fps}"        Tag="20" />
-                            <ComboBoxItem Content="{x:Static loc:Strings.MainWindow_30Fps}"        Tag="30" />
-                            <ComboBoxItem Content="{x:Static loc:Strings.MainWindow_45Fps}"        Tag="45" />
-                            <ComboBoxItem Content="{x:Static loc:Strings.MainWindow_60Fps}"        Tag="60" />
-                            <ComboBoxItem Content="{x:Static loc:Strings.MainWindow_90Fps}"        Tag="90" />
-                            <ComboBoxItem Content="{x:Static loc:Strings.MainWindow_120Fps}"       Tag="120" />
-                            <ComboBoxItem Content="{x:Static loc:Strings.MainWindow_144Fps}"       Tag="144" />
-                            <ComboBoxItem Content="{x:Static loc:Strings.MainWindow_165Fps}"       Tag="165" />
-                            <ComboBoxItem Content="{x:Static loc:Strings.MainWindow_240Fps}"       Tag="240" />
-                            <ComboBoxItem Content="{x:Static loc:Strings.MainWindow_UnlimitedFps}" Tag="9999" />
+                            ToolTip="{loc:Loc MainWindow_FpsCapAppliedAtLaunch_2}">
+                            <ComboBoxItem Content="{loc:Loc MainWindow_Fps}"         Tag="{x:Null}" />
+                            <ComboBoxItem Content="{loc:Loc MainWindow_20Fps}"        Tag="20" />
+                            <ComboBoxItem Content="{loc:Loc MainWindow_30Fps}"        Tag="30" />
+                            <ComboBoxItem Content="{loc:Loc MainWindow_45Fps}"        Tag="45" />
+                            <ComboBoxItem Content="{loc:Loc MainWindow_60Fps}"        Tag="60" />
+                            <ComboBoxItem Content="{loc:Loc MainWindow_90Fps}"        Tag="90" />
+                            <ComboBoxItem Content="{loc:Loc MainWindow_120Fps}"       Tag="120" />
+                            <ComboBoxItem Content="{loc:Loc MainWindow_144Fps}"       Tag="144" />
+                            <ComboBoxItem Content="{loc:Loc MainWindow_165Fps}"       Tag="165" />
+                            <ComboBoxItem Content="{loc:Loc MainWindow_240Fps}"       Tag="240" />
+                            <ComboBoxItem Content="{loc:Loc MainWindow_UnlimitedFps}" Tag="9999" />
                         </ComboBox>
 
                         <!-- Launch As (hidden while running — Stop takes its place) -->
-                        <Button Content="{x:Static loc:Strings.MainWindow_LaunchAs}"
+                        <Button Content="{loc:Loc MainWindow_LaunchAs}"
                                 Command="{Binding DataContext.LaunchAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="14,6" Margin="0,0,8,0">
@@ -943,7 +943,7 @@
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding SessionLimited}" Value="True">
                                             <Setter Property="IsEnabled" Value="False" />
-                                            <Setter Property="ToolTip" Value="{x:Static loc:Strings.MainWindow_RobloxFlaggedThisAccountRe}" />
+                                            <Setter Property="ToolTip" Value="{loc:Loc MainWindow_RobloxFlaggedThisAccountRe}" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -956,12 +956,12 @@
                              used by Re-authenticate below — same "this row needs an action" visual
                              language, so the button appears exactly where/when the fix applies and
                              disappears once the watchdog reports clear. -->
-                        <Button Content="{x:Static loc:Strings.MainWindow_Recycle}"
+                        <Button Content="{loc:Loc MainWindow_Recycle}"
                                 Command="{Binding DataContext.RecycleAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="12,6" Margin="0,0,8,0"
                                 FontSize="{DynamicResource BodyFontSize}"
-                                ToolTip="{x:Static loc:Strings.MainWindow_CloseAndRelaunchThisClient}">
+                                ToolTip="{loc:Loc MainWindow_CloseAndRelaunchThisClient}">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource WarningButtonStyle}">
                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -989,11 +989,11 @@
                         </Button>
 
                         <!-- Stop (visible while running) -->
-                        <Button Style="{StaticResource AccentActionButtonStyle}" Content="{x:Static loc:Strings.MainWindow_Stop}"
+                        <Button Style="{StaticResource AccentActionButtonStyle}" Content="{loc:Loc MainWindow_Stop}"
                                 Command="{Binding DataContext.StopAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="14,6" Margin="0,0,8,0"
-                                ToolTip="{x:Static loc:Strings.MainWindow_CloseTheRobloxWindowFor}"
+                                ToolTip="{loc:Loc MainWindow_CloseTheRobloxWindowFor}"
                                 Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                         <!-- Remove. One of the three sites DestructiveButtonStyle is assigned to by
@@ -1001,7 +1001,7 @@
                              cookie cannot be recovered — re-authentication is the only way back.
                              Deliberately NOT an accent fill; on a row that also carries Launch As
                              and Stop, the loudest control must not be the one that deletes. -->
-                        <Button Content="{x:Static loc:Strings.MainWindow_Remove}"
+                        <Button Content="{loc:Loc MainWindow_Remove}"
                                 Command="{Binding DataContext.RemoveAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="10,6"
@@ -1026,7 +1026,7 @@
         </Grid.RowDefinitions>
 
         <ui:TitleBar Grid.Row="0"
-                     Title="{x:Static loc:Strings.MainWindow_Rororo}"
+                     Title="{loc:Loc MainWindow_Rororo}"
                      ShowMaximize="True"
                      ShowMinimize="True"
                      ShowClose="True">
@@ -1071,7 +1071,7 @@
                          this panel stretches to the row height set by the + Add account button and
                          the title top-aligns a few pixels above that button's centreline. -->
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <controls:PageHeader ShowWordmark="True" Heading="{x:Static loc:Strings.MainWindow_Accounts}" />
+                        <controls:PageHeader ShowWordmark="True" Heading="{loc:Loc MainWindow_Accounts}" />
                         <!-- F-010: the Store-listing pitch used to live here — "Run multiple Roblox
                              clients side by side. Add a saved account, click Launch As to open it."
                              — read on every launch by someone who already has eight accounts on
@@ -1090,11 +1090,11 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Style="{StaticResource CtaButtonStyle}" Content="{x:Static loc:Strings.MainWindow_AddAccount}"
+                        <Button Style="{StaticResource CtaButtonStyle}" Content="{loc:Loc MainWindow_AddAccount}"
                                 Command="{Binding AddAccountCommand}"
                                 Padding="16,8"
                                 AutomationProperties.AcceleratorKey="Ctrl+N"
-                                ToolTip="{x:Static loc:Strings.MainWindow_LogInToARoblox}"
+                                ToolTip="{loc:Loc MainWindow_LogInToARoblox}"
                                 FontSize="{DynamicResource HeadingFontSize}" />
                     </StackPanel>
                 </Grid>
@@ -1142,20 +1142,20 @@
                              window. Two paths to Games where one of them was two clicks behind a
                              chevron. Removed from the Tools menu in the same change so the app has
                              one route per destination, not two. -->
-                        <Button Content="{x:Static loc:Strings.MainWindow_Games}"
+                        <Button Content="{loc:Loc MainWindow_Games}"
                                 Command="{Binding OpenGamesCommand}"
                                 Padding="10,6" Margin="0,0,6,0"
                                 Style="{StaticResource SecondaryButtonStyle}"
                                 FontSize="{DynamicResource BodyFontSize}"
                                 AutomationProperties.AcceleratorKey="Ctrl+G"
-                                ToolTip="{x:Static loc:Strings.MainWindow_SavedGamesAndPrivateServers}" />
-                        <Button Content="{x:Static loc:Strings.MainWindow_Settings}"
+                                ToolTip="{loc:Loc MainWindow_SavedGamesAndPrivateServers}" />
+                        <Button Content="{loc:Loc MainWindow_Settings}"
                                 Command="{Binding OpenPreferencesCommand}"
                                 Padding="10,6" Margin="0,0,6,0"
                                 Style="{StaticResource SecondaryButtonStyle}"
                                 FontSize="{DynamicResource BodyFontSize}"
                                 AutomationProperties.AcceleratorKey="Ctrl+,"
-                                ToolTip="{x:Static loc:Strings.MainWindow_StartupAccountsAlertsDiscordAnd}" />
+                                ToolTip="{loc:Loc MainWindow_StartupAccountsAlertsDiscordAnd}" />
                         <!-- A ToolsDropDownButton: a Button that owns its ContextMenu and adds what a
                              bare Button-with-ContextMenu lacked. The first cut announced to a screen
                              reader as a plain button (no ExpandCollapse pattern, no expanded state,
@@ -1167,40 +1167,40 @@
 
                              AutomationProperties.Name strips the chevron from what gets announced;
                              the glyph is a visual affordance, not part of the name. -->
-                        <controls:ToolsDropDownButton Content="{x:Static loc:Strings.MainWindow_Tools}"
-                                           AutomationProperties.Name="{x:Static loc:Strings.MainWindow_Tools_2}"
+                        <controls:ToolsDropDownButton Content="{loc:Loc MainWindow_Tools}"
+                                           AutomationProperties.Name="{loc:Loc MainWindow_Tools_2}"
                                            Padding="10,6" Margin="0,0,6,0"
                                            Style="{StaticResource SecondaryButtonStyle}"
                                            FontSize="{DynamicResource BodyFontSize}"
-                                           ToolTip="{x:Static loc:Strings.MainWindow_HistoryDiagnosticsPluginsLogFolder}">
+                                           ToolTip="{loc:Loc MainWindow_HistoryDiagnosticsPluginsLogFolder}">
                             <controls:ToolsDropDownButton.ContextMenu>
                                 <ContextMenu Background="{DynamicResource NavyBrush}"
                                              BorderBrush="{DynamicResource DividerBrush}"
                                              BorderThickness="1"
                                              Foreground="{DynamicResource WhiteBrush}">
-                                <MenuItem Header="{x:Static loc:Strings.MainWindow_History}"
+                                <MenuItem Header="{loc:Loc MainWindow_History}"
                                           Command="{Binding OpenHistoryCommand}"
                                           InputGestureText="Ctrl+H"
-                                          ToolTip="{x:Static loc:Strings.MainWindow_RecentSessionsPerAccountWhat}" />
-                                <MenuItem Header="{x:Static loc:Strings.MainWindow_Diagnostics}"
+                                          ToolTip="{loc:Loc MainWindow_RecentSessionsPerAccountWhat}" />
+                                <MenuItem Header="{loc:Loc MainWindow_Diagnostics}"
                                           Command="{Binding OpenDiagnosticsCommand}"
                                           InputGestureText="Ctrl+D"
-                                          ToolTip="{x:Static loc:Strings.MainWindow_SystemHealthRobloxWebview2Versions}" />
-                                <MenuItem Header="{x:Static loc:Strings.MainWindow_Plugins}"
+                                          ToolTip="{loc:Loc MainWindow_SystemHealthRobloxWebview2Versions}" />
+                                <MenuItem Header="{loc:Loc MainWindow_Plugins}"
                                           Command="{Binding OpenPluginsCommand}"
                                           InputGestureText="Ctrl+P"
-                                          ToolTip="{x:Static loc:Strings.MainWindow_InstallAndManageRororoPlugins}" />
+                                          ToolTip="{loc:Loc MainWindow_InstallAndManageRororoPlugins}" />
                                 <!-- F-001 group 2 — verbs that reach outside the app. Kept apart
                                      from the destinations above so the one destructive item is not
                                      a row away from Plugins; the confirm catches a mis-click, but
                                      distance is cheaper than a dialog. -->
                                 <Separator Background="{DynamicResource DividerBrush}" />
-                                <MenuItem Header="{x:Static loc:Strings.MainWindow_OpenLogFolder}"
+                                <MenuItem Header="{loc:Loc MainWindow_OpenLogFolder}"
                                           Command="{Binding OpenLogFolderCommand}"
-                                          ToolTip="{x:Static loc:Strings.MainWindow_OpenTheFolderHoldingRororo}" />
-                                <MenuItem Header="{x:Static loc:Strings.MainWindow_StopAllRobloxInstances}"
+                                          ToolTip="{loc:Loc MainWindow_OpenTheFolderHoldingRororo}" />
+                                <MenuItem Header="{loc:Loc MainWindow_StopAllRobloxInstances}"
                                           Command="{Binding StopAllCommand}"
-                                          ToolTip="{x:Static loc:Strings.MainWindow_ForceCloseEveryRunningRoblox}" />
+                                          ToolTip="{loc:Loc MainWindow_ForceCloseEveryRunningRoblox}" />
                                 <!-- Explicitly themed. WPF-UI's default Separator draws a 4%-alpha
                                      white rule from its own dictionary, which ThemeService never
                                      touches (it owns ten RoRoRo slots and nothing else) — so on any
@@ -1208,13 +1208,13 @@
                                      same flatten-the-fill failure the popup border defends against,
                                      and it would have shipped one element away from it. -->
                                     <Separator Background="{DynamicResource DividerBrush}" />
-                                    <MenuItem Header="{x:Static loc:Strings.MainWindow_WelcomeTour}"
+                                    <MenuItem Header="{loc:Loc MainWindow_WelcomeTour}"
                                               Command="{Binding ShowWelcomeTourCommand}"
-                                              ToolTip="{x:Static loc:Strings.MainWindow_ReplayTheFirstRunTour}" />
-                                    <MenuItem Header="{x:Static loc:Strings.MainWindow_About}"
+                                              ToolTip="{loc:Loc MainWindow_ReplayTheFirstRunTour}" />
+                                    <MenuItem Header="{loc:Loc MainWindow_About}"
                                               Command="{Binding OpenAboutCommand}"
                                               InputGestureText="F1"
-                                              ToolTip="{x:Static loc:Strings.MainWindow_VersionLinksLicense}" />
+                                              ToolTip="{loc:Loc MainWindow_VersionLinksLicense}" />
                                 </ContextMenu>
                             </controls:ToolsDropDownButton.ContextMenu>
                         </controls:ToolsDropDownButton>
@@ -1228,7 +1228,7 @@
                     <Grid Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <!-- Filled state: ToggleButton + dropdown Popup. -->
                         <ToggleButton x:Name="DefaultGameWidget"
-                                      AutomationProperties.Name="{x:Static loc:Strings.MainWindow_DefaultGamePickWhichGame}"
+                                      AutomationProperties.Name="{loc:Loc MainWindow_DefaultGamePickWhichGame}"
                                       MinWidth="220" MaxWidth="340"
                                       Padding="12,6"
                                       Background="{DynamicResource RowBgBrush}"
@@ -1298,7 +1298,7 @@
                              One click → the Games window, the same destination as the Games button
                              in the toolbar. It was a toolbar button before wave 3, spent wave 3
                              through v1.19 inside the Tools menu, and is back in the toolbar. -->
-                        <Button Content="{x:Static loc:Strings.MainWindow_NoSavedGamesYetAdd}"
+                        <Button Content="{loc:Loc MainWindow_NoSavedGamesYetAdd}"
                                 Command="{Binding OpenGamesCommand}"
                                 MinWidth="220" MaxWidth="340"
                                 Padding="12,6"
@@ -1336,7 +1336,7 @@
                                     MinWidth="280" MaxWidth="360">
                                 <DockPanel>
                                     <Button Style="{StaticResource SecondaryButtonStyle}" DockPanel.Dock="Bottom"
-                                            Content="{x:Static loc:Strings.MainWindow_ManageGames}"
+                                            Content="{loc:Loc MainWindow_ManageGames}"
                                             Command="{Binding OpenGamesCommand}"
                                             Padding="10,6"
                                             Margin="0,4,0,0"
@@ -1371,14 +1371,14 @@
                                                          the rest. -->
                                                     <Button.ContextMenu>
                                                         <ContextMenu>
-                                                            <MenuItem Header="{x:Static loc:Strings.MainWindow_SetAsDefault}"
+                                                            <MenuItem Header="{loc:Loc MainWindow_SetAsDefault}"
                                                                       Command="{Binding Data.SetDefaultGameCommand, Source={StaticResource VmProxy}}"
                                                                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
                                                             <Separator />
-                                                            <MenuItem Header="{x:Static loc:Strings.MainWindow_Rename}"
+                                                            <MenuItem Header="{loc:Loc MainWindow_Rename}"
                                                                       Command="{Binding Data.RenameItemCommand, Source={StaticResource VmProxy}}"
                                                                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
-                                                            <MenuItem Header="{x:Static loc:Strings.MainWindow_ResetName}"
+                                                            <MenuItem Header="{loc:Loc MainWindow_ResetName}"
                                                                       Command="{Binding Data.ResetItemNameCommand, Source={StaticResource VmProxy}}"
                                                                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
                                                                 <MenuItem.Style>
@@ -1393,7 +1393,7 @@
                                                                 </MenuItem.Style>
                                                             </MenuItem>
                                                             <Separator />
-                                                            <MenuItem Header="{x:Static loc:Strings.MainWindow_Remove}"
+                                                            <MenuItem Header="{loc:Loc MainWindow_Remove}"
                                                                       Command="{Binding Data.RemoveGameCommand, Source={StaticResource VmProxy}}"
                                                                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
                                                         </ContextMenu>
@@ -1466,22 +1466,22 @@
                     </Grid>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Content="{x:Static loc:Strings.MainWindow_LaunchMultiple}"
+                        <Button Content="{loc:Loc MainWindow_LaunchMultiple}"
                                 Command="{Binding LaunchAllCommand}"
                                 Padding="14,6" Margin="0,0,8,0"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 FontSize="{DynamicResource BodyFontSize}"
                                 FontWeight="SemiBold"
-                                ToolTip="{x:Static loc:Strings.MainWindow_LaunchEverySelectedAccountInto}"
+                                ToolTip="{loc:Loc MainWindow_LaunchEverySelectedAccountInto}"
                                 AutomationProperties.AcceleratorKey="Ctrl+L" />
                         <!-- Labelled "Private server" until v1.14, when the modal stopped being
                              private-server-only: a plain game link now puts the squad in one public
                              server. The old label described the input, not what the button does. -->
-                        <Button Style="{StaticResource AccentActionButtonStyle}" Content="{x:Static loc:Strings.MainWindow_SquadLaunch}"
+                        <Button Style="{StaticResource AccentActionButtonStyle}" Content="{loc:Loc MainWindow_SquadLaunch}"
                                 Command="{Binding OpenSquadLaunchCommand}"
                                 Padding="14,6"
                                 FontSize="{DynamicResource BodyFontSize}"
-                                ToolTip="{x:Static loc:Strings.MainWindow_SendEverySelectedAccountInto}"
+                                ToolTip="{loc:Loc MainWindow_SendEverySelectedAccountInto}"
                                 AutomationProperties.AcceleratorKey="Ctrl+J" />
                     </StackPanel>
                 </Grid>
@@ -1508,12 +1508,12 @@
                              Fill="{DynamicResource CyanBrush}" />
                     <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="4,0,10,0"
                              Fill="{DynamicResource MagentaBrush}" />
-                    <TextBlock Text="{x:Static loc:Strings.MainWindow_RobloxIsUpdating}"
+                    <TextBlock Text="{loc:Loc MainWindow_RobloxIsUpdating}"
                                VerticalAlignment="Center"
                                FontSize="{DynamicResource HeadingFontSize}" FontWeight="SemiBold"
                                Foreground="{DynamicResource CyanBrush}" />
                 </StackPanel>
-                <TextBlock Text="{x:Static loc:Strings.MainWindow_HoldingYourOtherAccountsUntil}"
+                <TextBlock Text="{loc:Loc MainWindow_HoldingYourOtherAccountsUntil}"
                            Margin="0,4,0,0"
                            FontSize="{DynamicResource BodyFontSize}"
                            TextWrapping="Wrap"
@@ -1580,9 +1580,9 @@
                                FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap"
                                Foreground="{DynamicResource RowExpiredAccentBrush}" />
                     <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                        <Button Style="{StaticResource CtaButtonStyle}" Content="{x:Static loc:Strings.MainWindow_CloseRobloxForMe}" Command="{Binding CloseRobloxForMeCommand}"
+                        <Button Style="{StaticResource CtaButtonStyle}" Content="{loc:Loc MainWindow_CloseRobloxForMe}" Command="{Binding CloseRobloxForMeCommand}"
                                 Padding="10,4" Margin="0,0,8,0" FontSize="{DynamicResource BodyFontSize}" />
-                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static loc:Strings.MainWindow_Retry}" Command="{Binding RetryMutexCommand}"
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="{loc:Loc MainWindow_Retry}" Command="{Binding RetryMutexCommand}"
                                 Padding="10,4" FontSize="{DynamicResource BodyFontSize}" />
                     </StackPanel>
                 </StackPanel>
@@ -1617,8 +1617,8 @@
                                Foreground="{DynamicResource MutedTextBrush}" />
                     <Button Grid.Column="1"
                             Style="{StaticResource GhostButtonStyle}"
-                            Content="{x:Static loc:Strings.MainWindow_Dismiss}"
-                            AutomationProperties.Name="{x:Static loc:Strings.MainWindow_DismissTheFrameRateCap}"
+                            Content="{loc:Loc MainWindow_Dismiss}"
+                            AutomationProperties.Name="{loc:Loc MainWindow_DismissTheFrameRateCap}"
                             Command="{Binding DismissFpsCapWarningCommand}"
                             Margin="8,0,0,0"
                             Padding="0"
@@ -1682,11 +1682,11 @@
                 <TextBlock Grid.Column="0"
                     VerticalAlignment="Center"
                     TextWrapping="Wrap"
-                    Foreground="{DynamicResource RowExpiredAccentBrush}"><Run Text="▲ " /><Run Text="{x:Static loc:Strings.MainWindow_BloxstrapIsSetAsYour}" /></TextBlock>
+                    Foreground="{DynamicResource RowExpiredAccentBrush}"><Run Text="▲ " /><Run Text="{loc:Loc MainWindow_BloxstrapIsSetAsYour}" /></TextBlock>
                 <Button Grid.Column="1"
                     Style="{StaticResource GhostButtonStyle}"
-                    Content="{x:Static loc:Strings.MainWindow_Dismiss}"
-                    AutomationProperties.Name="{x:Static loc:Strings.MainWindow_DismissTheBloxstrapWarning}"
+                    Content="{loc:Loc MainWindow_Dismiss}"
+                    AutomationProperties.Name="{loc:Loc MainWindow_DismissTheBloxstrapWarning}"
                     Margin="12,0,0,0"
                     Command="{Binding DismissBloxstrapWarningCommand}" />
             </Grid>
@@ -1729,13 +1729,13 @@
                             </Style.Triggers>
                         </Style>
                     </Grid.Style>
-                    <ui:TextBox x:Name="FilterBox" PlaceholderText="{x:Static loc:Strings.MainWindow_FilterAccountsByTagOr}" AutomationProperties.Name="{x:Static loc:Strings.MainWindow_FilterAccounts}"
+                    <ui:TextBox x:Name="FilterBox" PlaceholderText="{loc:Loc MainWindow_FilterAccountsByTagOr}" AutomationProperties.Name="{loc:Loc MainWindow_FilterAccounts}"
                                 AutomationProperties.AcceleratorKey="Ctrl+F"
                                 Text="{Binding AccountFilter, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                                 Icon="{ui:SymbolIcon Filter24}"
                                 ClearButtonEnabled="True"
                                 FontSize="{DynamicResource BodyFontSize}"
-                                ToolTip="{x:Static loc:Strings.MainWindow_ShowOnlyAccountsWhoseTag}" />
+                                ToolTip="{loc:Loc MainWindow_ShowOnlyAccountsWhoseTag}" />
                 </Grid>
 
                 <ScrollViewer Padding="24,12,24,16"
@@ -1747,11 +1747,11 @@
                     <!-- Empty state -->
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
                                 Visibility="{Binding Accounts.Count, Converter={StaticResource ZeroToVisibilityConverter}}">
-                        <TextBlock Text="{x:Static loc:Strings.MainWindow_NoSavedAccountsYet}"
+                        <TextBlock Text="{loc:Loc MainWindow_NoSavedAccountsYet}"
                                    FontSize="{DynamicResource HeadingFontSize}"
                                    Foreground="{DynamicResource MutedTextBrush}"
                                    HorizontalAlignment="Center" />
-                        <TextBlock Text="{x:Static loc:Strings.MainWindow_ClickAddAccountToLog}"
+                        <TextBlock Text="{loc:Loc MainWindow_ClickAddAccountToLog}"
                                    FontSize="{DynamicResource BodyFontSize}"
                                    Foreground="{DynamicResource MutedTextBrush}"
                                    HorizontalAlignment="Center"
@@ -1817,7 +1817,7 @@
                                         </Style.Triggers>
                                     </Style>
                                 </StackPanel.Style>
-                                <TextBlock Text="{x:Static loc:Strings.MainWindow_NoRobloxRunning}"
+                                <TextBlock Text="{loc:Loc MainWindow_NoRobloxRunning}"
                                            FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            HorizontalAlignment="Center"
@@ -1826,9 +1826,9 @@
                                         Padding="14,10"
                                         FontSize="{DynamicResource HeadingFontSize}"
                                         HorizontalAlignment="Stretch"
-                                        ToolTip="{x:Static loc:Strings.MainWindow_LaunchYourMainAccountInto}">
+                                        ToolTip="{loc:Loc MainWindow_LaunchYourMainAccountInto}">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <TextBlock Text="{x:Static loc:Strings.MainWindow_Start}" />
+                                        <TextBlock Text="{loc:Loc MainWindow_Start}" />
                                         <TextBlock Text="{Binding MainAccount.RenderName, FallbackValue='main'}" />
                                     </StackPanel>
                                 </Button>
@@ -1846,19 +1846,19 @@
                                         </Style.Triggers>
                                     </Style>
                                 </StackPanel.Style>
-                                <TextBlock Text="{x:Static loc:Strings.MainWindow_NoMainAccountPicked}"
+                                <TextBlock Text="{loc:Loc MainWindow_NoMainAccountPicked}"
                                            FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
                                            Foreground="{DynamicResource WhiteBrush}"
                                            HorizontalAlignment="Center"
                                            Margin="0,0,0,4" />
-                                <TextBlock Text="{x:Static loc:Strings.MainWindow_ExpandAndClickTheOn}"
+                                <TextBlock Text="{loc:Loc MainWindow_ExpandAndClickTheOn}"
                                            FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            HorizontalAlignment="Center"
                                            TextWrapping="Wrap"
                                            Margin="0,0,0,10" />
                                 <Button Command="{Binding ToggleCompactCommand}"
-                                        Content="{x:Static loc:Strings.MainWindow_Expand}"
+                                        Content="{loc:Loc MainWindow_Expand}"
                                         Padding="14,8"
                                         Style="{StaticResource PrimaryButtonStyle}"
                                         FontWeight="SemiBold"
@@ -1877,13 +1877,13 @@
                                         </Style.Triggers>
                                     </Style>
                                 </StackPanel.Style>
-                                <TextBlock Text="{x:Static loc:Strings.MainWindow_NoAccountsSaved}"
+                                <TextBlock Text="{loc:Loc MainWindow_NoAccountsSaved}"
                                            FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
                                            Foreground="{DynamicResource WhiteBrush}"
                                            HorizontalAlignment="Center"
                                            Margin="0,0,0,8" />
                                 <Button Style="{StaticResource CtaButtonStyle}" Command="{Binding AddAccountCommand}"
-                                        Content="{x:Static loc:Strings.MainWindow_AddYourFirstAccount}"
+                                        Content="{loc:Loc MainWindow_AddYourFirstAccount}"
                                         Padding="14,10"
                                         FontSize="{DynamicResource BodyFontSize}"
                                         HorizontalAlignment="Stretch" />
@@ -1950,7 +1950,7 @@
                         Padding="10,4" Margin="14,0,0,0"
                         FontSize="{DynamicResource MetaFontSize}"
                         VerticalAlignment="Center"
-                        ToolTip="{x:Static loc:Strings.MainWindow_ShrinkToASmallOps}" />
+                        ToolTip="{loc:Loc MainWindow_ShrinkToASmallOps}" />
 
                 <!-- F-011: Grid.Column="2" held "Multi-launcher for Windows. A 626 Labs product."
                      Every other cell in this status bar reports live state; that one sold the app to
@@ -1998,7 +1998,7 @@
                 </TextBlock>
 
                 <TextBlock Grid.Column="3"
-                           Text="{x:Static loc:Strings.MainWindow_XMinimizesToTrayQuit}"
+                           Text="{loc:Loc MainWindow_XMinimizesToTrayQuit}"
                            FontSize="{DynamicResource MetaFontSize}"
                            Foreground="{DynamicResource MutedTextBrush}"
                            Opacity="0.7"

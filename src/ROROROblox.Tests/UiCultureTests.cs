@@ -13,6 +13,7 @@ namespace ROROROblox.Tests;
 /// translated catalogs — pt-BR, fr, de, ru, pl, es. These lock the guard so a picker bug can't
 /// start advertising a language the app can't render.
 /// </summary>
+[Collection("MutatesUiCulture")]
 public class UiCultureTests
 {
     [Fact]
@@ -110,6 +111,7 @@ public class UiCultureTests
     {
         // The positive path: a saved language whose catalog ships IS applied to the thread.
         var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
+        var beforeTs = TranslationSource.Instance.CurrentCulture; // ApplyFromSettings now sets this too
         var tmp = Path.Combine(Path.GetTempPath(), $"rr-uiculture-{Guid.NewGuid():N}.json");
         try
         {
@@ -120,6 +122,7 @@ public class UiCultureTests
         finally
         {
             System.Threading.Thread.CurrentThread.CurrentUICulture = before;
+            TranslationSource.Instance.CurrentCulture = beforeTs;
             if (File.Exists(tmp)) File.Delete(tmp);
         }
     }

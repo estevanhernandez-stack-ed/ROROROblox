@@ -1,9 +1,9 @@
 <Window x:Class="ROROROblox.App.Modals.RobloxAlreadyRunningWindow"
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:loc="clr-namespace:ROROROblox.App.Properties"
+        xmlns:loc="clr-namespace:ROROROblox.App.Localization"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="{x:Static loc:Strings.RobloxAlreadyRunningWindow_RobloxIsAlreadyRunning}"
+        Title="{loc:Loc RobloxAlreadyRunningWindow_RobloxIsAlreadyRunning}"
         Width="560"
         SizeToContent="Height"
         WindowStartupLocation="CenterScreen"
@@ -34,12 +34,12 @@
         </Grid.RowDefinitions>
 
         <!-- Heading -->
-        <TextBlock Grid.Row="0" Text="{x:Static loc:Strings.RobloxAlreadyRunningWindow_RobloxIsAlreadyRunning}"
+        <TextBlock Grid.Row="0" Text="{loc:Loc RobloxAlreadyRunningWindow_RobloxIsAlreadyRunning}"
                    FontSize="18" FontWeight="Bold" Foreground="{DynamicResource CyanBrush}" />
 
         <!-- Body: the tray-residence explanation -->
         <TextBlock Grid.Row="1"
-                   Text="{x:Static loc:Strings.RobloxAlreadyRunningWindow_RororoNeedsTheMultiInstance}"
+                   Text="{loc:Loc RobloxAlreadyRunningWindow_RororoNeedsTheMultiInstance}"
                    TextWrapping="Wrap" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Opacity="0.85"
                    Margin="0,12,0,0" />
 
@@ -47,21 +47,21 @@
         <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,12,0,0">
             <TextBlock FontSize="{DynamicResource BodyFontSize}" Margin="0,2,0,0">
                 <Run Text="1." Foreground="{DynamicResource MagentaBrush}" FontWeight="Bold" />
-                <Run Text="{x:Static loc:Strings.RobloxAlreadyRunningWindow_ClickTheNearTheClock}" Foreground="{DynamicResource WhiteBrush}" />
+                <Run Text="{loc:Loc RobloxAlreadyRunningWindow_ClickTheNearTheClock}" Foreground="{DynamicResource WhiteBrush}" />
             </TextBlock>
             <TextBlock FontSize="{DynamicResource BodyFontSize}" Margin="0,2,0,0">
                 <Run Text="2." Foreground="{DynamicResource MagentaBrush}" FontWeight="Bold" />
-                <Run Text="{x:Static loc:Strings.RobloxAlreadyRunningWindow_RightClickTheRobloxIcon}" Foreground="{DynamicResource WhiteBrush}" />
+                <Run Text="{loc:Loc RobloxAlreadyRunningWindow_RightClickTheRobloxIcon}" Foreground="{DynamicResource WhiteBrush}" />
             </TextBlock>
             <TextBlock FontSize="{DynamicResource BodyFontSize}" Margin="0,2,0,0">
                 <Run Text="3." Foreground="{DynamicResource MagentaBrush}" FontWeight="Bold" />
-                <Run Text="{x:Static loc:Strings.RobloxAlreadyRunningWindow_ChooseQuitRobloxThenHit}" Foreground="{DynamicResource WhiteBrush}" />
+                <Run Text="{loc:Loc RobloxAlreadyRunningWindow_ChooseQuitRobloxThenHit}" Foreground="{DynamicResource WhiteBrush}" />
             </TextBlock>
         </StackPanel>
 
         <!-- Start-with-Windows note -->
         <TextBlock Grid.Row="3"
-                   Text="{x:Static loc:Strings.RobloxAlreadyRunningWindow_RobloxCanStartItselfWith}"
+                   Text="{loc:Loc RobloxAlreadyRunningWindow_RobloxCanStartItselfWith}"
                    TextWrapping="Wrap" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,12,0,0" />
 
         <!-- Bottom-of-body notes: still-locked tick (hidden until a failed retry) + the
@@ -76,7 +76,7 @@
             <TextBlock x:Name="StillLockedTick"
                        FontFamily="{DynamicResource MonoFontFamily}" FontSize="{DynamicResource MetaFontSize}"
                        Foreground="{DynamicResource RowExpiredAccentBrush}" Margin="0,12,0,0" Visibility="Collapsed" />
-            <TextBlock Text="{x:Static loc:Strings.RobloxAlreadyRunningWindow_AlreadyHaveAnotherCopyOf}"
+            <TextBlock Text="{loc:Loc RobloxAlreadyRunningWindow_AlreadyHaveAnotherCopyOf}"
                        TextWrapping="Wrap" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,12,0,0" />
         </StackPanel>
 
@@ -91,13 +91,13 @@
              a reflexive Enter on a dialog you didn't expect should never destroy state. It stays
              clearly available, just not on the Enter key. Guarded by ModalDefaultButtonSafetyTests. -->
         <StackPanel Grid.Row="5" x:Name="ActionButtons" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static loc:Strings.RobloxAlreadyRunningWindow_QuitRororo}" Padding="16,8" IsCancel="True"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{loc:Loc RobloxAlreadyRunningWindow_QuitRororo}" Padding="16,8" IsCancel="True"
                     Margin="0,0,8,0" Click="OnQuitClick" />
-            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static loc:Strings.RobloxAlreadyRunningWindow_StartAnyway}" Padding="16,8"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{loc:Loc RobloxAlreadyRunningWindow_StartAnyway}" Padding="16,8"
                     Margin="0,0,8,0" Click="OnStartAnywayClick" />
-            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static loc:Strings.RobloxAlreadyRunningWindow_CloseRobloxForMe}" Padding="16,8"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{loc:Loc RobloxAlreadyRunningWindow_CloseRobloxForMe}" Padding="16,8"
                     Margin="0,0,8,0" Click="OnCloseForMeClick" />
-            <Button Style="{StaticResource CtaButtonStyle}" Content="{x:Static loc:Strings.RobloxAlreadyRunningWindow_Retry}" Padding="16,8" IsDefault="True" Click="OnRetryClick" />
+            <Button Style="{StaticResource CtaButtonStyle}" Content="{loc:Loc RobloxAlreadyRunningWindow_Retry}" Padding="16,8" IsDefault="True" Click="OnRetryClick" />
         </StackPanel>
     </Grid>
 </Window>
