@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using ROROROblox.App.Localization;
 using ROROROblox.App.ViewModels;
@@ -87,5 +88,18 @@ public class ShellLocalizationTests
             Assert.Equal("Last launched 3 days ago",
                 new AccountSummary(ColdAccount(DateTimeOffset.UtcNow.AddDays(-3))).SecondaryStatusText);
         });
+    }
+
+    [Fact]
+    public void AccountSummary_NotifyCultureChanged_RaisesComposedGetters()
+    {
+        // The row-level half of the live toggle: MainViewModel's CultureChanged fan-out calls this,
+        // and it must re-raise the composed getters so bound text re-pulls in the new language.
+        var s = new AccountSummary(ColdAccount());
+        var raised = new List<string?>();
+        s.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+        s.NotifyCultureChanged();
+        Assert.Contains(nameof(AccountSummary.SecondaryStatusText), raised);
+        Assert.Contains(nameof(AccountSummary.IdleText), raised);
     }
 }

@@ -2327,4 +2327,9 @@
   <data name="Shell_Ago_Days_other" xml:space="preserve"><value>{0} days ago</value><comment>RelativeAgo via Loc.Plural (localized Phase D step 3)</comment></data>
   <data name="Shell_Ago_Days_few" xml:space="preserve"><value>{0} days ago</value><comment>few-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
   <data name="Shell_Ago_Days_many" xml:space="preserve"><value>{0} days ago</value><comment>many-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_RobloxHome" xml:space="preserve"><value>Roblox home</value><comment>DefaultGameDisplay fallback; "Roblox" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_DefaultGameTooltip_None" xml:space="preserve"><value>Launches open Roblox at home. Set a default game under Games to launch straight into it.</value><comment>DefaultGameTooltip; product nouns stay English (localized Phase D step 3)</comment></data>
+  <data name="Shell_DefaultGameTooltip_Set" xml:space="preserve"><value>The default game Launch As uses when no per-row pick is set. Click to change.</value><comment>DefaultGameTooltip (localized Phase D step 3)</comment></data>
+  <data name="Shell_CompactToggle_Expand" xml:space="preserve"><value>Expand</value><comment>CompactToggleLabel (localized Phase D step 3)</comment></data>
+  <data name="Shell_CompactToggle_Compact" xml:space="preserve"><value>Compact</value><comment>CompactToggleLabel (localized Phase D step 3)</comment></data>
 </root>
