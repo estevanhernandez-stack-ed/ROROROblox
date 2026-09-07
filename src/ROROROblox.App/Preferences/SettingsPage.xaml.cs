@@ -980,8 +980,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         }
         catch (Exception ex)
         {
-            MessageBox.Show(Window.GetWindow(this), $"Couldn't save the phone setting: {ex.Message}",
-                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Window.GetWindow(this), Loc.Format("Shell_Pref_CouldntSavePhone", ex.Message),
+                Loc.Get("Shell_Pref_Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
 
             // Persist failed: put the picker back on what notify.dat actually holds, so the UI
             // cannot show a provider the saved config does not have. Sibling handlers paint only
@@ -1013,7 +1013,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             // The topic stays read-only even revealed — it is generated, and a hand-edited topic
             // is a weaker secret. The Pushover fields unlock like the webhook fields do.
             input.IsReadOnly = ReferenceEquals(input, NtfyTopicInput);
-            reveal.Content = "Hide";
+            reveal.Content = Loc.Get("Shell_Pref_Reveal_Hide");
             input.Focus();
             input.SelectAll();
         }
@@ -1065,7 +1065,7 @@ internal partial class SettingsPage : UserControl, IDisposable
 
         var verdict = ROROROblox.Core.Notify.PhoneCredentialValidator.InspectPushoverKey(input.Text);
         PhonePushoverVerdict.Text = Localization.CoreMessageCatalog.ForPushoverKey(
-            verdict.Kind, isToken ? "application token" : "user key");
+            verdict.Kind, isToken ? Loc.Get("Shell_Pref_PushoverAppToken") : Loc.Get("Shell_Pref_PushoverUserKey"));
 
         if (verdict.Kind is not (ROROROblox.Core.Notify.PhoneCredentialKind.Valid
             or ROROROblox.Core.Notify.PhoneCredentialKind.Empty))
@@ -1089,8 +1089,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         }
         catch (Exception ex)
         {
-            MessageBox.Show(Window.GetWindow(this), $"Couldn't save the key: {ex.Message}",
-                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Window.GetWindow(this), Loc.Format("Shell_Pref_CouldntSaveKey", ex.Message),
+                Loc.Get("Shell_Pref_Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -1099,8 +1099,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         if (!string.IsNullOrWhiteSpace(CurrentPhoneConfig.NtfyTopic))
         {
             var answer = MessageBox.Show(Window.GetWindow(this),
-                "A new topic disconnects your phone until you subscribe to the new one in the ntfy app. Make a new topic?",
-                "Preferences", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+                Loc.Get("Shell_Pref_NtfyTopicWarn"),
+                Loc.Get("Shell_Pref_Title"), MessageBoxButton.OKCancel, MessageBoxImage.Warning);
             if (answer != MessageBoxResult.OK) return;
         }
 
@@ -1124,13 +1124,13 @@ internal partial class SettingsPage : UserControl, IDisposable
             // Revealed on purpose: the user's next act is subscribing to this exact string on
             // their phone. Hide puts it back behind the mask.
             NtfyTopicReveal.IsChecked = true;
-            PhoneNtfyVerdict.Text = "Subscribe to this exact topic in the ntfy app on your phone, then hit Test my phone.";
+            PhoneNtfyVerdict.Text = Loc.Get("Shell_Pref_NtfySubscribeHint");
             RefreshAlertsStatus();
         }
         catch (Exception ex)
         {
-            MessageBox.Show(Window.GetWindow(this), $"Couldn't save the new topic: {ex.Message}",
-                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Window.GetWindow(this), Loc.Format("Shell_Pref_CouldntSaveTopic", ex.Message),
+                Loc.Get("Shell_Pref_Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -1166,8 +1166,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         }
         catch (Exception ex)
         {
-            MessageBox.Show(Window.GetWindow(this), $"Couldn't save the server: {ex.Message}",
-                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Window.GetWindow(this), Loc.Format("Shell_Pref_CouldntSaveServer", ex.Message),
+                Loc.Get("Shell_Pref_Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -1182,13 +1182,13 @@ internal partial class SettingsPage : UserControl, IDisposable
         var phone = CurrentPhoneConfig;
         if (!phone.IsConfigured)
         {
-            AlertsStatusLine.Text = "Finish the phone setup above first — there's nowhere to send a test yet.";
+            AlertsStatusLine.Text = Loc.Get("Shell_Pref_FinishPhoneSetup");
             AlertsStatusLine.Tag = null;
             return;
         }
 
         PhoneTestButton.IsEnabled = false;
-        AlertsStatusLine.Text = "Sending…";
+        AlertsStatusLine.Text = Loc.Get("Shell_Pref_Sending");
         AlertsStatusLine.Tag = null;
         try
         {
@@ -1208,14 +1208,14 @@ internal partial class SettingsPage : UserControl, IDisposable
             AlertsStatusLine.Text = result switch
             {
                 ROROROblox.App.Notify.PhoneSendResult.Sent =>
-                    "Sent — your phone should buzz within a few seconds.",
+                    Loc.Get("Shell_Pref_PhoneTestSent"),
                 ROROROblox.App.Notify.PhoneSendResult.EndpointRejected =>
                     phone.Provider == ROROROblox.Core.Notify.PhoneProvider.Pushover
-                        ? "Pushover rejected the saved keys — re-check both on pushover.net and paste them again."
-                        : "The ntfy server refused that topic — generate a new one and re-subscribe on your phone.",
+                        ? Loc.Get("Shell_Pref_PushoverRejected")
+                        : Loc.Get("Shell_Pref_NtfyRefused"),
                 ROROROblox.App.Notify.PhoneSendResult.RateLimited =>
-                    "The push service is rate-limiting us. Wait a minute; the setup itself looks fine.",
-                _ => "Couldn't reach the push service.",
+                    Loc.Get("Shell_Pref_PushRateLimited"),
+                _ => Loc.Get("Shell_Pref_PushUnreachable"),
             };
 
             // Text and colour must agree: the style paints Tag="failure" red and everything else
@@ -1241,8 +1241,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
             FileName = "rororo-icon-128.png",
-            Filter = "PNG image|*.png",
-            Title = "Save the icon",
+            Filter = Loc.Get("Shell_Pref_IconFilter"),
+            Title = Loc.Get("Shell_Pref_SaveIconTitle"),
         };
         if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
 
@@ -1253,12 +1253,12 @@ internal partial class SettingsPage : UserControl, IDisposable
                 ?? throw new InvalidOperationException("The embedded icon resource is missing.");
             using var file = System.IO.File.Create(dialog.FileName);
             resource.CopyTo(file);
-            PhonePushoverVerdict.Text = "Icon saved — upload it in the icon slot on pushover.net's application form.";
+            PhonePushoverVerdict.Text = Loc.Get("Shell_Pref_IconSaved");
         }
         catch (Exception ex)
         {
-            MessageBox.Show(Window.GetWindow(this), $"Couldn't save the icon: {ex.Message}",
-                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Window.GetWindow(this), Loc.Format("Shell_Pref_CouldntSaveIcon", ex.Message),
+                Loc.Get("Shell_Pref_Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -1291,8 +1291,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         }
         catch (Exception ex)
         {
-            MessageBox.Show(Window.GetWindow(this), $"Couldn't save alert routing: {ex.Message}",
-                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Window.GetWindow(this), Loc.Format("Shell_Pref_CouldntSaveAlertRouting", ex.Message),
+                Loc.Get("Shell_Pref_Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -1339,7 +1339,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             _syncingWebhookReveal = false;
         }
 
-        reveal.Content = "Show";
+        reveal.Content = Loc.Get("Shell_Pref_Reveal_Show");
         // Nothing saved means nothing to hide: the field is an ordinary empty box you can paste
         // into, and a Show button over an empty field would be a control that does nothing.
         reveal.Visibility = hasSaved ? Visibility.Visible : Visibility.Collapsed;
@@ -1372,7 +1372,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         {
             input.Text = saved ?? "";
             input.IsReadOnly = false;
-            reveal.Content = "Hide";
+            reveal.Content = Loc.Get("Shell_Pref_Reveal_Hide");
             input.Focus();
             input.SelectAll();   // so a paste replaces rather than appends
         }
@@ -1434,8 +1434,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         }
         catch (Exception ex)
         {
-            MessageBox.Show(Window.GetWindow(this), $"Couldn't save the webhook: {ex.Message}",
-                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Window.GetWindow(this), Loc.Format("Shell_Pref_CouldntSaveWebhook", ex.Message),
+                Loc.Get("Shell_Pref_Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -1453,7 +1453,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         else { _mineChannelName = identity.ChannelName; }
 
         (isClan ? ClanWebhookVerdict : MineWebhookVerdict).Text =
-            $"Posts to #{identity.ChannelName} in {identity.GuildName}.";
+            Loc.Format("Shell_Pref_PostsTo", identity.ChannelName, identity.GuildName);
         RefreshAlertsStatus();
     }
 
@@ -1470,22 +1470,22 @@ internal partial class SettingsPage : UserControl, IDisposable
         var targets = new List<(string Label, string Url)>();
         if (!string.IsNullOrWhiteSpace(discordConfig.MineWebhookUrl))
         {
-            targets.Add(("My channel", discordConfig.MineWebhookUrl));
+            targets.Add((Loc.Get("Shell_Pref_MyChannel"), discordConfig.MineWebhookUrl));
         }
 
         if (!string.IsNullOrWhiteSpace(discordConfig.ClanWebhookUrl))
         {
-            targets.Add(("Clan channel", discordConfig.ClanWebhookUrl));
+            targets.Add((Loc.Get("Shell_Pref_ClanChannel"), discordConfig.ClanWebhookUrl));
         }
 
         if (targets.Count == 0)
         {
-            AlertsStatusLine.Text = "Paste a webhook URL first — there's nowhere to send a test yet.";
+            AlertsStatusLine.Text = Loc.Get("Shell_Pref_PasteWebhookFirst");
             return;
         }
 
         SendTestButton.IsEnabled = false;
-        AlertsStatusLine.Text = "Sending…";
+        AlertsStatusLine.Text = Loc.Get("Shell_Pref_Sending");
         try
         {
             var results = new List<string>();
@@ -1496,10 +1496,10 @@ internal partial class SettingsPage : UserControl, IDisposable
 
                 results.Add(result switch
                 {
-                    WebhookSendResult.Sent => $"{label}: sent.",
-                    WebhookSendResult.WebhookGone => $"{label}: that webhook no longer exists — make a new one and paste it again.",
-                    WebhookSendResult.RateLimited => $"{label}: Discord is rate-limiting us. Wait a minute; the webhook itself looks fine.",
-                    _ => $"{label}: couldn't reach Discord.",
+                    WebhookSendResult.Sent => Loc.Format("Shell_Pref_TestResult_Sent", label),
+                    WebhookSendResult.WebhookGone => Loc.Format("Shell_Pref_TestResult_Gone", label),
+                    WebhookSendResult.RateLimited => Loc.Format("Shell_Pref_TestResult_RateLimited", label),
+                    _ => Loc.Format("Shell_Pref_TestResult_Unreachable", label),
                 });
 
                 if (result == WebhookSendResult.WebhookGone) RefreshAlertsStatus();
@@ -1520,22 +1520,8 @@ internal partial class SettingsPage : UserControl, IDisposable
     /// </summary>
     private void OnNoServerHelpClick(object sender, RoutedEventArgs e) =>
         MessageBox.Show(Window.GetWindow(this),
-            """
-            You need a Discord server of your own. It's free, it can be just you, and nobody else can see it.
-
-            Make one:
-              1. Click the + button on the left edge of Discord.
-              2. Choose "Create My Own", then skip the questions.
-              3. Name it anything — "RoRoRo" works.
-
-            Then make the webhook:
-              4. Right-click your new server, then Server Settings.
-              5. Integrations, then Webhooks, then New Webhook.
-              6. Click Copy Webhook URL, and paste it into the box here.
-
-            Alerts will arrive in that server — on your phone too, as long as Discord is installed on it.
-            """,
-            "Setting up alerts",
+            Loc.Get("Shell_Pref_NoServerHelp"),
+            Loc.Get("Shell_Pref_NoServerHelpTitle"),
             MessageBoxButton.OK,
             MessageBoxImage.Information);
 
@@ -1591,8 +1577,8 @@ internal partial class SettingsPage : UserControl, IDisposable
 
             RefreshMutedAccounts();
             MessageBox.Show(Window.GetWindow(this),
-                $"Couldn't save that: {ex.Message}",
-                "Preferences",
+                Loc.Format("Shell_Pref_CouldntSaveThat", ex.Message),
+                Loc.Get("Shell_Pref_Title"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
         }
@@ -1625,12 +1611,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         if (!_themeService.ReopenEdgeQuestion())
         {
             MessageBox.Show(Window.GetWindow(this),
-                "There's nothing to choose for this theme.\n\n"
-                + "RoRoRo only asks about button outlines on themes people write themselves, and "
-                + "only when the outline a theme sets would be too faint to tell a button apart "
-                + "from the surface behind it. The built-in themes are ours to get right, so they "
-                + "are never asked about.",
-                "Button outlines",
+                Loc.Get("Shell_Pref_NoThemeChoice"),
+                Loc.Get("Shell_Pref_ButtonOutlinesTitle"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
             return;
@@ -1777,8 +1759,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         // "(auto)" and not a sentence: the box is 184px and the number is the payload — the
         // sentence above and the hint below carry the words (Este, 2026-09-05: the first ghost
         // overflowed its box).
-        MemoryReserveGhost.Text = $"{automatic.ReserveMb} (auto)";
-        MemoryCapGhost.Text = $"{automatic.CapMb} (auto)";
+        MemoryReserveGhost.Text = Loc.Format("Shell_Pref_AutoValue", automatic.ReserveMb);
+        MemoryCapGhost.Text = Loc.Format("Shell_Pref_AutoValue", automatic.CapMb);
         UpdateMemoryGhosts();
 
         MemoryWatchdogEnabledToggle.IsChecked = await _settings.GetMemoryWatchdogEnabledAsync();
@@ -1855,12 +1837,12 @@ internal partial class SettingsPage : UserControl, IDisposable
         }
 
         var blankHint = allowZero
-            ? $"Use a whole number from {floor} to {ceiling}, 0 to turn it off, or leave the box empty and RoRoRo will pick one."
-            : $"Use a whole number from {floor} to {ceiling}, or leave the box empty and RoRoRo will pick one.";
+            ? Loc.Format("Shell_Pref_NumberHint_WithZero", floor, ceiling)
+            : Loc.Format("Shell_Pref_NumberHint", floor, ceiling);
 
         if (!int.TryParse(trimmed, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
         {
-            refusal = $"\"{trimmed}\" isn't a whole number, so nothing was saved. {blankHint}";
+            refusal = Loc.Format("Shell_Pref_NotWholeNumber", trimmed, blankHint);
             return false;
         }
 
@@ -1872,7 +1854,7 @@ internal partial class SettingsPage : UserControl, IDisposable
 
         if (parsed < floor || parsed > ceiling)
         {
-            refusal = $"{parsed} is outside {floor} to {ceiling}, so nothing was saved. {blankHint}";
+            refusal = Loc.Format("Shell_Pref_OutOfRange", parsed, floor, ceiling, blankHint);
             return false;
         }
 
@@ -1891,23 +1873,23 @@ internal partial class SettingsPage : UserControl, IDisposable
         refusal = string.Empty;
 
         var trimmed = text?.Trim() ?? string.Empty;
-        var hint = $"Use a whole number from {floor} to {ceiling}. The default is {fallback}.";
+        var hint = Loc.Format("Shell_Pref_RequiredNumberHint", floor, ceiling, fallback);
 
         if (trimmed.Length == 0)
         {
-            refusal = $"This one needs a number, so nothing was saved. {hint}";
+            refusal = Loc.Format("Shell_Pref_NeedsANumber", hint);
             return false;
         }
 
         if (!int.TryParse(trimmed, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
         {
-            refusal = $"\"{trimmed}\" isn't a whole number, so nothing was saved. {hint}";
+            refusal = Loc.Format("Shell_Pref_NotWholeNumber", trimmed, hint);
             return false;
         }
 
         if (parsed < floor || parsed > ceiling)
         {
-            refusal = $"{parsed} is outside {floor} to {ceiling}, so nothing was saved. {hint}";
+            refusal = Loc.Format("Shell_Pref_OutOfRange", parsed, floor, ceiling, hint);
             return false;
         }
 
@@ -1927,7 +1909,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         {
             // Reported on this section's own line rather than in a MessageBox, so a failure to save
             // and a refusal to accept arrive in the same place and the same voice.
-            ShowMemoryWarning($"Couldn't save that: {ex.Message}");
+            ShowMemoryWarning(Loc.Format("Shell_Pref_CouldntSaveThat", ex.Message));
             _suppressClickHandlers = true;
             MemoryWatchdogEnabledToggle.IsChecked = await _settings.GetMemoryWatchdogEnabledAsync();
             _suppressClickHandlers = false;
@@ -1959,7 +1941,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         }
         catch (Exception ex)
         {
-            Refuse(MemoryReserveMbInput, saved, $"Couldn't save that: {ex.Message}");
+            Refuse(MemoryReserveMbInput, saved, Loc.Format("Shell_Pref_CouldntSaveThat", ex.Message));
         }
     }
 
@@ -1985,7 +1967,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         }
         catch (Exception ex)
         {
-            Refuse(MemoryCapMbInput, saved, $"Couldn't save that: {ex.Message}");
+            Refuse(MemoryCapMbInput, saved, Loc.Format("Shell_Pref_CouldntSaveThat", ex.Message));
         }
     }
 
@@ -2013,7 +1995,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         }
         catch (Exception ex)
         {
-            Refuse(ProjectionWarnMinutesInput, saved, $"Couldn't save that: {ex.Message}");
+            Refuse(ProjectionWarnMinutesInput, saved, Loc.Format("Shell_Pref_CouldntSaveThat", ex.Message));
         }
     }
 
@@ -2034,8 +2016,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         {
             MessageBox.Show(
                 Window.GetWindow(this),
-                "You don't have any saved accounts to export yet.",
-                "Nothing to export",
+                Loc.Get("Shell_Pref_NothingToExport"),
+                Loc.Get("Shell_Pref_NothingToExportTitle"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
             return;
