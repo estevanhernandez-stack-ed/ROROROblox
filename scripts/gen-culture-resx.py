@@ -21,6 +21,7 @@ expected to carry their English text verbatim in the translation JSON.
 from __future__ import annotations
 
 import json
+import re
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -48,6 +49,9 @@ def esc(text: str) -> str:
 # catalogs; this guard makes that class of regression impossible to ship. Case-sensitive, so
 # only the branded capitalised forms are enforced (descriptive "multi-instance lock" is free).
 PRODUCT_NOUNS = ["RoRoRo", "Roblox", "Squad Launch", "Recycle", "Multi-Instance"]
+
+# .NET composite-format tokens ({0}, {name}) must survive translation — the SET, not the order.
+TOKEN_RE = re.compile(r"\{[^{}]+\}")
 
 
 def neutral_entries() -> list[tuple[str, str]]:
@@ -99,11 +103,22 @@ def main() -> None:
         for noun in PRODUCT_NOUNS
         if noun in en.get(k, "") and noun not in str(trans[k])
     ]
+    # Format-token guard: the {…} token set in the English value must survive in the translation.
+    token_violations = [
+        f"{k}: en{sorted(TOKEN_RE.findall(en[k]))} != {sorted(TOKEN_RE.findall(str(trans[k])))}"
+        for k in keys
+        if k in trans and sorted(TOKEN_RE.findall(en.get(k, ""))) != sorted(TOKEN_RE.findall(str(trans[k])))
+    ]
     problems = []
     if noun_violations:
         problems.append(
             f"{len(noun_violations)} product-noun violation(s): {noun_violations[:8]}"
             + (" …" if len(noun_violations) > 8 else "")
+        )
+    if token_violations:
+        problems.append(
+            f"{len(token_violations)} format-token mismatch(es): {token_violations[:8]}"
+            + (" …" if len(token_violations) > 8 else "")
         )
     if missing:
         problems.append(f"{len(missing)} MISSING key(s): {missing[:8]}{' …' if len(missing) > 8 else ''}")
