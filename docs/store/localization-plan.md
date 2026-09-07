@@ -340,6 +340,41 @@ the App-side extraction** (it shapes how composed strings become resources).
   re-teach the copy fences the new form — which retires `gen-strings-accessor.py` for a resx⇄key
   parity fence.
 
+### Core refactor DONE — per-category items 1 & 2 complete (2026-09-07)
+
+The whole Core string layer (71 strings) now hands the App an enum + data, never a sentence.
+**Core carries no user-facing prose.**
+
+- **Item 1 — `CoreMessageCatalog` resx-backed (Part A, #164).** Every Core message Kind resolves a
+  `CoreMsg_*` key through `Loc` instead of returning literal English; the history count rides
+  `Loc.Plural`. This retired the hand-written `Strings.cs` accessor for runtime key lookup.
+- **Item 2 — the 7 raw-prose composers (Part B, one PR each, #165–#171).** Each stopped emitting
+  finished English:
+  1. `RobloxCompatChecker` (#165) — `CompatCheckResult` carries `CompatDrift` (direction enum +
+     versions); App composes the banner.
+  2. `SessionHistoryRowName` (#166) — the spoken a11y row name; **moved whole to the App** (no Core
+     consumer), resx-backed.
+  3. `DiagnosticsCollector` (#167) — snapshot fields became data (`string?` versions, `bool
+     MultiInstanceHeld`); the System-health panel localizes, the **support bundle stays English**.
+  4. `AccountTransportService` (#168) — `AccountTransportException` carries no message (string ctor
+     removed so prose can't return); App renders one localized line. No-oracle-leak invariant kept.
+  5. `ThemeStore` (#169) — `InvalidThemeException` gained `Kind` (6) + `Detail`; App composes via
+     `CoreMessageCatalog.For(InvalidThemeException)`.
+  6. `MultiInstanceStatusLine` (#170) — moved whole to the App, resx-backed; "Multi-Instance" stays
+     verbatim.
+  7. `AlertStatusLine` (#171) — moved whole to the App; nine sentence keys + localized channel
+     fragments joined by a localized `AlertStatus_ListConnector`; `#channel`/provider names are data.
+
+All new keys are English-only in the neutral resx (satellites fall back) until step 4 translates
+them. **CI-health note:** the wall-clock flake family (`AppStorageDefenderTests`,
+`FpsCapSettlerTests`) forced a re-run on ~half these PRs — a pre-existing, arch-asymmetric,
+timing-sensitive flake unrelated to the changes; a dedicated fix (injected clock or serial
+collection) is worth a follow-up.
+
+**Still open in Phase D:** item 3 (the ~430 App-side composed strings + the `x:Static`→`{loc:Loc}`
+codemod + VM `CultureChanged` wiring), item 4 (XAML misses), item 5 (translate all new keys ×6),
+then the guards and v1.27.
+
 ### Policy — what stays English (extend the never-lie rules)
 
 - **External notification payloads** — Discord webhook bodies, Discord Rich Presence card, phone
