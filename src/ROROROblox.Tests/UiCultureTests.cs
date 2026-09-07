@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Resources;
 using ROROROblox.App.Localization;
 using ROROROblox.Core;
 
@@ -5,24 +7,54 @@ namespace ROROROblox.Tests;
 
 /// <summary>
 /// The UI-language surface is honest by construction (localization, 2026-09-07): a language is
-/// offered ONLY when its catalog actually ships. Until the translated `Strings.&lt;culture&gt;.resx`
-/// files land, English is the only option — which is exactly the never-lie rule (don't offer a
-/// language the app can't render) expressed as a runtime property. These lock it so a picker
-/// bug can't start advertising empty languages.
+/// offered ONLY when its satellite catalog actually ships. English is always in (the neutral
+/// catalog is compiled in); each translated <c>Strings.&lt;culture&gt;.resx</c> that lands makes
+/// its language appear and earns its package-manifest entry. pt-BR is the first translated UI.
+/// These lock the guard so a picker bug can't start advertising a language the app can't render.
 /// </summary>
 public class UiCultureTests
 {
     [Fact]
-    public void WithNoTranslatedCatalogs_OnlyEnglishIsAvailable()
+    public void Available_OffersALanguageIffEnglishOrItsCatalogShips()
     {
-        // No Strings.<culture>.resx ship yet, so the satellite probe finds nothing and the
-        // AVAILABLE list is English alone. When a catalog is added, this expectation updates in
-        // the same commit — a ceiling that moves with reality, like the app's other fences.
         var available = UiCulture.Available();
 
-        Assert.Single(available);
+        // English is always available and first.
         Assert.Equal("", available[0].CultureName);
         Assert.Equal("English", available[0].DisplayName);
+
+        // Honest by construction: for EVERY candidate, it is offered exactly when it is English
+        // or its satellite catalog is present — never otherwise. This is the whole guarantee.
+        foreach (var c in UiCulture.Candidates)
+        {
+            var offered = available.Any(a => a.CultureName == c.CultureName);
+            var shouldOffer = c.CultureName.Length == 0 || UiCulture.HasCatalog(c.CultureName);
+            Assert.Equal(shouldOffer, offered);
+        }
+    }
+
+    [Fact]
+    public void ShippedLanguages_IncludePtBr_TheFirstTranslatedUi()
+    {
+        // Ratchet — moves in the same commit a catalog lands. If the pt-BR satellite silently
+        // stops building (a publish setting strips it, the resx breaks), this fails loudly.
+        var shipped = UiCulture.Available().Select(c => c.CultureName).ToHashSet();
+        Assert.Contains("pt-BR", shipped);
+    }
+
+    [Fact]
+    public void PtBrCatalog_ResolvesTranslatedText_NotAnEnglishFallback()
+    {
+        // The strongest end-to-end proof: the pt-BR satellite loads and returns genuinely
+        // translated content. If it never built, GetString would fall back to English and the
+        // NotEqual below would fail — exactly the regression we want caught.
+        var rm = new ResourceManager("ROROROblox.App.Properties.Strings", typeof(UiCulture).Assembly);
+        var en = rm.GetString("AboutPage_KeyboardShortcuts", CultureInfo.InvariantCulture);
+        var pt = rm.GetString("AboutPage_KeyboardShortcuts", CultureInfo.GetCultureInfo("pt-BR"));
+
+        Assert.Equal("Keyboard shortcuts", en);
+        Assert.False(string.IsNullOrWhiteSpace(pt));
+        Assert.NotEqual(en, pt);
     }
 
     [Fact]
@@ -37,7 +69,10 @@ public class UiCultureTests
     [Fact]
     public void HasCatalog_IsFalseForAnUnshippedCulture_AndNeverThrows()
     {
-        Assert.False(UiCulture.HasCatalog("fr"));
+        // A well-formed culture that will never ship a satellite: English is the NEUTRAL catalog,
+        // so there is no en-GB satellite and tryParents:false won't borrow the neutral one. Durable
+        // past the fan-out, unlike naming a wave-1 language that is about to ship.
+        Assert.False(UiCulture.HasCatalog("en-GB"));
         Assert.False(UiCulture.HasCatalog("not-a-culture")); // bad name → false, no throw
     }
 
@@ -50,9 +85,28 @@ public class UiCultureTests
         var tmp = Path.Combine(Path.GetTempPath(), $"rr-uiculture-{Guid.NewGuid():N}.json");
         try
         {
-            File.WriteAllText(tmp, "{\"uiLanguage\":\"fr\"}");
+            File.WriteAllText(tmp, "{\"uiLanguage\":\"en-GB\"}");
             UiCulture.ApplyFromSettings(tmp);
             Assert.Equal(before, System.Threading.Thread.CurrentThread.CurrentUICulture);
+        }
+        finally
+        {
+            System.Threading.Thread.CurrentThread.CurrentUICulture = before;
+            if (File.Exists(tmp)) File.Delete(tmp);
+        }
+    }
+
+    [Fact]
+    public void ApplyFromSettings_AppliesAShippedCulture()
+    {
+        // The positive path: a saved language whose catalog ships IS applied to the thread.
+        var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
+        var tmp = Path.Combine(Path.GetTempPath(), $"rr-uiculture-{Guid.NewGuid():N}.json");
+        try
+        {
+            File.WriteAllText(tmp, "{\"uiLanguage\":\"pt-BR\"}");
+            UiCulture.ApplyFromSettings(tmp);
+            Assert.Equal("pt-BR", System.Threading.Thread.CurrentThread.CurrentUICulture.Name);
         }
         finally
         {

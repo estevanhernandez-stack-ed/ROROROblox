@@ -1,0 +1,2904 @@
+{
+  "source": "Strings.resx",
+  "count": 483,
+  "rows": [
+    {
+      "key": "AboutPage_A626LabsProduct",
+      "en": "A 626 Labs product",
+      "comment": "src/ROROROblox.App/About/AboutPage.xaml:98 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "AboutPage_CookiesAreEncryptedWithWindows",
+      "en": "Cookies are encrypted with Windows DPAPI per user. They never leave this machine.\n                    A copy of accounts.dat moved to another PC will not decrypt.",
+      "comment": "src/ROROROblox.App/About/AboutPage.xaml:182 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "AboutPage_InsideTheToolsWindowCtrl",
+      "en": "Inside the tools window, Ctrl+1 through Ctrl+6 also jump straight to a page.",
+      "comment": "src/ROROROblox.App/About/AboutPage.xaml:177 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "AboutPage_KeyboardShortcuts",
+      "en": "Keyboard shortcuts",
+      "comment": "src/ROROROblox.App/About/AboutPage.xaml:153 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "AboutPage_Koii4Eva",
+      "en": "Koii 4 eva",
+      "comment": "src/ROROROblox.App/About/AboutPage.xaml:102 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "AboutPage_Links",
+      "en": "Links",
+      "comment": "src/ROROROblox.App/About/AboutPage.xaml:127 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "AboutPage_MultiLauncherForWindows",
+      "en": "Multi-launcher for Windows.",
+      "comment": "src/ROROROblox.App/About/AboutPage.xaml:94 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "AboutPage_OpenLogFolder",
+      "en": "Open log folder",
+      "comment": "src/ROROROblox.App/About/AboutPage.xaml Hyperlink (hand-converted from staged)",
+      "placeholders": false
+    },
+    {
+      "key": "AboutPage_ReportAnIssue",
+      "en": "Report an issue",
+      "comment": "src/ROROROblox.App/About/AboutPage.xaml Hyperlink (hand-converted from staged)",
+      "placeholders": false
+    },
+    {
+      "key": "AboutPage_RobloxIsATrademarkOf",
+      "en": "\"Roblox\" is a trademark of Roblox Corporation. RoRoRo is not affiliated with,\n                    endorsed by, or sponsored by Roblox Corporation.",
+      "comment": "src/ROROROblox.App/About/AboutPage.xaml:187 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "AboutPage_Rororo",
+      "en": "RoRoRo",
+      "comment": "src/ROROROblox.App/About/AboutPage.xaml:80 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "AboutPage_RunMultipleRobloxClientsSide",
+      "en": "Run multiple Roblox clients side by side, signed in as different saved accounts.\n                    Holds the Roblox singleton mutex so subsequent clients don't fight for it; uses\n                    Roblox's documented authentication-ticket flow for per-account launches. Clean\n                    reimplementation; not a fork.",
+      "comment": "src/ROROROblox.App/About/AboutPage.xaml:118 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "AboutPage_ShowTheWelcomeTour",
+      "en": "Show the welcome tour",
+      "comment": "src/ROROROblox.App/About/AboutPage.xaml Hyperlink (hand-converted from staged)",
+      "placeholders": false
+    },
+    {
+      "key": "AboutPage_Version",
+      "en": "Version",
+      "comment": "src/ROROROblox.App/About/AboutPage.xaml:87 title",
+      "placeholders": false
+    },
+    {
+      "key": "CaptionColorPickerWindow_Apply",
+      "en": "Apply",
+      "comment": "src/ROROROblox.App/Theming/CaptionColorPickerWindow.xaml:62 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "CaptionColorPickerWindow_ClickASwatchToApply",
+      "en": "Click a swatch to apply. The Roblox window updates within ~1.5s.",
+      "comment": "src/ROROROblox.App/Theming/CaptionColorPickerWindow.xaml:33 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "CaptionColorPickerWindow_Close",
+      "en": "Close",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "CaptionColorPickerWindow_CustomHex",
+      "en": "Custom hex:",
+      "comment": "src/ROROROblox.App/Theming/CaptionColorPickerWindow.xaml:49 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "CaptionColorPickerWindow_CustomHexColour",
+      "en": "Custom hex colour",
+      "comment": "src/ROROROblox.App/Theming/CaptionColorPickerWindow.xaml:55 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "CaptionColorPickerWindow_PickATitleBarColor",
+      "en": "Pick a title-bar color",
+      "comment": "src/ROROROblox.App/Theming/CaptionColorPickerWindow.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "CaptionColorPickerWindow_ResetToAuto",
+      "en": "Reset to auto",
+      "comment": "src/ROROROblox.App/Theming/CaptionColorPickerWindow.xaml:78 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ConsentSheet_Cancel",
+      "en": "Cancel",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "ConsentSheet_GrantThisCapability",
+      "en": "Grant this capability",
+      "comment": "src/ROROROblox.App/Plugins/ConsentSheet.xaml:142 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "ConsentSheet_Install",
+      "en": "Install",
+      "comment": "src/ROROROblox.App/Plugins/ConsentSheet.xaml:34 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ConsentSheet_InstallPlugin",
+      "en": "Install plugin",
+      "comment": "src/ROROROblox.App/Plugins/ConsentSheet.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ConsentSheet_ThisPluginAsksFor",
+      "en": "THIS PLUGIN ASKS FOR",
+      "comment": "src/ROROROblox.App/Plugins/ConsentSheet.xaml:110 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ConsentSheet_ThisPluginStartsAsSoon",
+      "en": "This plugin starts as soon as you install it. Use the Autostart toggle on the Plugins page to control whether it also launches with RoRoRo.",
+      "comment": "src/ROROROblox.App/Plugins/ConsentSheet.xaml:49 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "CookieCaptureWindow_AddARobloxAccount",
+      "en": "Add a Roblox account",
+      "comment": "src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:33 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "CookieCaptureWindow_AddAccount",
+      "en": "Add account",
+      "comment": "src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "CookieCaptureWindow_FirstOpenCanTakeA",
+      "en": "First open can take a few seconds on a fresh WebView2 install.",
+      "comment": "src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:100 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "CookieCaptureWindow_IfThePageIsBlank",
+      "en": "If the page is blank, click Reload (F5).",
+      "comment": "src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:57 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "CookieCaptureWindow_LoadingRobloxCom",
+      "en": "Loading roblox.com...",
+      "comment": "src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:90 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "CookieCaptureWindow_OverHttpsInsideThisEmbedded",
+      "en": "over HTTPS, inside this embedded browser. RoRoRo never sees it.",
+      "comment": "src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:43 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "CookieCaptureWindow_RobloxHasnTAcceptedThis",
+      "en": "Roblox hasn't accepted this session yet — finish any verification steps. If this stays after you're fully logged in, close this window and try again.",
+      "comment": "src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:74 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "CookieCaptureWindow_TheEmbeddedBrowserSometimesLoads",
+      "en": "The embedded browser sometimes loads slowly on first open. If Roblox asks for two-factor verification, that's normal — verify here and your saved login keeps working.",
+      "comment": "src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:64 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "CookieCaptureWindow_WeCaptureOnlyTheSession",
+      "en": "We capture only the session cookie that Roblox sets after a successful login, then encrypt it on disk via Windows DPAPI tied to your user.",
+      "comment": "src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:50 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "CookieCaptureWindow_YourPasswordGoesOnlyTo",
+      "en": "Your password goes only to",
+      "comment": "src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:41 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "DiagnosticsPage_BundleTheLatestLogFiles",
+      "en": "Bundle the latest log files + this snapshot into a zip you can attach to a Discord report. Cookies are never logged; the bundle contains no secrets.",
+      "comment": "src/ROROROblox.App/Diagnostics/DiagnosticsPage.xaml:43 title",
+      "placeholders": false
+    },
+    {
+      "key": "DiagnosticsPage_Diagnostics",
+      "en": "Diagnostics",
+      "comment": "src/ROROROblox.App/Diagnostics/DiagnosticsPage.xaml:16 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "DiagnosticsPage_OpenDataFolder",
+      "en": "Open data folder",
+      "comment": "src/ROROROblox.App/Diagnostics/DiagnosticsPage.xaml:39 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "DiagnosticsPage_OpenLogFolder",
+      "en": "Open log folder",
+      "comment": "src/ROROROblox.App/Diagnostics/DiagnosticsPage.xaml:35 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "DiagnosticsPage_SaveSupportBundleZip",
+      "en": "Save support bundle (.zip)",
+      "comment": "src/ROROROblox.App/Diagnostics/DiagnosticsPage.xaml:43 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "DiagnosticsPage_SaveTheBundleWhenFiling",
+      "en": "Save the bundle when filing a bug — log files redact secrets.",
+      "comment": "src/ROROROblox.App/Diagnostics/DiagnosticsPage.xaml:17 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "DpapiCorruptWindow_Quit",
+      "en": "Quit",
+      "comment": "src/ROROROblox.App/Modals/DpapiCorruptWindow.xaml:43 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "DpapiCorruptWindow_SavedAccountsCanTBe",
+      "en": "Saved accounts can't be unlocked",
+      "comment": "src/ROROROblox.App/Modals/DpapiCorruptWindow.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "DpapiCorruptWindow_StartFresh",
+      "en": "Start Fresh",
+      "comment": "src/ROROROblox.App/Modals/DpapiCorruptWindow.xaml:39 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "DpapiCorruptWindow_ThisUsuallyMeansWindowsWas",
+      "en": "This usually means Windows was restored from a backup that didn't preserve the encryption key, or the saved-accounts file was copied from another machine. We need to start your account list fresh — your Roblox accounts themselves are fine, you'll just need to log in again.",
+      "comment": "src/ROROROblox.App/Modals/DpapiCorruptWindow.xaml:30 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "DpapiCorruptWindow_YourSavedAccountsCanT",
+      "en": "Your saved accounts can't be unlocked on this PC",
+      "comment": "src/ROROROblox.App/Modals/DpapiCorruptWindow.xaml:24 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "EdgeRemediationWindow_KeepMyThemeAsI",
+      "en": "Keep my theme as I wrote it",
+      "comment": "src/ROROROblox.App/Modals/EdgeRemediationWindow.xaml:96 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "EdgeRemediationWindow_SeparatorsCardEdgesAndRow",
+      "en": "Separators, card edges and row rules are untouched either way, and so is every text box and dropdown — this is the outline on buttons.",
+      "comment": "src/ROROROblox.App/Modals/EdgeRemediationWindow.xaml:85 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "EdgeRemediationWindow_ThemeContrast",
+      "en": "Theme contrast",
+      "comment": "src/ROROROblox.App/Modals/EdgeRemediationWindow.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "EdgeRemediationWindow_UseTheReadableEdge",
+      "en": "Use the readable edge",
+      "comment": "src/ROROROblox.App/Modals/EdgeRemediationWindow.xaml:101 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "EdgeRemediationWindow_WeChangedOneColourIn",
+      "en": "We changed one colour in your theme",
+      "comment": "src/ROROROblox.App/Modals/EdgeRemediationWindow.xaml:30 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "EdgeRemediationWindow_WithTheFix",
+      "en": "With the fix",
+      "comment": "src/ROROROblox.App/Modals/EdgeRemediationWindow.xaml:68 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "EdgeRemediationWindow_YourTheme",
+      "en": "Your theme",
+      "comment": "src/ROROROblox.App/Modals/EdgeRemediationWindow.xaml:52 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ExportAccountsWindow_Accounts",
+      "en": "Accounts",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "ExportAccountsWindow_Cancel",
+      "en": "Cancel",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "ExportAccountsWindow_ConfirmPassphrase",
+      "en": "Confirm passphrase",
+      "comment": "src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:132 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "ExportAccountsWindow_Export",
+      "en": "Export…",
+      "comment": "src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:151 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ExportAccountsWindow_ExportAccounts",
+      "en": "Export accounts",
+      "comment": "src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ExportAccountsWindow_IncludeThisAccountInThe",
+      "en": "Include this account in the export",
+      "comment": "src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:60 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "ExportAccountsWindow_NoRobloxIdYetLaunch",
+      "en": "No Roblox ID yet — launch this account once before it can be exported.",
+      "comment": "src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:82 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ExportAccountsWindow_PassphraseAtLeast12Characters",
+      "en": "Passphrase (at least 12 characters)",
+      "comment": "src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:97 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ExportAccountsWindow_PassphraseAtLeast12Characters_2",
+      "en": "Passphrase, at least 12 characters",
+      "comment": "src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:103 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "ExportAccountsWindow_PickAccountsAndSetA",
+      "en": "Pick accounts and set a passphrase. The saved file is encrypted — anyone who opens it needs the passphrase. There's no recovery if you lose it.",
+      "comment": "src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:30 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "FriendFollowWindow_Close",
+      "en": "Close",
+      "comment": "src/ROROROblox.App/Friends/FriendFollowWindow.xaml:68 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "FriendFollowWindow_PickAFriendToFollow",
+      "en": "Pick a friend to follow into their server. Roblox does the permission check — works for public AND private servers if your friend's privacy + server allowlist permit.",
+      "comment": "src/ROROROblox.App/Friends/FriendFollowWindow.xaml:25 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "FriendFollowWindow_Refresh",
+      "en": "Refresh",
+      "comment": "src/ROROROblox.App/Friends/FriendFollowWindow.xaml:55 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_Add",
+      "en": "+ Add",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:58 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_AddByUrl",
+      "en": "+ Add by URL",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:347 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_ClearDefault",
+      "en": "Clear default",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:149 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_Games",
+      "en": "Games",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:302 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_GiveThisGameACustom",
+      "en": "Give this game a custom name shown only in RoRoRo. The Roblox-side name stays untouched.",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:158 title",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_GiveThisServerACustom",
+      "en": "Give this server a custom name shown only in RoRoRo.",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:270 title",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_NoSavedGamesYet",
+      "en": "No saved games yet.",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:371 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_NoSavedPrivateServers",
+      "en": "No saved private servers.",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:387 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_OrPasteARobloxCom",
+      "en": "Or paste a roblox.com/games/<id>/<name> URL or place id",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:340 title",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_PasteAPrivateServerLink",
+      "en": "Paste a private server link into Squad Launch and launch it. It saves here automatically.",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:396 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_PreSelectThisServerWhen",
+      "en": "Pre-select this server when you launch all accounts to a private server.",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:254 title",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_Remove",
+      "en": "Remove",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:165 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_Rename",
+      "en": "Rename…",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:85 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_Rename_2",
+      "en": "Rename",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:158 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_ResetName",
+      "en": "Reset name",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:88 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_RobloxGameUrlOrPlace",
+      "en": "Roblox game URL or place id",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:340 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_SavedGames",
+      "en": "Saved games",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:365 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_SavedPrivateServers",
+      "en": "Saved private servers",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:381 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_Search",
+      "en": "Search",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:317 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_SearchAboveOrPasteA",
+      "en": "Search above or paste a Roblox game URL to add your first one.",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:374 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_SearchRobloxGamesByName",
+      "en": "Search Roblox games by name",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:310 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_SearchRobloxGamesByName_2",
+      "en": "Search Roblox games by name. Enter to search.",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:310 title",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_SetDefault",
+      "en": "Set default",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:143 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_StopPreSelectingThisServer",
+      "en": "Stop pre-selecting this server. You'll pick one each time again.",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:261 title",
+      "placeholders": false
+    },
+    {
+      "key": "GamesPage_StopUsingThisAsThe",
+      "en": "Stop using this as the default. Launch As will open Roblox home until you set a default game.",
+      "comment": "src/ROROROblox.App/Games/GamesPage.xaml:149 title",
+      "placeholders": false
+    },
+    {
+      "key": "ImportAccountsWindow_BackupFilePath",
+      "en": "Backup file path",
+      "comment": "src/ROROROblox.App/Transport/ImportAccountsWindow.xaml:46 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "ImportAccountsWindow_Browse",
+      "en": "Browse…",
+      "comment": "src/ROROROblox.App/Transport/ImportAccountsWindow.xaml:52 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ImportAccountsWindow_Cancel",
+      "en": "Cancel",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "ImportAccountsWindow_File",
+      "en": "File",
+      "comment": "src/ROROROblox.App/Transport/ImportAccountsWindow.xaml:35 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ImportAccountsWindow_Import",
+      "en": "Import",
+      "comment": "src/ROROROblox.App/Transport/ImportAccountsWindow.xaml:82 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ImportAccountsWindow_ImportAccounts",
+      "en": "Import accounts",
+      "comment": "src/ROROROblox.App/Transport/ImportAccountsWindow.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ImportAccountsWindow_Passphrase",
+      "en": "Passphrase",
+      "comment": "src/ROROROblox.App/Transport/ImportAccountsWindow.xaml:58 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ImportAccountsWindow_PickARororoAccountsFile",
+      "en": "Pick a .rororo-accounts file and enter its passphrase. Accounts already on this PC are kept as-is — only new ones are added.",
+      "comment": "src/ROROROblox.App/Transport/ImportAccountsWindow.xaml:28 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "JoinByLinkWindow_AddThisGameOrPrivate",
+      "en": "Add this game or private server to your saved games so it shows up next time without retyping.",
+      "comment": "src/ROROROblox.App/JoinByLink/JoinByLinkWindow.xaml:81 title",
+      "placeholders": false
+    },
+    {
+      "key": "JoinByLinkWindow_Cancel",
+      "en": "Cancel",
+      "comment": "src/ROROROblox.App/JoinByLink/JoinByLinkWindow.xaml:88 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "JoinByLinkWindow_JoinByLink",
+      "en": "Join by link",
+      "comment": "src/ROROROblox.App/JoinByLink/JoinByLinkWindow.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "JoinByLinkWindow_Launch",
+      "en": "Launch",
+      "comment": "src/ROROROblox.App/JoinByLink/JoinByLinkWindow.xaml:92 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "JoinByLinkWindow_PasteARobloxGameUrl",
+      "en": "Paste a Roblox game URL or a private server share link. We figure out which kind it is.",
+      "comment": "src/ROROROblox.App/JoinByLink/JoinByLinkWindow.xaml:41 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "JoinByLinkWindow_RobloxGameOrPrivateServer",
+      "en": "Roblox game or private server link",
+      "comment": "src/ROROROblox.App/JoinByLink/JoinByLinkWindow.xaml:48 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "JoinByLinkWindow_SaveToMyGames",
+      "en": "Save to my games",
+      "comment": "src/ROROROblox.App/JoinByLink/JoinByLinkWindow.xaml:81 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "JoinRequestWindow_Cancel",
+      "en": "Cancel",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "JoinRequestWindow_PrivateServer",
+      "en": "Private server",
+      "comment": "src/ROROROblox.App/Modals/JoinRequestWindow.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "JoinRequestWindow_RobloxChecksAccessServerSide",
+      "en": "ROBLOX CHECKS ACCESS SERVER-SIDE",
+      "comment": "src/ROROROblox.App/Modals/JoinRequestWindow.xaml:44 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "JoinRequestWindow_ThisIsAPrivateServer",
+      "en": "This is a private server",
+      "comment": "src/ROROROblox.App/Modals/JoinRequestWindow.xaml:31 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "JoinRequestWindow_TryAnyway",
+      "en": "Try anyway",
+      "comment": "src/ROROROblox.App/Modals/JoinRequestWindow.xaml:56 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "LaunchHeadroomWindow_Cancel",
+      "en": "Cancel",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "LaunchHeadroomWindow_LaunchAnyway",
+      "en": "Launch anyway",
+      "comment": "src/ROROROblox.App/Modals/LaunchHeadroomWindow.xaml:60 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "LaunchHeadroomWindow_NotMuchMemoryLeft",
+      "en": "Not much memory left",
+      "comment": "src/ROROROblox.App/Modals/LaunchHeadroomWindow.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "LeftoverProcessesWindow_CleanUpContinue",
+      "en": "Clean up + continue",
+      "comment": "src/ROROROblox.App/Modals/LeftoverProcessesWindow.xaml:37 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "LeftoverProcessesWindow_ClearStrays",
+      "en": "Clear strays",
+      "comment": "src/ROROROblox.App/Modals/LeftoverProcessesWindow.xaml:35 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "LeftoverProcessesWindow_Continue",
+      "en": "Continue",
+      "comment": "src/ROROROblox.App/Modals/LeftoverProcessesWindow.xaml:39 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "LeftoverProcessesWindow_LeftoverRobloxProcesses",
+      "en": "Leftover Roblox processes",
+      "comment": "src/ROROROblox.App/Modals/LeftoverProcessesWindow.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_120Fps",
+      "en": "120 FPS",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:921 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_144Fps",
+      "en": "144 FPS",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:922 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_165Fps",
+      "en": "165 FPS",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:923 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_20Fps",
+      "en": "20 FPS",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:916 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_240Fps",
+      "en": "240 FPS",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:924 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_30Fps",
+      "en": "30 FPS",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:917 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_45Fps",
+      "en": "45 FPS",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:918 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_60Fps",
+      "en": "60 FPS",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:919 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_90Fps",
+      "en": "90 FPS",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:920 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_About",
+      "en": "About",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1213 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Accounts",
+      "en": "Accounts",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1073 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_AddALabelPs99Rcu",
+      "en": "Add a label (PS99, RCU…).",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:705 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_AddATagToThis",
+      "en": "Add a tag to this account",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:736 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_AddAccount",
+      "en": "+ Add account",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1092 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_AddGamesFromToolsGames",
+      "en": "Add games from Tools → Games",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:893 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_AddTag",
+      "en": "add tag",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:736 placeholder",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_AddYourFirstAccount",
+      "en": "+ Add your first account",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1884 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_AssignThisAccountAFresh",
+      "en": "Assign this account a fresh fake name and avatar for streamer mode.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:314 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_BloxstrapIsSetAsYour",
+      "en": "Bloxstrap is set as your Roblox launcher — it will override per-account FPS. Set FPS in Bloxstrap to match.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1684 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_ClickAChipToLaunch",
+      "en": "Click a chip to launch this account into another account's current Roblox server.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:577 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_ClickAddAccountToLog",
+      "en": "Click + Add account to log in to your first Roblox account.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1753 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_CloseAndRelaunchThisClient",
+      "en": "Close and relaunch this client — back into the same server it's in now, and the only guaranteed way to reclaim memory Roblox has leaked.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:958 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_CloseRobloxForMe",
+      "en": "Close Roblox for me",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1582 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_CloseTheRobloxWindowFor",
+      "en": "Close the Roblox window for this account.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:172 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_DefaultGamePickWhichGame",
+      "en": "Default game — pick which game new launches use",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1229 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Diagnostics",
+      "en": "Diagnostics",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Dismiss",
+      "en": "Dismiss",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1617 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_DismissTheBloxstrapWarning",
+      "en": "Dismiss the Bloxstrap warning",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1685 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_DismissTheFrameRateCap",
+      "en": "Dismiss the frame-rate cap warning",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1617 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_DragToReorderThisAccount",
+      "en": "Drag to reorder this account.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:374 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Expand",
+      "en": "Expand",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1859 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_ExpandAndClickTheOn",
+      "en": "Expand and click the ☆ on a row to set one.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1853 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_FilterAccounts",
+      "en": "Filter accounts",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1731 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_FilterAccountsByTagOr",
+      "en": "Filter accounts by tag or name…",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1731 placeholder",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Follow",
+      "en": "Follow:",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Follow_2",
+      "en": "Follow",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:628 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_ForceCloseEveryRunningRoblox",
+      "en": "Force-close every running Roblox client. Asks first.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1200 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Fps",
+      "en": "— FPS",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:915 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_FpsCapAppliedAtLaunch",
+      "en": "FPS cap applied at launch",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:908 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_FpsCapAppliedAtLaunch_2",
+      "en": "FPS cap applied at launch (DFIntTaskSchedulerTargetFps + GlobalBasicSettings FramerateCap)",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:908 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Friends",
+      "en": "Friends",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:839 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_GameOrPrivateServerTo",
+      "en": "Game or private server to launch this account into",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:853 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_GameOrSavedPrivateServer",
+      "en": "Game or saved private server to launch this account into, or '(Paste a link...)' for a one-shot link.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:853 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Games",
+      "en": "Games",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_History",
+      "en": "History",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_HistoryDiagnosticsPluginsLogFolder",
+      "en": "History, Diagnostics, Plugins, log folder, Stop all, tour, About.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1169 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_HoldingYourOtherAccountsUntil",
+      "en": "Holding your other accounts until it finishes — this only happens when Roblox needs a fresh client.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1515 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_InBatches",
+      "en": "In batches",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_IncludeThisAccountInLaunch",
+      "en": "Include this account in Launch multiple and Squad Launch",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:529 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_IncludeThisAccountInLaunch_2",
+      "en": "Include this account in Launch multiple / Squad Launch batches. Click to skip.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:529 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_InstallAndManageRororoPlugins",
+      "en": "Install and manage RoRoRo plugins.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1188 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_IntoTheirServer",
+      "en": "into their server",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:628 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_JoinViaFriendChallengeProne",
+      "en": "Join via friend (challenge-prone account)",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:276 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_JoinViaFriendChallengeProne_2",
+      "en": "✓ Join via friend (challenge-prone account)",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:279 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_LaunchAs",
+      "en": "Launch As",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:929 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_LaunchEverySelectedAccountInto",
+      "en": "Launch every selected account into its own per-row game, one at a time about 5 seconds apart — the gap makes sure each window lands on the right account. Use the dot next to each account's status to deselect. (Ctrl+L)",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1468 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_LaunchMultiple",
+      "en": "Launch multiple",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1468 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_LaunchYourMainAccountInto",
+      "en": "Launch your main account into its current per-row game.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1824 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_LogInToARoblox",
+      "en": "Log in to a Roblox account and save it here. (Ctrl+N)",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1092 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_ManageGames",
+      "en": "Manage games…",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1337 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_MuteDiscordAlerts",
+      "en": "Mute Discord alerts",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:296 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_MutedNoDiscordAlerts",
+      "en": "✓ Muted — no Discord alerts",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:299 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_NoAccountsSaved",
+      "en": "No accounts saved.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1879 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_NoMainAccountPicked",
+      "en": "No main account picked.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1848 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_NoRobloxRunning",
+      "en": "No Roblox running.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1819 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_NoSavedAccountsYet",
+      "en": "No saved accounts yet.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1749 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_NoSavedGamesYetAdd",
+      "en": "No saved games yet — Add a game",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1300 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_OpenLogFolder",
+      "en": "Open log folder",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_OpenTheFolderHoldingRororo",
+      "en": "Open the folder holding RoRoRo's log files.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1197 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_PickARobloxWindowTitle",
+      "en": "Pick a Roblox window title-bar color for this account.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:763 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Plugins",
+      "en": "Plugins",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1188 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Reauthenticate",
+      "en": "Re-authenticate",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:820 Button (hand-converted; tokenizer missed this one site — see Vibe-Lingual follow-up)",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_RecentSessionsPerAccountWhat",
+      "en": "Recent sessions per account: what game/server, when, how long.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1180 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Recycle",
+      "en": "Recycle",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:958 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_RecycleCloseAndRelaunchThis",
+      "en": "Recycle — close and relaunch this client back into the server it's in now, and reclaim leaked memory.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:144 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Remove",
+      "en": "Remove",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_RemoveThisTag",
+      "en": "Remove this tag",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:684 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_RemoveThisTag_2",
+      "en": "Remove this tag.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:684 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Rename",
+      "en": "Rename…",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_ReplayTheFirstRunTour",
+      "en": "Replay the first-run tour of the account row.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1210 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_RerollIdentity",
+      "en": "Reroll identity",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:314 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_RerollIdentity_2",
+      "en": "🎲 Reroll identity",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:314 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_ResetName",
+      "en": "Reset name",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Retry",
+      "en": "Retry",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1584 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_RobloxFlaggedThisAccountRe",
+      "en": "Roblox flagged this account. Re-authenticate, or wait for it to cool down.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:945 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_RobloxIsUpdating",
+      "en": "Roblox is updating",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1510 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Rororo",
+      "en": "RoRoRo",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_SavedGamesAndPrivateServers",
+      "en": "Saved games and private servers for the launch picker. (Ctrl+G)",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1144 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_SeeThisAccountSFriends",
+      "en": "See this account's friends and follow one into their server (works for public + private).",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:839 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_SendEverySelectedAccountInto",
+      "en": "Send every selected account into the SAME server — a private server link, or a plain game link to share one public server. Launch multiple, next to this, sends each account into its own game instead. Use the dot next to each account's status to deselect. (Ctrl+J)",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1479 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_SetAsDefault",
+      "en": "Set as default",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1373 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_SetAsMainAccount",
+      "en": "Set as main account",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:784 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_SetAsMainAccountDrives",
+      "en": "Set as main account. Drives the compact-mode CTA + tray double-click target.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:792 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Settings",
+      "en": "Settings",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1151 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_ShowOnlyAccountsWhoseTag",
+      "en": "Show only accounts whose tag or name contains this text. Drag-reorder is paused while filtering — clear the box to reorder again.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1731 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_ShrinkToASmallOps",
+      "en": "Shrink to a small ops view that only shows running accounts. Click again to expand.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1946 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Skipped",
+      "en": "Skipped",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_SquadLaunch",
+      "en": "Squad Launch",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1479 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_SquadLaunchesRouteThisAccount",
+      "en": "Squad launches route this account into the server by following a squad member who's already in — Roblox's verification prompts hit direct joins, not follows. Requires friendship with your squad.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:271 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Start",
+      "en": "▶ Start",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1830 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_StartupAccountsAlertsDiscordAnd",
+      "en": "Startup, accounts, alerts, Discord, and theme. (Ctrl+,)",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1151 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Stop",
+      "en": "Stop",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:172 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_StopAllRobloxInstances",
+      "en": "Stop all Roblox instances",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1200 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_StopDiscordAlertsForThis",
+      "en": "Stop Discord alerts for this account only. Routing is per-trigger; muting is per-account.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:291 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_SystemHealthRobloxWebview2Versions",
+      "en": "System health, Roblox + WebView2 versions, log location.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1184 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_ThisIsYourMainAccount",
+      "en": "This is your main account. Click to unset.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:795 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Tools",
+      "en": "Tools  ▾",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1169 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_Tools_2",
+      "en": "Tools",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1169 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_TypeALabelPs99Rcu",
+      "en": "Type a label (PS99, RCU…) and press Enter. Esc to cancel.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:736 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_UnlimitedFps",
+      "en": "Unlimited FPS",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:925 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_VersionLinksLicense",
+      "en": "Version, links, license.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1213 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_WelcomeTour",
+      "en": "Welcome tour",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1210 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_WhetherThisAccountJoinsLaunch",
+      "en": "Whether this account joins Launch multiple / Squad Launch batch launches. Click the dot to flip.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:534 title",
+      "placeholders": false
+    },
+    {
+      "key": "MainWindow_XMinimizesToTrayQuit",
+      "en": "X minimizes to tray. Quit from the tray to exit.",
+      "comment": "src/ROROROblox.App/MainWindow.xaml:1999 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "PageHeader_Rororo",
+      "en": "RoRoRo",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "PluginsPage_Autostart",
+      "en": "Autostart",
+      "comment": "src/ROROROblox.App/Plugins/PluginsPage.xaml:221 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "PluginsPage_EachPluginRunsInIts",
+      "en": "Each plugin runs in its own process and only sees what you grant.",
+      "comment": "src/ROROROblox.App/Plugins/PluginsPage.xaml:31 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "PluginsPage_Install",
+      "en": "Install",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "PluginsPage_InstallFromUrl",
+      "en": "INSTALL FROM URL",
+      "comment": "src/ROROROblox.App/Plugins/PluginsPage.xaml:109 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "PluginsPage_Launch",
+      "en": "Launch",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "PluginsPage_NoPluginsInstalled",
+      "en": "No plugins installed.",
+      "comment": "src/ROROROblox.App/Plugins/PluginsPage.xaml:334 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "PluginsPage_PasteAReleaseUrlAbove",
+      "en": "Paste a release URL above to add one.",
+      "comment": "src/ROROROblox.App/Plugins/PluginsPage.xaml:338 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "PluginsPage_PasteTheBaseUrlOf",
+      "en": "Paste the base URL of a plugin release (the folder containing manifest.json, manifest.sha256, and plugin.zip).",
+      "comment": "src/ROROROblox.App/Plugins/PluginsPage.xaml:133 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "PluginsPage_PluginManifestUrl",
+      "en": "Plugin manifest URL",
+      "comment": "src/ROROROblox.App/Plugins/PluginsPage.xaml:119 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "PluginsPage_Plugins",
+      "en": "Plugins",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "PluginsPage_Remove",
+      "en": "Remove",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "PluginsPage_Restart",
+      "en": "Restart",
+      "comment": "src/ROROROblox.App/Plugins/PluginsPage.xaml:71 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "PluginsPage_Update",
+      "en": "Update",
+      "comment": "src/ROROROblox.App/Plugins/PluginsPage.xaml:244 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RenameWindow_Cancel",
+      "en": "Cancel",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "RenameWindow_NewName",
+      "en": "New name",
+      "comment": "src/ROROROblox.App/Modals/RenameWindow.xaml:45 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "RenameWindow_Rename",
+      "en": "Rename",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "RenameWindow_ResetToOriginal",
+      "en": "Reset to original",
+      "comment": "src/ROROROblox.App/Modals/RenameWindow.xaml Hyperlink (hand-converted from staged)",
+      "placeholders": false
+    },
+    {
+      "key": "RenameWindow_Save",
+      "en": "Save",
+      "comment": "src/ROROROblox.App/Modals/RenameWindow.xaml:73 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxAlreadyRunningWindow_AlreadyHaveAnotherCopyOf",
+      "en": "Already have another copy of RoRoRo or a compatible tool holding the lock? Start anyway — multi-instance keeps working, and RoRoRo will show a banner while it doesn't hold the lock.",
+      "comment": "src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:78 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxAlreadyRunningWindow_ChooseQuitRobloxThenHit",
+      "en": "Choose Quit Roblox — then hit Retry",
+      "comment": "src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:57 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxAlreadyRunningWindow_ClickTheNearTheClock",
+      "en": "Click the ^ near the clock (bottom-right)",
+      "comment": "src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:49 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxAlreadyRunningWindow_CloseRobloxForMe",
+      "en": "Close Roblox for me",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxAlreadyRunningWindow_QuitRororo",
+      "en": "Quit RoRoRo",
+      "comment": "src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:93 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxAlreadyRunningWindow_Retry",
+      "en": "Retry",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxAlreadyRunningWindow_RightClickTheRobloxIcon",
+      "en": "Right-click the Roblox icon",
+      "comment": "src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:53 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxAlreadyRunningWindow_RobloxCanStartItselfWith",
+      "en": "Roblox can start itself with Windows. You can turn that off in Roblox's tray settings — but you don't have to; RoRoRo will catch it here either way.",
+      "comment": "src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:62 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxAlreadyRunningWindow_RobloxIsAlreadyRunning",
+      "en": "Roblox is already running",
+      "comment": "src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxAlreadyRunningWindow_RororoNeedsTheMultiInstance",
+      "en": "RoRoRo needs the multi-instance lock, but Roblox is holding it — it may be running with no window at all, hidden in your system tray.",
+      "comment": "src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:40 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxAlreadyRunningWindow_StartAnyway",
+      "en": "Start anyway",
+      "comment": "src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:95 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxNotInstalledWindow_DownloadRoblox",
+      "en": "Download Roblox",
+      "comment": "src/ROROROblox.App/Modals/RobloxNotInstalledWindow.xaml:49 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxNotInstalledWindow_IfYouUseBloxstrapMake",
+      "en": "If you use Bloxstrap, make sure it's set as the default Roblox launcher in its settings — Bloxstrap should also handle our launches.",
+      "comment": "src/ROROROblox.App/Modals/RobloxNotInstalledWindow.xaml:38 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxNotInstalledWindow_OpenBloxstrapSetup",
+      "en": "Open Bloxstrap setup",
+      "comment": "src/ROROROblox.App/Modals/RobloxNotInstalledWindow.xaml:47 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxNotInstalledWindow_RobloxDoesnTAppearTo",
+      "en": "Roblox doesn't appear to be installed",
+      "comment": "src/ROROROblox.App/Modals/RobloxNotInstalledWindow.xaml:25 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxNotInstalledWindow_RobloxNeeded",
+      "en": "Roblox needed",
+      "comment": "src/ROROROblox.App/Modals/RobloxNotInstalledWindow.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "RobloxNotInstalledWindow_RororoLaunchesRobloxViaThe",
+      "en": "RoRoRo launches Roblox via the standard roblox-player: handler. We can't find that handler on this PC, which usually means Roblox isn't installed yet.",
+      "comment": "src/ROROROblox.App/Modals/RobloxNotInstalledWindow.xaml:30 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SessionHistoryPage_ClearHistory",
+      "en": "Clear history",
+      "comment": "src/ROROROblox.App/History/SessionHistoryPage.xaml:158 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SessionHistoryPage_DayStreak",
+      "en": "DAY STREAK",
+      "comment": "src/ROROROblox.App/History/SessionHistoryPage.xaml:88 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SessionHistoryPage_History",
+      "en": "History",
+      "comment": "src/ROROROblox.App/History/SessionHistoryPage.xaml:15 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SessionHistoryPage_PeakAltsAtOnce",
+      "en": "PEAK ALTS AT ONCE",
+      "comment": "src/ROROROblox.App/History/SessionHistoryPage.xaml:55 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SessionHistoryPage_SinceHistoryBegan",
+      "en": "since history began",
+      "comment": "src/ROROROblox.App/History/SessionHistoryPage.xaml:63 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SessionHistoryPage_TotalUptime",
+      "en": "TOTAL UPTIME",
+      "comment": "src/ROROROblox.App/History/SessionHistoryPage.xaml:71 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_10Minutes",
+      "en": "10 minutes",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:304 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_12Minutes",
+      "en": "12 minutes",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:305 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_15Minutes",
+      "en": "15 minutes",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:306 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_18Minutes",
+      "en": "18 minutes",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:307 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_1GetTheFreeNtfy",
+      "en": "1. Get the free ntfy app from your phone's app store — no account needed.  2. In it, subscribe to the exact topic below.  3. Hit the test button. The topic is a secret — anyone holding it can read and fake your alerts, which is why RoRoRo makes it long and random. On iPhone, delivery is best-effort; Pushover is the reliable choice there.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:570 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AServerOnlyYouRead",
+      "en": "A server only you read. Saved encrypted on this PC and never leaves it except to post your alerts.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:441 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ASharedRoomAnythingRouted",
+      "en": "A shared room. Anything routed here is read by everyone in that channel, now and later — so send what the clan should see, not everything.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:477 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AWholeNumberFrom256",
+      "en": "A whole number from 256 to 65536, or blank to let RoRoRo pick.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:725 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AWholeNumberFrom256_2",
+      "en": "A whole number from 256 to 65536, 0 to turn this warning off, or blank to let RoRoRo pick.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:754 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AWholeNumberOfMinutes",
+      "en": "A whole number of minutes from 1 to 1440. The default is 120.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:782 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Accounts",
+      "en": "Accounts",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AddAccountsFromAnEncrypted",
+      "en": "Add accounts from an encrypted .rororo-accounts file.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:262 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Alerts",
+      "en": "Alerts",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:318 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AlertsMemory",
+      "en": "Alerts & memory",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:35 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AlwaysShowRecycleOnRunning",
+      "en": "Always show Recycle on running accounts.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:210 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AnAccountDropsOut",
+      "en": "An account drops out",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:333 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AnAccountEatsMemory",
+      "en": "An account eats memory",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:352 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AnAccountGetsRecycled",
+      "en": "An account gets recycled",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:366 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Appearance",
+      "en": "Appearance",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:37 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ApplicationToken",
+      "en": "Application token",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:549 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_AssignEveryFakeNameAnd",
+      "en": "Assign every fake name and avatar a fresh pick.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:191 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_BothCodesComeFromPushover",
+      "en": "Both codes come from pushover.net: your user key is on the dashboard, and creating an application there (name it anything) gives you its token. The phone app is a one-time purchase after the trial.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:524 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_BuildATheme",
+      "en": "+ Build a theme...",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:890 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_BuzzesYourPhoneDirectlyNo",
+      "en": "Buzzes your phone directly — no Discord needed. Pushover is the app most of the clan already uses; ntfy is free. Tick My phone on an alert above, set the service up once here.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:513 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ClanChannel",
+      "en": "Clan channel",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:342 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ClanChannelWebhookUrl",
+      "en": "Clan channel — webhook URL",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:475 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ClanChannelWebhookUrl_2",
+      "en": "Clan channel webhook URL",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:485 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Desktop",
+      "en": "Desktop",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:340 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Discord",
+      "en": "Discord",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:36 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_DiscordPresence",
+      "en": "Discord presence",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:828 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_DropAJsonFileIn",
+      "en": "Drop a *.json file in here, then close and reopen Settings to see it in the picker.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:897 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_EachAccountFinishesLandingIn",
+      "en": "Each account finishes landing in the game before the next one starts. It takes longer, but no two accounts are ever joining at once, which is what sets off Roblox's verification prompts. You can also flip this in the Squad Launch window.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:137 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ExportAccounts",
+      "en": "Export accounts…",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:257 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_GenerateANewNtfyTopic",
+      "en": "Generate a new ntfy topic",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:589 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_GetToldWhenSomethingHappens",
+      "en": "Get told when something happens to an account while you're away from the PC. Sending to a Discord channel takes about a minute to set up — there's a walkthrough below if you've never made a webhook.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:324 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_HidesNamesAvatarsAndShare",
+      "en": "Hides names, avatars, and share links inside RoRoRo. It does not change anything Roblox itself shows — your stream still shows whatever is on screen in the game.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:186 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_IDonTHaveA",
+      "en": "I don't have a Discord server",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:499 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_IdleAccounts",
+      "en": "Idle accounts",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:274 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_IdleWarnThreshold",
+      "en": "Idle warn threshold",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:292 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ImportAccounts",
+      "en": "Import accounts…",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:262 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_KeepRobloxWindowed",
+      "en": "Keep Roblox windowed",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:145 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_KeepRobloxWindowed_2",
+      "en": "Keep Roblox windowed.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:151 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Language",
+      "en": "Language",
+      "comment": "Settings > Appearance — UI-language section heading + picker name",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_LanguageHint",
+      "en": "Choose the language RoRoRo's interface uses. New languages appear here as they're translated, and a change takes effect the next time you open RoRoRo.",
+      "comment": "Settings > Appearance — UI-language picker hint",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_LaunchASquadOneAccount",
+      "en": "Launch a squad one account at a time",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:129 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_LaunchASquadOneAccount_2",
+      "en": "Launch a squad one account at a time.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:135 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_LaunchYourMainAccountWhen",
+      "en": "Launch your main account when RoRoRo starts.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:102 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_LeaveAsNtfyShUnless",
+      "en": "Leave as ntfy.sh unless you run your own server.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:597 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_LetFriendsJoinYourServer",
+      "en": "Let friends join your server from Discord.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:853 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_MakesAFreshRandomTopic",
+      "en": "Makes a fresh random topic. Your phone stops getting alerts until you subscribe to the new one.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:589 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Memory",
+      "en": "Memory",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:666 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_MemorySettingsWarning",
+      "en": "Memory settings warning",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:813 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_MemoryToKeepFreeIn",
+      "en": "Memory to keep free, in megabytes",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:725 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_MemoryToKeepFreeMb",
+      "en": "Memory to keep free (MB)",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:715 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_MoveYourSavedAccountsTo",
+      "en": "Move your saved accounts to another PC. Export writes a passphrase-encrypted file; import merges it in without touching accounts already on this machine.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:251 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_MuteIdleAlerts",
+      "en": "Mute idle alerts.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:285 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_MutedAccounts",
+      "en": "Muted accounts",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:416 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_MyChannel",
+      "en": "My channel",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:341 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_MyChannelWebhookUrl",
+      "en": "My channel — webhook URL",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:439 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_MyChannelWebhookUrl_2",
+      "en": "My channel webhook URL",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:454 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_MyPhone",
+      "en": "My phone",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:343 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_MyPhonePushService",
+      "en": "My phone — push service",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:511 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_NewTopic",
+      "en": "New topic",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:589 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_NormallyStopGivesRobloxTen",
+      "en": "Normally Stop gives Roblox ten seconds to close itself, counting down on the row, because Roblox asks you to confirm inside the game and only a clean exit saves your Roblox settings — window size, fullscreen, graphics quality. Turn this on and Stop closes the client at once, and those settings go back to whatever was last saved.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:232 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Ntfy",
+      "en": "ntfy",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:520 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_NtfyServerAddress",
+      "en": "ntfy server address",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:597 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_NtfyTopic",
+      "en": "ntfy topic",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:580 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Off",
+      "en": "Off",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:518 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_OneClientOnItsOwn",
+      "en": "One client on its own, not the whole PC. A healthy Pet Sim client sits near 2650 MB. 256 to 65536, or 0 to turn this warning off. Leave it blank and RoRoRo works one out.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:769 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_OpenTheThemeBuilderCopy",
+      "en": "Open the theme builder. Copy an AI prompt, paste the result back, save.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:890 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_OpenThemesFolder",
+      "en": "Open themes folder",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:897 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_PairWithTheToggleAbove",
+      "en": "Pair with the toggle above for a one-step boot-to-Roblox setup. Pick a main account in the row list (the ☆ star) first.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:104 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_PickABuiltInOr",
+      "en": "Pick a built-in or drop your own JSON in the themes folder. The main window updates immediately; secondary dialogs (this one, Diagnostics, About) adopt the theme on next open.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:870 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Pushover",
+      "en": "Pushover",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:519 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_PushoverApplicationToken",
+      "en": "Pushover application token",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:555 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_PushoverUserKey",
+      "en": "Pushover user key",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:539 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_RecycleClosesAClientAnd",
+      "en": "Recycle closes a client and puts it straight back into the server it was in — useful for a client that's gone sideways, not just one eating memory. Off, it appears only when RoRoRo warns about that account's memory.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:212 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_RerollAllIdentities",
+      "en": "Reroll all identities",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:191 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_RevealTheSavedKeySo",
+      "en": "Reveal the saved key so you can read or replace it.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:542 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_RevealTheSavedTokenSo",
+      "en": "Reveal the saved token so you can read or replace it.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:558 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_RevealTheSavedWebhookSo",
+      "en": "Reveal the saved webhook so you can read or replace it.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:466 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_RevealTheTopicSoYou",
+      "en": "Reveal the topic so you can subscribe to it on your phone.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:583 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ReviewButtonOutlines",
+      "en": "Review button outlines",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:919 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ReviewButtonOutlinesOnThis",
+      "en": "Review button outlines on this theme",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:919 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_RobloxRemembersFullscreenFromLast",
+      "en": "Roblox remembers fullscreen from last time — a crash, or Alt+Enter mid-game, and the next client swallows a whole screen. With this on, RoRoRo turns that off right before every launch. Untick it if you actually want fullscreen clients.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:153 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_RororoChecksEveryRunningClient",
+      "en": "RoRoRo checks every running client every 30 seconds and tells you before your PC runs out. Turn it off and the three settings below stop doing anything. All four take effect the next time RoRoRo starts.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:681 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_RororoShowsOneTrayToast",
+      "en": "RoRoRo shows one tray toast when a running account crosses the idle threshold below. Checking this keeps the row chip but skips the toast.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:287 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_RororoWatchesHowFastYour",
+      "en": "RoRoRo watches how fast your clients are growing and warns you this long before they would fill the PC. 1 to 1440. The default is 120.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:792 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SaveTheRororoIcon",
+      "en": "Save the RoRoRo icon",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:527 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SaveTheRororoIconFor",
+      "en": "Save the RoRoRo icon for the Pushover application form",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:527 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SaveYourAccountsToAn",
+      "en": "Save your accounts to an encrypted file you can move to another PC.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:257 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SeeBothVersionsOfThis",
+      "en": "See both versions of this theme's button outlines and pick the one it uses.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:919 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendATestNotificationTo",
+      "en": "Send a test notification to my phone",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:605 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendDropOutAlertsTo",
+      "en": "Send drop-out alerts to the desktop",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:340 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendDropOutAlertsTo_2",
+      "en": "Send drop-out alerts to my Discord channel",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:341 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendDropOutAlertsTo_3",
+      "en": "Send drop-out alerts to the clan Discord channel",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:342 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendDropOutAlertsTo_4",
+      "en": "Send drop-out alerts to my phone",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:343 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendMemoryWarningsToMy",
+      "en": "Send memory warnings to my Discord channel",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:356 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendMemoryWarningsToMy_2",
+      "en": "Send memory warnings to my phone",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:358 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendMemoryWarningsToThe",
+      "en": "Send memory warnings to the desktop",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:355 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendMemoryWarningsToThe_2",
+      "en": "Send memory warnings to the clan Discord channel",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:357 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendRecycleNoticesToMy",
+      "en": "Send recycle notices to my Discord channel",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:370 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendRecycleNoticesToMy_2",
+      "en": "Send recycle notices to my phone",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:372 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendRecycleNoticesToThe",
+      "en": "Send recycle notices to the desktop",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:369 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendRecycleNoticesToThe_2",
+      "en": "Send recycle notices to the clan Discord channel",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:371 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendTest",
+      "en": "Send test",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:498 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendUptimeMarksToMy",
+      "en": "Send uptime marks to my Discord channel",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:385 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendUptimeMarksToMy_2",
+      "en": "Send uptime marks to my phone",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:387 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendUptimeMarksToThe",
+      "en": "Send uptime marks to the desktop",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:384 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_SendUptimeMarksToThe_2",
+      "en": "Send uptime marks to the clan Discord channel",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:386 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Server",
+      "en": "Server",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:596 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Settings",
+      "en": "Settings",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Show",
+      "en": "Show",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:466 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ShowOrHideTheNtfy",
+      "en": "Show or hide the ntfy topic",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:583 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ShowOrHideTheSaved",
+      "en": "Show or hide the saved Pushover user key",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:542 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ShowOrHideTheSaved_2",
+      "en": "Show or hide the saved Pushover application token",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:558 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ShowWhatYouRePlaying",
+      "en": "Show what you're playing on Discord.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:837 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_StartRororoWhenWindowsStarts",
+      "en": "Start RoRoRo when Windows starts.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:83 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Startup",
+      "en": "Startup",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:33 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_StopClientsImmediatelyWithoutWaiting",
+      "en": "Stop clients immediately, without waiting.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:230 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_StreamerMode",
+      "en": "Streamer mode.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:184 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_TestMyPhone",
+      "en": "Test my phone",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:605 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_TheApplicationFormOnPushover",
+      "en": "The application form on pushover.net has an icon slot — this saves the 128 by 128 RoRoRo mark for it.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:527 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Theme",
+      "en": "Theme",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:862 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ThemeWarning",
+      "en": "Theme warning",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:950 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ThemesPeopleWriteThemselvesSometimes",
+      "en": "Themes people write themselves sometimes set button outlines too faint to see, so RoRoRo brightens those. Review button outlines puts both side by side and lets you pick. You can change your mind as often as you like.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:929 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_ThisAppliesToYourWindows",
+      "en": "This applies to your Windows account only, and it does not start Roblox: that is the setting below. Unchecking this undoes it completely.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:85 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_TickEveryPlaceEachAlert",
+      "en": "Tick every place each alert should go. Nothing ticked means that alert is off. While anything runs, an uptime mark says all's well every two hours — and a mark that doesn't arrive means the PC or RoRoRo died.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:391 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_Topic",
+      "en": "Topic",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:573 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_TurnAlertsBackOnFor",
+      "en": "Turn alerts back on for every account you muted.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:421 title",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_UnmuteAll",
+      "en": "Unmute all",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:421 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_UnmuteEveryMutedAccount",
+      "en": "Unmute every muted account",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:421 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_UptimeMarksEvery2Hours",
+      "en": "Uptime marks (every 2 hours)",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:381 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_UserKey",
+      "en": "User key",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:533 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_WarnThisFarAheadMinutes",
+      "en": "Warn this far ahead (minutes)",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:777 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_WarnThisManyMinutesAhead",
+      "en": "Warn this many minutes ahead of running out",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:782 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_WarnWhenOneAccountPasses",
+      "en": "Warn when one account passes (MB)",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:748 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_WarnWhenOneAccountPasses_2",
+      "en": "Warn when one account passes this many megabytes",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:754 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_WatchMemoryWhileAccountsAre",
+      "en": "Watch memory while accounts are running",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:673 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_WatchMemoryWhileAccountsAre_2",
+      "en": "Watch memory while accounts are running.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:679 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_WhatRororoPicksWhenA",
+      "en": "What RoRoRo picks when a box is left blank",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:706 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_WhatRororoShows",
+      "en": "What RoRoRo shows",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:167 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_WhichPushServiceSendsPhone",
+      "en": "Which push service sends phone alerts",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:516 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_WorthKnowingWhileRobloxIs",
+      "en": "Worth knowing: while Roblox is running, your friends see Roblox on your profile instead of RoRoRo — Discord gives that spot to games it recognizes. You'll always see your own card. RoRoRo gets recognized once enough people are running it.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:847 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_YouGetWarnedOnceFree",
+      "en": "You get warned once free memory drops under this. 256 to 65536. Leave it blank and RoRoRo works one out from your installed RAM.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:740 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SettingsPage_YourDiscordStatusShowsThe",
+      "en": "Your Discord status shows the game, how many accounts you have in it, and how long you've been going. Nothing to set up — it uses the Discord app already on this PC.",
+      "comment": "src/ROROROblox.App/Preferences/SettingsPage.xaml:839 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ShellWindow_About",
+      "en": "About",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "ShellWindow_Destinations",
+      "en": "Destinations",
+      "comment": "src/ROROROblox.App/Shell/ShellWindow.xaml:24 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "ShellWindow_Diagnostics",
+      "en": "Diagnostics",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "ShellWindow_Games",
+      "en": "Games",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "ShellWindow_History",
+      "en": "History",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "ShellWindow_Plugins",
+      "en": "Plugins",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "ShellWindow_Settings",
+      "en": "Settings",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "SquadLaunchWindow_CarefulModeLandAccountsOne",
+      "en": "Careful mode — land accounts one at a time",
+      "comment": "src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:79 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SquadLaunchWindow_Close",
+      "en": "Close",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "SquadLaunchWindow_LaunchAllHere",
+      "en": "Launch all here",
+      "comment": "src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:59 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SquadLaunchWindow_LaunchByUrl",
+      "en": "Launch by URL",
+      "comment": "src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:41 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SquadLaunchWindow_PrivateServerLink_2",
+      "en": "Private server link",
+      "comment": "src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:55 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "SquadLaunchWindow_SendEveryActiveAccountInto",
+      "en": "Send every active account into the same Roblox server. Private server: everyone joins the link directly. Public game: the first account goes in, and the rest join the server it landed in.",
+      "comment": "src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:28 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SquadLaunchWindow_SquadLaunch",
+      "en": "Squad Launch",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "SquadLaunchWindow_WaitsForEachAccountTo",
+      "en": "Waits for each account to fully land in the game before launching the next. Slower, but no two accounts are ever joining at the same time — which is what triggers Roblox's verification prompts.",
+      "comment": "src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:73 title",
+      "placeholders": false
+    },
+    {
+      "key": "StopAllConfirmWindow_Cancel",
+      "en": "Cancel",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "StopAllConfirmWindow_StopAll",
+      "en": "Stop all",
+      "comment": "src/ROROROblox.App/Modals/StopAllConfirmWindow.xaml:76 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "StopAllConfirmWindow_StopAllRobloxInstances",
+      "en": "Stop all Roblox instances",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "StopAllConfirmWindow_StopAllRobloxInstances_2",
+      "en": "Stop all Roblox instances?",
+      "comment": "src/ROROROblox.App/Modals/StopAllConfirmWindow.xaml:28 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "StopAllConfirmWindow_UnsavedProgressInYourRunning",
+      "en": "Unsaved progress in your running games will be lost.",
+      "comment": "src/ROROROblox.App/Modals/StopAllConfirmWindow.xaml:51 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ThemeBuilderWindow_1AiPrompt",
+      "en": "1.  AI prompt",
+      "comment": "src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:36 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ThemeBuilderWindow_2PasteTheJsonThe",
+      "en": "2.  Paste the JSON the AI returned",
+      "comment": "src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:56 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ThemeBuilderWindow_BuildATheme",
+      "en": "Build a theme",
+      "comment": "src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ThemeBuilderWindow_Cancel",
+      "en": "Cancel",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "ThemeBuilderWindow_CopiesThePromptToYour",
+      "en": "Copies the prompt to your clipboard. Paste into Claude or ChatGPT, attach a reference image or describe a vibe, and paste the JSON they return into the box below.",
+      "comment": "src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:41 title",
+      "placeholders": false
+    },
+    {
+      "key": "ThemeBuilderWindow_CopyAiPrompt",
+      "en": "📋 Copy AI prompt",
+      "comment": "src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:41 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ThemeBuilderWindow_OpenThemesFolder",
+      "en": "Open themes folder",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "ThemeBuilderWindow_SaveAndApply",
+      "en": "Save and apply",
+      "comment": "src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:93 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ThemeBuilderWindow_Step1CopyTheAi",
+      "en": "Step 1 — copy the AI prompt. Step 2 — paste into Claude/ChatGPT/etc. with a vibe description or reference image. Step 3 — paste the JSON it returns below. We save it, apply it, and add it to the picker.",
+      "comment": "src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:24 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "ThemeBuilderWindow_ThemeJson",
+      "en": "Theme JSON",
+      "comment": "src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:61 aria-label",
+      "placeholders": false
+    },
+    {
+      "key": "WebView2NotInstalledWindow_InstallNow",
+      "en": "Install Now",
+      "comment": "src/ROROROblox.App/Modals/WebView2NotInstalledWindow.xaml:40 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WebView2NotInstalledWindow_LearnMore",
+      "en": "Learn More",
+      "comment": "src/ROROROblox.App/Modals/WebView2NotInstalledWindow.xaml:38 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WebView2NotInstalledWindow_MicrosoftWebview2Needed",
+      "en": "Microsoft WebView2 needed",
+      "comment": "src/ROROROblox.App/Modals/WebView2NotInstalledWindow.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WebView2NotInstalledWindow_RororoUsesMicrosoftSWebview2",
+      "en": "RoRoRo uses Microsoft's WebView2 runtime to manage Roblox logins. It's free and made by Microsoft. Most Windows 11 PCs already have it; if yours doesn't, install it and try again.",
+      "comment": "src/ROROROblox.App/Modals/WebView2NotInstalledWindow.xaml:29 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_ButtonAtTheBottomLeft",
+      "en": "button at the bottom-left — collapses to a tiny strip showing only running accounts. Great for parking it on a second monitor while you play.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:161 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_ChipsBelowAnAccountClick",
+      "en": "chips below an account — click one of your other accounts to launch THIS one into THAT account's current Roblox server.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:154 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_ClickAddAccount",
+      "en": "Click + Add account.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:61 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_ClickLaunchAsOrLaunch",
+      "en": "Click Launch As. Or Launch multiple for every selected alt at once.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:99 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_ClickThe",
+      "en": "Click the",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:175 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_ClosingXMinimizesToTray",
+      "en": "Closing X minimizes to tray; right-click the tray icon for Preferences, History,\n                        Diagnostics, or Quit.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:166 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_Compact",
+      "en": "Compact",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:160 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_Follow",
+      "en": "Follow:",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:153 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_GotIt",
+      "en": "Got it",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:185 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_InBatches",
+      "en": "In batches",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:144 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_InTheSystemTrayAnd",
+      "en": "in the system tray and drag RoRoRo out to keep it visible.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:177 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_MultiInstanceIsOnBy",
+      "en": "Multi-Instance is on by default — Roblox windows open side by side without fighting each other for the singleton.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:102 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_OnTheLeftOfA",
+      "en": "on the left of a row — drag to reorder.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:124 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_OpenGamesAndAddThe",
+      "en": "Open Games and add the place you launch into.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:80 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_QuickTipsForTheRow",
+      "en": "Quick tips for the row controls",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:115 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_Rororo",
+      "en": "RoRoRo",
+      "comment": "duplicate value; key kept addressable for x:Static",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_RunMultipleRobloxClientsSide",
+      "en": "Run multiple Roblox clients side by side. Three steps and you're set.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:45 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_SearchByNameOrPaste",
+      "en": "Search by name or paste a roblox.com/games/<id> URL. The default game is what Launch As uses.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:83 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_SignInToRobloxCom",
+      "en": "Sign in to roblox.com in the popup. We capture the cookie, encrypt it, and never see your password.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:64 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_Skipped",
+      "en": "Skipped",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:146 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_StarNextToARow",
+      "en": "star next to a row's actions — mark that account as your main (one at a time). The main launches on tray double-click and is the default for compact mode.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:131 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_TheColoredSwatchNextTo",
+      "en": "The colored swatch next to the star — pick a per-account color. The avatar ring + Roblox window title bar pick it up so you can tell windows apart.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:137 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_TheDotLabeled",
+      "en": "The dot labeled",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:143 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_TogglesWhetherThisAccountJoins",
+      "en": "— toggles whether this account joins Launch multiple / Squad Launch runs. Persists across restarts.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:147 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_WelcomeTo",
+      "en": "Welcome to",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:38 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_WelcomeToRororo",
+      "en": "Welcome to RoRoRo",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:1 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "WelcomeWindow_WindowsHidesNewTrayIcons",
+      "en": "Windows hides new tray icons by default, so RoRoRo's icon may not show right away.",
+      "comment": "src/ROROROblox.App/About/WelcomeWindow.xaml:174 xaml-text",
+      "placeholders": false
+    }
+  ]
+}
