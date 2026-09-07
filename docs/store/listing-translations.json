@@ -10,8 +10,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "d6bea6e",
-  "generatedUtc": "2026-09-07T15:01:52+00:00",
+  "sourceCommit": "1afc9e0",
+  "generatedUtc": "2026-09-07T15:13:36+00:00",
   "sourceOfTruth": "docs/store/listing-copy*.md — corrections are edits there, then re-run this script",
   "fields": [
     {
@@ -21,9 +21,9 @@
         "fr": "Multi-lanceur Windows, désormais en 6 langues. Plusieurs clients Roblox côte à côte, chacun sur son compte. Coffre chiffré, Squad Launch, surveillance mémoire, alertes téléphone, statut en direct.",
         "de": "Multi-Launcher für Windows, jetzt in 6 Sprachen: mehrere Roblox-Clients nebeneinander, jeder mit eigenem Konto. Verschlüsselter Tresor, Squad Launch, RAM-Wächter, Handy-Alarme, Live-Status, Themes.",
         "ru": "Мульти-лаунчер Windows, теперь на 6 языках: несколько клиентов Roblox бок о бок под разными аккаунтами. Шифрованное хранилище, Squad Launch, контроль памяти, оповещения на телефон, живой статус, темы.",
-        "pt-br": "Multi-launcher para Windows, agora em 6 idiomas: vários clientes Roblox lado a lado, cada um na sua conta. Cofre criptografado, Squad Launch, vigia de memória, alertas no celular, status ao vivo.",
+        "pt-br": "Multi-launcher para Windows em 6 idiomas: vários clientes Roblox lado a lado, cada um na sua conta. Cofre criptografado, Squad Launch, vigia de memória, alertas no celular, status ao vivo, temas.",
         "pl": "Multi-launcher dla Windows, teraz w 6 językach: kilka klientów Roblox obok siebie, każdy na innym koncie. Szyfrowany sejf, Squad Launch, strażnik pamięci, alerty na telefon, status na żywo, motywy.",
-        "es": "Multi-launcher para Windows, ahora en 6 idiomas: varios clientes de Roblox a la vez, cada uno con su cuenta. Baúl cifrado, Squad Launch, vigilante de memoria, alertas al móvil, estado en vivo y temas."
+        "es": "Multi-launcher para Windows en 6 idiomas: varios clientes de Roblox a la vez, cada uno con su cuenta. Baúl cifrado, Squad Launch, vigilante de memoria, alertas al móvil, estado en vivo y temas."
       },
       "charCap": 200
     },

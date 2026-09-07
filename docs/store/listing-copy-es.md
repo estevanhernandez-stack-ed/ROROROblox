@@ -8,7 +8,7 @@
 ## Short description (≤200 chars)
 
 ```
-Multi-launcher para Windows, ahora en 6 idiomas: varios clientes de Roblox a la vez, cada uno con su cuenta. Baúl cifrado, Squad Launch, vigilante de memoria, alertas al móvil, estado en vivo y temas.
+Multi-launcher para Windows en 6 idiomas: varios clientes de Roblox a la vez, cada uno con su cuenta. Baúl cifrado, Squad Launch, vigilante de memoria, alertas al móvil, estado en vivo y temas.
 ```
 
 ## Long description
