@@ -2419,4 +2419,63 @@ You'll need to log in again to add it back.</value><comment>Remove-account confi
   <data name="Shell_Pref_CouldntUpdateStartup" xml:space="preserve"><value>Couldn't update Windows startup entry: {0}</value><comment>Settings error; {0}=exception text (localized Phase D step 3)</comment></data>
   <data name="Shell_Pref_CouldntSavePreference" xml:space="preserve"><value>Couldn't save preference: {0}</value><comment>Settings error; {0}=exception text (localized Phase D step 3)</comment></data>
   <data name="Shell_Pref_CouldntSaveSetting" xml:space="preserve"><value>Could not save that setting: {0}</value><comment>Settings error; {0}=exception text (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_CouldntSavePhone" xml:space="preserve"><value>Couldn't save the phone setting: {0}</value><comment>Settings error; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_Reveal_Hide" xml:space="preserve"><value>Hide</value><comment>Credential reveal toggle (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_Reveal_Show" xml:space="preserve"><value>Show</value><comment>Credential reveal toggle (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_PushoverAppToken" xml:space="preserve"><value>application token</value><comment>Pushover field noun, passed into CoreMessageCatalog.ForPushoverKey (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_PushoverUserKey" xml:space="preserve"><value>user key</value><comment>Pushover field noun, passed into CoreMessageCatalog.ForPushoverKey (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_CouldntSaveKey" xml:space="preserve"><value>Couldn't save the key: {0}</value><comment>Settings error; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_NtfyTopicWarn" xml:space="preserve"><value>A new topic disconnects your phone until you subscribe to the new one in the ntfy app. Make a new topic?</value><comment>ntfy topic regen confirm; "ntfy" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_NtfySubscribeHint" xml:space="preserve"><value>Subscribe to this exact topic in the ntfy app on your phone, then hit Test my phone.</value><comment>ntfy hint; "ntfy" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_CouldntSaveTopic" xml:space="preserve"><value>Couldn't save the new topic: {0}</value><comment>Settings error; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_CouldntSaveServer" xml:space="preserve"><value>Couldn't save the server: {0}</value><comment>Settings error; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_FinishPhoneSetup" xml:space="preserve"><value>Finish the phone setup above first — there's nowhere to send a test yet.</value><comment>Phone test status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_Sending" xml:space="preserve"><value>Sending…</value><comment>Test-send status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_PhoneTestSent" xml:space="preserve"><value>Sent — your phone should buzz within a few seconds.</value><comment>Phone test status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_PushoverRejected" xml:space="preserve"><value>Pushover rejected the saved keys — re-check both on pushover.net and paste them again.</value><comment>Phone test status; "Pushover" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_NtfyRefused" xml:space="preserve"><value>The ntfy server refused that topic — generate a new one and re-subscribe on your phone.</value><comment>Phone test status; "ntfy" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_PushRateLimited" xml:space="preserve"><value>The push service is rate-limiting us. Wait a minute; the setup itself looks fine.</value><comment>Phone test status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_PushUnreachable" xml:space="preserve"><value>Couldn't reach the push service.</value><comment>Phone test status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_IconFilter" xml:space="preserve"><value>PNG image|*.png</value><comment>Save-icon dialog filter; only "PNG image" is display text (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_SaveIconTitle" xml:space="preserve"><value>Save the icon</value><comment>Save-icon dialog title (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_IconSaved" xml:space="preserve"><value>Icon saved — upload it in the icon slot on pushover.net's application form.</value><comment>Pushover verdict status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_CouldntSaveIcon" xml:space="preserve"><value>Couldn't save the icon: {0}</value><comment>Settings error; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_CouldntSaveAlertRouting" xml:space="preserve"><value>Couldn't save alert routing: {0}</value><comment>Settings error; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_CouldntSaveWebhook" xml:space="preserve"><value>Couldn't save the webhook: {0}</value><comment>Settings error; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_PostsTo" xml:space="preserve"><value>Posts to #{0} in {1}.</value><comment>Webhook identity; {0}=channel {1}=guild (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_MyChannel" xml:space="preserve"><value>My channel</value><comment>Webhook test result label (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_ClanChannel" xml:space="preserve"><value>Clan channel</value><comment>Webhook test result label (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_PasteWebhookFirst" xml:space="preserve"><value>Paste a webhook URL first — there's nowhere to send a test yet.</value><comment>Webhook test status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_TestResult_Sent" xml:space="preserve"><value>{0}: sent.</value><comment>Webhook test result; {0}=channel label (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_TestResult_Gone" xml:space="preserve"><value>{0}: that webhook no longer exists — make a new one and paste it again.</value><comment>Webhook test result; {0}=label (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_TestResult_RateLimited" xml:space="preserve"><value>{0}: Discord is rate-limiting us. Wait a minute; the webhook itself looks fine.</value><comment>Webhook test result; {0}=label; "Discord" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_TestResult_Unreachable" xml:space="preserve"><value>{0}: couldn't reach Discord.</value><comment>Webhook test result; {0}=label; "Discord" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_NoServerHelpTitle" xml:space="preserve"><value>Setting up alerts</value><comment>Discord no-server help title (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_ButtonOutlinesTitle" xml:space="preserve"><value>Button outlines</value><comment>Theme edge-review dialog title (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_CouldntSaveThat" xml:space="preserve"><value>Couldn't save that: {0}</value><comment>Settings error; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_AutoValue" xml:space="preserve"><value>{0} (auto)</value><comment>Memory ghost hint; {0}=computed value (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_NumberHint_WithZero" xml:space="preserve"><value>Use a whole number from {0} to {1}, 0 to turn it off, or leave the box empty and RoRoRo will pick one.</value><comment>Memory-field hint; {0}=floor {1}=ceiling; "RoRoRo" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_NumberHint" xml:space="preserve"><value>Use a whole number from {0} to {1}, or leave the box empty and RoRoRo will pick one.</value><comment>Memory-field hint; {0}=floor {1}=ceiling (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_NotWholeNumber" xml:space="preserve"><value>"{0}" isn't a whole number, so nothing was saved. {1}</value><comment>Memory-field refusal; {0}=input {1}=hint (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_OutOfRange" xml:space="preserve"><value>{0} is outside {1} to {2}, so nothing was saved. {3}</value><comment>Memory-field refusal; {0}=value {1}=floor {2}=ceiling {3}=hint (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_RequiredNumberHint" xml:space="preserve"><value>Use a whole number from {0} to {1}. The default is {2}.</value><comment>Memory-field hint; {0}=floor {1}=ceiling {2}=default (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_NeedsANumber" xml:space="preserve"><value>This one needs a number, so nothing was saved. {0}</value><comment>Memory-field refusal; {0}=hint (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_NothingToExport" xml:space="preserve"><value>You don't have any saved accounts to export yet.</value><comment>Export dialog body (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_NothingToExportTitle" xml:space="preserve"><value>Nothing to export</value><comment>Export dialog title (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_NoThemeChoice" xml:space="preserve"><value>There's nothing to choose for this theme.
+
+RoRoRo only asks about button outlines on themes people write themselves, and only when the outline a theme sets would be too faint to tell a button apart from the surface behind it. The built-in themes are ours to get right, so they are never asked about.</value><comment>Theme edge-review dialog body; "RoRoRo" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_NoServerHelp" xml:space="preserve"><value>You need a Discord server of your own. It's free, it can be just you, and nobody else can see it.
+
+Make one:
+  1. Click the + button on the left edge of Discord.
+  2. Choose "Create My Own", then skip the questions.
+  3. Name it anything — "RoRoRo" works.
+
+Then make the webhook:
+  4. Right-click your new server, then Server Settings.
+  5. Integrations, then Webhooks, then New Webhook.
+  6. Click Copy Webhook URL, and paste it into the box here.
+
+Alerts will arrive in that server — on your phone too, as long as Discord is installed on it.</value><comment>Discord no-server help body; product nouns stay English (localized Phase D step 3)</comment></data>
 </root>
