@@ -62,7 +62,21 @@ pointed the wrong direction. Findings for the builder, severity-ordered:
    carry stale verdicts for pairs whose text has since changed, and label the whole array
    with the FIRST round's sourceCommit. Stamping each result with the sourceCommit it was
    judged at (and evicting results for pairs whose text changed) would make the state
-   readable.
+   readable. (Later rounds behaved better — see #11.)
+9. **One hallucinated finding in ~30** (surfaced in the polish pass): pt-br whatsNew was
+   flagged for "PC or o app" — a quote that does not exist in the text (the file says
+   "o PC ou o app"). It persisted across two review calls, then cleared on a third.
+   Ground verdicts server-side: a `contains` check of every issue's `quote` against the
+   ingested field text before emitting would turn hallucinations into automatic re-rolls.
+10. **Round-to-round strictness lottery.** Identical text approved in rounds 2-3 drew a new
+    blocker in round 4 (the tray-icon clause, one language of six sharing the omission), and
+    a clause fixed where flagged (es) was flagged elsewhere a round later. Each pass can
+    surface a new shared micro-omission in one random language. Grounding plus a
+    two-vote-for-blockers scheme would stabilize verdicts; until then, the human approver
+    should treat late-round singleton blockers with judgment.
+11. **The sourceCommit stamp works after re-ingest** — round 3+ responses carried the fresh
+    commit and cleanly reset state (contrast finding #8, observed in round 1's
+    accumulate-forever behavior; whatever changed between rounds, keep it).
 
 ---
 
