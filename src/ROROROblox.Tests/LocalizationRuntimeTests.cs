@@ -11,6 +11,7 @@ namespace ROROROblox.Tests;
 /// restart. These prove the mechanism end to end against the shipped satellites — the thing v1.26's
 /// <c>x:Static</c> could not do.
 /// </summary>
+[Collection("MutatesUiCulture")]
 public class LocalizationRuntimeTests
 {
     // A key whose Spanish translation differs from English (used to prove per-culture resolution).

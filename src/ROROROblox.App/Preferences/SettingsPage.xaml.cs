@@ -390,9 +390,13 @@ internal partial class SettingsPage : UserControl, IDisposable
         if (LanguagePicker.SelectedItem is not CultureOption picked) return;
         try
         {
-            // Empty culture name = English = "follow the OS" (null). Applies on next launch —
-            // x:Static binds once, and the hint under the picker says so.
+            // Empty culture name = English (the neutral catalog) = "follow the OS" (null) next launch.
+            // Persist it, AND apply it LIVE — {loc:Loc} bindings re-render on the toggle now (Phase D),
+            // no restart. Composed ViewModel strings not yet migrated stay until their extraction.
             await _settings.SetUiLanguageAsync(picked.CultureName.Length == 0 ? null : picked.CultureName);
+            TranslationSource.Instance.CurrentCulture = picked.CultureName.Length == 0
+                ? System.Globalization.CultureInfo.InvariantCulture
+                : System.Globalization.CultureInfo.GetCultureInfo(picked.CultureName);
         }
         catch (System.Exception ex)
         {

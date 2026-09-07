@@ -217,13 +217,13 @@ public class AutomaticMemorySummaryTests
 
         // The two "The default is N." statements moved into the resx (localization, 2026-09-06),
         // and because they are identical text the resx merge deduped them to ONE key referenced
-        // TWICE. Count per x:Static REFERENCE (resolving each to its value) so the "stated twice"
-        // semantics survive, plus any literal that did not move. Number N is not localized copy —
-        // a translator keeps "The default is 10." shaped — so the regex still holds per language.
+        // TWICE. Count per {loc:Loc} REFERENCE (Phase D codemod, 2026-09-07; resolving each to its
+        // value) so the "stated twice" semantics survive, plus any literal that did not move. Number
+        // N is not localized copy — a translator keeps "The default is 10." shaped — so it still holds.
         var xamlText = File.ReadAllText(xaml);
         var defaultRe = new Regex(@"The default is (\d+)\.");
         var stated = new List<int>();
-        foreach (Match r in Regex.Matches(xamlText, @"\{x:Static\s+\w+:Strings\.[A-Za-z_][A-Za-z0-9_]*\}"))
+        foreach (Match r in Regex.Matches(xamlText, @"\{\w+:Loc\s+(?:Key=)?[A-Za-z_][A-Za-z0-9_]*\}"))
         {
             var value = ResxCatalog.Resolve(r.Value) ?? "";
             foreach (Match m in defaultRe.Matches(value))

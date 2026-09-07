@@ -1,9 +1,9 @@
 <Window x:Class="ROROROblox.App.Modals.DpapiCorruptWindow"
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:loc="clr-namespace:ROROROblox.App.Properties"
+        xmlns:loc="clr-namespace:ROROROblox.App.Localization"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="{x:Static loc:Strings.DpapiCorruptWindow_SavedAccountsCanTBe}"
+        Title="{loc:Loc DpapiCorruptWindow_SavedAccountsCanTBe}"
         Width="560"
         SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
@@ -23,13 +23,13 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0"
-                   Text="{x:Static loc:Strings.DpapiCorruptWindow_YourSavedAccountsCanT}"
+                   Text="{loc:Loc DpapiCorruptWindow_YourSavedAccountsCanT}"
                    FontSize="18" FontWeight="Bold"
                    Foreground="{DynamicResource MagentaBrush}"
                    TextWrapping="Wrap" />
 
         <TextBlock Grid.Row="1"
-                   Text="{x:Static loc:Strings.DpapiCorruptWindow_ThisUsuallyMeansWindowsWas}"
+                   Text="{loc:Loc DpapiCorruptWindow_ThisUsuallyMeansWindowsWas}"
                    TextWrapping="Wrap"
                    FontSize="{DynamicResource BodyFontSize}"
                    Foreground="{DynamicResource WhiteBrush}"
@@ -37,11 +37,11 @@
                    Margin="0,12,0,0" />
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static loc:Strings.DpapiCorruptWindow_StartFresh}" Padding="16,8" Margin="0,0,8,0"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{loc:Loc DpapiCorruptWindow_StartFresh}" Padding="16,8" Margin="0,0,8,0"
                     Click="OnStartFreshClick" />
             <!-- F-054. IsCancel so Esc lands on the SAFE answer. The other button renames accounts.dat
                  and starts empty; Esc must never be able to reach that. -->
-            <Button Style="{StaticResource CtaButtonStyle}" Content="{x:Static loc:Strings.DpapiCorruptWindow_Quit}" Padding="16,8" IsDefault="True" IsCancel="True"
+            <Button Style="{StaticResource CtaButtonStyle}" Content="{loc:Loc DpapiCorruptWindow_Quit}" Padding="16,8" IsDefault="True" IsCancel="True"
                     Click="OnQuitClick" />
         </StackPanel>
     </Grid>

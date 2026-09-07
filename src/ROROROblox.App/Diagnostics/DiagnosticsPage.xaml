@@ -1,7 +1,7 @@
 <UserControl x:Class="ROROROblox.App.Diagnostics.DiagnosticsPage"
              x:ClassModifier="internal"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:loc="clr-namespace:ROROROblox.App.Properties"
+             xmlns:loc="clr-namespace:ROROROblox.App.Localization"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:ROROROblox.App.Controls">
 
@@ -14,8 +14,8 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0">
-            <controls:PageHeader Heading="{x:Static loc:Strings.DiagnosticsPage_Diagnostics}" />
-            <TextBlock Text="{x:Static loc:Strings.DiagnosticsPage_SaveTheBundleWhenFiling}"
+            <controls:PageHeader Heading="{loc:Loc DiagnosticsPage_Diagnostics}" />
+            <TextBlock Text="{loc:Loc DiagnosticsPage_SaveTheBundleWhenFiling}"
                        FontSize="{DynamicResource BodyFontSize}"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0"
@@ -33,18 +33,18 @@
                    TextWrapping="Wrap" />
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button x:Name="OpenLogFolderButton" Content="{x:Static loc:Strings.DiagnosticsPage_OpenLogFolder}"
+            <Button x:Name="OpenLogFolderButton" Content="{loc:Loc DiagnosticsPage_OpenLogFolder}"
                     Padding="12,8" Margin="0,0,8,0"
                     Style="{StaticResource SecondaryStrongButtonStyle}"
                     Click="OnOpenLogFolderClick" />
-            <Button x:Name="OpenDataFolderButton" Content="{x:Static loc:Strings.DiagnosticsPage_OpenDataFolder}"
+            <Button x:Name="OpenDataFolderButton" Content="{loc:Loc DiagnosticsPage_OpenDataFolder}"
                     Padding="12,8" Margin="0,0,8,0"
                     Style="{StaticResource SecondaryStrongButtonStyle}"
                     Click="OnOpenDataFolderClick" />
-            <Button Style="{StaticResource CtaButtonStyle}" x:Name="SaveBundleButton" Content="{x:Static loc:Strings.DiagnosticsPage_SaveSupportBundleZip}"
+            <Button Style="{StaticResource CtaButtonStyle}" x:Name="SaveBundleButton" Content="{loc:Loc DiagnosticsPage_SaveSupportBundleZip}"
                     Padding="14,8"
                     Click="OnSaveBundleClick"
-                    ToolTip="{x:Static loc:Strings.DiagnosticsPage_BundleTheLatestLogFiles}" />
+                    ToolTip="{loc:Loc DiagnosticsPage_BundleTheLatestLogFiles}" />
         </StackPanel>
     </Grid>
 </UserControl>
