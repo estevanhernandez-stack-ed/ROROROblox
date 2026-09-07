@@ -1,0 +1,1470 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AboutPage_A626LabsProduct" xml:space="preserve">
+    <value>Produkt 626 Labs</value>
+  </data>
+  <data name="AboutPage_CookiesAreEncryptedWithWindows" xml:space="preserve">
+    <value>Pliki cookie są szyfrowane za pomocą Windows DPAPI dla każdego użytkownika. Nigdy nie opuszczają tego komputera.
+                    Kopia accounts.dat przeniesiona na inny komputer nie zostanie odszyfrowana.</value>
+  </data>
+  <data name="AboutPage_InsideTheToolsWindowCtrl" xml:space="preserve">
+    <value>W oknie narzędzi klawisze Ctrl+1 do Ctrl+6 również przenoszą bezpośrednio do strony.</value>
+  </data>
+  <data name="AboutPage_KeyboardShortcuts" xml:space="preserve">
+    <value>Skróty klawiszowe</value>
+  </data>
+  <data name="AboutPage_Koii4Eva" xml:space="preserve">
+    <value>Koii 4 eva</value>
+  </data>
+  <data name="AboutPage_Links" xml:space="preserve">
+    <value>Odnośniki</value>
+  </data>
+  <data name="AboutPage_MultiLauncherForWindows" xml:space="preserve">
+    <value>Uruchamianie wielu klientów dla Windows.</value>
+  </data>
+  <data name="AboutPage_RobloxIsATrademarkOf" xml:space="preserve">
+    <value>„Roblox” jest znakiem towarowym Roblox Corporation. RoRoRo nie jest powiązane z,
+                    wspierane ani sponsorowane przez Roblox Corporation.</value>
+  </data>
+  <data name="AboutPage_Rororo" xml:space="preserve">
+    <value>RoRoRo</value>
+  </data>
+  <data name="AboutPage_RunMultipleRobloxClientsSide" xml:space="preserve">
+    <value>Uruchamiaj wiele klientów Roblox obok siebie, zalogowanych na różne zapisane konta.
+                    Przytrzymuje muteks singletona Roblox, aby kolejne klienty nie biły się o niego; korzysta z
+                    udokumentowanego przez Roblox przepływu biletów uwierzytelniania przy uruchomieniach poszczególnych kont. Czysta
+                    reimplementacja, nie odgałęzienie.</value>
+  </data>
+  <data name="AboutPage_Version" xml:space="preserve">
+    <value>Wersja</value>
+  </data>
+  <data name="CaptionColorPickerWindow_Apply" xml:space="preserve">
+    <value>Zastosuj</value>
+  </data>
+  <data name="CaptionColorPickerWindow_ClickASwatchToApply" xml:space="preserve">
+    <value>Kliknij próbkę, aby zastosować. Okno Roblox zaktualizuje się w ciągu ~1,5 s.</value>
+  </data>
+  <data name="CaptionColorPickerWindow_Close" xml:space="preserve">
+    <value>Zamknij</value>
+  </data>
+  <data name="CaptionColorPickerWindow_CustomHex" xml:space="preserve">
+    <value>Własny hex:</value>
+  </data>
+  <data name="CaptionColorPickerWindow_CustomHexColour" xml:space="preserve">
+    <value>Własny kolor hex</value>
+  </data>
+  <data name="CaptionColorPickerWindow_PickATitleBarColor" xml:space="preserve">
+    <value>Wybierz kolor paska tytułu</value>
+  </data>
+  <data name="CaptionColorPickerWindow_ResetToAuto" xml:space="preserve">
+    <value>Przywróć automatyczny</value>
+  </data>
+  <data name="ConsentSheet_Cancel" xml:space="preserve">
+    <value>Anuluj</value>
+  </data>
+  <data name="ConsentSheet_GrantThisCapability" xml:space="preserve">
+    <value>Przyznaj to uprawnienie</value>
+  </data>
+  <data name="ConsentSheet_Install" xml:space="preserve">
+    <value>Zainstaluj</value>
+  </data>
+  <data name="ConsentSheet_InstallPlugin" xml:space="preserve">
+    <value>Zainstaluj wtyczkę</value>
+  </data>
+  <data name="ConsentSheet_ThisPluginAsksFor" xml:space="preserve">
+    <value>TA WTYCZKA PROSI O</value>
+  </data>
+  <data name="ConsentSheet_ThisPluginStartsAsSoon" xml:space="preserve">
+    <value>Ta wtyczka uruchamia się od razu po instalacji. Użyj przełącznika Automatyczne uruchamianie na stronie Wtyczki, aby zdecydować, czy uruchamia się także wraz z RoRoRo.</value>
+  </data>
+  <data name="CookieCaptureWindow_AddAccount" xml:space="preserve">
+    <value>Dodaj konto</value>
+  </data>
+  <data name="CookieCaptureWindow_AddARobloxAccount" xml:space="preserve">
+    <value>Dodaj konto Roblox</value>
+  </data>
+  <data name="CookieCaptureWindow_FirstOpenCanTakeA" xml:space="preserve">
+    <value>Pierwsze otwarcie może potrwać kilka sekund przy świeżej instalacji WebView2.</value>
+  </data>
+  <data name="CookieCaptureWindow_IfThePageIsBlank" xml:space="preserve">
+    <value>Jeśli strona jest pusta, kliknij Odśwież (F5).</value>
+  </data>
+  <data name="CookieCaptureWindow_LoadingRobloxCom" xml:space="preserve">
+    <value>Ładowanie roblox.com...</value>
+  </data>
+  <data name="CookieCaptureWindow_OverHttpsInsideThisEmbedded" xml:space="preserve">
+    <value>przez HTTPS, wewnątrz tej wbudowanej przeglądarki. RoRoRo nigdy go nie widzi.</value>
+  </data>
+  <data name="CookieCaptureWindow_RobloxHasnTAcceptedThis" xml:space="preserve">
+    <value>Roblox nie zaakceptował jeszcze tej sesji — dokończ wszelkie kroki weryfikacji. Jeśli utrzymuje się to po pełnym zalogowaniu, zamknij to okno i spróbuj ponownie.</value>
+  </data>
+  <data name="CookieCaptureWindow_TheEmbeddedBrowserSometimesLoads" xml:space="preserve">
+    <value>Wbudowana przeglądarka czasami ładuje się wolno przy pierwszym otwarciu. Jeśli Roblox poprosi o weryfikację dwuskładnikową, to normalne — zweryfikuj tutaj, a zapisane logowanie będzie działać dalej.</value>
+  </data>
+  <data name="CookieCaptureWindow_WeCaptureOnlyTheSession" xml:space="preserve">
+    <value>Przechwytujemy tylko plik cookie sesji, który Roblox ustawia po udanym zalogowaniu, a następnie szyfrujemy go na dysku za pomocą Windows DPAPI powiązanego z Twoim użytkownikiem.</value>
+  </data>
+  <data name="CookieCaptureWindow_YourPasswordGoesOnlyTo" xml:space="preserve">
+    <value>Twoje hasło trafia wyłącznie do</value>
+  </data>
+  <data name="DiagnosticsPage_BundleTheLatestLogFiles" xml:space="preserve">
+    <value>Spakuj najnowsze pliki dzienników + ten zrzut do pliku zip, który możesz dołączyć do zgłoszenia na Discordzie. Pliki cookie nigdy nie są zapisywane w dziennikach; pakiet nie zawiera żadnych sekretów.</value>
+  </data>
+  <data name="DiagnosticsPage_Diagnostics" xml:space="preserve">
+    <value>Diagnostyka</value>
+  </data>
+  <data name="DiagnosticsPage_OpenDataFolder" xml:space="preserve">
+    <value>Otwórz folder danych</value>
+  </data>
+  <data name="DiagnosticsPage_OpenLogFolder" xml:space="preserve">
+    <value>Otwórz folder dzienników</value>
+  </data>
+  <data name="DiagnosticsPage_SaveSupportBundleZip" xml:space="preserve">
+    <value>Zapisz pakiet pomocy (.zip)</value>
+  </data>
+  <data name="DiagnosticsPage_SaveTheBundleWhenFiling" xml:space="preserve">
+    <value>Zapisz pakiet, zgłaszając błąd — pliki dzienników ukrywają sekrety.</value>
+  </data>
+  <data name="DpapiCorruptWindow_Quit" xml:space="preserve">
+    <value>Zakończ</value>
+  </data>
+  <data name="DpapiCorruptWindow_SavedAccountsCanTBe" xml:space="preserve">
+    <value>Nie można odblokować zapisanych kont</value>
+  </data>
+  <data name="DpapiCorruptWindow_StartFresh" xml:space="preserve">
+    <value>Zacznij od nowa</value>
+  </data>
+  <data name="DpapiCorruptWindow_ThisUsuallyMeansWindowsWas" xml:space="preserve">
+    <value>Zwykle oznacza to, że Windows został przywrócony z kopii zapasowej, która nie zachowała klucza szyfrowania, albo plik zapisanych kont został skopiowany z innego komputera. Musimy zacząć listę Twoich kont od nowa — same konta Roblox są w porządku, wystarczy zalogować się ponownie.</value>
+  </data>
+  <data name="DpapiCorruptWindow_YourSavedAccountsCanT" xml:space="preserve">
+    <value>Nie można odblokować zapisanych kont na tym komputerze</value>
+  </data>
+  <data name="EdgeRemediationWindow_KeepMyThemeAsI" xml:space="preserve">
+    <value>Zachowaj mój motyw taki, jaki napisałem</value>
+  </data>
+  <data name="EdgeRemediationWindow_SeparatorsCardEdgesAndRow" xml:space="preserve">
+    <value>Separatory, krawędzie kart i linie wierszy pozostają nietknięte w obu przypadkach, podobnie jak każde pole tekstowe i lista rozwijana — chodzi o obrys przycisków.</value>
+  </data>
+  <data name="EdgeRemediationWindow_ThemeContrast" xml:space="preserve">
+    <value>Kontrast motywu</value>
+  </data>
+  <data name="EdgeRemediationWindow_UseTheReadableEdge" xml:space="preserve">
+    <value>Użyj czytelnego obrysu</value>
+  </data>
+  <data name="EdgeRemediationWindow_WeChangedOneColourIn" xml:space="preserve">
+    <value>Zmieniliśmy jeden kolor w Twoim motywie</value>
+  </data>
+  <data name="EdgeRemediationWindow_WithTheFix" xml:space="preserve">
+    <value>Z poprawką</value>
+  </data>
+  <data name="EdgeRemediationWindow_YourTheme" xml:space="preserve">
+    <value>Twój motyw</value>
+  </data>
+  <data name="ExportAccountsWindow_Accounts" xml:space="preserve">
+    <value>Konta</value>
+  </data>
+  <data name="ExportAccountsWindow_Cancel" xml:space="preserve">
+    <value>Anuluj</value>
+  </data>
+  <data name="ExportAccountsWindow_ConfirmPassphrase" xml:space="preserve">
+    <value>Potwierdź hasło dostępu</value>
+  </data>
+  <data name="ExportAccountsWindow_Export" xml:space="preserve">
+    <value>Eksportuj…</value>
+  </data>
+  <data name="ExportAccountsWindow_ExportAccounts" xml:space="preserve">
+    <value>Eksportuj konta</value>
+  </data>
+  <data name="ExportAccountsWindow_IncludeThisAccountInThe" xml:space="preserve">
+    <value>Uwzględnij to konto w eksporcie</value>
+  </data>
+  <data name="ExportAccountsWindow_NoRobloxIdYetLaunch" xml:space="preserve">
+    <value>Brak jeszcze identyfikatora Roblox — uruchom to konto raz, zanim będzie można je wyeksportować.</value>
+  </data>
+  <data name="ExportAccountsWindow_PassphraseAtLeast12Characters" xml:space="preserve">
+    <value>Hasło dostępu (co najmniej 12 znaków)</value>
+  </data>
+  <data name="ExportAccountsWindow_PassphraseAtLeast12Characters_2" xml:space="preserve">
+    <value>Hasło dostępu, co najmniej 12 znaków</value>
+  </data>
+  <data name="ExportAccountsWindow_PickAccountsAndSetA" xml:space="preserve">
+    <value>Wybierz konta i ustaw hasło dostępu. Zapisany plik jest zaszyfrowany — każdy, kto go otworzy, potrzebuje hasła dostępu. Nie ma odzyskiwania, jeśli je zgubisz.</value>
+  </data>
+  <data name="FriendFollowWindow_Close" xml:space="preserve">
+    <value>Zamknij</value>
+  </data>
+  <data name="FriendFollowWindow_PickAFriendToFollow" xml:space="preserve">
+    <value>Wybierz znajomego, aby dołączyć do jego serwera. Roblox sprawdza uprawnienia — działa dla serwerów publicznych ORAZ prywatnych, jeśli pozwalają na to prywatność znajomego i lista dozwolonych serwera.</value>
+  </data>
+  <data name="FriendFollowWindow_Refresh" xml:space="preserve">
+    <value>Odśwież</value>
+  </data>
+  <data name="GamesPage_Add" xml:space="preserve">
+    <value>+ Dodaj</value>
+  </data>
+  <data name="GamesPage_AddByUrl" xml:space="preserve">
+    <value>+ Dodaj przez URL</value>
+  </data>
+  <data name="GamesPage_ClearDefault" xml:space="preserve">
+    <value>Wyczyść domyślną</value>
+  </data>
+  <data name="GamesPage_Games" xml:space="preserve">
+    <value>Gry</value>
+  </data>
+  <data name="GamesPage_GiveThisGameACustom" xml:space="preserve">
+    <value>Nadaj tej grze własną nazwę widoczną tylko w RoRoRo. Nazwa po stronie Roblox pozostaje nietknięta.</value>
+  </data>
+  <data name="GamesPage_GiveThisServerACustom" xml:space="preserve">
+    <value>Nadaj temu serwerowi własną nazwę widoczną tylko w RoRoRo.</value>
+  </data>
+  <data name="GamesPage_NoSavedGamesYet" xml:space="preserve">
+    <value>Brak zapisanych gier.</value>
+  </data>
+  <data name="GamesPage_NoSavedPrivateServers" xml:space="preserve">
+    <value>Brak zapisanych serwerów prywatnych.</value>
+  </data>
+  <data name="GamesPage_OrPasteARobloxCom" xml:space="preserve">
+    <value>Lub wklej adres roblox.com/games/&lt;id&gt;/&lt;name&gt; albo identyfikator miejsca</value>
+  </data>
+  <data name="GamesPage_PasteAPrivateServerLink" xml:space="preserve">
+    <value>Wklej link do serwera prywatnego w Uruchomieniu zespołowym i uruchom go. Zapisze się tutaj automatycznie.</value>
+  </data>
+  <data name="GamesPage_PreSelectThisServerWhen" xml:space="preserve">
+    <value>Wstępnie wybieraj ten serwer, gdy uruchamiasz wszystkie konta na serwer prywatny.</value>
+  </data>
+  <data name="GamesPage_Remove" xml:space="preserve">
+    <value>Usuń</value>
+  </data>
+  <data name="GamesPage_Rename" xml:space="preserve">
+    <value>Zmień nazwę…</value>
+  </data>
+  <data name="GamesPage_Rename_2" xml:space="preserve">
+    <value>Zmień nazwę</value>
+  </data>
+  <data name="GamesPage_ResetName" xml:space="preserve">
+    <value>Przywróć nazwę</value>
+  </data>
+  <data name="GamesPage_RobloxGameUrlOrPlace" xml:space="preserve">
+    <value>Adres URL gry Roblox lub identyfikator miejsca</value>
+  </data>
+  <data name="GamesPage_SavedGames" xml:space="preserve">
+    <value>Zapisane gry</value>
+  </data>
+  <data name="GamesPage_SavedPrivateServers" xml:space="preserve">
+    <value>Zapisane serwery prywatne</value>
+  </data>
+  <data name="GamesPage_Search" xml:space="preserve">
+    <value>Szukaj</value>
+  </data>
+  <data name="GamesPage_SearchAboveOrPasteA" xml:space="preserve">
+    <value>Wyszukaj powyżej lub wklej adres URL gry Roblox, aby dodać pierwszą.</value>
+  </data>
+  <data name="GamesPage_SearchRobloxGamesByName" xml:space="preserve">
+    <value>Szukaj gier Roblox według nazwy</value>
+  </data>
+  <data name="GamesPage_SearchRobloxGamesByName_2" xml:space="preserve">
+    <value>Szukaj gier Roblox według nazwy. Enter, aby wyszukać.</value>
+  </data>
+  <data name="GamesPage_SetDefault" xml:space="preserve">
+    <value>Ustaw domyślną</value>
+  </data>
+  <data name="GamesPage_StopPreSelectingThisServer" xml:space="preserve">
+    <value>Przestań wstępnie wybierać ten serwer. Znów będziesz wybierać za każdym razem.</value>
+  </data>
+  <data name="GamesPage_StopUsingThisAsThe" xml:space="preserve">
+    <value>Przestań używać tego jako domyślnej. Uruchom jako otworzy stronę główną Roblox, dopóki nie ustawisz domyślnej gry.</value>
+  </data>
+  <data name="ImportAccountsWindow_BackupFilePath" xml:space="preserve">
+    <value>Ścieżka pliku kopii zapasowej</value>
+  </data>
+  <data name="ImportAccountsWindow_Browse" xml:space="preserve">
+    <value>Przeglądaj…</value>
+  </data>
+  <data name="ImportAccountsWindow_Cancel" xml:space="preserve">
+    <value>Anuluj</value>
+  </data>
+  <data name="ImportAccountsWindow_File" xml:space="preserve">
+    <value>Plik</value>
+  </data>
+  <data name="ImportAccountsWindow_Import" xml:space="preserve">
+    <value>Importuj</value>
+  </data>
+  <data name="ImportAccountsWindow_ImportAccounts" xml:space="preserve">
+    <value>Importuj konta</value>
+  </data>
+  <data name="ImportAccountsWindow_Passphrase" xml:space="preserve">
+    <value>Hasło dostępu</value>
+  </data>
+  <data name="ImportAccountsWindow_PickARororoAccountsFile" xml:space="preserve">
+    <value>Wybierz plik .rororo-accounts i wprowadź jego hasło dostępu. Konta już obecne na tym komputerze pozostają bez zmian — dodawane są tylko nowe.</value>
+  </data>
+  <data name="JoinByLinkWindow_AddThisGameOrPrivate" xml:space="preserve">
+    <value>Dodaj tę grę lub serwer prywatny do zapisanych gier, aby pojawiła się następnym razem bez ponownego wpisywania.</value>
+  </data>
+  <data name="JoinByLinkWindow_Cancel" xml:space="preserve">
+    <value>Anuluj</value>
+  </data>
+  <data name="JoinByLinkWindow_JoinByLink" xml:space="preserve">
+    <value>Dołącz przez link</value>
+  </data>
+  <data name="JoinByLinkWindow_Launch" xml:space="preserve">
+    <value>Uruchom</value>
+  </data>
+  <data name="JoinByLinkWindow_PasteARobloxGameUrl" xml:space="preserve">
+    <value>Wklej adres URL gry Roblox lub link udostępniania serwera prywatnego. Sami rozpoznamy, jakiego jest rodzaju.</value>
+  </data>
+  <data name="JoinByLinkWindow_RobloxGameOrPrivateServer" xml:space="preserve">
+    <value>Link do gry Roblox lub serwera prywatnego</value>
+  </data>
+  <data name="JoinByLinkWindow_SaveToMyGames" xml:space="preserve">
+    <value>Zapisz w moich grach</value>
+  </data>
+  <data name="JoinRequestWindow_Cancel" xml:space="preserve">
+    <value>Anuluj</value>
+  </data>
+  <data name="JoinRequestWindow_PrivateServer" xml:space="preserve">
+    <value>Serwer prywatny</value>
+  </data>
+  <data name="JoinRequestWindow_RobloxChecksAccessServerSide" xml:space="preserve">
+    <value>ROBLOX SPRAWDZA DOSTĘP PO STRONIE SERWERA</value>
+  </data>
+  <data name="JoinRequestWindow_ThisIsAPrivateServer" xml:space="preserve">
+    <value>To jest serwer prywatny</value>
+  </data>
+  <data name="JoinRequestWindow_TryAnyway" xml:space="preserve">
+    <value>Spróbuj mimo to</value>
+  </data>
+  <data name="LaunchHeadroomWindow_Cancel" xml:space="preserve">
+    <value>Anuluj</value>
+  </data>
+  <data name="LaunchHeadroomWindow_LaunchAnyway" xml:space="preserve">
+    <value>Uruchom mimo to</value>
+  </data>
+  <data name="LaunchHeadroomWindow_NotMuchMemoryLeft" xml:space="preserve">
+    <value>Zostało niewiele pamięci</value>
+  </data>
+  <data name="LeftoverProcessesWindow_CleanUpContinue" xml:space="preserve">
+    <value>Wyczyść + kontynuuj</value>
+  </data>
+  <data name="LeftoverProcessesWindow_ClearStrays" xml:space="preserve">
+    <value>Usuń pozostałości</value>
+  </data>
+  <data name="LeftoverProcessesWindow_Continue" xml:space="preserve">
+    <value>Kontynuuj</value>
+  </data>
+  <data name="LeftoverProcessesWindow_LeftoverRobloxProcesses" xml:space="preserve">
+    <value>Pozostałe procesy Roblox</value>
+  </data>
+  <data name="MainWindow_120Fps" xml:space="preserve">
+    <value>120 FPS</value>
+  </data>
+  <data name="MainWindow_144Fps" xml:space="preserve">
+    <value>144 FPS</value>
+  </data>
+  <data name="MainWindow_165Fps" xml:space="preserve">
+    <value>165 FPS</value>
+  </data>
+  <data name="MainWindow_20Fps" xml:space="preserve">
+    <value>20 FPS</value>
+  </data>
+  <data name="MainWindow_240Fps" xml:space="preserve">
+    <value>240 FPS</value>
+  </data>
+  <data name="MainWindow_30Fps" xml:space="preserve">
+    <value>30 FPS</value>
+  </data>
+  <data name="MainWindow_45Fps" xml:space="preserve">
+    <value>45 FPS</value>
+  </data>
+  <data name="MainWindow_60Fps" xml:space="preserve">
+    <value>60 FPS</value>
+  </data>
+  <data name="MainWindow_90Fps" xml:space="preserve">
+    <value>90 FPS</value>
+  </data>
+  <data name="MainWindow_About" xml:space="preserve">
+    <value>O programie</value>
+  </data>
+  <data name="MainWindow_Accounts" xml:space="preserve">
+    <value>Konta</value>
+  </data>
+  <data name="MainWindow_AddAccount" xml:space="preserve">
+    <value>+ Dodaj konto</value>
+  </data>
+  <data name="MainWindow_AddALabelPs99Rcu" xml:space="preserve">
+    <value>Dodaj etykietę (PS99, RCU…).</value>
+  </data>
+  <data name="MainWindow_AddATagToThis" xml:space="preserve">
+    <value>Dodaj etykietę do tego konta</value>
+  </data>
+  <data name="MainWindow_AddGamesFromToolsGames" xml:space="preserve">
+    <value>Dodaj gry z Narzędzia → Gry</value>
+  </data>
+  <data name="MainWindow_AddTag" xml:space="preserve">
+    <value>dodaj etykietę</value>
+  </data>
+  <data name="MainWindow_AddYourFirstAccount" xml:space="preserve">
+    <value>+ Dodaj swoje pierwsze konto</value>
+  </data>
+  <data name="MainWindow_AssignThisAccountAFresh" xml:space="preserve">
+    <value>Przypisz temu kontu nową fałszywą nazwę i awatar do trybu streamera.</value>
+  </data>
+  <data name="MainWindow_BloxstrapIsSetAsYour" xml:space="preserve">
+    <value>Bloxstrap jest ustawiony jako Twój launcher Roblox — nadpisze FPS ustawiony dla poszczególnych kont. Ustaw FPS w Bloxstrap, aby się zgadzał.</value>
+  </data>
+  <data name="MainWindow_ClickAChipToLaunch" xml:space="preserve">
+    <value>Kliknij element, aby uruchomić to konto na bieżącym serwerze Roblox innego konta.</value>
+  </data>
+  <data name="MainWindow_ClickAddAccountToLog" xml:space="preserve">
+    <value>Kliknij + Dodaj konto, aby zalogować się na swoje pierwsze konto Roblox.</value>
+  </data>
+  <data name="MainWindow_CloseAndRelaunchThisClient" xml:space="preserve">
+    <value>Zamknij i uruchom ponownie tego klienta — z powrotem na tym samym serwerze, na którym jest teraz, jedyny pewny sposób na odzyskanie pamięci utraconej przez Roblox.</value>
+  </data>
+  <data name="MainWindow_CloseRobloxForMe" xml:space="preserve">
+    <value>Zamknij Roblox za mnie</value>
+  </data>
+  <data name="MainWindow_CloseTheRobloxWindowFor" xml:space="preserve">
+    <value>Zamknij okno Roblox dla tego konta.</value>
+  </data>
+  <data name="MainWindow_DefaultGamePickWhichGame" xml:space="preserve">
+    <value>Domyślna gra — wybierz, jakiej gry używają nowe uruchomienia</value>
+  </data>
+  <data name="MainWindow_Diagnostics" xml:space="preserve">
+    <value>Diagnostyka</value>
+  </data>
+  <data name="MainWindow_Dismiss" xml:space="preserve">
+    <value>Odrzuć</value>
+  </data>
+  <data name="MainWindow_DismissTheBloxstrapWarning" xml:space="preserve">
+    <value>Odrzuć ostrzeżenie Bloxstrap</value>
+  </data>
+  <data name="MainWindow_DismissTheFrameRateCap" xml:space="preserve">
+    <value>Odrzuć ostrzeżenie o limicie liczby klatek</value>
+  </data>
+  <data name="MainWindow_DragToReorderThisAccount" xml:space="preserve">
+    <value>Przeciągnij, aby zmienić kolejność tego konta.</value>
+  </data>
+  <data name="MainWindow_Expand" xml:space="preserve">
+    <value>Rozwiń</value>
+  </data>
+  <data name="MainWindow_ExpandAndClickTheOn" xml:space="preserve">
+    <value>Rozwiń i kliknij ☆ w wierszu, aby ustawić jedno.</value>
+  </data>
+  <data name="MainWindow_FilterAccounts" xml:space="preserve">
+    <value>Filtruj konta</value>
+  </data>
+  <data name="MainWindow_FilterAccountsByTagOr" xml:space="preserve">
+    <value>Filtruj konta według etykiety lub nazwy…</value>
+  </data>
+  <data name="MainWindow_Follow" xml:space="preserve">
+    <value>Dołącz do:</value>
+  </data>
+  <data name="MainWindow_Follow_2" xml:space="preserve">
+    <value>Dołącz</value>
+  </data>
+  <data name="MainWindow_ForceCloseEveryRunningRoblox" xml:space="preserve">
+    <value>Wymuś zamknięcie każdego uruchomionego klienta Roblox. Najpierw pyta.</value>
+  </data>
+  <data name="MainWindow_Fps" xml:space="preserve">
+    <value>— FPS</value>
+  </data>
+  <data name="MainWindow_FpsCapAppliedAtLaunch" xml:space="preserve">
+    <value>Limit FPS zastosowany przy uruchomieniu</value>
+  </data>
+  <data name="MainWindow_FpsCapAppliedAtLaunch_2" xml:space="preserve">
+    <value>Limit FPS zastosowany przy uruchomieniu (DFIntTaskSchedulerTargetFps + GlobalBasicSettings FramerateCap)</value>
+  </data>
+  <data name="MainWindow_Friends" xml:space="preserve">
+    <value>Znajomi</value>
+  </data>
+  <data name="MainWindow_GameOrPrivateServerTo" xml:space="preserve">
+    <value>Gra lub serwer prywatny, na który uruchomić to konto</value>
+  </data>
+  <data name="MainWindow_GameOrSavedPrivateServer" xml:space="preserve">
+    <value>Gra lub zapisany serwer prywatny, na który uruchomić to konto, albo '(Paste a link...)' dla jednorazowego linku.</value>
+  </data>
+  <data name="MainWindow_Games" xml:space="preserve">
+    <value>Gry</value>
+  </data>
+  <data name="MainWindow_History" xml:space="preserve">
+    <value>Historia</value>
+  </data>
+  <data name="MainWindow_HistoryDiagnosticsPluginsLogFolder" xml:space="preserve">
+    <value>Historia, Diagnostyka, Wtyczki, folder dzienników, Zatrzymaj wszystko, przewodnik, O programie.</value>
+  </data>
+  <data name="MainWindow_HoldingYourOtherAccountsUntil" xml:space="preserve">
+    <value>Wstrzymujemy Twoje pozostałe konta, aż to się zakończy — dzieje się tak tylko wtedy, gdy Roblox potrzebuje świeżego klienta.</value>
+  </data>
+  <data name="MainWindow_InBatches" xml:space="preserve">
+    <value>Partiami</value>
+  </data>
+  <data name="MainWindow_IncludeThisAccountInLaunch" xml:space="preserve">
+    <value>Uwzględnij to konto w Uruchom wiele i Uruchomieniu zespołowym</value>
+  </data>
+  <data name="MainWindow_IncludeThisAccountInLaunch_2" xml:space="preserve">
+    <value>Uwzględnij to konto w partiach Uruchom wiele / Uruchomienie zespołowe. Kliknij, aby pominąć.</value>
+  </data>
+  <data name="MainWindow_InstallAndManageRororoPlugins" xml:space="preserve">
+    <value>Instaluj wtyczki RoRoRo i zarządzaj nimi.</value>
+  </data>
+  <data name="MainWindow_IntoTheirServer" xml:space="preserve">
+    <value>na ich serwer</value>
+  </data>
+  <data name="MainWindow_JoinViaFriendChallengeProne" xml:space="preserve">
+    <value>Dołącz przez znajomego (konto podatne na weryfikację)</value>
+  </data>
+  <data name="MainWindow_JoinViaFriendChallengeProne_2" xml:space="preserve">
+    <value>✓ Dołącz przez znajomego (konto podatne na weryfikację)</value>
+  </data>
+  <data name="MainWindow_LaunchAs" xml:space="preserve">
+    <value>Uruchom jako</value>
+  </data>
+  <data name="MainWindow_LaunchEverySelectedAccountInto" xml:space="preserve">
+    <value>Uruchom każde wybrane konto do jego własnej gry z wiersza, pojedynczo w odstępach około 5 sekund — odstęp gwarantuje, że każde okno trafi na właściwe konto. Użyj kropki obok statusu każdego konta, aby odznaczyć. (Ctrl+L)</value>
+  </data>
+  <data name="MainWindow_LaunchMultiple" xml:space="preserve">
+    <value>Uruchom wiele</value>
+  </data>
+  <data name="MainWindow_LaunchYourMainAccountInto" xml:space="preserve">
+    <value>Uruchom swoje główne konto do jego bieżącej gry z wiersza.</value>
+  </data>
+  <data name="MainWindow_LogInToARoblox" xml:space="preserve">
+    <value>Zaloguj się na konto Roblox i zapisz je tutaj. (Ctrl+N)</value>
+  </data>
+  <data name="MainWindow_ManageGames" xml:space="preserve">
+    <value>Zarządzaj grami…</value>
+  </data>
+  <data name="MainWindow_MuteDiscordAlerts" xml:space="preserve">
+    <value>Wycisz alerty Discord</value>
+  </data>
+  <data name="MainWindow_MutedNoDiscordAlerts" xml:space="preserve">
+    <value>✓ Wyciszone — brak alertów Discord</value>
+  </data>
+  <data name="MainWindow_NoAccountsSaved" xml:space="preserve">
+    <value>Brak zapisanych kont.</value>
+  </data>
+  <data name="MainWindow_NoMainAccountPicked" xml:space="preserve">
+    <value>Nie wybrano głównego konta.</value>
+  </data>
+  <data name="MainWindow_NoRobloxRunning" xml:space="preserve">
+    <value>Roblox nie jest uruchomiony.</value>
+  </data>
+  <data name="MainWindow_NoSavedAccountsYet" xml:space="preserve">
+    <value>Brak jeszcze zapisanych kont.</value>
+  </data>
+  <data name="MainWindow_NoSavedGamesYetAdd" xml:space="preserve">
+    <value>Brak zapisanych gier — Dodaj grę</value>
+  </data>
+  <data name="MainWindow_OpenLogFolder" xml:space="preserve">
+    <value>Otwórz folder dzienników</value>
+  </data>
+  <data name="MainWindow_OpenTheFolderHoldingRororo" xml:space="preserve">
+    <value>Otwórz folder z plikami dzienników RoRoRo.</value>
+  </data>
+  <data name="MainWindow_PickARobloxWindowTitle" xml:space="preserve">
+    <value>Wybierz kolor paska tytułu okna Roblox dla tego konta.</value>
+  </data>
+  <data name="MainWindow_Plugins" xml:space="preserve">
+    <value>Wtyczki</value>
+  </data>
+  <data name="MainWindow_RecentSessionsPerAccountWhat" xml:space="preserve">
+    <value>Ostatnie sesje dla każdego konta: jaka gra/serwer, kiedy, jak długo.</value>
+  </data>
+  <data name="MainWindow_Recycle" xml:space="preserve">
+    <value>Połącz ponownie</value>
+  </data>
+  <data name="MainWindow_RecycleCloseAndRelaunchThis" xml:space="preserve">
+    <value>Połącz ponownie — zamknij i uruchom ponownie tego klienta z powrotem na serwerze, na którym jest teraz, i odzyskaj utraconą pamięć.</value>
+  </data>
+  <data name="MainWindow_Remove" xml:space="preserve">
+    <value>Usuń</value>
+  </data>
+  <data name="MainWindow_RemoveThisTag" xml:space="preserve">
+    <value>Usuń tę etykietę</value>
+  </data>
+  <data name="MainWindow_RemoveThisTag_2" xml:space="preserve">
+    <value>Usuń tę etykietę.</value>
+  </data>
+  <data name="MainWindow_Rename" xml:space="preserve">
+    <value>Zmień nazwę…</value>
+  </data>
+  <data name="MainWindow_ReplayTheFirstRunTour" xml:space="preserve">
+    <value>Odtwórz ponownie przewodnik pierwszego uruchomienia dla wiersza konta.</value>
+  </data>
+  <data name="MainWindow_RerollIdentity" xml:space="preserve">
+    <value>Wylosuj tożsamość ponownie</value>
+  </data>
+  <data name="MainWindow_RerollIdentity_2" xml:space="preserve">
+    <value>🎲 Wylosuj tożsamość ponownie</value>
+  </data>
+  <data name="MainWindow_ResetName" xml:space="preserve">
+    <value>Przywróć nazwę</value>
+  </data>
+  <data name="MainWindow_Retry" xml:space="preserve">
+    <value>Ponów</value>
+  </data>
+  <data name="MainWindow_RobloxFlaggedThisAccountRe" xml:space="preserve">
+    <value>Roblox oznaczył to konto. Uwierzytelnij ponownie lub poczekaj, aż ostygnie.</value>
+  </data>
+  <data name="MainWindow_RobloxIsUpdating" xml:space="preserve">
+    <value>Roblox się aktualizuje</value>
+  </data>
+  <data name="MainWindow_Rororo" xml:space="preserve">
+    <value>RoRoRo</value>
+  </data>
+  <data name="MainWindow_SavedGamesAndPrivateServers" xml:space="preserve">
+    <value>Zapisane gry i serwery prywatne dla listy wyboru uruchamiania. (Ctrl+G)</value>
+  </data>
+  <data name="MainWindow_SeeThisAccountSFriends" xml:space="preserve">
+    <value>Zobacz znajomych tego konta i dołącz do jednego na jego serwer (działa dla publicznych + prywatnych).</value>
+  </data>
+  <data name="MainWindow_SendEverySelectedAccountInto" xml:space="preserve">
+    <value>Wyślij każde wybrane konto na TEN SAM serwer — link do serwera prywatnego lub zwykły link do gry, aby udostępnić jeden serwer publiczny. Uruchom wiele, obok tego, wysyła każde konto do jego własnej gry. Użyj kropki obok statusu każdego konta, aby odznaczyć. (Ctrl+J)</value>
+  </data>
+  <data name="MainWindow_SetAsDefault" xml:space="preserve">
+    <value>Ustaw jako domyślną</value>
+  </data>
+  <data name="MainWindow_SetAsMainAccount" xml:space="preserve">
+    <value>Ustaw jako główne konto</value>
+  </data>
+  <data name="MainWindow_SetAsMainAccountDrives" xml:space="preserve">
+    <value>Ustaw jako główne konto. Steruje przyciskiem trybu kompaktowego + celem podwójnego kliknięcia w zasobniku systemowym.</value>
+  </data>
+  <data name="MainWindow_Settings" xml:space="preserve">
+    <value>Ustawienia</value>
+  </data>
+  <data name="MainWindow_ShowOnlyAccountsWhoseTag" xml:space="preserve">
+    <value>Pokaż tylko konta, których etykieta lub nazwa zawiera ten tekst. Zmiana kolejności przeciąganiem jest wstrzymana podczas filtrowania — wyczyść pole, aby znów zmieniać kolejność.</value>
+  </data>
+  <data name="MainWindow_ShrinkToASmallOps" xml:space="preserve">
+    <value>Zmniejsz do małego widoku operacyjnego, który pokazuje tylko uruchomione konta. Kliknij ponownie, aby rozwinąć.</value>
+  </data>
+  <data name="MainWindow_Skipped" xml:space="preserve">
+    <value>Pominięte</value>
+  </data>
+  <data name="MainWindow_SquadLaunch" xml:space="preserve">
+    <value>Uruchomienie zespołowe</value>
+  </data>
+  <data name="MainWindow_SquadLaunchesRouteThisAccount" xml:space="preserve">
+    <value>Uruchomienia zespołowe kierują to konto na serwer, dołączając do członka zespołu, który już tam jest — monity weryfikacyjne Roblox dotyczą bezpośrednich dołączeń, nie dołączania do znajomych. Wymaga znajomości z Twoim zespołem.</value>
+  </data>
+  <data name="MainWindow_Start" xml:space="preserve">
+    <value>▶ Uruchom</value>
+  </data>
+  <data name="MainWindow_StartupAccountsAlertsDiscordAnd" xml:space="preserve">
+    <value>Uruchamianie, konta, alerty, Discord i motyw. (Ctrl+,)</value>
+  </data>
+  <data name="MainWindow_Stop" xml:space="preserve">
+    <value>Zatrzymaj</value>
+  </data>
+  <data name="MainWindow_StopAllRobloxInstances" xml:space="preserve">
+    <value>Zatrzymaj wszystkie instancje Roblox</value>
+  </data>
+  <data name="MainWindow_StopDiscordAlertsForThis" xml:space="preserve">
+    <value>Zatrzymaj alerty Discord tylko dla tego konta. Kierowanie jest per wyzwalacz; wyciszanie jest per konto.</value>
+  </data>
+  <data name="MainWindow_SystemHealthRobloxWebview2Versions" xml:space="preserve">
+    <value>Kondycja systemu, wersje Roblox + WebView2, lokalizacja dzienników.</value>
+  </data>
+  <data name="MainWindow_ThisIsYourMainAccount" xml:space="preserve">
+    <value>To jest Twoje główne konto. Kliknij, aby anulować.</value>
+  </data>
+  <data name="MainWindow_Tools" xml:space="preserve">
+    <value>Narzędzia  ▾</value>
+  </data>
+  <data name="MainWindow_Tools_2" xml:space="preserve">
+    <value>Narzędzia</value>
+  </data>
+  <data name="MainWindow_TypeALabelPs99Rcu" xml:space="preserve">
+    <value>Wpisz etykietę (PS99, RCU…) i naciśnij Enter. Esc, aby anulować.</value>
+  </data>
+  <data name="MainWindow_UnlimitedFps" xml:space="preserve">
+    <value>Nieograniczony FPS</value>
+  </data>
+  <data name="MainWindow_VersionLinksLicense" xml:space="preserve">
+    <value>Wersja, odnośniki, licencja.</value>
+  </data>
+  <data name="MainWindow_WelcomeTour" xml:space="preserve">
+    <value>Przewodnik powitalny</value>
+  </data>
+  <data name="MainWindow_WhetherThisAccountJoinsLaunch" xml:space="preserve">
+    <value>Czy to konto dołącza do zbiorczych uruchomień Uruchom wiele / Uruchomienie zespołowe. Kliknij kropkę, aby przełączyć.</value>
+  </data>
+  <data name="MainWindow_XMinimizesToTrayQuit" xml:space="preserve">
+    <value>X minimalizuje do zasobnika systemowego. Zakończ z zasobnika systemowego, aby wyjść.</value>
+  </data>
+  <data name="PageHeader_Rororo" xml:space="preserve">
+    <value>RoRoRo</value>
+  </data>
+  <data name="PluginsPage_Autostart" xml:space="preserve">
+    <value>Automatyczne uruchamianie</value>
+  </data>
+  <data name="PluginsPage_EachPluginRunsInIts" xml:space="preserve">
+    <value>Każda wtyczka działa we własnym procesie i widzi tylko to, na co zezwolisz.</value>
+  </data>
+  <data name="PluginsPage_Install" xml:space="preserve">
+    <value>Zainstaluj</value>
+  </data>
+  <data name="PluginsPage_InstallFromUrl" xml:space="preserve">
+    <value>ZAINSTALUJ Z URL</value>
+  </data>
+  <data name="PluginsPage_Launch" xml:space="preserve">
+    <value>Uruchom</value>
+  </data>
+  <data name="PluginsPage_NoPluginsInstalled" xml:space="preserve">
+    <value>Brak zainstalowanych wtyczek.</value>
+  </data>
+  <data name="PluginsPage_PasteAReleaseUrlAbove" xml:space="preserve">
+    <value>Wklej adres URL wydania powyżej, aby dodać wtyczkę.</value>
+  </data>
+  <data name="PluginsPage_PasteTheBaseUrlOf" xml:space="preserve">
+    <value>Wklej podstawowy adres URL wydania wtyczki (folder zawierający manifest.json, manifest.sha256 i plugin.zip).</value>
+  </data>
+  <data name="PluginsPage_PluginManifestUrl" xml:space="preserve">
+    <value>Adres URL manifestu wtyczki</value>
+  </data>
+  <data name="PluginsPage_Plugins" xml:space="preserve">
+    <value>Wtyczki</value>
+  </data>
+  <data name="PluginsPage_Remove" xml:space="preserve">
+    <value>Usuń</value>
+  </data>
+  <data name="PluginsPage_Restart" xml:space="preserve">
+    <value>Uruchom ponownie</value>
+  </data>
+  <data name="PluginsPage_Update" xml:space="preserve">
+    <value>Aktualizuj</value>
+  </data>
+  <data name="RenameWindow_Cancel" xml:space="preserve">
+    <value>Anuluj</value>
+  </data>
+  <data name="RenameWindow_NewName" xml:space="preserve">
+    <value>Nowa nazwa</value>
+  </data>
+  <data name="RenameWindow_Rename" xml:space="preserve">
+    <value>Zmień nazwę</value>
+  </data>
+  <data name="RenameWindow_Save" xml:space="preserve">
+    <value>Zapisz</value>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_AlreadyHaveAnotherCopyOf" xml:space="preserve">
+    <value>Masz już inną kopię RoRoRo lub zgodne narzędzie trzymające blokadę? Uruchom mimo to — Multi-Instance działa dalej, a RoRoRo pokaże baner, gdy nie trzyma blokady.</value>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_ChooseQuitRobloxThenHit" xml:space="preserve">
+    <value>Wybierz Zakończ Roblox — a następnie naciśnij Ponów</value>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_ClickTheNearTheClock" xml:space="preserve">
+    <value>Kliknij ^ obok zegara (prawy dolny róg)</value>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_CloseRobloxForMe" xml:space="preserve">
+    <value>Zamknij Roblox za mnie</value>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_QuitRororo" xml:space="preserve">
+    <value>Zakończ RoRoRo</value>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_Retry" xml:space="preserve">
+    <value>Ponów</value>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_RightClickTheRobloxIcon" xml:space="preserve">
+    <value>Kliknij prawym przyciskiem ikonę Roblox</value>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_RobloxCanStartItselfWith" xml:space="preserve">
+    <value>Roblox może uruchamiać się razem z Windows. Możesz to wyłączyć w ustawieniach Roblox w zasobniku systemowym — ale nie musisz; RoRoRo i tak wychwyci to tutaj.</value>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_RobloxIsAlreadyRunning" xml:space="preserve">
+    <value>Roblox jest już uruchomiony</value>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_RororoNeedsTheMultiInstance" xml:space="preserve">
+    <value>RoRoRo potrzebuje blokady Multi-Instance, ale Roblox ją trzyma — może działać zupełnie bez okna, ukryty w zasobniku systemowym.</value>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_StartAnyway" xml:space="preserve">
+    <value>Uruchom mimo to</value>
+  </data>
+  <data name="RobloxNotInstalledWindow_DownloadRoblox" xml:space="preserve">
+    <value>Pobierz Roblox</value>
+  </data>
+  <data name="RobloxNotInstalledWindow_IfYouUseBloxstrapMake" xml:space="preserve">
+    <value>Jeśli używasz Bloxstrap, upewnij się, że jest ustawiony jako domyślny launcher Roblox w jego ustawieniach — Bloxstrap powinien też obsługiwać nasze uruchomienia.</value>
+  </data>
+  <data name="RobloxNotInstalledWindow_OpenBloxstrapSetup" xml:space="preserve">
+    <value>Otwórz konfigurację Bloxstrap</value>
+  </data>
+  <data name="RobloxNotInstalledWindow_RobloxDoesnTAppearTo" xml:space="preserve">
+    <value>Roblox wydaje się niezainstalowany</value>
+  </data>
+  <data name="RobloxNotInstalledWindow_RobloxNeeded" xml:space="preserve">
+    <value>Wymagany Roblox</value>
+  </data>
+  <data name="RobloxNotInstalledWindow_RororoLaunchesRobloxViaThe" xml:space="preserve">
+    <value>RoRoRo uruchamia Roblox przez standardowy program obsługi roblox-player:. Nie możemy znaleźć tego programu obsługi na tym komputerze, co zwykle oznacza, że Roblox nie jest jeszcze zainstalowany.</value>
+  </data>
+  <data name="SessionHistoryPage_ClearHistory" xml:space="preserve">
+    <value>Wyczyść historię</value>
+  </data>
+  <data name="SessionHistoryPage_DayStreak" xml:space="preserve">
+    <value>SERIA DNI</value>
+  </data>
+  <data name="SessionHistoryPage_History" xml:space="preserve">
+    <value>Historia</value>
+  </data>
+  <data name="SessionHistoryPage_PeakAltsAtOnce" xml:space="preserve">
+    <value>MAKS. KONT NARAZ</value>
+  </data>
+  <data name="SessionHistoryPage_SinceHistoryBegan" xml:space="preserve">
+    <value>od początku historii</value>
+  </data>
+  <data name="SessionHistoryPage_TotalUptime" xml:space="preserve">
+    <value>ŁĄCZNY CZAS DZIAŁANIA</value>
+  </data>
+  <data name="SettingsPage_10Minutes" xml:space="preserve">
+    <value>10 minut</value>
+  </data>
+  <data name="SettingsPage_12Minutes" xml:space="preserve">
+    <value>12 minut</value>
+  </data>
+  <data name="SettingsPage_15Minutes" xml:space="preserve">
+    <value>15 minut</value>
+  </data>
+  <data name="SettingsPage_18Minutes" xml:space="preserve">
+    <value>18 minut</value>
+  </data>
+  <data name="SettingsPage_1GetTheFreeNtfy" xml:space="preserve">
+    <value>1. Pobierz darmową aplikację ntfy ze sklepu z aplikacjami na telefonie — konto nie jest potrzebne.  2. W niej zasubskrybuj dokładny temat poniżej.  3. Naciśnij przycisk testu. Temat jest sekretem — każdy, kto go posiada, może odczytywać i podrabiać Twoje alerty, dlatego RoRoRo tworzy go długim i losowym. Na iPhonie dostarczanie działa w miarę możliwości; Pushover jest tam niezawodnym wyborem.</value>
+  </data>
+  <data name="SettingsPage_Accounts" xml:space="preserve">
+    <value>Konta</value>
+  </data>
+  <data name="SettingsPage_AddAccountsFromAnEncrypted" xml:space="preserve">
+    <value>Dodaj konta z zaszyfrowanego pliku .rororo-accounts.</value>
+  </data>
+  <data name="SettingsPage_Alerts" xml:space="preserve">
+    <value>Alerty</value>
+  </data>
+  <data name="SettingsPage_AlertsMemory" xml:space="preserve">
+    <value>Alerty i pamięć</value>
+  </data>
+  <data name="SettingsPage_AlwaysShowRecycleOnRunning" xml:space="preserve">
+    <value>Zawsze pokazuj Połącz ponownie na uruchomionych kontach.</value>
+  </data>
+  <data name="SettingsPage_AnAccountDropsOut" xml:space="preserve">
+    <value>Konto wypada</value>
+  </data>
+  <data name="SettingsPage_AnAccountEatsMemory" xml:space="preserve">
+    <value>Konto pochłania pamięć</value>
+  </data>
+  <data name="SettingsPage_AnAccountGetsRecycled" xml:space="preserve">
+    <value>Konto zostaje połączone ponownie</value>
+  </data>
+  <data name="SettingsPage_Appearance" xml:space="preserve">
+    <value>Wygląd</value>
+  </data>
+  <data name="SettingsPage_ApplicationToken" xml:space="preserve">
+    <value>Token aplikacji</value>
+  </data>
+  <data name="SettingsPage_AServerOnlyYouRead" xml:space="preserve">
+    <value>Serwer, który czytasz tylko Ty. Zapisany zaszyfrowany na tym komputerze i nigdy go nie opuszcza, chyba że po to, by wysłać Twoje alerty.</value>
+  </data>
+  <data name="SettingsPage_ASharedRoomAnythingRouted" xml:space="preserve">
+    <value>Wspólny pokój. Wszystko, co tu trafia, jest czytane przez każdego na tym kanale, teraz i później — więc wysyłaj to, co powinien widzieć klan, nie wszystko.</value>
+  </data>
+  <data name="SettingsPage_AssignEveryFakeNameAnd" xml:space="preserve">
+    <value>Przypisz każdej fałszywej nazwie i awatarowi nowy wybór.</value>
+  </data>
+  <data name="SettingsPage_AWholeNumberFrom256" xml:space="preserve">
+    <value>Liczba całkowita od 256 do 65536 lub puste, aby RoRoRo wybrało.</value>
+  </data>
+  <data name="SettingsPage_AWholeNumberFrom256_2" xml:space="preserve">
+    <value>Liczba całkowita od 256 do 65536, 0, aby wyłączyć to ostrzeżenie, lub puste, aby RoRoRo wybrało.</value>
+  </data>
+  <data name="SettingsPage_AWholeNumberOfMinutes" xml:space="preserve">
+    <value>Liczba całkowita minut od 1 do 1440. Domyślnie 120.</value>
+  </data>
+  <data name="SettingsPage_BothCodesComeFromPushover" xml:space="preserve">
+    <value>Oba kody pochodzą z pushover.net: Twój klucz użytkownika jest na pulpicie, a utworzenie tam aplikacji (nazwij ją dowolnie) daje jej token. Aplikacja na telefon to jednorazowy zakup po okresie próbnym.</value>
+  </data>
+  <data name="SettingsPage_BuildATheme" xml:space="preserve">
+    <value>+ Zbuduj motyw...</value>
+  </data>
+  <data name="SettingsPage_BuzzesYourPhoneDirectlyNo" xml:space="preserve">
+    <value>Wibruje bezpośrednio na Twoim telefonie — bez Discorda. Pushover to aplikacja, której używa już większość klanu; ntfy jest darmowe. Zaznacz Mój telefon przy alercie powyżej, skonfiguruj usługę raz tutaj.</value>
+  </data>
+  <data name="SettingsPage_ClanChannel" xml:space="preserve">
+    <value>Kanał klanu</value>
+  </data>
+  <data name="SettingsPage_ClanChannelWebhookUrl" xml:space="preserve">
+    <value>Kanał klanu — adres URL webhooka</value>
+  </data>
+  <data name="SettingsPage_ClanChannelWebhookUrl_2" xml:space="preserve">
+    <value>Adres URL webhooka kanału klanu</value>
+  </data>
+  <data name="SettingsPage_Desktop" xml:space="preserve">
+    <value>Pulpit</value>
+  </data>
+  <data name="SettingsPage_Discord" xml:space="preserve">
+    <value>Discord</value>
+  </data>
+  <data name="SettingsPage_DiscordPresence" xml:space="preserve">
+    <value>Obecność na Discordzie</value>
+  </data>
+  <data name="SettingsPage_DropAJsonFileIn" xml:space="preserve">
+    <value>Umieść tutaj plik *.json, a następnie zamknij i otwórz ponownie Ustawienia, aby zobaczyć go na liście wyboru.</value>
+  </data>
+  <data name="SettingsPage_EachAccountFinishesLandingIn" xml:space="preserve">
+    <value>Każde konto kończy wchodzenie do gry, zanim rozpocznie się następne. Trwa to dłużej, ale nigdy dwa konta nie dołączają jednocześnie, co jest tym, co wywołuje monity weryfikacyjne Roblox. Możesz to też przełączyć w oknie Uruchomienia zespołowego.</value>
+  </data>
+  <data name="SettingsPage_ExportAccounts" xml:space="preserve">
+    <value>Eksportuj konta…</value>
+  </data>
+  <data name="SettingsPage_GenerateANewNtfyTopic" xml:space="preserve">
+    <value>Wygeneruj nowy temat ntfy</value>
+  </data>
+  <data name="SettingsPage_GetToldWhenSomethingHappens" xml:space="preserve">
+    <value>Otrzymuj powiadomienia, gdy coś dzieje się z kontem, gdy jesteś z dala od komputera. Konfiguracja wysyłania na kanał Discord zajmuje około minuty — poniżej jest instrukcja, jeśli nigdy nie tworzyłeś webhooka.</value>
+  </data>
+  <data name="SettingsPage_HidesNamesAvatarsAndShare" xml:space="preserve">
+    <value>Ukrywa nazwy, awatary i linki udostępniania wewnątrz RoRoRo. Nie zmienia niczego, co pokazuje sam Roblox — Twój stream nadal pokazuje to, co jest na ekranie w grze.</value>
+  </data>
+  <data name="SettingsPage_IdleAccounts" xml:space="preserve">
+    <value>Bezczynne konta</value>
+  </data>
+  <data name="SettingsPage_IdleWarnThreshold" xml:space="preserve">
+    <value>Próg ostrzeżenia o bezczynności</value>
+  </data>
+  <data name="SettingsPage_IDonTHaveA" xml:space="preserve">
+    <value>Nie mam serwera Discord</value>
+  </data>
+  <data name="SettingsPage_ImportAccounts" xml:space="preserve">
+    <value>Importuj konta…</value>
+  </data>
+  <data name="SettingsPage_KeepRobloxWindowed" xml:space="preserve">
+    <value>Trzymaj Roblox w oknie</value>
+  </data>
+  <data name="SettingsPage_KeepRobloxWindowed_2" xml:space="preserve">
+    <value>Trzymaj Roblox w oknie.</value>
+  </data>
+  <data name="SettingsPage_LaunchASquadOneAccount" xml:space="preserve">
+    <value>Uruchamiaj zespół po jednym koncie naraz</value>
+  </data>
+  <data name="SettingsPage_LaunchASquadOneAccount_2" xml:space="preserve">
+    <value>Uruchamiaj zespół po jednym koncie naraz.</value>
+  </data>
+  <data name="SettingsPage_LaunchYourMainAccountWhen" xml:space="preserve">
+    <value>Uruchamiaj swoje główne konto, gdy RoRoRo się uruchamia.</value>
+  </data>
+  <data name="SettingsPage_LeaveAsNtfyShUnless" xml:space="preserve">
+    <value>Pozostaw jako ntfy.sh, chyba że prowadzisz własny serwer.</value>
+  </data>
+  <data name="SettingsPage_LetFriendsJoinYourServer" xml:space="preserve">
+    <value>Pozwól znajomym dołączać do Twojego serwera z Discorda.</value>
+  </data>
+  <data name="SettingsPage_MakesAFreshRandomTopic" xml:space="preserve">
+    <value>Tworzy nowy losowy temat. Twój telefon przestaje otrzymywać alerty, dopóki nie zasubskrybujesz nowego.</value>
+  </data>
+  <data name="SettingsPage_Memory" xml:space="preserve">
+    <value>Pamięć</value>
+  </data>
+  <data name="SettingsPage_MemorySettingsWarning" xml:space="preserve">
+    <value>Ostrzeżenie o ustawieniach pamięci</value>
+  </data>
+  <data name="SettingsPage_MemoryToKeepFreeIn" xml:space="preserve">
+    <value>Ilość pamięci do zachowania wolnej, w megabajtach</value>
+  </data>
+  <data name="SettingsPage_MemoryToKeepFreeMb" xml:space="preserve">
+    <value>Pamięć do zachowania wolnej (MB)</value>
+  </data>
+  <data name="SettingsPage_MoveYourSavedAccountsTo" xml:space="preserve">
+    <value>Przenieś zapisane konta na inny komputer. Eksport zapisuje plik zaszyfrowany hasłem dostępu; import scala go bez naruszania kont już obecnych na tym komputerze.</value>
+  </data>
+  <data name="SettingsPage_MutedAccounts" xml:space="preserve">
+    <value>Wyciszone konta</value>
+  </data>
+  <data name="SettingsPage_MuteIdleAlerts" xml:space="preserve">
+    <value>Wycisz alerty o bezczynności.</value>
+  </data>
+  <data name="SettingsPage_MyChannel" xml:space="preserve">
+    <value>Mój kanał</value>
+  </data>
+  <data name="SettingsPage_MyChannelWebhookUrl" xml:space="preserve">
+    <value>Mój kanał — adres URL webhooka</value>
+  </data>
+  <data name="SettingsPage_MyChannelWebhookUrl_2" xml:space="preserve">
+    <value>Adres URL webhooka mojego kanału</value>
+  </data>
+  <data name="SettingsPage_MyPhone" xml:space="preserve">
+    <value>Mój telefon</value>
+  </data>
+  <data name="SettingsPage_MyPhonePushService" xml:space="preserve">
+    <value>Mój telefon — usługa powiadomień push</value>
+  </data>
+  <data name="SettingsPage_NewTopic" xml:space="preserve">
+    <value>Nowy temat</value>
+  </data>
+  <data name="SettingsPage_NormallyStopGivesRobloxTen" xml:space="preserve">
+    <value>Zwykle Zatrzymaj daje Robloxowi dziesięć sekund na samodzielne zamknięcie, odliczając w wierszu, ponieważ Roblox prosi o potwierdzenie w grze, a tylko czyste wyjście zapisuje ustawienia Roblox — rozmiar okna, pełny ekran, jakość grafiki. Włącz to, a Zatrzymaj zamyka klienta natychmiast, a te ustawienia wracają do ostatnio zapisanych.</value>
+  </data>
+  <data name="SettingsPage_Ntfy" xml:space="preserve">
+    <value>ntfy</value>
+  </data>
+  <data name="SettingsPage_NtfyServerAddress" xml:space="preserve">
+    <value>adres serwera ntfy</value>
+  </data>
+  <data name="SettingsPage_NtfyTopic" xml:space="preserve">
+    <value>temat ntfy</value>
+  </data>
+  <data name="SettingsPage_Off" xml:space="preserve">
+    <value>Wyłączone</value>
+  </data>
+  <data name="SettingsPage_OneClientOnItsOwn" xml:space="preserve">
+    <value>Jeden klient sam w sobie, nie cały komputer. Zdrowy klient Pet Sim utrzymuje się blisko 2650 MB. Od 256 do 65536 lub 0, aby wyłączyć to ostrzeżenie. Pozostaw puste, a RoRoRo samo wyliczy.</value>
+  </data>
+  <data name="SettingsPage_OpenThemesFolder" xml:space="preserve">
+    <value>Otwórz folder motywów</value>
+  </data>
+  <data name="SettingsPage_OpenTheThemeBuilderCopy" xml:space="preserve">
+    <value>Otwórz kreator motywów. Skopiuj polecenie AI, wklej wynik z powrotem, zapisz.</value>
+  </data>
+  <data name="SettingsPage_PairWithTheToggleAbove" xml:space="preserve">
+    <value>Połącz z przełącznikiem powyżej, aby uzyskać jednoetapowe uruchamianie prosto do Roblox. Najpierw wybierz główne konto na liście wierszy (gwiazdka ☆).</value>
+  </data>
+  <data name="SettingsPage_PickABuiltInOr" xml:space="preserve">
+    <value>Wybierz wbudowany lub umieść własny JSON w folderze motywów. Główne okno aktualizuje się natychmiast; okna dodatkowe (to, Diagnostyka, O programie) przejmują motyw przy następnym otwarciu.</value>
+  </data>
+  <data name="SettingsPage_Pushover" xml:space="preserve">
+    <value>Pushover</value>
+  </data>
+  <data name="SettingsPage_PushoverApplicationToken" xml:space="preserve">
+    <value>Token aplikacji Pushover</value>
+  </data>
+  <data name="SettingsPage_PushoverUserKey" xml:space="preserve">
+    <value>Klucz użytkownika Pushover</value>
+  </data>
+  <data name="SettingsPage_RecycleClosesAClientAnd" xml:space="preserve">
+    <value>Połącz ponownie zamyka klienta i umieszcza go z powrotem na serwerze, na którym był — przydatne dla klienta, który zaczął się zachowywać dziwnie, nie tylko takiego pochłaniającego pamięć. Wyłączone, pojawia się tylko wtedy, gdy RoRoRo ostrzega o pamięci tego konta.</value>
+  </data>
+  <data name="SettingsPage_RerollAllIdentities" xml:space="preserve">
+    <value>Wylosuj ponownie wszystkie tożsamości</value>
+  </data>
+  <data name="SettingsPage_RevealTheSavedKeySo" xml:space="preserve">
+    <value>Odsłoń zapisany klucz, aby móc go odczytać lub wymienić.</value>
+  </data>
+  <data name="SettingsPage_RevealTheSavedTokenSo" xml:space="preserve">
+    <value>Odsłoń zapisany token, aby móc go odczytać lub wymienić.</value>
+  </data>
+  <data name="SettingsPage_RevealTheSavedWebhookSo" xml:space="preserve">
+    <value>Odsłoń zapisany webhook, aby móc go odczytać lub wymienić.</value>
+  </data>
+  <data name="SettingsPage_RevealTheTopicSoYou" xml:space="preserve">
+    <value>Odsłoń temat, aby móc go zasubskrybować na telefonie.</value>
+  </data>
+  <data name="SettingsPage_ReviewButtonOutlines" xml:space="preserve">
+    <value>Przejrzyj obrysy przycisków</value>
+  </data>
+  <data name="SettingsPage_ReviewButtonOutlinesOnThis" xml:space="preserve">
+    <value>Przejrzyj obrysy przycisków w tym motywie</value>
+  </data>
+  <data name="SettingsPage_RobloxRemembersFullscreenFromLast" xml:space="preserve">
+    <value>Roblox pamięta pełny ekran z poprzedniego razu — awaria lub Alt+Enter w trakcie gry i następny klient zajmuje cały ekran. Gdy to włączone, RoRoRo wyłącza to tuż przed każdym uruchomieniem. Odznacz, jeśli faktycznie chcesz klientów na pełnym ekranie.</value>
+  </data>
+  <data name="SettingsPage_RororoChecksEveryRunningClient" xml:space="preserve">
+    <value>RoRoRo sprawdza każdego uruchomionego klienta co 30 sekund i informuje, zanim komputerowi zabraknie pamięci. Wyłącz to, a trzy ustawienia poniżej przestaną cokolwiek robić. Wszystkie cztery zaczynają obowiązywać przy następnym uruchomieniu RoRoRo.</value>
+  </data>
+  <data name="SettingsPage_RororoShowsOneTrayToast" xml:space="preserve">
+    <value>RoRoRo pokazuje jedno powiadomienie w zasobniku systemowym, gdy uruchomione konto przekroczy próg bezczynności poniżej. Zaznaczenie tego zachowuje znacznik w wierszu, ale pomija powiadomienie.</value>
+  </data>
+  <data name="SettingsPage_RororoWatchesHowFastYour" xml:space="preserve">
+    <value>RoRoRo obserwuje, jak szybko rosną Twoi klienci, i ostrzega z tym wyprzedzeniem, zanim zapełnią komputer. Od 1 do 1440. Domyślnie 120.</value>
+  </data>
+  <data name="SettingsPage_SaveTheRororoIcon" xml:space="preserve">
+    <value>Zapisz ikonę RoRoRo</value>
+  </data>
+  <data name="SettingsPage_SaveTheRororoIconFor" xml:space="preserve">
+    <value>Zapisz ikonę RoRoRo do formularza aplikacji Pushover</value>
+  </data>
+  <data name="SettingsPage_SaveYourAccountsToAn" xml:space="preserve">
+    <value>Zapisz swoje konta do zaszyfrowanego pliku, który możesz przenieść na inny komputer.</value>
+  </data>
+  <data name="SettingsPage_SeeBothVersionsOfThis" xml:space="preserve">
+    <value>Zobacz obie wersje obrysów przycisków tego motywu i wybierz tę, której używa.</value>
+  </data>
+  <data name="SettingsPage_SendATestNotificationTo" xml:space="preserve">
+    <value>Wyślij testowe powiadomienie na mój telefon</value>
+  </data>
+  <data name="SettingsPage_SendDropOutAlertsTo" xml:space="preserve">
+    <value>Wysyłaj alerty o wypadnięciu na pulpit</value>
+  </data>
+  <data name="SettingsPage_SendDropOutAlertsTo_2" xml:space="preserve">
+    <value>Wysyłaj alerty o wypadnięciu na mój kanał Discord</value>
+  </data>
+  <data name="SettingsPage_SendDropOutAlertsTo_3" xml:space="preserve">
+    <value>Wysyłaj alerty o wypadnięciu na kanał Discord klanu</value>
+  </data>
+  <data name="SettingsPage_SendDropOutAlertsTo_4" xml:space="preserve">
+    <value>Wysyłaj alerty o wypadnięciu na mój telefon</value>
+  </data>
+  <data name="SettingsPage_SendMemoryWarningsToMy" xml:space="preserve">
+    <value>Wysyłaj ostrzeżenia o pamięci na mój kanał Discord</value>
+  </data>
+  <data name="SettingsPage_SendMemoryWarningsToMy_2" xml:space="preserve">
+    <value>Wysyłaj ostrzeżenia o pamięci na mój telefon</value>
+  </data>
+  <data name="SettingsPage_SendMemoryWarningsToThe" xml:space="preserve">
+    <value>Wysyłaj ostrzeżenia o pamięci na pulpit</value>
+  </data>
+  <data name="SettingsPage_SendMemoryWarningsToThe_2" xml:space="preserve">
+    <value>Wysyłaj ostrzeżenia o pamięci na kanał Discord klanu</value>
+  </data>
+  <data name="SettingsPage_SendRecycleNoticesToMy" xml:space="preserve">
+    <value>Wysyłaj powiadomienia o ponownym połączeniu na mój kanał Discord</value>
+  </data>
+  <data name="SettingsPage_SendRecycleNoticesToMy_2" xml:space="preserve">
+    <value>Wysyłaj powiadomienia o ponownym połączeniu na mój telefon</value>
+  </data>
+  <data name="SettingsPage_SendRecycleNoticesToThe" xml:space="preserve">
+    <value>Wysyłaj powiadomienia o ponownym połączeniu na pulpit</value>
+  </data>
+  <data name="SettingsPage_SendRecycleNoticesToThe_2" xml:space="preserve">
+    <value>Wysyłaj powiadomienia o ponownym połączeniu na kanał Discord klanu</value>
+  </data>
+  <data name="SettingsPage_SendTest" xml:space="preserve">
+    <value>Wyślij test</value>
+  </data>
+  <data name="SettingsPage_SendUptimeMarksToMy" xml:space="preserve">
+    <value>Wysyłaj znaczniki czasu działania na mój kanał Discord</value>
+  </data>
+  <data name="SettingsPage_SendUptimeMarksToMy_2" xml:space="preserve">
+    <value>Wysyłaj znaczniki czasu działania na mój telefon</value>
+  </data>
+  <data name="SettingsPage_SendUptimeMarksToThe" xml:space="preserve">
+    <value>Wysyłaj znaczniki czasu działania na pulpit</value>
+  </data>
+  <data name="SettingsPage_SendUptimeMarksToThe_2" xml:space="preserve">
+    <value>Wysyłaj znaczniki czasu działania na kanał Discord klanu</value>
+  </data>
+  <data name="SettingsPage_Server" xml:space="preserve">
+    <value>Serwer</value>
+  </data>
+  <data name="SettingsPage_Settings" xml:space="preserve">
+    <value>Ustawienia</value>
+  </data>
+  <data name="SettingsPage_Show" xml:space="preserve">
+    <value>Pokaż</value>
+  </data>
+  <data name="SettingsPage_ShowOrHideTheNtfy" xml:space="preserve">
+    <value>Pokaż lub ukryj temat ntfy</value>
+  </data>
+  <data name="SettingsPage_ShowOrHideTheSaved" xml:space="preserve">
+    <value>Pokaż lub ukryj zapisany klucz użytkownika Pushover</value>
+  </data>
+  <data name="SettingsPage_ShowOrHideTheSaved_2" xml:space="preserve">
+    <value>Pokaż lub ukryj zapisany token aplikacji Pushover</value>
+  </data>
+  <data name="SettingsPage_ShowWhatYouRePlaying" xml:space="preserve">
+    <value>Pokazuj, w co grasz, na Discordzie.</value>
+  </data>
+  <data name="SettingsPage_StartRororoWhenWindowsStarts" xml:space="preserve">
+    <value>Uruchamiaj RoRoRo, gdy uruchamia się Windows.</value>
+  </data>
+  <data name="SettingsPage_Startup" xml:space="preserve">
+    <value>Uruchamianie</value>
+  </data>
+  <data name="SettingsPage_StopClientsImmediatelyWithoutWaiting" xml:space="preserve">
+    <value>Zatrzymuj klientów natychmiast, bez czekania.</value>
+  </data>
+  <data name="SettingsPage_StreamerMode" xml:space="preserve">
+    <value>Tryb streamera.</value>
+  </data>
+  <data name="SettingsPage_TestMyPhone" xml:space="preserve">
+    <value>Przetestuj mój telefon</value>
+  </data>
+  <data name="SettingsPage_TheApplicationFormOnPushover" xml:space="preserve">
+    <value>Formularz aplikacji na pushover.net ma miejsce na ikonę — to zapisuje do niego znak RoRoRo 128 na 128.</value>
+  </data>
+  <data name="SettingsPage_Theme" xml:space="preserve">
+    <value>Motyw</value>
+  </data>
+  <data name="SettingsPage_ThemesPeopleWriteThemselvesSometimes" xml:space="preserve">
+    <value>Motywy, które ludzie piszą sami, czasami ustawiają obrysy przycisków zbyt słabe, by je zobaczyć, więc RoRoRo je rozjaśnia. Przejrzyj obrysy przycisków pokazuje oba obok siebie i pozwala wybrać. Możesz zmieniać zdanie tak często, jak chcesz.</value>
+  </data>
+  <data name="SettingsPage_ThemeWarning" xml:space="preserve">
+    <value>Ostrzeżenie o motywie</value>
+  </data>
+  <data name="SettingsPage_ThisAppliesToYourWindows" xml:space="preserve">
+    <value>Dotyczy to tylko Twojego konta Windows i nie uruchamia Roblox: to jest ustawienie poniżej. Odznaczenie tego cofa to całkowicie.</value>
+  </data>
+  <data name="SettingsPage_TickEveryPlaceEachAlert" xml:space="preserve">
+    <value>Zaznacz każde miejsce, do którego ma trafiać dany alert. Brak zaznaczeń oznacza, że alert jest wyłączony. Gdy cokolwiek działa, znacznik czasu działania co dwie godziny potwierdza, że wszystko w porządku — a znacznik, który nie dotrze, oznacza, że komputer lub RoRoRo przestały działać.</value>
+  </data>
+  <data name="SettingsPage_Topic" xml:space="preserve">
+    <value>Temat</value>
+  </data>
+  <data name="SettingsPage_TurnAlertsBackOnFor" xml:space="preserve">
+    <value>Włącz ponownie alerty dla każdego wyciszonego konta.</value>
+  </data>
+  <data name="SettingsPage_UnmuteAll" xml:space="preserve">
+    <value>Wyłącz wyciszenie wszystkich</value>
+  </data>
+  <data name="SettingsPage_UnmuteEveryMutedAccount" xml:space="preserve">
+    <value>Wyłącz wyciszenie każdego wyciszonego konta</value>
+  </data>
+  <data name="SettingsPage_UptimeMarksEvery2Hours" xml:space="preserve">
+    <value>Znaczniki czasu działania (co 2 godziny)</value>
+  </data>
+  <data name="SettingsPage_UserKey" xml:space="preserve">
+    <value>Klucz użytkownika</value>
+  </data>
+  <data name="SettingsPage_WarnThisFarAheadMinutes" xml:space="preserve">
+    <value>Ostrzegaj z tym wyprzedzeniem (minuty)</value>
+  </data>
+  <data name="SettingsPage_WarnThisManyMinutesAhead" xml:space="preserve">
+    <value>Ostrzegaj z tyloma minutami wyprzedzenia przed wyczerpaniem</value>
+  </data>
+  <data name="SettingsPage_WarnWhenOneAccountPasses" xml:space="preserve">
+    <value>Ostrzegaj, gdy jedno konto przekroczy (MB)</value>
+  </data>
+  <data name="SettingsPage_WarnWhenOneAccountPasses_2" xml:space="preserve">
+    <value>Ostrzegaj, gdy jedno konto przekroczy tyle megabajtów</value>
+  </data>
+  <data name="SettingsPage_WatchMemoryWhileAccountsAre" xml:space="preserve">
+    <value>Obserwuj pamięć, gdy konta są uruchomione</value>
+  </data>
+  <data name="SettingsPage_WatchMemoryWhileAccountsAre_2" xml:space="preserve">
+    <value>Obserwuj pamięć, gdy konta są uruchomione.</value>
+  </data>
+  <data name="SettingsPage_WhatRororoPicksWhenA" xml:space="preserve">
+    <value>Co RoRoRo wybiera, gdy pole pozostaje puste</value>
+  </data>
+  <data name="SettingsPage_WhatRororoShows" xml:space="preserve">
+    <value>Co pokazuje RoRoRo</value>
+  </data>
+  <data name="SettingsPage_WhichPushServiceSendsPhone" xml:space="preserve">
+    <value>Która usługa push wysyła alerty na telefon</value>
+  </data>
+  <data name="SettingsPage_WorthKnowingWhileRobloxIs" xml:space="preserve">
+    <value>Warto wiedzieć: gdy Roblox jest uruchomiony, Twoi znajomi widzą na Twoim profilu Roblox zamiast RoRoRo — Discord przydziela to miejsce grom, które rozpoznaje. Ty zawsze zobaczysz własną kartę. RoRoRo zostanie rozpoznany, gdy wystarczająco wiele osób go uruchomi.</value>
+  </data>
+  <data name="SettingsPage_YouGetWarnedOnceFree" xml:space="preserve">
+    <value>Otrzymasz ostrzeżenie, gdy wolna pamięć spadnie poniżej tej wartości. Od 256 do 65536. Pozostaw puste, a RoRoRo wyliczy ją na podstawie zainstalowanej pamięci RAM.</value>
+  </data>
+  <data name="SettingsPage_YourDiscordStatusShowsThe" xml:space="preserve">
+    <value>Twój status Discord pokazuje grę, ile masz w niej kont i jak długo grasz. Nic do skonfigurowania — używa aplikacji Discord już obecnej na tym komputerze.</value>
+  </data>
+  <data name="ShellWindow_About" xml:space="preserve">
+    <value>O programie</value>
+  </data>
+  <data name="ShellWindow_Destinations" xml:space="preserve">
+    <value>Miejsca docelowe</value>
+  </data>
+  <data name="ShellWindow_Diagnostics" xml:space="preserve">
+    <value>Diagnostyka</value>
+  </data>
+  <data name="ShellWindow_Games" xml:space="preserve">
+    <value>Gry</value>
+  </data>
+  <data name="ShellWindow_History" xml:space="preserve">
+    <value>Historia</value>
+  </data>
+  <data name="ShellWindow_Plugins" xml:space="preserve">
+    <value>Wtyczki</value>
+  </data>
+  <data name="ShellWindow_Settings" xml:space="preserve">
+    <value>Ustawienia</value>
+  </data>
+  <data name="SquadLaunchWindow_CarefulModeLandAccountsOne" xml:space="preserve">
+    <value>Tryb ostrożny — wprowadzaj konta pojedynczo</value>
+  </data>
+  <data name="SquadLaunchWindow_Close" xml:space="preserve">
+    <value>Zamknij</value>
+  </data>
+  <data name="SquadLaunchWindow_LaunchAllHere" xml:space="preserve">
+    <value>Uruchom wszystkie tutaj</value>
+  </data>
+  <data name="SquadLaunchWindow_LaunchByUrl" xml:space="preserve">
+    <value>Uruchom przez URL</value>
+  </data>
+  <data name="SquadLaunchWindow_PrivateServerLink_2" xml:space="preserve">
+    <value>Link do serwera prywatnego</value>
+  </data>
+  <data name="SquadLaunchWindow_SendEveryActiveAccountInto" xml:space="preserve">
+    <value>Wyślij każde aktywne konto na ten sam serwer Roblox. Serwer prywatny: wszyscy dołączają bezpośrednio przez link. Gra publiczna: pierwsze konto wchodzi, a reszta dołącza do serwera, na którym wylądowało.</value>
+  </data>
+  <data name="SquadLaunchWindow_SquadLaunch" xml:space="preserve">
+    <value>Uruchomienie zespołowe</value>
+  </data>
+  <data name="SquadLaunchWindow_WaitsForEachAccountTo" xml:space="preserve">
+    <value>Czeka, aż każde konto w pełni wejdzie do gry, zanim uruchomi następne. Wolniej, ale nigdy dwa konta nie dołączają w tym samym czasie — co jest tym, co wyzwala monity weryfikacyjne Roblox.</value>
+  </data>
+  <data name="StopAllConfirmWindow_Cancel" xml:space="preserve">
+    <value>Anuluj</value>
+  </data>
+  <data name="StopAllConfirmWindow_StopAll" xml:space="preserve">
+    <value>Zatrzymaj wszystko</value>
+  </data>
+  <data name="StopAllConfirmWindow_StopAllRobloxInstances" xml:space="preserve">
+    <value>Zatrzymaj wszystkie instancje Roblox</value>
+  </data>
+  <data name="StopAllConfirmWindow_StopAllRobloxInstances_2" xml:space="preserve">
+    <value>Zatrzymać wszystkie instancje Roblox?</value>
+  </data>
+  <data name="StopAllConfirmWindow_UnsavedProgressInYourRunning" xml:space="preserve">
+    <value>Niezapisany postęp w uruchomionych grach zostanie utracony.</value>
+  </data>
+  <data name="ThemeBuilderWindow_1AiPrompt" xml:space="preserve">
+    <value>1.  Polecenie AI</value>
+  </data>
+  <data name="ThemeBuilderWindow_2PasteTheJsonThe" xml:space="preserve">
+    <value>2.  Wklej JSON zwrócony przez AI</value>
+  </data>
+  <data name="ThemeBuilderWindow_BuildATheme" xml:space="preserve">
+    <value>Zbuduj motyw</value>
+  </data>
+  <data name="ThemeBuilderWindow_Cancel" xml:space="preserve">
+    <value>Anuluj</value>
+  </data>
+  <data name="ThemeBuilderWindow_CopiesThePromptToYour" xml:space="preserve">
+    <value>Kopiuje polecenie do schowka. Wklej do Claude lub ChatGPT, dołącz obraz referencyjny lub opisz klimat, a JSON, który zwrócą, wklej do pola poniżej.</value>
+  </data>
+  <data name="ThemeBuilderWindow_CopyAiPrompt" xml:space="preserve">
+    <value>📋 Skopiuj polecenie AI</value>
+  </data>
+  <data name="ThemeBuilderWindow_OpenThemesFolder" xml:space="preserve">
+    <value>Otwórz folder motywów</value>
+  </data>
+  <data name="ThemeBuilderWindow_SaveAndApply" xml:space="preserve">
+    <value>Zapisz i zastosuj</value>
+  </data>
+  <data name="ThemeBuilderWindow_Step1CopyTheAi" xml:space="preserve">
+    <value>Krok 1 — skopiuj polecenie AI. Krok 2 — wklej do Claude/ChatGPT itp. z opisem klimatu lub obrazem referencyjnym. Krok 3 — wklej poniżej zwrócony JSON. Zapisujemy go, stosujemy i dodajemy do listy wyboru.</value>
+  </data>
+  <data name="ThemeBuilderWindow_ThemeJson" xml:space="preserve">
+    <value>JSON motywu</value>
+  </data>
+  <data name="WebView2NotInstalledWindow_InstallNow" xml:space="preserve">
+    <value>Zainstaluj teraz</value>
+  </data>
+  <data name="WebView2NotInstalledWindow_LearnMore" xml:space="preserve">
+    <value>Dowiedz się więcej</value>
+  </data>
+  <data name="WebView2NotInstalledWindow_MicrosoftWebview2Needed" xml:space="preserve">
+    <value>Wymagany Microsoft WebView2</value>
+  </data>
+  <data name="WebView2NotInstalledWindow_RororoUsesMicrosoftSWebview2" xml:space="preserve">
+    <value>RoRoRo używa środowiska uruchomieniowego Microsoft WebView2 do zarządzania logowaniami Roblox. Jest darmowe i stworzone przez Microsoft. Większość komputerów z Windows 11 już je ma; jeśli Twój nie, zainstaluj je i spróbuj ponownie.</value>
+  </data>
+  <data name="WelcomeWindow_ButtonAtTheBottomLeft" xml:space="preserve">
+    <value>przycisk w lewym dolnym rogu — zwija się do maleńkiego paska pokazującego tylko uruchomione konta. Świetny do umieszczenia na drugim monitorze podczas gry.</value>
+  </data>
+  <data name="WelcomeWindow_ChipsBelowAnAccountClick" xml:space="preserve">
+    <value>elementy pod kontem — kliknij jedno z pozostałych kont, aby uruchomić TO na bieżącym serwerze Roblox TAMTEGO konta.</value>
+  </data>
+  <data name="WelcomeWindow_ClickAddAccount" xml:space="preserve">
+    <value>Kliknij + Dodaj konto.</value>
+  </data>
+  <data name="WelcomeWindow_ClickLaunchAsOrLaunch" xml:space="preserve">
+    <value>Kliknij Uruchom jako. Albo Uruchom wiele dla wszystkich wybranych kont naraz.</value>
+  </data>
+  <data name="WelcomeWindow_ClickThe" xml:space="preserve">
+    <value>Kliknij</value>
+  </data>
+  <data name="WelcomeWindow_ClosingXMinimizesToTray" xml:space="preserve">
+    <value>Zamknięcie przez X minimalizuje do zasobnika systemowego; kliknij prawym przyciskiem ikonę w zasobniku, aby uzyskać Preferencje, Historię,
+                        Diagnostykę lub Zakończ.</value>
+  </data>
+  <data name="WelcomeWindow_Compact" xml:space="preserve">
+    <value>Kompaktowy</value>
+  </data>
+  <data name="WelcomeWindow_Follow" xml:space="preserve">
+    <value>Dołącz do:</value>
+  </data>
+  <data name="WelcomeWindow_GotIt" xml:space="preserve">
+    <value>Rozumiem</value>
+  </data>
+  <data name="WelcomeWindow_InBatches" xml:space="preserve">
+    <value>Partiami</value>
+  </data>
+  <data name="WelcomeWindow_InTheSystemTrayAnd" xml:space="preserve">
+    <value>w zasobniku systemowym i przeciągnij RoRoRo na zewnątrz, aby pozostał widoczny.</value>
+  </data>
+  <data name="WelcomeWindow_MultiInstanceIsOnBy" xml:space="preserve">
+    <value>Multi-Instance jest domyślnie włączone — okna Roblox otwierają się obok siebie, nie walcząc ze sobą o singleton.</value>
+  </data>
+  <data name="WelcomeWindow_OnTheLeftOfA" xml:space="preserve">
+    <value>po lewej stronie wiersza — przeciągnij, aby zmienić kolejność.</value>
+  </data>
+  <data name="WelcomeWindow_OpenGamesAndAddThe" xml:space="preserve">
+    <value>Otwórz Gry i dodaj miejsce, do którego się uruchamiasz.</value>
+  </data>
+  <data name="WelcomeWindow_QuickTipsForTheRow" xml:space="preserve">
+    <value>Szybkie wskazówki dotyczące elementów sterujących wiersza</value>
+  </data>
+  <data name="WelcomeWindow_Rororo" xml:space="preserve">
+    <value>RoRoRo</value>
+  </data>
+  <data name="WelcomeWindow_RunMultipleRobloxClientsSide" xml:space="preserve">
+    <value>Uruchamiaj wiele klientów Roblox obok siebie. Trzy kroki i gotowe.</value>
+  </data>
+  <data name="WelcomeWindow_SearchByNameOrPaste" xml:space="preserve">
+    <value>Wyszukaj według nazwy lub wklej adres roblox.com/games/&lt;id&gt;. Domyślna gra to ta, której używa Uruchom jako.</value>
+  </data>
+  <data name="WelcomeWindow_SignInToRobloxCom" xml:space="preserve">
+    <value>Zaloguj się na roblox.com w wyskakującym oknie. Przechwytujemy plik cookie, szyfrujemy go i nigdy nie widzimy Twojego hasła.</value>
+  </data>
+  <data name="WelcomeWindow_Skipped" xml:space="preserve">
+    <value>Pominięte</value>
+  </data>
+  <data name="WelcomeWindow_StarNextToARow" xml:space="preserve">
+    <value>gwiazdka obok akcji wiersza — oznacz to konto jako główne (po jednym naraz). Główne konto uruchamia się po podwójnym kliknięciu w zasobniku systemowym i jest domyślne dla trybu kompaktowego.</value>
+  </data>
+  <data name="WelcomeWindow_TheColoredSwatchNextTo" xml:space="preserve">
+    <value>Kolorowa próbka obok gwiazdki — wybierz kolor dla konta. Obwódka awatara + pasek tytułu okna Roblox przejmują go, dzięki czemu odróżnisz okna.</value>
+  </data>
+  <data name="WelcomeWindow_TheDotLabeled" xml:space="preserve">
+    <value>Kropka z etykietą</value>
+  </data>
+  <data name="WelcomeWindow_TogglesWhetherThisAccountJoins" xml:space="preserve">
+    <value>— przełącza, czy to konto dołącza do uruchomień Uruchom wiele / Uruchomienie zespołowe. Zachowuje się po ponownych uruchomieniach.</value>
+  </data>
+  <data name="WelcomeWindow_WelcomeTo" xml:space="preserve">
+    <value>Witaj w</value>
+  </data>
+  <data name="WelcomeWindow_WelcomeToRororo" xml:space="preserve">
+    <value>Witaj w RoRoRo</value>
+  </data>
+  <data name="WelcomeWindow_WindowsHidesNewTrayIcons" xml:space="preserve">
+    <value>Windows domyślnie ukrywa nowe ikony w zasobniku systemowym, więc ikona RoRoRo może nie pojawić się od razu.</value>
+  </data>
+  <data name="AboutPage_ReportAnIssue" xml:space="preserve">
+    <value>Zgłoś problem</value>
+  </data>
+  <data name="AboutPage_OpenLogFolder" xml:space="preserve">
+    <value>Otwórz folder dzienników</value>
+  </data>
+  <data name="AboutPage_ShowTheWelcomeTour" xml:space="preserve">
+    <value>Pokaż przewodnik powitalny</value>
+  </data>
+  <data name="RenameWindow_ResetToOriginal" xml:space="preserve">
+    <value>Przywróć oryginalną</value>
+  </data>
+  <data name="MainWindow_Reauthenticate" xml:space="preserve">
+    <value>Uwierzytelnij ponownie</value>
+  </data>
+  <data name="SettingsPage_Language" xml:space="preserve">
+    <value>Język</value>
+  </data>
+  <data name="SettingsPage_LanguageHint" xml:space="preserve">
+    <value>Wybierz język interfejsu RoRoRo. Nowe języki pojawiają się tutaj w miarę tłumaczenia, a zmiana zacznie obowiązywać przy następnym otwarciu RoRoRo.</value>
+  </data>
+</root>

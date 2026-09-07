@@ -9,8 +9,9 @@ namespace ROROROblox.Tests;
 /// The UI-language surface is honest by construction (localization, 2026-09-07): a language is
 /// offered ONLY when its satellite catalog actually ships. English is always in (the neutral
 /// catalog is compiled in); each translated <c>Strings.&lt;culture&gt;.resx</c> that lands makes
-/// its language appear and earns its package-manifest entry. pt-BR is the first translated UI.
-/// These lock the guard so a picker bug can't start advertising a language the app can't render.
+/// its language appear and earns its package-manifest entry. Wave 1 (2026-09-07) ships six
+/// translated catalogs — pt-BR, fr, de, ru, pl, es. These lock the guard so a picker bug can't
+/// start advertising a language the app can't render.
 /// </summary>
 public class UiCultureTests
 {
@@ -34,27 +35,35 @@ public class UiCultureTests
     }
 
     [Fact]
-    public void ShippedLanguages_IncludePtBr_TheFirstTranslatedUi()
+    public void ShippedLanguages_AreTheFullWaveOneSet()
     {
-        // Ratchet — moves in the same commit a catalog lands. If the pt-BR satellite silently
-        // stops building (a publish setting strips it, the resx breaks), this fails loudly.
+        // Ratchet — moves in the same commit catalogs land. Wave 1 (2026-09-07): all six. If any
+        // satellite silently stops building (a publish setting strips it, a resx breaks), its
+        // language drops out of Available() and this fails loudly.
         var shipped = UiCulture.Available().Select(c => c.CultureName).ToHashSet();
-        Assert.Contains("pt-BR", shipped);
+        foreach (var lang in new[] { "pt-BR", "fr", "de", "ru", "pl", "es" })
+            Assert.Contains(lang, shipped);
     }
 
-    [Fact]
-    public void PtBrCatalog_ResolvesTranslatedText_NotAnEnglishFallback()
+    [Theory]
+    [InlineData("pt-BR")]
+    [InlineData("fr")]
+    [InlineData("de")]
+    [InlineData("ru")]
+    [InlineData("pl")]
+    [InlineData("es")]
+    public void EachShippedCatalog_ResolvesTranslatedText_NotAnEnglishFallback(string culture)
     {
-        // The strongest end-to-end proof: the pt-BR satellite loads and returns genuinely
-        // translated content. If it never built, GetString would fall back to English and the
-        // NotEqual below would fail — exactly the regression we want caught.
+        // The strongest end-to-end proof, per language: the satellite loads and returns genuinely
+        // translated content. If it never built, GetString falls back to English and NotEqual
+        // fails — exactly the regression we want caught. "Keyboard shortcuts" differs in all six.
         var rm = new ResourceManager("ROROROblox.App.Properties.Strings", typeof(UiCulture).Assembly);
         var en = rm.GetString("AboutPage_KeyboardShortcuts", CultureInfo.InvariantCulture);
-        var pt = rm.GetString("AboutPage_KeyboardShortcuts", CultureInfo.GetCultureInfo("pt-BR"));
+        var loc = rm.GetString("AboutPage_KeyboardShortcuts", CultureInfo.GetCultureInfo(culture));
 
         Assert.Equal("Keyboard shortcuts", en);
-        Assert.False(string.IsNullOrWhiteSpace(pt));
-        Assert.NotEqual(en, pt);
+        Assert.False(string.IsNullOrWhiteSpace(loc));
+        Assert.NotEqual(en, loc);
     }
 
     [Fact]
