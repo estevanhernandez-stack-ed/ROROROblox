@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO;
+using ROROROblox.App.Localization;
 using ROROROblox.App.Theming;
 using ROROROblox.Core.Theming;
 
@@ -71,15 +72,14 @@ internal static class ThemeStatusSummary
     /// </summary>
     internal static Line ForThemeChange(string? themeName, ThemeChange change)
     {
-        var name = string.IsNullOrWhiteSpace(themeName) ? "That theme" : themeName!.Trim();
+        var name = string.IsNullOrWhiteSpace(themeName) ? Loc.Get("Shell_ThemeStatus_ThatTheme") : themeName!.Trim();
 
         if (!change.Found)
         {
             // Reachable by deleting a theme file while Settings is open: the picker still holds the
             // row, the store no longer holds the theme. Nothing was applied, so this must not say
             // anything is on.
-            return Warn($"{name} isn't in your themes folder any more, so nothing changed. Close "
-                        + "and reopen Settings to see what's there now.");
+            return Warn(Loc.Format("Shell_ThemeStatus_NotInFolder", name));
         }
 
         if (change.Persisted)
@@ -94,8 +94,7 @@ internal static class ThemeStatusSummary
             ? "."
             : ": " + Terminated(change.PersistError!.Trim());
 
-        return Warn($"{name} is on now, but RoRoRo couldn't remember it{because} You'll be back on "
-                    + "your old theme the next time you start.");
+        return Warn(Loc.Format("Shell_ThemeStatus_OnButNotSaved", name, because));
     }
 
     /// <summary>
@@ -178,11 +177,8 @@ internal static class ThemeStatusSummary
     /// </summary>
     private static string UnreadableSentence(List<string> files) =>
         files.Count == 1
-            ? $"RoRoRo couldn't read {files[0]}, so it isn't in the list. Check it for a typo or a "
-              + "missing line, then close and reopen Settings."
-            : $"RoRoRo couldn't read {Count(files.Count)} files in your themes folder, so they "
-              + $"aren't in the list: {Names(files)}. Check each one for a typo or a missing line, "
-              + "then close and reopen Settings.";
+            ? Loc.Format("Shell_ThemeStatus_UnreadableOne", files[0])
+            : Loc.Format("Shell_ThemeStatus_UnreadableMany", Count(files.Count), Names(files));
 
     /// <summary>
     /// The other reason a file does not appear, and it is not a broken file — so it must not be
@@ -191,15 +187,13 @@ internal static class ThemeStatusSummary
     /// </summary>
     private static string ShadowedSentence(List<string> files) =>
         files.Count == 1
-            ? $"{files[0]} has the same name as a built-in theme, so RoRoRo kept the built-in. "
-              + "Rename the file to use yours."
-            : $"{Count(files.Count)} files have the same names as built-in themes, so RoRoRo kept "
-              + $"the built-ins: {Names(files)}. Rename them to use yours.";
+            ? Loc.Format("Shell_ThemeStatus_ShadowedOne", files[0])
+            : Loc.Format("Shell_ThemeStatus_ShadowedMany", Count(files.Count), Names(files));
 
     private static string Names(List<string> files) =>
         files.Count <= MaxNamed
             ? string.Join(", ", files)
-            : string.Join(", ", files.Take(MaxNamed)) + $", and {Count(files.Count - MaxNamed)} more";
+            : string.Join(", ", files.Take(MaxNamed)) + Loc.Format("Shell_ThemeStatus_MoreNames", Count(files.Count - MaxNamed));
 
     private static string Count(int value) => value.ToString(CultureInfo.InvariantCulture);
 

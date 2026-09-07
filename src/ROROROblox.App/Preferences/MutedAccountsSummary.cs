@@ -1,4 +1,4 @@
-using System.Globalization;
+using ROROROblox.App.Localization;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core.Discord;
 
@@ -58,11 +58,7 @@ internal static class MutedAccountsSummary
     /// what muting DOES rather than restating the label, because the reader here is somebody who
     /// muted a row weeks ago and is being reminded, not taught.
     /// </summary>
-    private static string Sentence(int count) =>
-        count == 1
-            ? "1 account is muted. Nothing it does raises an alert, whatever the settings above say."
-            : $"{count.ToString(CultureInfo.InvariantCulture)} accounts are muted. Nothing they do "
-              + "raises an alert, whatever the settings above say.";
+    private static string Sentence(int count) => Loc.Plural("Shell_Muted", count);
 
     /// <summary>
     /// Turns the live mute off on every row that carried it, and hands back exactly those rows.
