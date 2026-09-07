@@ -85,7 +85,8 @@ Alarme gehen überallhin, wo du Haken setzt
 Zwei neue Alarme, standardmäßig aus
 • Ein abgeschlossenes Recycle meldet die freigeräumte RAM-Menge.
   Statuszeichen melden alle zwei Stunden „4h up — 6 accounts in" —
-  ein ausbleibendes Zeichen heißt: PC oder App sind gestorben.
+  ein ausbleibendes Zeichen heißt: PC oder App sind gestorben —
+  der eine Ausfall, den nichts direkt melden kann.
 
 Roblox bleibt im Fenstermodus
 • Hat ein Absturz oder Alt+Eingabe Roblox im Vollbild hinterlassen,

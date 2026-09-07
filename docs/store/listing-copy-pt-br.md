@@ -86,7 +86,8 @@ Alertas vão a todo lugar que você marcar
 Dois alertas novos, desligados por padrão
 • Um Recycle concluído informa quanta memória recuperou. Sinais de
   atividade dizem "4h up — 6 accounts in" a cada duas horas — um
-  sinal que não chega significa que o PC ou o app caiu.
+  sinal que não chega significa que o PC ou o app caiu — a única
+  falha que nada consegue anunciar diretamente.
 
 Roblox fica em janela
 • Se um travamento ou Alt+Enter deixou o Roblox salvo em tela cheia,

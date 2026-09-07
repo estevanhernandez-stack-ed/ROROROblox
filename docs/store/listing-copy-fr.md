@@ -87,7 +87,8 @@ Deux nouvelles alertes, désactivées par défaut
 • La fin d'un Recycle indique la mémoire récupérée. Les signaux de
   bon fonctionnement disent « 4h up — 6 accounts in » toutes les
   deux heures — un signal qui n'arrive pas signifie que le PC ou
-  l'application s'est arrêté.
+  l'application s'est arrêté — la seule panne que rien ne peut
+  annoncer directement.
 
 Roblox reste en fenêtré
 • Si un crash ou Alt+Entrée a laissé Roblox en plein écran, RoRoRo

@@ -86,7 +86,8 @@ Alerty idą wszędzie, gdzie zaznaczysz
 Dwa nowe alerty, domyślnie wyłączone
 • Zakończony Recycle podaje, ile pamięci odzyskał. Sygnały
   działania mówią „4h up — 6 accounts in" co dwie godziny — sygnał,
-  który nie dociera, znaczy, że PC albo aplikacja padły.
+  który nie dociera, znaczy, że PC albo aplikacja padły — jedyna
+  awaria, której nic nie zgłosi wprost.
 
 Roblox zostaje w oknie
 • Jeśli awaria albo Alt+Enter zostawiły Roblox w trybie
