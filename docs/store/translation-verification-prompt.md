@@ -8,6 +8,11 @@
 > contract lives in `localization-plan.md` (Phase A approval gate) and
 > `scripts/export-listing-translations.py`.
 
+> **The tool has its own repo:** `github.com/estevanhernandez-stack-ed/translation-verification`
+> (source: `src/core/reviewer.js`, `rubric.js`, `ingest.js`, `export.js`, `repo-patcher.js`,
+> `approval-gate.js`, `src/mcp/server.js`, `src/oauth/*`). The dogfood findings below were
+> relayed there as **issue #1** (2026-09-07), mapped to modules. File future feedback there.
+
 ## Dogfood feedback — first connection attempt, 2026-09-05 (relay to the builder agent)
 
 The tool deployed (dashboard + connect portal + 2nd-gen Cloud Function + SSE endpoint) and a
