@@ -1,3 +1,4 @@
+using ROROROblox.App.Localization;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 

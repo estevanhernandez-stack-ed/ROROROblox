@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using ROROROblox.App.Localization;
 using ROROROblox.Core;
 using ROROROblox.Core.StreamerMode;
 
