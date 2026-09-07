@@ -1,10 +1,12 @@
-using ROROROblox.Core;
+using ROROROblox.App.History;
 
 namespace ROROROblox.Tests;
 
 /// <summary>
 /// F-072. Each test here is a fragment that used to be announced on its own, with nothing tying it
-/// to the four beside it.
+/// to the four beside it. The composer moved Core → App in localization Phase D (2026-09-07) — a
+/// spoken name is UI text in the viewer's language — so these assert its English (neutral resx)
+/// composition; the default test-process culture is English and culture-mutating tests are isolated.
 /// </summary>
 public class SessionHistoryRowNameTests
 {

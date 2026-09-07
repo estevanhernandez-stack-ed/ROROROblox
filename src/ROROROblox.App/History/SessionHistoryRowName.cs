@@ -1,4 +1,6 @@
-namespace ROROROblox.Core;
+using ROROROblox.App.Localization;
+
+namespace ROROROblox.App.History;
 
 /// <summary>
 /// The one sentence a screen reader should hear for a session, instead of five loose fragments
@@ -21,6 +23,14 @@ namespace ROROROblox.Core;
 /// It also does not invent a hundred tab stops. Rows are named, not focusable — a list where Tab
 /// visits every row is a worse keyboard experience than one where it visits none, and the right
 /// answer there is arrow-key navigation inside a real list control, which is the rebuild.
+/// </para>
+/// <para>
+/// WHY IT LIVES IN THE APP (Core string boundary, localization Phase D, 2026-09-07). This is a
+/// spoken sentence a screen reader reads in the viewer's language, and it has exactly one caller —
+/// <see cref="SessionHistoryPage"/>'s code-behind. It was raw English prose in Core; it composes
+/// its fragments from resx now (<see cref="Loc"/>), so a live culture toggle re-narrates the row.
+/// The duration and outcome hint arrive already formatted from the caller and pass through verbatim,
+/// so the name never drifts from the pixels the row shows.
 /// </para>
 /// </summary>
 public static class SessionHistoryRowName
@@ -49,20 +59,22 @@ public static class SessionHistoryRowName
     {
         var parts = new List<string>
         {
-            string.IsNullOrWhiteSpace(displayName) ? "Unknown account" : displayName.Trim(),
-            string.IsNullOrWhiteSpace(gameName) ? "(unknown game)" : gameName.Trim(),
+            string.IsNullOrWhiteSpace(displayName) ? Loc.Get("SessionHistoryRow_UnknownAccount") : displayName.Trim(),
+            string.IsNullOrWhiteSpace(gameName) ? Loc.Get("SessionHistoryRow_UnknownGame") : gameName.Trim(),
         };
 
-        if (isPrivateServer) parts.Add("private server");
+        if (isPrivateServer) parts.Add(Loc.Get("SessionHistoryRow_PrivateServer"));
 
-        if (!string.IsNullOrWhiteSpace(startedAtLocal)) parts.Add($"started {startedAtLocal.Trim()}");
+        if (!string.IsNullOrWhiteSpace(startedAtLocal)) parts.Add(Loc.Format("SessionHistoryRow_Started", startedAtLocal.Trim()));
         if (!string.IsNullOrWhiteSpace(duration)) parts.Add(duration.Trim());
         if (!string.IsNullOrWhiteSpace(outcomeHint)) parts.Add(outcomeHint.Trim());
 
         // Only when true. "Not saved" would be noise on every unbookmarked row, and the row itself
         // says nothing in that case either — it shows a "+ Bookmark" button, which announces itself.
-        if (isSaved) parts.Add("saved");
+        if (isSaved) parts.Add(Loc.Get("SessionHistoryRow_Saved"));
 
+        // Comma joins and the terminal stop are punctuation, not prose — they carry no meaning to
+        // translate, so they stay in code the way CoreMessageCatalog keeps its "{0}"-slot punctuation.
         return string.Join(", ", parts) + ".";
     }
 }
