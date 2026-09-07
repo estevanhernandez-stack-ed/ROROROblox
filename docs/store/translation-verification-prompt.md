@@ -77,6 +77,17 @@ pointed the wrong direction. Findings for the builder, severity-ordered:
 11. **The sourceCommit stamp works after re-ingest** — round 3+ responses carried the fresh
     commit and cleanly reset state (contrast finding #8, observed in round 1's
     accumulate-forever behavior; whatever changed between rounds, keep it).
+12. **Review results don't survive a cold start.** At approval time, `batch_approve_passing`
+    answered "No review results available" — the ingest and the approval gate persisted
+    (Firestore), but the review RESULTS lived in the function instance's memory and died
+    with a scale-to-zero recycle. All six languages had to be re-reviewed to repopulate
+    before approving (during which the round-6 lottery flagged, then re-roll-cleared, a
+    fr field approved five times prior). Persist results beside the gate; a verdict that
+    can vanish between review and approval breaks the tool's own workflow.
+
+**Cycle closed 2026-09-07:** `batch_approve_passing` recorded 36/36 (approver
+`este-via-claude-desktop-agent`, Este's instruction) at sourceCommit `148676f` —
+`allReady: true`, all six languages READY FOR PARTNER CENTER.
 
 ---
 

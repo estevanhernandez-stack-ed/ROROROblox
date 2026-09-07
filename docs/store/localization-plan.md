@@ -81,6 +81,13 @@ language at first (the UI is English regardless — honest either way).
   embedded), and `scripts/apply-translation-verdicts.py` applies a verdicts JSON back to
   the `.md` files — quote→suggestedFix inside the right language/field block, missing or
   ambiguous quotes refused, caps re-checked, export regenerated.
+- **GATE CLOSED 2026-09-07.** The verifier ran the full loop (4 review rounds + polish,
+  ~30 real findings applied, dogfood items 1-12 filed in
+  `translation-verification-prompt.md`), and `batch_approve_passing` recorded **36/36
+  approved** at sourceCommit `148676f` (approver `este-via-claude-desktop-agent`, on Este's
+  instruction) — all six languages READY FOR PARTNER CENTER. What remains is Este's Partner
+  Center pass: add each language, paste its `listing-copy-<code>.md` blocks, submit
+  (listing-only submission, no new package).
 - **Standing per-release cost:** each `whats-new-X.Y.Z.0.md` must be translated for every
   listing language at Phase 2 time, and Phase 7 pastes each language's block. The Phase 2
   listing audit covers the translated listings the same as the English one.
