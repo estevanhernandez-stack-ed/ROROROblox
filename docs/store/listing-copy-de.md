@@ -29,7 +29,7 @@ Was du bekommst:
 • Ein Werkzeugfenster. Spiele, Einstellungen, Verlauf, Diagnose, Plugins und Über sind Seiten eines Fensters neben deinen Konten — mit Tastenkürzeln überall; F1 zeigt die Liste.
 • Themes. Vier eingebaute, darunter eines, das Bedeutung nie allein über Farbe transportiert, plus ein Editor für eigene Themes aus zehn Farben, teilbar als Datei.
 • Optionale Alarme — Desktop, Discord oder Handy. Leite jeden Alarm an jede Kombination: Desktop-Benachrichtigungen, einen selbst erstellten Discord-Webhook oder dein Handy über Pushover oder ntfy. Verbindungsabbrüche, RAM-Warnungen, Recycle-Abschlüsse und ein „Alles gut“-Zeichen alle zwei Stunden. Eine frische Installation macht keinerlei Alarm-Aufrufe — nichts sendet, bevor du etwas einrichtest.
-• Infobereich mit statusfarbenem Symbol; Doppelklick startet dein Hauptkonto.
+• Infobereich mit statusfarbenem Symbol — der Multi-Instanz-Status auf einen Blick; Doppelklick startet dein Hauptkonto.
 • Plugin-System. Optionale Plugins laufen als getrennte Prozesse und haben keine Berechtigungen, bis du sie einzeln erteilst.
 • Auto-Update über Velopack. Eine entfernte Konfiguration verfolgt die bekannte Roblox-Version und den Mutex-Namen, damit eine Umbenennung auf Roblox-Seite dich nicht lange ausbremst.
 • Barrierefreiheit, gemessen. Jedes Steuerelement meldet seinen Namen an Hilfstechnologien, und der Kontrast wird in jedem Theme an gerenderten Pixeln geprüft.

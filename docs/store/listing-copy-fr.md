@@ -29,7 +29,7 @@ Ce que vous obtenez :
 • Une seule fenêtre d'outils. Jeux, réglages, historique, diagnostics, plugins et À propos sont les pages d'une même fenêtre, avec raccourcis clavier partout — F1 affiche la liste.
 • Thèmes. Quatre intégrés, dont un qui ne repose jamais sur la couleur seule, plus un éditeur pour créer le vôtre à partir de dix couleurs et le partager en fichier.
 • Alertes en option — bureau, Discord ou téléphone. Routez chaque alerte vers n'importe quelle combinaison : notifications bureau, un webhook Discord que vous créez, ou votre téléphone via Pushover ou ntfy. Déconnexions, alertes mémoire, fin de Recycle, et un signal « tout va bien » toutes les deux heures. Une installation neuve n'émet aucun appel d'alerte — rien ne part tant que vous n'avez rien configuré.
-• Icône de zone de notification colorée selon l'état ; double-clic pour lancer le compte principal.
+• Icône de zone de notification colorée selon l'état — l'état multi-instance en un coup d'œil ; double-clic pour lancer le compte principal.
 • Système de plugins. Des plugins optionnels tournent dans des processus séparés et n'ont aucune permission tant que vous ne les accordez pas un par un.
 • Mise à jour automatique via Velopack. Une configuration distante suit la version et le nom de mutex Roblox connus, pour qu'un changement côté Roblox ne vous bloque pas longtemps.
 • Accessibilité mesurée. Chaque contrôle annonce son nom aux technologies d'assistance, et le contraste est vérifié sur les pixels rendus dans chaque thème.

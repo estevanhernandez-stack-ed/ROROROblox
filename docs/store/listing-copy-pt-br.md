@@ -29,7 +29,7 @@ O que você leva:
 • Uma só janela de ferramentas. Jogos, configurações, histórico, diagnóstico, plugins e Sobre são páginas de uma única janela ao lado das contas — com atalhos de teclado em tudo; F1 mostra a lista.
 • Temas. Quatro embutidos, incluindo um que nunca depende só de cor, mais um editor para criar o seu a partir de dez cores e compartilhar como arquivo.
 • Alertas opcionais — desktop, Discord ou celular. Direcione cada alerta para qualquer combinação: notificações no desktop, um webhook do Discord que você cria, ou seu celular via Pushover ou ntfy. Quedas de conta, avisos de memória, conclusões de Recycle e um sinal de "tudo certo" a cada duas horas. Uma instalação nova não faz nenhuma chamada de alerta — nada sai antes de você configurar.
-• Bandeja do sistema com ícone colorido por estado; clique duplo inicia sua conta principal.
+• Bandeja do sistema com ícone colorido por estado — o status de multi-instância à primeira vista; clique duplo inicia sua conta principal.
 • Sistema de plugins. Plugins opcionais rodam como processos separados e não têm permissão nenhuma até você conceder uma a uma.
 • Atualização automática via Velopack. Uma configuração remota acompanha a versão do Roblox e o nome do mutex conhecidos, para uma mudança do lado do Roblox não te travar por muito tempo.
 • Acessibilidade medida. Cada controle anuncia seu nome para tecnologias assistivas, e o contraste é verificado nos pixels renderizados em todos os temas.

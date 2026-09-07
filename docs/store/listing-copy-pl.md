@@ -29,7 +29,7 @@ Co dostajesz:
 • Jedno okno narzędzi. Gry, ustawienia, historia, diagnostyka, pluginy i O programie to strony jednego okna obok listy kont — ze skrótami klawiszowymi wszędzie; F1 pokazuje listę.
 • Motywy. Cztery wbudowane, w tym jeden, który nigdy nie przekazuje znaczenia samym kolorem, plus edytor własnych motywów z dziesięciu kolorów, z udostępnianiem w pliku.
 • Alerty opcjonalne — pulpit, Discord albo telefon. Skieruj każdy alert w dowolną kombinację: powiadomienia na pulpicie, utworzony przez ciebie webhook Discorda albo telefon przez Pushover lub ntfy. Wylogowania altów, ostrzeżenia o pamięci, zakończenia Recycle i sygnał „wszystko gra" co dwie godziny. Świeża instalacja nie wykonuje żadnych wywołań alertów — nic nie wychodzi, dopóki sam czegoś nie skonfigurujesz.
-• Zasobnik systemowy z ikoną w kolorze stanu; dwuklik uruchamia główne konto.
+• Zasobnik systemowy. Ikona w kolorze stanu rzutem oka pokazuje stan multi-instancji; dwuklik uruchamia główne konto.
 • System pluginów. Opcjonalne pluginy działają jako osobne procesy i nie mają żadnych uprawnień, dopóki nie nadasz każdemu z osobna.
 • Automatyczne aktualizacje przez Velopack. Zdalna konfiguracja śledzi znaną wersję Roblox i nazwę mutexa, żeby zmiana po stronie Roblox nie blokowała cię na długo.
 • Dostępność mierzona. Każda kontrolka przedstawia się technologiom asystującym, a kontrast jest sprawdzany na wyrenderowanych pikselach w każdym motywie.
