@@ -86,7 +86,8 @@ Las alertas van a donde tú marques
 Dos alertas nuevas, apagadas por defecto
 • Un Recycle terminado te dice cuánta memoria recuperó. Las señales
   de actividad dicen "4h up — 6 accounts in" cada dos horas: una
-  señal que no llega significa que el PC o la app murieron.
+  señal que no llega significa que el PC o la app murieron — el
+  único fallo que nada puede anunciar directamente.
 
 Roblox se queda en ventana
 • Si un fallo o Alt+Intro dejó Roblox guardado en pantalla completa,
