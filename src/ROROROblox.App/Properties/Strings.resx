@@ -2122,4 +2122,28 @@
     <value>Couldn't open this bundle — wrong passphrase or the file is damaged.</value>
     <comment>Core message; the one deliberately-ambiguous account-import failure line, rendered for any AccountTransportException (localized Phase D 2026-09-07)</comment>
   </data>
+  <data name="CoreMsg_Theme_EmptyInput" xml:space="preserve">
+    <value>Paste a theme JSON first.</value>
+    <comment>Core message; theme-builder validation, resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Theme_UnreadableJson" xml:space="preserve">
+    <value>Couldn't read the JSON: {0}. Make sure you pasted the whole object including the curly braces.</value>
+    <comment>Core message; theme-builder validation, resolved by CoreMessageCatalog. {0} is the JSON parser's reason (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Theme_NullPayload" xml:space="preserve">
+    <value>Empty theme JSON.</value>
+    <comment>Core message; theme-builder validation, resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Theme_MissingName" xml:space="preserve">
+    <value>Theme JSON is missing the "name" field.</value>
+    <comment>Core message; theme-builder validation, resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Theme_EmptyFilename" xml:space="preserve">
+    <value>Theme name produced an empty filename. Pick a different name.</value>
+    <comment>Core message; theme-builder validation, resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Theme_MissingField" xml:space="preserve">
+    <value>Theme JSON is missing a required field: {0}</value>
+    <comment>Core message; theme-builder validation, resolved by CoreMessageCatalog. {0} is the offending field name (localized Phase D 2026-09-07)</comment>
+  </data>
 </root>

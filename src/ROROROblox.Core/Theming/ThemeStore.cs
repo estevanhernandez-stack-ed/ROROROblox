@@ -114,7 +114,7 @@ public sealed class ThemeStore : IThemeStore
     {
         if (string.IsNullOrWhiteSpace(rawJson))
         {
-            throw new InvalidThemeException("Paste a theme JSON first.");
+            throw new InvalidThemeException(InvalidThemeKind.EmptyInput);
         }
 
         RawTheme? raw;
@@ -124,19 +124,19 @@ public sealed class ThemeStore : IThemeStore
         }
         catch (JsonException ex)
         {
-            throw new InvalidThemeException(
-                $"Couldn't read the JSON: {ex.Message}. Make sure you pasted the whole object including the curly braces.",
-                ex);
+            // Detail is the parser's own reason — diagnostic data the App drops into the localized
+            // template's {0} slot, exactly as CoreMessageCatalog handles an exception's text elsewhere.
+            throw new InvalidThemeException(InvalidThemeKind.UnreadableJson, ex, ex.Message);
         }
 
         if (raw is null)
         {
-            throw new InvalidThemeException("Empty theme JSON.");
+            throw new InvalidThemeException(InvalidThemeKind.NullPayload);
         }
 
         if (string.IsNullOrWhiteSpace(raw.Name))
         {
-            throw new InvalidThemeException("Theme JSON is missing the \"name\" field.");
+            throw new InvalidThemeException(InvalidThemeKind.MissingName);
         }
 
         // Filename derivation. lowercase + only alphanumeric/dash; spaces and other punctuation
@@ -145,11 +145,12 @@ public sealed class ThemeStore : IThemeStore
         var id = ToKebabId(raw.Name);
         if (string.IsNullOrEmpty(id))
         {
-            throw new InvalidThemeException("Theme name produced an empty filename. Pick a different name.");
+            throw new InvalidThemeException(InvalidThemeKind.EmptyFilename);
         }
 
-        // Validate by constructing the Theme — this will throw on missing required fields with
-        // a helpful message, which we wrap into our typed exception.
+        // Validate by constructing the Theme — this throws on the first missing required field,
+        // naming it in the exception text. That name is the Detail (data) the App drops into the
+        // localized "missing a required field: {0}" template.
         Theme theme;
         try
         {
@@ -157,9 +158,7 @@ public sealed class ThemeStore : IThemeStore
         }
         catch (InvalidOperationException ex)
         {
-            throw new InvalidThemeException(
-                $"Theme JSON is missing a required field: {ex.Message}",
-                ex);
+            throw new InvalidThemeException(InvalidThemeKind.MissingField, ex, ex.Message);
         }
 
         Directory.CreateDirectory(_userThemesFolder);
