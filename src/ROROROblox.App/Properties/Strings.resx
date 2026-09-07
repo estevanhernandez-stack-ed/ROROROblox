@@ -2392,4 +2392,24 @@
   <data name="Shell_Msg_CouldntReadSession" xml:space="preserve"><value>Couldn't read this account's saved session.</value><comment>Friends-modal banner (localized Phase D step 3)</comment></data>
   <data name="Shell_Msg_SessionExpiredReauth" xml:space="preserve"><value>{0}'s session expired — re-authenticate first.</value><comment>Friends-modal banner; {0}=name (localized Phase D step 3)</comment></data>
   <data name="Shell_Msg_CouldntReachFriends" xml:space="preserve"><value>Couldn't reach Roblox to load friends. Try again in a moment.</value><comment>Friends-modal banner; "Roblox" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_RemoveConfirm" xml:space="preserve"><value>Remove {0}?
+You'll need to log in again to add it back.</value><comment>Remove-account confirm body; {0}=name; embedded newline intentional (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_RemoveAccountTitle" xml:space="preserve"><value>Remove Account</value><comment>Remove-account confirm title (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_Removed" xml:space="preserve"><value>Removed {0}.</value><comment>Remove-account banner; {0}=name (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_ReauthCancelled" xml:space="preserve"><value>Re-authentication cancelled — {0}'s saved session is unchanged.</value><comment>Re-auth banner; {0}=name (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_ReauthIncomplete" xml:space="preserve"><value>Re-authentication didn't complete: {0}</value><comment>Re-auth banner; {0}=inner reason (already localized) (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_ReauthDifferentAccount" xml:space="preserve"><value>That login was a different account (@{0}) — {1} is unchanged.</value><comment>Re-auth guard; {0}=username {1}=name (localized Phase D step 3)</comment></data>
+  <data name="Shell_Status_Reauthenticated" xml:space="preserve"><value>Re-authenticated.</value><comment>Row status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_CouldntSaveJoinViaFriend" xml:space="preserve"><value>Couldn't save join-via-friend: {0}</value><comment>Banner; {0}=exception text (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_SourceExpired" xml:space="preserve"><value>{0} has an expired session — re-authenticate first.</value><comment>Follow banner; {0}=name (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_CouldntFollowNoUserId" xml:space="preserve"><value>Couldn't follow {0} — Roblox userId not yet known. Try Re-authenticating that account, or wait a moment after login.</value><comment>Follow banner; {0}=name; "Roblox" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_FollowingFromSource" xml:space="preserve"><value>Following {0} from {1}...</value><comment>Follow banner; {0}=target {1}=source (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_CouldntSetMain" xml:space="preserve"><value>Couldn't set main account — see log for details.</value><comment>Main-account banner (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_MainCleared" xml:space="preserve"><value>Main account cleared.</value><comment>Main-account banner (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_IsNowMain" xml:space="preserve"><value>{0} is now your main.</value><comment>Main-account banner; {0}=name (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_StartedFresh" xml:space="preserve"><value>Started fresh. Add accounts to begin.</value><comment>DPAPI-corrupt recovery banner (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_CouldntRemoveGame" xml:space="preserve"><value>Couldn't remove that game. Disk error?</value><comment>Game-management banner (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_GameNotSaved" xml:space="preserve"><value>That game isn't saved any more.</value><comment>Game-management banner (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_ItemNotSaved" xml:space="preserve"><value>That {0} isn't saved any more.</value><comment>Rename banner; {0}=kind noun (English enum text, minor) (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_CouldntSaveNameChange" xml:space="preserve"><value>Couldn't save name change. Disk error?</value><comment>Rename banner (localized Phase D step 3)</comment></data>
 </root>
