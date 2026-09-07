@@ -2118,4 +2118,8 @@
     <value>not detected</value>
     <comment>Diagnostics System-health panel; the support-bundle body keeps its own English (localized Phase D 2026-09-07)</comment>
   </data>
+  <data name="CoreMsg_Transport_ImportFailed" xml:space="preserve">
+    <value>Couldn't open this bundle — wrong passphrase or the file is damaged.</value>
+    <comment>Core message; the one deliberately-ambiguous account-import failure line, rendered for any AccountTransportException (localized Phase D 2026-09-07)</comment>
+  </data>
 </root>
