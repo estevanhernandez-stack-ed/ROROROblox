@@ -27,6 +27,10 @@
 
 ## Short description (under 200 chars — Store snippet)
 
+> Refreshed 2026-09-07 (v1.26.0.0) — "now in 6 languages" leads the snippet (the app's UI is
+> localized this release); "auto-update" dropped to fit the cap (it keeps its feature entry and
+> long-description claim). 197/200 chars.
+>
 > Refreshed 2026-09-05 (v1.25.0.0) — phone alerts joined the list; "account vault" tightened to
 > "vault" to stay under the cap. 192/200 chars.
 >
@@ -34,7 +38,7 @@
 > watchdog, presence status, themes, and the tools window.
 
 ```
-Multi-launcher for Windows. Run several Roblox clients side by side as different saved accounts. Encrypted vault, Squad Launch, memory watchdog, phone alerts, live status, themes, auto-update.
+Multi-launcher for Windows, now in 6 languages. Run several Roblox clients side by side as different saved accounts. Encrypted vault, Squad Launch, memory watchdog, phone alerts, live status, themes.
 ```
 
 ## Long description
@@ -66,6 +70,7 @@ What you get:
 • Plugin system. Optional plugins run as separate processes and hold no permissions until you grant each one by name.
 • Auto-update via Velopack. Remote config tracks the current known-good Roblox version and mutex name, so a Roblox-side rename doesn't break you for long.
 • Accessible by measurement. Every control announces its name to assistive tech, and contrast is verified against rendered pixels in every theme.
+• Speaks your language. The whole interface — every menu, setting, tooltip, and window — is translated into French, German, Russian, Portuguese (Brazil), Polish, and Spanish, following your Windows language or your pick in Settings. The picker only offers a language that's fully translated, so you never land on a half-English screen.
 
 Privacy & security:
 Your Roblox password is never seen by RoRoRo. Login happens entirely inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame — same HTML, same HTTPS connection your browser would make. RoRoRo captures only the session cookie that Roblox sets after successful login, and encrypts it before writing it to disk. No telemetry. No analytics. Nothing leaves your machine except the Roblox-side calls during launch — the same calls Roblox.com makes from your browser — and, only if you set them up yourself, alerts to your own Discord webhook or to the phone push service you chose (Pushover or ntfy).
@@ -78,6 +83,9 @@ A 626 Labs product.
 
 ## Product features (paste each as one feature; Partner Center accepts up to 20, ≤200 chars each)
 
+> One entry added 2026-09-07 (v1.26.0.0): the interface is now localized to six languages
+> (fr, de, ru, pt-BR, pl, es). 18/20 entries used.
+>
 > Three entries added 2026-09-05 (v1.25.0.0): phone alerts, uptime marks, and alert fan-out.
 >
 > Two entries added 2026-08-30 (v1.24.0.0): run-on-login and Discord join activation — both
@@ -107,6 +115,7 @@ Discord Join starts RoRoRo even when it's closed, and always asks before launchi
 Phone alerts through Pushover or ntfy — an alt drops and your phone buzzes, even with Discord closed
 Uptime marks — an all-good buzz every two hours while your accounts run, so silence means something's wrong
 Alerts fan out — desktop, Discord channels, and your phone in any mix, per alert
+Available in six languages — the whole interface in French, German, Russian, Portuguese (Brazil), Polish, or Spanish, following Windows or your pick in Settings
 ```
 
 ## Copyright (single line)
@@ -183,6 +192,7 @@ A reviewer reading our description must see **multiple** features spanning disco
 | Themes incl. builder (v1.17+) | Engagement | Personalization + a shareable artifact (theme files travel between users). |
 | One tools window + keyboard shortcuts (v1.22) | Engagement | Daily-driver ergonomics; the app stays open beside the game. |
 | Phone alerts + fan-out routing (v1.25) | Retention | The app reaches you when an alt drops or a two-hour all-good mark goes missing — long unattended sessions become safe to walk away from. |
+| Localization — six languages (v1.26) | Discovery + engagement | Reaches the non-English majority of Roblox's player base in their own language; a first-in-category localized multi-launcher. |
 
 ## Response protocol if rejected (post-rename)
 

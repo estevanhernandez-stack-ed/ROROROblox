@@ -2,13 +2,12 @@
 
 > Paste-ready dla Partner Center → Store listings → **Polski**. Drafted 2026-09-05 from
 > `listing-copy.md` (v1.25.0.0 state). Product nouns stay in English (RoRoRo, Squad Launch,
-> Friend Follow, Pushover, ntfy); the long description says plainly that the app's interface
-> is in English. Register: ty (norma dla gier).
+> Friend Follow, Pushover, ntfy); the app UI is now localized to Polish (v1.26.0.0). Register: ty (norma dla gier).
 
 ## Short description (≤200 chars)
 
 ```
-Multi-launcher dla Windows: kilka klientów Roblox obok siebie, każdy na innym koncie. Szyfrowany sejf, Squad Launch, strażnik pamięci, alerty na telefon, status na żywo, motywy, auto-update.
+Multi-launcher dla Windows, teraz w 6 językach: kilka klientów Roblox obok siebie, każdy na innym koncie. Szyfrowany sejf, Squad Launch, strażnik pamięci, alerty na telefon, status na żywo, motywy.
 ```
 
 ## Long description
@@ -17,8 +16,6 @@ Multi-launcher dla Windows: kilka klientów Roblox obok siebie, każdy na innym 
 Multi-launcher dla Windows.
 
 RoRoRo to launcher dla Windows, który uruchamia kilka klientów Roblox jednocześnie na jednym PC — każdy zalogowany na inne zapisane konto, które należy do ciebie. Dodaj konta raz przez własną stronę logowania Roblox, a potem uruchamiaj je jednym kliknięciem — do domyślnej gry, na zapisany prywatny serwer albo z dowolnego wklejonego linku do gry.
-
-Uwaga: interfejs aplikacji jest na razie po angielsku.
 
 Co dostajesz:
 • Multi-instancja jednym kliknięciem. RoRoRo trzyma mutex singleton Roblox, więc kolejne klienty się otwierają, zamiast wyciągać pierwszy na wierzch.
@@ -33,6 +30,7 @@ Co dostajesz:
 • System pluginów. Opcjonalne pluginy działają jako osobne procesy i nie mają żadnych uprawnień, dopóki nie nadasz każdemu z osobna.
 • Automatyczne aktualizacje przez Velopack. Zdalna konfiguracja śledzi znaną wersję Roblox i nazwę mutexa, żeby zmiana po stronie Roblox nie blokowała cię na długo.
 • Dostępność mierzona. Każda kontrolka przedstawia się technologiom asystującym, a kontrast jest sprawdzany na wyrenderowanych pikselach w każdym motywie.
+• Mówi w twoim języku. Cały interfejs — każde menu, ustawienie, podpowiedź i okno — jest przetłumaczony na francuski, niemiecki, rosyjski, portugalski (brazylijski), polski i hiszpański, zgodnie z językiem Windows albo twoim wyborem w Ustawieniach. Lista wyboru oferuje tylko język w pełni przetłumaczony, więc nigdy nie trafisz na wpół angielski ekran.
 
 Prywatność i bezpieczeństwo:
 RoRoRo nigdy nie widzi twojego hasła do Roblox. Logowanie odbywa się w całości na stronie samego Roblox, osadzonej w ramce Microsoft Edge WebView2 — ten sam HTML, to samo połączenie HTTPS co w przeglądarce. RoRoRo przechwytuje tylko cookie sesji, które Roblox ustawia po zalogowaniu, i szyfruje je przed zapisem na dysk. Zero telemetrii. Zero analityki. Nic nie opuszcza twojej maszyny poza wywołaniami do Roblox przy starcie — tymi samymi, które Roblox.com robi z przeglądarki — oraz, wyłącznie jeśli sam je skonfigurujesz, alertami na twój webhook Discorda albo wybraną usługę push (Pushover lub ntfy).
@@ -43,7 +41,7 @@ Ważne: znaki towarowe i powiązania.
 Produkt 626 Labs.
 ```
 
-## Product features (17 entries, ≤200 chars each)
+## Product features (18 entries, ≤200 chars each)
 
 ```
 Launcher multi-instancji dla Roblox na Windows — jednym kliknięciem
@@ -63,41 +61,30 @@ Discord Join uruchamia RoRoRo nawet zamknięte — i zawsze pyta, zanim cokolwie
 Alerty na telefon przez Pushover lub ntfy — alt wypada i telefon wibruje, nawet bez Discorda
 Sygnał „wszystko gra" co dwie godziny, póki konta działają — cisza znaczy: sprawdź PC
 Alerty wachlarzem — pulpit, kanały Discord i telefon w dowolnej kombinacji, na każdy alert
+Dostępne w sześciu językach — cały interfejs po francusku, niemiecku, rosyjsku, portugalsku (brazylijsku), polsku lub hiszpańsku, zgodnie z Windows albo twoim wyborem w Ustawieniach
 ```
 
-## What's new in this version (v1.25.0.0, ≤1500 chars)
+## What's new in this version (v1.26.0.0, ≤1500 chars)
 
 ```
-v1.25.0.0
+v1.26.0.0
 
-Twój telefon może teraz wibrować
-• Settings > Alerts: skieruj dowolny alert na telefon przez
-  Pushover lub ntfy. Alt wypada — telefon o tym wie, nawet przy
-  zamkniętym Discordzie. Jednorazowa konfiguracja, a Test my phone
-  udowadnia, że działa. Klucze zostają zaszyfrowane na twoim PC;
-  nic nie jest wysyłane poza momentem alertu, i tylko do wybranej
-  przez ciebie usługi.
+RoRoRo mówi teraz w twoim języku
+• Cały interfejs — menu, ustawienia, podpowiedzi, każde okno —
+  jest przetłumaczony na francuski, niemiecki, rosyjski,
+  portugalski (brazylijski), polski i hiszpański. Jeśli Windows
+  jest ustawiony na jeden z tych języków, RoRoRo sam go podchwytuje.
 
-Alerty idą wszędzie, gdzie zaznaczysz
-• Pulpit, twój kanał Discord, kanał klanu, telefon — dowolna
-  kombinacja na każdy alert. Stare ustawienia przeniesione
-  automatycznie.
+Wybierz go sam
+• Ustawienia > Wygląd ma nową listę rozwijaną Język. Wymienia tylko
+  języki, na które RoRoRo jest w pełni przetłumaczony, więc nigdy
+  nie trafisz na wpół przetłumaczony ekran. Twój wybór zadziała przy
+  następnym otwarciu RoRoRo.
 
-Dwa nowe alerty, domyślnie wyłączone
-• Zakończony Recycle podaje, ile pamięci odzyskał. Sygnały
-  działania mówią „4h up — 6 accounts in" co dwie godziny — sygnał,
-  który nie dociera, znaczy, że PC albo aplikacja padły — jedyna
-  awaria, której nic nie zgłosi wprost.
-
-Roblox zostaje w oknie
-• Jeśli awaria albo Alt+Enter zostawiły Roblox w trybie
-  pełnoekranowym, RoRoRo czyści to przed każdym startem. Przełącznik
-  w Settings > Startup, domyślnie włączony.
-
-Wracasz do starszej wersji?
-• Jeśli po skonfigurowaniu nowego routingu alertów wrócisz do
-  starszej wersji, ustaw routing tam od nowa — starsze wersje po
-  cichu pomijają nieznane opcje.
+Wciąż angielski w sercu
+• Angielski pozostaje domyślny, a nazwy produktów — Squad Launch,
+  Recycle, samo RoRoRo — brzmią tak samo w każdym języku. Nic w
+  twoich kontach, motywach ani ustawieniach się nie zmienia.
 ```
 
 ## Copyright (single line)

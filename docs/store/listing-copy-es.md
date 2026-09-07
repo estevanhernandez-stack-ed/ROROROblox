@@ -3,12 +3,12 @@
 > Paste-ready para Partner Center → Store listings → **Español** (neutral — un solo texto para
 > España y Latinoamérica). Drafted 2026-09-05 from `listing-copy.md` (v1.25.0.0 state).
 > Product nouns stay in English (RoRoRo, Squad Launch, Friend Follow, Pushover, ntfy); the
-> long description says plainly that the app's interface is in English. Register: tú.
+> app UI is now localized to Spanish (v1.26.0.0). Register: tú.
 
 ## Short description (≤200 chars)
 
 ```
-Multi-launcher para Windows: varios clientes de Roblox a la vez, cada uno con su cuenta. Baúl cifrado, Squad Launch, vigilante de memoria, alertas al móvil, estado en vivo, temas y autoactualización.
+Multi-launcher para Windows, ahora en 6 idiomas: varios clientes de Roblox a la vez, cada uno con su cuenta. Baúl cifrado, Squad Launch, vigilante de memoria, alertas al móvil, estado en vivo y temas.
 ```
 
 ## Long description
@@ -17,8 +17,6 @@ Multi-launcher para Windows: varios clientes de Roblox a la vez, cada uno con su
 Multi-launcher para Windows.
 
 RoRoRo es un launcher para Windows que ejecuta varios clientes de Roblox a la vez en un mismo PC, cada uno con una cuenta guardada distinta que te pertenece. Añade tus cuentas una sola vez desde la propia página de inicio de sesión de Roblox y luego lánzalas con un clic: a su juego predeterminado, a un servidor privado guardado o a cualquier enlace de juego que pegues.
-
-Aviso: la interfaz de la aplicación está en inglés por ahora.
 
 Lo que obtienes:
 • Multi-instancia con un clic. RoRoRo retiene el mutex singleton de Roblox, así que los clientes adicionales se abren en lugar de traer el primero al frente.
@@ -33,6 +31,7 @@ Lo que obtienes:
 • Sistema de plugins. Los plugins opcionales corren como procesos separados y no tienen permisos hasta que se los concedes uno a uno.
 • Actualización automática vía Velopack. Una configuración remota sigue la versión de Roblox y el nombre del mutex conocidos, para que un cambio del lado de Roblox no te deje fuera mucho tiempo.
 • Accesibilidad medida. Cada control anuncia su nombre a las tecnologías de asistencia, y el contraste se verifica sobre píxeles renderizados en todos los temas.
+• Habla tu idioma. Toda la interfaz —cada menú, ajuste, información sobre herramientas y ventana— está traducida al francés, alemán, ruso, portugués (Brasil), polaco y español, según el idioma de tu Windows o lo que elijas en Configuración. El selector solo ofrece idiomas completamente traducidos, así que nunca terminas en una pantalla a medio traducir en inglés.
 
 Privacidad y seguridad:
 RoRoRo nunca ve tu contraseña de Roblox. El inicio de sesión ocurre por completo en la página del propio Roblox, incrustada en un marco Microsoft Edge WebView2: el mismo HTML, la misma conexión HTTPS que haría tu navegador. RoRoRo captura solo la cookie de sesión que Roblox establece tras iniciar sesión, y la cifra antes de escribirla en disco. Sin telemetría. Sin analítica. Nada sale de tu máquina salvo las llamadas a Roblox durante el lanzamiento —las mismas que hace Roblox.com desde tu navegador— y, solo si tú los configuras, las alertas a tu webhook de Discord o al servicio de push que elegiste (Pushover o ntfy).
@@ -43,7 +42,7 @@ Importante: aviso de marcas y afiliación.
 Un producto de 626 Labs.
 ```
 
-## Product features (17 entries, ≤200 chars each)
+## Product features (18 entries, ≤200 chars each)
 
 ```
 Launcher multi-instancia para Roblox en Windows, con un clic
@@ -63,41 +62,31 @@ Discord Join arranca RoRoRo aunque esté cerrado, y siempre pregunta antes de la
 Alertas al móvil vía Pushover o ntfy: un alt se cae y tu móvil vibra, aun con Discord cerrado
 Señales de "todo bien" cada dos horas mientras tus cuentas corren: el silencio significa problema
 Las alertas se reparten: escritorio, canales de Discord y móvil en cualquier combinación, por alerta
+Disponible en seis idiomas: toda la interfaz en francés, alemán, ruso, portugués (Brasil), polaco o español, según Windows o lo que elijas en Configuración
 ```
 
-## What's new in this version (v1.25.0.0, ≤1500 chars)
+## What's new in this version (v1.26.0.0, ≤1500 chars)
 
 ```
-v1.25.0.0
+v1.26.0.0
 
-Tu móvil ya puede vibrar
-• Settings > Alerts: dirige cualquier alerta a tu móvil mediante
-  Pushover o ntfy. Un alt se cae y tu móvil lo sabe, incluso con
-  Discord cerrado. Configuración única, y Test my phone demuestra
-  que funciona. Tus claves quedan cifradas en tu PC; no
-  se envía nada salvo cuando salta una alerta, y solo al servicio
-  que elegiste.
+RoRoRo ya habla tu idioma
+• Toda la interfaz —menús, ajustes, información sobre
+  herramientas, cada ventana— está traducida al francés, alemán,
+  ruso, portugués (Brasil), polaco y español. Si tu Windows está
+  en uno de esos idiomas, RoRoRo lo detecta solo.
 
-Las alertas van a donde tú marques
-• Escritorio, tu canal de Discord, el del clan, tu móvil: cualquier
-  combinación por alerta. Tu enrutado anterior se conservó
-  automáticamente.
+Elígelo tú
+• Configuración > Apariencia tiene un nuevo menú de Idioma. Solo
+  lista los idiomas a los que RoRoRo está completamente traducido,
+  así que nunca terminas en una pantalla a medio traducir. Tu
+  elección se aplica la próxima vez que abras RoRoRo.
 
-Dos alertas nuevas, apagadas por defecto
-• Un Recycle terminado te dice cuánta memoria recuperó. Las señales
-  de actividad dicen "4h up — 6 accounts in" cada dos horas: una
-  señal que no llega significa que el PC o la app murieron — el
-  único fallo que nada puede anunciar directamente.
-
-Roblox se queda en ventana
-• Si un fallo o Alt+Intro dejó Roblox guardado en pantalla completa,
-  RoRoRo lo corrige antes de cada lanzamiento. Ajustable en
-  Settings > Startup, activado por defecto.
-
-¿Vuelves a una versión anterior?
-• Si vuelves atrás después de configurar el nuevo enrutado de
-  alertas, configúralo allí de nuevo: las versiones antiguas omiten
-  en silencio las opciones que no conocen.
+Inglés de corazón
+• El inglés sigue siendo el valor por defecto, y los nombres de
+  producto —Squad Launch, Recycle, el propio RoRoRo— se leen igual
+  en todos los idiomas. Nada cambia en tus cuentas, temas ni
+  ajustes.
 ```
 
 ## Copyright (single line)

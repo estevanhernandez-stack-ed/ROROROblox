@@ -21,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 STORE = ROOT / "docs" / "store"
 LANGUAGES = ["fr", "de", "ru", "pt-br", "pl", "es"]
-WHATS_NEW_VERSION = "1.25.0.0"
+WHATS_NEW_VERSION = "1.26.0.0"
 
 # (json key, heading prefix in the .md files, per-block char cap, per-line cap)
 FIELDS = [
