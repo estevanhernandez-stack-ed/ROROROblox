@@ -30,6 +30,11 @@ public static class Program
             Windows.Win32.PInvoke.SetCurrentProcessExplicitAppUserModelID("velopack.RORORO.portable");
         }
 
+        // Apply the saved UI language BEFORE any WPF window/resource loads (localization,
+        // 2026-09-07). The XAML binds its strings once via x:Static, so the culture must be set
+        // here — earlier than the theme, which OnStartup applies. Best-effort, never throws.
+        Localization.UiCulture.ApplyFromSettings();
+
         var app = new App();
         app.InitializeComponent();
         return app.Run();

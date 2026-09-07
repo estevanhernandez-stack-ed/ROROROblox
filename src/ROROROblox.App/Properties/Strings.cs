@@ -24,7 +24,7 @@ public static class Strings
     public static string Get(string key) =>
         Rm.GetString(key, CultureInfo.CurrentUICulture) ?? key;
 
-    // === 481 generated properties — do not edit by hand ===
+    // === 483 generated properties — do not edit by hand ===
     public static string AboutPage_A626LabsProduct => Get("AboutPage_A626LabsProduct");
     public static string AboutPage_CookiesAreEncryptedWithWindows => Get("AboutPage_CookiesAreEncryptedWithWindows");
     public static string AboutPage_InsideTheToolsWindowCtrl => Get("AboutPage_InsideTheToolsWindowCtrl");
@@ -343,6 +343,8 @@ public static class Strings
     public static string SettingsPage_ImportAccounts => Get("SettingsPage_ImportAccounts");
     public static string SettingsPage_KeepRobloxWindowed => Get("SettingsPage_KeepRobloxWindowed");
     public static string SettingsPage_KeepRobloxWindowed_2 => Get("SettingsPage_KeepRobloxWindowed_2");
+    public static string SettingsPage_Language => Get("SettingsPage_Language");
+    public static string SettingsPage_LanguageHint => Get("SettingsPage_LanguageHint");
     public static string SettingsPage_LaunchASquadOneAccount => Get("SettingsPage_LaunchASquadOneAccount");
     public static string SettingsPage_LaunchASquadOneAccount_2 => Get("SettingsPage_LaunchASquadOneAccount_2");
     public static string SettingsPage_LaunchYourMainAccountWhen => Get("SettingsPage_LaunchYourMainAccountWhen");

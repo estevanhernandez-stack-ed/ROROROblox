@@ -1942,4 +1942,12 @@
     <value>Re-authenticate</value>
     <comment>src/ROROROblox.App/MainWindow.xaml:820 Button (hand-converted; tokenizer missed this one site — see Vibe-Lingual follow-up)</comment>
   </data>
+  <data name="SettingsPage_Language" xml:space="preserve">
+    <value>Language</value>
+    <comment>Settings &gt; Appearance — UI-language section heading + picker name</comment>
+  </data>
+  <data name="SettingsPage_LanguageHint" xml:space="preserve">
+    <value>Choose the language RoRoRo's interface uses. New languages appear here as they're translated, and a change takes effect the next time you open RoRoRo.</value>
+    <comment>Settings &gt; Appearance — UI-language picker hint</comment>
+  </data>
 </root>

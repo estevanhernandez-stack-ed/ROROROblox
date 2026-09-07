@@ -1581,6 +1581,10 @@ public class MainViewModelTests
             CompactMode = compact;
             return Task.CompletedTask;
         }
+
+        public string? UiLanguage { get; set; }
+        public Task<string?> GetUiLanguageAsync() => Task.FromResult(UiLanguage);
+        public Task SetUiLanguageAsync(string? cultureName) { UiLanguage = cultureName; return Task.CompletedTask; }
     }
 
     private sealed class FakeFavoriteGameStore : IFavoriteGameStore

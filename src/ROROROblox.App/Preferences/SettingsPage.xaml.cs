@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using ROROROblox.App.Discord;
+using ROROROblox.App.Localization;
 using ROROROblox.App.Modals;
 using ROROROblox.App.Startup;
 using ROROROblox.App.Theming;
@@ -366,10 +367,37 @@ internal partial class SettingsPage : UserControl, IDisposable
             // the file was supposed to show up in, and because a report nobody is looking at is
             // the same silence in a different place.
             ReportThemeFolder(themes);
+
+            // Language picker (localization, 2026-09-07). Only languages whose catalog ships
+            // (UiCulture.Available) — with no translated catalogs yet, English alone. Honest by
+            // construction: a language appears here exactly when its Strings.<culture>.resx does.
+            var languages = UiCulture.Available();
+            LanguagePicker.ItemsSource = languages;
+            var savedLang = await _settings.GetUiLanguageAsync() ?? "";
+            LanguagePicker.SelectedItem =
+                languages.FirstOrDefault(c => string.Equals(c.CultureName, savedLang, StringComparison.OrdinalIgnoreCase))
+                ?? languages[0]; // English — always present
         }
         finally
         {
             _suppressClickHandlers = false;
+        }
+    }
+
+    private async void OnUiLanguageChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressClickHandlers) return;
+        if (LanguagePicker.SelectedItem is not CultureOption picked) return;
+        try
+        {
+            // Empty culture name = English = "follow the OS" (null). Applies on next launch —
+            // x:Static binds once, and the hint under the picker says so.
+            await _settings.SetUiLanguageAsync(picked.CultureName.Length == 0 ? null : picked.CultureName);
+        }
+        catch (System.Exception ex)
+        {
+            MessageBox.Show(Window.GetWindow(this), $"Couldn't save the language: {ex.Message}",
+                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
