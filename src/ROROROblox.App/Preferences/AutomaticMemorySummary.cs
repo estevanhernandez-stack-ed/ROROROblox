@@ -1,4 +1,5 @@
 using System.Globalization;
+using ROROROblox.App.Localization;
 using ROROROblox.Core.Diagnostics;
 
 namespace ROROROblox.App.Preferences;
@@ -98,15 +99,8 @@ internal sealed class AutomaticMemorySummary
     /// </summary>
     private static string Sentence(bool ramKnown, long totalPhysicalBytes, int reserveMb, int capMb) =>
         ramKnown
-            ? $"Your PC reports {FormatGb(totalPhysicalBytes)} of RAM. Leave a box below blank and "
-              + $"RoRoRo picks for you: {Number(reserveMb)} MB kept free, and a warning when one "
-              + $"account passes {Number(capMb)} MB. Warn this far ahead starts at "
-              + $"{Number(ProjectionDefaultMinutes)} minutes."
-            : "RoRoRo can't read how much RAM your PC has. Leave a box below blank and it falls "
-              + $"back to {Number(reserveMb)} MB kept free, and a warning when one account passes "
-              + $"{Number(capMb)} MB. Warn this far ahead starts at "
-              + $"{Number(ProjectionDefaultMinutes)} minutes. Put your own numbers in if those "
-              + "don't suit your PC.";
+            ? Loc.Format("Shell_Mem_SummaryKnown", FormatGb(totalPhysicalBytes), reserveMb, capMb, ProjectionDefaultMinutes)
+            : Loc.Format("Shell_Mem_SummaryUnknown", reserveMb, capMb, ProjectionDefaultMinutes);
 
     /// <summary>
     /// One decimal, and the trailing <c>.0</c> dropped, so 32 GiB reads "32 GB" while the 31.9 a
@@ -115,6 +109,4 @@ internal sealed class AutomaticMemorySummary
     /// </summary>
     private static string FormatGb(long totalPhysicalBytes) =>
         (totalPhysicalBytes / BytesPerGb).ToString("0.#", CultureInfo.InvariantCulture) + " GB";
-
-    private static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
 }

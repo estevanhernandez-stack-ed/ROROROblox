@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using ROROROblox.App.Localization;
 using ROROROblox.App.ViewModels;
 
 namespace ROROROblox.App.Theming;
@@ -17,17 +18,19 @@ internal partial class CaptionColorPickerWindow : Window
     // Same palette as the auto-derive in RobloxWindowDecorator. Showing them here as
     // first-class options means the user can lock in a color they already get assigned by
     // hash, without it being conditional on Account.Id math.
-    private static readonly (string Hex, string Label)[] Palette =
+    // The Label is a resx KEY, resolved through Loc when a swatch tooltip is built. This modal is
+    // constructed per open, so it reads the current UI culture at build time (localization Phase D).
+    private static readonly (string Hex, string LabelKey)[] Palette =
     {
-        ("#1E40AF", "Deep Blue"),
-        ("#7C2D12", "Burnt Orange"),
-        ("#14532D", "Forest Green"),
-        ("#581C87", "Royal Purple"),
-        ("#7F1D1D", "Crimson"),
-        ("#075985", "Ocean"),
-        ("#713F12", "Amber Brown"),
-        ("#134E4A", "Deep Teal"),
-        ("#E13AA0", "Magenta (main)"),
+        ("#1E40AF", "Shell_Caption_DeepBlue"),
+        ("#7C2D12", "Shell_Caption_BurntOrange"),
+        ("#14532D", "Shell_Caption_ForestGreen"),
+        ("#581C87", "Shell_Caption_RoyalPurple"),
+        ("#7F1D1D", "Shell_Caption_Crimson"),
+        ("#075985", "Shell_Caption_Ocean"),
+        ("#713F12", "Shell_Caption_AmberBrown"),
+        ("#134E4A", "Shell_Caption_DeepTeal"),
+        ("#E13AA0", "Shell_Caption_MagentaMain"),
     };
 
     private readonly AccountSummary _summary;
@@ -38,15 +41,16 @@ internal partial class CaptionColorPickerWindow : Window
         _summary = summary ?? throw new ArgumentNullException(nameof(summary));
         _onApplied = onApplied;
         InitializeComponent();
-        HeaderText.Text = $"Title-bar color for {_summary.RenderName}";
+        HeaderText.Text = Loc.Format("Shell_Caption_Header", _summary.RenderName);
         HexInput.Text = _summary.CaptionColorHex ?? string.Empty;
         BuildSwatches();
     }
 
     private void BuildSwatches()
     {
-        foreach (var (hex, label) in Palette)
+        foreach (var (hex, labelKey) in Palette)
         {
+            var label = Loc.Get(labelKey);
             var swatch = new Button
             {
                 Width = 50,
@@ -77,12 +81,12 @@ internal partial class CaptionColorPickerWindow : Window
         var hex = HexInput.Text?.Trim();
         if (string.IsNullOrWhiteSpace(hex))
         {
-            StatusText.Text = "Type a hex color like #4FE08C, or click Reset to auto.";
+            StatusText.Text = Loc.Get("Shell_Caption_TypeHex");
             return;
         }
         if (!TryNormalizeHex(hex, out var normalized))
         {
-            StatusText.Text = "That doesn't look like a hex color. Use #rrggbb (e.g. #4FE08C).";
+            StatusText.Text = Loc.Get("Shell_Caption_BadHex");
             return;
         }
         ApplyColor(normalized);
@@ -92,7 +96,7 @@ internal partial class CaptionColorPickerWindow : Window
     {
         _summary.CaptionColorHex = null;
         HexInput.Text = string.Empty;
-        StatusText.Text = "Reverted to auto-derived color.";
+        StatusText.Text = Loc.Get("Shell_Caption_Reverted");
         _onApplied?.Invoke();
     }
 
@@ -100,7 +104,7 @@ internal partial class CaptionColorPickerWindow : Window
     {
         _summary.CaptionColorHex = hex;
         HexInput.Text = hex;
-        StatusText.Text = $"Applied {hex}.";
+        StatusText.Text = Loc.Format("Shell_Caption_Applied", hex);
         _onApplied?.Invoke();
     }
 

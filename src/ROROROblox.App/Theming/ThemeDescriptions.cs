@@ -1,3 +1,5 @@
+using ROROROblox.App.Localization;
+
 namespace ROROROblox.App.Theming;
 
 /// <summary>
@@ -13,10 +15,10 @@ internal static class ThemeDescriptions
 {
     public static string? For(string id) => id.ToLowerInvariant() switch
     {
-        "brand" => "Cyan and magenta on navy: RoRoRo's default look, and the one you'll see in every screenshot.",
-        "midnight" => "Cooler and dimmer than Brand, built for late sessions when you don't want a bright screen staring back.",
-        "magenta-heat" => "Leads with magenta instead of cyan, so your Launch and Stop buttons are the first thing you notice.",
-        "flatline" => "Reads the same whether or not you can tell colours apart: everything the app says in colour, it also says in words or shape.",
+        "brand" => Loc.Get("Shell_Theme_Desc_Brand"),
+        "midnight" => Loc.Get("Shell_Theme_Desc_Midnight"),
+        "magenta-heat" => Loc.Get("Shell_Theme_Desc_MagentaHeat"),
+        "flatline" => Loc.Get("Shell_Theme_Desc_Flatline"),
         _ => null,
     };
 }

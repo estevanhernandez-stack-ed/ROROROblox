@@ -39,17 +39,17 @@ internal partial class ThemeBuilderWindow : Window
         var prompt = LoadPrompt();
         if (string.IsNullOrEmpty(prompt))
         {
-            StatusText.Text = "Couldn't load the prompt — see logs.";
+            StatusText.Text = Loc.Get("Shell_ThemeBuilder_CouldntLoadPrompt");
             return;
         }
         try
         {
             Clipboard.SetText(prompt);
-            StatusText.Text = "Prompt copied. Paste it into Claude / ChatGPT / etc., describe a vibe, and paste the JSON it returns below.";
+            StatusText.Text = Loc.Get("Shell_ThemeBuilder_PromptCopied");
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Clipboard set failed: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_ThemeBuilder_ClipboardFailed", ex.Message);
         }
     }
 
@@ -58,11 +58,11 @@ internal partial class ThemeBuilderWindow : Window
         var json = JsonInput.Text?.Trim() ?? string.Empty;
         if (string.IsNullOrEmpty(json))
         {
-            StatusText.Text = "Paste the JSON the AI returned first.";
+            StatusText.Text = Loc.Get("Shell_ThemeBuilder_PasteJsonFirst");
             return;
         }
         SaveButton.IsEnabled = false;
-        StatusText.Text = "Saving...";
+        StatusText.Text = Loc.Get("Shell_ThemeBuilder_Saving");
         try
         {
             var theme = await _themeStore.SaveUserThemeAsync(json);
@@ -79,7 +79,7 @@ internal partial class ThemeBuilderWindow : Window
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Save failed: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_ThemeBuilder_SaveFailed", ex.Message);
         }
         finally
         {
