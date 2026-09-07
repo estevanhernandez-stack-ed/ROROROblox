@@ -28,6 +28,42 @@ remote agent tried to connect the same day. Three findings, in severity order:
    (clean `{"error":"Unauthorized: Invalid token"}` on a stale token). Consider scoping:
    a read-only token for review sessions vs. the approval token.
 
+## Dogfood feedback — first full review cycle, 2026-09-06 (the tool WORKS; these sharpen it)
+
+The MCP connection succeeded (OAuth per the MCP spec — finding #1 above addressed) and the
+full loop ran: ingest → review ×6 languages → repo fixes → re-export → re-review → **36/36
+approve** in two rounds. The review quality was real: it caught the reviewer's own author
+breaking his own rubric (translated `Settings > Alerts` paths in every language), dropped
+claims (auto-update in every short description), and — best catch — a source-side defect:
+all six copyright verdicts flagged the translations for carrying the trademark disclaimer,
+and the root cause was the ENGLISH block, which had drifted from the certification
+requirement. The gate surfaced a real EN inconsistency even though its surface diagnosis
+pointed the wrong direction. Findings for the builder, severity-ordered:
+
+4. **`suggestedFix` must be a drop-in replacement for `quote`.** Several fixes were
+   full-field rewrites paired with tail-only quotes (e.g. fr shortDescription: quote
+   `"statut en direct, thèmes."`, fix = the entire rewritten description) — machine-applying
+   quote→fix would duplicate the field's head. The repo's applier assumes the contract as
+   written; these had to be applied by hand.
+5. **Same defect, different verdicts across languages.** The dropped mutex clause existed in
+   all six long descriptions but was flagged in 2; the genericized "Test my phone" button in
+   all six whats-new but flagged in 2; the dropped "one failure nothing can announce
+   directly" clause in several but flagged in 1 (and only in a later round). Per-pair
+   isolated review invites this variance — consider a cross-language consistency pass for
+   any issue found in one language.
+6. **Default ingest is CDN-stale.** The branch raw URL is cached ~5 minutes on
+   raw.githubusercontent, so an ingest right after a push fetched the previous commit.
+   Ingesting by commit-pinned raw URL (resolve the branch SHA via the GitHub API first)
+   would make ingestion deterministic and match the sourceCommit contract.
+7. **The all-languages review call exceeds the MCP timeout** (36 Gemini reviews in one
+   request). Per-language calls work; the full run wants a job pattern (return a run id,
+   poll status) or internal chunking.
+8. **Result payloads mix rounds without stamps.** Responses accumulate every reviewed pair,
+   carry stale verdicts for pairs whose text has since changed, and label the whole array
+   with the FIRST round's sourceCommit. Stamping each result with the sourceCommit it was
+   judged at (and evicting results for pairs whose text changed) would make the state
+   readable.
+
 ---
 
 ```
