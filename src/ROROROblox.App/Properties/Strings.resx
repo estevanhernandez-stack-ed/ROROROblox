@@ -2250,4 +2250,16 @@
     <value> and </value>
     <comment>Joins the alert channel list ("X and Y"); composed by AlertStatusLine. Translators localize the connector, spaces included (localized Phase D 2026-09-07)</comment>
   </data>
+  <data name="Shell_MultiInstance_ContestedBanner" xml:space="preserve">
+    <value>Roblox has the multi-instance lock — it's probably running in your system tray.</value>
+    <comment>Main-window banner; composed by MultiInstanceCopy. "Roblox"/"multi-instance" stay English (localized Phase D step 3)</comment>
+  </data>
+  <data name="Shell_MultiInstance_StillLocked" xml:space="preserve">
+    <value>Still locked — Roblox is still running.</value>
+    <comment>BLOCKED modal tick; composed by MultiInstanceCopy (localized Phase D step 3)</comment>
+  </data>
+  <data name="Shell_MultiInstance_FpsCapMismatch" xml:space="preserve">
+    <value>Set every account to the same FPS cap to launch at full speed. Roblox keeps one shared settings file for every client, so different caps make RoRoRo wait for each account to finish loading before starting the next, up to about 20 seconds each.</value>
+    <comment>Main-window banner; composed by MultiInstanceCopy. Product nouns stay English (localized Phase D step 3)</comment>
+  </data>
 </root>
