@@ -1,3 +1,5 @@
+using ROROROblox.App.Localization;
+
 namespace ROROROblox.App.ViewModels;
 
 /// <summary>
@@ -91,6 +93,6 @@ internal static class PreWarmGate
     /// <param name="installerRunning"><c>IRobloxUpdateProbe.IsInstallerRunning()</c> — install in progress.</param>
     public static string AttachFailedMessage(bool installerRunning)
         => installerRunning
-            ? "Roblox is updating — hold on."
-            : "Launch never connected. Check Roblox is current + antivirus isn't blocking.";
+            ? Loc.Get("Shell_PreWarm_Updating")
+            : Loc.Get("Shell_PreWarm_NeverConnected");
 }

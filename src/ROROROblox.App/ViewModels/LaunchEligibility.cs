@@ -1,3 +1,5 @@
+using ROROROblox.App.Localization;
+
 namespace ROROROblox.App.ViewModels;
 
 /// <summary>
@@ -47,9 +49,9 @@ internal sealed class LaunchEligibilityResult
             // No reasons at all (e.g. no accounts) — still say something, never go silent.
             if (clauses.Count == 0)
             {
-                return "Nothing to launch — no accounts available.";
+                return Loc.Get("Shell_Launch_NothingNoAccounts");
             }
-            return $"Nothing to launch — {string.Join(", ", clauses)}.";
+            return Loc.Format("Shell_Launch_NothingReasons", string.Join(", ", clauses));
         }
     }
 
@@ -61,8 +63,7 @@ internal sealed class LaunchEligibilityResult
     /// </summary>
     public string PartialBanner(int dispatched, string verb)
     {
-        var clientWord = dispatched == 1 ? "client" : "clients";
-        var head = $"{verb}. {dispatched} {clientWord} dispatched.";
+        var head = Loc.Plural("Shell_Launch_Dispatched", dispatched, verb);
         var clauses = NonZeroClauses();
         if (clauses.Count == 0)
         {
@@ -78,10 +79,10 @@ internal sealed class LaunchEligibilityResult
     private List<string> NonZeroClauses()
     {
         var clauses = new List<string>();
-        if (Breakdown.Running > 0) clauses.Add($"{Breakdown.Running} already running");
-        if (Breakdown.Expired > 0) clauses.Add($"{Breakdown.Expired} expired");
-        if (Breakdown.Limited > 0) clauses.Add($"{Breakdown.Limited} limited");
-        if (Breakdown.Deselected > 0) clauses.Add($"{Breakdown.Deselected} deselected");
+        if (Breakdown.Running > 0) clauses.Add(Loc.Format("Shell_Launch_Clause_Running", Breakdown.Running));
+        if (Breakdown.Expired > 0) clauses.Add(Loc.Format("Shell_Launch_Clause_Expired", Breakdown.Expired));
+        if (Breakdown.Limited > 0) clauses.Add(Loc.Format("Shell_Launch_Clause_Limited", Breakdown.Limited));
+        if (Breakdown.Deselected > 0) clauses.Add(Loc.Format("Shell_Launch_Clause_Deselected", Breakdown.Deselected));
         return clauses;
     }
 }
