@@ -2194,4 +2194,60 @@
     <value>The Roblox singleton lock was lost, so new clients may refuse to open. Right-click the tray icon and click Multi-Instance to take it back.</value>
     <comment>Footer tooltip; composed by MultiInstanceStatusLine. "Multi-Instance" stays English (localized Phase D 2026-09-07)</comment>
   </data>
+  <data name="AlertStatus_NoAlertsYet" xml:space="preserve">
+    <value>No alerts yet. Pick what you want to hear about above.</value>
+    <comment>Settings alerts line; composed by AlertStatusLine (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="AlertStatus_MineWebhookDeleted" xml:space="preserve">
+    <value>Your webhook was deleted, so nothing is reaching your phone. Alerts are falling back to desktop only — make a new webhook and paste it below.</value>
+    <comment>Settings alerts line; composed by AlertStatusLine (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="AlertStatus_ClanWebhookDeleted" xml:space="preserve">
+    <value>The clan webhook was deleted, so nothing is reaching that channel. Alerts are falling back to desktop only.</value>
+    <comment>Settings alerts line; composed by AlertStatusLine (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="AlertStatus_PhoneRejected" xml:space="preserve">
+    <value>Your push service rejected the saved key, so nothing is reaching your phone. Alerts are falling back to desktop only — check the key below and save it again.</value>
+    <comment>Settings alerts line; composed by AlertStatusLine (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="AlertStatus_PhoneUnfinished" xml:space="preserve">
+    <value>You've routed alerts to your phone but haven't finished setting up the push service below, so they'll only show on this PC.</value>
+    <comment>Settings alerts line; composed by AlertStatusLine (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="AlertStatus_WebhookMissing" xml:space="preserve">
+    <value>You've routed alerts to a Discord channel but haven't pasted a webhook, so they'll only show on this PC — which won't help when you're away from it.</value>
+    <comment>Settings alerts line; composed by AlertStatusLine (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="AlertStatus_DesktopOnly" xml:space="preserve">
+    <value>Desktop only. You'll see these at the PC, but nothing will reach your phone.</value>
+    <comment>Settings alerts line; composed by AlertStatusLine (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="AlertStatus_SendingToChannels" xml:space="preserve">
+    <value>Sending to {0}.</value>
+    <comment>Settings alerts line; composed by AlertStatusLine. {0} is the connector-joined channel list (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="AlertStatus_SendingToDiscord" xml:space="preserve">
+    <value>Sending to your Discord channel.</value>
+    <comment>Settings alerts line; composed by AlertStatusLine. "Discord" stays English (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="AlertStatus_Channel_Mine" xml:space="preserve">
+    <value>your channel</value>
+    <comment>Alert channel fragment; composed by AlertStatusLine when the personal channel name is unknown (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="AlertStatus_Channel_Clan" xml:space="preserve">
+    <value>the clan channel</value>
+    <comment>Alert channel fragment; composed by AlertStatusLine when the clan channel name is unknown (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="AlertStatus_Channel_Phone" xml:space="preserve">
+    <value>your phone</value>
+    <comment>Alert channel fragment; composed by AlertStatusLine when the push provider is unnamed (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="AlertStatus_Channel_PhoneNamed" xml:space="preserve">
+    <value>your phone ({0})</value>
+    <comment>Alert channel fragment; composed by AlertStatusLine. {0} is the push provider name (Pushover/ntfy), which stays English (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="AlertStatus_ListConnector" xml:space="preserve">
+    <value> and </value>
+    <comment>Joins the alert channel list ("X and Y"); composed by AlertStatusLine. Translators localize the connector, spaces included (localized Phase D 2026-09-07)</comment>
+  </data>
 </root>
