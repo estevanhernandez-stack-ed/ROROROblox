@@ -1,6 +1,7 @@
 <UserControl x:Class="ROROROblox.App.History.SessionHistoryPage"
              x:ClassModifier="internal"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:loc="clr-namespace:ROROROblox.App.Properties"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:ROROROblox.App.Controls">
 
@@ -12,7 +13,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0">
-            <controls:PageHeader Heading="History" />
+            <controls:PageHeader Heading="{x:Static loc:Strings.SessionHistoryPage_History}" />
 
             <!-- F-038. Diagnostics has carried a line like this since it shipped ("Collecting…",
                  then a capture time or "Couldn't collect diagnostics: {message}") and History never
@@ -52,7 +53,7 @@
                     <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8"
                             Margin="0,0,8,0" Padding="14,10">
                         <StackPanel>
-                            <TextBlock Text="PEAK ALTS AT ONCE"
+                            <TextBlock Text="{x:Static loc:Strings.SessionHistoryPage_PeakAltsAtOnce}"
                                        FontFamily="{DynamicResource MonoFontFamily}"
                                        FontSize="{DynamicResource MetaFontSize}"
                                        Foreground="{DynamicResource MutedTextBrush}" />
@@ -60,7 +61,7 @@
                                        FontSize="{DynamicResource DisplayFontSize}" FontWeight="Bold"
                                        Foreground="{DynamicResource CyanBrush}"
                                        Margin="0,2,0,0" />
-                            <TextBlock x:Name="PeakAltsCaption" Text="since history began"
+                            <TextBlock x:Name="PeakAltsCaption" Text="{x:Static loc:Strings.SessionHistoryPage_SinceHistoryBegan}"
                                        FontSize="{DynamicResource MetaFontSize}"
                                        Foreground="{DynamicResource MutedTextBrush}" />
                         </StackPanel>
@@ -68,7 +69,7 @@
                     <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8"
                             Margin="0,0,8,0" Padding="14,10">
                         <StackPanel>
-                            <TextBlock Text="TOTAL UPTIME"
+                            <TextBlock Text="{x:Static loc:Strings.SessionHistoryPage_TotalUptime}"
                                        FontFamily="{DynamicResource MonoFontFamily}"
                                        FontSize="{DynamicResource MetaFontSize}"
                                        Foreground="{DynamicResource MutedTextBrush}" />
@@ -85,7 +86,7 @@
                     <Border Background="{DynamicResource RowBgBrush}" CornerRadius="8"
                             Padding="14,10">
                         <StackPanel>
-                            <TextBlock Text="DAY STREAK"
+                            <TextBlock Text="{x:Static loc:Strings.SessionHistoryPage_DayStreak}"
                                        FontFamily="{DynamicResource MonoFontFamily}"
                                        FontSize="{DynamicResource MetaFontSize}"
                                        Foreground="{DynamicResource MutedTextBrush}" />
@@ -155,7 +156,7 @@
                  filled, and that is right — History performs no action, it reports one. The Close
                  button left with the window (F-013): a shell page is a destination, not a dialog,
                  and the shell's title bar owns closing. -->
-            <Button x:Name="ClearButton" Content="Clear history"
+            <Button x:Name="ClearButton" Content="{x:Static loc:Strings.SessionHistoryPage_ClearHistory}"
                     Padding="12,8"
                     Style="{StaticResource DestructiveButtonStyle}"
                     Click="OnClearClick" />

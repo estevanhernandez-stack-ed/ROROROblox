@@ -1,8 +1,9 @@
 <Window x:Class="ROROROblox.App.Modals.JoinRequestWindow"
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:loc="clr-namespace:ROROROblox.App.Properties"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Private server"
+        Title="{x:Static loc:Strings.JoinRequestWindow_PrivateServer}"
         Width="480"
         SizeToContent="Height"
         WindowStartupLocation="CenterScreen"
@@ -29,7 +30,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0"
-                   Text="This is a private server"
+                   Text="{x:Static loc:Strings.JoinRequestWindow_ThisIsAPrivateServer}"
                    FontSize="18" FontWeight="Bold"
                    Foreground="{DynamicResource CyanBrush}" />
 
@@ -42,7 +43,7 @@
                    Margin="0,12,0,0" />
 
         <TextBlock Grid.Row="2"
-                   Text="ROBLOX CHECKS ACCESS SERVER-SIDE"
+                   Text="{x:Static loc:Strings.JoinRequestWindow_RobloxChecksAccessServerSide}"
                    FontFamily="{DynamicResource MonoFontFamily}"
                    FontSize="{DynamicResource MetaFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
@@ -50,10 +51,10 @@
                    Margin="0,16,0,0" />
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Cancel" Padding="16,8" IsCancel="True"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static loc:Strings.JoinRequestWindow_Cancel}" Padding="16,8" IsCancel="True"
                     Margin="0,0,8,0"
                     Click="OnCancelClick" />
-            <Button Style="{StaticResource CtaButtonStyle}" Content="Try anyway" Padding="16,8" IsDefault="True"
+            <Button Style="{StaticResource CtaButtonStyle}" Content="{x:Static loc:Strings.JoinRequestWindow_TryAnyway}" Padding="16,8" IsDefault="True"
                     Click="OnTryAnywayClick" />
         </StackPanel>
     </Grid>

@@ -29,8 +29,14 @@ public class DialogCloseButtonFenceTests
         foreach (var file in XamlStyleScanner.EnumerateAppXamlFiles())
         {
             var text = File.ReadAllText(file.FullPath);
-            foreach (Match m in Regex.Matches(text, @"<Button\b[^>]*?Content=""Close""[^>]*?/>", RegexOptions.Singleline))
+            // Content is now an {x:Static loc:Strings.Key} reference (localization, 2026-09-06),
+            // so match any self-closing Button and keep the ones whose Content resolves to "Close"
+            // through the resx (a surviving literal "Close" still resolves to itself).
+            foreach (Match m in Regex.Matches(text, @"<Button\b[^>]*?/>", RegexOptions.Singleline))
             {
+                var content = Regex.Match(m.Value, @"Content\s*=\s*""([^""]*)""");
+                if (!content.Success) continue;
+                if (ResxCatalog.Resolve(content.Groups[1].Value) != "Close") continue;
                 yield return (file.Label, m.Value);
             }
         }

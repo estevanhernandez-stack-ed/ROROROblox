@@ -56,6 +56,15 @@ public class AccessibleNamingFenceTests
     /// </summary>
     private const int ScannedFloor = 120;
 
+    /// <summary>
+    /// A Content/Text value names its control when it is a literal with letters OR an
+    /// {x:Static loc:Strings.Key} reference (which resolves to a string at runtime). A
+    /// {Binding} — an object at runtime — does not.
+    /// </summary>
+    private static bool NamesControl(string value) =>
+        ResxCatalog.IsLocalizedRef(value)
+        || (!value.Contains('{') && Regex.IsMatch(value, "[A-Za-z]{2}"));
+
     private static (int Named, List<string> Unnamed) Scan()
     {
         var named = 0;
@@ -84,9 +93,12 @@ public class AccessibleNamingFenceTests
                 // were the whole test. A bound Content is an OBJECT at runtime, and
                 // ButtonAutomationPeer names a button from its content only when that content is a
                 // string — so the bound ones announce nothing while scanning as labelled.
-                var literalText = content.Success
-                    && !content.Groups[1].Value.Contains('{')
-                    && Regex.IsMatch(content.Groups[1].Value, "[A-Za-z]{2}");
+                //
+                // Localization (2026-09-06) turned literal labels into {x:Static loc:Strings.Key}
+                // references. Those resolve to a STRING at runtime — they name the control exactly
+                // as the literal did — so they count, while {Binding} still does not. NamesControl
+                // draws that line.
+                var literalText = content.Success && NamesControl(content.Groups[1].Value);
 
                 // AND SO IS CHILD CONTENT, which this scanner used to miss entirely (F-052, corrected
                 // 2026-08-21). Half the app writes `<CheckBox ...><TextBlock Text="…" /></CheckBox>`
@@ -116,8 +128,7 @@ public class AccessibleNamingFenceTests
                         var inner = text[(m.Index + m.Length)..close];
                         var attrText = Regex.Match(inner, @"Text\s*=\s*""([^""]*)""");
                         literalText =
-                            (attrText.Success && !attrText.Groups[1].Value.Contains('{')
-                                && Regex.IsMatch(attrText.Groups[1].Value, "[A-Za-z]{2}"))
+                            (attrText.Success && NamesControl(attrText.Groups[1].Value))
                             || Regex.IsMatch(Regex.Replace(inner, "<[^>]*>", ""), "[A-Za-z]{2}");
                     }
                 }

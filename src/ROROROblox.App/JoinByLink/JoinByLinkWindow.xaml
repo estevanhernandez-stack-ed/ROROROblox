@@ -1,8 +1,9 @@
 <Window x:Class="ROROROblox.App.JoinByLink.JoinByLinkWindow"
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:loc="clr-namespace:ROROROblox.App.Properties"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Join by link"
+        Title="{x:Static loc:Strings.JoinByLinkWindow_JoinByLink}"
         Width="540"
         SizeToContent="Height"
         ResizeMode="NoResize"
@@ -30,7 +31,7 @@
 
         <StackPanel Grid.Row="0">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Join by link"
+                <TextBlock Text="{x:Static loc:Strings.JoinByLinkWindow_JoinByLink}"
                            FontSize="20" FontWeight="Bold"
                            Foreground="{DynamicResource CyanBrush}" />
                 <TextBlock x:Name="AccountSubtitle"
@@ -38,14 +39,14 @@
                            Foreground="{DynamicResource WhiteBrush}"
                            Margin="8,0,0,0" />
             </StackPanel>
-            <TextBlock Text="Paste a Roblox game URL or a private server share link. We figure out which kind it is."
+            <TextBlock Text="{x:Static loc:Strings.JoinByLinkWindow_PasteARobloxGameUrl}"
                        FontSize="{DynamicResource BodyFontSize}"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0"
                        TextWrapping="Wrap" />
         </StackPanel>
 
-        <TextBox Grid.Row="1" x:Name="UrlInput" AutomationProperties.Name="Roblox game or private server link"
+        <TextBox Grid.Row="1" x:Name="UrlInput" AutomationProperties.Name="{x:Static loc:Strings.JoinByLinkWindow_RobloxGameOrPrivateServer}"
                  Padding="10,8" FontSize="{DynamicResource BodyFontSize}" Margin="0,18,0,0"
                  Background="{DynamicResource RowBgBrush}"
                  VerticalContentAlignment="Center"
@@ -79,18 +80,18 @@
                    VerticalAlignment="Top" />
 
         <CheckBox Grid.Row="4" x:Name="SaveCheckBox"
-                  Content="Save to my games"
+                  Content="{x:Static loc:Strings.JoinByLinkWindow_SaveToMyGames}"
                   Foreground="{DynamicResource WhiteBrush}"
                   Margin="0,12,0,0"
-                  ToolTip="Add this game or private server to your saved games so it shows up next time without retyping." />
+                  ToolTip="{x:Static loc:Strings.JoinByLinkWindow_AddThisGameOrPrivate}" />
 
         <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-            <Button Content="Cancel" Padding="14,8" Margin="0,0,8,0"
+            <Button Content="{x:Static loc:Strings.JoinByLinkWindow_Cancel}" Padding="14,8" Margin="0,0,8,0"
                     Style="{StaticResource SecondaryStrongButtonStyle}"
                     IsCancel="True"
                     Click="OnCancelClick" />
             <Button Style="{StaticResource CtaButtonStyle}" x:Name="LaunchButton"
-                    Content="Launch"
+                    Content="{x:Static loc:Strings.JoinByLinkWindow_Launch}"
                     Padding="18,8"
                     IsDefault="True"
                     IsEnabled="False"

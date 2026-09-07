@@ -129,7 +129,11 @@ public class PreferencesCopyTests
 
             foreach (var el in page.DescendantsAndSelf().Where(e => e.Name.LocalName == "TextBlock"))
             {
-                var text = el.Attribute("Text")?.Value;
+                // Text is now an {x:Static loc:Strings.Key} reference (localization, 2026-09-06);
+                // resolve it to the display copy the reader sees before classifying/asserting. A
+                // binding or code-filled TextBlock resolves to null and is skipped, exactly as an
+                // empty Text was before.
+                var text = ResxCatalog.Resolve(el.Attribute("Text")?.Value);
                 if (string.IsNullOrWhiteSpace(text)) continue;
 
                 var kind =

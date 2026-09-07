@@ -109,12 +109,14 @@ public class ModalDefaultButtonSafetyTests
     private static bool IsDefault(XElement button)
         => string.Equals((string?)button.Attribute("IsDefault"), "True", StringComparison.OrdinalIgnoreCase);
 
+    // Content is now an {x:Static loc:Strings.Key} reference (localization, 2026-09-06);
+    // resolve it back to the display label through the resx before matching/asserting.
     private static string DefaultButtonLabel(string modalFile)
-        => (string?)Buttons(modalFile).Single(IsDefault).Attribute("Content")
-           ?? throw new InvalidOperationException($"default button in {modalFile} has no Content");
+        => ResxCatalog.Resolve((string?)Buttons(modalFile).Single(IsDefault).Attribute("Content"))
+           ?? throw new InvalidOperationException($"default button in {modalFile} has no resolvable Content");
 
     private static XElement? FindButton(string modalFile, string content)
-        => Buttons(modalFile).FirstOrDefault(b => (string?)b.Attribute("Content") == content);
+        => Buttons(modalFile).FirstOrDefault(b => ResxCatalog.Resolve((string?)b.Attribute("Content")) == content);
 
     private static IEnumerable<XElement> Buttons(string modalFile)
         => XDocument.Load(ModalPath(modalFile)).Descendants(Presentation + "Button");

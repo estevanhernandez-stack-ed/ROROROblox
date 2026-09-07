@@ -481,7 +481,9 @@ public class ThemeStatusSummaryTests : IDisposable
             "OpenThemesFolderButton was not found in SettingsPage.xaml, so this test asserted "
             + "nothing about its tooltip.");
 
-        var tooltip = button!.Attribute("ToolTip")?.Value ?? "";
+        // ToolTip is now an {x:Static loc:Strings.Key} reference (localization, 2026-09-06);
+        // resolve it to the display copy before asserting on the claim it makes.
+        var tooltip = ResxCatalog.Resolve(button!.Attribute("ToolTip")?.Value) ?? "";
 
         Assert.False(string.IsNullOrWhiteSpace(tooltip),
             "The themes-folder button lost its tooltip. The claim it makes is the point of this "

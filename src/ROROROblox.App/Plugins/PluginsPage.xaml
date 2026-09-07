@@ -1,6 +1,7 @@
 <UserControl x:Class="ROROROblox.App.Plugins.PluginsPage"
              x:ClassModifier="internal"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:loc="clr-namespace:ROROROblox.App.Properties"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:ROROROblox.App.Controls"
              xmlns:local="clr-namespace:ROROROblox.App"
@@ -27,8 +28,8 @@
 
         <!-- Header -->
         <StackPanel Grid.Row="0">
-            <controls:PageHeader Heading="Plugins" />
-            <TextBlock Text="Each plugin runs in its own process and only sees what you grant."
+            <controls:PageHeader Heading="{x:Static loc:Strings.PluginsPage_Plugins}" />
+            <TextBlock Text="{x:Static loc:Strings.PluginsPage_EachPluginRunsInIts}"
                        FontSize="{DynamicResource BodyFontSize}"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Margin="0,4,0,0"
@@ -69,7 +70,7 @@
                                VerticalAlignment="Center"
                                TextWrapping="Wrap" />
                     <Button Style="{StaticResource AccentActionButtonStyle}" Grid.Column="1"
-                            Content="Restart"
+                            Content="{x:Static loc:Strings.PluginsPage_Restart}"
                             Margin="12,0,0,0"
                             Padding="14,4"
                             FontSize="{DynamicResource BodyFontSize}"
@@ -106,7 +107,7 @@
                 Background="{DynamicResource RowBgBrush}"
                 CornerRadius="8">
             <StackPanel>
-                <TextBlock Text="INSTALL FROM URL"
+                <TextBlock Text="{x:Static loc:Strings.PluginsPage_InstallFromUrl}"
                            FontFamily="{DynamicResource MonoFontFamily}"
                            FontSize="{DynamicResource MetaFontSize}"
                            Foreground="{DynamicResource MutedTextBrush}"
@@ -117,20 +118,20 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBox Grid.Column="0"
-                             Text="{Binding InstallUrlInput, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Plugin manifest URL"
+                             Text="{Binding InstallUrlInput, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{x:Static loc:Strings.PluginsPage_PluginManifestUrl}"
                              Background="{DynamicResource NavyBrush}"
                              Padding="8,6"
                              FontSize="{DynamicResource BodyFontSize}"
                              VerticalContentAlignment="Center"
                              IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverterLocal}}" Style="{StaticResource AppTextBoxStyle}"/>
                     <Button Grid.Column="1"
-                            Content="Install"
+                            Content="{x:Static loc:Strings.PluginsPage_Install}"
                             Margin="8,0,0,0"
                             Padding="18,6"
                             Style="{StaticResource CtaButtonStyle}"
                             Command="{Binding InstallFromUrlCommand}" />
                 </Grid>
-                <TextBlock Text="Paste the base URL of a plugin release (the folder containing manifest.json, manifest.sha256, and plugin.zip)."
+                <TextBlock Text="{x:Static loc:Strings.PluginsPage_PasteTheBaseUrlOf}"
                            FontSize="{DynamicResource BodyFontSize}"
                            Foreground="{DynamicResource MutedTextBrush}"
                            TextWrapping="Wrap"
@@ -219,13 +220,13 @@
                                                  can't double-spawn — IsRunning fires INPC. -->
                                             <StackPanel Orientation="Horizontal">
                                                 <CheckBox IsChecked="{Binding AutostartEnabled, Mode=OneWay}"
-                                                          Content="Autostart"
+                                                          Content="{x:Static loc:Strings.PluginsPage_Autostart}"
                                                           Foreground="{DynamicResource WhiteBrush}"
                                                           FontSize="{DynamicResource BodyFontSize}"
                                                           VerticalAlignment="Center"
                                                           Command="{Binding DataContext.ToggleAutostartCommand, RelativeSource={RelativeSource AncestorType=plugins:PluginsPage}}"
                                                           CommandParameter="{Binding}" />
-                                                <Button Content="Launch"
+                                                <Button Content="{x:Static loc:Strings.PluginsPage_Launch}"
                                                         Margin="10,0,0,0"
                                                         Padding="12,4"
                                                         Style="{StaticResource CtaButtonStyle}"
@@ -234,14 +235,14 @@
                                                         Command="{Binding DataContext.LaunchPluginCommand, RelativeSource={RelativeSource AncestorType=plugins:PluginsPage}}"
                                                         CommandParameter="{Binding}" />
                                             </StackPanel>
-                                            <Button Style="{StaticResource DestructiveButtonStyle}" Content="Remove"
+                                            <Button Style="{StaticResource DestructiveButtonStyle}" Content="{x:Static loc:Strings.PluginsPage_Remove}"
                                                     Margin="0,8,0,0"
                                                     Padding="10,4"
                                                     FontSize="{DynamicResource BodyFontSize}"
                                                     HorizontalAlignment="Right"
                                                     Command="{Binding DataContext.RevokeCommand, RelativeSource={RelativeSource AncestorType=plugins:PluginsPage}}"
                                                     CommandParameter="{Binding}" />
-                                            <Button Content="Update"
+                                            <Button Content="{x:Static loc:Strings.PluginsPage_Update}"
                                                     Margin="0,8,0,0"
                                                     Padding="12,4"
                                                     Style="{StaticResource CtaButtonStyle}"
@@ -331,11 +332,11 @@
                 <StackPanel HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Visibility="{Binding Plugins.Count, Converter={StaticResource ZeroToVisibilityConverterLocal}}">
-                    <TextBlock Text="No plugins installed."
+                    <TextBlock Text="{x:Static loc:Strings.PluginsPage_NoPluginsInstalled}"
                                FontSize="{DynamicResource HeadingFontSize}"
                                Foreground="{DynamicResource MutedTextBrush}"
                                HorizontalAlignment="Center" />
-                    <TextBlock Text="Paste a release URL above to add one."
+                    <TextBlock Text="{x:Static loc:Strings.PluginsPage_PasteAReleaseUrlAbove}"
                                FontSize="{DynamicResource BodyFontSize}"
                                Foreground="{DynamicResource MutedTextBrush}"
                                HorizontalAlignment="Center"
