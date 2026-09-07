@@ -139,11 +139,19 @@ repo, not here):
    also JS-ecosystem-bound — WPF support needs a detector arm (csproj + XAML presence) and
    a XAML/C# scanner (literal inventory by kind: Text, Content, Header, ToolTip,
    AutomationProperties.Name, code-behind strings) before any adapter method runs.
-   **→ Built the same day: Vibe-Lingual PR #1 (`feat/wpf-stack-readonly`) ships the read
-   side — detect arm, whitelist XAML scanner, honest stand-downs. Its dogfood run on THIS
-   repo: 530 sites across 30 XAML files — 385 xaml-text (vs the hand-measured 395; two
-   independent methods within ten) + 81 automation names + 62 tooltips + 2 placeholders.
-   The mutating wpf-resx adapter remains the open half of Phase C.**
+   **→ Built the same day: Vibe-Lingual PR #1 (`feat/wpf-stack-readonly`, MERGED) ships the
+   read side — detect arm, whitelist XAML scanner, honest stand-downs. Its dogfood run on
+   THIS repo: 530 sites across 30 XAML files — 385 xaml-text (vs the hand-measured 395; two
+   independent methods within ten) + 81 automation names + 62 tooltips + 2 placeholders.**
+   **→ 2026-09-06: the MUTATING half landed as Vibe-Lingual PR #2 (`feat/wpf-resx-adapter`)
+   — span-precise XAML codemod ({x:Static loc:Strings.Key}), idempotent resx merge +
+   per-culture seeding, backup-batch reversibility, emitted C# parity + literal-ratchet
+   fences, CLI `extract --clr-namespace … --dry-run`. RoRoRo dry-run: 29/29 files
+   rewritten, 470 entries, 7 honestly staged (4 Hyperlink inner texts, 3 inline-split
+   fragments). The remaining Phase C work is the RoRoRo-side cycle: real extraction run,
+   the 7 hand conversions, per-culture translations, culture-selection setting (new
+   IAppSettings ripple; culture applies BEFORE theme in the load-bearing startup order),
+   copy fences re-pointed at the resx baseline, and only then manifest languages.**
 2. **What the adapter's four methods mean here:** wire = resx infrastructure + culture
    selection; transform = XAML literal → resource reference and C# literal →
    `Resources.Key`; parity guard = resx key parity across languages (the engine's
