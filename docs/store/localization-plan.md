@@ -242,7 +242,105 @@ Repo-specific hazards the sweep must respect, or the suite goes red:
 Only after C ships a genuinely translated UI does the manifest gain `<Resource>` entries for
 those languages — never before (the rule above).
 
+## Phase D — localization completeness (v1.27)
+
+> **Why this phase exists.** v1.26 shipped Phase C (the 483 static XAML strings, six languages)
+> and went live on GitHub 2026-09-07. The pre-Store localized smoke (Este, same day, in Spanish)
+> found English patches in the running UI. **Este's ruling: HOLD v1.26 from the Store, ship a
+> COMPLETE v1.27.** Localization is a first-impression feature — a half-English Store debut turns
+> people off worse than a later, whole one. This phase closes the gap.
+
+### The audit (2026-09-07, four parallel read-only sweeps)
+
+Phase C swept **static XAML only**. Every string COMPOSED IN CODE (status banners, account-row
+text, memory hints, join/follow flows, plugin/consent copy, error dialogs, theme + diagnostics
+prose) was never touched and still renders English.
+
+| Surface | Distinct | Notes |
+|---|---|---|
+| `ViewModels/` | 105 | whole layer had zero `Strings.` refs (`MainViewModel` alone 59) |
+| `Preferences/` + `Theming/` | 94 | `SettingsPage.xaml.cs` heaviest single file |
+| `Core` + `CoreMessageCatalog` | 71 | 28 keyed-but-English + 43 raw-prose composers |
+| other code-behind + XAML misses | 265 | 256 code-behind (25 files) + 9 XAML misses |
+| raw sum | **535** | — |
+| ≈ distinct (minus ~20 cross-group dups) | **~515** | ~600 code sites |
+| — policy "leave English" (~50) | | external notification payloads, diagnostics bundle, unit tokens |
+| **must localize** | **≈ 465** | |
+
+**The headline:** the code-composed layer (~515) is the same magnitude as the 483 static strings
+that *were* localized — the app is **about half localized**. That is the "half-English screen"
+the honest picker was meant to prevent; the picker's guarantee held only for the catalog, and
+the catalog was not the whole UI.
+
+### Per-category treatment
+
+1. **`CoreMessageCatalog` (28)** — already keyed by enum; make it **resx-backed** (resolve the key
+   through the resource system instead of returning literal English). Foundational, low-risk.
+2. **Core raw-prose composers (7 files, 43)** — `AlertStatusLine`, `MultiInstanceStatusLine`,
+   `RobloxCompatChecker`, `SessionHistoryRowName`, `DiagnosticsCollector`, `ThemeStore`,
+   `AccountTransportService` — bypass the key+data boundary and emit finished English. Convert to
+   the **return-a-Kind** pattern (`LaunchResult`/`WebhookUrlValidator` are the model), resolved
+   App-side. Structural refactor with test ripple.
+3. **App-side composed strings (~430)** — ViewModels, Preferences summaries, code-behind,
+   formatters — extract to resx and resolve via the runtime lookup (see live-toggle below) +
+   `string.Format`. The bulk, and nuanced: these are *composed* strings with placeholders and
+   singular/plural forks, not static labels.
+4. **XAML misses (9)** — badges (`MAIN`/`DEFAULT`/`PRIVATE`/`AVAILABLE`) + one mixed-`<Run>`
+   paragraph (`SquadLaunchWindow.xaml:44-50`) → straight extraction.
+5. **Translate** the new strings × 6 languages through the built pipeline (translation agents →
+   `translation-verification` tool → `PRODUCT_NOUNS` guard in `gen-culture-resx.py`).
+
+### Decision 1 — live-toggle (Este asked; the answer is YES, and Phase D is the time)
+
+**Result: WPF can switch language instantly on the picker toggle — all open windows update with no
+restart — but it requires moving off `{x:Static}`.** `x:Static` is resolved ONCE at load time; it
+cannot react to a culture change (that is exactly why v1.26 applies-on-restart). Live switching is
+the standard WPF pattern:
+
+- A `TranslationSource` singleton implementing `INotifyPropertyChanged` with a `this[string key]`
+  indexer that reads `ResourceManager.GetString(key, CurrentCulture)`, and a `CurrentCulture`
+  setter that raises `PropertyChanged(Binding.IndexerName)`.
+- A `{loc:Loc Key}` markup extension returning a one-way `Binding("[Key]")` to that singleton.
+- XAML `{x:Static loc:Strings.Key}` → `{loc:Loc Key}`. On toggle, set `CurrentCulture` → every
+  bound element re-pulls → the whole UI re-renders in the new language, live.
+- ViewModel composed strings already ride `INotifyPropertyChanged`; on a culture-changed event the
+  VM re-raises its display properties (or reads them through the same source).
+
+**Why fold it into Phase D and not defer it:** live-toggle re-touches the 483 static strings (the
+`x:Static` → `loc:Loc` rewrite). We are already re-touching the entire string surface for the
+~515 composed strings. Do both in one pass, or pay the 483-string rewrite twice. **Bonus:** the
+`{loc:Loc}` indexer looks strings up by key at runtime, which **removes the need for the generated
+`Strings.cs` public accessor** (the CRUX that forced `gen-strings-accessor.py`) — a parity fence
+that every `loc:Loc` key exists in the resx replaces the compile-time accessor check. Net: live
+UX + less generated-code machinery. Cost: the codemod (a Vibe-Lingual transform variant), the tiny
+provider/extension, VM notify wiring, and re-teaching the copy fences the new binding form.
+
+### Decision 2 — plurals (the thing that separates "translated" from "correct")
+
+Many strings are plural-forked: `"1 account is muted"` / `"{n} accounts are muted"`, `"{n} min
+ago"`. English has 2 plural forms; **Russian and Polish have 3-4** with non-trivial rules. Naïve
+per-count keys ship subtly wrong grammar in ru/pl. Options: ICU-style plural resources, or a
+plural-selector helper keyed on each language's CLDR plural category. **This must be decided before
+the App-side extraction** (it shapes how composed strings become resources).
+
+### Policy — what stays English (extend the never-lie rules)
+
+- **External notification payloads** — Discord webhook bodies, Discord Rich Presence card, phone
+  (Pushover/ntfy) envelopes. They go to a channel/service, not the app window. (Desktop toasts
+  shown ON the user's PC — e.g. the memory-warning toast — DO localize.)
+- **Diagnostics support-bundle body** — pasted into Discord for maintainers; English by design.
+- **Unit tokens / glyphs / gestures / product nouns** — per the existing rules and `PRODUCT_NOUNS`.
+
+### Sequence
+
+(a) Core boundary + `CoreMessageCatalog` resx-backing → (b) settle the plural design + build the
+`loc:Loc` provider/codemod → (c) App-side extraction (XAML `x:Static`→`loc:Loc` + composed
+strings) with live-toggle wired → (d) translate + verify the new strings → (e) guards (resx⇄key
+parity for `loc:Loc`, re-pointed copy fences, a fence against new raw UI prose in the converted
+files). Then v1.27 ships a UI that is fully localized AND switches on the toggle, and the Store
+submission (the held v1.26 work, re-versioned) goes out complete.
+
 ## Order
 
-Core boundary (B) → WPF adapter → tool sweep (C). Phase A is independent of all of it and
-can start as soon as the language set is picked.
+Core boundary (B) → WPF adapter → tool sweep (C, shipped v1.26) → completeness + live-toggle (D,
+v1.27). Phase A (listing languages) is independent and rides each release's Phase 2 audit.
