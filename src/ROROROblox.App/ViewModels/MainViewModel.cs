@@ -3518,8 +3518,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
 
         var confirm = MessageBox.Show(
-            $"Remove {summary.RenderName}?\nYou'll need to log in again to add it back.",
-            "Remove Account",
+            Loc.Format("Shell_Msg_RemoveConfirm", summary.RenderName),
+            Loc.Get("Shell_Msg_RemoveAccountTitle"),
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
         if (confirm != MessageBoxResult.Yes)
@@ -3561,7 +3561,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CompactRows));
         OnPropertyChanged(nameof(HasCompactRows));
         RelayCommand.RaiseCanExecuteChanged();
-        StatusBanner = $"Removed {removedName}.";
+        StatusBanner = Loc.Format("Shell_Msg_Removed", removedName);
     }
 
     // Internal for MainViewModelTests (same pattern as LaunchAccountForPluginAsync) — the
@@ -3584,13 +3584,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     // stayed — the 2FA reauth bug's visible half (followups 2026-06-30 §1).
                     // Copy stays state-neutral: the Re-authenticate button also shows on
                     // SessionLimited rows, where "still expired" would be the wrong diagnosis.
-                    StatusBanner = $"Re-authentication cancelled — {summary.RenderName}'s saved session is unchanged.";
+                    StatusBanner = Loc.Format("Shell_Msg_ReauthCancelled", summary.RenderName);
                     return;
                 case CookieCaptureResult.Failed { Kind: CookieCaptureFailureKind.WebView2RuntimeMissing or CookieCaptureFailureKind.WebView2InitFailed }:
                     ShowWebView2NotInstalledModal();
                     return;
                 case CookieCaptureResult.Failed failed:
-                    StatusBanner = $"Re-authentication didn't complete: {CoreMessageCatalog.For(failed)}";
+                    StatusBanner = Loc.Format("Shell_Msg_ReauthIncomplete", CoreMessageCatalog.For(failed));
                     return;
             }
 
@@ -3601,7 +3601,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // account's session would silently corrupt the row, so refuse and say why.
             if (summary.RobloxUserId is long knownUserId && knownUserId != success.UserId)
             {
-                StatusBanner = $"That login was a different account (@{success.Username}) — {summary.RenderName} is unchanged.";
+                StatusBanner = Loc.Format("Shell_Msg_ReauthDifferentAccount", success.Username, summary.RenderName);
                 return;
             }
 
@@ -3635,7 +3635,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
             _log.LogInformation("Re-authenticated account {AccountId}", summary.Id);
             summary.SessionExpired = false;
-            summary.StatusText = "Re-authenticated.";
+            summary.StatusText = Loc.Get("Shell_Status_Reauthenticated");
         }
         finally
         {
@@ -3666,7 +3666,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             summary.JoinViaFriend = !next; // revert on persist failure
-            StatusBanner = $"Couldn't save join-via-friend: {ex.Message}";
+            StatusBanner = Loc.Format("Shell_Msg_CouldntSaveJoinViaFriend", ex.Message);
         }
     }
 
@@ -3915,7 +3915,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         if (ReferenceEquals(source, target)) return;
         if (source.SessionExpired)
         {
-            StatusBanner = $"{source.RenderName} has an expired session — re-authenticate first.";
+            StatusBanner = Loc.Format("Shell_Msg_SourceExpired", source.RenderName);
             return;
         }
         if (target.RobloxUserId is not long targetUserId || targetUserId <= 0)
@@ -3923,8 +3923,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // RobloxUserId is cached lazily (validation pass + cookie capture). If it's never
             // landed, we don't have a userId to route to. Surface the gap rather than fail
             // silently inside the launcher.
-            StatusBanner = $"Couldn't follow {target.RenderName} — Roblox userId not yet known. " +
-                           "Try Re-authenticating that account, or wait a moment after login.";
+            StatusBanner = Loc.Format("Shell_Msg_CouldntFollowNoUserId", target.RenderName);
             return;
         }
         // Share the SAME land-at-home guard as the Friends-modal path so the two follow surfaces
@@ -3940,7 +3939,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             StatusBanner = decision.BlockedMessage!; // non-null whenever CanFollow is false (see FollowDecision.Block)
             return;
         }
-        StatusBanner = $"Following {target.RenderName} from {source.RenderName}...";
+        StatusBanner = Loc.Format("Shell_Msg_FollowingFromSource", target.RenderName, source.RenderName);
         var follow = new LaunchTarget.FollowFriend(targetUserId);
         await LaunchAccountAsync(source, overrideTarget: follow);
     }
@@ -4012,7 +4011,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             _log.LogWarning(ex, "SetMain failed for {AccountId}", summary.Id);
-            StatusBanner = "Couldn't set main account — see log for details.";
+            StatusBanner = Loc.Get("Shell_Msg_CouldntSetMain");
             return;
         }
 
@@ -4023,8 +4022,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(MainAccount));
         OnPropertyChanged(nameof(CompactEmptyKind));
         StatusBanner = newMainId == Guid.Empty
-            ? "Main account cleared."
-            : $"{summary.RenderName} is now your main.";
+            ? Loc.Get("Shell_Msg_MainCleared")
+            : Loc.Format("Shell_Msg_IsNowMain", summary.RenderName);
         RelayCommand.RaiseCanExecuteChanged();
     }
 
@@ -4064,7 +4063,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             }
             Accounts.Clear();
             RefreshFpsCapWarning();
-            StatusBanner = "Started fresh. Add accounts to begin.";
+            StatusBanner = Loc.Get("Shell_Msg_StartedFresh");
         }
         else
         {
@@ -4131,7 +4130,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             _log.LogWarning(ex, "RemoveAsync failed for placeId {PlaceId}.", game.PlaceId);
-            StatusBanner = "Couldn't remove that game. Disk error?";
+            StatusBanner = Loc.Get("Shell_Msg_CouldntRemoveGame");
             return;
         }
 
@@ -4159,7 +4158,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // Race: game removed from another surface between the user opening the popup and
             // clicking. Surface a quiet status banner; in-memory list will reconcile on next reload.
             _log.LogDebug(ex, "SetDefaultAsync: game {PlaceId} no longer exists.", game.PlaceId);
-            StatusBanner = "That game isn't saved any more.";
+            StatusBanner = Loc.Get("Shell_Msg_GameNotSaved");
             await ReloadGamesAsync();
         }
     }
@@ -4185,12 +4184,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             // Race: the entity was removed from another surface between context-menu open and Save.
             _log.LogDebug(ex, "Rename target {Kind} {Id} no longer exists.", target.Kind, target.Id);
-            StatusBanner = $"That {target.Kind.ToString().ToLowerInvariant()} isn't saved any more.";
+            StatusBanner = Loc.Format("Shell_Msg_ItemNotSaved", target.Kind.ToString().ToLowerInvariant());
         }
         catch (System.IO.IOException ex)
         {
             _log.LogWarning(ex, "Atomic write failed during rename of {Kind} {Id}.", target.Kind, target.Id);
-            StatusBanner = "Couldn't save name change. Disk error?";
+            StatusBanner = Loc.Get("Shell_Msg_CouldntSaveNameChange");
             return;
         }
 
@@ -4211,13 +4210,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         catch (KeyNotFoundException ex)
         {
             _log.LogDebug(ex, "Reset target {Kind} {Id} no longer exists.", target.Kind, target.Id);
-            StatusBanner = $"That {target.Kind.ToString().ToLowerInvariant()} isn't saved any more.";
+            StatusBanner = Loc.Format("Shell_Msg_ItemNotSaved", target.Kind.ToString().ToLowerInvariant());
             return;
         }
         catch (System.IO.IOException ex)
         {
             _log.LogWarning(ex, "Atomic write failed during reset of {Kind} {Id}.", target.Kind, target.Id);
-            StatusBanner = "Couldn't save name change. Disk error?";
+            StatusBanner = Loc.Get("Shell_Msg_CouldntSaveNameChange");
             return;
         }
 
