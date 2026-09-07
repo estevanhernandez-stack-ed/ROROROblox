@@ -323,6 +323,23 @@ per-count keys ship subtly wrong grammar in ru/pl. Options: ICU-style plural res
 plural-selector helper keyed on each language's CLDR plural category. **This must be decided before
 the App-side extraction** (it shapes how composed strings become resources).
 
+### Decisions 1 & 2 RESOLVED + runtime foundation LANDED (2026-09-07)
+
+- **Plurals: per-form resx keys + a CLDR selector** (not ICU MessageFormat). A plural string is a
+  family — `Key_one`/`Key_other` (en/fr/de/es/pt), `Key_one`/`Key_few`/`Key_many` (ru/pl) — so each
+  form stays a plain translatable string the agents + verifier handle like any other, with no new
+  dependency. `Plurals.Category(culture, count)` implements the CLDR cardinal rules (integer counts
+  only; UI counts are never fractional); `Loc.Plural(baseKey, count)` picks the form and formats it;
+  `Plurals.Required` drives the lint plural-family guard. `PluralsTests` locks ru/pl with CLDR vectors.
+- **Live-toggle: `{loc:Loc}` bindings over `TranslationSource`** — built + unit-proven. Setting
+  `TranslationSource.CurrentCulture` raises the indexer change (bound XAML re-renders) and fires
+  `CultureChanged` (ViewModels re-raise composed strings): instant switch, no restart. `LocExtension`
+  is the `{loc:Loc Key}` markup extension; `Loc.Get/Format/Plural` the code side.
+  `LocalizationRuntimeTests` proves per-culture resolution + notification against the shipped
+  satellites. **Still to do (the extraction step):** codemod the 483 `x:Static` → `{loc:Loc}` and
+  re-teach the copy fences the new form — which retires `gen-strings-accessor.py` for a resx⇄key
+  parity fence.
+
 ### Policy — what stays English (extend the never-lie rules)
 
 - **External notification payloads** — Discord webhook bodies, Discord Rich Presence card, phone
