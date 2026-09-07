@@ -2146,4 +2146,52 @@
     <value>Theme JSON is missing a required field: {0}</value>
     <comment>Core message; theme-builder validation, resolved by CoreMessageCatalog. {0} is the offending field name (localized Phase D 2026-09-07)</comment>
   </data>
+  <data name="MultiInstance_Tooltip_On" xml:space="preserve">
+    <value>{0} — Multi-Instance ON</value>
+    <comment>Tray tooltip; composed by MultiInstanceStatusLine. {0} is the product name; "Multi-Instance" stays English (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="MultiInstance_Tooltip_Off" xml:space="preserve">
+    <value>{0} — Multi-Instance OFF</value>
+    <comment>Tray tooltip; composed by MultiInstanceStatusLine. {0} is the product name; "Multi-Instance" stays English (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="MultiInstance_Tooltip_Error" xml:space="preserve">
+    <value>{0} — Multi-Instance ERROR (mutex lost)</value>
+    <comment>Tray tooltip; composed by MultiInstanceStatusLine. {0} is the product name; "Multi-Instance" stays English (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="MultiInstance_MenuHeader_On" xml:space="preserve">
+    <value>Multi-Instance: ON ✓</value>
+    <comment>Tray menu item; composed by MultiInstanceStatusLine. "Multi-Instance" stays English (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="MultiInstance_MenuHeader_Off" xml:space="preserve">
+    <value>Multi-Instance: OFF</value>
+    <comment>Tray menu item; composed by MultiInstanceStatusLine. "Multi-Instance" stays English (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="MultiInstance_MenuHeader_Error" xml:space="preserve">
+    <value>Multi-Instance: ERROR — click to reload</value>
+    <comment>Tray menu item; composed by MultiInstanceStatusLine. "Multi-Instance" stays English (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="MultiInstance_StatusBar_On" xml:space="preserve">
+    <value>Multi-Instance on</value>
+    <comment>Main window footer; composed by MultiInstanceStatusLine. "Multi-Instance" stays English (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="MultiInstance_StatusBar_Off" xml:space="preserve">
+    <value>Multi-Instance off</value>
+    <comment>Main window footer; composed by MultiInstanceStatusLine. "Multi-Instance" stays English (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="MultiInstance_StatusBar_Error" xml:space="preserve">
+    <value>Multi-Instance error</value>
+    <comment>Main window footer; composed by MultiInstanceStatusLine. "Multi-Instance" stays English (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="MultiInstance_StatusBarTooltip_On" xml:space="preserve">
+    <value>Roblox clients can run side by side. Toggle this from the tray icon's right-click menu.</value>
+    <comment>Footer tooltip; composed by MultiInstanceStatusLine (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="MultiInstance_StatusBarTooltip_Off" xml:space="preserve">
+    <value>Only one Roblox client can run at a time. Right-click the tray icon and click Multi-Instance to turn it on.</value>
+    <comment>Footer tooltip; composed by MultiInstanceStatusLine. "Multi-Instance" stays English (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="MultiInstance_StatusBarTooltip_Error" xml:space="preserve">
+    <value>The Roblox singleton lock was lost, so new clients may refuse to open. Right-click the tray icon and click Multi-Instance to take it back.</value>
+    <comment>Footer tooltip; composed by MultiInstanceStatusLine. "Multi-Instance" stays English (localized Phase D 2026-09-07)</comment>
+  </data>
 </root>

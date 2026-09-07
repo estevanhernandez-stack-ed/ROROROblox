@@ -1,4 +1,6 @@
-namespace ROROROblox.Core;
+using ROROROblox.Core;
+
+namespace ROROROblox.App.Localization;
 
 /// <summary>
 /// Every sentence the app says about <see cref="MultiInstanceState"/>, in one place (F-018, F-034).
@@ -18,15 +20,22 @@ namespace ROROROblox.Core;
 /// cannot fit goes in <see cref="StatusBarTooltip"/>, which is also the only place that says where
 /// the switch actually lives — the tray menu Windows hides behind an overflow chevron by default.
 /// </para>
+/// <para>
+/// WHY IT LIVES IN THE APP (Core string boundary, localization Phase D, 2026-09-07). Every arm here
+/// is text a viewer reads, and its only callers are the App — the status-bar VM and the tray. It was
+/// raw English prose in Core; it composes each arm from resx now (<see cref="Loc"/>), so a live
+/// culture toggle re-narrates the footer and tray alike. "Multi-Instance" stays verbatim across
+/// languages — it is a product noun (the PRODUCT_NOUNS guard keeps it English in every catalog).
+/// </para>
 /// </summary>
 public static class MultiInstanceStatusLine
 {
     /// <summary>The tray icon's hover text. Carries the product name because nothing else near it does.</summary>
     public static string Tooltip(MultiInstanceState state) => state switch
     {
-        MultiInstanceState.On => $"{Branding.ProductName} — Multi-Instance ON",
-        MultiInstanceState.Off => $"{Branding.ProductName} — Multi-Instance OFF",
-        MultiInstanceState.Error => $"{Branding.ProductName} — Multi-Instance ERROR (mutex lost)",
+        MultiInstanceState.On => Loc.Format("MultiInstance_Tooltip_On", Branding.ProductName),
+        MultiInstanceState.Off => Loc.Format("MultiInstance_Tooltip_Off", Branding.ProductName),
+        MultiInstanceState.Error => Loc.Format("MultiInstance_Tooltip_Error", Branding.ProductName),
         _ => Branding.ProductName,
     };
 
@@ -36,17 +45,17 @@ public static class MultiInstanceStatusLine
     /// </summary>
     public static string MenuHeader(MultiInstanceState state) => state switch
     {
-        MultiInstanceState.On => "Multi-Instance: ON ✓",
-        MultiInstanceState.Error => "Multi-Instance: ERROR — click to reload",
-        _ => "Multi-Instance: OFF",
+        MultiInstanceState.On => Loc.Get("MultiInstance_MenuHeader_On"),
+        MultiInstanceState.Error => Loc.Get("MultiInstance_MenuHeader_Error"),
+        _ => Loc.Get("MultiInstance_MenuHeader_Off"),
     };
 
     /// <summary>The main window footer. State only — the switch stays in the tray (F-018).</summary>
     public static string StatusBar(MultiInstanceState state) => state switch
     {
-        MultiInstanceState.On => "Multi-Instance on",
-        MultiInstanceState.Error => "Multi-Instance error",
-        _ => "Multi-Instance off",
+        MultiInstanceState.On => Loc.Get("MultiInstance_StatusBar_On"),
+        MultiInstanceState.Error => Loc.Get("MultiInstance_StatusBar_Error"),
+        _ => Loc.Get("MultiInstance_StatusBar_Off"),
     };
 
     /// <summary>
@@ -56,14 +65,9 @@ public static class MultiInstanceStatusLine
     /// </summary>
     public static string StatusBarTooltip(MultiInstanceState state) => state switch
     {
-        MultiInstanceState.On =>
-            "Roblox clients can run side by side. Toggle this from the tray icon's right-click menu.",
-        MultiInstanceState.Error =>
-            "The Roblox singleton lock was lost, so new clients may refuse to open. Right-click the "
-            + "tray icon and click Multi-Instance to take it back.",
-        _ =>
-            "Only one Roblox client can run at a time. Right-click the tray icon and click "
-            + "Multi-Instance to turn it on.",
+        MultiInstanceState.On => Loc.Get("MultiInstance_StatusBarTooltip_On"),
+        MultiInstanceState.Error => Loc.Get("MultiInstance_StatusBarTooltip_Error"),
+        _ => Loc.Get("MultiInstance_StatusBarTooltip_Off"),
     };
 
     /// <summary>
