@@ -53,8 +53,9 @@ public class DiagnosticsCollectorTests
 
         var snap = await collector.CollectAsync();
 
-        // The class contract is "a missing piece becomes 'not detected' rather than throwing."
-        // Zero is honest here; a fabricated plausible number in a support bundle is not.
+        // The class contract is "a missing piece becomes an absence rather than throwing" (a null
+        // version the App renders as "not detected", a zero count). Zero is honest here; a
+        // fabricated plausible number in a support bundle is not.
         Assert.Equal(0, snap.TotalPhysicalMemoryBytes);
         Assert.Equal(0, snap.AvailablePhysicalMemoryBytes);
     }

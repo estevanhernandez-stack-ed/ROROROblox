@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Microsoft.Win32;
+using ROROROblox.App.Localization;
 using ROROROblox.App.Logging;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
@@ -53,19 +54,19 @@ internal partial class DiagnosticsPage : UserControl
             ("Version", s.AppVersion),
             (".NET runtime", s.DotNetVersion),
             ("OS", s.OsVersion),
-            ("Multi-Instance", s.MultiInstanceState),
+            ("Multi-Instance", s.MultiInstanceHeld ? Loc.Get("Diag_On") : Loc.Get("Diag_Off")),
             ("Saved accounts", s.AccountCount.ToString()),
             ("Live Roblox clients", s.LiveProcessCount.ToString()),
         });
         AddSection("Roblox", new[]
         {
             ("Installed", s.RobloxInstalled ? "yes" : "no"),
-            ("Version", s.RobloxInstalledVersion),
+            ("Version", s.RobloxInstalledVersion ?? Loc.Get("Diag_NotDetected")),
         });
         AddSection("WebView2", new[]
         {
             ("Installed", s.WebView2Installed ? "yes" : "no"),
-            ("Version", s.WebView2Version),
+            ("Version", s.WebView2Version ?? Loc.Get("Diag_NotDetected")),
         });
         AddSection("Memory", new[]
         {
@@ -233,15 +234,18 @@ internal partial class DiagnosticsPage : UserControl
             writer.WriteLine($"App version       : {snapshot.AppVersion}");
             writer.WriteLine($".NET runtime      : {snapshot.DotNetVersion}");
             writer.WriteLine($"OS                : {snapshot.OsVersion}");
-            writer.WriteLine($"Multi-Instance    : {snapshot.MultiInstanceState}");
+            // The bundle body stays English by policy — a clan member pastes it into a bug report a
+            // maintainer reads. So these compose English from the snapshot's data, the same way the
+            // "yes"/"no" lines below already do, rather than reusing the localized UI-panel strings.
+            writer.WriteLine($"Multi-Instance    : {(snapshot.MultiInstanceHeld ? "ON" : "OFF")}");
             writer.WriteLine($"Saved accounts    : {snapshot.AccountCount}");
             writer.WriteLine($"Live clients      : {snapshot.LiveProcessCount}");
             writer.WriteLine();
             writer.WriteLine($"Roblox installed  : {(snapshot.RobloxInstalled ? "yes" : "no")}");
-            writer.WriteLine($"Roblox version    : {snapshot.RobloxInstalledVersion}");
+            writer.WriteLine($"Roblox version    : {snapshot.RobloxInstalledVersion ?? "not detected"}");
             writer.WriteLine();
             writer.WriteLine($"WebView2 installed: {(snapshot.WebView2Installed ? "yes" : "no")}");
-            writer.WriteLine($"WebView2 version  : {snapshot.WebView2Version}");
+            writer.WriteLine($"WebView2 version  : {snapshot.WebView2Version ?? "not detected"}");
             writer.WriteLine();
             writer.WriteLine($"Installed RAM     : {FormatGb(snapshot.TotalPhysicalMemoryBytes)}");
             writer.WriteLine($"Available RAM     : {FormatGb(snapshot.AvailablePhysicalMemoryBytes)}");

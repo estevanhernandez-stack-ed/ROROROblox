@@ -8,8 +8,9 @@ namespace ROROROblox.Core.Diagnostics;
 
 /// <summary>
 /// Default <see cref="IDiagnosticsCollector"/>. All probes are best-effort — a missing piece
-/// becomes "not detected" rather than throwing. Designed so a clean snapshot is always
-/// produceable even on a busted machine where half the surface is broken.
+/// becomes an absence (a null version, a zero count) rather than throwing; the App renders that
+/// absence as "not detected" (localized Phase D 2026-09-07). Designed so a clean snapshot is
+/// always produceable even on a busted machine where half the surface is broken.
 /// </summary>
 public sealed class DiagnosticsCollector : IDiagnosticsCollector
 {
@@ -106,13 +107,13 @@ public sealed class DiagnosticsCollector : IDiagnosticsCollector
             AppVersion: appVersion,
             DotNetVersion: dotnet,
             OsVersion: osVersion,
-            RobloxInstalledVersion: robloxVersion ?? "not detected",
+            RobloxInstalledVersion: robloxVersion,
             RobloxInstalled: robloxVersion is not null,
-            WebView2Version: webView2Version ?? "not detected",
+            WebView2Version: webView2Version,
             WebView2Installed: webView2Version is not null,
             AccountCount: accountCount,
             LiveProcessCount: _processTracker.Attached.Count,
-            MultiInstanceState: _mutexHolder.IsHeld ? "ON" : "OFF",
+            MultiInstanceHeld: _mutexHolder.IsHeld,
             LogDirectory: _logDirectory,
             DataDirectory: _dataDirectory,
             CapturedAtUtc: DateTimeOffset.UtcNow,

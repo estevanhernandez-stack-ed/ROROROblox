@@ -2106,4 +2106,16 @@
     <value>saved</value>
     <comment>Row accessibility name; composed by SessionHistoryRowName (localized Phase D 2026-09-07)</comment>
   </data>
+  <data name="Diag_On" xml:space="preserve">
+    <value>ON</value>
+    <comment>Diagnostics System-health panel; the support-bundle body keeps its own English (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="Diag_Off" xml:space="preserve">
+    <value>OFF</value>
+    <comment>Diagnostics System-health panel; the support-bundle body keeps its own English (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="Diag_NotDetected" xml:space="preserve">
+    <value>not detected</value>
+    <comment>Diagnostics System-health panel; the support-bundle body keeps its own English (localized Phase D 2026-09-07)</comment>
+  </data>
 </root>
