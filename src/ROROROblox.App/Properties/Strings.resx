@@ -2332,4 +2332,31 @@
   <data name="Shell_DefaultGameTooltip_Set" xml:space="preserve"><value>The default game Launch As uses when no per-row pick is set. Click to change.</value><comment>DefaultGameTooltip (localized Phase D step 3)</comment></data>
   <data name="Shell_CompactToggle_Expand" xml:space="preserve"><value>Expand</value><comment>CompactToggleLabel (localized Phase D step 3)</comment></data>
   <data name="Shell_CompactToggle_Compact" xml:space="preserve"><value>Compact</value><comment>CompactToggleLabel (localized Phase D step 3)</comment></data>
+  <data name="Shell_Launch_NothingNoAccounts" xml:space="preserve"><value>Nothing to launch — no accounts available.</value><comment>LaunchEligibility banner (localized Phase D step 3)</comment></data>
+  <data name="Shell_Launch_NothingReasons" xml:space="preserve"><value>Nothing to launch — {0}.</value><comment>LaunchEligibility banner; {0}=reason clauses (localized Phase D step 3)</comment></data>
+  <data name="Shell_Launch_Dispatched_one" xml:space="preserve"><value>{1}. {0} client dispatched.</value><comment>LaunchEligibility banner via Loc.Plural; {0}=count {1}=verb (localized Phase D step 3)</comment></data>
+  <data name="Shell_Launch_Dispatched_other" xml:space="preserve"><value>{1}. {0} clients dispatched.</value><comment>LaunchEligibility banner via Loc.Plural (localized Phase D step 3)</comment></data>
+  <data name="Shell_Launch_Dispatched_few" xml:space="preserve"><value>{1}. {0} clients dispatched.</value><comment>few-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Launch_Dispatched_many" xml:space="preserve"><value>{1}. {0} clients dispatched.</value><comment>many-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Launch_Clause_Running" xml:space="preserve"><value>{0} already running</value><comment>LaunchEligibility skip clause (localized Phase D step 3)</comment></data>
+  <data name="Shell_Launch_Clause_Expired" xml:space="preserve"><value>{0} expired</value><comment>LaunchEligibility skip clause (localized Phase D step 3)</comment></data>
+  <data name="Shell_Launch_Clause_Limited" xml:space="preserve"><value>{0} limited</value><comment>LaunchEligibility skip clause (localized Phase D step 3)</comment></data>
+  <data name="Shell_Launch_Clause_Deselected" xml:space="preserve"><value>{0} deselected</value><comment>LaunchEligibility skip clause (localized Phase D step 3)</comment></data>
+  <data name="Shell_Leftover_Windowless_one" xml:space="preserve"><value>{0} leftover Roblox process with no window</value><comment>LeftoverSummary via Loc.Plural; "Roblox" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Leftover_Windowless_other" xml:space="preserve"><value>{0} leftover Roblox processes with no window</value><comment>LeftoverSummary via Loc.Plural (localized Phase D step 3)</comment></data>
+  <data name="Shell_Leftover_Windowless_few" xml:space="preserve"><value>{0} leftover Roblox processes with no window</value><comment>few-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Leftover_Windowless_many" xml:space="preserve"><value>{0} leftover Roblox processes with no window</value><comment>many-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Leftover_Windowed_one" xml:space="preserve"><value>{0} open Roblox window from before</value><comment>LeftoverSummary via Loc.Plural (localized Phase D step 3)</comment></data>
+  <data name="Shell_Leftover_Windowed_other" xml:space="preserve"><value>{0} open Roblox windows from before</value><comment>LeftoverSummary via Loc.Plural (localized Phase D step 3)</comment></data>
+  <data name="Shell_Leftover_Windowed_few" xml:space="preserve"><value>{0} open Roblox windows from before</value><comment>few-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Leftover_Windowed_many" xml:space="preserve"><value>{0} open Roblox windows from before</value><comment>many-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Leftover_Connector" xml:space="preserve"><value>, and </value><comment>LeftoverSummary list join; translators localize incl. spaces (localized Phase D step 3)</comment></data>
+  <data name="Shell_Leftover_Found" xml:space="preserve"><value>Found {0}. Multi-instance is fine — RoRoRo has the lock.</value><comment>LeftoverSummary; product nouns stay English (localized Phase D step 3)</comment></data>
+  <data name="Shell_PreWarm_Updating" xml:space="preserve"><value>Roblox is updating — hold on.</value><comment>PreWarmGate row status; "Roblox" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_PreWarm_NeverConnected" xml:space="preserve"><value>Launch never connected. Check Roblox is current + antivirus isn't blocking.</value><comment>PreWarmGate row status (localized Phase D step 3)</comment></data>
+  <data name="Shell_ServerLanding_RecycleNotYet" xml:space="preserve"><value>{0} isn't in that server yet — check its Roblox window. A full server puts you in line.</value><comment>ServerLandingReport; {0}=account (localized Phase D step 3)</comment></data>
+  <data name="Shell_ServerLanding_RecycleElsewhere" xml:space="preserve"><value>{0} came back in a different server — Roblox moved it. Recycle again to retry.</value><comment>ServerLandingReport; {0}=account (localized Phase D step 3)</comment></data>
+  <data name="Shell_ServerLanding_SquadNotYet" xml:space="preserve"><value>{0} of {1} aren't in that server yet: {2}. Check their Roblox windows — a full server puts you in line.</value><comment>ServerLandingReport; {0}=count {1}=total {2}=names (localized Phase D step 3)</comment></data>
+  <data name="Shell_ServerLanding_SquadElsewhere" xml:space="preserve"><value>{0} of {1} landed in a different server: {2}. Recycle those rows to retry.</value><comment>ServerLandingReport; {0}=count {1}=total {2}=names (localized Phase D step 3)</comment></data>
+  <data name="Shell_ServerLanding_MoreNames" xml:space="preserve"><value> +{0} more</value><comment>ServerLandingReport name-overflow suffix (localized Phase D step 3)</comment></data>
 </root>

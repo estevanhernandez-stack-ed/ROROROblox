@@ -1,3 +1,4 @@
+using ROROROblox.App.Localization;
 using ROROROblox.Core;
 
 namespace ROROROblox.App.ViewModels;
@@ -124,8 +125,8 @@ internal static class ServerLandingReport
     public static string ComposeRecycleMiss(string accountName, ServerLandingOutcome outcome) =>
         outcome == ServerLandingOutcome.NeverLanded
             // Says what to check, not what to avoid. Naming the wrong move plants it.
-            ? $"{accountName} isn't in that server yet — check its Roblox window. A full server puts you in line."
-            : $"{accountName} came back in a different server — Roblox moved it. Recycle again to retry.";
+            ? Loc.Format("Shell_ServerLanding_RecycleNotYet", accountName)
+            : Loc.Format("Shell_ServerLanding_RecycleElsewhere", accountName);
 
     /// <summary>
     /// Squad Launch missed for some accounts. "We're all together" is the whole point of the
@@ -139,14 +140,12 @@ internal static class ServerLandingReport
 
         if (notInYet.Count > 0)
         {
-            parts.Add($"{notInYet.Count} of {totalVerified} aren't in that server yet: {Names(notInYet)}. "
-                + "Check their Roblox windows — a full server puts you in line.");
+            parts.Add(Loc.Format("Shell_ServerLanding_SquadNotYet", notInYet.Count, totalVerified, Names(notInYet)));
         }
 
         if (landedElsewhere.Count > 0)
         {
-            parts.Add($"{landedElsewhere.Count} of {totalVerified} landed in a different server: "
-                + $"{Names(landedElsewhere)}. Recycle those rows to retry.");
+            parts.Add(Loc.Format("Shell_ServerLanding_SquadElsewhere", landedElsewhere.Count, totalVerified, Names(landedElsewhere)));
         }
 
         return parts.Count == 0 ? null : string.Join(" ", parts);
@@ -159,5 +158,5 @@ internal static class ServerLandingReport
     private static string Names(IReadOnlyList<string> names) =>
         names.Count <= MaxNamesShown
             ? string.Join(", ", names)
-            : string.Join(", ", names.Take(MaxNamesShown)) + $" +{names.Count - MaxNamesShown} more";
+            : string.Join(", ", names.Take(MaxNamesShown)) + Loc.Format("Shell_ServerLanding_MoreNames", names.Count - MaxNamesShown);
 }

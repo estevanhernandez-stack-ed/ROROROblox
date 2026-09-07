@@ -1,3 +1,5 @@
+using ROROROblox.App.Localization;
+
 namespace ROROROblox.App.ViewModels;
 
 /// <summary>Formats the LEFTOVER modal's split-aware body: windowless orphans (safe to clean) vs
@@ -9,11 +11,11 @@ public static class LeftoverSummary
     {
         var clauses = new System.Collections.Generic.List<string>(2);
         if (windowless > 0)
-            clauses.Add($"{windowless} leftover Roblox process{(windowless == 1 ? "" : "es")} with no window");
+            clauses.Add(Loc.Plural("Shell_Leftover_Windowless", windowless));
         if (windowed > 0)
-            clauses.Add($"{windowed} open Roblox window{(windowed == 1 ? "" : "s")} from before");
+            clauses.Add(Loc.Plural("Shell_Leftover_Windowed", windowed));
 
-        var found = string.Join(", and ", clauses);
-        return $"Found {found}. Multi-instance is fine — RoRoRo has the lock.";
+        var found = string.Join(Loc.Get("Shell_Leftover_Connector"), clauses);
+        return Loc.Format("Shell_Leftover_Found", found);
     }
 }
