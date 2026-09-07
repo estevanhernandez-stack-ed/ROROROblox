@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Windows;
+using ROROROblox.App.Localization;
 using ROROROblox.Core.Theming;
 
 namespace ROROROblox.App.Theming;
@@ -72,8 +73,9 @@ internal partial class ThemeBuilderWindow : Window
         }
         catch (InvalidThemeException ex)
         {
-            // Validation failures get a friendly inline message — no stack, no MessageBox.
-            StatusText.Text = ex.Message;
+            // Validation failures get a friendly inline message — no stack, no MessageBox. The
+            // exception carries a Kind, not prose; the App composes the localized sentence.
+            StatusText.Text = CoreMessageCatalog.For(ex);
         }
         catch (Exception ex)
         {

@@ -1,6 +1,7 @@
 using ROROROblox.Core;
 using ROROROblox.Core.Discord;
 using ROROROblox.Core.Notify;
+using ROROROblox.Core.Theming;
 
 namespace ROROROblox.App.Localization;
 
@@ -44,6 +45,20 @@ internal static class CoreMessageCatalog
         };
         return Loc.Format("CoreMsg_Compat_Banner", direction, drift.InstalledVersion, drift.TestedMaxVersion);
     }
+
+    /// <summary>The inline message the theme builder shows when a pasted blob is rejected. Core hands
+    /// over the <see cref="InvalidThemeException.Kind"/> (+ Detail for the two kinds that carry data);
+    /// the sentence is composed here (resource-backed Phase D).</summary>
+    public static string For(InvalidThemeException ex) => ex.Kind switch
+    {
+        InvalidThemeKind.EmptyInput => Loc.Get("CoreMsg_Theme_EmptyInput"),
+        InvalidThemeKind.UnreadableJson => Loc.Format("CoreMsg_Theme_UnreadableJson", ex.Detail),
+        InvalidThemeKind.NullPayload => Loc.Get("CoreMsg_Theme_NullPayload"),
+        InvalidThemeKind.MissingName => Loc.Get("CoreMsg_Theme_MissingName"),
+        InvalidThemeKind.EmptyFilename => Loc.Get("CoreMsg_Theme_EmptyFilename"),
+        InvalidThemeKind.MissingField => Loc.Format("CoreMsg_Theme_MissingField", ex.Detail),
+        _ => throw new ArgumentOutOfRangeException(nameof(ex), ex.Kind, null),
+    };
 
     public static string For(CookieCaptureResult.Failed failed) => failed.Kind switch
     {

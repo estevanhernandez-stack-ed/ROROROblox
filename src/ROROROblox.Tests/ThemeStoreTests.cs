@@ -290,7 +290,10 @@ public class ThemeStoreTests : IDisposable
 
         var ex = await Assert.ThrowsAsync<InvalidThemeException>(() =>
             store.SaveUserThemeAsync("{ this is not valid json"));
-        Assert.Contains("JSON", ex.Message, StringComparison.OrdinalIgnoreCase);
+        // Core carries the reason as data now (the prose moved to the App's CoreMessageCatalog):
+        // the kind is UnreadableJson and the parser's own reason rides along in Detail.
+        Assert.Equal(InvalidThemeKind.UnreadableJson, ex.Kind);
+        Assert.False(string.IsNullOrWhiteSpace(ex.Detail));
     }
 
     [Fact]
@@ -314,7 +317,10 @@ public class ThemeStoreTests : IDisposable
         """;
 
         var ex = await Assert.ThrowsAsync<InvalidThemeException>(() => store.SaveUserThemeAsync(json));
-        Assert.Contains("magenta", ex.Message, StringComparison.OrdinalIgnoreCase);
+        // The offending field is data now (Detail), not baked into a sentence — the App composes
+        // the localized "missing a required field: {0}" line from it.
+        Assert.Equal(InvalidThemeKind.MissingField, ex.Kind);
+        Assert.Contains("magenta", ex.Detail ?? "", StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
