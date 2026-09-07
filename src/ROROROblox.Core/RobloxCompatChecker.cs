@@ -28,9 +28,6 @@ public sealed class RobloxCompatChecker : IRobloxCompatChecker
 
     private const string CompatConfigSignatureUrl = CompatConfigUrl + ".sig";
 
-    private const string IssuesUrl =
-        "https://github.com/estevanhernandez-stack-ed/ROROROblox/issues";
-
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -76,7 +73,7 @@ public sealed class RobloxCompatChecker : IRobloxCompatChecker
         {
             // Roblox isn't installed — banner is item 9's "Roblox not installed" modal,
             // not the version-drift banner.
-            return new CompatCheckResult(HasDrift: false, Banner: null);
+            return new CompatCheckResult(HasDrift: false, Drift: null);
         }
 
         var config = await FetchConfigAsync(TimeSpan.FromSeconds(8)).ConfigureAwait(false);
@@ -85,27 +82,28 @@ public sealed class RobloxCompatChecker : IRobloxCompatChecker
             // No network or no published config — fail-quiet. Returning no-drift means the user
             // doesn't see a stale banner. If multi-instance breaks, the symptoms still point them
             // at the issue tracker via the "Roblox not installed" / "session expired" surfaces.
-            return new CompatCheckResult(HasDrift: false, Banner: null);
+            return new CompatCheckResult(HasDrift: false, Drift: null);
         }
 
         if (!Version.TryParse(installed, out var installedVer)
             || !Version.TryParse(config.KnownGoodVersionMin, out var minVer)
             || !Version.TryParse(config.KnownGoodVersionMax, out var maxVer))
         {
-            return new CompatCheckResult(HasDrift: false, Banner: null);
+            return new CompatCheckResult(HasDrift: false, Drift: null);
         }
 
         if (installedVer >= minVer && installedVer <= maxVer)
         {
-            return new CompatCheckResult(HasDrift: false, Banner: null);
+            return new CompatCheckResult(HasDrift: false, Drift: null);
         }
 
-        var direction = installedVer > maxVer ? "updated to" : "downgraded to";
-        var banner =
-            $"Roblox {direction} {installed}. We've tested up to {config.KnownGoodVersionMax}. " +
-            $"Multi-instance might not work — let us know at {IssuesUrl}.";
+        var direction = installedVer > maxVer
+            ? CompatDriftDirection.UpdatedTo
+            : CompatDriftDirection.DowngradedTo;
 
-        return new CompatCheckResult(HasDrift: true, Banner: banner);
+        return new CompatCheckResult(
+            HasDrift: true,
+            Drift: new CompatDrift(direction, installed, config.KnownGoodVersionMax));
     }
 
     private async Task<RobloxCompatConfig?> FetchConfigAsync(TimeSpan timeout)
