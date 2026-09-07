@@ -32,6 +32,19 @@ internal static class CoreMessageCatalog
         _ => throw new ArgumentOutOfRangeException(nameof(failed), failed.Kind, null),
     };
 
+    /// <summary>The version-drift banner (F-125 era; resource-backed Phase D). Core hands over the
+    /// direction + versions as <see cref="CompatDrift"/>; the sentence is composed here.</summary>
+    public static string For(CompatDrift drift)
+    {
+        var direction = drift.Direction switch
+        {
+            CompatDriftDirection.UpdatedTo => Loc.Get("CoreMsg_Compat_UpdatedTo"),
+            CompatDriftDirection.DowngradedTo => Loc.Get("CoreMsg_Compat_DowngradedTo"),
+            _ => throw new ArgumentOutOfRangeException(nameof(drift), drift.Direction, null),
+        };
+        return Loc.Format("CoreMsg_Compat_Banner", direction, drift.InstalledVersion, drift.TestedMaxVersion);
+    }
+
     public static string For(CookieCaptureResult.Failed failed) => failed.Kind switch
     {
         CookieCaptureFailureKind.WebView2RuntimeMissing => Loc.Get("CoreMsg_Cookie_WebView2RuntimeMissing"),

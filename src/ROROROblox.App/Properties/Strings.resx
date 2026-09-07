@@ -2074,4 +2074,16 @@
     <value>Couldn't clear history{0} Nothing was deleted.</value>
     <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
   </data>
+  <data name="CoreMsg_Compat_UpdatedTo" xml:space="preserve">
+    <value>updated to</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Compat_DowngradedTo" xml:space="preserve">
+    <value>downgraded to</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Compat_Banner" xml:space="preserve">
+    <value>Roblox {0} {1}. We've tested up to {2}. Multi-instance might not work — let us know at https://github.com/estevanhernandez-stack-ed/ROROROblox/issues.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
 </root>

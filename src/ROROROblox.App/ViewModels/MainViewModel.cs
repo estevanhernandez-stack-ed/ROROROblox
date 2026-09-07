@@ -1344,7 +1344,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         try
         {
             var result = await _compatChecker.CheckAsync();
-            RobloxCompatBanner = result.HasDrift ? result.Banner : null;
+            RobloxCompatBanner = result is { HasDrift: true, Drift: { } drift }
+                ? CoreMessageCatalog.For(drift)
+                : null;
         }
         catch (Exception ex)
         {
