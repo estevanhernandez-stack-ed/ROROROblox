@@ -1,8 +1,9 @@
 <Window x:Class="ROROROblox.App.Modals.LeftoverProcessesWindow"
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:loc="clr-namespace:ROROROblox.App.Properties"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Leftover Roblox processes"
+        Title="{x:Static loc:Strings.LeftoverProcessesWindow_LeftoverRobloxProcesses}"
         Width="520"
         SizeToContent="Height"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
@@ -24,7 +25,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Text="Leftover Roblox processes"
+        <TextBlock Grid.Row="0" Text="{x:Static loc:Strings.LeftoverProcessesWindow_LeftoverRobloxProcesses}"
                    FontSize="18" FontWeight="Bold" Foreground="{DynamicResource CyanBrush}" />
         <TextBlock Grid.Row="1" x:Name="BodyText" TextWrapping="Wrap"
                    FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Opacity="0.85" Margin="0,12,0,0" />
@@ -32,11 +33,11 @@
             <!-- Stray-only cleanup: windowless orphans have nothing to lose (same reasoning as
                  SeamlessTakeover.WindowlessOnly), so no confirmation gate. Hidden entirely when
                  there are no windowless orphans to clear — see code-behind. -->
-            <Button Style="{StaticResource SecondaryButtonStyle}" x:Name="ClearStraysButton" Content="Clear strays" Padding="16,8"
+            <Button Style="{StaticResource SecondaryButtonStyle}" x:Name="ClearStraysButton" Content="{x:Static loc:Strings.LeftoverProcessesWindow_ClearStrays}" Padding="16,8"
                     Margin="0,0,8,0" Click="OnClearStraysClick" />
-            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Clean up + continue" Padding="16,8"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static loc:Strings.LeftoverProcessesWindow_CleanUpContinue}" Padding="16,8"
                     Margin="0,0,8,0" Click="OnCleanUpClick" />
-            <Button Style="{StaticResource CtaButtonStyle}" Content="Continue" Padding="16,8" IsDefault="True" IsCancel="True" Click="OnContinueClick" />
+            <Button Style="{StaticResource CtaButtonStyle}" Content="{x:Static loc:Strings.LeftoverProcessesWindow_Continue}" Padding="16,8" IsDefault="True" IsCancel="True" Click="OnContinueClick" />
         </StackPanel>
     </Grid>
 </Window>

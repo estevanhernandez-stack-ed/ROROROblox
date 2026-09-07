@@ -1,8 +1,9 @@
 <Window x:Class="ROROROblox.App.Plugins.ConsentSheet"
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:loc="clr-namespace:ROROROblox.App.Properties"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Install plugin"
+        Title="{x:Static loc:Strings.ConsentSheet_InstallPlugin}"
         Width="560"
         SizeToContent="Height"
         MaxHeight="620"
@@ -26,12 +27,12 @@
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Margin="0,16,0,0">
-            <Button x:Name="CancelButton" Content="Cancel"
+            <Button x:Name="CancelButton" Content="{x:Static loc:Strings.ConsentSheet_Cancel}"
                     Padding="18,8" Margin="0,0,8,0"
                     Style="{StaticResource SecondaryButtonStyle}"
                     IsCancel="True"
                     Click="OnCancelClick" />
-            <Button x:Name="InstallButton" Style="{StaticResource CtaButtonStyle}" Content="Install"
+            <Button x:Name="InstallButton" Style="{StaticResource CtaButtonStyle}" Content="{x:Static loc:Strings.ConsentSheet_Install}"
                     Padding="22,8"
                     IsDefault="True"
                     Click="OnInstallClick" />
@@ -46,7 +47,7 @@
                 BorderBrush="{DynamicResource CyanBrush}"
                 BorderThickness="0,0,0,2"
                 CornerRadius="6">
-            <TextBlock Text="This plugin starts as soon as you install it. Use the Autostart toggle on the Plugins page to control whether it also launches with RoRoRo."
+            <TextBlock Text="{x:Static loc:Strings.ConsentSheet_ThisPluginStartsAsSoon}"
                        Foreground="{DynamicResource WhiteBrush}"
                        FontSize="{DynamicResource BodyFontSize}"
                        TextWrapping="Wrap"
@@ -108,7 +109,7 @@
 
         <!-- Capability heading -->
         <TextBlock Grid.Row="2"
-                   Text="THIS PLUGIN ASKS FOR"
+                   Text="{x:Static loc:Strings.ConsentSheet_ThisPluginAsksFor}"
                    FontFamily="{DynamicResource MonoFontFamily}"
                    FontSize="{DynamicResource MetaFontSize}"
                    Foreground="{DynamicResource MutedTextBrush}"
@@ -140,7 +141,7 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox Grid.Column="0"
-                                              IsChecked="{Binding IsGranted, Mode=TwoWay}" AutomationProperties.Name="Grant this capability"
+                                              IsChecked="{Binding IsGranted, Mode=TwoWay}" AutomationProperties.Name="{x:Static loc:Strings.ConsentSheet_GrantThisCapability}"
                                               VerticalAlignment="Top"
                                               Margin="0,2,12,0" />
                                     <StackPanel Grid.Column="1">

@@ -78,11 +78,14 @@ public class DismissOrderFenceTests
     {
         if (element.Name.LocalName is not ("Button" or "ToggleButton")) return false;
 
-        var name = element.Attributes()
+        // Name and Content are now {x:Static loc:Strings.Key} references (localization,
+        // 2026-09-06); resolve each to its display text before matching. A surviving literal
+        // resolves to itself.
+        var name = ResxCatalog.Resolve(element.Attributes()
             .FirstOrDefault(a => a.Name.LocalName == "Name" && a.Name.NamespaceName.Contains("automation", StringComparison.OrdinalIgnoreCase))
-            ?.Value;
+            ?.Value);
 
-        var content = element.Attribute("Content")?.Value;
+        var content = ResxCatalog.Resolve(element.Attribute("Content")?.Value);
 
         return (name?.StartsWith("Dismiss", StringComparison.OrdinalIgnoreCase) ?? false)
             || string.Equals(content, "Dismiss", StringComparison.OrdinalIgnoreCase);

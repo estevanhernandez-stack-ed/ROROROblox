@@ -93,3 +93,6 @@ pkg/
 # 77 MB binary rewritten on every index run. Untracked 2026-08-13 after the widened local-path
 # guard caught the repoPath on main. Files stay on disk; Git Nexus is unaffected.
 .gitnexus/
+
+# vibe-lingual tool working dir (backup batches, state) — never committed
+.vibe-lingual/

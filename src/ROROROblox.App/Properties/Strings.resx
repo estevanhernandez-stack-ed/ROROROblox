@@ -1,0 +1,1945 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AboutPage_A626LabsProduct" xml:space="preserve">
+    <value>A 626 Labs product</value>
+    <comment>src/ROROROblox.App/About/AboutPage.xaml:98 xaml-text</comment>
+  </data>
+  <data name="AboutPage_CookiesAreEncryptedWithWindows" xml:space="preserve">
+    <value>Cookies are encrypted with Windows DPAPI per user. They never leave this machine.
+                    A copy of accounts.dat moved to another PC will not decrypt.</value>
+    <comment>src/ROROROblox.App/About/AboutPage.xaml:182 xaml-text</comment>
+  </data>
+  <data name="AboutPage_InsideTheToolsWindowCtrl" xml:space="preserve">
+    <value>Inside the tools window, Ctrl+1 through Ctrl+6 also jump straight to a page.</value>
+    <comment>src/ROROROblox.App/About/AboutPage.xaml:177 xaml-text</comment>
+  </data>
+  <data name="AboutPage_KeyboardShortcuts" xml:space="preserve">
+    <value>Keyboard shortcuts</value>
+    <comment>src/ROROROblox.App/About/AboutPage.xaml:153 xaml-text</comment>
+  </data>
+  <data name="AboutPage_Koii4Eva" xml:space="preserve">
+    <value>Koii 4 eva</value>
+    <comment>src/ROROROblox.App/About/AboutPage.xaml:102 xaml-text</comment>
+  </data>
+  <data name="AboutPage_Links" xml:space="preserve">
+    <value>Links</value>
+    <comment>src/ROROROblox.App/About/AboutPage.xaml:127 xaml-text</comment>
+  </data>
+  <data name="AboutPage_MultiLauncherForWindows" xml:space="preserve">
+    <value>Multi-launcher for Windows.</value>
+    <comment>src/ROROROblox.App/About/AboutPage.xaml:94 xaml-text</comment>
+  </data>
+  <data name="AboutPage_RobloxIsATrademarkOf" xml:space="preserve">
+    <value>"Roblox" is a trademark of Roblox Corporation. RoRoRo is not affiliated with,
+                    endorsed by, or sponsored by Roblox Corporation.</value>
+    <comment>src/ROROROblox.App/About/AboutPage.xaml:187 xaml-text</comment>
+  </data>
+  <data name="AboutPage_Rororo" xml:space="preserve">
+    <value>RoRoRo</value>
+    <comment>src/ROROROblox.App/About/AboutPage.xaml:80 xaml-text</comment>
+  </data>
+  <data name="AboutPage_RunMultipleRobloxClientsSide" xml:space="preserve">
+    <value>Run multiple Roblox clients side by side, signed in as different saved accounts.
+                    Holds the Roblox singleton mutex so subsequent clients don't fight for it; uses
+                    Roblox's documented authentication-ticket flow for per-account launches. Clean
+                    reimplementation; not a fork.</value>
+    <comment>src/ROROROblox.App/About/AboutPage.xaml:118 xaml-text</comment>
+  </data>
+  <data name="AboutPage_Version" xml:space="preserve">
+    <value>Version</value>
+    <comment>src/ROROROblox.App/About/AboutPage.xaml:87 title</comment>
+  </data>
+  <data name="CaptionColorPickerWindow_Apply" xml:space="preserve">
+    <value>Apply</value>
+    <comment>src/ROROROblox.App/Theming/CaptionColorPickerWindow.xaml:62 xaml-text</comment>
+  </data>
+  <data name="CaptionColorPickerWindow_ClickASwatchToApply" xml:space="preserve">
+    <value>Click a swatch to apply. The Roblox window updates within ~1.5s.</value>
+    <comment>src/ROROROblox.App/Theming/CaptionColorPickerWindow.xaml:33 xaml-text</comment>
+  </data>
+  <data name="CaptionColorPickerWindow_Close" xml:space="preserve">
+    <value>Close</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="CaptionColorPickerWindow_CustomHex" xml:space="preserve">
+    <value>Custom hex:</value>
+    <comment>src/ROROROblox.App/Theming/CaptionColorPickerWindow.xaml:49 xaml-text</comment>
+  </data>
+  <data name="CaptionColorPickerWindow_CustomHexColour" xml:space="preserve">
+    <value>Custom hex colour</value>
+    <comment>src/ROROROblox.App/Theming/CaptionColorPickerWindow.xaml:55 aria-label</comment>
+  </data>
+  <data name="CaptionColorPickerWindow_PickATitleBarColor" xml:space="preserve">
+    <value>Pick a title-bar color</value>
+    <comment>src/ROROROblox.App/Theming/CaptionColorPickerWindow.xaml:1 xaml-text</comment>
+  </data>
+  <data name="CaptionColorPickerWindow_ResetToAuto" xml:space="preserve">
+    <value>Reset to auto</value>
+    <comment>src/ROROROblox.App/Theming/CaptionColorPickerWindow.xaml:78 xaml-text</comment>
+  </data>
+  <data name="ConsentSheet_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="ConsentSheet_GrantThisCapability" xml:space="preserve">
+    <value>Grant this capability</value>
+    <comment>src/ROROROblox.App/Plugins/ConsentSheet.xaml:142 aria-label</comment>
+  </data>
+  <data name="ConsentSheet_Install" xml:space="preserve">
+    <value>Install</value>
+    <comment>src/ROROROblox.App/Plugins/ConsentSheet.xaml:34 xaml-text</comment>
+  </data>
+  <data name="ConsentSheet_InstallPlugin" xml:space="preserve">
+    <value>Install plugin</value>
+    <comment>src/ROROROblox.App/Plugins/ConsentSheet.xaml:1 xaml-text</comment>
+  </data>
+  <data name="ConsentSheet_ThisPluginAsksFor" xml:space="preserve">
+    <value>THIS PLUGIN ASKS FOR</value>
+    <comment>src/ROROROblox.App/Plugins/ConsentSheet.xaml:110 xaml-text</comment>
+  </data>
+  <data name="ConsentSheet_ThisPluginStartsAsSoon" xml:space="preserve">
+    <value>This plugin starts as soon as you install it. Use the Autostart toggle on the Plugins page to control whether it also launches with RoRoRo.</value>
+    <comment>src/ROROROblox.App/Plugins/ConsentSheet.xaml:49 xaml-text</comment>
+  </data>
+  <data name="CookieCaptureWindow_AddAccount" xml:space="preserve">
+    <value>Add account</value>
+    <comment>src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:1 xaml-text</comment>
+  </data>
+  <data name="CookieCaptureWindow_AddARobloxAccount" xml:space="preserve">
+    <value>Add a Roblox account</value>
+    <comment>src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:33 xaml-text</comment>
+  </data>
+  <data name="CookieCaptureWindow_FirstOpenCanTakeA" xml:space="preserve">
+    <value>First open can take a few seconds on a fresh WebView2 install.</value>
+    <comment>src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:100 xaml-text</comment>
+  </data>
+  <data name="CookieCaptureWindow_IfThePageIsBlank" xml:space="preserve">
+    <value>If the page is blank, click Reload (F5).</value>
+    <comment>src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:57 xaml-text</comment>
+  </data>
+  <data name="CookieCaptureWindow_LoadingRobloxCom" xml:space="preserve">
+    <value>Loading roblox.com...</value>
+    <comment>src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:90 xaml-text</comment>
+  </data>
+  <data name="CookieCaptureWindow_OverHttpsInsideThisEmbedded" xml:space="preserve">
+    <value>over HTTPS, inside this embedded browser. RoRoRo never sees it.</value>
+    <comment>src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:43 xaml-text</comment>
+  </data>
+  <data name="CookieCaptureWindow_RobloxHasnTAcceptedThis" xml:space="preserve">
+    <value>Roblox hasn't accepted this session yet — finish any verification steps. If this stays after you're fully logged in, close this window and try again.</value>
+    <comment>src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:74 xaml-text</comment>
+  </data>
+  <data name="CookieCaptureWindow_TheEmbeddedBrowserSometimesLoads" xml:space="preserve">
+    <value>The embedded browser sometimes loads slowly on first open. If Roblox asks for two-factor verification, that's normal — verify here and your saved login keeps working.</value>
+    <comment>src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:64 xaml-text</comment>
+  </data>
+  <data name="CookieCaptureWindow_WeCaptureOnlyTheSession" xml:space="preserve">
+    <value>We capture only the session cookie that Roblox sets after a successful login, then encrypt it on disk via Windows DPAPI tied to your user.</value>
+    <comment>src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:50 xaml-text</comment>
+  </data>
+  <data name="CookieCaptureWindow_YourPasswordGoesOnlyTo" xml:space="preserve">
+    <value>Your password goes only to</value>
+    <comment>src/ROROROblox.App/CookieCapture/CookieCaptureWindow.xaml:41 xaml-text</comment>
+  </data>
+  <data name="DiagnosticsPage_BundleTheLatestLogFiles" xml:space="preserve">
+    <value>Bundle the latest log files + this snapshot into a zip you can attach to a Discord report. Cookies are never logged; the bundle contains no secrets.</value>
+    <comment>src/ROROROblox.App/Diagnostics/DiagnosticsPage.xaml:43 title</comment>
+  </data>
+  <data name="DiagnosticsPage_Diagnostics" xml:space="preserve">
+    <value>Diagnostics</value>
+    <comment>src/ROROROblox.App/Diagnostics/DiagnosticsPage.xaml:16 xaml-text</comment>
+  </data>
+  <data name="DiagnosticsPage_OpenDataFolder" xml:space="preserve">
+    <value>Open data folder</value>
+    <comment>src/ROROROblox.App/Diagnostics/DiagnosticsPage.xaml:39 xaml-text</comment>
+  </data>
+  <data name="DiagnosticsPage_OpenLogFolder" xml:space="preserve">
+    <value>Open log folder</value>
+    <comment>src/ROROROblox.App/Diagnostics/DiagnosticsPage.xaml:35 xaml-text</comment>
+  </data>
+  <data name="DiagnosticsPage_SaveSupportBundleZip" xml:space="preserve">
+    <value>Save support bundle (.zip)</value>
+    <comment>src/ROROROblox.App/Diagnostics/DiagnosticsPage.xaml:43 xaml-text</comment>
+  </data>
+  <data name="DiagnosticsPage_SaveTheBundleWhenFiling" xml:space="preserve">
+    <value>Save the bundle when filing a bug — log files redact secrets.</value>
+    <comment>src/ROROROblox.App/Diagnostics/DiagnosticsPage.xaml:17 xaml-text</comment>
+  </data>
+  <data name="DpapiCorruptWindow_Quit" xml:space="preserve">
+    <value>Quit</value>
+    <comment>src/ROROROblox.App/Modals/DpapiCorruptWindow.xaml:43 xaml-text</comment>
+  </data>
+  <data name="DpapiCorruptWindow_SavedAccountsCanTBe" xml:space="preserve">
+    <value>Saved accounts can't be unlocked</value>
+    <comment>src/ROROROblox.App/Modals/DpapiCorruptWindow.xaml:1 xaml-text</comment>
+  </data>
+  <data name="DpapiCorruptWindow_StartFresh" xml:space="preserve">
+    <value>Start Fresh</value>
+    <comment>src/ROROROblox.App/Modals/DpapiCorruptWindow.xaml:39 xaml-text</comment>
+  </data>
+  <data name="DpapiCorruptWindow_ThisUsuallyMeansWindowsWas" xml:space="preserve">
+    <value>This usually means Windows was restored from a backup that didn't preserve the encryption key, or the saved-accounts file was copied from another machine. We need to start your account list fresh — your Roblox accounts themselves are fine, you'll just need to log in again.</value>
+    <comment>src/ROROROblox.App/Modals/DpapiCorruptWindow.xaml:30 xaml-text</comment>
+  </data>
+  <data name="DpapiCorruptWindow_YourSavedAccountsCanT" xml:space="preserve">
+    <value>Your saved accounts can't be unlocked on this PC</value>
+    <comment>src/ROROROblox.App/Modals/DpapiCorruptWindow.xaml:24 xaml-text</comment>
+  </data>
+  <data name="EdgeRemediationWindow_KeepMyThemeAsI" xml:space="preserve">
+    <value>Keep my theme as I wrote it</value>
+    <comment>src/ROROROblox.App/Modals/EdgeRemediationWindow.xaml:96 xaml-text</comment>
+  </data>
+  <data name="EdgeRemediationWindow_SeparatorsCardEdgesAndRow" xml:space="preserve">
+    <value>Separators, card edges and row rules are untouched either way, and so is every text box and dropdown — this is the outline on buttons.</value>
+    <comment>src/ROROROblox.App/Modals/EdgeRemediationWindow.xaml:85 xaml-text</comment>
+  </data>
+  <data name="EdgeRemediationWindow_ThemeContrast" xml:space="preserve">
+    <value>Theme contrast</value>
+    <comment>src/ROROROblox.App/Modals/EdgeRemediationWindow.xaml:1 xaml-text</comment>
+  </data>
+  <data name="EdgeRemediationWindow_UseTheReadableEdge" xml:space="preserve">
+    <value>Use the readable edge</value>
+    <comment>src/ROROROblox.App/Modals/EdgeRemediationWindow.xaml:101 xaml-text</comment>
+  </data>
+  <data name="EdgeRemediationWindow_WeChangedOneColourIn" xml:space="preserve">
+    <value>We changed one colour in your theme</value>
+    <comment>src/ROROROblox.App/Modals/EdgeRemediationWindow.xaml:30 xaml-text</comment>
+  </data>
+  <data name="EdgeRemediationWindow_WithTheFix" xml:space="preserve">
+    <value>With the fix</value>
+    <comment>src/ROROROblox.App/Modals/EdgeRemediationWindow.xaml:68 xaml-text</comment>
+  </data>
+  <data name="EdgeRemediationWindow_YourTheme" xml:space="preserve">
+    <value>Your theme</value>
+    <comment>src/ROROROblox.App/Modals/EdgeRemediationWindow.xaml:52 xaml-text</comment>
+  </data>
+  <data name="ExportAccountsWindow_Accounts" xml:space="preserve">
+    <value>Accounts</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="ExportAccountsWindow_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="ExportAccountsWindow_ConfirmPassphrase" xml:space="preserve">
+    <value>Confirm passphrase</value>
+    <comment>src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:132 aria-label</comment>
+  </data>
+  <data name="ExportAccountsWindow_Export" xml:space="preserve">
+    <value>Export…</value>
+    <comment>src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:151 xaml-text</comment>
+  </data>
+  <data name="ExportAccountsWindow_ExportAccounts" xml:space="preserve">
+    <value>Export accounts</value>
+    <comment>src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:1 xaml-text</comment>
+  </data>
+  <data name="ExportAccountsWindow_IncludeThisAccountInThe" xml:space="preserve">
+    <value>Include this account in the export</value>
+    <comment>src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:60 aria-label</comment>
+  </data>
+  <data name="ExportAccountsWindow_NoRobloxIdYetLaunch" xml:space="preserve">
+    <value>No Roblox ID yet — launch this account once before it can be exported.</value>
+    <comment>src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:82 xaml-text</comment>
+  </data>
+  <data name="ExportAccountsWindow_PassphraseAtLeast12Characters" xml:space="preserve">
+    <value>Passphrase (at least 12 characters)</value>
+    <comment>src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:97 xaml-text</comment>
+  </data>
+  <data name="ExportAccountsWindow_PassphraseAtLeast12Characters_2" xml:space="preserve">
+    <value>Passphrase, at least 12 characters</value>
+    <comment>src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:103 aria-label</comment>
+  </data>
+  <data name="ExportAccountsWindow_PickAccountsAndSetA" xml:space="preserve">
+    <value>Pick accounts and set a passphrase. The saved file is encrypted — anyone who opens it needs the passphrase. There's no recovery if you lose it.</value>
+    <comment>src/ROROROblox.App/Transport/ExportAccountsWindow.xaml:30 xaml-text</comment>
+  </data>
+  <data name="FriendFollowWindow_Close" xml:space="preserve">
+    <value>Close</value>
+    <comment>src/ROROROblox.App/Friends/FriendFollowWindow.xaml:68 xaml-text</comment>
+  </data>
+  <data name="FriendFollowWindow_PickAFriendToFollow" xml:space="preserve">
+    <value>Pick a friend to follow into their server. Roblox does the permission check — works for public AND private servers if your friend's privacy + server allowlist permit.</value>
+    <comment>src/ROROROblox.App/Friends/FriendFollowWindow.xaml:25 xaml-text</comment>
+  </data>
+  <data name="FriendFollowWindow_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+    <comment>src/ROROROblox.App/Friends/FriendFollowWindow.xaml:55 xaml-text</comment>
+  </data>
+  <data name="GamesPage_Add" xml:space="preserve">
+    <value>+ Add</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:58 xaml-text</comment>
+  </data>
+  <data name="GamesPage_AddByUrl" xml:space="preserve">
+    <value>+ Add by URL</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:347 xaml-text</comment>
+  </data>
+  <data name="GamesPage_ClearDefault" xml:space="preserve">
+    <value>Clear default</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:149 xaml-text</comment>
+  </data>
+  <data name="GamesPage_Games" xml:space="preserve">
+    <value>Games</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:302 xaml-text</comment>
+  </data>
+  <data name="GamesPage_GiveThisGameACustom" xml:space="preserve">
+    <value>Give this game a custom name shown only in RoRoRo. The Roblox-side name stays untouched.</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:158 title</comment>
+  </data>
+  <data name="GamesPage_GiveThisServerACustom" xml:space="preserve">
+    <value>Give this server a custom name shown only in RoRoRo.</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:270 title</comment>
+  </data>
+  <data name="GamesPage_NoSavedGamesYet" xml:space="preserve">
+    <value>No saved games yet.</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:371 xaml-text</comment>
+  </data>
+  <data name="GamesPage_NoSavedPrivateServers" xml:space="preserve">
+    <value>No saved private servers.</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:387 xaml-text</comment>
+  </data>
+  <data name="GamesPage_OrPasteARobloxCom" xml:space="preserve">
+    <value>Or paste a roblox.com/games/&lt;id&gt;/&lt;name&gt; URL or place id</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:340 title</comment>
+  </data>
+  <data name="GamesPage_PasteAPrivateServerLink" xml:space="preserve">
+    <value>Paste a private server link into Squad Launch and launch it. It saves here automatically.</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:396 xaml-text</comment>
+  </data>
+  <data name="GamesPage_PreSelectThisServerWhen" xml:space="preserve">
+    <value>Pre-select this server when you launch all accounts to a private server.</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:254 title</comment>
+  </data>
+  <data name="GamesPage_Remove" xml:space="preserve">
+    <value>Remove</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:165 xaml-text</comment>
+  </data>
+  <data name="GamesPage_Rename" xml:space="preserve">
+    <value>Rename…</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:85 xaml-text</comment>
+  </data>
+  <data name="GamesPage_Rename_2" xml:space="preserve">
+    <value>Rename</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:158 xaml-text</comment>
+  </data>
+  <data name="GamesPage_ResetName" xml:space="preserve">
+    <value>Reset name</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:88 xaml-text</comment>
+  </data>
+  <data name="GamesPage_RobloxGameUrlOrPlace" xml:space="preserve">
+    <value>Roblox game URL or place id</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:340 aria-label</comment>
+  </data>
+  <data name="GamesPage_SavedGames" xml:space="preserve">
+    <value>Saved games</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:365 xaml-text</comment>
+  </data>
+  <data name="GamesPage_SavedPrivateServers" xml:space="preserve">
+    <value>Saved private servers</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:381 xaml-text</comment>
+  </data>
+  <data name="GamesPage_Search" xml:space="preserve">
+    <value>Search</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:317 xaml-text</comment>
+  </data>
+  <data name="GamesPage_SearchAboveOrPasteA" xml:space="preserve">
+    <value>Search above or paste a Roblox game URL to add your first one.</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:374 xaml-text</comment>
+  </data>
+  <data name="GamesPage_SearchRobloxGamesByName" xml:space="preserve">
+    <value>Search Roblox games by name</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:310 aria-label</comment>
+  </data>
+  <data name="GamesPage_SearchRobloxGamesByName_2" xml:space="preserve">
+    <value>Search Roblox games by name. Enter to search.</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:310 title</comment>
+  </data>
+  <data name="GamesPage_SetDefault" xml:space="preserve">
+    <value>Set default</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:143 xaml-text</comment>
+  </data>
+  <data name="GamesPage_StopPreSelectingThisServer" xml:space="preserve">
+    <value>Stop pre-selecting this server. You'll pick one each time again.</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:261 title</comment>
+  </data>
+  <data name="GamesPage_StopUsingThisAsThe" xml:space="preserve">
+    <value>Stop using this as the default. Launch As will open Roblox home until you set a default game.</value>
+    <comment>src/ROROROblox.App/Games/GamesPage.xaml:149 title</comment>
+  </data>
+  <data name="ImportAccountsWindow_BackupFilePath" xml:space="preserve">
+    <value>Backup file path</value>
+    <comment>src/ROROROblox.App/Transport/ImportAccountsWindow.xaml:46 aria-label</comment>
+  </data>
+  <data name="ImportAccountsWindow_Browse" xml:space="preserve">
+    <value>Browse…</value>
+    <comment>src/ROROROblox.App/Transport/ImportAccountsWindow.xaml:52 xaml-text</comment>
+  </data>
+  <data name="ImportAccountsWindow_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="ImportAccountsWindow_File" xml:space="preserve">
+    <value>File</value>
+    <comment>src/ROROROblox.App/Transport/ImportAccountsWindow.xaml:35 xaml-text</comment>
+  </data>
+  <data name="ImportAccountsWindow_Import" xml:space="preserve">
+    <value>Import</value>
+    <comment>src/ROROROblox.App/Transport/ImportAccountsWindow.xaml:82 xaml-text</comment>
+  </data>
+  <data name="ImportAccountsWindow_ImportAccounts" xml:space="preserve">
+    <value>Import accounts</value>
+    <comment>src/ROROROblox.App/Transport/ImportAccountsWindow.xaml:1 xaml-text</comment>
+  </data>
+  <data name="ImportAccountsWindow_Passphrase" xml:space="preserve">
+    <value>Passphrase</value>
+    <comment>src/ROROROblox.App/Transport/ImportAccountsWindow.xaml:58 xaml-text</comment>
+  </data>
+  <data name="ImportAccountsWindow_PickARororoAccountsFile" xml:space="preserve">
+    <value>Pick a .rororo-accounts file and enter its passphrase. Accounts already on this PC are kept as-is — only new ones are added.</value>
+    <comment>src/ROROROblox.App/Transport/ImportAccountsWindow.xaml:28 xaml-text</comment>
+  </data>
+  <data name="JoinByLinkWindow_AddThisGameOrPrivate" xml:space="preserve">
+    <value>Add this game or private server to your saved games so it shows up next time without retyping.</value>
+    <comment>src/ROROROblox.App/JoinByLink/JoinByLinkWindow.xaml:81 title</comment>
+  </data>
+  <data name="JoinByLinkWindow_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>src/ROROROblox.App/JoinByLink/JoinByLinkWindow.xaml:88 xaml-text</comment>
+  </data>
+  <data name="JoinByLinkWindow_JoinByLink" xml:space="preserve">
+    <value>Join by link</value>
+    <comment>src/ROROROblox.App/JoinByLink/JoinByLinkWindow.xaml:1 xaml-text</comment>
+  </data>
+  <data name="JoinByLinkWindow_Launch" xml:space="preserve">
+    <value>Launch</value>
+    <comment>src/ROROROblox.App/JoinByLink/JoinByLinkWindow.xaml:92 xaml-text</comment>
+  </data>
+  <data name="JoinByLinkWindow_PasteARobloxGameUrl" xml:space="preserve">
+    <value>Paste a Roblox game URL or a private server share link. We figure out which kind it is.</value>
+    <comment>src/ROROROblox.App/JoinByLink/JoinByLinkWindow.xaml:41 xaml-text</comment>
+  </data>
+  <data name="JoinByLinkWindow_RobloxGameOrPrivateServer" xml:space="preserve">
+    <value>Roblox game or private server link</value>
+    <comment>src/ROROROblox.App/JoinByLink/JoinByLinkWindow.xaml:48 aria-label</comment>
+  </data>
+  <data name="JoinByLinkWindow_SaveToMyGames" xml:space="preserve">
+    <value>Save to my games</value>
+    <comment>src/ROROROblox.App/JoinByLink/JoinByLinkWindow.xaml:81 xaml-text</comment>
+  </data>
+  <data name="JoinRequestWindow_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="JoinRequestWindow_PrivateServer" xml:space="preserve">
+    <value>Private server</value>
+    <comment>src/ROROROblox.App/Modals/JoinRequestWindow.xaml:1 xaml-text</comment>
+  </data>
+  <data name="JoinRequestWindow_RobloxChecksAccessServerSide" xml:space="preserve">
+    <value>ROBLOX CHECKS ACCESS SERVER-SIDE</value>
+    <comment>src/ROROROblox.App/Modals/JoinRequestWindow.xaml:44 xaml-text</comment>
+  </data>
+  <data name="JoinRequestWindow_ThisIsAPrivateServer" xml:space="preserve">
+    <value>This is a private server</value>
+    <comment>src/ROROROblox.App/Modals/JoinRequestWindow.xaml:31 xaml-text</comment>
+  </data>
+  <data name="JoinRequestWindow_TryAnyway" xml:space="preserve">
+    <value>Try anyway</value>
+    <comment>src/ROROROblox.App/Modals/JoinRequestWindow.xaml:56 xaml-text</comment>
+  </data>
+  <data name="LaunchHeadroomWindow_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="LaunchHeadroomWindow_LaunchAnyway" xml:space="preserve">
+    <value>Launch anyway</value>
+    <comment>src/ROROROblox.App/Modals/LaunchHeadroomWindow.xaml:60 xaml-text</comment>
+  </data>
+  <data name="LaunchHeadroomWindow_NotMuchMemoryLeft" xml:space="preserve">
+    <value>Not much memory left</value>
+    <comment>src/ROROROblox.App/Modals/LaunchHeadroomWindow.xaml:1 xaml-text</comment>
+  </data>
+  <data name="LeftoverProcessesWindow_CleanUpContinue" xml:space="preserve">
+    <value>Clean up + continue</value>
+    <comment>src/ROROROblox.App/Modals/LeftoverProcessesWindow.xaml:37 xaml-text</comment>
+  </data>
+  <data name="LeftoverProcessesWindow_ClearStrays" xml:space="preserve">
+    <value>Clear strays</value>
+    <comment>src/ROROROblox.App/Modals/LeftoverProcessesWindow.xaml:35 xaml-text</comment>
+  </data>
+  <data name="LeftoverProcessesWindow_Continue" xml:space="preserve">
+    <value>Continue</value>
+    <comment>src/ROROROblox.App/Modals/LeftoverProcessesWindow.xaml:39 xaml-text</comment>
+  </data>
+  <data name="LeftoverProcessesWindow_LeftoverRobloxProcesses" xml:space="preserve">
+    <value>Leftover Roblox processes</value>
+    <comment>src/ROROROblox.App/Modals/LeftoverProcessesWindow.xaml:1 xaml-text</comment>
+  </data>
+  <data name="MainWindow_120Fps" xml:space="preserve">
+    <value>120 FPS</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:921 xaml-text</comment>
+  </data>
+  <data name="MainWindow_144Fps" xml:space="preserve">
+    <value>144 FPS</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:922 xaml-text</comment>
+  </data>
+  <data name="MainWindow_165Fps" xml:space="preserve">
+    <value>165 FPS</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:923 xaml-text</comment>
+  </data>
+  <data name="MainWindow_20Fps" xml:space="preserve">
+    <value>20 FPS</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:916 xaml-text</comment>
+  </data>
+  <data name="MainWindow_240Fps" xml:space="preserve">
+    <value>240 FPS</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:924 xaml-text</comment>
+  </data>
+  <data name="MainWindow_30Fps" xml:space="preserve">
+    <value>30 FPS</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:917 xaml-text</comment>
+  </data>
+  <data name="MainWindow_45Fps" xml:space="preserve">
+    <value>45 FPS</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:918 xaml-text</comment>
+  </data>
+  <data name="MainWindow_60Fps" xml:space="preserve">
+    <value>60 FPS</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:919 xaml-text</comment>
+  </data>
+  <data name="MainWindow_90Fps" xml:space="preserve">
+    <value>90 FPS</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:920 xaml-text</comment>
+  </data>
+  <data name="MainWindow_About" xml:space="preserve">
+    <value>About</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1213 xaml-text</comment>
+  </data>
+  <data name="MainWindow_Accounts" xml:space="preserve">
+    <value>Accounts</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1073 xaml-text</comment>
+  </data>
+  <data name="MainWindow_AddAccount" xml:space="preserve">
+    <value>+ Add account</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1092 xaml-text</comment>
+  </data>
+  <data name="MainWindow_AddALabelPs99Rcu" xml:space="preserve">
+    <value>Add a label (PS99, RCU…).</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:705 title</comment>
+  </data>
+  <data name="MainWindow_AddATagToThis" xml:space="preserve">
+    <value>Add a tag to this account</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:736 aria-label</comment>
+  </data>
+  <data name="MainWindow_AddGamesFromToolsGames" xml:space="preserve">
+    <value>Add games from Tools → Games</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:893 xaml-text</comment>
+  </data>
+  <data name="MainWindow_AddTag" xml:space="preserve">
+    <value>add tag</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:736 placeholder</comment>
+  </data>
+  <data name="MainWindow_AddYourFirstAccount" xml:space="preserve">
+    <value>+ Add your first account</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1884 xaml-text</comment>
+  </data>
+  <data name="MainWindow_AssignThisAccountAFresh" xml:space="preserve">
+    <value>Assign this account a fresh fake name and avatar for streamer mode.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:314 title</comment>
+  </data>
+  <data name="MainWindow_BloxstrapIsSetAsYour" xml:space="preserve">
+    <value>Bloxstrap is set as your Roblox launcher — it will override per-account FPS. Set FPS in Bloxstrap to match.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1684 xaml-text</comment>
+  </data>
+  <data name="MainWindow_ClickAChipToLaunch" xml:space="preserve">
+    <value>Click a chip to launch this account into another account's current Roblox server.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:577 title</comment>
+  </data>
+  <data name="MainWindow_ClickAddAccountToLog" xml:space="preserve">
+    <value>Click + Add account to log in to your first Roblox account.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1753 xaml-text</comment>
+  </data>
+  <data name="MainWindow_CloseAndRelaunchThisClient" xml:space="preserve">
+    <value>Close and relaunch this client — back into the same server it's in now, and the only guaranteed way to reclaim memory Roblox has leaked.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:958 title</comment>
+  </data>
+  <data name="MainWindow_CloseRobloxForMe" xml:space="preserve">
+    <value>Close Roblox for me</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1582 xaml-text</comment>
+  </data>
+  <data name="MainWindow_CloseTheRobloxWindowFor" xml:space="preserve">
+    <value>Close the Roblox window for this account.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:172 title</comment>
+  </data>
+  <data name="MainWindow_DefaultGamePickWhichGame" xml:space="preserve">
+    <value>Default game — pick which game new launches use</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1229 aria-label</comment>
+  </data>
+  <data name="MainWindow_Diagnostics" xml:space="preserve">
+    <value>Diagnostics</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="MainWindow_Dismiss" xml:space="preserve">
+    <value>Dismiss</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1617 xaml-text</comment>
+  </data>
+  <data name="MainWindow_DismissTheBloxstrapWarning" xml:space="preserve">
+    <value>Dismiss the Bloxstrap warning</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1685 aria-label</comment>
+  </data>
+  <data name="MainWindow_DismissTheFrameRateCap" xml:space="preserve">
+    <value>Dismiss the frame-rate cap warning</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1617 aria-label</comment>
+  </data>
+  <data name="MainWindow_DragToReorderThisAccount" xml:space="preserve">
+    <value>Drag to reorder this account.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:374 title</comment>
+  </data>
+  <data name="MainWindow_Expand" xml:space="preserve">
+    <value>Expand</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1859 xaml-text</comment>
+  </data>
+  <data name="MainWindow_ExpandAndClickTheOn" xml:space="preserve">
+    <value>Expand and click the ☆ on a row to set one.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1853 xaml-text</comment>
+  </data>
+  <data name="MainWindow_FilterAccounts" xml:space="preserve">
+    <value>Filter accounts</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1731 aria-label</comment>
+  </data>
+  <data name="MainWindow_FilterAccountsByTagOr" xml:space="preserve">
+    <value>Filter accounts by tag or name…</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1731 placeholder</comment>
+  </data>
+  <data name="MainWindow_Follow" xml:space="preserve">
+    <value>Follow:</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="MainWindow_Follow_2" xml:space="preserve">
+    <value>Follow</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:628 xaml-text</comment>
+  </data>
+  <data name="MainWindow_ForceCloseEveryRunningRoblox" xml:space="preserve">
+    <value>Force-close every running Roblox client. Asks first.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1200 title</comment>
+  </data>
+  <data name="MainWindow_Fps" xml:space="preserve">
+    <value>— FPS</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:915 xaml-text</comment>
+  </data>
+  <data name="MainWindow_FpsCapAppliedAtLaunch" xml:space="preserve">
+    <value>FPS cap applied at launch</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:908 aria-label</comment>
+  </data>
+  <data name="MainWindow_FpsCapAppliedAtLaunch_2" xml:space="preserve">
+    <value>FPS cap applied at launch (DFIntTaskSchedulerTargetFps + GlobalBasicSettings FramerateCap)</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:908 title</comment>
+  </data>
+  <data name="MainWindow_Friends" xml:space="preserve">
+    <value>Friends</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:839 xaml-text</comment>
+  </data>
+  <data name="MainWindow_GameOrPrivateServerTo" xml:space="preserve">
+    <value>Game or private server to launch this account into</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:853 aria-label</comment>
+  </data>
+  <data name="MainWindow_GameOrSavedPrivateServer" xml:space="preserve">
+    <value>Game or saved private server to launch this account into, or '(Paste a link...)' for a one-shot link.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:853 title</comment>
+  </data>
+  <data name="MainWindow_Games" xml:space="preserve">
+    <value>Games</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="MainWindow_History" xml:space="preserve">
+    <value>History</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="MainWindow_HistoryDiagnosticsPluginsLogFolder" xml:space="preserve">
+    <value>History, Diagnostics, Plugins, log folder, Stop all, tour, About.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1169 title</comment>
+  </data>
+  <data name="MainWindow_HoldingYourOtherAccountsUntil" xml:space="preserve">
+    <value>Holding your other accounts until it finishes — this only happens when Roblox needs a fresh client.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1515 xaml-text</comment>
+  </data>
+  <data name="MainWindow_InBatches" xml:space="preserve">
+    <value>In batches</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="MainWindow_IncludeThisAccountInLaunch" xml:space="preserve">
+    <value>Include this account in Launch multiple and Squad Launch</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:529 aria-label</comment>
+  </data>
+  <data name="MainWindow_IncludeThisAccountInLaunch_2" xml:space="preserve">
+    <value>Include this account in Launch multiple / Squad Launch batches. Click to skip.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:529 title</comment>
+  </data>
+  <data name="MainWindow_InstallAndManageRororoPlugins" xml:space="preserve">
+    <value>Install and manage RoRoRo plugins.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1188 title</comment>
+  </data>
+  <data name="MainWindow_IntoTheirServer" xml:space="preserve">
+    <value>into their server</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:628 xaml-text</comment>
+  </data>
+  <data name="MainWindow_JoinViaFriendChallengeProne" xml:space="preserve">
+    <value>Join via friend (challenge-prone account)</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:276 xaml-text</comment>
+  </data>
+  <data name="MainWindow_JoinViaFriendChallengeProne_2" xml:space="preserve">
+    <value>✓ Join via friend (challenge-prone account)</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:279 xaml-text</comment>
+  </data>
+  <data name="MainWindow_LaunchAs" xml:space="preserve">
+    <value>Launch As</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:929 xaml-text</comment>
+  </data>
+  <data name="MainWindow_LaunchEverySelectedAccountInto" xml:space="preserve">
+    <value>Launch every selected account into its own per-row game, one at a time about 5 seconds apart — the gap makes sure each window lands on the right account. Use the dot next to each account's status to deselect. (Ctrl+L)</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1468 title</comment>
+  </data>
+  <data name="MainWindow_LaunchMultiple" xml:space="preserve">
+    <value>Launch multiple</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1468 xaml-text</comment>
+  </data>
+  <data name="MainWindow_LaunchYourMainAccountInto" xml:space="preserve">
+    <value>Launch your main account into its current per-row game.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1824 title</comment>
+  </data>
+  <data name="MainWindow_LogInToARoblox" xml:space="preserve">
+    <value>Log in to a Roblox account and save it here. (Ctrl+N)</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1092 title</comment>
+  </data>
+  <data name="MainWindow_ManageGames" xml:space="preserve">
+    <value>Manage games…</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1337 xaml-text</comment>
+  </data>
+  <data name="MainWindow_MuteDiscordAlerts" xml:space="preserve">
+    <value>Mute Discord alerts</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:296 xaml-text</comment>
+  </data>
+  <data name="MainWindow_MutedNoDiscordAlerts" xml:space="preserve">
+    <value>✓ Muted — no Discord alerts</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:299 xaml-text</comment>
+  </data>
+  <data name="MainWindow_NoAccountsSaved" xml:space="preserve">
+    <value>No accounts saved.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1879 xaml-text</comment>
+  </data>
+  <data name="MainWindow_NoMainAccountPicked" xml:space="preserve">
+    <value>No main account picked.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1848 xaml-text</comment>
+  </data>
+  <data name="MainWindow_NoRobloxRunning" xml:space="preserve">
+    <value>No Roblox running.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1819 xaml-text</comment>
+  </data>
+  <data name="MainWindow_NoSavedAccountsYet" xml:space="preserve">
+    <value>No saved accounts yet.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1749 xaml-text</comment>
+  </data>
+  <data name="MainWindow_NoSavedGamesYetAdd" xml:space="preserve">
+    <value>No saved games yet — Add a game</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1300 xaml-text</comment>
+  </data>
+  <data name="MainWindow_OpenLogFolder" xml:space="preserve">
+    <value>Open log folder</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="MainWindow_OpenTheFolderHoldingRororo" xml:space="preserve">
+    <value>Open the folder holding RoRoRo's log files.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1197 title</comment>
+  </data>
+  <data name="MainWindow_PickARobloxWindowTitle" xml:space="preserve">
+    <value>Pick a Roblox window title-bar color for this account.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:763 title</comment>
+  </data>
+  <data name="MainWindow_Plugins" xml:space="preserve">
+    <value>Plugins</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1188 xaml-text</comment>
+  </data>
+  <data name="MainWindow_RecentSessionsPerAccountWhat" xml:space="preserve">
+    <value>Recent sessions per account: what game/server, when, how long.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1180 title</comment>
+  </data>
+  <data name="MainWindow_Recycle" xml:space="preserve">
+    <value>Recycle</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:958 xaml-text</comment>
+  </data>
+  <data name="MainWindow_RecycleCloseAndRelaunchThis" xml:space="preserve">
+    <value>Recycle — close and relaunch this client back into the server it's in now, and reclaim leaked memory.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:144 title</comment>
+  </data>
+  <data name="MainWindow_Remove" xml:space="preserve">
+    <value>Remove</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="MainWindow_RemoveThisTag" xml:space="preserve">
+    <value>Remove this tag</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:684 aria-label</comment>
+  </data>
+  <data name="MainWindow_RemoveThisTag_2" xml:space="preserve">
+    <value>Remove this tag.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:684 title</comment>
+  </data>
+  <data name="MainWindow_Rename" xml:space="preserve">
+    <value>Rename…</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="MainWindow_ReplayTheFirstRunTour" xml:space="preserve">
+    <value>Replay the first-run tour of the account row.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1210 title</comment>
+  </data>
+  <data name="MainWindow_RerollIdentity" xml:space="preserve">
+    <value>Reroll identity</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:314 aria-label</comment>
+  </data>
+  <data name="MainWindow_RerollIdentity_2" xml:space="preserve">
+    <value>🎲 Reroll identity</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:314 xaml-text</comment>
+  </data>
+  <data name="MainWindow_ResetName" xml:space="preserve">
+    <value>Reset name</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="MainWindow_Retry" xml:space="preserve">
+    <value>Retry</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1584 xaml-text</comment>
+  </data>
+  <data name="MainWindow_RobloxFlaggedThisAccountRe" xml:space="preserve">
+    <value>Roblox flagged this account. Re-authenticate, or wait for it to cool down.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:945 title</comment>
+  </data>
+  <data name="MainWindow_RobloxIsUpdating" xml:space="preserve">
+    <value>Roblox is updating</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1510 xaml-text</comment>
+  </data>
+  <data name="MainWindow_Rororo" xml:space="preserve">
+    <value>RoRoRo</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="MainWindow_SavedGamesAndPrivateServers" xml:space="preserve">
+    <value>Saved games and private servers for the launch picker. (Ctrl+G)</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1144 title</comment>
+  </data>
+  <data name="MainWindow_SeeThisAccountSFriends" xml:space="preserve">
+    <value>See this account's friends and follow one into their server (works for public + private).</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:839 title</comment>
+  </data>
+  <data name="MainWindow_SendEverySelectedAccountInto" xml:space="preserve">
+    <value>Send every selected account into the SAME server — a private server link, or a plain game link to share one public server. Launch multiple, next to this, sends each account into its own game instead. Use the dot next to each account's status to deselect. (Ctrl+J)</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1479 title</comment>
+  </data>
+  <data name="MainWindow_SetAsDefault" xml:space="preserve">
+    <value>Set as default</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1373 xaml-text</comment>
+  </data>
+  <data name="MainWindow_SetAsMainAccount" xml:space="preserve">
+    <value>Set as main account</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:784 aria-label</comment>
+  </data>
+  <data name="MainWindow_SetAsMainAccountDrives" xml:space="preserve">
+    <value>Set as main account. Drives the compact-mode CTA + tray double-click target.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:792 xaml-text</comment>
+  </data>
+  <data name="MainWindow_Settings" xml:space="preserve">
+    <value>Settings</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1151 xaml-text</comment>
+  </data>
+  <data name="MainWindow_ShowOnlyAccountsWhoseTag" xml:space="preserve">
+    <value>Show only accounts whose tag or name contains this text. Drag-reorder is paused while filtering — clear the box to reorder again.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1731 title</comment>
+  </data>
+  <data name="MainWindow_ShrinkToASmallOps" xml:space="preserve">
+    <value>Shrink to a small ops view that only shows running accounts. Click again to expand.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1946 title</comment>
+  </data>
+  <data name="MainWindow_Skipped" xml:space="preserve">
+    <value>Skipped</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="MainWindow_SquadLaunch" xml:space="preserve">
+    <value>Squad Launch</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1479 xaml-text</comment>
+  </data>
+  <data name="MainWindow_SquadLaunchesRouteThisAccount" xml:space="preserve">
+    <value>Squad launches route this account into the server by following a squad member who's already in — Roblox's verification prompts hit direct joins, not follows. Requires friendship with your squad.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:271 title</comment>
+  </data>
+  <data name="MainWindow_Start" xml:space="preserve">
+    <value>▶ Start</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1830 xaml-text</comment>
+  </data>
+  <data name="MainWindow_StartupAccountsAlertsDiscordAnd" xml:space="preserve">
+    <value>Startup, accounts, alerts, Discord, and theme. (Ctrl+,)</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1151 title</comment>
+  </data>
+  <data name="MainWindow_Stop" xml:space="preserve">
+    <value>Stop</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:172 xaml-text</comment>
+  </data>
+  <data name="MainWindow_StopAllRobloxInstances" xml:space="preserve">
+    <value>Stop all Roblox instances</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1200 xaml-text</comment>
+  </data>
+  <data name="MainWindow_StopDiscordAlertsForThis" xml:space="preserve">
+    <value>Stop Discord alerts for this account only. Routing is per-trigger; muting is per-account.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:291 title</comment>
+  </data>
+  <data name="MainWindow_SystemHealthRobloxWebview2Versions" xml:space="preserve">
+    <value>System health, Roblox + WebView2 versions, log location.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1184 title</comment>
+  </data>
+  <data name="MainWindow_ThisIsYourMainAccount" xml:space="preserve">
+    <value>This is your main account. Click to unset.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:795 xaml-text</comment>
+  </data>
+  <data name="MainWindow_Tools" xml:space="preserve">
+    <value>Tools  ▾</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1169 xaml-text</comment>
+  </data>
+  <data name="MainWindow_Tools_2" xml:space="preserve">
+    <value>Tools</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1169 aria-label</comment>
+  </data>
+  <data name="MainWindow_TypeALabelPs99Rcu" xml:space="preserve">
+    <value>Type a label (PS99, RCU…) and press Enter. Esc to cancel.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:736 title</comment>
+  </data>
+  <data name="MainWindow_UnlimitedFps" xml:space="preserve">
+    <value>Unlimited FPS</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:925 xaml-text</comment>
+  </data>
+  <data name="MainWindow_VersionLinksLicense" xml:space="preserve">
+    <value>Version, links, license.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1213 title</comment>
+  </data>
+  <data name="MainWindow_WelcomeTour" xml:space="preserve">
+    <value>Welcome tour</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1210 xaml-text</comment>
+  </data>
+  <data name="MainWindow_WhetherThisAccountJoinsLaunch" xml:space="preserve">
+    <value>Whether this account joins Launch multiple / Squad Launch batch launches. Click the dot to flip.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:534 title</comment>
+  </data>
+  <data name="MainWindow_XMinimizesToTrayQuit" xml:space="preserve">
+    <value>X minimizes to tray. Quit from the tray to exit.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:1999 xaml-text</comment>
+  </data>
+  <data name="PageHeader_Rororo" xml:space="preserve">
+    <value>RoRoRo</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="PluginsPage_Autostart" xml:space="preserve">
+    <value>Autostart</value>
+    <comment>src/ROROROblox.App/Plugins/PluginsPage.xaml:221 xaml-text</comment>
+  </data>
+  <data name="PluginsPage_EachPluginRunsInIts" xml:space="preserve">
+    <value>Each plugin runs in its own process and only sees what you grant.</value>
+    <comment>src/ROROROblox.App/Plugins/PluginsPage.xaml:31 xaml-text</comment>
+  </data>
+  <data name="PluginsPage_Install" xml:space="preserve">
+    <value>Install</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="PluginsPage_InstallFromUrl" xml:space="preserve">
+    <value>INSTALL FROM URL</value>
+    <comment>src/ROROROblox.App/Plugins/PluginsPage.xaml:109 xaml-text</comment>
+  </data>
+  <data name="PluginsPage_Launch" xml:space="preserve">
+    <value>Launch</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="PluginsPage_NoPluginsInstalled" xml:space="preserve">
+    <value>No plugins installed.</value>
+    <comment>src/ROROROblox.App/Plugins/PluginsPage.xaml:334 xaml-text</comment>
+  </data>
+  <data name="PluginsPage_PasteAReleaseUrlAbove" xml:space="preserve">
+    <value>Paste a release URL above to add one.</value>
+    <comment>src/ROROROblox.App/Plugins/PluginsPage.xaml:338 xaml-text</comment>
+  </data>
+  <data name="PluginsPage_PasteTheBaseUrlOf" xml:space="preserve">
+    <value>Paste the base URL of a plugin release (the folder containing manifest.json, manifest.sha256, and plugin.zip).</value>
+    <comment>src/ROROROblox.App/Plugins/PluginsPage.xaml:133 xaml-text</comment>
+  </data>
+  <data name="PluginsPage_PluginManifestUrl" xml:space="preserve">
+    <value>Plugin manifest URL</value>
+    <comment>src/ROROROblox.App/Plugins/PluginsPage.xaml:119 aria-label</comment>
+  </data>
+  <data name="PluginsPage_Plugins" xml:space="preserve">
+    <value>Plugins</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="PluginsPage_Remove" xml:space="preserve">
+    <value>Remove</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="PluginsPage_Restart" xml:space="preserve">
+    <value>Restart</value>
+    <comment>src/ROROROblox.App/Plugins/PluginsPage.xaml:71 xaml-text</comment>
+  </data>
+  <data name="PluginsPage_Update" xml:space="preserve">
+    <value>Update</value>
+    <comment>src/ROROROblox.App/Plugins/PluginsPage.xaml:244 xaml-text</comment>
+  </data>
+  <data name="RenameWindow_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="RenameWindow_NewName" xml:space="preserve">
+    <value>New name</value>
+    <comment>src/ROROROblox.App/Modals/RenameWindow.xaml:45 aria-label</comment>
+  </data>
+  <data name="RenameWindow_Rename" xml:space="preserve">
+    <value>Rename</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="RenameWindow_Save" xml:space="preserve">
+    <value>Save</value>
+    <comment>src/ROROROblox.App/Modals/RenameWindow.xaml:73 xaml-text</comment>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_AlreadyHaveAnotherCopyOf" xml:space="preserve">
+    <value>Already have another copy of RoRoRo or a compatible tool holding the lock? Start anyway — multi-instance keeps working, and RoRoRo will show a banner while it doesn't hold the lock.</value>
+    <comment>src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:78 xaml-text</comment>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_ChooseQuitRobloxThenHit" xml:space="preserve">
+    <value>Choose Quit Roblox — then hit Retry</value>
+    <comment>src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:57 xaml-text</comment>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_ClickTheNearTheClock" xml:space="preserve">
+    <value>Click the ^ near the clock (bottom-right)</value>
+    <comment>src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:49 xaml-text</comment>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_CloseRobloxForMe" xml:space="preserve">
+    <value>Close Roblox for me</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_QuitRororo" xml:space="preserve">
+    <value>Quit RoRoRo</value>
+    <comment>src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:93 xaml-text</comment>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_Retry" xml:space="preserve">
+    <value>Retry</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_RightClickTheRobloxIcon" xml:space="preserve">
+    <value>Right-click the Roblox icon</value>
+    <comment>src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:53 xaml-text</comment>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_RobloxCanStartItselfWith" xml:space="preserve">
+    <value>Roblox can start itself with Windows. You can turn that off in Roblox's tray settings — but you don't have to; RoRoRo will catch it here either way.</value>
+    <comment>src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:62 xaml-text</comment>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_RobloxIsAlreadyRunning" xml:space="preserve">
+    <value>Roblox is already running</value>
+    <comment>src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:1 xaml-text</comment>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_RororoNeedsTheMultiInstance" xml:space="preserve">
+    <value>RoRoRo needs the multi-instance lock, but Roblox is holding it — it may be running with no window at all, hidden in your system tray.</value>
+    <comment>src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:40 xaml-text</comment>
+  </data>
+  <data name="RobloxAlreadyRunningWindow_StartAnyway" xml:space="preserve">
+    <value>Start anyway</value>
+    <comment>src/ROROROblox.App/Modals/RobloxAlreadyRunningWindow.xaml:95 xaml-text</comment>
+  </data>
+  <data name="RobloxNotInstalledWindow_DownloadRoblox" xml:space="preserve">
+    <value>Download Roblox</value>
+    <comment>src/ROROROblox.App/Modals/RobloxNotInstalledWindow.xaml:49 xaml-text</comment>
+  </data>
+  <data name="RobloxNotInstalledWindow_IfYouUseBloxstrapMake" xml:space="preserve">
+    <value>If you use Bloxstrap, make sure it's set as the default Roblox launcher in its settings — Bloxstrap should also handle our launches.</value>
+    <comment>src/ROROROblox.App/Modals/RobloxNotInstalledWindow.xaml:38 xaml-text</comment>
+  </data>
+  <data name="RobloxNotInstalledWindow_OpenBloxstrapSetup" xml:space="preserve">
+    <value>Open Bloxstrap setup</value>
+    <comment>src/ROROROblox.App/Modals/RobloxNotInstalledWindow.xaml:47 xaml-text</comment>
+  </data>
+  <data name="RobloxNotInstalledWindow_RobloxDoesnTAppearTo" xml:space="preserve">
+    <value>Roblox doesn't appear to be installed</value>
+    <comment>src/ROROROblox.App/Modals/RobloxNotInstalledWindow.xaml:25 xaml-text</comment>
+  </data>
+  <data name="RobloxNotInstalledWindow_RobloxNeeded" xml:space="preserve">
+    <value>Roblox needed</value>
+    <comment>src/ROROROblox.App/Modals/RobloxNotInstalledWindow.xaml:1 xaml-text</comment>
+  </data>
+  <data name="RobloxNotInstalledWindow_RororoLaunchesRobloxViaThe" xml:space="preserve">
+    <value>RoRoRo launches Roblox via the standard roblox-player: handler. We can't find that handler on this PC, which usually means Roblox isn't installed yet.</value>
+    <comment>src/ROROROblox.App/Modals/RobloxNotInstalledWindow.xaml:30 xaml-text</comment>
+  </data>
+  <data name="SessionHistoryPage_ClearHistory" xml:space="preserve">
+    <value>Clear history</value>
+    <comment>src/ROROROblox.App/History/SessionHistoryPage.xaml:158 xaml-text</comment>
+  </data>
+  <data name="SessionHistoryPage_DayStreak" xml:space="preserve">
+    <value>DAY STREAK</value>
+    <comment>src/ROROROblox.App/History/SessionHistoryPage.xaml:88 xaml-text</comment>
+  </data>
+  <data name="SessionHistoryPage_History" xml:space="preserve">
+    <value>History</value>
+    <comment>src/ROROROblox.App/History/SessionHistoryPage.xaml:15 xaml-text</comment>
+  </data>
+  <data name="SessionHistoryPage_PeakAltsAtOnce" xml:space="preserve">
+    <value>PEAK ALTS AT ONCE</value>
+    <comment>src/ROROROblox.App/History/SessionHistoryPage.xaml:55 xaml-text</comment>
+  </data>
+  <data name="SessionHistoryPage_SinceHistoryBegan" xml:space="preserve">
+    <value>since history began</value>
+    <comment>src/ROROROblox.App/History/SessionHistoryPage.xaml:63 xaml-text</comment>
+  </data>
+  <data name="SessionHistoryPage_TotalUptime" xml:space="preserve">
+    <value>TOTAL UPTIME</value>
+    <comment>src/ROROROblox.App/History/SessionHistoryPage.xaml:71 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_10Minutes" xml:space="preserve">
+    <value>10 minutes</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:304 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_12Minutes" xml:space="preserve">
+    <value>12 minutes</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:305 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_15Minutes" xml:space="preserve">
+    <value>15 minutes</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:306 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_18Minutes" xml:space="preserve">
+    <value>18 minutes</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:307 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_1GetTheFreeNtfy" xml:space="preserve">
+    <value>1. Get the free ntfy app from your phone's app store — no account needed.  2. In it, subscribe to the exact topic below.  3. Hit the test button. The topic is a secret — anyone holding it can read and fake your alerts, which is why RoRoRo makes it long and random. On iPhone, delivery is best-effort; Pushover is the reliable choice there.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:570 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_Accounts" xml:space="preserve">
+    <value>Accounts</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="SettingsPage_AddAccountsFromAnEncrypted" xml:space="preserve">
+    <value>Add accounts from an encrypted .rororo-accounts file.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:262 title</comment>
+  </data>
+  <data name="SettingsPage_Alerts" xml:space="preserve">
+    <value>Alerts</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:318 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_AlertsMemory" xml:space="preserve">
+    <value>Alerts &amp; memory</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:35 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_AlwaysShowRecycleOnRunning" xml:space="preserve">
+    <value>Always show Recycle on running accounts.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:210 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_AnAccountDropsOut" xml:space="preserve">
+    <value>An account drops out</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:333 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_AnAccountEatsMemory" xml:space="preserve">
+    <value>An account eats memory</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:352 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_AnAccountGetsRecycled" xml:space="preserve">
+    <value>An account gets recycled</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:366 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_Appearance" xml:space="preserve">
+    <value>Appearance</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:37 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_ApplicationToken" xml:space="preserve">
+    <value>Application token</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:549 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_AServerOnlyYouRead" xml:space="preserve">
+    <value>A server only you read. Saved encrypted on this PC and never leaves it except to post your alerts.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:441 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_ASharedRoomAnythingRouted" xml:space="preserve">
+    <value>A shared room. Anything routed here is read by everyone in that channel, now and later — so send what the clan should see, not everything.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:477 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_AssignEveryFakeNameAnd" xml:space="preserve">
+    <value>Assign every fake name and avatar a fresh pick.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:191 title</comment>
+  </data>
+  <data name="SettingsPage_AWholeNumberFrom256" xml:space="preserve">
+    <value>A whole number from 256 to 65536, or blank to let RoRoRo pick.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:725 aria-label</comment>
+  </data>
+  <data name="SettingsPage_AWholeNumberFrom256_2" xml:space="preserve">
+    <value>A whole number from 256 to 65536, 0 to turn this warning off, or blank to let RoRoRo pick.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:754 aria-label</comment>
+  </data>
+  <data name="SettingsPage_AWholeNumberOfMinutes" xml:space="preserve">
+    <value>A whole number of minutes from 1 to 1440. The default is 120.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:782 aria-label</comment>
+  </data>
+  <data name="SettingsPage_BothCodesComeFromPushover" xml:space="preserve">
+    <value>Both codes come from pushover.net: your user key is on the dashboard, and creating an application there (name it anything) gives you its token. The phone app is a one-time purchase after the trial.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:524 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_BuildATheme" xml:space="preserve">
+    <value>+ Build a theme...</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:890 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_BuzzesYourPhoneDirectlyNo" xml:space="preserve">
+    <value>Buzzes your phone directly — no Discord needed. Pushover is the app most of the clan already uses; ntfy is free. Tick My phone on an alert above, set the service up once here.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:513 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_ClanChannel" xml:space="preserve">
+    <value>Clan channel</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:342 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_ClanChannelWebhookUrl" xml:space="preserve">
+    <value>Clan channel — webhook URL</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:475 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_ClanChannelWebhookUrl_2" xml:space="preserve">
+    <value>Clan channel webhook URL</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:485 aria-label</comment>
+  </data>
+  <data name="SettingsPage_Desktop" xml:space="preserve">
+    <value>Desktop</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:340 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_Discord" xml:space="preserve">
+    <value>Discord</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:36 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_DiscordPresence" xml:space="preserve">
+    <value>Discord presence</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:828 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_DropAJsonFileIn" xml:space="preserve">
+    <value>Drop a *.json file in here, then close and reopen Settings to see it in the picker.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:897 title</comment>
+  </data>
+  <data name="SettingsPage_EachAccountFinishesLandingIn" xml:space="preserve">
+    <value>Each account finishes landing in the game before the next one starts. It takes longer, but no two accounts are ever joining at once, which is what sets off Roblox's verification prompts. You can also flip this in the Squad Launch window.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:137 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_ExportAccounts" xml:space="preserve">
+    <value>Export accounts…</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:257 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_GenerateANewNtfyTopic" xml:space="preserve">
+    <value>Generate a new ntfy topic</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:589 aria-label</comment>
+  </data>
+  <data name="SettingsPage_GetToldWhenSomethingHappens" xml:space="preserve">
+    <value>Get told when something happens to an account while you're away from the PC. Sending to a Discord channel takes about a minute to set up — there's a walkthrough below if you've never made a webhook.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:324 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_HidesNamesAvatarsAndShare" xml:space="preserve">
+    <value>Hides names, avatars, and share links inside RoRoRo. It does not change anything Roblox itself shows — your stream still shows whatever is on screen in the game.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:186 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_IdleAccounts" xml:space="preserve">
+    <value>Idle accounts</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:274 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_IdleWarnThreshold" xml:space="preserve">
+    <value>Idle warn threshold</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:292 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_IDonTHaveA" xml:space="preserve">
+    <value>I don't have a Discord server</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:499 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_ImportAccounts" xml:space="preserve">
+    <value>Import accounts…</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:262 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_KeepRobloxWindowed" xml:space="preserve">
+    <value>Keep Roblox windowed</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:145 aria-label</comment>
+  </data>
+  <data name="SettingsPage_KeepRobloxWindowed_2" xml:space="preserve">
+    <value>Keep Roblox windowed.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:151 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_LaunchASquadOneAccount" xml:space="preserve">
+    <value>Launch a squad one account at a time</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:129 aria-label</comment>
+  </data>
+  <data name="SettingsPage_LaunchASquadOneAccount_2" xml:space="preserve">
+    <value>Launch a squad one account at a time.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:135 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_LaunchYourMainAccountWhen" xml:space="preserve">
+    <value>Launch your main account when RoRoRo starts.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:102 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_LeaveAsNtfyShUnless" xml:space="preserve">
+    <value>Leave as ntfy.sh unless you run your own server.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:597 title</comment>
+  </data>
+  <data name="SettingsPage_LetFriendsJoinYourServer" xml:space="preserve">
+    <value>Let friends join your server from Discord.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:853 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_MakesAFreshRandomTopic" xml:space="preserve">
+    <value>Makes a fresh random topic. Your phone stops getting alerts until you subscribe to the new one.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:589 title</comment>
+  </data>
+  <data name="SettingsPage_Memory" xml:space="preserve">
+    <value>Memory</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:666 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_MemorySettingsWarning" xml:space="preserve">
+    <value>Memory settings warning</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:813 aria-label</comment>
+  </data>
+  <data name="SettingsPage_MemoryToKeepFreeIn" xml:space="preserve">
+    <value>Memory to keep free, in megabytes</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:725 aria-label</comment>
+  </data>
+  <data name="SettingsPage_MemoryToKeepFreeMb" xml:space="preserve">
+    <value>Memory to keep free (MB)</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:715 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_MoveYourSavedAccountsTo" xml:space="preserve">
+    <value>Move your saved accounts to another PC. Export writes a passphrase-encrypted file; import merges it in without touching accounts already on this machine.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:251 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_MutedAccounts" xml:space="preserve">
+    <value>Muted accounts</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:416 aria-label</comment>
+  </data>
+  <data name="SettingsPage_MuteIdleAlerts" xml:space="preserve">
+    <value>Mute idle alerts.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:285 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_MyChannel" xml:space="preserve">
+    <value>My channel</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:341 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_MyChannelWebhookUrl" xml:space="preserve">
+    <value>My channel — webhook URL</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:439 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_MyChannelWebhookUrl_2" xml:space="preserve">
+    <value>My channel webhook URL</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:454 aria-label</comment>
+  </data>
+  <data name="SettingsPage_MyPhone" xml:space="preserve">
+    <value>My phone</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:343 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_MyPhonePushService" xml:space="preserve">
+    <value>My phone — push service</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:511 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_NewTopic" xml:space="preserve">
+    <value>New topic</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:589 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_NormallyStopGivesRobloxTen" xml:space="preserve">
+    <value>Normally Stop gives Roblox ten seconds to close itself, counting down on the row, because Roblox asks you to confirm inside the game and only a clean exit saves your Roblox settings — window size, fullscreen, graphics quality. Turn this on and Stop closes the client at once, and those settings go back to whatever was last saved.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:232 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_Ntfy" xml:space="preserve">
+    <value>ntfy</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:520 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_NtfyServerAddress" xml:space="preserve">
+    <value>ntfy server address</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:597 aria-label</comment>
+  </data>
+  <data name="SettingsPage_NtfyTopic" xml:space="preserve">
+    <value>ntfy topic</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:580 aria-label</comment>
+  </data>
+  <data name="SettingsPage_Off" xml:space="preserve">
+    <value>Off</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:518 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_OneClientOnItsOwn" xml:space="preserve">
+    <value>One client on its own, not the whole PC. A healthy Pet Sim client sits near 2650 MB. 256 to 65536, or 0 to turn this warning off. Leave it blank and RoRoRo works one out.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:769 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_OpenThemesFolder" xml:space="preserve">
+    <value>Open themes folder</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:897 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_OpenTheThemeBuilderCopy" xml:space="preserve">
+    <value>Open the theme builder. Copy an AI prompt, paste the result back, save.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:890 title</comment>
+  </data>
+  <data name="SettingsPage_PairWithTheToggleAbove" xml:space="preserve">
+    <value>Pair with the toggle above for a one-step boot-to-Roblox setup. Pick a main account in the row list (the ☆ star) first.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:104 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_PickABuiltInOr" xml:space="preserve">
+    <value>Pick a built-in or drop your own JSON in the themes folder. The main window updates immediately; secondary dialogs (this one, Diagnostics, About) adopt the theme on next open.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:870 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_Pushover" xml:space="preserve">
+    <value>Pushover</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:519 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_PushoverApplicationToken" xml:space="preserve">
+    <value>Pushover application token</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:555 aria-label</comment>
+  </data>
+  <data name="SettingsPage_PushoverUserKey" xml:space="preserve">
+    <value>Pushover user key</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:539 aria-label</comment>
+  </data>
+  <data name="SettingsPage_RecycleClosesAClientAnd" xml:space="preserve">
+    <value>Recycle closes a client and puts it straight back into the server it was in — useful for a client that's gone sideways, not just one eating memory. Off, it appears only when RoRoRo warns about that account's memory.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:212 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_RerollAllIdentities" xml:space="preserve">
+    <value>Reroll all identities</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:191 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_RevealTheSavedKeySo" xml:space="preserve">
+    <value>Reveal the saved key so you can read or replace it.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:542 title</comment>
+  </data>
+  <data name="SettingsPage_RevealTheSavedTokenSo" xml:space="preserve">
+    <value>Reveal the saved token so you can read or replace it.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:558 title</comment>
+  </data>
+  <data name="SettingsPage_RevealTheSavedWebhookSo" xml:space="preserve">
+    <value>Reveal the saved webhook so you can read or replace it.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:466 title</comment>
+  </data>
+  <data name="SettingsPage_RevealTheTopicSoYou" xml:space="preserve">
+    <value>Reveal the topic so you can subscribe to it on your phone.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:583 title</comment>
+  </data>
+  <data name="SettingsPage_ReviewButtonOutlines" xml:space="preserve">
+    <value>Review button outlines</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:919 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_ReviewButtonOutlinesOnThis" xml:space="preserve">
+    <value>Review button outlines on this theme</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:919 aria-label</comment>
+  </data>
+  <data name="SettingsPage_RobloxRemembersFullscreenFromLast" xml:space="preserve">
+    <value>Roblox remembers fullscreen from last time — a crash, or Alt+Enter mid-game, and the next client swallows a whole screen. With this on, RoRoRo turns that off right before every launch. Untick it if you actually want fullscreen clients.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:153 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_RororoChecksEveryRunningClient" xml:space="preserve">
+    <value>RoRoRo checks every running client every 30 seconds and tells you before your PC runs out. Turn it off and the three settings below stop doing anything. All four take effect the next time RoRoRo starts.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:681 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_RororoShowsOneTrayToast" xml:space="preserve">
+    <value>RoRoRo shows one tray toast when a running account crosses the idle threshold below. Checking this keeps the row chip but skips the toast.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:287 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_RororoWatchesHowFastYour" xml:space="preserve">
+    <value>RoRoRo watches how fast your clients are growing and warns you this long before they would fill the PC. 1 to 1440. The default is 120.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:792 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_SaveTheRororoIcon" xml:space="preserve">
+    <value>Save the RoRoRo icon</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:527 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_SaveTheRororoIconFor" xml:space="preserve">
+    <value>Save the RoRoRo icon for the Pushover application form</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:527 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SaveYourAccountsToAn" xml:space="preserve">
+    <value>Save your accounts to an encrypted file you can move to another PC.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:257 title</comment>
+  </data>
+  <data name="SettingsPage_SeeBothVersionsOfThis" xml:space="preserve">
+    <value>See both versions of this theme's button outlines and pick the one it uses.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:919 title</comment>
+  </data>
+  <data name="SettingsPage_SendATestNotificationTo" xml:space="preserve">
+    <value>Send a test notification to my phone</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:605 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendDropOutAlertsTo" xml:space="preserve">
+    <value>Send drop-out alerts to the desktop</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:340 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendDropOutAlertsTo_2" xml:space="preserve">
+    <value>Send drop-out alerts to my Discord channel</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:341 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendDropOutAlertsTo_3" xml:space="preserve">
+    <value>Send drop-out alerts to the clan Discord channel</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:342 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendDropOutAlertsTo_4" xml:space="preserve">
+    <value>Send drop-out alerts to my phone</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:343 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendMemoryWarningsToMy" xml:space="preserve">
+    <value>Send memory warnings to my Discord channel</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:356 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendMemoryWarningsToMy_2" xml:space="preserve">
+    <value>Send memory warnings to my phone</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:358 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendMemoryWarningsToThe" xml:space="preserve">
+    <value>Send memory warnings to the desktop</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:355 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendMemoryWarningsToThe_2" xml:space="preserve">
+    <value>Send memory warnings to the clan Discord channel</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:357 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendRecycleNoticesToMy" xml:space="preserve">
+    <value>Send recycle notices to my Discord channel</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:370 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendRecycleNoticesToMy_2" xml:space="preserve">
+    <value>Send recycle notices to my phone</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:372 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendRecycleNoticesToThe" xml:space="preserve">
+    <value>Send recycle notices to the desktop</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:369 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendRecycleNoticesToThe_2" xml:space="preserve">
+    <value>Send recycle notices to the clan Discord channel</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:371 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendTest" xml:space="preserve">
+    <value>Send test</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:498 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_SendUptimeMarksToMy" xml:space="preserve">
+    <value>Send uptime marks to my Discord channel</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:385 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendUptimeMarksToMy_2" xml:space="preserve">
+    <value>Send uptime marks to my phone</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:387 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendUptimeMarksToThe" xml:space="preserve">
+    <value>Send uptime marks to the desktop</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:384 aria-label</comment>
+  </data>
+  <data name="SettingsPage_SendUptimeMarksToThe_2" xml:space="preserve">
+    <value>Send uptime marks to the clan Discord channel</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:386 aria-label</comment>
+  </data>
+  <data name="SettingsPage_Server" xml:space="preserve">
+    <value>Server</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:596 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_Settings" xml:space="preserve">
+    <value>Settings</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="SettingsPage_Show" xml:space="preserve">
+    <value>Show</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:466 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_ShowOrHideTheNtfy" xml:space="preserve">
+    <value>Show or hide the ntfy topic</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:583 aria-label</comment>
+  </data>
+  <data name="SettingsPage_ShowOrHideTheSaved" xml:space="preserve">
+    <value>Show or hide the saved Pushover user key</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:542 aria-label</comment>
+  </data>
+  <data name="SettingsPage_ShowOrHideTheSaved_2" xml:space="preserve">
+    <value>Show or hide the saved Pushover application token</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:558 aria-label</comment>
+  </data>
+  <data name="SettingsPage_ShowWhatYouRePlaying" xml:space="preserve">
+    <value>Show what you're playing on Discord.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:837 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_StartRororoWhenWindowsStarts" xml:space="preserve">
+    <value>Start RoRoRo when Windows starts.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:83 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_Startup" xml:space="preserve">
+    <value>Startup</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:33 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_StopClientsImmediatelyWithoutWaiting" xml:space="preserve">
+    <value>Stop clients immediately, without waiting.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:230 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_StreamerMode" xml:space="preserve">
+    <value>Streamer mode.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:184 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_TestMyPhone" xml:space="preserve">
+    <value>Test my phone</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:605 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_TheApplicationFormOnPushover" xml:space="preserve">
+    <value>The application form on pushover.net has an icon slot — this saves the 128 by 128 RoRoRo mark for it.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:527 title</comment>
+  </data>
+  <data name="SettingsPage_Theme" xml:space="preserve">
+    <value>Theme</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:862 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_ThemesPeopleWriteThemselvesSometimes" xml:space="preserve">
+    <value>Themes people write themselves sometimes set button outlines too faint to see, so RoRoRo brightens those. Review button outlines puts both side by side and lets you pick. You can change your mind as often as you like.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:929 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_ThemeWarning" xml:space="preserve">
+    <value>Theme warning</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:950 aria-label</comment>
+  </data>
+  <data name="SettingsPage_ThisAppliesToYourWindows" xml:space="preserve">
+    <value>This applies to your Windows account only, and it does not start Roblox: that is the setting below. Unchecking this undoes it completely.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:85 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_TickEveryPlaceEachAlert" xml:space="preserve">
+    <value>Tick every place each alert should go. Nothing ticked means that alert is off. While anything runs, an uptime mark says all's well every two hours — and a mark that doesn't arrive means the PC or RoRoRo died.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:391 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_Topic" xml:space="preserve">
+    <value>Topic</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:573 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_TurnAlertsBackOnFor" xml:space="preserve">
+    <value>Turn alerts back on for every account you muted.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:421 title</comment>
+  </data>
+  <data name="SettingsPage_UnmuteAll" xml:space="preserve">
+    <value>Unmute all</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:421 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_UnmuteEveryMutedAccount" xml:space="preserve">
+    <value>Unmute every muted account</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:421 aria-label</comment>
+  </data>
+  <data name="SettingsPage_UptimeMarksEvery2Hours" xml:space="preserve">
+    <value>Uptime marks (every 2 hours)</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:381 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_UserKey" xml:space="preserve">
+    <value>User key</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:533 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_WarnThisFarAheadMinutes" xml:space="preserve">
+    <value>Warn this far ahead (minutes)</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:777 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_WarnThisManyMinutesAhead" xml:space="preserve">
+    <value>Warn this many minutes ahead of running out</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:782 aria-label</comment>
+  </data>
+  <data name="SettingsPage_WarnWhenOneAccountPasses" xml:space="preserve">
+    <value>Warn when one account passes (MB)</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:748 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_WarnWhenOneAccountPasses_2" xml:space="preserve">
+    <value>Warn when one account passes this many megabytes</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:754 aria-label</comment>
+  </data>
+  <data name="SettingsPage_WatchMemoryWhileAccountsAre" xml:space="preserve">
+    <value>Watch memory while accounts are running</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:673 aria-label</comment>
+  </data>
+  <data name="SettingsPage_WatchMemoryWhileAccountsAre_2" xml:space="preserve">
+    <value>Watch memory while accounts are running.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:679 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_WhatRororoPicksWhenA" xml:space="preserve">
+    <value>What RoRoRo picks when a box is left blank</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:706 aria-label</comment>
+  </data>
+  <data name="SettingsPage_WhatRororoShows" xml:space="preserve">
+    <value>What RoRoRo shows</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:167 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_WhichPushServiceSendsPhone" xml:space="preserve">
+    <value>Which push service sends phone alerts</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:516 aria-label</comment>
+  </data>
+  <data name="SettingsPage_WorthKnowingWhileRobloxIs" xml:space="preserve">
+    <value>Worth knowing: while Roblox is running, your friends see Roblox on your profile instead of RoRoRo — Discord gives that spot to games it recognizes. You'll always see your own card. RoRoRo gets recognized once enough people are running it.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:847 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_YouGetWarnedOnceFree" xml:space="preserve">
+    <value>You get warned once free memory drops under this. 256 to 65536. Leave it blank and RoRoRo works one out from your installed RAM.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:740 xaml-text</comment>
+  </data>
+  <data name="SettingsPage_YourDiscordStatusShowsThe" xml:space="preserve">
+    <value>Your Discord status shows the game, how many accounts you have in it, and how long you've been going. Nothing to set up — it uses the Discord app already on this PC.</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:839 xaml-text</comment>
+  </data>
+  <data name="ShellWindow_About" xml:space="preserve">
+    <value>About</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="ShellWindow_Destinations" xml:space="preserve">
+    <value>Destinations</value>
+    <comment>src/ROROROblox.App/Shell/ShellWindow.xaml:24 aria-label</comment>
+  </data>
+  <data name="ShellWindow_Diagnostics" xml:space="preserve">
+    <value>Diagnostics</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="ShellWindow_Games" xml:space="preserve">
+    <value>Games</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="ShellWindow_History" xml:space="preserve">
+    <value>History</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="ShellWindow_Plugins" xml:space="preserve">
+    <value>Plugins</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="ShellWindow_Settings" xml:space="preserve">
+    <value>Settings</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="SquadLaunchWindow_CarefulModeLandAccountsOne" xml:space="preserve">
+    <value>Careful mode — land accounts one at a time</value>
+    <comment>src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:79 xaml-text</comment>
+  </data>
+  <data name="SquadLaunchWindow_Close" xml:space="preserve">
+    <value>Close</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="SquadLaunchWindow_LaunchAllHere" xml:space="preserve">
+    <value>Launch all here</value>
+    <comment>src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:59 xaml-text</comment>
+  </data>
+  <data name="SquadLaunchWindow_LaunchByUrl" xml:space="preserve">
+    <value>Launch by URL</value>
+    <comment>src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:41 xaml-text</comment>
+  </data>
+  <data name="SquadLaunchWindow_PrivateServerLink_2" xml:space="preserve">
+    <value>Private server link</value>
+    <comment>src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:55 aria-label</comment>
+  </data>
+  <data name="SquadLaunchWindow_SendEveryActiveAccountInto" xml:space="preserve">
+    <value>Send every active account into the same Roblox server. Private server: everyone joins the link directly. Public game: the first account goes in, and the rest join the server it landed in.</value>
+    <comment>src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:28 xaml-text</comment>
+  </data>
+  <data name="SquadLaunchWindow_SquadLaunch" xml:space="preserve">
+    <value>Squad Launch</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="SquadLaunchWindow_WaitsForEachAccountTo" xml:space="preserve">
+    <value>Waits for each account to fully land in the game before launching the next. Slower, but no two accounts are ever joining at the same time — which is what triggers Roblox's verification prompts.</value>
+    <comment>src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:73 title</comment>
+  </data>
+  <data name="StopAllConfirmWindow_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="StopAllConfirmWindow_StopAll" xml:space="preserve">
+    <value>Stop all</value>
+    <comment>src/ROROROblox.App/Modals/StopAllConfirmWindow.xaml:76 xaml-text</comment>
+  </data>
+  <data name="StopAllConfirmWindow_StopAllRobloxInstances" xml:space="preserve">
+    <value>Stop all Roblox instances</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="StopAllConfirmWindow_StopAllRobloxInstances_2" xml:space="preserve">
+    <value>Stop all Roblox instances?</value>
+    <comment>src/ROROROblox.App/Modals/StopAllConfirmWindow.xaml:28 xaml-text</comment>
+  </data>
+  <data name="StopAllConfirmWindow_UnsavedProgressInYourRunning" xml:space="preserve">
+    <value>Unsaved progress in your running games will be lost.</value>
+    <comment>src/ROROROblox.App/Modals/StopAllConfirmWindow.xaml:51 xaml-text</comment>
+  </data>
+  <data name="ThemeBuilderWindow_1AiPrompt" xml:space="preserve">
+    <value>1.  AI prompt</value>
+    <comment>src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:36 xaml-text</comment>
+  </data>
+  <data name="ThemeBuilderWindow_2PasteTheJsonThe" xml:space="preserve">
+    <value>2.  Paste the JSON the AI returned</value>
+    <comment>src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:56 xaml-text</comment>
+  </data>
+  <data name="ThemeBuilderWindow_BuildATheme" xml:space="preserve">
+    <value>Build a theme</value>
+    <comment>src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:1 xaml-text</comment>
+  </data>
+  <data name="ThemeBuilderWindow_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="ThemeBuilderWindow_CopiesThePromptToYour" xml:space="preserve">
+    <value>Copies the prompt to your clipboard. Paste into Claude or ChatGPT, attach a reference image or describe a vibe, and paste the JSON they return into the box below.</value>
+    <comment>src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:41 title</comment>
+  </data>
+  <data name="ThemeBuilderWindow_CopyAiPrompt" xml:space="preserve">
+    <value>📋 Copy AI prompt</value>
+    <comment>src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:41 xaml-text</comment>
+  </data>
+  <data name="ThemeBuilderWindow_OpenThemesFolder" xml:space="preserve">
+    <value>Open themes folder</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="ThemeBuilderWindow_SaveAndApply" xml:space="preserve">
+    <value>Save and apply</value>
+    <comment>src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:93 xaml-text</comment>
+  </data>
+  <data name="ThemeBuilderWindow_Step1CopyTheAi" xml:space="preserve">
+    <value>Step 1 — copy the AI prompt. Step 2 — paste into Claude/ChatGPT/etc. with a vibe description or reference image. Step 3 — paste the JSON it returns below. We save it, apply it, and add it to the picker.</value>
+    <comment>src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:24 xaml-text</comment>
+  </data>
+  <data name="ThemeBuilderWindow_ThemeJson" xml:space="preserve">
+    <value>Theme JSON</value>
+    <comment>src/ROROROblox.App/Theming/ThemeBuilderWindow.xaml:61 aria-label</comment>
+  </data>
+  <data name="WebView2NotInstalledWindow_InstallNow" xml:space="preserve">
+    <value>Install Now</value>
+    <comment>src/ROROROblox.App/Modals/WebView2NotInstalledWindow.xaml:40 xaml-text</comment>
+  </data>
+  <data name="WebView2NotInstalledWindow_LearnMore" xml:space="preserve">
+    <value>Learn More</value>
+    <comment>src/ROROROblox.App/Modals/WebView2NotInstalledWindow.xaml:38 xaml-text</comment>
+  </data>
+  <data name="WebView2NotInstalledWindow_MicrosoftWebview2Needed" xml:space="preserve">
+    <value>Microsoft WebView2 needed</value>
+    <comment>src/ROROROblox.App/Modals/WebView2NotInstalledWindow.xaml:1 xaml-text</comment>
+  </data>
+  <data name="WebView2NotInstalledWindow_RororoUsesMicrosoftSWebview2" xml:space="preserve">
+    <value>RoRoRo uses Microsoft's WebView2 runtime to manage Roblox logins. It's free and made by Microsoft. Most Windows 11 PCs already have it; if yours doesn't, install it and try again.</value>
+    <comment>src/ROROROblox.App/Modals/WebView2NotInstalledWindow.xaml:29 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_ButtonAtTheBottomLeft" xml:space="preserve">
+    <value>button at the bottom-left — collapses to a tiny strip showing only running accounts. Great for parking it on a second monitor while you play.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:161 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_ChipsBelowAnAccountClick" xml:space="preserve">
+    <value>chips below an account — click one of your other accounts to launch THIS one into THAT account's current Roblox server.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:154 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_ClickAddAccount" xml:space="preserve">
+    <value>Click + Add account.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:61 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_ClickLaunchAsOrLaunch" xml:space="preserve">
+    <value>Click Launch As. Or Launch multiple for every selected alt at once.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:99 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_ClickThe" xml:space="preserve">
+    <value>Click the</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:175 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_ClosingXMinimizesToTray" xml:space="preserve">
+    <value>Closing X minimizes to tray; right-click the tray icon for Preferences, History,
+                        Diagnostics, or Quit.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:166 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_Compact" xml:space="preserve">
+    <value>Compact</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:160 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_Follow" xml:space="preserve">
+    <value>Follow:</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:153 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_GotIt" xml:space="preserve">
+    <value>Got it</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:185 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_InBatches" xml:space="preserve">
+    <value>In batches</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:144 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_InTheSystemTrayAnd" xml:space="preserve">
+    <value>in the system tray and drag RoRoRo out to keep it visible.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:177 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_MultiInstanceIsOnBy" xml:space="preserve">
+    <value>Multi-Instance is on by default — Roblox windows open side by side without fighting each other for the singleton.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:102 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_OnTheLeftOfA" xml:space="preserve">
+    <value>on the left of a row — drag to reorder.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:124 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_OpenGamesAndAddThe" xml:space="preserve">
+    <value>Open Games and add the place you launch into.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:80 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_QuickTipsForTheRow" xml:space="preserve">
+    <value>Quick tips for the row controls</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:115 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_Rororo" xml:space="preserve">
+    <value>RoRoRo</value>
+    <comment>duplicate value; key kept addressable for x:Static</comment>
+  </data>
+  <data name="WelcomeWindow_RunMultipleRobloxClientsSide" xml:space="preserve">
+    <value>Run multiple Roblox clients side by side. Three steps and you're set.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:45 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_SearchByNameOrPaste" xml:space="preserve">
+    <value>Search by name or paste a roblox.com/games/&lt;id&gt; URL. The default game is what Launch As uses.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:83 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_SignInToRobloxCom" xml:space="preserve">
+    <value>Sign in to roblox.com in the popup. We capture the cookie, encrypt it, and never see your password.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:64 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_Skipped" xml:space="preserve">
+    <value>Skipped</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:146 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_StarNextToARow" xml:space="preserve">
+    <value>star next to a row's actions — mark that account as your main (one at a time). The main launches on tray double-click and is the default for compact mode.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:131 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_TheColoredSwatchNextTo" xml:space="preserve">
+    <value>The colored swatch next to the star — pick a per-account color. The avatar ring + Roblox window title bar pick it up so you can tell windows apart.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:137 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_TheDotLabeled" xml:space="preserve">
+    <value>The dot labeled</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:143 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_TogglesWhetherThisAccountJoins" xml:space="preserve">
+    <value>— toggles whether this account joins Launch multiple / Squad Launch runs. Persists across restarts.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:147 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_WelcomeTo" xml:space="preserve">
+    <value>Welcome to</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:38 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_WelcomeToRororo" xml:space="preserve">
+    <value>Welcome to RoRoRo</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:1 xaml-text</comment>
+  </data>
+  <data name="WelcomeWindow_WindowsHidesNewTrayIcons" xml:space="preserve">
+    <value>Windows hides new tray icons by default, so RoRoRo's icon may not show right away.</value>
+    <comment>src/ROROROblox.App/About/WelcomeWindow.xaml:174 xaml-text</comment>
+  </data>
+  <data name="AboutPage_ReportAnIssue" xml:space="preserve">
+    <value>Report an issue</value>
+    <comment>src/ROROROblox.App/About/AboutPage.xaml Hyperlink (hand-converted from staged)</comment>
+  </data>
+  <data name="AboutPage_OpenLogFolder" xml:space="preserve">
+    <value>Open log folder</value>
+    <comment>src/ROROROblox.App/About/AboutPage.xaml Hyperlink (hand-converted from staged)</comment>
+  </data>
+  <data name="AboutPage_ShowTheWelcomeTour" xml:space="preserve">
+    <value>Show the welcome tour</value>
+    <comment>src/ROROROblox.App/About/AboutPage.xaml Hyperlink (hand-converted from staged)</comment>
+  </data>
+  <data name="RenameWindow_ResetToOriginal" xml:space="preserve">
+    <value>Reset to original</value>
+    <comment>src/ROROROblox.App/Modals/RenameWindow.xaml Hyperlink (hand-converted from staged)</comment>
+  </data>
+  <data name="MainWindow_Reauthenticate" xml:space="preserve">
+    <value>Re-authenticate</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:820 Button (hand-converted; tokenizer missed this one site — see Vibe-Lingual follow-up)</comment>
+  </data>
+</root>

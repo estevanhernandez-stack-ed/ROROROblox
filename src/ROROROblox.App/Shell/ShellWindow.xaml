@@ -1,8 +1,9 @@
 <Window x:Class="ROROROblox.App.Shell.ShellWindow"
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:loc="clr-namespace:ROROROblox.App.Properties"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Games"
+        Title="{x:Static loc:Strings.ShellWindow_Games}"
         Height="640" Width="920"
         MinHeight="480" MinWidth="800"
         WindowStartupLocation="CenterScreen"
@@ -22,18 +23,18 @@
         </Grid.ColumnDefinitions>
 
         <ListBox x:Name="ShellNav" Grid.Column="0"
-                 AutomationProperties.Name="Destinations"
+                 AutomationProperties.Name="{x:Static loc:Strings.ShellWindow_Destinations}"
                  Background="Transparent"
                  BorderThickness="0"
                  FontSize="{DynamicResource HeadingFontSize}"
                  ItemContainerStyle="{StaticResource NavItemStyle}"
                  SelectionChanged="OnNavSelectionChanged">
-            <ListBoxItem Content="Games" />
-            <ListBoxItem Content="Settings" />
-            <ListBoxItem Content="History" />
-            <ListBoxItem Content="Diagnostics" />
-            <ListBoxItem Content="Plugins" />
-            <ListBoxItem Content="About" />
+            <ListBoxItem Content="{x:Static loc:Strings.ShellWindow_Games}" />
+            <ListBoxItem Content="{x:Static loc:Strings.ShellWindow_Settings}" />
+            <ListBoxItem Content="{x:Static loc:Strings.ShellWindow_History}" />
+            <ListBoxItem Content="{x:Static loc:Strings.ShellWindow_Diagnostics}" />
+            <ListBoxItem Content="{x:Static loc:Strings.ShellWindow_Plugins}" />
+            <ListBoxItem Content="{x:Static loc:Strings.ShellWindow_About}" />
         </ListBox>
 
         <ContentControl Grid.Column="1" x:Name="PageHost" Margin="16,0,0,0" Focusable="False" />

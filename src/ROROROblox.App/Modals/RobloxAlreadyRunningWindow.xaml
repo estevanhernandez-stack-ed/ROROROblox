@@ -1,8 +1,9 @@
 <Window x:Class="ROROROblox.App.Modals.RobloxAlreadyRunningWindow"
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:loc="clr-namespace:ROROROblox.App.Properties"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Roblox is already running"
+        Title="{x:Static loc:Strings.RobloxAlreadyRunningWindow_RobloxIsAlreadyRunning}"
         Width="560"
         SizeToContent="Height"
         WindowStartupLocation="CenterScreen"
@@ -33,12 +34,12 @@
         </Grid.RowDefinitions>
 
         <!-- Heading -->
-        <TextBlock Grid.Row="0" Text="Roblox is already running"
+        <TextBlock Grid.Row="0" Text="{x:Static loc:Strings.RobloxAlreadyRunningWindow_RobloxIsAlreadyRunning}"
                    FontSize="18" FontWeight="Bold" Foreground="{DynamicResource CyanBrush}" />
 
         <!-- Body: the tray-residence explanation -->
         <TextBlock Grid.Row="1"
-                   Text="RoRoRo needs the multi-instance lock, but Roblox is holding it — it may be running with no window at all, hidden in your system tray."
+                   Text="{x:Static loc:Strings.RobloxAlreadyRunningWindow_RororoNeedsTheMultiInstance}"
                    TextWrapping="Wrap" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Opacity="0.85"
                    Margin="0,12,0,0" />
 
@@ -46,21 +47,21 @@
         <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,12,0,0">
             <TextBlock FontSize="{DynamicResource BodyFontSize}" Margin="0,2,0,0">
                 <Run Text="1." Foreground="{DynamicResource MagentaBrush}" FontWeight="Bold" />
-                <Run Text=" Click the ^ near the clock (bottom-right)" Foreground="{DynamicResource WhiteBrush}" />
+                <Run Text="{x:Static loc:Strings.RobloxAlreadyRunningWindow_ClickTheNearTheClock}" Foreground="{DynamicResource WhiteBrush}" />
             </TextBlock>
             <TextBlock FontSize="{DynamicResource BodyFontSize}" Margin="0,2,0,0">
                 <Run Text="2." Foreground="{DynamicResource MagentaBrush}" FontWeight="Bold" />
-                <Run Text=" Right-click the Roblox icon" Foreground="{DynamicResource WhiteBrush}" />
+                <Run Text="{x:Static loc:Strings.RobloxAlreadyRunningWindow_RightClickTheRobloxIcon}" Foreground="{DynamicResource WhiteBrush}" />
             </TextBlock>
             <TextBlock FontSize="{DynamicResource BodyFontSize}" Margin="0,2,0,0">
                 <Run Text="3." Foreground="{DynamicResource MagentaBrush}" FontWeight="Bold" />
-                <Run Text=" Choose Quit Roblox — then hit Retry" Foreground="{DynamicResource WhiteBrush}" />
+                <Run Text="{x:Static loc:Strings.RobloxAlreadyRunningWindow_ChooseQuitRobloxThenHit}" Foreground="{DynamicResource WhiteBrush}" />
             </TextBlock>
         </StackPanel>
 
         <!-- Start-with-Windows note -->
         <TextBlock Grid.Row="3"
-                   Text="Roblox can start itself with Windows. You can turn that off in Roblox's tray settings — but you don't have to; RoRoRo will catch it here either way."
+                   Text="{x:Static loc:Strings.RobloxAlreadyRunningWindow_RobloxCanStartItselfWith}"
                    TextWrapping="Wrap" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,12,0,0" />
 
         <!-- Bottom-of-body notes: still-locked tick (hidden until a failed retry) + the
@@ -75,7 +76,7 @@
             <TextBlock x:Name="StillLockedTick"
                        FontFamily="{DynamicResource MonoFontFamily}" FontSize="{DynamicResource MetaFontSize}"
                        Foreground="{DynamicResource RowExpiredAccentBrush}" Margin="0,12,0,0" Visibility="Collapsed" />
-            <TextBlock Text="Already have another copy of RoRoRo or a compatible tool holding the lock? Start anyway — multi-instance keeps working, and RoRoRo will show a banner while it doesn't hold the lock."
+            <TextBlock Text="{x:Static loc:Strings.RobloxAlreadyRunningWindow_AlreadyHaveAnotherCopyOf}"
                        TextWrapping="Wrap" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,12,0,0" />
         </StackPanel>
 
@@ -90,13 +91,13 @@
              a reflexive Enter on a dialog you didn't expect should never destroy state. It stays
              clearly available, just not on the Enter key. Guarded by ModalDefaultButtonSafetyTests. -->
         <StackPanel Grid.Row="5" x:Name="ActionButtons" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Quit RoRoRo" Padding="16,8" IsCancel="True"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static loc:Strings.RobloxAlreadyRunningWindow_QuitRororo}" Padding="16,8" IsCancel="True"
                     Margin="0,0,8,0" Click="OnQuitClick" />
-            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Start anyway" Padding="16,8"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static loc:Strings.RobloxAlreadyRunningWindow_StartAnyway}" Padding="16,8"
                     Margin="0,0,8,0" Click="OnStartAnywayClick" />
-            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Close Roblox for me" Padding="16,8"
+            <Button Style="{StaticResource SecondaryButtonStyle}" Content="{x:Static loc:Strings.RobloxAlreadyRunningWindow_CloseRobloxForMe}" Padding="16,8"
                     Margin="0,0,8,0" Click="OnCloseForMeClick" />
-            <Button Style="{StaticResource CtaButtonStyle}" Content="Retry" Padding="16,8" IsDefault="True" Click="OnRetryClick" />
+            <Button Style="{StaticResource CtaButtonStyle}" Content="{x:Static loc:Strings.RobloxAlreadyRunningWindow_Retry}" Padding="16,8" IsDefault="True" Click="OnRetryClick" />
         </StackPanel>
     </Grid>
 </Window>

@@ -215,9 +215,22 @@ public class AutomaticMemorySummaryTests
         var xaml = Path.Combine(root!, "src", "ROROROblox.App", "Preferences", "SettingsPage.xaml");
         Assert.True(File.Exists(xaml), $"{xaml} is missing; this test scanned nothing.");
 
-        var stated = Regex.Matches(File.ReadAllText(xaml), @"The default is (\d+)\.")
-            .Select(m => int.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture))
-            .ToList();
+        // The two "The default is N." statements moved into the resx (localization, 2026-09-06),
+        // and because they are identical text the resx merge deduped them to ONE key referenced
+        // TWICE. Count per x:Static REFERENCE (resolving each to its value) so the "stated twice"
+        // semantics survive, plus any literal that did not move. Number N is not localized copy —
+        // a translator keeps "The default is 10." shaped — so the regex still holds per language.
+        var xamlText = File.ReadAllText(xaml);
+        var defaultRe = new Regex(@"The default is (\d+)\.");
+        var stated = new List<int>();
+        foreach (Match r in Regex.Matches(xamlText, @"\{x:Static\s+\w+:Strings\.[A-Za-z_][A-Za-z0-9_]*\}"))
+        {
+            var value = ResxCatalog.Resolve(r.Value) ?? "";
+            foreach (Match m in defaultRe.Matches(value))
+                stated.Add(int.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture));
+        }
+        foreach (Match m in defaultRe.Matches(xamlText)) // any surviving literal
+            stated.Add(int.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture));
 
         // Vacuity floor. Two sites today (the projection box's AutomationProperties.HelpText and
         // its hint). A regex that stopped matching would pass an empty list forever, which is the
