@@ -8,7 +8,7 @@
 ## Short description (≤200 chars)
 
 ```
-Multi-lanceur pour Windows : plusieurs clients Roblox côte à côte, chacun sur son compte. Coffre chiffré, Squad Launch, surveillance mémoire, alertes téléphone, statut en direct, thèmes.
+Multi-lanceur Windows : plusieurs clients Roblox côte à côte, chacun sur son compte. Coffre chiffré, Squad Launch, surveillance mémoire, alertes téléphone, statut en direct, thèmes, auto-update.
 ```
 
 ## Long description
@@ -26,7 +26,7 @@ Ce que vous obtenez :
 • Statut en direct pour chaque compte. Voyez quel compte est dans quel jeu, qui est inactif et depuis combien de temps, avec une limite de FPS par compte qui tient.
 • Squad Launch + Friend Follow. Envoyez tous les comptes sélectionnés dans le même serveur privé, suivez un ami dans le sien, ou réunissez vos comptes dans un serveur public.
 • Surveillance mémoire + Recycle. RoRoRo apprend ce qu'un client Roblox coûte réellement en RAM sur votre machine et prévient avant la saturation. Un clic ferme un client trop lourd et le renvoie dans le serveur où il était.
-• Une seule fenêtre d'outils. Jeux, réglages, historique, diagnostics, plugins et À propos sont les pages d'une même fenêtre, avec raccourcis clavier partout.
+• Une seule fenêtre d'outils. Jeux, réglages, historique, diagnostics, plugins et À propos sont les pages d'une même fenêtre, avec raccourcis clavier partout — F1 affiche la liste.
 • Thèmes. Quatre intégrés, dont un qui ne repose jamais sur la couleur seule, plus un éditeur pour créer le vôtre et le partager en fichier.
 • Alertes en option — bureau, Discord ou téléphone. Routez chaque alerte vers n'importe quelle combinaison : notifications bureau, un webhook Discord que vous créez, ou votre téléphone via Pushover ou ntfy. Déconnexions, alertes mémoire, fin de Recycle, et un signal « tout va bien » toutes les deux heures. Une installation neuve n'émet aucun appel d'alerte — rien ne part tant que vous n'avez rien configuré.
 • Icône de zone de notification colorée selon l'état ; double-clic pour lancer le compte principal.
@@ -38,7 +38,7 @@ Confidentialité et sécurité :
 Votre mot de passe Roblox n'est jamais vu par RoRoRo. La connexion se fait entièrement dans la page de Roblox, intégrée dans un cadre Microsoft Edge WebView2 — même HTML, même connexion HTTPS que votre navigateur. RoRoRo ne capture que le cookie de session posé par Roblox après connexion, et le chiffre avant de l'écrire sur disque. Pas de télémétrie. Pas d'analytique. Rien ne quitte votre machine hormis les appels Roblox du lancement — les mêmes que ceux de Roblox.com dans votre navigateur — et, uniquement si vous les configurez vous-même, les alertes vers votre webhook Discord ou le service de notification choisi (Pushover ou ntfy).
 
 Important : marques et affiliation.
-« Roblox » et le logo Roblox sont des marques de Roblox Corporation. RoRoRo est un outil tiers indépendant, non affilié à, ni approuvé, ni sponsorisé par Roblox Corporation. Le terme n'est utilisé que pour décrire la compatibilité avec la plateforme Roblox. RoRoRo lance le client Roblox officiel sans le modifier — aucune injection, aucun hook, aucune altération du processus Roblox ; il ne fait que détenir un mutex nommé Windows avant le lancement.
+« Roblox » et le logo Roblox sont des marques de Roblox Corporation. RoRoRo est un outil tiers indépendant, non affilié à, ni approuvé, ni sponsorisé par Roblox Corporation. Le terme n'est utilisé que pour décrire la compatibilité avec la plateforme Roblox. RoRoRo lance le client Roblox officiel sans le modifier — aucune injection, aucun hook, aucune altération du processus Roblox ; il ne fait que détenir un mutex nommé Windows avant le lancement, pour que les instances de client suivantes voient le contrôle singleton comme déjà pris.
 
 Un produit 626 Labs.
 ```
@@ -71,9 +71,9 @@ Les alertes se diffusent — bureau, salons Discord et téléphone, dans n'impor
 v1.25.0.0
 
 Votre téléphone peut vibrer
-• Réglages > Alerts : routez toute alerte vers votre téléphone via
+• Settings > Alerts : routez toute alerte vers votre téléphone via
   Pushover ou ntfy. Un alt se déconnecte — votre téléphone le sait,
-  même Discord fermé. Configuration unique, et le bouton de test
+  même Discord fermé. Configuration unique, et Test my phone
   prouve que ça marche. Vos clés restent chiffrées sur votre PC ;
   rien n'est envoyé sauf quand une alerte part, et uniquement vers
   le service que vous avez choisi.
@@ -91,7 +91,7 @@ Deux nouvelles alertes, désactivées par défaut
 
 Roblox reste en fenêtré
 • Si un crash ou Alt+Entrée a laissé Roblox en plein écran, RoRoRo
-  corrige cela avant chaque lancement. Réglable, activé par défaut.
+  corrige cela avant chaque lancement. Option dans Settings > Startup, activée par défaut.
 
 Vous revenez en arrière ?
 • Si vous repassez à une version plus ancienne après avoir configuré
@@ -102,7 +102,7 @@ Vous revenez en arrière ?
 ## Copyright (single line)
 
 ```
-© 2026 626 Labs LLC. « Roblox » est une marque de Roblox Corporation. RoRoRo n'est ni affilié à, ni approuvé, ni sponsorisé par Roblox Corporation.
+© 2026 626 Labs LLC. Tous droits réservés. « Roblox » est une marque de Roblox Corporation. RoRoRo n'est ni affilié à, ni approuvé, ni sponsorisé par Roblox Corporation.
 ```
 
 ## Trademark info

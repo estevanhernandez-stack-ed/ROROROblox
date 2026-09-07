@@ -111,8 +111,12 @@ Alerts fan out — desktop, Discord channels, and your phone in any mix, per ale
 
 ## Copyright (single line)
 
+> The disclaimer is part of this field — the submission checklist requires it on the Store
+> copyright surface, and the identity table has always carried it. The plain
+> "All rights reserved." form here was drift the translation verifier surfaced (2026-09-06).
+
 ```
-© 2026 626 Labs LLC. All rights reserved.
+© 2026 626 Labs LLC. All rights reserved. "Roblox" is a trademark of Roblox Corporation. RoRoRo is not affiliated with, endorsed by, or sponsored by Roblox Corporation.
 ```
 
 ## Trademark info

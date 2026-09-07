@@ -8,7 +8,7 @@
 ## Short description (≤200 chars)
 
 ```
-Multi-Launcher für Windows: mehrere Roblox-Clients nebeneinander, jeder mit eigenem Konto. Verschlüsselter Tresor, Squad Launch, RAM-Wächter, Handy-Alarme, Live-Status, Themes.
+Multi-Launcher für Windows: mehrere Roblox-Clients nebeneinander, jeder mit eigenem Konto. Verschlüsselter Tresor, Squad Launch, RAM-Wächter, Handy-Alarme, Live-Status, Themes, Auto-Update.
 ```
 
 ## Long description
@@ -26,7 +26,7 @@ Was du bekommst:
 • Live-Status für jedes Konto. Sieh, welches Konto in welchem Spiel ist, wer wie lange inaktiv ist, und setze FPS-Limits pro Konto, die halten.
 • Squad Launch + Friend Follow. Schicke alle ausgewählten Konten in denselben privaten Server, folge einem Freund in seinen, oder lande mit deinen Konten gemeinsam auf einem öffentlichen Server.
 • RAM-Wächter + Recycle. RoRoRo lernt, was ein Roblox-Client auf deiner Maschine wirklich an RAM kostet, und warnt, bevor er ausgeht. Ein Klick schließt einen schweren Client und bringt ihn zurück in denselben Server.
-• Ein Werkzeugfenster. Spiele, Einstellungen, Verlauf, Diagnose, Plugins und Über sind Seiten eines Fensters neben deinen Konten — mit Tastenkürzeln überall.
+• Ein Werkzeugfenster. Spiele, Einstellungen, Verlauf, Diagnose, Plugins und Über sind Seiten eines Fensters neben deinen Konten — mit Tastenkürzeln überall; F1 zeigt die Liste.
 • Themes. Vier eingebaute, darunter eines, das Bedeutung nie allein über Farbe transportiert, plus ein Editor für eigene Themes, teilbar als Datei.
 • Optionale Alarme — Desktop, Discord oder Handy. Leite jeden Alarm an jede Kombination: Desktop-Benachrichtigungen, einen selbst erstellten Discord-Webhook oder dein Handy über Pushover oder ntfy. Verbindungsabbrüche, RAM-Warnungen, Recycle-Abschlüsse und ein „Alles gut“-Zeichen alle zwei Stunden. Eine frische Installation macht keinerlei Alarm-Aufrufe — nichts sendet, bevor du etwas einrichtest.
 • Infobereich mit statusfarbenem Symbol; Doppelklick startet dein Hauptkonto.
@@ -38,7 +38,7 @@ Datenschutz und Sicherheit:
 Dein Roblox-Passwort sieht RoRoRo nie. Die Anmeldung passiert vollständig auf Robloxs eigener Seite, eingebettet in einen Microsoft-Edge-WebView2-Rahmen — dasselbe HTML, dieselbe HTTPS-Verbindung wie in deinem Browser. RoRoRo erfasst nur das Sitzungscookie, das Roblox nach erfolgreicher Anmeldung setzt, und verschlüsselt es vor dem Schreiben auf die Festplatte. Keine Telemetrie. Keine Analyse. Nichts verlässt deine Maschine außer den Roblox-Aufrufen beim Start — denselben, die Roblox.com aus deinem Browser macht — und, nur wenn du sie selbst einrichtest, Alarmen an deinen eigenen Discord-Webhook oder den gewählten Push-Dienst (Pushover oder ntfy).
 
 Wichtig: Marken- und Zugehörigkeitshinweis.
-„Roblox" und das Roblox-Logo sind Marken der Roblox Corporation. RoRoRo ist ein unabhängiges Drittanbieter-Werkzeug, nicht mit der Roblox Corporation verbunden, von ihr befürwortet oder gesponsert. Der Markenbegriff wird ausschließlich zur Beschreibung der Kompatibilität mit der Roblox-Plattform verwendet. RoRoRo startet den offiziellen Roblox-Client unverändert — keine Injektion, keine Hooks, keine Veränderung des Roblox-Prozesses; es hält lediglich vor dem Start einen benannten Windows-Mutex.
+„Roblox" und das Roblox-Logo sind Marken der Roblox Corporation. RoRoRo ist ein unabhängiges Drittanbieter-Werkzeug, nicht mit der Roblox Corporation verbunden, von ihr befürwortet oder gesponsert. Der Markenbegriff wird ausschließlich zur Beschreibung der Kompatibilität mit der Roblox-Plattform verwendet. RoRoRo startet den offiziellen Roblox-Client unverändert — keine Injektion, keine Hooks, keine Veränderung des Roblox-Prozesses; es hält lediglich vor dem Start einen benannten Windows-Mutex, damit weitere Client-Instanzen die Singleton-Prüfung als bereits vergeben sehen.
 
 Ein Produkt von 626 Labs.
 ```
@@ -71,9 +71,9 @@ Alarme fächern auf — Desktop, Discord-Kanäle und Handy in jeder Kombination,
 v1.25.0.0
 
 Dein Handy kann jetzt vibrieren
-• Einstellungen > Alerts: Leite jeden Alarm über Pushover oder ntfy
+• Settings > Alerts: Leite jeden Alarm über Pushover oder ntfy
   an dein Handy. Ein Alt fliegt raus — dein Handy weiß es, auch bei
-  geschlossenem Discord. Einmalige Einrichtung, und der Testknopf
+  geschlossenem Discord. Einmalige Einrichtung, und Test my phone
   beweist, dass es funktioniert. Deine Schlüssel bleiben
   verschlüsselt auf deinem PC; gesendet wird nur, wenn ein Alarm
   ausgelöst wird, und nur an den Dienst, den du gewählt hast.
@@ -89,7 +89,7 @@ Zwei neue Alarme, standardmäßig aus
 
 Roblox bleibt im Fenstermodus
 • Hat ein Absturz oder Alt+Eingabe Roblox im Vollbild hinterlassen,
-  räumt RoRoRo das vor jedem Start weg. Abschaltbar, standardmäßig an.
+  räumt RoRoRo das vor jedem Start weg. Schalter in Settings > Startup, standardmäßig an.
 
 Zurück zu einer älteren Version?
 • Wenn du nach dem Einrichten des neuen Alarm-Routings zurückgehst,
@@ -100,7 +100,7 @@ Zurück zu einer älteren Version?
 ## Copyright (single line)
 
 ```
-© 2026 626 Labs LLC. „Roblox" ist eine Marke der Roblox Corporation. RoRoRo ist nicht mit der Roblox Corporation verbunden, von ihr befürwortet oder gesponsert.
+© 2026 626 Labs LLC. Alle Rechte vorbehalten. „Roblox" ist eine Marke der Roblox Corporation. RoRoRo ist nicht mit der Roblox Corporation verbunden, von ihr befürwortet oder gesponsert.
 ```
 
 ## Trademark info
