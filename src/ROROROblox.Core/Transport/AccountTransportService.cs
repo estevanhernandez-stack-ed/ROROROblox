@@ -18,7 +18,9 @@ namespace ROROROblox.Core.Transport;
 /// - The iteration count is written INTO the header so a future bump can still open old bundles
 ///   (Import reads iters from the header, not the const).
 /// - Fail-closed import: wrong passphrase, tampered data, or malformed header all throw the same
-///   <see cref="AccountTransportException"/> with the same message — no oracle leak, no partial data.
+///   <see cref="AccountTransportException"/> — no oracle leak, no partial data. The exception
+///   carries no prose; the App renders one localized sentence for it (the Core string boundary,
+///   localization Phase D 2026-09-07), which is identical across every failure mode by design.
 /// - The derived key is zeroed after use; the passphrase / key / cookie / plaintext are never logged.
 /// </summary>
 public sealed class AccountTransportService : IAccountTransport
@@ -42,10 +44,6 @@ public sealed class AccountTransportService : IAccountTransport
     private const int NonceOffset = SaltOffset + SaltBytes;  // 29
     private const int TagOffset = NonceOffset + NonceBytes;  // 41
     private const int CipherOffset = TagOffset + TagBytes;   // 57
-
-    /// <summary>The one message the caller may show on any import failure. Deliberately ambiguous.</summary>
-    private const string FailMessage =
-        "Couldn't open this bundle — wrong passphrase or the file is damaged.";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -98,21 +96,21 @@ public sealed class AccountTransportService : IAccountTransport
         // Header validation — any malformation throws the same ambiguous exception (no oracle leak).
         if (bundle.Length < HeaderLength)
         {
-            throw new AccountTransportException(FailMessage);
+            throw new AccountTransportException();
         }
         if (!bundle.AsSpan(0, Magic.Length).SequenceEqual(Magic))
         {
-            throw new AccountTransportException(FailMessage);
+            throw new AccountTransportException();
         }
         if (bundle[VersionOffset] != FormatVersion)
         {
-            throw new AccountTransportException(FailMessage);
+            throw new AccountTransportException();
         }
 
         int iters = BinaryPrimitives.ReadInt32LittleEndian(bundle.AsSpan(ItersOffset, 4));
         if (iters <= 0)
         {
-            throw new AccountTransportException(FailMessage);
+            throw new AccountTransportException();
         }
 
         byte[] salt = bundle.AsSpan(SaltOffset, SaltBytes).ToArray();
@@ -133,17 +131,17 @@ public sealed class AccountTransportService : IAccountTransport
 
             var records = JsonSerializer.Deserialize<List<AccountExportRecord>>(plaintext, JsonOptions);
             // A successfully-decrypted-but-empty/garbage payload is treated as damaged, never partial.
-            return records ?? throw new AccountTransportException(FailMessage);
+            return records ?? throw new AccountTransportException();
         }
         catch (CryptographicException ex)
         {
             // Wrong passphrase and tamper land here identically — same message, no leak.
-            throw new AccountTransportException(FailMessage, ex);
+            throw new AccountTransportException(ex);
         }
         catch (JsonException ex)
         {
             // Decrypt succeeded (tag verified) but payload didn't parse — still fail closed.
-            throw new AccountTransportException(FailMessage, ex);
+            throw new AccountTransportException(ex);
         }
         finally
         {

@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using ROROROblox.App.Localization;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 using ROROROblox.Core.Transport;
@@ -13,9 +14,10 @@ namespace ROROROblox.App.Transport;
 ///
 /// SECURITY-SENSITIVE. The decrypted records and the passphrase live only inside
 /// <see cref="OnImportClick"/>'s scope — never assigned to a field/property, never logged. On a
-/// failed decrypt we catch ONLY <see cref="AccountTransportException"/> and show its message verbatim
-/// (the deliberately-ambiguous "wrong passphrase or damaged file" string) so we never reveal which
-/// failure mode hit.
+/// failed decrypt we catch ONLY <see cref="AccountTransportException"/> and show one localized,
+/// deliberately-ambiguous "wrong passphrase or damaged file" line (<c>CoreMsg_Transport_ImportFailed</c>)
+/// — never <c>ex.Message</c>, and never anything that reveals which failure mode hit. The exception
+/// carries no prose to leak (localization Phase D 2026-09-07); every mode lands on the same sentence.
 /// </summary>
 internal partial class ImportAccountsWindow : Window
 {
@@ -116,11 +118,12 @@ internal partial class ImportAccountsWindow : Window
             DialogResult = true;
             Close();
         }
-        catch (AccountTransportException ex)
+        catch (AccountTransportException)
         {
-            // The ONE expected failure: wrong passphrase OR damaged file. Surface .Message verbatim
-            // (the generic, ambiguous string) — never distinguish the two modes.
-            StatusText.Text = ex.Message;
+            // The ONE expected failure: wrong passphrase OR damaged file. Show the one generic,
+            // ambiguous line (localized) — never distinguish the two modes, and never ex.Message
+            // (the exception now carries only an invariant diagnostic, not a user sentence).
+            StatusText.Text = Loc.Get("CoreMsg_Transport_ImportFailed");
             ImportButton.IsEnabled = true;
         }
         catch (IOException ex)
