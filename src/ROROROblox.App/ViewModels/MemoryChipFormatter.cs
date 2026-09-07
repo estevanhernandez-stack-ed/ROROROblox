@@ -1,3 +1,4 @@
+using ROROROblox.App.Localization;
 using ROROROblox.Core.Diagnostics;
 
 namespace ROROROblox.App.ViewModels;
@@ -31,12 +32,9 @@ public static class MemoryChipFormatter
     /// </summary>
     public static string FormatFooter(int clientCount, long aggregateBytes, bool belowReserve)
     {
-        var clients = clientCount switch
-        {
-            0 => "No Roblox clients running",
-            1 => "1 Roblox client running",
-            _ => $"{clientCount} Roblox clients running",
-        };
+        var clients = clientCount == 0
+            ? Loc.Get("Shell_MemFooter_None")
+            : Loc.Plural("Shell_MemFooter_Clients", clientCount);
 
         // No clients, or nothing readable yet: say nothing rather than "0.0 GB", which reads as a
         // measurement when it is really an absence of one.

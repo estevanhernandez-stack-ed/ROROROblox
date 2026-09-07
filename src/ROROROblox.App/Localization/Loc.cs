@@ -20,16 +20,25 @@ public static class Loc
         string.Format(TranslationSource.Instance.CurrentCulture, TranslationSource.Instance[key], args);
 
     /// <summary>
-    /// Resolve a plural family and format it with <paramref name="count"/>. Picks the CLDR category
-    /// for the current culture (<see cref="Plurals.Category"/>), looks up <c>{baseKey}_{category}</c>,
-    /// and formats <c>{0}</c> with the count. A language supplies only the categories it needs
-    /// (en/fr/de/es/pt: one+other; ru/pl: one+few+many); the lint guard enforces the family is complete.
+    /// Resolve a plural family and format it. Picks the CLDR category for the current culture
+    /// (<see cref="Plurals.Category"/>), looks up <c>{baseKey}_{category}</c>, and formats it with
+    /// the count as <c>{0}</c> and any <paramref name="args"/> as <c>{1}, {2}, …</c> — so a plural
+    /// string can carry extra placeholders (e.g. <c>"{0} accounts idle &gt; {1}m"</c>). A language
+    /// supplies only the categories it needs (en/fr/de/es/pt: one+other; ru/pl: one+few+many); the
+    /// lint guard enforces the family is complete.
     /// </summary>
-    public static string Plural(string baseKey, long count)
+    public static string Plural(string baseKey, long count, params object?[] args)
     {
         var culture = TranslationSource.Instance.CurrentCulture;
         var category = Plurals.Category(culture, count);
         var template = TranslationSource.Instance[$"{baseKey}_{category}"];
-        return string.Format(culture, template, count);
+        if (args is null || args.Length == 0)
+        {
+            return string.Format(culture, template, count);
+        }
+        var all = new object?[args.Length + 1];
+        all[0] = count;
+        args.CopyTo(all, 1);
+        return string.Format(culture, template, all);
     }
 }

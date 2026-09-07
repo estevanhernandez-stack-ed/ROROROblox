@@ -414,6 +414,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             }
         };
         _ticker.Start();
+
+        // Live language toggle (localization Phase D step 3): refresh the code-composed shell text
+        // when the UI culture changes. Unsubscribed in StopPeriodicRefresh so a leaked VM doesn't
+        // keep refreshing after a test ends (same hazard the ticker documents).
+        TranslationSource.Instance.CultureChanged += OnUiCultureChanged;
     }
 
     /// <summary>
@@ -437,7 +442,30 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <para>Production never calls this: the app wants the refresh for its whole lifetime, and the
     /// process exiting is what stops it. See F-105.</para>
     /// </summary>
-    internal void StopPeriodicRefresh() => _ticker.Stop();
+    internal void StopPeriodicRefresh()
+    {
+        _ticker.Stop();
+        TranslationSource.Instance.CultureChanged -= OnUiCultureChanged;
+    }
+
+    /// <summary>
+    /// Live language toggle (localization Phase D step 3). The static XAML re-renders via
+    /// <c>{loc:Loc}</c> bindings on its own; this refreshes the code-composed shell text. Cached
+    /// banner fields are recomputed by re-running their stateless refreshers; the account rows
+    /// re-raise their composed getters; then a blanket notify re-pulls every computed display getter
+    /// (MultiInstanceSummary, DefaultGameDisplay, CompactToggleLabel, …). Marshalled onto the UI
+    /// thread — bound properties written from a worker are the cross-thread exception this app has
+    /// already paid for once.
+    /// </summary>
+    private void OnUiCultureChanged(object? sender, EventArgs e) => _ui.Invoke(() =>
+    {
+        RefreshFpsCapWarning();
+        IdleSummaryText = IdleSummary.Format(Accounts.Count(a => a.IdleWarn), _idleWarnThresholdMinutes);
+        if (_isContested) { ContestedBannerText = MultiInstanceCopy.ContestedBanner; }
+        RefreshMemoryChips();
+        foreach (var a in Accounts) { a.NotifyCultureChanged(); }
+        OnPropertyChanged(string.Empty); // all bindings — re-pull every computed getter
+    });
 
     public ObservableCollection<AccountSummary> Accounts { get; } = [];
 
@@ -825,7 +853,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// game is marked default -- a real state (Task 3), not just an empty-library placeholder.
     /// </summary>
     public string DefaultGameDisplay =>
-        _currentDefaultGame?.LocalName ?? _currentDefaultGame?.Name ?? "Roblox home";
+        _currentDefaultGame?.LocalName ?? _currentDefaultGame?.Name ?? Loc.Get("Shell_RobloxHome");
 
     /// <summary>
     /// Tooltip for the default-game widget ToggleButton. Coupled to <see cref="CurrentDefaultGame"/>
@@ -835,8 +863,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// </summary>
     public string DefaultGameTooltip =>
         _currentDefaultGame is null
-            ? "Launches open Roblox at home. Set a default game under Games to launch straight into it."
-            : "The default game Launch As uses when no per-row pick is set. Click to change.";
+            ? Loc.Get("Shell_DefaultGameTooltip_None")
+            : Loc.Get("Shell_DefaultGameTooltip_Set");
 
     private bool _isCompact;
     /// <summary>
@@ -926,7 +954,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    public string CompactToggleLabel => _isCompact ? "Expand" : "Compact";
+    public string CompactToggleLabel => _isCompact ? Loc.Get("Shell_CompactToggle_Expand") : Loc.Get("Shell_CompactToggle_Compact");
 
     private string _accountFilter = string.Empty;
     /// <summary>
@@ -4241,8 +4269,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         private set => SetField(ref _contestedBannerText, value);
     }
 
+    private bool _isContested;
+
     public void SetContested(bool contested)
-        => ContestedBannerText = contested ? MultiInstanceCopy.ContestedBanner : string.Empty;
+    {
+        _isContested = contested;
+        ContestedBannerText = contested ? MultiInstanceCopy.ContestedBanner : string.Empty;
+    }
 
     private MultiInstanceState _multiInstanceState = MultiInstanceState.Off;
 

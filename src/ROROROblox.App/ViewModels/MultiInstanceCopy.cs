@@ -1,3 +1,5 @@
+using ROROROblox.App.Localization;
+
 namespace ROROROblox.App.ViewModels;
 
 /// <summary>
@@ -15,11 +17,10 @@ namespace ROROROblox.App.ViewModels;
 public static class MultiInstanceCopy
 {
     /// <summary>Runtime banner shown when Roblox holds the lock post-startup.</summary>
-    public const string ContestedBanner =
-        "Roblox has the multi-instance lock — it's probably running in your system tray.";
+    public static string ContestedBanner => Loc.Get("Shell_MultiInstance_ContestedBanner");
 
     /// <summary>Tick shown in the BLOCKED modal after a Retry that still failed.</summary>
-    public const string StillLocked = "Still locked — Roblox is still running.";
+    public static string StillLocked => Loc.Get("Shell_MultiInstance_StillLocked");
 
     /// <summary>
     /// Shown when the accounts on screen do not all share one FPS cap. Roblox keeps a single
@@ -35,8 +36,5 @@ public static class MultiInstanceCopy
     /// account to the same cap", so the one sentence a reader could act on was the last of three,
     /// behind two sentences of mechanism. 47 words to 44, same facts, same 20-second figure.
     /// </para>
-    public const string FpsCapMismatchBanner =
-        "Set every account to the same FPS cap to launch at full speed. Roblox keeps one shared "
-        + "settings file for every client, so different caps make RoRoRo wait for each account to "
-        + "finish loading before starting the next, up to about 20 seconds each.";
+    public static string FpsCapMismatchBanner => Loc.Get("Shell_MultiInstance_FpsCapMismatch");
 }
