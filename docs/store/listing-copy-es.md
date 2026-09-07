@@ -27,7 +27,7 @@ Lo que obtienes:
 • Squad Launch + Friend Follow. Manda todas las cuentas seleccionadas al mismo servidor privado, sigue a un amigo hasta el suyo o junta tus cuentas en un servidor público.
 • Vigilante de memoria + Recycle. RoRoRo aprende cuánta RAM cuesta de verdad un cliente de Roblox en tu máquina y avisa antes de que se agote. Un clic cierra un cliente pesado y lo devuelve al mismo servidor donde estaba.
 • Una sola ventana de herramientas. Juegos, ajustes, historial, diagnóstico, plugins y Acerca de son páginas de una misma ventana junto a tus cuentas, con atajos de teclado en todas partes — F1 muestra la lista.
-• Temas. Cuatro integrados, incluido uno que nunca transmite significado solo con color, más un editor para crear el tuyo y compartirlo como archivo.
+• Temas. Cuatro integrados, incluido uno que nunca transmite significado solo con color, más un editor para crear el tuyo a partir de diez colores y compartirlo como archivo.
 • Alertas opcionales: escritorio, Discord o móvil. Dirige cada alerta a cualquier combinación: notificaciones de escritorio, un webhook de Discord que tú creas, o tu móvil mediante Pushover o ntfy. Desconexiones, avisos de memoria, finales de Recycle y una señal de "todo bien" cada dos horas. Una instalación nueva no hace ninguna llamada de alertas: nada sale hasta que tú lo configuras.
 • Bandeja del sistema con icono coloreado por estado; doble clic lanza tu cuenta principal.
 • Sistema de plugins. Los plugins opcionales corren como procesos separados y no tienen permisos hasta que se los concedes uno a uno.
