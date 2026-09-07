@@ -1950,4 +1950,128 @@
     <value>Choose the language RoRoRo's interface uses. New languages appear here as they're translated, and a change takes effect the next time you open RoRoRo.</value>
     <comment>Settings &gt; Appearance — UI-language picker hint</comment>
   </data>
+  <data name="CoreMsg_Launch_NoDefaultGame" xml:space="preserve">
+    <value>No default Roblox game configured. Add one in Games (header button), or pass an explicit target.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Launch_AuthTicketFailed" xml:space="preserve">
+    <value>Failed to obtain auth ticket: {0}</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Launch_RobloxNotInstalled" xml:space="preserve">
+    <value>Roblox does not appear to be installed.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Launch_ProcessStartFailed" xml:space="preserve">
+    <value>Process.Start failed: {0}</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Cookie_WebView2RuntimeMissing" xml:space="preserve">
+    <value>WebView2 runtime missing</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Cookie_WebView2InitFailed" xml:space="preserve">
+    <value>WebView2 init failed: {0}</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Cookie_UserDataDirFailed" xml:space="preserve">
+    <value>Cookie capture failed to allocate user-data dir: {0}</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Cookie_StartFailed" xml:space="preserve">
+    <value>Cookie capture failed to start: {0}</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Cookie_CaptureFailed" xml:space="preserve">
+    <value>Cookie capture failed: {0}</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Cookie_LoginRejected" xml:space="preserve">
+    <value>Roblox didn't accept the login session.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Cookie_ProfileFetchFailed" xml:space="preserve">
+    <value>Profile fetch failed: {0}</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Webhook_ServerInvite" xml:space="preserve">
+    <value>That's a server invite. You need a webhook — in Discord: Server Settings → Integrations → Webhooks → New Webhook, then Copy Webhook URL.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Webhook_ChannelLink" xml:space="preserve">
+    <value>That's a link to the channel, not a webhook. Same channel, different button: Server Settings → Integrations → Webhooks → New Webhook.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Webhook_BotToken" xml:space="preserve">
+    <value>That looks like a bot token — don't share that anywhere, and reset it if you pasted it somewhere public. A webhook URL starts with discord.com/api/webhooks/.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Webhook_Unrecognized" xml:space="preserve">
+    <value>That doesn't look like a webhook URL. It should start with discord.com/api/webhooks/ — Server Settings → Integrations → Webhooks → Copy Webhook URL.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Pushover_WebhookUrl" xml:space="preserve">
+    <value>That's a Discord link — the {0} is a 30-character code from pushover.net, not a URL.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Pushover_WrongShape" xml:space="preserve">
+    <value>That doesn't look like a {0} — it's a 30-character code of letters and digits, shown on your pushover.net dashboard.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_Ntfy_Server" xml:space="preserve">
+    <value>The server needs to be a full address like https://ntfy.sh — leave it as the default unless you run your own.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_History_Unreadable" xml:space="preserve">
+    <value>Couldn't read history{0}</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_History_Empty" xml:space="preserve">
+    <value>Nothing recorded yet.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_History_Recorded_one" xml:space="preserve">
+    <value>{0} launch recorded.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_History_Recorded_few" xml:space="preserve">
+    <value>{0} launches recorded.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_History_Recorded_many" xml:space="preserve">
+    <value>{0} launches recorded.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_History_Recorded_other" xml:space="preserve">
+    <value>{0} launches recorded.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_History_Loading" xml:space="preserve">
+    <value>Loading…</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_History_PlaceholderUnreadableHeadline" xml:space="preserve">
+    <value>History couldn't be read.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_History_PlaceholderUnreadableDetail" xml:space="preserve">
+    <value>The file may be open in another program, or damaged. This doesn't affect your saved accounts or settings — they're stored separately.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_History_PlaceholderEmptyHeadline" xml:space="preserve">
+    <value>No launches yet.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_History_PlaceholderEmptyDetail" xml:space="preserve">
+    <value>Click Launch As on any account and you'll see entries here.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_History_Cleared" xml:space="preserve">
+    <value>History cleared.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
+  <data name="CoreMsg_History_ClearFailed" xml:space="preserve">
+    <value>Couldn't clear history{0} Nothing was deleted.</value>
+    <comment>Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)</comment>
+  </data>
 </root>
