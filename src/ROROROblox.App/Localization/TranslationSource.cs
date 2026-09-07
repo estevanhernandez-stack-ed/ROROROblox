@@ -27,10 +27,10 @@ public sealed class TranslationSource : INotifyPropertyChanged
 
     private TranslationSource() { }
 
-    /// <summary>The active UI culture. Setting it flips the whole UI live: it updates the ambient
-    /// thread cultures (so newly-constructed elements and code lookups agree), raises the indexer
-    /// change (so existing <c>{loc:Loc}</c> bindings refresh), and fires <see cref="CultureChanged"/>
-    /// (so ViewModels re-raise composed strings).</summary>
+    /// <summary>The active UI culture. Setting it flips the whole UI live: it updates the UI thread's
+    /// culture (so not-yet-migrated <c>x:Static</c> and framework lookups on this thread agree),
+    /// raises the indexer change (so existing <c>{loc:Loc}</c> bindings refresh), and fires
+    /// <see cref="CultureChanged"/> (so ViewModels re-raise composed strings).</summary>
     public CultureInfo CurrentCulture
     {
         get => _culture;
@@ -38,8 +38,10 @@ public sealed class TranslationSource : INotifyPropertyChanged
         {
             if (Equals(_culture, value)) return;
             _culture = value;
+            // The UI thread's culture only. The PROCESS default (DefaultThreadCurrentUICulture) is a
+            // STARTUP concern owned by UiCulture.ApplyFromSettings; a runtime toggle must not mutate
+            // process-global state — it would leak across threads (including parallel test runs).
             Thread.CurrentThread.CurrentUICulture = value;
-            CultureInfo.DefaultThreadCurrentUICulture = value;
             // Binding.IndexerName ("Item[]") tells WPF every indexer binding on this source changed.
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(Binding.IndexerName));
             CultureChanged?.Invoke(this, EventArgs.Empty);
