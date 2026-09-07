@@ -240,7 +240,7 @@
     <value>Lub wklej adres roblox.com/games/&lt;id&gt;/&lt;name&gt; albo identyfikator miejsca</value>
   </data>
   <data name="GamesPage_PasteAPrivateServerLink" xml:space="preserve">
-    <value>Wklej link do serwera prywatnego w Uruchomieniu zespołowym i uruchom go. Zapisze się tutaj automatycznie.</value>
+    <value>Wklej link do serwera prywatnego w Squad Launch i uruchom go. Zapisze się tutaj automatycznie.</value>
   </data>
   <data name="GamesPage_PreSelectThisServerWhen" xml:space="preserve">
     <value>Wstępnie wybieraj ten serwer, gdy uruchamiasz wszystkie konta na serwer prywatny.</value>
@@ -513,10 +513,10 @@
     <value>Partiami</value>
   </data>
   <data name="MainWindow_IncludeThisAccountInLaunch" xml:space="preserve">
-    <value>Uwzględnij to konto w Uruchom wiele i Uruchomieniu zespołowym</value>
+    <value>Uwzględnij to konto w Uruchom wiele i Squad Launch</value>
   </data>
   <data name="MainWindow_IncludeThisAccountInLaunch_2" xml:space="preserve">
-    <value>Uwzględnij to konto w partiach Uruchom wiele / Uruchomienie zespołowe. Kliknij, aby pominąć.</value>
+    <value>Uwzględnij to konto w partiach Uruchom wiele / Squad Launch. Kliknij, aby pominąć.</value>
   </data>
   <data name="MainWindow_InstallAndManageRororoPlugins" xml:space="preserve">
     <value>Instaluj wtyczki RoRoRo i zarządzaj nimi.</value>
@@ -585,10 +585,10 @@
     <value>Ostatnie sesje dla każdego konta: jaka gra/serwer, kiedy, jak długo.</value>
   </data>
   <data name="MainWindow_Recycle" xml:space="preserve">
-    <value>Połącz ponownie</value>
+    <value>Recycle</value>
   </data>
   <data name="MainWindow_RecycleCloseAndRelaunchThis" xml:space="preserve">
-    <value>Połącz ponownie — zamknij i uruchom ponownie tego klienta z powrotem na serwerze, na którym jest teraz, i odzyskaj utraconą pamięć.</value>
+    <value>Recycle — zamknij i uruchom ponownie tego klienta z powrotem na serwerze, na którym jest teraz, i odzyskaj utraconą pamięć.</value>
   </data>
   <data name="MainWindow_Remove" xml:space="preserve">
     <value>Usuń</value>
@@ -657,10 +657,10 @@
     <value>Pominięte</value>
   </data>
   <data name="MainWindow_SquadLaunch" xml:space="preserve">
-    <value>Uruchomienie zespołowe</value>
+    <value>Squad Launch</value>
   </data>
   <data name="MainWindow_SquadLaunchesRouteThisAccount" xml:space="preserve">
-    <value>Uruchomienia zespołowe kierują to konto na serwer, dołączając do członka zespołu, który już tam jest — monity weryfikacyjne Roblox dotyczą bezpośrednich dołączeń, nie dołączania do znajomych. Wymaga znajomości z Twoim zespołem.</value>
+    <value>Uruchomienia Squad Launch kierują to konto na serwer, dołączając do członka zespołu, który już tam jest — monity weryfikacyjne Roblox dotyczą bezpośrednich dołączeń, nie dołączania do znajomych. Wymaga znajomości z Twoim zespołem.</value>
   </data>
   <data name="MainWindow_Start" xml:space="preserve">
     <value>▶ Uruchom</value>
@@ -702,7 +702,7 @@
     <value>Przewodnik powitalny</value>
   </data>
   <data name="MainWindow_WhetherThisAccountJoinsLaunch" xml:space="preserve">
-    <value>Czy to konto dołącza do zbiorczych uruchomień Uruchom wiele / Uruchomienie zespołowe. Kliknij kropkę, aby przełączyć.</value>
+    <value>Czy to konto dołącza do zbiorczych uruchomień Uruchom wiele / Squad Launch. Kliknij kropkę, aby przełączyć.</value>
   </data>
   <data name="MainWindow_XMinimizesToTrayQuit" xml:space="preserve">
     <value>X minimalizuje do zasobnika systemowego. Zakończ z zasobnika systemowego, aby wyjść.</value>
@@ -858,7 +858,7 @@
     <value>Alerty i pamięć</value>
   </data>
   <data name="SettingsPage_AlwaysShowRecycleOnRunning" xml:space="preserve">
-    <value>Zawsze pokazuj Połącz ponownie na uruchomionych kontach.</value>
+    <value>Zawsze pokazuj Recycle na uruchomionych kontach.</value>
   </data>
   <data name="SettingsPage_AnAccountDropsOut" xml:space="preserve">
     <value>Konto wypada</value>
@@ -924,7 +924,7 @@
     <value>Umieść tutaj plik *.json, a następnie zamknij i otwórz ponownie Ustawienia, aby zobaczyć go na liście wyboru.</value>
   </data>
   <data name="SettingsPage_EachAccountFinishesLandingIn" xml:space="preserve">
-    <value>Każde konto kończy wchodzenie do gry, zanim rozpocznie się następne. Trwa to dłużej, ale nigdy dwa konta nie dołączają jednocześnie, co jest tym, co wywołuje monity weryfikacyjne Roblox. Możesz to też przełączyć w oknie Uruchomienia zespołowego.</value>
+    <value>Każde konto kończy wchodzenie do gry, zanim rozpocznie się następne. Trwa to dłużej, ale nigdy dwa konta nie dołączają jednocześnie, co jest tym, co wywołuje monity weryfikacyjne Roblox. Możesz to też przełączyć w oknie Squad Launch.</value>
   </data>
   <data name="SettingsPage_ExportAccounts" xml:space="preserve">
     <value>Eksportuj konta…</value>
@@ -1053,7 +1053,7 @@
     <value>Klucz użytkownika Pushover</value>
   </data>
   <data name="SettingsPage_RecycleClosesAClientAnd" xml:space="preserve">
-    <value>Połącz ponownie zamyka klienta i umieszcza go z powrotem na serwerze, na którym był — przydatne dla klienta, który zaczął się zachowywać dziwnie, nie tylko takiego pochłaniającego pamięć. Wyłączone, pojawia się tylko wtedy, gdy RoRoRo ostrzega o pamięci tego konta.</value>
+    <value>Recycle zamyka klienta i umieszcza go z powrotem na serwerze, na którym był — przydatne dla klienta, który zaczął się zachowywać dziwnie, nie tylko takiego pochłaniającego pamięć. Wyłączone, pojawia się tylko wtedy, gdy RoRoRo ostrzega o pamięci tego konta.</value>
   </data>
   <data name="SettingsPage_RerollAllIdentities" xml:space="preserve">
     <value>Wylosuj ponownie wszystkie tożsamości</value>
@@ -1302,7 +1302,7 @@
     <value>Wyślij każde aktywne konto na ten sam serwer Roblox. Serwer prywatny: wszyscy dołączają bezpośrednio przez link. Gra publiczna: pierwsze konto wchodzi, a reszta dołącza do serwera, na którym wylądowało.</value>
   </data>
   <data name="SquadLaunchWindow_SquadLaunch" xml:space="preserve">
-    <value>Uruchomienie zespołowe</value>
+    <value>Squad Launch</value>
   </data>
   <data name="SquadLaunchWindow_WaitsForEachAccountTo" xml:space="preserve">
     <value>Czeka, aż każde konto w pełni wejdzie do gry, zanim uruchomi następne. Wolniej, ale nigdy dwa konta nie dołączają w tym samym czasie — co jest tym, co wyzwala monity weryfikacyjne Roblox.</value>
@@ -1435,7 +1435,7 @@
     <value>Kropka z etykietą</value>
   </data>
   <data name="WelcomeWindow_TogglesWhetherThisAccountJoins" xml:space="preserve">
-    <value>— przełącza, czy to konto dołącza do uruchomień Uruchom wiele / Uruchomienie zespołowe. Zachowuje się po ponownych uruchomieniach.</value>
+    <value>— przełącza, czy to konto dołącza do uruchomień Uruchom wiele / Squad Launch. Zachowuje się po ponownych uruchomieniach.</value>
   </data>
   <data name="WelcomeWindow_WelcomeTo" xml:space="preserve">
     <value>Witaj w</value>

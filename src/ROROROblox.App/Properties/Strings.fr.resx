@@ -240,7 +240,7 @@
     <value>Ou collez une URL roblox.com/games/&lt;id&gt;/&lt;name&gt; ou un id de place</value>
   </data>
   <data name="GamesPage_PasteAPrivateServerLink" xml:space="preserve">
-    <value>Collez un lien de serveur privé dans Lancement en escouade et lancez-le. Il s'enregistre ici automatiquement.</value>
+    <value>Collez un lien de serveur privé dans Squad Launch et lancez-le. Il s'enregistre ici automatiquement.</value>
   </data>
   <data name="GamesPage_PreSelectThisServerWhen" xml:space="preserve">
     <value>Présélectionner ce serveur quand vous lancez tous les comptes vers un serveur privé.</value>
@@ -513,10 +513,10 @@
     <value>Par lots</value>
   </data>
   <data name="MainWindow_IncludeThisAccountInLaunch" xml:space="preserve">
-    <value>Inclure ce compte dans Lancer plusieurs et Lancement en escouade</value>
+    <value>Inclure ce compte dans Lancer plusieurs et Squad Launch</value>
   </data>
   <data name="MainWindow_IncludeThisAccountInLaunch_2" xml:space="preserve">
-    <value>Inclure ce compte dans les lots Lancer plusieurs / Lancement en escouade. Cliquez pour l'ignorer.</value>
+    <value>Inclure ce compte dans les lots Lancer plusieurs / Squad Launch. Cliquez pour l'ignorer.</value>
   </data>
   <data name="MainWindow_InstallAndManageRororoPlugins" xml:space="preserve">
     <value>Installer et gérer les plugins RoRoRo.</value>
@@ -585,10 +585,10 @@
     <value>Sessions récentes par compte : quel jeu/serveur, quand, combien de temps.</value>
   </data>
   <data name="MainWindow_Recycle" xml:space="preserve">
-    <value>Recycler</value>
+    <value>Recycle</value>
   </data>
   <data name="MainWindow_RecycleCloseAndRelaunchThis" xml:space="preserve">
-    <value>Recycler — ferme et relance ce client dans le serveur où il se trouve actuellement, et récupère la mémoire ayant fui.</value>
+    <value>Recycle — ferme et relance ce client dans le serveur où il se trouve actuellement, et récupère la mémoire ayant fui.</value>
   </data>
   <data name="MainWindow_Remove" xml:space="preserve">
     <value>Retirer</value>
@@ -657,10 +657,10 @@
     <value>Ignoré</value>
   </data>
   <data name="MainWindow_SquadLaunch" xml:space="preserve">
-    <value>Lancement en escouade</value>
+    <value>Squad Launch</value>
   </data>
   <data name="MainWindow_SquadLaunchesRouteThisAccount" xml:space="preserve">
-    <value>Les lancements en escouade acheminent ce compte dans le serveur en suivant un membre de l'escouade déjà présent — les invites de vérification de Roblox visent les connexions directes, pas les suivis. Nécessite d'être ami avec votre escouade.</value>
+    <value>Les lancements avec Squad Launch acheminent ce compte dans le serveur en suivant un membre de l'escouade déjà présent — les invites de vérification de Roblox visent les connexions directes, pas les suivis. Nécessite d'être ami avec votre escouade.</value>
   </data>
   <data name="MainWindow_Start" xml:space="preserve">
     <value>▶ Démarrer</value>
@@ -702,7 +702,7 @@
     <value>Visite guidée</value>
   </data>
   <data name="MainWindow_WhetherThisAccountJoinsLaunch" xml:space="preserve">
-    <value>Indique si ce compte participe aux lancements par lots Lancer plusieurs / Lancement en escouade. Cliquez sur le point pour basculer.</value>
+    <value>Indique si ce compte participe aux lancements par lots Lancer plusieurs / Squad Launch. Cliquez sur le point pour basculer.</value>
   </data>
   <data name="MainWindow_XMinimizesToTrayQuit" xml:space="preserve">
     <value>X réduit dans la barre d'état système. Quittez depuis la barre d'état système pour fermer.</value>
@@ -858,7 +858,7 @@
     <value>Alertes et mémoire</value>
   </data>
   <data name="SettingsPage_AlwaysShowRecycleOnRunning" xml:space="preserve">
-    <value>Toujours afficher Recycler sur les comptes en cours d'exécution.</value>
+    <value>Toujours afficher Recycle sur les comptes en cours d'exécution.</value>
   </data>
   <data name="SettingsPage_AnAccountDropsOut" xml:space="preserve">
     <value>Un compte décroche</value>
@@ -924,7 +924,7 @@
     <value>Déposez un fichier *.json ici, puis fermez et rouvrez les Paramètres pour le voir dans le sélecteur.</value>
   </data>
   <data name="SettingsPage_EachAccountFinishesLandingIn" xml:space="preserve">
-    <value>Chaque compte finit d'atterrir dans le jeu avant que le suivant ne démarre. C'est plus long, mais deux comptes ne rejoignent jamais en même temps, ce qui est justement ce qui déclenche les invites de vérification de Roblox. Vous pouvez aussi basculer ceci dans la fenêtre Lancement en escouade.</value>
+    <value>Chaque compte finit d'atterrir dans le jeu avant que le suivant ne démarre. C'est plus long, mais deux comptes ne rejoignent jamais en même temps, ce qui est justement ce qui déclenche les invites de vérification de Roblox. Vous pouvez aussi basculer ceci dans la fenêtre Squad Launch.</value>
   </data>
   <data name="SettingsPage_ExportAccounts" xml:space="preserve">
     <value>Exporter les comptes…</value>
@@ -1053,7 +1053,7 @@
     <value>Clé utilisateur Pushover</value>
   </data>
   <data name="SettingsPage_RecycleClosesAClientAnd" xml:space="preserve">
-    <value>Recycler ferme un client et le remet directement dans le serveur où il était — utile pour un client qui déraille, pas seulement un qui consomme trop de mémoire. Désactivé, il n'apparaît que lorsque RoRoRo signale la mémoire de ce compte.</value>
+    <value>Recycle ferme un client et le remet directement dans le serveur où il était — utile pour un client qui déraille, pas seulement un qui consomme trop de mémoire. Désactivé, il n'apparaît que lorsque RoRoRo signale la mémoire de ce compte.</value>
   </data>
   <data name="SettingsPage_RerollAllIdentities" xml:space="preserve">
     <value>Régénérer toutes les identités</value>
@@ -1302,7 +1302,7 @@
     <value>Envoyez chaque compte actif dans le même serveur Roblox. Serveur privé : tout le monde rejoint le lien directement. Jeu public : le premier compte entre, et les autres rejoignent le serveur où il a atterri.</value>
   </data>
   <data name="SquadLaunchWindow_SquadLaunch" xml:space="preserve">
-    <value>Lancement en escouade</value>
+    <value>Squad Launch</value>
   </data>
   <data name="SquadLaunchWindow_WaitsForEachAccountTo" xml:space="preserve">
     <value>Attend que chaque compte ait complètement atterri dans le jeu avant de lancer le suivant. Plus lent, mais deux comptes ne rejoignent jamais en même temps — ce qui est justement ce qui déclenche les invites de vérification de Roblox.</value>
@@ -1435,7 +1435,7 @@
     <value>Le point étiqueté</value>
   </data>
   <data name="WelcomeWindow_TogglesWhetherThisAccountJoins" xml:space="preserve">
-    <value>— détermine si ce compte participe aux exécutions Lancer plusieurs / Lancement en escouade. Persiste après les redémarrages.</value>
+    <value>— détermine si ce compte participe aux exécutions Lancer plusieurs / Squad Launch. Persiste après les redémarrages.</value>
   </data>
   <data name="WelcomeWindow_WelcomeTo" xml:space="preserve">
     <value>Bienvenue dans</value>

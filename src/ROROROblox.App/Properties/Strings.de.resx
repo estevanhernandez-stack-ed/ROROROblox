@@ -240,7 +240,7 @@
     <value>Oder füge eine roblox.com/games/&lt;id&gt;/&lt;name&gt;-URL oder Place-ID ein</value>
   </data>
   <data name="GamesPage_PasteAPrivateServerLink" xml:space="preserve">
-    <value>Füge einen privaten Server-Link in Squad-Start ein und starte ihn. Er wird hier automatisch gespeichert.</value>
+    <value>Füge einen privaten Server-Link in Squad Launch ein und starte ihn. Er wird hier automatisch gespeichert.</value>
   </data>
   <data name="GamesPage_PreSelectThisServerWhen" xml:space="preserve">
     <value>Diesen Server vorauswählen, wenn du alle Konten auf einen privaten Server startest.</value>
@@ -513,10 +513,10 @@
     <value>In Schüben</value>
   </data>
   <data name="MainWindow_IncludeThisAccountInLaunch" xml:space="preserve">
-    <value>Dieses Konto in Mehrere starten und Squad-Start einbeziehen</value>
+    <value>Dieses Konto in Mehrere starten und Squad Launch einbeziehen</value>
   </data>
   <data name="MainWindow_IncludeThisAccountInLaunch_2" xml:space="preserve">
-    <value>Dieses Konto in Mehrere starten / Squad-Start-Schübe einbeziehen. Klicke zum Überspringen.</value>
+    <value>Dieses Konto in Mehrere starten / Squad Launch-Schübe einbeziehen. Klicke zum Überspringen.</value>
   </data>
   <data name="MainWindow_InstallAndManageRororoPlugins" xml:space="preserve">
     <value>RoRoRo-Plugins installieren und verwalten.</value>
@@ -585,10 +585,10 @@
     <value>Letzte Sitzungen pro Konto: welches Spiel/welcher Server, wann, wie lange.</value>
   </data>
   <data name="MainWindow_Recycle" xml:space="preserve">
-    <value>Neu verbinden</value>
+    <value>Recycle</value>
   </data>
   <data name="MainWindow_RecycleCloseAndRelaunchThis" xml:space="preserve">
-    <value>Neu verbinden — schließt diesen Client und startet ihn zurück in den Server, in dem er jetzt ist, und gewinnt verlorenen Speicher zurück.</value>
+    <value>Recycle — schließt diesen Client und startet ihn zurück in den Server, in dem er jetzt ist, und gewinnt verlorenen Speicher zurück.</value>
   </data>
   <data name="MainWindow_Remove" xml:space="preserve">
     <value>Entfernen</value>
@@ -657,10 +657,10 @@
     <value>Übersprungen</value>
   </data>
   <data name="MainWindow_SquadLaunch" xml:space="preserve">
-    <value>Squad-Start</value>
+    <value>Squad Launch</value>
   </data>
   <data name="MainWindow_SquadLaunchesRouteThisAccount" xml:space="preserve">
-    <value>Squad-Starts leiten dieses Konto in den Server, indem es einem bereits anwesenden Squad-Mitglied folgt — Roblox' Verifizierungsabfragen treffen direkte Beitritte, nicht das Folgen. Erfordert eine Freundschaft mit deinem Squad.</value>
+    <value>Squad Launch leitet dieses Konto in den Server, indem es einem bereits anwesenden Squad-Mitglied folgt — Roblox' Verifizierungsabfragen treffen direkte Beitritte, nicht das Folgen. Erfordert eine Freundschaft mit deinem Squad.</value>
   </data>
   <data name="MainWindow_Start" xml:space="preserve">
     <value>▶ Starten</value>
@@ -702,7 +702,7 @@
     <value>Willkommenstour</value>
   </data>
   <data name="MainWindow_WhetherThisAccountJoinsLaunch" xml:space="preserve">
-    <value>Ob dieses Konto an Mehrere starten / Squad-Start-Schüben teilnimmt. Klicke den Punkt zum Umschalten.</value>
+    <value>Ob dieses Konto an Mehrere starten / Squad Launch-Schüben teilnimmt. Klicke den Punkt zum Umschalten.</value>
   </data>
   <data name="MainWindow_XMinimizesToTrayQuit" xml:space="preserve">
     <value>X minimiert in den Infobereich. Zum Beenden über den Infobereich beenden.</value>
@@ -858,7 +858,7 @@
     <value>Benachrichtigungen &amp; Speicher</value>
   </data>
   <data name="SettingsPage_AlwaysShowRecycleOnRunning" xml:space="preserve">
-    <value>Neu verbinden bei laufenden Konten immer anzeigen.</value>
+    <value>Recycle bei laufenden Konten immer anzeigen.</value>
   </data>
   <data name="SettingsPage_AnAccountDropsOut" xml:space="preserve">
     <value>Ein Konto fällt aus</value>
@@ -924,7 +924,7 @@
     <value>Lege eine *.json-Datei hier ab, schließe dann die Einstellungen und öffne sie erneut, um sie in der Auswahl zu sehen.</value>
   </data>
   <data name="SettingsPage_EachAccountFinishesLandingIn" xml:space="preserve">
-    <value>Jedes Konto landet vollständig im Spiel, bevor das nächste startet. Es dauert länger, aber nie treten zwei Konten gleichzeitig bei, was Roblox' Verifizierungsabfragen auslöst. Du kannst das auch im Squad-Start-Fenster umschalten.</value>
+    <value>Jedes Konto landet vollständig im Spiel, bevor das nächste startet. Es dauert länger, aber nie treten zwei Konten gleichzeitig bei, was Roblox' Verifizierungsabfragen auslöst. Du kannst das auch im Squad Launch-Fenster umschalten.</value>
   </data>
   <data name="SettingsPage_ExportAccounts" xml:space="preserve">
     <value>Konten exportieren…</value>
@@ -1053,7 +1053,7 @@
     <value>Pushover User Key</value>
   </data>
   <data name="SettingsPage_RecycleClosesAClientAnd" xml:space="preserve">
-    <value>Neu verbinden schließt einen Client und setzt ihn direkt in den Server zurück, in dem er war — nützlich für einen Client, der aus dem Ruder gelaufen ist, nicht nur für einen, der Speicher frisst. Aus, erscheint es nur, wenn RoRoRo vor dem Speicher dieses Kontos warnt.</value>
+    <value>Recycle schließt einen Client und setzt ihn direkt in den Server zurück, in dem er war — nützlich für einen Client, der aus dem Ruder gelaufen ist, nicht nur für einen, der Speicher frisst. Aus, erscheint es nur, wenn RoRoRo vor dem Speicher dieses Kontos warnt.</value>
   </data>
   <data name="SettingsPage_RerollAllIdentities" xml:space="preserve">
     <value>Alle Identitäten neu würfeln</value>
@@ -1302,7 +1302,7 @@
     <value>Schickt jedes aktive Konto in denselben Roblox-Server. Privater Server: Alle treten dem Link direkt bei. Öffentliches Spiel: Das erste Konto geht hinein, und die übrigen treten dem Server bei, in dem es gelandet ist.</value>
   </data>
   <data name="SquadLaunchWindow_SquadLaunch" xml:space="preserve">
-    <value>Squad-Start</value>
+    <value>Squad Launch</value>
   </data>
   <data name="SquadLaunchWindow_WaitsForEachAccountTo" xml:space="preserve">
     <value>Wartet, bis jedes Konto vollständig im Spiel gelandet ist, bevor das nächste startet. Langsamer, aber nie treten zwei Konten gleichzeitig bei — was Roblox' Verifizierungsabfragen auslöst.</value>
@@ -1435,7 +1435,7 @@
     <value>Der Punkt mit der Bezeichnung</value>
   </data>
   <data name="WelcomeWindow_TogglesWhetherThisAccountJoins" xml:space="preserve">
-    <value>— schaltet um, ob dieses Konto an Mehrere starten / Squad-Start-Durchläufen teilnimmt. Bleibt über Neustarts erhalten.</value>
+    <value>— schaltet um, ob dieses Konto an Mehrere starten / Squad Launch-Durchläufen teilnimmt. Bleibt über Neustarts erhalten.</value>
   </data>
   <data name="WelcomeWindow_WelcomeTo" xml:space="preserve">
     <value>Willkommen bei</value>

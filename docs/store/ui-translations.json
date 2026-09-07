@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "862a749",
-  "generatedUtc": "2026-09-07T14:09:57+00:00",
+  "sourceCommit": "fd82cce",
+  "generatedUtc": "2026-09-07T14:26:12+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -907,12 +907,12 @@
       "field": "GamesPage_PasteAPrivateServerLink",
       "en": "Paste a private server link into Squad Launch and launch it. It saves here automatically.",
       "translations": {
-        "fr": "Collez un lien de serveur privé dans Lancement en escouade et lancez-le. Il s'enregistre ici automatiquement.",
-        "de": "Füge einen privaten Server-Link in Squad-Start ein und starte ihn. Er wird hier automatisch gespeichert.",
-        "ru": "Вставьте ссылку на приватный сервер в «Групповой запуск» и запустите. Она сохранится здесь автоматически.",
-        "pt-br": "Cole um link de servidor privado no Iniciar em grupo e inicie-o. Ele é salvo aqui automaticamente.",
-        "pl": "Wklej link do serwera prywatnego w Uruchomieniu zespołowym i uruchom go. Zapisze się tutaj automatycznie.",
-        "es": "Pega un enlace de servidor privado en Inicio en escuadra e inícialo. Se guarda aquí automáticamente."
+        "fr": "Collez un lien de serveur privé dans Squad Launch et lancez-le. Il s'enregistre ici automatiquement.",
+        "de": "Füge einen privaten Server-Link in Squad Launch ein und starte ihn. Er wird hier automatisch gespeichert.",
+        "ru": "Вставьте ссылку на приватный сервер в Squad Launch и запустите. Она сохранится здесь автоматически.",
+        "pt-br": "Cole um link de servidor privado no Squad Launch e inicie-o. Ele é salvo aqui automaticamente.",
+        "pl": "Wklej link do serwera prywatnego w Squad Launch i uruchom go. Zapisze się tutaj automatycznie.",
+        "es": "Pega un enlace de servidor privado en Squad Launch e inícialo. Se guarda aquí automáticamente."
       }
     },
     {
@@ -1999,24 +1999,24 @@
       "field": "MainWindow_IncludeThisAccountInLaunch",
       "en": "Include this account in Launch multiple and Squad Launch",
       "translations": {
-        "fr": "Inclure ce compte dans Lancer plusieurs et Lancement en escouade",
-        "de": "Dieses Konto in Mehrere starten und Squad-Start einbeziehen",
-        "ru": "Включать этот аккаунт в «Запустить несколько» и «Групповой запуск»",
-        "pt-br": "Incluir esta conta no Iniciar vários e no Iniciar em grupo",
-        "pl": "Uwzględnij to konto w Uruchom wiele i Uruchomieniu zespołowym",
-        "es": "Incluir esta cuenta en Iniciar varias e Inicio en escuadra"
+        "fr": "Inclure ce compte dans Lancer plusieurs et Squad Launch",
+        "de": "Dieses Konto in Mehrere starten und Squad Launch einbeziehen",
+        "ru": "Включать этот аккаунт в «Запустить несколько» и Squad Launch",
+        "pt-br": "Incluir esta conta no Iniciar vários e no Squad Launch",
+        "pl": "Uwzględnij to konto w Uruchom wiele i Squad Launch",
+        "es": "Incluir esta cuenta en Iniciar varias y Squad Launch"
       }
     },
     {
       "field": "MainWindow_IncludeThisAccountInLaunch_2",
       "en": "Include this account in Launch multiple / Squad Launch batches. Click to skip.",
       "translations": {
-        "fr": "Inclure ce compte dans les lots Lancer plusieurs / Lancement en escouade. Cliquez pour l'ignorer.",
-        "de": "Dieses Konto in Mehrere starten / Squad-Start-Schübe einbeziehen. Klicke zum Überspringen.",
-        "ru": "Включать этот аккаунт в пакеты «Запустить несколько» / «Групповой запуск». Нажмите, чтобы пропустить.",
-        "pt-br": "Incluir esta conta nos lotes de Iniciar vários / Iniciar em grupo. Clique para pular.",
-        "pl": "Uwzględnij to konto w partiach Uruchom wiele / Uruchomienie zespołowe. Kliknij, aby pominąć.",
-        "es": "Incluir esta cuenta en los lotes de Iniciar varias / Inicio en escuadra. Haz clic para omitirla."
+        "fr": "Inclure ce compte dans les lots Lancer plusieurs / Squad Launch. Cliquez pour l'ignorer.",
+        "de": "Dieses Konto in Mehrere starten / Squad Launch-Schübe einbeziehen. Klicke zum Überspringen.",
+        "ru": "Включать этот аккаунт в пакеты «Запустить несколько» / Squad Launch. Нажмите, чтобы пропустить.",
+        "pt-br": "Incluir esta conta nos lotes de Iniciar vários / Squad Launch. Clique para pular.",
+        "pl": "Uwzględnij to konto w partiach Uruchom wiele / Squad Launch. Kliknij, aby pominąć.",
+        "es": "Incluir esta cuenta en los lotes de Iniciar varias / Squad Launch. Haz clic para omitirla."
       }
     },
     {
@@ -2287,24 +2287,24 @@
       "field": "MainWindow_Recycle",
       "en": "Recycle",
       "translations": {
-        "fr": "Recycler",
-        "de": "Neu verbinden",
-        "ru": "Переподключить",
-        "pt-br": "Reciclar",
-        "pl": "Połącz ponownie",
-        "es": "Reconectar"
+        "fr": "Recycle",
+        "de": "Recycle",
+        "ru": "Recycle",
+        "pt-br": "Recycle",
+        "pl": "Recycle",
+        "es": "Recycle"
       }
     },
     {
       "field": "MainWindow_RecycleCloseAndRelaunchThis",
       "en": "Recycle — close and relaunch this client back into the server it's in now, and reclaim leaked memory.",
       "translations": {
-        "fr": "Recycler — ferme et relance ce client dans le serveur où il se trouve actuellement, et récupère la mémoire ayant fui.",
-        "de": "Neu verbinden — schließt diesen Client und startet ihn zurück in den Server, in dem er jetzt ist, und gewinnt verlorenen Speicher zurück.",
-        "ru": "Переподключить — закрыть и перезапустить этот клиент обратно на сервер, где он сейчас, и вернуть утёкшую память.",
-        "pt-br": "Reciclar — feche e reinicie este cliente de volta no servidor em que está agora, e recupere a memória vazada.",
-        "pl": "Połącz ponownie — zamknij i uruchom ponownie tego klienta z powrotem na serwerze, na którym jest teraz, i odzyskaj utraconą pamięć.",
-        "es": "Reconectar — cierra y vuelve a iniciar este cliente de vuelta al servidor en el que está ahora, y recupera la memoria filtrada."
+        "fr": "Recycle — ferme et relance ce client dans le serveur où il se trouve actuellement, et récupère la mémoire ayant fui.",
+        "de": "Recycle — schließt diesen Client und startet ihn zurück in den Server, in dem er jetzt ist, und gewinnt verlorenen Speicher zurück.",
+        "ru": "Recycle — закрыть и перезапустить этот клиент обратно на сервер, где он сейчас, и вернуть утёкшую память.",
+        "pt-br": "Recycle — feche e reinicie este cliente de volta no servidor em que está agora, e recupere a memória vazada.",
+        "pl": "Recycle — zamknij i uruchom ponownie tego klienta z powrotem na serwerze, na którym jest teraz, i odzyskaj utraconą pamięć.",
+        "es": "Recycle — cierra y vuelve a iniciar este cliente de vuelta al servidor en el que está ahora, y recupera la memoria filtrada."
       }
     },
     {
@@ -2575,24 +2575,24 @@
       "field": "MainWindow_SquadLaunch",
       "en": "Squad Launch",
       "translations": {
-        "fr": "Lancement en escouade",
-        "de": "Squad-Start",
-        "ru": "Групповой запуск",
-        "pt-br": "Iniciar em grupo",
-        "pl": "Uruchomienie zespołowe",
-        "es": "Inicio en escuadra"
+        "fr": "Squad Launch",
+        "de": "Squad Launch",
+        "ru": "Squad Launch",
+        "pt-br": "Squad Launch",
+        "pl": "Squad Launch",
+        "es": "Squad Launch"
       }
     },
     {
       "field": "MainWindow_SquadLaunchesRouteThisAccount",
       "en": "Squad launches route this account into the server by following a squad member who's already in — Roblox's verification prompts hit direct joins, not follows. Requires friendship with your squad.",
       "translations": {
-        "fr": "Les lancements en escouade acheminent ce compte dans le serveur en suivant un membre de l'escouade déjà présent — les invites de vérification de Roblox visent les connexions directes, pas les suivis. Nécessite d'être ami avec votre escouade.",
-        "de": "Squad-Starts leiten dieses Konto in den Server, indem es einem bereits anwesenden Squad-Mitglied folgt — Roblox' Verifizierungsabfragen treffen direkte Beitritte, nicht das Folgen. Erfordert eine Freundschaft mit deinem Squad.",
-        "ru": "Групповые запуски направляют этот аккаунт на сервер, присоединяясь к уже вошедшему участнику группы — проверки Roblox срабатывают при прямом входе, а не при присоединении. Требуется дружба с вашей группой.",
-        "pt-br": "Os inícios em grupo levam esta conta ao servidor seguindo um membro do grupo que já está dentro — os avisos de verificação do Roblox atingem entradas diretas, não o seguir. Requer amizade com seu grupo.",
-        "pl": "Uruchomienia zespołowe kierują to konto na serwer, dołączając do członka zespołu, który już tam jest — monity weryfikacyjne Roblox dotyczą bezpośrednich dołączeń, nie dołączania do znajomych. Wymaga znajomości z Twoim zespołem.",
-        "es": "Los inicios en escuadra encaminan esta cuenta al servidor siguiendo a un miembro de la escuadra que ya está dentro — las verificaciones de Roblox afectan a las uniones directas, no a los seguimientos. Requiere amistad con tu escuadra."
+        "fr": "Les lancements avec Squad Launch acheminent ce compte dans le serveur en suivant un membre de l'escouade déjà présent — les invites de vérification de Roblox visent les connexions directes, pas les suivis. Nécessite d'être ami avec votre escouade.",
+        "de": "Squad Launch leitet dieses Konto in den Server, indem es einem bereits anwesenden Squad-Mitglied folgt — Roblox' Verifizierungsabfragen treffen direkte Beitritte, nicht das Folgen. Erfordert eine Freundschaft mit deinem Squad.",
+        "ru": "Запуски Squad Launch направляют этот аккаунт на сервер, присоединяясь к уже вошедшему участнику группы — проверки Roblox срабатывают при прямом входе, а не при присоединении. Требуется дружба с вашей группой.",
+        "pt-br": "Os inícios com Squad Launch levam esta conta ao servidor seguindo um membro do grupo que já está dentro — os avisos de verificação do Roblox atingem entradas diretas, não o seguir. Requer amizade com seu grupo.",
+        "pl": "Uruchomienia Squad Launch kierują to konto na serwer, dołączając do członka zespołu, który już tam jest — monity weryfikacyjne Roblox dotyczą bezpośrednich dołączeń, nie dołączania do znajomych. Wymaga znajomości z Twoim zespołem.",
+        "es": "Los inicios con Squad Launch encaminan esta cuenta al servidor siguiendo a un miembro de la escuadra que ya está dentro — las verificaciones de Roblox afectan a las uniones directas, no a los seguimientos. Requiere amistad con tu escuadra."
       }
     },
     {
@@ -2755,12 +2755,12 @@
       "field": "MainWindow_WhetherThisAccountJoinsLaunch",
       "en": "Whether this account joins Launch multiple / Squad Launch batch launches. Click the dot to flip.",
       "translations": {
-        "fr": "Indique si ce compte participe aux lancements par lots Lancer plusieurs / Lancement en escouade. Cliquez sur le point pour basculer.",
-        "de": "Ob dieses Konto an Mehrere starten / Squad-Start-Schüben teilnimmt. Klicke den Punkt zum Umschalten.",
-        "ru": "Участвует ли этот аккаунт в пакетных запусках «Запустить несколько» / «Групповой запуск». Нажмите точку, чтобы переключить.",
-        "pt-br": "Se esta conta entra nos inícios em lote de Iniciar vários / Iniciar em grupo. Clique no ponto para alternar.",
-        "pl": "Czy to konto dołącza do zbiorczych uruchomień Uruchom wiele / Uruchomienie zespołowe. Kliknij kropkę, aby przełączyć.",
-        "es": "Si esta cuenta participa en los inicios por lotes de Iniciar varias / Inicio en escuadra. Haz clic en el punto para cambiarlo."
+        "fr": "Indique si ce compte participe aux lancements par lots Lancer plusieurs / Squad Launch. Cliquez sur le point pour basculer.",
+        "de": "Ob dieses Konto an Mehrere starten / Squad Launch-Schüben teilnimmt. Klicke den Punkt zum Umschalten.",
+        "ru": "Участвует ли этот аккаунт в пакетных запусках «Запустить несколько» / Squad Launch. Нажмите точку, чтобы переключить.",
+        "pt-br": "Se esta conta entra nos inícios em lote de Iniciar vários / Squad Launch. Clique no ponto para alternar.",
+        "pl": "Czy to konto dołącza do zbiorczych uruchomień Uruchom wiele / Squad Launch. Kliknij kropkę, aby przełączyć.",
+        "es": "Si esta cuenta participa en los inicios por lotes de Iniciar varias / Squad Launch. Haz clic en el punto para cambiarlo."
       }
     },
     {
@@ -3379,12 +3379,12 @@
       "field": "SettingsPage_AlwaysShowRecycleOnRunning",
       "en": "Always show Recycle on running accounts.",
       "translations": {
-        "fr": "Toujours afficher Recycler sur les comptes en cours d'exécution.",
-        "de": "Neu verbinden bei laufenden Konten immer anzeigen.",
-        "ru": "Всегда показывать «Переподключить» у запущенных аккаунтов.",
-        "pt-br": "Sempre mostrar Reciclar nas contas em execução.",
-        "pl": "Zawsze pokazuj Połącz ponownie na uruchomionych kontach.",
-        "es": "Mostrar siempre Reconectar en las cuentas en ejecución."
+        "fr": "Toujours afficher Recycle sur les comptes en cours d'exécution.",
+        "de": "Recycle bei laufenden Konten immer anzeigen.",
+        "ru": "Всегда показывать Recycle у запущенных аккаунтов.",
+        "pt-br": "Sempre mostrar Recycle nas contas em execução.",
+        "pl": "Zawsze pokazuj Recycle na uruchomionych kontach.",
+        "es": "Mostrar siempre Recycle en las cuentas en ejecución."
       }
     },
     {
@@ -3643,12 +3643,12 @@
       "field": "SettingsPage_EachAccountFinishesLandingIn",
       "en": "Each account finishes landing in the game before the next one starts. It takes longer, but no two accounts are ever joining at once, which is what sets off Roblox's verification prompts. You can also flip this in the Squad Launch window.",
       "translations": {
-        "fr": "Chaque compte finit d'atterrir dans le jeu avant que le suivant ne démarre. C'est plus long, mais deux comptes ne rejoignent jamais en même temps, ce qui est justement ce qui déclenche les invites de vérification de Roblox. Vous pouvez aussi basculer ceci dans la fenêtre Lancement en escouade.",
-        "de": "Jedes Konto landet vollständig im Spiel, bevor das nächste startet. Es dauert länger, aber nie treten zwei Konten gleichzeitig bei, was Roblox' Verifizierungsabfragen auslöst. Du kannst das auch im Squad-Start-Fenster umschalten.",
-        "ru": "Каждый аккаунт полностью заходит в игру, прежде чем запускается следующий. Это дольше, но никакие два аккаунта не входят одновременно — а именно это вызывает проверки Roblox. Это также можно переключить в окне «Групповой запуск».",
-        "pt-br": "Cada conta termina de entrar no jogo antes de a próxima começar. Leva mais tempo, mas nunca há duas contas entrando ao mesmo tempo, que é o que dispara os avisos de verificação do Roblox. Você também pode alternar isso na janela do Iniciar em grupo.",
-        "pl": "Każde konto kończy wchodzenie do gry, zanim rozpocznie się następne. Trwa to dłużej, ale nigdy dwa konta nie dołączają jednocześnie, co jest tym, co wywołuje monity weryfikacyjne Roblox. Możesz to też przełączyć w oknie Uruchomienia zespołowego.",
-        "es": "Cada cuenta termina de entrar en el juego antes de que empiece la siguiente. Tarda más, pero nunca hay dos cuentas uniéndose a la vez, que es lo que desencadena las verificaciones de Roblox. También puedes cambiar esto en la ventana de Inicio en escuadra."
+        "fr": "Chaque compte finit d'atterrir dans le jeu avant que le suivant ne démarre. C'est plus long, mais deux comptes ne rejoignent jamais en même temps, ce qui est justement ce qui déclenche les invites de vérification de Roblox. Vous pouvez aussi basculer ceci dans la fenêtre Squad Launch.",
+        "de": "Jedes Konto landet vollständig im Spiel, bevor das nächste startet. Es dauert länger, aber nie treten zwei Konten gleichzeitig bei, was Roblox' Verifizierungsabfragen auslöst. Du kannst das auch im Squad Launch-Fenster umschalten.",
+        "ru": "Каждый аккаунт полностью заходит в игру, прежде чем запускается следующий. Это дольше, но никакие два аккаунта не входят одновременно — а именно это вызывает проверки Roblox. Это также можно переключить в окне Squad Launch.",
+        "pt-br": "Cada conta termina de entrar no jogo antes de a próxima começar. Leva mais tempo, mas nunca há duas contas entrando ao mesmo tempo, que é o que dispara os avisos de verificação do Roblox. Você também pode alternar isso na janela do Squad Launch.",
+        "pl": "Każde konto kończy wchodzenie do gry, zanim rozpocznie się następne. Trwa to dłużej, ale nigdy dwa konta nie dołączają jednocześnie, co jest tym, co wywołuje monity weryfikacyjne Roblox. Możesz to też przełączyć w oknie Squad Launch.",
+        "es": "Cada cuenta termina de entrar en el juego antes de que empiece la siguiente. Tarda más, pero nunca hay dos cuentas uniéndose a la vez, que es lo que desencadena las verificaciones de Roblox. También puedes cambiar esto en la ventana de Squad Launch."
       }
     },
     {
@@ -4159,12 +4159,12 @@
       "field": "SettingsPage_RecycleClosesAClientAnd",
       "en": "Recycle closes a client and puts it straight back into the server it was in — useful for a client that's gone sideways, not just one eating memory. Off, it appears only when RoRoRo warns about that account's memory.",
       "translations": {
-        "fr": "Recycler ferme un client et le remet directement dans le serveur où il était — utile pour un client qui déraille, pas seulement un qui consomme trop de mémoire. Désactivé, il n'apparaît que lorsque RoRoRo signale la mémoire de ce compte.",
-        "de": "Neu verbinden schließt einen Client und setzt ihn direkt in den Server zurück, in dem er war — nützlich für einen Client, der aus dem Ruder gelaufen ist, nicht nur für einen, der Speicher frisst. Aus, erscheint es nur, wenn RoRoRo vor dem Speicher dieses Kontos warnt.",
-        "ru": "«Переподключить» закрывает клиент и сразу возвращает его на тот сервер, где он был — полезно для клиента, который сбоит, а не только для того, что съедает память. При отключении оно появляется, только когда RoRoRo предупреждает о памяти этого аккаунта.",
-        "pt-br": "O Reciclar fecha um cliente e o coloca de volta direto no servidor em que estava — útil para um cliente que deu problema, não só um que está consumindo memória. Desligado, ele aparece apenas quando o RoRoRo avisa sobre a memória daquela conta.",
-        "pl": "Połącz ponownie zamyka klienta i umieszcza go z powrotem na serwerze, na którym był — przydatne dla klienta, który zaczął się zachowywać dziwnie, nie tylko takiego pochłaniającego pamięć. Wyłączone, pojawia się tylko wtedy, gdy RoRoRo ostrzega o pamięci tego konta.",
-        "es": "Reconectar cierra un cliente y lo devuelve directamente al servidor en el que estaba — útil para un cliente que se ha descontrolado, no solo uno que consume memoria. Desactivado, aparece solo cuando RoRoRo advierte sobre la memoria de esa cuenta."
+        "fr": "Recycle ferme un client et le remet directement dans le serveur où il était — utile pour un client qui déraille, pas seulement un qui consomme trop de mémoire. Désactivé, il n'apparaît que lorsque RoRoRo signale la mémoire de ce compte.",
+        "de": "Recycle schließt einen Client und setzt ihn direkt in den Server zurück, in dem er war — nützlich für einen Client, der aus dem Ruder gelaufen ist, nicht nur für einen, der Speicher frisst. Aus, erscheint es nur, wenn RoRoRo vor dem Speicher dieses Kontos warnt.",
+        "ru": "Recycle закрывает клиент и сразу возвращает его на тот сервер, где он был — полезно для клиента, который сбоит, а не только для того, что съедает память. При отключении оно появляется, только когда RoRoRo предупреждает о памяти этого аккаунта.",
+        "pt-br": "O Recycle fecha um cliente e o coloca de volta direto no servidor em que estava — útil para um cliente que deu problema, não só um que está consumindo memória. Desligado, ele aparece apenas quando o RoRoRo avisa sobre a memória daquela conta.",
+        "pl": "Recycle zamyka klienta i umieszcza go z powrotem na serwerze, na którym był — przydatne dla klienta, który zaczął się zachowywać dziwnie, nie tylko takiego pochłaniającego pamięć. Wyłączone, pojawia się tylko wtedy, gdy RoRoRo ostrzega o pamięci tego konta.",
+        "es": "Recycle cierra un cliente y lo devuelve directamente al servidor en el que estaba — útil para un cliente que se ha descontrolado, no solo uno que consume memoria. Desactivado, aparece solo cuando RoRoRo advierte sobre la memoria de esa cuenta."
       }
     },
     {
@@ -5155,12 +5155,12 @@
       "field": "SquadLaunchWindow_SquadLaunch",
       "en": "Squad Launch",
       "translations": {
-        "fr": "Lancement en escouade",
-        "de": "Squad-Start",
-        "ru": "Групповой запуск",
-        "pt-br": "Iniciar em grupo",
-        "pl": "Uruchomienie zespołowe",
-        "es": "Inicio en escuadra"
+        "fr": "Squad Launch",
+        "de": "Squad Launch",
+        "ru": "Squad Launch",
+        "pt-br": "Squad Launch",
+        "pl": "Squad Launch",
+        "es": "Squad Launch"
       }
     },
     {
@@ -5683,12 +5683,12 @@
       "field": "WelcomeWindow_TogglesWhetherThisAccountJoins",
       "en": "— toggles whether this account joins Launch multiple / Squad Launch runs. Persists across restarts.",
       "translations": {
-        "fr": "— détermine si ce compte participe aux exécutions Lancer plusieurs / Lancement en escouade. Persiste après les redémarrages.",
-        "de": "— schaltet um, ob dieses Konto an Mehrere starten / Squad-Start-Durchläufen teilnimmt. Bleibt über Neustarts erhalten.",
-        "ru": "— переключает, участвует ли этот аккаунт в запусках «Запустить несколько» / «Групповой запуск». Сохраняется между перезапусками.",
-        "pt-br": "— alterna se esta conta entra nas execuções de Iniciar vários / Iniciar em grupo. Persiste entre reinícios.",
-        "pl": "— przełącza, czy to konto dołącza do uruchomień Uruchom wiele / Uruchomienie zespołowe. Zachowuje się po ponownych uruchomieniach.",
-        "es": "— alterna si esta cuenta participa en las ejecuciones de Iniciar varias / Inicio en escuadra. Persiste entre reinicios."
+        "fr": "— détermine si ce compte participe aux exécutions Lancer plusieurs / Squad Launch. Persiste après les redémarrages.",
+        "de": "— schaltet um, ob dieses Konto an Mehrere starten / Squad Launch-Durchläufen teilnimmt. Bleibt über Neustarts erhalten.",
+        "ru": "— переключает, участвует ли этот аккаунт в запусках «Запустить несколько» / Squad Launch. Сохраняется между перезапусками.",
+        "pt-br": "— alterna se esta conta entra nas execuções de Iniciar vários / Squad Launch. Persiste entre reinícios.",
+        "pl": "— przełącza, czy to konto dołącza do uruchomień Uruchom wiele / Squad Launch. Zachowuje się po ponownych uruchomieniach.",
+        "es": "— alterna si esta cuenta participa en las ejecuciones de Iniciar varias / Squad Launch. Persiste entre reinicios."
       }
     },
     {

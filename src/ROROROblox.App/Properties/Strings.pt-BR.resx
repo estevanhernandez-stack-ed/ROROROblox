@@ -240,7 +240,7 @@
     <value>Ou cole uma URL roblox.com/games/&lt;id&gt;/&lt;name&gt; ou ID de lugar</value>
   </data>
   <data name="GamesPage_PasteAPrivateServerLink" xml:space="preserve">
-    <value>Cole um link de servidor privado no Iniciar em grupo e inicie-o. Ele é salvo aqui automaticamente.</value>
+    <value>Cole um link de servidor privado no Squad Launch e inicie-o. Ele é salvo aqui automaticamente.</value>
   </data>
   <data name="GamesPage_PreSelectThisServerWhen" xml:space="preserve">
     <value>Pré-selecione este servidor quando você iniciar todas as contas em um servidor privado.</value>
@@ -513,10 +513,10 @@
     <value>Em lotes</value>
   </data>
   <data name="MainWindow_IncludeThisAccountInLaunch" xml:space="preserve">
-    <value>Incluir esta conta no Iniciar vários e no Iniciar em grupo</value>
+    <value>Incluir esta conta no Iniciar vários e no Squad Launch</value>
   </data>
   <data name="MainWindow_IncludeThisAccountInLaunch_2" xml:space="preserve">
-    <value>Incluir esta conta nos lotes de Iniciar vários / Iniciar em grupo. Clique para pular.</value>
+    <value>Incluir esta conta nos lotes de Iniciar vários / Squad Launch. Clique para pular.</value>
   </data>
   <data name="MainWindow_InstallAndManageRororoPlugins" xml:space="preserve">
     <value>Instale e gerencie plugins do RoRoRo.</value>
@@ -585,10 +585,10 @@
     <value>Sessões recentes por conta: qual jogo/servidor, quando, por quanto tempo.</value>
   </data>
   <data name="MainWindow_Recycle" xml:space="preserve">
-    <value>Reciclar</value>
+    <value>Recycle</value>
   </data>
   <data name="MainWindow_RecycleCloseAndRelaunchThis" xml:space="preserve">
-    <value>Reciclar — feche e reinicie este cliente de volta no servidor em que está agora, e recupere a memória vazada.</value>
+    <value>Recycle — feche e reinicie este cliente de volta no servidor em que está agora, e recupere a memória vazada.</value>
   </data>
   <data name="MainWindow_Remove" xml:space="preserve">
     <value>Remover</value>
@@ -657,10 +657,10 @@
     <value>Pulado</value>
   </data>
   <data name="MainWindow_SquadLaunch" xml:space="preserve">
-    <value>Iniciar em grupo</value>
+    <value>Squad Launch</value>
   </data>
   <data name="MainWindow_SquadLaunchesRouteThisAccount" xml:space="preserve">
-    <value>Os inícios em grupo levam esta conta ao servidor seguindo um membro do grupo que já está dentro — os avisos de verificação do Roblox atingem entradas diretas, não o seguir. Requer amizade com seu grupo.</value>
+    <value>Os inícios com Squad Launch levam esta conta ao servidor seguindo um membro do grupo que já está dentro — os avisos de verificação do Roblox atingem entradas diretas, não o seguir. Requer amizade com seu grupo.</value>
   </data>
   <data name="MainWindow_Start" xml:space="preserve">
     <value>▶ Iniciar</value>
@@ -702,7 +702,7 @@
     <value>Tour de boas-vindas</value>
   </data>
   <data name="MainWindow_WhetherThisAccountJoinsLaunch" xml:space="preserve">
-    <value>Se esta conta entra nos inícios em lote de Iniciar vários / Iniciar em grupo. Clique no ponto para alternar.</value>
+    <value>Se esta conta entra nos inícios em lote de Iniciar vários / Squad Launch. Clique no ponto para alternar.</value>
   </data>
   <data name="MainWindow_XMinimizesToTrayQuit" xml:space="preserve">
     <value>O X minimiza para a bandeja do sistema. Saia pela bandeja para fechar.</value>
@@ -858,7 +858,7 @@
     <value>Alertas e memória</value>
   </data>
   <data name="SettingsPage_AlwaysShowRecycleOnRunning" xml:space="preserve">
-    <value>Sempre mostrar Reciclar nas contas em execução.</value>
+    <value>Sempre mostrar Recycle nas contas em execução.</value>
   </data>
   <data name="SettingsPage_AnAccountDropsOut" xml:space="preserve">
     <value>Uma conta cai</value>
@@ -924,7 +924,7 @@
     <value>Solte um arquivo *.json aqui, depois feche e reabra as Configurações para vê-lo no seletor.</value>
   </data>
   <data name="SettingsPage_EachAccountFinishesLandingIn" xml:space="preserve">
-    <value>Cada conta termina de entrar no jogo antes de a próxima começar. Leva mais tempo, mas nunca há duas contas entrando ao mesmo tempo, que é o que dispara os avisos de verificação do Roblox. Você também pode alternar isso na janela do Iniciar em grupo.</value>
+    <value>Cada conta termina de entrar no jogo antes de a próxima começar. Leva mais tempo, mas nunca há duas contas entrando ao mesmo tempo, que é o que dispara os avisos de verificação do Roblox. Você também pode alternar isso na janela do Squad Launch.</value>
   </data>
   <data name="SettingsPage_ExportAccounts" xml:space="preserve">
     <value>Exportar contas…</value>
@@ -1053,7 +1053,7 @@
     <value>Chave de usuário do Pushover</value>
   </data>
   <data name="SettingsPage_RecycleClosesAClientAnd" xml:space="preserve">
-    <value>O Reciclar fecha um cliente e o coloca de volta direto no servidor em que estava — útil para um cliente que deu problema, não só um que está consumindo memória. Desligado, ele aparece apenas quando o RoRoRo avisa sobre a memória daquela conta.</value>
+    <value>O Recycle fecha um cliente e o coloca de volta direto no servidor em que estava — útil para um cliente que deu problema, não só um que está consumindo memória. Desligado, ele aparece apenas quando o RoRoRo avisa sobre a memória daquela conta.</value>
   </data>
   <data name="SettingsPage_RerollAllIdentities" xml:space="preserve">
     <value>Sortear todas as identidades</value>
@@ -1302,7 +1302,7 @@
     <value>Envie cada conta ativa para o mesmo servidor do Roblox. Servidor privado: todos entram diretamente pelo link. Jogo público: a primeira conta entra, e as demais entram no servidor em que ela chegou.</value>
   </data>
   <data name="SquadLaunchWindow_SquadLaunch" xml:space="preserve">
-    <value>Iniciar em grupo</value>
+    <value>Squad Launch</value>
   </data>
   <data name="SquadLaunchWindow_WaitsForEachAccountTo" xml:space="preserve">
     <value>Espera cada conta entrar totalmente no jogo antes de iniciar a próxima. Mais lento, mas nunca há duas contas entrando ao mesmo tempo — que é o que dispara os avisos de verificação do Roblox.</value>
@@ -1435,7 +1435,7 @@
     <value>O ponto rotulado</value>
   </data>
   <data name="WelcomeWindow_TogglesWhetherThisAccountJoins" xml:space="preserve">
-    <value>— alterna se esta conta entra nas execuções de Iniciar vários / Iniciar em grupo. Persiste entre reinícios.</value>
+    <value>— alterna se esta conta entra nas execuções de Iniciar vários / Squad Launch. Persiste entre reinícios.</value>
   </data>
   <data name="WelcomeWindow_WelcomeTo" xml:space="preserve">
     <value>Bem-vindo ao</value>

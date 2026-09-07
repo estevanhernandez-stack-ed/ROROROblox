@@ -240,7 +240,7 @@
     <value>Или вставьте URL roblox.com/games/&lt;id&gt;/&lt;name&gt; либо place id</value>
   </data>
   <data name="GamesPage_PasteAPrivateServerLink" xml:space="preserve">
-    <value>Вставьте ссылку на приватный сервер в «Групповой запуск» и запустите. Она сохранится здесь автоматически.</value>
+    <value>Вставьте ссылку на приватный сервер в Squad Launch и запустите. Она сохранится здесь автоматически.</value>
   </data>
   <data name="GamesPage_PreSelectThisServerWhen" xml:space="preserve">
     <value>Предварительно выбирать этот сервер при запуске всех аккаунтов на приватный сервер.</value>
@@ -513,10 +513,10 @@
     <value>В пакетах</value>
   </data>
   <data name="MainWindow_IncludeThisAccountInLaunch" xml:space="preserve">
-    <value>Включать этот аккаунт в «Запустить несколько» и «Групповой запуск»</value>
+    <value>Включать этот аккаунт в «Запустить несколько» и Squad Launch</value>
   </data>
   <data name="MainWindow_IncludeThisAccountInLaunch_2" xml:space="preserve">
-    <value>Включать этот аккаунт в пакеты «Запустить несколько» / «Групповой запуск». Нажмите, чтобы пропустить.</value>
+    <value>Включать этот аккаунт в пакеты «Запустить несколько» / Squad Launch. Нажмите, чтобы пропустить.</value>
   </data>
   <data name="MainWindow_InstallAndManageRororoPlugins" xml:space="preserve">
     <value>Установка и управление плагинами RoRoRo.</value>
@@ -585,10 +585,10 @@
     <value>Недавние сессии по каждому аккаунту: какая игра/сервер, когда, как долго.</value>
   </data>
   <data name="MainWindow_Recycle" xml:space="preserve">
-    <value>Переподключить</value>
+    <value>Recycle</value>
   </data>
   <data name="MainWindow_RecycleCloseAndRelaunchThis" xml:space="preserve">
-    <value>Переподключить — закрыть и перезапустить этот клиент обратно на сервер, где он сейчас, и вернуть утёкшую память.</value>
+    <value>Recycle — закрыть и перезапустить этот клиент обратно на сервер, где он сейчас, и вернуть утёкшую память.</value>
   </data>
   <data name="MainWindow_Remove" xml:space="preserve">
     <value>Удалить</value>
@@ -657,10 +657,10 @@
     <value>Пропущен</value>
   </data>
   <data name="MainWindow_SquadLaunch" xml:space="preserve">
-    <value>Групповой запуск</value>
+    <value>Squad Launch</value>
   </data>
   <data name="MainWindow_SquadLaunchesRouteThisAccount" xml:space="preserve">
-    <value>Групповые запуски направляют этот аккаунт на сервер, присоединяясь к уже вошедшему участнику группы — проверки Roblox срабатывают при прямом входе, а не при присоединении. Требуется дружба с вашей группой.</value>
+    <value>Запуски Squad Launch направляют этот аккаунт на сервер, присоединяясь к уже вошедшему участнику группы — проверки Roblox срабатывают при прямом входе, а не при присоединении. Требуется дружба с вашей группой.</value>
   </data>
   <data name="MainWindow_Start" xml:space="preserve">
     <value>▶ Запустить</value>
@@ -702,7 +702,7 @@
     <value>Приветственный тур</value>
   </data>
   <data name="MainWindow_WhetherThisAccountJoinsLaunch" xml:space="preserve">
-    <value>Участвует ли этот аккаунт в пакетных запусках «Запустить несколько» / «Групповой запуск». Нажмите точку, чтобы переключить.</value>
+    <value>Участвует ли этот аккаунт в пакетных запусках «Запустить несколько» / Squad Launch. Нажмите точку, чтобы переключить.</value>
   </data>
   <data name="MainWindow_XMinimizesToTrayQuit" xml:space="preserve">
     <value>X сворачивает в область уведомлений. Чтобы выйти, используйте «Выйти» в области уведомлений.</value>
@@ -858,7 +858,7 @@
     <value>Оповещения и память</value>
   </data>
   <data name="SettingsPage_AlwaysShowRecycleOnRunning" xml:space="preserve">
-    <value>Всегда показывать «Переподключить» у запущенных аккаунтов.</value>
+    <value>Всегда показывать Recycle у запущенных аккаунтов.</value>
   </data>
   <data name="SettingsPage_AnAccountDropsOut" xml:space="preserve">
     <value>Аккаунт отваливается</value>
@@ -924,7 +924,7 @@
     <value>Поместите файл *.json сюда, затем закройте и снова откройте настройки, чтобы увидеть его в списке.</value>
   </data>
   <data name="SettingsPage_EachAccountFinishesLandingIn" xml:space="preserve">
-    <value>Каждый аккаунт полностью заходит в игру, прежде чем запускается следующий. Это дольше, но никакие два аккаунта не входят одновременно — а именно это вызывает проверки Roblox. Это также можно переключить в окне «Групповой запуск».</value>
+    <value>Каждый аккаунт полностью заходит в игру, прежде чем запускается следующий. Это дольше, но никакие два аккаунта не входят одновременно — а именно это вызывает проверки Roblox. Это также можно переключить в окне Squad Launch.</value>
   </data>
   <data name="SettingsPage_ExportAccounts" xml:space="preserve">
     <value>Экспорт аккаунтов…</value>
@@ -1053,7 +1053,7 @@
     <value>Пользовательский ключ Pushover</value>
   </data>
   <data name="SettingsPage_RecycleClosesAClientAnd" xml:space="preserve">
-    <value>«Переподключить» закрывает клиент и сразу возвращает его на тот сервер, где он был — полезно для клиента, который сбоит, а не только для того, что съедает память. При отключении оно появляется, только когда RoRoRo предупреждает о памяти этого аккаунта.</value>
+    <value>Recycle закрывает клиент и сразу возвращает его на тот сервер, где он был — полезно для клиента, который сбоит, а не только для того, что съедает память. При отключении оно появляется, только когда RoRoRo предупреждает о памяти этого аккаунта.</value>
   </data>
   <data name="SettingsPage_RerollAllIdentities" xml:space="preserve">
     <value>Сменить все личности</value>
@@ -1302,7 +1302,7 @@
     <value>Отправить все активные аккаунты на один и тот же сервер Roblox. Приватный сервер: все входят по ссылке напрямую. Публичная игра: первый аккаунт заходит, а остальные присоединяются к серверу, на который он попал.</value>
   </data>
   <data name="SquadLaunchWindow_SquadLaunch" xml:space="preserve">
-    <value>Групповой запуск</value>
+    <value>Squad Launch</value>
   </data>
   <data name="SquadLaunchWindow_WaitsForEachAccountTo" xml:space="preserve">
     <value>Ждёт, пока каждый аккаунт полностью зайдёт в игру, прежде чем запускать следующий. Медленнее, но никакие два аккаунта не входят одновременно — а именно это вызывает проверки Roblox.</value>
@@ -1435,7 +1435,7 @@
     <value>Точка с подписью</value>
   </data>
   <data name="WelcomeWindow_TogglesWhetherThisAccountJoins" xml:space="preserve">
-    <value>— переключает, участвует ли этот аккаунт в запусках «Запустить несколько» / «Групповой запуск». Сохраняется между перезапусками.</value>
+    <value>— переключает, участвует ли этот аккаунт в запусках «Запустить несколько» / Squad Launch. Сохраняется между перезапусками.</value>
   </data>
   <data name="WelcomeWindow_WelcomeTo" xml:space="preserve">
     <value>Добро пожаловать в</value>
