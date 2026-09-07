@@ -195,4 +195,16 @@ public interface IAppSettings
     /// </summary>
     Task<bool> GetCompactModeAsync();
     Task SetCompactModeAsync(bool compact);
+
+    /// <summary>
+    /// The user's chosen UI language as a culture name ("fr", "pt-BR", …), or <c>null</c> to
+    /// follow the operating system (localization, 2026-09-07). Applied to the UI thread's
+    /// <c>CurrentUICulture</c> at startup, before any window loads. A value naming a culture
+    /// whose catalog is not shipped resolves to English through the resource fallback, so a
+    /// stale value never breaks the UI — but the picker only offers languages that actually
+    /// ship, so a stored value is normally a real one. Because the XAML binds its strings once
+    /// (x:Static), a change takes effect on the next launch; the picker copy says so.
+    /// </summary>
+    Task<string?> GetUiLanguageAsync();
+    Task SetUiLanguageAsync(string? cultureName);
 }

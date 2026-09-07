@@ -958,6 +958,33 @@
                                        AutomationProperties.LiveSetting="Assertive" />
                         </StackPanel>
                     </Border>
+
+                    <!-- Language (localization, 2026-09-07). The picker is populated in code from
+                         UiCulture.Available() — only languages whose catalog actually ships, so a
+                         fresh build with no translated catalogs shows English alone. x:Static binds
+                         once, so a change applies on the next launch; the hint says so. -->
+                    <TextBlock Text="{x:Static loc:Strings.SettingsPage_Language}"
+                               Style="{StaticResource SectionHeadingStyle}"
+                               Margin="0,20,0,0"
+                               AutomationProperties.Name="{x:Static loc:Strings.SettingsPage_Language}"
+                               AutomationProperties.HeadingLevel="Level2" />
+                    <Border Style="{StaticResource CardBorderStyle}" Margin="0">
+                        <StackPanel>
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,8"
+                                       Text="{x:Static loc:Strings.SettingsPage_LanguageHint}" />
+                            <ComboBox x:Name="LanguagePicker"
+                                      AutomationProperties.Name="{x:Static loc:Strings.SettingsPage_Language}"
+                                      DisplayMemberPath="DisplayName"
+                                      HorizontalAlignment="Left"
+                                      Width="220"
+                                      Padding="8,6"
+                                      SelectionChanged="OnUiLanguageChanged"
+                                      FontSize="{DynamicResource BodyFontSize}" />
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
                 </Grid>
             </ScrollViewer>

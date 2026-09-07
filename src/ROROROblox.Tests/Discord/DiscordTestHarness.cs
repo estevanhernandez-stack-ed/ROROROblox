@@ -370,6 +370,8 @@ internal static class DiscordTestHarness
 
         public Task<bool> GetCompactModeAsync() => Task.FromResult(false);
         public Task SetCompactModeAsync(bool compact) => Task.CompletedTask;
+        public Task<string?> GetUiLanguageAsync() => Task.FromResult<string?>(null);
+        public Task SetUiLanguageAsync(string? cultureName) => Task.CompletedTask;
     }
 
     private sealed class FakeFavoriteGameStore : IFavoriteGameStore

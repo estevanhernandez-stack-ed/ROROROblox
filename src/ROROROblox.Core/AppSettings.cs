@@ -461,6 +461,50 @@ public sealed class AppSettings : IAppSettings, IDisposable
         finally { _gate.Release(); }
     }
 
+    public async Task<string?> GetUiLanguageAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).UiLanguage; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetUiLanguageAsync(string? cultureName)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            // Normalise empty to null ("follow the OS") — a blank stored culture is an accident
+            // on the way to a choice, not a choice.
+            var value = string.IsNullOrWhiteSpace(cultureName) ? null : cultureName.Trim();
+            await SaveAsync(s with { UiLanguage = value }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
+    /// <summary>
+    /// Read ONLY the saved UI language, synchronously, off the settings file — for the startup
+    /// culture bootstrap, which must run before the DI container and before any window, so it
+    /// cannot await the async accessor. Returns null (follow the OS) on any absence or error;
+    /// this is best-effort and must never throw into <c>Main</c>.
+    /// </summary>
+    public static string? ReadUiLanguageFast(string? filePath = null)
+    {
+        try
+        {
+            var path = filePath ?? DefaultPath();
+            if (!File.Exists(path)) return null;
+            var bytes = File.ReadAllBytes(path);
+            if (bytes.Length == 0) return null;
+            var blob = JsonSerializer.Deserialize<SettingsBlob>(bytes, JsonOptions);
+            return string.IsNullOrWhiteSpace(blob?.UiLanguage) ? null : blob!.UiLanguage;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     /// <summary>
     /// Re-keys the deserialized answers case-insensitively. System.Text.Json always hands back an
     /// Ordinal dictionary regardless of what was written, so the comparer has to be re-applied on
@@ -559,6 +603,7 @@ public sealed class AppSettings : IAppSettings, IDisposable
         bool CompactMode = false,
         bool AutoForceStop = false,
         bool LaunchWindowed = true,
+        string? UiLanguage = null,
         double? MainWindowLeft = null,
         double? MainWindowTop = null,
         double? MainWindowWidth = null,
