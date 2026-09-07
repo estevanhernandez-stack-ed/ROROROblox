@@ -2516,4 +2516,30 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Shell_Caption_BadHex" xml:space="preserve"><value>That doesn't look like a hex color. Use #rrggbb (e.g. #4FE08C).</value><comment>Caption picker status; hex example stays (localized Phase D step 3)</comment></data>
   <data name="Shell_Caption_Reverted" xml:space="preserve"><value>Reverted to auto-derived color.</value><comment>Caption picker status (localized Phase D step 3)</comment></data>
   <data name="Shell_Caption_Applied" xml:space="preserve"><value>Applied {0}.</value><comment>Caption picker status; {0}=hex (localized Phase D step 3)</comment></data>
+  <data name="Diag_Section_Application" xml:space="preserve"><value>Application</value><comment>Diagnostics section title (localized Phase D step 3)</comment></data>
+  <data name="Diag_Section_Memory" xml:space="preserve"><value>Memory</value><comment>Diagnostics section title (localized Phase D step 3)</comment></data>
+  <data name="Diag_Section_PerAccountMemory" xml:space="preserve"><value>Per-Account Memory</value><comment>Diagnostics section title (localized Phase D step 3)</comment></data>
+  <data name="Diag_Section_Paths" xml:space="preserve"><value>Paths</value><comment>Diagnostics section title (localized Phase D step 3)</comment></data>
+  <data name="Diag_Label_Version" xml:space="preserve"><value>Version</value><comment>Diagnostics row label (localized Phase D step 3)</comment></data>
+  <data name="Diag_Label_DotNet" xml:space="preserve"><value>.NET runtime</value><comment>Diagnostics row label; ".NET" stays English (localized Phase D step 3)</comment></data>
+  <data name="Diag_Label_OS" xml:space="preserve"><value>OS</value><comment>Diagnostics row label (localized Phase D step 3)</comment></data>
+  <data name="Diag_Label_SavedAccounts" xml:space="preserve"><value>Saved accounts</value><comment>Diagnostics row label (localized Phase D step 3)</comment></data>
+  <data name="Diag_Label_LiveClients" xml:space="preserve"><value>Live Roblox clients</value><comment>Diagnostics row label; "Roblox" stays English (localized Phase D step 3)</comment></data>
+  <data name="Diag_Label_Installed" xml:space="preserve"><value>Installed</value><comment>Diagnostics row label (localized Phase D step 3)</comment></data>
+  <data name="Diag_Label_InstalledRam" xml:space="preserve"><value>Installed RAM</value><comment>Diagnostics row label; "RAM" stays English (localized Phase D step 3)</comment></data>
+  <data name="Diag_Label_AvailableRam" xml:space="preserve"><value>Available RAM</value><comment>Diagnostics row label; "RAM" stays English (localized Phase D step 3)</comment></data>
+  <data name="Diag_Label_Logs" xml:space="preserve"><value>Logs</value><comment>Diagnostics row label (localized Phase D step 3)</comment></data>
+  <data name="Diag_Label_Data" xml:space="preserve"><value>Data</value><comment>Diagnostics row label (localized Phase D step 3)</comment></data>
+  <data name="Diag_Yes" xml:space="preserve"><value>yes</value><comment>Diagnostics installed value (localized Phase D step 3)</comment></data>
+  <data name="Diag_No" xml:space="preserve"><value>no</value><comment>Diagnostics installed value (localized Phase D step 3)</comment></data>
+  <data name="Diag_Stale" xml:space="preserve"><value>(stale)</value><comment>Diagnostics per-account memory stale suffix (localized Phase D step 3)</comment></data>
+  <data name="Diag_Collecting" xml:space="preserve"><value>Collecting...</value><comment>Diagnostics status (localized Phase D step 3)</comment></data>
+  <data name="Diag_Captured" xml:space="preserve"><value>Captured {0} local.</value><comment>Diagnostics status; {0}=time (localized Phase D step 3)</comment></data>
+  <data name="Diag_CouldntCollect" xml:space="preserve"><value>Couldn't collect diagnostics: {0}</value><comment>Diagnostics status; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Diag_SnapshotNotReady" xml:space="preserve"><value>Snapshot not ready yet — wait a beat and retry.</value><comment>Diagnostics status (localized Phase D step 3)</comment></data>
+  <data name="Diag_SaveBundleTitle" xml:space="preserve"><value>Save support bundle</value><comment>Save-bundle dialog title (localized Phase D step 3)</comment></data>
+  <data name="Diag_ZipFilter" xml:space="preserve"><value>Zip archives (*.zip)|*.zip</value><comment>Save-bundle dialog filter; only "Zip archives" is display text (localized Phase D step 3)</comment></data>
+  <data name="Diag_BuildingBundle" xml:space="preserve"><value>Building bundle...</value><comment>Diagnostics status (localized Phase D step 3)</comment></data>
+  <data name="Diag_SavedFile" xml:space="preserve"><value>Saved {0}.</value><comment>Diagnostics status; {0}=filename (localized Phase D step 3)</comment></data>
+  <data name="Diag_CouldntSaveBundle" xml:space="preserve"><value>Couldn't save bundle: {0}</value><comment>Diagnostics status; {0}=exception (localized Phase D step 3)</comment></data>
 </root>
