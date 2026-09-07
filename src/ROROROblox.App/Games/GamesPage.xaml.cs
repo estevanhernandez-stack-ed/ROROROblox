@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using ROROROblox.App.Localization;
 using ROROROblox.App.Modals;
 using ROROROblox.Core;
 
@@ -62,12 +63,12 @@ internal partial class GamesPage : UserControl
         var query = SearchInput.Text?.Trim();
         if (string.IsNullOrWhiteSpace(query))
         {
-            StatusText.Text = "Type a game name to search.";
+            StatusText.Text = Loc.Get("Shell_Games_TypeToSearch");
             return;
         }
 
         SearchButton.IsEnabled = false;
-        StatusText.Text = $"Searching for \"{query}\"...";
+        StatusText.Text = Loc.Format("Shell_Games_Searching", query);
 
         try
         {
@@ -81,17 +82,17 @@ internal partial class GamesPage : UserControl
             if (results.Count == 0)
             {
                 SearchResultsContainer.Visibility = Visibility.Collapsed;
-                StatusText.Text = $"No results for \"{query}\". Try a different name or paste a URL below.";
+                StatusText.Text = Loc.Format("Shell_Games_NoResults", query);
             }
             else
             {
                 SearchResultsContainer.Visibility = Visibility.Visible;
-                StatusText.Text = $"Found {results.Count} match{(results.Count == 1 ? "" : "es")}.";
+                StatusText.Text = Loc.Plural("Shell_Games_FoundMatches", results.Count);
             }
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Search failed: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_Games_SearchFailed", ex.Message);
         }
         finally
         {
@@ -109,12 +110,12 @@ internal partial class GamesPage : UserControl
         try
         {
             await _favorites.AddAsync(result.PlaceId, result.UniverseId, result.Name, result.IconUrl);
-            StatusText.Text = $"Added {result.Name}.";
+            StatusText.Text = Loc.Format("Shell_Games_Added", result.Name);
             await ReloadAsync();
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Couldn't add: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_Games_CouldntAdd", ex.Message);
         }
     }
 
@@ -147,37 +148,37 @@ internal partial class GamesPage : UserControl
         var input = UrlInput.Text?.Trim();
         if (string.IsNullOrWhiteSpace(input))
         {
-            StatusText.Text = "Paste a Roblox game URL or place id first.";
+            StatusText.Text = Loc.Get("Shell_Games_PasteUrlFirst");
             return;
         }
 
         var placeId = RobloxLauncher.ExtractPlaceId(input);
         if (placeId is null)
         {
-            StatusText.Text = "Couldn't find a place id in that input. Expected: roblox.com/games/<id>/<slug> or just <id>.";
+            StatusText.Text = Loc.Get("Shell_Games_NoPlaceId");
             return;
         }
 
         AddButton.IsEnabled = false;
-        StatusText.Text = "Looking up game...";
+        StatusText.Text = Loc.Get("Shell_Games_LookingUp");
 
         try
         {
             var meta = await _api.GetGameMetadataByPlaceIdAsync(placeId.Value);
             if (meta is null)
             {
-                StatusText.Text = $"Roblox didn't return metadata for place id {placeId}. Check the URL and try again.";
+                StatusText.Text = Loc.Format("Shell_Games_NoMetadata", placeId);
                 return;
             }
 
             await _favorites.AddAsync(meta.PlaceId, meta.UniverseId, meta.Name, meta.IconUrl);
             UrlInput.Text = string.Empty;
-            StatusText.Text = $"Added {meta.Name}.";
+            StatusText.Text = Loc.Format("Shell_Games_Added", meta.Name);
             await ReloadAsync();
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Couldn't add: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_Games_CouldntAdd", ex.Message);
         }
         finally
         {
@@ -199,7 +200,7 @@ internal partial class GamesPage : UserControl
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Couldn't set default: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_Games_CouldntSetDefault", ex.Message);
         }
     }
 
@@ -212,7 +213,7 @@ internal partial class GamesPage : UserControl
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Couldn't clear the default: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_Games_CouldntClearDefault", ex.Message);
         }
     }
 
@@ -230,7 +231,7 @@ internal partial class GamesPage : UserControl
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Couldn't set default server: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_Games_CouldntSetDefaultServer", ex.Message);
         }
     }
 
@@ -243,7 +244,7 @@ internal partial class GamesPage : UserControl
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Couldn't clear the default server: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_Games_CouldntClearDefaultServer", ex.Message);
         }
     }
 
@@ -257,8 +258,8 @@ internal partial class GamesPage : UserControl
         var game = _items.FirstOrDefault(f => f.PlaceId == placeId);
         var confirm = MessageBox.Show(
             Window.GetWindow(this),
-            $"Remove {game?.RenderName ?? "this game"} from your saved games?",
-            "Remove game",
+            Loc.Format("Shell_Games_RemoveGameConfirm", game?.RenderName ?? Loc.Get("Shell_Games_ThisGame")),
+            Loc.Get("Shell_Games_RemoveGameTitle"),
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
         if (confirm != MessageBoxResult.Yes)
@@ -270,11 +271,11 @@ internal partial class GamesPage : UserControl
         {
             await _favorites.RemoveAsync(placeId);
             await ReloadAsync();
-            StatusText.Text = "Removed.";
+            StatusText.Text = Loc.Get("Shell_Games_Removed");
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Couldn't remove: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_Games_CouldntRemove", ex.Message);
         }
     }
 
@@ -288,8 +289,8 @@ internal partial class GamesPage : UserControl
         var server = _serverItems.FirstOrDefault(s => s.Id == id);
         var confirm = MessageBox.Show(
             Window.GetWindow(this),
-            $"Remove {server?.RenderName ?? "this server"} from your saved servers?",
-            "Remove server",
+            Loc.Format("Shell_Games_RemoveServerConfirm", server?.RenderName ?? Loc.Get("Shell_Games_ThisServer")),
+            Loc.Get("Shell_Games_RemoveServerTitle"),
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
         if (confirm != MessageBoxResult.Yes)
@@ -301,11 +302,11 @@ internal partial class GamesPage : UserControl
         {
             await _servers.RemoveAsync(id);
             await ReloadServersAsync();
-            StatusText.Text = "Removed.";
+            StatusText.Text = Loc.Get("Shell_Games_Removed");
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Couldn't remove: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_Games_CouldntRemove", ex.Message);
         }
     }
 
@@ -335,12 +336,12 @@ internal partial class GamesPage : UserControl
         }
         catch (KeyNotFoundException)
         {
-            StatusText.Text = "That game isn't saved any more.";
+            StatusText.Text = Loc.Get("Shell_Msg_GameNotSaved");
             await ReloadAsync();
         }
         catch (System.IO.IOException ex)
         {
-            StatusText.Text = $"Couldn't save name change. Disk error? ({ex.Message})";
+            StatusText.Text = Loc.Format("Shell_Games_CouldntSaveNameChangeDisk", ex.Message);
         }
     }
 
@@ -357,7 +358,7 @@ internal partial class GamesPage : UserControl
         }
         catch (KeyNotFoundException)
         {
-            StatusText.Text = "That game isn't saved any more.";
+            StatusText.Text = Loc.Get("Shell_Msg_GameNotSaved");
             await ReloadAsync();
         }
     }
@@ -386,12 +387,12 @@ internal partial class GamesPage : UserControl
         }
         catch (KeyNotFoundException)
         {
-            StatusText.Text = "That server isn't saved any more.";
+            StatusText.Text = Loc.Get("Shell_Games_ServerNotSaved");
             await ReloadServersAsync();
         }
         catch (System.IO.IOException ex)
         {
-            StatusText.Text = $"Couldn't save name change. Disk error? ({ex.Message})";
+            StatusText.Text = Loc.Format("Shell_Games_CouldntSaveNameChangeDisk", ex.Message);
         }
     }
 
@@ -408,7 +409,7 @@ internal partial class GamesPage : UserControl
         }
         catch (KeyNotFoundException)
         {
-            StatusText.Text = "That server isn't saved any more.";
+            StatusText.Text = Loc.Get("Shell_Games_ServerNotSaved");
             await ReloadServersAsync();
         }
     }
