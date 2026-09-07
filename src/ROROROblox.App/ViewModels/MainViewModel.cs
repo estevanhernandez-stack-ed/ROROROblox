@@ -645,7 +645,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <param name="targetName">The target's display name, for the user-facing message.</param>
     public static FollowDecision EvaluateFollow(UserPresence? presence, string targetName)
     {
-        var name = string.IsNullOrWhiteSpace(targetName) ? "that friend" : targetName;
+        var name = string.IsNullOrWhiteSpace(targetName) ? Loc.Get("Shell_Msg_ThatFriend") : targetName;
 
         // Joinable == InGame AND a real place id we can actually see. PlaceId is populated only when
         // InGame AND the target's privacy lets the requesting cookie's owner see the server; a
@@ -656,7 +656,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
 
         return FollowDecision.Block(
-            $"Can't follow {name} — they're not in a joinable game right now (or their join privacy is off).");
+            Loc.Format("Shell_Msg_CantFollow", name));
     }
 
     /// <summary>
@@ -1461,9 +1461,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var expired = snapshot.Count(s => s.SessionExpired);
         if (expired > 0)
         {
-            StatusBanner = expired == 1
-                ? "1 saved session has expired. Click Re-authenticate to refresh it."
-                : $"{expired} saved sessions have expired. Click Re-authenticate to refresh.";
+            StatusBanner = Loc.Plural("Shell_Msg_SessionsExpired", expired);
         }
     }
 
@@ -1531,8 +1529,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // showed the real Roblox account, but this StatusBanner is a RORORO-owned surface and
         // must not re-print the real name once masking is live.
         StatusBanner = account.IsMain
-            ? $"Added {summary.RenderName}. Marked as main — change it any time."
-            : $"Added {summary.RenderName}.";
+            ? Loc.Format("Shell_Msg_AddedMain", summary.RenderName)
+            : Loc.Format("Shell_Msg_Added", summary.RenderName);
         OnPropertyChanged(nameof(MainAccount));
         OnPropertyChanged(nameof(CompactEmptyKind));
         RelayCommand.RaiseCanExecuteChanged();
@@ -1608,7 +1606,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                   ?? Accounts.FirstOrDefault(a => !a.SessionExpired && !a.IsLaunching);
         if (row is null)
         {
-            StatusBanner = "Nothing to join with — add an account first.";
+            StatusBanner = Loc.Get("Shell_Msg_NothingToJoin");
             return false;
         }
 
@@ -1621,11 +1619,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // user only learning it from the StatusBanner AFTER already agreeing to something else.
             // The banner below still fires post-confirm — this is additive, not a replacement.
             var takeoverClause = row.IsRunning
-                ? $" This takes over {row.RenderName}'s running session."
+                ? Loc.Format("Shell_Msg_TakeoverClause", row.RenderName)
                 : string.Empty;
             var message = isPrivateServer
-                ? $"This is a private server — you may be denied entry if you're not on its list.{takeoverClause} Try anyway?"
-                : $"This join request came from outside RoRoRo and can't be verified — launching {row.RenderName} into this server.{takeoverClause} Continue anyway?";
+                ? Loc.Format("Shell_Msg_JoinPrivateConfirm", takeoverClause)
+                : Loc.Format("Shell_Msg_JoinUriConfirm", row.RenderName, takeoverClause);
             if (!confirm(message))
             {
                 return false;
@@ -1635,7 +1633,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var takingOverRunningAccount = row.IsRunning;
         if (takingOverRunningAccount)
         {
-            StatusBanner = $"Joining via {row.RenderName} — this takes over that account's running session.";
+            StatusBanner = Loc.Format("Shell_Msg_JoiningViaTakeover", row.RenderName);
         }
 
         await LaunchAccountAsync(row, overrideTarget: target).ConfigureAwait(true);
@@ -1659,7 +1657,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
 
         summary.IsLaunching = true;
-        summary.StatusText = "Launching...";
+        summary.StatusText = Loc.Get("Shell_Status_Launching");
         OnPropertyChanged(nameof(CompactRows));
         OnPropertyChanged(nameof(HasCompactRows));
         _log.LogInformation("Launching account {AccountId} ({DisplayName}) target={Target}",
@@ -1777,7 +1775,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     return 0;
                 case LaunchResult.Failed { Kind: LaunchFailureKind.RobloxNotInstalled }:
                     _log.LogWarning("Roblox not installed at launch time for account {AccountId}", summary.Id);
-                    summary.StatusText = "Roblox not installed.";
+                    summary.StatusText = Loc.Get("Shell_Status_RobloxNotInstalled");
                     ShowRobloxNotInstalledModal();
                     return 0;
                 case LaunchResult.Failed failed:
@@ -2043,12 +2041,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 return;
             }
 
-            StatusBanner = $"Launching {targets.Count} selected account{(targets.Count == 1 ? "" : "s")}...";
+            StatusBanner = Loc.Plural("Shell_Msg_LaunchingSelected", targets.Count);
             await DispatchBatchAsync(
                 targets,
                 overrideTarget: null,
-                launchingBanner: (summary, n, total) => $"Launching {summary.RenderName} ({n} of {total})...");
-            StatusBanner = result.PartialBanner(targets.Count, "Launch multiple finished");
+                launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_LaunchingProgress", summary.RenderName, n, total));
+            StatusBanner = result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbMultiple"));
         }
         finally
         {
@@ -2411,11 +2409,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             Func<AccountSummary, DateTimeOffset, Task<LaunchTarget?>>? resolveTailTarget = target is LaunchTarget.Place
                 ? async (first, launchedAtUtc) =>
                 {
-                    StatusBanner = $"Waiting for {first.RenderName} to land so the rest can join that server...";
+                    StatusBanner = Loc.Format("Shell_Msg_WaitingForLanding", first.RenderName);
                     squadServer = await WaitForServerInstanceAsync(first, launchedAtUtc).ConfigureAwait(true);
                     if (squadServer is null)
                     {
-                        StatusBanner = $"Couldn't read {first.RenderName}'s server in time — the rest are joining the game, not that server.";
+                        StatusBanner = Loc.Format("Shell_Msg_CouldntReadServer", first.RenderName);
                         return null;
                     }
                     return ServerInstanceTargeting.Upgrade(target, squadServer);
@@ -2428,7 +2426,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 await DispatchBatchAsync(
                     plan.Direct,
                     overrideTarget: target,
-                    launchingBanner: (summary, n, total) => $"Joining server: {summary.RenderName} ({n} of {total})...",
+                    launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_JoiningServerProgress", summary.RenderName, n, total),
                     waitForLanding: careful,
                     resolveTailTarget: resolveTailTarget);
             }
@@ -2439,7 +2437,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 AccountSummary? anchor = null;
                 if (plan.Direct.Count > 0)
                 {
-                    StatusBanner = "Waiting for a squad member to land (for join-via-friend accounts)...";
+                    StatusBanner = Loc.Get("Shell_Msg_WaitingSquadMember");
                     var deadline = DateTime.UtcNow + AnchorGate.MaxWait;
                     while (anchor is null && !AnchorGate.WaitExpired(DateTime.UtcNow, deadline))
                     {
@@ -2459,7 +2457,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     await ReleaseBatchAsync(
                         plan.Flagged,
                         overrideTarget: new LaunchTarget.FollowFriend(anchorUserId),
-                        launchingBanner: (summary, n, total) => $"{summary.RenderName} joining via {anchor.RenderName} ({n} of {total})...",
+                        launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_JoiningViaAnchorProgress", summary.RenderName, anchor.RenderName, n, total),
                         startIndex: 0,
                         waitForLanding: careful);
                 }
@@ -2469,8 +2467,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     _log.LogWarning("Join-via-friend: no anchor landed within {Cap}s (direct batch: {Direct}); falling back to direct joins for {Count} flagged account(s).",
                         (int)AnchorGate.MaxWait.TotalSeconds, plan.Direct.Count, plan.Flagged.Count);
                     StatusBanner = plan.Direct.Count == 0
-                        ? "No direct-join accounts to anchor on — flagged accounts joining directly."
-                        : "No squad member landed in time — flagged accounts joining directly.";
+                        ? Loc.Get("Shell_Msg_NoAnchorAccounts")
+                        : Loc.Get("Shell_Msg_NoSquadLanded");
                     if (plan.Direct.Count == 0)
                     {
                         // No Phase 1 ran, so no anchor was ever possible and the pre-warm gate
@@ -2480,7 +2478,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                         await DispatchBatchAsync(
                             plan.Flagged,
                             overrideTarget: target,
-                            launchingBanner: (summary, n, total) => $"Joining server (direct fallback): {summary.RenderName} ({n} of {total})...",
+                            launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_JoiningServerFallbackProgress", summary.RenderName, n, total),
                             waitForLanding: careful,
                             // Nothing landed before this batch, so #1 here defines the server the
                             // rest aim at — same first-lands-then-follow shape as the direct batch.
@@ -2495,14 +2493,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                         await ReleaseBatchAsync(
                             plan.Flagged,
                             overrideTarget: ServerInstanceTargeting.Upgrade(target, squadServer),
-                            launchingBanner: (summary, n, total) => $"Joining server (direct fallback): {summary.RenderName} ({n} of {total})...",
+                            launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_JoiningServerFallbackProgress", summary.RenderName, n, total),
                             startIndex: 0,
                             waitForLanding: careful);
                     }
                 }
             }
 
-            StatusBanner = result.PartialBanner(targets.Count, "Squad launch finished");
+            StatusBanner = result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbSquad"));
 
             // Everyone was aimed at one specific server — check with presence who actually made it.
             // Fire-and-forget: the verdict is up to four minutes out (ServerLandingGate.MaxWait,
@@ -2688,7 +2686,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             _log.LogDebug(ex, "RetrieveCookieAsync failed for friends modal {AccountId}", summary.Id);
-            StatusBanner = "Couldn't read this account's saved session.";
+            StatusBanner = Loc.Get("Shell_Msg_CouldntReadSession");
             return;
         }
 
@@ -2715,13 +2713,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             catch (CookieExpiredException)
             {
                 summary.SessionExpired = true;
-                StatusBanner = $"{summary.RenderName}'s session expired — re-authenticate first.";
+                StatusBanner = Loc.Format("Shell_Msg_SessionExpiredReauth", summary.RenderName);
                 return;
             }
             catch (Exception ex)
             {
                 _log.LogDebug(ex, "Couldn't resolve userId for friends modal {AccountId}", summary.Id);
-                StatusBanner = "Couldn't reach Roblox to load friends. Try again in a moment.";
+                StatusBanner = Loc.Get("Shell_Msg_CouldntReachFriends");
                 return;
             }
         }
@@ -2741,7 +2739,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // re-check here so the launch decision is owned by one shared rule (EvaluateFollow) and
             // a privacy-hidden / stale-presence target gets a clear message instead of a silent
             // bounce to the Roblox home page.
-            var decision = EvaluateFollow(pick.Presence, pick.FriendName ?? "that friend");
+            var decision = EvaluateFollow(pick.Presence, pick.FriendName ?? Loc.Get("Shell_Msg_ThatFriend"));
             if (!decision.CanFollow)
             {
                 StatusBanner = decision.BlockedMessage!; // non-null whenever CanFollow is false (see FollowDecision.Block)
