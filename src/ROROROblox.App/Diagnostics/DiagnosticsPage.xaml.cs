@@ -33,45 +33,45 @@ internal partial class DiagnosticsPage : UserControl
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        StatusText.Text = "Collecting...";
+        StatusText.Text = Loc.Get("Diag_Collecting");
         try
         {
             _snapshot = await _collector.CollectAsync();
             RenderSnapshot(_snapshot);
-            StatusText.Text = $"Captured {_snapshot.CapturedAtUtc.ToLocalTime():HH:mm:ss} local.";
+            StatusText.Text = Loc.Format("Diag_Captured", _snapshot.CapturedAtUtc.ToLocalTime().ToString("HH:mm:ss"));
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Couldn't collect diagnostics: {ex.Message}";
+            StatusText.Text = Loc.Format("Diag_CouldntCollect", ex.Message);
         }
     }
 
     private void RenderSnapshot(DiagnosticsSnapshot s)
     {
         DetailsList.Children.Clear();
-        AddSection("Application", new[]
+        AddSection(Loc.Get("Diag_Section_Application"), new[]
         {
-            ("Version", s.AppVersion),
-            (".NET runtime", s.DotNetVersion),
-            ("OS", s.OsVersion),
+            (Loc.Get("Diag_Label_Version"), s.AppVersion),
+            (Loc.Get("Diag_Label_DotNet"), s.DotNetVersion),
+            (Loc.Get("Diag_Label_OS"), s.OsVersion),
             ("Multi-Instance", s.MultiInstanceHeld ? Loc.Get("Diag_On") : Loc.Get("Diag_Off")),
-            ("Saved accounts", s.AccountCount.ToString()),
-            ("Live Roblox clients", s.LiveProcessCount.ToString()),
+            (Loc.Get("Diag_Label_SavedAccounts"), s.AccountCount.ToString()),
+            (Loc.Get("Diag_Label_LiveClients"), s.LiveProcessCount.ToString()),
         });
         AddSection("Roblox", new[]
         {
-            ("Installed", s.RobloxInstalled ? "yes" : "no"),
-            ("Version", s.RobloxInstalledVersion ?? Loc.Get("Diag_NotDetected")),
+            (Loc.Get("Diag_Label_Installed"), s.RobloxInstalled ? Loc.Get("Diag_Yes") : Loc.Get("Diag_No")),
+            (Loc.Get("Diag_Label_Version"), s.RobloxInstalledVersion ?? Loc.Get("Diag_NotDetected")),
         });
         AddSection("WebView2", new[]
         {
-            ("Installed", s.WebView2Installed ? "yes" : "no"),
-            ("Version", s.WebView2Version ?? Loc.Get("Diag_NotDetected")),
+            (Loc.Get("Diag_Label_Installed"), s.WebView2Installed ? Loc.Get("Diag_Yes") : Loc.Get("Diag_No")),
+            (Loc.Get("Diag_Label_Version"), s.WebView2Version ?? Loc.Get("Diag_NotDetected")),
         });
-        AddSection("Memory", new[]
+        AddSection(Loc.Get("Diag_Section_Memory"), new[]
         {
-            ("Installed RAM", FormatGb(s.TotalPhysicalMemoryBytes)),
-            ("Available RAM", FormatGb(s.AvailablePhysicalMemoryBytes)),
+            (Loc.Get("Diag_Label_InstalledRam"), FormatGb(s.TotalPhysicalMemoryBytes)),
+            (Loc.Get("Diag_Label_AvailableRam"), FormatGb(s.AvailablePhysicalMemoryBytes)),
         });
         if (s.AccountMemory.Count > 0)
         {
@@ -79,14 +79,14 @@ internal partial class DiagnosticsPage : UserControl
             // cookies. This artifact gets pasted into Discord. A ReadOk-false reading carries a
             // stale last-known-good byte figure; tag it "(stale)" so it never reads as a fresh,
             // trustworthy sample (same precedent as MemoryWatchdog's own log payload).
-            AddSection("Per-Account Memory", s.AccountMemory.Select(a => (
+            AddSection(Loc.Get("Diag_Section_PerAccountMemory"), s.AccountMemory.Select(a => (
                 Label: a.AccountId.ToString("N")[..8],
-                Value: a.ReadOk ? FormatGb(a.PrivateBytes) : $"{FormatGb(a.PrivateBytes)}(stale)")));
+                Value: a.ReadOk ? FormatGb(a.PrivateBytes) : $"{FormatGb(a.PrivateBytes)}{Loc.Get("Diag_Stale")}")));
         }
-        AddSection("Paths", new[]
+        AddSection(Loc.Get("Diag_Section_Paths"), new[]
         {
-            ("Logs", s.LogDirectory),
-            ("Data", s.DataDirectory),
+            (Loc.Get("Diag_Label_Logs"), s.LogDirectory),
+            (Loc.Get("Diag_Label_Data"), s.DataDirectory),
         });
     }
 
@@ -174,14 +174,14 @@ internal partial class DiagnosticsPage : UserControl
     {
         if (_snapshot is null)
         {
-            StatusText.Text = "Snapshot not ready yet — wait a beat and retry.";
+            StatusText.Text = Loc.Get("Diag_SnapshotNotReady");
             return;
         }
 
         var dialog = new SaveFileDialog
         {
-            Title = "Save support bundle",
-            Filter = "Zip archives (*.zip)|*.zip",
+            Title = Loc.Get("Diag_SaveBundleTitle"),
+            Filter = Loc.Get("Diag_ZipFilter"),
             FileName = $"rororoblox-support-{DateTime.Now:yyyyMMdd-HHmm}.zip",
         };
         if (dialog.ShowDialog(Window.GetWindow(this)) != true)
@@ -192,13 +192,13 @@ internal partial class DiagnosticsPage : UserControl
         try
         {
             SaveBundleButton.IsEnabled = false;
-            StatusText.Text = "Building bundle...";
+            StatusText.Text = Loc.Get("Diag_BuildingBundle");
             BuildSupportBundle(_snapshot, dialog.FileName);
-            StatusText.Text = $"Saved {Path.GetFileName(dialog.FileName)}.";
+            StatusText.Text = Loc.Format("Diag_SavedFile", Path.GetFileName(dialog.FileName));
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Couldn't save bundle: {ex.Message}";
+            StatusText.Text = Loc.Format("Diag_CouldntSaveBundle", ex.Message);
         }
         finally
         {
