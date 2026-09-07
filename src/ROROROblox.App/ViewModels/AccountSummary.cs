@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using ROROROblox.App.Localization;
 using ROROROblox.Core;
 using ROROROblox.Core.StreamerMode;
 
@@ -353,9 +354,9 @@ public sealed class AccountSummary : INotifyPropertyChanged
             if (_sinceActivity is not TimeSpan t) return string.Empty;
 
             var warn = _idleWarn ? "▲ " : string.Empty;
-            if (t < TimeSpan.FromMinutes(1)) return $"{warn}idle {(int)t.TotalSeconds}s";
-            if (t < TimeSpan.FromHours(1)) return $"{warn}idle {(int)t.TotalMinutes}m";
-            return $"{warn}idle {(int)t.TotalHours}h{t.Minutes}m";
+            if (t < TimeSpan.FromMinutes(1)) return warn + Loc.Format("Shell_Idle_Seconds", (int)t.TotalSeconds);
+            if (t < TimeSpan.FromHours(1)) return warn + Loc.Format("Shell_Idle_Minutes", (int)t.TotalMinutes);
+            return warn + Loc.Format("Shell_Idle_HoursMinutes", (int)t.TotalHours, t.Minutes);
         }
     }
 
@@ -746,36 +747,36 @@ public sealed class AccountSummary : INotifyPropertyChanged
             //    absence is what made the old Stop button feel dead.
             if (_stoppingSecondsRemaining is int stopping)
             {
-                return stopping > 0 ? $"Closing… {stopping}s" : "Closing…";
+                return stopping > 0 ? Loc.Format("Shell_Status_Closing", stopping) : Loc.Get("Shell_Status_ClosingNoCount");
             }
             // 1. Session expired wins over everything — the cookie is dead, nothing else matters.
             if (_sessionExpired)
             {
-                return "Session expired";
+                return Loc.Get("Shell_Status_SessionExpired");
             }
             // 1b. Limited by Roblox (403). Beats stale presence — this is the fix for the frozen
             //     "In game" dot masking a failed launch.
             if (_sessionLimited)
             {
-                return "Limited by Roblox — re-capture or wait";
+                return Loc.Get("Shell_Status_Limited");
             }
             // 2. In a game (presence authoritative for display — this is the ghost fix).
             if (InGame)
             {
                 if (string.IsNullOrEmpty(_currentGameName))
                 {
-                    return "In a game";
+                    return Loc.Get("Shell_Status_InGame");
                 }
                 if (_inGameSinceUtc is DateTimeOffset since)
                 {
-                    return $"In {_currentGameName} · {RelativeAge(DateTimeOffset.UtcNow - since)}";
+                    return Loc.Format("Shell_Status_InGameNamedAge", _currentGameName, RelativeAge(DateTimeOffset.UtcNow - since));
                 }
-                return $"In {_currentGameName}";
+                return Loc.Format("Shell_Status_InGameNamed", _currentGameName);
             }
             // 3. In Roblox Studio (presence) — a real activity, surfaced even if it wasn't our launch.
             if (_presenceState == UserPresenceType.InStudio)
             {
-                return "In Studio";
+                return Loc.Get("Shell_Status_InStudio");
             }
             // 4. Client alive but not in a game — sitting at the Roblox home screen / menus. Two ways
             //    to land here: presence explicitly reports online-not-in-game (OnlineWebsite), OR the
@@ -787,14 +788,14 @@ public sealed class AccountSummary : INotifyPropertyChanged
             {
                 if (_presenceState == UserPresenceType.OnlineWebsite)
                 {
-                    return "At Roblox home";
+                    return Loc.Get("Shell_Status_AtHome");
                 }
                 if (_runningSinceUtc is DateTimeOffset since &&
                     DateTimeOffset.UtcNow - since < TimeSpan.FromSeconds(60))
                 {
-                    return "Connecting…";
+                    return Loc.Get("Shell_Status_Connecting");
                 }
-                return "At Roblox home";
+                return Loc.Get("Shell_Status_AtHome");
             }
             // 5. Launch error surfaced only when the row isn't active.
             if (!string.IsNullOrEmpty(_statusText))
@@ -804,15 +805,15 @@ public sealed class AccountSummary : INotifyPropertyChanged
             // 6. Both signals agree it's gone — presence-confirmed close.
             if (_lastClosedAtUtc is DateTimeOffset closed)
             {
-                return $"Closed {RelativeAgo(closed)}";
+                return Loc.Format("Shell_Status_Closed", RelativeAgo(closed));
             }
             // 7. Never been active this session, but launched before.
             if (LastLaunchedAt is DateTimeOffset last)
             {
-                return $"Last launched {RelativeAgo(last)}";
+                return Loc.Format("Shell_Status_LastLaunched", RelativeAgo(last));
             }
             // 8. Cold.
-            return "Ready";
+            return Loc.Get("Shell_Status_Ready");
         }
     }
 
@@ -845,23 +846,35 @@ public sealed class AccountSummary : INotifyPropertyChanged
         return true;
     }
 
+    /// <summary>
+    /// Re-raise the composed getters after a UI-culture change so bound text re-pulls in the new
+    /// language (localization Phase D step 3). Called by MainViewModel's CultureChanged fan-out.
+    /// <c>_statusText</c> (momentary, set at event time) and <c>MemoryText</c> (repainted by
+    /// MainViewModel.RefreshMemoryChips) are refreshed by the parent, not here.
+    /// </summary>
+    public void NotifyCultureChanged()
+    {
+        OnPropertyChanged(nameof(SecondaryStatusText));
+        OnPropertyChanged(nameof(IdleText));
+    }
+
     private static string RelativeAge(TimeSpan span)
     {
-        if (span < TimeSpan.FromMinutes(1)) return "just now";
-        if (span < TimeSpan.FromHours(1)) return $"{(int)span.TotalMinutes} min";
-        if (span < TimeSpan.FromDays(1)) return $"{(int)span.TotalHours}h {span.Minutes}m";
-        return $"{(int)span.TotalDays}d";
+        if (span < TimeSpan.FromMinutes(1)) return Loc.Get("Shell_Age_JustNow");
+        if (span < TimeSpan.FromHours(1)) return Loc.Format("Shell_Age_Minutes", (int)span.TotalMinutes);
+        if (span < TimeSpan.FromDays(1)) return Loc.Format("Shell_Age_HoursMinutes", (int)span.TotalHours, span.Minutes);
+        return Loc.Format("Shell_Age_Days", (int)span.TotalDays);
     }
 
     private static string RelativeAgo(DateTimeOffset when)
     {
         var span = DateTimeOffset.UtcNow - when;
-        if (span < TimeSpan.Zero) return "in the future"; // clock skew safety
-        if (span < TimeSpan.FromSeconds(30)) return "just now";
-        if (span < TimeSpan.FromMinutes(1)) return "<1 min ago";
-        if (span < TimeSpan.FromHours(1)) return $"{(int)span.TotalMinutes} min ago";
-        if (span < TimeSpan.FromDays(1)) return $"{(int)span.TotalHours} hr ago";
-        if (span < TimeSpan.FromDays(7)) return $"{(int)span.TotalDays} days ago";
+        if (span < TimeSpan.Zero) return Loc.Get("Shell_Ago_InFuture"); // clock skew safety
+        if (span < TimeSpan.FromSeconds(30)) return Loc.Get("Shell_Ago_JustNow");
+        if (span < TimeSpan.FromMinutes(1)) return Loc.Get("Shell_Ago_LessThanMinute");
+        if (span < TimeSpan.FromHours(1)) return Loc.Format("Shell_Ago_Minutes", (int)span.TotalMinutes);
+        if (span < TimeSpan.FromDays(1)) return Loc.Format("Shell_Ago_Hours", (int)span.TotalHours);
+        if (span < TimeSpan.FromDays(7)) return Loc.Plural("Shell_Ago_Days", (int)span.TotalDays);
         return when.ToLocalTime().ToString("MMM d");
     }
 }

@@ -2298,4 +2298,33 @@
     <value>{0} Roblox clients running</value>
     <comment>Memory footer; many-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment>
   </data>
+  <data name="Shell_Status_Closing" xml:space="preserve"><value>Closing… {0}s</value><comment>AccountSummary state; {0}=seconds (localized Phase D step 3)</comment></data>
+  <data name="Shell_Status_ClosingNoCount" xml:space="preserve"><value>Closing…</value><comment>AccountSummary state (localized Phase D step 3)</comment></data>
+  <data name="Shell_Status_SessionExpired" xml:space="preserve"><value>Session expired</value><comment>AccountSummary state (localized Phase D step 3)</comment></data>
+  <data name="Shell_Status_Limited" xml:space="preserve"><value>Limited by Roblox — re-capture or wait</value><comment>AccountSummary state; "Roblox" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Status_InGame" xml:space="preserve"><value>In a game</value><comment>AccountSummary state (localized Phase D step 3)</comment></data>
+  <data name="Shell_Status_InGameNamed" xml:space="preserve"><value>In {0}</value><comment>AccountSummary state; {0}=game name (localized Phase D step 3)</comment></data>
+  <data name="Shell_Status_InGameNamedAge" xml:space="preserve"><value>In {0} · {1}</value><comment>AccountSummary state; {0}=game {1}=age (localized Phase D step 3)</comment></data>
+  <data name="Shell_Status_InStudio" xml:space="preserve"><value>In Studio</value><comment>AccountSummary state; "Studio" is Roblox Studio (localized Phase D step 3)</comment></data>
+  <data name="Shell_Status_AtHome" xml:space="preserve"><value>At Roblox home</value><comment>AccountSummary state; "Roblox" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Status_Connecting" xml:space="preserve"><value>Connecting…</value><comment>AccountSummary state (localized Phase D step 3)</comment></data>
+  <data name="Shell_Status_Closed" xml:space="preserve"><value>Closed {0}</value><comment>AccountSummary state; {0}=relative ago (localized Phase D step 3)</comment></data>
+  <data name="Shell_Status_LastLaunched" xml:space="preserve"><value>Last launched {0}</value><comment>AccountSummary state; {0}=relative ago (localized Phase D step 3)</comment></data>
+  <data name="Shell_Status_Ready" xml:space="preserve"><value>Ready</value><comment>AccountSummary state (localized Phase D step 3)</comment></data>
+  <data name="Shell_Idle_Seconds" xml:space="preserve"><value>idle {0}s</value><comment>AccountSummary IdleText; s = unit symbol (localized Phase D step 3)</comment></data>
+  <data name="Shell_Idle_Minutes" xml:space="preserve"><value>idle {0}m</value><comment>AccountSummary IdleText; m = unit symbol (localized Phase D step 3)</comment></data>
+  <data name="Shell_Idle_HoursMinutes" xml:space="preserve"><value>idle {0}h{1}m</value><comment>AccountSummary IdleText; h/m unit symbols (localized Phase D step 3)</comment></data>
+  <data name="Shell_Age_JustNow" xml:space="preserve"><value>just now</value><comment>RelativeAge (localized Phase D step 3)</comment></data>
+  <data name="Shell_Age_Minutes" xml:space="preserve"><value>{0} min</value><comment>RelativeAge; min = unit symbol (localized Phase D step 3)</comment></data>
+  <data name="Shell_Age_HoursMinutes" xml:space="preserve"><value>{0}h {1}m</value><comment>RelativeAge; unit symbols (localized Phase D step 3)</comment></data>
+  <data name="Shell_Age_Days" xml:space="preserve"><value>{0}d</value><comment>RelativeAge; d = unit symbol (localized Phase D step 3)</comment></data>
+  <data name="Shell_Ago_InFuture" xml:space="preserve"><value>in the future</value><comment>RelativeAgo clock-skew (localized Phase D step 3)</comment></data>
+  <data name="Shell_Ago_JustNow" xml:space="preserve"><value>just now</value><comment>RelativeAgo (localized Phase D step 3)</comment></data>
+  <data name="Shell_Ago_LessThanMinute" xml:space="preserve"><value>&lt;1 min ago</value><comment>RelativeAgo; min unit symbol (localized Phase D step 3)</comment></data>
+  <data name="Shell_Ago_Minutes" xml:space="preserve"><value>{0} min ago</value><comment>RelativeAgo; min unit symbol (localized Phase D step 3)</comment></data>
+  <data name="Shell_Ago_Hours" xml:space="preserve"><value>{0} hr ago</value><comment>RelativeAgo; hr unit symbol (localized Phase D step 3)</comment></data>
+  <data name="Shell_Ago_Days_one" xml:space="preserve"><value>{0} day ago</value><comment>RelativeAgo via Loc.Plural (localized Phase D step 3)</comment></data>
+  <data name="Shell_Ago_Days_other" xml:space="preserve"><value>{0} days ago</value><comment>RelativeAgo via Loc.Plural (localized Phase D step 3)</comment></data>
+  <data name="Shell_Ago_Days_few" xml:space="preserve"><value>{0} days ago</value><comment>few-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Ago_Days_many" xml:space="preserve"><value>{0} days ago</value><comment>many-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
 </root>

@@ -55,4 +55,37 @@ public class ShellLocalizationTests
                 MemoryChipFormatter.FormatFooter(2, 5L * 1024 * 1024 * 1024, false));
         });
     }
+
+    private static ROROROblox.Core.Account ColdAccount(DateTimeOffset? lastLaunched = null) =>
+        new(
+            Id: Guid.NewGuid(),
+            DisplayName: "TestAlt",
+            AvatarUrl: "https://example.com/a.png",
+            CreatedAt: DateTimeOffset.UtcNow,
+            LastLaunchedAt: lastLaunched,
+            RobloxUserId: 12345L);
+
+    [Fact]
+    public void AccountSummary_StatusStates_Localized()
+    {
+        InEnglish(() =>
+        {
+            Assert.Equal("Ready", new AccountSummary(ColdAccount()).SecondaryStatusText);
+            Assert.Equal("Session expired",
+                new AccountSummary(ColdAccount()) { SessionExpired = true }.SecondaryStatusText);
+        });
+    }
+
+    [Fact]
+    public void AccountSummary_DaysAgo_PluralFix()
+    {
+        // The old code always said "days ago" — "1 days ago". The plural family fixes it.
+        InEnglish(() =>
+        {
+            Assert.Equal("Last launched 1 day ago",
+                new AccountSummary(ColdAccount(DateTimeOffset.UtcNow.AddHours(-25))).SecondaryStatusText);
+            Assert.Equal("Last launched 3 days ago",
+                new AccountSummary(ColdAccount(DateTimeOffset.UtcNow.AddDays(-3))).SecondaryStatusText);
+        });
+    }
 }
