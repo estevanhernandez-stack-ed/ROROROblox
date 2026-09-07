@@ -42,14 +42,24 @@ def esc(text: str) -> str:
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def neutral_keys() -> list[str]:
+# Product nouns that MUST stay English in every language (localization-plan.md, the
+# approved listings' "product nouns stay English" rule + the Multi-Instance ruling). The
+# es voice-review pilot (2026-09-07) caught Squad Launch / Recycle translated across all six
+# catalogs; this guard makes that class of regression impossible to ship. Case-sensitive, so
+# only the branded capitalised forms are enforced (descriptive "multi-instance lock" is free).
+PRODUCT_NOUNS = ["RoRoRo", "Roblox", "Squad Launch", "Recycle", "Multi-Instance"]
+
+
+def neutral_entries() -> list[tuple[str, str]]:
     tree = ET.parse(RESX)
-    keys = []
+    entries = []
     for data in tree.getroot().findall("data"):
         name = data.get("name")
-        if name is not None:
-            keys.append(name)
-    return keys
+        if name is None:
+            continue
+        value_el = data.find("value")
+        entries.append((name, (value_el.text if value_el is not None else "") or ""))
+    return entries
 
 
 def load_translations(culture: str) -> dict[str, str]:
@@ -71,14 +81,30 @@ def main() -> None:
     if len(sys.argv) != 2:
         raise SystemExit("usage: gen-culture-resx.py <culture>   e.g. pt-BR")
     culture = sys.argv[1]
-    keys = neutral_keys()
+    entries = neutral_entries()
+    keys = [k for k, _ in entries]
+    en = dict(entries)
     keyset = set(keys)
     trans = load_translations(culture)
 
     missing = [k for k in keys if k not in trans]
     extra = [k for k in trans if k not in keyset]
     empty = [k for k in keys if k in trans and not str(trans[k]).strip()]
+    # Product-noun guard: if the English value carries a must-stay-English noun, the
+    # translation must carry it verbatim (it was not translated away).
+    noun_violations = [
+        f"{k}: '{noun}' translated away"
+        for k in keys
+        if k in trans
+        for noun in PRODUCT_NOUNS
+        if noun in en.get(k, "") and noun not in str(trans[k])
+    ]
     problems = []
+    if noun_violations:
+        problems.append(
+            f"{len(noun_violations)} product-noun violation(s): {noun_violations[:8]}"
+            + (" …" if len(noun_violations) > 8 else "")
+        )
     if missing:
         problems.append(f"{len(missing)} MISSING key(s): {missing[:8]}{' …' if len(missing) > 8 else ''}")
     if extra:

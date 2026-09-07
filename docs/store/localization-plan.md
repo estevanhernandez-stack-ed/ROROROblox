@@ -154,15 +154,41 @@ Not every Core string is UI copy — the traps, named so nobody localizes them:
 > translated (proper nouns + whitespace preserved), satellite builds by SDK auto-glob (no csproj
 > edit), `UiCultureTests` reworked to the biconditional guard + a satellite-loads-real-Portuguese
 > proof, manifest gains `<Resource Language="pt-BR"/>` (never-lie: catalog ships, so the
-> declaration is true). Suite 1987 pass. **Remaining:** the other five catalogs (fr, de, ru, pl,
-> es) — same generator, one PR — each earning its manifest entry as it lands; the app-string
-> **verification gate** (the tool is listing-shaped, so app-string ingest is its own dogfood) is
-> the pre-Store-submission approval — merging catalogs to main is not a Store submission, so the
-> gate binds before the next Store push, not before merge. **Two follow-ups noted:** the
+> declaration is true). Suite 1987 pass.
+
+> **WAVE 1 COMPLETE 2026-09-07.** The other five catalogs (fr, de, ru, pl, es) landed the same
+> day via five parallel translation agents (each 483/483, proper nouns + whitespace + per-language
+> quote styles preserved, registers: fr *vous*, de *du*, es *tú*, ru/pl neutral-impersonal), the
+> same generator, one PR. Manifest now declares all six; `UiCultureTests` ratchets to the full
+> wave-1 set and a per-language Theory proves each satellite resolves real (non-English-fallback)
+> text. Suite 1992 pass (1 documented wall-clock flake, green standalone). **The RoRoRo UI now
+> speaks six languages.** The app-string **verification gate** (the verifier tool is
+> listing-shaped, so app-string ingest is its own dogfood) is the pre-Store-submission approval —
+> merging catalogs to main is not a Store submission, so the gate binds before the next Store
+> push, not before merge; the six catalogs are the input to that pass. **Two follow-ups noted:** the
 > `JoinByLinkSentinel` picker item `(Paste a link...)` is a ViewModel display string outside the
 > XAML sweep (identity is `PlaceId==0`, so its `Name` is safe to localize) — deferred to a
 > deliberate ViewModel-display-string audit rather than cherry-picked; until then the pt-BR
 > tooltip quotes the on-screen English label so the reference is accurate.
+
+> **VERIFICATION PILOT 2026-09-07 — the tool does app-string voice review.** Este's call: run
+> the app catalogs through the translation-verification tool as both voice review and the
+> pre-Store gate. `scripts/export-ui-translations.py` shapes the neutral + six catalogs into the
+> tool's `fields` contract (`field`/`en`/`translations`, `pt-BR`→`pt-br`) → `ui-translations.json`,
+> ingested by pinned commit like the listing dataset. Findings: (1) the tool ingests app-string
+> shape and its readiness gate **generalizes** (`0/483`, not hard-locked to the 6 listing fields);
+> caps handled gracefully (`capViolations: []`). (2) The es review validated the voice (*"correct
+> 'tú' register, captures claims accurately"*) and flagged exactly one systematic class — **product
+> feature nouns translated**: `Squad Launch`, `Recycle` rendered in the target language, against
+> the approved listing's "product nouns stay English" rule (listing-copy-*.md line 5). Fixed
+> across all six catalogs (feature name → English; descriptive "squad member" and `Launch multiple`
+> stay translated; the localized `Tools → Games` nav path kept). (3) **Baked in:** a `PRODUCT_NOUNS`
+> guard in `gen-culture-resx.py` fails the build if a must-stay-English noun (RoRoRo, Roblox, Squad
+> Launch, Recycle, Multi-Instance) is translated away — and it immediately caught a **13th
+> occurrence the Gemini review missed** (`WelcomeWindow_TogglesWhetherThisAccountJoins`), so the
+> deterministic guard and the tool each catch what the other misses. Two dogfood findings for the
+> tool repo: the ingest response echoes all 2,898 field-statuses (450KB, overflows at app-string
+> scale — should summarize); and the review had a false negative on that 13th field.
 
 Do not hand-sweep the 395. `/vibe-lingual` is the loop — extract, wire, translate, guard,
 per-file backups, safe re-runs. It won't handle this XAML natively; it has an adapter seam

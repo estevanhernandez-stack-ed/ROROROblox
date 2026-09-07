@@ -28,11 +28,17 @@
     </Dependencies>
     <!-- Declared package languages. The never-lie rule (docs/store/localization-plan.md): a
          language appears here ONLY when its UI catalog actually ships. en-us is the default
-         (first entry wins); pt-BR was added 2026-09-07 alongside Strings.pt-BR.resx — the first
-         genuinely translated UI. Each further language earns its <Resource> as its catalog lands. -->
+         (first entry wins). Wave 1 completed 2026-09-07 — each entry has a full
+         Strings.<culture>.resx satellite (483 strings): pt-BR, then fr/de/ru/pl/es. Each further
+         language earns its <Resource> only as its catalog lands. -->
     <Resources>
         <Resource Language="en-us" />
         <Resource Language="pt-BR" />
+        <Resource Language="fr" />
+        <Resource Language="de" />
+        <Resource Language="ru" />
+        <Resource Language="pl" />
+        <Resource Language="es" />
     </Resources>
     <Applications>
         <Application Id="ROROROblox" Executable="ROROROblox.App.exe" EntryPoint="Windows.FullTrustApplication">
