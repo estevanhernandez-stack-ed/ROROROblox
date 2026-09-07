@@ -26,8 +26,13 @@
     <Dependencies>
         <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19045.0" MaxVersionTested="10.0.26100.0" />
     </Dependencies>
+    <!-- Declared package languages. The never-lie rule (docs/store/localization-plan.md): a
+         language appears here ONLY when its UI catalog actually ships. en-us is the default
+         (first entry wins); pt-BR was added 2026-09-07 alongside Strings.pt-BR.resx — the first
+         genuinely translated UI. Each further language earns its <Resource> as its catalog lands. -->
     <Resources>
         <Resource Language="en-us" />
+        <Resource Language="pt-BR" />
     </Resources>
     <Applications>
         <Application Id="ROROROblox" Executable="ROROROblox.App.exe" EntryPoint="Windows.FullTrustApplication">

@@ -138,6 +138,32 @@ Not every Core string is UI copy — the traps, named so nobody localizes them:
 > status chips, glyphs, keyboard gestures, `roblox.com`. One tokenizer miss hand-recovered
 > (MainWindow Re-authenticate) — Vibe-Lingual issue #4.
 
+> **CULTURE SWITCH LANDED 2026-09-07 (PR #159).** The `IAppSettings.UiLanguage` key (+ its
+> 4-fake ripple, `ReadUiLanguageFast` startup read), `UiCulture` (the AVAILABLE-list guard —
+> a language is offered ONLY when its satellite catalog ships, probed not assumed), the
+> `Program.Main` bootstrap (culture applied before `new App()`, earlier than theme), and the
+> Settings → Appearance language picker. English-only until a catalog shipped.
+>
+> **FIRST TRANSLATED UI SHIPPED 2026-09-07 (pt-BR).** The content cycle's tooling:
+> `scripts/export-ui-strings.py` dumps the neutral catalog to `docs/store/ui-strings.json`
+> (483 keys, **0 placeholders** — Phase B kept every format string in code, so the catalog is
+> pure display copy); `scripts/gen-culture-resx.py <culture>` applies a per-culture
+> `docs/store/translations/ui-<culture>.json` to a `Strings.<culture>.resx`, REFUSING an
+> incomplete catalog (every neutral key, none extra, no empty value) so the honest-picker
+> guarantee holds — a shipped language is fully translated. pt-BR is the first: all 483 strings
+> translated (proper nouns + whitespace preserved), satellite builds by SDK auto-glob (no csproj
+> edit), `UiCultureTests` reworked to the biconditional guard + a satellite-loads-real-Portuguese
+> proof, manifest gains `<Resource Language="pt-BR"/>` (never-lie: catalog ships, so the
+> declaration is true). Suite 1987 pass. **Remaining:** the other five catalogs (fr, de, ru, pl,
+> es) — same generator, one PR — each earning its manifest entry as it lands; the app-string
+> **verification gate** (the tool is listing-shaped, so app-string ingest is its own dogfood) is
+> the pre-Store-submission approval — merging catalogs to main is not a Store submission, so the
+> gate binds before the next Store push, not before merge. **Two follow-ups noted:** the
+> `JoinByLinkSentinel` picker item `(Paste a link...)` is a ViewModel display string outside the
+> XAML sweep (identity is `PlaceId==0`, so its `Name` is safe to localize) — deferred to a
+> deliberate ViewModel-display-string audit rather than cherry-picked; until then the pt-BR
+> tooltip quotes the on-screen English label so the reference is accurate.
+
 Do not hand-sweep the 395. `/vibe-lingual` is the loop — extract, wire, translate, guard,
 per-file backups, safe re-runs. It won't handle this XAML natively; it has an adapter seam
 and reports not-yet-implemented rather than mangling anything. Build the **WPF adapter**
