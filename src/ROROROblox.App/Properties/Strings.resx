@@ -2262,4 +2262,20 @@
     <value>Set every account to the same FPS cap to launch at full speed. Roblox keeps one shared settings file for every client, so different caps make RoRoRo wait for each account to finish loading before starting the next, up to about 20 seconds each.</value>
     <comment>Main-window banner; composed by MultiInstanceCopy. Product nouns stay English (localized Phase D step 3)</comment>
   </data>
+  <data name="Shell_IdleSummary_one" xml:space="preserve">
+    <value>{0} account idle &gt; {1}m</value>
+    <comment>Idle-strip; composed by IdleSummary via Loc.Plural. {0}=count {1}=threshold minutes (localized Phase D step 3)</comment>
+  </data>
+  <data name="Shell_IdleSummary_other" xml:space="preserve">
+    <value>{0} accounts idle &gt; {1}m</value>
+    <comment>Idle-strip; composed by IdleSummary via Loc.Plural (localized Phase D step 3)</comment>
+  </data>
+  <data name="Shell_IdleSummary_few" xml:space="preserve">
+    <value>{0} accounts idle &gt; {1}m</value>
+    <comment>Idle-strip; few-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment>
+  </data>
+  <data name="Shell_IdleSummary_many" xml:space="preserve">
+    <value>{0} accounts idle &gt; {1}m</value>
+    <comment>Idle-strip; many-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment>
+  </data>
 </root>

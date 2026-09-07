@@ -31,4 +31,15 @@ public class ShellLocalizationTests
             Assert.Contains("FPS cap", MultiInstanceCopy.FpsCapMismatchBanner);
         });
     }
+
+    [Fact]
+    public void IdleSummary_PluralAndThreshold()
+    {
+        InEnglish(() =>
+        {
+            Assert.Equal(string.Empty, IdleSummary.Format(0, 5));
+            Assert.Equal("1 account idle > 5m", IdleSummary.Format(1, 5));
+            Assert.Equal("3 accounts idle > 5m", IdleSummary.Format(3, 5));
+        });
+    }
 }
