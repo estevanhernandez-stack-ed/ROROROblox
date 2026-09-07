@@ -311,7 +311,7 @@ internal partial class SettingsPage : UserControl, IDisposable
                 {
                     DiscordPresenceToggle.IsEnabled = false;
                     DiscordJoinToggle.IsEnabled = false;
-                    DiscordStatusLine.Text = "Discord presence isn't set up for this build.";
+                    DiscordStatusLine.Text = Loc.Get("Shell_Pref_DiscordNotSetUp");
                 }
             }
             catch (Exception)
@@ -323,7 +323,7 @@ internal partial class SettingsPage : UserControl, IDisposable
                 DiscordPresenceToggle.IsEnabled = false;
                 DiscordJoinToggle.IsChecked = false;
                 DiscordJoinToggle.IsEnabled = false;
-                DiscordStatusLine.Text = "Discord presence isn't set up for this build.";
+                DiscordStatusLine.Text = Loc.Get("Shell_Pref_DiscordNotSetUp");
             }
 
             // v1.8 idle awareness — mute toggle + warn-threshold preset (10/12/15/18 minutes).
@@ -347,7 +347,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             }
             catch (Exception ex)
             {
-                ShowMemoryWarning($"Couldn't read your memory settings: {ex.Message}");
+                ShowMemoryWarning(Loc.Format("Shell_Pref_CouldntReadMemory", ex.Message));
             }
 
             // Populate the theme picker. Built-ins first, then user-supplied JSON files.
@@ -400,8 +400,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         }
         catch (System.Exception ex)
         {
-            MessageBox.Show(Window.GetWindow(this), $"Couldn't save the language: {ex.Message}",
-                "Preferences", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Window.GetWindow(this), Loc.Format("Shell_Pref_CouldntSaveLanguage", ex.Message),
+                Loc.Get("Shell_Pref_Title"), MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -560,8 +560,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         catch (Exception ex)
         {
             MessageBox.Show(Window.GetWindow(this),
-                $"Couldn't update Windows startup entry: {ex.Message}",
-                "Preferences",
+                Loc.Format("Shell_Pref_CouldntUpdateStartup", ex.Message),
+                Loc.Get("Shell_Pref_Title"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             // Revert visual state.
@@ -581,8 +581,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         catch (Exception ex)
         {
             MessageBox.Show(Window.GetWindow(this),
-                $"Couldn't save preference: {ex.Message}",
-                "Preferences",
+                Loc.Format("Shell_Pref_CouldntSavePreference", ex.Message),
+                Loc.Get("Shell_Pref_Title"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             _suppressClickHandlers = true;
@@ -601,8 +601,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         catch (Exception ex)
         {
             MessageBox.Show(Window.GetWindow(this),
-                $"Couldn't save preference: {ex.Message}",
-                "Preferences",
+                Loc.Format("Shell_Pref_CouldntSavePreference", ex.Message),
+                Loc.Get("Shell_Pref_Title"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             _suppressClickHandlers = true;
@@ -631,8 +631,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         catch (Exception ex)
         {
             MessageBox.Show(Window.GetWindow(this),
-                $"Couldn't save preference: {ex.Message}",
-                "Preferences",
+                Loc.Format("Shell_Pref_CouldntSavePreference", ex.Message),
+                Loc.Get("Shell_Pref_Title"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             _suppressClickHandlers = true;
@@ -654,7 +654,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         catch (Exception ex)
         {
             MessageBox.Show(Window.GetWindow(this),
-                $"Could not save that setting: {ex.Message}",
+                Loc.Format("Shell_Pref_CouldntSaveSetting", ex.Message),
                 "RoRoRo", MessageBoxButton.OK, MessageBoxImage.Warning);
             _suppressClickHandlers = true;
             AutoForceStopToggle.IsChecked = !wanted;
@@ -676,8 +676,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         catch (Exception ex)
         {
             MessageBox.Show(Window.GetWindow(this),
-                $"Couldn't save preference: {ex.Message}",
-                "Preferences",
+                Loc.Format("Shell_Pref_CouldntSavePreference", ex.Message),
+                Loc.Get("Shell_Pref_Title"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             _suppressClickHandlers = true;
@@ -741,8 +741,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         catch (Exception ex)
         {
             MessageBox.Show(Window.GetWindow(this),
-                $"Couldn't save preference: {ex.Message}",
-                "Preferences",
+                Loc.Format("Shell_Pref_CouldntSavePreference", ex.Message),
+                Loc.Get("Shell_Pref_Title"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             // A failed mutate publishes nothing, so Current still matches the disk — repaint from it.
@@ -765,8 +765,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         catch (Exception ex)
         {
             MessageBox.Show(Window.GetWindow(this),
-                $"Couldn't save preference: {ex.Message}",
-                "Preferences",
+                Loc.Format("Shell_Pref_CouldntSavePreference", ex.Message),
+                Loc.Get("Shell_Pref_Title"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             _suppressClickHandlers = true;
@@ -1676,8 +1676,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         catch (Exception ex)
         {
             MessageBox.Show(Window.GetWindow(this),
-                $"Couldn't save preference: {ex.Message}",
-                "Preferences",
+                Loc.Format("Shell_Pref_CouldntSavePreference", ex.Message),
+                Loc.Get("Shell_Pref_Title"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             _suppressClickHandlers = true;
@@ -1703,8 +1703,8 @@ internal partial class SettingsPage : UserControl, IDisposable
         catch (Exception ex)
         {
             MessageBox.Show(Window.GetWindow(this),
-                $"Couldn't save preference: {ex.Message}",
-                "Preferences",
+                Loc.Format("Shell_Pref_CouldntSavePreference", ex.Message),
+                Loc.Get("Shell_Pref_Title"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
         }

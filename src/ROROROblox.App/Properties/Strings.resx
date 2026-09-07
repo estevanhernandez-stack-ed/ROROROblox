@@ -2412,4 +2412,11 @@ You'll need to log in again to add it back.</value><comment>Remove-account confi
   <data name="Shell_Msg_GameNotSaved" xml:space="preserve"><value>That game isn't saved any more.</value><comment>Game-management banner (localized Phase D step 3)</comment></data>
   <data name="Shell_Msg_ItemNotSaved" xml:space="preserve"><value>That {0} isn't saved any more.</value><comment>Rename banner; {0}=kind noun (English enum text, minor) (localized Phase D step 3)</comment></data>
   <data name="Shell_Msg_CouldntSaveNameChange" xml:space="preserve"><value>Couldn't save name change. Disk error?</value><comment>Rename banner (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_Title" xml:space="preserve"><value>Preferences</value><comment>Settings MessageBox caption (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_DiscordNotSetUp" xml:space="preserve"><value>Discord presence isn't set up for this build.</value><comment>Settings Discord status; "Discord" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_CouldntReadMemory" xml:space="preserve"><value>Couldn't read your memory settings: {0}</value><comment>Settings error; {0}=exception text (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_CouldntSaveLanguage" xml:space="preserve"><value>Couldn't save the language: {0}</value><comment>Settings error; {0}=exception text (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_CouldntUpdateStartup" xml:space="preserve"><value>Couldn't update Windows startup entry: {0}</value><comment>Settings error; {0}=exception text (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_CouldntSavePreference" xml:space="preserve"><value>Couldn't save preference: {0}</value><comment>Settings error; {0}=exception text (localized Phase D step 3)</comment></data>
+  <data name="Shell_Pref_CouldntSaveSetting" xml:space="preserve"><value>Could not save that setting: {0}</value><comment>Settings error; {0}=exception text (localized Phase D step 3)</comment></data>
 </root>
