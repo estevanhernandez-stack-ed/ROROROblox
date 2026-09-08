@@ -139,11 +139,11 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
         StatsBlock.Visibility = Visibility.Visible;
         PeakAltsText.Text = view.PeakConcurrentAlts.ToString();
         TotalUptimeText.Text = view.TotalUptime;
-        MostPlayedText.Text = $"most played: {view.MostPlayedGame}";
+        MostPlayedText.Text = Loc.Format("Shell_History_MostPlayed", view.MostPlayedGame);
         StreakText.Text = view.StreakDays.ToString();
         StreakCaption.Text = view.LongestStreakDays > view.StreakDays
-            ? $"best: {view.LongestStreakDays} days · longest session {view.LongestSession}"
-            : $"longest session {view.LongestSession}";
+            ? Loc.Format("Shell_History_BestStreak", view.LongestStreakDays, view.LongestSession)
+            : Loc.Format("Shell_History_LongestSession", view.LongestSession);
 
         LeaderboardList.Children.Clear();
         foreach (var row in view.Leaderboard)
@@ -151,7 +151,7 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
             var line = new DockPanel { Margin = new Thickness(2, 2, 2, 0) };
             var uptime = new TextBlock
             {
-                Text = $"{SessionStatsPresenter.FormatUptime(row.Uptime)} · {row.Launches} launches{row.StreakSuffix}",
+                Text = Loc.Format("Shell_History_LeaderRow", SessionStatsPresenter.FormatUptime(row.Uptime), row.Launches, row.StreakSuffix),
                 FontSize = (double)FindResource("MetaFontSize"),
                 Foreground = (Brush)FindResource("MutedTextBrush"),
             };
@@ -253,8 +253,8 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
         foreach (var row in _rows)
         {
             var local = row.LaunchedAtUtc.ToLocalTime().Date;
-            var bucket = local == today ? "Today"
-                : local == yesterday ? "Yesterday"
+            var bucket = local == today ? Loc.Get("Shell_History_Today")
+                : local == yesterday ? Loc.Get("Shell_History_Yesterday")
                 : local.ToString("dddd, MMMM d");
             if (bucket != lastBucket)
             {
@@ -379,7 +379,7 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
                 VerticalAlignment = VerticalAlignment.Center,
                 Child = new TextBlock
                 {
-                    Text = "PRIVATE",
+                    Text = Loc.Get("Shell_History_Badge_Private"),
                     FontSize = 8,
                     FontWeight = FontWeights.Bold,
                     Foreground = (Brush)FindResource("WhiteBrush"),
@@ -388,7 +388,7 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
         }
         info.Children.Add(nameLine);
 
-        var detail = $"{row.GameName ?? "(unknown game)"}";
+        var detail = row.GameName ?? Loc.Get("SessionHistoryRow_UnknownGame");
         if (row.OutcomeHint is { Length: > 0 } hint)
         {
             detail += $"  ·  {hint}";
@@ -434,7 +434,7 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
             {
                 rightPanel.Children.Add(new TextBlock
                 {
-                    Text = "Saved",
+                    Text = Loc.Get("Shell_History_Badge_Saved"),
                     FontSize = 9,
                     FontWeight = FontWeights.SemiBold,
                     Foreground = (Brush)FindResource("CyanBrush"),
@@ -446,7 +446,7 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
             {
                 var bookmark = new Button
                 {
-                    Content = "+ Bookmark",
+                    Content = Loc.Get("Shell_History_Bookmark"),
                     Padding = new Thickness(8, 3, 8, 3),
                     FontSize = 10,
                     Background = (Brush)FindResource("NavyBrush"),
@@ -456,7 +456,7 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
                     Cursor = System.Windows.Input.Cursors.Hand,
                     HorizontalAlignment = HorizontalAlignment.Right,
                     Margin = new Thickness(0, 2, 0, 0),
-                    ToolTip = "Add this place to your saved games so you can launch into it any time.",
+                    ToolTip = Loc.Get("Shell_History_BookmarkTooltip"),
                     Tag = row,
                 };
                 bookmark.Click += OnBookmarkClick;
@@ -507,7 +507,7 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
         }
         btn.IsEnabled = false;
         var oldContent = btn.Content;
-        btn.Content = "Saving...";
+        btn.Content = Loc.Get("Shell_History_Saving");
         try
         {
             // Fresh metadata fetch covers the case where the game name on the history row is
@@ -539,14 +539,14 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
         {
             btn.Content = oldContent;
             btn.IsEnabled = true;
-            ShowMessage($"Couldn't bookmark: {ex.Message}", "Bookmark game",
+            ShowMessage(Loc.Format("Shell_History_CouldntBookmark", ex.Message), Loc.Get("Shell_History_BookmarkGameTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
     private static string FormatDuration(LaunchSession row)
     {
-        if (row.Duration is not TimeSpan d) return row.OutcomeHint is null ? "still running" : "—";
+        if (row.Duration is not TimeSpan d) return row.OutcomeHint is null ? Loc.Get("Shell_History_StillRunning") : "—";
         if (d < TimeSpan.FromMinutes(1)) return "<1 min";
         if (d < TimeSpan.FromHours(1)) return $"{(int)d.TotalMinutes} min";
         return $"{(int)d.TotalHours}h {d.Minutes}m";
@@ -555,8 +555,8 @@ internal partial class SessionHistoryPage : UserControl, IDisposable
     private async void OnClearClick(object sender, RoutedEventArgs e)
     {
         var confirm = ShowMessage(
-            "Clear all session history? This can't be undone.",
-            "Clear history",
+            Loc.Get("Shell_History_ClearConfirm"),
+            Loc.Get("SessionHistoryPage_ClearHistory"),
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
         if (confirm != MessageBoxResult.Yes)

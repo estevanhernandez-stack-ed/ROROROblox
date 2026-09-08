@@ -2570,4 +2570,25 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Shell_Games_RemoveServerTitle" xml:space="preserve"><value>Remove server</value><comment>Games remove confirm title (localized Phase D step 3)</comment></data>
   <data name="Shell_Games_ServerNotSaved" xml:space="preserve"><value>That server isn't saved any more.</value><comment>Games rename status (localized Phase D step 3)</comment></data>
   <data name="Shell_Games_CouldntSaveNameChangeDisk" xml:space="preserve"><value>Couldn't save name change. Disk error? ({0})</value><comment>Games rename status; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Stats_StreakSuffix" xml:space="preserve"><value> · {0}d streak</value><comment>Leaderboard streak suffix; {0}=days (localized Phase D step 3)</comment></data>
+  <data name="Shell_Stats_PlaceFallback" xml:space="preserve"><value>place {0}</value><comment>Most-played game fallback; {0}=place id (localized Phase D step 3)</comment></data>
+  <data name="Shell_Stats_IntegrityNote_one" xml:space="preserve"><value>{0} session didn't record an end and isn't counted in uptime.</value><comment>Stats integrity note via Loc.Plural (localized Phase D step 3)</comment></data>
+  <data name="Shell_Stats_IntegrityNote_other" xml:space="preserve"><value>{0} sessions didn't record an end and aren't counted in uptime.</value><comment>Stats integrity note via Loc.Plural (localized Phase D step 3)</comment></data>
+  <data name="Shell_Stats_IntegrityNote_few" xml:space="preserve"><value>{0} sessions didn't record an end and aren't counted in uptime.</value><comment>few-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Stats_IntegrityNote_many" xml:space="preserve"><value>{0} sessions didn't record an end and aren't counted in uptime.</value><comment>many-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_MostPlayed" xml:space="preserve"><value>most played: {0}</value><comment>History stats; {0}=game (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_BestStreak" xml:space="preserve"><value>best: {0} days · longest session {1}</value><comment>History stats; {0}=days {1}=session (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_LongestSession" xml:space="preserve"><value>longest session {0}</value><comment>History stats; {0}=session (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_LeaderRow" xml:space="preserve"><value>{0} · {1} launches{2}</value><comment>Leaderboard row; {0}=uptime {1}=launches {2}=streak suffix (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_Today" xml:space="preserve"><value>Today</value><comment>History date bucket (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_Yesterday" xml:space="preserve"><value>Yesterday</value><comment>History date bucket (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_Badge_Private" xml:space="preserve"><value>PRIVATE</value><comment>History row private-server badge (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_Badge_Saved" xml:space="preserve"><value>Saved</value><comment>History row saved badge (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_Bookmark" xml:space="preserve"><value>+ Bookmark</value><comment>History row bookmark button (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_BookmarkTooltip" xml:space="preserve"><value>Add this place to your saved games so you can launch into it any time.</value><comment>History bookmark button tooltip (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_Saving" xml:space="preserve"><value>Saving...</value><comment>History bookmark status (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_CouldntBookmark" xml:space="preserve"><value>Couldn't bookmark: {0}</value><comment>History bookmark error; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_BookmarkGameTitle" xml:space="preserve"><value>Bookmark game</value><comment>History bookmark error title (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_StillRunning" xml:space="preserve"><value>still running</value><comment>Duration text for an open session (localized Phase D step 3)</comment></data>
+  <data name="Shell_History_ClearConfirm" xml:space="preserve"><value>Clear all session history? This can't be undone.</value><comment>Clear-history confirm body (localized Phase D step 3)</comment></data>
 </root>
