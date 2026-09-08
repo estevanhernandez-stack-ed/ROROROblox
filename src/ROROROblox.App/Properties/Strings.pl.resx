@@ -3082,6 +3082,6 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
     <value>RoRoRo mówi teraz w Twoim języku</value>
   </data>
   <data name="LanguageNotice_Body" xml:space="preserve">
-    <value>Automatycznie podąża za językiem systemu. W każdej chwili możesz wybrać inny w Ustawienia › Język.</value>
+    <value>Automatycznie podąża za językiem systemu. W każdej chwili możesz wybrać inny w Ustawienia › Wygląd.</value>
   </data>
 </root>
