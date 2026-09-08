@@ -1,4 +1,5 @@
 using System.Windows;
+using ROROROblox.App.Localization;
 using ROROROblox.Core;
 
 namespace ROROROblox.App.Modals;
@@ -17,7 +18,7 @@ internal partial class RenameWindow : Window
         InitializeComponent();
 
         // Mono-micro reference — uppercase per brand. Em-dash separator.
-        OriginalNameLine.Text = $"ROBLOX NAME — {target.OriginalName}".ToUpperInvariant();
+        OriginalNameLine.Text = Loc.Format("Shell_Rename_OriginalLabel", target.OriginalName).ToUpperInvariant();
 
         // Pre-fill: existing local name, falling back to the Roblox-side original. All-selected
         // so the first keystroke replaces — fast retype is the dominant interaction.

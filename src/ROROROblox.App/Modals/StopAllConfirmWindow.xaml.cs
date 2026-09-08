@@ -1,4 +1,5 @@
 using System.Windows;
+using ROROROblox.App.Localization;
 
 namespace ROROROblox.App.Modals;
 
@@ -12,9 +13,7 @@ internal partial class StopAllConfirmWindow : Window
     public StopAllConfirmWindow(int runningCount)
     {
         InitializeComponent();
-        BodyText.Text = runningCount == 1
-            ? "1 Roblox client is running. This closes it immediately."
-            : $"{runningCount} Roblox clients are running. This closes them all immediately.";
+        BodyText.Text = Loc.Plural("Shell_StopAll_Running", runningCount);
     }
 
     private void OnStopClick(object sender, RoutedEventArgs e)

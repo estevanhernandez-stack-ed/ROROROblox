@@ -41,8 +41,8 @@ internal partial class ImportAccountsWindow : Window
     {
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
-            Title = "Open account bundle",
-            Filter = "RoRoRo account bundle (*.rororo-accounts)|*.rororo-accounts|All files (*.*)|*.*",
+            Title = Loc.Get("Shell_Import_OpenTitle"),
+            Filter = Loc.Get("Shell_Import_BundleFilter"),
             DefaultExt = ".rororo-accounts",
             CheckFileExists = true,
             Multiselect = false,
@@ -74,7 +74,7 @@ internal partial class ImportAccountsWindow : Window
         }
 
         ImportButton.IsEnabled = false;
-        StatusText.Text = "Opening bundle…";
+        StatusText.Text = Loc.Get("Shell_Import_Opening");
 
         try
         {
@@ -110,8 +110,8 @@ internal partial class ImportAccountsWindow : Window
             // records goes out of scope here — nothing retained.
             MessageBox.Show(
                 this,
-                $"Imported {merge.Imported} account(s). Skipped {merge.Skipped} already on this PC.",
-                "Accounts imported",
+                Loc.Format("Shell_Import_Result", merge.Imported, merge.Skipped),
+                Loc.Get("Shell_Import_ResultTitle"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
 
@@ -129,7 +129,7 @@ internal partial class ImportAccountsWindow : Window
         catch (IOException ex)
         {
             // File couldn't be read (deleted, locked). Distinct from a crypto failure, plainly stated.
-            StatusText.Text = $"Couldn't read that file: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_Import_CouldntRead", ex.Message);
             ImportButton.IsEnabled = true;
         }
     }

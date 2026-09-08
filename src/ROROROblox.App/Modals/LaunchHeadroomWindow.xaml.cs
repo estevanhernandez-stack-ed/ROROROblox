@@ -1,4 +1,5 @@
 using System.Windows;
+using ROROROblox.App.Localization;
 using ROROROblox.Core.Diagnostics;
 
 namespace ROROROblox.App.Modals;
@@ -19,21 +20,20 @@ internal partial class LaunchHeadroomWindow : Window
         var gb = (double b) => b / 1024d / 1024d / 1024d;
 
         Heading.Text = verdict == LaunchHeadroomAdvisor.Verdict.WontFit
-            ? "There may not be room for another client"
-            : $"There may only be room for {roomFor} more";
+            ? Loc.Get("Shell_Headroom_WontFit")
+            : Loc.Format("Shell_Headroom_RoomFor", roomFor);
 
         // Says "may". The footprint is a measured constant, not a promise about this machine and
         // this game — overstating it would be the same mistake as blocking on it.
         BodyText.Text = requested == 1
-            ? "A Roblox client typically needs about 2.6 GB. Starting one now could push the "
-              + "machine past what it can hold, and Windows may close a client that is already "
-              + "running to make space."
-            : $"You are launching {requested} accounts, and a Roblox client typically needs about "
-              + "2.6 GB each. Windows may close clients that are already running to make space.";
+            ? Loc.Get("Shell_Headroom_BodyOne")
+            : Loc.Format("Shell_Headroom_BodyMany", requested);
 
-        Numbers.Text =
-            $"{gb(availableBytes):F1} GB free  ·  {gb(aggregateClientBytes):F1} GB held by "
-            + $"{(aggregateClientBytes > 0 ? "running clients" : "nothing yet")}  ·  room for about {roomFor} more";
+        var heldBy = aggregateClientBytes > 0
+            ? Loc.Get("Shell_Headroom_HeldRunning")
+            : Loc.Get("Shell_Headroom_HeldNothing");
+        Numbers.Text = Loc.Format(
+            "Shell_Headroom_Numbers", gb(availableBytes), gb(aggregateClientBytes), heldBy, roomFor);
     }
 
     /// <summary>

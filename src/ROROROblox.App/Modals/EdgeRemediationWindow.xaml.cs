@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
+using ROROROblox.App.Localization;
 using ROROROblox.App.Theming;
 using ROROROblox.Core.Theming;
 
@@ -27,11 +28,7 @@ internal partial class EdgeRemediationWindow : Window
         // was doing two jobs and only one of them needed 3:1; anyone who followed our documentation
         // wrote exactly this. Copy that implies the author erred would be blaming them for our
         // design. Found by the wave-5 review gate.
-        BodyText.Text =
-            $"RoRoRo now outlines buttons so they can be told apart from the surface behind them. "
-            + $"Your theme — {question.ThemeName} — sets one divider colour, and it does two jobs: "
-            + "the faint rule between rows, which is right as you wrote it, and now the outline on a "
-            + "button, which needs to be brighter to be seen. We brightened it for buttons only.";
+        BodyText.Text = Loc.Format("Shell_Edge_Body", question.ThemeName);
 
         Paint(AuthoredSwatch, AuthoredRatio, question.Surface, question.AuthoredEdge);
         Paint(DerivedSwatch, DerivedRatio, question.Surface, question.DerivedEdge);
@@ -54,7 +51,7 @@ internal partial class EdgeRemediationWindow : Window
                 CultureInfo.CurrentCulture,
                 "{0:0.0}:1 · {1}",
                 ratio.Value,
-                ratio.Value >= ContrastGuard.MinimumBoundaryRatio ? "passes" : "below the 3:1 floor");
+                ratio.Value >= ContrastGuard.MinimumBoundaryRatio ? Loc.Get("Shell_Edge_Passes") : Loc.Get("Shell_Edge_BelowFloor"));
     }
 
     private static bool TryBrush(string hex, out SolidColorBrush brush)

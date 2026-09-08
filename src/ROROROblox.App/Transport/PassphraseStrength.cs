@@ -1,3 +1,5 @@
+using ROROROblox.App.Localization;
+
 namespace ROROROblox.App.Transport;
 
 /// <summary>
@@ -44,7 +46,7 @@ public static class PassphraseStrength
     {
         if (string.IsNullOrWhiteSpace(passphrase))
         {
-            return (0, "Too short");
+            return (0, Loc.Get("Shell_Passphrase_TooShort"));
         }
 
         int length = passphrase.Length;
@@ -78,7 +80,7 @@ public static class PassphraseStrength
         {
             // 0..1 only: a short-but-varied passphrase is still short.
             int shortScore = varietyPoints > 0 ? 1 : 0;
-            return (shortScore, shortScore == 0 ? "Too short" : "Too short");
+            return (shortScore, Loc.Get("Shell_Passphrase_TooShort"));
         }
 
         int raw = lengthPoints + varietyPoints; // 1..5 at/above the floor
@@ -86,10 +88,10 @@ public static class PassphraseStrength
 
         string label = score switch
         {
-            1 => "Weak",
-            2 => "Fair",
-            3 => "Strong",
-            _ => "Very strong",
+            1 => Loc.Get("Shell_Passphrase_Weak"),
+            2 => Loc.Get("Shell_Passphrase_Fair"),
+            3 => Loc.Get("Shell_Passphrase_Strong"),
+            _ => Loc.Get("Shell_Passphrase_VeryStrong"),
         };
         return (score, label);
     }

@@ -111,7 +111,15 @@ public class BrandNameFenceTests
             }
         }
 
-        Assert.True(sinks >= 20, $"Expected to find the app's display assignments, found {sinks}.");
+        // The floor guards against a broken filesystem walk (FindRepoRoot returning null yields zero
+        // lines, and then the offenders check below passes vacuously). It is deliberately low: Phase D
+        // localization (2026-09) is converting literal display-sink assignments — Text = "…", Title =
+        // "…", ShowToast("…", …) — into Loc.Get/Loc.Format calls across the app, which the DisplaySink
+        // regex no longer matches (a call, not a literal, follows the =). That is the point of the
+        // work, so the literal count legitimately trends toward the handful of symbolic/format sinks
+        // that stay ($" / {name}", "", and the like). 5 sits under that residue and far over the 0 a
+        // broken walk produces. Was 20 before the localization arc.
+        Assert.True(sinks >= 5, $"Expected to find the app's display assignments, found {sinks}.");
 
         Assert.True(offenders.Count == 0,
             "A person reads these. Use Branding.ProductName:" + Environment.NewLine
