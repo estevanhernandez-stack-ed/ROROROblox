@@ -1,3 +1,4 @@
+using ROROROblox.App.Localization;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 
@@ -24,7 +25,7 @@ internal static class SessionStatsPresenter
         /// truthful chain), and eight rows of "0d streak" on day one reads as broken rather
         /// than new. "History begins" rather than "install": Clear history clears stats too.
         /// </summary>
-        public string StreakSuffix => StreakDays > 0 ? $" · {StreakDays}d streak" : string.Empty;
+        public string StreakSuffix => StreakDays > 0 ? Loc.Format("Shell_Stats_StreakSuffix", StreakDays) : string.Empty;
     }
 
     internal sealed record StatsView(
@@ -54,7 +55,7 @@ internal static class SessionStatsPresenter
         // one three-hour session (spec §6).
         var mostPlayed = stats.Games
             .OrderByDescending(kv => kv.Value.Uptime)
-            .Select(kv => kv.Value.LastKnownName ?? $"place {kv.Key}")
+            .Select(kv => kv.Value.LastKnownName ?? Loc.Format("Shell_Stats_PlaceFallback", kv.Key))
             .FirstOrDefault() ?? "—";
 
         return new StatsView(
@@ -67,7 +68,7 @@ internal static class SessionStatsPresenter
             Leaderboard: leaderboard,
             // Counted out loud rather than silently dropped or silently guessed (spec §5).
             IntegrityNote: stats.SessionsMissingAnEnd > 0
-                ? $"{stats.SessionsMissingAnEnd} session(s) didn't record an end and aren't counted in uptime."
+                ? Loc.Plural("Shell_Stats_IntegrityNote", stats.SessionsMissingAnEnd)
                 : string.Empty,
             HasAnything: stats.Accounts.Count > 0 || stats.PeakConcurrentAlts > 0);
     }
