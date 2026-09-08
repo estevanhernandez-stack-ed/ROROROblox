@@ -1,3 +1,5 @@
+using ROROROblox.App.Localization;
+
 namespace ROROROblox.App.Plugins;
 
 /// <summary>
@@ -74,15 +76,11 @@ internal static class PluginDuplicates
         if (dropped.Count == 1)
         {
             var d = dropped[0];
-            return $"Two folders declare the plugin \"{d.Id}\". RoRoRo is running the copy in "
-                 + $"{d.KeptDir} and ignoring {d.IgnoredDir}. Delete the unused copy — it is usually "
-                 + "a leftover backup folder.";
+            return Loc.Format("Plugin_Dup_Single", d.Id, d.KeptDir, d.IgnoredDir);
         }
 
         var ids = string.Join(", ", dropped.Select(d => $"\"{d.Id}\"").Distinct(StringComparer.Ordinal));
         var paths = string.Join("; ", dropped.Select(d => d.IgnoredDir));
-        return $"{dropped.Count} plugin folders are being ignored because another folder already "
-             + $"declares the same id ({ids}). Ignored: {paths}. Delete the unused copies — they are "
-             + "usually leftover backup folders.";
+        return Loc.Format("Plugin_Dup_Multi", dropped.Count, ids, paths);
     }
 }

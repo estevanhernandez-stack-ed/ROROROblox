@@ -8,6 +8,7 @@ using System.Windows.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.App.Distribution;
+using ROROROblox.App.Localization;
 using ROROROblox.App.Plugins.Adapters;
 using ROROROblox.App.ViewModels;
 
@@ -178,7 +179,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             var row = new PluginRow(iv.Plugin, isRunning: running.ContainsKey(iv.Plugin.Manifest.Id));
             if (iv.Update is PluginUpdateState.UpdateAvailable upd)
             {
-                row.SetUpdateAvailable($"Update available ({upd.FromVersion} → {upd.ToVersion})", iv.UpdateInstallUrl);
+                row.SetUpdateAvailable(Loc.Format("Plugin_UpdateAvailable", upd.FromVersion, upd.ToVersion), iv.UpdateInstallUrl);
             }
             Plugins.Add(row);
         }
@@ -210,7 +211,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
                     "Plugin consent: sheet cancelled for {PluginId} v{Version} during install — install dir rolled back.",
                     installed.Manifest.Id, installed.Manifest.Version);
                 TryDeleteInstallDir(installed.InstallDir);
-                StatusBanner = "Install cancelled.";
+                StatusBanner = Loc.Get("Plugin_InstallCancelled");
                 return;
             }
 
@@ -235,12 +236,12 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
                 // IsRunning so the Launch button on it shows disabled-state immediately.
                 var newRow = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == installed.Manifest.Id);
                 if (newRow is not null) newRow.IsRunning = true;
-                StatusBanner = $"{installed.Manifest.Name} installed and running.";
+                StatusBanner = Loc.Format("Plugin_InstalledRunning", installed.Manifest.Name);
             }
             catch (Exception startEx)
             {
                 _log.LogWarning(startEx, "Plugin {PluginId} installed but post-install start failed.", installed.Manifest.Id);
-                StatusBanner = $"{installed.Manifest.Name} installed — start failed: {startEx.Message}";
+                StatusBanner = Loc.Format("Plugin_InstalledStartFailed", installed.Manifest.Name, startEx.Message);
             }
 
             InstallUrlInput = string.Empty;
@@ -265,7 +266,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
                 ex.Message, @"https?://\S+", "<url>");
             _log.LogWarning("Plugin install failed: {ExceptionType}: {Reason}; install dir rolled back if present.",
                 ex.GetType().Name, safeReason);
-            StatusBanner = $"Install failed: {ex.Message}";
+            StatusBanner = Loc.Format("Plugin_InstallFailed", ex.Message);
         }
         finally
         {
@@ -293,12 +294,12 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
                 var newRow = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == updated.Manifest.Id);
                 if (newRow is not null) newRow.IsRunning = true;
             }
-            StatusBanner = $"{updated.Manifest.Name} updated to {updated.Manifest.Version}.";
+            StatusBanner = Loc.Format("Plugin_Updated", updated.Manifest.Name, updated.Manifest.Version);
         }
         catch (Exception ex)
         {
             _log.LogWarning("Plugin update failed (url input): {ExceptionType}.", ex.GetType().Name);
-            StatusBanner = $"Update failed: {ex.Message}";
+            StatusBanner = Loc.Format("Plugin_UpdateFailed", ex.Message);
         }
         finally
         {
@@ -325,12 +326,12 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             await LoadAsync().ConfigureAwait(true);
             _log.LogInformation("Plugin {PluginId}: autostart {State}.", row.Plugin.Manifest.Id, nextEnabled ? "enabled" : "disabled");
             StatusBanner = nextEnabled
-                ? $"Autostart enabled for {row.Name}."
-                : $"Autostart disabled for {row.Name}.";
+                ? Loc.Format("Plugin_AutostartEnabled", row.Name)
+                : Loc.Format("Plugin_AutostartDisabled", row.Name);
         }
         catch (Exception ex)
         {
-            StatusBanner = $"Autostart toggle failed: {ex.Message}";
+            StatusBanner = Loc.Format("Plugin_AutostartToggleFailed", ex.Message);
         }
     }
 
@@ -359,7 +360,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
                     _log.LogInformation(
                         "Plugin consent: sheet cancelled for {PluginId} on first Launch — not started, nothing persisted.",
                         pluginId);
-                    StatusBanner = $"{row.Name} not started — consent sheet cancelled.";
+                    StatusBanner = Loc.Format("Plugin_NotStartedConsentCancelled", row.Name);
                     return;
                 }
                 _log.LogInformation(
@@ -373,15 +374,15 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
                 row = Plugins.FirstOrDefault(p => p.Plugin.Manifest.Id == pluginId) ?? row;
             }
 
-            StatusBanner = $"Launching {row.Name}...";
+            StatusBanner = Loc.Format("Plugin_Launching", row.Name);
             _supervisor.Start(row.Plugin);
             row.IsRunning = true;
-            StatusBanner = $"{row.Name} is running.";
+            StatusBanner = Loc.Format("Plugin_Running", row.Name);
         }
         catch (Exception ex)
         {
             _log.LogWarning(ex, "Plugin {PluginId} launch-from-row failed.", row.Plugin.Manifest.Id);
-            StatusBanner = $"Launch failed: {ex.Message}";
+            StatusBanner = Loc.Format("Plugin_LaunchFailed", ex.Message);
         }
     }
 
@@ -404,12 +405,12 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             _registryAdapter.Refresh();
             await LoadAsync().ConfigureAwait(true);
             _log.LogInformation("Plugin consent: revoked + removed {PluginId} (consent record deleted, install dir cleaned).", row.Plugin.Manifest.Id);
-            StatusBanner = $"{row.Name} removed.";
+            StatusBanner = Loc.Format("Plugin_Removed", row.Name);
         }
         catch (Exception ex)
         {
             _log.LogWarning(ex, "Plugin {PluginId} remove failed.", row.Plugin.Manifest.Id);
-            StatusBanner = $"Remove failed: {ex.Message}";
+            StatusBanner = Loc.Format("Plugin_RemoveFailed", ex.Message);
         }
     }
 
@@ -430,14 +431,14 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
         {
             _supervisor.Restart(match.Plugin);
             _log.LogInformation("Plugin {PluginId}: restarted from exit banner.", match.Plugin.Manifest.Id);
-            StatusBanner = $"{match.Name} restarted.";
+            StatusBanner = Loc.Format("Plugin_Restarted", match.Name);
             _bannerPluginId = null;
             Raise(nameof(BannerIsRestartable));
         }
         catch (Exception ex)
         {
             _log.LogWarning(ex, "Plugin {PluginId} restart-from-banner failed.", _bannerPluginId);
-            StatusBanner = $"Restart failed: {ex.Message}";
+            StatusBanner = Loc.Format("Plugin_RestartFailed", ex.Message);
         }
         return Task.CompletedTask;
     }
@@ -457,7 +458,7 @@ internal sealed class PluginsViewModel : INotifyPropertyChanged, IDisposable
             // match is null (uninstalled mid-exit) — null-skip the row state mutation.
             if (match is not null) match.IsRunning = false;
             _bannerPluginId = pluginId;
-            StatusBanner = $"{displayName} stopped -- click to restart.";
+            StatusBanner = Loc.Format("Plugin_StoppedClickRestart", displayName);
             Raise(nameof(BannerIsRestartable));
         };
         if (dispatcher is null || dispatcher.CheckAccess())
@@ -535,9 +536,7 @@ internal sealed class PluginRow : INotifyPropertyChanged
     }
 
     /// <summary>"3 capabilities" / "1 capability" — the row chip label.</summary>
-    public string CapabilitySummary => CapabilityCount == 1
-        ? "1 capability"
-        : $"{CapabilityCount} capabilities";
+    public string CapabilitySummary => Loc.Plural("Plugin_CapabilityChip", CapabilityCount);
 
     private bool _updateAvailable;
     /// <summary>True when the catalog lists a newer version than the installed one. Drives the
@@ -583,5 +582,5 @@ internal sealed class AvailablePluginRow
     public bool Installable => _view.Installable;
 
     /// <summary>"Install" when installable, else the reason it isn't.</summary>
-    public string ActionLabel => Installable ? "Install" : $"Needs RoRoRo {_view.Entry.MinHostVersion}+";
+    public string ActionLabel => Installable ? Loc.Get("Plugin_Install") : Loc.Format("Plugin_NeedsHost", _view.Entry.MinHostVersion);
 }

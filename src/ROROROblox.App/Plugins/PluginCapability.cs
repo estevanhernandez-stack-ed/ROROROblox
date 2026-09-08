@@ -1,3 +1,5 @@
+using ROROROblox.App.Localization;
+
 namespace ROROROblox.App.Plugins;
 
 /// <summary>
@@ -32,38 +34,42 @@ public static class PluginCapability
     public const string SystemFocusForeignWindows = "system.focus-foreign-windows";
     public const string SystemReadScreen = "system.read-screen";
 
-    private static readonly IReadOnlyDictionary<string, string> Catalog = new Dictionary<string, string>
+    // Maps each capability to its resx KEY, not its English sentence. Display() resolves the key
+    // through Loc at CALL time so the consent sheet — an on-demand modal — reads the current UI
+    // culture when it is shown, rather than freezing whatever culture was current when this static
+    // dictionary first initialized (localization Phase D step 3 batch 13, mirrors CaptionColorPicker).
+    private static readonly IReadOnlyDictionary<string, string> ResxKeys = new Dictionary<string, string>
     {
-        [HostEventsAccountLaunched] = "Notify the plugin when an account launches.",
-        [HostEventsAccountExited] = "Notify the plugin when an account exits.",
-        [HostEventsMutexStateChanged] = "Notify the plugin when multi-instance state changes.",
-        [HostEventsMemoryPressure] = "Notify the plugin when an account's memory use gets high enough to risk the machine running out of RAM.",
-        [HostCommandsRequestLaunch] = "Allow the plugin to ask RoRoRo to launch a Roblox account.",
-        [HostCommandsLaunchTarget] = "Allow the plugin to launch one of your accounts into a Roblox server from a link or friend it provides.",
-        [HostCommandsMarkAccountActive] = "Let this plugin tell RoRoRo an account is still active (so idle warnings don't misfire). It cannot see what you type or do — only mark an account active.",
-        [HostCommandsStopAccounts] = "Allow the plugin to close Roblox clients that RoRoRo launched. Any unsaved in-game progress in those clients is lost.",
-        [HostQueriesCurrentServer] = "Allow the plugin to read the private-server link you most recently launched, so it can share it.",
-        [HostQueriesAccountActivity] = "See how long each account has been idle — timestamps only, never what you type or do.",
-        [HostQueriesAccounts] = "See your saved accounts — names and which one is your main. Never reads cookies or passwords.",
-        [HostUITrayMenu] = "Allow the plugin to add tray menu items.",
-        [HostUIRowBadge] = "Allow the plugin to add a badge on each saved-account row.",
-        [HostUIStatusPanel] = "Allow the plugin to add a status panel to the main window.",
-        [SystemSynthesizeKeyboardInput] = "The plugin will synthesize keyboard input on your machine.",
-        [SystemSynthesizeMouseInput] = "The plugin will synthesize mouse input on your machine.",
-        [SystemWatchGlobalInput] = "The plugin will watch your keyboard + mouse input system-wide.",
-        [SystemPreventSleep] = "The plugin will prevent your computer from sleeping while it runs.",
-        [SystemFocusForeignWindows] = "The plugin will activate / focus other applications' windows.",
-        [SystemReadScreen] = "The plugin will read pixels from your screen.",
+        [HostEventsAccountLaunched] = "Plugin_Cap_AccountLaunched",
+        [HostEventsAccountExited] = "Plugin_Cap_AccountExited",
+        [HostEventsMutexStateChanged] = "Plugin_Cap_MutexStateChanged",
+        [HostEventsMemoryPressure] = "Plugin_Cap_MemoryPressure",
+        [HostCommandsRequestLaunch] = "Plugin_Cap_RequestLaunch",
+        [HostCommandsLaunchTarget] = "Plugin_Cap_LaunchTarget",
+        [HostCommandsMarkAccountActive] = "Plugin_Cap_MarkAccountActive",
+        [HostCommandsStopAccounts] = "Plugin_Cap_StopAccounts",
+        [HostQueriesCurrentServer] = "Plugin_Cap_CurrentServer",
+        [HostQueriesAccountActivity] = "Plugin_Cap_AccountActivity",
+        [HostQueriesAccounts] = "Plugin_Cap_Accounts",
+        [HostUITrayMenu] = "Plugin_Cap_TrayMenu",
+        [HostUIRowBadge] = "Plugin_Cap_RowBadge",
+        [HostUIStatusPanel] = "Plugin_Cap_StatusPanel",
+        [SystemSynthesizeKeyboardInput] = "Plugin_Cap_SynthKeyboard",
+        [SystemSynthesizeMouseInput] = "Plugin_Cap_SynthMouse",
+        [SystemWatchGlobalInput] = "Plugin_Cap_WatchGlobalInput",
+        [SystemPreventSleep] = "Plugin_Cap_PreventSleep",
+        [SystemFocusForeignWindows] = "Plugin_Cap_FocusForeignWindows",
+        [SystemReadScreen] = "Plugin_Cap_ReadScreen",
     };
 
     public static bool IsKnown(string capability)
-        => !string.IsNullOrEmpty(capability) && Catalog.ContainsKey(capability);
+        => !string.IsNullOrEmpty(capability) && ResxKeys.ContainsKey(capability);
 
     public static bool IsHostEnforced(string capability)
         => IsKnown(capability) && capability.StartsWith("host.", StringComparison.Ordinal);
 
     public static string Display(string capability)
-        => Catalog.TryGetValue(capability, out var explanation)
-            ? explanation
-            : $"Unknown capability: {capability}";
+        => ResxKeys.TryGetValue(capability, out var resxKey)
+            ? Loc.Get(resxKey)
+            : Loc.Format("Plugin_Cap_Unknown", capability);
 }

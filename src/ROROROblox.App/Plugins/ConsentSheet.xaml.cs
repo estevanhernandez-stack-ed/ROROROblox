@@ -1,4 +1,5 @@
 using System.Windows;
+using ROROROblox.App.Localization;
 
 namespace ROROROblox.App.Plugins;
 
@@ -86,8 +87,8 @@ internal partial class ConsentSheet : Window
         // XAML is a second carrier and cannot be the only one: magenta-heat sets Cyan and Magenta
         // to the same value, so the tint collapses there and these sentences are all that is left.
         public string NamespaceLabel => IsHostEnforced
-            ? "RoRoRo enforces this on every call."
-            : "Runs on your machine -- RoRoRo cannot sandbox it.";
+            ? Loc.Get("Plugin_Consent_HostEnforced")
+            : Loc.Get("Plugin_Consent_SystemLocal");
 
         // NamespaceBrush lived here until v1.21 item 7 (F-087). It resolved CyanBrush/MagentaBrush
         // through TryFindResource with literal fallbacks; it is now a Style + DataTrigger on
