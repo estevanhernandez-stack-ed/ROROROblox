@@ -41,13 +41,8 @@
             <StackPanel>
                 <TextBlock Text="{loc:Loc SquadLaunchWindow_LaunchByUrl}" FontSize="{DynamicResource BodyFontSize}" FontWeight="SemiBold"
                            Foreground="{DynamicResource CyanBrush}" Margin="0,0,0,6" />
-                <TextBlock TextWrapping="Wrap" FontSize="{DynamicResource MetaFontSize}"
-                           Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,8">
-                    Private server link —
-                    <Run FontFamily="{DynamicResource MonoFontFamily}">https://www.roblox.com/games/&lt;id&gt;/&lt;name&gt;?privateServerLinkCode=&lt;code&gt;</Run>
-                    — gets saved for next time. A plain game link (<Run FontFamily="{DynamicResource MonoFontFamily}">roblox.com/games/&lt;id&gt;</Run>)
-                    puts the squad in one public server together instead.
-                </TextBlock>
+                <TextBlock Text="{loc:Loc SquadLaunchWindow_LinkHelp}" TextWrapping="Wrap" FontSize="{DynamicResource MetaFontSize}"
+                           Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,8" />
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />

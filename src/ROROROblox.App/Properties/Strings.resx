@@ -2755,4 +2755,7 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Discord_Status_Connecting" xml:space="preserve"><value>Connecting to Discord…</value><comment>Discord presence status line, internal (localized Phase D step 3 batch 14)</comment></data>
   <data name="Webhook_UnknownChannel" xml:space="preserve"><value>unknown</value><comment>Webhook identity fallback when Discord returns no channel name (localized Phase D step 3 batch 14)</comment></data>
   <data name="Webhook_UnknownGuild" xml:space="preserve"><value>your server</value><comment>Webhook identity fallback when Discord returns no server name (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Badge_Main" xml:space="preserve"><value>MAIN</value><comment>Account-row badge: the main account (localized Phase D step 3 batch 15)</comment></data>
+  <data name="Badge_Available" xml:space="preserve"><value>AVAILABLE</value><comment>Plugins-page badge: an installable catalog plugin (localized Phase D step 3 batch 15)</comment></data>
+  <data name="SquadLaunchWindow_LinkHelp" xml:space="preserve"><value>Private server link — https://www.roblox.com/games/&lt;id&gt;/&lt;name&gt;?privateServerLinkCode=&lt;code&gt; — gets saved for next time. A plain game link (roblox.com/games/&lt;id&gt;) puts the squad in one public server together instead.</value><comment>Squad-launch link help; keep the two roblox.com URL templates verbatim (localized Phase D step 3 batch 15)</comment></data>
 </root>

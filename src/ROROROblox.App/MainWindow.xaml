@@ -61,7 +61,7 @@
                                     Margin="6,2,0,0" Padding="4,1"
                                     VerticalAlignment="Center"
                                     Visibility="{Binding IsMain, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <TextBlock Text="MAIN"
+                                <TextBlock Text="{loc:Loc Badge_Main}"
                                            FontSize="{DynamicResource MetaFontSize}" FontWeight="Bold"
                                            Foreground="{DynamicResource OnMagentaBrush}" />
                             </Border>
@@ -424,7 +424,7 @@
                                     Margin="10,2,0,0" Padding="6,2"
                                     VerticalAlignment="Center"
                                     Visibility="{Binding IsMain, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <TextBlock Text="MAIN"
+                                <TextBlock Text="{loc:Loc Badge_Main}"
                                            FontSize="{DynamicResource MetaFontSize}" FontWeight="Bold"
                                            Foreground="{DynamicResource OnMagentaBrush}" />
                             </Border>
@@ -1265,7 +1265,7 @@
 
                                 <!-- Mono-micro label. Brand: uppercase + tracking, magenta tint. -->
                                 <TextBlock Grid.Column="1"
-                                           Text="DEFAULT"
+                                           Text="{loc:Loc Shell_Squad_Badge_Default}"
                                            FontFamily="{DynamicResource MonoFontFamily}"
                                            FontSize="{DynamicResource MetaFontSize}"
                                            Foreground="{DynamicResource MagentaBrush}"
@@ -1449,7 +1449,7 @@
                                                                     </Style.Triggers>
                                                                 </Style>
                                                             </Border.Style>
-                                                            <TextBlock Text="DEFAULT"
+                                                            <TextBlock Text="{loc:Loc Shell_Squad_Badge_Default}"
                                                                        FontFamily="{DynamicResource MonoFontFamily}"
                                                                        FontSize="{DynamicResource MetaFontSize}"
                                                                        FontWeight="Bold"
