@@ -61,6 +61,7 @@ internal partial class SettingsPage : UserControl, IDisposable
     private ThemeStatusSummary.Line _themeFolderStatus = ThemeStatusSummary.Silent;
 
     private bool _suppressClickHandlers; // true while we set the initial check states.
+    private bool _loaded;                 // true once OnLoaded has populated; gates the culture-change re-render.
 
     /// <summary>Channel names reported by the probe for each webhook, if it answered.</summary>
     private string? _mineChannelName;
@@ -133,6 +134,15 @@ internal partial class SettingsPage : UserControl, IDisposable
             });
 
         Loaded += OnLoaded;
+
+        // Live-refresh the code-composed summaries on a language toggle (the deferred half of the
+        // Phase D live-toggle). The language picker below sets TranslationSource.CurrentCulture, which
+        // raises CultureChanged synchronously; {loc:Loc} XAML re-renders itself, but the summaries
+        // this page assembles in code (alerts status, muted accounts, theme description + folder
+        // status) are set imperatively and would otherwise stay in the old language until the next
+        // open. Subscribed here (once per instance) rather than in OnLoaded, which re-fires on
+        // re-navigation and would double-subscribe; unsubscribed in Dispose.
+        TranslationSource.Instance.CultureChanged += OnUiCultureChanged;
     }
 
     /// <summary>
@@ -156,6 +166,10 @@ internal partial class SettingsPage : UserControl, IDisposable
 
         // And the config owner outlives this window the same way.
         _discordConfigService.Changed -= OnDiscordConfigChanged;
+
+        // The culture source is an app-lifetime singleton too — leave a subscription on it and this
+        // disposed page's re-render fires for the rest of the process.
+        TranslationSource.Instance.CultureChanged -= OnUiCultureChanged;
     }
 
     /// <summary>
@@ -377,10 +391,34 @@ internal partial class SettingsPage : UserControl, IDisposable
             LanguagePicker.SelectedItem =
                 languages.FirstOrDefault(c => string.Equals(c.CultureName, savedLang, StringComparison.OrdinalIgnoreCase))
                 ?? languages[0]; // English — always present
+
+            // Population done — the culture-change re-render may now run against real state.
+            _loaded = true;
         }
         finally
         {
             _suppressClickHandlers = false;
+        }
+    }
+
+    /// <summary>
+    /// Re-render the summaries this page composes in code when the UI language changes, so they flip
+    /// with the toggle instead of waiting for the next open. Every call here is a pure read of
+    /// already-loaded state — no settings re-read, no toggle reset, no editable field touched — so it
+    /// is safe to run on any culture change. The memory section and the Discord status line are
+    /// deliberately not here: the former re-reads settings (heavier, and a mid-edit stomp risk) and
+    /// the latter is event-driven (it re-narrates on the next presence event), both acceptable as
+    /// next-open refreshes.
+    /// </summary>
+    private void OnUiCultureChanged(object? sender, EventArgs e)
+    {
+        if (!_loaded) return;
+        RefreshAlertsStatus();
+        RefreshMutedAccounts();
+        UpdateThemeDescription(ThemePicker.SelectedItem as Theme);
+        if (ThemePicker.ItemsSource is IReadOnlyList<Theme> themes)
+        {
+            ReportThemeFolder(themes);
         }
     }
 
