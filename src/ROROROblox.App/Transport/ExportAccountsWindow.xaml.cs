@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using ROROROblox.App.Localization;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 using ROROROblox.Core.Transport;
@@ -125,15 +126,15 @@ internal partial class ExportAccountsWindow : Window
         string? message = null;
         if (!hasAccounts)
         {
-            message = "Pick at least one account to export.";
+            message = Loc.Get("Shell_Export_PickAtLeastOne");
         }
         else if (!floorOk)
         {
-            message = $"Passphrase must be at least {PassphraseStrength.MinimumLength} characters.";
+            message = Loc.Format("Shell_Export_PassphraseTooShort", PassphraseStrength.MinimumLength);
         }
         else if (!match)
         {
-            message = "The two passphrases don't match.";
+            message = Loc.Get("Shell_Export_PassphrasesDontMatch");
         }
 
         ValidationText.Text = message ?? string.Empty;
@@ -155,8 +156,8 @@ internal partial class ExportAccountsWindow : Window
 
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
-            Title = "Save account bundle",
-            Filter = "RoRoRo account bundle (*.rororo-accounts)|*.rororo-accounts",
+            Title = Loc.Get("Shell_Export_SaveTitle"),
+            Filter = Loc.Get("Shell_Export_BundleFilter"),
             DefaultExt = ".rororo-accounts",
             AddExtension = true,
             FileName = $"rororo-accounts-{DateTime.Now:yyyyMMdd}.rororo-accounts",
@@ -178,8 +179,8 @@ internal partial class ExportAccountsWindow : Window
             {
                 MessageBox.Show(
                     this,
-                    "None of the selected accounts could be exported. Launch them once so they get a Roblox ID, then try again.",
-                    "Nothing to export",
+                    Loc.Get("Shell_Export_NoneExportable"),
+                    Loc.Get("Shell_Export_NothingTitle"),
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
                 return;
@@ -190,8 +191,8 @@ internal partial class ExportAccountsWindow : Window
 
             MessageBox.Show(
                 this,
-                "Saved. This file is your account logins — anyone with the file AND the passphrase can sign in as you. Keep the passphrase safe and don't post the file publicly.",
-                "Accounts exported",
+                Loc.Get("Shell_Export_SavedBody"),
+                Loc.Get("Shell_Export_SavedTitle"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
 
@@ -204,8 +205,8 @@ internal partial class ExportAccountsWindow : Window
             // crypto-input error, not an oracle (the transport's own errors are import-side).
             MessageBox.Show(
                 this,
-                $"Couldn't save the bundle: {ex.Message}",
-                "Export failed",
+                Loc.Format("Shell_Export_SaveFailed", ex.Message),
+                Loc.Get("Shell_Export_SaveFailedTitle"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             ExportButton.IsEnabled = true;
