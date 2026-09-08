@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using ROROROblox.App.Localization;
 
 namespace ROROROblox.App.Shell;
 
@@ -21,18 +22,23 @@ internal sealed partial class ShellWindow : Window
     private static readonly ShellPage[] RailOrder =
         [ShellPage.Games, ShellPage.Settings, ShellPage.History, ShellPage.Diagnostics, ShellPage.Plugins, ShellPage.About];
 
-    private static readonly IReadOnlyDictionary<ShellPage, string> Titles = new Dictionary<ShellPage, string>
+    // Resx KEYS, not the English titles — resolved through Loc at navigation time and again on a
+    // live culture toggle. The shell is a long-lived surface (it hosts the Settings page, where the
+    // language selector lives), so the title has to re-narrate when the culture changes under it
+    // rather than only on the next navigation (localization Phase D step 3 batch 14).
+    private static readonly IReadOnlyDictionary<ShellPage, string> TitleKeys = new Dictionary<ShellPage, string>
     {
-        [ShellPage.Games] = "Games",
-        [ShellPage.Settings] = "Settings",
-        [ShellPage.History] = "History",
-        [ShellPage.Diagnostics] = "Diagnostics",
-        [ShellPage.Plugins] = "Plugins",
-        [ShellPage.About] = "About",
+        [ShellPage.Games] = "Shell_Title_Games",
+        [ShellPage.Settings] = "Shell_Title_Settings",
+        [ShellPage.History] = "Shell_Title_History",
+        [ShellPage.Diagnostics] = "Shell_Title_Diagnostics",
+        [ShellPage.Plugins] = "Shell_Title_Plugins",
+        [ShellPage.About] = "Shell_Title_About",
     };
 
     private readonly Func<ShellPage, UserControl> _createPage;
     private readonly Dictionary<ShellPage, UserControl> _pages = [];
+    private ShellPage _currentPage = ShellPage.Games;
 
     public ShellWindow(Func<ShellPage, UserControl> createPage)
     {
@@ -52,6 +58,11 @@ internal sealed partial class ShellWindow : Window
         // layered-alpha; see RevealAfterFirstRender's own comment for the full journey.
         Theming.WindowTheming.RevealAfterFirstRender(this);
         Closed += OnShellClosed;
+
+        // Re-narrate the title on a live culture toggle. The Settings page — the one that flips the
+        // language — lives inside this window, so the title above it must not stay in the old
+        // language until the next navigation. Unsubscribed in OnShellClosed.
+        TranslationSource.Instance.CultureChanged += OnUiCultureChanged;
 
         // The same vocabulary the main window binds (F-112), scoped to what makes sense here:
         // destination shortcuts navigate this window's pages, and Ctrl+1..6 walk the rail in
@@ -99,13 +110,19 @@ internal sealed partial class ShellWindow : Window
         }
 
         PageHost.Content = control;
+        _currentPage = page;
         // The header-matches-title-bar rule (conventions C2), held dynamically: one Alt-Tab entry,
         // named for wherever the user is right now.
-        Title = Titles[page];
+        Title = Loc.Get(TitleKeys[page]);
     }
+
+    private void OnUiCultureChanged(object? sender, EventArgs e)
+        => Title = Loc.Get(TitleKeys[_currentPage]);
 
     private void OnShellClosed(object? sender, EventArgs e)
     {
+        TranslationSource.Instance.CultureChanged -= OnUiCultureChanged;
+
         foreach (var page in _pages.Values)
         {
             (page as IDisposable)?.Dispose();

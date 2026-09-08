@@ -204,7 +204,7 @@ internal sealed class TrayService : ITrayService
     {
         var menu = new ContextMenu();
 
-        var toggle = new MenuItem { Header = "Multi-Instance: OFF" };
+        var toggle = new MenuItem { Header = MultiInstanceStatusLine.MenuHeader(MultiInstanceState.Off) };
         toggle.Click += (_, _) => RequestToggleMutex?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(toggle);
 
@@ -212,7 +212,7 @@ internal sealed class TrayService : ITrayService
         // so the tray reflects state at a glance; Click reads the CURRENT provider state (not the
         // checkbox's own auto-toggled IsChecked) to decide the new value, then OnStreamerModeChanged
         // resyncs IsChecked once the provider's Changed event confirms the flip landed.
-        var streamerMode = new MenuItem { Header = "Streamer mode", IsCheckable = true };
+        var streamerMode = new MenuItem { Header = Loc.Get("Tray_StreamerMode"), IsCheckable = true };
 
         // F-102. BOUND, not clicked. MenuItemAutomationPeer.Toggle() raises no Click at all —
         // measured, not assumed, in TogglePatternReachesTheHandlerTests — so the previous handler
@@ -228,7 +228,7 @@ internal sealed class TrayService : ITrayService
             });
         menu.Items.Add(streamerMode);
 
-        var stopAll = new MenuItem { Header = "Stop all Roblox instances" };
+        var stopAll = new MenuItem { Header = Loc.Get("Tray_StopAll") };
         stopAll.Click += (_, _) => RequestStopAllInstances?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(stopAll);
 
@@ -236,35 +236,35 @@ internal sealed class TrayService : ITrayService
 
         // F-034. The repo name is ROROROblox; the product is RoRoRo. This is the entry a
         // tray-resident app shows more often than any other surface it has.
-        var open = new MenuItem { Header = $"Open {Branding.ProductName}" };
+        var open = new MenuItem { Header = Loc.Format("Tray_Open", Branding.ProductName) };
         open.Click += (_, _) => RequestOpenMainWindow?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(open);
 
         menu.Items.Add(new Separator());
 
-        var preferences = new MenuItem { Header = "Settings..." };
+        var preferences = new MenuItem { Header = Loc.Get("Tray_Settings") };
         preferences.Click += (_, _) => RequestOpenPreferences?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(preferences);
 
-        var history = new MenuItem { Header = "History..." };
+        var history = new MenuItem { Header = Loc.Get("Tray_History") };
         history.Click += (_, _) => RequestOpenHistory?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(history);
 
-        var diagnostics = new MenuItem { Header = "Diagnostics..." };
+        var diagnostics = new MenuItem { Header = Loc.Get("Tray_Diagnostics") };
         diagnostics.Click += (_, _) => RequestOpenDiagnostics?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(diagnostics);
 
-        var plugins = new MenuItem { Header = "Plugins..." };
+        var plugins = new MenuItem { Header = Loc.Get("Tray_Plugins") };
         plugins.Click += (_, _) => RequestOpenPlugins?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(plugins);
 
-        var logs = new MenuItem { Header = "Open log folder" };
+        var logs = new MenuItem { Header = Loc.Get("Tray_OpenLogs") };
         logs.Click += (_, _) => RequestOpenLogs?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(logs);
 
         menu.Items.Add(new Separator());
 
-        var quit = new MenuItem { Header = "Quit" };
+        var quit = new MenuItem { Header = Loc.Get("Tray_Quit") };
         quit.Click += (_, _) => RequestQuit?.Invoke(this, EventArgs.Empty);
         menu.Items.Add(quit);
 
