@@ -270,7 +270,7 @@
                              no Visibility binding at all, the header just shows whenever this
                              whole block is visible (MarketplaceEnabled), which is also the correct
                              behavior for the "empty until plugins catalog ships" period. -->
-                        <TextBlock Text="AVAILABLE"
+                        <TextBlock Text="{loc:Loc Badge_Available}"
                                    FontFamily="{DynamicResource MonoFontFamily}"
                                    FontSize="{DynamicResource MetaFontSize}"
                                    Foreground="{DynamicResource MutedTextBrush}"

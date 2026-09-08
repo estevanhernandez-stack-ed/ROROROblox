@@ -125,7 +125,7 @@
                             <Border Background="{DynamicResource CyanBrush}" CornerRadius="3"
                                     Margin="10,2,0,0" Padding="6,1"
                                     Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <TextBlock Text="DEFAULT"
+                                <TextBlock Text="{loc:Loc Shell_Squad_Badge_Default}"
                                            FontSize="{DynamicResource MetaFontSize}" FontWeight="Bold"
                                            Foreground="{DynamicResource NavyBrush}" />
                             </Border>
@@ -232,14 +232,14 @@
                                        Foreground="{DynamicResource WhiteBrush}" />
                             <Border Background="{DynamicResource MagentaBrush}" CornerRadius="3"
                                     Margin="10,2,0,0" Padding="6,1">
-                                <TextBlock Text="PRIVATE"
+                                <TextBlock Text="{loc:Loc Shell_History_Badge_Private}"
                                            FontSize="{DynamicResource MetaFontSize}" FontWeight="Bold"
                                            Foreground="{DynamicResource OnMagentaBrush}" />
                             </Border>
                             <Border Background="{DynamicResource CyanBrush}" CornerRadius="3"
                                     Margin="6,2,0,0" Padding="6,1"
                                     Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <TextBlock Text="DEFAULT"
+                                <TextBlock Text="{loc:Loc Shell_Squad_Badge_Default}"
                                            FontSize="{DynamicResource MetaFontSize}" FontWeight="Bold"
                                            Foreground="{DynamicResource NavyBrush}" />
                             </Border>
