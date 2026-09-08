@@ -2542,4 +2542,32 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Diag_BuildingBundle" xml:space="preserve"><value>Building bundle...</value><comment>Diagnostics status (localized Phase D step 3)</comment></data>
   <data name="Diag_SavedFile" xml:space="preserve"><value>Saved {0}.</value><comment>Diagnostics status; {0}=filename (localized Phase D step 3)</comment></data>
   <data name="Diag_CouldntSaveBundle" xml:space="preserve"><value>Couldn't save bundle: {0}</value><comment>Diagnostics status; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_TypeToSearch" xml:space="preserve"><value>Type a game name to search.</value><comment>Games status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_Searching" xml:space="preserve"><value>Searching for "{0}"...</value><comment>Games status; {0}=query (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_NoResults" xml:space="preserve"><value>No results for "{0}". Try a different name or paste a URL below.</value><comment>Games status; {0}=query (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_FoundMatches_one" xml:space="preserve"><value>Found {0} match.</value><comment>Games status via Loc.Plural (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_FoundMatches_other" xml:space="preserve"><value>Found {0} matches.</value><comment>Games status via Loc.Plural (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_FoundMatches_few" xml:space="preserve"><value>Found {0} matches.</value><comment>few-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_FoundMatches_many" xml:space="preserve"><value>Found {0} matches.</value><comment>many-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_SearchFailed" xml:space="preserve"><value>Search failed: {0}</value><comment>Games status; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_Added" xml:space="preserve"><value>Added {0}.</value><comment>Games status; {0}=game name (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_CouldntAdd" xml:space="preserve"><value>Couldn't add: {0}</value><comment>Games status; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_PasteUrlFirst" xml:space="preserve"><value>Paste a Roblox game URL or place id first.</value><comment>Games status; "Roblox" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_NoPlaceId" xml:space="preserve"><value>Couldn't find a place id in that input. Expected: roblox.com/games/&lt;id&gt;/&lt;slug&gt; or just &lt;id&gt;.</value><comment>Games status; URL pattern stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_LookingUp" xml:space="preserve"><value>Looking up game...</value><comment>Games status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_NoMetadata" xml:space="preserve"><value>Roblox didn't return metadata for place id {0}. Check the URL and try again.</value><comment>Games status; {0}=place id; "Roblox" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_CouldntSetDefault" xml:space="preserve"><value>Couldn't set default: {0}</value><comment>Games status; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_CouldntClearDefault" xml:space="preserve"><value>Couldn't clear the default: {0}</value><comment>Games status; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_CouldntSetDefaultServer" xml:space="preserve"><value>Couldn't set default server: {0}</value><comment>Games status; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_CouldntClearDefaultServer" xml:space="preserve"><value>Couldn't clear the default server: {0}</value><comment>Games status; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_RemoveGameConfirm" xml:space="preserve"><value>Remove {0} from your saved games?</value><comment>Games remove confirm; {0}=name (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_ThisGame" xml:space="preserve"><value>this game</value><comment>Games remove fallback name (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_RemoveGameTitle" xml:space="preserve"><value>Remove game</value><comment>Games remove confirm title (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_Removed" xml:space="preserve"><value>Removed.</value><comment>Games status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_CouldntRemove" xml:space="preserve"><value>Couldn't remove: {0}</value><comment>Games status; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_RemoveServerConfirm" xml:space="preserve"><value>Remove {0} from your saved servers?</value><comment>Games remove confirm; {0}=name (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_ThisServer" xml:space="preserve"><value>this server</value><comment>Games remove fallback name (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_RemoveServerTitle" xml:space="preserve"><value>Remove server</value><comment>Games remove confirm title (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_ServerNotSaved" xml:space="preserve"><value>That server isn't saved any more.</value><comment>Games rename status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Games_CouldntSaveNameChangeDisk" xml:space="preserve"><value>Couldn't save name change. Disk error? ({0})</value><comment>Games rename status; {0}=exception (localized Phase D step 3)</comment></data>
 </root>
