@@ -2734,4 +2734,25 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Plugin_CapabilityChip_many" xml:space="preserve"><value>{0} capabilities</value><comment>Plugin row capability chip, many (mirrors other for en; ru/pl fallback) (localized Phase D step 3 batch 13)</comment></data>
   <data name="Plugin_Install" xml:space="preserve"><value>Install</value><comment>Available-plugin row action button (localized Phase D step 3 batch 13)</comment></data>
   <data name="Plugin_NeedsHost" xml:space="preserve"><value>Needs RoRoRo {0}+</value><comment>Available-plugin row action button when host too old; {0}=min host version (localized Phase D step 3 batch 13)</comment></data>
+  <data name="Tray_StreamerMode" xml:space="preserve"><value>Streamer mode</value><comment>Tray context-menu item (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Tray_StopAll" xml:space="preserve"><value>Stop all Roblox instances</value><comment>Tray context-menu item (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Tray_Open" xml:space="preserve"><value>Open {0}</value><comment>Tray context-menu item; {0}=product name (RoRoRo) (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Tray_Settings" xml:space="preserve"><value>Settings...</value><comment>Tray context-menu item (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Tray_History" xml:space="preserve"><value>History...</value><comment>Tray context-menu item (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Tray_Diagnostics" xml:space="preserve"><value>Diagnostics...</value><comment>Tray context-menu item (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Tray_Plugins" xml:space="preserve"><value>Plugins...</value><comment>Tray context-menu item (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Tray_OpenLogs" xml:space="preserve"><value>Open log folder</value><comment>Tray context-menu item (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Tray_Quit" xml:space="preserve"><value>Quit</value><comment>Tray context-menu item (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Shell_Title_Games" xml:space="preserve"><value>Games</value><comment>Shell window title, Games page (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Shell_Title_Settings" xml:space="preserve"><value>Settings</value><comment>Shell window title, Settings page (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Shell_Title_History" xml:space="preserve"><value>History</value><comment>Shell window title, History page (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Shell_Title_Diagnostics" xml:space="preserve"><value>Diagnostics</value><comment>Shell window title, Diagnostics page (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Shell_Title_Plugins" xml:space="preserve"><value>Plugins</value><comment>Shell window title, Plugins page (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Shell_Title_About" xml:space="preserve"><value>About</value><comment>Shell window title, About page (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Discord_Status_Off" xml:space="preserve"><value>Presence is off.</value><comment>Discord presence status line, internal (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Discord_Status_NotRunning" xml:space="preserve"><value>Discord isn't running — presence starts when it does.</value><comment>Discord presence status line, internal (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Discord_Status_Connected" xml:space="preserve"><value>Connected to Discord.</value><comment>Discord presence status line, internal (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Discord_Status_Connecting" xml:space="preserve"><value>Connecting to Discord…</value><comment>Discord presence status line, internal (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Webhook_UnknownChannel" xml:space="preserve"><value>unknown</value><comment>Webhook identity fallback when Discord returns no channel name (localized Phase D step 3 batch 14)</comment></data>
+  <data name="Webhook_UnknownGuild" xml:space="preserve"><value>your server</value><comment>Webhook identity fallback when Discord returns no server name (localized Phase D step 3 batch 14)</comment></data>
 </root>

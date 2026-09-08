@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using ROROROblox.App.Discord.Internal;
+using ROROROblox.App.Localization;
 using ROROROblox.Core;
 using ROROROblox.Core.Discord;
 
@@ -54,7 +55,7 @@ internal sealed class DiscordPresenceService : IDisposable
     }
 
     /// <summary>Plain-language state for the Settings panel. Never a stack trace.</summary>
-    public string StatusLine { get; private set; } = "Presence is off.";
+    public string StatusLine { get; private set; } = Loc.Get("Discord_Status_Off");
 
     /// <summary>
     /// Fires whenever <see cref="StatusLine"/> changes — including from <c>Ready</c>/
@@ -119,7 +120,7 @@ internal sealed class DiscordPresenceService : IDisposable
         }
 
         _lastLoggedPush = null;
-        SetStatus("Discord isn't running — presence starts when it does.");
+        SetStatus(Loc.Get("Discord_Status_NotRunning"));
     }
 
     /// <summary>
@@ -141,7 +142,7 @@ internal sealed class DiscordPresenceService : IDisposable
         _hasEverConnected = true;
         _lastLoggedPush = null;
 
-        SetStatus("Connected to Discord.");
+        SetStatus(Loc.Get("Discord_Status_Connected"));
         Refresh();
     }
 
@@ -153,7 +154,7 @@ internal sealed class DiscordPresenceService : IDisposable
             if (!config.PresenceEnabled)
             {
                 if (_client.IsInitialized) { _client.ClearPresence(); _client.Deinitialize(); }
-                SetStatus("Presence is off.");
+                SetStatus(Loc.Get("Discord_Status_Off"));
                 return Task.CompletedTask;
             }
 
@@ -162,7 +163,7 @@ internal sealed class DiscordPresenceService : IDisposable
             // call — "Presence is off." while presence is actually turning on — because the real
             // outcome (Ready/ConnectionFailed) hasn't arrived yet. Never contradictory, even in
             // the instant before the first Lachee callback lands.
-            SetStatus("Connecting to Discord…");
+            SetStatus(Loc.Get("Discord_Status_Connecting"));
 
             if (!_client.IsInitialized) { _client.Initialize(); }
             Refresh();
@@ -170,7 +171,7 @@ internal sealed class DiscordPresenceService : IDisposable
         catch (Exception ex)
         {
             _log.LogDebug(ex, "Discord presence apply failed; continuing without presence.");
-            SetStatus("Discord isn't running — presence starts when it does.");
+            SetStatus(Loc.Get("Discord_Status_NotRunning"));
         }
         return Task.CompletedTask;
     }

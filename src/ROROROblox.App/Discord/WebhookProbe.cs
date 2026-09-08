@@ -1,5 +1,6 @@
 using System.Net.Http;
 using System.Text.Json;
+using ROROROblox.App.Localization;
 
 namespace ROROROblox.App.Discord;
 
@@ -35,7 +36,7 @@ public sealed class WebhookProbe(HttpClient client)
 
             return channel is null && guild is null
                 ? null
-                : new WebhookIdentity(channel ?? "unknown", guild ?? "your server");
+                : new WebhookIdentity(channel ?? Loc.Get("Webhook_UnknownChannel"), guild ?? Loc.Get("Webhook_UnknownGuild"));
         }
         catch
         {
