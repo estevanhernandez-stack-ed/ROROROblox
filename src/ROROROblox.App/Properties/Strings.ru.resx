@@ -3078,4 +3078,10 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="SquadLaunchWindow_LinkHelp" xml:space="preserve">
     <value>Ссылка на приватный сервер — https://www.roblox.com/games/&lt;id&gt;/&lt;name&gt;?privateServerLinkCode=&lt;code&gt; — сохраняется на будущее. Обычная ссылка на игру (roblox.com/games/&lt;id&gt;) вместо этого собирает отряд вместе на одном публичном сервере.</value>
   </data>
+  <data name="LanguageNotice_Title" xml:space="preserve">
+    <value>RoRoRo теперь говорит на вашем языке</value>
+  </data>
+  <data name="LanguageNotice_Body" xml:space="preserve">
+    <value>Он автоматически следует языку вашей системы. Выбрать другой можно в любой момент в разделе Настройки › Язык.</value>
+  </data>
 </root>

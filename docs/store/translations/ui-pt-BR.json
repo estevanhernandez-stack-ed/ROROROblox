@@ -202,6 +202,8 @@
   "JoinRequestWindow_RobloxChecksAccessServerSide": "O ROBLOX VERIFICA O ACESSO NO SERVIDOR",
   "JoinRequestWindow_ThisIsAPrivateServer": "Este é um servidor privado",
   "JoinRequestWindow_TryAnyway": "Tentar mesmo assim",
+  "LanguageNotice_Body": "Ele segue automaticamente o idioma do seu sistema. Escolha outro quando quiser em Configurações › Idioma.",
+  "LanguageNotice_Title": "O RoRoRo agora fala o seu idioma",
   "LaunchHeadroomWindow_Cancel": "Cancelar",
   "LaunchHeadroomWindow_LaunchAnyway": "Iniciar mesmo assim",
   "LaunchHeadroomWindow_NotMuchMemoryLeft": "Pouca memória restante",

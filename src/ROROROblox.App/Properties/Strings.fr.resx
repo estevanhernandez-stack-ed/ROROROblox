@@ -3078,4 +3078,10 @@ Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que 
   <data name="SquadLaunchWindow_LinkHelp" xml:space="preserve">
     <value>Lien de serveur privé — https://www.roblox.com/games/&lt;id&gt;/&lt;name&gt;?privateServerLinkCode=&lt;code&gt; — enregistré pour la prochaine fois. Un simple lien de jeu (roblox.com/games/&lt;id&gt;) met plutôt l'escouade ensemble dans un même serveur public.</value>
   </data>
+  <data name="LanguageNotice_Title" xml:space="preserve">
+    <value>RoRoRo parle maintenant votre langue</value>
+  </data>
+  <data name="LanguageNotice_Body" xml:space="preserve">
+    <value>Il suit automatiquement la langue de votre système. Choisissez-en une autre à tout moment dans Paramètres › Langue.</value>
+  </data>
 </root>

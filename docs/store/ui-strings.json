@@ -1,6 +1,6 @@
 {
   "source": "Strings.resx",
-  "count": 1015,
+  "count": 1017,
   "rows": [
     {
       "key": "AboutPage_A626LabsProduct",
@@ -1218,6 +1218,18 @@
       "key": "JoinRequestWindow_TryAnyway",
       "en": "Try anyway",
       "comment": "src/ROROROblox.App/Modals/JoinRequestWindow.xaml:56 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "LanguageNotice_Body",
+      "en": "It follows your system language automatically. Pick a different one any time in Settings › Language.",
+      "comment": "One-time post-update tray notice body (localized Phase D)",
+      "placeholders": false
+    },
+    {
+      "key": "LanguageNotice_Title",
+      "en": "RoRoRo now speaks your language",
+      "comment": "One-time post-update tray notice title (localized Phase D)",
       "placeholders": false
     },
     {
