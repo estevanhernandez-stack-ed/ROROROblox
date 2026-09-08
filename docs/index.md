@@ -40,6 +40,7 @@ No DevTools. No registry edits. No telemetry. The Roblox client launches unmodif
 - **Alerts wherever you want them** — desktop, a Discord webhook you create, or your phone through Pushover or ntfy, in any mix per alert: drops, memory warnings, recycle completions, and an every-two-hours all-good mark while your accounts run.
 - **History that keeps score** — most alts at once, total hours, longest session, and per-alt login streaks that only count days the account actually landed in a game.
 - **Themes** — four built in, plus a builder to make your own and share it as a file.
+- **Speaks your language** — the whole app, screens and messages alike, in French, German, Russian, Portuguese (Brazil), Polish, or Spanish. Follows your Windows language, or pick one in Settings and it switches instantly.
 - **Plugin system** — optional plugins run as separate processes and hold no permissions until you grant each one by name.
 - **Start with Windows + Discord Join** — one toggle Windows stays in control of, and Join links that start RoRoRo even when it's closed.
 - **Auto-update that survives Roblox renames** — a signed remote feed tracks the current known-good Roblox version and mutex name.

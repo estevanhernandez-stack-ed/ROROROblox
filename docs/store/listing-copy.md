@@ -43,6 +43,12 @@ Multi-launcher for Windows, now in 6 languages. Run several Roblox clients side 
 
 ## Long description
 
+> Refreshed 2026-09-08 (v1.27.0.0) — the "speaks your language" bullet now covers the messages the
+> app composes while you use it, not just the screens, and says switching is instant. The v1.26
+> wording ("every menu, setting, tooltip, and window") claimed the whole interface before that was
+> true: only the static screens were translated, and everything RoRoRo wrote at runtime stayed
+> English. v1.27 makes the claim accurate rather than aspirational.
+>
 > Refreshed 2026-09-05 (v1.25.0.0): the Discord-alerts bullet became the multi-destination
 > alerts bullet (phone via Pushover/ntfy, fan-out, the new alert kinds), and the privacy
 > paragraph now names the push services — it claimed nothing leaves your machine except Roblox
@@ -70,7 +76,7 @@ What you get:
 • Plugin system. Optional plugins run as separate processes and hold no permissions until you grant each one by name.
 • Auto-update via Velopack. Remote config tracks the current known-good Roblox version and mutex name, so a Roblox-side rename doesn't break you for long.
 • Accessible by measurement. Every control announces its name to assistive tech, and contrast is verified against rendered pixels in every theme.
-• Speaks your language. The whole interface — every menu, setting, tooltip, and window — is translated into French, German, Russian, Portuguese (Brazil), Polish, and Spanish, following your Windows language or your pick in Settings. The picker only offers a language that's fully translated, so you never land on a half-English screen.
+• Speaks your language. The whole interface — every menu, setting, tooltip and window, and the messages RoRoRo writes as you use it — is translated into French, German, Russian, Portuguese (Brazil), Polish, and Spanish, following your Windows language or your pick in Settings. Switching takes effect instantly, and the picker only offers a language that's fully translated, so you never land on a half-English screen.
 
 Privacy & security:
 Your Roblox password is never seen by RoRoRo. Login happens entirely inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame — same HTML, same HTTPS connection your browser would make. RoRoRo captures only the session cookie that Roblox sets after successful login, and encrypts it before writing it to disk. No telemetry. No analytics. Nothing leaves your machine except the Roblox-side calls during launch — the same calls Roblox.com makes from your browser — and, only if you set them up yourself, alerts to your own Discord webhook or to the phone push service you chose (Pushover or ntfy).
@@ -83,6 +89,10 @@ A 626 Labs product.
 
 ## Product features (paste each as one feature; Partner Center accepts up to 20, ≤200 chars each)
 
+> One entry edited 2026-09-08 (v1.27.0.0): the language entry now says switching is instant and
+> covers the whole app rather than the screens alone. No new entry — v1.27 completes a claim the
+> v1.26 entry already made. Still 18/20 entries used.
+>
 > One entry added 2026-09-07 (v1.26.0.0): the interface is now localized to six languages
 > (fr, de, ru, pt-BR, pl, es). 18/20 entries used.
 >
@@ -115,7 +125,7 @@ Discord Join starts RoRoRo even when it's closed, and always asks before launchi
 Phone alerts through Pushover or ntfy — an alt drops and your phone buzzes, even with Discord closed
 Uptime marks — an all-good buzz every two hours while your accounts run, so silence means something's wrong
 Alerts fan out — desktop, Discord channels, and your phone in any mix, per alert
-Available in six languages — the whole interface in French, German, Russian, Portuguese (Brazil), Polish, or Spanish, following Windows or your pick in Settings
+Available in six languages — the whole app, screens and messages alike, in French, German, Russian, Portuguese (Brazil), Polish, or Spanish, switching instantly, following Windows or your pick
 ```
 
 ## Copyright (single line)
