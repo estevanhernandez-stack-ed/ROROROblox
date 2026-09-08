@@ -202,6 +202,8 @@
   "JoinRequestWindow_RobloxChecksAccessServerSide": "ROBLOX PRÜFT DEN ZUGRIFF SERVERSEITIG",
   "JoinRequestWindow_ThisIsAPrivateServer": "Dies ist ein privater Server",
   "JoinRequestWindow_TryAnyway": "Trotzdem versuchen",
+  "LanguageNotice_Body": "Es folgt automatisch der Sprache deines Systems. Wähle jederzeit unter Einstellungen › Sprache eine andere.",
+  "LanguageNotice_Title": "RoRoRo spricht jetzt deine Sprache",
   "LaunchHeadroomWindow_Cancel": "Abbrechen",
   "LaunchHeadroomWindow_LaunchAnyway": "Trotzdem starten",
   "LaunchHeadroomWindow_NotMuchMemoryLeft": "Wenig Speicher übrig",

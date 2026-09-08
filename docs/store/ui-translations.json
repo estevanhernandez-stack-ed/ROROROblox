@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "0a13eb6",
-  "generatedUtc": "2026-09-08T02:39:32+00:00",
+  "sourceCommit": "def7690",
+  "generatedUtc": "2026-09-08T03:55:04+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -12193,6 +12193,30 @@
         "pt-br": "Link de servidor privado — https://www.roblox.com/games/<id>/<name>?privateServerLinkCode=<code> — fica salvo para a próxima vez. Um link simples de jogo (roblox.com/games/<id>) coloca o squad junto em um servidor público.",
         "pl": "Link prywatnego serwera — https://www.roblox.com/games/<id>/<name>?privateServerLinkCode=<code> — zapisuje się na następny raz. Zwykły link do gry (roblox.com/games/<id>) umieszcza drużynę razem na jednym publicznym serwerze.",
         "es": "Enlace de servidor privado — https://www.roblox.com/games/<id>/<name>?privateServerLinkCode=<code> — se guarda para la próxima vez. Un enlace de juego normal (roblox.com/games/<id>) pone al squad en un mismo servidor público."
+      }
+    },
+    {
+      "field": "LanguageNotice_Title",
+      "en": "RoRoRo now speaks your language",
+      "translations": {
+        "fr": "RoRoRo parle maintenant votre langue",
+        "de": "RoRoRo spricht jetzt deine Sprache",
+        "ru": "RoRoRo теперь говорит на вашем языке",
+        "pt-br": "O RoRoRo agora fala o seu idioma",
+        "pl": "RoRoRo mówi teraz w Twoim języku",
+        "es": "RoRoRo ahora habla tu idioma"
+      }
+    },
+    {
+      "field": "LanguageNotice_Body",
+      "en": "It follows your system language automatically. Pick a different one any time in Settings › Language.",
+      "translations": {
+        "fr": "Il suit automatiquement la langue de votre système. Choisissez-en une autre à tout moment dans Paramètres › Langue.",
+        "de": "Es folgt automatisch der Sprache deines Systems. Wähle jederzeit unter Einstellungen › Sprache eine andere.",
+        "ru": "Он автоматически следует языку вашей системы. Выбрать другой можно в любой момент в разделе Настройки › Язык.",
+        "pt-br": "Ele segue automaticamente o idioma do seu sistema. Escolha outro quando quiser em Configurações › Idioma.",
+        "pl": "Automatycznie podąża za językiem systemu. W każdej chwili możesz wybrać inny w Ustawienia › Język.",
+        "es": "Sigue automáticamente el idioma de tu sistema. Elige otro cuando quieras en Configuración › Idioma."
       }
     }
   ]

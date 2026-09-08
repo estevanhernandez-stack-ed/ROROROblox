@@ -10,6 +10,7 @@ using ROROROblox.App.AppLifecycle;
 using ROROROblox.App.CookieCapture;
 using ROROROblox.App.Discord;
 using ROROROblox.App.Discord.Internal;
+using ROROROblox.App.Localization;
 using ROROROblox.App.Logging;
 using ROROROblox.App.Startup;
 using ROROROblox.App.Theming;
@@ -416,6 +417,23 @@ public partial class App : Application
         tray.Show();
         _singleInstance.StartListening(mainWindow);
         mainWindow.Show();
+
+        // One-time notice that the UI now follows the system language (localization completeness).
+        // After Show() and best-effort so it never touches the startup path; the toast reads in the
+        // culture Program.Main already applied, so a returning non-English user sees it in their
+        // language and knows where to change it. Sentinel-gated: shown once per install, never again.
+        try
+        {
+            if (LanguageNoticeSentinel.ShouldShow(LanguageNoticeSentinel.IsPending(), UiCulture.Available().Count > 1))
+            {
+                tray.ShowToast(Loc.Get("LanguageNotice_Title"), Loc.Get("LanguageNotice_Body"));
+                LanguageNoticeSentinel.MarkShown();
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.LogDebug(ex, "Language-notice toast skipped.");
+        }
 
         // Seed session stats from whatever history survives, once (spec §4). After Show() and
         // fire-and-forget: it reads up to a hundred rows, nobody is looking at the stats page in

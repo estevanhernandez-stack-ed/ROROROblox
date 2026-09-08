@@ -202,6 +202,8 @@
   "JoinRequestWindow_RobloxChecksAccessServerSide": "ROBLOX ПРОВЕРЯЕТ ДОСТУП НА СТОРОНЕ СЕРВЕРА",
   "JoinRequestWindow_ThisIsAPrivateServer": "Это приватный сервер",
   "JoinRequestWindow_TryAnyway": "Всё равно попробовать",
+  "LanguageNotice_Body": "Он автоматически следует языку вашей системы. Выбрать другой можно в любой момент в разделе Настройки › Язык.",
+  "LanguageNotice_Title": "RoRoRo теперь говорит на вашем языке",
   "LaunchHeadroomWindow_Cancel": "Отмена",
   "LaunchHeadroomWindow_LaunchAnyway": "Всё равно запустить",
   "LaunchHeadroomWindow_NotMuchMemoryLeft": "Осталось мало памяти",
