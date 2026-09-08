@@ -1,0 +1,308 @@
+{
+  "schema": 1,
+  "product": "RoRoRo",
+  "generatedAt": "2026-09-07T18:23:22.906Z",
+  "sourceCommit": "03c2fc208d082102065ca4d3f78980631385fabb",
+  "entries": {
+    "de": {
+      "copyright": {
+        "enHash": "99320ac5364d05390c1156268e610c3987fd9d7519d1e716112a4abf8873a4ad",
+        "translationHash": "c27bd466162f7f103f08b136d1aa122da6730e4e167be34c8d85a64787054e67",
+        "pairHash": "823862e40907a25b36830a4c621ef52f20b851bd26f3aa99f5b572d74ae59f55",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:00.483Z"
+      },
+      "trademark": {
+        "enHash": "77cd702314b51f4d950f0e90655a3b452043d4ce3fe0c5a6cece94784b3d5c9b",
+        "translationHash": "bba988528e89daaaa465cbeb33b548760e68158651f29b3ab34017f877baaabb",
+        "pairHash": "c78121a547ba3efce015d582dabcb9c99112f2dab06ec17497c31820cadfb58a",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:00.537Z"
+      },
+      "features": {
+        "enHash": "87b12804d4533b4ddf319b95ecb78836f25fcf9377f18146df59d78d8ac5e78b",
+        "translationHash": "ecf2c0231dfe4ca90dfdc5cb808c140045a8d37afffe8f508918e63016819513",
+        "pairHash": "deb170c18283972a8091573137d33888eb1e07f01383349472b801186c1d4ed8",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:00.416Z"
+      },
+      "longDescription": {
+        "enHash": "5aa6c4930b06914044361bcbded24ffa8db8656567bfbc01f1c3b235d0e6be5f",
+        "translationHash": "b8c4af0d4bdfaf0b2588fd3faa9c03516a47add1b44c601c8a5be6b758786f03",
+        "pairHash": "046c390a32ced1a55c809626e8e1c6cae198591178fc98a2c060266a507fee0e",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:00.141Z"
+      },
+      "shortDescription": {
+        "enHash": "bdff794518959123cf7ac6a5af57e43f47465c19cd57f7941769179dbf46c57c",
+        "translationHash": "2ca7d7869a9a798701773f02d71684ce60243b1368a7bc9b8b7fd6c0940379c2",
+        "pairHash": "0fdfd67577935470e87d11db38214458648040f9c4a1d08dd5c34f85f1d81e37",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:00.039Z"
+      },
+      "whatsNew": {
+        "enHash": "228116e8d2428c26a38d502234306371368a6a17f71967356904706fd836a643",
+        "translationHash": "9fba18abdf90d28cf105e9cf97b14a9d205f601368bb374aa5d038d13eecdd73",
+        "pairHash": "6154817620c4015c91d96a398a421490cbdd0daff24d2b41e479ab77ea45b37e",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:16.856Z"
+      }
+    },
+    "es": {
+      "copyright": {
+        "enHash": "99320ac5364d05390c1156268e610c3987fd9d7519d1e716112a4abf8873a4ad",
+        "translationHash": "99870037709b329088cc5f1e69aa2d3fcb2dc1b20788fea63338caa729bd4bcf",
+        "pairHash": "b45f7d5084686d747e8e7d153b3fe563268932e9dd01a8cdd0ec3e62865121f3",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:00.728Z"
+      },
+      "trademark": {
+        "enHash": "77cd702314b51f4d950f0e90655a3b452043d4ce3fe0c5a6cece94784b3d5c9b",
+        "translationHash": "de16a1e1aaafa4e5605499a4ae1cc68e4a7b60a57d99b3c2997f1ad90ab528c3",
+        "pairHash": "43fec8cc85bef1f9b37469683dfd3cdb2d162f27064c8bb52a7ab3b38472bb72",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:00.776Z"
+      },
+      "features": {
+        "enHash": "87b12804d4533b4ddf319b95ecb78836f25fcf9377f18146df59d78d8ac5e78b",
+        "translationHash": "0cb6f7bb08704aaf3db247da3d0de457562857035a91574b88c942d6ead6db02",
+        "pairHash": "29179d0af3e58125eb0aa32aab3551c2d8699e4cda2b12dc381692d623ef552f",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:00.676Z"
+      },
+      "longDescription": {
+        "enHash": "5aa6c4930b06914044361bcbded24ffa8db8656567bfbc01f1c3b235d0e6be5f",
+        "translationHash": "17da6f0aaade084bb69207b9cfaed84ea805cada47a5e302c4b61333afd8bc40",
+        "pairHash": "70236cb867f072d2e3fa3e4ec551734b915bf19d646f362f85edea76c4f79537",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:00.626Z"
+      },
+      "shortDescription": {
+        "enHash": "bdff794518959123cf7ac6a5af57e43f47465c19cd57f7941769179dbf46c57c",
+        "translationHash": "1f147d1197543a94d0626095c88d37084185cf77407682a85d6f06e978a1bb97",
+        "pairHash": "99e70c8b1b3eaf027dc1bf93659d8c19e609a2bbbd875067563b42bd43572314",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:00.584Z"
+      },
+      "whatsNew": {
+        "enHash": "228116e8d2428c26a38d502234306371368a6a17f71967356904706fd836a643",
+        "translationHash": "b3a16e3e1d6c596e53f0caa4624c375ba004d708076985b6c1e225830628e5d1",
+        "pairHash": "2274150aef8470a6efbbe9ba7bee7a8ac8bd78c47fd7be243bf49984f4cdc646",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:25.044Z"
+      }
+    },
+    "fr": {
+      "copyright": {
+        "enHash": "99320ac5364d05390c1156268e610c3987fd9d7519d1e716112a4abf8873a4ad",
+        "translationHash": "9a933807c482dc0bd04b64383fa1adda2c4450bc5a4aa7771a6c4e4025a9b0eb",
+        "pairHash": "66a0b1c31a93c299b828a0aa80fed7542c089dd2494a0dd79526af502573778e",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:15:59.441Z"
+      },
+      "trademark": {
+        "enHash": "77cd702314b51f4d950f0e90655a3b452043d4ce3fe0c5a6cece94784b3d5c9b",
+        "translationHash": "7aeecfbc60e808e7874ac6a6cf8ea134a29dc171df913687fb40a6f2314da73d",
+        "pairHash": "4f449a0a66bad1be92332961536f1c24b07c2c383e068127f5a637fb4c72d0b2",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:15:59.484Z"
+      },
+      "features": {
+        "enHash": "87b12804d4533b4ddf319b95ecb78836f25fcf9377f18146df59d78d8ac5e78b",
+        "translationHash": "c60cf203461cda7221eefcdcbb9d1e8422a6694a04a25ae8e3a1925423be8d9d",
+        "pairHash": "f8f54080c18a7bf0f92df74973e390c7da0d55ac43cc7eaf85fe7d2d016053ab",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:15:59.384Z"
+      },
+      "longDescription": {
+        "enHash": "5aa6c4930b06914044361bcbded24ffa8db8656567bfbc01f1c3b235d0e6be5f",
+        "translationHash": "8e671c446e26e66746dcb070e38d029de98fd7bda26cb30a60db4bc04e0a32fc",
+        "pairHash": "fb83781953d6316714b7fd16c8b33fdcdf1575cba110820e8c8707993c6f2f51",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:15:59.339Z"
+      },
+      "shortDescription": {
+        "enHash": "bdff794518959123cf7ac6a5af57e43f47465c19cd57f7941769179dbf46c57c",
+        "translationHash": "f25a1fa446166cc718e921c9676069460c301e9f7d0674541d3fda1a98c71cbb",
+        "pairHash": "b0f695aa3e2fd5f64141e66d55df6352b780c77c3f50e499108bcbd5ef64edcc",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:15:59.287Z"
+      },
+      "whatsNew": {
+        "enHash": "228116e8d2428c26a38d502234306371368a6a17f71967356904706fd836a643",
+        "translationHash": "1dfd0756f26bc193ca4d1eb6f2b1f1f91d819d97eb7b3ced7bca1407e7250863",
+        "pairHash": "5992ab3daa3b59e41a6bddbe7a9ce7b1e34d2b1e0a22e6ca95727b7dde19de79",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:14.767Z"
+      }
+    },
+    "pl": {
+      "copyright": {
+        "enHash": "99320ac5364d05390c1156268e610c3987fd9d7519d1e716112a4abf8873a4ad",
+        "translationHash": "9b870adf504cc18060d4298edcf72b339b7b3d6fd5c4bda48ec473259bbb3ff0",
+        "pairHash": "5317fbd8b96ab4313b774e27973159a0138afbfa2e4da2ededfdcd2f233ae960",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:15:59.942Z"
+      },
+      "trademark": {
+        "enHash": "77cd702314b51f4d950f0e90655a3b452043d4ce3fe0c5a6cece94784b3d5c9b",
+        "translationHash": "fbae9bb1edc9b7a5b4ba2ec1a041b61f20a03093c9dcec2c92cde7cffea38bc3",
+        "pairHash": "7f456a9db03e97872f3dcbd3b0ef235171b5e8dc0c6238b973ca0ac1bac23504",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:15:59.982Z"
+      },
+      "features": {
+        "enHash": "87b12804d4533b4ddf319b95ecb78836f25fcf9377f18146df59d78d8ac5e78b",
+        "translationHash": "fc2bb9dcbece671c46afa1514b3d2a88190ba93232b1d9098d2b514e6982e8f5",
+        "pairHash": "78cb7c0d81577936f02bd3391aa599e12cdbda02add7616e7e20772e1888c1da",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:15:59.899Z"
+      },
+      "longDescription": {
+        "enHash": "5aa6c4930b06914044361bcbded24ffa8db8656567bfbc01f1c3b235d0e6be5f",
+        "translationHash": "33e9c5d562836611b766f0709a190bcff44fc32c6fddf34b989e8391ceaf5b6f",
+        "pairHash": "997d2eaeee03407dd1f0112d59e849e98b6077aef387298b86145983044e3481",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:15:59.837Z"
+      },
+      "shortDescription": {
+        "enHash": "bdff794518959123cf7ac6a5af57e43f47465c19cd57f7941769179dbf46c57c",
+        "translationHash": "2ee2be776c83da9746b65b7948911c93770902122c9026ce17416f744336ec15",
+        "pairHash": "7cc901031a5541c8bbd26d1d3a01579cbec5854873a2d7f943fc43c005a71d20",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:15:59.790Z"
+      },
+      "whatsNew": {
+        "enHash": "228116e8d2428c26a38d502234306371368a6a17f71967356904706fd836a643",
+        "translationHash": "6154ca151540980931d802ba42a7712d668795d33a263c73470e563d4765b5a4",
+        "pairHash": "cc3cfbc405892d64d45aff3c2c7f879bf08009f823792bf0dc961c784b8f6b93",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:23.032Z"
+      }
+    },
+    "pt-br": {
+      "copyright": {
+        "enHash": "99320ac5364d05390c1156268e610c3987fd9d7519d1e716112a4abf8873a4ad",
+        "translationHash": "841c43d736e1e55aa0a3d9899969e171773a64fb22aa27eb689b459384a5f52a",
+        "pairHash": "0310ea10174403a56cfe9190b3577d56af7c4cfc2fa1d92dee22dab141d8c46d",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:00.989Z"
+      },
+      "trademark": {
+        "enHash": "77cd702314b51f4d950f0e90655a3b452043d4ce3fe0c5a6cece94784b3d5c9b",
+        "translationHash": "c3e23162c12342039581366cfb4c2239884f7dc1885f3444ce4517a7769c224a",
+        "pairHash": "d428002650c6b34526be2b617517186b105367002b6267c042fc250362825f80",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:01.040Z"
+      },
+      "features": {
+        "enHash": "87b12804d4533b4ddf319b95ecb78836f25fcf9377f18146df59d78d8ac5e78b",
+        "translationHash": "9abc3d61f17e03f0d8db877618b7a01fefb1697d81cb257fb4f463f244b23813",
+        "pairHash": "d3c3ca60b35d60c4ea455548f55eb95416ec79ed8ba93864d6e936c3b40160dc",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:00.939Z"
+      },
+      "longDescription": {
+        "enHash": "5aa6c4930b06914044361bcbded24ffa8db8656567bfbc01f1c3b235d0e6be5f",
+        "translationHash": "52c3311d58c53630aeba32ff05c7c98dfffdc3372cb0474926346f53875c1361",
+        "pairHash": "74a8d23e1776504512498212268cea32e3f71f1f6983a23489f648a53960368b",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:00.886Z"
+      },
+      "shortDescription": {
+        "enHash": "bdff794518959123cf7ac6a5af57e43f47465c19cd57f7941769179dbf46c57c",
+        "translationHash": "9997d1c403adb2c2365c31f3a34a7511c1a379c0d03d444dff93ab03004750f3",
+        "pairHash": "9021f945c1d209bbc923bc469558dfc02b6565d5c8581b69c07c203692b93ab5",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:00.832Z"
+      },
+      "whatsNew": {
+        "enHash": "228116e8d2428c26a38d502234306371368a6a17f71967356904706fd836a643",
+        "translationHash": "5ab0675ef5fd0ce467e11ae46a778ea4544fd1021646d8f13ebc06b5f42caf54",
+        "pairHash": "4bd9ead62af3212e19b2a0566a248012fa805030c655a549c1c8d58ba1e08b6e",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:20.773Z"
+      }
+    },
+    "ru": {
+      "copyright": {
+        "enHash": "99320ac5364d05390c1156268e610c3987fd9d7519d1e716112a4abf8873a4ad",
+        "translationHash": "5fa0ba6e26881164a825fd2b64e72c2936e12974896520be6c80a1c2869587c8",
+        "pairHash": "984c49ebaa21d23e1162182a6e58e2780dbf95260f074a182321db4152b37fe3",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:15:59.687Z"
+      },
+      "trademark": {
+        "enHash": "77cd702314b51f4d950f0e90655a3b452043d4ce3fe0c5a6cece94784b3d5c9b",
+        "translationHash": "9ce57e42e82ad91bd5fe627378df5149902fdf617ee828ad1b33a6fa4ddda6f9",
+        "pairHash": "bfd11583032effee2ebd6563c916bada08b4fc6a124e8c42fc726959899a1aab",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:15:59.740Z"
+      },
+      "features": {
+        "enHash": "87b12804d4533b4ddf319b95ecb78836f25fcf9377f18146df59d78d8ac5e78b",
+        "translationHash": "985225b2088f71edc2f0e1222417275c2dc87c8e78fa6e115dd0ac1940a6476c",
+        "pairHash": "75bdaf6f382fac52d5090f19febcb5e8e633f95c60cea04960040a073e581005",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:15:59.637Z"
+      },
+      "longDescription": {
+        "enHash": "5aa6c4930b06914044361bcbded24ffa8db8656567bfbc01f1c3b235d0e6be5f",
+        "translationHash": "9a4c8826883c57ddefdd5a4a84ea30bdfd814201a2a89ff4c8da20363457515b",
+        "pairHash": "1929d0268af9ab497ed39243a7bbbe5a11c84d14742bc30c90a5506af57a9402",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:15:59.588Z"
+      },
+      "shortDescription": {
+        "enHash": "bdff794518959123cf7ac6a5af57e43f47465c19cd57f7941769179dbf46c57c",
+        "translationHash": "673fb9345f2559aa40ea123feec36722c3352c9391898d486bd1a2597ad16e11",
+        "pairHash": "58c427312bdfff5425021fd681825f902eaa74a046fc3684c764d5f639747aa2",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:15:59.542Z"
+      },
+      "whatsNew": {
+        "enHash": "228116e8d2428c26a38d502234306371368a6a17f71967356904706fd836a643",
+        "translationHash": "79c01532cbb02b13e22c1f7d25e137d69fb00a1b051f266eb95a5aa6cb72ecff",
+        "pairHash": "719b21a3b190b9916d2256e148494db4552d07e07478f7c077f82d0cac84edde",
+        "status": "approved",
+        "approvedBy": "este-via-claude-desktop-agent",
+        "approvedAt": "2026-09-07T15:16:18.788Z"
+      }
+    }
+  }
+}
