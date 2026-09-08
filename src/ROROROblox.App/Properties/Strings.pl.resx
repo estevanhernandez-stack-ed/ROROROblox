@@ -2248,7 +2248,7 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
     <value>{0} konto jest wyciszone. Nic, co robi, nie wywołuje alertu, niezależnie od ustawień powyżej.</value>
   </data>
   <data name="Shell_Muted_other" xml:space="preserve">
-    <value>{0} konta jest wyciszone. Nic, co robi, nie wywołuje alertu, niezależnie od ustawień powyżej.</value>
+    <value>{0} konta są wyciszone. Nic, co robią, nie wywołuje alertu, niezależnie od ustawień powyżej.</value>
   </data>
   <data name="Shell_Muted_few" xml:space="preserve">
     <value>{0} konta są wyciszone. Nic, co robią, nie wywołuje alertu, niezależnie od ustawień powyżej.</value>
@@ -2815,7 +2815,7 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
     <value>{0} klient Roblox działa. To natychmiast go zamknie.</value>
   </data>
   <data name="Shell_StopAll_Running_other" xml:space="preserve">
-    <value>{0} klienta Roblox działa. To natychmiast go zamknie.</value>
+    <value>{0} klienta Roblox działa. To natychmiast zamknie je wszystkie.</value>
   </data>
   <data name="Shell_StopAll_Running_few" xml:space="preserve">
     <value>{0} klienty Roblox działają. To natychmiast zamknie je wszystkie.</value>

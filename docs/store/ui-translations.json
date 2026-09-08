@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "4c8c27e",
-  "generatedUtc": "2026-09-08T21:21:33+00:00",
+  "sourceCommit": "7f9dc34",
+  "generatedUtc": "2026-09-08T21:55:52+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -8879,7 +8879,7 @@
         "de": "{0} Konten sind stummgeschaltet. Nichts, was sie tun, löst eine Benachrichtigung aus, egal was die Einstellungen oben sagen.",
         "ru": "{0} аккаунта заглушены. Что бы они ни делали, это не вызовет оповещения, что бы ни было настроено выше.",
         "pt-br": "{0} contas estão silenciadas. Nada que elas façam gera um alerta, seja lá o que as configurações acima digam.",
-        "pl": "{0} konta jest wyciszone. Nic, co robi, nie wywołuje alertu, niezależnie od ustawień powyżej.",
+        "pl": "{0} konta są wyciszone. Nic, co robią, nie wywołuje alertu, niezależnie od ustawień powyżej.",
         "es": "{0} cuentas están silenciadas. Nada de lo que hagan genera una alerta, digan lo que digan los ajustes de arriba."
       }
     },
@@ -11147,7 +11147,7 @@
         "de": "{0} Roblox-Clients laufen. Das schließt sie alle sofort.",
         "ru": "Запущено {0} клиента Roblox. Все они будут немедленно закрыты.",
         "pt-br": "{0} clientes do Roblox estão em execução. Isso fecha todos eles imediatamente.",
-        "pl": "{0} klienta Roblox działa. To natychmiast go zamknie.",
+        "pl": "{0} klienta Roblox działa. To natychmiast zamknie je wszystkie.",
         "es": "{0} clientes de Roblox están en ejecución. Esto los cierra todos de inmediato."
       }
     },
