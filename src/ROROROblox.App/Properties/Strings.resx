@@ -2613,4 +2613,38 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Shell_Squad_CouldntReadLink" xml:space="preserve"><value>Couldn't read that as a Roblox link. Paste a private server URL from its "Configure Server" page (either the roblox.com/share?... form or the older privateServerLinkCode= one), or a plain game link to put the squad in one public server.</value><comment>Squad add error; "Roblox"/URL forms stay English (localized Phase D step 3)</comment></data>
   <data name="Shell_Squad_LookingUp" xml:space="preserve"><value>Looking up game info...</value><comment>Squad add status (localized Phase D step 3)</comment></data>
   <data name="Shell_Squad_CouldntAddLaunch" xml:space="preserve"><value>Couldn't add and launch: {0}</value><comment>Squad add error; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_Title" xml:space="preserve"><value>Friends — {0}</value><comment>Friends window title; {0}=account (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_ViewOthers" xml:space="preserve"><value>View {0}'s friends</value><comment>Friends source-switch button; {0}=account (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_LauncherHint" xml:space="preserve"><value>Follow one to launch {0} into their server.</value><comment>Friends launcher hint; {0}=account (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_Loading" xml:space="preserve"><value>Loading friends...</value><comment>Friends status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_NoneVisible" xml:space="preserve"><value>No friends visible. Either this account has none, or its privacy filter is hiding them.</value><comment>Friends empty state (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_Summary_one" xml:space="preserve"><value>{0} friend · {1} in game · {2} online · {3} offline</value><comment>Friends summary via Loc.Plural; {0}=friends {1}=in-game {2}=online {3}=offline (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_Summary_other" xml:space="preserve"><value>{0} friends · {1} in game · {2} online · {3} offline</value><comment>Friends summary via Loc.Plural (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_Summary_few" xml:space="preserve"><value>{0} friends · {1} in game · {2} online · {3} offline</value><comment>few-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_Summary_many" xml:space="preserve"><value>{0} friends · {1} in game · {2} online · {3} offline</value><comment>many-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_SessionExpiredSwitch" xml:space="preserve"><value>{0}'s session expired — re-authenticate it, or switch to the other account's friends.</value><comment>Friends status; {0}=account (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_SessionExpiredClose" xml:space="preserve"><value>{0}'s session expired — close this and re-authenticate the account first.</value><comment>Friends status; {0}=account (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_CouldntReadSession" xml:space="preserve"><value>Couldn't read this account's saved session — close this and re-add the account.</value><comment>Friends status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_CouldntLoad" xml:space="preserve"><value>Couldn't load friends: {0}</value><comment>Friends status; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_SectionInGame" xml:space="preserve"><value>In game</value><comment>Friends section header (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_SectionOnline" xml:space="preserve"><value>Online</value><comment>Friends section header (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_SectionOffline" xml:space="preserve"><value>Offline</value><comment>Friends section header (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_Follow" xml:space="preserve"><value>Follow</value><comment>Friends follow button (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_FollowTooltip" xml:space="preserve"><value>Launch this account into the server your friend is in.</value><comment>Friends follow button tooltip (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_JoinPrivacyOff" xml:space="preserve"><value>Join privacy off</value><comment>Friends row hint (localized Phase D step 3)</comment></data>
+  <data name="Shell_Friends_JoinPrivacyTooltip" xml:space="preserve"><value>This friend is in a game, but their join privacy hides the server so RoRoRo can't follow them in.</value><comment>Friends row hint tooltip; "RoRoRo" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Join_PrivateServer" xml:space="preserve"><value>Private server</value><comment>Join-by-link preview label (localized Phase D step 3)</comment></data>
+  <data name="Shell_Join_ShareLink" xml:space="preserve"><value>share link</value><comment>Join-by-link code kind (localized Phase D step 3)</comment></data>
+  <data name="Shell_Join_AccessCode" xml:space="preserve"><value>access code</value><comment>Join-by-link code kind (localized Phase D step 3)</comment></data>
+  <data name="Shell_Join_PlaceCode" xml:space="preserve"><value>Place {0}  ·  {1} {2}</value><comment>Join-by-link detail; {0}=place {1}=kind {2}=code (localized Phase D step 3)</comment></data>
+  <data name="Shell_Join_VipServerHint" xml:space="preserve"><value>We'll launch this account into that VIP server.</value><comment>Join-by-link status; "VIP" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Join_PublicGame" xml:space="preserve"><value>Public game</value><comment>Join-by-link preview label (localized Phase D step 3)</comment></data>
+  <data name="Shell_Join_Place" xml:space="preserve"><value>Place {0}</value><comment>Join-by-link detail; {0}=place id (localized Phase D step 3)</comment></data>
+  <data name="Shell_Join_PublicGameHint" xml:space="preserve"><value>We'll launch this account into the public version of that game.</value><comment>Join-by-link status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Join_RobloxShare" xml:space="preserve"><value>Roblox share ({0})</value><comment>Join-by-link preview label; {0}=link type; "Roblox" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Join_ResolveHint" xml:space="preserve"><value>We'll resolve this with Roblox when you click Launch.</value><comment>Join-by-link status; "Roblox" stays English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Join_NotALink" xml:space="preserve"><value>Doesn't look like a Roblox link. Try https://www.roblox.com/games/&lt;id&gt;, a private server share URL, or a roblox.com/share?code=... link.</value><comment>Join-by-link error; URLs/"Roblox" stay English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Join_Resolving" xml:space="preserve"><value>Resolving share link...</value><comment>Join-by-link status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Join_CouldntResolve" xml:space="preserve"><value>Couldn't resolve that share link. Make sure it's a valid private server URL.</value><comment>Join-by-link error (localized Phase D step 3)</comment></data>
+  <data name="Shell_Join_CouldntResolveEx" xml:space="preserve"><value>Couldn't resolve: {0}</value><comment>Join-by-link error; {0}=exception (localized Phase D step 3)</comment></data>
 </root>
