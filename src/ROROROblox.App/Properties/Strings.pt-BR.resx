@@ -2767,7 +2767,7 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
     <value>Nada para exportar</value>
   </data>
   <data name="Shell_Export_SavedBody" xml:space="preserve">
-    <value>Salvo. Este arquivo contém os logins das suas contas — qualquer pessoa com o arquivo E a frase secreta pode entrar como você. Guarde a frase secreta em segurança e não publique o arquivo.</value>
+    <value>Salvo. Este arquivo contém os logins das suas contas — qualquer pessoa com o arquivo E a frase secreta pode entrar como você. Guarde a frase secreta em segurança e não compartilhe o arquivo publicamente.</value>
   </data>
   <data name="Shell_Export_SavedTitle" xml:space="preserve">
     <value>Contas exportadas</value>

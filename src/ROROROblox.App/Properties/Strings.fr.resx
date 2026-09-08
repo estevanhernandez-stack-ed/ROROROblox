@@ -2767,7 +2767,7 @@ Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que 
     <value>Rien à exporter</value>
   </data>
   <data name="Shell_Export_SavedBody" xml:space="preserve">
-    <value>Enregistré. Ce fichier contient vos identifiants de connexion — quiconque possède le fichier ET la phrase secrète peut se connecter à votre place. Gardez la phrase secrète en lieu sûr et ne publiez pas le fichier.</value>
+    <value>Enregistré. Ce fichier contient vos identifiants de connexion — quiconque possède le fichier ET la phrase secrète peut se connecter à votre place. Gardez la phrase secrète en lieu sûr et ne partagez pas le fichier publiquement.</value>
   </data>
   <data name="Shell_Export_SavedTitle" xml:space="preserve">
     <value>Comptes exportés</value>

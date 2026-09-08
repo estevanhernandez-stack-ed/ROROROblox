@@ -2767,7 +2767,7 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
     <value>Nichts zu exportieren</value>
   </data>
   <data name="Shell_Export_SavedBody" xml:space="preserve">
-    <value>Gespeichert. Diese Datei enthält deine Konto-Anmeldungen — wer die Datei UND die Passphrase hat, kann sich als du anmelden. Bewahre die Passphrase sicher auf und veröffentliche die Datei nicht.</value>
+    <value>Gespeichert. Diese Datei enthält deine Konto-Anmeldungen — wer die Datei UND die Passphrase hat, kann sich als du anmelden. Bewahre die Passphrase sicher auf und teile die Datei nicht öffentlich.</value>
   </data>
   <data name="Shell_Export_SavedTitle" xml:space="preserve">
     <value>Konten exportiert</value>

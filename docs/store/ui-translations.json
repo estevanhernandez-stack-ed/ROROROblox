@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "def7690",
-  "generatedUtc": "2026-09-08T03:55:04+00:00",
+  "sourceCommit": "4c8c27e",
+  "generatedUtc": "2026-09-08T21:21:33+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -10951,12 +10951,12 @@
       "field": "Shell_Export_SavedBody",
       "en": "Saved. This file is your account logins — anyone with the file AND the passphrase can sign in as you. Keep the passphrase safe and don't post the file publicly.",
       "translations": {
-        "fr": "Enregistré. Ce fichier contient vos identifiants de connexion — quiconque possède le fichier ET la phrase secrète peut se connecter à votre place. Gardez la phrase secrète en lieu sûr et ne publiez pas le fichier.",
-        "de": "Gespeichert. Diese Datei enthält deine Konto-Anmeldungen — wer die Datei UND die Passphrase hat, kann sich als du anmelden. Bewahre die Passphrase sicher auf und veröffentliche die Datei nicht.",
+        "fr": "Enregistré. Ce fichier contient vos identifiants de connexion — quiconque possède le fichier ET la phrase secrète peut se connecter à votre place. Gardez la phrase secrète en lieu sûr et ne partagez pas le fichier publiquement.",
+        "de": "Gespeichert. Diese Datei enthält deine Konto-Anmeldungen — wer die Datei UND die Passphrase hat, kann sich als du anmelden. Bewahre die Passphrase sicher auf und teile die Datei nicht öffentlich.",
         "ru": "Сохранено. В этом файле — данные для входа в ваши аккаунты: любой, у кого есть файл И парольная фраза, сможет войти под вами. Храните парольную фразу в надёжном месте и не выкладывайте файл публично.",
-        "pt-br": "Salvo. Este arquivo contém os logins das suas contas — qualquer pessoa com o arquivo E a frase secreta pode entrar como você. Guarde a frase secreta em segurança e não publique o arquivo.",
+        "pt-br": "Salvo. Este arquivo contém os logins das suas contas — qualquer pessoa com o arquivo E a frase secreta pode entrar como você. Guarde a frase secreta em segurança e não compartilhe o arquivo publicamente.",
         "pl": "Zapisano. Ten plik zawiera dane logowania twoich kont — każdy, kto ma plik ORAZ hasło, może zalogować się jako ty. Trzymaj hasło w bezpiecznym miejscu i nie udostępniaj pliku publicznie.",
-        "es": "Guardado. Este archivo contiene los inicios de sesión de tus cuentas: cualquiera que tenga el archivo Y la frase de contraseña puede iniciar sesión como tú. Guarda la frase de contraseña en un lugar seguro y no publiques el archivo."
+        "es": "Guardado. Este archivo contiene los inicios de sesión de tus cuentas: cualquiera que tenga el archivo Y la frase de contraseña puede iniciar sesión como tú. Guarda la frase de contraseña en un lugar seguro y no compartas el archivo públicamente."
       }
     },
     {
