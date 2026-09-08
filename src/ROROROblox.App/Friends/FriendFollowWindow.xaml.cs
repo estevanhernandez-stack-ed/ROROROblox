@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using ROROROblox.App.Localization;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 using ROROROblox.Core.StreamerMode;
@@ -135,13 +136,13 @@ internal partial class FriendFollowWindow : Window
         // could drift — rule 2 of the wave-4 title rule. This window is the only one that builds
         // its chrome at runtime, and it is the one that got it wrong for months: it used to say
         // "ROROROblox -- Friends -- {name}", leaking the repo name into user-facing chrome.
-        Title = $"Friends — {ChromeName(current)}";
+        Title = Loc.Format("Shell_Friends_Title", ChromeName(current));
         Header.Heading = Title;
 
         if (_sources.Count > 1)
         {
             var other = _sources[(_currentSourceIndex + 1) % _sources.Count];
-            SourceSwitchButton.Content = $"View {ChromeName(other)}'s friends";
+            SourceSwitchButton.Content = Loc.Format("Shell_Friends_ViewOthers", ChromeName(other));
         }
 
         // When you're browsing a list that isn't the launching account's own, name the launcher so
@@ -150,7 +151,7 @@ internal partial class FriendFollowWindow : Window
         if (current.AccountId != _launcherAccountId)
         {
             var launcherName = ChromeName(_sources.First(s => s.AccountId == _launcherAccountId));
-            LauncherHint.Text = $"Follow one to launch {launcherName} into their server.";
+            LauncherHint.Text = Loc.Format("Shell_Friends_LauncherHint", launcherName);
             LauncherHint.Visibility = Visibility.Visible;
         }
         else
@@ -170,7 +171,7 @@ internal partial class FriendFollowWindow : Window
 
     private async Task RefreshAsync()
     {
-        StatusText.Text = "Loading friends...";
+        StatusText.Text = Loc.Get("Shell_Friends_Loading");
         FriendsList.Children.Clear();
         RefreshButton.IsEnabled = false;
         SourceSwitchButton.IsEnabled = false;
@@ -187,7 +188,7 @@ internal partial class FriendFollowWindow : Window
             if (friends.Count == 0)
             {
                 _hasData = false;
-                StatusText.Text = "No friends visible. Either this account has none, or its privacy filter is hiding them.";
+                StatusText.Text = Loc.Get("Shell_Friends_NoneVisible");
                 return;
             }
 
@@ -227,8 +228,7 @@ internal partial class FriendFollowWindow : Window
             _hasData = true;
             RenderRows();
 
-            StatusText.Text = $"{friends.Count} {(friends.Count == 1 ? "friend" : "friends")} · " +
-                              $"{inGame.Count} in game · {online.Count} online · {offline.Count} offline";
+            StatusText.Text = Loc.Plural("Shell_Friends_Summary", friends.Count, inGame.Count, online.Count, offline.Count);
         }
         catch (CookieExpiredException)
         {
@@ -238,18 +238,18 @@ internal partial class FriendFollowWindow : Window
             // likely open on stream). ChromeName returns the fake name when active, real when not.
             var name = ChromeName(source);
             StatusText.Text = _sources.Count > 1
-                ? $"{name}'s session expired — re-authenticate it, or switch to the other account's friends."
-                : $"{name}'s session expired — close this and re-authenticate the account first.";
+                ? Loc.Format("Shell_Friends_SessionExpiredSwitch", name)
+                : Loc.Format("Shell_Friends_SessionExpiredClose", name);
         }
         catch (AccountStoreCorruptException)
         {
             _hasData = false;
-            StatusText.Text = "Couldn't read this account's saved session — close this and re-add the account.";
+            StatusText.Text = Loc.Get("Shell_Friends_CouldntReadSession");
         }
         catch (Exception ex)
         {
             _hasData = false;
-            StatusText.Text = $"Couldn't load friends: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_Friends_CouldntLoad", ex.Message);
         }
         finally
         {
@@ -271,7 +271,7 @@ internal partial class FriendFollowWindow : Window
 
         if (_inGame.Count > 0)
         {
-            AddSectionHeader("In game", _inGame.Count, isAccent: true);
+            AddSectionHeader(Loc.Get("Shell_Friends_SectionInGame"), _inGame.Count, isAccent: true);
             foreach (var (f, p) in _inGame)
             {
                 // A friend can be InGame yet expose no joinable place (join/visibility privacy
@@ -283,7 +283,7 @@ internal partial class FriendFollowWindow : Window
         }
         if (_online.Count > 0)
         {
-            AddSectionHeader("Online", _online.Count, isAccent: false);
+            AddSectionHeader(Loc.Get("Shell_Friends_SectionOnline"), _online.Count, isAccent: false);
             foreach (var (f, p) in _online)
             {
                 FriendsList.Children.Add(BuildFriendRow(f, p, isFollowable: false));
@@ -291,7 +291,7 @@ internal partial class FriendFollowWindow : Window
         }
         if (_offline.Count > 0)
         {
-            AddSectionHeader("Offline", _offline.Count, isAccent: false);
+            AddSectionHeader(Loc.Get("Shell_Friends_SectionOffline"), _offline.Count, isAccent: false);
             foreach (var f in _offline)
             {
                 FriendsList.Children.Add(BuildFriendRow(f, null, isFollowable: false));
@@ -416,11 +416,11 @@ internal partial class FriendFollowWindow : Window
             // this button's hover and disabled looks stayed put while the user switched themes.
             var followBtn = new Button
             {
-                Content = "Follow",
+                Content = Loc.Get("Shell_Friends_Follow"),
                 Style = (Style)FindResource("CtaButtonStyle"),
                 Padding = new Thickness(14, 6, 14, 6),
                 FontSize = 11,
-                ToolTip = "Launch this account into the server your friend is in.",
+                ToolTip = Loc.Get("Shell_Friends_FollowTooltip"),
             };
             followBtn.Click += (_, _) => OnFollowClick(friend, presence, display.Name);
             Grid.SetColumn(followBtn, 2);
@@ -432,11 +432,11 @@ internal partial class FriendFollowWindow : Window
             // Follow would land at home. Say why instead of offering a button that silently bounces.
             var hint = new TextBlock
             {
-                Text = "Join privacy off",
+                Text = Loc.Get("Shell_Friends_JoinPrivacyOff"),
                 FontSize = 10,
                 Foreground = (Brush)FindResource("MutedTextBrush"),
                 VerticalAlignment = VerticalAlignment.Center,
-                ToolTip = "This friend is in a game, but their join privacy hides the server so RoRoRo can't follow them in.",
+                ToolTip = Loc.Get("Shell_Friends_JoinPrivacyTooltip"),
             };
             Grid.SetColumn(hint, 2);
             grid.Children.Add(hint);

@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using ROROROblox.App.Localization;
 using ROROROblox.Core;
 
 namespace ROROROblox.App.JoinByLink;
@@ -48,27 +49,27 @@ internal partial class JoinByLinkWindow : Window
         switch (_parsedTarget)
         {
             case LaunchTarget.PrivateServer ps:
-                PreviewLabel.Text = "Private server";
-                var kindLabel = ps.Kind == PrivateServerCodeKind.LinkCode ? "share link" : "access code";
-                PreviewDetail.Text = $"Place {ps.PlaceId}  ·  {kindLabel} {Truncate(ps.Code, 18)}";
+                PreviewLabel.Text = Loc.Get("Shell_Join_PrivateServer");
+                var kindLabel = ps.Kind == PrivateServerCodeKind.LinkCode ? Loc.Get("Shell_Join_ShareLink") : Loc.Get("Shell_Join_AccessCode");
+                PreviewDetail.Text = Loc.Format("Shell_Join_PlaceCode", ps.PlaceId, kindLabel, Truncate(ps.Code, 18));
                 PreviewBorder.Visibility = Visibility.Visible;
                 LaunchButton.IsEnabled = true;
-                StatusText.Text = "We'll launch this account into that VIP server.";
+                StatusText.Text = Loc.Get("Shell_Join_VipServerHint");
                 break;
 
             case LaunchTarget.Place place:
-                PreviewLabel.Text = "Public game";
-                PreviewDetail.Text = $"Place {place.PlaceId}";
+                PreviewLabel.Text = Loc.Get("Shell_Join_PublicGame");
+                PreviewDetail.Text = Loc.Format("Shell_Join_Place", place.PlaceId);
                 PreviewBorder.Visibility = Visibility.Visible;
                 LaunchButton.IsEnabled = true;
-                StatusText.Text = "We'll launch this account into the public version of that game.";
+                StatusText.Text = Loc.Get("Shell_Join_PublicGameHint");
                 break;
 
             default:
                 if (LaunchTarget.TryParseShareLink(input, out _, out var linkType))
                 {
-                    PreviewLabel.Text = $"Roblox share ({linkType})";
-                    PreviewDetail.Text = "We'll resolve this with Roblox when you click Launch.";
+                    PreviewLabel.Text = Loc.Format("Shell_Join_RobloxShare", linkType);
+                    PreviewDetail.Text = Loc.Get("Shell_Join_ResolveHint");
                     PreviewBorder.Visibility = Visibility.Visible;
                     LaunchButton.IsEnabled = true;
                     StatusText.Text = string.Empty;
@@ -78,9 +79,7 @@ internal partial class JoinByLinkWindow : Window
                     _parsedTarget = null;
                     PreviewBorder.Visibility = Visibility.Collapsed;
                     LaunchButton.IsEnabled = false;
-                    StatusText.Text = "Doesn't look like a Roblox link. Try " +
-                                      "https://www.roblox.com/games/<id>, a private server share URL, " +
-                                      "or a roblox.com/share?code=... link.";
+                    StatusText.Text = Loc.Get("Shell_Join_NotALink");
                 }
                 break;
         }
@@ -103,13 +102,13 @@ internal partial class JoinByLinkWindow : Window
             return;
         }
         LaunchButton.IsEnabled = false;
-        StatusText.Text = "Resolving share link...";
+        StatusText.Text = Loc.Get("Shell_Join_Resolving");
         try
         {
             var resolved = await _resolveShareUrl(input);
             if (resolved is null)
             {
-                StatusText.Text = "Couldn't resolve that share link. Make sure it's a valid private server URL.";
+                StatusText.Text = Loc.Get("Shell_Join_CouldntResolve");
                 return;
             }
             SelectedTarget = resolved;
@@ -118,7 +117,7 @@ internal partial class JoinByLinkWindow : Window
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Couldn't resolve: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_Join_CouldntResolveEx", ex.Message);
         }
         finally
         {
