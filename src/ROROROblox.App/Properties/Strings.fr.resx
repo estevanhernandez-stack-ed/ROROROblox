@@ -1467,4 +1467,1615 @@
   <data name="SettingsPage_LanguageHint" xml:space="preserve">
     <value>Choisissez la langue de l'interface de RoRoRo. De nouvelles langues apparaissent ici à mesure qu'elles sont traduites, et un changement prend effet à la prochaine ouverture de RoRoRo.</value>
   </data>
+  <data name="CoreMsg_Launch_NoDefaultGame" xml:space="preserve">
+    <value>Aucun jeu Roblox par défaut configuré. Ajoutez-en un dans Jeux (bouton d'en-tête), ou indiquez une cible explicite.</value>
+  </data>
+  <data name="CoreMsg_Launch_AuthTicketFailed" xml:space="preserve">
+    <value>Échec de l'obtention du ticket d'authentification : {0}</value>
+  </data>
+  <data name="CoreMsg_Launch_RobloxNotInstalled" xml:space="preserve">
+    <value>Roblox ne semble pas être installé.</value>
+  </data>
+  <data name="CoreMsg_Launch_ProcessStartFailed" xml:space="preserve">
+    <value>Échec de Process.Start : {0}</value>
+  </data>
+  <data name="CoreMsg_Cookie_WebView2RuntimeMissing" xml:space="preserve">
+    <value>Runtime WebView2 manquant</value>
+  </data>
+  <data name="CoreMsg_Cookie_WebView2InitFailed" xml:space="preserve">
+    <value>Échec de l'initialisation de WebView2 : {0}</value>
+  </data>
+  <data name="CoreMsg_Cookie_UserDataDirFailed" xml:space="preserve">
+    <value>La capture du cookie n'a pas pu allouer le dossier de données utilisateur : {0}</value>
+  </data>
+  <data name="CoreMsg_Cookie_StartFailed" xml:space="preserve">
+    <value>La capture du cookie n'a pas pu démarrer : {0}</value>
+  </data>
+  <data name="CoreMsg_Cookie_CaptureFailed" xml:space="preserve">
+    <value>Échec de la capture du cookie : {0}</value>
+  </data>
+  <data name="CoreMsg_Cookie_LoginRejected" xml:space="preserve">
+    <value>Roblox n'a pas accepté la session de connexion.</value>
+  </data>
+  <data name="CoreMsg_Cookie_ProfileFetchFailed" xml:space="preserve">
+    <value>Échec de la récupération du profil : {0}</value>
+  </data>
+  <data name="CoreMsg_Webhook_ServerInvite" xml:space="preserve">
+    <value>C'est une invitation de serveur. Il vous faut un webhook — dans Discord : Paramètres du serveur → Intégrations → Webhooks → Nouveau webhook, puis Copier l'URL du webhook.</value>
+  </data>
+  <data name="CoreMsg_Webhook_ChannelLink" xml:space="preserve">
+    <value>C'est un lien vers le canal, pas un webhook. Même canal, bouton différent : Paramètres du serveur → Intégrations → Webhooks → Nouveau webhook.</value>
+  </data>
+  <data name="CoreMsg_Webhook_BotToken" xml:space="preserve">
+    <value>On dirait un jeton de bot — ne le partagez nulle part, et réinitialisez-le si vous l'avez collé quelque part en public. Une URL de webhook commence par discord.com/api/webhooks/.</value>
+  </data>
+  <data name="CoreMsg_Webhook_Unrecognized" xml:space="preserve">
+    <value>Cela ne ressemble pas à une URL de webhook. Elle devrait commencer par discord.com/api/webhooks/ — Paramètres du serveur → Intégrations → Webhooks → Copier l'URL du webhook.</value>
+  </data>
+  <data name="CoreMsg_Pushover_WebhookUrl" xml:space="preserve">
+    <value>C'est un lien Discord — {0} : c'est un code de 30 caractères provenant de pushover.net, pas une URL.</value>
+  </data>
+  <data name="CoreMsg_Pushover_WrongShape" xml:space="preserve">
+    <value>{0} : ce n'est pas le bon format — c'est un code de 30 caractères composé de lettres et de chiffres, affiché sur votre tableau de bord pushover.net.</value>
+  </data>
+  <data name="CoreMsg_Ntfy_Server" xml:space="preserve">
+    <value>Le serveur doit être une adresse complète comme https://ntfy.sh — laissez la valeur par défaut sauf si vous hébergez le vôtre.</value>
+  </data>
+  <data name="CoreMsg_History_Unreadable" xml:space="preserve">
+    <value>Impossible de lire l'historique{0}</value>
+  </data>
+  <data name="CoreMsg_History_Empty" xml:space="preserve">
+    <value>Rien d'enregistré pour l'instant.</value>
+  </data>
+  <data name="CoreMsg_History_Recorded_one" xml:space="preserve">
+    <value>{0} lancement enregistré.</value>
+  </data>
+  <data name="CoreMsg_History_Recorded_few" xml:space="preserve">
+    <value>{0} lancements enregistrés.</value>
+  </data>
+  <data name="CoreMsg_History_Recorded_many" xml:space="preserve">
+    <value>{0} lancements enregistrés.</value>
+  </data>
+  <data name="CoreMsg_History_Recorded_other" xml:space="preserve">
+    <value>{0} lancements enregistrés.</value>
+  </data>
+  <data name="CoreMsg_History_Loading" xml:space="preserve">
+    <value>Chargement…</value>
+  </data>
+  <data name="CoreMsg_History_PlaceholderUnreadableHeadline" xml:space="preserve">
+    <value>Impossible de lire l'historique.</value>
+  </data>
+  <data name="CoreMsg_History_PlaceholderUnreadableDetail" xml:space="preserve">
+    <value>Le fichier est peut-être ouvert dans un autre programme, ou endommagé. Cela n'affecte pas vos comptes enregistrés ni vos réglages — ils sont stockés séparément.</value>
+  </data>
+  <data name="CoreMsg_History_PlaceholderEmptyHeadline" xml:space="preserve">
+    <value>Aucun lancement pour l'instant.</value>
+  </data>
+  <data name="CoreMsg_History_PlaceholderEmptyDetail" xml:space="preserve">
+    <value>Cliquez sur « Lancer en tant que » pour n'importe quel compte et des entrées apparaîtront ici.</value>
+  </data>
+  <data name="CoreMsg_History_Cleared" xml:space="preserve">
+    <value>Historique effacé.</value>
+  </data>
+  <data name="CoreMsg_History_ClearFailed" xml:space="preserve">
+    <value>Impossible d'effacer l'historique{0} Rien n'a été supprimé.</value>
+  </data>
+  <data name="CoreMsg_Compat_UpdatedTo" xml:space="preserve">
+    <value>mis à jour vers</value>
+  </data>
+  <data name="CoreMsg_Compat_DowngradedTo" xml:space="preserve">
+    <value>rétrogradé vers</value>
+  </data>
+  <data name="CoreMsg_Compat_Banner" xml:space="preserve">
+    <value>Roblox {0} {1}. Nous avons testé jusqu'à {2}. Multi-instance pourrait ne pas fonctionner — signalez-le-nous sur https://github.com/estevanhernandez-stack-ed/ROROROblox/issues.</value>
+  </data>
+  <data name="SessionHistoryRow_UnknownAccount" xml:space="preserve">
+    <value>Compte inconnu</value>
+  </data>
+  <data name="SessionHistoryRow_UnknownGame" xml:space="preserve">
+    <value>(jeu inconnu)</value>
+  </data>
+  <data name="SessionHistoryRow_PrivateServer" xml:space="preserve">
+    <value>serveur privé</value>
+  </data>
+  <data name="SessionHistoryRow_Started" xml:space="preserve">
+    <value>démarré {0}</value>
+  </data>
+  <data name="SessionHistoryRow_Saved" xml:space="preserve">
+    <value>enregistré</value>
+  </data>
+  <data name="Diag_On" xml:space="preserve">
+    <value>ACTIVÉ</value>
+  </data>
+  <data name="Diag_Off" xml:space="preserve">
+    <value>DÉSACTIVÉ</value>
+  </data>
+  <data name="Diag_NotDetected" xml:space="preserve">
+    <value>non détecté</value>
+  </data>
+  <data name="CoreMsg_Transport_ImportFailed" xml:space="preserve">
+    <value>Impossible d'ouvrir ce lot — phrase secrète incorrecte ou fichier endommagé.</value>
+  </data>
+  <data name="CoreMsg_Theme_EmptyInput" xml:space="preserve">
+    <value>Collez d'abord un JSON de thème.</value>
+  </data>
+  <data name="CoreMsg_Theme_UnreadableJson" xml:space="preserve">
+    <value>Impossible de lire le JSON : {0}. Vérifiez que vous avez collé l'objet entier, accolades comprises.</value>
+  </data>
+  <data name="CoreMsg_Theme_NullPayload" xml:space="preserve">
+    <value>JSON de thème vide.</value>
+  </data>
+  <data name="CoreMsg_Theme_MissingName" xml:space="preserve">
+    <value>Il manque le champ « name » dans le JSON du thème.</value>
+  </data>
+  <data name="CoreMsg_Theme_EmptyFilename" xml:space="preserve">
+    <value>Le nom du thème produit un nom de fichier vide. Choisissez un autre nom.</value>
+  </data>
+  <data name="CoreMsg_Theme_MissingField" xml:space="preserve">
+    <value>Il manque un champ obligatoire au JSON du thème : {0}</value>
+  </data>
+  <data name="MultiInstance_Tooltip_On" xml:space="preserve">
+    <value>{0} — Multi-Instance ACTIVÉ</value>
+  </data>
+  <data name="MultiInstance_Tooltip_Off" xml:space="preserve">
+    <value>{0} — Multi-Instance DÉSACTIVÉ</value>
+  </data>
+  <data name="MultiInstance_Tooltip_Error" xml:space="preserve">
+    <value>{0} — Multi-Instance ERREUR (mutex perdu)</value>
+  </data>
+  <data name="MultiInstance_MenuHeader_On" xml:space="preserve">
+    <value>Multi-Instance : ACTIVÉ ✓</value>
+  </data>
+  <data name="MultiInstance_MenuHeader_Off" xml:space="preserve">
+    <value>Multi-Instance : DÉSACTIVÉ</value>
+  </data>
+  <data name="MultiInstance_MenuHeader_Error" xml:space="preserve">
+    <value>Multi-Instance : ERREUR — cliquez pour recharger</value>
+  </data>
+  <data name="MultiInstance_StatusBar_On" xml:space="preserve">
+    <value>Multi-Instance activé</value>
+  </data>
+  <data name="MultiInstance_StatusBar_Off" xml:space="preserve">
+    <value>Multi-Instance désactivé</value>
+  </data>
+  <data name="MultiInstance_StatusBar_Error" xml:space="preserve">
+    <value>Erreur Multi-Instance</value>
+  </data>
+  <data name="MultiInstance_StatusBarTooltip_On" xml:space="preserve">
+    <value>Les clients Roblox peuvent s'exécuter côte à côte. Activez ou désactivez cette option depuis le menu clic droit de l'icône de la barre d'état système.</value>
+  </data>
+  <data name="MultiInstance_StatusBarTooltip_Off" xml:space="preserve">
+    <value>Un seul client Roblox peut s'exécuter à la fois. Faites un clic droit sur l'icône de la barre d'état système et cliquez sur Multi-Instance pour l'activer.</value>
+  </data>
+  <data name="MultiInstance_StatusBarTooltip_Error" xml:space="preserve">
+    <value>Le verrou singleton de Roblox a été perdu, donc de nouveaux clients pourraient refuser de s'ouvrir. Faites un clic droit sur l'icône de la barre d'état système et cliquez sur Multi-Instance pour le récupérer.</value>
+  </data>
+  <data name="AlertStatus_NoAlertsYet" xml:space="preserve">
+    <value>Aucune alerte pour l'instant. Choisissez ci-dessus ce dont vous voulez être averti.</value>
+  </data>
+  <data name="AlertStatus_MineWebhookDeleted" xml:space="preserve">
+    <value>Votre webhook a été supprimé, donc plus rien n'arrive sur votre téléphone. Les alertes se rabattent sur le bureau uniquement — créez un nouveau webhook et collez-le ci-dessous.</value>
+  </data>
+  <data name="AlertStatus_ClanWebhookDeleted" xml:space="preserve">
+    <value>Le webhook du clan a été supprimé, donc plus rien n'arrive sur ce canal. Les alertes se rabattent sur le bureau uniquement.</value>
+  </data>
+  <data name="AlertStatus_PhoneRejected" xml:space="preserve">
+    <value>Votre service push a rejeté la clé enregistrée, donc plus rien n'arrive sur votre téléphone. Les alertes se rabattent sur le bureau uniquement — vérifiez la clé ci-dessous et enregistrez-la à nouveau.</value>
+  </data>
+  <data name="AlertStatus_PhoneUnfinished" xml:space="preserve">
+    <value>Vous avez dirigé les alertes vers votre téléphone mais n'avez pas fini de configurer le service push ci-dessous, elles ne s'afficheront donc que sur ce PC.</value>
+  </data>
+  <data name="AlertStatus_WebhookMissing" xml:space="preserve">
+    <value>Vous avez dirigé les alertes vers un canal Discord mais n'avez pas collé de webhook, elles ne s'afficheront donc que sur ce PC — ce qui ne servira à rien quand vous en serez loin.</value>
+  </data>
+  <data name="AlertStatus_DesktopOnly" xml:space="preserve">
+    <value>Bureau uniquement. Vous les verrez sur le PC, mais rien n'arrivera sur votre téléphone.</value>
+  </data>
+  <data name="AlertStatus_SendingToChannels" xml:space="preserve">
+    <value>Envoi vers {0}.</value>
+  </data>
+  <data name="AlertStatus_SendingToDiscord" xml:space="preserve">
+    <value>Envoi vers votre canal Discord.</value>
+  </data>
+  <data name="AlertStatus_Channel_Mine" xml:space="preserve">
+    <value>votre canal</value>
+  </data>
+  <data name="AlertStatus_Channel_Clan" xml:space="preserve">
+    <value>le canal du clan</value>
+  </data>
+  <data name="AlertStatus_Channel_Phone" xml:space="preserve">
+    <value>votre téléphone</value>
+  </data>
+  <data name="AlertStatus_Channel_PhoneNamed" xml:space="preserve">
+    <value>votre téléphone ({0})</value>
+  </data>
+  <data name="AlertStatus_ListConnector" xml:space="preserve">
+    <value> et </value>
+  </data>
+  <data name="Shell_MultiInstance_ContestedBanner" xml:space="preserve">
+    <value>Roblox détient le verrou multi-instance — il est probablement en cours d'exécution dans votre barre d'état système.</value>
+  </data>
+  <data name="Shell_MultiInstance_StillLocked" xml:space="preserve">
+    <value>Toujours verrouillé — Roblox est encore en cours d'exécution.</value>
+  </data>
+  <data name="Shell_MultiInstance_FpsCapMismatch" xml:space="preserve">
+    <value>Réglez tous les comptes sur la même limite de FPS pour lancer à pleine vitesse. Roblox conserve un seul fichier de réglages partagé pour tous les clients, donc des limites différentes obligent RoRoRo à attendre que chaque compte finisse de charger avant de démarrer le suivant, jusqu'à environ 20 secondes chacun.</value>
+  </data>
+  <data name="Shell_IdleSummary_one" xml:space="preserve">
+    <value>{0} compte inactif &gt; {1} min</value>
+  </data>
+  <data name="Shell_IdleSummary_other" xml:space="preserve">
+    <value>{0} comptes inactifs &gt; {1} min</value>
+  </data>
+  <data name="Shell_IdleSummary_few" xml:space="preserve">
+    <value>{0} comptes inactifs &gt; {1} min</value>
+  </data>
+  <data name="Shell_IdleSummary_many" xml:space="preserve">
+    <value>{0} comptes inactifs &gt; {1} min</value>
+  </data>
+  <data name="Shell_MemFooter_None" xml:space="preserve">
+    <value>Aucun client Roblox en cours</value>
+  </data>
+  <data name="Shell_MemFooter_Clients_one" xml:space="preserve">
+    <value>{0} client Roblox en cours</value>
+  </data>
+  <data name="Shell_MemFooter_Clients_other" xml:space="preserve">
+    <value>{0} clients Roblox en cours</value>
+  </data>
+  <data name="Shell_MemFooter_Clients_few" xml:space="preserve">
+    <value>{0} clients Roblox en cours</value>
+  </data>
+  <data name="Shell_MemFooter_Clients_many" xml:space="preserve">
+    <value>{0} clients Roblox en cours</value>
+  </data>
+  <data name="Shell_Status_Closing" xml:space="preserve">
+    <value>Fermeture… {0} s</value>
+  </data>
+  <data name="Shell_Status_ClosingNoCount" xml:space="preserve">
+    <value>Fermeture…</value>
+  </data>
+  <data name="Shell_Status_SessionExpired" xml:space="preserve">
+    <value>Session expirée</value>
+  </data>
+  <data name="Shell_Status_Limited" xml:space="preserve">
+    <value>Limité par Roblox — recapturez ou patientez</value>
+  </data>
+  <data name="Shell_Status_InGame" xml:space="preserve">
+    <value>Dans un jeu</value>
+  </data>
+  <data name="Shell_Status_InGameNamed" xml:space="preserve">
+    <value>Dans {0}</value>
+  </data>
+  <data name="Shell_Status_InGameNamedAge" xml:space="preserve">
+    <value>Dans {0} · {1}</value>
+  </data>
+  <data name="Shell_Status_InStudio" xml:space="preserve">
+    <value>Dans Studio</value>
+  </data>
+  <data name="Shell_Status_AtHome" xml:space="preserve">
+    <value>À l'accueil Roblox</value>
+  </data>
+  <data name="Shell_Status_Connecting" xml:space="preserve">
+    <value>Connexion…</value>
+  </data>
+  <data name="Shell_Status_Closed" xml:space="preserve">
+    <value>Fermé {0}</value>
+  </data>
+  <data name="Shell_Status_LastLaunched" xml:space="preserve">
+    <value>Dernier lancement {0}</value>
+  </data>
+  <data name="Shell_Status_Ready" xml:space="preserve">
+    <value>Prêt</value>
+  </data>
+  <data name="Shell_Idle_Seconds" xml:space="preserve">
+    <value>inactif {0} s</value>
+  </data>
+  <data name="Shell_Idle_Minutes" xml:space="preserve">
+    <value>inactif {0} min</value>
+  </data>
+  <data name="Shell_Idle_HoursMinutes" xml:space="preserve">
+    <value>inactif {0} h {1} min</value>
+  </data>
+  <data name="Shell_Age_JustNow" xml:space="preserve">
+    <value>à l'instant</value>
+  </data>
+  <data name="Shell_Age_Minutes" xml:space="preserve">
+    <value>{0} min</value>
+  </data>
+  <data name="Shell_Age_HoursMinutes" xml:space="preserve">
+    <value>{0} h {1} min</value>
+  </data>
+  <data name="Shell_Age_Days" xml:space="preserve">
+    <value>{0} j</value>
+  </data>
+  <data name="Shell_Ago_InFuture" xml:space="preserve">
+    <value>dans le futur</value>
+  </data>
+  <data name="Shell_Ago_JustNow" xml:space="preserve">
+    <value>à l'instant</value>
+  </data>
+  <data name="Shell_Ago_LessThanMinute" xml:space="preserve">
+    <value>il y a moins d'1 min</value>
+  </data>
+  <data name="Shell_Ago_Minutes" xml:space="preserve">
+    <value>il y a {0} min</value>
+  </data>
+  <data name="Shell_Ago_Hours" xml:space="preserve">
+    <value>il y a {0} h</value>
+  </data>
+  <data name="Shell_Ago_Days_one" xml:space="preserve">
+    <value>il y a {0} jour</value>
+  </data>
+  <data name="Shell_Ago_Days_other" xml:space="preserve">
+    <value>il y a {0} jours</value>
+  </data>
+  <data name="Shell_Ago_Days_few" xml:space="preserve">
+    <value>il y a {0} jours</value>
+  </data>
+  <data name="Shell_Ago_Days_many" xml:space="preserve">
+    <value>il y a {0} jours</value>
+  </data>
+  <data name="Shell_RobloxHome" xml:space="preserve">
+    <value>Accueil Roblox</value>
+  </data>
+  <data name="Shell_DefaultGameTooltip_None" xml:space="preserve">
+    <value>Les lancements ouvrent Roblox à l'accueil. Définissez un jeu par défaut sous Jeux pour être lancé directement dedans.</value>
+  </data>
+  <data name="Shell_DefaultGameTooltip_Set" xml:space="preserve">
+    <value>Le jeu par défaut qu'utilise « Lancer en tant que » lorsqu'aucun choix par ligne n'est défini. Cliquez pour changer.</value>
+  </data>
+  <data name="Shell_CompactToggle_Expand" xml:space="preserve">
+    <value>Développer</value>
+  </data>
+  <data name="Shell_CompactToggle_Compact" xml:space="preserve">
+    <value>Compact</value>
+  </data>
+  <data name="Shell_Launch_NothingNoAccounts" xml:space="preserve">
+    <value>Rien à lancer — aucun compte disponible.</value>
+  </data>
+  <data name="Shell_Launch_NothingReasons" xml:space="preserve">
+    <value>Rien à lancer — {0}.</value>
+  </data>
+  <data name="Shell_Launch_Dispatched_one" xml:space="preserve">
+    <value>{1}. {0} client lancé.</value>
+  </data>
+  <data name="Shell_Launch_Dispatched_other" xml:space="preserve">
+    <value>{1}. {0} clients lancés.</value>
+  </data>
+  <data name="Shell_Launch_Dispatched_few" xml:space="preserve">
+    <value>{1}. {0} clients lancés.</value>
+  </data>
+  <data name="Shell_Launch_Dispatched_many" xml:space="preserve">
+    <value>{1}. {0} clients lancés.</value>
+  </data>
+  <data name="Shell_Launch_Clause_Running" xml:space="preserve">
+    <value>{0} déjà en cours</value>
+  </data>
+  <data name="Shell_Launch_Clause_Expired" xml:space="preserve">
+    <value>{0} expiré(s)</value>
+  </data>
+  <data name="Shell_Launch_Clause_Limited" xml:space="preserve">
+    <value>{0} limité(s)</value>
+  </data>
+  <data name="Shell_Launch_Clause_Deselected" xml:space="preserve">
+    <value>{0} désélectionné(s)</value>
+  </data>
+  <data name="Shell_Leftover_Windowless_one" xml:space="preserve">
+    <value>{0} processus Roblox résiduel sans fenêtre</value>
+  </data>
+  <data name="Shell_Leftover_Windowless_other" xml:space="preserve">
+    <value>{0} processus Roblox résiduels sans fenêtre</value>
+  </data>
+  <data name="Shell_Leftover_Windowless_few" xml:space="preserve">
+    <value>{0} processus Roblox résiduels sans fenêtre</value>
+  </data>
+  <data name="Shell_Leftover_Windowless_many" xml:space="preserve">
+    <value>{0} processus Roblox résiduels sans fenêtre</value>
+  </data>
+  <data name="Shell_Leftover_Windowed_one" xml:space="preserve">
+    <value>{0} fenêtre Roblox ouverte d'une session précédente</value>
+  </data>
+  <data name="Shell_Leftover_Windowed_other" xml:space="preserve">
+    <value>{0} fenêtres Roblox ouvertes d'une session précédente</value>
+  </data>
+  <data name="Shell_Leftover_Windowed_few" xml:space="preserve">
+    <value>{0} fenêtres Roblox ouvertes d'une session précédente</value>
+  </data>
+  <data name="Shell_Leftover_Windowed_many" xml:space="preserve">
+    <value>{0} fenêtres Roblox ouvertes d'une session précédente</value>
+  </data>
+  <data name="Shell_Leftover_Connector" xml:space="preserve">
+    <value>, et </value>
+  </data>
+  <data name="Shell_Leftover_Found" xml:space="preserve">
+    <value>{0} détecté(s). Multi-instance fonctionne — RoRoRo détient le verrou.</value>
+  </data>
+  <data name="Shell_PreWarm_Updating" xml:space="preserve">
+    <value>Roblox se met à jour — patientez.</value>
+  </data>
+  <data name="Shell_PreWarm_NeverConnected" xml:space="preserve">
+    <value>Le lancement ne s'est jamais connecté. Vérifiez que Roblox est à jour + que l'antivirus ne bloque pas.</value>
+  </data>
+  <data name="Shell_ServerLanding_RecycleNotYet" xml:space="preserve">
+    <value>{0} n'est pas encore dans ce serveur — vérifiez sa fenêtre Roblox. Un serveur plein vous met en file d'attente.</value>
+  </data>
+  <data name="Shell_ServerLanding_RecycleElsewhere" xml:space="preserve">
+    <value>{0} est revenu dans un serveur différent — Roblox l'a déplacé. Utilisez Recycle à nouveau pour réessayer.</value>
+  </data>
+  <data name="Shell_ServerLanding_SquadNotYet" xml:space="preserve">
+    <value>{0} sur {1} ne sont pas encore dans ce serveur : {2}. Vérifiez leurs fenêtres Roblox — un serveur plein vous met en file d'attente.</value>
+  </data>
+  <data name="Shell_ServerLanding_SquadElsewhere" xml:space="preserve">
+    <value>{0} sur {1} sont arrivés dans un serveur différent : {2}. Utilisez Recycle sur ces lignes pour réessayer.</value>
+  </data>
+  <data name="Shell_ServerLanding_MoreNames" xml:space="preserve">
+    <value> +{0} de plus</value>
+  </data>
+  <data name="Shell_Msg_ThatFriend" xml:space="preserve">
+    <value>cet ami</value>
+  </data>
+  <data name="Shell_Msg_CantFollow" xml:space="preserve">
+    <value>Impossible de suivre {0} — il n'est pas dans un jeu rejoignable pour le moment (ou sa confidentialité de connexion est désactivée).</value>
+  </data>
+  <data name="Shell_Msg_SessionsExpired_one" xml:space="preserve">
+    <value>{0} session enregistrée a expiré. Cliquez sur Réauthentifier pour l'actualiser.</value>
+  </data>
+  <data name="Shell_Msg_SessionsExpired_other" xml:space="preserve">
+    <value>{0} sessions enregistrées ont expiré. Cliquez sur Réauthentifier pour les actualiser.</value>
+  </data>
+  <data name="Shell_Msg_SessionsExpired_few" xml:space="preserve">
+    <value>{0} sessions enregistrées ont expiré. Cliquez sur Réauthentifier pour les actualiser.</value>
+  </data>
+  <data name="Shell_Msg_SessionsExpired_many" xml:space="preserve">
+    <value>{0} sessions enregistrées ont expiré. Cliquez sur Réauthentifier pour les actualiser.</value>
+  </data>
+  <data name="Shell_Msg_AddedMain" xml:space="preserve">
+    <value>{0} ajouté. Défini comme principal — modifiable à tout moment.</value>
+  </data>
+  <data name="Shell_Msg_Added" xml:space="preserve">
+    <value>{0} ajouté.</value>
+  </data>
+  <data name="Shell_Msg_NothingToJoin" xml:space="preserve">
+    <value>Aucun compte pour se connecter — ajoutez d'abord un compte.</value>
+  </data>
+  <data name="Shell_Msg_TakeoverClause" xml:space="preserve">
+    <value> Cela prend le contrôle de la session en cours de {0}.</value>
+  </data>
+  <data name="Shell_Msg_JoinPrivateConfirm" xml:space="preserve">
+    <value>Ceci est un serveur privé — l'accès peut vous être refusé si vous n'êtes pas sur sa liste.{0} Essayer quand même ?</value>
+  </data>
+  <data name="Shell_Msg_JoinUriConfirm" xml:space="preserve">
+    <value>Cette demande de connexion provient de l'extérieur de RoRoRo et ne peut pas être vérifiée — lancement de {0} dans ce serveur.{1} Continuer quand même ?</value>
+  </data>
+  <data name="Shell_Msg_JoiningViaTakeover" xml:space="preserve">
+    <value>Connexion via {0} — cela prend le contrôle de la session en cours de ce compte.</value>
+  </data>
+  <data name="Shell_Status_Launching" xml:space="preserve">
+    <value>Lancement...</value>
+  </data>
+  <data name="Shell_Status_RobloxNotInstalled" xml:space="preserve">
+    <value>Roblox non installé.</value>
+  </data>
+  <data name="Shell_Msg_LaunchingSelected_one" xml:space="preserve">
+    <value>Lancement de {0} compte sélectionné...</value>
+  </data>
+  <data name="Shell_Msg_LaunchingSelected_other" xml:space="preserve">
+    <value>Lancement de {0} comptes sélectionnés...</value>
+  </data>
+  <data name="Shell_Msg_LaunchingSelected_few" xml:space="preserve">
+    <value>Lancement de {0} comptes sélectionnés...</value>
+  </data>
+  <data name="Shell_Msg_LaunchingSelected_many" xml:space="preserve">
+    <value>Lancement de {0} comptes sélectionnés...</value>
+  </data>
+  <data name="Shell_Msg_LaunchingProgress" xml:space="preserve">
+    <value>Lancement de {0} ({1} sur {2})...</value>
+  </data>
+  <data name="Shell_Launch_VerbMultiple" xml:space="preserve">
+    <value>Lancement multiple terminé</value>
+  </data>
+  <data name="Shell_Msg_WaitingForLanding" xml:space="preserve">
+    <value>En attente de l'arrivée de {0} pour que les autres puissent rejoindre ce serveur...</value>
+  </data>
+  <data name="Shell_Msg_CouldntReadServer" xml:space="preserve">
+    <value>Impossible de lire le serveur de {0} à temps — les autres rejoignent le jeu, pas ce serveur.</value>
+  </data>
+  <data name="Shell_Msg_JoiningServerProgress" xml:space="preserve">
+    <value>Connexion au serveur : {0} ({1} sur {2})...</value>
+  </data>
+  <data name="Shell_Msg_WaitingSquadMember" xml:space="preserve">
+    <value>En attente de l'arrivée d'un membre de l'escouade (pour les comptes en connexion via un ami)...</value>
+  </data>
+  <data name="Shell_Msg_JoiningViaAnchorProgress" xml:space="preserve">
+    <value>{0} rejoint via {1} ({2} sur {3})...</value>
+  </data>
+  <data name="Shell_Msg_NoAnchorAccounts" xml:space="preserve">
+    <value>Aucun compte à connexion directe pour servir d'ancrage — les comptes marqués se connectent directement.</value>
+  </data>
+  <data name="Shell_Msg_NoSquadLanded" xml:space="preserve">
+    <value>Aucun membre de l'escouade n'est arrivé à temps — les comptes marqués se connectent directement.</value>
+  </data>
+  <data name="Shell_Msg_JoiningServerFallbackProgress" xml:space="preserve">
+    <value>Connexion au serveur (repli direct) : {0} ({1} sur {2})...</value>
+  </data>
+  <data name="Shell_Launch_VerbSquad" xml:space="preserve">
+    <value>Squad launch terminé</value>
+  </data>
+  <data name="Shell_Msg_CouldntReadSession" xml:space="preserve">
+    <value>Impossible de lire la session enregistrée de ce compte.</value>
+  </data>
+  <data name="Shell_Msg_SessionExpiredReauth" xml:space="preserve">
+    <value>La session de {0} a expiré — réauthentifiez-vous d'abord.</value>
+  </data>
+  <data name="Shell_Msg_CouldntReachFriends" xml:space="preserve">
+    <value>Impossible de contacter Roblox pour charger les amis. Réessayez dans un instant.</value>
+  </data>
+  <data name="Shell_Msg_RemoveConfirm" xml:space="preserve">
+    <value>Supprimer {0} ?
+Vous devrez vous reconnecter pour le rajouter.</value>
+  </data>
+  <data name="Shell_Msg_RemoveAccountTitle" xml:space="preserve">
+    <value>Supprimer le compte</value>
+  </data>
+  <data name="Shell_Msg_Removed" xml:space="preserve">
+    <value>{0} supprimé.</value>
+  </data>
+  <data name="Shell_Msg_ReauthCancelled" xml:space="preserve">
+    <value>Réauthentification annulée — la session enregistrée de {0} est inchangée.</value>
+  </data>
+  <data name="Shell_Msg_ReauthIncomplete" xml:space="preserve">
+    <value>La réauthentification ne s'est pas terminée : {0}</value>
+  </data>
+  <data name="Shell_Msg_ReauthDifferentAccount" xml:space="preserve">
+    <value>Cette connexion concernait un autre compte (@{0}) — {1} est inchangé.</value>
+  </data>
+  <data name="Shell_Status_Reauthenticated" xml:space="preserve">
+    <value>Réauthentifié.</value>
+  </data>
+  <data name="Shell_Msg_CouldntSaveJoinViaFriend" xml:space="preserve">
+    <value>Impossible d'enregistrer la connexion via un ami : {0}</value>
+  </data>
+  <data name="Shell_Msg_SourceExpired" xml:space="preserve">
+    <value>{0} a une session expirée — réauthentifiez-vous d'abord.</value>
+  </data>
+  <data name="Shell_Msg_CouldntFollowNoUserId" xml:space="preserve">
+    <value>Impossible de suivre {0} — le userId Roblox n'est pas encore connu. Essayez de réauthentifier ce compte, ou attendez un instant après la connexion.</value>
+  </data>
+  <data name="Shell_Msg_FollowingFromSource" xml:space="preserve">
+    <value>Suivi de {0} depuis {1}...</value>
+  </data>
+  <data name="Shell_Msg_CouldntSetMain" xml:space="preserve">
+    <value>Impossible de définir le compte principal — voir le journal pour les détails.</value>
+  </data>
+  <data name="Shell_Msg_MainCleared" xml:space="preserve">
+    <value>Compte principal effacé.</value>
+  </data>
+  <data name="Shell_Msg_IsNowMain" xml:space="preserve">
+    <value>{0} est maintenant votre compte principal.</value>
+  </data>
+  <data name="Shell_Msg_StartedFresh" xml:space="preserve">
+    <value>Nouveau départ. Ajoutez des comptes pour commencer.</value>
+  </data>
+  <data name="Shell_Msg_CouldntRemoveGame" xml:space="preserve">
+    <value>Impossible de supprimer ce jeu. Erreur disque ?</value>
+  </data>
+  <data name="Shell_Msg_GameNotSaved" xml:space="preserve">
+    <value>Ce jeu n'est plus enregistré.</value>
+  </data>
+  <data name="Shell_Msg_ItemNotSaved" xml:space="preserve">
+    <value>Ce {0} n'est plus enregistré.</value>
+  </data>
+  <data name="Shell_Msg_CouldntSaveNameChange" xml:space="preserve">
+    <value>Impossible d'enregistrer le changement de nom. Erreur disque ?</value>
+  </data>
+  <data name="Shell_Pref_Title" xml:space="preserve">
+    <value>Préférences</value>
+  </data>
+  <data name="Shell_Pref_DiscordNotSetUp" xml:space="preserve">
+    <value>La présence Discord n'est pas configurée pour cette version.</value>
+  </data>
+  <data name="Shell_Pref_CouldntReadMemory" xml:space="preserve">
+    <value>Impossible de lire vos réglages de mémoire : {0}</value>
+  </data>
+  <data name="Shell_Pref_CouldntSaveLanguage" xml:space="preserve">
+    <value>Impossible d'enregistrer la langue : {0}</value>
+  </data>
+  <data name="Shell_Pref_CouldntUpdateStartup" xml:space="preserve">
+    <value>Impossible de mettre à jour l'entrée de démarrage Windows : {0}</value>
+  </data>
+  <data name="Shell_Pref_CouldntSavePreference" xml:space="preserve">
+    <value>Impossible d'enregistrer la préférence : {0}</value>
+  </data>
+  <data name="Shell_Pref_CouldntSaveSetting" xml:space="preserve">
+    <value>Impossible d'enregistrer ce réglage : {0}</value>
+  </data>
+  <data name="Shell_Pref_CouldntSavePhone" xml:space="preserve">
+    <value>Impossible d'enregistrer le réglage du téléphone : {0}</value>
+  </data>
+  <data name="Shell_Pref_Reveal_Hide" xml:space="preserve">
+    <value>Masquer</value>
+  </data>
+  <data name="Shell_Pref_Reveal_Show" xml:space="preserve">
+    <value>Afficher</value>
+  </data>
+  <data name="Shell_Pref_PushoverAppToken" xml:space="preserve">
+    <value>jeton d'application</value>
+  </data>
+  <data name="Shell_Pref_PushoverUserKey" xml:space="preserve">
+    <value>clé utilisateur</value>
+  </data>
+  <data name="Shell_Pref_CouldntSaveKey" xml:space="preserve">
+    <value>Impossible d'enregistrer la clé : {0}</value>
+  </data>
+  <data name="Shell_Pref_NtfyTopicWarn" xml:space="preserve">
+    <value>Un nouveau sujet déconnecte votre téléphone jusqu'à ce que vous vous abonniez au nouveau dans l'application ntfy. Créer un nouveau sujet ?</value>
+  </data>
+  <data name="Shell_Pref_NtfySubscribeHint" xml:space="preserve">
+    <value>Abonnez-vous à ce sujet exact dans l'application ntfy sur votre téléphone, puis appuyez sur Tester mon téléphone.</value>
+  </data>
+  <data name="Shell_Pref_CouldntSaveTopic" xml:space="preserve">
+    <value>Impossible d'enregistrer le nouveau sujet : {0}</value>
+  </data>
+  <data name="Shell_Pref_CouldntSaveServer" xml:space="preserve">
+    <value>Impossible d'enregistrer le serveur : {0}</value>
+  </data>
+  <data name="Shell_Pref_FinishPhoneSetup" xml:space="preserve">
+    <value>Terminez d'abord la configuration du téléphone ci-dessus — il n'y a encore nulle part où envoyer un test.</value>
+  </data>
+  <data name="Shell_Pref_Sending" xml:space="preserve">
+    <value>Envoi…</value>
+  </data>
+  <data name="Shell_Pref_PhoneTestSent" xml:space="preserve">
+    <value>Envoyé — votre téléphone devrait vibrer d'ici quelques secondes.</value>
+  </data>
+  <data name="Shell_Pref_PushoverRejected" xml:space="preserve">
+    <value>Pushover a rejeté les clés enregistrées — revérifiez les deux sur pushover.net et collez-les à nouveau.</value>
+  </data>
+  <data name="Shell_Pref_NtfyRefused" xml:space="preserve">
+    <value>Le serveur ntfy a refusé ce sujet — générez-en un nouveau et réabonnez-vous sur votre téléphone.</value>
+  </data>
+  <data name="Shell_Pref_PushRateLimited" xml:space="preserve">
+    <value>Le service push nous limite en débit. Attendez une minute ; la configuration elle-même semble correcte.</value>
+  </data>
+  <data name="Shell_Pref_PushUnreachable" xml:space="preserve">
+    <value>Impossible de contacter le service push.</value>
+  </data>
+  <data name="Shell_Pref_IconFilter" xml:space="preserve">
+    <value>Image PNG|*.png</value>
+  </data>
+  <data name="Shell_Pref_SaveIconTitle" xml:space="preserve">
+    <value>Enregistrer l'icône</value>
+  </data>
+  <data name="Shell_Pref_IconSaved" xml:space="preserve">
+    <value>Icône enregistrée — téléversez-la dans l'emplacement d'icône du formulaire d'application de pushover.net.</value>
+  </data>
+  <data name="Shell_Pref_CouldntSaveIcon" xml:space="preserve">
+    <value>Impossible d'enregistrer l'icône : {0}</value>
+  </data>
+  <data name="Shell_Pref_CouldntSaveAlertRouting" xml:space="preserve">
+    <value>Impossible d'enregistrer le routage des alertes : {0}</value>
+  </data>
+  <data name="Shell_Pref_CouldntSaveWebhook" xml:space="preserve">
+    <value>Impossible d'enregistrer le webhook : {0}</value>
+  </data>
+  <data name="Shell_Pref_PostsTo" xml:space="preserve">
+    <value>Publie dans #{0} sur {1}.</value>
+  </data>
+  <data name="Shell_Pref_MyChannel" xml:space="preserve">
+    <value>Mon canal</value>
+  </data>
+  <data name="Shell_Pref_ClanChannel" xml:space="preserve">
+    <value>Canal du clan</value>
+  </data>
+  <data name="Shell_Pref_PasteWebhookFirst" xml:space="preserve">
+    <value>Collez d'abord une URL de webhook — il n'y a encore nulle part où envoyer un test.</value>
+  </data>
+  <data name="Shell_Pref_TestResult_Sent" xml:space="preserve">
+    <value>{0} : envoyé.</value>
+  </data>
+  <data name="Shell_Pref_TestResult_Gone" xml:space="preserve">
+    <value>{0} : ce webhook n'existe plus — créez-en un nouveau et collez-le à nouveau.</value>
+  </data>
+  <data name="Shell_Pref_TestResult_RateLimited" xml:space="preserve">
+    <value>{0} : Discord nous limite en débit. Attendez une minute ; le webhook lui-même semble correct.</value>
+  </data>
+  <data name="Shell_Pref_TestResult_Unreachable" xml:space="preserve">
+    <value>{0} : impossible de contacter Discord.</value>
+  </data>
+  <data name="Shell_Pref_NoServerHelpTitle" xml:space="preserve">
+    <value>Configuration des alertes</value>
+  </data>
+  <data name="Shell_Pref_ButtonOutlinesTitle" xml:space="preserve">
+    <value>Contours des boutons</value>
+  </data>
+  <data name="Shell_Pref_CouldntSaveThat" xml:space="preserve">
+    <value>Impossible d'enregistrer cela : {0}</value>
+  </data>
+  <data name="Shell_Pref_AutoValue" xml:space="preserve">
+    <value>{0} (auto)</value>
+  </data>
+  <data name="Shell_Pref_NumberHint_WithZero" xml:space="preserve">
+    <value>Utilisez un nombre entier de {0} à {1}, 0 pour le désactiver, ou laissez le champ vide et RoRoRo en choisira un.</value>
+  </data>
+  <data name="Shell_Pref_NumberHint" xml:space="preserve">
+    <value>Utilisez un nombre entier de {0} à {1}, ou laissez le champ vide et RoRoRo en choisira un.</value>
+  </data>
+  <data name="Shell_Pref_NotWholeNumber" xml:space="preserve">
+    <value>« {0} » n'est pas un nombre entier, donc rien n'a été enregistré. {1}</value>
+  </data>
+  <data name="Shell_Pref_OutOfRange" xml:space="preserve">
+    <value>{0} est en dehors de {1} à {2}, donc rien n'a été enregistré. {3}</value>
+  </data>
+  <data name="Shell_Pref_RequiredNumberHint" xml:space="preserve">
+    <value>Utilisez un nombre entier de {0} à {1}. La valeur par défaut est {2}.</value>
+  </data>
+  <data name="Shell_Pref_NeedsANumber" xml:space="preserve">
+    <value>Celui-ci nécessite un nombre, donc rien n'a été enregistré. {0}</value>
+  </data>
+  <data name="Shell_Pref_NothingToExport" xml:space="preserve">
+    <value>Vous n'avez encore aucun compte enregistré à exporter.</value>
+  </data>
+  <data name="Shell_Pref_NothingToExportTitle" xml:space="preserve">
+    <value>Rien à exporter</value>
+  </data>
+  <data name="Shell_Pref_NoThemeChoice" xml:space="preserve">
+    <value>Il n'y a rien à choisir pour ce thème.
+
+RoRoRo ne pose de question sur les contours des boutons que pour les thèmes écrits par les utilisateurs eux-mêmes, et uniquement quand le contour défini par un thème serait trop faible pour distinguer un bouton de la surface derrière lui. Les thèmes intégrés, c'est à nous de les réussir, ils ne font donc jamais l'objet de cette question.</value>
+  </data>
+  <data name="Shell_Pref_NoServerHelp" xml:space="preserve">
+    <value>Il vous faut votre propre serveur Discord. C'est gratuit, il peut n'y avoir que vous, et personne d'autre ne peut le voir.
+
+Créez-en un :
+  1. Cliquez sur le bouton + sur le bord gauche de Discord.
+  2. Choisissez « Create My Own », puis passez les questions.
+  3. Nommez-le comme vous voulez — « RoRoRo » convient.
+
+Créez ensuite le webhook :
+  4. Faites un clic droit sur votre nouveau serveur, puis Paramètres du serveur.
+  5. Intégrations, puis Webhooks, puis Nouveau webhook.
+  6. Cliquez sur Copier l'URL du webhook, et collez-la dans le champ ici.
+
+Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que Discord y est installé.</value>
+  </data>
+  <data name="Shell_Mem_SummaryKnown" xml:space="preserve">
+    <value>Votre PC indique {0} de RAM. Laissez un champ ci-dessous vide et RoRoRo choisit pour vous : {1} MB gardés libres, et un avertissement quand un compte dépasse {2} MB. Le délai d'avertissement anticipé démarre à {3} minutes.</value>
+  </data>
+  <data name="Shell_Mem_SummaryUnknown" xml:space="preserve">
+    <value>RoRoRo ne peut pas lire la quantité de RAM de votre PC. Laissez un champ ci-dessous vide et il se rabat sur {0} MB gardés libres, et un avertissement quand un compte dépasse {1} MB. Le délai d'avertissement anticipé démarre à {2} minutes. Saisissez vos propres valeurs si celles-ci ne conviennent pas à votre PC.</value>
+  </data>
+  <data name="Shell_Muted_one" xml:space="preserve">
+    <value>{0} compte est en sourdine. Rien de ce qu'il fait ne déclenche d'alerte, quels que soient les réglages ci-dessus.</value>
+  </data>
+  <data name="Shell_Muted_other" xml:space="preserve">
+    <value>{0} comptes sont en sourdine. Rien de ce qu'ils font ne déclenche d'alerte, quels que soient les réglages ci-dessus.</value>
+  </data>
+  <data name="Shell_Muted_few" xml:space="preserve">
+    <value>{0} comptes sont en sourdine. Rien de ce qu'ils font ne déclenche d'alerte, quels que soient les réglages ci-dessus.</value>
+  </data>
+  <data name="Shell_Muted_many" xml:space="preserve">
+    <value>{0} comptes sont en sourdine. Rien de ce qu'ils font ne déclenche d'alerte, quels que soient les réglages ci-dessus.</value>
+  </data>
+  <data name="Shell_ThemeStatus_ThatTheme" xml:space="preserve">
+    <value>Ce thème</value>
+  </data>
+  <data name="Shell_ThemeStatus_NotInFolder" xml:space="preserve">
+    <value>{0} n'est plus dans votre dossier de thèmes, donc rien n'a changé. Fermez et rouvrez les Paramètres pour voir ce qui s'y trouve maintenant.</value>
+  </data>
+  <data name="Shell_ThemeStatus_OnButNotSaved" xml:space="preserve">
+    <value>{0} est activé maintenant, mais RoRoRo n'a pas pu le mémoriser{1} Vous reviendrez à votre ancien thème au prochain démarrage.</value>
+  </data>
+  <data name="Shell_ThemeStatus_UnreadableOne" xml:space="preserve">
+    <value>RoRoRo n'a pas pu lire {0}, il n'est donc pas dans la liste. Vérifiez-le pour une faute de frappe ou une ligne manquante, puis fermez et rouvrez les Paramètres.</value>
+  </data>
+  <data name="Shell_ThemeStatus_UnreadableMany" xml:space="preserve">
+    <value>RoRoRo n'a pas pu lire {0} fichiers de votre dossier de thèmes, ils ne sont donc pas dans la liste : {1}. Vérifiez chacun pour une faute de frappe ou une ligne manquante, puis fermez et rouvrez les Paramètres.</value>
+  </data>
+  <data name="Shell_ThemeStatus_ShadowedOne" xml:space="preserve">
+    <value>{0} porte le même nom qu'un thème intégré, donc RoRoRo a conservé le thème intégré. Renommez le fichier pour utiliser le vôtre.</value>
+  </data>
+  <data name="Shell_ThemeStatus_ShadowedMany" xml:space="preserve">
+    <value>{0} fichiers portent les mêmes noms que des thèmes intégrés, donc RoRoRo a conservé les thèmes intégrés : {1}. Renommez-les pour utiliser les vôtres.</value>
+  </data>
+  <data name="Shell_ThemeStatus_MoreNames" xml:space="preserve">
+    <value>, et {0} de plus</value>
+  </data>
+  <data name="Shell_Theme_Desc_Brand" xml:space="preserve">
+    <value>Cyan et magenta sur bleu marine : l'apparence par défaut de RoRoRo, celle que vous verrez sur chaque capture d'écran.</value>
+  </data>
+  <data name="Shell_Theme_Desc_Midnight" xml:space="preserve">
+    <value>Plus froid et plus tamisé que Brand, conçu pour les sessions tardives quand vous ne voulez pas d'un écran lumineux en face de vous.</value>
+  </data>
+  <data name="Shell_Theme_Desc_MagentaHeat" xml:space="preserve">
+    <value>Met en avant le magenta plutôt que le cyan, pour que vos boutons Lancer et Arrêter soient la première chose que vous remarquez.</value>
+  </data>
+  <data name="Shell_Theme_Desc_Flatline" xml:space="preserve">
+    <value>Se lit de la même façon, que vous distinguiez les couleurs ou non : tout ce que l'application exprime par la couleur, elle l'exprime aussi par des mots ou des formes.</value>
+  </data>
+  <data name="Shell_ThemeBuilder_CouldntLoadPrompt" xml:space="preserve">
+    <value>Impossible de charger l'invite — voir les journaux.</value>
+  </data>
+  <data name="Shell_ThemeBuilder_PromptCopied" xml:space="preserve">
+    <value>Invite copiée. Collez-la dans Claude / ChatGPT / etc., décrivez une ambiance, et collez ci-dessous le JSON qu'elle renvoie.</value>
+  </data>
+  <data name="Shell_ThemeBuilder_ClipboardFailed" xml:space="preserve">
+    <value>Échec de la copie dans le presse-papiers : {0}</value>
+  </data>
+  <data name="Shell_ThemeBuilder_PasteJsonFirst" xml:space="preserve">
+    <value>Collez d'abord le JSON renvoyé par l'IA.</value>
+  </data>
+  <data name="Shell_ThemeBuilder_Saving" xml:space="preserve">
+    <value>Enregistrement...</value>
+  </data>
+  <data name="Shell_ThemeBuilder_SaveFailed" xml:space="preserve">
+    <value>Échec de l'enregistrement : {0}</value>
+  </data>
+  <data name="Shell_Caption_DeepBlue" xml:space="preserve">
+    <value>Bleu profond</value>
+  </data>
+  <data name="Shell_Caption_BurntOrange" xml:space="preserve">
+    <value>Orange brûlé</value>
+  </data>
+  <data name="Shell_Caption_ForestGreen" xml:space="preserve">
+    <value>Vert forêt</value>
+  </data>
+  <data name="Shell_Caption_RoyalPurple" xml:space="preserve">
+    <value>Violet royal</value>
+  </data>
+  <data name="Shell_Caption_Crimson" xml:space="preserve">
+    <value>Cramoisi</value>
+  </data>
+  <data name="Shell_Caption_Ocean" xml:space="preserve">
+    <value>Océan</value>
+  </data>
+  <data name="Shell_Caption_AmberBrown" xml:space="preserve">
+    <value>Brun ambré</value>
+  </data>
+  <data name="Shell_Caption_DeepTeal" xml:space="preserve">
+    <value>Sarcelle profond</value>
+  </data>
+  <data name="Shell_Caption_MagentaMain" xml:space="preserve">
+    <value>Magenta (principal)</value>
+  </data>
+  <data name="Shell_Caption_Header" xml:space="preserve">
+    <value>Couleur de la barre de titre pour {0}</value>
+  </data>
+  <data name="Shell_Caption_TypeHex" xml:space="preserve">
+    <value>Saisissez une couleur hexadécimale comme #4FE08C, ou cliquez sur Réinitialiser pour revenir en auto.</value>
+  </data>
+  <data name="Shell_Caption_BadHex" xml:space="preserve">
+    <value>Cela ne ressemble pas à une couleur hexadécimale. Utilisez #rrggbb (par ex. #4FE08C).</value>
+  </data>
+  <data name="Shell_Caption_Reverted" xml:space="preserve">
+    <value>Retour à la couleur dérivée automatiquement.</value>
+  </data>
+  <data name="Shell_Caption_Applied" xml:space="preserve">
+    <value>{0} appliqué.</value>
+  </data>
+  <data name="Diag_Section_Application" xml:space="preserve">
+    <value>Application</value>
+  </data>
+  <data name="Diag_Section_Memory" xml:space="preserve">
+    <value>Mémoire</value>
+  </data>
+  <data name="Diag_Section_PerAccountMemory" xml:space="preserve">
+    <value>Mémoire par compte</value>
+  </data>
+  <data name="Diag_Section_Paths" xml:space="preserve">
+    <value>Chemins</value>
+  </data>
+  <data name="Diag_Label_Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="Diag_Label_DotNet" xml:space="preserve">
+    <value>Runtime .NET</value>
+  </data>
+  <data name="Diag_Label_OS" xml:space="preserve">
+    <value>OS</value>
+  </data>
+  <data name="Diag_Label_SavedAccounts" xml:space="preserve">
+    <value>Comptes enregistrés</value>
+  </data>
+  <data name="Diag_Label_LiveClients" xml:space="preserve">
+    <value>Clients Roblox actifs</value>
+  </data>
+  <data name="Diag_Label_Installed" xml:space="preserve">
+    <value>Installé</value>
+  </data>
+  <data name="Diag_Label_InstalledRam" xml:space="preserve">
+    <value>RAM installée</value>
+  </data>
+  <data name="Diag_Label_AvailableRam" xml:space="preserve">
+    <value>RAM disponible</value>
+  </data>
+  <data name="Diag_Label_Logs" xml:space="preserve">
+    <value>Journaux</value>
+  </data>
+  <data name="Diag_Label_Data" xml:space="preserve">
+    <value>Données</value>
+  </data>
+  <data name="Diag_Yes" xml:space="preserve">
+    <value>oui</value>
+  </data>
+  <data name="Diag_No" xml:space="preserve">
+    <value>non</value>
+  </data>
+  <data name="Diag_Stale" xml:space="preserve">
+    <value>(obsolète)</value>
+  </data>
+  <data name="Diag_Collecting" xml:space="preserve">
+    <value>Collecte...</value>
+  </data>
+  <data name="Diag_Captured" xml:space="preserve">
+    <value>Capturé {0} (heure locale).</value>
+  </data>
+  <data name="Diag_CouldntCollect" xml:space="preserve">
+    <value>Impossible de collecter les diagnostics : {0}</value>
+  </data>
+  <data name="Diag_SnapshotNotReady" xml:space="preserve">
+    <value>Instantané pas encore prêt — patientez un instant et réessayez.</value>
+  </data>
+  <data name="Diag_SaveBundleTitle" xml:space="preserve">
+    <value>Enregistrer le lot de support</value>
+  </data>
+  <data name="Diag_ZipFilter" xml:space="preserve">
+    <value>Archives Zip (*.zip)|*.zip</value>
+  </data>
+  <data name="Diag_BuildingBundle" xml:space="preserve">
+    <value>Création du lot...</value>
+  </data>
+  <data name="Diag_SavedFile" xml:space="preserve">
+    <value>{0} enregistré.</value>
+  </data>
+  <data name="Diag_CouldntSaveBundle" xml:space="preserve">
+    <value>Impossible d'enregistrer le lot : {0}</value>
+  </data>
+  <data name="Shell_Games_TypeToSearch" xml:space="preserve">
+    <value>Saisissez un nom de jeu pour lancer la recherche.</value>
+  </data>
+  <data name="Shell_Games_Searching" xml:space="preserve">
+    <value>Recherche de « {0} »...</value>
+  </data>
+  <data name="Shell_Games_NoResults" xml:space="preserve">
+    <value>Aucun résultat pour « {0} ». Essayez un autre nom ou collez une URL ci-dessous.</value>
+  </data>
+  <data name="Shell_Games_FoundMatches_one" xml:space="preserve">
+    <value>{0} résultat trouvé.</value>
+  </data>
+  <data name="Shell_Games_FoundMatches_other" xml:space="preserve">
+    <value>{0} résultats trouvés.</value>
+  </data>
+  <data name="Shell_Games_FoundMatches_few" xml:space="preserve">
+    <value>{0} résultats trouvés.</value>
+  </data>
+  <data name="Shell_Games_FoundMatches_many" xml:space="preserve">
+    <value>{0} résultats trouvés.</value>
+  </data>
+  <data name="Shell_Games_SearchFailed" xml:space="preserve">
+    <value>Échec de la recherche : {0}</value>
+  </data>
+  <data name="Shell_Games_Added" xml:space="preserve">
+    <value>{0} ajouté.</value>
+  </data>
+  <data name="Shell_Games_CouldntAdd" xml:space="preserve">
+    <value>Impossible d'ajouter : {0}</value>
+  </data>
+  <data name="Shell_Games_PasteUrlFirst" xml:space="preserve">
+    <value>Collez d'abord une URL de jeu Roblox ou un ID de place.</value>
+  </data>
+  <data name="Shell_Games_NoPlaceId" xml:space="preserve">
+    <value>Impossible de trouver un ID de place dans cette saisie. Attendu : roblox.com/games/&lt;id&gt;/&lt;slug&gt; ou simplement &lt;id&gt;.</value>
+  </data>
+  <data name="Shell_Games_LookingUp" xml:space="preserve">
+    <value>Recherche du jeu...</value>
+  </data>
+  <data name="Shell_Games_NoMetadata" xml:space="preserve">
+    <value>Roblox n'a pas renvoyé de métadonnées pour l'ID de place {0}. Vérifiez l'URL et réessayez.</value>
+  </data>
+  <data name="Shell_Games_CouldntSetDefault" xml:space="preserve">
+    <value>Impossible de définir la valeur par défaut : {0}</value>
+  </data>
+  <data name="Shell_Games_CouldntClearDefault" xml:space="preserve">
+    <value>Impossible d'effacer la valeur par défaut : {0}</value>
+  </data>
+  <data name="Shell_Games_CouldntSetDefaultServer" xml:space="preserve">
+    <value>Impossible de définir le serveur par défaut : {0}</value>
+  </data>
+  <data name="Shell_Games_CouldntClearDefaultServer" xml:space="preserve">
+    <value>Impossible d'effacer le serveur par défaut : {0}</value>
+  </data>
+  <data name="Shell_Games_RemoveGameConfirm" xml:space="preserve">
+    <value>Supprimer {0} de vos jeux enregistrés ?</value>
+  </data>
+  <data name="Shell_Games_ThisGame" xml:space="preserve">
+    <value>ce jeu</value>
+  </data>
+  <data name="Shell_Games_RemoveGameTitle" xml:space="preserve">
+    <value>Supprimer le jeu</value>
+  </data>
+  <data name="Shell_Games_Removed" xml:space="preserve">
+    <value>Supprimé.</value>
+  </data>
+  <data name="Shell_Games_CouldntRemove" xml:space="preserve">
+    <value>Impossible de supprimer : {0}</value>
+  </data>
+  <data name="Shell_Games_RemoveServerConfirm" xml:space="preserve">
+    <value>Supprimer {0} de vos serveurs enregistrés ?</value>
+  </data>
+  <data name="Shell_Games_ThisServer" xml:space="preserve">
+    <value>ce serveur</value>
+  </data>
+  <data name="Shell_Games_RemoveServerTitle" xml:space="preserve">
+    <value>Supprimer le serveur</value>
+  </data>
+  <data name="Shell_Games_ServerNotSaved" xml:space="preserve">
+    <value>Ce serveur n'est plus enregistré.</value>
+  </data>
+  <data name="Shell_Games_CouldntSaveNameChangeDisk" xml:space="preserve">
+    <value>Impossible d'enregistrer le changement de nom. Erreur disque ? ({0})</value>
+  </data>
+  <data name="Shell_Stats_StreakSuffix" xml:space="preserve">
+    <value> · série de {0} j</value>
+  </data>
+  <data name="Shell_Stats_PlaceFallback" xml:space="preserve">
+    <value>place {0}</value>
+  </data>
+  <data name="Shell_Stats_IntegrityNote_one" xml:space="preserve">
+    <value>{0} session n'a pas enregistré de fin et n'est pas comptée dans le temps d'activité.</value>
+  </data>
+  <data name="Shell_Stats_IntegrityNote_other" xml:space="preserve">
+    <value>{0} sessions n'ont pas enregistré de fin et ne sont pas comptées dans le temps d'activité.</value>
+  </data>
+  <data name="Shell_Stats_IntegrityNote_few" xml:space="preserve">
+    <value>{0} sessions n'ont pas enregistré de fin et ne sont pas comptées dans le temps d'activité.</value>
+  </data>
+  <data name="Shell_Stats_IntegrityNote_many" xml:space="preserve">
+    <value>{0} sessions n'ont pas enregistré de fin et ne sont pas comptées dans le temps d'activité.</value>
+  </data>
+  <data name="Shell_History_MostPlayed" xml:space="preserve">
+    <value>le plus joué : {0}</value>
+  </data>
+  <data name="Shell_History_BestStreak" xml:space="preserve">
+    <value>record : {0} jours · session la plus longue {1}</value>
+  </data>
+  <data name="Shell_History_LongestSession" xml:space="preserve">
+    <value>session la plus longue {0}</value>
+  </data>
+  <data name="Shell_History_LeaderRow" xml:space="preserve">
+    <value>{0} · {1} lancements{2}</value>
+  </data>
+  <data name="Shell_History_Today" xml:space="preserve">
+    <value>Aujourd'hui</value>
+  </data>
+  <data name="Shell_History_Yesterday" xml:space="preserve">
+    <value>Hier</value>
+  </data>
+  <data name="Shell_History_Badge_Private" xml:space="preserve">
+    <value>PRIVÉ</value>
+  </data>
+  <data name="Shell_History_Badge_Saved" xml:space="preserve">
+    <value>Enregistré</value>
+  </data>
+  <data name="Shell_History_Bookmark" xml:space="preserve">
+    <value>+ Favori</value>
+  </data>
+  <data name="Shell_History_BookmarkTooltip" xml:space="preserve">
+    <value>Ajoutez cette place à vos jeux enregistrés pour pouvoir la lancer à tout moment.</value>
+  </data>
+  <data name="Shell_History_Saving" xml:space="preserve">
+    <value>Enregistrement...</value>
+  </data>
+  <data name="Shell_History_CouldntBookmark" xml:space="preserve">
+    <value>Impossible d'ajouter aux favoris : {0}</value>
+  </data>
+  <data name="Shell_History_BookmarkGameTitle" xml:space="preserve">
+    <value>Ajouter le jeu aux favoris</value>
+  </data>
+  <data name="Shell_History_StillRunning" xml:space="preserve">
+    <value>toujours en cours</value>
+  </data>
+  <data name="Shell_History_ClearConfirm" xml:space="preserve">
+    <value>Effacer tout l'historique des sessions ? Cette action est irréversible.</value>
+  </data>
+  <data name="Shell_Squad_Eligible_one" xml:space="preserve">
+    <value>{0} compte éligible</value>
+  </data>
+  <data name="Shell_Squad_Eligible_other" xml:space="preserve">
+    <value>{0} comptes éligibles</value>
+  </data>
+  <data name="Shell_Squad_Eligible_few" xml:space="preserve">
+    <value>{0} comptes éligibles</value>
+  </data>
+  <data name="Shell_Squad_Eligible_many" xml:space="preserve">
+    <value>{0} comptes éligibles</value>
+  </data>
+  <data name="Shell_Squad_Running" xml:space="preserve">
+    <value>{0} en cours (ignoré(s))</value>
+  </data>
+  <data name="Shell_Squad_Expired" xml:space="preserve">
+    <value>{0} expiré(s) (ignoré(s))</value>
+  </data>
+  <data name="Shell_Squad_CouldntLoadServers" xml:space="preserve">
+    <value>Impossible de charger les serveurs enregistrés : {0}</value>
+  </data>
+  <data name="Shell_Squad_NoSavedServers" xml:space="preserve">
+    <value>Aucun serveur enregistré pour l'instant. Collez un lien de serveur privé ci-dessous pour en ajouter un — il sera enregistré pour la prochaine fois.</value>
+  </data>
+  <data name="Shell_Squad_PlaceFallback" xml:space="preserve">
+    <value>Place {0}</value>
+  </data>
+  <data name="Shell_Squad_Badge_Default" xml:space="preserve">
+    <value>PAR DÉFAUT</value>
+  </data>
+  <data name="Shell_Squad_LastLaunched" xml:space="preserve">
+    <value> · dernier lancement {0}</value>
+  </data>
+  <data name="Shell_Squad_Added" xml:space="preserve">
+    <value> · ajouté {0}</value>
+  </data>
+  <data name="Shell_Squad_LaunchAll" xml:space="preserve">
+    <value>Tout lancer</value>
+  </data>
+  <data name="Shell_Squad_NoEligibleTooltip" xml:space="preserve">
+    <value>Aucun compte éligible. Réauthentifiez d'abord les sessions expirées ou fermez les clients en cours.</value>
+  </data>
+  <data name="Shell_Squad_Remove" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+  <data name="Shell_Squad_Rename" xml:space="preserve">
+    <value>Renommer…</value>
+  </data>
+  <data name="Shell_Squad_ResetName" xml:space="preserve">
+    <value>Réinitialiser le nom</value>
+  </data>
+  <data name="Shell_Squad_PasteLinkFirst" xml:space="preserve">
+    <value>Collez d'abord un lien de serveur privé ou un lien de jeu.</value>
+  </data>
+  <data name="Shell_Squad_Resolving" xml:space="preserve">
+    <value>Résolution du lien...</value>
+  </data>
+  <data name="Shell_Squad_CouldntReadLink" xml:space="preserve">
+    <value>Impossible de lire ceci comme un lien Roblox. Collez une URL de serveur privé depuis sa page « Configure Server » (soit la forme roblox.com/share?... soit l'ancienne privateServerLinkCode=), ou un simple lien de jeu pour mettre l'escouade dans un même serveur public.</value>
+  </data>
+  <data name="Shell_Squad_LookingUp" xml:space="preserve">
+    <value>Recherche des infos du jeu...</value>
+  </data>
+  <data name="Shell_Squad_CouldntAddLaunch" xml:space="preserve">
+    <value>Impossible d'ajouter et de lancer : {0}</value>
+  </data>
+  <data name="Shell_Friends_Title" xml:space="preserve">
+    <value>Amis — {0}</value>
+  </data>
+  <data name="Shell_Friends_ViewOthers" xml:space="preserve">
+    <value>Voir les amis de {0}</value>
+  </data>
+  <data name="Shell_Friends_LauncherHint" xml:space="preserve">
+    <value>Suivez-en un pour lancer {0} dans son serveur.</value>
+  </data>
+  <data name="Shell_Friends_Loading" xml:space="preserve">
+    <value>Chargement des amis...</value>
+  </data>
+  <data name="Shell_Friends_NoneVisible" xml:space="preserve">
+    <value>Aucun ami visible. Soit ce compte n'en a aucun, soit son filtre de confidentialité les masque.</value>
+  </data>
+  <data name="Shell_Friends_Summary_one" xml:space="preserve">
+    <value>{0} ami · {1} en jeu · {2} en ligne · {3} hors ligne</value>
+  </data>
+  <data name="Shell_Friends_Summary_other" xml:space="preserve">
+    <value>{0} amis · {1} en jeu · {2} en ligne · {3} hors ligne</value>
+  </data>
+  <data name="Shell_Friends_Summary_few" xml:space="preserve">
+    <value>{0} amis · {1} en jeu · {2} en ligne · {3} hors ligne</value>
+  </data>
+  <data name="Shell_Friends_Summary_many" xml:space="preserve">
+    <value>{0} amis · {1} en jeu · {2} en ligne · {3} hors ligne</value>
+  </data>
+  <data name="Shell_Friends_SessionExpiredSwitch" xml:space="preserve">
+    <value>La session de {0} a expiré — réauthentifiez-la, ou basculez vers les amis de l'autre compte.</value>
+  </data>
+  <data name="Shell_Friends_SessionExpiredClose" xml:space="preserve">
+    <value>La session de {0} a expiré — fermez cette fenêtre et réauthentifiez d'abord le compte.</value>
+  </data>
+  <data name="Shell_Friends_CouldntReadSession" xml:space="preserve">
+    <value>Impossible de lire la session enregistrée de ce compte — fermez cette fenêtre et rajoutez le compte.</value>
+  </data>
+  <data name="Shell_Friends_CouldntLoad" xml:space="preserve">
+    <value>Impossible de charger les amis : {0}</value>
+  </data>
+  <data name="Shell_Friends_SectionInGame" xml:space="preserve">
+    <value>En jeu</value>
+  </data>
+  <data name="Shell_Friends_SectionOnline" xml:space="preserve">
+    <value>En ligne</value>
+  </data>
+  <data name="Shell_Friends_SectionOffline" xml:space="preserve">
+    <value>Hors ligne</value>
+  </data>
+  <data name="Shell_Friends_Follow" xml:space="preserve">
+    <value>Suivre</value>
+  </data>
+  <data name="Shell_Friends_FollowTooltip" xml:space="preserve">
+    <value>Lancer ce compte dans le serveur où se trouve votre ami.</value>
+  </data>
+  <data name="Shell_Friends_JoinPrivacyOff" xml:space="preserve">
+    <value>Rejoindre bloqué</value>
+  </data>
+  <data name="Shell_Friends_JoinPrivacyTooltip" xml:space="preserve">
+    <value>Cet ami est dans un jeu, mais sa confidentialité de connexion masque le serveur, donc RoRoRo ne peut pas l'y suivre.</value>
+  </data>
+  <data name="Shell_Join_PrivateServer" xml:space="preserve">
+    <value>Serveur privé</value>
+  </data>
+  <data name="Shell_Join_ShareLink" xml:space="preserve">
+    <value>lien de partage</value>
+  </data>
+  <data name="Shell_Join_AccessCode" xml:space="preserve">
+    <value>code d'accès</value>
+  </data>
+  <data name="Shell_Join_PlaceCode" xml:space="preserve">
+    <value>Place {0}  ·  {1} {2}</value>
+  </data>
+  <data name="Shell_Join_VipServerHint" xml:space="preserve">
+    <value>Nous lancerons ce compte dans ce serveur VIP.</value>
+  </data>
+  <data name="Shell_Join_PublicGame" xml:space="preserve">
+    <value>Jeu public</value>
+  </data>
+  <data name="Shell_Join_Place" xml:space="preserve">
+    <value>Place {0}</value>
+  </data>
+  <data name="Shell_Join_PublicGameHint" xml:space="preserve">
+    <value>Nous lancerons ce compte dans la version publique de ce jeu.</value>
+  </data>
+  <data name="Shell_Join_RobloxShare" xml:space="preserve">
+    <value>Partage Roblox ({0})</value>
+  </data>
+  <data name="Shell_Join_ResolveHint" xml:space="preserve">
+    <value>Nous résoudrons cela auprès de Roblox quand vous cliquerez sur Lancer.</value>
+  </data>
+  <data name="Shell_Join_NotALink" xml:space="preserve">
+    <value>Cela ne ressemble pas à un lien Roblox. Essayez https://www.roblox.com/games/&lt;id&gt;, une URL de partage de serveur privé, ou un lien roblox.com/share?code=...</value>
+  </data>
+  <data name="Shell_Join_Resolving" xml:space="preserve">
+    <value>Résolution du lien de partage...</value>
+  </data>
+  <data name="Shell_Join_CouldntResolve" xml:space="preserve">
+    <value>Impossible de résoudre ce lien de partage. Vérifiez qu'il s'agit d'une URL de serveur privé valide.</value>
+  </data>
+  <data name="Shell_Join_CouldntResolveEx" xml:space="preserve">
+    <value>Impossible de résoudre : {0}</value>
+  </data>
+  <data name="Shell_Export_PickAtLeastOne" xml:space="preserve">
+    <value>Choisissez au moins un compte à exporter.</value>
+  </data>
+  <data name="Shell_Export_PassphraseTooShort" xml:space="preserve">
+    <value>La phrase secrète doit comporter au moins {0} caractères.</value>
+  </data>
+  <data name="Shell_Export_PassphrasesDontMatch" xml:space="preserve">
+    <value>Les deux phrases secrètes ne correspondent pas.</value>
+  </data>
+  <data name="Shell_Export_SaveTitle" xml:space="preserve">
+    <value>Enregistrer le lot de comptes</value>
+  </data>
+  <data name="Shell_Export_BundleFilter" xml:space="preserve">
+    <value>Lot de comptes RoRoRo (*.rororo-accounts)|*.rororo-accounts</value>
+  </data>
+  <data name="Shell_Export_NoneExportable" xml:space="preserve">
+    <value>Aucun des comptes sélectionnés n'a pu être exporté. Lancez-les une fois pour qu'ils obtiennent un ID Roblox, puis réessayez.</value>
+  </data>
+  <data name="Shell_Export_NothingTitle" xml:space="preserve">
+    <value>Rien à exporter</value>
+  </data>
+  <data name="Shell_Export_SavedBody" xml:space="preserve">
+    <value>Enregistré. Ce fichier contient vos identifiants de connexion — quiconque possède le fichier ET la phrase secrète peut se connecter à votre place. Gardez la phrase secrète en lieu sûr et ne publiez pas le fichier.</value>
+  </data>
+  <data name="Shell_Export_SavedTitle" xml:space="preserve">
+    <value>Comptes exportés</value>
+  </data>
+  <data name="Shell_Export_SaveFailed" xml:space="preserve">
+    <value>Impossible d'enregistrer le lot : {0}</value>
+  </data>
+  <data name="Shell_Export_SaveFailedTitle" xml:space="preserve">
+    <value>Échec de l'exportation</value>
+  </data>
+  <data name="Shell_Import_OpenTitle" xml:space="preserve">
+    <value>Ouvrir un lot de comptes</value>
+  </data>
+  <data name="Shell_Import_BundleFilter" xml:space="preserve">
+    <value>Lot de comptes RoRoRo (*.rororo-accounts)|*.rororo-accounts|Tous les fichiers (*.*)|*.*</value>
+  </data>
+  <data name="Shell_Import_Opening" xml:space="preserve">
+    <value>Ouverture du lot…</value>
+  </data>
+  <data name="Shell_Import_Result" xml:space="preserve">
+    <value>{0} compte(s) importé(s). {1} ignoré(s), déjà présent(s) sur ce PC.</value>
+  </data>
+  <data name="Shell_Import_ResultTitle" xml:space="preserve">
+    <value>Comptes importés</value>
+  </data>
+  <data name="Shell_Import_CouldntRead" xml:space="preserve">
+    <value>Impossible de lire ce fichier : {0}</value>
+  </data>
+  <data name="Shell_Passphrase_TooShort" xml:space="preserve">
+    <value>Trop courte</value>
+  </data>
+  <data name="Shell_Passphrase_Weak" xml:space="preserve">
+    <value>Faible</value>
+  </data>
+  <data name="Shell_Passphrase_Fair" xml:space="preserve">
+    <value>Correcte</value>
+  </data>
+  <data name="Shell_Passphrase_Strong" xml:space="preserve">
+    <value>Forte</value>
+  </data>
+  <data name="Shell_Passphrase_VeryStrong" xml:space="preserve">
+    <value>Très forte</value>
+  </data>
+  <data name="Shell_StopAll_Running_one" xml:space="preserve">
+    <value>{0} client Roblox est en cours. Cela le ferme immédiatement.</value>
+  </data>
+  <data name="Shell_StopAll_Running_other" xml:space="preserve">
+    <value>{0} clients Roblox sont en cours. Cela les ferme tous immédiatement.</value>
+  </data>
+  <data name="Shell_StopAll_Running_few" xml:space="preserve">
+    <value>{0} clients Roblox sont en cours. Cela les ferme tous immédiatement.</value>
+  </data>
+  <data name="Shell_StopAll_Running_many" xml:space="preserve">
+    <value>{0} clients Roblox sont en cours. Cela les ferme tous immédiatement.</value>
+  </data>
+  <data name="Shell_Headroom_WontFit" xml:space="preserve">
+    <value>Il n'y a peut-être pas de place pour un autre client</value>
+  </data>
+  <data name="Shell_Headroom_RoomFor" xml:space="preserve">
+    <value>Il n'y a peut-être de la place que pour {0} de plus</value>
+  </data>
+  <data name="Shell_Headroom_BodyOne" xml:space="preserve">
+    <value>Un client Roblox a généralement besoin d'environ 2,6 GB. En démarrer un maintenant pourrait pousser la machine au-delà de ce qu'elle peut contenir, et Windows pourrait fermer un client déjà en cours pour faire de la place.</value>
+  </data>
+  <data name="Shell_Headroom_BodyMany" xml:space="preserve">
+    <value>Vous lancez {0} comptes, et un client Roblox a généralement besoin d'environ 2,6 GB chacun. Windows pourrait fermer des clients déjà en cours pour faire de la place.</value>
+  </data>
+  <data name="Shell_Headroom_Numbers" xml:space="preserve">
+    <value>{0:F1} GB libres  ·  {1:F1} GB utilisés par {2}  ·  de la place pour environ {3} de plus</value>
+  </data>
+  <data name="Shell_Headroom_HeldRunning" xml:space="preserve">
+    <value>clients en cours</value>
+  </data>
+  <data name="Shell_Headroom_HeldNothing" xml:space="preserve">
+    <value>rien pour l'instant</value>
+  </data>
+  <data name="Shell_Edge_Body" xml:space="preserve">
+    <value>RoRoRo entoure désormais les boutons d'un contour pour qu'on puisse les distinguer de la surface derrière eux. Votre thème — {0} — définit une seule couleur de séparateur, et elle remplit deux rôles : le fin filet entre les lignes, qui est correct tel que vous l'avez écrit, et maintenant le contour d'un bouton, qui doit être plus lumineux pour être visible. Nous l'avons éclairci pour les boutons uniquement.</value>
+  </data>
+  <data name="Shell_Edge_Passes" xml:space="preserve">
+    <value>conforme</value>
+  </data>
+  <data name="Shell_Edge_BelowFloor" xml:space="preserve">
+    <value>sous le seuil de 3:1</value>
+  </data>
+  <data name="Shell_Rename_OriginalLabel" xml:space="preserve">
+    <value>Nom Roblox — {0}</value>
+  </data>
+  <data name="Plugin_Cap_AccountLaunched" xml:space="preserve">
+    <value>Prévenir le plugin quand un compte est lancé.</value>
+  </data>
+  <data name="Plugin_Cap_AccountExited" xml:space="preserve">
+    <value>Prévenir le plugin quand un compte se ferme.</value>
+  </data>
+  <data name="Plugin_Cap_MutexStateChanged" xml:space="preserve">
+    <value>Prévenir le plugin quand l'état du multi-instance change.</value>
+  </data>
+  <data name="Plugin_Cap_MemoryPressure" xml:space="preserve">
+    <value>Prévenir le plugin quand l'utilisation mémoire d'un compte devient assez élevée pour risquer une pénurie de RAM sur la machine.</value>
+  </data>
+  <data name="Plugin_Cap_RequestLaunch" xml:space="preserve">
+    <value>Autoriser le plugin à demander à RoRoRo de lancer un compte Roblox.</value>
+  </data>
+  <data name="Plugin_Cap_LaunchTarget" xml:space="preserve">
+    <value>Autoriser le plugin à lancer un de vos comptes dans un serveur Roblox à partir d'un lien ou d'un ami qu'il fournit.</value>
+  </data>
+  <data name="Plugin_Cap_MarkAccountActive" xml:space="preserve">
+    <value>Permettre à ce plugin d'indiquer à RoRoRo qu'un compte est toujours actif (pour que les avertissements d'inactivité ne se déclenchent pas à tort). Il ne peut pas voir ce que vous tapez ou faites — seulement marquer un compte comme actif.</value>
+  </data>
+  <data name="Plugin_Cap_StopAccounts" xml:space="preserve">
+    <value>Autoriser le plugin à fermer les clients Roblox que RoRoRo a lancés. Toute progression en jeu non enregistrée dans ces clients sera perdue.</value>
+  </data>
+  <data name="Plugin_Cap_CurrentServer" xml:space="preserve">
+    <value>Autoriser le plugin à lire le lien de serveur privé que vous avez lancé le plus récemment, afin qu'il puisse le partager.</value>
+  </data>
+  <data name="Plugin_Cap_AccountActivity" xml:space="preserve">
+    <value>Voir depuis combien de temps chaque compte est inactif — horodatages uniquement, jamais ce que vous tapez ou faites.</value>
+  </data>
+  <data name="Plugin_Cap_Accounts" xml:space="preserve">
+    <value>Voir vos comptes enregistrés — les noms et lequel est votre compte principal. Ne lit jamais les cookies ni les mots de passe.</value>
+  </data>
+  <data name="Plugin_Cap_TrayMenu" xml:space="preserve">
+    <value>Autoriser le plugin à ajouter des éléments au menu de la barre d'état système.</value>
+  </data>
+  <data name="Plugin_Cap_RowBadge" xml:space="preserve">
+    <value>Autoriser le plugin à ajouter un badge sur chaque ligne de compte enregistré.</value>
+  </data>
+  <data name="Plugin_Cap_StatusPanel" xml:space="preserve">
+    <value>Autoriser le plugin à ajouter un panneau d'état à la fenêtre principale.</value>
+  </data>
+  <data name="Plugin_Cap_SynthKeyboard" xml:space="preserve">
+    <value>Le plugin synthétisera des saisies clavier sur votre machine.</value>
+  </data>
+  <data name="Plugin_Cap_SynthMouse" xml:space="preserve">
+    <value>Le plugin synthétisera des actions de souris sur votre machine.</value>
+  </data>
+  <data name="Plugin_Cap_WatchGlobalInput" xml:space="preserve">
+    <value>Le plugin surveillera vos saisies clavier + souris à l'échelle du système.</value>
+  </data>
+  <data name="Plugin_Cap_PreventSleep" xml:space="preserve">
+    <value>Le plugin empêchera votre ordinateur de se mettre en veille pendant son exécution.</value>
+  </data>
+  <data name="Plugin_Cap_FocusForeignWindows" xml:space="preserve">
+    <value>Le plugin activera / mettra au premier plan les fenêtres d'autres applications.</value>
+  </data>
+  <data name="Plugin_Cap_ReadScreen" xml:space="preserve">
+    <value>Le plugin lira les pixels de votre écran.</value>
+  </data>
+  <data name="Plugin_Cap_Unknown" xml:space="preserve">
+    <value>Capacité inconnue : {0}</value>
+  </data>
+  <data name="Plugin_Consent_HostEnforced" xml:space="preserve">
+    <value>RoRoRo applique ceci à chaque appel.</value>
+  </data>
+  <data name="Plugin_Consent_SystemLocal" xml:space="preserve">
+    <value>S'exécute sur votre machine -- RoRoRo ne peut pas l'isoler.</value>
+  </data>
+  <data name="Plugin_Dup_Single" xml:space="preserve">
+    <value>Deux dossiers déclarent le plugin « {0} ». RoRoRo exécute la copie dans {1} et ignore {2}. Supprimez la copie inutilisée — c'est généralement un dossier de sauvegarde résiduel.</value>
+  </data>
+  <data name="Plugin_Dup_Multi" xml:space="preserve">
+    <value>{0} dossiers de plugins sont ignorés car un autre dossier déclare déjà le même id ({1}). Ignorés : {2}. Supprimez les copies inutilisées — ce sont généralement des dossiers de sauvegarde résiduels.</value>
+  </data>
+  <data name="Plugin_UpdateAvailable" xml:space="preserve">
+    <value>Mise à jour disponible ({0} → {1})</value>
+  </data>
+  <data name="Plugin_InstallCancelled" xml:space="preserve">
+    <value>Installation annulée.</value>
+  </data>
+  <data name="Plugin_InstalledRunning" xml:space="preserve">
+    <value>{0} installé et en cours d'exécution.</value>
+  </data>
+  <data name="Plugin_InstalledStartFailed" xml:space="preserve">
+    <value>{0} installé — échec du démarrage : {1}</value>
+  </data>
+  <data name="Plugin_InstallFailed" xml:space="preserve">
+    <value>Échec de l'installation : {0}</value>
+  </data>
+  <data name="Plugin_Updated" xml:space="preserve">
+    <value>{0} mis à jour vers {1}.</value>
+  </data>
+  <data name="Plugin_UpdateFailed" xml:space="preserve">
+    <value>Échec de la mise à jour : {0}</value>
+  </data>
+  <data name="Plugin_AutostartEnabled" xml:space="preserve">
+    <value>Démarrage automatique activé pour {0}.</value>
+  </data>
+  <data name="Plugin_AutostartDisabled" xml:space="preserve">
+    <value>Démarrage automatique désactivé pour {0}.</value>
+  </data>
+  <data name="Plugin_AutostartToggleFailed" xml:space="preserve">
+    <value>Échec du basculement du démarrage automatique : {0}</value>
+  </data>
+  <data name="Plugin_NotStartedConsentCancelled" xml:space="preserve">
+    <value>{0} non démarré — feuille de consentement annulée.</value>
+  </data>
+  <data name="Plugin_Launching" xml:space="preserve">
+    <value>Lancement de {0}...</value>
+  </data>
+  <data name="Plugin_Running" xml:space="preserve">
+    <value>{0} est en cours d'exécution.</value>
+  </data>
+  <data name="Plugin_LaunchFailed" xml:space="preserve">
+    <value>Échec du lancement : {0}</value>
+  </data>
+  <data name="Plugin_Removed" xml:space="preserve">
+    <value>{0} supprimé.</value>
+  </data>
+  <data name="Plugin_RemoveFailed" xml:space="preserve">
+    <value>Échec de la suppression : {0}</value>
+  </data>
+  <data name="Plugin_Restarted" xml:space="preserve">
+    <value>{0} redémarré.</value>
+  </data>
+  <data name="Plugin_RestartFailed" xml:space="preserve">
+    <value>Échec du redémarrage : {0}</value>
+  </data>
+  <data name="Plugin_StoppedClickRestart" xml:space="preserve">
+    <value>{0} arrêté -- cliquez pour redémarrer.</value>
+  </data>
+  <data name="Plugin_CapabilityChip_one" xml:space="preserve">
+    <value>{0} capacité</value>
+  </data>
+  <data name="Plugin_CapabilityChip_other" xml:space="preserve">
+    <value>{0} capacités</value>
+  </data>
+  <data name="Plugin_CapabilityChip_few" xml:space="preserve">
+    <value>{0} capacités</value>
+  </data>
+  <data name="Plugin_CapabilityChip_many" xml:space="preserve">
+    <value>{0} capacités</value>
+  </data>
+  <data name="Plugin_Install" xml:space="preserve">
+    <value>Installer</value>
+  </data>
+  <data name="Plugin_NeedsHost" xml:space="preserve">
+    <value>Nécessite RoRoRo {0}+</value>
+  </data>
+  <data name="Tray_StreamerMode" xml:space="preserve">
+    <value>Mode streamer</value>
+  </data>
+  <data name="Tray_StopAll" xml:space="preserve">
+    <value>Arrêter toutes les instances Roblox</value>
+  </data>
+  <data name="Tray_Open" xml:space="preserve">
+    <value>Ouvrir {0}</value>
+  </data>
+  <data name="Tray_Settings" xml:space="preserve">
+    <value>Paramètres...</value>
+  </data>
+  <data name="Tray_History" xml:space="preserve">
+    <value>Historique...</value>
+  </data>
+  <data name="Tray_Diagnostics" xml:space="preserve">
+    <value>Diagnostics...</value>
+  </data>
+  <data name="Tray_Plugins" xml:space="preserve">
+    <value>Plugins...</value>
+  </data>
+  <data name="Tray_OpenLogs" xml:space="preserve">
+    <value>Ouvrir le dossier des journaux</value>
+  </data>
+  <data name="Tray_Quit" xml:space="preserve">
+    <value>Quitter</value>
+  </data>
+  <data name="Shell_Title_Games" xml:space="preserve">
+    <value>Jeux</value>
+  </data>
+  <data name="Shell_Title_Settings" xml:space="preserve">
+    <value>Paramètres</value>
+  </data>
+  <data name="Shell_Title_History" xml:space="preserve">
+    <value>Historique</value>
+  </data>
+  <data name="Shell_Title_Diagnostics" xml:space="preserve">
+    <value>Diagnostics</value>
+  </data>
+  <data name="Shell_Title_Plugins" xml:space="preserve">
+    <value>Plugins</value>
+  </data>
+  <data name="Shell_Title_About" xml:space="preserve">
+    <value>À propos</value>
+  </data>
+  <data name="Discord_Status_Off" xml:space="preserve">
+    <value>La présence est désactivée.</value>
+  </data>
+  <data name="Discord_Status_NotRunning" xml:space="preserve">
+    <value>Discord n'est pas lancé — la présence démarrera dès qu'il le sera.</value>
+  </data>
+  <data name="Discord_Status_Connected" xml:space="preserve">
+    <value>Connecté à Discord.</value>
+  </data>
+  <data name="Discord_Status_Connecting" xml:space="preserve">
+    <value>Connexion à Discord…</value>
+  </data>
+  <data name="Webhook_UnknownChannel" xml:space="preserve">
+    <value>inconnu</value>
+  </data>
+  <data name="Webhook_UnknownGuild" xml:space="preserve">
+    <value>votre serveur</value>
+  </data>
+  <data name="Badge_Main" xml:space="preserve">
+    <value>PRINCIPAL</value>
+  </data>
+  <data name="Badge_Available" xml:space="preserve">
+    <value>DISPONIBLE</value>
+  </data>
+  <data name="SquadLaunchWindow_LinkHelp" xml:space="preserve">
+    <value>Lien de serveur privé — https://www.roblox.com/games/&lt;id&gt;/&lt;name&gt;?privateServerLinkCode=&lt;code&gt; — enregistré pour la prochaine fois. Un simple lien de jeu (roblox.com/games/&lt;id&gt;) met plutôt l'escouade ensemble dans un même serveur public.</value>
+  </data>
 </root>

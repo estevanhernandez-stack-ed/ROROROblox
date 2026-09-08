@@ -1,6 +1,6 @@
 {
   "source": "Strings.resx",
-  "count": 483,
+  "count": 1015,
   "rows": [
     {
       "key": "AboutPage_A626LabsProduct",
@@ -84,6 +84,102 @@
       "key": "AboutPage_Version",
       "en": "Version",
       "comment": "src/ROROROblox.App/About/AboutPage.xaml:87 title",
+      "placeholders": false
+    },
+    {
+      "key": "AlertStatus_Channel_Clan",
+      "en": "the clan channel",
+      "comment": "Alert channel fragment; composed by AlertStatusLine when the clan channel name is unknown (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "AlertStatus_Channel_Mine",
+      "en": "your channel",
+      "comment": "Alert channel fragment; composed by AlertStatusLine when the personal channel name is unknown (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "AlertStatus_Channel_Phone",
+      "en": "your phone",
+      "comment": "Alert channel fragment; composed by AlertStatusLine when the push provider is unnamed (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "AlertStatus_Channel_PhoneNamed",
+      "en": "your phone ({0})",
+      "comment": "Alert channel fragment; composed by AlertStatusLine. {0} is the push provider name (Pushover/ntfy), which stays English (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "AlertStatus_ClanWebhookDeleted",
+      "en": "The clan webhook was deleted, so nothing is reaching that channel. Alerts are falling back to desktop only.",
+      "comment": "Settings alerts line; composed by AlertStatusLine (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "AlertStatus_DesktopOnly",
+      "en": "Desktop only. You'll see these at the PC, but nothing will reach your phone.",
+      "comment": "Settings alerts line; composed by AlertStatusLine (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "AlertStatus_ListConnector",
+      "en": " and ",
+      "comment": "Joins the alert channel list (\"X and Y\"); composed by AlertStatusLine. Translators localize the connector, spaces included (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "AlertStatus_MineWebhookDeleted",
+      "en": "Your webhook was deleted, so nothing is reaching your phone. Alerts are falling back to desktop only — make a new webhook and paste it below.",
+      "comment": "Settings alerts line; composed by AlertStatusLine (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "AlertStatus_NoAlertsYet",
+      "en": "No alerts yet. Pick what you want to hear about above.",
+      "comment": "Settings alerts line; composed by AlertStatusLine (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "AlertStatus_PhoneRejected",
+      "en": "Your push service rejected the saved key, so nothing is reaching your phone. Alerts are falling back to desktop only — check the key below and save it again.",
+      "comment": "Settings alerts line; composed by AlertStatusLine (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "AlertStatus_PhoneUnfinished",
+      "en": "You've routed alerts to your phone but haven't finished setting up the push service below, so they'll only show on this PC.",
+      "comment": "Settings alerts line; composed by AlertStatusLine (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "AlertStatus_SendingToChannels",
+      "en": "Sending to {0}.",
+      "comment": "Settings alerts line; composed by AlertStatusLine. {0} is the connector-joined channel list (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "AlertStatus_SendingToDiscord",
+      "en": "Sending to your Discord channel.",
+      "comment": "Settings alerts line; composed by AlertStatusLine. \"Discord\" stays English (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "AlertStatus_WebhookMissing",
+      "en": "You've routed alerts to a Discord channel but haven't pasted a webhook, so they'll only show on this PC — which won't help when you're away from it.",
+      "comment": "Settings alerts line; composed by AlertStatusLine (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "Badge_Available",
+      "en": "AVAILABLE",
+      "comment": "Plugins-page badge: an installable catalog plugin (localized Phase D step 3 batch 15)",
+      "placeholders": false
+    },
+    {
+      "key": "Badge_Main",
+      "en": "MAIN",
+      "comment": "Account-row badge: the main account (localized Phase D step 3 batch 15)",
       "placeholders": false
     },
     {
@@ -225,6 +321,426 @@
       "placeholders": false
     },
     {
+      "key": "CoreMsg_Compat_Banner",
+      "en": "Roblox {0} {1}. We've tested up to {2}. Multi-instance might not work — let us know at https://github.com/estevanhernandez-stack-ed/ROROROblox/issues.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_Compat_DowngradedTo",
+      "en": "downgraded to",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_Compat_UpdatedTo",
+      "en": "updated to",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_Cookie_CaptureFailed",
+      "en": "Cookie capture failed: {0}",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_Cookie_LoginRejected",
+      "en": "Roblox didn't accept the login session.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_Cookie_ProfileFetchFailed",
+      "en": "Profile fetch failed: {0}",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_Cookie_StartFailed",
+      "en": "Cookie capture failed to start: {0}",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_Cookie_UserDataDirFailed",
+      "en": "Cookie capture failed to allocate user-data dir: {0}",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_Cookie_WebView2InitFailed",
+      "en": "WebView2 init failed: {0}",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_Cookie_WebView2RuntimeMissing",
+      "en": "WebView2 runtime missing",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_History_ClearFailed",
+      "en": "Couldn't clear history{0} Nothing was deleted.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_History_Cleared",
+      "en": "History cleared.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_History_Empty",
+      "en": "Nothing recorded yet.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_History_Loading",
+      "en": "Loading…",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_History_PlaceholderEmptyDetail",
+      "en": "Click Launch As on any account and you'll see entries here.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_History_PlaceholderEmptyHeadline",
+      "en": "No launches yet.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_History_PlaceholderUnreadableDetail",
+      "en": "The file may be open in another program, or damaged. This doesn't affect your saved accounts or settings — they're stored separately.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_History_PlaceholderUnreadableHeadline",
+      "en": "History couldn't be read.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_History_Recorded_few",
+      "en": "{0} launches recorded.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_History_Recorded_many",
+      "en": "{0} launches recorded.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_History_Recorded_one",
+      "en": "{0} launch recorded.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_History_Recorded_other",
+      "en": "{0} launches recorded.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_History_Unreadable",
+      "en": "Couldn't read history{0}",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_Launch_AuthTicketFailed",
+      "en": "Failed to obtain auth ticket: {0}",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_Launch_NoDefaultGame",
+      "en": "No default Roblox game configured. Add one in Games (header button), or pass an explicit target.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_Launch_ProcessStartFailed",
+      "en": "Process.Start failed: {0}",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_Launch_RobloxNotInstalled",
+      "en": "Roblox does not appear to be installed.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_Ntfy_Server",
+      "en": "The server needs to be a full address like https://ntfy.sh — leave it as the default unless you run your own.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_Pushover_WebhookUrl",
+      "en": "That's a Discord link — the {0} is a 30-character code from pushover.net, not a URL.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_Pushover_WrongShape",
+      "en": "That doesn't look like a {0} — it's a 30-character code of letters and digits, shown on your pushover.net dashboard.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_Theme_EmptyFilename",
+      "en": "Theme name produced an empty filename. Pick a different name.",
+      "comment": "Core message; theme-builder validation, resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_Theme_EmptyInput",
+      "en": "Paste a theme JSON first.",
+      "comment": "Core message; theme-builder validation, resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_Theme_MissingField",
+      "en": "Theme JSON is missing a required field: {0}",
+      "comment": "Core message; theme-builder validation, resolved by CoreMessageCatalog. {0} is the offending field name (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_Theme_MissingName",
+      "en": "Theme JSON is missing the \"name\" field.",
+      "comment": "Core message; theme-builder validation, resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_Theme_NullPayload",
+      "en": "Empty theme JSON.",
+      "comment": "Core message; theme-builder validation, resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_Theme_UnreadableJson",
+      "en": "Couldn't read the JSON: {0}. Make sure you pasted the whole object including the curly braces.",
+      "comment": "Core message; theme-builder validation, resolved by CoreMessageCatalog. {0} is the JSON parser's reason (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "CoreMsg_Transport_ImportFailed",
+      "en": "Couldn't open this bundle — wrong passphrase or the file is damaged.",
+      "comment": "Core message; the one deliberately-ambiguous account-import failure line, rendered for any AccountTransportException (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_Webhook_BotToken",
+      "en": "That looks like a bot token — don't share that anywhere, and reset it if you pasted it somewhere public. A webhook URL starts with discord.com/api/webhooks/.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_Webhook_ChannelLink",
+      "en": "That's a link to the channel, not a webhook. Same channel, different button: Server Settings → Integrations → Webhooks → New Webhook.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_Webhook_ServerInvite",
+      "en": "That's a server invite. You need a webhook — in Discord: Server Settings → Integrations → Webhooks → New Webhook, then Copy Webhook URL.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "CoreMsg_Webhook_Unrecognized",
+      "en": "That doesn't look like a webhook URL. It should start with discord.com/api/webhooks/ — Server Settings → Integrations → Webhooks → Copy Webhook URL.",
+      "comment": "Core message; resolved by CoreMessageCatalog (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_BuildingBundle",
+      "en": "Building bundle...",
+      "comment": "Diagnostics status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Captured",
+      "en": "Captured {0} local.",
+      "comment": "Diagnostics status; {0}=time (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Diag_Collecting",
+      "en": "Collecting...",
+      "comment": "Diagnostics status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_CouldntCollect",
+      "en": "Couldn't collect diagnostics: {0}",
+      "comment": "Diagnostics status; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Diag_CouldntSaveBundle",
+      "en": "Couldn't save bundle: {0}",
+      "comment": "Diagnostics status; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Diag_Label_AvailableRam",
+      "en": "Available RAM",
+      "comment": "Diagnostics row label; \"RAM\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Label_Data",
+      "en": "Data",
+      "comment": "Diagnostics row label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Label_DotNet",
+      "en": ".NET runtime",
+      "comment": "Diagnostics row label; \".NET\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Label_Installed",
+      "en": "Installed",
+      "comment": "Diagnostics row label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Label_InstalledRam",
+      "en": "Installed RAM",
+      "comment": "Diagnostics row label; \"RAM\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Label_LiveClients",
+      "en": "Live Roblox clients",
+      "comment": "Diagnostics row label; \"Roblox\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Label_Logs",
+      "en": "Logs",
+      "comment": "Diagnostics row label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Label_OS",
+      "en": "OS",
+      "comment": "Diagnostics row label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Label_SavedAccounts",
+      "en": "Saved accounts",
+      "comment": "Diagnostics row label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Label_Version",
+      "en": "Version",
+      "comment": "Diagnostics row label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_No",
+      "en": "no",
+      "comment": "Diagnostics installed value (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_NotDetected",
+      "en": "not detected",
+      "comment": "Diagnostics System-health panel; the support-bundle body keeps its own English (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Off",
+      "en": "OFF",
+      "comment": "Diagnostics System-health panel; the support-bundle body keeps its own English (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_On",
+      "en": "ON",
+      "comment": "Diagnostics System-health panel; the support-bundle body keeps its own English (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_SaveBundleTitle",
+      "en": "Save support bundle",
+      "comment": "Save-bundle dialog title (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_SavedFile",
+      "en": "Saved {0}.",
+      "comment": "Diagnostics status; {0}=filename (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Diag_Section_Application",
+      "en": "Application",
+      "comment": "Diagnostics section title (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Section_Memory",
+      "en": "Memory",
+      "comment": "Diagnostics section title (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Section_Paths",
+      "en": "Paths",
+      "comment": "Diagnostics section title (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Section_PerAccountMemory",
+      "en": "Per-Account Memory",
+      "comment": "Diagnostics section title (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_SnapshotNotReady",
+      "en": "Snapshot not ready yet — wait a beat and retry.",
+      "comment": "Diagnostics status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Stale",
+      "en": "(stale)",
+      "comment": "Diagnostics per-account memory stale suffix (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_Yes",
+      "en": "yes",
+      "comment": "Diagnostics installed value (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Diag_ZipFilter",
+      "en": "Zip archives (*.zip)|*.zip",
+      "comment": "Save-bundle dialog filter; only \"Zip archives\" is display text (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
       "key": "DiagnosticsPage_BundleTheLatestLogFiles",
       "en": "Bundle the latest log files + this snapshot into a zip you can attach to a Discord report. Cookies are never logged; the bundle contains no secrets.",
       "comment": "src/ROROROblox.App/Diagnostics/DiagnosticsPage.xaml:43 title",
@@ -258,6 +774,30 @@
       "key": "DiagnosticsPage_SaveTheBundleWhenFiling",
       "en": "Save the bundle when filing a bug — log files redact secrets.",
       "comment": "src/ROROROblox.App/Diagnostics/DiagnosticsPage.xaml:17 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "Discord_Status_Connected",
+      "en": "Connected to Discord.",
+      "comment": "Discord presence status line, internal (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Discord_Status_Connecting",
+      "en": "Connecting to Discord…",
+      "comment": "Discord presence status line, internal (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Discord_Status_NotRunning",
+      "en": "Discord isn't running — presence starts when it does.",
+      "comment": "Discord presence status line, internal (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Discord_Status_Off",
+      "en": "Presence is off.",
+      "comment": "Discord presence status line, internal (localized Phase D step 3 batch 14)",
       "placeholders": false
     },
     {
@@ -1407,10 +1947,382 @@
       "placeholders": false
     },
     {
+      "key": "MultiInstance_MenuHeader_Error",
+      "en": "Multi-Instance: ERROR — click to reload",
+      "comment": "Tray menu item; composed by MultiInstanceStatusLine. \"Multi-Instance\" stays English (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "MultiInstance_MenuHeader_Off",
+      "en": "Multi-Instance: OFF",
+      "comment": "Tray menu item; composed by MultiInstanceStatusLine. \"Multi-Instance\" stays English (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "MultiInstance_MenuHeader_On",
+      "en": "Multi-Instance: ON ✓",
+      "comment": "Tray menu item; composed by MultiInstanceStatusLine. \"Multi-Instance\" stays English (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "MultiInstance_StatusBarTooltip_Error",
+      "en": "The Roblox singleton lock was lost, so new clients may refuse to open. Right-click the tray icon and click Multi-Instance to take it back.",
+      "comment": "Footer tooltip; composed by MultiInstanceStatusLine. \"Multi-Instance\" stays English (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "MultiInstance_StatusBarTooltip_Off",
+      "en": "Only one Roblox client can run at a time. Right-click the tray icon and click Multi-Instance to turn it on.",
+      "comment": "Footer tooltip; composed by MultiInstanceStatusLine. \"Multi-Instance\" stays English (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "MultiInstance_StatusBarTooltip_On",
+      "en": "Roblox clients can run side by side. Toggle this from the tray icon's right-click menu.",
+      "comment": "Footer tooltip; composed by MultiInstanceStatusLine (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "MultiInstance_StatusBar_Error",
+      "en": "Multi-Instance error",
+      "comment": "Main window footer; composed by MultiInstanceStatusLine. \"Multi-Instance\" stays English (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "MultiInstance_StatusBar_Off",
+      "en": "Multi-Instance off",
+      "comment": "Main window footer; composed by MultiInstanceStatusLine. \"Multi-Instance\" stays English (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "MultiInstance_StatusBar_On",
+      "en": "Multi-Instance on",
+      "comment": "Main window footer; composed by MultiInstanceStatusLine. \"Multi-Instance\" stays English (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "MultiInstance_Tooltip_Error",
+      "en": "{0} — Multi-Instance ERROR (mutex lost)",
+      "comment": "Tray tooltip; composed by MultiInstanceStatusLine. {0} is the product name; \"Multi-Instance\" stays English (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "MultiInstance_Tooltip_Off",
+      "en": "{0} — Multi-Instance OFF",
+      "comment": "Tray tooltip; composed by MultiInstanceStatusLine. {0} is the product name; \"Multi-Instance\" stays English (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "MultiInstance_Tooltip_On",
+      "en": "{0} — Multi-Instance ON",
+      "comment": "Tray tooltip; composed by MultiInstanceStatusLine. {0} is the product name; \"Multi-Instance\" stays English (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
       "key": "PageHeader_Rororo",
       "en": "RoRoRo",
       "comment": "duplicate value; key kept addressable for x:Static",
       "placeholders": false
+    },
+    {
+      "key": "Plugin_AutostartDisabled",
+      "en": "Autostart disabled for {0}.",
+      "comment": "Plugins-window status banner; {0}=plugin name (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_AutostartEnabled",
+      "en": "Autostart enabled for {0}.",
+      "comment": "Plugins-window status banner; {0}=plugin name (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_AutostartToggleFailed",
+      "en": "Autostart toggle failed: {0}",
+      "comment": "Plugins-window status banner; {0}=error message (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_Cap_AccountActivity",
+      "en": "See how long each account has been idle — timestamps only, never what you type or do.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_AccountExited",
+      "en": "Notify the plugin when an account exits.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_AccountLaunched",
+      "en": "Notify the plugin when an account launches.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_Accounts",
+      "en": "See your saved accounts — names and which one is your main. Never reads cookies or passwords.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_CurrentServer",
+      "en": "Allow the plugin to read the private-server link you most recently launched, so it can share it.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_FocusForeignWindows",
+      "en": "The plugin will activate / focus other applications' windows.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_LaunchTarget",
+      "en": "Allow the plugin to launch one of your accounts into a Roblox server from a link or friend it provides.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_MarkAccountActive",
+      "en": "Let this plugin tell RoRoRo an account is still active (so idle warnings don't misfire). It cannot see what you type or do — only mark an account active.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_MemoryPressure",
+      "en": "Notify the plugin when an account's memory use gets high enough to risk the machine running out of RAM.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_MutexStateChanged",
+      "en": "Notify the plugin when multi-instance state changes.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_PreventSleep",
+      "en": "The plugin will prevent your computer from sleeping while it runs.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_ReadScreen",
+      "en": "The plugin will read pixels from your screen.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_RequestLaunch",
+      "en": "Allow the plugin to ask RoRoRo to launch a Roblox account.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_RowBadge",
+      "en": "Allow the plugin to add a badge on each saved-account row.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_StatusPanel",
+      "en": "Allow the plugin to add a status panel to the main window.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_StopAccounts",
+      "en": "Allow the plugin to close Roblox clients that RoRoRo launched. Any unsaved in-game progress in those clients is lost.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_SynthKeyboard",
+      "en": "The plugin will synthesize keyboard input on your machine.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_SynthMouse",
+      "en": "The plugin will synthesize mouse input on your machine.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_TrayMenu",
+      "en": "Allow the plugin to add tray menu items.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Cap_Unknown",
+      "en": "Unknown capability: {0}",
+      "comment": "Plugin capability fallback; {0}=capability id (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_Cap_WatchGlobalInput",
+      "en": "The plugin will watch your keyboard + mouse input system-wide.",
+      "comment": "Plugin capability description, consent sheet (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_CapabilityChip_few",
+      "en": "{0} capabilities",
+      "comment": "Plugin row capability chip, few (mirrors other for en; ru/pl fallback) (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_CapabilityChip_many",
+      "en": "{0} capabilities",
+      "comment": "Plugin row capability chip, many (mirrors other for en; ru/pl fallback) (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_CapabilityChip_one",
+      "en": "{0} capability",
+      "comment": "Plugin row capability chip, singular; {0}=count (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_CapabilityChip_other",
+      "en": "{0} capabilities",
+      "comment": "Plugin row capability chip, plural; {0}=count (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_Consent_HostEnforced",
+      "en": "RoRoRo enforces this on every call.",
+      "comment": "Consent-sheet namespace label, host.* (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Consent_SystemLocal",
+      "en": "Runs on your machine -- RoRoRo cannot sandbox it.",
+      "comment": "Consent-sheet namespace label, system.* (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_Dup_Multi",
+      "en": "{0} plugin folders are being ignored because another folder already declares the same id ({1}). Ignored: {2}. Delete the unused copies — they are usually leftover backup folders.",
+      "comment": "Plugins-window duplicate banner, many collisions; {0}=count, {1}=ids, {2}=paths (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_Dup_Single",
+      "en": "Two folders declare the plugin \"{0}\". RoRoRo is running the copy in {1} and ignoring {2}. Delete the unused copy — it is usually a leftover backup folder.",
+      "comment": "Plugins-window duplicate banner, one collision; {0}=id, {1}=kept dir, {2}=ignored dir (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_Install",
+      "en": "Install",
+      "comment": "Available-plugin row action button (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_InstallCancelled",
+      "en": "Install cancelled.",
+      "comment": "Plugins-window status banner (localized Phase D step 3 batch 13)",
+      "placeholders": false
+    },
+    {
+      "key": "Plugin_InstallFailed",
+      "en": "Install failed: {0}",
+      "comment": "Plugins-window status banner; {0}=error message (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_InstalledRunning",
+      "en": "{0} installed and running.",
+      "comment": "Plugins-window status banner; {0}=plugin name (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_InstalledStartFailed",
+      "en": "{0} installed — start failed: {1}",
+      "comment": "Plugins-window status banner; {0}=plugin name, {1}=error message (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_LaunchFailed",
+      "en": "Launch failed: {0}",
+      "comment": "Plugins-window status banner; {0}=error message (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_Launching",
+      "en": "Launching {0}...",
+      "comment": "Plugins-window status banner; {0}=plugin name (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_NeedsHost",
+      "en": "Needs RoRoRo {0}+",
+      "comment": "Available-plugin row action button when host too old; {0}=min host version (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_NotStartedConsentCancelled",
+      "en": "{0} not started — consent sheet cancelled.",
+      "comment": "Plugins-window status banner; {0}=plugin name (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_RemoveFailed",
+      "en": "Remove failed: {0}",
+      "comment": "Plugins-window status banner; {0}=error message (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_Removed",
+      "en": "{0} removed.",
+      "comment": "Plugins-window status banner; {0}=plugin name (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_RestartFailed",
+      "en": "Restart failed: {0}",
+      "comment": "Plugins-window status banner; {0}=error message (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_Restarted",
+      "en": "{0} restarted.",
+      "comment": "Plugins-window status banner; {0}=plugin name (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_Running",
+      "en": "{0} is running.",
+      "comment": "Plugins-window status banner; {0}=plugin name (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_StoppedClickRestart",
+      "en": "{0} stopped -- click to restart.",
+      "comment": "Plugins-window status banner; {0}=plugin name (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_UpdateAvailable",
+      "en": "Update available ({0} → {1})",
+      "comment": "Plugin row update badge; {0}=from version, {1}=to version (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_UpdateFailed",
+      "en": "Update failed: {0}",
+      "comment": "Plugins-window status banner; {0}=error message (localized Phase D step 3 batch 13)",
+      "placeholders": true
+    },
+    {
+      "key": "Plugin_Updated",
+      "en": "{0} updated to {1}.",
+      "comment": "Plugins-window status banner; {0}=plugin name, {1}=version (localized Phase D step 3 batch 13)",
+      "placeholders": true
     },
     {
       "key": "PluginsPage_Autostart",
@@ -1656,6 +2568,36 @@
       "key": "SessionHistoryPage_TotalUptime",
       "en": "TOTAL UPTIME",
       "comment": "src/ROROROblox.App/History/SessionHistoryPage.xaml:71 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SessionHistoryRow_PrivateServer",
+      "en": "private server",
+      "comment": "Row accessibility name; composed by SessionHistoryRowName (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "SessionHistoryRow_Saved",
+      "en": "saved",
+      "comment": "Row accessibility name; composed by SessionHistoryRowName (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "SessionHistoryRow_Started",
+      "en": "started {0}",
+      "comment": "Row accessibility name; composed by SessionHistoryRowName (localized Phase D 2026-09-07)",
+      "placeholders": true
+    },
+    {
+      "key": "SessionHistoryRow_UnknownAccount",
+      "en": "Unknown account",
+      "comment": "Row accessibility name; composed by SessionHistoryRowName (localized Phase D 2026-09-07)",
+      "placeholders": false
+    },
+    {
+      "key": "SessionHistoryRow_UnknownGame",
+      "en": "(unknown game)",
+      "comment": "Row accessibility name; composed by SessionHistoryRowName (localized Phase D 2026-09-07)",
       "placeholders": false
     },
     {
@@ -2577,6 +3519,2184 @@
       "placeholders": false
     },
     {
+      "key": "Shell_Age_Days",
+      "en": "{0}d",
+      "comment": "RelativeAge; d = unit symbol (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Age_HoursMinutes",
+      "en": "{0}h {1}m",
+      "comment": "RelativeAge; unit symbols (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Age_JustNow",
+      "en": "just now",
+      "comment": "RelativeAge (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Age_Minutes",
+      "en": "{0} min",
+      "comment": "RelativeAge; min = unit symbol (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Ago_Days_few",
+      "en": "{0} days ago",
+      "comment": "few-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Ago_Days_many",
+      "en": "{0} days ago",
+      "comment": "many-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Ago_Days_one",
+      "en": "{0} day ago",
+      "comment": "RelativeAgo via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Ago_Days_other",
+      "en": "{0} days ago",
+      "comment": "RelativeAgo via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Ago_Hours",
+      "en": "{0} hr ago",
+      "comment": "RelativeAgo; hr unit symbol (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Ago_InFuture",
+      "en": "in the future",
+      "comment": "RelativeAgo clock-skew (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Ago_JustNow",
+      "en": "just now",
+      "comment": "RelativeAgo (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Ago_LessThanMinute",
+      "en": "<1 min ago",
+      "comment": "RelativeAgo; min unit symbol (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Ago_Minutes",
+      "en": "{0} min ago",
+      "comment": "RelativeAgo; min unit symbol (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Caption_AmberBrown",
+      "en": "Amber Brown",
+      "comment": "Caption color swatch label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Caption_Applied",
+      "en": "Applied {0}.",
+      "comment": "Caption picker status; {0}=hex (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Caption_BadHex",
+      "en": "That doesn't look like a hex color. Use #rrggbb (e.g. #4FE08C).",
+      "comment": "Caption picker status; hex example stays (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Caption_BurntOrange",
+      "en": "Burnt Orange",
+      "comment": "Caption color swatch label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Caption_Crimson",
+      "en": "Crimson",
+      "comment": "Caption color swatch label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Caption_DeepBlue",
+      "en": "Deep Blue",
+      "comment": "Caption color swatch label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Caption_DeepTeal",
+      "en": "Deep Teal",
+      "comment": "Caption color swatch label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Caption_ForestGreen",
+      "en": "Forest Green",
+      "comment": "Caption color swatch label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Caption_Header",
+      "en": "Title-bar color for {0}",
+      "comment": "Caption picker header; {0}=account (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Caption_MagentaMain",
+      "en": "Magenta (main)",
+      "comment": "Caption color swatch label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Caption_Ocean",
+      "en": "Ocean",
+      "comment": "Caption color swatch label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Caption_Reverted",
+      "en": "Reverted to auto-derived color.",
+      "comment": "Caption picker status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Caption_RoyalPurple",
+      "en": "Royal Purple",
+      "comment": "Caption color swatch label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Caption_TypeHex",
+      "en": "Type a hex color like #4FE08C, or click Reset to auto.",
+      "comment": "Caption picker status; hex example stays (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_CompactToggle_Compact",
+      "en": "Compact",
+      "comment": "CompactToggleLabel (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_CompactToggle_Expand",
+      "en": "Expand",
+      "comment": "CompactToggleLabel (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_DefaultGameTooltip_None",
+      "en": "Launches open Roblox at home. Set a default game under Games to launch straight into it.",
+      "comment": "DefaultGameTooltip; product nouns stay English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_DefaultGameTooltip_Set",
+      "en": "The default game Launch As uses when no per-row pick is set. Click to change.",
+      "comment": "DefaultGameTooltip (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Edge_BelowFloor",
+      "en": "below the 3:1 floor",
+      "comment": "Edge-remediation contrast verdict (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Edge_Body",
+      "en": "RoRoRo now outlines buttons so they can be told apart from the surface behind them. Your theme — {0} — sets one divider colour, and it does two jobs: the faint rule between rows, which is right as you wrote it, and now the outline on a button, which needs to be brighter to be seen. We brightened it for buttons only.",
+      "comment": "Edge-remediation body; {0}=theme name (localized Phase D step 3 batch 12)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Edge_Passes",
+      "en": "passes",
+      "comment": "Edge-remediation contrast verdict (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Export_BundleFilter",
+      "en": "RoRoRo account bundle (*.rororo-accounts)|*.rororo-accounts",
+      "comment": "Export save-file filter; keep the *.rororo-accounts pattern and the | separator verbatim (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Export_NoneExportable",
+      "en": "None of the selected accounts could be exported. Launch them once so they get a Roblox ID, then try again.",
+      "comment": "Export result body (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Export_NothingTitle",
+      "en": "Nothing to export",
+      "comment": "Export result caption (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Export_PassphraseTooShort",
+      "en": "Passphrase must be at least {0} characters.",
+      "comment": "Export validation; {0}=minimum length (localized Phase D step 3 batch 12)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Export_PassphrasesDontMatch",
+      "en": "The two passphrases don't match.",
+      "comment": "Export validation (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Export_PickAtLeastOne",
+      "en": "Pick at least one account to export.",
+      "comment": "Export validation (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Export_SaveFailed",
+      "en": "Couldn't save the bundle: {0}",
+      "comment": "Export error; {0}=exception message (localized Phase D step 3 batch 12)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Export_SaveFailedTitle",
+      "en": "Export failed",
+      "comment": "Export error caption (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Export_SaveTitle",
+      "en": "Save account bundle",
+      "comment": "Export save-file dialog title (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Export_SavedBody",
+      "en": "Saved. This file is your account logins — anyone with the file AND the passphrase can sign in as you. Keep the passphrase safe and don't post the file publicly.",
+      "comment": "Export success body (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Export_SavedTitle",
+      "en": "Accounts exported",
+      "comment": "Export success caption (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Friends_CouldntLoad",
+      "en": "Couldn't load friends: {0}",
+      "comment": "Friends status; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Friends_CouldntReadSession",
+      "en": "Couldn't read this account's saved session — close this and re-add the account.",
+      "comment": "Friends status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Friends_Follow",
+      "en": "Follow",
+      "comment": "Friends follow button (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Friends_FollowTooltip",
+      "en": "Launch this account into the server your friend is in.",
+      "comment": "Friends follow button tooltip (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Friends_JoinPrivacyOff",
+      "en": "Join privacy off",
+      "comment": "Friends row hint (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Friends_JoinPrivacyTooltip",
+      "en": "This friend is in a game, but their join privacy hides the server so RoRoRo can't follow them in.",
+      "comment": "Friends row hint tooltip; \"RoRoRo\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Friends_LauncherHint",
+      "en": "Follow one to launch {0} into their server.",
+      "comment": "Friends launcher hint; {0}=account (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Friends_Loading",
+      "en": "Loading friends...",
+      "comment": "Friends status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Friends_NoneVisible",
+      "en": "No friends visible. Either this account has none, or its privacy filter is hiding them.",
+      "comment": "Friends empty state (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Friends_SectionInGame",
+      "en": "In game",
+      "comment": "Friends section header (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Friends_SectionOffline",
+      "en": "Offline",
+      "comment": "Friends section header (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Friends_SectionOnline",
+      "en": "Online",
+      "comment": "Friends section header (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Friends_SessionExpiredClose",
+      "en": "{0}'s session expired — close this and re-authenticate the account first.",
+      "comment": "Friends status; {0}=account (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Friends_SessionExpiredSwitch",
+      "en": "{0}'s session expired — re-authenticate it, or switch to the other account's friends.",
+      "comment": "Friends status; {0}=account (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Friends_Summary_few",
+      "en": "{0} friends · {1} in game · {2} online · {3} offline",
+      "comment": "few-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Friends_Summary_many",
+      "en": "{0} friends · {1} in game · {2} online · {3} offline",
+      "comment": "many-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Friends_Summary_one",
+      "en": "{0} friend · {1} in game · {2} online · {3} offline",
+      "comment": "Friends summary via Loc.Plural; {0}=friends {1}=in-game {2}=online {3}=offline (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Friends_Summary_other",
+      "en": "{0} friends · {1} in game · {2} online · {3} offline",
+      "comment": "Friends summary via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Friends_Title",
+      "en": "Friends — {0}",
+      "comment": "Friends window title; {0}=account (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Friends_ViewOthers",
+      "en": "View {0}'s friends",
+      "comment": "Friends source-switch button; {0}=account (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_Added",
+      "en": "Added {0}.",
+      "comment": "Games status; {0}=game name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_CouldntAdd",
+      "en": "Couldn't add: {0}",
+      "comment": "Games status; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_CouldntClearDefault",
+      "en": "Couldn't clear the default: {0}",
+      "comment": "Games status; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_CouldntClearDefaultServer",
+      "en": "Couldn't clear the default server: {0}",
+      "comment": "Games status; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_CouldntRemove",
+      "en": "Couldn't remove: {0}",
+      "comment": "Games status; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_CouldntSaveNameChangeDisk",
+      "en": "Couldn't save name change. Disk error? ({0})",
+      "comment": "Games rename status; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_CouldntSetDefault",
+      "en": "Couldn't set default: {0}",
+      "comment": "Games status; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_CouldntSetDefaultServer",
+      "en": "Couldn't set default server: {0}",
+      "comment": "Games status; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_FoundMatches_few",
+      "en": "Found {0} matches.",
+      "comment": "few-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_FoundMatches_many",
+      "en": "Found {0} matches.",
+      "comment": "many-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_FoundMatches_one",
+      "en": "Found {0} match.",
+      "comment": "Games status via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_FoundMatches_other",
+      "en": "Found {0} matches.",
+      "comment": "Games status via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_LookingUp",
+      "en": "Looking up game...",
+      "comment": "Games status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Games_NoMetadata",
+      "en": "Roblox didn't return metadata for place id {0}. Check the URL and try again.",
+      "comment": "Games status; {0}=place id; \"Roblox\" stays English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_NoPlaceId",
+      "en": "Couldn't find a place id in that input. Expected: roblox.com/games/<id>/<slug> or just <id>.",
+      "comment": "Games status; URL pattern stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Games_NoResults",
+      "en": "No results for \"{0}\". Try a different name or paste a URL below.",
+      "comment": "Games status; {0}=query (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_PasteUrlFirst",
+      "en": "Paste a Roblox game URL or place id first.",
+      "comment": "Games status; \"Roblox\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Games_RemoveGameConfirm",
+      "en": "Remove {0} from your saved games?",
+      "comment": "Games remove confirm; {0}=name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_RemoveGameTitle",
+      "en": "Remove game",
+      "comment": "Games remove confirm title (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Games_RemoveServerConfirm",
+      "en": "Remove {0} from your saved servers?",
+      "comment": "Games remove confirm; {0}=name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_RemoveServerTitle",
+      "en": "Remove server",
+      "comment": "Games remove confirm title (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Games_Removed",
+      "en": "Removed.",
+      "comment": "Games status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Games_SearchFailed",
+      "en": "Search failed: {0}",
+      "comment": "Games status; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_Searching",
+      "en": "Searching for \"{0}\"...",
+      "comment": "Games status; {0}=query (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Games_ServerNotSaved",
+      "en": "That server isn't saved any more.",
+      "comment": "Games rename status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Games_ThisGame",
+      "en": "this game",
+      "comment": "Games remove fallback name (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Games_ThisServer",
+      "en": "this server",
+      "comment": "Games remove fallback name (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Games_TypeToSearch",
+      "en": "Type a game name to search.",
+      "comment": "Games status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Headroom_BodyMany",
+      "en": "You are launching {0} accounts, and a Roblox client typically needs about 2.6 GB each. Windows may close clients that are already running to make space.",
+      "comment": "Launch-headroom body, multi launch; {0}=requested count (localized Phase D step 3 batch 12)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Headroom_BodyOne",
+      "en": "A Roblox client typically needs about 2.6 GB. Starting one now could push the machine past what it can hold, and Windows may close a client that is already running to make space.",
+      "comment": "Launch-headroom body, single launch (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Headroom_HeldNothing",
+      "en": "nothing yet",
+      "comment": "Launch-headroom held-by phrase (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Headroom_HeldRunning",
+      "en": "running clients",
+      "comment": "Launch-headroom held-by phrase (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Headroom_Numbers",
+      "en": "{0:F1} GB free  ·  {1:F1} GB held by {2}  ·  room for about {3} more",
+      "comment": "Launch-headroom stats; {0}=free GB, {1}=held GB, {2}=held-by phrase, {3}=room-for count (localized Phase D step 3 batch 12)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Headroom_RoomFor",
+      "en": "There may only be room for {0} more",
+      "comment": "Launch-headroom heading; {0}=count that fits (localized Phase D step 3 batch 12)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Headroom_WontFit",
+      "en": "There may not be room for another client",
+      "comment": "Launch-headroom heading, won't fit (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_History_Badge_Private",
+      "en": "PRIVATE",
+      "comment": "History row private-server badge (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_History_Badge_Saved",
+      "en": "Saved",
+      "comment": "History row saved badge (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_History_BestStreak",
+      "en": "best: {0} days · longest session {1}",
+      "comment": "History stats; {0}=days {1}=session (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_History_Bookmark",
+      "en": "+ Bookmark",
+      "comment": "History row bookmark button (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_History_BookmarkGameTitle",
+      "en": "Bookmark game",
+      "comment": "History bookmark error title (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_History_BookmarkTooltip",
+      "en": "Add this place to your saved games so you can launch into it any time.",
+      "comment": "History bookmark button tooltip (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_History_ClearConfirm",
+      "en": "Clear all session history? This can't be undone.",
+      "comment": "Clear-history confirm body (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_History_CouldntBookmark",
+      "en": "Couldn't bookmark: {0}",
+      "comment": "History bookmark error; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_History_LeaderRow",
+      "en": "{0} · {1} launches{2}",
+      "comment": "Leaderboard row; {0}=uptime {1}=launches {2}=streak suffix (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_History_LongestSession",
+      "en": "longest session {0}",
+      "comment": "History stats; {0}=session (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_History_MostPlayed",
+      "en": "most played: {0}",
+      "comment": "History stats; {0}=game (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_History_Saving",
+      "en": "Saving...",
+      "comment": "History bookmark status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_History_StillRunning",
+      "en": "still running",
+      "comment": "Duration text for an open session (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_History_Today",
+      "en": "Today",
+      "comment": "History date bucket (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_History_Yesterday",
+      "en": "Yesterday",
+      "comment": "History date bucket (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_IdleSummary_few",
+      "en": "{0} accounts idle > {1}m",
+      "comment": "Idle-strip; few-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_IdleSummary_many",
+      "en": "{0} accounts idle > {1}m",
+      "comment": "Idle-strip; many-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_IdleSummary_one",
+      "en": "{0} account idle > {1}m",
+      "comment": "Idle-strip; composed by IdleSummary via Loc.Plural. {0}=count {1}=threshold minutes (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_IdleSummary_other",
+      "en": "{0} accounts idle > {1}m",
+      "comment": "Idle-strip; composed by IdleSummary via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Idle_HoursMinutes",
+      "en": "idle {0}h{1}m",
+      "comment": "AccountSummary IdleText; h/m unit symbols (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Idle_Minutes",
+      "en": "idle {0}m",
+      "comment": "AccountSummary IdleText; m = unit symbol (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Idle_Seconds",
+      "en": "idle {0}s",
+      "comment": "AccountSummary IdleText; s = unit symbol (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Import_BundleFilter",
+      "en": "RoRoRo account bundle (*.rororo-accounts)|*.rororo-accounts|All files (*.*)|*.*",
+      "comment": "Import open-file filter; keep the patterns and | separators verbatim (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Import_CouldntRead",
+      "en": "Couldn't read that file: {0}",
+      "comment": "Import I/O error; {0}=exception message (localized Phase D step 3 batch 12)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Import_OpenTitle",
+      "en": "Open account bundle",
+      "comment": "Import open-file dialog title (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Import_Opening",
+      "en": "Opening bundle…",
+      "comment": "Import in-progress status (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Import_Result",
+      "en": "Imported {0} account(s). Skipped {1} already on this PC.",
+      "comment": "Import result; {0}=imported count, {1}=skipped count (localized Phase D step 3 batch 12)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Import_ResultTitle",
+      "en": "Accounts imported",
+      "comment": "Import result caption (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Join_AccessCode",
+      "en": "access code",
+      "comment": "Join-by-link code kind (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Join_CouldntResolve",
+      "en": "Couldn't resolve that share link. Make sure it's a valid private server URL.",
+      "comment": "Join-by-link error (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Join_CouldntResolveEx",
+      "en": "Couldn't resolve: {0}",
+      "comment": "Join-by-link error; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Join_NotALink",
+      "en": "Doesn't look like a Roblox link. Try https://www.roblox.com/games/<id>, a private server share URL, or a roblox.com/share?code=... link.",
+      "comment": "Join-by-link error; URLs/\"Roblox\" stay English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Join_Place",
+      "en": "Place {0}",
+      "comment": "Join-by-link detail; {0}=place id (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Join_PlaceCode",
+      "en": "Place {0}  ·  {1} {2}",
+      "comment": "Join-by-link detail; {0}=place {1}=kind {2}=code (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Join_PrivateServer",
+      "en": "Private server",
+      "comment": "Join-by-link preview label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Join_PublicGame",
+      "en": "Public game",
+      "comment": "Join-by-link preview label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Join_PublicGameHint",
+      "en": "We'll launch this account into the public version of that game.",
+      "comment": "Join-by-link status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Join_ResolveHint",
+      "en": "We'll resolve this with Roblox when you click Launch.",
+      "comment": "Join-by-link status; \"Roblox\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Join_Resolving",
+      "en": "Resolving share link...",
+      "comment": "Join-by-link status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Join_RobloxShare",
+      "en": "Roblox share ({0})",
+      "comment": "Join-by-link preview label; {0}=link type; \"Roblox\" stays English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Join_ShareLink",
+      "en": "share link",
+      "comment": "Join-by-link code kind (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Join_VipServerHint",
+      "en": "We'll launch this account into that VIP server.",
+      "comment": "Join-by-link status; \"VIP\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Launch_Clause_Deselected",
+      "en": "{0} deselected",
+      "comment": "LaunchEligibility skip clause (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Launch_Clause_Expired",
+      "en": "{0} expired",
+      "comment": "LaunchEligibility skip clause (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Launch_Clause_Limited",
+      "en": "{0} limited",
+      "comment": "LaunchEligibility skip clause (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Launch_Clause_Running",
+      "en": "{0} already running",
+      "comment": "LaunchEligibility skip clause (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Launch_Dispatched_few",
+      "en": "{1}. {0} clients dispatched.",
+      "comment": "few-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Launch_Dispatched_many",
+      "en": "{1}. {0} clients dispatched.",
+      "comment": "many-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Launch_Dispatched_one",
+      "en": "{1}. {0} client dispatched.",
+      "comment": "LaunchEligibility banner via Loc.Plural; {0}=count {1}=verb (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Launch_Dispatched_other",
+      "en": "{1}. {0} clients dispatched.",
+      "comment": "LaunchEligibility banner via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Launch_NothingNoAccounts",
+      "en": "Nothing to launch — no accounts available.",
+      "comment": "LaunchEligibility banner (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Launch_NothingReasons",
+      "en": "Nothing to launch — {0}.",
+      "comment": "LaunchEligibility banner; {0}=reason clauses (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Launch_VerbMultiple",
+      "en": "Launch multiple finished",
+      "comment": "PartialBanner verb (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Launch_VerbSquad",
+      "en": "Squad launch finished",
+      "comment": "PartialBanner verb (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Leftover_Connector",
+      "en": ", and ",
+      "comment": "LeftoverSummary list join; translators localize incl. spaces (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Leftover_Found",
+      "en": "Found {0}. Multi-instance is fine — RoRoRo has the lock.",
+      "comment": "LeftoverSummary; product nouns stay English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Leftover_Windowed_few",
+      "en": "{0} open Roblox windows from before",
+      "comment": "few-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Leftover_Windowed_many",
+      "en": "{0} open Roblox windows from before",
+      "comment": "many-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Leftover_Windowed_one",
+      "en": "{0} open Roblox window from before",
+      "comment": "LeftoverSummary via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Leftover_Windowed_other",
+      "en": "{0} open Roblox windows from before",
+      "comment": "LeftoverSummary via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Leftover_Windowless_few",
+      "en": "{0} leftover Roblox processes with no window",
+      "comment": "few-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Leftover_Windowless_many",
+      "en": "{0} leftover Roblox processes with no window",
+      "comment": "many-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Leftover_Windowless_one",
+      "en": "{0} leftover Roblox process with no window",
+      "comment": "LeftoverSummary via Loc.Plural; \"Roblox\" stays English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Leftover_Windowless_other",
+      "en": "{0} leftover Roblox processes with no window",
+      "comment": "LeftoverSummary via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_MemFooter_Clients_few",
+      "en": "{0} Roblox clients running",
+      "comment": "Memory footer; few-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_MemFooter_Clients_many",
+      "en": "{0} Roblox clients running",
+      "comment": "Memory footer; many-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_MemFooter_Clients_one",
+      "en": "{0} Roblox client running",
+      "comment": "Memory footer; via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_MemFooter_Clients_other",
+      "en": "{0} Roblox clients running",
+      "comment": "Memory footer; via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_MemFooter_None",
+      "en": "No Roblox clients running",
+      "comment": "Memory footer; composed by MemoryChipFormatter. \"Roblox\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Mem_SummaryKnown",
+      "en": "Your PC reports {0} of RAM. Leave a box below blank and RoRoRo picks for you: {1} MB kept free, and a warning when one account passes {2} MB. Warn this far ahead starts at {3} minutes.",
+      "comment": "AutomaticMemorySummary; {0}=RAM {1}=reserve {2}=cap {3}=minutes; \"RoRoRo\"/\"MB\" stay (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Mem_SummaryUnknown",
+      "en": "RoRoRo can't read how much RAM your PC has. Leave a box below blank and it falls back to {0} MB kept free, and a warning when one account passes {1} MB. Warn this far ahead starts at {2} minutes. Put your own numbers in if those don't suit your PC.",
+      "comment": "AutomaticMemorySummary fallback; {0}=reserve {1}=cap {2}=minutes (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_Added",
+      "en": "Added {0}.",
+      "comment": "Add-account banner; {0}=name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_AddedMain",
+      "en": "Added {0}. Marked as main — change it any time.",
+      "comment": "Add-account banner; {0}=name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_CantFollow",
+      "en": "Can't follow {0} — they're not in a joinable game right now (or their join privacy is off).",
+      "comment": "Follow block reason; {0}=name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_CouldntFollowNoUserId",
+      "en": "Couldn't follow {0} — Roblox userId not yet known. Try Re-authenticating that account, or wait a moment after login.",
+      "comment": "Follow banner; {0}=name; \"Roblox\" stays English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_CouldntReachFriends",
+      "en": "Couldn't reach Roblox to load friends. Try again in a moment.",
+      "comment": "Friends-modal banner; \"Roblox\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Msg_CouldntReadServer",
+      "en": "Couldn't read {0}'s server in time — the rest are joining the game, not that server.",
+      "comment": "Squad banner; {0}=name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_CouldntReadSession",
+      "en": "Couldn't read this account's saved session.",
+      "comment": "Friends-modal banner (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Msg_CouldntRemoveGame",
+      "en": "Couldn't remove that game. Disk error?",
+      "comment": "Game-management banner (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Msg_CouldntSaveJoinViaFriend",
+      "en": "Couldn't save join-via-friend: {0}",
+      "comment": "Banner; {0}=exception text (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_CouldntSaveNameChange",
+      "en": "Couldn't save name change. Disk error?",
+      "comment": "Rename banner (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Msg_CouldntSetMain",
+      "en": "Couldn't set main account — see log for details.",
+      "comment": "Main-account banner (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Msg_FollowingFromSource",
+      "en": "Following {0} from {1}...",
+      "comment": "Follow banner; {0}=target {1}=source (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_GameNotSaved",
+      "en": "That game isn't saved any more.",
+      "comment": "Game-management banner (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Msg_IsNowMain",
+      "en": "{0} is now your main.",
+      "comment": "Main-account banner; {0}=name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_ItemNotSaved",
+      "en": "That {0} isn't saved any more.",
+      "comment": "Rename banner; {0}=kind noun (English enum text, minor) (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_JoinPrivateConfirm",
+      "en": "This is a private server — you may be denied entry if you're not on its list.{0} Try anyway?",
+      "comment": "Join confirm; {0}=takeover clause (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_JoinUriConfirm",
+      "en": "This join request came from outside RoRoRo and can't be verified — launching {0} into this server.{1} Continue anyway?",
+      "comment": "Join confirm; {0}=name {1}=takeover clause; \"RoRoRo\" stays English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_JoiningServerFallbackProgress",
+      "en": "Joining server (direct fallback): {0} ({1} of {2})...",
+      "comment": "Squad fallback progress; {0}=name {1}=n {2}=total (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_JoiningServerProgress",
+      "en": "Joining server: {0} ({1} of {2})...",
+      "comment": "Squad progress; {0}=name {1}=n {2}=total (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_JoiningViaAnchorProgress",
+      "en": "{0} joining via {1} ({2} of {3})...",
+      "comment": "Squad progress; {0}=name {1}=anchor {2}=n {3}=total (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_JoiningViaTakeover",
+      "en": "Joining via {0} — this takes over that account's running session.",
+      "comment": "Join banner; {0}=name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_LaunchingProgress",
+      "en": "Launching {0} ({1} of {2})...",
+      "comment": "Batch launch progress; {0}=name {1}=n {2}=total (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_LaunchingSelected_few",
+      "en": "Launching {0} selected accounts...",
+      "comment": "few-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_LaunchingSelected_many",
+      "en": "Launching {0} selected accounts...",
+      "comment": "many-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_LaunchingSelected_one",
+      "en": "Launching {0} selected account...",
+      "comment": "Launch-multiple banner via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_LaunchingSelected_other",
+      "en": "Launching {0} selected accounts...",
+      "comment": "Launch-multiple banner via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_MainCleared",
+      "en": "Main account cleared.",
+      "comment": "Main-account banner (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Msg_NoAnchorAccounts",
+      "en": "No direct-join accounts to anchor on — flagged accounts joining directly.",
+      "comment": "Squad fallback banner (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Msg_NoSquadLanded",
+      "en": "No squad member landed in time — flagged accounts joining directly.",
+      "comment": "Squad fallback banner (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Msg_NothingToJoin",
+      "en": "Nothing to join with — add an account first.",
+      "comment": "Discord-join banner (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Msg_ReauthCancelled",
+      "en": "Re-authentication cancelled — {0}'s saved session is unchanged.",
+      "comment": "Re-auth banner; {0}=name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_ReauthDifferentAccount",
+      "en": "That login was a different account (@{0}) — {1} is unchanged.",
+      "comment": "Re-auth guard; {0}=username {1}=name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_ReauthIncomplete",
+      "en": "Re-authentication didn't complete: {0}",
+      "comment": "Re-auth banner; {0}=inner reason (already localized) (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_RemoveAccountTitle",
+      "en": "Remove Account",
+      "comment": "Remove-account confirm title (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Msg_RemoveConfirm",
+      "en": "Remove {0}?\nYou'll need to log in again to add it back.",
+      "comment": "Remove-account confirm body; {0}=name; embedded newline intentional (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_Removed",
+      "en": "Removed {0}.",
+      "comment": "Remove-account banner; {0}=name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_SessionExpiredReauth",
+      "en": "{0}'s session expired — re-authenticate first.",
+      "comment": "Friends-modal banner; {0}=name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_SessionsExpired_few",
+      "en": "{0} saved sessions have expired. Click Re-authenticate to refresh.",
+      "comment": "few-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_SessionsExpired_many",
+      "en": "{0} saved sessions have expired. Click Re-authenticate to refresh.",
+      "comment": "many-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_SessionsExpired_one",
+      "en": "{0} saved session has expired. Click Re-authenticate to refresh it.",
+      "comment": "Expired-sessions banner via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_SessionsExpired_other",
+      "en": "{0} saved sessions have expired. Click Re-authenticate to refresh.",
+      "comment": "Expired-sessions banner via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_SourceExpired",
+      "en": "{0} has an expired session — re-authenticate first.",
+      "comment": "Follow banner; {0}=name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_StartedFresh",
+      "en": "Started fresh. Add accounts to begin.",
+      "comment": "DPAPI-corrupt recovery banner (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Msg_TakeoverClause",
+      "en": " This takes over {0}'s running session.",
+      "comment": "Join confirm clause; {0}=name; leading space intentional (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_ThatFriend",
+      "en": "that friend",
+      "comment": "Follow fallback name (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Msg_WaitingForLanding",
+      "en": "Waiting for {0} to land so the rest can join that server...",
+      "comment": "Squad banner; {0}=name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Msg_WaitingSquadMember",
+      "en": "Waiting for a squad member to land (for join-via-friend accounts)...",
+      "comment": "Squad banner (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_MultiInstance_ContestedBanner",
+      "en": "Roblox has the multi-instance lock — it's probably running in your system tray.",
+      "comment": "Main-window banner; composed by MultiInstanceCopy. \"Roblox\"/\"multi-instance\" stay English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_MultiInstance_FpsCapMismatch",
+      "en": "Set every account to the same FPS cap to launch at full speed. Roblox keeps one shared settings file for every client, so different caps make RoRoRo wait for each account to finish loading before starting the next, up to about 20 seconds each.",
+      "comment": "Main-window banner; composed by MultiInstanceCopy. Product nouns stay English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_MultiInstance_StillLocked",
+      "en": "Still locked — Roblox is still running.",
+      "comment": "BLOCKED modal tick; composed by MultiInstanceCopy (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Muted_few",
+      "en": "{0} accounts are muted. Nothing they do raises an alert, whatever the settings above say.",
+      "comment": "few-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Muted_many",
+      "en": "{0} accounts are muted. Nothing they do raises an alert, whatever the settings above say.",
+      "comment": "many-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Muted_one",
+      "en": "{0} account is muted. Nothing it does raises an alert, whatever the settings above say.",
+      "comment": "MutedAccountsSummary via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Muted_other",
+      "en": "{0} accounts are muted. Nothing they do raises an alert, whatever the settings above say.",
+      "comment": "MutedAccountsSummary via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Passphrase_Fair",
+      "en": "Fair",
+      "comment": "Passphrase strength label (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Passphrase_Strong",
+      "en": "Strong",
+      "comment": "Passphrase strength label (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Passphrase_TooShort",
+      "en": "Too short",
+      "comment": "Passphrase strength label (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Passphrase_VeryStrong",
+      "en": "Very strong",
+      "comment": "Passphrase strength label (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Passphrase_Weak",
+      "en": "Weak",
+      "comment": "Passphrase strength label (localized Phase D step 3 batch 12)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_PreWarm_NeverConnected",
+      "en": "Launch never connected. Check Roblox is current + antivirus isn't blocking.",
+      "comment": "PreWarmGate row status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_PreWarm_Updating",
+      "en": "Roblox is updating — hold on.",
+      "comment": "PreWarmGate row status; \"Roblox\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_AutoValue",
+      "en": "{0} (auto)",
+      "comment": "Memory ghost hint; {0}=computed value (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_ButtonOutlinesTitle",
+      "en": "Button outlines",
+      "comment": "Theme edge-review dialog title (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_ClanChannel",
+      "en": "Clan channel",
+      "comment": "Webhook test result label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_CouldntReadMemory",
+      "en": "Couldn't read your memory settings: {0}",
+      "comment": "Settings error; {0}=exception text (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_CouldntSaveAlertRouting",
+      "en": "Couldn't save alert routing: {0}",
+      "comment": "Settings error; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_CouldntSaveIcon",
+      "en": "Couldn't save the icon: {0}",
+      "comment": "Settings error; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_CouldntSaveKey",
+      "en": "Couldn't save the key: {0}",
+      "comment": "Settings error; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_CouldntSaveLanguage",
+      "en": "Couldn't save the language: {0}",
+      "comment": "Settings error; {0}=exception text (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_CouldntSavePhone",
+      "en": "Couldn't save the phone setting: {0}",
+      "comment": "Settings error; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_CouldntSavePreference",
+      "en": "Couldn't save preference: {0}",
+      "comment": "Settings error; {0}=exception text (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_CouldntSaveServer",
+      "en": "Couldn't save the server: {0}",
+      "comment": "Settings error; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_CouldntSaveSetting",
+      "en": "Could not save that setting: {0}",
+      "comment": "Settings error; {0}=exception text (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_CouldntSaveThat",
+      "en": "Couldn't save that: {0}",
+      "comment": "Settings error; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_CouldntSaveTopic",
+      "en": "Couldn't save the new topic: {0}",
+      "comment": "Settings error; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_CouldntSaveWebhook",
+      "en": "Couldn't save the webhook: {0}",
+      "comment": "Settings error; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_CouldntUpdateStartup",
+      "en": "Couldn't update Windows startup entry: {0}",
+      "comment": "Settings error; {0}=exception text (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_DiscordNotSetUp",
+      "en": "Discord presence isn't set up for this build.",
+      "comment": "Settings Discord status; \"Discord\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_FinishPhoneSetup",
+      "en": "Finish the phone setup above first — there's nowhere to send a test yet.",
+      "comment": "Phone test status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_IconFilter",
+      "en": "PNG image|*.png",
+      "comment": "Save-icon dialog filter; only \"PNG image\" is display text (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_IconSaved",
+      "en": "Icon saved — upload it in the icon slot on pushover.net's application form.",
+      "comment": "Pushover verdict status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_MyChannel",
+      "en": "My channel",
+      "comment": "Webhook test result label (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_NeedsANumber",
+      "en": "This one needs a number, so nothing was saved. {0}",
+      "comment": "Memory-field refusal; {0}=hint (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_NoServerHelp",
+      "en": "You need a Discord server of your own. It's free, it can be just you, and nobody else can see it.\n\nMake one:\n  1. Click the + button on the left edge of Discord.\n  2. Choose \"Create My Own\", then skip the questions.\n  3. Name it anything — \"RoRoRo\" works.\n\nThen make the webhook:\n  4. Right-click your new server, then Server Settings.\n  5. Integrations, then Webhooks, then New Webhook.\n  6. Click Copy Webhook URL, and paste it into the box here.\n\nAlerts will arrive in that server — on your phone too, as long as Discord is installed on it.",
+      "comment": "Discord no-server help body; product nouns stay English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_NoServerHelpTitle",
+      "en": "Setting up alerts",
+      "comment": "Discord no-server help title (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_NoThemeChoice",
+      "en": "There's nothing to choose for this theme.\n\nRoRoRo only asks about button outlines on themes people write themselves, and only when the outline a theme sets would be too faint to tell a button apart from the surface behind it. The built-in themes are ours to get right, so they are never asked about.",
+      "comment": "Theme edge-review dialog body; \"RoRoRo\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_NotWholeNumber",
+      "en": "\"{0}\" isn't a whole number, so nothing was saved. {1}",
+      "comment": "Memory-field refusal; {0}=input {1}=hint (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_NothingToExport",
+      "en": "You don't have any saved accounts to export yet.",
+      "comment": "Export dialog body (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_NothingToExportTitle",
+      "en": "Nothing to export",
+      "comment": "Export dialog title (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_NtfyRefused",
+      "en": "The ntfy server refused that topic — generate a new one and re-subscribe on your phone.",
+      "comment": "Phone test status; \"ntfy\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_NtfySubscribeHint",
+      "en": "Subscribe to this exact topic in the ntfy app on your phone, then hit Test my phone.",
+      "comment": "ntfy hint; \"ntfy\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_NtfyTopicWarn",
+      "en": "A new topic disconnects your phone until you subscribe to the new one in the ntfy app. Make a new topic?",
+      "comment": "ntfy topic regen confirm; \"ntfy\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_NumberHint",
+      "en": "Use a whole number from {0} to {1}, or leave the box empty and RoRoRo will pick one.",
+      "comment": "Memory-field hint; {0}=floor {1}=ceiling (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_NumberHint_WithZero",
+      "en": "Use a whole number from {0} to {1}, 0 to turn it off, or leave the box empty and RoRoRo will pick one.",
+      "comment": "Memory-field hint; {0}=floor {1}=ceiling; \"RoRoRo\" stays English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_OutOfRange",
+      "en": "{0} is outside {1} to {2}, so nothing was saved. {3}",
+      "comment": "Memory-field refusal; {0}=value {1}=floor {2}=ceiling {3}=hint (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_PasteWebhookFirst",
+      "en": "Paste a webhook URL first — there's nowhere to send a test yet.",
+      "comment": "Webhook test status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_PhoneTestSent",
+      "en": "Sent — your phone should buzz within a few seconds.",
+      "comment": "Phone test status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_PostsTo",
+      "en": "Posts to #{0} in {1}.",
+      "comment": "Webhook identity; {0}=channel {1}=guild (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_PushRateLimited",
+      "en": "The push service is rate-limiting us. Wait a minute; the setup itself looks fine.",
+      "comment": "Phone test status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_PushUnreachable",
+      "en": "Couldn't reach the push service.",
+      "comment": "Phone test status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_PushoverAppToken",
+      "en": "application token",
+      "comment": "Pushover field noun, passed into CoreMessageCatalog.ForPushoverKey (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_PushoverRejected",
+      "en": "Pushover rejected the saved keys — re-check both on pushover.net and paste them again.",
+      "comment": "Phone test status; \"Pushover\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_PushoverUserKey",
+      "en": "user key",
+      "comment": "Pushover field noun, passed into CoreMessageCatalog.ForPushoverKey (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_RequiredNumberHint",
+      "en": "Use a whole number from {0} to {1}. The default is {2}.",
+      "comment": "Memory-field hint; {0}=floor {1}=ceiling {2}=default (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_Reveal_Hide",
+      "en": "Hide",
+      "comment": "Credential reveal toggle (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_Reveal_Show",
+      "en": "Show",
+      "comment": "Credential reveal toggle (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_SaveIconTitle",
+      "en": "Save the icon",
+      "comment": "Save-icon dialog title (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_Sending",
+      "en": "Sending…",
+      "comment": "Test-send status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Pref_TestResult_Gone",
+      "en": "{0}: that webhook no longer exists — make a new one and paste it again.",
+      "comment": "Webhook test result; {0}=label (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_TestResult_RateLimited",
+      "en": "{0}: Discord is rate-limiting us. Wait a minute; the webhook itself looks fine.",
+      "comment": "Webhook test result; {0}=label; \"Discord\" stays English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_TestResult_Sent",
+      "en": "{0}: sent.",
+      "comment": "Webhook test result; {0}=channel label (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_TestResult_Unreachable",
+      "en": "{0}: couldn't reach Discord.",
+      "comment": "Webhook test result; {0}=label; \"Discord\" stays English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Pref_Title",
+      "en": "Preferences",
+      "comment": "Settings MessageBox caption (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Rename_OriginalLabel",
+      "en": "Roblox name — {0}",
+      "comment": "Rename modal original-name label; rendered uppercase; {0}=original name (localized Phase D step 3 batch 12)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_RobloxHome",
+      "en": "Roblox home",
+      "comment": "DefaultGameDisplay fallback; \"Roblox\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_ServerLanding_MoreNames",
+      "en": " +{0} more",
+      "comment": "ServerLandingReport name-overflow suffix (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_ServerLanding_RecycleElsewhere",
+      "en": "{0} came back in a different server — Roblox moved it. Recycle again to retry.",
+      "comment": "ServerLandingReport; {0}=account (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_ServerLanding_RecycleNotYet",
+      "en": "{0} isn't in that server yet — check its Roblox window. A full server puts you in line.",
+      "comment": "ServerLandingReport; {0}=account (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_ServerLanding_SquadElsewhere",
+      "en": "{0} of {1} landed in a different server: {2}. Recycle those rows to retry.",
+      "comment": "ServerLandingReport; {0}=count {1}=total {2}=names (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_ServerLanding_SquadNotYet",
+      "en": "{0} of {1} aren't in that server yet: {2}. Check their Roblox windows — a full server puts you in line.",
+      "comment": "ServerLandingReport; {0}=count {1}=total {2}=names (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Squad_Added",
+      "en": " · added {0}",
+      "comment": "Squad server subtitle; {0}=relative ago (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Squad_Badge_Default",
+      "en": "DEFAULT",
+      "comment": "Squad default-server badge (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Squad_CouldntAddLaunch",
+      "en": "Couldn't add and launch: {0}",
+      "comment": "Squad add error; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Squad_CouldntLoadServers",
+      "en": "Couldn't load saved servers: {0}",
+      "comment": "Squad status; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Squad_CouldntReadLink",
+      "en": "Couldn't read that as a Roblox link. Paste a private server URL from its \"Configure Server\" page (either the roblox.com/share?... form or the older privateServerLinkCode= one), or a plain game link to put the squad in one public server.",
+      "comment": "Squad add error; \"Roblox\"/URL forms stay English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Squad_Eligible_few",
+      "en": "{0} eligible accounts",
+      "comment": "few-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Squad_Eligible_many",
+      "en": "{0} eligible accounts",
+      "comment": "many-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Squad_Eligible_one",
+      "en": "{0} eligible account",
+      "comment": "Squad eligibility via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Squad_Eligible_other",
+      "en": "{0} eligible accounts",
+      "comment": "Squad eligibility via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Squad_Expired",
+      "en": "{0} expired (skipped)",
+      "comment": "Squad eligibility clause; {0}=count (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Squad_LastLaunched",
+      "en": " · last launched {0}",
+      "comment": "Squad server subtitle; {0}=relative ago (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Squad_LaunchAll",
+      "en": "Launch all",
+      "comment": "Squad launch button (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Squad_LookingUp",
+      "en": "Looking up game info...",
+      "comment": "Squad add status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Squad_NoEligibleTooltip",
+      "en": "No eligible accounts. Re-authenticate expired sessions or close running clients first.",
+      "comment": "Squad launch button disabled tooltip (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Squad_NoSavedServers",
+      "en": "No saved servers yet. Paste a private server link below to add one — it'll save for next time.",
+      "comment": "Squad empty state (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Squad_PasteLinkFirst",
+      "en": "Paste a private server link or a game link first.",
+      "comment": "Squad add status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Squad_PlaceFallback",
+      "en": "Place {0}",
+      "comment": "Squad server display fallback; {0}=place id (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Squad_Remove",
+      "en": "Remove",
+      "comment": "Squad server remove button (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Squad_Rename",
+      "en": "Rename…",
+      "comment": "Squad server context-menu item (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Squad_ResetName",
+      "en": "Reset name",
+      "comment": "Squad server context-menu item (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Squad_Resolving",
+      "en": "Resolving link...",
+      "comment": "Squad add status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Squad_Running",
+      "en": "{0} running (skipped)",
+      "comment": "Squad eligibility clause; {0}=count (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Stats_IntegrityNote_few",
+      "en": "{0} sessions didn't record an end and aren't counted in uptime.",
+      "comment": "few-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Stats_IntegrityNote_many",
+      "en": "{0} sessions didn't record an end and aren't counted in uptime.",
+      "comment": "many-form (ru/pl) mirrors other in English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Stats_IntegrityNote_one",
+      "en": "{0} session didn't record an end and isn't counted in uptime.",
+      "comment": "Stats integrity note via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Stats_IntegrityNote_other",
+      "en": "{0} sessions didn't record an end and aren't counted in uptime.",
+      "comment": "Stats integrity note via Loc.Plural (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Stats_PlaceFallback",
+      "en": "place {0}",
+      "comment": "Most-played game fallback; {0}=place id (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Stats_StreakSuffix",
+      "en": " · {0}d streak",
+      "comment": "Leaderboard streak suffix; {0}=days (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Status_AtHome",
+      "en": "At Roblox home",
+      "comment": "AccountSummary state; \"Roblox\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Status_Closed",
+      "en": "Closed {0}",
+      "comment": "AccountSummary state; {0}=relative ago (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Status_Closing",
+      "en": "Closing… {0}s",
+      "comment": "AccountSummary state; {0}=seconds (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Status_ClosingNoCount",
+      "en": "Closing…",
+      "comment": "AccountSummary state (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Status_Connecting",
+      "en": "Connecting…",
+      "comment": "AccountSummary state (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Status_InGame",
+      "en": "In a game",
+      "comment": "AccountSummary state (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Status_InGameNamed",
+      "en": "In {0}",
+      "comment": "AccountSummary state; {0}=game name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Status_InGameNamedAge",
+      "en": "In {0} · {1}",
+      "comment": "AccountSummary state; {0}=game {1}=age (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Status_InStudio",
+      "en": "In Studio",
+      "comment": "AccountSummary state; \"Studio\" is Roblox Studio (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Status_LastLaunched",
+      "en": "Last launched {0}",
+      "comment": "AccountSummary state; {0}=relative ago (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Status_Launching",
+      "en": "Launching...",
+      "comment": "Row status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Status_Limited",
+      "en": "Limited by Roblox — re-capture or wait",
+      "comment": "AccountSummary state; \"Roblox\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Status_Ready",
+      "en": "Ready",
+      "comment": "AccountSummary state (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Status_Reauthenticated",
+      "en": "Re-authenticated.",
+      "comment": "Row status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Status_RobloxNotInstalled",
+      "en": "Roblox not installed.",
+      "comment": "Row status; \"Roblox\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Status_SessionExpired",
+      "en": "Session expired",
+      "comment": "AccountSummary state (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_StopAll_Running_few",
+      "en": "{0} Roblox clients are running. This closes them all immediately.",
+      "comment": "Stop-all confirm, few (mirrors other for en; ru/pl fallback) (localized Phase D step 3 batch 12)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_StopAll_Running_many",
+      "en": "{0} Roblox clients are running. This closes them all immediately.",
+      "comment": "Stop-all confirm, many (mirrors other for en; ru/pl fallback) (localized Phase D step 3 batch 12)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_StopAll_Running_one",
+      "en": "{0} Roblox client is running. This closes it immediately.",
+      "comment": "Stop-all confirm, singular; {0}=count (localized Phase D step 3 batch 12)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_StopAll_Running_other",
+      "en": "{0} Roblox clients are running. This closes them all immediately.",
+      "comment": "Stop-all confirm, plural; {0}=count (localized Phase D step 3 batch 12)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_ThemeBuilder_ClipboardFailed",
+      "en": "Clipboard set failed: {0}",
+      "comment": "Theme builder status; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_ThemeBuilder_CouldntLoadPrompt",
+      "en": "Couldn't load the prompt — see logs.",
+      "comment": "Theme builder status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_ThemeBuilder_PasteJsonFirst",
+      "en": "Paste the JSON the AI returned first.",
+      "comment": "Theme builder status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_ThemeBuilder_PromptCopied",
+      "en": "Prompt copied. Paste it into Claude / ChatGPT / etc., describe a vibe, and paste the JSON it returns below.",
+      "comment": "Theme builder status; product names stay English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_ThemeBuilder_SaveFailed",
+      "en": "Save failed: {0}",
+      "comment": "Theme builder status; {0}=exception (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_ThemeBuilder_Saving",
+      "en": "Saving...",
+      "comment": "Theme builder status (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_ThemeStatus_MoreNames",
+      "en": ", and {0} more",
+      "comment": "ThemeStatusSummary name-overflow suffix (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_ThemeStatus_NotInFolder",
+      "en": "{0} isn't in your themes folder any more, so nothing changed. Close and reopen Settings to see what's there now.",
+      "comment": "ThemeStatusSummary; {0}=name (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_ThemeStatus_OnButNotSaved",
+      "en": "{0} is on now, but RoRoRo couldn't remember it{1} You'll be back on your old theme the next time you start.",
+      "comment": "ThemeStatusSummary; {0}=name {1}=because clause; \"RoRoRo\" stays English (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_ThemeStatus_ShadowedMany",
+      "en": "{0} files have the same names as built-in themes, so RoRoRo kept the built-ins: {1}. Rename them to use yours.",
+      "comment": "ThemeStatusSummary; {0}=count {1}=names (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_ThemeStatus_ShadowedOne",
+      "en": "{0} has the same name as a built-in theme, so RoRoRo kept the built-in. Rename the file to use yours.",
+      "comment": "ThemeStatusSummary; {0}=filename (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_ThemeStatus_ThatTheme",
+      "en": "That theme",
+      "comment": "ThemeStatusSummary fallback name (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_ThemeStatus_UnreadableMany",
+      "en": "RoRoRo couldn't read {0} files in your themes folder, so they aren't in the list: {1}. Check each one for a typo or a missing line, then close and reopen Settings.",
+      "comment": "ThemeStatusSummary; {0}=count {1}=names (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_ThemeStatus_UnreadableOne",
+      "en": "RoRoRo couldn't read {0}, so it isn't in the list. Check it for a typo or a missing line, then close and reopen Settings.",
+      "comment": "ThemeStatusSummary; {0}=filename (localized Phase D step 3)",
+      "placeholders": true
+    },
+    {
+      "key": "Shell_Theme_Desc_Brand",
+      "en": "Cyan and magenta on navy: RoRoRo's default look, and the one you'll see in every screenshot.",
+      "comment": "Theme description; \"RoRoRo\" stays English (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Theme_Desc_Flatline",
+      "en": "Reads the same whether or not you can tell colours apart: everything the app says in colour, it also says in words or shape.",
+      "comment": "Theme description (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Theme_Desc_MagentaHeat",
+      "en": "Leads with magenta instead of cyan, so your Launch and Stop buttons are the first thing you notice.",
+      "comment": "Theme description (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Theme_Desc_Midnight",
+      "en": "Cooler and dimmer than Brand, built for late sessions when you don't want a bright screen staring back.",
+      "comment": "Theme description (localized Phase D step 3)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Title_About",
+      "en": "About",
+      "comment": "Shell window title, About page (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Title_Diagnostics",
+      "en": "Diagnostics",
+      "comment": "Shell window title, Diagnostics page (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Title_Games",
+      "en": "Games",
+      "comment": "Shell window title, Games page (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Title_History",
+      "en": "History",
+      "comment": "Shell window title, History page (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Title_Plugins",
+      "en": "Plugins",
+      "comment": "Shell window title, Plugins page (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Shell_Title_Settings",
+      "en": "Settings",
+      "comment": "Shell window title, Settings page (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
       "key": "SquadLaunchWindow_CarefulModeLandAccountsOne",
       "en": "Careful mode — land accounts one at a time",
       "comment": "src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:79 xaml-text",
@@ -2598,6 +5718,12 @@
       "key": "SquadLaunchWindow_LaunchByUrl",
       "en": "Launch by URL",
       "comment": "src/ROROROblox.App/SquadLaunch/SquadLaunchWindow.xaml:41 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "SquadLaunchWindow_LinkHelp",
+      "en": "Private server link — https://www.roblox.com/games/<id>/<name>?privateServerLinkCode=<code> — gets saved for next time. A plain game link (roblox.com/games/<id>) puts the squad in one public server together instead.",
+      "comment": "Squad-launch link help; keep the two roblox.com URL templates verbatim (localized Phase D step 3 batch 15)",
       "placeholders": false
     },
     {
@@ -2715,6 +5841,60 @@
       "placeholders": false
     },
     {
+      "key": "Tray_Diagnostics",
+      "en": "Diagnostics...",
+      "comment": "Tray context-menu item (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Tray_History",
+      "en": "History...",
+      "comment": "Tray context-menu item (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Tray_Open",
+      "en": "Open {0}",
+      "comment": "Tray context-menu item; {0}=product name (RoRoRo) (localized Phase D step 3 batch 14)",
+      "placeholders": true
+    },
+    {
+      "key": "Tray_OpenLogs",
+      "en": "Open log folder",
+      "comment": "Tray context-menu item (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Tray_Plugins",
+      "en": "Plugins...",
+      "comment": "Tray context-menu item (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Tray_Quit",
+      "en": "Quit",
+      "comment": "Tray context-menu item (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Tray_Settings",
+      "en": "Settings...",
+      "comment": "Tray context-menu item (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Tray_StopAll",
+      "en": "Stop all Roblox instances",
+      "comment": "Tray context-menu item (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Tray_StreamerMode",
+      "en": "Streamer mode",
+      "comment": "Tray context-menu item (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
       "key": "WebView2NotInstalledWindow_InstallNow",
       "en": "Install Now",
       "comment": "src/ROROROblox.App/Modals/WebView2NotInstalledWindow.xaml:40 xaml-text",
@@ -2736,6 +5916,18 @@
       "key": "WebView2NotInstalledWindow_RororoUsesMicrosoftSWebview2",
       "en": "RoRoRo uses Microsoft's WebView2 runtime to manage Roblox logins. It's free and made by Microsoft. Most Windows 11 PCs already have it; if yours doesn't, install it and try again.",
       "comment": "src/ROROROblox.App/Modals/WebView2NotInstalledWindow.xaml:29 xaml-text",
+      "placeholders": false
+    },
+    {
+      "key": "Webhook_UnknownChannel",
+      "en": "unknown",
+      "comment": "Webhook identity fallback when Discord returns no channel name (localized Phase D step 3 batch 14)",
+      "placeholders": false
+    },
+    {
+      "key": "Webhook_UnknownGuild",
+      "en": "your server",
+      "comment": "Webhook identity fallback when Discord returns no server name (localized Phase D step 3 batch 14)",
       "placeholders": false
     },
     {
