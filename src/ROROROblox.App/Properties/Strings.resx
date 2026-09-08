@@ -2591,4 +2591,26 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="Shell_History_BookmarkGameTitle" xml:space="preserve"><value>Bookmark game</value><comment>History bookmark error title (localized Phase D step 3)</comment></data>
   <data name="Shell_History_StillRunning" xml:space="preserve"><value>still running</value><comment>Duration text for an open session (localized Phase D step 3)</comment></data>
   <data name="Shell_History_ClearConfirm" xml:space="preserve"><value>Clear all session history? This can't be undone.</value><comment>Clear-history confirm body (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_Eligible_one" xml:space="preserve"><value>{0} eligible account</value><comment>Squad eligibility via Loc.Plural (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_Eligible_other" xml:space="preserve"><value>{0} eligible accounts</value><comment>Squad eligibility via Loc.Plural (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_Eligible_few" xml:space="preserve"><value>{0} eligible accounts</value><comment>few-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_Eligible_many" xml:space="preserve"><value>{0} eligible accounts</value><comment>many-form (ru/pl) mirrors other in English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_Running" xml:space="preserve"><value>{0} running (skipped)</value><comment>Squad eligibility clause; {0}=count (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_Expired" xml:space="preserve"><value>{0} expired (skipped)</value><comment>Squad eligibility clause; {0}=count (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_CouldntLoadServers" xml:space="preserve"><value>Couldn't load saved servers: {0}</value><comment>Squad status; {0}=exception (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_NoSavedServers" xml:space="preserve"><value>No saved servers yet. Paste a private server link below to add one — it'll save for next time.</value><comment>Squad empty state (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_PlaceFallback" xml:space="preserve"><value>Place {0}</value><comment>Squad server display fallback; {0}=place id (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_Badge_Default" xml:space="preserve"><value>DEFAULT</value><comment>Squad default-server badge (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_LastLaunched" xml:space="preserve"><value> · last launched {0}</value><comment>Squad server subtitle; {0}=relative ago (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_Added" xml:space="preserve"><value> · added {0}</value><comment>Squad server subtitle; {0}=relative ago (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_LaunchAll" xml:space="preserve"><value>Launch all</value><comment>Squad launch button (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_NoEligibleTooltip" xml:space="preserve"><value>No eligible accounts. Re-authenticate expired sessions or close running clients first.</value><comment>Squad launch button disabled tooltip (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_Remove" xml:space="preserve"><value>Remove</value><comment>Squad server remove button (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_Rename" xml:space="preserve"><value>Rename…</value><comment>Squad server context-menu item (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_ResetName" xml:space="preserve"><value>Reset name</value><comment>Squad server context-menu item (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_PasteLinkFirst" xml:space="preserve"><value>Paste a private server link or a game link first.</value><comment>Squad add status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_Resolving" xml:space="preserve"><value>Resolving link...</value><comment>Squad add status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_CouldntReadLink" xml:space="preserve"><value>Couldn't read that as a Roblox link. Paste a private server URL from its "Configure Server" page (either the roblox.com/share?... form or the older privateServerLinkCode= one), or a plain game link to put the squad in one public server.</value><comment>Squad add error; "Roblox"/URL forms stay English (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_LookingUp" xml:space="preserve"><value>Looking up game info...</value><comment>Squad add status (localized Phase D step 3)</comment></data>
+  <data name="Shell_Squad_CouldntAddLaunch" xml:space="preserve"><value>Couldn't add and launch: {0}</value><comment>Squad add error; {0}=exception (localized Phase D step 3)</comment></data>
 </root>

@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using ROROROblox.App.Localization;
 using ROROROblox.App.Modals;
 using ROROROblox.Core;
 
@@ -74,7 +75,7 @@ internal partial class SquadLaunchWindow : Window
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Couldn't save preference: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_Pref_CouldntSavePreference", ex.Message);
             _suppressClickHandlers = true;
             CarefulModeToggle.IsChecked = await _settings.GetCarefulSquadLaunchAsync();
             _suppressClickHandlers = false;
@@ -85,10 +86,10 @@ internal partial class SquadLaunchWindow : Window
     {
         var parts = new List<string>
         {
-            $"{_eligibleAccountCount} eligible {(_eligibleAccountCount == 1 ? "account" : "accounts")}",
+            Loc.Plural("Shell_Squad_Eligible", _eligibleAccountCount),
         };
-        if (_runningAccountCount > 0) parts.Add($"{_runningAccountCount} running (skipped)");
-        if (_expiredAccountCount > 0) parts.Add($"{_expiredAccountCount} expired (skipped)");
+        if (_runningAccountCount > 0) parts.Add(Loc.Format("Shell_Squad_Running", _runningAccountCount));
+        if (_expiredAccountCount > 0) parts.Add(Loc.Format("Shell_Squad_Expired", _expiredAccountCount));
         return string.Join(" · ", parts);
     }
 
@@ -102,7 +103,7 @@ internal partial class SquadLaunchWindow : Window
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Couldn't load saved servers: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_Squad_CouldntLoadServers", ex.Message);
             return;
         }
 
@@ -110,7 +111,7 @@ internal partial class SquadLaunchWindow : Window
         {
             SavedServersList.Children.Add(new TextBlock
             {
-                Text = "No saved servers yet. Paste a private server link below to add one — it'll save for next time.",
+                Text = Loc.Get("Shell_Squad_NoSavedServers"),
                 Foreground = (Brush)FindResource("MutedTextBrush"),
                 FontSize = 11,
                 Margin = new Thickness(0, 4, 0, 0),
@@ -151,7 +152,7 @@ internal partial class SquadLaunchWindow : Window
         // Place placeholder kicks in only when both are empty (rare edge case).
         var renderName = !string.IsNullOrEmpty(server.RenderName)
             ? server.RenderName
-            : $"Place {server.PlaceId}";
+            : Loc.Format("Shell_Squad_PlaceFallback", server.PlaceId);
         var nameRow = new StackPanel { Orientation = Orientation.Horizontal };
         nameRow.Children.Add(new TextBlock
         {
@@ -170,7 +171,7 @@ internal partial class SquadLaunchWindow : Window
                 Padding = new Thickness(6, 1, 6, 1),
                 Child = new TextBlock
                 {
-                    Text = "DEFAULT",
+                    Text = Loc.Get("Shell_Squad_Badge_Default"),
                     FontSize = 9,
                     FontWeight = FontWeights.Bold,
                     Foreground = (Brush)FindResource("NavyBrush"),
@@ -181,15 +182,15 @@ internal partial class SquadLaunchWindow : Window
         info.Children.Add(nameRow);
 
         var subtitle = string.IsNullOrEmpty(server.PlaceName)
-            ? $"Place {server.PlaceId}"
+            ? Loc.Format("Shell_Squad_PlaceFallback", server.PlaceId)
             : server.PlaceName;
         if (server.LastLaunchedAt is { } last)
         {
-            subtitle += $" · last launched {RelativeAgo(last)}";
+            subtitle += Loc.Format("Shell_Squad_LastLaunched", RelativeAgo(last));
         }
         else
         {
-            subtitle += $" · added {RelativeAgo(server.AddedAt)}";
+            subtitle += Loc.Format("Shell_Squad_Added", RelativeAgo(server.AddedAt));
         }
         info.Children.Add(new TextBlock
         {
@@ -208,7 +209,7 @@ internal partial class SquadLaunchWindow : Window
         // fix lives in a template this button was not using. Now it is.
         var launchBtn = new Button
         {
-            Content = "Launch all",
+            Content = Loc.Get("Shell_Squad_LaunchAll"),
             Style = (Style)FindResource("CtaButtonStyle"),
             Padding = new Thickness(14, 6, 14, 6),
             Margin = new Thickness(0, 0, 6, 0),
@@ -216,7 +217,7 @@ internal partial class SquadLaunchWindow : Window
             IsEnabled = _eligibleAccountCount > 0,
             ToolTip = _eligibleAccountCount > 0
                 ? null
-                : "No eligible accounts. Re-authenticate expired sessions or close running clients first.",
+                : Loc.Get("Shell_Squad_NoEligibleTooltip"),
         };
         launchBtn.Click += async (_, _) => await OnLaunchSavedAsync(server);
         Grid.SetColumn(launchBtn, 1);
@@ -224,7 +225,7 @@ internal partial class SquadLaunchWindow : Window
 
         var removeBtn = new Button
         {
-            Content = "Remove",
+            Content = Loc.Get("Shell_Squad_Remove"),
             // The comment that used to sit here said it plainly at wave 5: "built in code, so wave
             // 5's markup sweep never saw it — and neither does any test in that wave, which all
             // parse XAML." That was written, left at one site, and then v1.20 shipped a brand-new
@@ -244,7 +245,7 @@ internal partial class SquadLaunchWindow : Window
             }
             catch (Exception ex)
             {
-                StatusText.Text = $"Couldn't remove: {ex.Message}";
+                StatusText.Text = Loc.Format("Shell_Games_CouldntRemove", ex.Message);
             }
         };
         Grid.SetColumn(removeBtn, 2);
@@ -253,10 +254,10 @@ internal partial class SquadLaunchWindow : Window
         // v1.3.x — right-click context menu for rename/reset. Existing Launch all + Remove
         // buttons stay; the rename actions are context-menu-only because they're rare.
         var menu = new ContextMenu();
-        var renameItem = new MenuItem { Header = "Rename…" };
+        var renameItem = new MenuItem { Header = Loc.Get("Shell_Squad_Rename") };
         renameItem.Click += async (_, _) => await OnRenameSavedServerAsync(server);
         menu.Items.Add(renameItem);
-        var resetItem = new MenuItem { Header = "Reset name", IsEnabled = server.LocalName is not null };
+        var resetItem = new MenuItem { Header = Loc.Get("Shell_Squad_ResetName"), IsEnabled = server.LocalName is not null };
         resetItem.Click += async (_, _) => await OnResetSavedServerNameAsync(server);
         menu.Items.Add(resetItem);
         row.ContextMenu = menu;
@@ -284,12 +285,12 @@ internal partial class SquadLaunchWindow : Window
         }
         catch (KeyNotFoundException)
         {
-            StatusText.Text = "That server isn't saved any more.";
+            StatusText.Text = Loc.Get("Shell_Games_ServerNotSaved");
             await RenderListAsync();
         }
         catch (System.IO.IOException ex)
         {
-            StatusText.Text = $"Couldn't save name change. Disk error? ({ex.Message})";
+            StatusText.Text = Loc.Format("Shell_Games_CouldntSaveNameChangeDisk", ex.Message);
         }
     }
 
@@ -302,7 +303,7 @@ internal partial class SquadLaunchWindow : Window
         }
         catch (KeyNotFoundException)
         {
-            StatusText.Text = "That server isn't saved any more.";
+            StatusText.Text = Loc.Get("Shell_Games_ServerNotSaved");
             await RenderListAsync();
         }
     }
@@ -327,12 +328,12 @@ internal partial class SquadLaunchWindow : Window
         var input = UrlInput.Text?.Trim();
         if (string.IsNullOrEmpty(input))
         {
-            StatusText.Text = "Paste a private server link or a game link first.";
+            StatusText.Text = Loc.Get("Shell_Squad_PasteLinkFirst");
             return;
         }
 
         AddButton.IsEnabled = false;
-        StatusText.Text = "Resolving link...";
+        StatusText.Text = Loc.Get("Shell_Squad_Resolving");
         try
         {
             // Three URL forms supported via the resolver:
@@ -355,14 +356,11 @@ internal partial class SquadLaunchWindow : Window
 
             if (parsed is not LaunchTarget.PrivateServer ps)
             {
-                StatusText.Text = "Couldn't read that as a Roblox link. Paste a private server URL " +
-                                  "from its \"Configure Server\" page (either the roblox.com/share?... " +
-                                  "form or the older privateServerLinkCode= one), or a plain game link " +
-                                  "to put the squad in one public server.";
+                StatusText.Text = Loc.Get("Shell_Squad_CouldntReadLink");
                 return;
             }
 
-            StatusText.Text = "Looking up game info...";
+            StatusText.Text = Loc.Get("Shell_Squad_LookingUp");
             var meta = await _api.GetGameMetadataByPlaceIdAsync(ps.PlaceId);
             var placeName = meta?.Name ?? $"Place {ps.PlaceId}";
             var thumbnail = meta?.IconUrl ?? string.Empty;
@@ -378,7 +376,7 @@ internal partial class SquadLaunchWindow : Window
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Couldn't add and launch: {ex.Message}";
+            StatusText.Text = Loc.Format("Shell_Squad_CouldntAddLaunch", ex.Message);
         }
         finally
         {
@@ -391,11 +389,11 @@ internal partial class SquadLaunchWindow : Window
     private static string RelativeAgo(DateTimeOffset when)
     {
         var span = DateTimeOffset.UtcNow - when;
-        if (span < TimeSpan.Zero) return "in the future";
-        if (span < TimeSpan.FromMinutes(1)) return "just now";
-        if (span < TimeSpan.FromHours(1)) return $"{(int)span.TotalMinutes} min ago";
-        if (span < TimeSpan.FromDays(1)) return $"{(int)span.TotalHours} hr ago";
-        if (span < TimeSpan.FromDays(7)) return $"{(int)span.TotalDays} days ago";
+        if (span < TimeSpan.Zero) return Loc.Get("Shell_Ago_InFuture");
+        if (span < TimeSpan.FromMinutes(1)) return Loc.Get("Shell_Ago_JustNow");
+        if (span < TimeSpan.FromHours(1)) return Loc.Format("Shell_Ago_Minutes", (int)span.TotalMinutes);
+        if (span < TimeSpan.FromDays(1)) return Loc.Format("Shell_Ago_Hours", (int)span.TotalHours);
+        if (span < TimeSpan.FromDays(7)) return Loc.Plural("Shell_Ago_Days", (int)span.TotalDays);
         return when.ToLocalTime().ToString("MMM d");
     }
 }
