@@ -1,0 +1,638 @@
+{
+  "product": "RoRoRo",
+  "storeId": "9NMJCS390KWB",
+  "dataset": "app-ui-strings-pilot",
+  "pilotPurpose": "Independent third-pass calibration on ~50 Phase D strings across plural grammar, terse micro-copy register, {0}-template reflow, and long-prose naturalness. Mechanical checks (coverage, product nouns, format-token multisets) are already enforced deterministically by scripts/lint-translations.py and are NOT in scope here — judge register/naturalness/plural grammar only.",
+  "pilotCategories": {
+    "plurals": 16,
+    "terse": 14,
+    "templates": 14,
+    "long": 7
+  },
+  "sourceLanguage": "en",
+  "languages": [
+    "fr",
+    "de",
+    "ru",
+    "pt-br",
+    "pl",
+    "es"
+  ],
+  "sourceCommit": "def7690",
+  "generatedUtc": "2026-09-08T03:55:04+00:00",
+  "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
+  "fields": [
+    {
+      "field": "Shell_StopAll_Running_one",
+      "en": "{0} Roblox client is running. This closes it immediately.",
+      "translations": {
+        "fr": "{0} client Roblox est en cours. Cela le ferme immédiatement.",
+        "de": "{0} Roblox-Client läuft. Das schließt ihn sofort.",
+        "ru": "Запущен {0} клиент Roblox. Он будет немедленно закрыт.",
+        "pt-br": "{0} cliente do Roblox está em execução. Isso o fecha imediatamente.",
+        "pl": "{0} klient Roblox działa. To natychmiast go zamknie.",
+        "es": "{0} cliente de Roblox está en ejecución. Esto lo cierra de inmediato."
+      }
+    },
+    {
+      "field": "Shell_StopAll_Running_other",
+      "en": "{0} Roblox clients are running. This closes them all immediately.",
+      "translations": {
+        "fr": "{0} clients Roblox sont en cours. Cela les ferme tous immédiatement.",
+        "de": "{0} Roblox-Clients laufen. Das schließt sie alle sofort.",
+        "ru": "Запущено {0} клиента Roblox. Все они будут немедленно закрыты.",
+        "pt-br": "{0} clientes do Roblox estão em execução. Isso fecha todos eles imediatamente.",
+        "pl": "{0} klienta Roblox działa. To natychmiast go zamknie.",
+        "es": "{0} clientes de Roblox están en ejecución. Esto los cierra todos de inmediato."
+      }
+    },
+    {
+      "field": "Shell_StopAll_Running_few",
+      "en": "{0} Roblox clients are running. This closes them all immediately.",
+      "translations": {
+        "fr": "{0} clients Roblox sont en cours. Cela les ferme tous immédiatement.",
+        "de": "{0} Roblox-Clients laufen. Das schließt sie alle sofort.",
+        "ru": "Запущено {0} клиента Roblox. Все они будут немедленно закрыты.",
+        "pt-br": "{0} clientes do Roblox estão em execução. Isso fecha todos eles imediatamente.",
+        "pl": "{0} klienty Roblox działają. To natychmiast zamknie je wszystkie.",
+        "es": "{0} clientes de Roblox están en ejecución. Esto los cierra todos de inmediato."
+      }
+    },
+    {
+      "field": "Shell_StopAll_Running_many",
+      "en": "{0} Roblox clients are running. This closes them all immediately.",
+      "translations": {
+        "fr": "{0} clients Roblox sont en cours. Cela les ferme tous immédiatement.",
+        "de": "{0} Roblox-Clients laufen. Das schließt sie alle sofort.",
+        "ru": "Запущено {0} клиентов Roblox. Все они будут немедленно закрыты.",
+        "pt-br": "{0} clientes do Roblox estão em execução. Isso fecha todos eles imediatamente.",
+        "pl": "{0} klientów Roblox działa. To natychmiast zamknie je wszystkie.",
+        "es": "{0} clientes de Roblox están en ejecución. Esto los cierra todos de inmediato."
+      }
+    },
+    {
+      "field": "Plugin_CapabilityChip_one",
+      "en": "{0} capability",
+      "translations": {
+        "fr": "{0} capacité",
+        "de": "{0} Berechtigung",
+        "ru": "{0} возможность",
+        "pt-br": "{0} capacidade",
+        "pl": "{0} uprawnienie",
+        "es": "{0} permiso"
+      }
+    },
+    {
+      "field": "Plugin_CapabilityChip_other",
+      "en": "{0} capabilities",
+      "translations": {
+        "fr": "{0} capacités",
+        "de": "{0} Berechtigungen",
+        "ru": "{0} возможности",
+        "pt-br": "{0} capacidades",
+        "pl": "{0} uprawnienia",
+        "es": "{0} permisos"
+      }
+    },
+    {
+      "field": "Plugin_CapabilityChip_few",
+      "en": "{0} capabilities",
+      "translations": {
+        "fr": "{0} capacités",
+        "de": "{0} Berechtigungen",
+        "ru": "{0} возможности",
+        "pt-br": "{0} capacidades",
+        "pl": "{0} uprawnienia",
+        "es": "{0} permisos"
+      }
+    },
+    {
+      "field": "Plugin_CapabilityChip_many",
+      "en": "{0} capabilities",
+      "translations": {
+        "fr": "{0} capacités",
+        "de": "{0} Berechtigungen",
+        "ru": "{0} возможностей",
+        "pt-br": "{0} capacidades",
+        "pl": "{0} uprawnień",
+        "es": "{0} permisos"
+      }
+    },
+    {
+      "field": "Shell_MemFooter_Clients_one",
+      "en": "{0} Roblox client running",
+      "translations": {
+        "fr": "{0} client Roblox en cours",
+        "de": "{0} Roblox-Client läuft",
+        "ru": "Запущен {0} клиент Roblox",
+        "pt-br": "{0} cliente do Roblox em execução",
+        "pl": "{0} klient Roblox działa",
+        "es": "{0} cliente de Roblox en ejecución"
+      }
+    },
+    {
+      "field": "Shell_MemFooter_Clients_other",
+      "en": "{0} Roblox clients running",
+      "translations": {
+        "fr": "{0} clients Roblox en cours",
+        "de": "{0} Roblox-Clients laufen",
+        "ru": "Запущено {0} клиента Roblox",
+        "pt-br": "{0} clientes do Roblox em execução",
+        "pl": "{0} klienta Roblox działa",
+        "es": "{0} clientes de Roblox en ejecución"
+      }
+    },
+    {
+      "field": "Shell_MemFooter_Clients_few",
+      "en": "{0} Roblox clients running",
+      "translations": {
+        "fr": "{0} clients Roblox en cours",
+        "de": "{0} Roblox-Clients laufen",
+        "ru": "Запущено {0} клиента Roblox",
+        "pt-br": "{0} clientes do Roblox em execução",
+        "pl": "{0} klienty Roblox działają",
+        "es": "{0} clientes de Roblox en ejecución"
+      }
+    },
+    {
+      "field": "Shell_MemFooter_Clients_many",
+      "en": "{0} Roblox clients running",
+      "translations": {
+        "fr": "{0} clients Roblox en cours",
+        "de": "{0} Roblox-Clients laufen",
+        "ru": "Запущено {0} клиентов Roblox",
+        "pt-br": "{0} clientes do Roblox em execução",
+        "pl": "{0} klientów Roblox działa",
+        "es": "{0} clientes de Roblox en ejecución"
+      }
+    },
+    {
+      "field": "Shell_Muted_one",
+      "en": "{0} account is muted. Nothing it does raises an alert, whatever the settings above say.",
+      "translations": {
+        "fr": "{0} compte est en sourdine. Rien de ce qu'il fait ne déclenche d'alerte, quels que soient les réglages ci-dessus.",
+        "de": "{0} Konto ist stummgeschaltet. Nichts, was es tut, löst eine Benachrichtigung aus, egal was die Einstellungen oben sagen.",
+        "ru": "{0} аккаунт заглушён. Что бы он ни делал, это не вызовет оповещения, что бы ни было настроено выше.",
+        "pt-br": "{0} conta está silenciada. Nada que ela faça gera um alerta, seja lá o que as configurações acima digam.",
+        "pl": "{0} konto jest wyciszone. Nic, co robi, nie wywołuje alertu, niezależnie od ustawień powyżej.",
+        "es": "{0} cuenta está silenciada. Nada de lo que haga genera una alerta, digan lo que digan los ajustes de arriba."
+      }
+    },
+    {
+      "field": "Shell_Muted_other",
+      "en": "{0} accounts are muted. Nothing they do raises an alert, whatever the settings above say.",
+      "translations": {
+        "fr": "{0} comptes sont en sourdine. Rien de ce qu'ils font ne déclenche d'alerte, quels que soient les réglages ci-dessus.",
+        "de": "{0} Konten sind stummgeschaltet. Nichts, was sie tun, löst eine Benachrichtigung aus, egal was die Einstellungen oben sagen.",
+        "ru": "{0} аккаунта заглушены. Что бы они ни делали, это не вызовет оповещения, что бы ни было настроено выше.",
+        "pt-br": "{0} contas estão silenciadas. Nada que elas façam gera um alerta, seja lá o que as configurações acima digam.",
+        "pl": "{0} konta jest wyciszone. Nic, co robi, nie wywołuje alertu, niezależnie od ustawień powyżej.",
+        "es": "{0} cuentas están silenciadas. Nada de lo que hagan genera una alerta, digan lo que digan los ajustes de arriba."
+      }
+    },
+    {
+      "field": "Shell_Muted_few",
+      "en": "{0} accounts are muted. Nothing they do raises an alert, whatever the settings above say.",
+      "translations": {
+        "fr": "{0} comptes sont en sourdine. Rien de ce qu'ils font ne déclenche d'alerte, quels que soient les réglages ci-dessus.",
+        "de": "{0} Konten sind stummgeschaltet. Nichts, was sie tun, löst eine Benachrichtigung aus, egal was die Einstellungen oben sagen.",
+        "ru": "{0} аккаунта заглушены. Что бы они ни делали, это не вызовет оповещения, что бы ни было настроено выше.",
+        "pt-br": "{0} contas estão silenciadas. Nada que elas façam gera um alerta, seja lá o que as configurações acima digam.",
+        "pl": "{0} konta są wyciszone. Nic, co robią, nie wywołuje alertu, niezależnie od ustawień powyżej.",
+        "es": "{0} cuentas están silenciadas. Nada de lo que hagan genera una alerta, digan lo que digan los ajustes de arriba."
+      }
+    },
+    {
+      "field": "Shell_Muted_many",
+      "en": "{0} accounts are muted. Nothing they do raises an alert, whatever the settings above say.",
+      "translations": {
+        "fr": "{0} comptes sont en sourdine. Rien de ce qu'ils font ne déclenche d'alerte, quels que soient les réglages ci-dessus.",
+        "de": "{0} Konten sind stummgeschaltet. Nichts, was sie tun, löst eine Benachrichtigung aus, egal was die Einstellungen oben sagen.",
+        "ru": "{0} аккаунтов заглушены. Что бы они ни делали, это не вызовет оповещения, что бы ни было настроено выше.",
+        "pt-br": "{0} contas estão silenciadas. Nada que elas façam gera um alerta, seja lá o que as configurações acima digam.",
+        "pl": "{0} kont jest wyciszonych. Nic, co robią, nie wywołuje alertu, niezależnie od ustawień powyżej.",
+        "es": "{0} cuentas están silenciadas. Nada de lo que hagan genera una alerta, digan lo que digan los ajustes de arriba."
+      }
+    },
+    {
+      "field": "Plugin_Install",
+      "en": "Install",
+      "translations": {
+        "fr": "Installer",
+        "de": "Installieren",
+        "ru": "Установить",
+        "pt-br": "Instalar",
+        "pl": "Zainstaluj",
+        "es": "Instalar"
+      }
+    },
+    {
+      "field": "Badge_Main",
+      "en": "MAIN",
+      "translations": {
+        "fr": "PRINCIPAL",
+        "de": "HAUPT",
+        "ru": "ОСНОВНОЙ",
+        "pt-br": "PRINCIPAL",
+        "pl": "GŁÓWNE",
+        "es": "PRINCIPAL"
+      }
+    },
+    {
+      "field": "Badge_Available",
+      "en": "AVAILABLE",
+      "translations": {
+        "fr": "DISPONIBLE",
+        "de": "VERFÜGBAR",
+        "ru": "ДОСТУПНО",
+        "pt-br": "DISPONÍVEL",
+        "pl": "DOSTĘPNE",
+        "es": "DISPONIBLE"
+      }
+    },
+    {
+      "field": "Tray_Quit",
+      "en": "Quit",
+      "translations": {
+        "fr": "Quitter",
+        "de": "Beenden",
+        "ru": "Выйти",
+        "pt-br": "Sair",
+        "pl": "Zakończ",
+        "es": "Salir"
+      }
+    },
+    {
+      "field": "Tray_Settings",
+      "en": "Settings...",
+      "translations": {
+        "fr": "Paramètres...",
+        "de": "Einstellungen...",
+        "ru": "Настройки...",
+        "pt-br": "Configurações...",
+        "pl": "Ustawienia...",
+        "es": "Ajustes..."
+      }
+    },
+    {
+      "field": "Tray_History",
+      "en": "History...",
+      "translations": {
+        "fr": "Historique...",
+        "de": "Verlauf...",
+        "ru": "История...",
+        "pt-br": "Histórico...",
+        "pl": "Historia...",
+        "es": "Historial..."
+      }
+    },
+    {
+      "field": "Tray_OpenLogs",
+      "en": "Open log folder",
+      "translations": {
+        "fr": "Ouvrir le dossier des journaux",
+        "de": "Protokollordner öffnen",
+        "ru": "Открыть папку логов",
+        "pt-br": "Abrir pasta de logs",
+        "pl": "Otwórz folder dzienników",
+        "es": "Abrir carpeta de registros"
+      }
+    },
+    {
+      "field": "Shell_Passphrase_Weak",
+      "en": "Weak",
+      "translations": {
+        "fr": "Faible",
+        "de": "Schwach",
+        "ru": "Слабая",
+        "pt-br": "Fraca",
+        "pl": "Słabe",
+        "es": "Débil"
+      }
+    },
+    {
+      "field": "Shell_Passphrase_Strong",
+      "en": "Strong",
+      "translations": {
+        "fr": "Forte",
+        "de": "Stark",
+        "ru": "Надёжная",
+        "pt-br": "Forte",
+        "pl": "Silne",
+        "es": "Fuerte"
+      }
+    },
+    {
+      "field": "Shell_Passphrase_VeryStrong",
+      "en": "Very strong",
+      "translations": {
+        "fr": "Très forte",
+        "de": "Sehr stark",
+        "ru": "Очень надёжная",
+        "pt-br": "Muito forte",
+        "pl": "Bardzo silne",
+        "es": "Muy fuerte"
+      }
+    },
+    {
+      "field": "Shell_Edge_Passes",
+      "en": "passes",
+      "translations": {
+        "fr": "conforme",
+        "de": "besteht",
+        "ru": "проходит",
+        "pt-br": "passa",
+        "pl": "spełnia",
+        "es": "cumple"
+      }
+    },
+    {
+      "field": "Shell_Edge_BelowFloor",
+      "en": "below the 3:1 floor",
+      "translations": {
+        "fr": "sous le seuil de 3:1",
+        "de": "unter dem 3:1-Minimum",
+        "ru": "ниже порога 3:1",
+        "pt-br": "abaixo do piso de 3:1",
+        "pl": "poniżej progu 3:1",
+        "es": "por debajo del mínimo de 3:1"
+      }
+    },
+    {
+      "field": "Discord_Status_Off",
+      "en": "Presence is off.",
+      "translations": {
+        "fr": "La présence est désactivée.",
+        "de": "Präsenz ist aus.",
+        "ru": "Статус отключён.",
+        "pt-br": "A presença está desligada.",
+        "pl": "Obecność jest wyłączona.",
+        "es": "La presencia está desactivada."
+      }
+    },
+    {
+      "field": "Discord_Status_Connecting",
+      "en": "Connecting to Discord…",
+      "translations": {
+        "fr": "Connexion à Discord…",
+        "de": "Verbindung zu Discord wird hergestellt…",
+        "ru": "Подключение к Discord…",
+        "pt-br": "Conectando ao Discord…",
+        "pl": "Łączenie z Discord…",
+        "es": "Conectando con Discord…"
+      }
+    },
+    {
+      "field": "Shell_Export_PassphraseTooShort",
+      "en": "Passphrase must be at least {0} characters.",
+      "translations": {
+        "fr": "La phrase secrète doit comporter au moins {0} caractères.",
+        "de": "Die Passphrase muss mindestens {0} Zeichen lang sein.",
+        "ru": "Парольная фраза должна содержать не менее {0} символов.",
+        "pt-br": "A frase secreta deve ter pelo menos {0} caracteres.",
+        "pl": "Hasło musi mieć co najmniej {0} znaków.",
+        "es": "La frase de contraseña debe tener al menos {0} caracteres."
+      }
+    },
+    {
+      "field": "Shell_Export_SaveFailed",
+      "en": "Couldn't save the bundle: {0}",
+      "translations": {
+        "fr": "Impossible d'enregistrer le lot : {0}",
+        "de": "Das Bundle konnte nicht gespeichert werden: {0}",
+        "ru": "Не удалось сохранить пакет: {0}",
+        "pt-br": "Não foi possível salvar o pacote: {0}",
+        "pl": "Nie udało się zapisać pakietu: {0}",
+        "es": "No se pudo guardar el paquete: {0}"
+      }
+    },
+    {
+      "field": "Plugin_InstallFailed",
+      "en": "Install failed: {0}",
+      "translations": {
+        "fr": "Échec de l'installation : {0}",
+        "de": "Installation fehlgeschlagen: {0}",
+        "ru": "Не удалось установить: {0}",
+        "pt-br": "Falha na instalação: {0}",
+        "pl": "Instalacja nie powiodła się: {0}",
+        "es": "Error al instalar: {0}"
+      }
+    },
+    {
+      "field": "Plugin_LaunchFailed",
+      "en": "Launch failed: {0}",
+      "translations": {
+        "fr": "Échec du lancement : {0}",
+        "de": "Start fehlgeschlagen: {0}",
+        "ru": "Не удалось запустить: {0}",
+        "pt-br": "Falha ao iniciar: {0}",
+        "pl": "Uruchomienie nie powiodło się: {0}",
+        "es": "Error al iniciar: {0}"
+      }
+    },
+    {
+      "field": "Plugin_Updated",
+      "en": "{0} updated to {1}.",
+      "translations": {
+        "fr": "{0} mis à jour vers {1}.",
+        "de": "{0} auf {1} aktualisiert.",
+        "ru": "{0} обновлён до {1}.",
+        "pt-br": "{0} atualizado para {1}.",
+        "pl": "{0} zaktualizowano do {1}.",
+        "es": "{0} actualizado a {1}."
+      }
+    },
+    {
+      "field": "Plugin_AutostartEnabled",
+      "en": "Autostart enabled for {0}.",
+      "translations": {
+        "fr": "Démarrage automatique activé pour {0}.",
+        "de": "Autostart für {0} aktiviert.",
+        "ru": "Автозапуск включён для {0}.",
+        "pt-br": "Início automático ativado para {0}.",
+        "pl": "Autostart włączony dla {0}.",
+        "es": "Inicio automático activado para {0}."
+      }
+    },
+    {
+      "field": "Shell_Import_Result",
+      "en": "Imported {0} account(s). Skipped {1} already on this PC.",
+      "translations": {
+        "fr": "{0} compte(s) importé(s). {1} ignoré(s), déjà présent(s) sur ce PC.",
+        "de": "{0} Konten importiert. {1} bereits auf diesem PC vorhandene übersprungen.",
+        "ru": "Импортировано аккаунтов: {0}. Пропущено {1}, уже есть на этом ПК.",
+        "pt-br": "Importadas {0} conta(s). {1} ignoradas por já estarem neste PC.",
+        "pl": "Zaimportowano {0} kont(a). Pominięto {1} już obecnych na tym komputerze.",
+        "es": "Se importaron {0} cuenta(s). Se omitieron {1} que ya están en este PC."
+      }
+    },
+    {
+      "field": "Shell_Headroom_RoomFor",
+      "en": "There may only be room for {0} more",
+      "translations": {
+        "fr": "Il n'y a peut-être de la place que pour {0} de plus",
+        "de": "Es ist vielleicht nur Platz für {0} weitere",
+        "ru": "Возможно, есть место ещё только для {0}",
+        "pt-br": "Pode haver espaço para apenas {0} mais",
+        "pl": "Może być miejsce tylko na {0} więcej",
+        "es": "Puede que solo haya espacio para {0} más"
+      }
+    },
+    {
+      "field": "Shell_Headroom_BodyMany",
+      "en": "You are launching {0} accounts, and a Roblox client typically needs about 2.6 GB each. Windows may close clients that are already running to make space.",
+      "translations": {
+        "fr": "Vous lancez {0} comptes, et un client Roblox a généralement besoin d'environ 2,6 GB chacun. Windows pourrait fermer des clients déjà en cours pour faire de la place.",
+        "de": "Du startest {0} Konten, und ein Roblox-Client braucht typischerweise etwa 2,6 GB pro Stück. Windows schließt möglicherweise bereits laufende Clients, um Platz zu schaffen.",
+        "ru": "Вы запускаете {0} аккаунтов, а клиенту Roblox обычно нужно около 2.6 GB на каждый. Windows может закрыть уже работающие клиенты, чтобы освободить место.",
+        "pt-br": "Você está iniciando {0} contas, e um cliente do Roblox normalmente precisa de cerca de 2,6 GB cada. O Windows pode fechar clientes que já estão em execução para liberar espaço.",
+        "pl": "Uruchamiasz {0} kont, a klient Roblox zwykle potrzebuje około 2.6 GB każdy. Windows może zamknąć już działające klienty, aby zwolnić miejsce.",
+        "es": "Vas a iniciar {0} cuentas, y un cliente de Roblox suele necesitar unos 2,6 GB cada uno. Windows puede cerrar clientes que ya están en ejecución para hacer sitio."
+      }
+    },
+    {
+      "field": "Shell_Headroom_Numbers",
+      "en": "{0:F1} GB free  ·  {1:F1} GB held by {2}  ·  room for about {3} more",
+      "translations": {
+        "fr": "{0:F1} GB libres  ·  {1:F1} GB utilisés par {2}  ·  de la place pour environ {3} de plus",
+        "de": "{0:F1} GB frei  ·  {1:F1} GB belegt von {2}  ·  Platz für etwa {3} weitere",
+        "ru": "{0:F1} GB свободно  ·  {1:F1} GB занято: {2}  ·  место примерно ещё для {3}",
+        "pt-br": "{0:F1} GB livres  ·  {1:F1} GB usados por {2}  ·  espaço para cerca de {3} mais",
+        "pl": "{0:F1} GB wolne  ·  {1:F1} GB zajęte przez {2}  ·  miejsce na około {3} więcej",
+        "es": "{0:F1} GB libres  ·  {1:F1} GB en uso por {2}  ·  espacio para unas {3} más"
+      }
+    },
+    {
+      "field": "Tray_Open",
+      "en": "Open {0}",
+      "translations": {
+        "fr": "Ouvrir {0}",
+        "de": "{0} öffnen",
+        "ru": "Открыть {0}",
+        "pt-br": "Abrir {0}",
+        "pl": "Otwórz {0}",
+        "es": "Abrir {0}"
+      }
+    },
+    {
+      "field": "Plugin_UpdateAvailable",
+      "en": "Update available ({0} → {1})",
+      "translations": {
+        "fr": "Mise à jour disponible ({0} → {1})",
+        "de": "Update verfügbar ({0} → {1})",
+        "ru": "Доступно обновление ({0} → {1})",
+        "pt-br": "Atualização disponível ({0} → {1})",
+        "pl": "Dostępna aktualizacja ({0} → {1})",
+        "es": "Actualización disponible ({0} → {1})"
+      }
+    },
+    {
+      "field": "CoreMsg_Compat_Banner",
+      "en": "Roblox {0} {1}. We've tested up to {2}. Multi-instance might not work — let us know at https://github.com/estevanhernandez-stack-ed/ROROROblox/issues.",
+      "translations": {
+        "fr": "Roblox {0} {1}. Nous avons testé jusqu'à {2}. Multi-instance pourrait ne pas fonctionner — signalez-le-nous sur https://github.com/estevanhernandez-stack-ed/ROROROblox/issues.",
+        "de": "Roblox wurde auf {1} {0}. Getestet haben wir bis {2}. Multi-Instance funktioniert möglicherweise nicht — sag uns Bescheid unter https://github.com/estevanhernandez-stack-ed/ROROROblox/issues.",
+        "ru": "Roblox {0} {1}. Мы протестировали вплоть до {2}. Multi-instance может не работать — сообщите нам на https://github.com/estevanhernandez-stack-ed/ROROROblox/issues.",
+        "pt-br": "O Roblox {0} {1}. Testamos até a {2}. O Multi-instance pode não funcionar — avise a gente em https://github.com/estevanhernandez-stack-ed/ROROROblox/issues.",
+        "pl": "Roblox {0} {1}. Przetestowaliśmy wersje do {2}. Multi-instance może nie działać — daj nam znać na https://github.com/estevanhernandez-stack-ed/ROROROblox/issues.",
+        "es": "Roblox {0} {1}. Lo hemos probado hasta {2}. Puede que Multi-instance no funcione: avísanos en https://github.com/estevanhernandez-stack-ed/ROROROblox/issues."
+      }
+    },
+    {
+      "field": "Shell_Rename_OriginalLabel",
+      "en": "Roblox name — {0}",
+      "translations": {
+        "fr": "Nom Roblox — {0}",
+        "de": "Roblox-Name — {0}",
+        "ru": "Имя Roblox — {0}",
+        "pt-br": "Nome do Roblox — {0}",
+        "pl": "Nazwa Roblox — {0}",
+        "es": "Nombre de Roblox — {0}"
+      }
+    },
+    {
+      "field": "SquadLaunchWindow_LinkHelp",
+      "en": "Private server link — https://www.roblox.com/games/<id>/<name>?privateServerLinkCode=<code> — gets saved for next time. A plain game link (roblox.com/games/<id>) puts the squad in one public server together instead.",
+      "translations": {
+        "fr": "Lien de serveur privé — https://www.roblox.com/games/<id>/<name>?privateServerLinkCode=<code> — enregistré pour la prochaine fois. Un simple lien de jeu (roblox.com/games/<id>) met plutôt l'escouade ensemble dans un même serveur public.",
+        "de": "Private-Server-Link — https://www.roblox.com/games/<id>/<name>?privateServerLinkCode=<code> — wird für nächstes Mal gespeichert. Ein einfacher Spiel-Link (roblox.com/games/<id>) setzt die Squad stattdessen zusammen in einen öffentlichen Server.",
+        "ru": "Ссылка на приватный сервер — https://www.roblox.com/games/<id>/<name>?privateServerLinkCode=<code> — сохраняется на будущее. Обычная ссылка на игру (roblox.com/games/<id>) вместо этого собирает отряд вместе на одном публичном сервере.",
+        "pt-br": "Link de servidor privado — https://www.roblox.com/games/<id>/<name>?privateServerLinkCode=<code> — fica salvo para a próxima vez. Um link simples de jogo (roblox.com/games/<id>) coloca o squad junto em um servidor público.",
+        "pl": "Link prywatnego serwera — https://www.roblox.com/games/<id>/<name>?privateServerLinkCode=<code> — zapisuje się na następny raz. Zwykły link do gry (roblox.com/games/<id>) umieszcza drużynę razem na jednym publicznym serwerze.",
+        "es": "Enlace de servidor privado — https://www.roblox.com/games/<id>/<name>?privateServerLinkCode=<code> — se guarda para la próxima vez. Un enlace de juego normal (roblox.com/games/<id>) pone al squad en un mismo servidor público."
+      }
+    },
+    {
+      "field": "Shell_Export_SavedBody",
+      "en": "Saved. This file is your account logins — anyone with the file AND the passphrase can sign in as you. Keep the passphrase safe and don't post the file publicly.",
+      "translations": {
+        "fr": "Enregistré. Ce fichier contient vos identifiants de connexion — quiconque possède le fichier ET la phrase secrète peut se connecter à votre place. Gardez la phrase secrète en lieu sûr et ne publiez pas le fichier.",
+        "de": "Gespeichert. Diese Datei enthält deine Konto-Anmeldungen — wer die Datei UND die Passphrase hat, kann sich als du anmelden. Bewahre die Passphrase sicher auf und veröffentliche die Datei nicht.",
+        "ru": "Сохранено. В этом файле — данные для входа в ваши аккаунты: любой, у кого есть файл И парольная фраза, сможет войти под вами. Храните парольную фразу в надёжном месте и не выкладывайте файл публично.",
+        "pt-br": "Salvo. Este arquivo contém os logins das suas contas — qualquer pessoa com o arquivo E a frase secreta pode entrar como você. Guarde a frase secreta em segurança e não publique o arquivo.",
+        "pl": "Zapisano. Ten plik zawiera dane logowania twoich kont — każdy, kto ma plik ORAZ hasło, może zalogować się jako ty. Trzymaj hasło w bezpiecznym miejscu i nie udostępniaj pliku publicznie.",
+        "es": "Guardado. Este archivo contiene los inicios de sesión de tus cuentas: cualquiera que tenga el archivo Y la frase de contraseña puede iniciar sesión como tú. Guarda la frase de contraseña en un lugar seguro y no publiques el archivo."
+      }
+    },
+    {
+      "field": "Plugin_Cap_MarkAccountActive",
+      "en": "Let this plugin tell RoRoRo an account is still active (so idle warnings don't misfire). It cannot see what you type or do — only mark an account active.",
+      "translations": {
+        "fr": "Permettre à ce plugin d'indiquer à RoRoRo qu'un compte est toujours actif (pour que les avertissements d'inactivité ne se déclenchent pas à tort). Il ne peut pas voir ce que vous tapez ou faites — seulement marquer un compte comme actif.",
+        "de": "Diesem Plugin erlauben, RoRoRo mitzuteilen, dass ein Konto noch aktiv ist (damit Inaktivitätswarnungen nicht fälschlich auslösen). Es kann nicht sehen, was du tippst oder tust — nur ein Konto als aktiv markieren.",
+        "ru": "Позволить этому плагину сообщать RoRoRo, что аккаунт ещё активен (чтобы предупреждения о простое не срабатывали зря). Он не может видеть, что вы вводите или делаете — только отмечать аккаунт активным.",
+        "pt-br": "Permitir que este plugin informe ao RoRoRo que uma conta ainda está ativa (para que os avisos de inatividade não disparem à toa). Ele não consegue ver o que você digita ou faz — apenas marcar uma conta como ativa.",
+        "pl": "Pozwól tej wtyczce informować RoRoRo, że konto jest nadal aktywne (aby ostrzeżenia o bezczynności nie uruchamiały się błędnie). Nie widzi, co piszesz lub robisz — może tylko oznaczyć konto jako aktywne.",
+        "es": "Permitir que este plugin le indique a RoRoRo que una cuenta sigue activa (para que las advertencias de inactividad no salten sin motivo). No puede ver lo que escribes o haces, solo marcar una cuenta como activa."
+      }
+    },
+    {
+      "field": "Shell_Headroom_BodyOne",
+      "en": "A Roblox client typically needs about 2.6 GB. Starting one now could push the machine past what it can hold, and Windows may close a client that is already running to make space.",
+      "translations": {
+        "fr": "Un client Roblox a généralement besoin d'environ 2,6 GB. En démarrer un maintenant pourrait pousser la machine au-delà de ce qu'elle peut contenir, et Windows pourrait fermer un client déjà en cours pour faire de la place.",
+        "de": "Ein Roblox-Client braucht typischerweise etwa 2,6 GB. Wenn du jetzt einen startest, könnte das den Rechner über seine Kapazität hinaus belasten, und Windows schließt möglicherweise einen bereits laufenden Client, um Platz zu schaffen.",
+        "ru": "Клиенту Roblox обычно нужно около 2.6 GB. Запуск ещё одного сейчас может превысить возможности машины, и Windows может закрыть уже работающий клиент, чтобы освободить место.",
+        "pt-br": "Um cliente do Roblox normalmente precisa de cerca de 2,6 GB. Iniciar um agora pode levar a máquina além do que ela aguenta, e o Windows pode fechar um cliente que já está em execução para liberar espaço.",
+        "pl": "Klient Roblox zwykle potrzebuje około 2.6 GB. Uruchomienie kolejnego teraz może przekroczyć możliwości maszyny, a Windows może zamknąć już działający klient, aby zwolnić miejsce.",
+        "es": "Un cliente de Roblox suele necesitar unos 2,6 GB. Iniciar uno ahora podría superar lo que la máquina puede soportar, y Windows puede cerrar un cliente que ya está en ejecución para hacer sitio."
+      }
+    },
+    {
+      "field": "Shell_Edge_Body",
+      "en": "RoRoRo now outlines buttons so they can be told apart from the surface behind them. Your theme — {0} — sets one divider colour, and it does two jobs: the faint rule between rows, which is right as you wrote it, and now the outline on a button, which needs to be brighter to be seen. We brightened it for buttons only.",
+      "translations": {
+        "fr": "RoRoRo entoure désormais les boutons d'un contour pour qu'on puisse les distinguer de la surface derrière eux. Votre thème — {0} — définit une seule couleur de séparateur, et elle remplit deux rôles : le fin filet entre les lignes, qui est correct tel que vous l'avez écrit, et maintenant le contour d'un bouton, qui doit être plus lumineux pour être visible. Nous l'avons éclairci pour les boutons uniquement.",
+        "de": "RoRoRo umrandet Schaltflächen jetzt, damit sie sich von der Fläche dahinter abheben. Dein Design — {0} — legt eine Trennlinienfarbe fest, und die erfüllt zwei Aufgaben: die feine Linie zwischen Zeilen, die so richtig ist, wie du sie geschrieben hast, und jetzt die Umrandung einer Schaltfläche, die heller sein muss, um erkennbar zu sein. Wir haben sie nur für Schaltflächen aufgehellt.",
+        "ru": "Теперь RoRoRo обводит кнопки, чтобы их можно было отличить от поверхности позади них. Ваша тема — {0} — задаёт один цвет разделителя, и он выполняет две задачи: тонкую линию между строками, которая верна такой, как вы её задали, и теперь обводку кнопки, которая должна быть ярче, чтобы её было видно. Мы сделали её ярче только для кнопок.",
+        "pt-br": "Agora o RoRoRo contorna os botões para que eles possam ser diferenciados da superfície atrás deles. Seu tema — {0} — define uma única cor de divisória, e ela faz dois trabalhos: a linha fraca entre as linhas, que está certa do jeito que você escreveu, e agora o contorno de um botão, que precisa ser mais claro para ser visto. Nós o deixamos mais claro apenas para os botões.",
+        "pl": "RoRoRo obrysowuje teraz przyciski, aby można je było odróżnić od tła za nimi. Twój motyw — {0} — ustawia jeden kolor linii podziału, który pełni dwie role: subtelną linię między wierszami, poprawną tak, jak ją zapisałeś, oraz teraz obrys przycisku, który musi być jaśniejszy, aby był widoczny. Rozjaśniliśmy go tylko dla przycisków.",
+        "es": "RoRoRo ahora dibuja el contorno de los botones para poder distinguirlos de la superficie que tienen detrás. Tu tema — {0} — define un solo color de separador, y este cumple dos funciones: la fina línea entre filas, que está bien tal como la escribiste, y ahora el contorno de un botón, que necesita ser más brillante para verse. Lo aclaramos solo para los botones."
+      }
+    },
+    {
+      "field": "Plugin_Dup_Multi",
+      "en": "{0} plugin folders are being ignored because another folder already declares the same id ({1}). Ignored: {2}. Delete the unused copies — they are usually leftover backup folders.",
+      "translations": {
+        "fr": "{0} dossiers de plugins sont ignorés car un autre dossier déclare déjà le même id ({1}). Ignorés : {2}. Supprimez les copies inutilisées — ce sont généralement des dossiers de sauvegarde résiduels.",
+        "de": "{0} Plugin-Ordner werden ignoriert, weil ein anderer Ordner bereits dieselbe ID deklariert ({1}). Ignoriert: {2}. Lösche die ungenutzten Kopien — meist sind es übrig gebliebene Sicherungsordner.",
+        "ru": "{0} папок плагинов игнорируются, потому что другая папка уже объявляет тот же id ({1}). Проигнорированы: {2}. Удалите неиспользуемые копии — обычно это оставшиеся резервные папки.",
+        "pt-br": "{0} pastas de plugin estão sendo ignoradas porque outra pasta já declara o mesmo id ({1}). Ignoradas: {2}. Exclua as cópias não usadas — geralmente são pastas de backup que sobraram.",
+        "pl": "{0} folderów wtyczek jest ignorowanych, ponieważ inny folder deklaruje już to samo id ({1}). Zignorowano: {2}. Usuń nieużywane kopie — zwykle są to pozostałe foldery kopii zapasowych.",
+        "es": "Se están ignorando {0} carpetas de plugins porque otra carpeta ya declara el mismo id ({1}). Ignoradas: {2}. Elimina las copias que no uses: suelen ser carpetas de copia de seguridad sobrantes."
+      }
+    },
+    {
+      "field": "Plugin_Cap_StopAccounts",
+      "en": "Allow the plugin to close Roblox clients that RoRoRo launched. Any unsaved in-game progress in those clients is lost.",
+      "translations": {
+        "fr": "Autoriser le plugin à fermer les clients Roblox que RoRoRo a lancés. Toute progression en jeu non enregistrée dans ces clients sera perdue.",
+        "de": "Dem Plugin erlauben, von RoRoRo gestartete Roblox-Clients zu schließen. Nicht gespeicherter Spielfortschritt in diesen Clients geht verloren.",
+        "ru": "Разрешить плагину закрывать клиенты Roblox, запущенные RoRoRo. Любой несохранённый игровой прогресс в этих клиентах будет потерян.",
+        "pt-br": "Permitir que o plugin feche clientes do Roblox que o RoRoRo iniciou. Qualquer progresso não salvo no jogo nesses clientes será perdido.",
+        "pl": "Pozwól wtyczce zamykać klienty Roblox uruchomione przez RoRoRo. Wszelkie niezapisane postępy w grze w tych klientach zostaną utracone.",
+        "es": "Permitir que el plugin cierre los clientes de Roblox que inició RoRoRo. Se perderá cualquier progreso del juego sin guardar en esos clientes."
+      }
+    }
+  ]
+}
