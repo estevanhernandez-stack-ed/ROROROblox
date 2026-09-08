@@ -371,9 +371,47 @@ them. **CI-health note:** the wall-clock flake family (`AppStorageDefenderTests`
 timing-sensitive flake unrelated to the changes; a dedicated fix (injected clock or serial
 collection) is worth a follow-up.
 
-**Still open in Phase D:** item 3 (the ~430 App-side composed strings + the `x:Static`→`{loc:Loc}`
-codemod + VM `CultureChanged` wiring), item 4 (XAML misses), item 5 (translate all new keys ×6),
-then the guards and v1.27.
+### App-side extraction DONE — items 3 & 4 + the guards complete (2026-09-07)
+
+Every user-facing string the app renders now resolves through `Loc`/`{loc:Loc}`. Done as **15 small
+PRs** (#172–#189, one coherent surface each), each build-green, unit-green, and CI-green (x64+arm64)
+before squash-merge. **~457 new `CoreMsg_*`/`Shell_*`/`Plugin_*`/`Diag_*`/`Tray_*`/`Discord_*`/…
+keys** carry the `localized Phase D step 3` marker in the neutral resx; all English-only until step 4.
+
+- **Item 3 — the App-side composed strings + live-toggle (batches 1–14).** `Loc.Plural` was extended
+  to carry extra format args ({0}=count, {1..}=extra). Batch 1 set the pattern: `MainViewModel`
+  subscribes `TranslationSource.CultureChanged` (unsubscribe in `StopPeriodicRefresh`) and re-runs its
+  composed getters + fans `NotifyCultureChanged()` across account rows, so long-lived surfaces
+  re-narrate live. The category treatment held throughout: **displayed on a long-lived surface** →
+  resx + `CultureChanged`; **on-demand window/page** → resx read at construction; **momentary
+  (catch/event-time)** → resx template at the moment; **plural** → `Loc.Plural`. Surfaces converted:
+  shell VM + account rows, Settings dialogs, theming (ThemeBuilder/CaptionColorPicker hold resx KEYS
+  resolved at build time), Diagnostics panel, Games/History/SquadLaunch/Friends/Join, Transport
+  (Export/Import) + shared modals, Plugins (consent sheet + window + capability vocabulary resolved at
+  call time, never baked at static-init), Tray menu, shell window titles (shell subscribes
+  `CultureChanged` — the language selector lives on its Settings page), and the Discord status line.
+- **Item 4 — XAML misses (batch 15).** The last hardcoded literals — MAIN/DEFAULT/PRIVATE/AVAILABLE
+  badges and the SquadLaunch link-help paragraph — moved to `{loc:Loc}`; DEFAULT/PRIVATE reuse the
+  existing Squad/History badge keys, and the mixed-`<Run>` paragraph collapsed to one coherent
+  sentence (URLs embedded verbatim) rather than fragments locked around monospace runs.
+- **Guards from (e) — in place.** `LocKeyParityFenceTests` (pre-existing) proves every `{loc:Loc Key}`
+  resolves to a real resx key; **new** `NoRawXamlProseFenceTests` fails on any raw-English
+  Text/Header/Content/ToolTip/Title/PlaceholderText attribute or inline text node, carving out markup
+  extensions, decoded glyphs/punctuation, and URLs/domains. `BrandNameFenceTests`' display-sink
+  vacuity floor dropped 20→5 in the same commit that made the reduction (localization converts literal
+  sinks to `Loc` calls the regex no longer counts).
+
+**Scope decisions recorded here:** installer-thrown `PluginInstallerException` messages stay English
+(they reach the user only via the localized `{ex.Message}` wrapper and flow into support logs — the
+same treatment every `ex.Message` gets; a proper fix is a Kind-based refactor, deferred). The Discord
+Rich Presence payload stays English (external payload). `SettingsPage` live-refresh is **deferred** —
+its displayed summaries flip on next populate, not mid-toggle; a small follow-up subscribes it to
+`CultureChanged` and re-runs its populate methods.
+
+**Still open in Phase D:** step 4 (translate the ~457 new keys ×6 via the catalog pipeline, the
+verifier, and the `PRODUCT_NOUNS` guard), the deferred `SettingsPage` live-refresh wiring, then re-cut v1.27 (version
+bump, MSIX ×2 arch, GitHub release) and the Partner Center submission (the held v1.26 work,
+re-versioned).
 
 ### Policy — what stays English (extend the never-lie rules)
 
