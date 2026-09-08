@@ -630,7 +630,7 @@
   "Shell_Export_SaveFailed": "Das Bundle konnte nicht gespeichert werden: {0}",
   "Shell_Export_SaveFailedTitle": "Export fehlgeschlagen",
   "Shell_Export_SaveTitle": "Konten-Bundle speichern",
-  "Shell_Export_SavedBody": "Gespeichert. Diese Datei enthält deine Konto-Anmeldungen — wer die Datei UND die Passphrase hat, kann sich als du anmelden. Bewahre die Passphrase sicher auf und veröffentliche die Datei nicht.",
+  "Shell_Export_SavedBody": "Gespeichert. Diese Datei enthält deine Konto-Anmeldungen — wer die Datei UND die Passphrase hat, kann sich als du anmelden. Bewahre die Passphrase sicher auf und teile die Datei nicht öffentlich.",
   "Shell_Export_SavedTitle": "Konten exportiert",
   "Shell_Friends_CouldntLoad": "Freunde konnten nicht geladen werden: {0}",
   "Shell_Friends_CouldntReadSession": "Die gespeicherte Sitzung dieses Kontos konnte nicht gelesen werden — schließe dies und füge das Konto erneut hinzu.",

@@ -2767,7 +2767,7 @@ Las alertas llegarán a ese servidor, y también a tu teléfono, siempre que ten
     <value>Nada que exportar</value>
   </data>
   <data name="Shell_Export_SavedBody" xml:space="preserve">
-    <value>Guardado. Este archivo contiene los inicios de sesión de tus cuentas: cualquiera que tenga el archivo Y la frase de contraseña puede iniciar sesión como tú. Guarda la frase de contraseña en un lugar seguro y no publiques el archivo.</value>
+    <value>Guardado. Este archivo contiene los inicios de sesión de tus cuentas: cualquiera que tenga el archivo Y la frase de contraseña puede iniciar sesión como tú. Guarda la frase de contraseña en un lugar seguro y no compartas el archivo públicamente.</value>
   </data>
   <data name="Shell_Export_SavedTitle" xml:space="preserve">
     <value>Cuentas exportadas</value>

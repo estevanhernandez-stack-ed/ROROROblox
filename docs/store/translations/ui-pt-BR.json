@@ -630,7 +630,7 @@
   "Shell_Export_SaveFailed": "Não foi possível salvar o pacote: {0}",
   "Shell_Export_SaveFailedTitle": "Falha na exportação",
   "Shell_Export_SaveTitle": "Salvar pacote de contas",
-  "Shell_Export_SavedBody": "Salvo. Este arquivo contém os logins das suas contas — qualquer pessoa com o arquivo E a frase secreta pode entrar como você. Guarde a frase secreta em segurança e não publique o arquivo.",
+  "Shell_Export_SavedBody": "Salvo. Este arquivo contém os logins das suas contas — qualquer pessoa com o arquivo E a frase secreta pode entrar como você. Guarde a frase secreta em segurança e não compartilhe o arquivo publicamente.",
   "Shell_Export_SavedTitle": "Contas exportadas",
   "Shell_Friends_CouldntLoad": "Não foi possível carregar os amigos: {0}",
   "Shell_Friends_CouldntReadSession": "Não foi possível ler a sessão salva desta conta — feche isto e adicione a conta de novo.",

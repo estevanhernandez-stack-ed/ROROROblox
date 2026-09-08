@@ -630,7 +630,7 @@
   "Shell_Export_SaveFailed": "Impossible d'enregistrer le lot : {0}",
   "Shell_Export_SaveFailedTitle": "Échec de l'exportation",
   "Shell_Export_SaveTitle": "Enregistrer le lot de comptes",
-  "Shell_Export_SavedBody": "Enregistré. Ce fichier contient vos identifiants de connexion — quiconque possède le fichier ET la phrase secrète peut se connecter à votre place. Gardez la phrase secrète en lieu sûr et ne publiez pas le fichier.",
+  "Shell_Export_SavedBody": "Enregistré. Ce fichier contient vos identifiants de connexion — quiconque possède le fichier ET la phrase secrète peut se connecter à votre place. Gardez la phrase secrète en lieu sûr et ne partagez pas le fichier publiquement.",
   "Shell_Export_SavedTitle": "Comptes exportés",
   "Shell_Friends_CouldntLoad": "Impossible de charger les amis : {0}",
   "Shell_Friends_CouldntReadSession": "Impossible de lire la session enregistrée de ce compte — fermez cette fenêtre et rajoutez le compte.",
