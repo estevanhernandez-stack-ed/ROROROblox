@@ -3082,6 +3082,6 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
     <value>RoRoRo spricht jetzt deine Sprache</value>
   </data>
   <data name="LanguageNotice_Body" xml:space="preserve">
-    <value>Es folgt automatisch der Sprache deines Systems. Wähle jederzeit unter Einstellungen › Sprache eine andere.</value>
+    <value>Es folgt automatisch der Sprache deines Systems. Wähle jederzeit unter Einstellungen › Darstellung eine andere.</value>
   </data>
 </root>

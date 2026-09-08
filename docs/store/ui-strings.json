@@ -1222,8 +1222,8 @@
     },
     {
       "key": "LanguageNotice_Body",
-      "en": "It follows your system language automatically. Pick a different one any time in Settings › Language.",
-      "comment": "One-time post-update tray notice body (localized Phase D)",
+      "en": "It follows your system language automatically. Pick a different one any time in Settings › Appearance.",
+      "comment": "One-time post-update tray notice body; names the Settings NAV destination (Appearance), not the Language section heading inside it, so the path is findable (localized Phase D)",
       "placeholders": false
     },
     {

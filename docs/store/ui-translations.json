@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "7f9dc34",
-  "generatedUtc": "2026-09-08T21:55:52+00:00",
+  "sourceCommit": "40a587b",
+  "generatedUtc": "2026-09-08T23:41:41+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -12209,14 +12209,14 @@
     },
     {
       "field": "LanguageNotice_Body",
-      "en": "It follows your system language automatically. Pick a different one any time in Settings › Language.",
+      "en": "It follows your system language automatically. Pick a different one any time in Settings › Appearance.",
       "translations": {
-        "fr": "Il suit automatiquement la langue de votre système. Choisissez-en une autre à tout moment dans Paramètres › Langue.",
-        "de": "Es folgt automatisch der Sprache deines Systems. Wähle jederzeit unter Einstellungen › Sprache eine andere.",
-        "ru": "Он автоматически следует языку вашей системы. Выбрать другой можно в любой момент в разделе Настройки › Язык.",
-        "pt-br": "Ele segue automaticamente o idioma do seu sistema. Escolha outro quando quiser em Configurações › Idioma.",
-        "pl": "Automatycznie podąża za językiem systemu. W każdej chwili możesz wybrać inny w Ustawienia › Język.",
-        "es": "Sigue automáticamente el idioma de tu sistema. Elige otro cuando quieras en Configuración › Idioma."
+        "fr": "Il suit automatiquement la langue de votre système. Choisissez-en une autre à tout moment dans Paramètres › Apparence.",
+        "de": "Es folgt automatisch der Sprache deines Systems. Wähle jederzeit unter Einstellungen › Darstellung eine andere.",
+        "ru": "Он автоматически следует языку вашей системы. Выбрать другой можно в любой момент в разделе Настройки › Внешний вид.",
+        "pt-br": "Ele segue automaticamente o idioma do seu sistema. Escolha outro quando quiser em Configurações › Aparência.",
+        "pl": "Automatycznie podąża za językiem systemu. W każdej chwili możesz wybrać inny w Ustawienia › Wygląd.",
+        "es": "Sigue automáticamente el idioma de tu sistema. Elige otro cuando quieras en Configuración › Apariencia."
       }
     }
   ]

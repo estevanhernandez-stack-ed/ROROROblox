@@ -3082,6 +3082,6 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
     <value>O RoRoRo agora fala o seu idioma</value>
   </data>
   <data name="LanguageNotice_Body" xml:space="preserve">
-    <value>Ele segue automaticamente o idioma do seu sistema. Escolha outro quando quiser em Configurações › Idioma.</value>
+    <value>Ele segue automaticamente o idioma do seu sistema. Escolha outro quando quiser em Configurações › Aparência.</value>
   </data>
 </root>
