@@ -408,10 +408,26 @@ Rich Presence payload stays English (external payload). `SettingsPage` live-refr
 its displayed summaries flip on next populate, not mid-toggle; a small follow-up subscribes it to
 `CultureChanged` and re-runs its populate methods.
 
-**Still open in Phase D:** step 4 (translate the ~457 new keys ×6 via the catalog pipeline, the
-verifier, and the `PRODUCT_NOUNS` guard), the deferred `SettingsPage` live-refresh wiring, then re-cut v1.27 (version
-bump, MSIX ×2 arch, GitHub release) and the Partner Center submission (the held v1.26 work,
-re-versioned).
+### Translation DONE — RoRoRo is fully localizED (2026-09-07, PR #191)
+
+The 532 Phase D keys (Core-boundary + step-3 App-extraction) are translated into all six languages, so
+every satellite now covers the full **1015-key** catalog (was 483). Produced by a **12-agent
+translation workflow** — one translator + one adversarial reviewer per language (Este opted into
+multi-agent orchestration) — checking product-noun leakage, format-token preservation, CLDR plural
+grammar, and voice. The reviewers made real grammatical fixes (distinct ru/pl genitive plural forms,
+a French gender-safe placeholder apposition, the pt-BR decimal separator `2,6 GB`), each wrote a
+per-language catalog, a deterministic merge folded them into `ui-<culture>.json`, and the pipeline
+(`lint-translations.py` → `gen-culture-resx.py` → `export-ui-translations.py`) finished: all six clean
+at 1015 keys, satellites regenerated, dataset rebuilt. Suite 2040 pass incl. the per-language
+`UiCultureTests` theory. **Verification honesty:** this pass used the in-workflow adversarial
+reviewers + the deterministic lint, not the external translation-verifier MCP (it times out at
+full-app scale — issue #13); the verifier stays available for an incremental spot-review, and any
+string is correctable post-hoc (edit `ui-<culture>.json`, re-run the cycle).
+
+**Still open (release territory, Este-gated):** an optional verifier spot-review; the small deferred
+`SettingsPage` live-refresh wiring; then re-cut v1.27 (version bump via `finalize-store-build.ps1`,
+ci.yml green on main, Store MSIX ×2 arch, GitHub release, the three-surface listing audit) and the
+held-since-v1.26 Partner Center submission — the submission click is Este's.
 
 ### Policy — what stays English (extend the never-lie rules)
 
