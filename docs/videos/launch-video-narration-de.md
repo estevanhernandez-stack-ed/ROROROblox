@@ -21,7 +21,7 @@ stays as digits in any OVERLAY.
 - VO: `Okay, das sind ACHT Roblox-Clients, die gleichzeitig laufen, auf einem PC. Und die App dahinter ist kostenlos.`
 
 ### accounts (slide 2)
-- OVERLAY: `einmal speichern. starten.`
+- OVERLAY: `einmal speichern. starte als.`
 - VO: `Das ist RoRoRo! Jeden Alt einmal speichern, danach ein Klick pro Stück. Live-Status, das Spiel, in dem jeder gerade steckt, sogar der RAM, den jeder Client frisst.`
 
 ### squad (slide 3)

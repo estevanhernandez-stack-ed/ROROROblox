@@ -37,7 +37,7 @@ stays as digits in any OVERLAY.
 - VO: `Cztery wbudowane motywy, plus kreator, w którym AI projektuje ci własny z opisu klimatu.`
 
 ### trust (slide 6)
-- OVERLAY: `hasło go nie dotyka`
+- OVERLAY: `hasło nigdy do niej nie trafia`
 - VO: `Hasło nigdy nie trafia do apki, sejf jest zaszyfrowany, a strażnik pamięci restartuje klienta, zanim wyciek go położy. Są nawet skróty klawiszowe.`
 
 ### cta (slide 7)
