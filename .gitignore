@@ -111,3 +111,6 @@ pkg/
 # exception keeps the one the Pages front door embeds.
 *.mp4
 !docs/videos/rororo-launch-16x9.mp4
+
+# Playwright MCP scratch output
+.playwright-mcp/
