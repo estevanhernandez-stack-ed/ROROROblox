@@ -52,7 +52,7 @@ No DevTools. No registry edits. No telemetry. The Roblox client launches unmodif
          poster="{{ '/videos/rororo-launch-poster.jpg' | relative_url }}">
     <source src="{{ '/videos/rororo-launch-16x9.mp4' | relative_url }}" type="video/mp4" />
   </video>
-  <figcaption>The launch cut — 53 seconds, sound on.</figcaption>
+  <figcaption>The launch cut — 57 seconds, sound on.</figcaption>
 </figure>
 
 ## Install it
