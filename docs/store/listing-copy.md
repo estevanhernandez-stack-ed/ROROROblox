@@ -25,7 +25,7 @@
 | **Category** | Utilities & tools | Not "Games" — RORORO is a launcher, not a game. |
 | **Sub-category** | (none — Partner Center doesn't show one for Utilities & tools) | |
 
-## Short description (under 200 chars — Store snippet)
+## Short description (200 characters max, inclusive — Store snippet)
 
 > Refreshed 2026-09-07 (v1.26.0.0) — "now in 6 languages" leads the snippet (the app's UI is
 > localized this release); "auto-update" dropped to fit the cap (it keeps its feature entry and

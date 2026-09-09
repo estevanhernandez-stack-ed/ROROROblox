@@ -146,8 +146,9 @@ HTML = """<meta charset="utf-8">
 <style>
   /* OLED dark, single theme by request: a true-black ground so the panel's pixels are actually
      off, with the 626 brand cyan and magenta carrying the accents. Committed deliberately rather
-     than following the host — so every colour is painted from a token and the page holds its own
-     even when it opens on a light ground. */
+     than following the host - so every colour is painted from a token and the page holds its own
+     even when it opens on a light ground. The whole file is intentionally pure ASCII; see the
+     ensure_ascii note in the generator. */
   :root {
     --ground: #000000;
     --surface: #0a0e13;
@@ -216,7 +217,7 @@ HTML = """<meta charset="utf-8">
   }
   .chip[aria-current="true"] { border-color: var(--cyan); color: var(--cyan); font-weight: 500; }
   .chip.done { border-color: var(--ok); color: var(--ok); }
-  .chip.done::before { content: "✓ "; }
+  .chip.done::before { content: "\\2713\\00a0"; }
 
   section.field {
     background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
@@ -308,11 +309,11 @@ HTML = """<meta charset="utf-8">
   <h3 class="rule">Order of operations</h3>
   <section class="field">
     <ol class="steps">
-      <li><strong>Packages</strong> — upload both MSIX above, wait for validation.</li>
-      <li><strong>Notes for certification</strong> — from <code>reviewer-letter-1.27.0.0.md</code>. Reviewer-only, not public.</li>
-      <li><strong>Store listings → [language]</strong> — work the fields below, one listing at a time.</li>
+      <li><strong>Packages</strong> &mdash; upload both MSIX above, wait for validation.</li>
+      <li><strong>Notes for certification</strong> &mdash; from <code>reviewer-letter-1.27.0.0.md</code>. Reviewer-only, not public.</li>
+      <li><strong>Store listings &rarr; [language]</strong> &mdash; work the fields below, one listing at a time.</li>
       <li><strong>What's new</strong> is a <em>different field</em> from Notes for certification. Both get filled, every release.</li>
-      <li><strong>Submit.</strong> In submission → Certification → Publishing, typically 24–72h.</li>
+      <li><strong>Submit.</strong> In submission &rarr; Certification &rarr; Publishing, typically 24&ndash;72h.</li>
     </ol>
   </section>
 </div>
@@ -331,7 +332,7 @@ if (typeof current !== "number" || current < 0 || current >= DATA.listings.lengt
 let showEn = store.get("rororo.showen", false);
 let done = store.get("rororo.done", {});
 
-$("#ver").textContent = "v" + DATA.version + " · Partner Center";
+$("#ver").textContent = "v" + DATA.version + " \\u00b7 Partner Center";
 
 const pick = $("#pick");
 DATA.listings.forEach((l, i) => {
@@ -381,11 +382,11 @@ function render() {
   banner.appendChild(strong);
   const meta = document.createElement("span");
   meta.className = "note";
-  meta.textContent = DATA.langName[lang] + (listing.note ? " · " + listing.note : "");
+  meta.textContent = DATA.langName[lang] + (listing.note ? " \\u00b7 " + listing.note : "");
   banner.appendChild(meta);
   const mark = document.createElement("button");
   mark.className = "copy ghost";
-  mark.textContent = done[listing.row] ? "Done ✓" : "Mark done";
+  mark.textContent = done[listing.row] ? "Done \\u2713" : "Mark done";
   mark.addEventListener("click", () => {
     done[listing.row] = !done[listing.row];
     store.set("rororo.done", done);
@@ -550,7 +551,7 @@ DATA.packages.forEach((p) => {
 });
 const pkgHint = document.createElement("p");
 pkgHint.className = "hint";
-pkgHint.textContent = "Both go in the Packages slot. Unsigned by design — Partner Center signs after upload.";
+pkgHint.textContent = "Both go in the Packages slot. Unsigned by design \\u2014 Partner Center signs after upload.";
 pkgSec.appendChild(pkgHint);
 pkgHost.appendChild(pkgSec);
 
@@ -572,7 +573,11 @@ render();
 
 def main() -> None:
     data = build_data()
-    payload = json.dumps(data, ensure_ascii=False).replace("<", "\\u003c")
+    # ensure_ascii deliberately: every non-ASCII character in the listing copy ships as a \\uXXXX
+    # escape, so the six translated languages render correctly no matter what encoding the document
+    # is parsed as. This is not cosmetic — a misdecoded document puts mojibake in the DOM, and the
+    # copy buttons would then copy mojibake straight into the Store listing.
+    payload = json.dumps(data, ensure_ascii=True).replace("<", "\\u003c")
     OUT.write_text(HTML.replace("__DATA__", payload), encoding="utf-8")
     langs = len(data["copy"])
     print(f"wrote {OUT.relative_to(ROOT)} — {len(data['listings'])} listings, {langs} copy sets, "
