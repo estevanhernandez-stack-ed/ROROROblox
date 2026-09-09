@@ -30,7 +30,7 @@ stays as digits in any OVERLAY.
 
 ### history (slide 4)
 - OVERLAY: `teraz liczy punkty`
-- VO: `I liczy punkty! Rekord altów naraz, łączny czas, ranking altów z seriami logowań. Wszystko liczone u ciebie, nic nie wychodzi.`
+- VO: `I liczy punkty! Rekord altów naraz, łączny czas, ranking altów z seriami logowań. Wszystko liczone u ciebie, nic nie opuszcza komputera.`
 
 ### themes (slide 5)
 - OVERLAY: `AI tworzy twój motyw`
