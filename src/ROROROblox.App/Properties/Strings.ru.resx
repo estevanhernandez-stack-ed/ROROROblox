@@ -3108,4 +3108,22 @@ RoRoRo спрашивает про обводку кнопок только дл
   <data name="LanguageNotice_Body" xml:space="preserve">
     <value>Он автоматически следует языку вашей системы. Выбрать другой можно в любой момент в разделе Настройки › Внешний вид.</value>
   </data>
+  <data name="SettingsPage_QrCodeOpeningThePushover" xml:space="preserve">
+    <value>QR-код, открывающий панель Pushover на телефоне</value>
+  </data>
+  <data name="SettingsPage_ScanForYourUserKey" xml:space="preserve">
+    <value>Сканируйте для ключа пользователя.</value>
+  </data>
+  <data name="SettingsPage_QrCodeOpeningThePushoverApplication" xml:space="preserve">
+    <value>QR-код, открывающий форму приложения Pushover на телефоне</value>
+  </data>
+  <data name="SettingsPage_ScanToCreateTheApplication" xml:space="preserve">
+    <value>Сканируйте, чтобы создать приложение.</value>
+  </data>
+  <data name="SettingsPage_QrCodeThatSubscribesYour" xml:space="preserve">
+    <value>QR-код, который подписывает телефон на эту тему ntfy</value>
+  </data>
+  <data name="SettingsPage_PointYourPhoneCameraAt" xml:space="preserve">
+    <value>Наведите камеру телефона сюда, чтобы подписаться — без набора. Любой, кто отсканирует его, сможет читать ваши оповещения, так что не показывайте его в стриме.</value>
+  </data>
 </root>

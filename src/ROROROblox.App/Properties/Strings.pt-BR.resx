@@ -3108,4 +3108,22 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
   <data name="LanguageNotice_Body" xml:space="preserve">
     <value>Ele segue automaticamente o idioma do seu sistema. Escolha outro quando quiser em Configurações › Aparência.</value>
   </data>
+  <data name="SettingsPage_QrCodeOpeningThePushover" xml:space="preserve">
+    <value>Código QR que abre o painel do Pushover no seu celular</value>
+  </data>
+  <data name="SettingsPage_ScanForYourUserKey" xml:space="preserve">
+    <value>Escaneie para sua chave de usuário.</value>
+  </data>
+  <data name="SettingsPage_QrCodeOpeningThePushoverApplication" xml:space="preserve">
+    <value>Código QR que abre o formulário de aplicativo do Pushover no seu celular</value>
+  </data>
+  <data name="SettingsPage_ScanToCreateTheApplication" xml:space="preserve">
+    <value>Escaneie para criar o aplicativo.</value>
+  </data>
+  <data name="SettingsPage_QrCodeThatSubscribesYour" xml:space="preserve">
+    <value>Código QR que inscreve seu celular neste tópico do ntfy</value>
+  </data>
+  <data name="SettingsPage_PointYourPhoneCameraAt" xml:space="preserve">
+    <value>Aponte a câmera do celular aqui para se inscrever — sem digitar. Quem escanear pode ler seus alertas, então mantenha fora da stream.</value>
+  </data>
 </root>

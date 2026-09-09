@@ -3108,4 +3108,22 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   <data name="LanguageNotice_Body" xml:space="preserve">
     <value>Es folgt automatisch der Sprache deines Systems. Wähle jederzeit unter Einstellungen › Darstellung eine andere.</value>
   </data>
+  <data name="SettingsPage_QrCodeOpeningThePushover" xml:space="preserve">
+    <value>QR-Code, der das Pushover-Dashboard auf deinem Handy öffnet</value>
+  </data>
+  <data name="SettingsPage_ScanForYourUserKey" xml:space="preserve">
+    <value>Scannen für deinen User Key.</value>
+  </data>
+  <data name="SettingsPage_QrCodeOpeningThePushoverApplication" xml:space="preserve">
+    <value>QR-Code, der das Pushover-Anwendungsformular auf deinem Handy öffnet</value>
+  </data>
+  <data name="SettingsPage_ScanToCreateTheApplication" xml:space="preserve">
+    <value>Scannen, um die Anwendung anzulegen.</value>
+  </data>
+  <data name="SettingsPage_QrCodeThatSubscribesYour" xml:space="preserve">
+    <value>QR-Code, der dein Handy für dieses ntfy-Thema anmeldet</value>
+  </data>
+  <data name="SettingsPage_PointYourPhoneCameraAt" xml:space="preserve">
+    <value>Richte die Handykamera hierauf, um dich anzumelden — ohne Tippen. Wer ihn scannt, kann deine Alerts mitlesen, also halte ihn aus dem Stream.</value>
+  </data>
 </root>

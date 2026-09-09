@@ -3108,4 +3108,22 @@ Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que 
   <data name="LanguageNotice_Body" xml:space="preserve">
     <value>Il suit automatiquement la langue de votre système. Choisissez-en une autre à tout moment dans Paramètres › Apparence.</value>
   </data>
+  <data name="SettingsPage_QrCodeOpeningThePushover" xml:space="preserve">
+    <value>Code QR qui ouvre le tableau de bord Pushover sur votre téléphone</value>
+  </data>
+  <data name="SettingsPage_ScanForYourUserKey" xml:space="preserve">
+    <value>Scannez pour votre clé utilisateur.</value>
+  </data>
+  <data name="SettingsPage_QrCodeOpeningThePushoverApplication" xml:space="preserve">
+    <value>Code QR qui ouvre le formulaire d'application Pushover sur votre téléphone</value>
+  </data>
+  <data name="SettingsPage_ScanToCreateTheApplication" xml:space="preserve">
+    <value>Scannez pour créer l'application.</value>
+  </data>
+  <data name="SettingsPage_QrCodeThatSubscribesYour" xml:space="preserve">
+    <value>Code QR qui abonne votre téléphone à ce sujet ntfy</value>
+  </data>
+  <data name="SettingsPage_PointYourPhoneCameraAt" xml:space="preserve">
+    <value>Pointez l'appareil photo de votre téléphone ici pour vous abonner — sans rien taper. Quiconque le scanne peut lire vos alertes, alors gardez-le hors stream.</value>
+  </data>
 </root>

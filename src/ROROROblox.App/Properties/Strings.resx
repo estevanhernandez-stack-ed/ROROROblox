@@ -2789,4 +2789,22 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="SquadLaunchWindow_LinkHelp" xml:space="preserve"><value>Private server link — https://www.roblox.com/games/&lt;id&gt;/&lt;name&gt;?privateServerLinkCode=&lt;code&gt; — gets saved for next time. A plain game link (roblox.com/games/&lt;id&gt;) puts the squad in one public server together instead.</value><comment>Squad-launch link help; keep the two roblox.com URL templates verbatim (localized Phase D step 3 batch 15)</comment></data>
   <data name="LanguageNotice_Title" xml:space="preserve"><value>RoRoRo now speaks your language</value><comment>One-time post-update tray notice title (localized Phase D)</comment></data>
   <data name="LanguageNotice_Body" xml:space="preserve"><value>It follows your system language automatically. Pick a different one any time in Settings › Appearance.</value><comment>One-time post-update tray notice body; names the Settings NAV destination (Appearance), not the Language section heading inside it, so the path is findable (localized Phase D)</comment></data>
+  <data name="SettingsPage_QrCodeOpeningThePushover" xml:space="preserve">
+    <value>QR code opening the Pushover dashboard on your phone</value>
+  </data>
+  <data name="SettingsPage_ScanForYourUserKey" xml:space="preserve">
+    <value>Scan for your user key.</value>
+  </data>
+  <data name="SettingsPage_QrCodeOpeningThePushoverApplication" xml:space="preserve">
+    <value>QR code opening the Pushover application form on your phone</value>
+  </data>
+  <data name="SettingsPage_ScanToCreateTheApplication" xml:space="preserve">
+    <value>Scan to create the application.</value>
+  </data>
+  <data name="SettingsPage_QrCodeThatSubscribesYour" xml:space="preserve">
+    <value>QR code that subscribes your phone to this ntfy topic</value>
+  </data>
+  <data name="SettingsPage_PointYourPhoneCameraAt" xml:space="preserve">
+    <value>Point your phone camera here to subscribe — no typing. Anyone who scans it can read your alerts, so keep it off stream.</value>
+  </data>
 </root>
