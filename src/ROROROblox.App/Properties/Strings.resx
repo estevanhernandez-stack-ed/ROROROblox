@@ -1947,7 +1947,7 @@
     <comment>Settings &gt; Appearance — UI-language section heading + picker name</comment>
   </data>
   <data name="SettingsPage_LanguageHint" xml:space="preserve">
-    <value>Choose the language RoRoRo's interface uses. New languages appear here as they're translated, and a change takes effect the next time you open RoRoRo.</value>
+    <value>Choose the language RoRoRo's interface uses. New languages appear here as they're translated, and a change takes effect right away.</value>
     <comment>Settings &gt; Appearance — UI-language picker hint</comment>
   </data>
   <data name="CoreMsg_Launch_NoDefaultGame" xml:space="preserve">

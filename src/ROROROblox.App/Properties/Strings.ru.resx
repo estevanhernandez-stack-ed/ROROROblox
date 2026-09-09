@@ -1465,7 +1465,7 @@
     <value>Язык</value>
   </data>
   <data name="SettingsPage_LanguageHint" xml:space="preserve">
-    <value>Выберите язык интерфейса RoRoRo. Новые языки появляются здесь по мере перевода, а изменение вступает в силу при следующем открытии RoRoRo.</value>
+    <value>Выберите язык интерфейса RoRoRo. Новые языки появляются здесь по мере перевода, и переключение происходит мгновенно.</value>
   </data>
   <data name="CoreMsg_Launch_NoDefaultGame" xml:space="preserve">
     <value>Игра Roblox по умолчанию не настроена. Добавьте её в разделе «Игры» (кнопка в шапке) или укажите цель явно.</value>
