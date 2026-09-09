@@ -40,6 +40,10 @@ stays as digits in any OVERLAY.
 - OVERLAY: `scannez, ouvrez sur ordi`
 - VO: `Gratuit sur le Microsoft Store, Windows ET Mac. Scannez le code, gardez la page, prenez-le sur votre ordi. RoRoRo, de six-deux-six Labs. Imaginez autre chose.`
 
+> **Render note (Este, 2026-09-08):** the `six-deux-six Labs` words are replaced at
+> render by the English master's "six-two-six Labs" — Este's own recording — so the
+> brand ident is his voice in every language. The localized text above is the fallback read.
+
 ## Post caption (for localized social posts)
 
 `Huit clients Roblox sur un seul PC — gratuit. RoRoRo enregistre vos alts, les lance en un clic chacun, les réunit dans le même serveur privé, et garde maintenant vos stats. Windows + Mac. Cherchez RORORO. Non affilié à Roblox.`
