@@ -13,6 +13,19 @@ Partner Center takes one-entry-at-a-time (product features, keywords) get a copy
     python scripts/build-listing-console.py          # -> docs/store/listing-console.html
 
 Re-run after any listing-copy change; the page is generated, never hand-edited.
+
+THIS COPY IS FROZEN FOR RoRoRo. It still works and still owns RoRoRo's submission, so nothing
+here needs to change. But the console has been extracted to its own repo and generalized to
+serve every 626 Labs Store app, and THAT is where the work is happening:
+
+    Projects/store-listing-console
+
+The split there: the Partner Center form order lives in the engine (it is a property of the
+Store, not of any app), and everything app-specific -- version, listing rows, reserved product
+names, image slots, paths -- moved to a per-app config.toml. RoRoRo is seeded as example data.
+
+So: fixes RoRoRo needs before its next submission can land here. Anything that improves the
+TOOL belongs in the new repo, or the two drift and the wrong one becomes the good one.
 """
 from __future__ import annotations
 
