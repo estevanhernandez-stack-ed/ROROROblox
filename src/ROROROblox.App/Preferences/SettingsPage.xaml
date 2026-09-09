@@ -31,11 +31,16 @@
                      FontSize="{DynamicResource HeadingFontSize}"
                      ItemContainerStyle="{StaticResource NavItemStyle}"
                      SelectionChanged="OnNavSelectionChanged">
-                    <ListBoxItem Content="{loc:Loc SettingsPage_Startup}" />
-                    <ListBoxItem Content="{loc:Loc SettingsPage_Accounts}" />
-                    <ListBoxItem Content="{loc:Loc SettingsPage_AlertsMemory}" />
-                    <ListBoxItem Content="{loc:Loc SettingsPage_Discord}" />
-                    <ListBoxItem Content="{loc:Loc SettingsPage_Appearance}" />
+                    <ListBoxItem Content="{loc:Loc SettingsPage_Startup}"
+                                AutomationProperties.AutomationId="NavStartup" />
+                    <ListBoxItem Content="{loc:Loc SettingsPage_Accounts}"
+                                AutomationProperties.AutomationId="NavAccounts" />
+                    <ListBoxItem Content="{loc:Loc SettingsPage_AlertsMemory}"
+                                AutomationProperties.AutomationId="NavAlerts" />
+                    <ListBoxItem Content="{loc:Loc SettingsPage_Discord}"
+                                AutomationProperties.AutomationId="NavDiscord" />
+                    <ListBoxItem Content="{loc:Loc SettingsPage_Appearance}"
+                                AutomationProperties.AutomationId="NavAppearance" />
             </ListBox>
 
             <ScrollViewer Grid.Column="1" Margin="16,0,0,0" VerticalScrollBarVisibility="Auto">
@@ -255,7 +260,8 @@
                                        Margin="0,0,0,8"
                                        Text="{loc:Loc SettingsPage_MoveYourSavedAccountsTo}" />
                             <StackPanel Orientation="Horizontal">
-                                <Button Content="{loc:Loc SettingsPage_ExportAccounts}" Padding="14,8" Margin="0,0,8,0"
+                                <Button Content="{loc:Loc SettingsPage_ExportAccounts}"
+                                AutomationProperties.AutomationId="ExportAccountsButton" Padding="14,8" Margin="0,0,8,0"
                                         Style="{StaticResource PrimaryButtonStyle}"
                                         FontSize="{DynamicResource BodyFontSize}"
                                         Click="OnExportAccountsClick"

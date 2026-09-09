@@ -5,6 +5,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:ROROROblox.App.Controls"
         Title="{loc:Loc ExportAccountsWindow_ExportAccounts}"
+        AutomationProperties.AutomationId="ExportAccountsWindow"
         Height="640" Width="520"
         MinHeight="560" MinWidth="480"
         WindowStartupLocation="CenterOwner"

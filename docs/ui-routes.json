@@ -13,11 +13,24 @@
     "Recycle",
     "Stop all"
   ],
+  "_note_denyAids": "The deny list above is ENGLISH DISPLAY TEXT and stops working the moment the app runs in another language -- a Polish 'Zatrzymaj' is not in it. These AutomationIds are the language-independent form of the same guard, and are what the resolver actually enforces on localized runs. Added 2026-09-09 with the language parameter; the name list is kept because it still catches an English-run route that names a destructive control directly.",
+  "denyAids": [
+    "DangerStop",
+    "DangerRemove",
+    "DangerLaunchAs",
+    "DangerRecycle",
+    "DangerSquadLaunch",
+    "DangerLaunchMultiple",
+    "DangerStopAll"
+  ],
   "surfaces": [
     {
       "id": "01",
       "name": "main-window",
-      "capture": { "type": "Window", "name": "RoRoRo" }
+      "capture": {
+        "type": "Window",
+        "aid": "MainWindow"
+      }
     },
     {
       "id": "02",
@@ -28,114 +41,309 @@
       "id": "03",
       "name": "preferences",
       "open": [
-        { "do": "invoke", "name": "Settings", "type": "Button" },
-        { "do": "select", "name": "Startup", "type": "ListItem", "within": "SettingsNav" }
+        {
+          "do": "invoke",
+          "type": "Button",
+          "aid": "ToolbarSettings"
+        },
+        {
+          "do": "select",
+          "type": "ListItem",
+          "within": "SettingsNav",
+          "aid": "NavStartup"
+        }
       ],
-      "capture": { "type": "Window", "name": "Settings" },
-      "close": [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
+      "capture": {
+        "type": "Window",
+        "aid": "ShellWindow"
+      },
+      "close": [
+        {
+          "do": "close-window",
+          "type": "Window",
+          "aid": "ShellWindow"
+        }
+      ]
     },
     {
       "id": "03a",
       "name": "preferences-accounts",
       "open": [
-        { "do": "invoke", "name": "Settings", "type": "Button" },
-        { "do": "select", "name": "Accounts", "type": "ListItem", "within": "SettingsNav" }
+        {
+          "do": "invoke",
+          "type": "Button",
+          "aid": "ToolbarSettings"
+        },
+        {
+          "do": "select",
+          "type": "ListItem",
+          "within": "SettingsNav",
+          "aid": "NavAccounts"
+        }
       ],
-      "capture": { "type": "Window", "name": "Settings" },
-      "close": [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
+      "capture": {
+        "type": "Window",
+        "aid": "ShellWindow"
+      },
+      "close": [
+        {
+          "do": "close-window",
+          "type": "Window",
+          "aid": "ShellWindow"
+        }
+      ]
     },
     {
       "id": "03b",
       "name": "preferences-alerts",
       "open": [
-        { "do": "invoke", "name": "Settings", "type": "Button" },
-        { "do": "select", "name": "Alerts & memory", "type": "ListItem", "within": "SettingsNav" }
+        {
+          "do": "invoke",
+          "type": "Button",
+          "aid": "ToolbarSettings"
+        },
+        {
+          "do": "select",
+          "type": "ListItem",
+          "within": "SettingsNav",
+          "aid": "NavAlerts"
+        }
       ],
-      "capture": { "type": "Window", "name": "Settings" },
-      "close": [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
+      "capture": {
+        "type": "Window",
+        "aid": "ShellWindow"
+      },
+      "close": [
+        {
+          "do": "close-window",
+          "type": "Window",
+          "aid": "ShellWindow"
+        }
+      ]
     },
     {
       "id": "03c",
       "name": "preferences-discord",
       "open": [
-        { "do": "invoke", "name": "Settings", "type": "Button" },
-        { "do": "select", "name": "Discord", "type": "ListItem", "within": "SettingsNav" }
+        {
+          "do": "invoke",
+          "type": "Button",
+          "aid": "ToolbarSettings"
+        },
+        {
+          "do": "select",
+          "type": "ListItem",
+          "within": "SettingsNav",
+          "aid": "NavDiscord"
+        }
       ],
-      "capture": { "type": "Window", "name": "Settings" },
-      "close": [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
+      "capture": {
+        "type": "Window",
+        "aid": "ShellWindow"
+      },
+      "close": [
+        {
+          "do": "close-window",
+          "type": "Window",
+          "aid": "ShellWindow"
+        }
+      ]
     },
     {
       "id": "03d",
       "name": "preferences-appearance",
       "open": [
-        { "do": "invoke", "name": "Settings", "type": "Button" },
-        { "do": "select", "name": "Appearance", "type": "ListItem", "within": "SettingsNav" }
+        {
+          "do": "invoke",
+          "type": "Button",
+          "aid": "ToolbarSettings"
+        },
+        {
+          "do": "select",
+          "type": "ListItem",
+          "within": "SettingsNav",
+          "aid": "NavAppearance"
+        }
       ],
-      "capture": { "type": "Window", "name": "Settings" },
-      "close": [ { "do": "close-window", "name": "Settings", "type": "Window" } ]
+      "capture": {
+        "type": "Window",
+        "aid": "ShellWindow"
+      },
+      "close": [
+        {
+          "do": "close-window",
+          "type": "Window",
+          "aid": "ShellWindow"
+        }
+      ]
     },
     {
       "id": "05",
       "name": "about",
       "open": [
-        { "do": "expand", "name": "Tools", "type": "Button" },
-        { "do": "invoke", "name": "About", "type": "MenuItem" }
+        {
+          "do": "expand",
+          "type": "Button",
+          "aid": "ToolbarTools"
+        },
+        {
+          "do": "invoke",
+          "type": "MenuItem",
+          "aid": "ToolsAbout"
+        }
       ],
-      "capture": { "type": "Window", "name": "About" },
-      "close": [ { "do": "close-window", "name": "About", "type": "Window" } ]
+      "capture": {
+        "type": "Window",
+        "aid": "ShellWindow"
+      },
+      "close": [
+        {
+          "do": "close-window",
+          "type": "Window",
+          "aid": "ShellWindow"
+        }
+      ]
     },
     {
       "id": "06",
       "name": "history",
       "open": [
-        { "do": "expand", "name": "Tools", "type": "Button" },
-        { "do": "invoke", "name": "History", "type": "MenuItem" }
+        {
+          "do": "expand",
+          "type": "Button",
+          "aid": "ToolbarTools"
+        },
+        {
+          "do": "invoke",
+          "type": "MenuItem",
+          "aid": "ToolsHistory"
+        }
       ],
-      "capture": { "type": "Window", "name": "History" },
-      "close": [ { "do": "close-window", "name": "History", "type": "Window" } ]
+      "capture": {
+        "type": "Window",
+        "aid": "ShellWindow"
+      },
+      "close": [
+        {
+          "do": "close-window",
+          "type": "Window",
+          "aid": "ShellWindow"
+        }
+      ]
     },
     {
       "id": "07",
       "name": "diagnostics",
       "open": [
-        { "do": "expand", "name": "Tools", "type": "Button" },
-        { "do": "invoke", "name": "Diagnostics", "type": "MenuItem" }
+        {
+          "do": "expand",
+          "type": "Button",
+          "aid": "ToolbarTools"
+        },
+        {
+          "do": "invoke",
+          "type": "MenuItem",
+          "aid": "ToolsDiagnostics"
+        }
       ],
-      "capture": { "type": "Window", "name": "Diagnostics" },
-      "close": [ { "do": "close-window", "name": "Diagnostics", "type": "Window" } ]
+      "capture": {
+        "type": "Window",
+        "aid": "ShellWindow"
+      },
+      "close": [
+        {
+          "do": "close-window",
+          "type": "Window",
+          "aid": "ShellWindow"
+        }
+      ]
     },
     {
       "id": "08",
       "name": "games",
       "_note": "Route-driven again as of v1.20: Games left the Tools popup and is a main-window Button, so it resolves from the window root without an expand step. 'Games' also names the captured Window and the default-game ToggleButton is a UIA Button, but neither can win this step -- the Window carries no InvokePattern and a ToggleButton exposes Toggle, not Invoke, so the Type+Verb pair the resolver requires leaves exactly one match.",
       "open": [
-        { "do": "invoke", "name": "Games", "type": "Button" }
+        {
+          "do": "invoke",
+          "type": "Button",
+          "aid": "ToolbarGames"
+        }
       ],
-      "capture": { "type": "Window", "name": "Games" },
-      "close": [ { "do": "close-window", "name": "Games", "type": "Window" } ]
+      "capture": {
+        "type": "Window",
+        "aid": "ShellWindow"
+      },
+      "close": [
+        {
+          "do": "close-window",
+          "type": "Window",
+          "aid": "ShellWindow"
+        }
+      ]
     },
     {
       "id": "09",
       "name": "plugins",
       "open": [
-        { "do": "expand", "name": "Tools", "type": "Button" },
-        { "do": "invoke", "name": "Plugins", "type": "MenuItem" }
+        {
+          "do": "expand",
+          "type": "Button",
+          "aid": "ToolbarTools"
+        },
+        {
+          "do": "invoke",
+          "type": "MenuItem",
+          "aid": "ToolsPlugins"
+        }
       ],
-      "capture": { "type": "Window", "name": "Plugins" },
-      "close": [ { "do": "close-window", "name": "Plugins", "type": "Window" } ]
+      "capture": {
+        "type": "Window",
+        "aid": "ShellWindow"
+      },
+      "close": [
+        {
+          "do": "close-window",
+          "type": "Window",
+          "aid": "ShellWindow"
+        }
+      ]
     },
     {
       "id": "10",
       "name": "theme-builder",
       "open": [
-        { "do": "invoke", "name": "Settings", "type": "Button" },
-        { "do": "select", "name": "Appearance", "type": "ListItem", "within": "SettingsNav" },
-        { "do": "invoke", "aid": "BuildThemeButton", "type": "Button" }
+        {
+          "do": "invoke",
+          "type": "Button",
+          "aid": "ToolbarSettings"
+        },
+        {
+          "do": "select",
+          "type": "ListItem",
+          "within": "SettingsNav",
+          "aid": "NavAppearance"
+        },
+        {
+          "do": "invoke",
+          "aid": "BuildThemeButton",
+          "type": "Button"
+        }
       ],
-      "capture": { "type": "Window", "name": "Build a theme" },
+      "capture": {
+        "type": "Window",
+        "aid": "ThemeBuilderWindow"
+      },
       "close": [
-        { "do": "close-window", "name": "Build a theme", "type": "Window" },
-        { "do": "close-window", "name": "Settings", "type": "Window" }
+        {
+          "do": "close-window",
+          "type": "Window",
+          "aid": "ThemeBuilderWindow"
+        },
+        {
+          "do": "close-window",
+          "type": "Window",
+          "aid": "ShellWindow"
+        }
       ]
     },
     {
@@ -147,11 +355,28 @@
       "id": "20",
       "name": "welcome",
       "open": [
-        { "do": "expand", "name": "Tools", "type": "Button" },
-        { "do": "invoke", "name": "Welcome tour", "type": "MenuItem" }
+        {
+          "do": "expand",
+          "type": "Button",
+          "aid": "ToolbarTools"
+        },
+        {
+          "do": "invoke",
+          "type": "MenuItem",
+          "aid": "ToolsWelcomeTour"
+        }
       ],
-      "capture": { "type": "Window", "name": "Welcome to RoRoRo" },
-      "close": [ { "do": "close-window", "name": "Welcome to RoRoRo", "type": "Window" } ]
+      "capture": {
+        "type": "Window",
+        "aid": "WelcomeWindow"
+      },
+      "close": [
+        {
+          "do": "close-window",
+          "type": "Window",
+          "aid": "WelcomeWindow"
+        }
+      ]
     },
     {
       "id": "21",
@@ -167,14 +392,38 @@
       "id": "23",
       "name": "export-accounts",
       "open": [
-        { "do": "invoke", "name": "Settings", "type": "Button" },
-        { "do": "select", "name": "Accounts", "type": "ListItem", "within": "SettingsNav" },
-        { "do": "invoke", "name": "Export accounts…", "type": "Button" }
+        {
+          "do": "invoke",
+          "type": "Button",
+          "aid": "ToolbarSettings"
+        },
+        {
+          "do": "select",
+          "type": "ListItem",
+          "within": "SettingsNav",
+          "aid": "NavAccounts"
+        },
+        {
+          "do": "invoke",
+          "type": "Button",
+          "aid": "ExportAccountsButton"
+        }
       ],
-      "capture": { "type": "Window", "name": "Export accounts" },
+      "capture": {
+        "type": "Window",
+        "aid": "ExportAccountsWindow"
+      },
       "close": [
-        { "do": "close-window", "name": "Export accounts", "type": "Window" },
-        { "do": "close-window", "name": "Settings", "type": "Window" }
+        {
+          "do": "close-window",
+          "type": "Window",
+          "aid": "ExportAccountsWindow"
+        },
+        {
+          "do": "close-window",
+          "type": "Window",
+          "aid": "ShellWindow"
+        }
       ]
     }
   ]

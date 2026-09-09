@@ -5,6 +5,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:ROROROblox.App.Controls"
         Title="{loc:Loc ThemeBuilderWindow_BuildATheme}"
+        AutomationProperties.AutomationId="ThemeBuilderWindow"
         Height="640" Width="640"
         MinHeight="500" MinWidth="540"
         WindowStartupLocation="CenterOwner"

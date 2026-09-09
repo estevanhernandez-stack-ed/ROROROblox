@@ -8,6 +8,7 @@
                  xmlns:app="clr-namespace:ROROROblox.App"
                  xmlns:controls="clr-namespace:ROROROblox.App.Controls"
                  Title="{loc:Loc MainWindow_Rororo}"
+        AutomationProperties.AutomationId="MainWindow"
                  Height="600" Width="900"
                  MinHeight="400" MinWidth="860"
                  WindowStartupLocation="CenterScreen"
@@ -171,6 +172,7 @@
                             </Button.Style>
                         </Button>
                         <Button Style="{StaticResource AccentActionButtonStyle}" Content="{loc:Loc MainWindow_Stop}"
+                                AutomationProperties.AutomationId="DangerStop"
                                 Command="{Binding DataContext.StopAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="10,4"
@@ -928,6 +930,7 @@
 
                         <!-- Launch As (hidden while running — Stop takes its place) -->
                         <Button Content="{loc:Loc MainWindow_LaunchAs}"
+                                AutomationProperties.AutomationId="DangerLaunchAs"
                                 Command="{Binding DataContext.LaunchAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="14,6" Margin="0,0,8,0">
@@ -957,6 +960,7 @@
                              language, so the button appears exactly where/when the fix applies and
                              disappears once the watchdog reports clear. -->
                         <Button Content="{loc:Loc MainWindow_Recycle}"
+                                AutomationProperties.AutomationId="DangerRecycle"
                                 Command="{Binding DataContext.RecycleAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="12,6" Margin="0,0,8,0"
@@ -990,6 +994,7 @@
 
                         <!-- Stop (visible while running) -->
                         <Button Style="{StaticResource AccentActionButtonStyle}" Content="{loc:Loc MainWindow_Stop}"
+                                AutomationProperties.AutomationId="DangerStop"
                                 Command="{Binding DataContext.StopAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="14,6" Margin="0,0,8,0"
@@ -1002,6 +1007,7 @@
                              Deliberately NOT an accent fill; on a row that also carries Launch As
                              and Stop, the loudest control must not be the one that deletes. -->
                         <Button Content="{loc:Loc MainWindow_Remove}"
+                                AutomationProperties.AutomationId="DangerRemove"
                                 Command="{Binding DataContext.RemoveAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 Padding="10,6"
@@ -1143,6 +1149,7 @@
                              chevron. Removed from the Tools menu in the same change so the app has
                              one route per destination, not two. -->
                         <Button Content="{loc:Loc MainWindow_Games}"
+                                AutomationProperties.AutomationId="ToolbarGames"
                                 Command="{Binding OpenGamesCommand}"
                                 Padding="10,6" Margin="0,0,6,0"
                                 Style="{StaticResource SecondaryButtonStyle}"
@@ -1150,6 +1157,7 @@
                                 AutomationProperties.AcceleratorKey="Ctrl+G"
                                 ToolTip="{loc:Loc MainWindow_SavedGamesAndPrivateServers}" />
                         <Button Content="{loc:Loc MainWindow_Settings}"
+                                AutomationProperties.AutomationId="ToolbarSettings"
                                 Command="{Binding OpenPreferencesCommand}"
                                 Padding="10,6" Margin="0,0,6,0"
                                 Style="{StaticResource SecondaryButtonStyle}"
@@ -1168,6 +1176,7 @@
                              AutomationProperties.Name strips the chevron from what gets announced;
                              the glyph is a visual affordance, not part of the name. -->
                         <controls:ToolsDropDownButton Content="{loc:Loc MainWindow_Tools}"
+                                AutomationProperties.AutomationId="ToolbarTools"
                                            AutomationProperties.Name="{loc:Loc MainWindow_Tools_2}"
                                            Padding="10,6" Margin="0,0,6,0"
                                            Style="{StaticResource SecondaryButtonStyle}"
@@ -1179,14 +1188,17 @@
                                              BorderThickness="1"
                                              Foreground="{DynamicResource WhiteBrush}">
                                 <MenuItem Header="{loc:Loc MainWindow_History}"
+                                AutomationProperties.AutomationId="ToolsHistory"
                                           Command="{Binding OpenHistoryCommand}"
                                           InputGestureText="Ctrl+H"
                                           ToolTip="{loc:Loc MainWindow_RecentSessionsPerAccountWhat}" />
                                 <MenuItem Header="{loc:Loc MainWindow_Diagnostics}"
+                                AutomationProperties.AutomationId="ToolsDiagnostics"
                                           Command="{Binding OpenDiagnosticsCommand}"
                                           InputGestureText="Ctrl+D"
                                           ToolTip="{loc:Loc MainWindow_SystemHealthRobloxWebview2Versions}" />
                                 <MenuItem Header="{loc:Loc MainWindow_Plugins}"
+                                AutomationProperties.AutomationId="ToolsPlugins"
                                           Command="{Binding OpenPluginsCommand}"
                                           InputGestureText="Ctrl+P"
                                           ToolTip="{loc:Loc MainWindow_InstallAndManageRororoPlugins}" />
@@ -1199,6 +1211,7 @@
                                           Command="{Binding OpenLogFolderCommand}"
                                           ToolTip="{loc:Loc MainWindow_OpenTheFolderHoldingRororo}" />
                                 <MenuItem Header="{loc:Loc MainWindow_StopAllRobloxInstances}"
+                                AutomationProperties.AutomationId="DangerStopAll"
                                           Command="{Binding StopAllCommand}"
                                           ToolTip="{loc:Loc MainWindow_ForceCloseEveryRunningRoblox}" />
                                 <!-- Explicitly themed. WPF-UI's default Separator draws a 4%-alpha
@@ -1209,9 +1222,11 @@
                                      and it would have shipped one element away from it. -->
                                     <Separator Background="{DynamicResource DividerBrush}" />
                                     <MenuItem Header="{loc:Loc MainWindow_WelcomeTour}"
+                                              AutomationProperties.AutomationId="ToolsWelcomeTour"
                                               Command="{Binding ShowWelcomeTourCommand}"
                                               ToolTip="{loc:Loc MainWindow_ReplayTheFirstRunTour}" />
                                     <MenuItem Header="{loc:Loc MainWindow_About}"
+                                              AutomationProperties.AutomationId="ToolsAbout"
                                               Command="{Binding OpenAboutCommand}"
                                               InputGestureText="F1"
                                               ToolTip="{loc:Loc MainWindow_VersionLinksLicense}" />
@@ -1394,6 +1409,7 @@
                                                             </MenuItem>
                                                             <Separator />
                                                             <MenuItem Header="{loc:Loc MainWindow_Remove}"
+                                AutomationProperties.AutomationId="DangerRemove"
                                                                       Command="{Binding Data.RemoveGameCommand, Source={StaticResource VmProxy}}"
                                                                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
                                                         </ContextMenu>
@@ -1467,6 +1483,7 @@
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Content="{loc:Loc MainWindow_LaunchMultiple}"
+                                AutomationProperties.AutomationId="DangerLaunchMultiple"
                                 Command="{Binding LaunchAllCommand}"
                                 Padding="14,6" Margin="0,0,8,0"
                                 Style="{StaticResource PrimaryButtonStyle}"
@@ -1478,6 +1495,7 @@
                              private-server-only: a plain game link now puts the squad in one public
                              server. The old label described the input, not what the button does. -->
                         <Button Style="{StaticResource AccentActionButtonStyle}" Content="{loc:Loc MainWindow_SquadLaunch}"
+                                AutomationProperties.AutomationId="DangerSquadLaunch"
                                 Command="{Binding OpenSquadLaunchCommand}"
                                 Padding="14,6"
                                 FontSize="{DynamicResource BodyFontSize}"
