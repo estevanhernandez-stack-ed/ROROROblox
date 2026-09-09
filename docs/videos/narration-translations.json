@@ -10,8 +10,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "ff867bd",
-  "generatedUtc": "2026-09-09T03:29:42+00:00",
+  "sourceCommit": "a30ca3e",
+  "generatedUtc": "2026-09-09T03:32:22+00:00",
   "sourceOfTruth": "docs/videos/launch-video-narration-*.md on feat/localized-taglines — corrections are edits there",
   "fields": [
     {
@@ -48,7 +48,7 @@
         "de": "einmal speichern. starte als.",
         "ru": "сохраните раз. запускайте.",
         "pt-br": "salve uma vez. inicie como.",
-        "pl": "zapisz raz. uruchamiaj.",
+        "pl": "zapisz raz. uruchamiaj jako.",
         "es": "guarda una vez. lanza como."
       },
       "charCap": 34
