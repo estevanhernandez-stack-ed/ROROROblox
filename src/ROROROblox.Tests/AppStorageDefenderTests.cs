@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Time.Testing;
 using ROROROblox.App.Diagnostics;
 
 namespace ROROROblox.Tests;
@@ -18,6 +19,21 @@ namespace ROROROblox.Tests;
 /// poll budget; a few asserts drive the re-stamp path directly via a fresh write rather
 /// than racing the OS event so the suite stays deterministic.
 /// </summary>
+/// <summary>
+/// The three FileSystemWatcher-backed tests below cannot be made deterministic by a clock — no
+/// abstraction makes an OS file event predictable — so they are given a quiet pool instead, the
+/// same treatment <c>FpsCapSettlerTests</c> got. Waiting on a real watcher while ~2,000 other
+/// tests contend for pool threads is the condition that turns a generous budget into a flake.
+/// <see cref="AppStorageDefenderTests.TheWatcherTestsKeepTheirQuietPool"/> fails the build if the
+/// attribute pair is ever tidied away.
+/// </summary>
+[CollectionDefinition(AppStorageDefenderQuietPoolCollection.Name, DisableParallelization = true)]
+public sealed class AppStorageDefenderQuietPoolCollection
+{
+    public const string Name = "AppStorageDefender quiet pool";
+}
+
+[Collection(AppStorageDefenderQuietPoolCollection.Name)]
 public sealed class AppStorageDefenderTests : IDisposable
 {
     private readonly string _dir;
@@ -68,7 +84,8 @@ public sealed class AppStorageDefenderTests : IDisposable
     private AppStorageDefender NewDefender(
         string username = "LaunchedAccount",
         TimeSpan? maxCap = null,
-        TimeSpan? postAttachGrace = null)
+        TimeSpan? postAttachGrace = null,
+        TimeProvider? time = null)
         => new(
             username,
             displayName: username,
@@ -76,7 +93,43 @@ public sealed class AppStorageDefenderTests : IDisposable
             log: NullLogger.Instance,
             maxCap: maxCap ?? TimeSpan.FromSeconds(2),
             postAttachGrace: postAttachGrace ?? TimeSpan.FromMilliseconds(200),
-            appStoragePath: _path);
+            appStoragePath: _path,
+            time: time);
+
+    /// <summary>
+    /// Real-time ceiling for "this should have completed by now" waits. It paces nothing — the
+    /// fake clock drives every deadline — so load can only make it more generous, never fail it.
+    /// </summary>
+    private static readonly TimeSpan CompletionBound = TimeSpan.FromSeconds(10);
+
+    /// <summary>
+    /// Gives an already-advanced fake timer's continuation a chance to run before a NEGATIVE
+    /// assertion reads it. Safe in a way the old real delays were not: with the clock faked,
+    /// no amount of real time can complete the defender, so a stalled runner cannot turn
+    /// "still defending" into a failure. It can only make this settle take longer.
+    /// </summary>
+    private static async Task SettleAsync()
+    {
+        for (var i = 0; i < 50; i++) await Task.Yield();
+    }
+
+    /// <summary>
+    /// The fence on the quiet pool: this class must stay in a parallel-disabled collection.
+    /// </summary>
+    [Fact]
+    public void TheWatcherTestsKeepTheirQuietPool()
+    {
+        var collection = (CollectionAttribute?)Attribute.GetCustomAttribute(
+            typeof(AppStorageDefenderTests), typeof(CollectionAttribute));
+        Assert.NotNull(collection);
+
+        var definition = (CollectionDefinitionAttribute?)Attribute.GetCustomAttribute(
+            typeof(AppStorageDefenderQuietPoolCollection), typeof(CollectionDefinitionAttribute));
+        Assert.NotNull(definition);
+        Assert.True(definition.DisableParallelization,
+            "The AppStorageDefender collection no longer disables parallelization — the "
+            + "FileSystemWatcher tests are back on a contended pool.");
+    }
 
     [Fact]
     public async Task InitialStamp_WritesLaunchedIdentityIntoFile()
@@ -127,81 +180,74 @@ public sealed class AppStorageDefenderTests : IDisposable
     [Fact]
     public async Task WithoutNotifyConsumed_StaysActiveUntilMaxCap()
     {
+        // F-116, fixed at the root 2026-09-09: this used to race a real 800ms cap with a real
+        // Stopwatch, and a stalled continuation resuming past the cap reported correct behaviour
+        // as a failure. Both timing assertions were guarded with "only assert if we actually
+        // landed inside the window", which is honest but means the claim went UNMEASURED on
+        // exactly the loaded runs where it mattered. With the clock injected the windows are
+        // exact and always measured.
         WriteAppStorage("LaunchedAccount");
 
-        var cap = TimeSpan.FromMilliseconds(800);
-        await using var defender = NewDefender("LaunchedAccount", maxCap: cap, postAttachGrace: TimeSpan.FromMilliseconds(100));
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var cap = TimeSpan.FromSeconds(8);
+        await using var defender = NewDefender(
+            "LaunchedAccount", maxCap: cap, postAttachGrace: TimeSpan.FromSeconds(1), time: clock);
 
-        var sw = Stopwatch.StartNew();
-        // Without NotifyConsumed, completion must NOT happen before the cap. This one is safe as
-        // written: nothing has been awaited yet, so no amount of load can move it.
-        Assert.False(defender.Completion.IsCompleted, "Defender completed before the max cap with no consume signal.");
+        Assert.False(defender.Completion.IsCompleted,
+            "Defender completed before the max cap with no consume signal.");
 
-        // F-116. THE MID-FLIGHT PROBE IS THE FRAGILE ONE, and the distinction is worth stating
-        // because it decides which timing assertions need work and which do not:
-        //
-        //   safe   — an assertion load can only make MORE true. `sw.Elapsed >= 700ms` below cannot
-        //            fail because a runner stalled; stalling makes elapsed LARGER.
-        //   unsafe — an assertion load can FALSIFY. This one claims "still running at 300ms" of an
-        //            800ms cap. A stalled continuation resuming at 850ms finds the defender
-        //            correctly finished and reports it as winding down early — a pass condition
-        //            reported as a failure. It blocked PR #126 on exactly that.
-        //
-        // So the probe now asserts only when it actually landed inside the window it was meant to
-        // probe. Overrunning means NOT MEASURED, which is the honest outcome; it does not mean
-        // broken. Not a longer delay — a delay cannot be made reliable, only its claim can.
-        await Task.Delay(TimeSpan.FromMilliseconds(300));
-        if (sw.Elapsed < cap)
-        {
-            Assert.False(defender.Completion.IsCompleted, "Defender wound down well before the max cap with no consume signal.");
-        }
+        // Deep inside the cap window. Real time cannot reach this assertion now — only Advance
+        // can complete the defender — so the probe is no longer conditional on having landed in
+        // time. It is always measured.
+        clock.Advance(TimeSpan.FromSeconds(3));
+        await SettleAsync();
+        Assert.False(defender.Completion.IsCompleted,
+            "Defender wound down well before the max cap with no consume signal.");
 
-        // Eventually it completes at the cap.
-        await defender.Completion.WaitAsync(TimeSpan.FromSeconds(2));
-        sw.Stop();
+        // One tick short of the cap: still defending.
+        clock.Advance(TimeSpan.FromSeconds(5) - TimeSpan.FromMilliseconds(1));
+        await SettleAsync();
+        Assert.False(defender.Completion.IsCompleted, "Defender completed before the cap elapsed.");
+
+        // And across it.
+        clock.Advance(TimeSpan.FromMilliseconds(1));
+        await defender.Completion.WaitAsync(CompletionBound);
         Assert.True(defender.Completion.IsCompleted, "Defender never completed at the max cap.");
-        Assert.True(sw.Elapsed >= TimeSpan.FromMilliseconds(700),
-            $"Completion fired too early ({sw.ElapsedMilliseconds}ms) — should have held until ~{cap.TotalMilliseconds}ms cap.");
     }
 
     [Fact]
     public async Task NotifyConsumed_CompletesAfterGrace_NotBefore_NotAtCap()
     {
+        // The test that failed PR #204's arm64 job. It asserted Completion was not done in the
+        // statement immediately after NotifyConsumed(), against a real 400ms grace — so a thread
+        // descheduled for longer than that saw correct code as a broken grace.
         WriteAppStorage("LaunchedAccount");
 
-        var cap = TimeSpan.FromSeconds(10);          // far away
-        var grace = TimeSpan.FromMilliseconds(400);
-        await using var defender = NewDefender("LaunchedAccount", maxCap: cap, postAttachGrace: grace);
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var cap = TimeSpan.FromSeconds(10);
+        var grace = TimeSpan.FromSeconds(2);
+        await using var defender = NewDefender(
+            "LaunchedAccount", maxCap: cap, postAttachGrace: grace, time: clock);
 
-        // Simulate attach at ~150ms in.
-        await Task.Delay(150);
-        var sw = Stopwatch.StartNew();
         defender.NotifyConsumed();
 
-        // Must NOT complete immediately — the grace keeps it defending so the live client
-        // reads the identity for captcha branding.
-        Assert.False(defender.Completion.IsCompleted, "Defender completed instantly on NotifyConsumed — grace not honored.");
+        // Must NOT complete immediately — the grace keeps it defending so the live client reads
+        // the identity for captcha branding.
+        await SettleAsync();
+        Assert.False(defender.Completion.IsCompleted,
+            "Defender completed instantly on NotifyConsumed — grace not honored.");
 
-        await defender.Completion.WaitAsync(TimeSpan.FromSeconds(3));
-        sw.Stop();
+        // One tick short of the grace.
+        clock.Advance(grace - TimeSpan.FromMilliseconds(1));
+        await SettleAsync();
+        Assert.False(defender.Completion.IsCompleted, "Defender completed before the grace elapsed.");
 
+        // Across the grace, and nowhere near the 10s cap — the distinction this test exists for.
+        clock.Advance(TimeSpan.FromMilliseconds(1));
+        await defender.Completion.WaitAsync(CompletionBound);
         Assert.True(defender.Completion.IsCompleted, "Defender never completed after the grace.");
-        // Completed roughly at grace, well short of the 10s cap.
-        Assert.True(sw.Elapsed >= TimeSpan.FromMilliseconds(300),
-            $"Completed before the grace elapsed ({sw.ElapsedMilliseconds}ms).");
-        // The last falsifiable assertion in this file, found by sweeping for the shape rather than
-        // by waiting for CI to hit it. It is an UPPER bound on wall clock: load can only make
-        // elapsed larger, so a stalled runner reports "completed after the grace" as "completed near
-        // the cap". The margin is generous — 5s against a 10s cap — which is why it has not fired
-        // yet, not a reason it cannot.
-        //
-        // Kept rather than deleted, because the claim is real: the grace path must not fall through
-        // to the cap. Guarded so it only speaks when the measurement means something.
-        if (sw.Elapsed < cap)
-        {
-            Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5),
-                $"Completed near the cap ({sw.ElapsedMilliseconds}ms) instead of after the short grace.");
-        }
+        Assert.True(clock.GetUtcNow() - DateTimeOffset.UnixEpoch < cap,
+            "Completed at the cap instead of after the short grace.");
     }
 
     [Fact]
