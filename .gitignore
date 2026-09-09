@@ -107,8 +107,7 @@ pkg/
 # is still in every clone, because removing it means a filter-repo rewrite that breaks
 # everyone's checkout.
 #
-# The directory rule states the intent; the pattern catches a stray master parked
-# anywhere else. The exception keeps the one cut the Pages front door embeds.
-docs/assets/Videos/
+# One video directory: docs/videos/. The pattern ignores every cut in it; the
+# exception keeps the one the Pages front door embeds.
 *.mp4
 !docs/videos/rororo-launch-16x9.mp4
