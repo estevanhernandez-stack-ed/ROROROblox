@@ -33,13 +33,22 @@ The pilot returned 16 findings. Triaged:
 
 | verdict | count | what they were |
 |---|---:|---|
-| real defect | 5 | 3 × `Export_SavedBody`, 2 × Polish plural forms |
+| real defect, user-visible | 3 | `Export_SavedBody` |
+| real defect, **unreachable string** | 2 | `Shell_StopAll_Running_other`, `Shell_Muted_other` (Polish) |
 | false positive | 1 | German `CoreMsg_Compat_Banner` (see #3) |
 | terminology preference | 10 | French word choice, all defensible either way |
 
 **Ten of sixteen were preferences.** Not wrong, not worth a translator's time, and
 they dominated the report by volume. A reviewer skimming that list has to do the
 triage the tool should have done.
+
+The two Polish rows deserve their own line, because an earlier draft of this document
+counted them simply as "real defects" and that was misleading. They are genuine
+grammar errors — and they are in `_other` arms that a Polish integer count can never
+select (see §4). We fixed them anyway in PR #198 for catalog hygiene, and recorded in
+that commit that no user could ever see them. So the honest score is **three defects a
+user could hit, two in dead strings, one false positive, ten preferences** — which is
+a more useful shape than "five real" and is the reason §4 exists at all.
 
 **Ask:** a distinct severity — `preference` vs `defect` — decided by whether the
 finding claims the string is *incorrect* or merely *not what I would have written*.
@@ -119,6 +128,12 @@ the two that worked.
 - **Rubric noise was zero.** Across 34 opportunities the reviewers never flagged the
   rubric itself — which is why we dropped a planned rubric-variant experiment. That
   data point saved us a workstream.
-- **Adversarial framing beat consensus framing.** Asking a second pass to *refute* a
-  finding is what demoted the German banner. A second pass asked to *agree* would have
-  confirmed it.
+- **Every finding got traced to the code or the grammar before it was accepted.** The
+  German banner was demoted by reading German constituent order and confirming the
+  reorder was required — not by a second reviewer pass. Stating that precisely because
+  an earlier draft of this document credited adversarial framing for the demotion, and
+  that was not what happened. The lesson the pilot actually supports is narrower and
+  more useful: **a finding about a language nobody on the team reads is the most
+  expensive kind to dismiss, and the only thing that dismisses it safely is tracing the
+  grammar.** Which is an argument for the tool carrying its own reasoning in the
+  finding, so the reader can check it without becoming a German speaker first.

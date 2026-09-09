@@ -17,12 +17,26 @@ The adapter swept 480 XAML strings to `{x:Static loc:Strings.Key}`. That is corr
 for a statically-localized app and it built, tested and shipped green.
 
 Then we added a language picker, and every one of those references had to be swept
-again. Today's tree:
+again. Today's tree, counted precisely — these are **markup sites**, not strings and
+not translations, since several sites can point at one key:
 
+```bash
+grep -ro "x:Static loc:" --include=*.xaml src/ | wc -l   # 0
+grep -ro "loc:Loc "      --include=*.xaml src/ | wc -l   # 586
 ```
-{x:Static loc:Strings.*}    0 occurrences
-{loc:Loc Key}             586 occurrences
-```
+
+| what | count |
+|---|---:|
+| `x:Static loc:` markup sites | **0** |
+| `{loc:Loc}` markup sites | **586** |
+| distinct keys those sites reference | 488 |
+| keys in the neutral catalog | 1,017 |
+| translated strings shipped (1,017 × 6) | 6,102 |
+
+The pair that matters is the first two: every `x:Static` reference is gone and 586
+markup sites now resolve through a change-notifying source. The catalog is larger than
+the markup count because roughly half the app's prose is composed in C#, which is
+finding #3 below.
 
 `x:Static` resolves **once, at parse time**. There is no change notification behind
 it, so a culture switch cannot re-render anything already on screen. The only fix is
