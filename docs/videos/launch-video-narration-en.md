@@ -22,9 +22,14 @@ come back as *speakable* text, not listing copy.
 ## Translator rules
 
 1. **Names stay in English:** RoRoRo, Squad Launch, 626 Labs, Microsoft
-   Store, Roblox. "Imagine something else." is the brand tagline — the
-   existing listing translations already carry a per-language rendering;
-   reuse that one, don't invent a new one.
+   Store, Roblox.
+   **The tagline splits by where the language cooperates** (decision
+   2026-09-08): where "Imagine" is the native imperative of the local
+   imaginar/imaginer, the tagline speaks localized — fr `Imagine autre
+   chose.`, pt-BR `Imagine algo diferente.`, es `Imagina algo
+   diferente.` (tú register). Everywhere else (de, pl, ru) it stays
+   English, matching the card footer, as a brand mark. These are the
+   canonical renderings — the listings should eventually adopt them.
 2. **Spoken digits:** the VO says "six-two-six Labs" because the TTS
    reads "626" as a number. Translate as the *spoken digits* of your
    language (e.g. DE "sechs-zwei-sechs Labs"). Keep digits as digits in

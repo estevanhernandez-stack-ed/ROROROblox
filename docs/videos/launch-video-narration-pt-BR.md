@@ -5,7 +5,8 @@ every VO and OVERLAY value localized. These are speakable lines for the
 multilingual TTS, not listing copy.
 
 **Kept English on purpose:** RoRoRo, Squad Launch, 626 Labs, Microsoft Store,
-Roblox, RAM, Windows, Mac — and `Imagine something else.`, the brand tagline.
+Roblox, RAM, Windows, Mac. The brand tagline speaks localized in this language
+(decision 2026-09-08): `Imagine algo diferente.` — « Imagine » is the native você-imperative of imaginar — the brand word survives letter-for-letter, matching the file's escaneie/salve/pegue voice.
 The kit said to reuse an existing per-language rendering of the tagline; there
 is none (it appears in no `listing-copy-*.md` and no `Strings.*.resx`, only as
 the English card footer), so rather than invent one it stays English and matches
@@ -49,7 +50,7 @@ stays as digits in any OVERLAY.
 
 ### cta (slide 7)
 - OVERLAY: `escaneie, abra no PC`
-- VO: `Grátis na Microsoft Store, Windows E Mac. Escaneie o código, salve a página, pegue no PC. RoRoRo, da seis-dois-seis Labs. Imagine something else.`
+- VO: `Grátis na Microsoft Store, Windows E Mac. Escaneie o código, salve a página, pegue no PC. RoRoRo, da seis-dois-seis Labs. Imagine algo diferente.`
 
 ## Post caption (for localized social posts)
 
