@@ -97,12 +97,18 @@ pkg/
 # vibe-lingual tool working dir (backup batches, state) — never committed
 .vibe-lingual/
 
-# Video masters live in 626labs-hub alongside the source script and the social cuts.
-# This repo carries only the web cut the Pages front door actually embeds.
-# Git stores every revision of a binary whole - no delta compression - so a 36 MB
-# master re-rendered three times is 108 MB in history forever. And .gitnexus/ above
-# is the standing reminder of what that costs: its 77 MB blob was committed before
-# the ignore rule existed and is still in history, because removing it now means a
-# filter-repo rewrite that breaks every clone.
+# Video masters stay local - 36MB+ per file, one `add -A` away from permanent history.
+# The web cuts that ship live in docs/videos/; masters render locally and belong in
+# 626labs-hub with the source script and the social cuts.
+#
+# Git stores every revision of a binary whole - no delta compression - so a 36MB master
+# re-rendered three times is 108MB in history forever. .gitnexus/ above is the standing
+# reminder of what that costs: its 77MB blob was committed before that rule existed and
+# is still in every clone, because removing it means a filter-repo rewrite that breaks
+# everyone's checkout.
+#
+# The directory rule states the intent; the pattern catches a stray master parked
+# anywhere else. The exception keeps the one cut the Pages front door embeds.
+docs/assets/Videos/
 *.mp4
 !docs/videos/rororo-launch-16x9.mp4
