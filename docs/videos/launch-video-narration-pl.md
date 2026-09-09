@@ -21,7 +21,7 @@ stays as digits in any OVERLAY.
 - VO: `To OSIEM klientów Roblox naraz, na jednym PC. A aplikacja jest darmowa.`
 
 ### accounts (slide 2)
-- OVERLAY: `zapisz raz. uruchamiaj.`
+- OVERLAY: `zapisz raz. uruchamiaj jako.`
 - VO: `To jest RoRoRo! Zapisz każdy alt raz, potem jedno kliknięcie na każdy. Status na żywo, w co kto gra, nawet ile RAM-u zjada każdy klient.`
 
 ### squad (slide 3)
