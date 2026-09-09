@@ -10,8 +10,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "a30ca3e",
-  "generatedUtc": "2026-09-09T03:32:22+00:00",
+  "sourceCommit": "2f1bb3d",
+  "generatedUtc": "2026-09-09T03:33:51+00:00",
   "sourceOfTruth": "docs/videos/launch-video-narration-*.md on feat/localized-taglines — corrections are edits there",
   "fields": [
     {
@@ -113,7 +113,7 @@
         "de": "Und es führt Buch! Höchstzahl gleichzeitiger Alts, Gesamtlaufzeit, eine Rangliste deiner Alts mit Login-Serien. Alles auf deinem Rechner berechnet, nichts verlässt ihn.",
         "ru": "И он ведёт счёт! Максимум альтов разом, общее время, рейтинг ваших альтов с сериями входов. Всё считается на вашей машине, ничего не уходит.",
         "pt-br": "E ele marca os pontos! Pico de alts, tempo total, um ranking com sequências de login. Tudo calculado na sua máquina, nada sai.",
-        "pl": "I liczy punkty! Rekord altów naraz, łączny czas, ranking altów z seriami logowań. Wszystko liczone u ciebie, nic nie wychodzi.",
+        "pl": "I liczy punkty! Rekord altów naraz, łączny czas, ranking altów z seriami logowań. Wszystko liczone u ciebie, nic nie opuszcza komputera.",
         "es": "¡Y lleva la cuenta! Pico de alts, tiempo total, un ranking con rachas de acceso. Todo se calcula en tu máquina, nada sale."
       },
       "charCap": 600
