@@ -1,6 +1,6 @@
 # Store listing — Deutsch (de)
 
-> Paste-ready für Partner Center → Store listings → **Deutsch**. Drafted 2026-09-05 from
+> Paste-ready für Partner Center → Store listings → **Deutsch**. Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
 > `listing-copy.md`, refreshed for v1.26.0.0. Product nouns stay in English (RoRoRo, Squad
 > Launch, Friend Follow, Pushover, ntfy); the interface is now localized to six languages, so
 > the old English-only caveat is gone. Register: du (Gaming-Store-Norm).
@@ -31,7 +31,7 @@ Was du bekommst:
 • Plugin-System. Optionale Plugins laufen als getrennte Prozesse und haben keine Berechtigungen, bis du sie einzeln erteilst.
 • Auto-Update über Velopack. Eine entfernte Konfiguration verfolgt die bekannte Roblox-Version und den Mutex-Namen, damit eine Umbenennung auf Roblox-Seite dich nicht lange ausbremst.
 • Barrierefreiheit, gemessen. Jedes Steuerelement meldet seinen Namen an Hilfstechnologien, und der Kontrast wird in jedem Theme an gerenderten Pixeln geprüft.
-• Spricht deine Sprache. Die gesamte Oberfläche — jedes Menü, jede Einstellung, jeder Tooltip und jedes Fenster — ist ins Französische, Deutsche, Russische, Portugiesische (Brasilien), Polnische und Spanische übersetzt und richtet sich nach deiner Windows-Sprache oder deiner Wahl in den Einstellungen. Die Sprachauswahl bietet nur eine vollständig übersetzte Sprache an, sodass du nie auf einem halb englischen Bildschirm landest.
+• Spricht deine Sprache. Die gesamte App — jedes Menü, jede Einstellung, jeder Tooltip und jedes Fenster sowie die Meldungen, die RoRoRo während der Nutzung schreibt — ist auf Französisch, Deutsch, Russisch, Portugiesisch (Brasilien), Polnisch und Spanisch übersetzt, je nach Windows-Sprache oder deiner Wahl in den Einstellungen. Der Wechsel wirkt sofort, und die Auswahl bietet nur vollständig übersetzte Sprachen an, damit du nie auf einem halb englischen Bildschirm landest.
 
 Datenschutz und Sicherheit:
 Dein Roblox-Passwort sieht RoRoRo nie. Die Anmeldung passiert vollständig auf Robloxs eigener Seite, eingebettet in einen Microsoft-Edge-WebView2-Rahmen — dasselbe HTML, dieselbe HTTPS-Verbindung wie in deinem Browser. RoRoRo erfasst nur das Sitzungscookie, das Roblox nach erfolgreicher Anmeldung setzt, und verschlüsselt es vor dem Schreiben auf die Festplatte. Keine Telemetrie. Keine Analyse. Nichts verlässt deine Maschine außer den Roblox-Aufrufen beim Start — denselben, die Roblox.com aus deinem Browser macht — und, nur wenn du sie selbst einrichtest, Alarmen an deinen eigenen Discord-Webhook oder den gewählten Push-Dienst (Pushover oder ntfy).
@@ -62,31 +62,32 @@ Discord Join startet RoRoRo auch geschlossen — und fragt immer, bevor irgendet
 Handy-Alarme über Pushover oder ntfy — ein Alt fliegt raus und dein Handy vibriert, auch ohne Discord
 Alle zwei Stunden ein „Alles gut“-Zeichen, solange deine Konten laufen — Stille heißt: nachsehen
 Alarme fächern auf — Desktop, Discord-Kanäle und Handy in jeder Kombination, je Alarm
-In sechs Sprachen verfügbar — die gesamte Oberfläche auf Französisch, Deutsch, Russisch, Portugiesisch (Brasilien), Polnisch oder Spanisch, folgt Windows oder deiner Wahl in den Einstellungen
+In sechs Sprachen — die ganze App, Bildschirme wie Meldungen: Französisch, Deutsch, Russisch, Portugiesisch (Brasilien), Polnisch, Spanisch. Sofortiger Wechsel, gemäß Windows oder deiner Wahl
 ```
 
-## What's new in this version (v1.26.0.0, ≤1500 chars)
+## What's new in this version (v1.27.0.0, ≤1500 chars)
 
 ```
-v1.26.0.0
+v1.27.0.0
 
-RoRoRo spricht jetzt deine Sprache
-• Die gesamte Oberfläche — Menüs, Einstellungen, Tooltips, jedes
-  Fenster — ist ins Französische, Deutsche, Russische,
-  Portugiesische (Brasilien), Polnische und Spanische übersetzt.
-  Steht Windows auf einer davon, übernimmt RoRoRo sie von selbst.
+RoRoRo spricht deine Sprache
+• Die ganze App — Menüs, Einstellungen, jedes Fenster und die
+  Meldungen, die RoRoRo während der Nutzung schreibt — ist auf
+  Französisch, Deutsch, Russisch, Portugiesisch (Brasilien),
+  Polnisch und Spanisch übersetzt. Steht Windows auf einer
+  davon, übernimmt RoRoRo sie von selbst.
 
-Wähle selbst
-• Einstellungen > Darstellung hat ein neues Sprach-Dropdown. Es
-  listet nur die Sprachen, in die RoRoRo vollständig übersetzt ist,
-  sodass du nie auf einem halb übersetzten Bildschirm landest.
-  Deine Wahl wird wirksam, sobald du RoRoRo das nächste Mal öffnest.
+Jederzeit wechseln, sofort
+• Einstellungen > Darstellung listet nur Sprachen, in die
+  RoRoRo vollständig übersetzt ist — du landest nie auf einem
+  halb übersetzten Bildschirm. Wähle eine, und die App stellt
+  sofort um — ohne Neustart.
 
-Im Kern englisch
-• Englisch bleibt die Voreinstellung, und Produktnamen — Squad
-  Launch, Recycle, RoRoRo selbst — lesen sich in jeder Sprache
-  gleich. An deinen Konten, Themes oder Einstellungen ändert sich
-  nichts.
+Im Kern weiterhin Englisch
+• Englisch bleibt die Standardsprache, und Produktnamen —
+  Squad Launch, Recycle, RoRoRo — lesen sich in jeder Sprache
+  gleich. An deinen Konten, Themes und Einstellungen ändert
+  sich nichts.
 ```
 
 ## Copyright (single line)

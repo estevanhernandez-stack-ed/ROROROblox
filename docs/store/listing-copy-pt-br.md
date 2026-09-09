@@ -31,7 +31,7 @@ O que você leva:
 • Sistema de plugins. Plugins opcionais rodam como processos separados e não têm permissão nenhuma até você conceder uma a uma.
 • Atualização automática via Velopack. Uma configuração remota acompanha a versão do Roblox e o nome do mutex conhecidos, para uma mudança do lado do Roblox não te travar por muito tempo.
 • Acessibilidade medida. Cada controle anuncia seu nome para tecnologias assistivas, e o contraste é verificado nos pixels renderizados em todos os temas.
-• Fala o seu idioma. Toda a interface — cada menu, configuração, dica e janela — é traduzida para francês, alemão, russo, português (Brasil), polonês e espanhol, seguindo o idioma do seu Windows ou a sua escolha em Configurações. O seletor só oferece idiomas totalmente traduzidos, então você nunca cai numa tela meio em inglês.
+• Fala o seu idioma. O app inteiro — cada menu, configuração, dica e janela, e as mensagens que o RoRoRo escreve enquanto você usa — é traduzido para francês, alemão, russo, português (Brasil), polonês e espanhol, seguindo o idioma do seu Windows ou sua escolha nas Configurações. A troca é imediata, e a lista só oferece idiomas totalmente traduzidos, para você nunca cair numa tela pela metade em inglês.
 
 Privacidade e segurança:
 Sua senha do Roblox nunca é vista pelo RoRoRo. O login acontece inteiramente na página do próprio Roblox, embutida num quadro Microsoft Edge WebView2 — mesmo HTML, mesma conexão HTTPS do seu navegador. O RoRoRo captura apenas o cookie de sessão que o Roblox define após o login, e o criptografa antes de gravar em disco. Sem telemetria. Sem analytics. Nada sai da sua máquina além das chamadas ao Roblox durante o lançamento — as mesmas que o Roblox.com faz do seu navegador — e, somente se você mesmo configurar, alertas para o seu webhook do Discord ou o serviço de push escolhido (Pushover ou ntfy).
@@ -62,22 +62,31 @@ Discord Join abre o RoRoRo mesmo fechado, e sempre pergunta antes de iniciar qua
 Alertas no celular via Pushover ou ntfy — um alt cai e seu celular vibra, mesmo com o Discord fechado
 Sinais de "tudo certo" a cada duas horas enquanto as contas rodam — silêncio significa problema
 Alertas em leque — desktop, canais do Discord e celular em qualquer combinação, por alerta
-Disponível em seis idiomas — toda a interface em francês, alemão, russo, português (Brasil), polonês ou espanhol, seguindo o Windows ou a sua escolha em Configurações
+Disponível em seis idiomas — o app inteiro, telas e mensagens, em francês, alemão, russo, português (Brasil), polonês ou espanhol, troca imediata, seguindo o Windows ou sua escolha
 ```
 
-## What's new in this version (v1.26.0.0, ≤1500 chars)
+## What's new in this version (v1.27.0.0, ≤1500 chars)
 
 ```
-v1.26.0.0
+v1.27.0.0
 
-O RoRoRo agora fala o seu idioma
-• Toda a interface — menus, configurações, dicas e cada janela — foi traduzida para francês, alemão, russo, português (Brasil), polonês e espanhol. Se o Windows estiver em um desses idiomas, o RoRoRo já assume esse idioma sozinho.
+O RoRoRo fala o seu idioma
+• O app inteiro — menus, configurações, cada janela e as
+  mensagens que o RoRoRo escreve enquanto você usa — está
+  traduzido para francês, alemão, russo, português (Brasil),
+  polonês e espanhol. Se o Windows estiver em um desses, o
+  RoRoRo adota sozinho.
 
-Escolha você mesmo
-• Configurações > Aparência tem um novo seletor de Idioma. Ele lista só os idiomas em que o RoRoRo está totalmente traduzido, então você nunca cai numa tela meio traduzida. Sua escolha vale na próxima vez que você abrir o RoRoRo.
+Troque quando quiser, na hora
+• Configurações > Aparência lista só os idiomas para os quais
+  o RoRoRo está totalmente traduzido — você nunca cai numa
+  tela pela metade. Escolha um e o app muda na hora, sem
+  reiniciar.
 
-Inglês no coração
-• O inglês continua sendo o padrão, e nomes de produto — Squad Launch, Recycle, o próprio RoRoRo — são iguais em todos os idiomas. Nada muda nas suas contas, temas ou configurações.
+Ainda inglês no fundo
+• O inglês continua sendo o padrão, e os nomes de recursos —
+  Squad Launch, Recycle, RoRoRo — se leem igual em qualquer
+  idioma. Nada muda nas suas contas, temas ou configurações.
 ```
 
 ## Copyright (single line)
