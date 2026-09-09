@@ -96,3 +96,13 @@ pkg/
 
 # vibe-lingual tool working dir (backup batches, state) — never committed
 .vibe-lingual/
+
+# Video masters live in 626labs-hub alongside the source script and the social cuts.
+# This repo carries only the web cut the Pages front door actually embeds.
+# Git stores every revision of a binary whole - no delta compression - so a 36 MB
+# master re-rendered three times is 108 MB in history forever. And .gitnexus/ above
+# is the standing reminder of what that costs: its 77 MB blob was committed before
+# the ignore rule existed and is still in history, because removing it now means a
+# filter-repo rewrite that breaks every clone.
+*.mp4
+!docs/videos/rororo-launch-16x9.mp4
