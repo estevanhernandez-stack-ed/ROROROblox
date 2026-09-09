@@ -35,8 +35,10 @@ internal sealed class AppStorageDefender : IAsyncDisposable
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "Roblox", "LocalStorage", "appStorage.json");
 
-    private static readonly long SelfWriteSuppressionTicks =
-        Stopwatch.Frequency * 250 / 1000;
+    // Instance rather than static: the tick frequency now comes from the injected TimeProvider,
+    // and FakeTimeProvider's frequency is not Stopwatch.Frequency. A static computed off the real
+    // Stopwatch would silently mis-scale every suppression window under a fake clock.
+    private readonly long _selfWriteSuppressionTicks;
 
     // Only one defender actively watches at a time — the most recent launch.
     // When a new defender is constructed, it takes over and cancels the
@@ -69,6 +71,7 @@ internal sealed class AppStorageDefender : IAsyncDisposable
     private readonly FileSystemWatcher? _fsw;
     private readonly SemaphoreSlim _restampLock = new(1, 1);
     private readonly Task _completion;
+    private readonly TimeProvider _time;
     private long _lastSelfWriteTicks;
     private int _restampCount;
     private int _consumedSignalled;
@@ -76,8 +79,14 @@ internal sealed class AppStorageDefender : IAsyncDisposable
 
     public AppStorageDefender(string username, string displayName, long userId,
         ILogger log, TimeSpan maxCap, TimeSpan postAttachGrace,
-        string? appStoragePath = null, CancellationToken externalCt = default)
+        string? appStoragePath = null, CancellationToken externalCt = default,
+        TimeProvider? time = null)
     {
+        // Injected so the grace/cap timing is testable without real delays. Defaults to the system
+        // clock, so every production call site is unchanged. See
+        // docs/superpowers/specs/2026-09-09-wall-clock-flake-design.md.
+        _time = time ?? TimeProvider.System;
+        _selfWriteSuppressionTicks = _time.TimestampFrequency * 250 / 1000;
         _username = username;
         _displayName = displayName;
         _userId = userId;
@@ -140,7 +149,7 @@ internal sealed class AppStorageDefender : IAsyncDisposable
 
     private async Task ScheduleGraceWinddownAsync()
     {
-        try { await Task.Delay(_postAttachGrace, _cts.Token).ConfigureAwait(false); }
+        try { await Task.Delay(_postAttachGrace, _time, _cts.Token).ConfigureAwait(false); }
         catch (OperationCanceledException) { }
         _consumed.TrySetResult();
     }
@@ -149,7 +158,7 @@ internal sealed class AppStorageDefender : IAsyncDisposable
     {
         // Hold until EITHER the max cap elapses (install-delay upper bound) OR the
         // post-attach grace fires after NotifyConsumed (normal wind-down).
-        var cap = Task.Delay(_maxCap, _cts.Token);
+        var cap = Task.Delay(_maxCap, _time, _cts.Token);
         var winner = await Task.WhenAny(cap, _consumed.Task).ConfigureAwait(false);
         // Observe the cap task's cancellation if it lost the race, to avoid an
         // unobserved-exception warning when DisposeAsync cancels.
@@ -173,8 +182,8 @@ internal sealed class AppStorageDefender : IAsyncDisposable
         // window — don't re-stamp into the new defender's identity.
         if (!ReferenceEquals(Volatile.Read(ref _active), this)) return;
 
-        var since = Stopwatch.GetTimestamp() - Volatile.Read(ref _lastSelfWriteTicks);
-        if (since < SelfWriteSuppressionTicks) return;
+        var since = _time.GetTimestamp() - Volatile.Read(ref _lastSelfWriteTicks);
+        if (since < _selfWriteSuppressionTicks) return;
 
         _ = Task.Run(async () =>
         {
@@ -234,7 +243,7 @@ internal sealed class AppStorageDefender : IAsyncDisposable
 
             var tmp = _appStoragePath + ".tmp";
             File.WriteAllText(tmp, node.ToJsonString());
-            Volatile.Write(ref _lastSelfWriteTicks, Stopwatch.GetTimestamp());
+            Volatile.Write(ref _lastSelfWriteTicks, _time.GetTimestamp());
             File.Move(tmp, _appStoragePath, overwrite: true);
 
             if (initial)
