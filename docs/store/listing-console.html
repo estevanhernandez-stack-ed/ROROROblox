@@ -1,0 +1,429 @@
+<meta charset="utf-8">
+<title>RoRoRo Listing Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  /* OLED dark, single theme by request: a true-black ground so the panel's pixels are actually
+     off, with the 626 brand cyan and magenta carrying the accents. Committed deliberately rather
+     than following the host — so every colour is painted from a token and the page holds its own
+     even when it opens on a light ground. */
+  :root {
+    --ground: #000000;
+    --surface: #0a0e13;
+    --surface-2: #131a22;
+    --line: #212a34;
+    --ink: #e9f1f8;
+    --ink-soft: #a3b6c8;
+    --ink-mute: #75899c;
+    --cyan: #17d4fa;
+    --cyan-bright: #5fe4ff;
+    --magenta: #f22f89;
+    --ok: #4ade9b;
+    --warn: #f0b429;
+    --over: #ff6b5e;
+    --radius: 10px;
+    --shadow: 0 0 0 1px rgba(23,212,250,.05), 0 12px 34px rgba(0,0,0,.7);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    font-size: 15px; line-height: 1.6;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px 96px; }
+
+  header.top {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--ground) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  .top-inner { max-width: 1080px; margin: 0 auto; padding: 14px 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .brand { display: flex; flex-direction: column; gap: 2px; margin-right: auto; }
+  .brand h1 {
+    margin: 0; font-family: "Space Grotesk", Inter, sans-serif; font-weight: 700;
+    font-size: 19px; letter-spacing: -.01em;
+  }
+  .brand .sub { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: var(--ink-mute); letter-spacing: .04em; }
+
+  .control { display: flex; align-items: center; gap: 8px; }
+  .control label { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-mute); font-weight: 600; }
+  select {
+    font: inherit; font-weight: 600; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-width: 210px;
+  }
+  select:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+  .toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: 13px; font-weight: 600; }
+  .toggle input { accent-color: var(--cyan); width: 15px; height: 15px; margin: 0; }
+
+  .rowbanner {
+    display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: baseline;
+    margin: 26px 0 4px; padding: 14px 16px; border-radius: var(--radius);
+    background: var(--surface-2); border-left: 3px solid var(--cyan);
+  }
+  .rowbanner strong { font-family: "Space Grotesk", sans-serif; font-size: 16px; }
+  .rowbanner .note { font-size: 13px; color: var(--ink-soft); }
+
+  .progress { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 4px; }
+  .chip {
+    font-family: "JetBrains Mono", monospace; font-size: 11px; padding: 4px 9px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--ink-mute); background: var(--surface); cursor: pointer;
+  }
+  .chip[aria-current="true"] { border-color: var(--cyan); color: var(--cyan); font-weight: 500; }
+  .chip.done { border-color: var(--ok); color: var(--ok); }
+  .chip.done::before { content: "✓ "; }
+
+  section.field {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    margin-top: 16px; box-shadow: var(--shadow); overflow: hidden;
+  }
+  .fhead { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--line); }
+  .fhead h2 { margin: 0; font-family: "Space Grotesk", sans-serif; font-size: 15px; font-weight: 700; margin-right: auto; }
+  .fnote { font-size: 12px; color: var(--ink-mute); flex-basis: 100%; order: 3; }
+  .count { font-family: "JetBrains Mono", monospace; font-size: 11px; padding: 3px 8px; border-radius: 6px;
+    background: var(--surface-2); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .count.ok { color: var(--ok); }
+  .count.warn { color: var(--warn); }
+  .count.over { color: var(--over); font-weight: 600; }
+
+  button.copy {
+    font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+    background: var(--cyan); color: var(--ground); border: 0; border-radius: 7px; padding: 6px 13px;
+  }
+  button.copy:hover { filter: brightness(1.08); }
+  button.copy.done { background: var(--ok); }
+  button.ghost { background: transparent; color: var(--cyan); border: 1px solid var(--line); }
+
+  pre.text {
+    margin: 0; padding: 14px 16px; white-space: pre-wrap; word-break: break-word;
+    font-family: Inter, sans-serif; font-size: 14px; line-height: 1.62; color: var(--ink);
+    max-height: 340px; overflow: auto;
+  }
+  .english {
+    border-top: 1px dashed var(--line); background: var(--surface-2);
+  }
+  .english .tag {
+    font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-mute); padding: 9px 16px 0; display: block;
+  }
+  .english pre.text { color: var(--ink-soft); font-size: 13px; max-height: 260px; }
+
+  ol.feats { margin: 0; padding: 8px 16px 14px 0; list-style: none; }
+  ol.feats li { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0 7px 16px; border-bottom: 1px solid var(--line); }
+  ol.feats li:last-child { border-bottom: 0; }
+  .fnum { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-mute); min-width: 20px; padding-top: 3px; font-variant-numeric: tabular-nums; }
+  .ftext { flex: 1; font-size: 14px; }
+  .fen { display: block; color: var(--ink-mute); font-size: 12.5px; margin-top: 3px; }
+
+  h3.rule {
+    font-family: "Space Grotesk", sans-serif; font-size: 12px; text-transform: uppercase; letter-spacing: .12em;
+    color: var(--ink-mute); margin: 40px 0 0; padding-bottom: 8px; border-bottom: 1px solid var(--line);
+  }
+  .pathrow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 16px; }
+  code.path {
+    font-family: "JetBrains Mono", monospace; font-size: 12px; background: var(--surface-2);
+    padding: 6px 10px; border-radius: 6px; color: var(--ink); flex: 1; min-width: 260px; overflow-x: auto; white-space: nowrap;
+  }
+  .files { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 16px 14px; }
+  .file { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-soft); background: var(--surface-2); border-radius: 5px; padding: 3px 7px; }
+  .hint { font-size: 12.5px; color: var(--ink-mute); padding: 0 16px 14px; }
+
+  ol.steps { margin: 0; padding: 4px 16px 16px 34px; }
+  ol.steps li { padding: 6px 0; }
+  ol.steps code { font-family: "JetBrains Mono", monospace; font-size: 12px; background: var(--surface-2); padding: 2px 6px; border-radius: 5px; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <h1>Listing Console</h1>
+      <span class="sub" id="ver"></span>
+    </div>
+    <div class="control">
+      <label for="pick">Listing</label>
+      <select id="pick"></select>
+    </div>
+    <label class="toggle"><input type="checkbox" id="showen"> Show English</label>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="progress" id="prog"></div>
+  <div class="rowbanner" id="banner"></div>
+  <main id="fields"></main>
+
+  <h3 class="rule">Asset folders</h3>
+  <div id="assets"></div>
+
+  <h3 class="rule">Packages to upload</h3>
+  <div id="packages"></div>
+
+  <h3 class="rule">Order of operations</h3>
+  <section class="field">
+    <ol class="steps">
+      <li><strong>Packages</strong> — upload both MSIX above, wait for validation.</li>
+      <li><strong>Notes for certification</strong> — from <code>reviewer-letter-1.27.0.0.md</code>. Reviewer-only, not public.</li>
+      <li><strong>Store listings → [language]</strong> — work the fields below, one listing at a time.</li>
+      <li><strong>What's new</strong> is a <em>different field</em> from Notes for certification. Both get filled, every release.</li>
+      <li><strong>Submit.</strong> In submission → Certification → Publishing, typically 24–72h.</li>
+    </ol>
+  </section>
+</div>
+
+<script>
+const DATA = {"version": "1.27.0.0", "listings": [{"row": "English (default)", "lang": "en", "note": null}, {"row": "French (France)", "lang": "fr", "note": null}, {"row": "French (Canada)", "lang": "fr", "note": "same copy as French (France)"}, {"row": "German (Germany)", "lang": "de", "note": null}, {"row": "Polish", "lang": "pl", "note": null}, {"row": "Portuguese (Brazil)", "lang": "pt-br", "note": null}, {"row": "Russian", "lang": "ru", "note": null}, {"row": "Spanish (Spain)", "lang": "es", "note": null}, {"row": "Spanish (Mexico)", "lang": "es", "note": "same copy as Spanish (Spain)"}, {"row": "Spanish (Americas)", "lang": "es", "note": "same copy as Spanish (Spain)"}], "langName": {"en": "English", "fr": "Français", "de": "Deutsch", "ru": "Русский", "pt-br": "Português (Brasil)", "pl": "Polski", "es": "Español"}, "fields": [{"key": "short", "label": "Short description", "cap": 200, "note": "The Store snippet. Hard cap."}, {"key": "long", "label": "Description", "cap": null, "note": "The main listing body."}, {"key": "whatsnew", "label": "What's new in this version", "cap": 1500, "note": "Public — a different field from Notes for certification."}, {"key": "features", "label": "Product features", "cap": 200, "note": "Up to 20 entries, each capped separately. Paste one at a time."}, {"key": "copyright", "label": "Copyright", "cap": null, "note": null}, {"key": "trademark", "label": "Trademark info", "cap": null, "note": null}, {"key": "license", "label": "Additional license terms", "cap": null, "note": "English on file for every listing."}, {"key": "developedby", "label": "Developed by", "cap": null, "note": "English on file for every listing."}, {"key": "keywords", "label": "Search terms", "cap": null, "note": "English on file for every listing."}], "copy": {"en": {"short": "Multi-launcher for Windows, now in 6 languages. Run several Roblox clients side by side as different saved accounts. Encrypted vault, Squad Launch, memory watchdog, phone alerts, live status, themes.", "long": "Multi-launcher for Windows.\n\nRoRoRo is a Windows launcher that lets you run several Roblox clients on one PC at the same time, each signed in as a different saved account you own. Add accounts once through Roblox's own login page, then launch any of them with one click — into their default game, a saved private server, or any game link you paste.\n\nWhat you get:\n• Multi-instance with one click. Holds the Roblox singleton mutex so additional clients open instead of focusing the first one.\n• DPAPI-encrypted account vault. Saved cookies are encrypted with Windows' Data Protection API, tied to your Windows user account — a copy of the vault file moved to another PC will not decrypt. Moving accounts between your own PCs is a deliberate, passphrase-protected export.\n• Live status for every account. See which account is in which game, who is idle and for how long, and per-account frame-rate caps that stick.\n• Squad Launch + Friend Follow. Send every selected account into the same private server, follow a friend into theirs, or land your accounts together in one public server.\n• Memory watchdog + Recycle. RoRoRo learns what a Roblox client actually costs in RAM on your machine and warns before you run out. One click closes a heavy client and puts it back in the same server it was in.\n• One tools window. Games, Settings, History, Diagnostics, Plugins and About are pages of one window that sits beside your accounts. Keyboard shortcuts throughout — F1 shows the list.\n• Themes. Four built-in, including one that carries no meaning in colour alone, plus a builder to make your own from ten colours and share it as a file.\n• Optional alerts — desktop, Discord, or your phone. Route each alert to any mix of desktop notifications, a Discord webhook you create, and your phone through Pushover or ntfy. Drops, memory warnings, recycle completions, and an every-two-hours all-good mark while your accounts run. A fresh install makes no alert calls at all — nothing fires until you set a destination up.\n• System tray UX. A state-coloured tray icon shows the multi-instance state at a glance; double-click launches your main account.\n• Plugin system. Optional plugins run as separate processes and hold no permissions until you grant each one by name.\n• Auto-update via Velopack. Remote config tracks the current known-good Roblox version and mutex name, so a Roblox-side rename doesn't break you for long.\n• Accessible by measurement. Every control announces its name to assistive tech, and contrast is verified against rendered pixels in every theme.\n• Speaks your language. The whole interface — every menu, setting, tooltip and window, and the messages RoRoRo writes as you use it — is translated into French, German, Russian, Portuguese (Brazil), Polish, and Spanish, following your Windows language or your pick in Settings. Switching takes effect instantly, and the picker only offers a language that's fully translated, so you never land on a half-English screen.\n\nPrivacy & security:\nYour Roblox password is never seen by RoRoRo. Login happens entirely inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame — same HTML, same HTTPS connection your browser would make. RoRoRo captures only the session cookie that Roblox sets after successful login, and encrypts it before writing it to disk. No telemetry. No analytics. Nothing leaves your machine except the Roblox-side calls during launch — the same calls Roblox.com makes from your browser — and, only if you set them up yourself, alerts to your own Discord webhook or to the phone push service you chose (Pushover or ntfy).\n\nImportant: trademark and affiliation notice.\n\"Roblox\" and the Roblox logo are trademarks of Roblox Corporation. RoRoRo is an independent third-party tool, not affiliated with, endorsed by, or sponsored by Roblox Corporation. The trademarked term is used solely to describe compatibility with the Roblox platform. RoRoRo launches the official Roblox client unmodified — it does not inject into, hook into, or alter the Roblox process in any way; it only holds a Windows named-mutex before launch so that subsequent client instances see the singleton check as already-claimed.\n\nA 626 Labs product.", "features": "One-click multi-instance launcher for Roblox on Windows\nDPAPI-encrypted account vault with passphrase-protected export\nLive status for every account — which game it's in, idle time, and per-account frame-rate caps\nMemory watchdog that learns each client's real RAM cost, plus one-click Recycle back into the same server\nSquad Launch and Friend Follow — same private server, or one public server together\nJoin-by-link from any roblox.com URL, with saved private servers per account\nOne tools window for Games, Settings, History and more, with keyboard shortcuts throughout\nFour built-in themes plus a build-your-own theme editor\nOptional Discord alerts to a webhook you create\nSystem tray with state-coloured icon and double-click main launch\nPlugin system with per-capability consent and out-of-process isolation\nAuto-update that keeps working when Roblox changes underneath\nStart with Windows if you want — one toggle, and Windows' own Startup list stays in control\nDiscord Join starts RoRoRo even when it's closed, and always asks before launching anything\nPhone alerts through Pushover or ntfy — an alt drops and your phone buzzes, even with Discord closed\nUptime marks — an all-good buzz every two hours while your accounts run, so silence means something's wrong\nAlerts fan out — desktop, Discord channels, and your phone in any mix, per alert\nAvailable in six languages — the whole app, screens and messages alike, in French, German, Russian, Portuguese (Brazil), Polish, or Spanish, switching instantly, following Windows or your pick", "whatsnew": "v1.27.0.0\n\nRoRoRo speaks your language\n• The whole app — menus, settings, every window, and the\n  messages RoRoRo writes as you use it — is translated into\n  French, German, Russian, Portuguese (Brazil), Polish, and\n  Spanish. If Windows is set to one of those, RoRoRo picks it\n  up on its own.\n\nSwitch any time, instantly\n• Settings > Appearance lists only the languages RoRoRo is\n  fully translated into, so you never land on a half-translated\n  screen. Pick one and the app changes over immediately — no\n  restart.\n\nStill English at heart\n• English stays the default, and product names — Squad Launch,\n  Recycle, RoRoRo itself — read the same in every language.\n  Nothing about your accounts, themes, or settings changes.", "copyright": "© 2026 626 Labs LLC. All rights reserved. \"Roblox\" is a trademark of Roblox Corporation. RoRoRo is not affiliated with, endorsed by, or sponsored by Roblox Corporation.", "trademark": "\"Roblox\" and the Roblox logo are trademarks of Roblox Corporation. RORORO is an independent third-party tool, not affiliated with, endorsed by, or sponsored by Roblox Corporation. The trademarked term is used solely to describe compatibility with the Roblox platform. RORORO launches the official Roblox client unmodified.", "license": "RORORO source code is licensed under the MIT License. Full text: https://github.com/estevanhernandez-stack-ed/ROROROblox/blob/main/LICENSE\n\nRORORO is provided \"as is,\" without warranty of any kind. Use of RORORO to access the Roblox platform is governed by Roblox Corporation's own Terms of Use, which you must accept separately when you sign in to a Roblox account. Roblox Corporation has stated that multi-instancing tools \"may be considered malicious behaviour\"; while RORORO does not modify the Roblox client and only holds a Windows named-mutex before launch, the user accepts any risk of Roblox-side enforcement on their accounts.\n\nNo warranty is offered or implied for compatibility with future versions of the Roblox client. The bundled remote-config update mechanism is best-effort.", "developedby": "626 Labs LLC", "keywords": "roblox, multi instance, multi-account, launcher, account manager, alt accounts, multibox"}, "fr": {"short": "Multi-lanceur Windows, désormais en 6 langues. Plusieurs clients Roblox côte à côte, chacun sur son compte. Coffre chiffré, Squad Launch, surveillance mémoire, alertes téléphone, statut en direct.", "long": "Multi-lanceur pour Windows.\n\nRoRoRo est un lanceur Windows qui fait tourner plusieurs clients Roblox sur un même PC, chacun connecté à un compte différent que vous possédez. Ajoutez vos comptes une fois via la page de connexion officielle de Roblox, puis lancez-les d'un clic — vers leur jeu par défaut, un serveur privé enregistré, ou n'importe quel lien de jeu collé.\n\nCe que vous obtenez :\n• Multi-instance en un clic. RoRoRo détient le mutex singleton de Roblox : les clients supplémentaires s'ouvrent au lieu de ramener le premier au premier plan.\n• Coffre de comptes chiffré (DPAPI). Les cookies enregistrés sont chiffrés avec l'API de protection des données de Windows, liés à votre compte Windows — un fichier copié sur un autre PC ne se déchiffre pas. Déplacer ses comptes entre ses propres PC passe par un export volontaire protégé par phrase secrète.\n• Statut en direct pour chaque compte. Voyez quel compte est dans quel jeu, qui est inactif et depuis combien de temps, avec une limite de FPS par compte qui tient.\n• Squad Launch + Friend Follow. Envoyez tous les comptes sélectionnés dans le même serveur privé, suivez un ami dans le sien, ou réunissez vos comptes dans un serveur public.\n• Surveillance mémoire + Recycle. RoRoRo apprend ce qu'un client Roblox coûte réellement en RAM sur votre machine et prévient avant la saturation. Un clic ferme un client trop lourd et le renvoie dans le serveur où il était.\n• Une seule fenêtre d'outils. Jeux, réglages, historique, diagnostics, plugins et À propos sont les pages d'une même fenêtre, avec raccourcis clavier partout — F1 affiche la liste.\n• Thèmes. Quatre intégrés, dont un qui ne repose jamais sur la couleur seule, plus un éditeur pour créer le vôtre à partir de dix couleurs et le partager en fichier.\n• Alertes en option — bureau, Discord ou téléphone. Routez chaque alerte vers n'importe quelle combinaison : notifications bureau, un webhook Discord que vous créez, ou votre téléphone via Pushover ou ntfy. Déconnexions, alertes mémoire, fin de Recycle, et un signal « tout va bien » toutes les deux heures. Une installation neuve n'émet aucun appel d'alerte — rien ne part tant que vous n'avez rien configuré.\n• Icône de zone de notification colorée selon l'état — l'état multi-instance en un coup d'œil ; double-clic pour lancer le compte principal.\n• Système de plugins. Des plugins optionnels tournent dans des processus séparés et n'ont aucune permission tant que vous ne les accordez pas un par un.\n• Mise à jour automatique via Velopack. Une configuration distante suit la version et le nom de mutex Roblox connus, pour qu'un changement côté Roblox ne vous bloque pas longtemps.\n• Accessibilité mesurée. Chaque contrôle annonce son nom aux technologies d'assistance, et le contraste est vérifié sur les pixels rendus dans chaque thème.\n• Parle votre langue. Toute l'application — chaque menu, réglage, info-bulle et fenêtre, et les messages que RoRoRo écrit pendant que vous l'utilisez — est traduite en français, allemand, russe, portugais (Brésil), polonais et espagnol, selon la langue de votre Windows ou votre choix dans les Paramètres. Le changement est immédiat, et le sélecteur ne propose qu'une langue entièrement traduite, pour que vous ne tombiez jamais sur un écran à moitié en anglais.\n\nConfidentialité et sécurité :\nVotre mot de passe Roblox n'est jamais vu par RoRoRo. La connexion se fait entièrement dans la page de Roblox, intégrée dans un cadre Microsoft Edge WebView2 — même HTML, même connexion HTTPS que votre navigateur. RoRoRo ne capture que le cookie de session posé par Roblox après connexion, et le chiffre avant de l'écrire sur disque. Pas de télémétrie. Pas d'analytique. Rien ne quitte votre machine hormis les appels Roblox du lancement — les mêmes que ceux de Roblox.com dans votre navigateur — et, uniquement si vous les configurez vous-même, les alertes vers votre webhook Discord ou le service de notification choisi (Pushover ou ntfy).\n\nImportant : marques et affiliation.\n« Roblox » et le logo Roblox sont des marques de Roblox Corporation. RoRoRo est un outil tiers indépendant, non affilié à, ni approuvé, ni sponsorisé par Roblox Corporation. Le terme n'est utilisé que pour décrire la compatibilité avec la plateforme Roblox. RoRoRo lance le client Roblox officiel sans le modifier — aucune injection, aucun hook, aucune altération du processus Roblox ; il ne fait que détenir un mutex nommé Windows avant le lancement, pour que les instances de client suivantes voient le contrôle singleton comme déjà pris.\n\nUn produit 626 Labs.", "features": "Lanceur multi-instance en un clic pour Roblox sur Windows\nCoffre de comptes chiffré DPAPI, avec export protégé par phrase secrète\nStatut en direct par compte — le jeu en cours, le temps d'inactivité, et une limite de FPS par compte\nSurveillance mémoire qui apprend le vrai coût RAM de chaque client, plus Recycle en un clic vers le même serveur\nSquad Launch et Friend Follow — même serveur privé, ou un serveur public ensemble\nRejoindre par lien depuis toute URL roblox.com, avec serveurs privés enregistrés par compte\nUne fenêtre d'outils pour Jeux, Réglages, Historique et plus, avec raccourcis clavier partout\nQuatre thèmes intégrés plus un éditeur pour créer le vôtre\nAlertes Discord en option vers un webhook que vous créez\nZone de notification avec icône d'état colorée et double-clic pour le compte principal\nSystème de plugins avec consentement par capacité et isolation hors processus\nMise à jour automatique qui résiste aux changements côté Roblox\nDémarrage avec Windows si vous voulez — un seul réglage, et la liste Démarrage de Windows garde la main\nDiscord Join démarre RoRoRo même fermé, et demande toujours avant de lancer quoi que ce soit\nAlertes téléphone via Pushover ou ntfy — un alt se déconnecte et votre téléphone vibre, même sans Discord\nSignaux de bon fonctionnement toutes les deux heures — un signal manquant veut dire qu'il faut vérifier\nLes alertes se diffusent — bureau, salons Discord et téléphone, dans n'importe quelle combinaison\nDisponible en six langues — toute l'app, écrans et messages, en français, allemand, russe, portugais (Brésil), polonais ou espagnol, changement immédiat, selon Windows ou votre choix", "whatsnew": "v1.27.0.0\n\nRoRoRo parle votre langue\n• Toute l'application — menus, paramètres, chaque fenêtre, et\n  les messages que RoRoRo écrit pendant que vous l'utilisez —\n  est traduite en français, allemand, russe, portugais\n  (Brésil), polonais et espagnol. Si Windows est réglé sur\n  l'une d'elles, RoRoRo la reprend tout seul.\n\nChangez quand vous voulez, instantanément\n• Paramètres > Apparence ne propose que les langues dans\n  lesquelles RoRoRo est entièrement traduit : vous ne tombez\n  jamais sur un écran à moitié traduit. Choisissez-en une et\n  l'application bascule immédiatement — sans redémarrage.\n\nToujours l'anglais au fond\n• L'anglais reste la langue par défaut, et les noms de\n  fonctionnalités — Squad Launch, Recycle, RoRoRo — se lisent\n  pareil dans toutes les langues. Rien ne change pour vos\n  comptes, thèmes ou réglages.", "copyright": "© 2026 626 Labs LLC. Tous droits réservés. « Roblox » est une marque de Roblox Corporation. RoRoRo n'est ni affilié à, ni approuvé, ni sponsorisé par Roblox Corporation.", "trademark": "« Roblox » et le logo Roblox sont des marques de Roblox Corporation. RORORO est un outil tiers indépendant, non affilié à, ni approuvé, ni sponsorisé par Roblox Corporation. Le terme n'est utilisé que pour décrire la compatibilité avec la plateforme Roblox. RORORO lance le client Roblox officiel sans le modifier.", "license": "RORORO source code is licensed under the MIT License. Full text: https://github.com/estevanhernandez-stack-ed/ROROROblox/blob/main/LICENSE\n\nRORORO is provided \"as is,\" without warranty of any kind. Use of RORORO to access the Roblox platform is governed by Roblox Corporation's own Terms of Use, which you must accept separately when you sign in to a Roblox account. Roblox Corporation has stated that multi-instancing tools \"may be considered malicious behaviour\"; while RORORO does not modify the Roblox client and only holds a Windows named-mutex before launch, the user accepts any risk of Roblox-side enforcement on their accounts.\n\nNo warranty is offered or implied for compatibility with future versions of the Roblox client. The bundled remote-config update mechanism is best-effort.", "developedby": "626 Labs LLC", "keywords": "roblox, multi instance, multi-account, launcher, account manager, alt accounts, multibox"}, "de": {"short": "Multi-Launcher für Windows, jetzt in 6 Sprachen: mehrere Roblox-Clients nebeneinander, jeder mit eigenem Konto. Verschlüsselter Tresor, Squad Launch, RAM-Wächter, Handy-Alarme, Live-Status, Themes.", "long": "Multi-Launcher für Windows.\n\nRoRoRo ist ein Windows-Launcher, der mehrere Roblox-Clients gleichzeitig auf einem PC laufen lässt — jeder angemeldet mit einem anderen gespeicherten Konto, das dir gehört. Füge deine Konten einmal über Robloxs eigene Login-Seite hinzu und starte sie dann mit einem Klick: ins Standardspiel, auf einen gespeicherten privaten Server oder auf jeden eingefügten Spiellink.\n\nWas du bekommst:\n• Multi-Instanz mit einem Klick. RoRoRo hält den Roblox-Singleton-Mutex, sodass zusätzliche Clients sich öffnen, statt den ersten in den Vordergrund zu holen.\n• Verschlüsselter Konten-Tresor (DPAPI). Gespeicherte Cookies werden mit der Windows-Datenschutz-API verschlüsselt und an dein Windows-Konto gebunden — eine auf einen anderen PC kopierte Tresordatei lässt sich nicht entschlüsseln. Konten zwischen deinen eigenen PCs bewegst du über einen bewussten, passphrasengeschützten Export.\n• Live-Status für jedes Konto. Sieh, welches Konto in welchem Spiel ist, wer wie lange inaktiv ist, und setze FPS-Limits pro Konto, die halten.\n• Squad Launch + Friend Follow. Schicke alle ausgewählten Konten in denselben privaten Server, folge einem Freund in seinen, oder lande mit deinen Konten gemeinsam auf einem öffentlichen Server.\n• RAM-Wächter + Recycle. RoRoRo lernt, was ein Roblox-Client auf deiner Maschine wirklich an RAM kostet, und warnt, bevor er ausgeht. Ein Klick schließt einen schweren Client und bringt ihn zurück in denselben Server.\n• Ein Werkzeugfenster. Spiele, Einstellungen, Verlauf, Diagnose, Plugins und Über sind Seiten eines Fensters neben deinen Konten — mit Tastenkürzeln überall; F1 zeigt die Liste.\n• Themes. Vier eingebaute, darunter eines, das Bedeutung nie allein über Farbe transportiert, plus ein Editor für eigene Themes aus zehn Farben, teilbar als Datei.\n• Optionale Alarme — Desktop, Discord oder Handy. Leite jeden Alarm an jede Kombination: Desktop-Benachrichtigungen, einen selbst erstellten Discord-Webhook oder dein Handy über Pushover oder ntfy. Verbindungsabbrüche, RAM-Warnungen, Recycle-Abschlüsse und ein „Alles gut“-Zeichen alle zwei Stunden. Eine frische Installation macht keinerlei Alarm-Aufrufe — nichts sendet, bevor du etwas einrichtest.\n• Infobereich mit statusfarbenem Symbol — der Multi-Instanz-Status auf einen Blick; Doppelklick startet dein Hauptkonto.\n• Plugin-System. Optionale Plugins laufen als getrennte Prozesse und haben keine Berechtigungen, bis du sie einzeln erteilst.\n• Auto-Update über Velopack. Eine entfernte Konfiguration verfolgt die bekannte Roblox-Version und den Mutex-Namen, damit eine Umbenennung auf Roblox-Seite dich nicht lange ausbremst.\n• Barrierefreiheit, gemessen. Jedes Steuerelement meldet seinen Namen an Hilfstechnologien, und der Kontrast wird in jedem Theme an gerenderten Pixeln geprüft.\n• Spricht deine Sprache. Die gesamte App — jedes Menü, jede Einstellung, jeder Tooltip und jedes Fenster sowie die Meldungen, die RoRoRo während der Nutzung schreibt — ist auf Französisch, Deutsch, Russisch, Portugiesisch (Brasilien), Polnisch und Spanisch übersetzt, je nach Windows-Sprache oder deiner Wahl in den Einstellungen. Der Wechsel wirkt sofort, und die Auswahl bietet nur vollständig übersetzte Sprachen an, damit du nie auf einem halb englischen Bildschirm landest.\n\nDatenschutz und Sicherheit:\nDein Roblox-Passwort sieht RoRoRo nie. Die Anmeldung passiert vollständig auf Robloxs eigener Seite, eingebettet in einen Microsoft-Edge-WebView2-Rahmen — dasselbe HTML, dieselbe HTTPS-Verbindung wie in deinem Browser. RoRoRo erfasst nur das Sitzungscookie, das Roblox nach erfolgreicher Anmeldung setzt, und verschlüsselt es vor dem Schreiben auf die Festplatte. Keine Telemetrie. Keine Analyse. Nichts verlässt deine Maschine außer den Roblox-Aufrufen beim Start — denselben, die Roblox.com aus deinem Browser macht — und, nur wenn du sie selbst einrichtest, Alarmen an deinen eigenen Discord-Webhook oder den gewählten Push-Dienst (Pushover oder ntfy).\n\nWichtig: Marken- und Zugehörigkeitshinweis.\n„Roblox\" und das Roblox-Logo sind Marken der Roblox Corporation. RoRoRo ist ein unabhängiges Drittanbieter-Werkzeug, nicht mit der Roblox Corporation verbunden, von ihr befürwortet oder gesponsert. Der Markenbegriff wird ausschließlich zur Beschreibung der Kompatibilität mit der Roblox-Plattform verwendet. RoRoRo startet den offiziellen Roblox-Client unverändert — keine Injektion, keine Hooks, keine Veränderung des Roblox-Prozesses; es hält lediglich vor dem Start einen benannten Windows-Mutex, damit weitere Client-Instanzen die Singleton-Prüfung als bereits vergeben sehen.\n\nEin Produkt von 626 Labs.", "features": "Multi-Instanz-Launcher für Roblox auf Windows, mit einem Klick\nDPAPI-verschlüsselter Konten-Tresor mit passphrasengeschütztem Export\nLive-Status je Konto — aktuelles Spiel, Inaktivitätszeit und FPS-Limits pro Konto\nRAM-Wächter, der die echten Kosten jedes Clients lernt, plus Ein-Klick-Recycle zurück in denselben Server\nSquad Launch und Friend Follow — derselbe private Server, oder gemeinsam auf einen öffentlichen\nBeitritt per Link von jeder roblox.com-URL, mit gespeicherten privaten Servern je Konto\nEin Werkzeugfenster für Spiele, Einstellungen, Verlauf und mehr, mit Tastenkürzeln überall\nVier eingebaute Themes plus ein Editor für eigene\nOptionale Discord-Alarme an einen selbst erstellten Webhook\nInfobereich mit statusfarbenem Symbol und Doppelklick-Start des Hauptkontos\nPlugin-System mit Zustimmung je Berechtigung und Isolation in eigenen Prozessen\nAuto-Update, das weiterläuft, wenn Roblox sich darunter ändert\nStart mit Windows, wenn du willst — ein Schalter, und Windows' eigene Autostart-Liste behält die Kontrolle\nDiscord Join startet RoRoRo auch geschlossen — und fragt immer, bevor irgendetwas startet\nHandy-Alarme über Pushover oder ntfy — ein Alt fliegt raus und dein Handy vibriert, auch ohne Discord\nAlle zwei Stunden ein „Alles gut“-Zeichen, solange deine Konten laufen — Stille heißt: nachsehen\nAlarme fächern auf — Desktop, Discord-Kanäle und Handy in jeder Kombination, je Alarm\nIn sechs Sprachen — die ganze App, Bildschirme wie Meldungen: Französisch, Deutsch, Russisch, Portugiesisch (Brasilien), Polnisch, Spanisch. Sofortiger Wechsel, gemäß Windows oder deiner Wahl", "whatsnew": "v1.27.0.0\n\nRoRoRo spricht deine Sprache\n• Die ganze App — Menüs, Einstellungen, jedes Fenster und die\n  Meldungen, die RoRoRo während der Nutzung schreibt — ist auf\n  Französisch, Deutsch, Russisch, Portugiesisch (Brasilien),\n  Polnisch und Spanisch übersetzt. Steht Windows auf einer\n  davon, übernimmt RoRoRo sie von selbst.\n\nJederzeit wechseln, sofort\n• Einstellungen > Darstellung listet nur Sprachen, in die\n  RoRoRo vollständig übersetzt ist — du landest nie auf einem\n  halb übersetzten Bildschirm. Wähle eine, und die App stellt\n  sofort um — ohne Neustart.\n\nIm Kern weiterhin Englisch\n• Englisch bleibt die Standardsprache, und Produktnamen —\n  Squad Launch, Recycle, RoRoRo — lesen sich in jeder Sprache\n  gleich. An deinen Konten, Themes und Einstellungen ändert\n  sich nichts.", "copyright": "© 2026 626 Labs LLC. Alle Rechte vorbehalten. „Roblox\" ist eine Marke der Roblox Corporation. RoRoRo ist nicht mit der Roblox Corporation verbunden, von ihr befürwortet oder gesponsert.", "trademark": "„Roblox\" und das Roblox-Logo sind Marken der Roblox Corporation. RORORO ist ein unabhängiges Drittanbieter-Werkzeug, nicht mit der Roblox Corporation verbunden, von ihr befürwortet oder gesponsert. Der Markenbegriff wird ausschließlich zur Beschreibung der Kompatibilität mit der Roblox-Plattform verwendet. RORORO startet den offiziellen Roblox-Client unverändert.", "license": "RORORO source code is licensed under the MIT License. Full text: https://github.com/estevanhernandez-stack-ed/ROROROblox/blob/main/LICENSE\n\nRORORO is provided \"as is,\" without warranty of any kind. Use of RORORO to access the Roblox platform is governed by Roblox Corporation's own Terms of Use, which you must accept separately when you sign in to a Roblox account. Roblox Corporation has stated that multi-instancing tools \"may be considered malicious behaviour\"; while RORORO does not modify the Roblox client and only holds a Windows named-mutex before launch, the user accepts any risk of Roblox-side enforcement on their accounts.\n\nNo warranty is offered or implied for compatibility with future versions of the Roblox client. The bundled remote-config update mechanism is best-effort.", "developedby": "626 Labs LLC", "keywords": "roblox, multi instance, multi-account, launcher, account manager, alt accounts, multibox"}, "ru": {"short": "Мульти-лаунчер Windows, теперь на 6 языках: несколько клиентов Roblox бок о бок под разными аккаунтами. Шифрованное хранилище, Squad Launch, контроль памяти, оповещения на телефон, живой статус, темы.", "long": "Мульти-лаунчер для Windows.\n\nRoRoRo — это лаунчер для Windows, который запускает несколько клиентов Roblox на одном ПК одновременно, каждый под отдельным сохранённым аккаунтом, принадлежащим вам. Добавьте аккаунты один раз через собственную страницу входа Roblox, а дальше запускайте любой из них одним кликом — в игру по умолчанию, на сохранённый приватный сервер или по любой вставленной ссылке на игру.\n\nЧто вы получаете:\n• Мульти-инстанс в один клик. RoRoRo удерживает мьютекс-одиночку Roblox, поэтому дополнительные клиенты открываются, а не выводят на передний план первый.\n• Шифрованное хранилище аккаунтов (DPAPI). Сохранённые cookie шифруются через Windows Data Protection API с привязкой к вашей учётной записи Windows — скопированный на другой ПК файл хранилища не расшифруется. Перенос аккаунтов между своими ПК — только через осознанный экспорт, защищённый парольной фразой.\n• Живой статус каждого аккаунта. Видно, какой аккаунт в какой игре, кто простаивает и как долго; лимит FPS задаётся на каждый аккаунт и держится.\n• Squad Launch + Friend Follow. Отправьте все выбранные аккаунты на один приватный сервер, зайдите за другом на его сервер или соберите свои аккаунты на одном публичном.\n• Контроль памяти + Recycle. RoRoRo изучает, сколько оперативной памяти клиент Roblox реально стоит на вашей машине, и предупреждает до того, как она закончится. Один клик закрывает тяжёлый клиент и возвращает его на тот же сервер.\n• Одно окно инструментов. Игры, настройки, история, диагностика, плагины и «О программе» — страницы одного окна рядом с аккаунтами, с горячими клавишами повсюду — F1 показывает список.\n• Темы. Четыре встроенные, включая одну, где смысл никогда не передаётся одним цветом, плюс конструктор собственных тем из десяти цветов с обменом файлами.\n• Оповещения по желанию — на рабочий стол, в Discord или на телефон. Направьте каждое оповещение в любое сочетание: уведомления на рабочем столе, созданный вами вебхук Discord или телефон через Pushover либо ntfy. Вылеты аккаунтов, предупреждения о памяти, завершения Recycle и сигнал «всё в порядке» каждые два часа. Свежая установка не делает ни одного вызова оповещений — ничего не отправляется, пока вы сами всё не настроите.\n• Значок в системном трее меняет цвет по состоянию — статус мульти-инстанса виден с одного взгляда; двойной клик запускает основной аккаунт.\n• Система плагинов. Необязательные плагины работают отдельными процессами и не имеют разрешений, пока вы не выдадите их каждому по имени.\n• Автообновление через Velopack. Удалённая конфигурация отслеживает актуальную версию Roblox и имя мьютекса, чтобы переименование на стороне Roblox не выбивало вас надолго.\n• Доступность, проверенная измерением. Каждый элемент управления сообщает своё имя вспомогательным технологиям, а контраст проверяется по отрисованным пикселям в каждой теме.\n• Говорит на вашем языке. Всё приложение — каждое меню, настройка, подсказка и окно, а также сообщения, которые RoRoRo пишет во время работы, — переведено на французский, немецкий, русский, португальский (Бразилия), польский и испанский, в соответствии с языком Windows или вашим выбором в настройках. Переключение происходит мгновенно, а список предлагает только полностью переведённые языки, поэтому вы никогда не попадёте на наполовину английский экран.\n\nПриватность и безопасность:\nRoRoRo никогда не видит ваш пароль Roblox. Вход происходит целиком на собственной странице Roblox, встроенной во фрейм Microsoft Edge WebView2 — тот же HTML, то же HTTPS-соединение, что и в браузере. RoRoRo забирает только сессионный cookie, который Roblox ставит после входа, и шифрует его перед записью на диск. Никакой телеметрии. Никакой аналитики. Машину не покидает ничего, кроме обращений к Roblox при запуске — тех же, что делает Roblox.com из браузера, — и, только если вы сами это настроили, оповещений на ваш вебхук Discord или выбранный push-сервис (Pushover или ntfy).\n\nВажно: товарные знаки и аффилиация.\n«Roblox» и логотип Roblox — товарные знаки Roblox Corporation. RoRoRo — независимый сторонний инструмент, не связанный с Roblox Corporation, не одобренный и не спонсируемый ею. Товарный знак используется исключительно для описания совместимости с платформой Roblox. RoRoRo запускает официальный клиент Roblox без изменений — без инъекций, без хуков, без вмешательства в процесс Roblox; перед запуском он лишь удерживает именованный мьютекс Windows, чтобы последующие экземпляры клиента видели проверку синглтона уже занятой.\n\nПродукт 626 Labs.", "features": "Мульти-инстанс-лаунчер для Roblox на Windows — в один клик\nШифрованное DPAPI-хранилище аккаунтов с экспортом под парольной фразой\nЖивой статус каждого аккаунта — игра, время простоя и лимит FPS на аккаунт\nКонтроль памяти, изучающий реальную цену каждого клиента, плюс Recycle в один клик на тот же сервер\nSquad Launch и Friend Follow — один приватный сервер или общий публичный\nВход по ссылке с любого URL roblox.com, с сохранёнными приватными серверами на аккаунт\nОдно окно инструментов: игры, настройки, история и не только, с горячими клавишами\nЧетыре встроенные темы плюс редактор собственных\nНеобязательные оповещения Discord на созданный вами вебхук\nСистемный трей со значком-индикатором состояния и запуском основного аккаунта двойным кликом\nСистема плагинов: согласие на каждую возможность и изоляция в отдельных процессах\nАвтообновление, которое переживает изменения на стороне Roblox\nЗапуск вместе с Windows по желанию — один переключатель, и список автозагрузки Windows главнее\nDiscord Join запускает RoRoRo даже закрытым — и всегда спрашивает, прежде чем что-то запустить\nОповещения на телефон через Pushover или ntfy — альт вылетел, и телефон завибрировал, даже без Discord\nСигнал «всё в порядке» каждые два часа, пока аккаунты работают, — тишина значит: проверьте ПК\nОповещения веером — рабочий стол, каналы Discord и телефон в любом сочетании, на каждое оповещение\nШесть языков — всё приложение, экраны и сообщения: французский, немецкий, русский, португальский (Бразилия), польский, испанский. Мгновенное переключение, по Windows или вашему выбору", "whatsnew": "v1.27.0.0\n\nRoRoRo говорит на вашем языке\n• Всё приложение — меню, настройки, каждое окно и сообщения,\n  которые RoRoRo пишет во время работы, — переведено на\n  французский, немецкий, русский, португальский (Бразилия),\n  польский и испанский. Если Windows настроена на один из них,\n  RoRoRo подхватит его сам.\n\nМеняйте когда угодно, мгновенно\n• В разделе «Настройки > Внешний вид» перечислены только те\n  языки, на которые RoRoRo переведён полностью, — вы никогда\n  не попадёте на наполовину переведённый экран. Выберите язык,\n  и приложение переключится сразу — без перезапуска.\n\nПо сути всё ещё английский\n• Английский остаётся языком по умолчанию, а названия функций —\n  Squad Launch, Recycle, RoRoRo — читаются одинаково на любом\n  языке. Ваши аккаунты, темы и настройки не меняются.", "copyright": "© 2026 626 Labs LLC. Все права защищены. «Roblox» — товарный знак Roblox Corporation. RoRoRo не связан с Roblox Corporation, не одобрен и не спонсируется ею.", "trademark": "«Roblox» и логотип Roblox — товарные знаки Roblox Corporation. RORORO — независимый сторонний инструмент, не связанный с Roblox Corporation, не одобренный и не спонсируемый ею. Товарный знак используется исключительно для описания совместимости с платформой Roblox. RORORO запускает официальный клиент Roblox без изменений.", "license": "RORORO source code is licensed under the MIT License. Full text: https://github.com/estevanhernandez-stack-ed/ROROROblox/blob/main/LICENSE\n\nRORORO is provided \"as is,\" without warranty of any kind. Use of RORORO to access the Roblox platform is governed by Roblox Corporation's own Terms of Use, which you must accept separately when you sign in to a Roblox account. Roblox Corporation has stated that multi-instancing tools \"may be considered malicious behaviour\"; while RORORO does not modify the Roblox client and only holds a Windows named-mutex before launch, the user accepts any risk of Roblox-side enforcement on their accounts.\n\nNo warranty is offered or implied for compatibility with future versions of the Roblox client. The bundled remote-config update mechanism is best-effort.", "developedby": "626 Labs LLC", "keywords": "roblox, multi instance, multi-account, launcher, account manager, alt accounts, multibox"}, "pt-br": {"short": "Multi-launcher para Windows em 6 idiomas: vários clientes Roblox lado a lado, cada um na sua conta. Cofre criptografado, Squad Launch, vigia de memória, alertas no celular, status ao vivo, temas.", "long": "Multi-launcher para Windows.\n\nO RoRoRo é um launcher para Windows que roda vários clientes Roblox ao mesmo tempo no mesmo PC, cada um conectado a uma conta salva diferente que pertence a você. Adicione suas contas uma vez pela própria página de login do Roblox e depois inicie qualquer uma com um clique — no jogo padrão, num servidor privado salvo ou em qualquer link de jogo colado.\n\nO que você leva:\n• Multi-instância com um clique. O RoRoRo segura o mutex singleton do Roblox, então clientes adicionais abrem em vez de trazer o primeiro para a frente.\n• Cofre de contas criptografado (DPAPI). Os cookies salvos são criptografados com a API de Proteção de Dados do Windows, presos à sua conta do Windows — um arquivo copiado para outro PC não descriptografa. Mover contas entre os seus próprios PCs é um export deliberado, protegido por frase-senha.\n• Status ao vivo de cada conta. Veja qual conta está em qual jogo, quem está parado e há quanto tempo, com limite de FPS por conta que não se perde.\n• Squad Launch + Friend Follow. Mande todas as contas selecionadas para o mesmo servidor privado, siga um amigo até o dele, ou junte suas contas num servidor público.\n• Vigia de memória + Recycle. O RoRoRo aprende quanto um cliente Roblox realmente custa de RAM na sua máquina e avisa antes de acabar. Um clique fecha um cliente pesado e o devolve ao mesmo servidor em que estava.\n• Uma só janela de ferramentas. Jogos, configurações, histórico, diagnóstico, plugins e Sobre são páginas de uma única janela ao lado das contas — com atalhos de teclado em tudo; F1 mostra a lista.\n• Temas. Quatro embutidos, incluindo um que nunca depende só de cor, mais um editor para criar o seu a partir de dez cores e compartilhar como arquivo.\n• Alertas opcionais — desktop, Discord ou celular. Direcione cada alerta para qualquer combinação: notificações no desktop, um webhook do Discord que você cria, ou seu celular via Pushover ou ntfy. Quedas de conta, avisos de memória, conclusões de Recycle e um sinal de \"tudo certo\" a cada duas horas. Uma instalação nova não faz nenhuma chamada de alerta — nada sai antes de você configurar.\n• Bandeja do sistema com ícone colorido por estado — o status de multi-instância à primeira vista; clique duplo inicia sua conta principal.\n• Sistema de plugins. Plugins opcionais rodam como processos separados e não têm permissão nenhuma até você conceder uma a uma.\n• Atualização automática via Velopack. Uma configuração remota acompanha a versão do Roblox e o nome do mutex conhecidos, para uma mudança do lado do Roblox não te travar por muito tempo.\n• Acessibilidade medida. Cada controle anuncia seu nome para tecnologias assistivas, e o contraste é verificado nos pixels renderizados em todos os temas.\n• Fala o seu idioma. O app inteiro — cada menu, configuração, dica e janela, e as mensagens que o RoRoRo escreve enquanto você usa — é traduzido para francês, alemão, russo, português (Brasil), polonês e espanhol, seguindo o idioma do seu Windows ou sua escolha nas Configurações. A troca é imediata, e a lista só oferece idiomas totalmente traduzidos, para você nunca cair numa tela pela metade em inglês.\n\nPrivacidade e segurança:\nSua senha do Roblox nunca é vista pelo RoRoRo. O login acontece inteiramente na página do próprio Roblox, embutida num quadro Microsoft Edge WebView2 — mesmo HTML, mesma conexão HTTPS do seu navegador. O RoRoRo captura apenas o cookie de sessão que o Roblox define após o login, e o criptografa antes de gravar em disco. Sem telemetria. Sem analytics. Nada sai da sua máquina além das chamadas ao Roblox durante o lançamento — as mesmas que o Roblox.com faz do seu navegador — e, somente se você mesmo configurar, alertas para o seu webhook do Discord ou o serviço de push escolhido (Pushover ou ntfy).\n\nImportante: aviso de marcas e afiliação.\n\"Roblox\" e o logotipo Roblox são marcas da Roblox Corporation. O RoRoRo é uma ferramenta independente de terceiros, não afiliada, endossada ou patrocinada pela Roblox Corporation. O termo é usado apenas para descrever compatibilidade com a plataforma Roblox. O RoRoRo inicia o cliente oficial do Roblox sem modificá-lo — sem injeção, sem hooks, sem alterar o processo do Roblox; ele apenas segura um mutex nomeado do Windows antes do lançamento, para que as instâncias seguintes do cliente vejam a checagem de singleton como já ocupada.\n\nUm produto 626 Labs.", "features": "Launcher multi-instância para Roblox no Windows, com um clique\nCofre de contas criptografado com DPAPI e export protegido por frase-senha\nStatus ao vivo por conta — em qual jogo está, tempo parado e limite de FPS por conta\nVigia de memória que aprende o custo real de RAM de cada cliente, mais Recycle de um clique ao mesmo servidor\nSquad Launch e Friend Follow — mesmo servidor privado, ou um servidor público juntos\nEntrar por link de qualquer URL roblox.com, com servidores privados salvos por conta\nUma janela de ferramentas para Jogos, Configurações, Histórico e mais, com atalhos de teclado\nQuatro temas embutidos mais um editor para criar o seu\nAlertas opcionais do Discord para um webhook que você cria\nBandeja do sistema com ícone colorido por estado e clique duplo para a conta principal\nSistema de plugins com consentimento por capacidade e isolamento fora do processo\nAtualização automática que continua funcionando quando o Roblox muda por baixo\nIniciar com o Windows se quiser — um botão só, e a lista de Inicialização do Windows continua no comando\nDiscord Join abre o RoRoRo mesmo fechado, e sempre pergunta antes de iniciar qualquer coisa\nAlertas no celular via Pushover ou ntfy — um alt cai e seu celular vibra, mesmo com o Discord fechado\nSinais de \"tudo certo\" a cada duas horas enquanto as contas rodam — silêncio significa problema\nAlertas em leque — desktop, canais do Discord e celular em qualquer combinação, por alerta\nDisponível em seis idiomas — o app inteiro, telas e mensagens, em francês, alemão, russo, português (Brasil), polonês ou espanhol, troca imediata, seguindo o Windows ou sua escolha", "whatsnew": "v1.27.0.0\n\nO RoRoRo fala o seu idioma\n• O app inteiro — menus, configurações, cada janela e as\n  mensagens que o RoRoRo escreve enquanto você usa — está\n  traduzido para francês, alemão, russo, português (Brasil),\n  polonês e espanhol. Se o Windows estiver em um desses, o\n  RoRoRo adota sozinho.\n\nTroque quando quiser, na hora\n• Configurações > Aparência lista só os idiomas para os quais\n  o RoRoRo está totalmente traduzido — você nunca cai numa\n  tela pela metade. Escolha um e o app muda na hora, sem\n  reiniciar.\n\nAinda inglês no fundo\n• O inglês continua sendo o padrão, e os nomes de recursos —\n  Squad Launch, Recycle, RoRoRo — se leem igual em qualquer\n  idioma. Nada muda nas suas contas, temas ou configurações.", "copyright": "© 2026 626 Labs LLC. Todos os direitos reservados. \"Roblox\" é uma marca da Roblox Corporation. O RoRoRo não é afiliado, endossado ou patrocinado pela Roblox Corporation.", "trademark": "\"Roblox\" e o logotipo Roblox são marcas da Roblox Corporation. O RORORO é uma ferramenta independente de terceiros, não afiliada, endossada ou patrocinada pela Roblox Corporation. O termo é usado apenas para descrever compatibilidade com a plataforma Roblox. O RORORO inicia o cliente oficial do Roblox sem modificações.", "license": "RORORO source code is licensed under the MIT License. Full text: https://github.com/estevanhernandez-stack-ed/ROROROblox/blob/main/LICENSE\n\nRORORO is provided \"as is,\" without warranty of any kind. Use of RORORO to access the Roblox platform is governed by Roblox Corporation's own Terms of Use, which you must accept separately when you sign in to a Roblox account. Roblox Corporation has stated that multi-instancing tools \"may be considered malicious behaviour\"; while RORORO does not modify the Roblox client and only holds a Windows named-mutex before launch, the user accepts any risk of Roblox-side enforcement on their accounts.\n\nNo warranty is offered or implied for compatibility with future versions of the Roblox client. The bundled remote-config update mechanism is best-effort.", "developedby": "626 Labs LLC", "keywords": "roblox, multi instance, multi-account, launcher, account manager, alt accounts, multibox"}, "pl": {"short": "Multi-launcher dla Windows, teraz w 6 językach: kilka klientów Roblox obok siebie, każdy na innym koncie. Szyfrowany sejf, Squad Launch, strażnik pamięci, alerty na telefon, status na żywo, motywy.", "long": "Multi-launcher dla Windows.\n\nRoRoRo to launcher dla Windows, który uruchamia kilka klientów Roblox jednocześnie na jednym PC — każdy zalogowany na inne zapisane konto, które należy do ciebie. Dodaj konta raz przez własną stronę logowania Roblox, a potem uruchamiaj je jednym kliknięciem — do domyślnej gry, na zapisany prywatny serwer albo z dowolnego wklejonego linku do gry.\n\nCo dostajesz:\n• Multi-instancja jednym kliknięciem. RoRoRo trzyma mutex singleton Roblox, więc kolejne klienty się otwierają, zamiast wyciągać pierwszy na wierzch.\n• Szyfrowany sejf kont (DPAPI). Zapisane pliki cookie są szyfrowane interfejsem Windows Data Protection API i związane z twoim kontem Windows — plik skopiowany na inny PC się nie odszyfruje. Przenoszenie kont między własnymi komputerami to świadomy eksport chroniony frazą-hasłem.\n• Status każdego konta na żywo. Widzisz, które konto jest w której grze, kto stoi bezczynnie i jak długo, a limit FPS ustawiasz osobno dla każdego konta — i on się trzyma.\n• Squad Launch + Friend Follow. Wyślij wszystkie zaznaczone konta na ten sam prywatny serwer, dołącz za znajomym na jego serwer albo wyląduj kontami razem na jednym publicznym.\n• Strażnik pamięci + Recycle. RoRoRo uczy się, ile RAM-u klient Roblox naprawdę kosztuje na twojej maszynie, i ostrzega, zanim jej zabraknie. Jedno kliknięcie zamyka ciężkiego klienta i odsyła go na ten sam serwer.\n• Jedno okno narzędzi. Gry, ustawienia, historia, diagnostyka, pluginy i O programie to strony jednego okna obok listy kont — ze skrótami klawiszowymi wszędzie; F1 pokazuje listę.\n• Motywy. Cztery wbudowane, w tym jeden, który nigdy nie przekazuje znaczenia samym kolorem, plus edytor własnych motywów z dziesięciu kolorów, z udostępnianiem w pliku.\n• Alerty opcjonalne — pulpit, Discord albo telefon. Skieruj każdy alert w dowolną kombinację: powiadomienia na pulpicie, utworzony przez ciebie webhook Discorda albo telefon przez Pushover lub ntfy. Wylogowania altów, ostrzeżenia o pamięci, zakończenia Recycle i sygnał „wszystko gra\" co dwie godziny. Świeża instalacja nie wykonuje żadnych wywołań alertów — nic nie wychodzi, dopóki sam czegoś nie skonfigurujesz.\n• Zasobnik systemowy. Ikona w kolorze stanu rzutem oka pokazuje stan multi-instancji; dwuklik uruchamia główne konto.\n• System pluginów. Opcjonalne pluginy działają jako osobne procesy i nie mają żadnych uprawnień, dopóki nie nadasz każdemu z osobna.\n• Automatyczne aktualizacje przez Velopack. Zdalna konfiguracja śledzi znaną wersję Roblox i nazwę mutexa, żeby zmiana po stronie Roblox nie blokowała cię na długo.\n• Dostępność mierzona. Każda kontrolka przedstawia się technologiom asystującym, a kontrast jest sprawdzany na wyrenderowanych pikselach w każdym motywie.\n• Mówi w twoim języku. Cała aplikacja — każde menu, ustawienie, podpowiedź i okno, a także komunikaty, które RoRoRo wypisuje podczas pracy — jest przetłumaczona na francuski, niemiecki, rosyjski, portugalski (brazylijski), polski i hiszpański, zgodnie z językiem Windows lub twoim wyborem w Ustawieniach. Zmiana działa natychmiast, a lista pokazuje tylko w pełni przetłumaczone języki, więc nigdy nie trafisz na ekran w połowie po angielsku.\n\nPrywatność i bezpieczeństwo:\nRoRoRo nigdy nie widzi twojego hasła do Roblox. Logowanie odbywa się w całości na stronie samego Roblox, osadzonej w ramce Microsoft Edge WebView2 — ten sam HTML, to samo połączenie HTTPS co w przeglądarce. RoRoRo przechwytuje tylko cookie sesji, które Roblox ustawia po zalogowaniu, i szyfruje je przed zapisem na dysk. Zero telemetrii. Zero analityki. Nic nie opuszcza twojej maszyny poza wywołaniami do Roblox przy starcie — tymi samymi, które Roblox.com robi z przeglądarki — oraz, wyłącznie jeśli sam je skonfigurujesz, alertami na twój webhook Discorda albo wybraną usługę push (Pushover lub ntfy).\n\nWażne: znaki towarowe i powiązania.\n„Roblox\" i logo Roblox są znakami towarowymi Roblox Corporation. RoRoRo to niezależne narzędzie zewnętrzne, niepowiązane z Roblox Corporation, nierekomendowane ani niesponsorowane przez nią. Znak towarowy służy wyłącznie opisaniu zgodności z platformą Roblox. RoRoRo uruchamia oficjalnego klienta Roblox bez modyfikacji — bez wstrzykiwania, bez hooków, bez ingerencji w proces Roblox; przed startem jedynie trzyma nazwany mutex Windows, tak aby kolejne instancje klienta widziały sprawdzenie singletona jako już zajęte.\n\nProdukt 626 Labs.", "features": "Launcher multi-instancji dla Roblox na Windows — jednym kliknięciem\nSzyfrowany sejf kont DPAPI z eksportem chronionym frazą-hasłem\nStatus każdego konta na żywo — gra, czas bezczynności i limit FPS na konto\nStrażnik pamięci uczący się prawdziwego kosztu RAM każdego klienta, plus Recycle jednym kliknięciem na ten sam serwer\nSquad Launch i Friend Follow — ten sam prywatny serwer albo wspólny publiczny\nDołączanie z linku z dowolnego URL roblox.com, z zapisanymi prywatnymi serwerami na konto\nJedno okno narzędzi: gry, ustawienia, historia i więcej, ze skrótami klawiszowymi\nCztery wbudowane motywy plus edytor własnych\nOpcjonalne alerty Discord na utworzony przez ciebie webhook\nZasobnik z ikoną w kolorze stanu i dwuklikiem uruchamiającym główne konto\nSystem pluginów ze zgodą na każdą zdolność i izolacją w osobnych procesach\nAutomatyczne aktualizacje odporne na zmiany po stronie Roblox\nStart z Windows, jeśli chcesz — jeden przełącznik, a lista Autostartu Windows ma ostatnie słowo\nDiscord Join uruchamia RoRoRo nawet zamknięte — i zawsze pyta, zanim cokolwiek wystartuje\nAlerty na telefon przez Pushover lub ntfy — alt wypada i telefon wibruje, nawet bez Discorda\nSygnał „wszystko gra\" co dwie godziny, póki konta działają — cisza znaczy: sprawdź PC\nAlerty wachlarzem — pulpit, kanały Discord i telefon w dowolnej kombinacji, na każdy alert\nSześć języków — cała aplikacja, ekrany i komunikaty: francuski, niemiecki, rosyjski, portugalski (brazylijski), polski, hiszpański. Natychmiastowa zmiana, wg Windows lub twojego wyboru", "whatsnew": "v1.27.0.0\n\nRoRoRo mówi w Twoim języku\n• Cała aplikacja — menu, ustawienia, każde okno i komunikaty,\n  które RoRoRo wypisuje podczas pracy — jest przetłumaczona na\n  francuski, niemiecki, rosyjski, portugalski (Brazylia),\n  polski i hiszpański. Jeśli Windows jest ustawiony na jeden z\n  nich, RoRoRo sam go podchwyci.\n\nZmieniaj kiedy chcesz, natychmiast\n• Ustawienia > Wygląd pokazują tylko języki, na które RoRoRo\n  jest w pełni przetłumaczone — nigdy nie trafisz na ekran\n  przetłumaczony w połowie. Wybierz język, a aplikacja\n  przełączy się od razu, bez restartu.\n\nW środku nadal angielski\n• Angielski pozostaje domyślny, a nazwy funkcji — Squad\n  Launch, Recycle, RoRoRo — czyta się tak samo w każdym\n  języku. Twoje konta, motywy i ustawienia się nie zmieniają.", "copyright": "© 2026 626 Labs LLC. Wszelkie prawa zastrzeżone. „Roblox\" jest znakiem towarowym Roblox Corporation. RoRoRo nie jest powiązane z Roblox Corporation, rekomendowane ani sponsorowane przez nią.", "trademark": "„Roblox\" i logo Roblox są znakami towarowymi Roblox Corporation. RORORO to niezależne narzędzie zewnętrzne, niepowiązane z Roblox Corporation, nierekomendowane ani niesponsorowane przez nią. Znak towarowy służy wyłącznie opisaniu zgodności z platformą Roblox. RORORO uruchamia oficjalnego klienta Roblox bez modyfikacji.", "license": "RORORO source code is licensed under the MIT License. Full text: https://github.com/estevanhernandez-stack-ed/ROROROblox/blob/main/LICENSE\n\nRORORO is provided \"as is,\" without warranty of any kind. Use of RORORO to access the Roblox platform is governed by Roblox Corporation's own Terms of Use, which you must accept separately when you sign in to a Roblox account. Roblox Corporation has stated that multi-instancing tools \"may be considered malicious behaviour\"; while RORORO does not modify the Roblox client and only holds a Windows named-mutex before launch, the user accepts any risk of Roblox-side enforcement on their accounts.\n\nNo warranty is offered or implied for compatibility with future versions of the Roblox client. The bundled remote-config update mechanism is best-effort.", "developedby": "626 Labs LLC", "keywords": "roblox, multi instance, multi-account, launcher, account manager, alt accounts, multibox"}, "es": {"short": "Multi-launcher para Windows en 6 idiomas: varios clientes de Roblox a la vez, cada uno con su cuenta. Baúl cifrado, Squad Launch, vigilante de memoria, alertas al móvil, estado en vivo y temas.", "long": "Multi-launcher para Windows.\n\nRoRoRo es un launcher para Windows que ejecuta varios clientes de Roblox a la vez en un mismo PC, cada uno con una cuenta guardada distinta que te pertenece. Añade tus cuentas una sola vez desde la propia página de inicio de sesión de Roblox y luego lánzalas con un clic: a su juego predeterminado, a un servidor privado guardado o a cualquier enlace de juego que pegues.\n\nLo que obtienes:\n• Multi-instancia con un clic. RoRoRo retiene el mutex singleton de Roblox, así que los clientes adicionales se abren en lugar de traer el primero al frente.\n• Baúl de cuentas cifrado (DPAPI). Las cookies guardadas se cifran con la API de Protección de Datos de Windows, ligadas a tu cuenta de Windows: un archivo copiado a otro PC no se descifra. Mover cuentas entre tus propios equipos es una exportación deliberada, protegida con frase de contraseña.\n• Estado en vivo de cada cuenta. Ve qué cuenta está en qué juego, quién lleva cuánto tiempo inactivo, y fija límites de FPS por cuenta que se mantienen.\n• Squad Launch + Friend Follow. Manda todas las cuentas seleccionadas al mismo servidor privado, sigue a un amigo hasta el suyo o junta tus cuentas en un servidor público.\n• Vigilante de memoria + Recycle. RoRoRo aprende cuánta RAM cuesta de verdad un cliente de Roblox en tu máquina y avisa antes de que se agote. Un clic cierra un cliente pesado y lo devuelve al mismo servidor donde estaba.\n• Una sola ventana de herramientas. Juegos, ajustes, historial, diagnóstico, plugins y Acerca de son páginas de una misma ventana junto a tus cuentas, con atajos de teclado en todas partes — F1 muestra la lista.\n• Temas. Cuatro integrados, incluido uno que nunca transmite significado solo con color, más un editor para crear el tuyo a partir de diez colores y compartirlo como archivo.\n• Alertas opcionales: escritorio, Discord o móvil. Dirige cada alerta a cualquier combinación: notificaciones de escritorio, un webhook de Discord que tú creas, o tu móvil mediante Pushover o ntfy. Desconexiones, avisos de memoria, finales de Recycle y una señal de \"todo bien\" cada dos horas. Una instalación nueva no hace ninguna llamada de alertas: nada sale hasta que tú lo configuras.\n• Bandeja del sistema con icono coloreado por estado — el estado de multi-instancia de un vistazo; doble clic lanza tu cuenta principal.\n• Sistema de plugins. Los plugins opcionales corren como procesos separados y no tienen permisos hasta que se los concedes uno a uno.\n• Actualización automática vía Velopack. Una configuración remota sigue la versión de Roblox y el nombre del mutex conocidos, para que un cambio del lado de Roblox no te deje fuera mucho tiempo.\n• Accesibilidad medida. Cada control anuncia su nombre a las tecnologías de asistencia, y el contraste se verifica sobre píxeles renderizados en todos los temas.\n• Habla tu idioma. Toda la app —cada menú, ajuste, información sobre herramientas y ventana, y los mensajes que RoRoRo escribe mientras la usas— está traducida al francés, alemán, ruso, portugués (Brasil), polaco y español, según el idioma de tu Windows o tu elección en Configuración. El cambio es inmediato, y la lista solo ofrece idiomas totalmente traducidos, así que nunca acabas en una pantalla a medias en inglés.\n\nPrivacidad y seguridad:\nRoRoRo nunca ve tu contraseña de Roblox. El inicio de sesión ocurre por completo en la página del propio Roblox, incrustada en un marco Microsoft Edge WebView2: el mismo HTML, la misma conexión HTTPS que haría tu navegador. RoRoRo captura solo la cookie de sesión que Roblox establece tras iniciar sesión, y la cifra antes de escribirla en disco. Sin telemetría. Sin analítica. Nada sale de tu máquina salvo las llamadas a Roblox durante el lanzamiento —las mismas que hace Roblox.com desde tu navegador— y, solo si tú los configuras, las alertas a tu webhook de Discord o al servicio de push que elegiste (Pushover o ntfy).\n\nImportante: aviso de marcas y afiliación.\n\"Roblox\" y el logotipo de Roblox son marcas de Roblox Corporation. RoRoRo es una herramienta independiente de terceros, no afiliada, avalada ni patrocinada por Roblox Corporation. El término se usa únicamente para describir compatibilidad con la plataforma Roblox. RoRoRo lanza el cliente oficial de Roblox sin modificarlo: sin inyección, sin hooks, sin alterar el proceso de Roblox; solo retiene un mutex con nombre de Windows antes del lanzamiento, para que las siguientes instancias del cliente vean la comprobación de singleton como ya ocupada.\n\nUn producto de 626 Labs.", "features": "Launcher multi-instancia para Roblox en Windows, con un clic\nBaúl de cuentas cifrado con DPAPI y exportación protegida con frase de contraseña\nEstado en vivo por cuenta: en qué juego está, tiempo inactivo y límite de FPS por cuenta\nVigilante de memoria que aprende el costo real de RAM de cada cliente, más Recycle de un clic al mismo servidor\nSquad Launch y Friend Follow: el mismo servidor privado, o un servidor público juntos\nUnirse por enlace desde cualquier URL de roblox.com, con servidores privados guardados por cuenta\nUna ventana de herramientas para Juegos, Ajustes, Historial y más, con atajos de teclado\nCuatro temas integrados más un editor para crear el tuyo\nAlertas opcionales de Discord a un webhook que tú creas\nBandeja del sistema con icono de estado y doble clic para la cuenta principal\nSistema de plugins con consentimiento por capacidad y aislamiento fuera de proceso\nActualización automática que sigue funcionando cuando Roblox cambia por debajo\nIniciar con Windows si quieres: un solo interruptor, y la lista de Inicio de Windows manda\nDiscord Join arranca RoRoRo aunque esté cerrado, y siempre pregunta antes de lanzar nada\nAlertas al móvil vía Pushover o ntfy: un alt se cae y tu móvil vibra, aun con Discord cerrado\nSeñales de \"todo bien\" cada dos horas mientras tus cuentas corren: el silencio significa problema\nLas alertas se reparten: escritorio, canales de Discord y móvil en cualquier combinación, por alerta\nDisponible en seis idiomas — toda la app, pantallas y mensajes, en francés, alemán, ruso, portugués (Brasil), polaco o español, cambio inmediato, según Windows o tu elección", "whatsnew": "v1.27.0.0\n\nRoRoRo habla tu idioma\n• Toda la app — menús, ajustes, cada ventana y los mensajes\n  que RoRoRo escribe mientras la usas — está traducida al\n  francés, alemán, ruso, portugués (Brasil), polaco y español.\n  Si Windows está en uno de ellos, RoRoRo lo adopta solo.\n\nCámbialo cuando quieras, al instante\n• Configuración > Apariencia solo lista los idiomas a los que\n  RoRoRo está totalmente traducido, así nunca acabas en una\n  pantalla a medias. Elige uno y la app cambia al momento, sin\n  reiniciar.\n\nSigue siendo inglés de fondo\n• El inglés sigue siendo el idioma predeterminado, y los\n  nombres de funciones — Squad Launch, Recycle, RoRoRo — se\n  leen igual en todos los idiomas. Tus cuentas, temas y\n  ajustes no cambian.", "copyright": "© 2026 626 Labs LLC. Todos los derechos reservados. \"Roblox\" es una marca de Roblox Corporation. RoRoRo no está afiliada, avalada ni patrocinada por Roblox Corporation.", "trademark": "\"Roblox\" y el logotipo de Roblox son marcas de Roblox Corporation. RORORO es una herramienta independiente de terceros, no afiliada, avalada ni patrocinada por Roblox Corporation. El término se usa únicamente para describir compatibilidad con la plataforma Roblox. RORORO lanza el cliente oficial de Roblox sin modificaciones.", "license": "RORORO source code is licensed under the MIT License. Full text: https://github.com/estevanhernandez-stack-ed/ROROROblox/blob/main/LICENSE\n\nRORORO is provided \"as is,\" without warranty of any kind. Use of RORORO to access the Roblox platform is governed by Roblox Corporation's own Terms of Use, which you must accept separately when you sign in to a Roblox account. Roblox Corporation has stated that multi-instancing tools \"may be considered malicious behaviour\"; while RORORO does not modify the Roblox client and only holds a Windows named-mutex before launch, the user accepts any risk of Roblox-side enforcement on their accounts.\n\nNo warranty is offered or implied for compatibility with future versions of the Roblox client. The bundled remote-config update mechanism is best-effort.", "developedby": "626 Labs LLC", "keywords": "roblox, multi instance, multi-account, launcher, account manager, alt accounts, multibox"}}, "assets": [{"label": "Screenshots", "path": "docs\\store\\screenshots", "cmd": "explorer docs\\store\\screenshots", "note": "Store listing screenshots.", "files": ["01-accounts-running.png", "02-themes.png", "03-about.png", "04-games.png", "05-diagnostics.png", "06-history.png", "07-plugins.png", "08-theme-builder.png", "09-compact.png", "10-multi-instance.png"]}, {"label": "Graphics", "path": "docs\\store\\graphics", "cmd": "explorer docs\\store\\graphics", "note": "Box art, display icons, hero and poster images.", "files": ["pushover-icon-128.png", "store-boxart-1080x1080.png", "store-boxart-2160x2160.png", "store-display-150x150.png", "store-display-300x300.png", "store-display-71x71.png", "store-hero-1920x1080.png", "store-hero-3840x2160.png", "store-poster-1440x2160.png", "store-poster-720x1080.png"]}], "packages": ["dist\\RORORO-Store-x64-1.27.0.0.msix", "dist\\RORORO-Store-arm64-1.27.0.0.msix"]};
+
+const $ = (s) => document.querySelector(s);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private window */ } }
+};
+
+let current = store.get("rororo.listing", 0);
+if (typeof current !== "number" || current < 0 || current >= DATA.listings.length) current = 0;
+let showEn = store.get("rororo.showen", false);
+let done = store.get("rororo.done", {});
+
+$("#ver").textContent = "v" + DATA.version + " · Partner Center";
+
+const pick = $("#pick");
+DATA.listings.forEach((l, i) => {
+  const o = document.createElement("option");
+  o.value = String(i);
+  o.textContent = l.row;
+  pick.appendChild(o);
+});
+pick.value = String(current);
+$("#showen").checked = showEn;
+
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const was = btn.textContent;
+    btn.textContent = "Copied";
+    btn.classList.add("done");
+    setTimeout(() => { btn.textContent = was; btn.classList.remove("done"); }, 1200);
+  }).catch(() => { btn.textContent = "Copy failed"; });
+}
+
+function countClass(len, cap) {
+  if (!cap) return "";
+  if (len > cap) return "over";
+  if (len > cap * 0.92) return "warn";
+  return "ok";
+}
+
+function makeBtn(label, text, cls) {
+  const b = document.createElement("button");
+  b.className = "copy" + (cls ? " " + cls : "");
+  b.textContent = label;
+  b.addEventListener("click", () => copyText(text, b));
+  return b;
+}
+
+function render() {
+  const listing = DATA.listings[current];
+  const lang = listing.lang;
+  const copy = DATA.copy[lang];
+  const en = DATA.copy.en;
+
+  // banner
+  const banner = $("#banner");
+  banner.innerHTML = "";
+  const strong = document.createElement("strong");
+  strong.textContent = listing.row;
+  banner.appendChild(strong);
+  const meta = document.createElement("span");
+  meta.className = "note";
+  meta.textContent = DATA.langName[lang] + (listing.note ? " · " + listing.note : "");
+  banner.appendChild(meta);
+  const mark = document.createElement("button");
+  mark.className = "copy ghost";
+  mark.textContent = done[listing.row] ? "Done ✓" : "Mark done";
+  mark.addEventListener("click", () => {
+    done[listing.row] = !done[listing.row];
+    store.set("rororo.done", done);
+    render();
+  });
+  banner.appendChild(mark);
+
+  // progress chips
+  const prog = $("#prog");
+  prog.innerHTML = "";
+  DATA.listings.forEach((l, i) => {
+    const c = document.createElement("button");
+    c.className = "chip" + (done[l.row] ? " done" : "");
+    if (i === current) c.setAttribute("aria-current", "true");
+    c.textContent = l.row;
+    c.addEventListener("click", () => { current = i; store.set("rororo.listing", i); pick.value = String(i); render(); });
+    prog.appendChild(c);
+  });
+
+  // fields
+  const host = $("#fields");
+  host.innerHTML = "";
+  DATA.fields.forEach((f) => {
+    const val = copy[f.key] || "";
+    const enVal = en[f.key] || "";
+    const sec = document.createElement("section");
+    sec.className = "field";
+
+    const head = document.createElement("div");
+    head.className = "fhead";
+    const h = document.createElement("h2");
+    h.textContent = f.label;
+    head.appendChild(h);
+
+    if (f.key === "features") {
+      const entries = val.split("\n").filter((x) => x.trim());
+      const cnt = document.createElement("span");
+      cnt.className = "count";
+      cnt.textContent = entries.length + " entries / 20";
+      head.appendChild(cnt);
+      head.appendChild(makeBtn("Copy all", val));
+    } else {
+      const cnt = document.createElement("span");
+      cnt.className = "count " + countClass(val.length, f.cap);
+      cnt.textContent = f.cap ? val.length + " / " + f.cap : val.length + " chars";
+      head.appendChild(cnt);
+      head.appendChild(makeBtn("Copy", val));
+    }
+    if (f.note) {
+      const n = document.createElement("span");
+      n.className = "fnote";
+      n.textContent = f.note;
+      head.appendChild(n);
+    }
+    sec.appendChild(head);
+
+    if (f.key === "features") {
+      const entries = val.split("\n").filter((x) => x.trim());
+      const enEntries = enVal.split("\n").filter((x) => x.trim());
+      const ol = document.createElement("ol");
+      ol.className = "feats";
+      entries.forEach((e, i) => {
+        const li = document.createElement("li");
+        const num = document.createElement("span");
+        num.className = "fnum";
+        num.textContent = String(i + 1).padStart(2, "0");
+        li.appendChild(num);
+        const tx = document.createElement("div");
+        tx.className = "ftext";
+        tx.textContent = e;
+        if (showEn && lang !== "en" && enEntries[i]) {
+          const s = document.createElement("span");
+          s.className = "fen";
+          s.textContent = enEntries[i];
+          tx.appendChild(s);
+        }
+        li.appendChild(tx);
+        const cc = document.createElement("span");
+        cc.className = "count " + countClass(e.length, 200);
+        cc.textContent = e.length;
+        li.appendChild(cc);
+        li.appendChild(makeBtn("Copy", e));
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+    } else {
+      const pre = document.createElement("pre");
+      pre.className = "text";
+      pre.textContent = val;
+      sec.appendChild(pre);
+      if (showEn && lang !== "en" && enVal && enVal !== val) {
+        const wrapEn = document.createElement("div");
+        wrapEn.className = "english";
+        const tag = document.createElement("span");
+        tag.className = "tag";
+        tag.textContent = "English reference";
+        wrapEn.appendChild(tag);
+        const p2 = document.createElement("pre");
+        p2.className = "text";
+        p2.textContent = enVal;
+        wrapEn.appendChild(p2);
+        sec.appendChild(wrapEn);
+      }
+    }
+    host.appendChild(sec);
+  });
+}
+
+// assets
+const assetHost = $("#assets");
+DATA.assets.forEach((a) => {
+  const sec = document.createElement("section");
+  sec.className = "field";
+  const head = document.createElement("div");
+  head.className = "fhead";
+  const h = document.createElement("h2");
+  h.textContent = a.label;
+  head.appendChild(h);
+  const cnt = document.createElement("span");
+  cnt.className = "count";
+  cnt.textContent = a.files.length + " files";
+  head.appendChild(cnt);
+  head.appendChild(makeBtn("Copy command", a.cmd));
+  sec.appendChild(head);
+  const row = document.createElement("div");
+  row.className = "pathrow";
+  const c = document.createElement("code");
+  c.className = "path";
+  c.textContent = a.cmd;
+  row.appendChild(c);
+  row.appendChild(makeBtn("Copy path", a.path, "ghost"));
+  sec.appendChild(row);
+  const files = document.createElement("div");
+  files.className = "files";
+  a.files.forEach((f) => {
+    const s = document.createElement("span");
+    s.className = "file";
+    s.textContent = f;
+    files.appendChild(s);
+  });
+  sec.appendChild(files);
+  const hint = document.createElement("p");
+  hint.className = "hint";
+  hint.textContent = "A browser can't open a local folder. Paste the command in a terminal at the repo root and it opens.";
+  sec.appendChild(hint);
+  assetHost.appendChild(sec);
+});
+
+// packages
+const pkgHost = $("#packages");
+const pkgSec = document.createElement("section");
+pkgSec.className = "field";
+DATA.packages.forEach((p) => {
+  const row = document.createElement("div");
+  row.className = "pathrow";
+  const c = document.createElement("code");
+  c.className = "path";
+  c.textContent = p;
+  row.appendChild(c);
+  row.appendChild(makeBtn("Copy", p));
+  pkgSec.appendChild(row);
+});
+const pkgHint = document.createElement("p");
+pkgHint.className = "hint";
+pkgHint.textContent = "Both go in the Packages slot. Unsigned by design — Partner Center signs after upload.";
+pkgSec.appendChild(pkgHint);
+pkgHost.appendChild(pkgSec);
+
+pick.addEventListener("change", () => {
+  current = Number(pick.value);
+  store.set("rororo.listing", current);
+  render();
+});
+$("#showen").addEventListener("change", (e) => {
+  showEn = e.target.checked;
+  store.set("rororo.showen", showEn);
+  render();
+});
+
+render();
+</script>
