@@ -1,27 +1,26 @@
 # Store screenshots — one folder per listing language
 
 ```
-en/     10 files    fr/  7    de/  7    ru/  7    pt-BR/  7    pl/  7    es/  7
+en/  fr/  de/  ru/  pt-BR/  pl/  es/      10 files each
 ```
 
-`en/` holds the full carousel. The six translated folders hold **seven**, and that is
-deliberate — not a broken capture.
+Every folder is a complete upload set. Seven frames per language are captured in that
+language; three carry over from English and say so in the filename with an **`-en`** suffix.
 
-## Why seven, not ten
-
-| file | translated? | why |
+| file | in the translated folders | why |
 |---|---|---|
-| `01-accounts-running` | **yes** | account rows, buttons and status are all localized |
-| `03-about` … `08-theme-builder` | **yes** | six app surfaces, all localized text |
-| `02-themes` | no — use `en/` | a 2×2 theme panel. It shows colours, not words |
-| `09-compact` | no — use `en/` | a strip of running clients; almost no chrome in frame |
-| `10-multi-instance` | no — use `en/` | eight Roblox windows and a sliver of RoRoRo |
+| `01-accounts-running` | captured | account rows, buttons and status are all localized |
+| `03-about` … `08-theme-builder` | captured | six app surfaces, all localized text |
+| `02-themes-en` | English | a 2×2 theme panel. It shows colours, not words |
+| `09-compact-en` | English | a strip of running clients; almost no chrome in frame |
+| `10-multi-instance-en` | English | eight Roblox windows and a sliver of RoRoRo |
 
-Copying those three into six folders would add ~17 MB of byte-identical PNGs to the
-repo's history for no visible difference. Point at `en/` instead.
+The `-en` suffix is the point: a reviewer glancing at `pl/` can see at once which three
+frames are not Polish, rather than having to know. It costs ~17 MB of duplicated PNGs
+across six folders, and `10-multi-instance-en.png` is 2.6 MB of that on its own — worth
+knowing if repo weight ever becomes the deciding factor.
 
-**Uploading a listing:** take the seven from that language's folder, then `02`, `09` and
-`10` from `en/`.
+**Uploading a listing:** take the whole folder. No cross-referencing.
 
 ## Regenerating
 
