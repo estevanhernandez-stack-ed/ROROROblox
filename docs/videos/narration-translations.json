@@ -1,0 +1,213 @@
+{
+  "product": "RoRoRo launch video narration",
+  "storeId": "9NMJCS390KWB",
+  "sourceLanguage": "en",
+  "languages": [
+    "fr",
+    "de",
+    "ru",
+    "pt-br",
+    "pl",
+    "es"
+  ],
+  "sourceCommit": "2f1bb3d",
+  "generatedUtc": "2026-09-09T03:33:51+00:00",
+  "sourceOfTruth": "docs/videos/launch-video-narration-*.md on feat/localized-taglines — corrections are edits there",
+  "fields": [
+    {
+      "field": "hook_overlay",
+      "en": "8 clients. 1 PC.",
+      "translations": {
+        "fr": "8 clients. 1 PC.",
+        "de": "8 Clients. 1 PC.",
+        "ru": "8 клиентов. 1 ПК.",
+        "pt-br": "8 clientes. 1 PC.",
+        "pl": "8 klientów. 1 PC.",
+        "es": "8 clientes. 1 PC."
+      },
+      "charCap": 34
+    },
+    {
+      "field": "hook_vo",
+      "en": "Okay, this is EIGHT Roblox clients, running at the same time, on one PC. And the app doing it is free.",
+      "translations": {
+        "fr": "Voilà HUIT clients Roblox qui tournent en même temps, sur un seul PC. Et l'appli qui fait ça est gratuite.",
+        "de": "Okay, das sind ACHT Roblox-Clients, die gleichzeitig laufen, auf einem PC. Und die App dahinter ist kostenlos.",
+        "ru": "Это ВОСЕМЬ клиентов Roblox одновременно, на одном ПК. И приложение бесплатное.",
+        "pt-br": "São OITO clientes Roblox rodando ao mesmo tempo, num PC só. E o app é grátis.",
+        "pl": "To OSIEM klientów Roblox naraz, na jednym PC. A aplikacja jest darmowa.",
+        "es": "Son OCHO clientes de Roblox a la vez, en un solo PC. Y la app es gratis."
+      },
+      "charCap": 600
+    },
+    {
+      "field": "accounts_overlay",
+      "en": "save once. launch as.",
+      "translations": {
+        "fr": "enregistrez une fois. lancez.",
+        "de": "einmal speichern. starte als.",
+        "ru": "сохраните раз. запускайте.",
+        "pt-br": "salve uma vez. inicie como.",
+        "pl": "zapisz raz. uruchamiaj jako.",
+        "es": "guarda una vez. lanza como."
+      },
+      "charCap": 34
+    },
+    {
+      "field": "accounts_vo",
+      "en": "This is RoRoRo! Save every alt once, and it's one click each. Live status, the game each one is actually in, even the RAM each client is eating.",
+      "translations": {
+        "fr": "Voici RoRoRo ! Enregistrez chaque alt une fois, ensuite c'est un clic chacun. Statut en direct, le jeu où chacun se trouve, même la RAM que chaque client consomme.",
+        "de": "Das ist RoRoRo! Jeden Alt einmal speichern, danach ein Klick pro Stück. Live-Status, das Spiel, in dem jeder gerade steckt, sogar der RAM, den jeder Client frisst.",
+        "ru": "Это RoRoRo! Сохраните каждый альт один раз — дальше один клик на каждый. Статус в реальном времени, игра, где каждый сейчас, даже сколько RAM ест каждый клиент.",
+        "pt-br": "Esse é o RoRoRo! Salve cada alt uma vez, depois é um clique. Status ao vivo, o jogo de cada um, até a RAM que consome.",
+        "pl": "To jest RoRoRo! Zapisz każdy alt raz, potem jedno kliknięcie na każdy. Status na żywo, w co kto gra, nawet ile RAM-u zjada każdy klient.",
+        "es": "¡Esto es RoRoRo! Guarda cada alt una vez, luego es un clic. Estado en vivo, el juego de cada uno, y la RAM que consume."
+      },
+      "charCap": 600
+    },
+    {
+      "field": "squad_overlay",
+      "en": "same private server. all of them.",
+      "translations": {
+        "fr": "même serveur privé. tous.",
+        "de": "gleicher Privatserver. alle.",
+        "ru": "тот же приватный сервер. все.",
+        "pt-br": "mesmo servidor privado. todos.",
+        "pl": "ten sam priv. wszystkie.",
+        "es": "mismo servidor privado. todas."
+      },
+      "charCap": 34
+    },
+    {
+      "field": "squad_vo",
+      "en": "Squad Launch is the best part. One link, and every single account lands in the SAME private server, together.",
+      "translations": {
+        "fr": "Squad Launch, c'est le meilleur. Un lien, et chaque compte atterrit dans le MÊME serveur privé, ensemble.",
+        "de": "Squad Launch ist das Beste. Ein Link, und jeder einzelne Account landet auf dem GLEICHEN privaten Server, zusammen.",
+        "ru": "Squad Launch — главная фишка. Одна ссылка, и каждый аккаунт попадает на ТОТ ЖЕ приватный сервер, вместе.",
+        "pt-br": "Squad Launch é a melhor parte. Um link, e todas as contas caem no MESMO servidor privado, juntas.",
+        "pl": "Squad Launch to najlepsze. Jeden link, i każde konto ląduje na TYM SAMYM prywatnym serwerze, razem.",
+        "es": "Squad Launch es lo mejor. Un enlace, y cada cuenta aterriza en el MISMO servidor privado, juntas."
+      },
+      "charCap": 600
+    },
+    {
+      "field": "history_overlay",
+      "en": "it keeps score now",
+      "translations": {
+        "fr": "il compte les points désormais",
+        "de": "jetzt mit Statistik",
+        "ru": "теперь ведёт счёт",
+        "pt-br": "agora ele marca os pontos",
+        "pl": "teraz liczy punkty",
+        "es": "ahora lleva la cuenta"
+      },
+      "charCap": 34
+    },
+    {
+      "field": "history_vo",
+      "en": "And it keeps score! Peak alts at once, total uptime, a leaderboard of your alts with login streaks. All computed on your machine, nothing leaves it.",
+      "translations": {
+        "fr": "Et il compte les points ! Pic d'alts simultanés, temps total, un classement de vos alts avec les séries de connexions. Tout calculé sur votre machine, rien n'en sort.",
+        "de": "Und es führt Buch! Höchstzahl gleichzeitiger Alts, Gesamtlaufzeit, eine Rangliste deiner Alts mit Login-Serien. Alles auf deinem Rechner berechnet, nichts verlässt ihn.",
+        "ru": "И он ведёт счёт! Максимум альтов разом, общее время, рейтинг ваших альтов с сериями входов. Всё считается на вашей машине, ничего не уходит.",
+        "pt-br": "E ele marca os pontos! Pico de alts, tempo total, um ranking com sequências de login. Tudo calculado na sua máquina, nada sai.",
+        "pl": "I liczy punkty! Rekord altów naraz, łączny czas, ranking altów z seriami logowań. Wszystko liczone u ciebie, nic nie opuszcza komputera.",
+        "es": "¡Y lleva la cuenta! Pico de alts, tiempo total, un ranking con rachas de acceso. Todo se calcula en tu máquina, nada sale."
+      },
+      "charCap": 600
+    },
+    {
+      "field": "themes_overlay",
+      "en": "AI builds your theme",
+      "translations": {
+        "fr": "l'IA crée votre thème",
+        "de": "KI baut dein Theme",
+        "ru": "ИИ создаёт тему",
+        "pt-br": "a IA cria seu tema",
+        "pl": "AI tworzy twój motyw",
+        "es": "la IA crea tu tema"
+      },
+      "charCap": 34
+    },
+    {
+      "field": "themes_vo",
+      "en": "Four built-in themes, plus a theme builder where an AI designs you a custom one from a vibe description.",
+      "translations": {
+        "fr": "Quatre thèmes intégrés, plus un créateur où une IA conçoit le vôtre à partir d'une ambiance que vous décrivez.",
+        "de": "Vier eingebaute Themes, plus ein Theme-Builder, in dem eine KI dir aus einer Stimmungsbeschreibung ein eigenes entwirft.",
+        "ru": "Четыре встроенные темы, плюс конструктор тем, где ИИ создаёт вам кастомную по описанию вайба.",
+        "pt-br": "Quatro temas nativos, mais um construtor onde uma IA cria o seu a partir de uma vibe.",
+        "pl": "Cztery wbudowane motywy, plus kreator, w którym AI projektuje ci własny z opisu klimatu.",
+        "es": "Cuatro temas integrados, y un creador donde una IA diseña el tuyo con la vibra que describas."
+      },
+      "charCap": 600
+    },
+    {
+      "field": "trust_overlay",
+      "en": "your password never touches it",
+      "translations": {
+        "fr": "votre mot de passe n'y passe pas",
+        "de": "dein Passwort bleibt draußen",
+        "ru": "пароль его не касается",
+        "pt-br": "sua senha nunca passa por ele",
+        "pl": "hasło nigdy do niej nie trafia",
+        "es": "tu contraseña nunca la toca"
+      },
+      "charCap": 34
+    },
+    {
+      "field": "trust_vo",
+      "en": "Your password never touches the app, the vault is encrypted, and a memory watchdog recycles a client before a leak crashes it. There are even keyboard shortcuts now.",
+      "translations": {
+        "fr": "Votre mot de passe ne touche jamais l'appli, le coffre est chiffré, et une surveillance mémoire recycle un client avant qu'une fuite le plante. Et il y a maintenant des raccourcis clavier.",
+        "de": "Dein Passwort gelangt nie in die App, der Tresor ist verschlüsselt, und ein Speicher-Wächter recycelt einen Client, bevor ein Leck ihn abstürzen lässt. Es gibt jetzt sogar Tastenkürzel.",
+        "ru": "Пароль никогда не попадает в приложение, хранилище зашифровано, а контроль памяти перезапускает клиент раньше, чем утечка его уронит. Есть и горячие клавиши.",
+        "pt-br": "Sua senha nunca toca no app, o cofre é criptografado, e o vigia de memória recicla o cliente antes do vazamento derrubar. E tem atalhos de teclado.",
+        "pl": "Hasło nigdy nie trafia do apki, sejf jest zaszyfrowany, a strażnik pamięci restartuje klienta, zanim wyciek go położy. Są nawet skróty klawiszowe.",
+        "es": "Tu contraseña nunca toca la app, la bóveda va cifrada, y el vigía de memoria recicla el cliente antes de que una fuga lo tumbe. Y hay atajos de teclado."
+      },
+      "charCap": 600
+    },
+    {
+      "field": "cta_overlay",
+      "en": "scan it, open on desktop",
+      "translations": {
+        "fr": "scannez, ouvrez sur ordi",
+        "de": "scannen, am Rechner öffnen",
+        "ru": "сканируйте, откройте на ПК",
+        "pt-br": "escaneie, abra no computador",
+        "pl": "zeskanuj, otwórz na komputerze",
+        "es": "escanea, abre en tu compu"
+      },
+      "charCap": 34
+    },
+    {
+      "field": "cta_vo",
+      "en": "Free on the Microsoft Store, Windows AND Mac. Scan the code, save the page, grab it on your desktop. RoRoRo, from six-two-six Labs. Imagine something else.",
+      "translations": {
+        "fr": "Gratuit sur le Microsoft Store, Windows ET Mac. Scannez le code, gardez la page, prenez-le sur votre ordi. RoRoRo, de six-deux-six Labs. Imaginez autre chose.",
+        "de": "Kostenlos im Microsoft Store, Windows UND Mac. Scanne den Code, speichere die Seite, hol es dir auf den Rechner. RoRoRo, von sechs-zwei-sechs Labs. Imagine something else.",
+        "ru": "Бесплатно в Microsoft Store, Windows И Mac. Отсканируйте код, сохраните страницу, заберите на компьютер. RoRoRo, от шесть-два-шесть Labs. Imagine something else.",
+        "pt-br": "Grátis na Microsoft Store, Windows E Mac. Escaneie o código, salve a página, pegue no computador. RoRoRo, da seis-dois-seis Labs. Imagine algo diferente.",
+        "pl": "Za darmo w Microsoft Store, Windows I Mac. Zeskanuj kod, zapisz stronę, pobierz na komputer. RoRoRo, od sześć-dwa-sześć Labs. Imagine something else.",
+        "es": "Gratis en Microsoft Store, Windows Y Mac. Escanea el código, guarda la página, bájalo en tu compu. RoRoRo, de seis-dos-seis Labs. Imagina algo diferente."
+      },
+      "charCap": 600
+    },
+    {
+      "field": "caption",
+      "en": "Eight Roblox clients on one PC — free. RoRoRo saves your alts, launches them one click each, lands them in the same private server, and now keeps your stats. Windows + Mac. Search RORORO. Not affiliated with Roblox.",
+      "translations": {
+        "fr": "Huit clients Roblox sur un seul PC — gratuit. RoRoRo enregistre vos alts, les lance en un clic chacun, les réunit dans le même serveur privé, et garde maintenant vos stats. Windows + Mac. Cherchez RORORO. Non affilié à Roblox.",
+        "de": "Acht Roblox-Clients auf einem PC — kostenlos. RoRoRo speichert deine Alts, startet sie mit je einem Klick, bringt sie auf denselben privaten Server und führt jetzt deine Statistiken. Windows + Mac. Such nach RORORO. Steht in keiner Verbindung zu Roblox.",
+        "ru": "Восемь клиентов Roblox на одном ПК — бесплатно. RoRoRo сохраняет ваши альты, запускает каждый одним кликом, собирает их на одном приватном сервере и теперь ведёт статистику. Windows + Mac. Ищите RORORO. Не связано с Roblox.",
+        "pt-br": "Oito clientes Roblox num PC só — grátis. O RoRoRo salva seus alts, inicia cada um com um clique, reúne todos no mesmo servidor privado e agora guarda suas estatísticas. Windows + Mac. Procure RORORO. Não afiliado à Roblox.",
+        "pl": "Osiem klientów Roblox na jednym PC — za darmo. RoRoRo zapisuje twoje alty, uruchamia każdy jednym kliknięciem, zbiera je na tym samym prywatnym serwerze i teraz prowadzi statystyki. Windows + Mac. Szukaj RORORO. Niepowiązane z Roblox.",
+        "es": "Ocho clientes de Roblox en un solo PC — gratis. RoRoRo guarda tus alts, los lanza con un clic cada uno, los reúne en el mismo servidor privado y ahora lleva tus estadísticas. Windows + Mac. Busca RORORO. No afiliado a Roblox."
+      },
+      "charCap": 600
+    }
+  ]
+}
