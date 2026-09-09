@@ -96,3 +96,7 @@ pkg/
 
 # vibe-lingual tool working dir (backup batches, state) — never committed
 .vibe-lingual/
+
+# Video masters stay local — 36MB+ per file, one add -A away from permanent history.
+# The web cuts that ship live in docs/videos/; masters render locally.
+docs/assets/Videos/
