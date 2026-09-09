@@ -1465,7 +1465,7 @@
     <value>Langue</value>
   </data>
   <data name="SettingsPage_LanguageHint" xml:space="preserve">
-    <value>Choisissez la langue de l'interface de RoRoRo. De nouvelles langues apparaissent ici à mesure qu'elles sont traduites, et un changement prend effet à la prochaine ouverture de RoRoRo.</value>
+    <value>Choisissez la langue de l'interface de RoRoRo. Les nouvelles langues apparaissent ici au fur et à mesure de leur traduction, et le changement est immédiat.</value>
   </data>
   <data name="CoreMsg_Launch_NoDefaultGame" xml:space="preserve">
     <value>Aucun jeu Roblox par défaut configuré. Ajoutez-en un dans Jeux (bouton d'en-tête), ou indiquez une cible explicite.</value>

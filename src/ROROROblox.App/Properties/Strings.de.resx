@@ -1465,7 +1465,7 @@
     <value>Sprache</value>
   </data>
   <data name="SettingsPage_LanguageHint" xml:space="preserve">
-    <value>Wähle die Sprache, die RoRoRos Oberfläche verwendet. Neue Sprachen erscheinen hier, sobald sie übersetzt sind, und eine Änderung wird wirksam, wenn du RoRoRo das nächste Mal öffnest.</value>
+    <value>Wähle die Sprache der RoRoRo-Oberfläche. Neue Sprachen erscheinen hier, sobald sie übersetzt sind, und der Wechsel wirkt sofort.</value>
   </data>
   <data name="CoreMsg_Launch_NoDefaultGame" xml:space="preserve">
     <value>Kein Standard-Roblox-Spiel festgelegt. Füge eines unter „Spiele“ hinzu (Schaltfläche in der Kopfzeile), oder gib ein konkretes Ziel an.</value>

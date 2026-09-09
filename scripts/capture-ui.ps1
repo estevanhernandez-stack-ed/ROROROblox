@@ -55,6 +55,19 @@ param(
     [switch]$NoThemeSwitch,
     [switch]$DumpUia,
     [switch]$Watch,
+    # Capture the UI in this culture (fr, de, ru, pt-BR, pl, es) instead of whatever is saved.
+    #
+    # Owns a RESTART, which is not optional: a saved language is applied by UiCulture at startup
+    # (Program.Main), so writing the setting under a running app changes nothing this run. The
+    # app can switch live from Settings, but driving that is itself a route, and a route that
+    # depends on reading localized text is the thing this parameter exists to stop needing.
+    #
+    # Store-frame output goes to <OutDir>/<language>/ so a six-language sweep does not overwrite
+    # itself; English stays in <OutDir>/en/ for symmetry.
+    [string]$Language,
+    # Only for a profile with no real saved accounts. The guard exists because the
+    # shipped assets are captured from a live machine, not a clean VM.
+    [switch]$AllowRealIdentities,
     [switch]$SelfTest
 )
 
@@ -350,6 +363,7 @@ function Test-BlankFrame {
 #endregion
 
 $script:DenyList = @()   # populated from the route file by the route engine
+$script:DenyAids = @()   # the language-independent half of the same guard
 
 #region UIA
 
@@ -506,6 +520,14 @@ function Resolve-UiaElement {
         throw [DenyViolation]::new("DENIED: resolved to '$resolvedName', which is on the deny list. It stops Roblox clients, deletes accounts, or launches game sessions.")
     }
 
+    # And by AutomationId. The name list above is English display text, so it goes silent the
+    # moment -Language runs the app in anything else: a Polish 'Zatrzymaj' is not in it, and the
+    # guard would wave through the very click it exists to stop. Ids do not translate.
+    $resolvedAid = $hits[0].Current.AutomationId
+    if ($resolvedAid -and $script:DenyAids -contains $resolvedAid) {
+        throw [DenyViolation]::new("DENIED: resolved to AutomationId '$resolvedAid', which is on the id deny list. It stops Roblox clients, deletes accounts, or launches game sessions.")
+    }
+
     return $hits[0]
 }
 
@@ -534,6 +556,7 @@ function Read-Routes {
     if (-not (Test-Path $Path)) { throw "route file not found at $Path" }
     $routes = Get-Content -Raw -Path $Path | ConvertFrom-Json
     $script:DenyList = @($routes.deny)
+    $script:DenyAids = @(if ($routes.PSObject.Properties.Name -contains 'denyAids') { $routes.denyAids } else { @() })
     if ($script:DenyList.Count -eq 0) { throw 'route file declares an empty deny list' }
     return $routes
 }
@@ -837,10 +860,10 @@ function Write-RunManifest {
 
 function Open-AppearancePage {
     param([Parameter(Mandatory)]$Scope)
-    Resolve-UiaElement -Scope $Scope -Type 'Button' -Name 'Settings' -Verb 'invoke' |
+    Resolve-UiaElement -Scope $Scope -Type 'Button' -Aid 'ToolbarSettings' -Verb 'invoke' |
         ForEach-Object { $_.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke() }
     Start-Sleep -Milliseconds 800
-    Resolve-UiaElement -Scope $Scope -Type 'ListItem' -Name 'Appearance' -Verb 'select' -Within 'SettingsNav' |
+    Resolve-UiaElement -Scope $Scope -Type 'ListItem' -Aid 'NavAppearance' -Verb 'select' -Within 'SettingsNav' |
         ForEach-Object { $_.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select() }
     Start-Sleep -Milliseconds 500
 }
@@ -848,7 +871,7 @@ function Open-AppearancePage {
 function Close-Preferences {
     param([Parameter(Mandatory)]$Scope)
     try {
-        Resolve-UiaElement -Scope $Scope -Type 'Window' -Name 'Settings' -Verb 'close-window' |
+        Resolve-UiaElement -Scope $Scope -Type 'Window' -Aid 'ShellWindow' -Verb 'close-window' |
             ForEach-Object { $_.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern).Close() }
         Start-Sleep -Milliseconds 400
     }
@@ -1100,7 +1123,69 @@ function Invoke-SelfTest {
 
 if ($SelfTest) { Invoke-SelfTest }
 
+function Set-UiLanguageAndRestart {
+    <#
+      Restarts the app in $Culture and PROVES it took, rather than assuming.
+
+      Order is load-bearing and was wrong on the first cut: the app rewrites settings.json when it
+      exits (that is where mainWindowLeft and friends come from), so a write made while it is still
+      running is silently clobbered on shutdown. Close first, then write, then start.
+
+      Casing is load-bearing too. settings.json is camelCase ("streamerMode", "launchMainOnStartup");
+      a PascalCase "UiLanguage" does not deserialize into the blob and is dropped on the next save,
+      which fails as a no-op rather than an error.
+    #>
+    param([Parameter(Mandatory)][string]$Culture, [Parameter(Mandatory)][string]$ProcessName)
+
+    $settings = Join-Path $env:LOCALAPPDATA 'ROROROblox\settings.json'
+    if (-not (Test-Path $settings)) { throw "settings.json not found at $settings - run the app once first." }
+
+    $proc = Get-AppProcess -ProcessName $ProcessName
+    $exe = $proc.Path
+    if (-not $exe) { throw "cannot read the running app's path; start it from a normal user session." }
+
+    Write-Host "Closing $ProcessName so its shutdown save cannot clobber the language write..."
+    $proc.CloseMainWindow() | Out-Null
+    if (-not $proc.WaitForExit(15000)) { $proc.Kill(); $proc.WaitForExit(5000) }
+    Start-Sleep -Milliseconds 500
+
+    $json = Get-Content $settings -Raw | ConvertFrom-Json
+    $previous = if ($json.PSObject.Properties.Name -contains 'uiLanguage') { $json.uiLanguage } else { '(follow OS)' }
+    $json | Add-Member -NotePropertyName uiLanguage -NotePropertyValue $Culture -Force
+    # Depth: the blob nests, and ConvertTo-Json truncates at 2 by default, which would flatten
+    # saved settings into the string "System.Object[]".
+    $json | ConvertTo-Json -Depth 20 | Set-Content $settings -Encoding utf8
+    Write-Host "uiLanguage: '$previous' -> '$Culture'"
+
+    Start-Process -FilePath $exe | Out-Null
+
+    # The single-instance guard means a too-early relaunch surfaces the OLD window instead of a
+    # new process, so wait for a main window rather than assuming one.
+    $deadline = (Get-Date).AddSeconds(45)
+    do {
+        Start-Sleep -Milliseconds 500
+        $back = @(Get-Process -Name $ProcessName -ErrorAction SilentlyContinue |
+                  Where-Object { $_.MainWindowHandle -ne 0 })
+    } while ($back.Count -eq 0 -and (Get-Date) -lt $deadline)
+    if ($back.Count -eq 0) { throw "app did not come back with a main window within 45s." }
+    Start-Sleep -Seconds 2   # let the shell settle before UIA walks it
+
+    # PROVE it. The first cut printed "Back up in 'pl'" on the strength of having asked, and the
+    # setting had in fact been discarded -- a capture sweep would have produced six identical
+    # English sets and looked successful. Read a known control's localized Name back instead.
+    $root = Get-AppRoot -ProcessId $back[0].Id
+    $probe = Resolve-UiaElement -Scope $root -Type 'Button' -Aid 'ToolbarSettings'
+    $label = $probe.Current.Name
+    Write-Host "Toolbar Settings button reads '$label' (pid $($back[0].Id))."
+    if ($Culture -notlike 'en*' -and $label -eq 'Settings') {
+        throw ("the app came back still in English (Settings button reads 'Settings'). The " +
+               "uiLanguage write did not take -- check the key casing in $settings, and that " +
+               "'$Culture' ships a satellite assembly.")
+    }
+}
+
 $routes = Read-Routes -Path $RoutesPath
+if ($Language) { Set-UiLanguageAndRestart -Culture $Language -ProcessName $routes.processName }
 $proc = Get-AppProcess -ProcessName $routes.processName
 # No desktop sweep is needed: PrintWindow never reads the screen, so nothing behind the app is
 # capturable in the first place. That is the whole reason this mode exists.
@@ -1168,6 +1253,29 @@ if ($StoreFrame) {
     # still override -OutDir; this only moves the default.
     if (-not $PSBoundParameters.ContainsKey('OutDir')) {
         $OutDir = Join-Path $PSScriptRoot '..\docs\store\screenshots'
+        # One folder per language. 'en' is a folder too rather than the bare root, so the six
+        # translated sets are not a special case sitting beside an unlabelled default.
+        $OutDir = Join-Path $OutDir $(if ($Language) { $Language } else { 'en' })
+    }
+    # Refuse to write store frames while real identities are on screen. The shipped English set
+    # is captured in streamer mode ("the names visible in every frame are streamer-mode
+    # identities, not real accounts" -- screenshots-checklist.md), and the checklist's own
+    # anti-patterns list bans personal Roblox account names. Nothing enforced that: it was a
+    # habit, and habits do not survive a six-language sweep run by whoever is free that day.
+    #
+    # This is the same class of leak the -StoreFrame comment above already documents for desktop
+    # captures, caught at a different layer: PrintWindow keeps the DESKTOP out of frame, and this
+    # keeps the ACCOUNT LIST out of it.
+    $settingsPath = Join-Path $env:LOCALAPPDATA 'ROROROblox\settings.json'
+    if (Test-Path $settingsPath) {
+        $sj = Get-Content $settingsPath -Raw | ConvertFrom-Json
+        $streamer = if ($sj.PSObject.Properties.Name -contains 'streamerMode') { [bool]$sj.streamerMode } else { $false }
+        if (-not $streamer -and -not $AllowRealIdentities) {
+            throw ("REFUSING to capture store frames with streamer mode OFF. Real Roblox account " +
+                   "names would be baked into shippable assets. Turn on Settings > Accounts > " +
+                   "streamer mode, restart the app, and re-run. (Override only if this profile has " +
+                   "no real accounts: -AllowRealIdentities.)")
+        }
     }
     Write-Host "Store-frame mode: window composited onto ${CanvasWidth}x${CanvasHeight} navy, to $OutDir"
 }
