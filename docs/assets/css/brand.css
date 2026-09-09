@@ -407,6 +407,33 @@ main blockquote p:last-child { margin-bottom: 0; }
   height: auto;
 }
 
+/* ---------- Launch video ---------- */
+/* Same frame treatment as .hero__shot, minus the gradient overlay —
+   it would dim the player controls. */
+.video-frame {
+  margin: 24px 0 8px;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-2);
+  box-shadow: 0 24px 64px rgba(0,0,0,.55), var(--inner-stroke);
+  background: var(--bg-1);
+}
+.video-frame video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+.video-frame figcaption {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-1);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
 /* ---------- Surfaces gallery ---------- */
 .surfaces {
   display: grid;

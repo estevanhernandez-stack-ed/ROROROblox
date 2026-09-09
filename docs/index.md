@@ -45,6 +45,16 @@ No DevTools. No registry edits. No telemetry. The Roblox client launches unmodif
 - **Start with Windows + Discord Join** — one toggle Windows stays in control of, and Join links that start RoRoRo even when it's closed.
 - **Auto-update that survives Roblox renames** — a signed remote feed tracks the current known-good Roblox version and mutex name.
 
+## See it run
+
+<figure class="video-frame" markdown="0">
+  <video controls preload="metadata" playsinline
+         poster="{{ '/videos/rororo-launch-poster.jpg' | relative_url }}">
+    <source src="{{ '/videos/rororo-launch-16x9.mp4' | relative_url }}" type="video/mp4" />
+  </video>
+  <figcaption>The launch cut — 53 seconds, sound on.</figcaption>
+</figure>
+
 ## Install it
 
 **Easiest:** [**install RoRoRo on the Microsoft Store**](https://apps.microsoft.com/detail/9NMJCS390KWB). Signed by Microsoft, no SmartScreen, auto-updates through the Store.
