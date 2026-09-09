@@ -22,15 +22,15 @@ stays as digits in any OVERLAY.
 
 ### accounts (slide 2)
 - OVERLAY: `zapisz raz. uruchamiaj.`
-- VO: `To jest RoRoRo! Zapisz każdy alt raz, a potem jedno kliknięcie na każdy. Status na żywo, gra, w której każdy właśnie jest, nawet RAM, który zjada każdy klient.`
+- VO: `To jest RoRoRo! Zapisz każdy alt raz, potem jedno kliknięcie na każdy. Status na żywo, w co kto gra, nawet ile RAM-u zjada każdy klient.`
 
 ### squad (slide 3)
-- OVERLAY: `ten sam serwer. wszystkie.`
+- OVERLAY: `ten sam priv. wszystkie.`
 - VO: `Squad Launch to najlepsze. Jeden link, i każde konto ląduje na TYM SAMYM prywatnym serwerze, razem.`
 
 ### history (slide 4)
 - OVERLAY: `teraz liczy punkty`
-- VO: `I liczy punkty! Szczyt altów naraz, łączny czas, ranking twoich altów z seriami logowań. Wszystko liczone na twojej maszynie, nic jej nie opuszcza.`
+- VO: `I liczy punkty! Rekord altów naraz, łączny czas, ranking altów z seriami logowań. Wszystko liczone u ciebie, nic nie wychodzi.`
 
 ### themes (slide 5)
 - OVERLAY: `AI tworzy twój motyw`
@@ -38,10 +38,10 @@ stays as digits in any OVERLAY.
 
 ### trust (slide 6)
 - OVERLAY: `hasło go nie dotyka`
-- VO: `Twoje hasło nigdy nie trafia do aplikacji, sejf jest zaszyfrowany, a czujnik pamięci przetwarza klienta, zanim wyciek go położy. Są nawet skróty klawiszowe.`
+- VO: `Hasło nigdy nie trafia do apki, sejf jest zaszyfrowany, a strażnik pamięci restartuje klienta, zanim wyciek go położy. Są nawet skróty klawiszowe.`
 
 ### cta (slide 7)
-- OVERLAY: `zeskanuj, otwórz na PC`
+- OVERLAY: `zeskanuj, otwórz na komputerze`
 - VO: `Za darmo w Microsoft Store, Windows I Mac. Zeskanuj kod, zapisz stronę, pobierz na komputer. RoRoRo, od sześć-dwa-sześć Labs. Imagine something else.`
 
 ## Post caption (for localized social posts)

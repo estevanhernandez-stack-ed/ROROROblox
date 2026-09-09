@@ -7,11 +7,6 @@ multilingual TTS, not listing copy.
 **Kept English on purpose:** RoRoRo, Squad Launch, 626 Labs, Microsoft Store,
 Roblox, RAM, Windows, Mac. The brand tagline speaks localized in this language
 (decision 2026-09-08): `Imagine algo diferente.` — « Imagine » is the native você-imperative of imaginar — the brand word survives letter-for-letter, matching the file's escaneie/salve/pegue voice.
-The kit said to reuse an existing per-language rendering of the tagline; there
-is none (it appears in no `listing-copy-*.md` and no `Strings.*.resx`, only as
-the English card footer), so rather than invent one it stays English and matches
-the footer that ships on the cards.
-
 **Spoken digits:** `626` is voiced as `seis-dois-seis Labs` in the cta line, and
 stays as digits in any OVERLAY.
 
@@ -27,10 +22,10 @@ stays as digits in any OVERLAY.
 
 ### squad (slide 3)
 - OVERLAY: `mesmo servidor privado. todos.`
-- VO: `Squad Launch é a melhor parte. Um link, e cada conta cai no MESMO servidor privado, juntas.`
+- VO: `Squad Launch é a melhor parte. Um link, e todas as contas caem no MESMO servidor privado, juntas.`
 
 ### history (slide 4)
-- OVERLAY: `agora ele conta pontos`
+- OVERLAY: `agora ele marca os pontos`
 - VO: `E ele marca os pontos! Pico de alts, tempo total, um ranking com sequências de login. Tudo calculado na sua máquina, nada sai.`
 
 ### themes (slide 5)
@@ -49,8 +44,8 @@ stays as digits in any OVERLAY.
 > which claim to cut and it comes back inside budget.
 
 ### cta (slide 7)
-- OVERLAY: `escaneie, abra no PC`
-- VO: `Grátis na Microsoft Store, Windows E Mac. Escaneie o código, salve a página, pegue no PC. RoRoRo, da seis-dois-seis Labs. Imagine algo diferente.`
+- OVERLAY: `escaneie, abra no computador`
+- VO: `Grátis na Microsoft Store, Windows E Mac. Escaneie o código, salve a página, pegue no computador. RoRoRo, da seis-dois-seis Labs. Imagine algo diferente.`
 
 ## Post caption (for localized social posts)
 

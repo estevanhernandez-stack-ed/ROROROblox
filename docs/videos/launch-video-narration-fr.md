@@ -7,11 +7,6 @@ multilingual TTS, not listing copy.
 **Kept English on purpose:** RoRoRo, Squad Launch, 626 Labs, Microsoft Store,
 Roblox, RAM, Windows, Mac. The brand tagline speaks localized in this language
 (decision 2026-09-08): `Imagine autre chose.` — « Imagine » is the native tu-imperative of imaginer — the brand word survives letter-for-letter.
-The kit said to reuse an existing per-language rendering of the tagline; there
-is none (it appears in no `listing-copy-*.md` and no `Strings.*.resx`, only as
-the English card footer), so rather than invent one it stays English and matches
-the footer that ships on the cards.
-
 **Spoken digits:** `626` is voiced as `six-deux-six Labs` in the cta line, and
 stays as digits in any OVERLAY.
 
@@ -30,20 +25,20 @@ stays as digits in any OVERLAY.
 - VO: `Squad Launch, c'est le meilleur. Un lien, et chaque compte atterrit dans le MÊME serveur privé, ensemble.`
 
 ### history (slide 4)
-- OVERLAY: `il compte les points`
+- OVERLAY: `il compte les points désormais`
 - VO: `Et il compte les points ! Pic d'alts simultanés, temps total, un classement de tes alts avec les séries de connexions. Tout calculé sur ta machine, rien n'en sort.`
 
 ### themes (slide 5)
 - OVERLAY: `l'IA crée ton thème`
-- VO: `Quatre thèmes intégrés, plus un créateur où une IA conçoit le tien à partir d'une ambiance.`
+- VO: `Quatre thèmes intégrés, plus un créateur où une IA conçoit le tien à partir d'une ambiance que tu décris.`
 
 ### trust (slide 6)
 - OVERLAY: `ton mot de passe n'y passe pas`
-- VO: `Ton mot de passe ne touche jamais l'appli, le coffre est chiffré, et la veille mémoire recycle un client avant qu'une fuite le plante. Et il y a des raccourcis clavier.`
+- VO: `Ton mot de passe ne touche jamais l'appli, le coffre est chiffré, et une surveillance mémoire recycle un client avant qu'une fuite le plante. Et il y a maintenant des raccourcis clavier.`
 
 ### cta (slide 7)
-- OVERLAY: `scanne, ouvre sur PC`
-- VO: `Gratuit sur le Microsoft Store, Windows ET Mac. Scanne le code, garde la page, prends-le sur ton PC. RoRoRo, de six-deux-six Labs. Imagine autre chose.`
+- OVERLAY: `scanne, ouvre sur ordi`
+- VO: `Gratuit sur le Microsoft Store, Windows ET Mac. Scanne le code, garde la page, prends-le sur ton ordi. RoRoRo, de six-deux-six Labs. Imagine autre chose.`
 
 ## Post caption (for localized social posts)
 

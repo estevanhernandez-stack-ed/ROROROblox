@@ -25,8 +25,8 @@ stays as digits in any OVERLAY.
 - VO: `Das ist RoRoRo! Jeden Alt einmal speichern, danach ein Klick pro Stück. Live-Status, das Spiel, in dem jeder gerade steckt, sogar der RAM, den jeder Client frisst.`
 
 ### squad (slide 3)
-- OVERLAY: `gleicher Server. alle.`
-- VO: `Squad Launch ist das Beste. Ein Link, und jeder einzelne Account landet im GLEICHEN privaten Server, zusammen.`
+- OVERLAY: `gleicher Privatserver. alle.`
+- VO: `Squad Launch ist das Beste. Ein Link, und jeder einzelne Account landet auf dem GLEICHEN privaten Server, zusammen.`
 
 ### history (slide 4)
 - OVERLAY: `jetzt mit Statistik`
@@ -38,14 +38,14 @@ stays as digits in any OVERLAY.
 
 ### trust (slide 6)
 - OVERLAY: `dein Passwort bleibt draußen`
-- VO: `Dein Passwort berührt die App nie, der Tresor ist verschlüsselt, und ein Speicher-Wächter recycelt einen Client, bevor ein Leck ihn abstürzen lässt. Es gibt jetzt sogar Tastenkürzel.`
+- VO: `Dein Passwort gelangt nie in die App, der Tresor ist verschlüsselt, und ein Speicher-Wächter recycelt einen Client, bevor ein Leck ihn abstürzen lässt. Es gibt jetzt sogar Tastenkürzel.`
 
 ### cta (slide 7)
-- OVERLAY: `scannen, am PC öffnen`
+- OVERLAY: `scannen, am Rechner öffnen`
 - VO: `Kostenlos im Microsoft Store, Windows UND Mac. Scanne den Code, speichere die Seite, hol es dir auf den Rechner. RoRoRo, von sechs-zwei-sechs Labs. Imagine something else.`
 
 ## Post caption (for localized social posts)
 
-`Acht Roblox-Clients auf einem PC — kostenlos. RoRoRo speichert deine Alts, startet sie mit je einem Klick, bringt sie in denselben privaten Server und führt jetzt deine Statistiken. Windows + Mac. Such nach RORORO. Nicht mit Roblox verbunden.`
+`Acht Roblox-Clients auf einem PC — kostenlos. RoRoRo speichert deine Alts, startet sie mit je einem Klick, bringt sie auf denselben privaten Server und führt jetzt deine Statistiken. Windows + Mac. Such nach RORORO. Steht in keiner Verbindung zu Roblox.`
 
 The not-affiliated sentence is mandatory and is present above.

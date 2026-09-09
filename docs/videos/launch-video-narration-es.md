@@ -6,12 +6,7 @@ multilingual TTS, not listing copy.
 
 **Kept English on purpose:** RoRoRo, Squad Launch, 626 Labs, Microsoft Store,
 Roblox, RAM, Windows, Mac. The brand tagline speaks localized in this language
-(decision 2026-09-08): `Imagina algo diferente.` — Register-consistent with the file's tú voice (escanea, bájalo). The usted form « Imagine algo diferente. » would keep the brand word letter-for-letter at the cost of an audible register switch — flagged for the verification pass to adjudicate.
-The kit said to reuse an existing per-language rendering of the tagline; there
-is none (it appears in no `listing-copy-*.md` and no `Strings.*.resx`, only as
-the English card footer), so rather than invent one it stays English and matches
-the footer that ships on the cards.
-
+(decision 2026-09-08): `Imagina algo diferente.` — Register-consistent with the file's tú voice (escanea, bájalo). The usted alternate « Imagine algo diferente. » was adjudicated 2026-09-08 and rejected: letter-identity is a print argument, and spoken, the register switch is the audible one.
 **Spoken digits:** `626` is voiced as `seis-dos-seis Labs` in the cta line, and
 stays as digits in any OVERLAY.
 
@@ -35,10 +30,10 @@ stays as digits in any OVERLAY.
 
 ### themes (slide 5)
 - OVERLAY: `la IA crea tu tema`
-- VO: `Cuatro temas integrados, y un creador donde una IA diseña el tuyo desde una vibe.`
+- VO: `Cuatro temas integrados, y un creador donde una IA diseña el tuyo con la vibra que describas.`
 
 ### trust (slide 6)
-- OVERLAY: `tu contraseña nunca lo toca`
+- OVERLAY: `tu contraseña nunca la toca`
 - VO: `Tu contraseña nunca toca la app, la bóveda va cifrada, y el vigía de memoria recicla el cliente antes de que una fuga lo tumbe. Y hay atajos de teclado.`
 
 > **Over budget: 115% of the English syllable count (53 vs 46).** This is the densest line in the script — it carries four
@@ -49,8 +44,8 @@ stays as digits in any OVERLAY.
 > which claim to cut and it comes back inside budget.
 
 ### cta (slide 7)
-- OVERLAY: `escanea, abre en el PC`
-- VO: `Gratis en Microsoft Store, Windows Y Mac. Escanea el código, guarda la página, bájalo en tu PC. RoRoRo, de seis-dos-seis Labs. Imagina algo diferente.`
+- OVERLAY: `escanea, abre en tu compu`
+- VO: `Gratis en Microsoft Store, Windows Y Mac. Escanea el código, guarda la página, bájalo en tu compu. RoRoRo, de seis-dos-seis Labs. Imagina algo diferente.`
 
 ## Post caption (for localized social posts)
 
