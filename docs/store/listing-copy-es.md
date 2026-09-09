@@ -100,3 +100,33 @@ Sigue siendo inglés de fondo
 ```
 "Roblox" y el logotipo de Roblox son marcas de Roblox Corporation. RORORO es una herramienta independiente de terceros, no afiliada, avalada ni patrocinada por Roblox Corporation. El término se usa únicamente para describir compatibilidad con la plataforma Roblox. RORORO lanza el cliente oficial de Roblox sin modificaciones.
 ```
+
+## Screenshot captions (one per image, in file-number order)
+
+Partner Center takes one caption per screenshot. These are in the order the files sort:
+`01-accounts-running.png`, `02-themes.png`, `03-about.png`, `04-games.png`, `05-diagnostics.png`, `06-history.png`, `07-plugins.png`, `08-theme-builder.png`, `09-compact.png`, `10-multi-instance.png`.
+
+```
+Tres cuentas ejecutándose a la vez, cada una con su propio uso de memoria y su propio botón de parada. Las cookies se cifran por usuario con Windows DPAPI y nunca salen de la máquina.
+Cuatro temas integrados. Flatline no transmite ningún significado mediante el color, así que no se pierde nada con daltonismo, un panel malo o sol directo.
+Multi-launcher para Windows. Retiene el mutex singleton de Roblox para que el siguiente cliente se abra en vez de pelear con el primero. Una reimplementación limpia, no un fork.
+Guarda los juegos y servidores privados a los que juegas de verdad y elige uno distinto por cuenta antes de lanzar.
+Diagnóstico muestra lo que RoRoRo ve ahora mismo: versiones, estado y dónde están los registros, para cuando necesites reportar algo.
+Cada lanzamiento queda registrado, así ves qué cuenta jugó a qué y durante cuánto tiempo.
+Los plugins se ejecutan como procesos separados y preguntan primero. Concedes cada permiso por su nombre y puedes revocarlo después.
+Crea un tema con diez colores y aparece en el selector. Es un archivo JSON, así que puedes pasárselo a otra persona.
+El modo compacto muestra solo lo que está en marcha. Fíjalo en una esquina de la pantalla y vuelve al juego.
+Ocho clientes de Roblox, ocho cuentas, un PC. El título de cada ventana lleva la cuenta que ha iniciado sesión en ella, así siempre sabes cuál es cuál.
+```
+
+## Keywords (max 7, 40 chars each, 21 words total — one per box)
+
+```
+roblox
+multi instancia
+multicuenta
+launcher
+gestor de cuentas
+cuentas alt
+multibox
+```

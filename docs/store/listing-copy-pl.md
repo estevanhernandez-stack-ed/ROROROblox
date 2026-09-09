@@ -99,3 +99,33 @@ W środku nadal angielski
 ```
 „Roblox" i logo Roblox są znakami towarowymi Roblox Corporation. RORORO to niezależne narzędzie zewnętrzne, niepowiązane z Roblox Corporation, nierekomendowane ani niesponsorowane przez nią. Znak towarowy służy wyłącznie opisaniu zgodności z platformą Roblox. RORORO uruchamia oficjalnego klienta Roblox bez modyfikacji.
 ```
+
+## Screenshot captions (one per image, in file-number order)
+
+Partner Center takes one caption per screenshot. These are in the order the files sort:
+`01-accounts-running.png`, `02-themes.png`, `03-about.png`, `04-games.png`, `05-diagnostics.png`, `06-history.png`, `07-plugins.png`, `08-theme-builder.png`, `09-compact.png`, `10-multi-instance.png`.
+
+```
+Trzy konta działają naraz, każde z własnym zużyciem pamięci i własnym przyciskiem zatrzymania. Ciasteczka szyfruje Windows DPAPI osobno dla każdego użytkownika i nigdy nie opuszczają komputera.
+Cztery wbudowane motywy. Flatline w ogóle nie przekazuje znaczenia kolorem, więc nic nie ginie przy daltonizmie, słabej matrycy ani w pełnym słońcu.
+Multi-launcher na Windowsa. Trzyma mutex singletona Roblox, żeby kolejny klient się otwierał, zamiast walczyć z pierwszym. Czysta reimplementacja, nie fork.
+Zapisz gry i prywatne serwery, w które naprawdę grasz, a przed startem wybierz inne dla każdego konta.
+Diagnostyka pokazuje, co RoRoRo widzi w tej chwili: wersje, stan i miejsce logów — na wypadek, gdy trzeba coś zgłosić.
+Każde uruchomienie jest zapisywane, więc widzisz, które konto w co grało i jak długo.
+Wtyczki działają jako osobne procesy i najpierw pytają. Każde uprawnienie przyznajesz z nazwy i możesz je później cofnąć.
+Zbuduj motyw z dziesięciu kolorów, a pojawi się na liście. To plik JSON, więc możesz go komuś przekazać.
+Tryb kompaktowy pokazuje tylko to, co działa. Przypnij go w rogu ekranu i wracaj do gry.
+Osiem klientów Roblox, osiem kont, jeden PC. Tytuł każdego okna niesie konto, które jest w nim zalogowane, więc zawsze wiesz, które jest które.
+```
+
+## Keywords (max 7, 40 chars each, 21 words total — one per box)
+
+```
+roblox
+wiele instancji
+multikonto
+launcher
+menedżer kont
+konta alt
+multibox
+```

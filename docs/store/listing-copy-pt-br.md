@@ -100,3 +100,33 @@ Ainda inglês no fundo
 ```
 "Roblox" e o logotipo Roblox são marcas da Roblox Corporation. O RORORO é uma ferramenta independente de terceiros, não afiliada, endossada ou patrocinada pela Roblox Corporation. O termo é usado apenas para descrever compatibilidade com a plataforma Roblox. O RORORO inicia o cliente oficial do Roblox sem modificações.
 ```
+
+## Screenshot captions (one per image, in file-number order)
+
+Partner Center takes one caption per screenshot. These are in the order the files sort:
+`01-accounts-running.png`, `02-themes.png`, `03-about.png`, `04-games.png`, `05-diagnostics.png`, `06-history.png`, `07-plugins.png`, `08-theme-builder.png`, `09-compact.png`, `10-multi-instance.png`.
+
+```
+Três contas rodando ao mesmo tempo, cada uma com seu próprio uso de memória e seu próprio botão de parada. Os cookies são criptografados por usuário com o Windows DPAPI e nunca saem da máquina.
+Quatro temas nativos. O Flatline não transmite nenhum significado pela cor, então nada se perde com daltonismo, um monitor ruim ou sol direto.
+Multi-launcher para Windows. Segura o mutex singleton do Roblox para que o próximo cliente abra em vez de brigar com o primeiro. Uma reimplementação limpa, não um fork.
+Salve os jogos e servidores privados que você realmente joga e escolha um diferente para cada conta antes de iniciar.
+O Diagnóstico mostra o que o RoRoRo enxerga agora: versões, saúde e onde ficam os logs, para quando você precisar relatar algo.
+Cada inicialização fica registrada, então você vê qual conta jogou o quê e por quanto tempo.
+Os plugins rodam como processos separados e perguntam antes. Você concede cada permissão pelo nome e pode revogá-la depois.
+Monte um tema com dez cores e ele aparece no seletor. É um arquivo JSON, então dá para passar para outra pessoa.
+O modo compacto mostra só o que está rodando. Fixe num canto da tela e volte para o jogo.
+Oito clientes Roblox, oito contas, um PC. O título de cada janela carrega a conta conectada nela, então você sempre sabe qual é qual.
+```
+
+## Keywords (max 7, 40 chars each, 21 words total — one per box)
+
+```
+roblox
+multi instância
+multi-conta
+launcher
+gerenciador de contas
+contas alt
+multibox
+```

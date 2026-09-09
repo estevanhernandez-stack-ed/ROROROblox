@@ -43,9 +43,21 @@ WinUI one, not the same artifact.
 
 ## Phase A — listing languages (no code; can start any release)
 
-Partner Center → Store listings → add a language; each added language gets its own
-description, features, and what's-new fields. Screenshots may carry over from the default
-language at first (the UI is English regardless — honest either way).
+Partner Center → Store listings → add a language; each added language gets its own product
+name, description, features, what's-new, **keywords**, and a **caption per screenshot** — six
+translated fields, not the three this line used to name.
+
+> **~~Screenshots may carry over from the default language at first (the UI is English
+> regardless — honest either way).~~ Stale 2026-09-08, v1.27.** That sentence was written
+> 2026-09-05, before the app was localized, and its justification has since inverted: the UI is
+> *not* English regardless. Captions and keywords are translated as of v1.27. The screenshot
+> **images** still carry over from English, which is now a known gap rather than an honest
+> default — a localized listing shows ten English frames under a description promising the app
+> speaks the reader's language. Recapture is 10 shots × 6 languages against real accounts and
+> running clients, so it is a v1.28 item, not a v1.27 blocker.
+>
+> Keywords were the costlier half of that miss: it is the search field, so English there does
+> not merely read oddly, it makes the listing unfindable by anyone typing their own language.
 
 - **The language set (measured 2026-09-05):** Este pulled Partner Center's
   acquisitions-by-market CSV — 577 installs, ~43% from non-English markets against an

@@ -183,6 +183,24 @@ roblox, multi instance, multi-account, launcher, account manager, alt accounts, 
 > marketplace or contract versions; write for the customer's vocabulary ("the server you were
 > in," never "instance"); do not describe defect mechanics in a public field.
 
+## Screenshot captions (one per image, in file-number order)
+
+Partner Center takes one caption per screenshot. These are in the order the files sort:
+`01-accounts-running.png`, `02-themes.png`, `03-about.png`, `04-games.png`, `05-diagnostics.png`, `06-history.png`, `07-plugins.png`, `08-theme-builder.png`, `09-compact.png`, `10-multi-instance.png`.
+
+```
+Three accounts running at once, each with its own memory use and its own stop button. Cookies are encrypted per user with Windows DPAPI and never leave the machine.
+Four built-in themes. Flatline carries no meaning in colour at all, so nothing is lost to colour blindness, a bad panel, or direct sun.
+Multi-launcher for Windows. Holds the Roblox singleton mutex so the next client opens instead of fighting the first. A clean reimplementation, not a fork.
+Save the games and private servers you actually play, then pick a different one per account before you launch.
+Diagnostics shows what RoRoRo can see right now: versions, health, and where the logs are, for when you need to file something.
+Every launch is recorded, so you can see which account played what and for how long.
+Plugins run as separate processes and ask first. You grant each capability by name, and you can revoke it later.
+Build a theme from ten colours and it shows up in the picker. It is a JSON file, so you can hand it to someone else.
+Compact mode shows only what is running. Pin it to a corner of the screen and get back to the game.
+Eight Roblox clients, eight accounts, one PC. Each window title carries the account signed into it, so you always know which is which.
+```
+
 ## Multi-feature value justification (10.1.4.4.b — DO NOT SKIP)
 
 A reviewer reading our description must see **multiple** features spanning discovery, engagement, and retention — not one trick. The list above is engineered around that:

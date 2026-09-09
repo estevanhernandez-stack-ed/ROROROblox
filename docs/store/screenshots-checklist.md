@@ -97,6 +97,13 @@ with `-CanvasWidth 1280 -CanvasHeight 720` rather than upscaling the window.
 
 ### Captions, written 2026-08-12 against the frames rather than the brief
 
+> **Captions are now per-language (2026-09-08).** The ten below are the English set; the
+> translations live in `listing-copy-<code>.md` under "Screenshot captions". Caption 01 was
+> changed from "its own Stop button" to "its own stop button" — that label is localized now
+> (pl `Zatrzymaj`, de `Stoppen`), so a caption that quotes the English word would name
+> something the reader's app does not say. Captions describe actions, not button labels.
+
+
 Partner Center shows these under each screenshot, and they double as the alt text, so they are
 written to be useful read aloud with no image at all. Second person, sentence case, no
 marketing verbs. **Each one describes what is actually visible in its own frame** — the earlier
@@ -105,7 +112,7 @@ show.
 
 | file | caption |
 |---|---|
-| `01-accounts-running.png` | Three accounts running at once, each with its own memory use and its own Stop button. Cookies are encrypted per user with Windows DPAPI and never leave the machine. |
+| `01-accounts-running.png` | Three accounts running at once, each with its own memory use and its own stop button. Cookies are encrypted per user with Windows DPAPI and never leave the machine. |
 | `02-themes.png` | Four built-in themes. Flatline carries no meaning in colour at all, so nothing is lost to colour blindness, a bad panel, or direct sun. |
 | `03-about.png` | Multi-launcher for Windows. Holds the Roblox singleton mutex so the next client opens instead of fighting the first. A clean reimplementation, not a fork. |
 | `04-games.png` | Save the games and private servers you actually play, then pick a different one per account before you launch. |

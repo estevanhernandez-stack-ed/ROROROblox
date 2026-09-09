@@ -101,3 +101,33 @@ Toujours l'anglais au fond
 ```
 « Roblox » et le logo Roblox sont des marques de Roblox Corporation. RORORO est un outil tiers indépendant, non affilié à, ni approuvé, ni sponsorisé par Roblox Corporation. Le terme n'est utilisé que pour décrire la compatibilité avec la plateforme Roblox. RORORO lance le client Roblox officiel sans le modifier.
 ```
+
+## Screenshot captions (one per image, in file-number order)
+
+Partner Center takes one caption per screenshot. These are in the order the files sort:
+`01-accounts-running.png`, `02-themes.png`, `03-about.png`, `04-games.png`, `05-diagnostics.png`, `06-history.png`, `07-plugins.png`, `08-theme-builder.png`, `09-compact.png`, `10-multi-instance.png`.
+
+```
+Trois comptes lancés en même temps, chacun avec sa mémoire utilisée et son propre bouton d'arrêt. Les cookies sont chiffrés par utilisateur avec Windows DPAPI et ne quittent jamais la machine.
+Quatre thèmes intégrés. Flatline ne fait passer aucune information par la couleur, donc rien ne se perd avec le daltonisme, un mauvais écran ou en plein soleil.
+Multi-lanceur pour Windows. Détient le mutex singleton de Roblox pour que le client suivant s'ouvre au lieu de se battre avec le premier. Une réimplémentation propre, pas un fork.
+Enregistrez les jeux et les serveurs privés auxquels vous jouez vraiment, puis choisissez-en un différent par compte avant de lancer.
+Diagnostics montre ce que RoRoRo voit à l'instant : versions, état de santé et emplacement des journaux, pour le jour où vous devez signaler quelque chose.
+Chaque lancement est enregistré, vous voyez donc quel compte a joué à quoi et pendant combien de temps.
+Les plugins tournent comme des processus séparés et demandent d'abord. Vous accordez chaque capacité par son nom, et vous pouvez la révoquer ensuite.
+Composez un thème à partir de dix couleurs et il apparaît dans le sélecteur. C'est un fichier JSON, vous pouvez donc le donner à quelqu'un d'autre.
+Le mode compact n'affiche que ce qui tourne. Épinglez-le dans un coin de l'écran et retournez jouer.
+Huit clients Roblox, huit comptes, un seul PC. Chaque titre de fenêtre porte le compte qui y est connecté, vous savez donc toujours qui est qui.
+```
+
+## Keywords (max 7, 40 chars each, 21 words total — one per box)
+
+```
+roblox
+multi-instance
+multi-compte
+launcher
+gestionnaire de comptes
+comptes alt
+multibox
+```

@@ -93,8 +93,9 @@ BLOCKS = [
     ("list", "features", "Product features", 200, "Up to 20. Partner Center takes one per box - Add more."),
 
     ("section", "", "Screenshots and images", None, None),
-    ("folder", "screenshots", "Screenshots", None,
-     "At least one required. 1366 x 768 or larger, .png, under 50 MB, max 30 files."),
+    ("folder", "screenshots", "Screenshots", 200,
+     "At least one required. 1366 x 768 or larger, .png, under 50 MB, max 30 files. "
+     "Each image takes its own caption, which doubles as its alt text."),
     ("slots", "logos", "Store logos", None,
      "9:16 Poster art is the main logo on Windows 10/11. Box art is the fallback."),
     ("slots", "display", "Store display images", None, "Shown in Store surfaces on Windows 10/11."),
@@ -134,6 +135,7 @@ def parse_english() -> dict:
         "long": block_after(t, r"## Long description"),
         "features": block_after(t, r"## Product features"),
         "whatsnew": block_after(wn, r"## English"),
+        "captions": block_after(t, r"## Screenshot captions"),
         "copyright_tm": cr + "\n\n" + tm,
         "license": block_after(t, r"## Additional license terms"),
         "developedby": block_after(t, r"## Developed by"),
@@ -151,11 +153,14 @@ def parse_language(lang: str, en: dict) -> dict:
         "long": block_after(t, r"## Long description"),
         "features": block_after(t, r"## Product features"),
         "whatsnew": block_after(t, r"## What's new in this version"),
+        "captions": block_after(t, r"## Screenshot captions"),
+        # Keywords ARE translated: this is the search field, so English here would be the one
+        # place a fallback silently costs discovery rather than merely reading oddly.
+        "keywords": block_after(t, r"## Keywords"),
         "copyright_tm": cr + "\n\n" + tm,
-        # Not translated in the repo - Partner Center takes the English for these.
+        # Legal boilerplate stays English - it names a US entity and an MIT licence text.
         "license": en["license"],
         "developedby": en["developedby"],
-        "keywords": en["keywords"],
     }
 
 
@@ -186,6 +191,14 @@ def build_data() -> tuple[dict, list[str]]:
             "files": sorted(p.name for p in shots_dir.iterdir() if p.suffix.lower() == ".png"),
         }
     }
+
+    # Captions are matched to files by position, so a count mismatch would silently caption the
+    # wrong image rather than fail - worth a warning at generate time.
+    n_shots = len(folders["screenshots"]["files"])
+    for lang, c in copy.items():
+        n_caps = len([x for x in c["captions"].split("\n") if x.strip()])
+        if n_caps != n_shots:
+            warnings.append(f"{lang}: {n_caps} captions for {n_shots} screenshots")
 
     slots = {}
     for key, entries in SLOTS.items():
@@ -307,6 +320,10 @@ HTML = """<meta charset="utf-8">
   .fnum { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-mute); min-width: 20px; padding-top: 3px; font-variant-numeric: tabular-nums; }
   .ftext { flex: 1; font-size: 14px; }
   .fen { display: block; color: var(--ink-mute); font-size: 12.5px; margin-top: 3px; }
+  /* Magenta is the brand's second accent and has no other job on this page, so it marks the one
+     thing in a row that is NOT pasted text: the file you upload alongside the caption. */
+  .shotfile { display: block; font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: var(--magenta); letter-spacing: .02em; margin-bottom: 3px; }
 
   table.slots { width: 100%; border-collapse: collapse; }
   table.slots td { padding: 9px 16px; border-bottom: 1px solid var(--line); font-size: 13.5px; vertical-align: middle; }
@@ -464,9 +481,29 @@ function render() {
       const c = document.createElement("code"); c.className = "path"; c.textContent = f.cmd; row.appendChild(c);
       row.appendChild(makeBtn("Copy path", f.path, "ghost"));
       sec.appendChild(row);
-      const files = document.createElement("div"); files.className = "files";
-      f.files.forEach((n) => { const s = document.createElement("span"); s.className = "file"; s.textContent = n; files.appendChild(s); });
-      sec.appendChild(files);
+      // Each row pairs the file being uploaded with the caption that goes under it, in upload
+      // order, so the two never drift apart while working down the form.
+      const caps = (copy.captions || "").split("\\n").filter((x) => x.trim());
+      const enCaps = (en.captions || "").split("\\n").filter((x) => x.trim());
+      const ol = document.createElement("ol"); ol.className = "items";
+      f.files.forEach((n, i) => {
+        const cap = caps[i] || "";
+        const li = document.createElement("li");
+        const num = document.createElement("span"); num.className = "fnum";
+        num.textContent = String(i + 1).padStart(2, "0"); li.appendChild(num);
+        const tx = document.createElement("div"); tx.className = "ftext";
+        const fn = document.createElement("span"); fn.className = "shotfile"; fn.textContent = n; tx.appendChild(fn);
+        const cp = document.createElement("span"); cp.textContent = cap || "(no caption)"; tx.appendChild(cp);
+        if (showEn && lang !== "en" && enCaps[i] && enCaps[i] !== cap) {
+          const s2 = document.createElement("span"); s2.className = "fen"; s2.textContent = enCaps[i]; tx.appendChild(s2);
+        }
+        li.appendChild(tx);
+        const cc = document.createElement("span");
+        cc.className = "count " + countClass(cap.length, b.cap); cc.textContent = cap.length; li.appendChild(cc);
+        li.appendChild(makeBtn("Copy", cap));
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
       const p = document.createElement("p"); p.className = "hint";
       p.textContent = (b.note ? b.note + " " : "") + "A browser can't open a local folder - paste the command in a terminal at the repo root.";
       sec.appendChild(p);
