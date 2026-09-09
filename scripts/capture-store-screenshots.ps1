@@ -38,6 +38,9 @@ $root   = Join-Path $PSScriptRoot '..\docs\store\screenshots'
 # harness surface id -> shipped carousel filename. Kept here rather than in ui-routes.json
 # because it is a STORE concern: the routes describe the app, this describes the listing.
 $MAP = [ordered]@{
+    # 01 is capturable ONLY while real clients are running -- the harness may photograph that
+    # state, it just may not create it (deny list + macro wall). Included conditionally below.
+    '01' = '01-accounts-running.png'
     '05' = '03-about.png'
     '08' = '04-games.png'
     '07' = '05-diagnostics.png'
@@ -46,10 +49,20 @@ $MAP = [ordered]@{
     '10' = '08-theme-builder.png'
 }
 $SKIPPED = @(
-    '01-accounts-running.png  (needs live Roblox clients)'
-    '09-compact.png           (needs live Roblox clients)'
-    '10-multi-instance.png    (needs live Roblox clients; the shipped one is a composite)'
+    '09-compact.png           (needs live Roblox clients AND compact mode)'
+    '10-multi-instance.png    (needs eight live clients; the shipped one is a composite)'
 )
+
+# Drop 01 when nothing is running: capturing an idle roster under the filename
+# "01-accounts-running" would ship a screenshot whose own caption ("Three accounts running at
+# once, each with its own memory use") the frame does not support.
+$liveClients = @(Get-Process -Name 'RobloxPlayerBeta' -ErrorAction SilentlyContinue).Count
+if ($liveClients -lt 1) {
+    $MAP.Remove('01')
+    $SKIPPED = ,'01-accounts-running.png  (no live clients running - launch some and re-run)' + $SKIPPED
+} else {
+    Write-Host "$liveClients live Roblox client(s) - 01-accounts-running is capturable." -ForegroundColor Green
+}
 
 function Invoke-OneLanguage {
     param([string]$Culture)

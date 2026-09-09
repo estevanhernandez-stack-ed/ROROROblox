@@ -860,10 +860,10 @@ function Write-RunManifest {
 
 function Open-AppearancePage {
     param([Parameter(Mandatory)]$Scope)
-    Resolve-UiaElement -Scope $Scope -Type 'Button' -Name 'Settings' -Verb 'invoke' |
+    Resolve-UiaElement -Scope $Scope -Type 'Button' -Aid 'ToolbarSettings' -Verb 'invoke' |
         ForEach-Object { $_.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke() }
     Start-Sleep -Milliseconds 800
-    Resolve-UiaElement -Scope $Scope -Type 'ListItem' -Name 'Appearance' -Verb 'select' -Within 'SettingsNav' |
+    Resolve-UiaElement -Scope $Scope -Type 'ListItem' -Aid 'NavAppearance' -Verb 'select' -Within 'SettingsNav' |
         ForEach-Object { $_.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select() }
     Start-Sleep -Milliseconds 500
 }
@@ -871,7 +871,7 @@ function Open-AppearancePage {
 function Close-Preferences {
     param([Parameter(Mandatory)]$Scope)
     try {
-        Resolve-UiaElement -Scope $Scope -Type 'Window' -Name 'Settings' -Verb 'close-window' |
+        Resolve-UiaElement -Scope $Scope -Type 'Window' -Aid 'ShellWindow' -Verb 'close-window' |
             ForEach-Object { $_.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern).Close() }
         Start-Sleep -Milliseconds 400
     }
