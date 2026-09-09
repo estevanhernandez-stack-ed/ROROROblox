@@ -3,6 +3,10 @@
 > Transcribed frame by frame from [`rororo-launch-16x9.mp4`](rororo-launch-16x9.mp4)
 > (57 s, 1920×1080, H.264 + AAC) on 2026-09-08. The script did not exist as text in this repo —
 > the video arrived as a finished artifact — so this file is now the source of truth for its copy.
+>
+> This file is the **visual layer** — what viewers read. The narration the voice speaks lives in
+> [`launch-video-narration-en.md`](launch-video-narration-en.md), awaiting the same six-language
+> round trip. The two together cover the whole video.
 
 ## Read this before typesetting anything
 
