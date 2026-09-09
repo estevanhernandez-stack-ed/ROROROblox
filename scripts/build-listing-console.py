@@ -16,9 +16,20 @@ Re-run after any listing-copy change; the page is generated, never hand-edited.
 """
 from __future__ import annotations
 
+import base64
+import io
 import json
 import re
 from pathlib import Path
+
+from PIL import Image
+
+# Screenshot thumbnails ride along as base64 JPEGs rather than file references. Two reasons, and
+# the first is hard: the published artifact's CSP blocks images from every origin, so a <img
+# src="screenshots/01.png"> renders as a broken icon there no matter what the path says. The
+# second is that base64 is ASCII, so embedding them keeps the whole file's pure-ASCII property.
+THUMB_WIDTH = 260
+THUMB_QUALITY = 72
 
 ROOT = Path(__file__).resolve().parent.parent
 STORE = ROOT / "docs" / "store"
@@ -119,6 +130,23 @@ BLOCKS = [
 ]
 
 
+def thumb_uri(path: Path) -> str:
+    """Downscale one screenshot to a data: URI small enough to embed ten of."""
+    with Image.open(path) as im:
+        im = im.convert("RGB")
+        h = round(im.height * THUMB_WIDTH / im.width)
+        im = im.resize((THUMB_WIDTH, h), Image.LANCZOS)
+        buf = io.BytesIO()
+        im.save(buf, format="JPEG", quality=THUMB_QUALITY, optimize=True)
+    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+
+
+def reviewer_letter() -> str:
+    """The current release's letter to the Store reviewer, or empty if it isn't written yet."""
+    p = STORE / f"reviewer-letter-{VERSION}.md"
+    return p.read_text(encoding="utf-8").strip() if p.exists() else ""
+
+
 def block_after(text: str, heading_pattern: str) -> str:
     m = re.search(heading_pattern + r".*?\n```\n(.*?)\n```", text, re.S)
     return m.group(1).strip() if m else ""
@@ -184,11 +212,12 @@ def build_data() -> tuple[dict, list[str]]:
     shots_rel = str(shots_dir.relative_to(ROOT)).replace("/", "\\")
     gfx_rel = str(gfx_dir.relative_to(ROOT)).replace("/", "\\")
 
+    shot_paths = sorted(p for p in shots_dir.iterdir() if p.suffix.lower() == ".png")
     folders = {
         "screenshots": {
             "path": shots_rel,
             "cmd": f"explorer {shots_rel}",
-            "files": sorted(p.name for p in shots_dir.iterdir() if p.suffix.lower() == ".png"),
+            "files": [{"name": p.name, "thumb": thumb_uri(p)} for p in shot_paths],
         }
     }
 
@@ -223,6 +252,9 @@ def build_data() -> tuple[dict, list[str]]:
             f"dist\\RORORO-Store-x64-{VERSION}.msix",
             f"dist\\RORORO-Store-arm64-{VERSION}.msix",
         ],
+        # Not a listing field - it goes in the submission's Notes for certification, once per
+        # release rather than once per language, so it sits at the bottom below the packages.
+        "reviewerLetter": reviewer_letter(),
     }, warnings
 
 
@@ -324,6 +356,17 @@ HTML = """<meta charset="utf-8">
      thing in a row that is NOT pasted text: the file you upload alongside the caption. */
   .shotfile { display: block; font-family: "JetBrains Mono", monospace; font-size: 11px;
     color: var(--magenta); letter-spacing: .02em; margin-bottom: 3px; }
+  .shotthumb { width: 132px; flex: 0 0 132px; border-radius: 5px; border: 1px solid var(--line);
+    cursor: zoom-in; background: var(--ground); display: block; }
+  .shotthumb:hover { border-color: var(--cyan); }
+
+  details.letter { border-top: 1px solid var(--line); }
+  details.letter > summary { cursor: pointer; padding: 12px 16px; font-size: 13px; font-weight: 600;
+    color: var(--cyan); list-style: none; }
+  details.letter > summary::-webkit-details-marker { display: none; }
+  details.letter > summary::before { content: "\\25B8\\00a0"; display: inline-block; transition: transform .15s; }
+  details.letter[open] > summary::before { content: "\\25BE\\00a0"; }
+  details.letter pre.text { max-height: 520px; font-family: "JetBrains Mono", monospace; font-size: 12.5px; line-height: 1.65; }
 
   table.slots { width: 100%; border-collapse: collapse; }
   table.slots td { padding: 9px 16px; border-bottom: 1px solid var(--line); font-size: 13.5px; vertical-align: middle; }
@@ -362,6 +405,9 @@ HTML = """<meta charset="utf-8">
 
   <h3 class="rule">Packages to upload</h3>
   <div id="packages"></div>
+
+  <h3 class="rule">Notes for certification</h3>
+  <div id="letter"></div>
 </div>
 
 <script>
@@ -486,13 +532,23 @@ function render() {
       const caps = (copy.captions || "").split("\\n").filter((x) => x.trim());
       const enCaps = (en.captions || "").split("\\n").filter((x) => x.trim());
       const ol = document.createElement("ol"); ol.className = "items";
-      f.files.forEach((n, i) => {
+      f.files.forEach((file, i) => {
         const cap = caps[i] || "";
         const li = document.createElement("li");
         const num = document.createElement("span"); num.className = "fnum";
         num.textContent = String(i + 1).padStart(2, "0"); li.appendChild(num);
+        // The thumbnail is the point of this row: ten filenames all look alike, one glance at the
+        // frame does not. Clicking opens it full size in a new tab.
+        const thumb = document.createElement("img");
+        thumb.className = "shotthumb"; thumb.src = file.thumb; thumb.alt = cap || file.name;
+        thumb.loading = "lazy";
+        thumb.addEventListener("click", () => {
+          const w = window.open();
+          if (w) { w.document.write('<img src="' + file.thumb + '" style="width:100%">'); w.document.close(); }
+        });
+        li.appendChild(thumb);
         const tx = document.createElement("div"); tx.className = "ftext";
-        const fn = document.createElement("span"); fn.className = "shotfile"; fn.textContent = n; tx.appendChild(fn);
+        const fn = document.createElement("span"); fn.className = "shotfile"; fn.textContent = file.name; tx.appendChild(fn);
         const cp = document.createElement("span"); cp.textContent = cap || "(no caption)"; tx.appendChild(cp);
         if (showEn && lang !== "en" && enCaps[i] && enCaps[i] !== cap) {
           const s2 = document.createElement("span"); s2.className = "fen"; s2.textContent = enCaps[i]; tx.appendChild(s2);
@@ -591,6 +647,37 @@ pkgHint.className = "hint";
 pkgHint.textContent = "Both go in the Packages slot. Unsigned by design \\u2014 Partner Center signs after upload.";
 pkgSec.appendChild(pkgHint);
 $("#packages").appendChild(pkgSec);
+
+// The reviewer letter is per-release, not per-language, so it lives below the listings rather
+// than inside them. Collapsed by default: it is long, and it is read once per submission.
+const letterSec = document.createElement("section");
+letterSec.className = "field";
+if (DATA.reviewerLetter) {
+  letterSec.appendChild(head("Letter to the Store reviewer \\u00b7 v" + DATA.version, [
+    Object.assign(document.createElement("span"), {
+      className: "count", textContent: DATA.reviewerLetter.length + " chars"
+    }),
+    makeBtn("Copy", DATA.reviewerLetter)
+  ]));
+  const det = document.createElement("details");
+  det.className = "letter";
+  const sum = document.createElement("summary");
+  sum.textContent = "Read it";
+  det.appendChild(sum);
+  const pre = document.createElement("pre");
+  pre.className = "text"; pre.textContent = DATA.reviewerLetter;
+  det.appendChild(pre);
+  letterSec.appendChild(det);
+  const lh = document.createElement("p"); lh.className = "hint";
+  lh.textContent = "Goes in Notes for certification on the submission page \\u2014 once per release, English only.";
+  letterSec.appendChild(lh);
+} else {
+  letterSec.appendChild(head("Letter to the Store reviewer", []));
+  const lh = document.createElement("p"); lh.className = "hint";
+  lh.textContent = "Not written yet for v" + DATA.version + " \\u2014 expected at docs/store/reviewer-letter-" + DATA.version + ".md";
+  letterSec.appendChild(lh);
+}
+$("#letter").appendChild(letterSec);
 
 pick.addEventListener("change", () => { current = Number(pick.value); store.set("rororo.listing", current); render(); });
 $("#showen").addEventListener("change", (e) => { showEn = e.target.checked; store.set("rororo.showen", showEn); render(); });
