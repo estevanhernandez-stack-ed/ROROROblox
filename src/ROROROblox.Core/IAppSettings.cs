@@ -207,4 +207,12 @@ public interface IAppSettings
     /// </summary>
     Task<string?> GetUiLanguageAsync();
     Task SetUiLanguageAsync(string? cultureName);
+
+    /// <summary>
+    /// True when external metric alerts (<see cref="ROROROblox.Core.Discord.AlertKind.MetricBreach"/>)
+    /// are allowed to reach the alert router. Defaults to false — a feature that starts alerting
+    /// on upgrade is a bug, so this is opt-in like every other alert kind.
+    /// </summary>
+    Task<bool> GetMetricAlertsEnabledAsync();
+    Task SetMetricAlertsEnabledAsync(bool enabled);
 }

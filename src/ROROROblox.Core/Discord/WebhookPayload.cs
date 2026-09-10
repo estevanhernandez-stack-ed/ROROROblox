@@ -50,6 +50,11 @@ public sealed record WebhookPayload(string Title, string Body)
                 $"• {Name(t)} — back in its server",
             AlertKind.UptimeMark =>
                 "• The scheduled all-good mark. A missing one is worth a look.",
+            // GameName carries the metric id, PrivateBytes the observed value. No unit: this kind
+            // is raised by Level and Event rules as well as Rate, so "per minute" would be wrong
+            // for two of the three, and AlertTrigger does not carry which rule fired.
+            AlertKind.MetricBreach when t.PrivateBytes is { } v =>
+                $"• {Name(t)} — {t.GameName} at {v}",
             _ => $"• {Name(t)}{(t.GameName is null ? "" : $" — {t.GameName}")}",
         });
 

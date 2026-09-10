@@ -203,6 +203,8 @@ public class StreamerIdentityProviderTests
         public Task SetCompactModeAsync(bool compact) => throw new NotImplementedException();
         public Task<string?> GetUiLanguageAsync() => throw new NotImplementedException();
         public Task SetUiLanguageAsync(string? cultureName) => throw new NotImplementedException();
+        public Task<bool> GetMetricAlertsEnabledAsync() => throw new NotImplementedException();
+        public Task SetMetricAlertsEnabledAsync(bool enabled) => throw new NotImplementedException();
     }
 
     private sealed class InMemoryIdentityStore : IStreamerIdentityStore

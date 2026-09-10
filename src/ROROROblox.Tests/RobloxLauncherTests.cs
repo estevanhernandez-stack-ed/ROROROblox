@@ -784,6 +784,9 @@ public class RobloxLauncherTests
         public string? UiLanguage { get; set; }
         public Task<string?> GetUiLanguageAsync() => Task.FromResult(UiLanguage);
         public Task SetUiLanguageAsync(string? cultureName) { UiLanguage = cultureName; return Task.CompletedTask; }
+        public bool MetricAlertsEnabled { get; set; }
+        public Task<bool> GetMetricAlertsEnabledAsync() => Task.FromResult(MetricAlertsEnabled);
+        public Task SetMetricAlertsEnabledAsync(bool enabled) { MetricAlertsEnabled = enabled; return Task.CompletedTask; }
     }
 
     private sealed class RecordingProcessStarter : IProcessStarter
