@@ -6,7 +6,10 @@ namespace ROROROblox.Tests.Metrics;
 public class MetricRoutingTests
 {
     private static AlertTrigger Breach(Guid id) =>
-        new(AlertKind.MetricBreach, id, "Masked", "Real", "battle.points", 50, DateTimeOffset.UnixEpoch);
+        // PrivateBytes stays null for this kind: the observed number rides MetricValue, because a
+        // long? truncated every fraction. Routing ignores both; the fixture carries them so it does
+        // not teach the next reader the convention this branch replaced.
+        new(AlertKind.MetricBreach, id, "Masked", "Real", "battle.points", null, DateTimeOffset.UnixEpoch, 50);
 
     [Fact]
     public void Configured_RoutesToItsDestination()
