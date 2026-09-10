@@ -59,6 +59,14 @@ public sealed class MetricHistory(int capacity = 64)
         lock (series.Samples) return series.Samples.Count == 0 ? null : series.Samples[^1].Value;
     }
 
+    /// <summary>True when the two most recent samples differ. Used by
+    /// <see cref="MetricRuleKind.Event"/>; false when there are fewer than two.</summary>
+    public bool Changed(Guid accountId, string metricId)
+    {
+        if (!_series.TryGetValue((accountId, metricId), out var series)) return false;
+        lock (series.Samples) return series.Samples.Count >= 2 && series.Samples[^1].Value != series.Samples[^2].Value;
+    }
+
     /// <summary>
     /// Change per minute across the samples inside <paramref name="window"/>, or <c>null</c> when
     /// that cannot be measured: fewer than two samples in the window, a zero-length span, a
