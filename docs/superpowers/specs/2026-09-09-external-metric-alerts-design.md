@@ -168,3 +168,34 @@ no vendor-specific anything in the shipped binary.**
 5. **Manifest rotation drill** — change a field path in the manifest, re-sign, and confirm a
    running install picks it up without a rebuild. That is the entire justification for the
    manifest; if it is never exercised it is speculative complexity.
+
+## §6 Carried out of plan 1 — binding on plan 2 (added 2026-09-09)
+
+Plan 1 (core: history, rules, coordinator, `AlertKind.MetricBreach`) landed on
+`feat/metric-alerts-core`. Its final whole-branch review surfaced four things that plan 1 could
+not fix because they live at the RPC ingress plan 2 builds. They are recorded here rather than in
+a scratch ledger so plan 2 cannot miss them.
+
+1. **The setting has no reader, and off-by-default currently rests on the wrong thing.**
+   `IAppSettings.GetMetricAlertsEnabledAsync` exists and defaults false, but nothing consults it.
+   The feature is off today only because `MetricBreachDestinations` is empty and routes nowhere.
+   **Plan 2 must enforce the setting at the RPC ingress** — reject reported observations while it
+   is off. If plan 3 populates destinations from a manifest without that gate, the toggle is
+   decorative, and a user who turned the feature off still gets paged.
+
+2. **A clock-skewed reporter silently disables Rate rules and only Rate rules.**
+   `MetricHistory` filters samples against the host clock, while `ObservedAtUtc` comes from the
+   reporter. A plugin that sends local time in a UTC+2 zone puts every sample in the future, the
+   in-window set is empty, the rate is forever null, and Rate never fires. Level and Event keep
+   working, because neither consults time. The failure shape is "the feature half-works and nobody
+   can tell." Plan 2's RPC must reject or clamp future-dated observations, and say so in a log line.
+
+3. **The series dictionary is bounded per key, never by key count.** Each series is capped, but a
+   reporter whose `metricId` varies — a server id, a session suffix — or observations for deleted
+   accounts grow the dictionary for the process lifetime of a tray app that runs for days. Plan 2
+   validates metric ids at ingress, which is the cheap place to bound this.
+
+4. **`WebhookPayload` formats in the current culture** (pre-existing, not introduced here). A
+   French-locale user's clan channel already reads "4,1 GB" for the memory warning, and will read
+   "0,79" for a metric. Worth its own decision against the production formatter; it is not a metric
+   alerts problem and was deliberately not patched on this branch.
