@@ -186,8 +186,12 @@ In `src/ROROROblox.Core/Discord/DiscordConfig.cs`, beside `UptimeMarkDestination
 and add the arm to `DestinationsFor`. Match the existing arms' shape exactly — several read `(PluralList, LegacySingular)` to migrate a pre-fanout blob. `MetricBreach` has no legacy singular because it never shipped one, so it returns its list directly:
 
 ```csharp
-            AlertKind.MetricBreach => MetricBreachDestinations,
+            AlertKind.MetricBreach => (MetricBreachDestinations, AlertDestination.None),
 ```
+
+The arms destructure a `(PluralList, LegacySingular)` tuple to migrate a pre-fanout config
+blob. `MetricBreach` has no legacy singular because it never shipped one, so it passes
+`AlertDestination.None` — the same shape `Recycled` and `UptimeMark` use.
 
 - [ ] **Step 6: Run the tests**
 
