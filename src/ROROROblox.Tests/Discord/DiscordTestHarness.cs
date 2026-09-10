@@ -372,6 +372,8 @@ internal static class DiscordTestHarness
         public Task SetCompactModeAsync(bool compact) => Task.CompletedTask;
         public Task<string?> GetUiLanguageAsync() => Task.FromResult<string?>(null);
         public Task SetUiLanguageAsync(string? cultureName) => Task.CompletedTask;
+        public Task<bool> GetMetricAlertsEnabledAsync() => Task.FromResult(false);
+        public Task SetMetricAlertsEnabledAsync(bool enabled) => Task.CompletedTask;
     }
 
     private sealed class FakeFavoriteGameStore : IFavoriteGameStore

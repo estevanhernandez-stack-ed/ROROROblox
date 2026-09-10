@@ -317,6 +317,24 @@ public sealed class AppSettings : IAppSettings, IDisposable
         finally { _gate.Release(); }
     }
 
+    public async Task<bool> GetMetricAlertsEnabledAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { return (await LoadAsync().ConfigureAwait(false)).MetricAlertsEnabled; }
+        finally { _gate.Release(); }
+    }
+
+    public async Task SetMetricAlertsEnabledAsync(bool enabled)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var s = await LoadAsync().ConfigureAwait(false);
+            await SaveAsync(s with { MetricAlertsEnabled = enabled }).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
     public async Task<bool> GetStreamerModeAsync()
     {
         await _gate.WaitAsync().ConfigureAwait(false);
@@ -575,8 +593,8 @@ public sealed class AppSettings : IAppSettings, IDisposable
     // SettingsBlob: missing fields decode as defaults (System.Text.Json), so older v1 blobs
     // without LaunchMainOnStartup, BloxstrapWarningDismissed, MuteIdleAlerts,
     // IdleWarnThresholdMinutes, CarefulSquadLaunch, StreamerMode, MemoryWatchdogEnabled,
-    // MemoryReserveMb, MemoryCapMb, ProjectionWarnMinutes, CompactMode, or
-    // DismissedFpsCapWarningSignature
+    // MemoryReserveMb, MemoryCapMb, ProjectionWarnMinutes, CompactMode,
+    // DismissedFpsCapWarningSignature, or MetricAlertsEnabled
     // load cleanly with those fields at their defaults — no migration step. MemoryReserveMb/
     // MemoryCapMb default to null ("never set" — the composition root derives from installed
     // RAM); they are NOT sentinel-zero because 0 is a real, distinct user choice for MemoryCapMb
@@ -609,5 +627,6 @@ public sealed class AppSettings : IAppSettings, IDisposable
         double? MainWindowWidth = null,
         double? MainWindowHeight = null,
         bool MainWindowMaximized = false,
-        Dictionary<string, bool>? EdgeRemediationAnswers = null);
+        Dictionary<string, bool>? EdgeRemediationAnswers = null,
+        bool MetricAlertsEnabled = false);
 }

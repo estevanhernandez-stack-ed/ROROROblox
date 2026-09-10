@@ -67,6 +67,7 @@ public static class AlertStatusLine
             .Concat(config.DestinationsFor(AlertKind.MemoryWarning))
             .Concat(config.DestinationsFor(AlertKind.Recycled))
             .Concat(config.DestinationsFor(AlertKind.UptimeMark))
+            .Concat(config.DestinationsFor(AlertKind.MetricBreach))
             .ToArray();
 
         if (routed.All(d => d == AlertDestination.None))

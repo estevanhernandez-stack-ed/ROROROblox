@@ -29,6 +29,33 @@ public class WebhookPayloadTests
         Assert.Contains("C", payload.Body, StringComparison.Ordinal);
     }
 
+    private static AlertTrigger Breach(string name, double? value) =>
+        new(AlertKind.MetricBreach, Guid.NewGuid(), name, $"real_{name}", "battle.points", null,
+            new DateTimeOffset(2026, 9, 9, 3, 14, 0, TimeSpan.Zero), value);
+
+    [Fact]
+    public void ForAlert_MetricBreach_RendersTheObservedValueWithoutFlatteningIt()
+    {
+        // The fractional value is the point. This line carried a long? until 2026-09-09, so a
+        // Level rule on a 0.0-1.0 ratio read "at 0" for 0.79 and for a genuine zero alike — the
+        // unknown-is-not-zero conflation the metric core defends against, arriving at the last
+        // step instead. Unit-free by design: Level and Event rules raise this same kind, so
+        // "per minute" would be wrong for two of the three.
+        var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, [Breach("BaronBloxwell", 0.79)]);
+
+        Assert.Equal("• BaronBloxwell — battle.points at 0.79", payload.Body);
+    }
+
+    [Fact]
+    public void ForAlert_MetricBreachWithNoValue_FallsThroughToTheGenericLine()
+    {
+        // No reading is not a reading of zero, here too: with nothing to report the line names the
+        // account and the metric and claims no number at all.
+        var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, [Breach("BaronBloxwell", null)]);
+
+        Assert.Equal("• BaronBloxwell — battle.points", payload.Body);
+    }
+
     [Fact]
     public void WebhookPayload_HasNoFieldThatCouldCarryAServerLink()
     {

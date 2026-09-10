@@ -34,6 +34,9 @@ public sealed record WebhookPayload(string Title, string Body)
             // GameName carries "6 accounts in", composed by the tracker's caller. No identity in
             // either, so streamer mode has nothing to mask.
             AlertKind.UptimeMark => $"{Name(triggers[0])} — {triggers[0].GameName}",
+            // GameName carries the metric id for this kind (later tasks rely on that), not a
+            // game — see MetricObservation and AlertTriggerSource.
+            AlertKind.MetricBreach => $"{noun} — {triggers[0].GameName}",
             _ => noun,
         };
 
@@ -47,6 +50,15 @@ public sealed record WebhookPayload(string Title, string Body)
                 $"• {Name(t)} — back in its server",
             AlertKind.UptimeMark =>
                 "• The scheduled all-good mark. A missing one is worth a look.",
+            // GameName carries the metric id, MetricValue the observed number. No unit: this kind
+            // is raised by Level and Event rules as well as Rate, so "per minute" would be wrong
+            // for two of the three, and AlertTrigger does not carry which rule fired.
+            // `0.##` because the value is a double of unknown scale: a points-per-minute rate
+            // wants to read "50", not "50.00", while a 0.0-1.0 ratio has to survive as "0.79" —
+            // it rode a long? until 2026-09-09 and rendered "at 0" for 0.79 and for nothing alike.
+            // Two decimals is where a metric stops being a reading and starts being noise.
+            AlertKind.MetricBreach when t.MetricValue is { } v =>
+                $"• {Name(t)} — {t.GameName} at {v:0.##}",
             _ => $"• {Name(t)}{(t.GameName is null ? "" : $" — {t.GameName}")}",
         });
 

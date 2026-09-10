@@ -136,6 +136,17 @@ public class SettingsReachabilityTests
             + "'EdgeRemediationAnswers' and the accessor is 'EdgeRemediationAnswer'. A control that "
             + "edits the whole map would be a settings editor, which is the thing this cycle is "
             + "arguing against."),
+
+        new("MetricAlertsEnabled",
+            "No control yet by design, not an oversight (metric-alerts-core plan, Task 6, "
+            + "2026-09-09; docs/superpowers/specs/2026-09-09-external-metric-alerts-design.md). This "
+            + "plan wires AlertKind.MetricBreach, MetricHistory and the three rules through Core "
+            + "only. There is no RPC yet for a plugin to report a MetricObservation over (plan 2) "
+            + "and no signed manifest or plugin that could produce one (plan 3), so no metric can "
+            + "ever be configured — a Settings toggle today would be reachable but inert, changing "
+            + "nothing a user could observe. The accessor pair ships now so plan 2/3 do not also "
+            + "need to touch AppSettings.cs; the control ships with plan 3, the first point there is "
+            + "a metric for it to gate."),
     ];
 
     /// <summary>
