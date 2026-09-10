@@ -34,6 +34,9 @@ public sealed record WebhookPayload(string Title, string Body)
             // GameName carries "6 accounts in", composed by the tracker's caller. No identity in
             // either, so streamer mode has nothing to mask.
             AlertKind.UptimeMark => $"{Name(triggers[0])} — {triggers[0].GameName}",
+            // GameName carries the metric id for this kind (later tasks rely on that), not a
+            // game — see MetricObservation and AlertTriggerSource.
+            AlertKind.MetricBreach => $"{noun} — {triggers[0].GameName}",
             _ => noun,
         };
 

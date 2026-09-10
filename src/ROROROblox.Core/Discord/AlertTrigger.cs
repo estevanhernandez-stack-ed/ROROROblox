@@ -1,7 +1,11 @@
 namespace ROROROblox.Core.Discord;
 
-/// <summary>The two things worth waking someone up for. Deliberately not extensible without a
-/// design decision — session-expired and landed-elsewhere were considered and cut (spec §11).</summary>
+/// <summary>
+/// The things worth waking someone up for. NOT extensible without a design decision:
+/// session-expired and landed-elsewhere were considered and cut (spec §11), and
+/// <see cref="MetricBreach"/> was added only with a written design
+/// (specs/2026-09-09-external-metric-alerts-design.md).
+/// </summary>
 public enum AlertKind
 {
     AccountDroppedOut,
@@ -16,6 +20,12 @@ public enum AlertKind
     /// system can give. Carrier AccountId is Guid.Empty — a global mark must not be silenced
     /// by any one account's mute.</summary>
     UptimeMark,
+
+    /// <summary>A user-configured metric crossed its rule — a contribution rate fell below a
+    /// floor, a level crossed a threshold, a tracked value changed. The number arrives from
+    /// outside the app; the RULE is evaluated here so this kind inherits mute, cooldown and
+    /// coalescing like every other.</summary>
+    MetricBreach,
 }
 
 /// <summary>

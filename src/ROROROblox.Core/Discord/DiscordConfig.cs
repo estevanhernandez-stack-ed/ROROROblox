@@ -48,6 +48,9 @@ public sealed record DiscordConfig
 
     public IReadOnlyList<AlertDestination> UptimeMarkDestinations { get; init; } = [];
 
+    /// <summary>Where a <see cref="AlertKind.MetricBreach"/> goes. Empty until the user opts in.</summary>
+    public IReadOnlyList<AlertDestination> MetricBreachDestinations { get; init; } = [];
+
     public IReadOnlyList<Guid> MutedAccountIds { get; init; } = [];
 
     /// <summary>The effective destination set for a kind — the list when present, else the
@@ -60,6 +63,7 @@ public sealed record DiscordConfig
             AlertKind.MemoryWarning => (MemoryWarningDestinations, MemoryWarningDestination),
             AlertKind.Recycled => (RecycledDestinations, AlertDestination.None),
             AlertKind.UptimeMark => (UptimeMarkDestinations, AlertDestination.None),
+            AlertKind.MetricBreach => (MetricBreachDestinations, AlertDestination.None),
             _ => ((IReadOnlyList<AlertDestination>)[], AlertDestination.None),
         };
 
