@@ -77,6 +77,33 @@ public class MetricAlertCoordinatorTests
     }
 
     [Fact]
+    public void TwoRulesOnOneMetricBothBreaching_StillProduceOneTrigger()
+    {
+        // Two rules sharing a MetricId is the designed case: the three rule kinds exist so one
+        // number can be judged several ways. Both breaching at once used to emit two triggers for
+        // one account, and AlertRouter — which groups per kind, as four shipped kinds need it to —
+        // handed WebhookPayload a batch that read "2 accounts — battle.points" with the same alt
+        // listed twice at two different values, in the clan channel, the one destination that uses
+        // real names. The tie-break is the configured order: first breaching rule wins.
+        var rate = new MetricRule(M, MetricRuleKind.Rate, 100, TimeSpan.FromMinutes(10));
+        var level = new MetricRule(M, MetricRuleKind.Level, 1000, TimeSpan.FromMinutes(10));
+
+        var (sut, clock) = New(rate, level);
+        sut.Observe(Obs(0, clock.GetUtcNow()), "Masked", "Real");
+        clock.Advance(TimeSpan.FromMinutes(10));
+        // 500 points in 10 minutes: 50/min, under the rate floor of 100 — and 500 is under the
+        // level floor of 1000. Both rules breach on this one observation.
+        var t = Assert.Single(sut.Observe(Obs(500, clock.GetUtcNow()), "Masked", "Real"));
+        Assert.Equal(50d, t.MetricValue);       // the rate rule, listed first, is the one that fired
+
+        var (reversed, clock2) = New(level, rate);
+        reversed.Observe(Obs(0, clock2.GetUtcNow()), "Masked", "Real");
+        clock2.Advance(TimeSpan.FromMinutes(10));
+        var t2 = Assert.Single(reversed.Observe(Obs(500, clock2.GetUtcNow()), "Masked", "Real"));
+        Assert.Equal(500d, t2.MetricValue);     // same observation, order reversed — the level wins
+    }
+
+    [Fact]
     public void TriggerCarriesNoProse()
     {
         // Core emits data; the App renders the sentence. GameName is reused as the metric id

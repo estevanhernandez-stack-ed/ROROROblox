@@ -30,7 +30,15 @@ public sealed record MetricRule(
 
 /// <summary>
 /// The outcome. <paramref name="Reason"/> is a resx KEY fragment, never a sentence —
-/// <c>CoreStringBoundaryFenceTests</c> bans prose in Core, and the App renders it through
-/// <c>CoreMessageCatalog</c>.
+/// <c>CoreStringBoundaryFenceTests</c> bans prose in Core.
+/// <para>
+/// Corrected 2026-09-09: this comment used to say "the App renders it through
+/// <c>CoreMessageCatalog</c>". It does not, and no path to it was ever built — that step was
+/// struck during execution. No alert kind routes prose through that class; all of them, this one
+/// included, compose their sentence in <c>WebhookPayload</c>, which is Core and deliberately
+/// English because one payload feeds the desktop toast, both webhooks and the phone. The key
+/// stays as diagnostic data for the later plan that surfaces WHY a rule fired; nothing reads it
+/// today, and a renderer must not be assumed to exist.
+/// </para>
 /// </summary>
 public sealed record MetricBreachVerdict(bool Breached, double? Observed, string? Reason);

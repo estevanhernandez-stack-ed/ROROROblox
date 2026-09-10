@@ -48,6 +48,15 @@ public enum AlertKind
 /// stream" problem, not something this type can solve — but it IS the reason no other destination
 /// gets <paramref name="RealName"/>.
 /// </para>
+/// <para>
+/// <paramref name="MetricValue"/> is the observed number behind a <see cref="AlertKind.MetricBreach"/>,
+/// and it is TRAILING and OPTIONAL on purpose: the four older kinds and every existing construction
+/// site compile untouched, so widening the record costs them nothing. It exists because
+/// <paramref name="PrivateBytes"/> is a <c>long?</c> — a byte count, honestly — and pouring a metric
+/// through it truncated every fraction, so a Level rule on a 0.0-1.0 ratio rendered "at 0" for 0.79
+/// and for nothing at all alike. That is the unknown-is-not-zero conflation the metric core defends
+/// against in three places; it must not come back at the display layer. Null for every other kind.
+/// </para>
 /// </summary>
 public sealed record AlertTrigger(
     AlertKind Kind,
@@ -56,4 +65,5 @@ public sealed record AlertTrigger(
     string RealName,
     string? GameName,
     long? PrivateBytes,
-    DateTimeOffset OccurredAtUtc);
+    DateTimeOffset OccurredAtUtc,
+    double? MetricValue = null);
