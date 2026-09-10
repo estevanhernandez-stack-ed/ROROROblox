@@ -89,6 +89,10 @@ A 626 Labs product.
 
 ## Product features (paste each as one feature; Partner Center accepts up to 20, ≤200 chars each)
 
+> One entry added 2026-09-09: per-account frame-rate control gets its own entry again. It
+> had been folded into the live-status line, but the live listing carried it standalone and
+> it is a control, not a readout. 19/20 entries used.
+>
 > One entry edited 2026-09-08 (v1.27.0.0): the language entry now says switching is instant and
 > covers the whole app rather than the screens alone. No new entry — v1.27 completes a claim the
 > v1.26 entry already made. Still 18/20 entries used.
@@ -111,6 +115,7 @@ A 626 Labs product.
 One-click multi-instance launcher for Roblox on Windows
 DPAPI-encrypted account vault with passphrase-protected export
 Live status for every account — which game it's in, idle time, and per-account frame-rate caps
+Per-account frame-rate caps, raised, lowered or lifted entirely per client
 Memory watchdog that learns each client's real RAM cost, plus one-click Recycle back into the same server
 Squad Launch and Friend Follow — same private server, or one public server together
 Join-by-link from any roblox.com URL, with saved private servers per account
