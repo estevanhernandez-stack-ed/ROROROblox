@@ -92,4 +92,27 @@ public class MetricHistoryTests
         Assert.Equal(2000d, Seeded((0, 1000), (10, 2000)).Latest(Acct, Metric));
         Assert.Null(new MetricHistory().Latest(Acct, Metric));
     }
+
+    [Fact]
+    public void AtCapacityWithTrimmedInWindowSamples_HasNoRate()
+    {
+        // capacity 4, but 10 samples land inside a 10-minute window: the earliest were trimmed,
+        // so any rate computed here would be measured over a span shorter than asked for and
+        // would read as underperformance that did not happen.
+        var h = new MetricHistory(capacity: 4);
+        for (var i = 0; i <= 9; i++) h.Add(new MetricObservation(Acct, Metric, i * 100, T(i)));
+
+        Assert.Null(h.RatePerMinute(Acct, Metric, TimeSpan.FromMinutes(10), T(9)));
+    }
+
+    [Fact]
+    public void AtCapacityButWindowFullyCovered_StillReportsARate()
+    {
+        // The guard must not fire when the retained samples DO span the whole window -- otherwise
+        // a correctly-sized capacity would stop reporting.
+        var h = new MetricHistory(capacity: 4);
+        for (var i = 0; i <= 9; i++) h.Add(new MetricObservation(Acct, Metric, i * 100, T(i)));
+
+        Assert.Equal(100d, h.RatePerMinute(Acct, Metric, TimeSpan.FromMinutes(3), T(9))!.Value, 3);
+    }
 }

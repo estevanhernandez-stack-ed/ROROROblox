@@ -48,8 +48,8 @@ public sealed class MetricHistory(int capacity = 64)
 
     /// <summary>
     /// Change per minute across the samples inside <paramref name="window"/>, or <c>null</c> when
-    /// that cannot be measured: fewer than two samples in the window, a zero-length span, or a
-    /// DECREASE anywhere in it.
+    /// that cannot be measured: fewer than two samples in the window, a zero-length span, a
+    /// DECREASE anywhere in it, or trimmed in-window data due to capacity bounds.
     ///
     /// <para>
     /// A decrease means the counter reset — a battle ended, a season rolled — and subtracting
@@ -57,17 +57,31 @@ public sealed class MetricHistory(int capacity = 64)
     /// Returning null makes the caller wait for the window to refill, which is the honest
     /// answer: after a reset there genuinely is no rate yet.
     /// </para>
+    /// <para>
+    /// When the series is at capacity and the oldest retained sample is newer than the window
+    /// cutoff, prior in-window samples have been trimmed and the rate would be measured over a
+    /// truncated span, under-reporting the true rate. Returning null is the honest answer: data loss
+    /// means we cannot trust the result.
+    /// </para>
     /// </summary>
     public double? RatePerMinute(Guid accountId, string metricId, TimeSpan window, DateTimeOffset nowUtc)
     {
         if (!_series.TryGetValue((accountId, metricId), out var list)) return null;
 
         Sample[] inWindow;
+        bool trimmedInWindowData = false;
         lock (list)
         {
             var cutoff = nowUtc - window;
             inWindow = [.. list.Where(s => s.AtUtc >= cutoff && s.AtUtc <= nowUtc)];
+            // If we're at capacity and the oldest retained sample is newer than the cutoff,
+            // in-window data may have been trimmed, so we can't trust the rate.
+            if (list.Count == _capacity && list[0].AtUtc > cutoff)
+            {
+                trimmedInWindowData = true;
+            }
         }
+        if (trimmedInWindowData) return null;
         if (inWindow.Length < 2) return null;
 
         for (var i = 1; i < inWindow.Length; i++)
