@@ -18,7 +18,16 @@ public sealed class MetricHistory(int capacity = 64)
 {
     private readonly record struct Sample(double Value, DateTimeOffset AtUtc);
 
-    private readonly ConcurrentDictionary<(Guid, string), List<Sample>> _series = new();
+    private sealed class Series
+    {
+        public readonly List<Sample> Samples = [];
+        /// <summary>Set once <see cref="Samples"/> has actually dropped an old sample. Distinct
+        /// from "full": a series holding exactly capacity items has evicted nothing, and its
+        /// history is complete.</summary>
+        public bool HasEvicted;
+    }
+
+    private readonly ConcurrentDictionary<(Guid, string), Series> _series = new();
     private readonly int _capacity = capacity > 1
         ? capacity
         : throw new ArgumentOutOfRangeException(nameof(capacity), "need room for at least two samples");
@@ -26,24 +35,28 @@ public sealed class MetricHistory(int capacity = 64)
     public void Add(MetricObservation o)
     {
         ArgumentNullException.ThrowIfNull(o);
-        var list = _series.GetOrAdd((o.AccountId, o.MetricId), _ => []);
-        lock (list)
+        var series = _series.GetOrAdd((o.AccountId, o.MetricId), _ => new Series());
+        lock (series.Samples)
         {
-            list.Add(new Sample(o.Value, o.ObservedAtUtc));
-            if (list.Count > _capacity) list.RemoveRange(0, list.Count - _capacity);
+            series.Samples.Add(new Sample(o.Value, o.ObservedAtUtc));
+            if (series.Samples.Count > _capacity)
+            {
+                series.Samples.RemoveRange(0, series.Samples.Count - _capacity);
+                series.HasEvicted = true;
+            }
         }
     }
 
     public int Count(Guid accountId, string metricId)
     {
-        if (!_series.TryGetValue((accountId, metricId), out var list)) return 0;
-        lock (list) return list.Count;
+        if (!_series.TryGetValue((accountId, metricId), out var series)) return 0;
+        lock (series.Samples) return series.Samples.Count;
     }
 
     public double? Latest(Guid accountId, string metricId)
     {
-        if (!_series.TryGetValue((accountId, metricId), out var list)) return null;
-        lock (list) return list.Count == 0 ? null : list[^1].Value;
+        if (!_series.TryGetValue((accountId, metricId), out var series)) return null;
+        lock (series.Samples) return series.Samples.Count == 0 ? null : series.Samples[^1].Value;
     }
 
     /// <summary>
@@ -66,17 +79,17 @@ public sealed class MetricHistory(int capacity = 64)
     /// </summary>
     public double? RatePerMinute(Guid accountId, string metricId, TimeSpan window, DateTimeOffset nowUtc)
     {
-        if (!_series.TryGetValue((accountId, metricId), out var list)) return null;
+        if (!_series.TryGetValue((accountId, metricId), out var series)) return null;
 
         Sample[] inWindow;
         bool trimmedInWindowData = false;
-        lock (list)
+        lock (series.Samples)
         {
             var cutoff = nowUtc - window;
-            inWindow = [.. list.Where(s => s.AtUtc >= cutoff && s.AtUtc <= nowUtc)];
-            // If we're at capacity and the oldest retained sample is newer than the cutoff,
+            inWindow = [.. series.Samples.Where(s => s.AtUtc >= cutoff && s.AtUtc <= nowUtc)];
+            // If eviction has occurred and the oldest retained sample is newer than the cutoff,
             // in-window data may have been trimmed, so we can't trust the rate.
-            if (list.Count == _capacity && list[0].AtUtc > cutoff)
+            if (series.HasEvicted && series.Samples[0].AtUtc > cutoff)
             {
                 trimmedInWindowData = true;
             }

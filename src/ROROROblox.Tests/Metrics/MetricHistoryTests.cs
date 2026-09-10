@@ -115,4 +115,15 @@ public class MetricHistoryTests
 
         Assert.Equal(100d, h.RatePerMinute(Acct, Metric, TimeSpan.FromMinutes(3), T(9))!.Value, 3);
     }
+
+    [Fact]
+    public void ExactlyAtCapacityWithNoEviction_StillReportsARate()
+    {
+        // Full is not the same as trimmed. A series holding exactly `capacity` samples has
+        // dropped nothing, so its history is complete and the rate is real.
+        var h = new MetricHistory(capacity: 4);
+        for (var i = 0; i <= 3; i++) h.Add(new MetricObservation(Acct, Metric, i * 100, T(i)));
+
+        Assert.Equal(100d, h.RatePerMinute(Acct, Metric, TimeSpan.FromMinutes(10), T(3))!.Value, 3);
+    }
 }
