@@ -23,6 +23,12 @@
   <ItemGroup>
     <ProjectReference Include="..\ROROROblox.Core\ROROROblox.Core.csproj" />
     <ProjectReference Include="..\ROROROblox.App\ROROROblox.App.csproj" />
+    <!-- The metric-alert smoke harness (tools/MetricSmoke). Referenced so ProfileGuard — which writes
+         the user's real settings, plugin consent and Discord webhook URLs when the harness runs for
+         real — is under the same unit suite as everything else. The direction is tests -> tool -> app;
+         nothing in src/ references tools/, and the Store build publishes the App project by path, so
+         this reference cannot reach a shipped binary. -->
+    <ProjectReference Include="..\..\tools\MetricSmoke\MetricSmoke.csproj" />
   </ItemGroup>
 
   <!-- Modal XAML copied next to the test binary so ModalDefaultButtonSafetyTests can assert that

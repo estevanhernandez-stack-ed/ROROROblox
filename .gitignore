@@ -38,6 +38,13 @@ consent.dat
 # Discord + phone-alert settings (DPAPI-encrypted; webhook URLs / push keys are bearer credentials)
 discord.dat
 notify.dat
+# Profile backups taken by tools/MetricSmoke while the metric-alert smoke harness runs. They live in
+# %LOCALAPPDATA%\ROROROblox\smoke-backup by default — outside any checkout — but discord.dat.bak is a
+# byte copy of the envelope holding two real webhook URLs, so the patterns are here for anyone who
+# points -BackupRoot at the repo. The guard deletes them as soon as a restore completes.
+smoke-backup/
+*.dat.bak
+smoke-run-in-progress.json
 last-update-check.txt
 webview2-data/
 # Plugin install root — sideloaded plugins land at %LOCALAPPDATA%\ROROROblox\plugins\.

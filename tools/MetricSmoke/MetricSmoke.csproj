@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- net10.0-windows10.0.19041.0 to match ROROROblox.App's TFM: a project reference needs the
+         same or a higher windows version than the project it references, and App is pinned there by
+         the WinRT projections packaged startup needs. WPF arrives transitively and is never used;
+         ROROROblox.Tests already references App the same way, which is the precedent. -->
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Core for AppSettings / DiscordConfig / DiscordConfigStore, App for ConsentStore (its only
+         usings are System.IO, Cryptography and Text.Json, so nothing WPF comes with it).
+         DIRECTION MATTERS: this tool references the app, never the reverse. The app must never
+         reference tools/, and the Store build cannot reach this project — build-msix.ps1 publishes
+         src/ROROROblox.App/ROROROblox.App.csproj by path, so nothing walks the solution file. The
+         ROROROblox.slnx entry exists only so ROROROblox.Tests can reference this project. -->
+    <ProjectReference Include="..\..\src\ROROROblox.Core\ROROROblox.Core.csproj" />
+    <ProjectReference Include="..\..\src\ROROROblox.App\ROROROblox.App.csproj" />
+  </ItemGroup>
+</Project>
