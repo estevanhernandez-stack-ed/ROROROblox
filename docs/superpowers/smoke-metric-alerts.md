@@ -15,12 +15,20 @@ Status key: `[ ]` not done · `[x]` done, with the date and what was seen · `[-
 ## Plan 1 — core (merged, PR #207, `9f39630`)
 
 Plan 1 shipped no reachable surface on its own: the coordinator existed, nothing fed it, and the
-opt-in setting had no reader. Plan 2 has now landed the RPC that feeds it, so the rows below are
-reachable — none of them has actually been run on a real machine yet.
+opt-in setting had no reader. Plan 2 landed the RPC that feeds it, and the whole-branch review then
+found the other half of the same hole: nothing in production ever wrote `MetricBreachDestinations`,
+so a breach resolved to no destination and was logged instead of delivered. It now defaults to the
+desktop toast.
 
-- [ ] **A breach reaches the desktop toast.**
-- [ ] **A breach reaches the phone.** Note the phone leg was only ever believed once a real
-      phone rang (phone-alerts spec §4) — the same discipline applies here.
+**The desktop toast is the only destination that works today.** Discord and phone routing for this
+kind need the Settings control that ships with plan 3 — until then there is no way to point a breach
+at a channel or a phone from a running app. Nothing below has been run on a real machine.
+
+- [ ] **A breach reaches the desktop toast.** The one delivery leg that is reachable today.
+- [-] **A breach reaches the phone.** Not runnable until plan 3 ships the routing control: no
+      surface writes a phone destination for this kind and the default is the desktop toast. Note
+      the phone leg was only ever believed once a real phone rang (phone-alerts spec §4) — the same
+      discipline applies here.
 - [ ] **The observed value renders legibly.** A fractional metric must read `0.79`, not `0`. The
       unit tests pin the formatter; only a real toast proves the sentence reads well at toast width.
 
@@ -49,8 +57,9 @@ reachable — none of them has actually been run on a real machine yet.
 - [ ] **The rules file is picked up, and its absence is inert.** With no rules file, confirm the
       app starts clean and never alerts. Add one, confirm it takes effect without a rebuild.
 - [ ] **A malformed rules file does not take the app down.** Truncate it mid-object and restart.
-- [ ] **Streamer mode masks the metric alert.** With streamer mode on, confirm the toast and the
-      personal webhook carry the masked name and only the clan destination carries the real one.
+- [ ] **Streamer mode masks the metric alert.** With streamer mode on, confirm the toast carries
+      the masked name. The webhook half of this row — personal masked, clan real — waits on plan 3's
+      routing control, because no breach can reach either channel before it.
 - [ ] **The plugin pipe still binds with the new RPC present.** A missing capability-map entry
       disables plugins for the whole session and is logged only at Debug — it does not crash. So
       confirm plugins still work at all after this change, not just that metrics work.

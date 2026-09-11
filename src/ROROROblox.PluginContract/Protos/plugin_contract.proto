@@ -307,7 +307,7 @@ message MetricReport {
   //
   // The host compares this against its own clock and drops a report stamped in the future,
   // with a log line. That asymmetry is worth knowing: a rate is computed over a time window
-  // and so a skewed clock silently disables rate rules ONLY, while level and change rules
+  // and so a skewed clock silently disables Rate rules ONLY, while Level and Event rules
   // keep working -- the feature half-works and nobody can tell. Send real UTC.
   int64 observed_at_unix_ms = 4;
 }

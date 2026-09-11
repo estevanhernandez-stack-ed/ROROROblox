@@ -36,6 +36,19 @@ public class MetricRoutingTests
     }
 
     [Fact]
+    public void OutOfTheBox_ABreachRoutesSomewhereRatherThanNowhere()
+    {
+        // The end-to-end claim rests on this one. Nothing in production writes
+        // MetricBreachDestinations — the Settings page paints checkboxes for the four older kinds
+        // only — so every test above was configuring by hand a list no user could ever set. With
+        // an empty default this assertion read Assert.Empty and the whole path died here.
+        var routed = AlertRouter.Route([Breach(Guid.NewGuid())], new DiscordConfig(),
+            new Dictionary<(Guid, AlertKind), DateTimeOffset>(), DateTimeOffset.UnixEpoch);
+
+        Assert.Equal(AlertDestination.Local, Assert.Single(routed).Destination);
+    }
+
+    [Fact]
     public void AMutedAccount_IsSilent()
     {
         var id = Guid.NewGuid();

@@ -1784,8 +1784,11 @@ public partial class App : Application
             // settings read), then keep it current on the view model's existing 30s tick. A tick
             // rather than a settings-change hook because there is no such hook to use: IAppSettings
             // broadcasts nothing, and this setting has no control to broadcast from — the toggle
-            // ships with plan 3, the first point there is a metric for it to gate (see
-            // SettingsReachabilityTests' allow-list entry). Until then only a hand-edited
+            // ships with the metric-alerts Settings section, which the signed-manifest plan brings
+            // along with the rule source and the routing destinations (see
+            // SettingsReachabilityTests' allow-list entry, corrected 2026-09-11: this used to say
+            // the toggle waited on there being a metric to gate, which stopped being true the day
+            // ReportMetric landed). Until then only a hand-edited
             // settings.json can change it, and the cost of noticing that up to 30 s late is one
             // missed report. Piggybacking the tick is this app's habit for exactly this reason —
             // the idle chips, the memory repaint and the uptime mark all ride it rather than stand

@@ -67,8 +67,15 @@ public static class AlertStatusLine
             .Concat(config.DestinationsFor(AlertKind.MemoryWarning))
             .Concat(config.DestinationsFor(AlertKind.Recycled))
             .Concat(config.DestinationsFor(AlertKind.UptimeMark))
-            .Concat(config.DestinationsFor(AlertKind.MetricBreach))
             .ToArray();
+
+        // MetricBreach is deliberately NOT in that list (2026-09-11). Every kind above is here
+        // because the user ticked a checkbox for it, and this sentence reports back what they
+        // ticked. MetricBreach now DEFAULTS to Local (see DiscordConfig) precisely because it has
+        // no checkbox yet, so counting it would make a fresh install claim alerts are configured
+        // when nothing is enabled — and the gate that actually decides whether a breach can fire,
+        // MetricAlertsEnabled, lives in settings.json where this composer cannot see it. Add it
+        // back in the same commit as the routing control the signed-manifest plan ships.
 
         if (routed.All(d => d == AlertDestination.None))
         {
