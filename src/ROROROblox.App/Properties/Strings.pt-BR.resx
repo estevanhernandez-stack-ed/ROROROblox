@@ -860,6 +860,9 @@
   <data name="SettingsPage_AlwaysShowRecycleOnRunning" xml:space="preserve">
     <value>Sempre mostrar Recycle nas contas em execução.</value>
   </data>
+  <data name="SettingsPage_AMetricCrossesAThreshold" xml:space="preserve">
+    <value>Uma métrica cruza um limite</value>
+  </data>
   <data name="SettingsPage_AnAccountDropsOut" xml:space="preserve">
     <value>Uma conta cai</value>
   </data>
@@ -985,6 +988,12 @@
   </data>
   <data name="SettingsPage_MemoryToKeepFreeMb" xml:space="preserve">
     <value>Memória a manter livre (MB)</value>
+  </data>
+  <data name="SettingsPage_MetricAlerts" xml:space="preserve">
+    <value>Alertas de métricas</value>
+  </data>
+  <data name="SettingsPage_MetricAlertsHint" xml:space="preserve">
+    <value>Avisa você quando um número enviado por um plugin cruza um limite que você define. Precisa de um plugin que o envie, e de um arquivo de regras.</value>
   </data>
   <data name="SettingsPage_MoveYourSavedAccountsTo" xml:space="preserve">
     <value>Mova suas contas salvas para outro PC. A exportação grava um arquivo criptografado por frase-senha; a importação o mescla sem mexer nas contas que já estão nesta máquina.</value>
@@ -1126,6 +1135,18 @@
   </data>
   <data name="SettingsPage_SendMemoryWarningsToThe_2" xml:space="preserve">
     <value>Enviar avisos de memória para o canal do clã no Discord</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToMy" xml:space="preserve">
+    <value>Enviar alertas de métricas para o meu canal</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToMy_2" xml:space="preserve">
+    <value>Enviar alertas de métricas para o meu celular</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToThe" xml:space="preserve">
+    <value>Enviar alertas de métricas para a área de trabalho</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToThe_2" xml:space="preserve">
+    <value>Enviar alertas de métricas para o canal do clã</value>
   </data>
   <data name="SettingsPage_SendRecycleNoticesToMy" xml:space="preserve">
     <value>Enviar avisos de reciclagem para o meu canal do Discord</value>

@@ -860,6 +860,9 @@
   <data name="SettingsPage_AlwaysShowRecycleOnRunning" xml:space="preserve">
     <value>Mostrar siempre Recycle en las cuentas en ejecución.</value>
   </data>
+  <data name="SettingsPage_AMetricCrossesAThreshold" xml:space="preserve">
+    <value>Una métrica cruza un umbral</value>
+  </data>
   <data name="SettingsPage_AnAccountDropsOut" xml:space="preserve">
     <value>Una cuenta se desconecta</value>
   </data>
@@ -985,6 +988,12 @@
   </data>
   <data name="SettingsPage_MemoryToKeepFreeMb" xml:space="preserve">
     <value>Memoria que mantener libre (MB)</value>
+  </data>
+  <data name="SettingsPage_MetricAlerts" xml:space="preserve">
+    <value>Alertas de métricas</value>
+  </data>
+  <data name="SettingsPage_MetricAlertsHint" xml:space="preserve">
+    <value>Te avisa cuando un número enviado por un plugin cruza un umbral que defines. Necesita un plugin que lo envíe, y un archivo de reglas.</value>
   </data>
   <data name="SettingsPage_MoveYourSavedAccountsTo" xml:space="preserve">
     <value>Traslada tus cuentas guardadas a otro PC. Exportar escribe un archivo cifrado con una frase de contraseña; importar lo fusiona sin tocar las cuentas que ya están en este equipo.</value>
@@ -1126,6 +1135,18 @@
   </data>
   <data name="SettingsPage_SendMemoryWarningsToThe_2" xml:space="preserve">
     <value>Enviar advertencias de memoria al canal de Discord del clan</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToMy" xml:space="preserve">
+    <value>Enviar alertas de métricas a mi canal</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToMy_2" xml:space="preserve">
+    <value>Enviar alertas de métricas a mi teléfono</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToThe" xml:space="preserve">
+    <value>Enviar alertas de métricas al escritorio</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToThe_2" xml:space="preserve">
+    <value>Enviar alertas de métricas al canal del clan</value>
   </data>
   <data name="SettingsPage_SendRecycleNoticesToMy" xml:space="preserve">
     <value>Enviar avisos de reconexión a mi canal de Discord</value>

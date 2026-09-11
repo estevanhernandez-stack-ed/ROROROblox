@@ -38,10 +38,17 @@ public class MetricRoutingTests
     [Fact]
     public void OutOfTheBox_ABreachRoutesSomewhereRatherThanNowhere()
     {
-        // The end-to-end claim rests on this one. Nothing in production writes
-        // MetricBreachDestinations — the Settings page paints checkboxes for the four older kinds
-        // only — so every test above was configuring by hand a list no user could ever set. With
-        // an empty default this assertion read Assert.Empty and the whole path died here.
+        // The end-to-end claim rests on this one: a breach with NOTHING configured still lands
+        // somewhere, which is what the desktop-toast default buys.
+        //
+        // Corrected 2026-09-11. This used to say nothing in production writes
+        // MetricBreachDestinations — that the Settings page painted checkboxes for the four older
+        // kinds only, so every test here configured by hand a list no user could ever set. The
+        // metric-alerts section landed that same day: the row's four boxes write the list through
+        // OnAlertRoutingChanged like every other kind's, and the switch above them writes the
+        // opt-in to settings.json. What survives the correction is the reason this test exists —
+        // with an empty default the assertion read Assert.Empty and the whole path died here, and
+        // a user who never opens Settings still gets the toast.
         var routed = AlertRouter.Route([Breach(Guid.NewGuid())], new DiscordConfig(),
             new Dictionary<(Guid, AlertKind), DateTimeOffset>(), DateTimeOffset.UnixEpoch);
 

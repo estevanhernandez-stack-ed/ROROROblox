@@ -860,6 +860,9 @@
   <data name="SettingsPage_AlwaysShowRecycleOnRunning" xml:space="preserve">
     <value>Zawsze pokazuj Recycle na uruchomionych kontach.</value>
   </data>
+  <data name="SettingsPage_AMetricCrossesAThreshold" xml:space="preserve">
+    <value>Wskaźnik przekracza próg</value>
+  </data>
   <data name="SettingsPage_AnAccountDropsOut" xml:space="preserve">
     <value>Konto wypada</value>
   </data>
@@ -985,6 +988,12 @@
   </data>
   <data name="SettingsPage_MemoryToKeepFreeMb" xml:space="preserve">
     <value>Pamięć do zachowania wolnej (MB)</value>
+  </data>
+  <data name="SettingsPage_MetricAlerts" xml:space="preserve">
+    <value>Alerty o wskaźnikach</value>
+  </data>
+  <data name="SettingsPage_MetricAlertsHint" xml:space="preserve">
+    <value>Powiadamia Cię, gdy liczba przesłana przez wtyczkę przekroczy próg, który ustalisz. Wymaga wtyczki, która ją przesyła, oraz pliku reguł.</value>
   </data>
   <data name="SettingsPage_MoveYourSavedAccountsTo" xml:space="preserve">
     <value>Przenieś zapisane konta na inny komputer. Eksport zapisuje plik zaszyfrowany hasłem dostępu; import scala go bez naruszania kont już obecnych na tym komputerze.</value>
@@ -1126,6 +1135,18 @@
   </data>
   <data name="SettingsPage_SendMemoryWarningsToThe_2" xml:space="preserve">
     <value>Wysyłaj ostrzeżenia o pamięci na kanał Discord klanu</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToMy" xml:space="preserve">
+    <value>Wysyłaj alerty o wskaźnikach na mój kanał</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToMy_2" xml:space="preserve">
+    <value>Wysyłaj alerty o wskaźnikach na mój telefon</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToThe" xml:space="preserve">
+    <value>Wysyłaj alerty o wskaźnikach na pulpit</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToThe_2" xml:space="preserve">
+    <value>Wysyłaj alerty o wskaźnikach na kanał klanu</value>
   </data>
   <data name="SettingsPage_SendRecycleNoticesToMy" xml:space="preserve">
     <value>Wysyłaj powiadomienia o ponownym połączeniu na mój kanał Discord</value>

@@ -273,6 +273,31 @@ internal partial class SettingsPage : UserControl, IDisposable
             AlwaysShowRecycleToggle.IsChecked = await _settings.GetAlwaysShowRecycleAsync();
             AutoForceStopToggle.IsChecked = await _settings.GetAutoForceStopAsync();
 
+            // The metric-alert opt-in, painted HERE with the other settings.json-backed toggles
+            // rather than in PopulateAlertControls, because that method paints from the Discord
+            // config and this value does not live there (see the XAML row's two-stores note).
+            // Order matters, mildly: this runs before PopulateAlertControls, whose
+            // RefreshAlertsStatus reads this checkbox for the status line.
+            //
+            // ITS OWN GUARD, NOT _suppressClickHandlers, and that is not belt-and-braces (review
+            // fix 2, 2026-09-11; this reason was corrected by the final whole-branch review the same
+            // day — the first version blamed OnDiscordConfigChanged, which is not subscribed until
+            // further down this method, AFTER the paint it claimed to be protecting).
+            //
+            // The real reason is what this paint is: the only one on the page whose handler a
+            // programmatic write actually raises. Every toggle above it is wired Click, which an
+            // IsChecked assignment never fires, so _suppressClickHandlers is belt for them and
+            // nothing more; this one is Checked/Unchecked and WOULD fire, turning a populate into a
+            // save and a gate nudge. A guard is therefore mandatory here, and it is a flag of its
+            // own so the toggle's safety does not depend on a flag another concern raises and
+            // clears — which OnDiscordConfigChanged becomes the moment it is subscribed below, on a
+            // dispatcher callback this page does not schedule. _paintingMetricAlertsToggle is set
+            // and cleared around this one assignment and nothing else can touch it. Today the value
+            // an unguarded write would save matches the file, so nothing breaks — which is exactly
+            // how this kind of path stays hidden until it does.
+            var metricAlertsEnabled = await _settings.GetMetricAlertsEnabledAsync();
+            PaintMetricAlertsToggle(metricAlertsEnabled);
+
             // Streamer mode reads through to IStreamerIdentityProvider via the view model — there is
             // no separate persisted flag here, which is why this reads the VM rather than _settings.
             // The SUBSCRIPTION is the load-bearing half: see OnViewModelPropertyChanged.
@@ -873,6 +898,40 @@ internal partial class SettingsPage : UserControl, IDisposable
         UptimeMarkMineCheck.IsChecked = uptime.Contains(AlertDestination.Mine);
         UptimeMarkClanCheck.IsChecked = uptime.Contains(AlertDestination.Clan);
         UptimeMarkPhoneCheck.IsChecked = uptime.Contains(AlertDestination.Phone);
+        // MetricBreach's routing lives in the same config as the four above it. Its ON/OFF switch
+        // does NOT — MetricAlertsEnabledToggle is painted from IAppSettings in OnLoaded.
+        var metric = config.DestinationsFor(AlertKind.MetricBreach);
+        MetricBreachLocalCheck.IsChecked = metric.Contains(AlertDestination.Local);
+        MetricBreachMineCheck.IsChecked = metric.Contains(AlertDestination.Mine);
+        MetricBreachClanCheck.IsChecked = metric.Contains(AlertDestination.Clan);
+        MetricBreachPhoneCheck.IsChecked = metric.Contains(AlertDestination.Phone);
+        // ...which is why the enabled state is synced here too: the four boxes' TICKS come from the
+        // config above, their AVAILABILITY from the switch, and every path that repaints one wants
+        // the other to agree. Both callers of this method (PopulateAlertControls in OnLoaded, and
+        // OnDiscordConfigChanged) run after the switch has been painted.
+        SyncMetricDestinationsEnabled();
+    }
+
+    /// <summary>
+    /// The four metric destination boxes follow the switch above them (final whole-branch review,
+    /// 2026-09-11). Left enabled while the switch was off, ticking one saved routing that could
+    /// never fire while the status line went on saying — correctly — that nothing was configured: a
+    /// control that answers the click and changes nothing else on the page reads as broken. The
+    /// page already had this shape for <c>DiscordJoinToggle</c>, which follows presence for the
+    /// same reason; this is that precedent, not a new one.
+    /// <para>
+    /// ENABLED STATE ONLY. <see cref="ReadChecks"/> reads <c>IsChecked</c>, which disabling does
+    /// not touch, so a saved routing set survives the switch going off and comes back exactly as it
+    /// was — turning the feature off is not a reason to forget where the user wanted it sent.
+    /// </para>
+    /// </summary>
+    private void SyncMetricDestinationsEnabled()
+    {
+        var on = MetricAlertsEnabledToggle.IsChecked == true;
+        MetricBreachLocalCheck.IsEnabled = on;
+        MetricBreachMineCheck.IsEnabled = on;
+        MetricBreachClanCheck.IsEnabled = on;
+        MetricBreachPhoneCheck.IsEnabled = on;
     }
 
     private IReadOnlyList<AlertDestination> ReadChecks(AlertKind kind)
@@ -906,6 +965,13 @@ internal partial class SettingsPage : UserControl, IDisposable
                 (UptimeMarkMineCheck, AlertDestination.Mine),
                 (UptimeMarkClanCheck, AlertDestination.Clan),
                 (UptimeMarkPhoneCheck, AlertDestination.Phone),
+            },
+            AlertKind.MetricBreach => new (System.Windows.Controls.CheckBox Box, AlertDestination Destination)[]
+            {
+                (MetricBreachLocalCheck, AlertDestination.Local),
+                (MetricBreachMineCheck, AlertDestination.Mine),
+                (MetricBreachClanCheck, AlertDestination.Clan),
+                (MetricBreachPhoneCheck, AlertDestination.Phone),
             },
             _ => throw new ArgumentOutOfRangeException(nameof(kind)),
         };
@@ -950,7 +1016,16 @@ internal partial class SettingsPage : UserControl, IDisposable
                 ROROROblox.Core.Notify.PhoneProvider.Pushover => "Pushover",
                 ROROROblox.Core.Notify.PhoneProvider.Ntfy => "ntfy",
                 _ => null,
-            });
+            },
+            // The metric opt-in, read off the checkbox rather than IAppSettings: this method is
+            // synchronous and called from a dozen places, one of them a dispatcher continuation,
+            // and the checkbox is this page's single copy of the setting — painted from
+            // GetMetricAlertsEnabledAsync in OnLoaded and rewritten (or reverted from the file) by
+            // OnMetricAlertsEnabledToggle. Composing from it keeps the sentence agreeing with the
+            // control the user is looking at. Without this the line would count MetricBreach's
+            // destinations as routed while the feature was off, which is the one thing
+            // AlertStatusLine exists not to do.
+            MetricAlertsEnabledToggle.IsChecked == true);
 
         // The glyph is the view's, not the composer's — same rule MainWindow.xaml records for the
         // compat banner. The Tag drives the brush from the Style so the colour stays in markup where
@@ -1300,6 +1375,95 @@ internal partial class SettingsPage : UserControl, IDisposable
         }
     }
 
+    /// <summary>
+    /// Re-entrancy guard for the programmatic writes to <c>MetricAlertsEnabledToggle.IsChecked</c>.
+    /// Its own flag rather than <c>_suppressClickHandlers</c> because that one is cleared from
+    /// <see cref="OnDiscordConfigChanged"/>'s <c>finally</c>, on a dispatcher callback this page
+    /// does not schedule — see the paint site in <see cref="OnLoaded"/>. Set and cleared around one
+    /// assignment, never held across an await, the same discipline
+    /// <see cref="_syncingWebhookReveal"/> records.
+    /// </summary>
+    private bool _paintingMetricAlertsToggle;
+
+    /// <summary>
+    /// Writes the toggle without its own handler answering. The <c>finally</c> is the point: a
+    /// throw between raising and lowering a suppression flag leaves the page with every guarded
+    /// handler dead for the rest of the session (review fix 4, 2026-09-11).
+    /// </summary>
+    private void PaintMetricAlertsToggle(bool enabled)
+    {
+        try
+        {
+            _paintingMetricAlertsToggle = true;
+            MetricAlertsEnabledToggle.IsChecked = enabled;
+        }
+        finally
+        {
+            _paintingMetricAlertsToggle = false;
+        }
+    }
+
+    /// <summary>
+    /// The metric-alert opt-in. Deliberately NOT <see cref="OnAlertRoutingChanged"/>: that handler
+    /// writes the Discord config (encrypted <c>discord.dat</c>) and this value lives in
+    /// <c>settings.json</c> behind <see cref="IAppSettings"/>. Same row on screen, two different
+    /// files — a handler that wrote one and forgot the other would half-work, and nothing in the
+    /// suite would say so.
+    /// <para>
+    /// Then it nudges the running gate. <c>App</c> re-reads this setting on the view model's 30s
+    /// tick and only while a rules file exists, so without the nudge a user who ticks this box and
+    /// reports a number immediately waits up to 30 seconds — or forever, if they have not written a
+    /// rules file yet. <c>App.SetMetricAlertsGate</c> is that one-line bypass.
+    /// </para>
+    /// <para>
+    /// The gate is nudged only after the write returns, and on the failure path the checkbox is
+    /// reverted from the file and the gate is left alone: a gate that says yes while settings.json
+    /// says no is the disagreement this ordering exists to prevent.
+    /// </para>
+    /// </summary>
+    private async void OnMetricAlertsEnabledToggle(object sender, RoutedEventArgs e)
+    {
+        if (_suppressClickHandlers || _paintingMetricAlertsToggle) return;
+
+        var wanted = MetricAlertsEnabledToggle.IsChecked == true;
+        // Before the await, exactly as OnDiscordPresenceToggle does for the Join checkbox: the
+        // destinations below follow this switch, and they should follow it at the speed of the
+        // click rather than at the speed of a file write. The save can still fail, and the revert
+        // path below puts this back with the checkbox.
+        SyncMetricDestinationsEnabled();
+        try
+        {
+            await _settings.SetMetricAlertsEnabledAsync(wanted);
+            // NUDGE FROM THE CONTROL AS IT STANDS NOW, not from `wanted` (review fix 3,
+            // 2026-09-11). Two quick clicks put two of these in flight: the writes serialize
+            // behind the settings semaphore, so settings.json ends at the second click's value,
+            // but the continuations can resume in either order and a captured `wanted` would let
+            // the first one land LAST and leave the gate believing the opposite of the file. The
+            // 30s tick would normally heal that, except it skips the read entirely while there is
+            // no rules file — which is precisely the user this nudge exists for. Re-reading the
+            // checkbox costs nothing and is the last thing the user actually asked for.
+            App.SetMetricAlertsGate(MetricAlertsEnabledToggle.IsChecked == true);
+            // The status line counts MetricBreach's destinations only while this is on, so the
+            // sentence under the rows is wrong until it is recomposed.
+            RefreshAlertsStatus();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Window.GetWindow(this),
+                Loc.Format("Shell_Pref_CouldntSavePreference", ex.Message),
+                Loc.Get("Shell_Pref_Title"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            // Revert from the file, not from `!wanted` — the write may have failed after landing.
+            // The read is awaited OUTSIDE the suppression window on purpose: a flag held across an
+            // await is how a real user click got swallowed earlier in this cycle (see
+            // _syncingWebhookReveal's note).
+            var saved = await _settings.GetMetricAlertsEnabledAsync();
+            PaintMetricAlertsToggle(saved);
+            SyncMetricDestinationsEnabled();
+        }
+    }
+
     private async void OnAlertRoutingChanged(object sender, RoutedEventArgs e)
     {
         if (_suppressClickHandlers) return;
@@ -1309,6 +1473,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         var memoryWarning = ReadChecks(AlertKind.MemoryWarning);
         var recycled = ReadChecks(AlertKind.Recycled);
         var uptimeMarks = ReadChecks(AlertKind.UptimeMark);
+        var metricBreaches = ReadChecks(AlertKind.MetricBreach);
 
         try
         {
@@ -1318,10 +1483,12 @@ internal partial class SettingsPage : UserControl, IDisposable
                 MemoryWarningDestinations = memoryWarning,
                 RecycledDestinations = recycled,
                 UptimeMarkDestinations = uptimeMarks,
+                MetricBreachDestinations = metricBreaches,
                 // The singular fields are the rollback mirror: an older binary reads only them,
                 // and "first ticked destination" beats "silently dropped" — the destination-4
-                // hazard the phone spec records. The two new kinds need no mirror: they postdate
-                // the singular fields entirely.
+                // hazard the phone spec records. The newer kinds need no mirror: Recycled,
+                // UptimeMark and now MetricBreach (2026-09-11) postdate the singular fields
+                // entirely, so there is no older binary that could read one.
                 DroppedOutDestination = droppedOut.Count > 0 ? droppedOut[0] : AlertDestination.None,
                 MemoryWarningDestination = memoryWarning.Count > 0 ? memoryWarning[0] : AlertDestination.None,
             });

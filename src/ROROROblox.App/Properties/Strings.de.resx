@@ -860,6 +860,9 @@
   <data name="SettingsPage_AlwaysShowRecycleOnRunning" xml:space="preserve">
     <value>Recycle bei laufenden Konten immer anzeigen.</value>
   </data>
+  <data name="SettingsPage_AMetricCrossesAThreshold" xml:space="preserve">
+    <value>Eine Metrik überschreitet einen Schwellenwert</value>
+  </data>
   <data name="SettingsPage_AnAccountDropsOut" xml:space="preserve">
     <value>Ein Konto fällt aus</value>
   </data>
@@ -985,6 +988,12 @@
   </data>
   <data name="SettingsPage_MemoryToKeepFreeMb" xml:space="preserve">
     <value>Freizuhaltender Speicher (MB)</value>
+  </data>
+  <data name="SettingsPage_MetricAlerts" xml:space="preserve">
+    <value>Metrik-Benachrichtigungen</value>
+  </data>
+  <data name="SettingsPage_MetricAlertsHint" xml:space="preserve">
+    <value>Benachrichtigt dich, wenn eine von einem Plugin gemeldete Zahl einen von dir festgelegten Schwellenwert überschreitet. Braucht ein Plugin, das eine meldet, und eine Regeldatei.</value>
   </data>
   <data name="SettingsPage_MoveYourSavedAccountsTo" xml:space="preserve">
     <value>Verschiebe deine gespeicherten Konten auf einen anderen PC. Der Export schreibt eine passphrasenverschlüsselte Datei; der Import führt sie zusammen, ohne bereits auf diesem Rechner vorhandene Konten anzutasten.</value>
@@ -1126,6 +1135,18 @@
   </data>
   <data name="SettingsPage_SendMemoryWarningsToThe_2" xml:space="preserve">
     <value>Speicherwarnungen an den Clan-Discord-Kanal senden</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToMy" xml:space="preserve">
+    <value>Metrik-Benachrichtigungen an meinen Kanal senden</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToMy_2" xml:space="preserve">
+    <value>Metrik-Benachrichtigungen an mein Handy senden</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToThe" xml:space="preserve">
+    <value>Metrik-Benachrichtigungen an den Desktop senden</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToThe_2" xml:space="preserve">
+    <value>Metrik-Benachrichtigungen an den Clan-Kanal senden</value>
   </data>
   <data name="SettingsPage_SendRecycleNoticesToMy" xml:space="preserve">
     <value>Neu-verbinden-Hinweise an meinen Discord-Kanal senden</value>

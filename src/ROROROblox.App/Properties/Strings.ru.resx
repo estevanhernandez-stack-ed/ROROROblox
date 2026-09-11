@@ -860,6 +860,9 @@
   <data name="SettingsPage_AlwaysShowRecycleOnRunning" xml:space="preserve">
     <value>Всегда показывать Recycle у запущенных аккаунтов.</value>
   </data>
+  <data name="SettingsPage_AMetricCrossesAThreshold" xml:space="preserve">
+    <value>Метрика пересекает порог</value>
+  </data>
   <data name="SettingsPage_AnAccountDropsOut" xml:space="preserve">
     <value>Аккаунт отваливается</value>
   </data>
@@ -985,6 +988,12 @@
   </data>
   <data name="SettingsPage_MemoryToKeepFreeMb" xml:space="preserve">
     <value>Сколько памяти оставлять свободной (МБ)</value>
+  </data>
+  <data name="SettingsPage_MetricAlerts" xml:space="preserve">
+    <value>Оповещения о метриках</value>
+  </data>
+  <data name="SettingsPage_MetricAlertsHint" xml:space="preserve">
+    <value>Уведомляет вас, когда число, переданное плагином, пересекает порог, который вы задаёте. Нужен плагин, который его передаёт, и файл правил.</value>
   </data>
   <data name="SettingsPage_MoveYourSavedAccountsTo" xml:space="preserve">
     <value>Перенесите сохранённые аккаунты на другой ПК. Экспорт создаёт файл, зашифрованный секретной фразой; импорт добавляет их, не затрагивая аккаунты, уже имеющиеся на этом компьютере.</value>
@@ -1126,6 +1135,18 @@
   </data>
   <data name="SettingsPage_SendMemoryWarningsToThe_2" xml:space="preserve">
     <value>Отправлять предупреждения о памяти в канал Discord клана</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToMy" xml:space="preserve">
+    <value>Отправлять оповещения о метриках в мой канал</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToMy_2" xml:space="preserve">
+    <value>Отправлять оповещения о метриках на мой телефон</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToThe" xml:space="preserve">
+    <value>Отправлять оповещения о метриках на рабочий стол</value>
+  </data>
+  <data name="SettingsPage_SendMetricAlertsToThe_2" xml:space="preserve">
+    <value>Отправлять оповещения о метриках в канал клана</value>
   </data>
   <data name="SettingsPage_SendRecycleNoticesToMy" xml:space="preserve">
     <value>Отправлять уведомления о переподключении в мой канал Discord</value>
