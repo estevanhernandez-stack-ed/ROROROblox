@@ -1,3 +1,4 @@
+using ROROROblox.App.Plugins;
 using ROROROblox.MetricSmoke;
 
 namespace ROROROblox.Tests.SmokeHarness;
@@ -26,6 +27,19 @@ public sealed class MetricReporterTests
 
         Assert.Equal("rororo-plugin-host", reporter.PipeName);
         Assert.Equal("rororo.smoke", reporter.PluginId);
+    }
+
+    [Fact]
+    public void Constructor_WithNoPipeNameGiven_DefaultsToTheProductionPipeName()
+    {
+        // The fix this guards: a hand-typed literal here (or in the one-argument constructor
+        // itself) would silently stop matching if PluginHostStartupService.DefaultPipeName were
+        // ever renamed. Asserting equality against the production constant -- not against the
+        // literal string it currently holds -- is what actually fails if only one of the two gets
+        // renamed.
+        using var reporter = new MetricReporter("rororo.smoke");
+
+        Assert.Equal(PluginHostStartupService.DefaultPipeName, reporter.PipeName);
     }
 
     [Fact]
