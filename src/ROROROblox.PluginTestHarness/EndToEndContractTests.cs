@@ -1071,6 +1071,250 @@ public class EndToEndContractTests
         }
     }
 
+    // =====================================================================
+    // ReportMetric capability gate (host.metrics.report, contract 0.10.0). The unit tests in
+    // ROROROblox.Tests construct PluginHostService directly and never see CapabilityInterceptor
+    // at all -- this is the only place the gate around ReportMetric is actually exercised, over
+    // a real named pipe with the real interceptor in the loop.
+    // =====================================================================
+
+    /// <summary>
+    /// Granted plugin: the report crosses the real pipe, through the real interceptor, into the
+    /// sink unchanged.
+    /// </summary>
+    [Fact]
+    public async Task ReportMetric_WithConsent_ReachesTheHost()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+        var sink = new StubMetricReportSink();
+
+        var registry = new SingleInstalledPluginLookup(new InstalledPlugin
+        {
+            Manifest = new PluginManifest
+            {
+                SchemaVersion = 1,
+                Id = "626labs.test",
+                Name = "Test",
+                Version = "1.0",
+                ContractVersion = "1.0",
+                Publisher = "626",
+                Description = "x",
+                Capabilities = new[] { PluginCapability.HostMetricsReport },
+            },
+            InstallDir = Path.GetTempPath(),
+            Consent = new ConsentRecord
+            {
+                PluginId = "626labs.test",
+                GrantedCapabilities = new[] { PluginCapability.HostMetricsReport },
+                AutostartEnabled = false,
+            },
+        });
+
+        var hostService = new PluginHostService(
+            registry, "1.4.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            new InProcessPluginEventBus(),
+            new NoOpLauncher(),
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider(),
+            new StubActivityMarker(),
+            new StubAccountStopper(),
+            metricSink: sink);
+
+        var interceptor = new CapabilityInterceptor(
+            currentPluginAccessor: () => "626labs.test",
+            consentLookup: id => new[] { PluginCapability.HostMetricsReport });
+
+        var startup = new PluginHostStartupService(
+            hostService, interceptor,
+            NullLogger<PluginHostStartupService>.Instance,
+            pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+
+            await client.ReportMetricAsync(new MetricReport
+            {
+                SubjectId = "11111111-1111-1111-1111-111111111111",
+                MetricId = "battle.points",
+                Value = 42,
+                ObservedAtUnixMs = 1_700_000_000_000,
+            });
+
+            var r = Assert.Single(sink.Reports);
+            Assert.Equal("11111111-1111-1111-1111-111111111111", r.Subject);
+            Assert.Equal("battle.points", r.Metric);
+            Assert.Equal(42, r.Value);
+            Assert.Equal(1_700_000_000_000, r.At);
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    /// <summary>
+    /// A plugin that never declared host.metrics.report at all -- its manifest lists a
+    /// different capability, and consent was never asked about this one. Both halves matter:
+    /// the status code the caller sees, and that nothing reached the sink. Asserting the status
+    /// code alone would not catch a gate that denied the caller while still letting the report
+    /// through to the host.
+    /// </summary>
+    [Fact]
+    public async Task ReportMetric_NeverDeclared_IsDenied_AndNothingReachesTheHost()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+        var sink = new StubMetricReportSink();
+
+        var registry = new SingleInstalledPluginLookup(new InstalledPlugin
+        {
+            Manifest = new PluginManifest
+            {
+                SchemaVersion = 1,
+                Id = "626labs.test",
+                Name = "Test",
+                Version = "1.0",
+                ContractVersion = "1.0",
+                Publisher = "626",
+                Description = "x",
+                // host.metrics.report is required by ReportMetric and is NOT declared here at
+                // all -- not granted, not asked for, not in the manifest's Capabilities list.
+                Capabilities = new[] { "host.events.account-launched" },
+            },
+            InstallDir = Path.GetTempPath(),
+            Consent = new ConsentRecord
+            {
+                PluginId = "626labs.test",
+                GrantedCapabilities = new[] { "host.events.account-launched" },
+                AutostartEnabled = false,
+            },
+        });
+
+        var hostService = new PluginHostService(
+            registry, "1.4.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            new InProcessPluginEventBus(),
+            new NoOpLauncher(),
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider(),
+            new StubActivityMarker(),
+            new StubAccountStopper(),
+            metricSink: sink);
+
+        var interceptor = new CapabilityInterceptor(
+            currentPluginAccessor: () => "626labs.test",
+            consentLookup: id => new[] { "host.events.account-launched" });
+
+        var startup = new PluginHostStartupService(
+            hostService, interceptor,
+            NullLogger<PluginHostStartupService>.Instance,
+            pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+
+            var ex = await Assert.ThrowsAsync<RpcException>(() =>
+                client.ReportMetricAsync(new MetricReport { MetricId = "battle.points" })
+                    .ResponseAsync);
+
+            Assert.Equal(StatusCode.PermissionDenied, ex.StatusCode);
+            Assert.Empty(sink.Reports);
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
+    /// <summary>
+    /// Companion to <see cref="ReportMetric_NeverDeclared_IsDenied_AndNothingReachesTheHost"/>:
+    /// a plugin that DID declare host.metrics.report in its manifest -- it asked for the
+    /// capability -- but was never granted it (equivalent to a grant that was later revoked;
+    /// the interceptor's consent lookup reflects only the current grant, not history). Absence
+    /// is denial in this system regardless of which side of "declared" produced the absence, so
+    /// this must deny exactly like the never-declared case above, both halves again: status
+    /// code, and nothing reaching the sink.
+    /// </summary>
+    [Fact]
+    public async Task ReportMetric_DeclaredButNotGranted_IsDenied_AndNothingReachesTheHost()
+    {
+        var pipeName = $"rororo-plugin-test-{Guid.NewGuid():N}";
+        var sink = new StubMetricReportSink();
+
+        var registry = new SingleInstalledPluginLookup(new InstalledPlugin
+        {
+            Manifest = new PluginManifest
+            {
+                SchemaVersion = 1,
+                Id = "626labs.test",
+                Name = "Test",
+                Version = "1.0",
+                ContractVersion = "1.0",
+                Publisher = "626",
+                Description = "x",
+                // Declared -- the plugin asked for it -- but consent below does not grant it.
+                Capabilities = new[] { PluginCapability.HostMetricsReport },
+            },
+            InstallDir = Path.GetTempPath(),
+            Consent = new ConsentRecord
+            {
+                PluginId = "626labs.test",
+                GrantedCapabilities = Array.Empty<string>(),
+                AutostartEnabled = false,
+            },
+        });
+
+        var hostService = new PluginHostService(
+            registry, "1.4.0", "1.0",
+            new FixedHostState("On"),
+            new EmptyAccounts(),
+            new InProcessPluginEventBus(),
+            new NoOpLauncher(),
+            new PluginUITranslator(new NullUIHost()),
+            new StubActivityProvider(),
+            new StubActivityMarker(),
+            new StubAccountStopper(),
+            metricSink: sink);
+
+        var interceptor = new CapabilityInterceptor(
+            currentPluginAccessor: () => "626labs.test",
+            consentLookup: id => Array.Empty<string>());
+
+        var startup = new PluginHostStartupService(
+            hostService, interceptor,
+            NullLogger<PluginHostStartupService>.Instance,
+            pipeName);
+
+        await startup.StartAsync(CancellationToken.None);
+        try
+        {
+            using var channel = ConnectChannel(pipeName);
+            var client = new RoRoRoHost.RoRoRoHostClient(channel);
+
+            var ex = await Assert.ThrowsAsync<RpcException>(() =>
+                client.ReportMetricAsync(new MetricReport { MetricId = "battle.points" })
+                    .ResponseAsync);
+
+            Assert.Equal(StatusCode.PermissionDenied, ex.StatusCode);
+            Assert.Empty(sink.Reports);
+        }
+        finally
+        {
+            await startup.StopAsync(CancellationToken.None);
+            await startup.DisposeAsync();
+        }
+    }
+
     /// <summary>
     /// Guards the known EndToEndContractTests blindspot documented across this file's other
     /// Production* tests: a naive test wires <c>currentPluginAccessor</c> to a fixed plugin id,
