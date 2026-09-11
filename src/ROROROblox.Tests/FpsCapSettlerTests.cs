@@ -11,6 +11,19 @@ using Xunit;
 namespace ROROROblox.Tests;
 
 /// <summary>
+/// <b>2026-09-11 correction -- the paragraph below names a real condition, but not THE cause.</b>
+/// The quiet pool stays: it is cheap and it does remove contention. It did not close the flake.
+/// The same "Pump stalled" failure kept landing on arm64 CI afterwards -- five runs on main
+/// between 2026-09-09 and 2026-09-10, every one of them including
+/// <see cref="PostWriteQuietWait_CompetingWriteLandsInsideTheWindow_ForcesARetry"/>. The actual
+/// cause was a lost-wakeup deadlock in the pump's own signal, not starvation; see
+/// <see cref="ArmSignallingClock"/> for the mechanism. It reproduces on a fully idle 16-core box
+/// with no parallelism and no load at all -- sleeping 5ms inside the probe's read took 9 of this
+/// file's 11 tests to a 30s stall -- which is why "25/25 clean in isolation" was never evidence
+/// about the mechanism: isolation changes how often the race is lost, not whether it exists.
+/// Starvation was the wrong suspect for the reason the failure message itself gives -- elapsed
+/// time cannot tell a starved continuation from a timer that was never armed.
+/// <para>
 /// F-116's last family, closed by removing the condition instead of surviving it. The pump below
 /// advances a fake clock and then waits, in real time, for the settler's continuation to resume —
 /// and that continuation is a plain thread-pool work item. Run in parallel with the rest of the
@@ -27,6 +40,7 @@ namespace ROROROblox.Tests;
 /// The cost is these tests' own wall time (~1s of real time) running serially, and
 /// <see cref="FpsCapSettlerTests.ThePumpKeepsItsQuietPool"/> fails the build if the attribute is
 /// ever tidied away.
+/// </para>
 /// </summary>
 [CollectionDefinition(QuietPoolCollectionName, DisableParallelization = true)]
 public sealed class FpsCapSettlerQuietPoolCollection
@@ -68,33 +82,67 @@ public sealed class FpsCapSettlerTests
     private static readonly TimeSpan SlowPathBudget = FpsCapSettler.SettleTimeout + TimeSpan.FromSeconds(2);
 
     /// <summary>
-    /// Tracks how many times a probe's <c>GetLastWriteTimeUtc()</c> has been called, and lets a
-    /// waiter block on the NEXT call without polling. <see cref="ReadCount"/> is the authoritative
-    /// signal <see cref="PumpStepAsync"/> checks (a plain <c>Interlocked</c>-guarded counter, read
-    /// back via <see cref="Volatile.Read(ref int)"/>); <see cref="WaitAsync"/> is purely a wakeup
-    /// so the pump doesn't have to busy-spin to notice a change -- see the "why not Task.Yield()"
-    /// remarks on <see cref="PumpStepAsync"/> for why that distinction matters.
+    /// The fake clock, plus a signal that fires when the code under test has ARMED its next timer.
+    /// <see cref="ArmCount"/> is the authoritative value <see cref="PumpStepAsync"/> checks;
+    /// <see cref="WaitForArmAsync"/> is purely a wakeup so the pump need not busy-spin -- see the
+    /// "why not Task.Yield()" remarks on <see cref="PumpStepAsync"/> for why that matters.
     /// <para>
-    /// A stale/unconsumed release from a read that happened while nobody was waiting on it just
-    /// causes one extra harmless wakeup on the NEXT wait call, which immediately re-checks
-    /// <see cref="ReadCount"/> against the caller's own baseline and loops if it hasn't actually
-    /// moved -- no explicit draining needed.
+    /// <b>Why the arm and not the mtime read (2026-09-11).</b> The pump used to wait on the probe's
+    /// <c>GetLastWriteTimeUtc()</c> call, reasoning that a read proves the settler's delay
+    /// continuation resumed. It does prove that -- and it is not enough.
+    /// <c>FpsCapSettler.WaitForQuietAsync</c> reads the mtime and only THEN loops back to arm its
+    /// next <c>Task.Delay</c>, so a pump released by the read can advance the clock again while the
+    /// settler is still in the handful of instructions between the two. The settler then arms
+    /// against the already-advanced clock, making its timer due a full step in the FUTURE, and the
+    /// pump -- which will not advance again until it sees another read -- waits for a wakeup that
+    /// can never arrive. A permanent deadlock, reported by the 30s ceiling as if it were a slow
+    /// runner. Confirmed by construction, not inferred: a 5ms sleep injected into the probe's read
+    /// on an idle, unparallelised box stalled 9 of this file's 11 tests at exactly 30s, reproducing
+    /// the arm64 CI failure byte for byte.
+    /// </para>
+    /// <para>
+    /// The arm has no such gap. <c>base.CreateTimer</c> registers the waiter before it returns, so
+    /// "a timer was armed since my advance" means the settler has already consumed that advance AND
+    /// is parked for the next one. That makes it structurally impossible for the clock to get ahead
+    /// of the code under test -- which is what the read-based signal claimed and did not deliver.
+    /// </para>
+    /// <para>
+    /// A stale release, left by an arm that happened while nobody was waiting, causes one extra
+    /// harmless wakeup, which the caller discards by re-checking <see cref="ArmCount"/> against its
+    /// own baseline. <see cref="PumpStepAsync"/> therefore ignores the wait's return value
+    /// entirely; trusting it is how the old pump consumed a stale permit and returned without the
+    /// settler having observed anything at all.
     /// </para>
     /// </summary>
-    private sealed class MtimeReadTracker
+    private sealed class ArmSignallingClock : FakeTimeProvider
     {
         private readonly SemaphoreSlim _signal = new(0, int.MaxValue);
-        private int _count;
+        private int _arms;
 
-        public int ReadCount => Volatile.Read(ref _count);
+        public ArmSignallingClock(DateTimeOffset start) : base(start) { }
 
-        public void RecordRead()
+        public int ArmCount => Volatile.Read(ref _arms);
+
+        public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
         {
-            Interlocked.Increment(ref _count);
-            _signal.Release();
+            var timer = base.CreateTimer(callback, state, dueTime, period);
+
+            // An infinite dueTime arms nothing, so announcing it would release the pump on a timer
+            // that can never fire. Task.Delay against this clock always passes a finite one; the
+            // guard is here so a future caller creating a parked timer cannot quietly reintroduce
+            // the lost-wakeup this class exists to close.
+            if (dueTime != Timeout.InfiniteTimeSpan)
+            {
+                Interlocked.Increment(ref _arms);
+                _signal.Release();
+            }
+
+            return timer;
         }
 
-        public Task<bool> WaitAsync(TimeSpan timeout) => _signal.WaitAsync(timeout);
+        /// <summary>Returns <c>Task</c>, not <c>Task&lt;bool&gt;</c>, so the wakeup-only nature of
+        /// this wait is structural rather than a comment a caller can overlook.</summary>
+        public Task WaitForArmAsync(TimeSpan timeout) => _signal.WaitAsync(timeout);
     }
 
     /// <summary>Scripted read side. Each ReadFramerateCap() pops the next scripted value.</summary>
@@ -104,9 +152,13 @@ public sealed class FpsCapSettlerTests
         public int ReadCalls { get; private set; }
         public DateTimeOffset? Mtime { get; set; } = DateTimeOffset.UnixEpoch;
 
-        /// <summary>See <see cref="MtimeReadTracker"/> -- the pump's proof that the settler's
-        /// delay continuation actually resumed and re-polled after a clock advance.</summary>
-        public MtimeReadTracker MtimeReads { get; } = new();
+        /// <summary>
+        /// Real-time pause taken AFTER the mtime is read, used only by
+        /// <see cref="ThePumpSurvivesAPreemptionBetweenTheReadAndTheRearm"/> to hold the settler
+        /// inside the read-then-arm window the old pump signal released on. Zero everywhere else,
+        /// so no other test in this file pays a millisecond for it.
+        /// </summary>
+        public TimeSpan PostReadPause { get; set; }
 
         public FakeProbe(params int?[] caps) => _caps = new Queue<int?>(caps);
 
@@ -118,7 +170,7 @@ public sealed class FpsCapSettlerTests
 
         public DateTimeOffset? GetLastWriteTimeUtc()
         {
-            MtimeReads.RecordRead();
+            if (PostReadPause > TimeSpan.Zero) { Thread.Sleep(PostReadPause); }
             return Mtime;
         }
     }
@@ -174,16 +226,9 @@ public sealed class FpsCapSettlerTests
         public DateTimeOffset? Mtime { get; set; }
         public int ReadCalls { get; private set; }
 
-        /// <summary>See <see cref="MtimeReadTracker"/> -- same role, same reasoning as on <see cref="FakeProbe"/>.</summary>
-        public MtimeReadTracker MtimeReads { get; } = new();
-
         public int? ReadFramerateCap() { ReadCalls++; return Cap; }
 
-        public DateTimeOffset? GetLastWriteTimeUtc()
-        {
-            MtimeReads.RecordRead();
-            return Mtime;
-        }
+        public DateTimeOffset? GetLastWriteTimeUtc() => Mtime;
     }
 
     /// <summary>Writes through to a <see cref="TimeAwareProbe"/>, stamping its own write's mtime.</summary>
@@ -228,13 +273,28 @@ public sealed class FpsCapSettlerTests
     /// no ceiling anywhere near this generous. 30s gives that headroom without meaningfully slowing
     /// down the failure-path report on an actual hang (which would otherwise block forever).
     /// </para>
+    /// <para>
+    /// <b>2026-09-11:</b> value unchanged -- it was measured, and it still costs nothing on the
+    /// success path -- but what it bounds is narrower now. Until the pump waited on the timer arm
+    /// rather than the mtime read, the commonest way to reach this ceiling was the pump's own
+    /// lost-wakeup deadlock (see <see cref="ArmSignallingClock"/>), which no amount of headroom
+    /// could have survived. With that closed, reaching 30s again really does mean a hang in the
+    /// code under test or a runner that scheduled nothing for half a minute.
+    /// </para>
     /// </summary>
     private static readonly TimeSpan PumpObservationCeiling = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// Advance the fake clock by exactly one step, then block until the settler has PROVABLY seen
-    /// it -- either its <c>GetLastWriteTimeUtc()</c> probe read count has moved (proof the delay
-    /// continuation actually resumed and re-polled) or the settle task itself has completed.
+    /// Advance the fake clock by exactly one step, then block until the settler has PROVABLY
+    /// consumed it -- either it has armed its next timer against the advanced clock
+    /// (<see cref="ArmSignallingClock"/>) or the settle task itself has completed.
+    /// <para>
+    /// <b>2026-09-11:</b> this used to wait on the probe's mtime READ instead. That signal fires one
+    /// step too early -- the settler reads, and only then arms -- and a pump released inside that
+    /// gap advances the clock past the timer the settler is about to register, deadlocking both
+    /// sides until the ceiling below fires. <see cref="ArmSignallingClock"/> carries the full
+    /// mechanism and the experiment that proved it.
+    /// </para>
     /// <para>
     /// This replaces the old fixed-count <c>for (var i = 0; i &lt; 8; i++) { await Task.Yield(); }</c>
     /// pump, which advanced the clock unconditionally on a scheduler-turn BUDGET rather than on an
@@ -249,7 +309,7 @@ public sealed class FpsCapSettlerTests
     /// impossible: the clock cannot get ahead of the code under test.
     /// </para>
     /// <para>
-    /// <b>Waits on <see cref="MtimeReadTracker.WaitAsync"/> (a <c>SemaphoreSlim</c>), not a
+    /// <b>Waits on <see cref="ArmSignallingClock.WaitForArmAsync"/> (a <c>SemaphoreSlim</c>), not a
     /// <c>while (...) { await Task.Yield(); }</c> spin.</b> A first pass used a raw Yield spin and
     /// it reproduced the ORIGINAL bug's mechanism on itself: under full-suite parallel load, a tight
     /// spin loop re-posts its own continuation to its worker thread's LOCAL queue millions of times
@@ -265,26 +325,27 @@ public sealed class FpsCapSettlerTests
     /// </para>
     /// <para>
     /// Polls in short (200ms) waits rather than one long <see cref="PumpObservationCeiling"/> wait
-    /// and re-issues <c>clock.Advance(TimeSpan.Zero)</c> between them. <c>FakeTimeProvider</c>'s own
-    /// source (read directly, not assumed) shows <c>Advance</c>/<c>AddWaiter</c> are correctly
-    /// lock-protected, so this is NOT compensating for a confirmed library bug -- it is a cheap,
-    /// side-effect-free defensive nudge (advancing by zero cannot skew any test's elapsed-fake-time
-    /// assertions) against the possibility that this specific pairing hits an edge this reading
-    /// missed. The 25/25-clean isolated run below is the actual evidence the core signal is sound;
-    /// this nudge is belt-and-suspenders, not the fix.
+    /// so the settle task's completion is noticed promptly. It no longer re-issues
+    /// <c>clock.Advance(TimeSpan.Zero)</c> between them (removed 2026-09-11): that was a defensive
+    /// nudge against "an edge this reading missed", and the edge turned out to be real but immune
+    /// to it -- a waiter armed a full step in the future cannot be woken by advancing zero. Naming
+    /// the edge removed the reason for the nudge.
     /// </para>
     /// </summary>
-    private static async Task PumpStepAsync(
-        FakeTimeProvider clock, TimeSpan step, Task settleTask, MtimeReadTracker mtimeReads)
+    private static async Task PumpStepAsync(ArmSignallingClock clock, TimeSpan step, Task settleTask)
     {
-        var before = mtimeReads.ReadCount;
+        var before = clock.ArmCount;
         clock.Advance(step);
 
         var budget = Stopwatch.StartNew();
-        while (mtimeReads.ReadCount == before && !settleTask.IsCompleted)
+        while (clock.ArmCount == before && !settleTask.IsCompleted)
         {
-            var observed = await mtimeReads.WaitAsync(TimeSpan.FromMilliseconds(200)).ConfigureAwait(false);
-            if (observed || mtimeReads.ReadCount != before || settleTask.IsCompleted)
+            // The wait's return value is deliberately discarded: a stale release left over from an
+            // arm nobody was waiting on would otherwise break this loop with the settler still
+            // un-parked, which is the same "clock gets ahead of the code" bug in a new costume.
+            // ArmCount against this caller's own baseline is the only thing that decides.
+            await clock.WaitForArmAsync(TimeSpan.FromMilliseconds(200)).ConfigureAwait(false);
+            if (clock.ArmCount != before || settleTask.IsCompleted)
             {
                 break;
             }
@@ -292,7 +353,7 @@ public sealed class FpsCapSettlerTests
             if (budget.Elapsed > PumpObservationCeiling)
             {
                 // This message used to end "a genuine hang, not a slow test." It cannot know that,
-                // and PumpObservationCeiling's own summary six lines up says why: a loaded runner
+                // PumpObservationCeiling's own summary says why: a loaded runner
                 // delays a single continuation's real-world resume by tens of seconds for reasons
                 // that have nothing to do with this file. Elapsed time cannot separate a deadlock
                 // from a starved thread, so the message asserted a conclusion its evidence did not
@@ -301,15 +362,13 @@ public sealed class FpsCapSettlerTests
                 // re-run. (F-098: an instrument claiming more than it measures, in the direction
                 // that wastes an afternoon rather than the one that ships a bug.)
                 Assert.Fail(
-                    $"Pump stalled: the settler never re-read GetLastWriteTimeUtc() within " +
+                    "Pump stalled: the settler never armed its next timer within " +
                     $"{PumpObservationCeiling} of real time after the fake clock advanced by {step}. " +
                     "That is EITHER a genuine hang in the code under test OR a continuation this " +
                     "runner never scheduled; elapsed time alone cannot tell them apart. Re-run before " +
                     "investigating: if it passes, it was starvation, and only a repeatable failure " +
                     "is evidence of a hang.");
             }
-
-            clock.Advance(TimeSpan.Zero);
         }
     }
 
@@ -320,12 +379,12 @@ public sealed class FpsCapSettlerTests
     /// advances past that point serve nothing.
     /// </summary>
     private static async Task AdvanceAsync(
-        FakeTimeProvider clock, TimeSpan total, TimeSpan step, Task settleTask, MtimeReadTracker mtimeReads)
+        ArmSignallingClock clock, TimeSpan total, TimeSpan step, Task settleTask)
     {
         var elapsed = TimeSpan.Zero;
         while (elapsed < total && !settleTask.IsCompleted)
         {
-            await PumpStepAsync(clock, step, settleTask, mtimeReads);
+            await PumpStepAsync(clock, step, settleTask);
             elapsed += step;
         }
     }
@@ -337,7 +396,7 @@ public sealed class FpsCapSettlerTests
         // FakeTimeProvider()'s parameterless ctor starts at 2000-01-01, not DateTimeOffset.UnixEpoch.
         // Pin it to UnixEpoch explicitly so it agrees with FakeProbe.Mtime's default below and the
         // "no time passed" assertion is checking something real, not an unrelated ctor default.
-        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var clock = new ArmSignallingClock(DateTimeOffset.UnixEpoch);
         var writer = new RecordingWriter(probe, clock);
 
         var outcome = await FpsCapSettler
@@ -361,13 +420,13 @@ public sealed class FpsCapSettlerTests
         // real 2000-01-01 start would be ~30 years past any epoch mtime, and the pre-write wait
         // would credit "already quiet" on its very first check instead of genuinely polling
         // through the debounce, silently skipping the behavior this test exists to exercise.
-        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var clock = new ArmSignallingClock(DateTimeOffset.UnixEpoch);
         var writer = new RecordingWriter(probe, clock);
 
         var task = FpsCapSettler.SettleAsync(
             probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None);
 
-        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval, task, probe.MtimeReads);
+        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval, task);
 
         var outcome = await task.WaitAsync(TestBound);
 
@@ -382,13 +441,13 @@ public sealed class FpsCapSettlerTests
         // read 2: 9999 again -> our write was clobbered, retry
         // read 3: 20 -> survived
         var probe = new FakeProbe(9999, 9999, 20);
-        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var clock = new ArmSignallingClock(DateTimeOffset.UnixEpoch);
         var writer = new RecordingWriter(probe, clock);
 
         var task = FpsCapSettler.SettleAsync(
             probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None);
 
-        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval, task, probe.MtimeReads);
+        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval, task);
 
         var outcome = await task.WaitAsync(TestBound);
 
@@ -416,7 +475,7 @@ public sealed class FpsCapSettlerTests
     [Fact]
     public async Task PostWriteQuietWait_CompetingWriteLandsInsideTheWindow_ForcesARetry()
     {
-        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var clock = new ArmSignallingClock(DateTimeOffset.UnixEpoch);
         var probe = new TimeAwareProbe
         {
             Cap = 9999,
@@ -450,7 +509,7 @@ public sealed class FpsCapSettlerTests
                 clobbered = true;
             }
 
-            await PumpStepAsync(clock, FpsCapSettler.QuietPollInterval, task, probe.MtimeReads);
+            await PumpStepAsync(clock, FpsCapSettler.QuietPollInterval, task);
             elapsed += FpsCapSettler.QuietPollInterval;
         }
 
@@ -482,7 +541,7 @@ public sealed class FpsCapSettlerTests
     [Fact]
     public async Task LaunchBaseline_GatesTheWriteUntilTheLaunchedClientsFirstWriteIsObserved()
     {
-        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var clock = new ArmSignallingClock(DateTimeOffset.UnixEpoch);
         // The mtime RobloxLauncher would have captured at the PREVIOUS launch's Process.Start.
         var baseline = clock.GetUtcNow();
         var probe = new TimeAwareProbe { Cap = 9999, Mtime = baseline };
@@ -497,7 +556,7 @@ public sealed class FpsCapSettlerTests
         // for the wrong reason (the launched client hasn't started writing yet, not because it
         // already read the cap and calmed down). Must NOT write while this holds.
         var noWriteWindow = FpsCapSettler.QuietDebounce + TimeSpan.FromSeconds(3);
-        await AdvanceAsync(clock, noWriteWindow, FpsCapSettler.QuietPollInterval, task, probe.MtimeReads);
+        await AdvanceAsync(clock, noWriteWindow, FpsCapSettler.QuietPollInterval, task);
 
         Assert.Empty(writer.Writes);
 
@@ -507,7 +566,7 @@ public sealed class FpsCapSettlerTests
         probe.Cap = 9999;
         probe.Mtime = clock.GetUtcNow();
 
-        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval, task, probe.MtimeReads);
+        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval, task);
 
         var outcome = await task.WaitAsync(TestBound);
 
@@ -524,7 +583,7 @@ public sealed class FpsCapSettlerTests
     [Fact]
     public async Task LaunchBaseline_ClientNeverWrites_ProceedsAnywayOnceBounded()
     {
-        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var clock = new ArmSignallingClock(DateTimeOffset.UnixEpoch);
         var baseline = clock.GetUtcNow();
         var probe = new TimeAwareProbe { Cap = 9999, Mtime = baseline };
         var writer = new TimeAwareWriter(probe, clock);
@@ -535,7 +594,7 @@ public sealed class FpsCapSettlerTests
 
         // The "launched client" never writes -- probe.Mtime only ever moves from SettleAsync's own
         // eventual write (via TimeAwareWriter).
-        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval, task, probe.MtimeReads);
+        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval, task);
 
         var outcome = await task.WaitAsync(TestBound);
 
@@ -549,13 +608,13 @@ public sealed class FpsCapSettlerTests
         // Always reads back someone else's value: every attempt is clobbered.
         // 1 entry read + 1 re-read per attempt (MaxWriteAttempts = 3) = 4 consumed.
         var probe = new FakeProbe(9999, 9999, 9999, 9999);
-        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var clock = new ArmSignallingClock(DateTimeOffset.UnixEpoch);
         var writer = new RecordingWriter(probe, clock);
 
         var task = FpsCapSettler.SettleAsync(
             probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None);
 
-        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval, task, probe.MtimeReads);
+        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval, task);
 
         var outcome = await task.WaitAsync(TestBound);
 
@@ -568,24 +627,56 @@ public sealed class FpsCapSettlerTests
     public async Task WriterThrows_DegradesToWriteFailedRatherThanEscaping()
     {
         var probe = new FakeProbe(9999);
-        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var clock = new ArmSignallingClock(DateTimeOffset.UnixEpoch);
         var writer = new RecordingWriter(probe, clock) { Throw = new GlobalBasicSettingsWriteException("disk on fire") };
 
         var task = FpsCapSettler.SettleAsync(
             probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None);
 
-        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval, task, probe.MtimeReads);
+        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval, task);
 
         var outcome = await task.WaitAsync(TestBound);
 
         Assert.Equal(FpsCapSettleOutcome.WriteFailed, outcome);
     }
 
+    /// <summary>
+    /// The fence on the 2026-09-11 pump fix. A pause inside the probe's read holds the settler in
+    /// exactly the window the old signal released on -- after the mtime read, before the next
+    /// <c>Task.Delay</c> is armed -- so the pump advances the clock while the settler is not yet
+    /// parked. Against the old read-based signal that is a permanent deadlock: measured directly, a
+    /// 5ms pause took 9 of this file's 11 tests to a 30s "Pump stalled" on an idle 16-core box with
+    /// no parallelism and no load. Against the arm signal it cannot stall at all, because the pump
+    /// does not move until the settler is parked for the next advance.
+    /// <para>
+    /// The 2ms is a deliberate REAL-time pause, and the only one in this file. It buys a race window
+    /// wide enough to lose every time rather than occasionally; the settler needs ~50 pump steps to
+    /// reach <c>QuietDebounce</c> on this fixture, so the whole test costs ~100ms of wall clock.
+    /// This is the WriterThrows shape on purpose -- it is the fastest-completing slow-path fixture
+    /// here, and the outcome it asserts is unrelated to the timing, so a regression shows up as the
+    /// pump's own ceiling rather than as a confusing wrong-outcome failure.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task ThePumpSurvivesAPreemptionBetweenTheReadAndTheRearm()
+    {
+        var probe = new FakeProbe(9999) { PostReadPause = TimeSpan.FromMilliseconds(2) };
+        var clock = new ArmSignallingClock(DateTimeOffset.UnixEpoch);
+        var writer = new RecordingWriter(probe, clock) { Throw = new GlobalBasicSettingsWriteException("disk on fire") };
+
+        var task = FpsCapSettler.SettleAsync(
+            probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None);
+
+        await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval, task);
+
+        Assert.Equal(FpsCapSettleOutcome.WriteFailed, await task.WaitAsync(TestBound));
+    }
+
     [Fact]
     public async Task FileKeepsChanging_QuietWaitTimesOutButStillWritesAndReturns()
     {
         var probe = new FakeProbe(9999, 20);
-        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var clock = new ArmSignallingClock(DateTimeOffset.UnixEpoch);
         var writer = new RecordingWriter(probe, clock);
 
         var task = FpsCapSettler.SettleAsync(
@@ -596,7 +687,7 @@ public sealed class FpsCapSettlerTests
         while (elapsed < SlowPathBudget && !task.IsCompleted)
         {
             probe.Mtime = probe.Mtime!.Value + TimeSpan.FromMilliseconds(50);
-            await PumpStepAsync(clock, FpsCapSettler.QuietPollInterval, task, probe.MtimeReads);
+            await PumpStepAsync(clock, FpsCapSettler.QuietPollInterval, task);
             elapsed += FpsCapSettler.QuietPollInterval;
         }
 
@@ -623,7 +714,7 @@ public sealed class FpsCapSettlerTests
         // waits) = 3 x 60s = 180s. With the overall deadline, one attempt consumes the entire
         // budget and the second attempt's own top-of-loop check refuses to start.
         var probe = new FakeProbe(9999, 9999, 9999, 9999, 9999);
-        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var clock = new ArmSignallingClock(DateTimeOffset.UnixEpoch);
         var writer = new RecordingWriter(probe, clock);
 
         var task = FpsCapSettler.SettleAsync(
@@ -634,7 +725,7 @@ public sealed class FpsCapSettlerTests
         while (elapsed < pumpBudget && !task.IsCompleted)
         {
             probe.Mtime = probe.Mtime!.Value + TimeSpan.FromMilliseconds(50);
-            await PumpStepAsync(clock, FpsCapSettler.QuietPollInterval, task, probe.MtimeReads);
+            await PumpStepAsync(clock, FpsCapSettler.QuietPollInterval, task);
             elapsed += FpsCapSettler.QuietPollInterval;
         }
 
