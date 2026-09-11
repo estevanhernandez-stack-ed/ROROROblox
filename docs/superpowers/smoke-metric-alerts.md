@@ -60,7 +60,8 @@ phone, resolved through the same `AlertRouter`/`AlertDispatcher` every other ale
 uses. The routing control lives in Settings → Alerts, alongside the **Metric alerts** opt-in toggle.
 
 - [ ] **A breach reaches the desktop toast.** Report twice across the window, under the floor.
-      The one delivery leg that is reachable today, and the row everything else rests on.
+      The simplest leg to test first — no webhook, no phone credentials, no routing tick required —
+      and the row everything else rests on.
 - [ ] **A consented plugin can report at all.** Grant `host.metrics.report` at the consent sheet and
       confirm the report is accepted rather than refused.
 - [ ] **An unconsented plugin is denied.** Two cases, and they are different paths through the
@@ -118,10 +119,13 @@ uses. The routing control lives in Settings → Alerts, alongside the **Metric a
 - [ ] **An unconfigured destination falls back to the desktop toast.** Tick **My phone** on the
       metric-alerts routing row with no phone credentials saved, report a breaching value, and
       confirm it lands as a toast rather than vanishing.
-- [ ] **A real threshold crossed on purpose, and a phone that buzzes (Este-gated).** A real clan, a
-      real battle, a member deliberately under the floor for the window. No longer blocked on
-      routing — a hand-written rules file and the phone checkbox are enough now that a breach can
-      reach a phone. Needs Este to run a real clan battle; nobody else can tick this box.
+- [ ] **A real threshold crossed on purpose, and a phone that buzzes (Este-gated).** Not a repeat of
+      the phone row above — that one is a synthetic report anyone can make from a throwaway plugin;
+      this one needs a real clan, a real battle, and a member deliberately under the floor for the
+      window, which is the only way to confirm the whole chain fires end to end against a live
+      signal instead of a manufactured one. No longer blocked on routing — a hand-written rules file
+      and the phone checkbox are enough now that a breach can reach a phone. Needs Este to run a real
+      clan battle; nobody else can tick this box.
 
 ---
 
