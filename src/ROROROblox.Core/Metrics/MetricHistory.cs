@@ -47,45 +47,46 @@ public sealed class MetricHistory(int capacity = 64, int maxSeries = 256)
         ? maxSeries
         : throw new ArgumentOutOfRangeException(nameof(maxSeries), "need room for at least two series");
 
-    public void Add(MetricObservation o)
+    private void AddSampleToSeries(Series series, Sample sample)
     {
-        ArgumentNullException.ThrowIfNull(o);
-        var key = (o.AccountId, o.MetricId);
-
-        // Check if this series already exists. If it does, we accept the sample regardless of the bound.
-        if (_series.TryGetValue(key, out var series))
-        {
-            lock (series.Samples)
-            {
-                series.Samples.Add(new Sample(o.Value, o.ObservedAtUtc));
-                if (series.Samples.Count > _capacity)
-                {
-                    series.Samples.RemoveRange(0, series.Samples.Count - _capacity);
-                    series.HasEvicted = true;
-                }
-            }
-            return;
-        }
-
-        // New series: check if we're at the bound. The count check races benignly—two threads
-        // adding two different new series at the bound can both pass it, so the dictionary may
-        // briefly hold one or two more than _maxSeries. That is fine; taking a lock across the
-        // whole dictionary to make the bound exact would put a global lock on the hot path.
-        if (_series.Count >= _maxSeries)
-        {
-            return;  // Refuse the newcomer; don't evict watched series.
-        }
-
-        series = _series.GetOrAdd(key, _ => new Series());
         lock (series.Samples)
         {
-            series.Samples.Add(new Sample(o.Value, o.ObservedAtUtc));
+            series.Samples.Add(sample);
             if (series.Samples.Count > _capacity)
             {
                 series.Samples.RemoveRange(0, series.Samples.Count - _capacity);
                 series.HasEvicted = true;
             }
         }
+    }
+
+    public void Add(MetricObservation o)
+    {
+        ArgumentNullException.ThrowIfNull(o);
+        var key = (o.AccountId, o.MetricId);
+        var sample = new Sample(o.Value, o.ObservedAtUtc);
+
+        // Check if this series already exists. If it does, we accept the sample regardless of the bound.
+        if (_series.TryGetValue(key, out var series))
+        {
+            AddSampleToSeries(series, sample);
+            return;
+        }
+
+        // New series: check if we're at the bound. This check is advisory under concurrency; the
+        // worst case is an overshoot by the width of a burst of distinct new keys arriving
+        // concurrently. That is acceptable because the bound targets growth over days, and gRPC
+        // handler concurrency bounds the burst width. An exact bound would require a post-add
+        // remove that can race with a legitimate concurrent add of the same key — not worth it.
+        // The cost of the check itself falls only on first touch of a new key, never on repeat
+        // writes to an existing series.
+        if (_series.Count >= _maxSeries)
+        {
+            return;  // Refuse the newcomer; don't evict watched series.
+        }
+
+        series = _series.GetOrAdd(key, _ => new Series());
+        AddSampleToSeries(series, sample);
     }
 
     public int Count(Guid accountId, string metricId)
