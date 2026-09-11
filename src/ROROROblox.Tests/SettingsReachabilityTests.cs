@@ -137,25 +137,13 @@ public class SettingsReachabilityTests
             + "edits the whole map would be a settings editor, which is the thing this cycle is "
             + "arguing against."),
 
-        new("MetricAlertsEnabled",
-            "No control yet by design, not an oversight — but NOT for the reason this entry gave "
-            + "until 2026-09-11. It said 'there is no RPC yet for a plugin to report a "
-            + "MetricObservation over (plan 2)', and the plugin-RPC plan then landed ReportMetric "
-            + "on this very branch, which made the justification false while the exemption stayed. "
-            + "Exactly the shape this file exists to catch, caught by a human review rather than "
-            + "by the fence, because a fence can check that a reason was WRITTEN and not that it "
-            + "is still TRUE. The true reason now: the setting has no UI to live in. A plugin can "
-            + "report a metric today, MetricAlertCoordinator raises a MetricBreach from it, and it "
-            + "reaches the desktop toast — what has not shipped is the metric-alerts section of "
-            + "Settings, which the signed-manifest plan brings along with the rule source and the "
-            + "routing destinations. An opt-in toggle floating above the feature it gates, a plan "
-            + "before that feature is configurable, is a worse answer than this entry. Meanwhile "
-            + "the gate is real rather than decorative: App.xaml.cs re-reads it onto the 30s tick "
-            + "and MetricReportSinkAdapter refuses every report while it is false, which is the "
-            + "shipped default; hand-editing settings.json is the only way to flip it, and that is "
-            + "the honest state of a feature whose UI has not shipped. REMOVABLE, with no other "
-            + "change, the moment that Settings section exists: add the toggle, delete this entry, "
-            + "and the accessor edge below finds GetMetricAlertsEnabledAsync on its own."),
+        // MetricAlertsEnabled's entry was RETIRED 2026-09-11 by the metric-alert routing plan,
+        // which gave the setting the Settings section the entry said it was waiting for:
+        // MetricAlertsEnabledToggle in SettingsPage.xaml, writing through
+        // SetMetricAlertsEnabledAsync. The entry had already survived one justification going
+        // stale — it claimed no plugin could report a metric yet, and ReportMetric landed on this
+        // same branch — which is the exemption-outlives-its-reason shape this file exists to
+        // catch. Both edges find it on their own now, so there is nothing left to permit.
     ];
 
     /// <summary>

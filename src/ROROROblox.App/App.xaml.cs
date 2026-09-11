@@ -70,6 +70,26 @@ public partial class App : Application
     private static volatile bool MetricAlertsEnabled;
 
     /// <summary>
+    /// Tells the running gate the opt-in changed, for callers that have just written it.
+    /// <see cref="Preferences.SettingsPage"/>'s metric-alerts toggle is the only one.
+    ///
+    /// <para><b>Why this exists at all.</b> <see cref="RefreshMetricAlertsGateAsync"/> picks the
+    /// setting up on the view model's 30s tick, and only while a rules file exists. So a user who
+    /// ticks the box and reports a number straight away waits up to 30 seconds — and if they have
+    /// not written <c>metric-rules.json</c> yet, the tick returns before the read and the gate
+    /// never moves at all. That second case is the one that matters: writing the rules file and
+    /// ticking the box in either order would leave the feature off until the next tick after both
+    /// exist, which reads as "I turned it on and nothing happened."</para>
+    ///
+    /// <para>A method rather than an <c>internal</c> field so the volatile stays single-writer by
+    /// construction and the reasoning above has somewhere to live. It sets the CACHE, never the
+    /// setting — the caller has already written <c>settings.json</c> through
+    /// <see cref="IAppSettings"/>, and calling this without that write would give the gate an
+    /// opinion the file does not share, which the next tick would silently overturn.</para>
+    /// </summary>
+    internal static void SetMetricAlertsGate(bool enabled) => MetricAlertsEnabled = enabled;
+
+    /// <summary>
     /// Where <c>LocalFileMetricRuleSource</c> reads its rules —
     /// <c>%LOCALAPPDATA%\ROROROblox\metric-rules.json</c>, derived from the settings file rather
     /// than rebuilt from a literal folder name so it follows <c>settings.json</c> if the app's
@@ -1783,16 +1803,13 @@ public partial class App : Application
             // Seed the opt-in gate (see MetricAlertsEnabled for why it is a cached bool and not a
             // settings read), then keep it current on the view model's existing 30s tick. A tick
             // rather than a settings-change hook because there is no such hook to use: IAppSettings
-            // broadcasts nothing, and this setting has no control to broadcast from — the toggle
-            // ships with the metric-alerts Settings section, which the signed-manifest plan brings
-            // along with the rule source and the routing destinations (see
-            // SettingsReachabilityTests' allow-list entry, corrected 2026-09-11: this used to say
-            // the toggle waited on there being a metric to gate, which stopped being true the day
-            // ReportMetric landed). Until then only a hand-edited
-            // settings.json can change it, and the cost of noticing that up to 30 s late is one
-            // missed report. Piggybacking the tick is this app's habit for exactly this reason —
-            // the idle chips, the memory repaint and the uptime mark all ride it rather than stand
-            // up a timer of their own.
+            // broadcasts nothing. The tick is no longer the only writer, though — as of 2026-09-11
+            // the metric-alerts toggle in Settings calls SetMetricAlertsGate the moment it saves,
+            // so a flip is live immediately rather than up to 30 s later (and rather than never,
+            // on the install with no rules file yet). The tick stays because it is what catches a
+            // hand-edited settings.json, which is still a supported way in. Piggybacking it is this
+            // app's habit for exactly this reason — the idle chips, the memory repaint and the
+            // uptime mark all ride it rather than stand up a timer of their own.
             var settings = _services.GetRequiredService<IAppSettings>();
             await RefreshMetricAlertsGateAsync(settings).ConfigureAwait(true);
             vm.PeriodicTick += (_, _) => _ = RefreshMetricAlertsGateAsync(settings);

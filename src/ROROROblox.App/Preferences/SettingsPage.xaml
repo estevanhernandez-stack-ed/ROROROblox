@@ -395,6 +395,42 @@
                                 </WrapPanel>
                             </Grid>
 
+                            <!-- Metric alerts (plan 2026-09-11). TWO STORES IN ONE ROW, and that is
+                                 the thing to know before editing it. The switch in column 0 writes
+                                 MetricAlertsEnabled into settings.json through IAppSettings; the four
+                                 boxes in column 1 write MetricBreachDestinations into the encrypted
+                                 discord.dat with every other kind's routing. Different files,
+                                 different save paths, which is why the switch has a handler of its
+                                 own instead of riding OnAlertRoutingChanged.
+
+                                 The fifth row rather than a section of its own because it answers the
+                                 same question the four above it do — where does this go — and the
+                                 switch stands where their labels stand because this is the one kind
+                                 that ships switched OFF. MetricBreachDestinations defaults to the
+                                 desktop toast so a breach has somewhere to land the moment it is
+                                 wanted; nothing lands until the switch is ticked, and an upgrade must
+                                 not start alerting anybody who did not ask.
+
+                                 Checked/Unchecked on the switch too, never Click, for the F-102
+                                 reason its neighbours carry: automation's TogglePattern never raises
+                                 Click. -->
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <CheckBox x:Name="MetricAlertsEnabledToggle" Grid.Column="0" Content="{loc:Loc SettingsPage_MetricAlerts}" AutomationProperties.Name="{loc:Loc SettingsPage_MetricAlerts}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" VerticalAlignment="Top" Margin="0,2,0,0" Width="180" Checked="OnMetricAlertsEnabledToggle" Unchecked="OnMetricAlertsEnabledToggle" />
+                                <WrapPanel Grid.Column="1">
+                                    <CheckBox x:Name="MetricBreachLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMetricAlertsToThe}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="MetricBreachMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMetricAlertsToMy}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="MetricBreachClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMetricAlertsToThe_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="MetricBreachPhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMetricAlertsToMy_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                </WrapPanel>
+                            </Grid>
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                       Margin="0,0,0,6"
+                                       Text="{loc:Loc SettingsPage_MetricAlertsHint}" />
+
                             <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                        Margin="0,0,0,6"
                                        Text="{loc:Loc SettingsPage_TickEveryPlaceEachAlert}" />
