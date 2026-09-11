@@ -1,4 +1,6 @@
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
@@ -22,10 +24,13 @@ namespace ROROROblox.App.Metrics;
 /// <para>
 /// Nothing here may throw. It is read on the gRPC report path, and a malformed file — or a
 /// single malformed row inside an otherwise good one — must cost the user their rules, never
-/// their plugin host. The parse is cached against the file's last-write time and length, so an
-/// unchanged file is neither re-read nor re-parsed (and a malformed one is not re-logged) on
-/// every report; an edited file is still picked up without a restart because the signature
-/// changes with it.
+/// their plugin host. The parse is cached against a hash of the file's bytes — not its
+/// last-write time and length, which a same-size edit inside the filesystem's timestamp
+/// resolution can leave unchanged for genuinely different content — so an unchanged file is
+/// not re-parsed (and a malformed one is not re-logged) on every report, while an edited file
+/// is still picked up without a restart because its hash changes with it. What the cache hands
+/// back is read-only, so a caller cannot mutate the shared cached result out from under later
+/// calls.
 /// </para>
 /// </summary>
 public sealed class LocalFileMetricRuleSource(string filePath, ILogger<LocalFileMetricRuleSource> log)
@@ -48,7 +53,7 @@ public sealed class LocalFileMetricRuleSource(string filePath, ILogger<LocalFile
 
     public IReadOnlyList<MetricRule> CurrentRules()
     {
-        FileSignature? signature = null;
+        string? contentHash = null;
         try
         {
             if (!File.Exists(filePath))
@@ -59,18 +64,27 @@ public sealed class LocalFileMetricRuleSource(string filePath, ILogger<LocalFile
                 return [];
             }
 
-            var info = new FileInfo(filePath);
-            signature = new FileSignature(info.LastWriteTimeUtc, info.Length);
+            var bytes = File.ReadAllBytes(filePath);
 
-            if (_cache is { } cached && cached.Signature == signature)
+            // Keyed on the file's content, not its last-write time plus length: a same-size
+            // hand-edit whose write lands inside the filesystem's timestamp resolution, or a
+            // restore that preserves both, would otherwise produce an identical signature for
+            // different content and serve stale rules forever with no error and no log. The
+            // parse below — walking the tree and converting each row — is what the cache exists
+            // to skip; hashing the bytes we already hold for that parse costs a small fraction
+            // of it, so this is strictly cheaper than the timestamp approach was ever meant to
+            // protect against, not a slower-but-safer trade.
+            contentHash = Convert.ToHexString(SHA256.HashData(bytes));
+
+            if (_cache is { } cached && cached.ContentHash == contentHash)
             {
                 // Same instance on purpose: this is the hot gRPC report path, and a caller that
-                // never throttles must not pay a file read plus a full re-parse per report.
+                // never throttles must not pay a full re-parse per report.
                 return cached.Rules;
             }
 
-            var rules = ParseRules(File.ReadAllText(filePath));
-            _cache = new RuleCache(signature.Value, rules);
+            var rules = ParseRules(DecodeUtf8(bytes));
+            _cache = new RuleCache(contentHash, rules);
             return rules;
         }
         catch (Exception ex)
@@ -81,13 +95,23 @@ public sealed class LocalFileMetricRuleSource(string filePath, ILogger<LocalFile
             // "the feature does not work".
             log.LogInformation(ex, "Could not read metric rules from {Path}; no rules are active.", filePath);
 
-            // Cache the empty outcome against the signature we already have, so a malformed
-            // file's log line fires once per edit, not once per reported metric. If we could not
-            // even stat the file (a rare race with a concurrent delete), there is no signature to
-            // key on — leave the cache alone and let the next call try again.
-            if (signature is { } sig) _cache = new RuleCache(sig, []);
+            // Cache the empty outcome against the hash we already have, so a malformed file's
+            // log line fires once per edit, not once per reported metric. If we could not even
+            // read the file (a rare race with a concurrent delete), there is no hash to key on —
+            // leave the cache alone and let the next call try again.
+            if (contentHash is not null) _cache = new RuleCache(contentHash, []);
             return [];
         }
+    }
+
+    /// <summary>Decodes the bytes as UTF-8, stripping a leading byte-order mark if present. A raw
+    /// byte read (needed so the same bytes can be hashed for the cache key) bypasses
+    /// <see cref="File.ReadAllText(string)"/>'s built-in BOM handling, so this replicates it —
+    /// a hand-edited file saved with a BOM must parse exactly as it did before.</summary>
+    private static string DecodeUtf8(byte[] bytes)
+    {
+        var text = Encoding.UTF8.GetString(bytes);
+        return text.Length > 0 && text[0] == '\uFEFF' ? text[1..] : text;
     }
 
     /// <summary>Parses the whole array, converting each row inside its own try so one
@@ -140,12 +164,14 @@ public sealed class LocalFileMetricRuleSource(string filePath, ILogger<LocalFile
             }
         }
 
-        return rules;
+        // AsReadOnly() wraps the list rather than exposing it cast to an interface: the wrapper
+        // is a distinct concrete type (ReadOnlyCollection<T>) whose mutating members throw, so a
+        // caller that casts the returned IReadOnlyList back to something mutable still cannot
+        // corrupt the cached instance shared across every later call.
+        return rules.AsReadOnly();
     }
 
-    private readonly record struct FileSignature(DateTime LastWriteUtc, long Length);
-
-    private sealed record RuleCache(FileSignature Signature, IReadOnlyList<MetricRule> Rules);
+    private sealed record RuleCache(string ContentHash, IReadOnlyList<MetricRule> Rules);
 
     /// <summary>The on-disk shape. Separate from <see cref="MetricRule"/> so the file format and
     /// the domain type can drift apart without one dragging the other.</summary>
