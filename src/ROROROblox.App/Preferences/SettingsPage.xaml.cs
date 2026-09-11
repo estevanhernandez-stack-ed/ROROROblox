@@ -278,7 +278,18 @@ internal partial class SettingsPage : UserControl, IDisposable
             // config and this value does not live there (see the XAML row's two-stores note).
             // Order matters, mildly: this runs before PopulateAlertControls, whose
             // RefreshAlertsStatus reads this checkbox for the status line.
-            MetricAlertsEnabledToggle.IsChecked = await _settings.GetMetricAlertsEnabledAsync();
+            //
+            // ITS OWN GUARD, NOT _suppressClickHandlers, and that is not belt-and-braces (review
+            // fix 2, 2026-09-11). OnDiscordConfigChanged is subscribed for this window's whole life
+            // and clears _suppressClickHandlers in a finally from a BeginInvoke that can land
+            // between any two awaits in this method — so the flag this block runs under is not
+            // reliably still true by the time the assignment below happens. Every paint above it
+            // survives that because their handlers are Click, which a programmatic IsChecked write
+            // never raises; this one is Checked/Unchecked and WOULD fire, turning a populate into a
+            // save and a gate nudge. Today the value it would write matches the file, so nothing
+            // breaks — which is exactly how this kind of path stays hidden until it does.
+            var metricAlertsEnabled = await _settings.GetMetricAlertsEnabledAsync();
+            PaintMetricAlertsToggle(metricAlertsEnabled);
 
             // Streamer mode reads through to IStreamerIdentityProvider via the view model — there is
             // no separate persisted flag here, which is why this reads the VM rather than _settings.
@@ -1331,6 +1342,34 @@ internal partial class SettingsPage : UserControl, IDisposable
     }
 
     /// <summary>
+    /// Re-entrancy guard for the programmatic writes to <c>MetricAlertsEnabledToggle.IsChecked</c>.
+    /// Its own flag rather than <c>_suppressClickHandlers</c> because that one is cleared from
+    /// <see cref="OnDiscordConfigChanged"/>'s <c>finally</c>, on a dispatcher callback this page
+    /// does not schedule — see the paint site in <see cref="OnLoaded"/>. Set and cleared around one
+    /// assignment, never held across an await, the same discipline
+    /// <see cref="_syncingWebhookReveal"/> records.
+    /// </summary>
+    private bool _paintingMetricAlertsToggle;
+
+    /// <summary>
+    /// Writes the toggle without its own handler answering. The <c>finally</c> is the point: a
+    /// throw between raising and lowering a suppression flag leaves the page with every guarded
+    /// handler dead for the rest of the session (review fix 4, 2026-09-11).
+    /// </summary>
+    private void PaintMetricAlertsToggle(bool enabled)
+    {
+        try
+        {
+            _paintingMetricAlertsToggle = true;
+            MetricAlertsEnabledToggle.IsChecked = enabled;
+        }
+        finally
+        {
+            _paintingMetricAlertsToggle = false;
+        }
+    }
+
+    /// <summary>
     /// The metric-alert opt-in. Deliberately NOT <see cref="OnAlertRoutingChanged"/>: that handler
     /// writes the Discord config (encrypted <c>discord.dat</c>) and this value lives in
     /// <c>settings.json</c> behind <see cref="IAppSettings"/>. Same row on screen, two different
@@ -1350,13 +1389,21 @@ internal partial class SettingsPage : UserControl, IDisposable
     /// </summary>
     private async void OnMetricAlertsEnabledToggle(object sender, RoutedEventArgs e)
     {
-        if (_suppressClickHandlers) return;
+        if (_suppressClickHandlers || _paintingMetricAlertsToggle) return;
 
         var wanted = MetricAlertsEnabledToggle.IsChecked == true;
         try
         {
             await _settings.SetMetricAlertsEnabledAsync(wanted);
-            App.SetMetricAlertsGate(wanted);
+            // NUDGE FROM THE CONTROL AS IT STANDS NOW, not from `wanted` (review fix 3,
+            // 2026-09-11). Two quick clicks put two of these in flight: the writes serialize
+            // behind the settings semaphore, so settings.json ends at the second click's value,
+            // but the continuations can resume in either order and a captured `wanted` would let
+            // the first one land LAST and leave the gate believing the opposite of the file. The
+            // 30s tick would normally heal that, except it skips the read entirely while there is
+            // no rules file — which is precisely the user this nudge exists for. Re-reading the
+            // checkbox costs nothing and is the last thing the user actually asked for.
+            App.SetMetricAlertsGate(MetricAlertsEnabledToggle.IsChecked == true);
             // The status line counts MetricBreach's destinations only while this is on, so the
             // sentence under the rows is wrong until it is recomposed.
             RefreshAlertsStatus();
@@ -1373,9 +1420,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             // await is how a real user click got swallowed earlier in this cycle (see
             // _syncingWebhookReveal's note).
             var saved = await _settings.GetMetricAlertsEnabledAsync();
-            _suppressClickHandlers = true;
-            MetricAlertsEnabledToggle.IsChecked = saved;
-            _suppressClickHandlers = false;
+            PaintMetricAlertsToggle(saved);
         }
     }
 

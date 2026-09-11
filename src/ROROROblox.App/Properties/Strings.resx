@@ -1141,6 +1141,10 @@
     <value>Always show Recycle on running accounts.</value>
     <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:210 xaml-text</comment>
   </data>
+  <data name="SettingsPage_AMetricCrossesAThreshold" xml:space="preserve">
+    <value>A metric crosses a threshold</value>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:439 xaml-text</comment>
+  </data>
   <data name="SettingsPage_AnAccountDropsOut" xml:space="preserve">
     <value>An account drops out</value>
     <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:333 xaml-text</comment>
@@ -1311,11 +1315,11 @@
   </data>
   <data name="SettingsPage_MetricAlerts" xml:space="preserve">
     <value>Metric alerts</value>
-    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:422 xaml-text</comment>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:426 xaml-text</comment>
   </data>
   <data name="SettingsPage_MetricAlertsHint" xml:space="preserve">
     <value>Alerts you when a number a plugin reports crosses a threshold you set. Needs a plugin that reports one, and a rules file.</value>
-    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:430 xaml-text</comment>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:448 xaml-text</comment>
   </data>
   <data name="SettingsPage_MoveYourSavedAccountsTo" xml:space="preserve">
     <value>Move your saved accounts to another PC. Export writes a passphrase-encrypted file; import merges it in without touching accounts already on this machine.</value>
@@ -1507,19 +1511,19 @@
   </data>
   <data name="SettingsPage_SendMetricAlertsToMy" xml:space="preserve">
     <value>Send metric alerts to my channel</value>
-    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:425 aria-label</comment>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:443 aria-label</comment>
   </data>
   <data name="SettingsPage_SendMetricAlertsToMy_2" xml:space="preserve">
     <value>Send metric alerts to my phone</value>
-    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:427 aria-label</comment>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:445 aria-label</comment>
   </data>
   <data name="SettingsPage_SendMetricAlertsToThe" xml:space="preserve">
     <value>Send metric alerts to the desktop</value>
-    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:424 aria-label</comment>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:442 aria-label</comment>
   </data>
   <data name="SettingsPage_SendMetricAlertsToThe_2" xml:space="preserve">
     <value>Send metric alerts to the clan channel</value>
-    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:426 aria-label</comment>
+    <comment>src/ROROROblox.App/Preferences/SettingsPage.xaml:444 aria-label</comment>
   </data>
   <data name="SettingsPage_SendRecycleNoticesToMy" xml:space="preserve">
     <value>Send recycle notices to my Discord channel</value>

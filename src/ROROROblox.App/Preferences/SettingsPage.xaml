@@ -413,13 +413,31 @@
 
                                  Checked/Unchecked on the switch too, never Click, for the F-102
                                  reason its neighbours carry: automation's TogglePattern never raises
-                                 Click. -->
+                                 Click.
+
+                                 THE SWITCH SITS ABOVE THE ROW, not in its label column, and that is
+                                 a translation constraint rather than taste (review fix 1,
+                                 2026-09-11). A CheckBox's Content does not wrap, and the label
+                                 column is a fixed 180px that German and Polish will overrun — the
+                                 one label that could not wrap would have been the one about to grow
+                                 by half. It also kept the row's label out of PreferencesCopyTests,
+                                 whose walk classifies TextBlocks only, so the hint below anchored to
+                                 the uptime row. A wrapping TextBlock label restores both. -->
+                            <CheckBox x:Name="MetricAlertsEnabledToggle"
+                                      Content="{loc:Loc SettingsPage_MetricAlerts}"
+                                      AutomationProperties.Name="{loc:Loc SettingsPage_MetricAlerts}"
+                                      FontSize="{DynamicResource BodyFontSize}"
+                                      FontWeight="SemiBold"
+                                      Foreground="{DynamicResource WhiteBrush}"
+                                      Margin="0,6,0,6"
+                                      Checked="OnMetricAlertsEnabledToggle" Unchecked="OnMetricAlertsEnabledToggle" />
                             <Grid Margin="0,0,0,6">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <CheckBox x:Name="MetricAlertsEnabledToggle" Grid.Column="0" Content="{loc:Loc SettingsPage_MetricAlerts}" AutomationProperties.Name="{loc:Loc SettingsPage_MetricAlerts}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" VerticalAlignment="Top" Margin="0,2,0,0" Width="180" Checked="OnMetricAlertsEnabledToggle" Unchecked="OnMetricAlertsEnabledToggle" />
+                                <TextBlock Grid.Column="0" Text="{loc:Loc SettingsPage_AMetricCrossesAThreshold}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Top" Margin="0,2,0,0" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource WhiteBrush}" Width="180" />
                                 <WrapPanel Grid.Column="1">
                                     <CheckBox x:Name="MetricBreachLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMetricAlertsToThe}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
                                     <CheckBox x:Name="MetricBreachMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendMetricAlertsToMy}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
