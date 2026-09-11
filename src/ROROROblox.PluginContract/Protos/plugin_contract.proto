@@ -76,6 +76,20 @@ service RoRoRoHost {
   // account disappears, or it will race the dying client.
   rpc StopAccounts(StopAccountsRequest) returns (StopAccountsResult);
 
+  // Metric reporting (additive, NuGet 0.10.0). A consented plugin reports ONE number it
+  // gathered itself; the host keeps the history, applies the rules, and decides whether that
+  // is worth an alert.
+  //
+  // The split is deliberate and is the whole design. Thresholding stays in the host so a
+  // metric alert inherits per-account mute, the per-(account, kind) cooldown, and coalescing
+  // from the same router every other alert kind rides. A plugin that decided for itself when
+  // to page would bypass all three, and "a bad night becomes forty notifications" is the one
+  // outcome this feature must not produce.
+  //
+  // Fire-and-forget: the host returns Empty whether or not the report produced an alert.
+  // A plugin cannot learn whether it made the user's phone buzz, and does not need to.
+  rpc ReportMetric(MetricReport) returns (Empty);
+
   // UI surface (v1: tray menu, row badge, status panel)
   rpc AddTrayMenuItem(MenuItemSpec) returns (UIHandle);
   rpc AddRowBadge(RowBadgeSpec) returns (UIHandle);
@@ -265,6 +279,37 @@ message AccountActivityList {
 
 message MarkAccountActiveRequest {
   string account_id = 1;
+}
+
+// One number, for one subject, at one instant.
+message MetricReport {
+  // A RoRoRo account id (the stringified Guid from GetAccounts), or empty for a metric that
+  // is not about any one account. Mapping an EXTERNAL identity -- a game's user id, a clan
+  // member -- onto a RoRoRo account is the plugin's job, because the plugin is the only side
+  // that knows the external system. GetAccounts carries roblox_user_id for exactly this.
+  //
+  // An id the host does not recognise is treated as the empty case rather than rejected: the
+  // alert still reaches the user, keyed globally, instead of vanishing because a plugin
+  // guessed an id wrong.
+  string subject_id = 1;
+
+  // Opaque to the host. The host stores history per (subject, metric_id) and matches rules by
+  // exact ordinal comparison. It carries no meaning here -- naming it "battle.points" or
+  // "widgets" is entirely the plugin's and the user's business, and the host ships no list of
+  // known ids because shipping one would name a game.
+  string metric_id = 2;
+
+  // Whatever the source reported, raw, and frequently CUMULATIVE (points so far) rather than
+  // a rate. Deriving a rate from two of these is the host's job, not the plugin's.
+  double value = 3;
+
+  // When the plugin observed it, UTC, unix milliseconds. NOT when it sent it.
+  //
+  // The host compares this against its own clock and drops a report stamped in the future,
+  // with a log line. That asymmetry is worth knowing: a rate is computed over a time window
+  // and so a skewed clock silently disables Rate rules ONLY, while Level and Event rules
+  // keep working -- the feature half-works and nobody can tell. Send real UTC.
+  int64 observed_at_unix_ms = 4;
 }
 
 message StopAccountsRequest {

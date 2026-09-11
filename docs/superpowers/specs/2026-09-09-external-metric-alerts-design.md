@@ -183,6 +183,11 @@ a scratch ledger so plan 2 cannot miss them.
    is off. If plan 3 populates destinations from a manifest without that gate, the toggle is
    decorative, and a user who turned the feature off still gets paged.
 
+   > **Corrected 2026-09-11 (feat/metric-alerts-plugin-rpc):** The setting now HAS a reader,
+   > enforced per report at the sink. The destination list now defaults to the local desktop toast.
+   > Plan 2 wired the setting enforcement at the RPC ingress. Plan 3's task is now limited to the
+   > settings control for routing a breach to destinations other than that toast.
+
 2. **A clock-skewed reporter silently disables Rate rules and only Rate rules.**
    `MetricHistory` filters samples against the host clock, while `ObservedAtUtc` comes from the
    reporter. A plugin that sends local time in a UTC+2 zone puts every sample in the future, the

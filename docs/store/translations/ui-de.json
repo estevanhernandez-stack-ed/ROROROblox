@@ -345,6 +345,7 @@
   "Plugin_Cap_AccountExited": "Das Plugin benachrichtigen, wenn ein Konto beendet wird.",
   "Plugin_Cap_AccountLaunched": "Das Plugin benachrichtigen, wenn ein Konto gestartet wird.",
   "Plugin_Cap_Accounts": "Deine gespeicherten Konten sehen — Namen und welches dein Hauptkonto ist. Liest nie Cookies oder Passwörter.",
+  "Plugin_Cap_MetricsReport": "Gesammelte Zahlen melden, damit RoRoRo dich darüber benachrichtigen kann",
   "Plugin_Cap_CurrentServer": "Dem Plugin erlauben, den zuletzt gestarteten Private-Server-Link zu lesen, damit es ihn teilen kann.",
   "Plugin_Cap_FocusForeignWindows": "Das Plugin aktiviert / fokussiert die Fenster anderer Anwendungen.",
   "Plugin_Cap_LaunchTarget": "Dem Plugin erlauben, eines deiner Konten über einen von ihm bereitgestellten Link oder Freund in einen Roblox-Server zu starten.",

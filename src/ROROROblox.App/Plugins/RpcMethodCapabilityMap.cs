@@ -54,6 +54,10 @@ public static class RpcMethodCapabilityMap
         ["GetAccounts"] = PluginCapability.HostQueriesAccounts,
         ["MarkAccountActive"] = PluginCapability.HostCommandsMarkAccountActive,
         ["StopAccounts"] = PluginCapability.HostCommandsStopAccounts,
+        // Metric reporting (0.10.0). Gated, unlike the ungated reads above, because this one
+        // WRITES: a plugin holding it can cause the user's phone to ring. That is the whole
+        // reason the consent sheet exists.
+        ["ReportMetric"] = PluginCapability.HostMetricsReport,
         ["AddTrayMenuItem"] = PluginCapability.HostUITrayMenu,
         ["AddRowBadge"] = PluginCapability.HostUIRowBadge,
         ["AddStatusPanel"] = PluginCapability.HostUIStatusPanel,

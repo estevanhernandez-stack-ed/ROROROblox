@@ -2889,6 +2889,9 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   <data name="Plugin_Cap_Accounts" xml:space="preserve">
     <value>Deine gespeicherten Konten sehen — Namen und welches dein Hauptkonto ist. Liest nie Cookies oder Passwörter.</value>
   </data>
+  <data name="Plugin_Cap_MetricsReport" xml:space="preserve">
+    <value>Gesammelte Zahlen melden, damit RoRoRo dich darüber benachrichtigen kann</value>
+  </data>
   <data name="Plugin_Cap_TrayMenu" xml:space="preserve">
     <value>Dem Plugin erlauben, Einträge im Tray-Menü hinzuzufügen.</value>
   </data>

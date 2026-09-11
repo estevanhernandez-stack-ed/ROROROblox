@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using ROROROblox.Core.Discord;
 
 namespace ROROROblox.Tests.Discord;
@@ -53,6 +55,28 @@ public class DiscordConfigStoreTests : IDisposable
 
         Assert.DoesNotContain("SECRET_TOKEN", asText, StringComparison.Ordinal);
         Assert.DoesNotContain("webhooks", asText, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task LoadAsync_AFileWrittenBeforeMetricAlerts_StillGetsTheDesktopDefault()
+    {
+        // A defaulted property and a deserialized-absent property are not automatically the same
+        // thing, and getting that wrong here would ship the exact bug the default was added to
+        // fix: every discord.dat on disk was written before MetricBreachDestinations existed, so
+        // if System.Text.Json left it empty on upgrade the breach would still route nowhere for
+        // everyone who has ever opened Settings. The envelope is hand-rolled rather than produced
+        // by SaveAsync because SaveAsync writes every property — it cannot express "absent".
+        var beforeTheField = """{"PresenceEnabled":true,"DroppedOutDestination":2}""";
+        await File.WriteAllBytesAsync(_path, ProtectedData.Protect(
+            Encoding.UTF8.GetBytes(beforeTheField), optionalEntropy: null, DataProtectionScope.CurrentUser));
+
+        var config = await new DiscordConfigStore(_path).LoadAsync();
+
+        // The old fields still read back, so this is a real blob and not a silent defaults return.
+        Assert.True(config.PresenceEnabled);
+        Assert.Equal(AlertDestination.Mine, config.DroppedOutDestination);
+        Assert.Equal(AlertDestination.Local,
+            Assert.Single(config.DestinationsFor(AlertKind.MetricBreach)));
     }
 
     [Fact]

@@ -48,8 +48,28 @@ public sealed record DiscordConfig
 
     public IReadOnlyList<AlertDestination> UptimeMarkDestinations { get; init; } = [];
 
-    /// <summary>Where a <see cref="AlertKind.MetricBreach"/> goes. Empty until the user opts in.</summary>
-    public IReadOnlyList<AlertDestination> MetricBreachDestinations { get; init; } = [];
+    /// <summary>
+    /// Where a <see cref="AlertKind.MetricBreach"/> goes. The one kind that does NOT start empty,
+    /// because it is the one kind with no routing checkbox: Settings paints the fan-out sets for
+    /// the four older kinds only, so nothing in production ever wrote this list. Empty meant the
+    /// host raised a breach, <see cref="AlertRouter"/> resolved it to no destination, and the
+    /// dispatcher logged "routed nowhere" — on every install, forever (whole-branch review R-10,
+    /// 2026-09-11).
+    /// <para>
+    /// Defaulting it to <see cref="AlertDestination.Local"/> cannot surprise anyone, because three
+    /// gates stand in front of it already: <c>MetricAlertsEnabled</c> is false by default, a rules
+    /// file must exist, and a plugin must hold <c>host.metrics.report</c> by the user's own grant.
+    /// Local is also where the router falls back when a chosen destination is unconfigured, so this
+    /// adds no delivery leg that was not already reachable. Discord and phone routing need the
+    /// Settings UI that arrives with the signed-manifest plan.
+    /// </para>
+    /// The upgrade case is the one worth pinning rather than assuming: every <c>discord.dat</c> on
+    /// disk predates this field, and a defaulted property and a deserialized-absent property are
+    /// not automatically the same thing. System.Text.Json constructs through the parameterless
+    /// constructor and leaves an absent property at its initializer, so the default survives the
+    /// round trip — <c>DiscordConfigStoreTests</c> proves it against a real envelope.
+    /// </summary>
+    public IReadOnlyList<AlertDestination> MetricBreachDestinations { get; init; } = [AlertDestination.Local];
 
     public IReadOnlyList<Guid> MutedAccountIds { get; init; } = [];
 

@@ -24,11 +24,15 @@ public class MetricVocabularyTests
     }
 
     [Fact]
-    public void DestinationsFor_MetricBreach_DefaultsToNothing()
+    public void DestinationsFor_MetricBreach_DefaultsToTheDesktopToast()
     {
-        // Off until the user turns it on, same as every other kind. A new alert kind that
-        // starts firing on upgrade is a bug, not a feature.
-        Assert.Empty(new DiscordConfig().DestinationsFor(AlertKind.MetricBreach));
+        // This test said "DefaultsToNothing" until 2026-09-11, and nothing is exactly what the
+        // feature did: no Settings control writes this list, so a breach resolved to no
+        // destination and was logged as "routed nowhere" on every install. The default is the
+        // reader the list never had. It cannot fire unasked — MetricAlertsEnabled is false, a
+        // rules file must exist, and a plugin must hold a granted capability.
+        Assert.Equal(AlertDestination.Local,
+            Assert.Single(new DiscordConfig().DestinationsFor(AlertKind.MetricBreach)));
     }
 
     [Fact]

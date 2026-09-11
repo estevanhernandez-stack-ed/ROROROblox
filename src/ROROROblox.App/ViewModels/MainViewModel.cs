@@ -412,6 +412,21 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     AlertKind.UptimeMark, Guid.Empty, label, label, detail,
                     PrivateBytes: null, DateTimeOffset.UtcNow)]);
             }
+
+            // Everything above is this view model's own work. PeriodicTick is the same cadence
+            // offered outward, for the app's periodic chores that have nothing to refresh here —
+            // App's metric-alert opt-in re-read is the first and, at time of writing, only one.
+            // Raised last, and guarded, so a subscriber that throws costs its own refresh and not
+            // the four above it; the guard is belt-and-braces, subscribers are still expected to
+            // own their exceptions.
+            try
+            {
+                PeriodicTick?.Invoke(this, EventArgs.Empty);
+            }
+            catch (Exception ex)
+            {
+                _log.LogDebug(ex, "A PeriodicTick subscriber threw; ignoring.");
+            }
         };
         _ticker.Start();
 
@@ -3257,6 +3272,22 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal Core.StreamerMode.IStreamerIdentityProvider? StreamerIdentityForTests => _streamerIdentity;
 
     internal event EventHandler<IReadOnlyList<AlertTrigger>>? AlertsRaised;
+
+    /// <summary>
+    /// The 30s ticker this view model already runs, offered to the rest of the app. Raised last on
+    /// every tick, on the UI thread, with no payload — subscribers are expected to go and read
+    /// whatever they care about.
+    ///
+    /// <para>Exists so a periodic chore elsewhere in the app does not stand up a second timer. The
+    /// idle chips, the memory repaint, the pressure-clear check and the uptime mark all already
+    /// ride this one cadence for that reason; this event extends the same bargain outside the view
+    /// model. Its first subscriber is <c>App</c>'s metric-alert opt-in re-read, which needs a
+    /// periodic pull because <c>IAppSettings</c> broadcasts no change event.</para>
+    ///
+    /// <para>Stopped by <see cref="StopPeriodicRefresh"/> along with everything else on the
+    /// ticker, so a leaked view model does not keep firing this into a finished test.</para>
+    /// </summary>
+    internal event EventHandler? PeriodicTick;
 
     /// <summary>
     /// Accounts the user just closed on purpose, and when. A dropped-out alert exists to report a

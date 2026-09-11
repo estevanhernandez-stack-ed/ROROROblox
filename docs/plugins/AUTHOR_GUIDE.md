@@ -139,6 +139,7 @@ Gated by the gRPC interceptor. If you call a method whose required capability is
 | `host.commands.mark-account-active` | `MarkAccountActive(accountId)` — tell RoRoRo an account is still active after you act on its window, so idle warnings don't misfire (NuGet 0.5.0+) |
 | `host.commands.stop-accounts` | `StopAccounts(accountIds)` — close Roblox clients RoRoRo launched. Graceful close, hard kill as fallback. Destructive: unsaved in-game progress is lost (NuGet 0.6.0+) |
 | `host.events.memory-pressure` | `SubscribeMemoryPressure` (server-streaming) — memory-watchdog crossings, per tracked account (NuGet 0.7.0+) |
+| `host.metrics.report` | `ReportMetric(subjectId, metricId, value, observedAtUnixMs)` — hand RoRoRo one number you gathered; RoRoRo owns the history, the rules, and the decision to alert (NuGet 0.10.0+) |
 | `host.ui.tray-menu` | `AddTrayMenuItem` — contribute a tray-menu entry |
 | `host.ui.row-badge` | `AddRowBadge` — paint a per-account badge in RoRoRo's main window |
 | `host.ui.status-panel` | `AddStatusPanel` — contribute a status panel pane |
@@ -366,6 +367,87 @@ await foreach (var snap in stream.ResponseStream.ReadAllAsync())
 ```
 
 `mins_to_ceiling` is `0` when there's no valid projection (not enough observation time yet, flat growth, or a failed system-memory read this tick) — **never** read `0` as "zero minutes left, act now." Gate your reaction on `over_cap` / `is_target`, and treat `mins_to_ceiling` as informational context once you're already acting.
+
+### Report a metric — you gather, RoRoRo decides
+
+`ReportMetric` (NuGet 0.10.0+, declare `host.metrics.report` in your manifest's `capabilities`
+array) lets a plugin hand RoRoRo one number it gathered, for the host to judge against rules the
+user configured. It is consent-gated like every other `host.*` capability — a user can decline it
+on the install sheet — and gated the same way an undeclared capability always is here: absence
+from your manifest is treated exactly like a decline, not like a "probably meant yes."
+
+```csharp
+await client.ReportMetricAsync(new MetricReport
+{
+    SubjectId = accountId,          // a RoRoRo account id — see "Which account?" below
+    MetricId = "run.points",        // yours; RoRoRo never looks inside it
+    Value = 1450,                   // raw, exactly as your source reports it
+    ObservedAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+}, callOptions);
+```
+
+The call is fire-and-forget: it always returns `Empty`, whether or not the number you sent produced
+an alert. You cannot ask, and you should not try to guess from your own polling — see "Report on
+your own clock, not the user's" below.
+
+**Which account?** `subject_id` is a RoRoRo account id — the stringified Guid `GetAccounts` and
+`GetRunningAccounts` hand you — not whatever identity your own polling target uses. If you're
+tracking something keyed by an external id, resolve it yourself: call `GetAccounts()` (capability
+`host.queries.accounts`) once, keep a lookup from its `roblox_user_id` to `account_id`, and map
+before you report. RoRoRo doesn't know your external identity and can't do this mapping for you.
+Get it wrong, or don't have a mapping yet, and the report isn't rejected — an id RoRoRo doesn't
+recognise is simply treated as belonging to no account, and the alert still reaches the user
+globally rather than vanishing because a plugin guessed wrong. Leave `subject_id` empty for a
+metric that was never about one account to begin with.
+
+**Send the raw, cumulative number — never a rate.** RoRoRo keeps your last several observations
+per (account, metric id) and derives a rate itself, from the gap between two of them. If you
+compute a rate on your side and send that instead, RoRoRo has no running total to measure a rate
+against, and a Rate rule watching that metric id never sees anything consistent. Report the total
+exactly as your source hands it to you, every time.
+
+This is also where a resetting counter catches authors out. Say `run.points` is cumulative within
+a run and resets to zero when a new run starts:
+
+| Time | You report | What happened |
+| --- | --- | --- |
+| 09:00 | 1200 | cumulative points, this run |
+| 09:05 | 1450 | same run, still climbing |
+| 09:07 | 40 | a new run started; the counter reset |
+
+Don't special-case the reset. Don't report a delta, don't skip the low sample, don't zero your own
+baseline first — just send 40, exactly as observed. RoRoRo sees the value go down and treats that
+window as unmeasurable rather than computing "−1410 points/min," which would read as a
+catastrophic drop that never happened. A Rate rule on this metric goes quiet for one cycle — it
+needs two fresh samples from the new run before it has anything to measure again — while Level and
+Event rules, which only ever look at the latest value, don't notice the reset at all.
+
+**`observed_at_unix_ms` is when you observed the number, in UTC — not when you call
+`ReportMetric`, and not your machine's local wall clock treated as if it were already UTC.** Get
+this wrong and it does not look like a failure. RoRoRo compares your timestamp against its own
+clock and drops anything stamped meaningfully in its future, with a log line naming the metric —
+so a plugin whose local-time mistake runs it *ahead* of UTC sees every report silently refused and
+logged, which at least leaves a trail. A plugin whose local-time mistake runs it *behind* UTC is
+worse, because nothing is dropped and nothing is logged: every report lands, but each one is
+stamped well before RoRoRo's own "now," so it never falls inside the few-minute window a Rate rule
+looks at. The toggle is on, the rules file is fine, reports are visibly arriving — and Rate rules
+on that metric simply never breach, forever, while Level and Event rules on the same metric id
+keep working. From the outside that reads as "this never worked," not "half of this broke,"
+because nothing about it looks broken. Use `DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()`, or
+whatever UTC timestamp your source already gives you — never `DateTime.Now`.
+
+**Report on your own clock, not the user's.** Whether an observation is worth an alert is RoRoRo's
+call, not yours — the per-(account, kind) cooldown, the coalescing across accounts, the mute list
+all live in the same router every other alert kind already rides, and a metric breach gets them
+for free. Report at whatever cadence is natural for what you're polling, and call `ReportMetric`
+every time you have a fresh number. Don't throttle, debounce, or skip reports on the theory that
+you're sparing the user's phone — that's RoRoRo's job, and it already does it for four other alert
+kinds. Rate-limiting on the user's behalf only starves the host of samples: fewer reports means
+fewer chances for a Rate rule to ever see two points close enough together to compute anything.
+
+If what you're polling is itself a third-party service, save your restraint for that: respect its
+cache headers and its terms of use, poll it no faster than it actually updates, and let
+`ReportMetric` reflect that cadence rather than inventing a faster one of your own.
 
 ## Match the host's theme (contract 0.8.0+)
 

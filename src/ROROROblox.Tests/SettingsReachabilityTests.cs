@@ -138,15 +138,24 @@ public class SettingsReachabilityTests
             + "arguing against."),
 
         new("MetricAlertsEnabled",
-            "No control yet by design, not an oversight (metric-alerts-core plan, Task 6, "
-            + "2026-09-09; docs/superpowers/specs/2026-09-09-external-metric-alerts-design.md). This "
-            + "plan wires AlertKind.MetricBreach, MetricHistory and the three rules through Core "
-            + "only. There is no RPC yet for a plugin to report a MetricObservation over (plan 2) "
-            + "and no signed manifest or plugin that could produce one (plan 3), so no metric can "
-            + "ever be configured — a Settings toggle today would be reachable but inert, changing "
-            + "nothing a user could observe. The accessor pair ships now so plan 2/3 do not also "
-            + "need to touch AppSettings.cs; the control ships with plan 3, the first point there is "
-            + "a metric for it to gate."),
+            "No control yet by design, not an oversight — but NOT for the reason this entry gave "
+            + "until 2026-09-11. It said 'there is no RPC yet for a plugin to report a "
+            + "MetricObservation over (plan 2)', and the plugin-RPC plan then landed ReportMetric "
+            + "on this very branch, which made the justification false while the exemption stayed. "
+            + "Exactly the shape this file exists to catch, caught by a human review rather than "
+            + "by the fence, because a fence can check that a reason was WRITTEN and not that it "
+            + "is still TRUE. The true reason now: the setting has no UI to live in. A plugin can "
+            + "report a metric today, MetricAlertCoordinator raises a MetricBreach from it, and it "
+            + "reaches the desktop toast — what has not shipped is the metric-alerts section of "
+            + "Settings, which the signed-manifest plan brings along with the rule source and the "
+            + "routing destinations. An opt-in toggle floating above the feature it gates, a plan "
+            + "before that feature is configurable, is a worse answer than this entry. Meanwhile "
+            + "the gate is real rather than decorative: App.xaml.cs re-reads it onto the 30s tick "
+            + "and MetricReportSinkAdapter refuses every report while it is false, which is the "
+            + "shipped default; hand-editing settings.json is the only way to flip it, and that is "
+            + "the honest state of a feature whose UI has not shipped. REMOVABLE, with no other "
+            + "change, the moment that Settings section exists: add the toggle, delete this entry, "
+            + "and the accessor edge below finds GetMetricAlertsEnabledAsync on its own."),
     ];
 
     /// <summary>
