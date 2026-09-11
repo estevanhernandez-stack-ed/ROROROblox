@@ -230,6 +230,8 @@ public sealed class ProfileGuardTests : IDisposable
         await guard.SetMetricAlertsEnabledAsync(true);
         await guard.RestoreAsync();
 
+        // Both halves asserted, because "the key reads false" is also what a DELETED file reads.
+        Assert.True(File.Exists(_settingsPath));
         Assert.False(await ReadSettingAsync(BooleanSetting.MetricAlertsEnabled));
     }
 
@@ -427,6 +429,56 @@ public sealed class ProfileGuardTests : IDisposable
         var report = await first.RestoreAsync();
         Assert.True(report.Complete);
         Assert.Equal(SeededMineUrl, (await new DiscordConfigStore(_discordPath).LoadAsync()).MineWebhookUrl);
+    }
+
+    [Fact]
+    public async Task RecoverOrphaned_SeesTheLiveRun_EvenWhenTheBackupRootIsSpeltDifferently()
+    {
+        // The ownership name is a hash of this string, so two spellings of one folder are two
+        // different runs as far as the semaphore is concerned — and the second one would happily
+        // restore underneath the first. Path.GetFullPath alone does not close this: it KEEPS a
+        // trailing separator. Task 5 builds this path rather than taking the default, which is what
+        // makes the spelling something other than a hypothetical.
+        var guard = await AcquireAsync();
+        await guard.MutateDiscordAsync(c => c with { MineWebhookUrl = "http://localhost:9/mine" });
+
+        var trailing = _backupRoot + Path.DirectorySeparatorChar;
+        var roundabout = Path.Combine(_backupRoot, "..", Path.GetFileName(_backupRoot));
+
+        Assert.False(await ProfileGuard.RecoverOrphanedAsync(trailing, _log.Add));
+        Assert.False(await ProfileGuard.RecoverOrphanedAsync(roundabout, _log.Add));
+
+        Assert.True((await guard.RestoreAsync()).Complete);
+        Assert.Equal(SeededMineUrl, (await new DiscordConfigStore(_discordPath).LoadAsync()).MineWebhookUrl);
+    }
+
+    [Fact]
+    public async Task ALockedDiscordFile_IsReportedAsLocked_NotAsADecryptionFailure()
+    {
+        // The harness runs alongside the app, and the app writes this file, so a momentary lock is
+        // not hypothetical. Refusing is right; telling the user their DPAPI key no longer works
+        // points them at something frightening and wrong.
+        var guard = await AcquireAsync();
+
+        using var _hold = File.Open(_discordPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            guard.MutateDiscordAsync(c => c with { MineWebhookUrl = "http://localhost:9/mine" }));
+
+        Assert.Contains("open by another process", ex.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("DPAPI", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ALockedDiscordFile_DoesNotMakeTheReadBackClaimTheConfigIsCorrupt()
+    {
+        var guard = await AcquireAsync();
+
+        using var _hold = File.Open(_discordPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+        Assert.False(await guard.VerifyDiscordSwapAsync("http://localhost:9/mine", "http://localhost:9/clan"));
+        Assert.Contains(_log, l => l.Contains("open by another process", StringComparison.Ordinal));
+        Assert.DoesNotContain(_log, l => l.Contains("will not decrypt", StringComparison.Ordinal));
     }
 
     [Fact]

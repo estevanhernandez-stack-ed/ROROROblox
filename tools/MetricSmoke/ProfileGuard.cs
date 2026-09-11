@@ -103,7 +103,16 @@ public sealed class ProfileGuard : IDisposable
 
     /// <summary>True when a marker from an unfinished run is sitting in <paramref name="backupRoot"/>.</summary>
     public static bool HasOrphanedMarker(string backupRoot)
-        => File.Exists(Path.Combine(backupRoot, MarkerFileName));
+        => File.Exists(Path.Combine(Canonical(backupRoot), MarkerFileName));
+
+    /// <summary>
+    /// One spelling for one folder. <see cref="Path.GetFullPath(string)"/> alone is not enough —
+    /// it keeps a trailing separator, so <c>…\smoke-backup</c> and <c>…\smoke-backup\</c> stay
+    /// different strings and would hash to two different ownership names, which is a live run this
+    /// process cannot see. <see cref="Path.TrimEndingDirectorySeparator(string)"/> leaves a root like
+    /// <c>C:\</c> alone, which is the one case where the separator is not decoration.
+    /// </summary>
+    private static string Canonical(string path) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
 
     /// <summary>
     /// Takes ownership, recovers an orphaned run, backs up what needs backing up, and hands back the
@@ -123,8 +132,8 @@ public sealed class ProfileGuard : IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(backupRoot);
         var write = log ?? (_ => { });
 
-        dataRoot = Path.GetFullPath(dataRoot);
-        backupRoot = Path.GetFullPath(backupRoot);
+        dataRoot = Canonical(dataRoot);
+        backupRoot = Canonical(backupRoot);
         Directory.CreateDirectory(dataRoot);
         Directory.CreateDirectory(backupRoot);
 
@@ -161,14 +170,15 @@ public sealed class ProfileGuard : IDisposable
             DiscordConfig? discordBefore = null;
             if (discordExisted)
             {
-                discordBefore = await ReadDiscordIfDecryptableAsync(discordPath).ConfigureAwait(false);
-                if (discordBefore is null)
+                var read = await ReadDiscordAsync(discordPath).ConfigureAwait(false);
+                discordBefore = read.Config;
+                if (read.Outcome != DiscordReadOutcome.Ok)
                 {
                     throw new InvalidOperationException(
-                        $"{discordPath} exists but will not decrypt with this user's DPAPI key, and the store "
-                        + "hands back an EMPTY config rather than failing. Writing the harness's webhook URLs "
-                        + "into that would blank the destinations, the muted list and both toggles while "
-                        + "reporting success. Refusing to start: fix or remove that file first.");
+                        read.Explain(discordPath)
+                        + " Writing the harness's webhook URLs on top of a config this tool could not read "
+                        + "first would blank the destinations, the muted list and both toggles while reporting "
+                        + "a successful swap. Refusing to start.");
                 }
             }
 
@@ -334,19 +344,16 @@ public sealed class ProfileGuard : IDisposable
         EnsureUsable();
         EnsureBackupsIntact();
 
-        DiscordConfig current;
-        if (File.Exists(DiscordPath))
+        var read = await ReadDiscordAsync(DiscordPath).ConfigureAwait(false);
+        var current = read.Outcome switch
         {
-            current = await ReadDiscordIfDecryptableAsync(DiscordPath).ConfigureAwait(false)
-                ?? throw new InvalidOperationException(
-                    $"{DiscordPath} no longer decrypts, and the store answers that with an EMPTY config. "
-                    + "Writing now would blank the real destinations and still look like a successful swap. "
-                    + $"Nothing was written. The backup taken at the start of this run is in {_backupRoot}.");
-        }
-        else
-        {
-            current = new DiscordConfig();
-        }
+            DiscordReadOutcome.Ok => read.Config!,
+            DiscordReadOutcome.Absent => new DiscordConfig(),
+            _ => throw new InvalidOperationException(
+                read.Explain(DiscordPath)
+                + " Writing now would blank the real destinations and still look like a successful swap, so "
+                + $"nothing was written. The backup taken at the start of this run is in {_backupRoot}."),
+        };
 
         await new DiscordConfigStore(DiscordPath).SaveAsync(transform(current)).ConfigureAwait(false);
     }
@@ -371,13 +378,14 @@ public sealed class ProfileGuard : IDisposable
     /// </summary>
     public async Task<bool> VerifyDiscordSwapAsync(string expectedMineUrl, string expectedClanUrl)
     {
-        var config = await ReadDiscordIfDecryptableAsync(DiscordPath).ConfigureAwait(false);
-        if (config is null)
+        var read = await ReadDiscordAsync(DiscordPath).ConfigureAwait(false);
+        if (read.Outcome != DiscordReadOutcome.Ok)
         {
-            _log($"[guard] {DiscordFileName} is missing or will not decrypt, so the swap cannot be confirmed. "
-                + "Nothing may be reported.");
+            _log($"[guard] the swap cannot be confirmed: {read.Explain(DiscordPath)} Nothing may be reported.");
             return false;
         }
+
+        var config = read.Config!;
 
         var mineOk = string.Equals(config.MineWebhookUrl, expectedMineUrl, StringComparison.Ordinal);
         var clanOk = string.Equals(config.ClanWebhookUrl, expectedClanUrl, StringComparison.Ordinal);
@@ -471,6 +479,12 @@ public sealed class ProfileGuard : IDisposable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(backupRoot);
         var write = log ?? (_ => { });
+
+        // Canonicalised for the same reason AcquireAsync does it: the ownership name is a hash of
+        // this string, so a caller spelling the same folder differently — a trailing separator, a
+        // relative path — would ask a different semaphore whether a run is live, be told no, and
+        // restore underneath it. Task 5 constructs this path rather than taking the default.
+        backupRoot = Canonical(backupRoot);
 
         if (!HasOrphanedMarker(backupRoot))
         {
@@ -734,34 +748,89 @@ public sealed class ProfileGuard : IDisposable
         $"uptimeSet={c.UptimeMarkDestinations.Count}",
         $"muted={c.MutedAccountIds.Count}");
 
+    private enum DiscordReadOutcome
+    {
+        /// <summary>No file. The harness may create one, and the restore deletes it again.</summary>
+        Absent,
+
+        /// <summary>Something else has it open right now. Nothing is wrong with the file.</summary>
+        Locked,
+
+        /// <summary>It will not decrypt or will not parse. This is the one that means damage.</summary>
+        Unreadable,
+
+        /// <summary>Decrypted and parsed.</summary>
+        Ok,
+    }
+
+    private readonly record struct DiscordRead(DiscordReadOutcome Outcome, DiscordConfig? Config)
+    {
+        /// <summary>The half of a failure a user can act on, without naming a cause we did not establish.</summary>
+        public string Explain(string path) => Outcome switch
+        {
+            DiscordReadOutcome.Locked =>
+                $"{path} is open by another process right now — the app writes that file too, so this is "
+                + "usually a moment's overlap rather than damage. Nothing is wrong with the file; try again.",
+            DiscordReadOutcome.Unreadable =>
+                $"{path} exists but will not decrypt with this user's DPAPI key, or does not parse, and the "
+                + "store answers that with an EMPTY config rather than an error.",
+            DiscordReadOutcome.Absent => $"{path} is not there.",
+            _ => $"{path} is readable.",
+        };
+    }
+
     /// <summary>
     /// Decodes <c>discord.dat</c> only if it genuinely decrypts and parses, so a caller can tell
-    /// "there is no config" from "the store swallowed a CryptographicException and handed me a blank
-    /// one." Null means do not trust the store's answer.
+    /// "there is no config" and "someone has the file open" from "the store swallowed a
+    /// <c>CryptographicException</c> and handed me a blank one."
+    /// <para>
+    /// Retries an <c>IOException</c> exactly as the settings probe does, and for the same reason: this
+    /// tool runs ALONGSIDE the app, the app touches this file, and a momentary lock is not
+    /// hypothetical. Answering one with "will not decrypt with this user's DPAPI key" would point a
+    /// user at a frightening and wrong conclusion about a file that is perfectly fine. Failing safe is
+    /// right; misnaming the cause is not.
+    /// </para>
     /// </summary>
-    private static async Task<DiscordConfig?> ReadDiscordIfDecryptableAsync(string path)
+    private static async Task<DiscordRead> ReadDiscordAsync(string path)
     {
-        if (!File.Exists(path))
+        const int attempts = 3;
+        for (var attempt = 1; attempt <= attempts; attempt++)
         {
-            return null;
+            if (!File.Exists(path))
+            {
+                return new DiscordRead(DiscordReadOutcome.Absent, null);
+            }
+
+            try
+            {
+                var encrypted = await File.ReadAllBytesAsync(path).ConfigureAwait(false);
+                if (encrypted.Length == 0)
+                {
+                    return new DiscordRead(DiscordReadOutcome.Unreadable, null);
+                }
+                var decrypted = ProtectedData.Unprotect(encrypted, optionalEntropy: null, DataProtectionScope.CurrentUser);
+                var config = JsonSerializer.Deserialize<DiscordConfig>(decrypted);
+                return config is null
+                    ? new DiscordRead(DiscordReadOutcome.Unreadable, null)
+                    : new DiscordRead(DiscordReadOutcome.Ok, config);
+            }
+            catch (IOException) when (attempt < attempts)
+            {
+                await Task.Delay(60).ConfigureAwait(false);
+            }
+            catch (IOException)
+            {
+                return new DiscordRead(DiscordReadOutcome.Locked, null);
+            }
+            catch (Exception)
+            {
+                // CryptographicException and JsonException — the two DiscordConfigStore turns into an
+                // empty config. Here they stay what they are.
+                return new DiscordRead(DiscordReadOutcome.Unreadable, null);
+            }
         }
 
-        try
-        {
-            var encrypted = await File.ReadAllBytesAsync(path).ConfigureAwait(false);
-            if (encrypted.Length == 0)
-            {
-                return null;
-            }
-            var decrypted = ProtectedData.Unprotect(encrypted, optionalEntropy: null, DataProtectionScope.CurrentUser);
-            return JsonSerializer.Deserialize<DiscordConfig>(decrypted);
-        }
-        catch (Exception)
-        {
-            // Same three failure modes DiscordConfigStore swallows (IO, crypto, JSON) — the difference
-            // is that here they are answered with "I do not know" instead of an empty config.
-            return null;
-        }
+        return new DiscordRead(DiscordReadOutcome.Locked, null);
     }
 
     private enum SettingsFileState { Absent, Readable, Unreadable }
@@ -851,9 +920,13 @@ public sealed class ProfileGuard : IDisposable
     // Local\ rather than Global\: overlapping runs are one user in one session double-clicking, or two
     // terminals. The hash keeps the name inside the 260-character limit and out of the way of a path
     // with characters a kernel object name cannot carry.
+    //
+    // Canonicalised HERE as well as at every entry point, on purpose: this is the one function whose
+    // output IS the identity of a run, so normalising at the chokepoint means a later caller cannot
+    // reintroduce a second name for one folder by spelling the path differently.
     private static string OwnershipName(string backupRoot)
     {
-        var key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(backupRoot.ToLowerInvariant())));
+        var key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Canonical(backupRoot).ToLowerInvariant())));
         return $@"Local\rororo-metric-smoke-{key[..16]}";
     }
 
