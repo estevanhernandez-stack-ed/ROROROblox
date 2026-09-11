@@ -75,12 +75,26 @@ purpose.**
    | `metric-rules.json` | scenario rules | **Harness-owned.** Back up only if one already exists, then restore or delete. |
    | `discord.dat` | destinations plus two webhook URLs | **Full backup and restore.** The only file needing it, and it holds real webhook URLs, so the backup never leaves the machine and is never committed. |
 
-5. **A crash must not leave the profile broken.** The runner writes a marker beside its backups
+5. **The runner verifies the swap landed before it sends anything.** After writing `discord.dat` it
+   reads the config back and confirms the webhook URLs are the localhost ones it just wrote. If they
+   are not, it restores and aborts without reporting a single metric. Added 2026-09-11 after Este
+   asked what could actually go wrong: of the three real risks, two are private annoyances — missing
+   a genuine drop-out alert for the few minutes the URLs point at localhost, and re-pasting two URLs
+   if a restore fails — and only one has an audience, which is a test alert landing in the real clan
+   channel because the swap silently did not take. That is the one worth a guard, and the guard is a
+   read-back.
+
+   Worth recording because Este's first instinct was that this could damage Discord: `discord.dat`
+   is RoRoRo's own file. It holds two webhook URLs, the per-kind destination lists, the presence and
+   join toggles, and the muted-account list. Discord never sees it. The worst case is RoRoRo
+   forgetting where to post and being told again.
+
+6. **A crash must not leave the profile broken.** The runner writes a marker beside its backups
    before touching anything and removes it on clean exit. A run that finds an orphaned marker
    restores from those backups before doing anything else, and says so. Without this, one Ctrl-C
    leaves Este with a config pointing at a dead localhost webhook.
 
-6. **Local one-command runner. CI is not promised.** It drives a real WPF app with a tray and toasts.
+7. **Local one-command runner. CI is not promised.** It drives a real WPF app with a tray and toasts.
    Whether a GitHub runner handles that is unknown, and claiming CI before proving it is how a smoke
    harness becomes shelfware. Prove it stable locally first.
 
