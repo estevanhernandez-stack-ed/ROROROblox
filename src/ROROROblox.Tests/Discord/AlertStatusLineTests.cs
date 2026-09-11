@@ -207,4 +207,48 @@ public class AlertStatusLineTests
 
         Assert.DoesNotContain("▲", failure.Text, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void AFreshInstall_StillSaysNoAlertsYet_EvenThoughMetricBreachDefaultsToDesktop()
+    {
+        // The regression the plan-2 exclusion existed to prevent. MetricBreachDestinations ships
+        // as [Local] so a breach has somewhere to go; that is a default, not a user choice, and
+        // this sentence reports back what the user chose.
+        var line = AlertStatusLine.Compose(new DiscordConfig());
+
+        Assert.Contains("No alerts yet", line.Text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void WithMetricAlertsOff_TheMetricDestinationIsNotCounted()
+    {
+        var config = new DiscordConfig { MetricBreachDestinations = [AlertDestination.Local] };
+        var line = AlertStatusLine.Compose(config, metricAlertsEnabled: false);
+
+        Assert.Contains("No alerts yet", line.Text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void WithMetricAlertsOn_TheMetricDestinationIsCounted()
+    {
+        // The under-reporting this task fixes: before it, a user who configured ONLY a metric
+        // destination was told nothing was configured.
+        var config = new DiscordConfig { MetricBreachDestinations = [AlertDestination.Local] };
+
+        var line = AlertStatusLine.Compose(config, metricAlertsEnabled: true);
+
+        Assert.NotEqual("No alerts yet", line.Text);
+    }
+
+    [Fact]
+    public void TheGateDefaultsOff_SoExistingCallersAreUnaffected()
+    {
+        // The parameter is trailing and optional on purpose. Every pre-existing call site passes
+        // nothing and must behave exactly as it did.
+        var config = new DiscordConfig { MetricBreachDestinations = [AlertDestination.Phone] };
+        var lineWithoutGate = AlertStatusLine.Compose(config);
+        var lineWithGateFalse = AlertStatusLine.Compose(config, metricAlertsEnabled: false);
+
+        Assert.Equal(lineWithoutGate, lineWithGateFalse);
+    }
 }
