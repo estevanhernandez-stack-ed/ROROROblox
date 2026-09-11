@@ -187,14 +187,37 @@ no vendor-specific anything in the shipped binary.**
    asking; not a blocker on building.
 2. **Where the manifest is hosted and how it is re-signed.** `compat.yml` already does exactly
    this for the mutex feed. Reuse it, or a sibling workflow?
+
+   > **Dropped 2026-09-11.** There is no manifest to host or re-sign. This question is not
+   > awaiting an answer — it no longer applies. Full correction at the top of this spec.
+
 3. **Whether `event` ships in the first cut.** `rate` covers the stated need. `level` is nearly
    free once `rate` exists. `event` needs change-detection semantics and its own copy, and may be
    a second cycle.
+
+   > **Settled 2026-09-11 (unrelated to the manifest decision):** yes. All three kinds — `Rate`,
+   > `Level`, `Event` — shipped in plan 1 (`docs/decisions.md`, 2026-09-09 entry, consequence 2).
+
 4. **Poll interval and politeness.** The server caches for 3 minutes; polling faster only burns
    the user's own bandwidth and looks like abuse under TERMS clause 4. Recommend a manifest-set
    minimum with a hard floor in core that the manifest cannot lower.
 
+   > **Corrected 2026-09-11.** The proposed mechanism — a manifest-set minimum with a host floor —
+   > no longer exists; there is no manifest. What shipped instead: `docs/plugins/AUTHOR_GUIDE.md`
+   > puts poll cadence and third-party politeness on the plugin author ("report on your own clock,
+   > not the user's … if what you're polling is itself a third-party service, save your restraint
+   > for that"). RoRoRo itself enforces no minimum poll interval.
+
 ## §5 Test plan
+
+> **Corrected 2026-09-11.** Item 1's manifest-signature and fallback-chain testing never applies —
+> the manifest was dropped before it was built; the rest of item 1 landed (rate computation across
+> sample gaps, level crossings, the router's `MetricBreach` cases). Item 2's fence landed, but not
+> against a manifest: `NoVendorNameFenceTests`
+> (`src/ROROROblox.Tests/NoVendorNameFenceTests.cs`) scans `Core`/`App`/`PluginContract` source for
+> the vendor's own company name and its API/community-tracker acronym — not the game's name, which
+> ships deliberately elsewhere. Item 5, the manifest rotation drill, is struck outright: there is
+> no manifest to rotate. Items 3 and 4 are unaffected by this decision.
 
 1. **Unit** — rate computation across sample gaps including a missed poll and a counter reset;
    level crossings in both directions with hysteresis; router `MetricBreach` cases
@@ -229,6 +252,12 @@ a scratch ledger so plan 2 cannot miss them.
    > enforced per report at the sink. The destination list now defaults to the local desktop toast.
    > Plan 2 wired the setting enforcement at the RPC ingress. Plan 3's task is now limited to the
    > settings control for routing a breach to destinations other than that toast.
+   >
+   > **Corrected again, 2026-09-11 (feat/metric-alerts-close-out):** That settings control has
+   > since shipped — `docs/superpowers/plans/2026-09-11-metric-alert-routing-control.md` — and
+   > plan 3 itself is dropped outright (top banner of this spec). There is no manifest task left
+   > for anything to be "limited to." Nothing of plan 3 remains: routing already reaches all four
+   > destinations without it, and the rule source (`LocalFileMetricRuleSource`) is permanent.
 
 2. **A clock-skewed reporter silently disables Rate rules and only Rate rules.**
    `MetricHistory` filters samples against the host clock, while `ObservedAtUtc` comes from the

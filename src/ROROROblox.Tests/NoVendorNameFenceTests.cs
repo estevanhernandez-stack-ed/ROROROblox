@@ -6,7 +6,7 @@ namespace ROROROblox.Tests;
 /// The shipped binary names no vendor. This is the metric-alerts spec's own closing test made
 /// executable: "does the shipped binary or the 626-hosted manifest name Big Games? If yes, the
 /// separation is a fig leaf." (docs/superpowers/specs/2026-09-09-external-metric-alerts-design.md
-/// §1.9). Every plan up to this one honoured that line by review; a reviewer having an off day is
+/// §1.6). Every plan up to this one honoured that line by review; a reviewer having an off day is
 /// exactly the failure mode a fence survives and a checklist item does not.
 ///
 /// <para>
