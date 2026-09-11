@@ -60,8 +60,10 @@ public sealed record DiscordConfig
     /// gates stand in front of it already: <c>MetricAlertsEnabled</c> is false by default, a rules
     /// file must exist, and a plugin must hold <c>host.metrics.report</c> by the user's own grant.
     /// Local is also where the router falls back when a chosen destination is unconfigured, so this
-    /// adds no delivery leg that was not already reachable. Discord and phone routing need the
-    /// Settings UI that arrives with the signed-manifest plan.
+    /// adds no delivery leg that was not already reachable. Discord and phone routing for this kind
+    /// ship through the same metric-alerts routing row in Settings › Alerts as every other
+    /// destination checkbox — no signed manifest was ever needed for that UI, and none is coming
+    /// (dropped 2026-09-11).
     /// </para>
     /// The upgrade case is the one worth pinning rather than assuming: every <c>discord.dat</c> on
     /// disk predates this field, and a defaulted property and a deserialized-absent property are

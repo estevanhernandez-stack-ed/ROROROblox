@@ -4,6 +4,35 @@
 > Origin: Este — clan battles are monitored by hand today, and the clan posts in Discord when a
 > member's contribution rate drops. The ask is for RoRoRo to notice first.
 
+---
+
+> **DECISION CORRECTION (2026-09-11) — the signed manifest is dropped; no reference plugin ships.**
+>
+> **Originally proposed** (§1.3, §1.5): a 626 Labs–hosted, signed manifest supplying a discovery
+> request, a fetch template, an extract path, and rule parameters for whatever game the user points
+> RoRoRo at — signed because, per §1.5, it "names URLs the plugin will call."
+>
+> **Why it was dropped, on two findings (Este's call):**
+>
+> 1. §1.5 and §1.6 contradict each other. §1.5 signs the manifest because it names the URL the
+>    plugin calls; §1.6 has the user enter that URL in plugin settings. If the user supplies it,
+>    the manifest names no URL, and the stated reason to sign one evaporates.
+> 2. The plugin/core split in §1.2 already made the manifest's job disappear. Of its four payloads
+>    — a discovery request, a fetch template, an extract path, and rule parameters — the first
+>    three belong wholly to the plugin, which the user builds and updates freely, and the fourth
+>    duplicates the local rules file (`LocalFileMetricRuleSource`) that already ships.
+>
+> **Consequence.** Dropping it is the strongest form of the separation §1.6 is protecting: 626 Labs
+> now hosts nothing about any game at all, rather than hosting a file that describes one. The
+> honest cost: a field-path change now means every user updates their own plugin, instead of one
+> re-signed manifest reaching everyone. Full account:
+> [docs/superpowers/plans/2026-09-11-metric-alerts-close-out.md](../plans/2026-09-11-metric-alerts-close-out.md#the-decision-this-plan-records).
+>
+> §0 below is unaffected — it is a record of live-verified facts, not a proposal. Do not rewrite §1
+> or §2; this banner and the two shorter ones at §1.3 and §1.5 are the correction.
+
+---
+
 ## §0 What was measured before designing
 
 Every fact below was checked against the live API or the repo, not assumed. Two of them
@@ -84,6 +113,11 @@ no vendor-specific anything in the shipped binary.**
    - an **extract** path to a list of `{subject, value}` pairs,
    - a **metric kind** and its rule parameters.
 
+   > **Dropped 2026-09-11.** The plugin/core split in item 2 above left these four payloads with
+   > nothing to do: the first three belong wholly to the plugin, which the user owns and updates
+   > freely; the fourth duplicates the rules file `LocalFileMetricRuleSource` already reads. Full
+   > correction at the top of this spec.
+
 4. **Three metric kinds, one fetch machinery.** "Points per minute" is too narrow — Este: "the
    points aren't always the same. So we'll have to pull some other events as they happen."
    - `rate` — value climbs; alert when the derivative over a window falls below a floor.
@@ -96,6 +130,11 @@ no vendor-specific anything in the shipped binary.**
    primitive rather than a config file. Resolution is remote → last-known-good cache → **nothing**
    (feature simply off), because unlike the mutex there is no safe hardcoded default and a
    metric feature that silently stops is a non-event.
+
+   > **Dropped 2026-09-11.** This paragraph and item 6 below contradict each other: this one signs
+   > the manifest because it "names URLs the plugin will call"; item 6 has the user enter that URL
+   > in plugin settings. If the user supplies the URL, the manifest names none, and the signing
+   > rationale here does not hold. Full correction at the top of this spec.
 
 6. **The user brings the source.** The manifest ships from the 626 Labs feed describing *shapes*;
    the endpoint URL and the subject id (clan name, user id) are entered by the user in plugin
@@ -120,6 +159,9 @@ no vendor-specific anything in the shipped binary.**
   mute, cooldown and coalescing. The one guarantee this feature must not break is "a bad night
   does not become forty notifications."
 - **Unsigned manifest.** Rejected in §1.5. The value being fetched is a URL, not a string.
+  > **Still correct, 2026-09-11, even though the manifest itself is dropped:** this is exactly why
+  > `LocalFileMetricRuleSource` ships unsigned. A rule names a metric id, a kind, a threshold and a
+  > window — never a URL — so there is nothing here that signing would protect.
 - **Alerting the clan leader about everyone (Este's "both, but definitely A").** Deliberately out
   of scope for this cycle. It cannot be done from the player's own machine — it needs a
   server-side watcher and its own privacy reckoning, and it shares the dead-PC gap already

@@ -129,16 +129,26 @@ uses. The routing control lives in Settings → Alerts, alongside the **Metric a
 
 ---
 
-## Not runnable yet — waiting on the signed manifest
+## No vendor name ships — mostly automated, one thing left to eyeball
 
-- [-] **Manifest rotation without a rebuild.** Change a field path in the manifest, re-sign, confirm
-      a running install picks it up. This is the entire justification for having a manifest; if it is
-      never exercised it is speculative complexity (spec §5.5).
-- [-] **A bad signature falls back correctly.** Corrupt the signature and confirm resolution goes
-      remote, then last-known-good cache, then off — and that "off" is visible somewhere rather than
-      silent.
-- [-] **No vendor hostname ships.** Grep the built binary and the hosted manifest. Spec §1.6 makes
-      this the test of whether the separation is real or a fig leaf.
+The signed 626-hosted manifest this section used to wait on is dropped (2026-09-11 — see
+`docs/decisions.md` and the banner at the top of the spec). There is no manifest to rotate and no
+signature to corrupt, so those two rows are gone rather than parked.
+
+- [ ] **No vendor hostname or company name ships in source.** `NoVendorNameFenceTests` now proves
+      this on every run instead of relying on review: it scans every `.cs`/`.proto`/`.resx`/`.xaml`
+      file under `Core`, `App` and `PluginContract` for the vendor's own name and the acronym its
+      community trackers use for it ("biggames" / "big games" / "bgsi"). It deliberately does
+      **not** forbid the *game's* name — that has been pervasive, pre-existing and shipped in Core
+      and App since before metric alerts existed (account-tag examples, the memory-headroom
+      advisor's tuning comments, the Discord roster and session-history accessibility work), and
+      this app's own audience is a clan that plays it. If you write about this fence elsewhere, say
+      what it actually covers — the company and its API, not the game — or you have overclaimed in
+      the same breath as correcting one.
+      What the fence cannot see, and what is still worth a skim by eye before a release: anything
+      outside those three projects' source text — the Store listing copy, screenshots and reviewer
+      letters, and the compiled binary's own embedded resources. The fence is a floor, not the
+      whole check.
 
 ---
 
