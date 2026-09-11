@@ -70,6 +70,22 @@ public partial class App : Application
     private static volatile bool MetricAlertsEnabled;
 
     /// <summary>
+    /// Where <c>LocalFileMetricRuleSource</c> reads its rules —
+    /// <c>%LOCALAPPDATA%\ROROROblox\metric-rules.json</c>, derived from the settings file rather
+    /// than rebuilt from a literal folder name so it follows <c>settings.json</c> if the app's
+    /// data location moves again.
+    /// <para>
+    /// A property rather than a string inside the registration because
+    /// <see cref="RefreshMetricAlertsGateAsync"/> needs the same path, and two expressions for one
+    /// file is how they drift apart. Recomputed per call and never cached: it is two string
+    /// operations over an environment folder, and nothing on either caller's path is hot.
+    /// </para>
+    /// </summary>
+    private static string MetricRulesPath => System.IO.Path.Combine(
+        System.IO.Path.GetDirectoryName(ROROROblox.Core.AppSettings.DefaultPath())!,
+        "metric-rules.json");
+
+    /// <summary>
     /// True after the user explicitly Quits via the tray menu. MainWindow's Closing handler
     /// (item 9) checks this to decide between "minimize to tray" and "actually exit."
     /// </summary>
@@ -1117,16 +1133,14 @@ public partial class App : Application
         // fresh install, which means no rules, which means the feature is inert — the correct
         // shipped default for an opt-in alert.
         //
-        // The path is DERIVED from the settings file rather than rebuilt from dataDir above: the
-        // rules sit beside settings.json by definition, and the app's data folder has moved once
-        // already. A path expression that tracks AppSettings.DefaultPath() moves with it; a second
-        // literal would not. Computed inside the factory, so it stays as lazy as every other
-        // registration in this method.
+        // MetricRulesPath is DERIVED from the settings file rather than rebuilt from dataDir
+        // above: the rules sit beside settings.json by definition, and the app's data folder has
+        // moved once already. A path expression that tracks AppSettings.DefaultPath() moves with
+        // it; a second literal would not. Read inside the factory, so it stays as lazy as every
+        // other registration in this method.
         services.AddSingleton<ROROROblox.Core.Metrics.IMetricRuleSource>(sp =>
             new ROROROblox.App.Metrics.LocalFileMetricRuleSource(
-                System.IO.Path.Combine(
-                    System.IO.Path.GetDirectoryName(ROROROblox.Core.AppSettings.DefaultPath())!,
-                    "metric-rules.json"),
+                MetricRulesPath,
                 sp.GetRequiredService<ILogger<ROROROblox.App.Metrics.LocalFileMetricRuleSource>>()));
 
         // The sink is the only thing on the report path that knows about this app — the RPC
@@ -1142,12 +1156,18 @@ public partial class App : Application
         //   the clock    is the same TimeProvider the rest of the alert path uses, so the skew
         //                check and the rate windows agree on "now".
         services.AddSingleton<ROROROblox.App.Plugins.IMetricReportSink>(sp =>
-            new ROROROblox.App.Plugins.Adapters.MetricReportSinkAdapter(
+        {
+            // Resolved here rather than inside the name func: that func runs once per reported
+            // number on a gRPC thread, and a container lookup per report — to have a logger ready
+            // for a failure that should never happen — would cost more than the thing it reports.
+            var appLog = sp.GetRequiredService<ILogger<App>>();
+            return new ROROROblox.App.Plugins.Adapters.MetricReportSinkAdapter(
                 sp.GetRequiredService<ROROROblox.Core.Metrics.IMetricRuleSource>(),
                 () => MetricAlertsEnabled,
-                accountId => ResolveAlertNames(sp, accountId),
+                accountId => ResolveAlertNames(sp, accountId, appLog),
                 TimeProvider.System,
-                sp.GetRequiredService<ILogger<ROROROblox.App.Plugins.Adapters.MetricReportSinkAdapter>>()));
+                sp.GetRequiredService<ILogger<ROROROblox.App.Plugins.Adapters.MetricReportSinkAdapter>>());
+        });
 
         services.AddSingleton(sp => new ROROROblox.App.Plugins.PluginHostService(
             sp.GetRequiredService<ROROROblox.App.Plugins.IInstalledPluginsLookup>(),
@@ -1782,20 +1802,42 @@ public partial class App : Application
 
     /// <summary>
     /// Re-reads the metric-alert opt-in into <see cref="MetricAlertsEnabled"/>. Async all the way
-    /// down on purpose — see that field for why the gate itself may never wait on this — and
-    /// swallowing, so a transient read failure costs the refresh rather than the tick that asked
-    /// for it. The gate keeps its last known value, which for the overwhelmingly common case
-    /// (never enabled) is the correct one anyway.
+    /// down on purpose — see that field for why the gate itself may never wait on this.
+    ///
+    /// <para><b>A failed read turns the gate OFF; it does not preserve it.</b> That is worth saying
+    /// plainly because the obvious reading is the opposite one. <c>AppSettings.LoadAsync</c> never
+    /// throws: a locked file (<c>IOException</c>), a zero-length read mid-save, and a corrupt blob
+    /// (<c>JsonException</c>) all return a DEFAULT <c>SettingsBlob</c>, whose
+    /// <c>MetricAlertsEnabled</c> is <c>false</c>. So the likeliest failure — this tick colliding
+    /// with a concurrent save — never reaches the catch below; it writes <c>false</c> over a
+    /// <c>true</c> gate and silences alerts until the next tick reads the file cleanly. At most 30
+    /// seconds, self-healing, and in the safe direction, which is why it is accepted rather than
+    /// worked around. The catch below is for the genuinely exceptional (a disposed settings
+    /// object, say), and only THAT path leaves the gate at its previous value.</para>
     /// </summary>
     private async Task RefreshMetricAlertsGateAsync(IAppSettings settings)
     {
         try
         {
+            // No rules file, no rules; no rules, and the sink returns before the gate's value can
+            // change any outcome. Skipping the read here is what keeps this tick free for the
+            // overwhelming majority of installs that will never write that file: the accessor has
+            // no cache, so every call takes the settings semaphore and re-reads and re-parses
+            // settings.json — every 30 seconds, for the whole process lifetime, in every session.
+            // One existence check on a local path replaces all of it, and the tick after the file
+            // appears picks the setting up, so the skip costs at most 30 s of latency at the one
+            // moment the feature starts to exist.
+            //
+            // The gate is deliberately NOT forced false here. A stale-true gate with no rules is
+            // already inert, and writing to it would only add a second place that decides what
+            // the opt-in is.
+            if (!System.IO.File.Exists(MetricRulesPath)) return;
+
             MetricAlertsEnabled = await settings.GetMetricAlertsEnabledAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _log?.LogDebug(ex, "Metric-alert opt-in re-read failed; the gate keeps its last value.");
+            _log?.LogDebug(ex, "Metric-alert opt-in re-read threw; the gate keeps its last value.");
         }
     }
 
@@ -1809,12 +1851,27 @@ public partial class App : Application
     /// on a gRPC handler thread, and the observable collection is UI-owned. The snapshot is the
     /// lock-free mirror that exists for exactly this call.</para>
     ///
+    /// <para><b>Resolving the view model here is safe only because of startup order, and that is
+    /// load-bearing.</b> <see cref="MainViewModel"/> is WPF-affine and is NOT registered through
+    /// <see cref="UiBoundFactory"/>, so whichever thread resolves it first is the thread that
+    /// constructs it. This func must therefore never be the first resolver. It is not, and cannot
+    /// become one by accident, because <see cref="MetricAlertsEnabled"/> stays false until
+    /// <see cref="WireAlertsAsync"/> seeds it — and by then <c>OnStartup</c> has resolved the view
+    /// model on the UI thread several times over (<c>WireMainViewModelEvents</c>, the
+    /// <c>ShellPageOpener</c> assignment, and <c>WireAlertsAsync</c>'s own <c>vm</c>). A false gate
+    /// returns from <c>Report</c> before reaching this func at all, so every call that gets here
+    /// is already behind that seed. Moving the seed earlier than the view model's first UI-thread
+    /// resolve would reintroduce the hazard silently — the container would happily build a
+    /// <see cref="MainViewModel"/> on a gRPC thread and the crash would land somewhere else
+    /// entirely.</para>
+    ///
     /// <para>An id with no account — including <see cref="Guid.Empty"/>, the documented global
     /// carrier a plugin lands on when it reports something that belongs to no account — yields a
     /// pair of empty strings rather than throwing. A name is decoration on a metric alert; the
     /// number is the message, and losing the decoration must not lose the alert.</para>
     /// </summary>
-    private static (string Display, string Real) ResolveAlertNames(IServiceProvider sp, Guid accountId)
+    private static (string Display, string Real) ResolveAlertNames(
+        IServiceProvider sp, Guid accountId, ILogger<App> log)
     {
         try
         {
@@ -1824,8 +1881,12 @@ public partial class App : Application
                 ? (string.Empty, string.Empty)
                 : (summary.RenderName, summary.DisplayName);
         }
-        catch
+        catch (Exception ex)
         {
+            // Debug, like every other swallow on this path, but never silent: an alert that
+            // arrives with no name on it should be explicable from the log rather than looking
+            // like a rendering bug somewhere downstream.
+            log.LogDebug(ex, "Couldn't resolve names for metric-alert subject {AccountId}; the alert carries none.", accountId);
             return (string.Empty, string.Empty);
         }
     }

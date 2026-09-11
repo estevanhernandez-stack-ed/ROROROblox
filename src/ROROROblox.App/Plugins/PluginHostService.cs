@@ -68,6 +68,19 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     /// </summary>
     private readonly IMetricReportSink? _metricSink;
 
+    /// <summary>
+    /// <see cref="_metricSink"/>, for tests only. Exists because the fact worth guarding is not
+    /// "a sink is registered" or "the host takes one" — both are visible from outside — but "the
+    /// production factory HANDS the registered sink to the host", and an optional parameter that
+    /// silently stays null is exactly the failure that leaves everything else green while no alert
+    /// ever fires. <c>MetricReportWiringTests</c> invokes the real factory and reads this.
+    /// <para>
+    /// Deliberately not part of the plugin-facing surface: nothing in the gRPC contract exposes
+    /// it, and <c>ReportMetric</c> reads the field directly.
+    /// </para>
+    /// </summary>
+    internal IMetricReportSink? MetricSinkForTests => _metricSink;
+
     public PluginHostService(
         IInstalledPluginsLookup registry,
         string hostVersion,
