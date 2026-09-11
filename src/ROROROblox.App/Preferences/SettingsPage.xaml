@@ -332,6 +332,17 @@
                                        Margin="0,0,0,10"
                                        Text="{loc:Loc SettingsPage_GetToldWhenSomethingHappens}" />
 
+                            <!-- How to read the rows below, stated before them (final whole-branch
+                                 review, 2026-09-11). This hint governs all five and used to sit at
+                                 the bottom of the card, where it trailed four rows and read as their
+                                 footnote; the metric block landing under it made that worse — a
+                                 general instruction arriving after a kind-specific paragraph reads
+                                 as an afterthought about that one kind. Above the rows it is what it
+                                 is: the key to the grid. Same string, moved. -->
+                            <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                       Margin="0,0,0,10"
+                                       Text="{loc:Loc SettingsPage_TickEveryPlaceEachAlert}" />
+
                             <Grid Margin="0,0,0,6">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
@@ -448,10 +459,6 @@
                             <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                        Margin="0,0,0,6"
                                        Text="{loc:Loc SettingsPage_MetricAlertsHint}" />
-
-                            <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
-                                       Margin="0,0,0,6"
-                                       Text="{loc:Loc SettingsPage_TickEveryPlaceEachAlert}" />
 
                             <!-- Muted accounts (F-024, spec 4.3). Muting is per-account and lives on
                                  the row context menu; this page owned every OTHER alert decision and

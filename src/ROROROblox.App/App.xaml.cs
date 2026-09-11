@@ -57,17 +57,49 @@ public partial class App : Application
     /// file; blocking a handler thread on that — <c>.Result</c>, <c>GetAwaiter().GetResult()</c> —
     /// is a deadlock waiting for a busy disk, and it would pay a file read per report besides.</para>
     ///
-    /// <para><c>volatile</c> because the writer (a startup continuation, then the view model's
-    /// 30s tick) and the reader (a gRPC handler thread) never share one. A bool write is already
-    /// atomic; what <c>volatile</c> buys is that the reader sees it promptly rather than out of a
-    /// register.</para>
+    /// <para><c>volatile</c> because the writers (a startup continuation, the view model's 30s
+    /// tick, and since 2026-09-11 the Settings toggle's nudge) and the reader (a gRPC handler
+    /// thread) never share one. A bool write is already atomic; what <c>volatile</c> buys is that
+    /// the reader sees it promptly rather than out of a register.</para>
     ///
     /// <para>Static because <see cref="ConfigureServices"/> is, and the gate closure is built
     /// there. Seeded by <see cref="WireAlertsAsync"/>; false until then, which drops reports that
     /// arrive during startup — the safe direction, and cheap: a false gate returns before the
     /// rules are read, so nothing consumes a cooldown that a real alert would have wanted.</para>
+    ///
+    /// <para><b>Written only through the three methods below</b>, never assigned directly, because
+    /// two of its writers can be in flight at once — see <see cref="MetricAlertsGateLock"/>.</para>
     /// </summary>
     private static volatile bool MetricAlertsEnabled;
+
+    /// <summary>
+    /// Serialises the two writers of <see cref="MetricAlertsEnabled"/> against each other, and
+    /// nothing else.
+    ///
+    /// <para><b>What it prevents.</b> The 30s tick reads the setting asynchronously; the Settings
+    /// toggle writes the setting and then nudges the gate. Interleaved, the tick could read
+    /// <c>true</c>, release the settings semaphore, be overtaken by a user unticking the box — the
+    /// write persisting <c>false</c> and nudging the gate to <c>false</c> — and then resume and
+    /// assign its stale <c>true</c>. Metric breaches would keep reaching Discord and the phone for
+    /// up to 30 seconds after an explicit opt-out (final whole-branch review, 2026-09-11). Before
+    /// the toggle existed the tick was the only writer and the interleaving had nobody to lose to.
+    /// </para>
+    ///
+    /// <para><b>What it is not.</b> It is never taken on the report path — the gate closure reads
+    /// the volatile bool with no lock at all — and it is never held across an <c>await</c>. The
+    /// settings read happens outside it, which is the whole reason the generation below exists
+    /// rather than a lock spanning the read: that path must not block.</para>
+    /// </summary>
+    private static readonly object MetricAlertsGateLock = new();
+
+    /// <summary>
+    /// Bumped by every <see cref="SetMetricAlertsGate"/> call.
+    /// <see cref="RefreshMetricAlertsGateAsync"/> captures it before its read begins and hands it
+    /// back to <see cref="TryCommitMetricAlertsGate"/>, which refuses a value whose read started
+    /// before a nudge landed. Guarded by <see cref="MetricAlertsGateLock"/>, so the compare and the
+    /// assignment are one step rather than two a nudge can slip between.
+    /// </summary>
+    private static int MetricAlertsGateGeneration;
 
     /// <summary>
     /// Tells the running gate the opt-in changed, for callers that have just written it.
@@ -81,13 +113,59 @@ public partial class App : Application
     /// ticking the box in either order would leave the feature off until the next tick after both
     /// exist, which reads as "I turned it on and nothing happened."</para>
     ///
-    /// <para>A method rather than an <c>internal</c> field so the volatile stays single-writer by
-    /// construction and the reasoning above has somewhere to live. It sets the CACHE, never the
-    /// setting — the caller has already written <c>settings.json</c> through
-    /// <see cref="IAppSettings"/>, and calling this without that write would give the gate an
-    /// opinion the file does not share, which the next tick would silently overturn.</para>
+    /// <para>A method rather than an <c>internal</c> field so the write stays in one place and the
+    /// reasoning above has somewhere to live. It sets the CACHE, never the setting — the caller has
+    /// already written <c>settings.json</c> through <see cref="IAppSettings"/>, and calling this
+    /// without that write would give the gate an opinion the file does not share, which the next
+    /// tick would silently overturn.</para>
+    ///
+    /// <para><b>The nudge outranks the tick, and the generation bump is what says so.</b> Bumping
+    /// and assigning under the same lock means a tick whose read began before this call can no
+    /// longer commit — see <see cref="MetricAlertsGateLock"/> for the interleaving that made this
+    /// necessary. The bump happens whatever the value, including a nudge that writes what the gate
+    /// already held: an in-flight read is stale either way.</para>
     /// </summary>
-    internal static void SetMetricAlertsGate(bool enabled) => MetricAlertsEnabled = enabled;
+    internal static void SetMetricAlertsGate(bool enabled)
+    {
+        lock (MetricAlertsGateLock)
+        {
+            MetricAlertsGateGeneration++;
+            MetricAlertsEnabled = enabled;
+        }
+    }
+
+    /// <summary>
+    /// The generation as of now, to be handed back to <see cref="TryCommitMetricAlertsGate"/>.
+    /// Captured immediately before a read of the setting starts: everything between this call and
+    /// the commit is the window a nudge is allowed to win.
+    /// </summary>
+    internal static int BeginMetricAlertsGateRead()
+    {
+        lock (MetricAlertsGateLock) return MetricAlertsGateGeneration;
+    }
+
+    /// <summary>
+    /// Assigns the gate only if no <see cref="SetMetricAlertsGate"/> landed since
+    /// <paramref name="generation"/> was taken. Returns <c>false</c> when one did, in which case
+    /// this value is stale by definition and the nudge's stands — an opt-out the user just made
+    /// must not be undone by a read that started before they made it.
+    /// </summary>
+    internal static bool TryCommitMetricAlertsGate(int generation, bool enabled)
+    {
+        lock (MetricAlertsGateLock)
+        {
+            if (MetricAlertsGateGeneration != generation) return false;
+            MetricAlertsEnabled = enabled;
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// The gate as <c>MetricReportSinkAdapter</c>'s closure sees it. Exists so the ordering above
+    /// is assertable — production reads it through the closure <see cref="ConfigureServices"/>
+    /// builds, never through this.
+    /// </summary>
+    internal static bool MetricAlertsGateForTests => MetricAlertsEnabled;
 
     /// <summary>
     /// Where <c>LocalFileMetricRuleSource</c> reads its rules —
@@ -1834,6 +1912,13 @@ public partial class App : Application
     /// seconds, self-healing, and in the safe direction, which is why it is accepted rather than
     /// worked around. The catch below is for the genuinely exceptional (a disposed settings
     /// object, say), and only THAT path leaves the gate at its previous value.</para>
+    ///
+    /// <para><b>It cannot overwrite a nudge that landed after its read began.</b> The generation is
+    /// captured before the read and checked as part of the assignment — see
+    /// <see cref="MetricAlertsGateLock"/> for the interleaving that made this necessary, and note
+    /// that the losing direction is the one that matters: the tick dropping a read costs at most
+    /// 30 seconds of staleness against a value the user did not just choose, while the tick winning
+    /// costs up to 30 seconds of alerts after an explicit opt-out.</para>
     /// </summary>
     private async Task RefreshMetricAlertsGateAsync(IAppSettings settings)
     {
@@ -1853,7 +1938,18 @@ public partial class App : Application
             // the opt-in is.
             if (!System.IO.File.Exists(MetricRulesPath)) return;
 
-            MetricAlertsEnabled = await settings.GetMetricAlertsEnabledAsync().ConfigureAwait(false);
+            // BEFORE the read, not after: the window a nudge has to win is exactly the span
+            // between this line and the commit below.
+            var generation = BeginMetricAlertsGateRead();
+            var enabled = await settings.GetMetricAlertsEnabledAsync().ConfigureAwait(false);
+            if (!TryCommitMetricAlertsGate(generation, enabled))
+            {
+                // Debug, not a warning: this is the mechanism working. It is logged at all because
+                // a gate that disagrees with a file read seconds earlier is otherwise unexplainable
+                // from a log.
+                _log?.LogDebug(
+                    "Metric-alert opt-in re-read was overtaken by a Settings change; the newer value stands.");
+            }
         }
         catch (Exception ex)
         {
@@ -1875,12 +1971,16 @@ public partial class App : Application
     /// load-bearing.</b> <see cref="MainViewModel"/> is WPF-affine and is NOT registered through
     /// <see cref="UiBoundFactory"/>, so whichever thread resolves it first is the thread that
     /// constructs it. This func must therefore never be the first resolver. It is not, and cannot
-    /// become one by accident, because <see cref="MetricAlertsEnabled"/> stays false until
-    /// <see cref="WireAlertsAsync"/> seeds it — and by then <c>OnStartup</c> has resolved the view
+    /// become one by accident, because <see cref="MetricAlertsEnabled"/> stays false until a writer
+    /// turns it on, and BOTH writers run after the view model's first UI-thread resolve (this said
+    /// "until <c>WireAlertsAsync</c> seeds it" and named one writer until 2026-09-11).
+    /// <see cref="WireAlertsAsync"/>'s seed is one: by then <c>OnStartup</c> has resolved the view
     /// model on the UI thread several times over (<c>WireMainViewModelEvents</c>, the
-    /// <c>ShellPageOpener</c> assignment, and <c>WireAlertsAsync</c>'s own <c>vm</c>). A false gate
-    /// returns from <c>Report</c> before reaching this func at all, so every call that gets here
-    /// is already behind that seed. Moving the seed earlier than the view model's first UI-thread
+    /// <c>ShellPageOpener</c> assignment, and <c>WireAlertsAsync</c>'s own <c>vm</c>).
+    /// <see cref="SetMetricAlertsGate"/> is the other, and only <see cref="Preferences.SettingsPage"/>
+    /// calls it — a page that cannot be opened before the shell exists, which is later still.
+    /// A false gate returns from <c>Report</c> before reaching this func at all, so every call that
+    /// gets here is already behind one of them. Moving the seed earlier than the view model's first UI-thread
     /// resolve would reintroduce the hazard silently — the container would happily build a
     /// <see cref="MainViewModel"/> on a gRPC thread and the crash would land somewhere else
     /// entirely.</para>

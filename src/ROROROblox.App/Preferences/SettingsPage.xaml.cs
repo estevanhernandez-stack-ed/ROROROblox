@@ -280,14 +280,21 @@ internal partial class SettingsPage : UserControl, IDisposable
             // RefreshAlertsStatus reads this checkbox for the status line.
             //
             // ITS OWN GUARD, NOT _suppressClickHandlers, and that is not belt-and-braces (review
-            // fix 2, 2026-09-11). OnDiscordConfigChanged is subscribed for this window's whole life
-            // and clears _suppressClickHandlers in a finally from a BeginInvoke that can land
-            // between any two awaits in this method — so the flag this block runs under is not
-            // reliably still true by the time the assignment below happens. Every paint above it
-            // survives that because their handlers are Click, which a programmatic IsChecked write
-            // never raises; this one is Checked/Unchecked and WOULD fire, turning a populate into a
-            // save and a gate nudge. Today the value it would write matches the file, so nothing
-            // breaks — which is exactly how this kind of path stays hidden until it does.
+            // fix 2, 2026-09-11; this reason was corrected by the final whole-branch review the same
+            // day — the first version blamed OnDiscordConfigChanged, which is not subscribed until
+            // further down this method, AFTER the paint it claimed to be protecting).
+            //
+            // The real reason is what this paint is: the only one on the page whose handler a
+            // programmatic write actually raises. Every toggle above it is wired Click, which an
+            // IsChecked assignment never fires, so _suppressClickHandlers is belt for them and
+            // nothing more; this one is Checked/Unchecked and WOULD fire, turning a populate into a
+            // save and a gate nudge. A guard is therefore mandatory here, and it is a flag of its
+            // own so the toggle's safety does not depend on a flag another concern raises and
+            // clears — which OnDiscordConfigChanged becomes the moment it is subscribed below, on a
+            // dispatcher callback this page does not schedule. _paintingMetricAlertsToggle is set
+            // and cleared around this one assignment and nothing else can touch it. Today the value
+            // an unguarded write would save matches the file, so nothing breaks — which is exactly
+            // how this kind of path stays hidden until it does.
             var metricAlertsEnabled = await _settings.GetMetricAlertsEnabledAsync();
             PaintMetricAlertsToggle(metricAlertsEnabled);
 
@@ -898,6 +905,33 @@ internal partial class SettingsPage : UserControl, IDisposable
         MetricBreachMineCheck.IsChecked = metric.Contains(AlertDestination.Mine);
         MetricBreachClanCheck.IsChecked = metric.Contains(AlertDestination.Clan);
         MetricBreachPhoneCheck.IsChecked = metric.Contains(AlertDestination.Phone);
+        // ...which is why the enabled state is synced here too: the four boxes' TICKS come from the
+        // config above, their AVAILABILITY from the switch, and every path that repaints one wants
+        // the other to agree. Both callers of this method (PopulateAlertControls in OnLoaded, and
+        // OnDiscordConfigChanged) run after the switch has been painted.
+        SyncMetricDestinationsEnabled();
+    }
+
+    /// <summary>
+    /// The four metric destination boxes follow the switch above them (final whole-branch review,
+    /// 2026-09-11). Left enabled while the switch was off, ticking one saved routing that could
+    /// never fire while the status line went on saying — correctly — that nothing was configured: a
+    /// control that answers the click and changes nothing else on the page reads as broken. The
+    /// page already had this shape for <c>DiscordJoinToggle</c>, which follows presence for the
+    /// same reason; this is that precedent, not a new one.
+    /// <para>
+    /// ENABLED STATE ONLY. <see cref="ReadChecks"/> reads <c>IsChecked</c>, which disabling does
+    /// not touch, so a saved routing set survives the switch going off and comes back exactly as it
+    /// was — turning the feature off is not a reason to forget where the user wanted it sent.
+    /// </para>
+    /// </summary>
+    private void SyncMetricDestinationsEnabled()
+    {
+        var on = MetricAlertsEnabledToggle.IsChecked == true;
+        MetricBreachLocalCheck.IsEnabled = on;
+        MetricBreachMineCheck.IsEnabled = on;
+        MetricBreachClanCheck.IsEnabled = on;
+        MetricBreachPhoneCheck.IsEnabled = on;
     }
 
     private IReadOnlyList<AlertDestination> ReadChecks(AlertKind kind)
@@ -1392,6 +1426,11 @@ internal partial class SettingsPage : UserControl, IDisposable
         if (_suppressClickHandlers || _paintingMetricAlertsToggle) return;
 
         var wanted = MetricAlertsEnabledToggle.IsChecked == true;
+        // Before the await, exactly as OnDiscordPresenceToggle does for the Join checkbox: the
+        // destinations below follow this switch, and they should follow it at the speed of the
+        // click rather than at the speed of a file write. The save can still fail, and the revert
+        // path below puts this back with the checkbox.
+        SyncMetricDestinationsEnabled();
         try
         {
             await _settings.SetMetricAlertsEnabledAsync(wanted);
@@ -1421,6 +1460,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             // _syncingWebhookReveal's note).
             var saved = await _settings.GetMetricAlertsEnabledAsync();
             PaintMetricAlertsToggle(saved);
+            SyncMetricDestinationsEnabled();
         }
     }
 
