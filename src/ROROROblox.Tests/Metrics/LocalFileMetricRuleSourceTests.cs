@@ -89,6 +89,65 @@ public class LocalFileMetricRuleSourceTests : IDisposable
         Assert.Equal(2, sut.CurrentRules().Count);
     }
 
+    [Fact]
+    public void ARowWithAMistypedField_DropsOnlyThatRow()
+    {
+        // The whole point: a hand-edited file is where a stray quote happens, and losing every
+        // rule because of one is indistinguishable from the feature being broken.
+        Write("""
+        [
+          { "metricId": "good", "kind": "Rate", "threshold": 1, "windowMinutes": 5 },
+          { "metricId": "bad",  "kind": "Rate", "threshold": "abc", "windowMinutes": 5 },
+          { "metricId": "alsogood", "kind": "Event" }
+        ]
+        """);
+
+        var rules = Sut().CurrentRules();
+
+        Assert.Equal(2, rules.Count);
+        Assert.DoesNotContain(rules, r => r.MetricId == "bad");
+    }
+
+    [Fact]
+    public void ANullWhereANumberBelongs_DropsOnlyThatRow()
+    {
+        Write("""
+        [
+          { "metricId": "good", "kind": "Event" },
+          { "metricId": "bad",  "kind": "Rate", "threshold": null, "windowMinutes": 5 }
+        ]
+        """);
+
+        Assert.Equal("good", Assert.Single(Sut().CurrentRules()).MetricId);
+    }
+
+    [Fact]
+    public void AnUnchangedFile_IsNotReparsedOnEveryCall()
+    {
+        // Called once per reported metric, on the gRPC path, for the life of the process.
+        var sut = Sut();
+        Write("""[ { "metricId": "a", "kind": "Event" } ]""");
+
+        var first = sut.CurrentRules();
+        var second = sut.CurrentRules();
+
+        // Same instance, not merely equal: proves the parse was skipped, which an equality
+        // assertion would not.
+        Assert.Same(first, second);
+    }
+
+    [Fact]
+    public void AnEditedFile_IsStillPickedUpWithoutRestart()
+    {
+        // The cache must not cost the live-reload behaviour an existing test already pins.
+        var sut = Sut();
+        Write("""[ { "metricId": "a", "kind": "Event" } ]""");
+        Assert.Single(sut.CurrentRules());
+
+        Write("""[ { "metricId": "a", "kind": "Event" }, { "metricId": "b", "kind": "Event" } ]""");
+        Assert.Equal(2, sut.CurrentRules().Count);
+    }
+
     public void Dispose()
     {
         try { if (File.Exists(_path)) File.Delete(_path); } catch (Exception) { /* temp file */ }
