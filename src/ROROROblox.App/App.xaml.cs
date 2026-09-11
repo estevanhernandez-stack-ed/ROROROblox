@@ -48,6 +48,28 @@ public partial class App : Application
     private Task? _pluginHostListening;
 
     /// <summary>
+    /// The metric-alert opt-in, cached. The authority is
+    /// <see cref="IAppSettings.GetMetricAlertsEnabledAsync"/>; this is a copy of its last read.
+    ///
+    /// <para><b>Why a cached field rather than the setting itself.</b> The reader is
+    /// <c>MetricReportSinkAdapter</c>'s gate, which runs synchronously on a gRPC handler thread
+    /// once per reported number. The accessor waits on a semaphore and then reads and parses a
+    /// file; blocking a handler thread on that — <c>.Result</c>, <c>GetAwaiter().GetResult()</c> —
+    /// is a deadlock waiting for a busy disk, and it would pay a file read per report besides.</para>
+    ///
+    /// <para><c>volatile</c> because the writer (a startup continuation, then the view model's
+    /// 30s tick) and the reader (a gRPC handler thread) never share one. A bool write is already
+    /// atomic; what <c>volatile</c> buys is that the reader sees it promptly rather than out of a
+    /// register.</para>
+    ///
+    /// <para>Static because <see cref="ConfigureServices"/> is, and the gate closure is built
+    /// there. Seeded by <see cref="WireAlertsAsync"/>; false until then, which drops reports that
+    /// arrive during startup — the safe direction, and cheap: a false gate returns before the
+    /// rules are read, so nothing consumes a cooldown that a real alert would have wanted.</para>
+    /// </summary>
+    private static volatile bool MetricAlertsEnabled;
+
+    /// <summary>
     /// True after the user explicitly Quits via the tray menu. MainWindow's Closing handler
     /// (item 9) checks this to decide between "minimize to tray" and "actually exit."
     /// </summary>
@@ -1090,6 +1112,43 @@ public partial class App : Application
         services.AddSingleton<ROROROblox.App.Plugins.IPluginAccountStopper,
             ROROROblox.App.Plugins.Adapters.ProcessTrackerAccountStopper>();
 
+        // Metric alerts (plan 2). The rule source is a seam: plan 3 swaps this one registration
+        // for the signed-manifest reader and nothing downstream changes. The file is absent on a
+        // fresh install, which means no rules, which means the feature is inert — the correct
+        // shipped default for an opt-in alert.
+        //
+        // The path is DERIVED from the settings file rather than rebuilt from dataDir above: the
+        // rules sit beside settings.json by definition, and the app's data folder has moved once
+        // already. A path expression that tracks AppSettings.DefaultPath() moves with it; a second
+        // literal would not. Computed inside the factory, so it stays as lazy as every other
+        // registration in this method.
+        services.AddSingleton<ROROROblox.Core.Metrics.IMetricRuleSource>(sp =>
+            new ROROROblox.App.Metrics.LocalFileMetricRuleSource(
+                System.IO.Path.Combine(
+                    System.IO.Path.GetDirectoryName(ROROROblox.Core.AppSettings.DefaultPath())!,
+                    "metric-rules.json"),
+                sp.GetRequiredService<ILogger<ROROROblox.App.Metrics.LocalFileMetricRuleSource>>()));
+
+        // The sink is the only thing on the report path that knows about this app — the RPC
+        // handler is a pass-through and the coordinator is Core — so all three of its funcs are
+        // supplied here, and every one of them is called on a gRPC handler thread:
+        //
+        //   the gate     reads a cached volatile bool, never IAppSettings. GetMetricAlertsEnabled-
+        //                Async waits on a semaphore and then reads a file; blocking a handler
+        //                thread on that is a deadlock waiting for a busy disk. See
+        //                MetricAlertsEnabled and RefreshMetricAlertsGateAsync.
+        //   the names    read MainViewModel.AccountsSnapshot, never Accounts — the lock-free
+        //                mirror is the only account list safe to enumerate off the UI thread.
+        //   the clock    is the same TimeProvider the rest of the alert path uses, so the skew
+        //                check and the rate windows agree on "now".
+        services.AddSingleton<ROROROblox.App.Plugins.IMetricReportSink>(sp =>
+            new ROROROblox.App.Plugins.Adapters.MetricReportSinkAdapter(
+                sp.GetRequiredService<ROROROblox.Core.Metrics.IMetricRuleSource>(),
+                () => MetricAlertsEnabled,
+                accountId => ResolveAlertNames(sp, accountId),
+                TimeProvider.System,
+                sp.GetRequiredService<ILogger<ROROROblox.App.Plugins.Adapters.MetricReportSinkAdapter>>()));
+
         services.AddSingleton(sp => new ROROROblox.App.Plugins.PluginHostService(
             sp.GetRequiredService<ROROROblox.App.Plugins.IInstalledPluginsLookup>(),
             typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0",
@@ -1103,7 +1162,8 @@ public partial class App : Application
             sp.GetRequiredService<ROROROblox.App.Plugins.IAccountActivityMarker>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.IPluginAccountStopper>(),
             sp.GetRequiredService<ROROROblox.App.Plugins.Adapters.IThemePaletteSource>(),
-            sp.GetRequiredService<ROROROblox.App.Plugins.ISavedAccountsProvider>()));
+            sp.GetRequiredService<ROROROblox.App.Plugins.ISavedAccountsProvider>(),
+            sp.GetRequiredService<ROROROblox.App.Plugins.IMetricReportSink>()));
 
         // CapabilityInterceptor: per-connection plugin id binding is deferred to v1.5+
         // (the gRPC interceptor sees the call before any plugin-id metadata is bound).
@@ -1643,7 +1703,9 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Bridges <see cref="MainViewModel.AlertsRaised"/> to <see cref="AlertDispatcher"/>.
+    /// Bridges the app's two alert producers — <see cref="MainViewModel.AlertsRaised"/> and
+    /// <c>MetricReportSinkAdapter.AlertsRaised</c> — to <see cref="AlertDispatcher"/>, and seeds
+    /// the metric-alert opt-in gate.
     /// <para>
     /// Deliberately independent of Discord presence: this runs whether or not Discord is
     /// installed, configured, or running, because the desktop-notification destination is the one
@@ -1680,10 +1742,91 @@ public partial class App : Application
             // may be made to wait on an HTTP POST to Discord. DispatchAsync swallows its own
             // failures (see its remarks), so there is no unobserved-exception hazard here.
             vm.AlertsRaised += (_, triggers) => _ = dispatcher.DispatchAsync(triggers);
+
+            // Metric breaches reach the dispatcher by exactly the path every other alert kind
+            // takes, which is what makes mute, the per-(account, kind) cooldown and coalescing
+            // apply to them without a line of new routing code. Fire-and-forget for the reason
+            // above and one more: this event is raised on a gRPC handler thread, which must not
+            // be parked on an HTTP POST while a plugin waits for its Empty.
+            //
+            // Cast to the concrete adapter on purpose. AlertsRaised lives there and not on
+            // IMetricReportSink, because that interface is the plugin-facing sink and an event on
+            // it would advertise a second subscriber path into the same pipe. GetService, not
+            // GetRequiredService: the alert path is a passenger, and a missing sink must not be
+            // what takes the dispatcher wiring down with it.
+            if (_services.GetService<ROROROblox.App.Plugins.IMetricReportSink>()
+                is ROROROblox.App.Plugins.Adapters.MetricReportSinkAdapter metricSink)
+            {
+                metricSink.AlertsRaised += (_, triggers) => _ = dispatcher.DispatchAsync(triggers);
+            }
+
+            // Seed the opt-in gate (see MetricAlertsEnabled for why it is a cached bool and not a
+            // settings read), then keep it current on the view model's existing 30s tick. A tick
+            // rather than a settings-change hook because there is no such hook to use: IAppSettings
+            // broadcasts nothing, and this setting has no control to broadcast from — the toggle
+            // ships with plan 3, the first point there is a metric for it to gate (see
+            // SettingsReachabilityTests' allow-list entry). Until then only a hand-edited
+            // settings.json can change it, and the cost of noticing that up to 30 s late is one
+            // missed report. Piggybacking the tick is this app's habit for exactly this reason —
+            // the idle chips, the memory repaint and the uptime mark all ride it rather than stand
+            // up a timer of their own.
+            var settings = _services.GetRequiredService<IAppSettings>();
+            await RefreshMetricAlertsGateAsync(settings).ConfigureAwait(true);
+            vm.PeriodicTick += (_, _) => _ = RefreshMetricAlertsGateAsync(settings);
         }
         catch (Exception ex)
         {
             _log?.LogWarning(ex, "Couldn't wire Discord alerts; the app runs without them.");
+        }
+    }
+
+    /// <summary>
+    /// Re-reads the metric-alert opt-in into <see cref="MetricAlertsEnabled"/>. Async all the way
+    /// down on purpose — see that field for why the gate itself may never wait on this — and
+    /// swallowing, so a transient read failure costs the refresh rather than the tick that asked
+    /// for it. The gate keeps its last known value, which for the overwhelmingly common case
+    /// (never enabled) is the correct one anyway.
+    /// </summary>
+    private async Task RefreshMetricAlertsGateAsync(IAppSettings settings)
+    {
+        try
+        {
+            MetricAlertsEnabled = await settings.GetMetricAlertsEnabledAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Metric-alert opt-in re-read failed; the gate keeps its last value.");
+        }
+    }
+
+    /// <summary>
+    /// Account id to (masked display name, real name) for an alert raised off the UI thread.
+    /// Masked first, because it is the one nearly every destination gets and only the clan channel
+    /// is allowed the real one — the same order and the same two properties every other
+    /// <c>AlertTrigger</c> site in this app uses.
+    ///
+    /// <para>Reads <see cref="MainViewModel.AccountsSnapshot"/>, never <c>Accounts</c>: this runs
+    /// on a gRPC handler thread, and the observable collection is UI-owned. The snapshot is the
+    /// lock-free mirror that exists for exactly this call.</para>
+    ///
+    /// <para>An id with no account — including <see cref="Guid.Empty"/>, the documented global
+    /// carrier a plugin lands on when it reports something that belongs to no account — yields a
+    /// pair of empty strings rather than throwing. A name is decoration on a metric alert; the
+    /// number is the message, and losing the decoration must not lose the alert.</para>
+    /// </summary>
+    private static (string Display, string Real) ResolveAlertNames(IServiceProvider sp, Guid accountId)
+    {
+        try
+        {
+            var summary = sp.GetRequiredService<MainViewModel>()
+                .AccountsSnapshot.FirstOrDefault(a => a.Id == accountId);
+            return summary is null
+                ? (string.Empty, string.Empty)
+                : (summary.RenderName, summary.DisplayName);
+        }
+        catch
+        {
+            return (string.Empty, string.Empty);
         }
     }
 
