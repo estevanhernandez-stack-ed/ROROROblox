@@ -14,31 +14,38 @@ Status key: `[ ]` not done · `[x]` done, with the date and what was seen · `[-
 
 ## Plan 1 — core (merged, PR #207, `9f39630`)
 
-Plan 1 shipped no reachable surface: the coordinator exists, nothing feeds it, and the opt-in
-setting has no reader. **There is nothing to smoke yet, and that is the honest status** — the rows
-below become live when plan 2 lands the RPC.
+Plan 1 shipped no reachable surface on its own: the coordinator existed, nothing fed it, and the
+opt-in setting had no reader. Plan 2 has now landed the RPC that feeds it, so the rows below are
+reachable — none of them has actually been run on a real machine yet.
 
-- [-] **A breach reaches the desktop toast.** Blocked on plan 2: nothing can report a number yet.
-- [-] **A breach reaches the phone.** Same. Note the phone leg was only ever believed once a real
+- [ ] **A breach reaches the desktop toast.**
+- [ ] **A breach reaches the phone.** Note the phone leg was only ever believed once a real
       phone rang (phone-alerts spec §4) — the same discipline applies here.
-- [-] **The observed value renders legibly.** A fractional metric must read `0.79`, not `0`. The
+- [ ] **The observed value renders legibly.** A fractional metric must read `0.79`, not `0`. The
       unit tests pin the formatter; only a real toast proves the sentence reads well at toast width.
 
 ---
 
-## Plan 2 — the plugin RPC (not yet written)
+## Plan 2 — the plugin RPC (implemented, not yet smoke-tested)
 
 - [ ] **A consented plugin can report and it becomes an alert.** Install a plugin declaring
       `host.metrics.report`, grant it, report a number twice across a window, watch a toast.
 - [ ] **An unconsented plugin is denied.** Revoke the capability, report again, confirm
       `PermissionDenied` at the plugin and no alert at the host. Absence is denial, so also confirm
       a plugin that never declared it is denied without having to revoke anything.
+- [ ] **An unrecognised `subject_id` still reaches the user.** Report a breaching value against an
+      account id RoRoRo has no record of (a typo, a stale mapping, anything). Confirm the alert
+      still fires, keyed globally, rather than vanishing because a plugin guessed an id wrong.
 - [ ] **The opt-in setting actually gates it.** Turn metric alerts OFF, report a breaching number,
       confirm nothing fires. This is the row that matters most: through plan 1 the feature was off
       only because the destination list was empty, not because the toggle said so.
 - [ ] **A clock-skewed reporter is visible, not silent.** Report an observation stamped in the
       future. Confirm the log says so. The failure this guards against is Rate rules going
       permanently quiet while Level and Event keep working, which looks like nothing at all.
+- [ ] **A resetting cumulative counter does not fire a false rate breach.** Against a Rate rule,
+      report a rising value, then a lower one (the counter reset, as the author guide's worked
+      example describes). Confirm no alert fires off the apparent drop, and that the rule reports
+      normally again once two fresh samples land after the reset.
 - [ ] **The rules file is picked up, and its absence is inert.** With no rules file, confirm the
       app starts clean and never alerts. Add one, confirm it takes effect without a rebuild.
 - [ ] **A malformed rules file does not take the app down.** Truncate it mid-object and restart.
