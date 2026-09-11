@@ -126,4 +126,59 @@ public class MetricHistoryTests
 
         Assert.Equal(100d, h.RatePerMinute(Acct, Metric, TimeSpan.FromMinutes(10), T(3))!.Value, 3);
     }
+
+    [Fact]
+    public void SeriesCount_IsBounded_AndTheBoundDropsRatherThanEvicts()
+    {
+        // A reporter whose metric id varies -- a server id, a session suffix -- would otherwise
+        // grow this dictionary for the lifetime of a tray app that runs for days.
+        var h = new MetricHistory(capacity: 8, maxSeries: 3);
+        var acct = Guid.NewGuid();
+
+        for (var i = 0; i < 3; i++)
+        {
+            h.Add(new MetricObservation(acct, $"m{i}", 1, DateTimeOffset.UnixEpoch));
+        }
+        h.Add(new MetricObservation(acct, "overflow", 1, DateTimeOffset.UnixEpoch));
+
+        // The three that got in are still there -- the bound refuses the newcomer rather than
+        // evicting a series a rule may be actively watching.
+        Assert.Equal(1, h.Count(acct, "m0"));
+        Assert.Equal(1, h.Count(acct, "m2"));
+        Assert.Equal(0, h.Count(acct, "overflow"));
+    }
+
+    [Fact]
+    public void AnExistingSeries_KeepsAcceptingAfterTheBoundIsReached()
+    {
+        // The bound is on the number of series, not on writes. Refusing further samples to a
+        // series a rule is watching would turn a junk-id flood into a silent outage of the
+        // metric the user actually configured.
+        var h = new MetricHistory(capacity: 8, maxSeries: 2);
+        var acct = Guid.NewGuid();
+
+        h.Add(new MetricObservation(acct, "real", 1, DateTimeOffset.UnixEpoch));
+        h.Add(new MetricObservation(acct, "other", 1, DateTimeOffset.UnixEpoch));
+        h.Add(new MetricObservation(acct, "junk", 1, DateTimeOffset.UnixEpoch));
+        h.Add(new MetricObservation(acct, "real", 2, DateTimeOffset.UnixEpoch.AddMinutes(1)));
+
+        Assert.Equal(2, h.Count(acct, "real"));
+    }
+
+    [Fact]
+    public void TheSeriesBound_IsPerAccountPlusMetric_NotPerMetric()
+    {
+        // The key is the PAIR. Two accounts reporting the same metric id are two series, which
+        // is what makes a per-account bound meaningful at all.
+        var h = new MetricHistory(capacity: 8, maxSeries: 2);
+        var a = Guid.NewGuid();
+        var b = Guid.NewGuid();
+
+        h.Add(new MetricObservation(a, "same", 1, DateTimeOffset.UnixEpoch));
+        h.Add(new MetricObservation(b, "same", 1, DateTimeOffset.UnixEpoch));
+        h.Add(new MetricObservation(Guid.NewGuid(), "same", 1, DateTimeOffset.UnixEpoch));
+
+        Assert.Equal(1, h.Count(a, "same"));
+        Assert.Equal(1, h.Count(b, "same"));
+    }
 }

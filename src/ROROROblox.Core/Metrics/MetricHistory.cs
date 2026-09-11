@@ -14,7 +14,7 @@ namespace ROROROblox.Core.Metrics;
 /// evaluation path, because those are different callers in the shipped shape.
 /// </para>
 /// </summary>
-public sealed class MetricHistory(int capacity = 64)
+public sealed class MetricHistory(int capacity = 64, int maxSeries = 256)
 {
     private readonly record struct Sample(double Value, DateTimeOffset AtUtc);
 
@@ -32,10 +32,51 @@ public sealed class MetricHistory(int capacity = 64)
         ? capacity
         : throw new ArgumentOutOfRangeException(nameof(capacity), "need room for at least two samples");
 
+    /// <summary>
+    /// The most distinct (account, metric) pairs this history will hold. Metric ids arrive from
+    /// a plugin, so a reporter whose id varies would otherwise grow this dictionary without limit
+    /// for the lifetime of a process that runs for days.
+    /// <para>
+    /// At the bound a NEW series is refused and the existing ones are untouched — never
+    /// evict-oldest. Eviction would discard a series a rule is actively watching in order to make
+    /// room for junk, which is a silent outage of the metric the user configured. Refusing the
+    /// newcomer costs only the junk.
+    /// </para>
+    /// </summary>
+    private readonly int _maxSeries = maxSeries > 1
+        ? maxSeries
+        : throw new ArgumentOutOfRangeException(nameof(maxSeries), "need room for at least two series");
+
     public void Add(MetricObservation o)
     {
         ArgumentNullException.ThrowIfNull(o);
-        var series = _series.GetOrAdd((o.AccountId, o.MetricId), _ => new Series());
+        var key = (o.AccountId, o.MetricId);
+
+        // Check if this series already exists. If it does, we accept the sample regardless of the bound.
+        if (_series.TryGetValue(key, out var series))
+        {
+            lock (series.Samples)
+            {
+                series.Samples.Add(new Sample(o.Value, o.ObservedAtUtc));
+                if (series.Samples.Count > _capacity)
+                {
+                    series.Samples.RemoveRange(0, series.Samples.Count - _capacity);
+                    series.HasEvicted = true;
+                }
+            }
+            return;
+        }
+
+        // New series: check if we're at the bound. The count check races benignly—two threads
+        // adding two different new series at the bound can both pass it, so the dictionary may
+        // briefly hold one or two more than _maxSeries. That is fine; taking a lock across the
+        // whole dictionary to make the bound exact would put a global lock on the hot path.
+        if (_series.Count >= _maxSeries)
+        {
+            return;  // Refuse the newcomer; don't evict watched series.
+        }
+
+        series = _series.GetOrAdd(key, _ => new Series());
         lock (series.Samples)
         {
             series.Samples.Add(new Sample(o.Value, o.ObservedAtUtc));
