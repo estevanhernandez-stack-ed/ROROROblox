@@ -16,13 +16,10 @@ Status key: `[ ]` runnable now, not done · `[x]` done, with the date and what w
 A smoke list nobody can execute is the same as no list, so this is the part that makes the rest
 runnable. Three things have to be true before a single toast can appear.
 
-**1. Turn the feature on.** There is no control for it yet (that is the routing work below), so set
-it in the settings file directly while the app is CLOSED — the app rewrites settings.json on exit,
-so editing it while running loses the change:
-
-```
-%LOCALAPPDATA%\ROROROblox\settings.json   →   "metricAlertsEnabled": true
-```
+**1. Turn the feature on.** Settings → Alerts → tick **Metric alerts**. The app writes
+`metricAlertsEnabled` into `settings.json` itself, so there is no file to hand-edit and no need to
+close RoRoRo first — and the toggle nudges the gate the moment the write succeeds, not on the next
+poll.
 
 **2. Write a rules file.** Absent means no rules, which means nothing can ever alert. Same folder:
 
@@ -49,17 +46,18 @@ declares `host.metrics.report`, which you then grant at the consent sheet. The c
 works is a throwaway console app against `ROROROblox.PluginContract` calling `ReportMetric` twice
 with a gap between them; two samples is the minimum for a Rate rule to compute anything at all.
 
-**The gate is re-read every 30 seconds while a rules file exists**, so flipping the setting does not
-need a restart — but flipping it does nothing at all while no rules file is present, because the
-refresh skips the read entirely in that case.
+**Toggling from Settings is live immediately** — no restart, no 30-second wait. The periodic 30-second
+re-read still exists underneath (it is what catches a hand-edited `settings.json`, still a supported
+way in), and it skips the read entirely while no rules file is present, so a hand edit made before
+any rules file exists waits for the tick after the file appears, not 30 seconds from the edit.
 
 ---
 
 ## Runnable today
 
-The desktop toast is the only delivery leg that works. Nothing can point a breach at Discord or a
-phone until the routing control lands, so every row needing a channel or a phone sits in the next
-section marked not-runnable rather than pending.
+All four delivery legs work: desktop toast, personal Discord channel, clan Discord channel, and
+phone, resolved through the same `AlertRouter`/`AlertDispatcher` every other alert kind already
+uses. The routing control lives in Settings → Alerts, alongside the **Metric alerts** opt-in toggle.
 
 - [ ] **A breach reaches the desktop toast.** Report twice across the window, under the floor.
       The one delivery leg that is reachable today, and the row everything else rests on.
@@ -71,9 +69,10 @@ section marked not-runnable rather than pending.
       plugin AND no alert at the host — a gate that denied the caller while still recording the
       report would look identical from the plugin's side.
 - [ ] **The opt-in setting actually gates it.** Turn it off, report a breaching number, confirm
-      nothing fires. Then turn it on and confirm the next report is believed within 30 seconds
-      without a restart. This is the row that matters most: through plan 1 the feature was off only
-      because the destination list was empty, not because the toggle said so.
+      nothing fires. Then turn it on and confirm the next report is believed immediately — the
+      Settings toggle nudges the gate the moment it saves, without waiting on the 30-second poll.
+      This is the row that matters most: through plan 1 the feature was off only because the
+      destination list was empty, not because the toggle said so.
 - [ ] **The observed value renders legibly.** Use the `Level` rule on a 0.0–1.0 ratio and report
       `0.79`. It must read `0.79`, not `0`. The unit tests pin the formatter; only a real toast
       proves the sentence reads well at toast width.
@@ -98,28 +97,31 @@ section marked not-runnable rather than pending.
       keep running and the plugin host must keep working; you lose your rules, not your session.
       Check the log names the file — a user with a typo has nothing else to go on.
 - [ ] **Streamer mode masks the metric alert.** With streamer mode on, the toast carries the masked
-      name. The channel half of this row — personal masked, clan real — waits on routing.
+      name, the personal Discord channel carries the masked name, and the clan Discord channel
+      carries the real one — the same policy every other alert kind's channel routing already uses.
 - [ ] **The plugin pipe still binds with the new RPC present.** A missing capability-map entry
       disables plugins for the whole session and is logged only at Debug, so it does not crash and
       does not show. Confirm plugins still work AT ALL, not just that metrics work.
-- [ ] **Settings still says "No alerts yet" with only metric alerts configured.** Deliberate, and it
-      will look like a bug if you do not expect it: the status line excludes this kind because its
-      destination is currently fixed and unchangeable. It must start counting once routing lands.
-
----
-
-## Not runnable yet — waiting on the routing control
-
-`DiscordConfig.MetricBreachDestinations` defaults to the desktop toast and nothing in the app can
-change it. The Settings page reads routing checkboxes for the four older alert kinds only.
-
-- [-] **A breach reaches the phone.** No surface writes a phone destination for this kind. The phone
-      leg was only ever believed once a real phone rang (phone-alerts spec §4); the same discipline
-      applies here, so this row cannot be waved through on the strength of the toast working.
-- [-] **A breach reaches a Discord channel**, personal and clan, with the clan one carrying the real
-      account name and the personal one the masked name.
-- [-] **An unconfigured destination falls back to the desktop toast.** Point a breach at the phone
-      with no phone credentials saved and confirm it lands as a toast rather than vanishing.
+- [ ] **Settings still says "No alerts yet" while the Metric alerts toggle is off.** Deliberate, and
+      it will look like a bug if you do not expect it: the status line excludes `MetricBreach` from
+      the count until the toggle is on, even though `MetricBreachDestinations` defaults to the
+      desktop toast underneath. Turn the toggle on and confirm the sentence starts counting it.
+- [ ] **A breach reaches the phone.** Tick **My phone** on the metric-alerts routing row in Settings
+      → Alerts, with phone credentials saved, report a breaching value, and confirm the push
+      notification arrives. The phone leg was only ever believed once a real phone rang
+      (phone-alerts spec §4); the same discipline applies here, so this row cannot be waved through
+      on the strength of the toast working.
+- [ ] **A breach reaches a Discord channel**, personal and clan, with the clan one carrying the real
+      account name and the personal one the masked name. Tick **My channel** and **Clan channel** on
+      the metric-alerts routing row with a webhook saved for each, report a breaching value on each,
+      and confirm both arrive with the right name policy.
+- [ ] **An unconfigured destination falls back to the desktop toast.** Tick **My phone** on the
+      metric-alerts routing row with no phone credentials saved, report a breaching value, and
+      confirm it lands as a toast rather than vanishing.
+- [ ] **A real threshold crossed on purpose, and a phone that buzzes (Este-gated).** A real clan, a
+      real battle, a member deliberately under the floor for the window. No longer blocked on
+      routing — a hand-written rules file and the phone checkbox are enough now that a breach can
+      reach a phone. Needs Este to run a real clan battle; nobody else can tick this box.
 
 ---
 
@@ -138,9 +140,6 @@ change it. The Settings page reads routing checkboxes for the four older alert k
 
 ## The live one (Este-gated, needs a real clan battle)
 
-- [-] **A real threshold crossed on purpose, and a phone that buzzes.** A real clan, a real battle, a
-      member deliberately under the floor for the window. Blocked on routing, not on the manifest —
-      a hand-written rules file is enough once a breach can reach a phone.
 - [-] **The 3-minute server cache does not read as a stall.** Confirm the delay between a real drop
       and the alert is the cache plus the window, and that it feels like a detector rather than a
       lag. A judgement call no test can make.
