@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ROROROblox.App.Plugins;
 using ROROROblox.Core.Discord;
 using ROROROblox.MetricSmoke;
@@ -11,6 +12,12 @@ namespace ROROROblox.Tests.SmokeHarness;
 /// genuine envelope written through <see cref="DiscordConfigStore"/> rather than a stub file: a
 /// backup/restore that only ever round-trips bytes we invented would not prove the real format
 /// survives.
+/// <para>
+/// Where a test simulates a killed run it calls <see cref="ProfileGuard.Dispose"/> without restoring.
+/// That is what a kill actually is: the OS closes the process's handles, so its ownership goes, and
+/// nothing restores. Leaving the guard alive instead would be simulating a hang, not a crash, and the
+/// ownership check would (correctly) refuse to recover underneath it.
+/// </para>
 /// </summary>
 public sealed class ProfileGuardTests : IDisposable
 {
@@ -25,6 +32,7 @@ public sealed class ProfileGuardTests : IDisposable
     private readonly string _rulesPath;
     private readonly string _consentPath;
     private readonly List<string> _log = [];
+    private readonly List<ProfileGuard> _guards = [];
 
     public ProfileGuardTests()
     {
@@ -51,12 +59,18 @@ public sealed class ProfileGuardTests : IDisposable
 
     public void Dispose()
     {
+        foreach (var guard in _guards) guard.Dispose();
         try { if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true); }
         catch (IOException) { /* a leaked lock in a failing test must not mask the failure */ }
         catch (UnauthorizedAccessException) { }
     }
 
-    private Task<ProfileGuard> AcquireAsync() => ProfileGuard.AcquireAsync(_dataRoot, _backupRoot, _log.Add);
+    private async Task<ProfileGuard> AcquireAsync()
+    {
+        var guard = await ProfileGuard.AcquireAsync(_dataRoot, _backupRoot, _log.Add);
+        _guards.Add(guard);
+        return guard;
+    }
 
     [Fact]
     public async Task Acquire_WritesAMarker_AndRestore_RemovesIt()
@@ -119,8 +133,12 @@ public sealed class ProfileGuardTests : IDisposable
     [Fact]
     public async Task Restore_PutsBackOnlyTheOneSettingsKey()
     {
-        // Rewriting settings.json wholesale would discard anything the app wrote while the harness
-        // ran, and the app rewrites that file on exit. Read-modify-write one key, or lose settings.
+        // What this shows: the restore goes through AppSettings' read-modify-write, so a key the
+        // harness never touched still has its value afterwards. It does NOT show that an arbitrary
+        // unknown key survives — AppSettings deserializes into SettingsBlob and reserializes, so a
+        // key outside that record is dropped by production itself, and no guard could keep it. The
+        // point being pinned is the one that is ours: we never stash and rewrite the file wholesale,
+        // which would discard what the app wrote while the harness ran.
         await File.WriteAllTextAsync(_settingsPath,
             """{ "version": 1, "metricAlertsEnabled": false, "streamerMode": true }""");
 
@@ -184,6 +202,85 @@ public sealed class ProfileGuardTests : IDisposable
     }
 
     [Fact]
+    public async Task AnAbsentSettingsFile_IsNotCreatedByARunThatNeverTouchedIt()
+    {
+        // AppSettings.LoadAsync answers a missing file with a defaults blob and SaveAsync writes the
+        // whole thing, so a restore that "puts a value back" unconditionally would conjure a
+        // settings.json onto a profile that never had one.
+        Assert.False(File.Exists(_settingsPath));
+
+        var guard = await AcquireAsync();
+        await guard.WriteRulesAsync("[]");
+        var report = await guard.RestoreAsync();
+
+        Assert.True(report.Complete);
+        Assert.False(File.Exists(_settingsPath));
+    }
+
+    [Fact]
+    public async Task AnAbsentSettingsFile_ThatTheHarnessHadToCreate_ComesBackWithTheKeyAtItsDefault()
+    {
+        // The other half, and the honest limit: flipping the gate on a profile with no settings.json
+        // necessarily creates one, because that is what the app's own accessor does. The restore puts
+        // the key back to the default it had, and does NOT delete the file — the app may legitimately
+        // have written its own settings into it while the harness ran.
+        Assert.False(File.Exists(_settingsPath));
+
+        var guard = await AcquireAsync();
+        await guard.SetMetricAlertsEnabledAsync(true);
+        await guard.RestoreAsync();
+
+        Assert.False(await ReadSettingAsync(BooleanSetting.MetricAlertsEnabled));
+    }
+
+    [Fact]
+    public async Task Acquire_RefusesWhenSettingsWillNotParse_AndLeavesNothingBehind()
+    {
+        // The trap this whole class is built around: AppSettings turns a JsonException into a fresh
+        // defaults blob, so a read would answer "false" and the restore would persist defaults over
+        // the real file. Refuse at the door instead.
+        await File.WriteAllTextAsync(_settingsPath, "{ this is not json");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ProfileGuard.AcquireAsync(_dataRoot, _backupRoot, _log.Add));
+
+        Assert.False(File.Exists(Path.Combine(_backupRoot, ProfileGuard.MarkerFileName)));
+        Assert.Equal("{ this is not json", await File.ReadAllTextAsync(_settingsPath));
+    }
+
+    [Fact]
+    public async Task ASettingsFileThatGoesUnreadableMidRun_IsNotCapturedAsAFabricatedOriginal()
+    {
+        var guard = await AcquireAsync();
+        await File.WriteAllTextAsync(_settingsPath, "{ torn");
+        var before = await File.ReadAllBytesAsync(_settingsPath);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => guard.SetMetricAlertsEnabledAsync(true));
+
+        Assert.Equal(before, await File.ReadAllBytesAsync(_settingsPath));
+    }
+
+    [Fact]
+    public async Task ASettingsFileThatGoesUnreadableBeforeTheRestore_IsReported_NotOverwrittenWithDefaults()
+    {
+        // The race made deterministic: the app rewrites settings.json on exit, so a restore read can
+        // lose it. AppSettings would answer with defaults and then SAVE them over the real file.
+        await File.WriteAllTextAsync(_settingsPath,
+            """{ "version": 1, "metricAlertsEnabled": false, "streamerMode": true }""");
+        var guard = await AcquireAsync();
+        await guard.SetMetricAlertsEnabledAsync(true);
+
+        await File.WriteAllTextAsync(_settingsPath, "{ torn");
+        var before = await File.ReadAllBytesAsync(_settingsPath);
+
+        var report = await guard.RestoreAsync();
+
+        Assert.False(report.Complete);
+        Assert.Contains(report.Failed, f => f.Contains("metricAlertsEnabled", StringComparison.Ordinal));
+        Assert.Equal(before, await File.ReadAllBytesAsync(_settingsPath));
+    }
+
+    [Fact]
     public async Task AnAbsentRulesFile_IsDeletedOnRestore_NotLeftBehind()
     {
         Assert.False(File.Exists(_rulesPath));
@@ -234,7 +331,7 @@ public sealed class ProfileGuardTests : IDisposable
         var original = await File.ReadAllBytesAsync(_discordPath);
         var guard = await AcquireAsync();
         await File.WriteAllBytesAsync(_discordPath, [9, 9, 9]);
-        // No RestoreAsync — simulating a kill.
+        guard.Dispose();        // the kill: handles closed, no RestoreAsync
 
         var recovered = await ProfileGuard.RecoverOrphanedAsync(_backupRoot, _log.Add);
 
@@ -254,11 +351,37 @@ public sealed class ProfileGuardTests : IDisposable
         var guard = await AcquireAsync();
         await guard.SetMetricAlertsEnabledAsync(true);
         await guard.WriteRulesAsync("[]");
-        // Killed here.
+        guard.Dispose();        // killed here
 
         Assert.True(await ProfileGuard.RecoverOrphanedAsync(_backupRoot, _log.Add));
 
         Assert.False(await ReadSettingAsync(BooleanSetting.MetricAlertsEnabled));
+        Assert.Equal("ORIGINAL", await File.ReadAllTextAsync(_rulesPath));
+    }
+
+    [Fact]
+    public async Task AMarkerNamingNoBackups_MeansNothingWasMutated_SoRecoveryLeavesTheProfileAlone()
+    {
+        // The window between claiming the marker and finishing the copies. The marker says the files
+        // existed but names no backup, and that must NOT be read as "the harness created them" —
+        // reading it that way would delete a discord.dat the run had not even copied yet.
+        var original = await File.ReadAllBytesAsync(_discordPath);
+        await File.WriteAllTextAsync(_rulesPath, "ORIGINAL");
+        Directory.CreateDirectory(_backupRoot);
+        await File.WriteAllTextAsync(
+            Path.Combine(_backupRoot, ProfileGuard.MarkerFileName),
+            JsonSerializer.Serialize(new SmokeRunMarker
+            {
+                DataRoot = _dataRoot,
+                StartedUtc = DateTimeOffset.UtcNow.ToString("O"),
+                DiscordExisted = true,
+                RulesExisted = true,
+                SettingsExisted = false,
+            }));
+
+        Assert.True(await ProfileGuard.RecoverOrphanedAsync(_backupRoot, _log.Add));
+
+        Assert.Equal(original, await File.ReadAllBytesAsync(_discordPath));
         Assert.Equal("ORIGINAL", await File.ReadAllTextAsync(_rulesPath));
     }
 
@@ -274,13 +397,47 @@ public sealed class ProfileGuardTests : IDisposable
     }
 
     [Fact]
+    public async Task RecoverOrphaned_RefusesWhileARunIsStillLive()
+    {
+        // --recover fired from another terminal against a run that is mid-scenario. Restoring under
+        // it would hand the profile back while the runner is still driving it, and the live run would
+        // then restore ITS localhost URLs over the real ones and delete the marker — the exact
+        // outcome the marker exists to prevent.
+        var guard = await AcquireAsync();
+        await guard.MutateDiscordAsync(c => c with { MineWebhookUrl = "http://localhost:9/mine" });
+
+        Assert.False(await ProfileGuard.RecoverOrphanedAsync(_backupRoot, _log.Add));
+
+        Assert.True(File.Exists(Path.Combine(_backupRoot, ProfileGuard.MarkerFileName)));
+        Assert.Contains(_log, l => l.Contains("in flight", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ASecondOverlappingRun_IsRefused_RatherThanRacingTheFirstOnesBackups()
+    {
+        // Without ownership both runs back up whatever the other has already swapped, and whichever
+        // restores last writes localhost URLs back as though they were the user's.
+        var first = await AcquireAsync();
+        await first.MutateDiscordAsync(c => c with { MineWebhookUrl = "http://localhost:9/mine" });
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ProfileGuard.AcquireAsync(_dataRoot, _backupRoot, _log.Add));
+
+        // And the first run can still put everything back.
+        var report = await first.RestoreAsync();
+        Assert.True(report.Complete);
+        Assert.Equal(SeededMineUrl, (await new DiscordConfigStore(_discordPath).LoadAsync()).MineWebhookUrl);
+    }
+
+    [Fact]
     public async Task Acquire_RecoversAnOrphanFromTheLastRun_BeforeTakingItsOwnBackups()
     {
         // Without this, the second run backs up the ALREADY-BROKEN discord.dat, overwrites the good
         // backup with it, and the localhost URLs become the thing it faithfully restores.
         var original = await File.ReadAllBytesAsync(_discordPath);
-        _ = await AcquireAsync();
-        await File.WriteAllBytesAsync(_discordPath, [9, 9, 9]);   // killed run
+        var killed = await AcquireAsync();
+        await File.WriteAllBytesAsync(_discordPath, [9, 9, 9]);
+        killed.Dispose();
 
         var second = await AcquireAsync();
         await second.RestoreAsync();
@@ -308,9 +465,68 @@ public sealed class ProfileGuardTests : IDisposable
         {
             MineWebhookUrl = "http://localhost:9/mine",
             ClanWebhookUrl = "http://localhost:9/clan",
+            MetricBreachDestinations = [AlertDestination.Mine, AlertDestination.Clan],
         });
 
         Assert.True(await guard.VerifyDiscordSwapAsync("http://localhost:9/mine", "http://localhost:9/clan"));
+    }
+
+    [Fact]
+    public async Task VerifyDiscordSwap_ReturnsFalse_WhenTheUrlsLandedOnABlankedConfig()
+    {
+        // What a swallowed CryptographicException looks like from outside: a perfectly valid envelope
+        // holding a DEFAULT config plus the new URLs. Both URLs match, and the presence toggle, the
+        // dropped-out destination and the muted list are gone. "Swapped" and "blanked and swapped"
+        // must not both read as success.
+        var guard = await AcquireAsync();
+        await new DiscordConfigStore(_discordPath).SaveAsync(new DiscordConfig
+        {
+            MineWebhookUrl = "http://localhost:9/mine",
+            ClanWebhookUrl = "http://localhost:9/clan",
+        });
+
+        Assert.False(await guard.VerifyDiscordSwapAsync("http://localhost:9/mine", "http://localhost:9/clan"));
+        Assert.Contains(_log, l => l.Contains("not what it was at", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Acquire_RefusesWhenDiscordConfigWillNotDecrypt_AndLeavesNothingBehind()
+    {
+        // DiscordConfigStore answers a CryptographicException with an empty config, so a harness that
+        // went ahead would write its URLs into a blank and report a clean swap.
+        await File.WriteAllBytesAsync(_discordPath, [1, 2, 3]);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ProfileGuard.AcquireAsync(_dataRoot, _backupRoot, _log.Add));
+
+        Assert.False(File.Exists(Path.Combine(_backupRoot, ProfileGuard.MarkerFileName)));
+    }
+
+    [Fact]
+    public async Task ADiscordFileThatStopsDecryptingMidRun_IsNotOverwrittenWithABlankConfig()
+    {
+        var guard = await AcquireAsync();
+        await File.WriteAllBytesAsync(_discordPath, [1, 2, 3]);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            guard.MutateDiscordAsync(c => c with { MineWebhookUrl = "http://localhost:9/mine" }));
+
+        Assert.Equal(new byte[] { 1, 2, 3 }, await File.ReadAllBytesAsync(_discordPath));
+
+        // And the backup still puts the real one back.
+        Assert.True((await guard.RestoreAsync()).Complete);
+        Assert.Equal(SeededMineUrl, (await new DiscordConfigStore(_discordPath).LoadAsync()).MineWebhookUrl);
+    }
+
+    [Fact]
+    public async Task ABackupDeletedMidRun_StopsTheNextMutation_InsteadOfLettingItProceedUnprotected()
+    {
+        // SaveMarkerAsync recreates the directory, so without a re-check the marker would come back
+        // while the backups did not, and the run would keep mutating a profile it could not put back.
+        var guard = await AcquireAsync();
+        Directory.Delete(_backupRoot, recursive: true);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => guard.SetMetricAlertsEnabledAsync(true));
     }
 
     [Fact]
@@ -359,6 +575,28 @@ public sealed class ProfileGuardTests : IDisposable
     }
 
     [Fact]
+    public async Task ASecondRestoreAfterASuccessfulOne_SaysThereIsNothingLeft_NotPartialFailure()
+    {
+        // The runner will have an explicit restore AND a finally, so this fires on every normal run.
+        // Answering it with the scariest message the tool prints — plus a claim that the backups are
+        // still there, when they were just deleted — teaches a reader to ignore the one message that
+        // means real trouble.
+        await File.WriteAllTextAsync(_settingsPath, """{ "version": 1, "metricAlertsEnabled": false }""");
+        var guard = await AcquireAsync();
+        await guard.SetMetricAlertsEnabledAsync(true);
+        await guard.WriteRulesAsync("[]");
+
+        Assert.True((await guard.RestoreAsync()).Complete);
+
+        var second = await guard.RestoreAsync();
+
+        Assert.True(second.Complete);
+        Assert.Empty(second.Failed);
+        Assert.DoesNotContain("PARTIAL", second.ToString(), StringComparison.Ordinal);
+        Assert.False(await ReadSettingAsync(BooleanSetting.MetricAlertsEnabled));
+    }
+
+    [Fact]
     public async Task Restore_DeletesTheDiscordBackup_SoRealWebhookUrlsDoNotLinger()
     {
         var guard = await AcquireAsync();
@@ -375,12 +613,14 @@ public sealed class ProfileGuardTests : IDisposable
     {
         // The one case where throwing is right: proceeding would overwrite the good backup with the
         // broken file. Acquire may throw; RestoreAsync may not.
-        _ = await AcquireAsync();
+        var killed = await AcquireAsync();
         await File.WriteAllBytesAsync(_discordPath, [9, 9, 9]);
+        killed.Dispose();
 
         using var _hold = File.Open(_discordPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(AcquireAsync);
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ProfileGuard.AcquireAsync(_dataRoot, _backupRoot, _log.Add));
     }
 
     private async Task<bool> ReadSettingAsync(BooleanSetting setting)

@@ -25,16 +25,28 @@ internal static class Program
         if (args is ["--recover"])
         {
             var backupRoot = ProfileGuard.DefaultBackupRoot();
-            var recovered = await ProfileGuard.RecoverOrphanedAsync(backupRoot, Console.WriteLine).ConfigureAwait(false);
-            if (!recovered)
+            var attempted = await ProfileGuard.RecoverOrphanedAsync(backupRoot, Console.WriteLine).ConfigureAwait(false);
+
+            // The marker outliving the attempt is the whole answer: it is removed only by a restore
+            // that put everything back. Recovery reports ATTEMPTED, not succeeded, and a command
+            // whose job is clearing a broken profile must not exit zero having left it broken —
+            // including when it refused because a run is still live.
+            if (ProfileGuard.HasOrphanedMarker(backupRoot))
             {
-                Console.WriteLine($"Nothing to recover: no {ProfileGuard.MarkerFileName} in {backupRoot}.");
+                Console.WriteLine($"NOT fully restored: {ProfileGuard.MarkerFileName} is still in {backupRoot}. "
+                    + "The lines above say which files could not be put back, or why this refused to try.");
+                return 2;
             }
+
+            Console.WriteLine(attempted
+                ? "The profile is back: the marker and its backups are gone."
+                : $"Nothing to recover: no {ProfileGuard.MarkerFileName} in {backupRoot}.");
             return 0;
         }
 
         Console.WriteLine("MetricSmoke: the scenario runner is not wired yet (plan tasks 2-5).");
         Console.WriteLine("  --recover    put the profile back after an interrupted run");
+        Console.WriteLine("Exit codes: 0 nothing to do or fully restored, 1 bad usage, 2 the profile is still not right.");
         return 1;
     }
 }
