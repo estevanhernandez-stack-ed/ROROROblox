@@ -1,5 +1,9 @@
 # External Metric Alerts, Plan 2: the plugin RPC Implementation Plan
 
+> **SUPERSEDED IN PART (2026-09-11):** every reference below to "plan 3", to the signed manifest, or to `LocalFileMetricRuleSource` being an interim format with an expiry date is out of date — the manifest was dropped on 2026-09-11 and the hand-edited JSON file is the permanent rule source. The `IMetricRuleSource` seam, the RPC and the capability all shipped as written. See [2026-09-11-metric-alerts-close-out.md](2026-09-11-metric-alerts-close-out.md); the body is left as the record.
+
+---
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A consented plugin can report a number to the host over gRPC, and that number becomes a routed alert.

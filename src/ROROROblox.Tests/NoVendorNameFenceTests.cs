@@ -53,7 +53,13 @@ public class NoVendorNameFenceTests
         "biggames", "big games", "bgsi",
     ];
 
-    private static readonly string[] Extensions = [".cs", ".proto", ".resx", ".xaml"];
+    // Source text is not the only way a vendor hostname ships. `.csproj` and `.json` are here
+    // because a package reference naming a vendor feed, or a base URL parked in `appsettings.json`,
+    // is INSIDE these three projects and would have sailed past a .cs/.proto/.resx/.xaml net —
+    // which is the shape this fence exists to catch, not an exotic one. `.json` rather than
+    // `appsettings.json` specifically: the next config file to arrive should be covered on the day
+    // it lands, not on the day someone remembers this list.
+    private static readonly string[] Extensions = [".cs", ".proto", ".resx", ".xaml", ".csproj", ".json"];
 
     // The three projects that ship. Deliberately not ROROROblox.Tests or
     // ROROROblox.PluginTestHarness — those discuss the vendor by necessity (this file included)
@@ -101,9 +107,12 @@ public class NoVendorNameFenceTests
         }
 
         // The floor guards against a broken filesystem walk (FindRepoRoot or a renamed project
-        // directory yielding zero files, which would pass the assertion below vacuously). 300
-        // sits comfortably under the ~365 .cs/.proto/.resx/.xaml files measured across the three
-        // projects on 2026-09-11 and comfortably over the zero a broken walk produces.
+        // directory yielding zero files, which would pass the assertion below vacuously). It is a
+        // vacuity floor, not a ratchet: it must not be raised to track the tree, or ordinary file
+        // deletion turns this fence red for a reason it has nothing to say about. 300 sits
+        // comfortably under the 369 matching files measured across the three projects on
+        // 2026-09-11 (365 source plus the four .csproj/.json the extension list picked up that
+        // day) and comfortably over the zero a broken walk produces.
         Assert.True(scanned >= 300,
             $"Expected to scan Core, App and PluginContract source, found {scanned} files. "
             + "That is the walk breaking, not the tree shrinking.");

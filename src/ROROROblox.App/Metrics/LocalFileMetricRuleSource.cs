@@ -32,6 +32,17 @@ namespace ROROROblox.App.Metrics;
 /// back is read-only, so a caller cannot mutate the shared cached result out from under later
 /// calls.
 /// </para>
+/// <para>
+/// The cache field is deliberately NOT volatile and NOT locked, which is the one concurrency
+/// question this class answers with "it does not matter" rather than with a mechanism — said out
+/// loud here because silence would read as nobody having asked. Reports arrive on gRPC handler
+/// threads, so two can be inside <see cref="CurrentRules"/> at once. A reference assignment is
+/// atomic, so no caller can ever see a half-built <c>RuleCache</c>; and because the key is the
+/// file's content, a stale or missed read cannot serve the wrong rules — it can only miss the
+/// cache. The whole cost of losing that race is two concurrent first-calls each parsing the file
+/// once, and the loser's result is discarded rather than wrong. Locking a hot path to save a
+/// duplicate parse that produces the identical answer would be the more expensive mistake.
+/// </para>
 /// </summary>
 public sealed class LocalFileMetricRuleSource(string filePath, ILogger<LocalFileMetricRuleSource> log)
     : IMetricRuleSource

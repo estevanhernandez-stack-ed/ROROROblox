@@ -50,6 +50,21 @@ public sealed class AlertDispatcher(
     /// than the corruption this type prevents, and moving the stamp would change delivery
     /// behaviour for four already-shipped alert kinds inside a change whose job is a data race.
     /// </para>
+    /// <para>
+    /// The map is not this type's only shared state, and this paragraph exists because the first
+    /// version of the comment above pretended it was. The three rejection flags —
+    /// <see cref="MineWebhookRejected"/>, <see cref="ClanWebhookRejected"/> and
+    /// <see cref="PhoneRejected"/> — are plain bools written from the same two producer threads.
+    /// They are safe because of HOW they are written, not because of their type: every write is an
+    /// unconditional <c>= true</c> guarded by the send's own verdict, so two racing dispatches can
+    /// only ever agree. <c>flag |= await Send(...)</c> would NOT be safe — the compiler reads the
+    /// property before the await, so a dispatch that reads false and then succeeds would overwrite
+    /// a concurrent dispatch's 404 verdict, leaving a dead webhook offered and Settings reporting
+    /// it healthy (fixed 2026-09-11; <c>DispatchAsync_TwoRacingDispatches_KeepTheRejection</c>
+    /// holds the line). The resets are UI-thread-only and terminal-in-one-direction besides, so a
+    /// torn read is not reachable: a bool write is atomic, and the worst a stale read costs is one
+    /// POST to a URL already known dead.
+    /// </para>
     /// </summary>
     private readonly ConcurrentDictionary<(Guid AccountId, AlertKind Kind), DateTimeOffset> _lastSent = new();
 
@@ -118,11 +133,15 @@ public sealed class AlertDispatcher(
                     case AlertDestination.Local:
                         tray.ShowToast(payload.Title, payload.Body);
                         break;
+                    // `if (send) flag = true`, never `flag |= await send`: the compiler reads the
+                    // property BEFORE the await, so `|=` opens a read-to-write window spanning a
+                    // whole HTTP round trip and a concurrent dispatch's 404 verdict can be
+                    // overwritten by this one's success. Writing only true has no such window.
                     case AlertDestination.Mine when current.MineWebhookUrl is { } mine:
-                        MineWebhookRejected |= await SendAsync(mine, payload).ConfigureAwait(false);
+                        if (await SendAsync(mine, payload).ConfigureAwait(false)) MineWebhookRejected = true;
                         break;
                     case AlertDestination.Clan when current.ClanWebhookUrl is { } clan:
-                        ClanWebhookRejected |= await SendAsync(clan, payload).ConfigureAwait(false);
+                        if (await SendAsync(clan, payload).ConfigureAwait(false)) ClanWebhookRejected = true;
                         break;
                     case AlertDestination.Phone when phoneSender is not null:
                         var phoneResult = await phoneSender.SendAsync(phone, alert.Kind, payload).ConfigureAwait(false);

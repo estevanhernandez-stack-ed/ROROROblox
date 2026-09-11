@@ -204,6 +204,73 @@ public class AlertDispatcherTests
     }
 
     [Fact]
+    public async Task DispatchAsync_TwoRacingDispatches_KeepTheRejection()
+    {
+        // The dispatcher has two fire-and-forget producers, so two dispatches to the same webhook
+        // overlap in production. With `MineWebhookRejected |= await SendAsync(...)` the property is
+        // READ before the await and written after it, so the read-to-write window spans a whole
+        // HTTP round trip: the slow dispatch reads false, the fast one 404s and writes true, and
+        // the slow one's success then writes false straight over the verdict. The webhook is dead,
+        // the dispatcher keeps offering it, and Settings reports it healthy.
+        //
+        // Sequenced rather than merely raced: the gate holds the first POST open until the second
+        // has completely finished, so the window is straddled every run, not one run in a hundred.
+        var handler = new GatedWebhookHandler();
+        var sender = new DiscordWebhookSender(new HttpClient(handler), NullLogger<DiscordWebhookSender>.Instance);
+        var dispatcher = Build(sender, new SpyTrayService(), new DiscordConfig
+        {
+            DroppedOutDestination = AlertDestination.Mine,
+            MineWebhookUrl = MineUrl,
+        });
+
+        var slow = Task.Run(() => dispatcher.DispatchAsync([Dropped(Guid.NewGuid(), "Slow")]));
+        await handler.FirstInFlight.WaitAsync(TimeSpan.FromSeconds(5));
+
+        // Runs to completion while the first POST is still open, so its 404 verdict is written
+        // before the first dispatch is allowed to write anything at all.
+        await dispatcher.DispatchAsync([Dropped(Guid.NewGuid(), "Fast")]).WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(dispatcher.MineWebhookRejected, "the 404 dispatch did not mark the webhook rejected");
+
+        handler.ReleaseFirst();
+        await slow.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.True(dispatcher.MineWebhookRejected,
+            "a successful POST overwrote a concurrent dispatch's 404 verdict — the flag must only ever be written true");
+    }
+
+    /// <summary>
+    /// Sequences two concurrent webhook POSTs. The FIRST request in blocks until the test releases
+    /// it and then succeeds; every later request 404s immediately. That is the exact interleaving a
+    /// read-before-await write loses a rejection on, and it is deterministic rather than lucky.
+    /// </summary>
+    private sealed class GatedWebhookHandler : HttpMessageHandler
+    {
+        private readonly TaskCompletionSource _firstInFlight = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _releaseFirst = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int _seen;
+
+        /// <summary>Completes once the slow POST is open, so the test knows the racing dispatch has
+        /// already read the rejection flag and is now parked inside the await.</summary>
+        public Task FirstInFlight => _firstInFlight.Task;
+
+        public void ReleaseFirst() => _releaseFirst.TrySetResult();
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            if (Interlocked.Increment(ref _seen) == 1)
+            {
+                _firstInFlight.TrySetResult();
+
+                // Bounded so a wiring mistake fails this test rather than hanging the whole run.
+                await _releaseFirst.Task.WaitAsync(TimeSpan.FromSeconds(30), ct).ConfigureAwait(false);
+                return new HttpResponseMessage(HttpStatusCode.NoContent);
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        }
+    }
+
+    [Fact]
     public async Task DispatchAsync_AfterAWebhookIsGone_StopsPostingAndFallsBackToTheTray()
     {
         // THE test for the 404-is-terminal claim. Marking a flag is not the same as acting on it:
@@ -321,8 +388,12 @@ public class AlertDispatcherTests
         // The timeout IS the assertion, as much as the toast count is. DispatchAsync swallows every
         // exception by design, so a corrupted Dictionary that THROWS is invisible here — what it
         // does visibly is spin forever inside a bucket chain that points at itself.
+        // The delay is cancelled the moment the race is decided. Left uncancelled it keeps a 60s
+        // timer alive after the test has returned its verdict, on every CI job, for nothing.
+        using var timeout = new CancellationTokenSource();
         var all = Task.WhenAll(work);
-        var finished = await Task.WhenAny(all, Task.Delay(TimeSpan.FromSeconds(60)));
+        var finished = await Task.WhenAny(all, Task.Delay(TimeSpan.FromSeconds(60), timeout.Token));
+        timeout.Cancel();
         Assert.Same(all, finished);
         await all;
 

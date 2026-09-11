@@ -136,7 +136,8 @@ The signed 626-hosted manifest this section used to wait on is dropped (2026-09-
 signature to corrupt, so those two rows are gone rather than parked.
 
 - [ ] **No vendor hostname or company name ships in source.** `NoVendorNameFenceTests` now proves
-      this on every run instead of relying on review: it scans every `.cs`/`.proto`/`.resx`/`.xaml`
+      this on every run instead of relying on review: it scans every
+      `.cs`/`.proto`/`.resx`/`.xaml`/`.csproj`/`.json`
       file under `Core`, `App` and `PluginContract` for the vendor's own name and the acronym its
       community trackers use for it ("biggames" / "big games" / "bgsi"). It deliberately does
       **not** forbid the *game's* name — that has been pervasive, pre-existing and shipped in Core
@@ -145,10 +146,16 @@ signature to corrupt, so those two rows are gone rather than parked.
       this app's own audience is a clan that plays it. If you write about this fence elsewhere, say
       what it actually covers — the company and its API, not the game — or you have overclaimed in
       the same breath as correcting one.
-      What the fence cannot see, and what is still worth a skim by eye before a release: anything
-      outside those three projects' source text — the Store listing copy, screenshots and reviewer
-      letters, and the compiled binary's own embedded resources. The fence is a floor, not the
-      whole check.
+      What the fence cannot see is a vendor endpoint that never spells the vendor's name. The
+      design spec's own host is `ps99.biggamesapi.io`, and "biggames" is the only half of that the
+      fence matches — a URL written to the same API against a bare `ps99.*` subdomain, a numeric
+      host, or a rebranded hostname that has dropped the company name would pass clean. So would
+      any of it arriving somewhere the scan does not reach at all: the Store listing copy,
+      screenshots and reviewer letters, or the compiled binary's embedded resources.
+      By eye before a release, then: grep the three shipping projects for `http` and read every
+      hit. There should be no host in `Core`, `App` or `PluginContract` that belongs to a game's
+      API rather than to Roblox, GitHub or 626 Labs — whatever it calls itself. The fence proves
+      the name is absent; only a human proves the *call* is.
 
 ---
 
