@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.App.Discord;
@@ -80,6 +81,60 @@ public sealed class WebhookCatcherTests
         Assert.Equal("second", posts[1].Body);
     }
 
+    /// <summary>
+    /// Fix round 1, finding 2: every test above fully awaits both posts before draining, so both
+    /// are already queued and <see cref="WebhookCatcher.QuietPeriodMilliseconds"/> never actually
+    /// runs — the reviewer set it to zero and all of them still passed. These two tests exercise
+    /// it for real: the second post is fired on a background delay and NOT awaited before
+    /// <c>DrainAsync</c> is called, so the outcome depends on the live wait/quiet-period logic
+    /// rather than on both bodies already sitting in the queue. Both margins are expressed as
+    /// multiples of the real constant, not a guessed number, so a future change to it keeps these
+    /// tests meaningful instead of silently drifting off the boundary they pin.
+    /// </summary>
+    [Fact]
+    public async Task DrainAsync_TwoPostsWellUnderTheQuietPeriodApart_AreBothCapturedInOneDrain()
+    {
+        await using var catcher = WebhookCatcher.Start();
+        var gap = TimeSpan.FromMilliseconds(WebhookCatcher.QuietPeriodMilliseconds / 3); // 50ms of 150ms
+
+        await PostAsync(catcher.MineUrl, "first");
+        var postingSecond = PostAfterDelayAsync(catcher.ClanUrl, "second", gap);
+
+        var posts = await catcher.DrainAsync(TimeSpan.FromSeconds(5));
+        await postingSecond;
+
+        Assert.Equal(2, posts.Count);
+        Assert.Equal("first", posts[0].Body);
+        Assert.Equal("second", posts[1].Body);
+    }
+
+    [Fact]
+    public async Task DrainAsync_TwoPostsWellOverTheQuietPeriodApart_TheSecondArrivesOnlyOnTheNextDrain()
+    {
+        await using var catcher = WebhookCatcher.Start();
+        var gap = TimeSpan.FromMilliseconds(WebhookCatcher.QuietPeriodMilliseconds * 4); // 600ms of 150ms
+
+        await PostAsync(catcher.MineUrl, "first");
+        var postingSecond = PostAfterDelayAsync(catcher.ClanUrl, "second", gap);
+
+        // Long enough to reach the quiet-period break (~150ms after "first" settles), short
+        // enough that "second" (due at 600ms) cannot have landed yet -- this proves the boundary
+        // rather than assuming it. A gap this far outside the window is exactly the case the fixed
+        // window (reset on every arrival, but bounded by `within`) cannot bridge: it must return
+        // with only "first".
+        var firstDrain = await catcher.DrainAsync(TimeSpan.FromMilliseconds(WebhookCatcher.QuietPeriodMilliseconds * 3));
+        var onlySoFar = Assert.Single(firstDrain);
+        Assert.Equal("first", onlySoFar.Body);
+
+        // Not lost, just deferred: the second post is still sitting in the app's own send path
+        // (about to land) and is fully there on the very next drain -- a caller that drains again
+        // sees it, rather than it vanishing.
+        await postingSecond;
+        var secondDrain = await catcher.DrainAsync(TimeSpan.FromSeconds(5));
+        var onlyLater = Assert.Single(secondDrain);
+        Assert.Equal("second", onlyLater.Body);
+    }
+
     [Fact]
     public async Task DisposeAsync_ReleasesThePort_SoASecondCatcherCanStartOnTheSameOne()
     {
@@ -105,6 +160,56 @@ public sealed class WebhookCatcherTests
     }
 
     /// <summary>
+    /// Fix round 1, finding 1, the worst one: before this fix, <c>await HandleAsync(context)</c>
+    /// sat outside the accept loop's only try/catch, so any exception raised while handling one
+    /// request (a client reset mid-body, here) propagated out of the <c>while</c> loop and ended it
+    /// for the rest of the process -- every later POST would then hang against a listener nobody
+    /// was calling <c>GetContextAsync</c> on anymore. This sends a request that promises a
+    /// Content-Length it never delivers, then forces an abortive TCP reset (not a graceful close)
+    /// instead of finishing it, so the server-side read fails hard while it is blocked waiting for
+    /// bytes that will never arrive. A normal POST sent afterward must still be captured, and the
+    /// fault must be visible on <see cref="WebhookCatcher.RequestFaults"/> rather than silent.
+    /// </summary>
+    [Fact]
+    public async Task AcceptLoop_ABadRequestThatFailsMidRead_CostsOnlyThatOneRequest()
+    {
+        await using var catcher = WebhookCatcher.Start();
+        var uri = new Uri(catcher.MineUrl);
+
+        SendThenResetMidBody(uri);
+
+        // Give the server a moment to hit the reset inside HandleAsync and fall into
+        // HandleSafelyAsync's catch, before the real POST that proves the loop is still alive.
+        await Task.Delay(TimeSpan.FromMilliseconds(200));
+
+        await PostAsync(catcher.MineUrl, "still hears me");
+        var posts = await catcher.DrainAsync(TimeSpan.FromSeconds(5));
+
+        var post = Assert.Single(posts);
+        Assert.Equal("still hears me", post.Body);
+        Assert.NotEmpty(catcher.RequestFaults);
+    }
+
+    /// <summary>
+    /// Sends a request line and headers promising a 1000-byte body, then forces an abortive RST
+    /// (via <see cref="LingerOption"/> with a zero timeout, instead of a graceful close) without
+    /// ever sending that body -- the server is left blocked on a read that will now fail rather
+    /// than quietly see a short body or a clean EOF.
+    /// </summary>
+    private static void SendThenResetMidBody(Uri uri)
+    {
+        using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        socket.Connect(IPAddress.Loopback, uri.Port);
+
+        var request = Encoding.ASCII.GetBytes(
+            $"POST {uri.AbsolutePath} HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 1000\r\nConnection: close\r\n\r\n");
+        socket.Send(request);
+
+        socket.LingerState = new LingerOption(true, 0);
+        // Disposal below closes the socket with that LingerState in effect, sending the reset.
+    }
+
+    /// <summary>
     /// The case a reviewer would ask for first: does this thing actually stand in for Discord to
     /// the app's REAL sender, unmocked, over real sockets? A stub <c>HttpMessageHandler</c>
     /// returning 204 (as <c>DiscordWebhookSenderTests</c> already does) proves the sender's own
@@ -127,6 +232,12 @@ public sealed class WebhookCatcherTests
         var post = Assert.Single(await catcher.DrainAsync(TimeSpan.FromSeconds(5)));
         Assert.Equal(WebhookCatcher.MinePath, post.Path);
         Assert.Contains("BaronBloxwell", post.Body, StringComparison.Ordinal);
+    }
+
+    private static async Task PostAfterDelayAsync(string url, string body, TimeSpan delay)
+    {
+        await Task.Delay(delay);
+        await PostAsync(url, body);
     }
 
     private static async Task PostAsync(string url, string body)
