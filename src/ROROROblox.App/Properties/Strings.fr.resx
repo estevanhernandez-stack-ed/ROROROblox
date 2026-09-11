@@ -2889,6 +2889,9 @@ Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que 
   <data name="Plugin_Cap_Accounts" xml:space="preserve">
     <value>Voir vos comptes enregistrés — les noms et lequel est votre compte principal. Ne lit jamais les cookies ni les mots de passe.</value>
   </data>
+  <data name="Plugin_Cap_MetricsReport" xml:space="preserve">
+    <value>Transmettre les chiffres qu'il collecte, pour que RoRoRo vous alerte à leur sujet</value>
+  </data>
   <data name="Plugin_Cap_TrayMenu" xml:space="preserve">
     <value>Autoriser le plugin à ajouter des éléments au menu de la barre d'état système.</value>
   </data>

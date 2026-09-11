@@ -23,6 +23,7 @@ public static class PluginCapability
     public const string HostQueriesCurrentServer = "host.queries.current-server";
     public const string HostQueriesAccountActivity = "host.queries.account-activity";
     public const string HostQueriesAccounts = "host.queries.accounts";
+    public const string HostMetricsReport = "host.metrics.report";
     public const string HostUITrayMenu = "host.ui.tray-menu";
     public const string HostUIRowBadge = "host.ui.row-badge";
     public const string HostUIStatusPanel = "host.ui.status-panel";
@@ -51,6 +52,7 @@ public static class PluginCapability
         [HostQueriesCurrentServer] = "Plugin_Cap_CurrentServer",
         [HostQueriesAccountActivity] = "Plugin_Cap_AccountActivity",
         [HostQueriesAccounts] = "Plugin_Cap_Accounts",
+        [HostMetricsReport] = "Plugin_Cap_MetricsReport",
         [HostUITrayMenu] = "Plugin_Cap_TrayMenu",
         [HostUIRowBadge] = "Plugin_Cap_RowBadge",
         [HostUIStatusPanel] = "Plugin_Cap_StatusPanel",

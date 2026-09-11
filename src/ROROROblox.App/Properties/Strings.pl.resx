@@ -2889,6 +2889,9 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
   <data name="Plugin_Cap_Accounts" xml:space="preserve">
     <value>Zobacz twoje zapisane konta — nazwy i które jest główne. Nigdy nie odczytuje cookie ani haseł.</value>
   </data>
+  <data name="Plugin_Cap_MetricsReport" xml:space="preserve">
+    <value>Przesyłać zebrane liczby, aby RoRoRo mógł Cię o nich powiadamiać</value>
+  </data>
   <data name="Plugin_Cap_TrayMenu" xml:space="preserve">
     <value>Pozwól wtyczce dodawać pozycje do menu zasobnika.</value>
   </data>

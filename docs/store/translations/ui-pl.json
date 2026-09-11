@@ -345,6 +345,7 @@
   "Plugin_Cap_AccountExited": "Powiadamiaj wtyczkę, gdy konto zostanie zamknięte.",
   "Plugin_Cap_AccountLaunched": "Powiadamiaj wtyczkę, gdy konto zostanie uruchomione.",
   "Plugin_Cap_Accounts": "Zobacz twoje zapisane konta — nazwy i które jest główne. Nigdy nie odczytuje cookie ani haseł.",
+  "Plugin_Cap_MetricsReport": "Przesyłać zebrane liczby, aby RoRoRo mógł Cię o nich powiadamiać",
   "Plugin_Cap_CurrentServer": "Pozwól wtyczce odczytać link prywatnego serwera, który ostatnio uruchomiłeś, aby mogła go udostępnić.",
   "Plugin_Cap_FocusForeignWindows": "Wtyczka będzie aktywować / przełączać okna innych aplikacji.",
   "Plugin_Cap_LaunchTarget": "Pozwól wtyczce uruchomić jedno z twoich kont na serwerze Roblox z podanego przez nią linku lub znajomego.",

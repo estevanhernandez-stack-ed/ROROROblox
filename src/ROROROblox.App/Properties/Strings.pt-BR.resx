@@ -2889,6 +2889,9 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
   <data name="Plugin_Cap_Accounts" xml:space="preserve">
     <value>Ver suas contas salvas — nomes e qual é a sua principal. Nunca lê cookies ou senhas.</value>
   </data>
+  <data name="Plugin_Cap_MetricsReport" xml:space="preserve">
+    <value>Enviar os números que coleta, para que o RoRoRo possa avisar você sobre eles</value>
+  </data>
   <data name="Plugin_Cap_TrayMenu" xml:space="preserve">
     <value>Permitir que o plugin adicione itens ao menu da bandeja.</value>
   </data>
