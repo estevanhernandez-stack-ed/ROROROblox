@@ -16,6 +16,22 @@ public class MetricReportSinkAdapterTests
         public IReadOnlyList<MetricRule> CurrentRules() => rules;
     }
 
+    /// <summary>Counts calls to <see cref="CurrentRules"/> so a test can prove the gate
+    /// short-circuits BEFORE rules are read, not merely that nothing ended up raised — a report
+    /// that reaches the coordinator and simply produces zero triggers would pass an
+    /// emptiness-only assertion just as well as a true short-circuit, and that gap is exactly the
+    /// contamination bug this adapter exists to prevent.</summary>
+    private sealed class CountingRules(params MetricRule[] rules) : IMetricRuleSource
+    {
+        public int CallCount { get; private set; }
+
+        public IReadOnlyList<MetricRule> CurrentRules()
+        {
+            CallCount++;
+            return rules;
+        }
+    }
+
     private static (MetricReportSinkAdapter Sut, FakeTimeProvider Clock, List<AlertTrigger> Raised) New(
         bool enabled = true, IMetricRuleSource? rules = null)
     {
@@ -55,13 +71,22 @@ public class MetricReportSinkAdapterTests
     {
         // Spec section 6, requirement 1. Through plan 1 this feature was off only because the
         // destination list happened to be empty. If the gate is not HERE, the toggle is decorative.
-        var (sut, clock, raised) = New(enabled: false);
+        //
+        // Emptiness alone would pass just as well against a gate placed AFTER the coordinator
+        // observes — the contamination bug this test's name is about, since a report that still
+        // reaches MetricHistory but happens to produce zero triggers looks identical to a report
+        // the gate stopped. CountingRules proves the short-circuit directly: the gate returns
+        // before rules are ever read, so CurrentRules() must never be called while the setting is
+        // off.
+        var rules = new CountingRules(new MetricRule(M, MetricRuleKind.Rate, 100, TimeSpan.FromMinutes(10)));
+        var (sut, clock, raised) = New(enabled: false, rules: rules);
 
         sut.Report(Acct.ToString(), M, 0, Ms(clock.GetUtcNow()));
         clock.Advance(TimeSpan.FromMinutes(10));
         sut.Report(Acct.ToString(), M, 500, Ms(clock.GetUtcNow()));
 
         Assert.Empty(raised);
+        Assert.Equal(0, rules.CallCount);
     }
 
     [Fact]

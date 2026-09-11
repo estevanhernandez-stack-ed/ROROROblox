@@ -82,14 +82,20 @@ public sealed class MetricReportSinkAdapter(
 
             // Anything past FutureTolerance already returned above without reaching this line, so
             // "clamped, not dropped" never applies to the case the decision above forbids clamping
-            // for. What lands here is at most FutureTolerance of ordinary jitter, and
-            // MetricHistory.RatePerMinute windows samples against ITS OWN now (this same
-            // TimeProvider) with a strict "at or before now" filter — a sample stamped even one
-            // tick ahead of that shared now is silently excluded from every rate window it would
-            // otherwise belong to, permanently, for a clock that is merely a few seconds fast.
-            // Capping the accepted stamp at our own now treats that jitter as the noise the
-            // tolerance already decided it was, rather than by-name reintroducing a second,
-            // uncoordinated definition of "now" into a class that already has one.
+            // for; `now` was captured once, above, and is not re-read here, so this cap can never
+            // land on a report that would have been dropped. What lands here is at most
+            // FutureTolerance of ordinary jitter, and MetricHistory.RatePerMinute windows samples
+            // against ITS OWN now (this same TimeProvider) with a strict "at or before now" filter
+            // — a sample stamped even one tick ahead of that shared now fails that filter on THIS
+            // evaluation and is not lost, just late: MetricHistory.Add is unconditional, so the
+            // sample sits in the series and clears the filter on the next report once the host
+            // clock has caught up to its stamp, at most FutureTolerance later. The real cost is a
+            // systematic one-sample lag — every rate is computed one observation stale, and a
+            // two-sample series produces no rate at all until a third report arrives — for any
+            // machine whose clock runs even a fraction of a second fast, which is most of them,
+            // permanently. Capping the accepted stamp at our own now removes that lag instead of
+            // just tolerating it, without reintroducing a second, uncoordinated definition of "now"
+            // into a class that already has one.
             var recordedAt = observedAt > now ? now : observedAt;
 
             _coordinator.SetRules(active);
@@ -102,8 +108,10 @@ public sealed class MetricReportSinkAdapter(
         catch (Exception ex)
         {
             // Degrade-safe, like every other alert surface: an alert is a passenger. This runs on
-            // a gRPC handler thread and must never take the plugin host down.
-            log.LogWarning(ex, "A metric report was dropped.");
+            // a gRPC handler thread and must never take the plugin host down. This also catches
+            // ArgumentOutOfRangeException from DateTimeOffset.FromUnixTimeMilliseconds on a
+            // garbage stamp, so the metric id is named here too, not just on the future-dated path.
+            log.LogWarning(ex, "A metric report for {MetricId} was dropped.", metricId);
         }
     }
 }
