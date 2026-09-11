@@ -160,6 +160,16 @@ public sealed class FpsCapSettlerTests
         /// </summary>
         public TimeSpan PostReadPause { get; set; }
 
+        /// <summary>
+        /// How many times <see cref="PostReadPause"/> was actually taken. This exists so the fence
+        /// that sets the pause can assert it was PAID rather than assume it: with the pause zeroed
+        /// that test is behaviourally identical to
+        /// <see cref="ThePumpSurvivesAPreemptionBetweenTheReadAndTheRearm"/>'s neighbour
+        /// <see cref="WriterThrows_DegradesToWriteFailedRatherThanEscaping"/> and would pass
+        /// forever while guarding nothing.
+        /// </summary>
+        public int PostReadPausesPaid { get; private set; }
+
         public FakeProbe(params int?[] caps) => _caps = new Queue<int?>(caps);
 
         public int? ReadFramerateCap()
@@ -170,7 +180,7 @@ public sealed class FpsCapSettlerTests
 
         public DateTimeOffset? GetLastWriteTimeUtc()
         {
-            if (PostReadPause > TimeSpan.Zero) { Thread.Sleep(PostReadPause); }
+            if (PostReadPause > TimeSpan.Zero) { PostReadPausesPaid++; Thread.Sleep(PostReadPause); }
             return Mtime;
         }
     }
@@ -361,13 +371,21 @@ public sealed class FpsCapSettlerTests
                 // Observed on x64 CI at 14bbd03, green on arm64 at the same commit and green on
                 // re-run. (F-098: an instrument claiming more than it measures, in the direction
                 // that wastes an afternoon rather than the one that ships a bug.)
+                //
+                // 2026-09-11: the closing clause used to read "Re-run before investigating: if it
+                // passes, it was starvation, and only a repeatable failure is evidence of a hang."
+                // That was wrong in the expensive direction and it contradicted this file's own
+                // banner. A green re-run distinguishes nothing -- the deadlock this pump shipped
+                // with lost its race intermittently, so it passed on re-run constantly, and taking
+                // that as proof of starvation is precisely why it survived weeks of arm64 CI.
                 Assert.Fail(
                     "Pump stalled: the settler never armed its next timer within " +
                     $"{PumpObservationCeiling} of real time after the fake clock advanced by {step}. " +
                     "That is EITHER a genuine hang in the code under test OR a continuation this " +
-                    "runner never scheduled; elapsed time alone cannot tell them apart. Re-run before " +
-                    "investigating: if it passes, it was starvation, and only a repeatable failure " +
-                    "is evidence of a hang.");
+                    "runner never scheduled; elapsed time alone cannot tell them apart. A green " +
+                    "re-run is NOT evidence it was starvation -- an intermittently lost race passes " +
+                    "on re-run too, which is how this pump's own deadlock survived for weeks. Read " +
+                    "ArmSignallingClock's summary before concluding anything from one.");
             }
         }
     }
@@ -487,9 +505,19 @@ public sealed class FpsCapSettlerTests
         var task = FpsCapSettler.SettleAsync(
             probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None);
 
-        // Fast-path check (mismatch) + pre-write instant-credit wait + attempt 1's write all
-        // resolve without the clock needing to move.
-        for (var i = 0; i < 20 && writer.Writes.Count == 0; i++) { await Task.Yield(); }
+        // Fast-path check (mismatch) + pre-write instant-credit wait + attempt 1's write all resolve
+        // without the clock needing to move -- and because not one of them awaits an INCOMPLETE
+        // task, they all run synchronously on this thread before SettleAsync returns. The first
+        // incomplete await in the whole call is the post-write wait's Task.Delay, which is reached
+        // after the write. So the write has already landed by the time the task comes back here, by
+        // construction rather than by luck.
+        //
+        // This used to read `for (var i = 0; i < 20 && writer.Writes.Count == 0; i++) await
+        // Task.Yield();` (removed 2026-09-11). A fixed scheduler-turn budget standing in for a
+        // signal is the exact anti-pattern PumpStepAsync's own summary condemns two members up, and
+        // a shortfall under load would have failed the assertion below as 0-versus-1 for reasons
+        // having nothing to do with the settler. It was also dead: its guard is already false on
+        // iteration 0. Deleting it beats sizing it -- there is now no budget left to outrun.
         Assert.Equal(1, writer.Writes.Count);
 
         var clobbered = false;
@@ -641,35 +669,74 @@ public sealed class FpsCapSettlerTests
     }
 
     /// <summary>
+    /// The pause this fence injects, and the value the race was PROVEN to lose at rather than a
+    /// smaller one picked afterwards. 5ms is the figure from the reproduction: injected into every
+    /// probe read on an idle 16-core box with no parallelism and no load, it took 9 of this file's
+    /// 11 tests to a 30s stall against the old read-based signal. An earlier revision of this fence
+    /// shipped 2ms, which nothing had ever demonstrated would lose the race -- proving a defect at
+    /// one value and guarding it at another is not a fence, it is a hope.
+    /// </summary>
+    private static readonly TimeSpan PreemptionPause = TimeSpan.FromMilliseconds(5);
+
+    /// <summary>
     /// The fence on the 2026-09-11 pump fix. A pause inside the probe's read holds the settler in
     /// exactly the window the old signal released on -- after the mtime read, before the next
     /// <c>Task.Delay</c> is armed -- so the pump advances the clock while the settler is not yet
-    /// parked. Against the old read-based signal that is a permanent deadlock: measured directly, a
-    /// 5ms pause took 9 of this file's 11 tests to a 30s "Pump stalled" on an idle 16-core box with
-    /// no parallelism and no load. Against the arm signal it cannot stall at all, because the pump
-    /// does not move until the settler is parked for the next advance.
+    /// parked. Against the old read-based signal that is a permanent deadlock (see
+    /// <see cref="PreemptionPause"/> for the measurement). Against the arm signal it cannot stall at
+    /// all, because the pump does not move until the settler is parked for the next advance.
     /// <para>
-    /// The 2ms is a deliberate REAL-time pause, and the only one in this file. It buys a race window
-    /// wide enough to lose every time rather than occasionally; the settler needs ~50 pump steps to
-    /// reach <c>QuietDebounce</c> on this fixture, so the whole test costs ~100ms of wall clock.
+    /// <b>The vacuity floor.</b> Delete the pause and this test is behaviourally identical to
+    /// <see cref="WriterThrows_DegradesToWriteFailedRatherThanEscaping"/> -- same probe, same
+    /// throwing writer, same outcome -- and passes forever while guarding nothing. So the pause is
+    /// asserted, not assumed, twice over: the probe counts the pauses it actually took, and the
+    /// wall clock has to show the time they cost. Either assertion fails the moment the injection
+    /// stops happening, which is the only way this fence can be trusted to still bite.
+    /// </para>
+    /// <para>
     /// This is the WriterThrows shape on purpose -- it is the fastest-completing slow-path fixture
     /// here, and the outcome it asserts is unrelated to the timing, so a regression shows up as the
-    /// pump's own ceiling rather than as a confusing wrong-outcome failure.
+    /// pump's own ceiling rather than as a confusing wrong-outcome failure. The settler needs
+    /// <c>QuietDebounce / QuietPollInterval</c> polls before the pre-write wait credits quiet, so
+    /// the whole test costs ~50 pauses, around 300ms of real time. That is the only deliberate
+    /// real-time cost in this file and it buys the one thing nothing else here can: a race window
+    /// wide enough to lose every run rather than one arm64 run in three.
     /// </para>
     /// </summary>
     [Fact]
     public async Task ThePumpSurvivesAPreemptionBetweenTheReadAndTheRearm()
     {
-        var probe = new FakeProbe(9999) { PostReadPause = TimeSpan.FromMilliseconds(2) };
+        var probe = new FakeProbe(9999) { PostReadPause = PreemptionPause };
         var clock = new ArmSignallingClock(DateTimeOffset.UnixEpoch);
         var writer = new RecordingWriter(probe, clock) { Throw = new GlobalBasicSettingsWriteException("disk on fire") };
+
+        // Derived, not hardcoded: the pre-write quiet wait cannot credit quiet until the fake clock
+        // has moved QuietDebounce in QuietPollInterval steps, and every one of those polls pays the
+        // pause. Half that count is a floor with room for the fixture to change shape without
+        // turning into a false alarm, and it is unreachable if the pause is ever zeroed.
+        var pauseFloor = (int)(FpsCapSettler.QuietDebounce / FpsCapSettler.QuietPollInterval) / 2;
+
+        var wall = Stopwatch.StartNew();
 
         var task = FpsCapSettler.SettleAsync(
             probe, writer, desiredCap: 20, clock, NullLogger.Instance, CancellationToken.None);
 
         await AdvanceAsync(clock, SlowPathBudget, FpsCapSettler.QuietPollInterval, task);
 
-        Assert.Equal(FpsCapSettleOutcome.WriteFailed, await task.WaitAsync(TestBound));
+        var outcome = await task.WaitAsync(TestBound);
+        wall.Stop();
+
+        Assert.True(probe.PostReadPausesPaid >= pauseFloor,
+            $"Vacuity floor: the preemption was paid {probe.PostReadPausesPaid} time(s), expected at "
+            + $"least {pauseFloor}. Without it actually being taken this test is a duplicate of "
+            + "WriterThrows_DegradesToWriteFailedRatherThanEscaping and guards nothing.");
+
+        Assert.True(wall.Elapsed >= PreemptionPause * pauseFloor,
+            $"Vacuity floor: the run took {wall.Elapsed}, less than the "
+            + $"{PreemptionPause * pauseFloor} the preemptions alone must cost. The race window this "
+            + "fence exists to force was never opened.");
+
+        Assert.Equal(FpsCapSettleOutcome.WriteFailed, outcome);
     }
 
     [Fact]
