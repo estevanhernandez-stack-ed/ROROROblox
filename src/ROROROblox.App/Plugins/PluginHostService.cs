@@ -55,6 +55,19 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
     /// </summary>
     private readonly ISavedAccountsProvider? _savedAccounts;
 
+    /// <summary>
+    /// Where a plugin's reported numbers go (contract 0.10.0). Optional for the same reason as
+    /// <see cref="_themePalettes"/> and <see cref="_savedAccounts"/> — 30 construction sites, 29 of
+    /// which do not care — and guarded the same way: <c>MetricReportWiringTests</c> asserts the
+    /// production registration supplies it.
+    /// <para>
+    /// Unlike those two, null here is INERT rather than an error: ReportMetric returns Empty and
+    /// records nothing. A plugin cannot tell whether a report produced an alert in any case, so
+    /// failing the call would tell it something untrue about its own correctness.
+    /// </para>
+    /// </summary>
+    private readonly IMetricReportSink? _metricSink;
+
     public PluginHostService(
         IInstalledPluginsLookup registry,
         string hostVersion,
@@ -68,7 +81,8 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         IAccountActivityMarker activityMarker,
         IPluginAccountStopper accountStopper,
         Adapters.IThemePaletteSource? themePalettes = null,
-        ISavedAccountsProvider? savedAccounts = null)
+        ISavedAccountsProvider? savedAccounts = null,
+        IMetricReportSink? metricSink = null)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _hostVersion = hostVersion ?? throw new ArgumentNullException(nameof(hostVersion));
@@ -83,6 +97,26 @@ public sealed partial class PluginHostService : RoRoRoHost.RoRoRoHostBase
         _accountStopper = accountStopper ?? throw new ArgumentNullException(nameof(accountStopper));
         _themePalettes = themePalettes;
         _savedAccounts = savedAccounts;
+        _metricSink = metricSink;
+    }
+
+    // =====================================================================
+    // ReportMetric (external metric alerts, plan 2 — contract 0.10.0).
+    //
+    // A pass-through, deliberately and completely. The opt-in gate, the
+    // clock-skew check, subject-to-account resolution and the rules all
+    // live in IMetricReportSink, so this handler reasons about nothing and
+    // there is nothing here to get wrong later. Capability gate
+    // (host.metrics.report) is enforced upstream by CapabilityInterceptor
+    // via RpcMethodCapabilityMap — absence in that map is denial.
+    //
+    // Fire-and-forget: Empty comes back whether or not an alert resulted.
+    // =====================================================================
+
+    public override Task<Empty> ReportMetric(MetricReport request, ServerCallContext context)
+    {
+        _metricSink?.Report(request.SubjectId, request.MetricId, request.Value, request.ObservedAtUnixMs);
+        return Task.FromResult(new Empty());
     }
 
     public override Task<HandshakeResponse> Handshake(HandshakeRequest request, ServerCallContext context)
