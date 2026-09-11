@@ -71,8 +71,8 @@ public static class AlertStatusLine
             // MetricBreach counts only when the feature is switched on. Its destinations default
             // to the desktop toast so a breach has somewhere to go, which is a shipped default
             // rather than a user's choice — and this sentence reports back what the user chose.
-            // The switch lives in settings.json, which this composer cannot read, so it arrives
-            // as a parameter from the one caller that holds it.
+            // The switch lives in settings.json, which this composer cannot read, so it accepts
+            // it as an optional parameter (defaulting to false for backward compatibility).
             .Concat(metricAlertsEnabled ? config.DestinationsFor(AlertKind.MetricBreach) : [])
             .ToArray();
 

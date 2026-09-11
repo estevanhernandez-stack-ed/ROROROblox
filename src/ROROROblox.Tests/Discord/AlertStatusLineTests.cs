@@ -237,7 +237,7 @@ public class AlertStatusLineTests
 
         var line = AlertStatusLine.Compose(config, metricAlertsEnabled: true);
 
-        Assert.NotEqual("No alerts yet", line.Text);
+        Assert.DoesNotContain("No alerts yet", line.Text, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
