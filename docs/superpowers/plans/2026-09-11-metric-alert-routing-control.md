@@ -1,5 +1,9 @@
 # Metric Alert Routing Control Implementation Plan
 
+> **SUPERSEDED IN PART (2026-09-11):** every line below that treats the signed manifest as still coming — the ledger sentence in Task 4, the rules-file editor deferred in Self-Review — is out of date; the manifest was dropped the same day and the hand-edited JSON file is the permanent rule source. See [2026-09-11-metric-alerts-close-out.md](2026-09-11-metric-alerts-close-out.md). Everything else shipped as written; the body is left as the record.
+
+---
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give metric alerts a Settings section, so a breach can reach a phone instead of only the desktop toast.

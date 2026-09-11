@@ -4,6 +4,35 @@
 > Origin: Este — clan battles are monitored by hand today, and the clan posts in Discord when a
 > member's contribution rate drops. The ask is for RoRoRo to notice first.
 
+---
+
+> **DECISION CORRECTION (2026-09-11) — the signed manifest is dropped; no reference plugin ships.**
+>
+> **Originally proposed** (§1.3, §1.5): a 626 Labs–hosted, signed manifest supplying a discovery
+> request, a fetch template, an extract path, and rule parameters for whatever game the user points
+> RoRoRo at — signed because, per §1.5, it "names URLs the plugin will call."
+>
+> **Why it was dropped, on two findings (Este's call):**
+>
+> 1. §1.5 and §1.6 contradict each other. §1.5 signs the manifest because it names the URL the
+>    plugin calls; §1.6 has the user enter that URL in plugin settings. If the user supplies it,
+>    the manifest names no URL, and the stated reason to sign one evaporates.
+> 2. The plugin/core split in §1.2 already made the manifest's job disappear. Of its four payloads
+>    — a discovery request, a fetch template, an extract path, and rule parameters — the first
+>    three belong wholly to the plugin, which the user builds and updates freely, and the fourth
+>    duplicates the local rules file (`LocalFileMetricRuleSource`) that already ships.
+>
+> **Consequence.** Dropping it is the strongest form of the separation §1.6 is protecting: 626 Labs
+> now hosts nothing about any game at all, rather than hosting a file that describes one. The
+> honest cost: a field-path change now means every user updates their own plugin, instead of one
+> re-signed manifest reaching everyone. Full account:
+> [docs/superpowers/plans/2026-09-11-metric-alerts-close-out.md](../plans/2026-09-11-metric-alerts-close-out.md#the-decision-this-plan-records).
+>
+> §0 below is unaffected — it is a record of live-verified facts, not a proposal. Do not rewrite §1
+> or §2; this banner and the two shorter ones at §1.3 and §1.5 are the correction.
+
+---
+
 ## §0 What was measured before designing
 
 Every fact below was checked against the live API or the repo, not assumed. Two of them
@@ -84,6 +113,11 @@ no vendor-specific anything in the shipped binary.**
    - an **extract** path to a list of `{subject, value}` pairs,
    - a **metric kind** and its rule parameters.
 
+   > **Dropped 2026-09-11.** The plugin/core split in item 2 above left these four payloads with
+   > nothing to do: the first three belong wholly to the plugin, which the user owns and updates
+   > freely; the fourth duplicates the rules file `LocalFileMetricRuleSource` already reads. Full
+   > correction at the top of this spec.
+
 4. **Three metric kinds, one fetch machinery.** "Points per minute" is too narrow — Este: "the
    points aren't always the same. So we'll have to pull some other events as they happen."
    - `rate` — value climbs; alert when the derivative over a window falls below a floor.
@@ -96,6 +130,11 @@ no vendor-specific anything in the shipped binary.**
    primitive rather than a config file. Resolution is remote → last-known-good cache → **nothing**
    (feature simply off), because unlike the mutex there is no safe hardcoded default and a
    metric feature that silently stops is a non-event.
+
+   > **Dropped 2026-09-11.** This paragraph and item 6 below contradict each other: this one signs
+   > the manifest because it "names URLs the plugin will call"; item 6 has the user enter that URL
+   > in plugin settings. If the user supplies the URL, the manifest names none, and the signing
+   > rationale here does not hold. Full correction at the top of this spec.
 
 6. **The user brings the source.** The manifest ships from the 626 Labs feed describing *shapes*;
    the endpoint URL and the subject id (clan name, user id) are entered by the user in plugin
@@ -120,6 +159,9 @@ no vendor-specific anything in the shipped binary.**
   mute, cooldown and coalescing. The one guarantee this feature must not break is "a bad night
   does not become forty notifications."
 - **Unsigned manifest.** Rejected in §1.5. The value being fetched is a URL, not a string.
+  > **Still correct, 2026-09-11, even though the manifest itself is dropped:** this is exactly why
+  > `LocalFileMetricRuleSource` ships unsigned. A rule names a metric id, a kind, a threshold and a
+  > window — never a URL — so there is nothing here that signing would protect.
 - **Alerting the clan leader about everyone (Este's "both, but definitely A").** Deliberately out
   of scope for this cycle. It cannot be done from the player's own machine — it needs a
   server-side watcher and its own privacy reckoning, and it shares the dead-PC gap already
@@ -145,14 +187,37 @@ no vendor-specific anything in the shipped binary.**
    asking; not a blocker on building.
 2. **Where the manifest is hosted and how it is re-signed.** `compat.yml` already does exactly
    this for the mutex feed. Reuse it, or a sibling workflow?
+
+   > **Dropped 2026-09-11.** There is no manifest to host or re-sign. This question is not
+   > awaiting an answer — it no longer applies. Full correction at the top of this spec.
+
 3. **Whether `event` ships in the first cut.** `rate` covers the stated need. `level` is nearly
    free once `rate` exists. `event` needs change-detection semantics and its own copy, and may be
    a second cycle.
+
+   > **Settled 2026-09-11 (unrelated to the manifest decision):** yes. All three kinds — `Rate`,
+   > `Level`, `Event` — shipped in plan 1 (`docs/decisions.md`, 2026-09-09 entry, consequence 2).
+
 4. **Poll interval and politeness.** The server caches for 3 minutes; polling faster only burns
    the user's own bandwidth and looks like abuse under TERMS clause 4. Recommend a manifest-set
    minimum with a hard floor in core that the manifest cannot lower.
 
+   > **Corrected 2026-09-11.** The proposed mechanism — a manifest-set minimum with a host floor —
+   > no longer exists; there is no manifest. What shipped instead: `docs/plugins/AUTHOR_GUIDE.md`
+   > puts poll cadence and third-party politeness on the plugin author ("report on your own clock,
+   > not the user's … if what you're polling is itself a third-party service, save your restraint
+   > for that"). RoRoRo itself enforces no minimum poll interval.
+
 ## §5 Test plan
+
+> **Corrected 2026-09-11.** Item 1's manifest-signature and fallback-chain testing never applies —
+> the manifest was dropped before it was built; the rest of item 1 landed (rate computation across
+> sample gaps, level crossings, the router's `MetricBreach` cases). Item 2's fence landed, but not
+> against a manifest: `NoVendorNameFenceTests`
+> (`src/ROROROblox.Tests/NoVendorNameFenceTests.cs`) scans `Core`/`App`/`PluginContract` source for
+> the vendor's own company name and its API/community-tracker acronym — not the game's name, which
+> ships deliberately elsewhere. Item 5, the manifest rotation drill, is struck outright: there is
+> no manifest to rotate. Items 3 and 4 are unaffected by this decision.
 
 1. **Unit** — rate computation across sample gaps including a missed poll and a counter reset;
    level crossings in both directions with hysteresis; router `MetricBreach` cases
@@ -187,6 +252,12 @@ a scratch ledger so plan 2 cannot miss them.
    > enforced per report at the sink. The destination list now defaults to the local desktop toast.
    > Plan 2 wired the setting enforcement at the RPC ingress. Plan 3's task is now limited to the
    > settings control for routing a breach to destinations other than that toast.
+   >
+   > **Corrected again, 2026-09-11 (feat/metric-alerts-close-out):** That settings control has
+   > since shipped — `docs/superpowers/plans/2026-09-11-metric-alert-routing-control.md` — and
+   > plan 3 itself is dropped outright (top banner of this spec). There is no manifest task left
+   > for anything to be "limited to." Nothing of plan 3 remains: routing already reaches all four
+   > destinations without it, and the rule source (`LocalFileMetricRuleSource`) is permanent.
 
 2. **A clock-skewed reporter silently disables Rate rules and only Rate rules.**
    `MetricHistory` filters samples against the host clock, while `ObservedAtUtc` comes from the

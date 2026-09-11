@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using ROROROblox.Core;
 using ROROROblox.Core.Discord;
@@ -13,8 +14,9 @@ namespace ROROROblox.App.Discord;
 /// </para>
 /// <para>
 /// Degrade-safe like every other Discord surface: an alert is a passenger. Nothing here may throw
-/// into a caller, because the callers are the memory watchdog and the presence path, and neither
-/// of those may be taken down by Discord being unreachable.
+/// into a caller, because the callers are the memory watchdog, the presence path and — since
+/// metric alerts, 2026-09-11 — a gRPC handler thread serving a plugin's report, and none of those
+/// may be taken down by Discord being unreachable.
 /// </para>
 /// </summary>
 public sealed class AlertDispatcher(
@@ -26,9 +28,45 @@ public sealed class AlertDispatcher(
     ROROROblox.App.Notify.PhoneAlertSender? phoneSender = null,
     Func<ROROROblox.Core.Notify.PhoneNotifyConfig>? phoneConfig = null)
 {
-    /// <summary>Keyed by (account, KIND) — see <see cref="AlertRouter.Route"/> for why the kind
-    /// belongs in the key.</summary>
-    private readonly Dictionary<(Guid AccountId, AlertKind Kind), DateTimeOffset> _lastSent = [];
+    /// <summary>
+    /// Keyed by (account, KIND) — see <see cref="AlertRouter.Route"/> for why the kind belongs in
+    /// the key. Concurrent because this dispatcher has TWO fire-and-forget producers: the view
+    /// model, raising on the UI thread, and the metric sink, raising on whatever gRPC handler
+    /// thread served a plugin's report (both wired in <c>App.xaml.cs</c>). A plain Dictionary was
+    /// safe only while the view model was the sole producer, and stopped being safe the moment
+    /// <see cref="AlertKind.MetricBreach"/> got a destination — before that the metric path routed
+    /// nowhere and never reached the write below.
+    /// <para>
+    /// What the race actually did, measured 2026-09-11 against the plain Dictionary: 3 063 of
+    /// 3 200 concurrent dispatches threw, almost all of them
+    /// "Operations that change non-concurrent collections must have exclusive access", and the
+    /// catch in <see cref="DispatchAsync"/> swallowed every one. So the production symptom was
+    /// alerts silently vanishing rather than a crash — and, in the worst case a corrupted bucket
+    /// chain allows, a read that never returns.
+    /// </para>
+    /// <para>
+    /// Known and deliberately NOT fixed here: the cooldown stamp lands AFTER the sends complete,
+    /// so two dispatches racing can both pass the cooldown check and both send. That is narrower
+    /// than the corruption this type prevents, and moving the stamp would change delivery
+    /// behaviour for four already-shipped alert kinds inside a change whose job is a data race.
+    /// </para>
+    /// <para>
+    /// The map is not this type's only shared state, and this paragraph exists because the first
+    /// version of the comment above pretended it was. The three rejection flags —
+    /// <see cref="MineWebhookRejected"/>, <see cref="ClanWebhookRejected"/> and
+    /// <see cref="PhoneRejected"/> — are plain bools written from the same two producer threads.
+    /// They are safe because of HOW they are written, not because of their type: every write is an
+    /// unconditional <c>= true</c> guarded by the send's own verdict, so two racing dispatches can
+    /// only ever agree. <c>flag |= await Send(...)</c> would NOT be safe — the compiler reads the
+    /// property before the await, so a dispatch that reads false and then succeeds would overwrite
+    /// a concurrent dispatch's 404 verdict, leaving a dead webhook offered and Settings reporting
+    /// it healthy (fixed 2026-09-11; <c>DispatchAsync_TwoRacingDispatches_KeepTheRejection</c>
+    /// holds the line). The resets are UI-thread-only and terminal-in-one-direction besides, so a
+    /// torn read is not reachable: a bool write is atomic, and the worst a stale read costs is one
+    /// POST to a URL already known dead.
+    /// </para>
+    /// </summary>
+    private readonly ConcurrentDictionary<(Guid AccountId, AlertKind Kind), DateTimeOffset> _lastSent = new();
 
     /// <summary>True once that webhook has returned 404. Surfaced in Settings; also stops the
     /// dispatcher offering the destination at all — see <see cref="EffectiveConfig"/>.</summary>
@@ -95,11 +133,15 @@ public sealed class AlertDispatcher(
                     case AlertDestination.Local:
                         tray.ShowToast(payload.Title, payload.Body);
                         break;
+                    // `if (send) flag = true`, never `flag |= await send`: the compiler reads the
+                    // property BEFORE the await, so `|=` opens a read-to-write window spanning a
+                    // whole HTTP round trip and a concurrent dispatch's 404 verdict can be
+                    // overwritten by this one's success. Writing only true has no such window.
                     case AlertDestination.Mine when current.MineWebhookUrl is { } mine:
-                        MineWebhookRejected |= await SendAsync(mine, payload).ConfigureAwait(false);
+                        if (await SendAsync(mine, payload).ConfigureAwait(false)) MineWebhookRejected = true;
                         break;
                     case AlertDestination.Clan when current.ClanWebhookUrl is { } clan:
-                        ClanWebhookRejected |= await SendAsync(clan, payload).ConfigureAwait(false);
+                        if (await SendAsync(clan, payload).ConfigureAwait(false)) ClanWebhookRejected = true;
                         break;
                     case AlertDestination.Phone when phoneSender is not null:
                         var phoneResult = await phoneSender.SendAsync(phone, alert.Kind, payload).ConfigureAwait(false);
@@ -111,6 +153,9 @@ public sealed class AlertDispatcher(
                         break;
                 }
 
+                // The indexer setter is the concurrent idiom for an unconditional overwrite —
+                // atomic per key, last writer wins, which is exactly the semantics this had
+                // single-threaded. AddOrUpdate would say the same thing in more words.
                 foreach (var t in alert.Triggers) { _lastSent[(t.AccountId, t.Kind)] = now; }
             }
         }

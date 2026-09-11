@@ -16,8 +16,24 @@ public class AlertDispatcherTests
     /// </summary>
     private sealed class SpyTrayService : ITrayService
     {
-        public List<string> Toasts { get; } = [];
-        public void ShowToast(string title, string message) => Toasts.Add($"{title}|{message}");
+        private readonly List<string> _toasts = [];
+
+        /// <summary>
+        /// Locked because the concurrency test below toasts from sixteen threads at once. A racing
+        /// <c>List.Add</c> throws an IndexOutOfRangeException that the dispatcher swallows, which
+        /// would abort a dispatch BEFORE it reached the cooldown map — the test would then fail, or
+        /// report a short toast count, for a reason that has nothing to do with the map it is about.
+        /// </summary>
+        public void ShowToast(string title, string message)
+        {
+            lock (_toasts) { _toasts.Add($"{title}|{message}"); }
+        }
+
+        /// <summary>A snapshot, so an assertion never enumerates the list while a producer appends.</summary>
+        public IReadOnlyList<string> Toasts
+        {
+            get { lock (_toasts) { return _toasts.ToArray(); } }
+        }
 
         public void Show() { }
         public void UpdateStatus(MultiInstanceState state) { }
@@ -42,6 +58,12 @@ public class AlertDispatcherTests
 
     private static AlertTrigger Dropped(Guid id, string name) =>
         new(AlertKind.AccountDroppedOut, id, name, $"real_{name}", "Pet Simulator 99!", null, DateTimeOffset.UtcNow);
+
+    /// <summary>Any kind, for the suites that care about the kind rather than the wording.</summary>
+    private static AlertTrigger Of(AlertKind kind, Guid id) =>
+        new(kind, id, "BaronBloxwell", "real_BaronBloxwell", "Pet Simulator 99!", null, DateTimeOffset.UtcNow);
+
+    private static AlertTrigger Metric(Guid id) => Of(AlertKind.MetricBreach, id);
 
     private static (DiscordWebhookSender Sender, StubHttpHandler Handler) Sender(HttpStatusCode status)
     {
@@ -182,6 +204,73 @@ public class AlertDispatcherTests
     }
 
     [Fact]
+    public async Task DispatchAsync_TwoRacingDispatches_KeepTheRejection()
+    {
+        // The dispatcher has two fire-and-forget producers, so two dispatches to the same webhook
+        // overlap in production. With `MineWebhookRejected |= await SendAsync(...)` the property is
+        // READ before the await and written after it, so the read-to-write window spans a whole
+        // HTTP round trip: the slow dispatch reads false, the fast one 404s and writes true, and
+        // the slow one's success then writes false straight over the verdict. The webhook is dead,
+        // the dispatcher keeps offering it, and Settings reports it healthy.
+        //
+        // Sequenced rather than merely raced: the gate holds the first POST open until the second
+        // has completely finished, so the window is straddled every run, not one run in a hundred.
+        var handler = new GatedWebhookHandler();
+        var sender = new DiscordWebhookSender(new HttpClient(handler), NullLogger<DiscordWebhookSender>.Instance);
+        var dispatcher = Build(sender, new SpyTrayService(), new DiscordConfig
+        {
+            DroppedOutDestination = AlertDestination.Mine,
+            MineWebhookUrl = MineUrl,
+        });
+
+        var slow = Task.Run(() => dispatcher.DispatchAsync([Dropped(Guid.NewGuid(), "Slow")]));
+        await handler.FirstInFlight.WaitAsync(TimeSpan.FromSeconds(5));
+
+        // Runs to completion while the first POST is still open, so its 404 verdict is written
+        // before the first dispatch is allowed to write anything at all.
+        await dispatcher.DispatchAsync([Dropped(Guid.NewGuid(), "Fast")]).WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(dispatcher.MineWebhookRejected, "the 404 dispatch did not mark the webhook rejected");
+
+        handler.ReleaseFirst();
+        await slow.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.True(dispatcher.MineWebhookRejected,
+            "a successful POST overwrote a concurrent dispatch's 404 verdict — the flag must only ever be written true");
+    }
+
+    /// <summary>
+    /// Sequences two concurrent webhook POSTs. The FIRST request in blocks until the test releases
+    /// it and then succeeds; every later request 404s immediately. That is the exact interleaving a
+    /// read-before-await write loses a rejection on, and it is deterministic rather than lucky.
+    /// </summary>
+    private sealed class GatedWebhookHandler : HttpMessageHandler
+    {
+        private readonly TaskCompletionSource _firstInFlight = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _releaseFirst = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int _seen;
+
+        /// <summary>Completes once the slow POST is open, so the test knows the racing dispatch has
+        /// already read the rejection flag and is now parked inside the await.</summary>
+        public Task FirstInFlight => _firstInFlight.Task;
+
+        public void ReleaseFirst() => _releaseFirst.TrySetResult();
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            if (Interlocked.Increment(ref _seen) == 1)
+            {
+                _firstInFlight.TrySetResult();
+
+                // Bounded so a wiring mistake fails this test rather than hanging the whole run.
+                await _releaseFirst.Task.WaitAsync(TimeSpan.FromSeconds(30), ct).ConfigureAwait(false);
+                return new HttpResponseMessage(HttpStatusCode.NoContent);
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        }
+    }
+
+    [Fact]
     public async Task DispatchAsync_AfterAWebhookIsGone_StopsPostingAndFallsBackToTheTray()
     {
         // THE test for the 404-is-terminal claim. Marking a flag is not the same as acting on it:
@@ -244,6 +333,73 @@ public class AlertDispatcherTests
         await dispatcher.DispatchAsync([Dropped(Guid.NewGuid(), "A")]).WaitAsync(TimeSpan.FromSeconds(5));
 
         Assert.Empty(tray.Toasts);
+        Assert.Empty(handler.Bodies);
+    }
+
+    [Fact]
+    public async Task DispatchAsync_ManyProducersAtOnce_DoesNotCorruptTheCooldownMap()
+    {
+        // The dispatcher has TWO fire-and-forget producers wired in App.xaml.cs: the view model,
+        // raising on the UI thread, and the metric sink, raising on whatever gRPC handler thread
+        // served a plugin's report. While the view model was the only one, an unsynchronised
+        // Dictionary was safe. It stopped being safe the moment MetricBreach got a destination.
+        //
+        // Sixteen producers rather than two: two threads reproduce the corruption only by luck,
+        // and this test has to fail against the unfixed field, not merely be pointed at it.
+        const int Producers = 16;
+        const int RoundsEach = 200;
+        const int TriggersPerDispatch = 8;
+
+        var (sender, handler) = Sender(HttpStatusCode.NoContent);
+        var tray = new SpyTrayService();
+        var dispatcher = Build(sender, tray, new DiscordConfig
+        {
+            // Every kind has to route SOMEWHERE, or DispatchAsync returns at the "routed nowhere"
+            // guard and never reaches the map write this test exists to stress. Local keeps the
+            // stress on the map instead of on an HTTP double.
+            DroppedOutDestinations = [AlertDestination.Local],
+            MemoryWarningDestinations = [AlertDestination.Local],
+            RecycledDestinations = [AlertDestination.Local],
+            UptimeMarkDestinations = [AlertDestination.Local],
+            // MetricBreachDestinations already defaults to Local.
+        });
+
+        // Prove the routing before trusting anything below: one dispatch, one toast. Without this
+        // the whole test would pass while exercising nothing at all.
+        await dispatcher.DispatchAsync([Metric(Guid.NewGuid())]).WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Single(tray.Toasts);
+
+        var kinds = Enum.GetValues<AlertKind>();
+        var work = Enumerable.Range(0, Producers).Select(producer => Task.Run(async () =>
+        {
+            for (var round = 0; round < RoundsEach; round++)
+            {
+                // Fresh ids every round, so nothing is suppressed by the cooldown and the map only
+                // ever grows — growth is when a Dictionary rehashes, and rehashing under a
+                // concurrent read is what corrupts the bucket chain.
+                var kind = kinds[(producer + round) % kinds.Length];
+                var triggers = Enumerable.Range(0, TriggersPerDispatch)
+                    .Select(_ => Of(kind, Guid.NewGuid()))
+                    .ToArray();
+                await dispatcher.DispatchAsync(triggers).ConfigureAwait(false);
+            }
+        })).ToArray();
+
+        // The timeout IS the assertion, as much as the toast count is. DispatchAsync swallows every
+        // exception by design, so a corrupted Dictionary that THROWS is invisible here — what it
+        // does visibly is spin forever inside a bucket chain that points at itself.
+        // The delay is cancelled the moment the race is decided. Left uncancelled it keeps a 60s
+        // timer alive after the test has returned its verdict, on every CI job, for nothing.
+        using var timeout = new CancellationTokenSource();
+        var all = Task.WhenAll(work);
+        var finished = await Task.WhenAny(all, Task.Delay(TimeSpan.FromSeconds(60), timeout.Token));
+        timeout.Cancel();
+        Assert.Same(all, finished);
+        await all;
+
+        // Each dispatch coalesces its triggers into exactly one RoutedAlert, so one toast each.
+        // A short count is the swallowed-throw half of the same corruption.
+        Assert.Equal((Producers * RoundsEach) + 1, tray.Toasts.Count);
         Assert.Empty(handler.Bodies);
     }
 }

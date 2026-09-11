@@ -18,8 +18,9 @@ namespace ROROROblox.App.Plugins.Adapters;
 /// breach for free, and cannot be bypassed from here.
 /// </para>
 /// </summary>
-/// <param name="rules">Plan 2 reads a local file; plan 3 reads a signed manifest. Re-read on every
-/// report, so an edited rule takes effect without a restart.</param>
+/// <param name="rules">Reads the local rules file (<see cref="ROROROblox.App.Metrics.LocalFileMetricRuleSource"/>)
+/// — the permanent rule source; the signed manifest once planned to replace it was dropped
+/// 2026-09-11. Re-read on every report, so an edited rule takes effect without a restart.</param>
 /// <param name="isEnabled">The opt-in gate, read PER REPORT. A user who turns the feature off must
 /// have it off on the next report, not on the next launch. A func rather than
 /// <c>IAppSettings</c> because this path is synchronous and must not block a gRPC thread on a

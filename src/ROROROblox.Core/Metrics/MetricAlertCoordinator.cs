@@ -21,7 +21,10 @@ public sealed class MetricAlertCoordinator(TimeProvider time, int historyCapacit
     private volatile IReadOnlyList<MetricRule> _rules = [];
 
     /// <summary>
-    /// Replaces the rule set wholesale. Called on settings change and on manifest load.
+    /// Replaces the rule set wholesale. Called every time the report path re-reads rules from the
+    /// configured <see cref="IMetricRuleSource"/> — today, the permanent local rules file. ("On
+    /// manifest load" was this comment's original second trigger; there is no manifest, dropped
+    /// 2026-09-11.)
     /// <para>
     /// The list is COPIED. An <c>IReadOnlyList</c> parameter is a promise the callee will not
     /// write to it, never a promise the caller will not — hand in a <c>List</c>, add to it later,

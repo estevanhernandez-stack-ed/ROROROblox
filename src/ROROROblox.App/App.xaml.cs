@@ -1226,10 +1226,12 @@ public partial class App : Application
         services.AddSingleton<ROROROblox.App.Plugins.IPluginAccountStopper,
             ROROROblox.App.Plugins.Adapters.ProcessTrackerAccountStopper>();
 
-        // Metric alerts (plan 2). The rule source is a seam: plan 3 swaps this one registration
-        // for the signed-manifest reader and nothing downstream changes. The file is absent on a
-        // fresh install, which means no rules, which means the feature is inert — the correct
-        // shipped default for an opt-in alert.
+        // Metric alerts. LocalFileMetricRuleSource is the rule source, permanently — the signed
+        // manifest once planned to replace it was dropped (2026-09-11: see "The decision this plan
+        // records" in docs/superpowers/plans/2026-09-11-metric-alerts-close-out.md). IMetricRuleSource
+        // stays a seam regardless: this registration is the only thing a future source would touch.
+        // The file is absent on a fresh install, which means no rules, which means the feature is
+        // inert — the correct shipped default for an opt-in alert.
         //
         // MetricRulesPath is DERIVED from the settings file rather than rebuilt from dataDir
         // above: the rules sit beside settings.json by definition, and the app's data folder has
