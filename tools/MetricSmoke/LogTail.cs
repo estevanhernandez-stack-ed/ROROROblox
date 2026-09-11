@@ -47,8 +47,15 @@ public sealed class LogTail
     // MetricReportSinkAdapter.Report, the future-skew drop:
     //   log.LogInformation("Dropped a metric report for {MetricId} stamped {Skew} in the future —
     //       check the reporter's clock; it is sending local time, not UTC.", metricId, ...);
+    // The metric id is captured lazily up to the first " stamped " rather than with `\S+`:
+    // MetricReportSinkAdapter.Report only ever guards metricId with
+    // `if (string.IsNullOrWhiteSpace(metricId)) return;` — no length or character restriction past
+    // that — so nothing stops a reporter using one with a space in it even though the shipped
+    // convention is dotted identifiers. `\S+` would silently truncate such an id at its first
+    // space; the rendered line's only real delimiter is the literal " stamped " that always
+    // follows, so that is what this matches against instead.
     private static readonly Regex SkewDropPattern = new(
-        @"Dropped a metric report for (?<metricId>\S+) stamped .+ in the future",
+        @"Dropped a metric report for (?<metricId>.+?) stamped .+ in the future",
         RegexOptions.Compiled);
 
     private readonly string _path;
@@ -93,6 +100,15 @@ public sealed class LogTail
     /// byte zero, advance to the new length — avoids both without pretending to reconstruct history
     /// that offset can no longer address.
     /// </para>
+    /// <para>
+    /// The new offset is read back from the stream's own position AFTER <c>ReadToEndAsync</c>
+    /// completes, not predicted from the length observed before it started. The app is appending to
+    /// this same file while this runs — that is the entire premise of tailing it live — so bytes can
+    /// land mid-read; <c>ReadToEndAsync</c> keeps looping until it genuinely hits end-of-file, so it
+    /// happily sweeps those up too, and the text this method hands back already includes them.
+    /// Stamping the offset from the pre-read length in that case would understate how far the read
+    /// actually went, and the next call would re-return the very lines this call already returned.
+    /// </para>
     /// </summary>
     public async Task<IReadOnlyList<string>> NewLinesAsync()
     {
@@ -107,15 +123,18 @@ public sealed class LogTail
                 bufferSize: 4096, useAsync: true),
             Encoding.UTF8);
 
-        var length = reader.BaseStream.Length;
-        if (length < _offset)
+        if (reader.BaseStream.Length < _offset)
         {
             _offset = 0;
         }
 
         reader.BaseStream.Seek(_offset, SeekOrigin.Begin);
         var text = await reader.ReadToEndAsync().ConfigureAwait(false);
-        _offset = length;
+
+        // BaseStream.Position, not the Length checked above: that Length was a prediction taken
+        // before the read started, and Position here is where the read actually stopped — the two
+        // differ exactly when a write landed while ReadToEndAsync was still in flight.
+        _offset = reader.BaseStream.Position;
 
         return SplitLines(text);
     }

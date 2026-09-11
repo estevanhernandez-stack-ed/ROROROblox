@@ -1,3 +1,4 @@
+using ROROROblox.Core.Discord;
 using ROROROblox.MetricSmoke;
 
 namespace ROROROblox.Tests.SmokeHarness;
@@ -21,14 +22,26 @@ public sealed class LogTailTests : IDisposable
         "2026-09-11 14:22:04.001 -07:00 [INF] v1.25.0.0 ROROROblox.App.Discord.AlertDispatcher "
         + "Alert → Clan: 3 accounts — Pet Simulator 99! (3 account(s)).";
 
-    private const string RoutedNowhereLine =
+    // Derived from AlertRouter.Cooldown rather than restated as a literal number: this line has to
+    // stay true to what AlertDispatcher.DispatchAsync actually renders, and a hand-typed number
+    // here would go stale silently the moment that constant changes (it already had — this used to
+    // hardcode "15-minute" against a 5-minute constant).
+    private static readonly string RoutedNowhereLine =
         "2026-09-11 14:22:05.777 -07:00 [INF] v1.25.0.0 ROROROblox.App.Discord.AlertDispatcher "
         + "Alert raised for 2 account(s) but routed nowhere — check the destination, the "
-        + "per-account mute, and the 15-minute cooldown.";
+        + $"per-account mute, and the {AlertRouter.Cooldown.TotalMinutes}-minute cooldown.";
 
     private const string SkewDropLine =
         "2026-09-11 14:22:06.114 -07:00 [INF] v1.25.0.0 ROROROblox.App.Plugins.Adapters.MetricReportSinkAdapter "
         + "Dropped a metric report for cpu.load stamped 00:00:45.1230000 in the future — check the "
+        + "reporter's clock; it is sending local time, not UTC.";
+
+    // MetricReportSinkAdapter.Report never validates metricId beyond
+    // string.IsNullOrWhiteSpace — nothing stops a reporter using one with a space in it, even
+    // though the shipped convention is dotted identifiers.
+    private const string SkewDropLineWithSpaceInMetricId =
+        "2026-09-11 14:22:06.500 -07:00 [INF] v1.25.0.0 ROROROblox.App.Plugins.Adapters.MetricReportSinkAdapter "
+        + "Dropped a metric report for fps p1 stamped 00:00:12.0000000 in the future — check the "
         + "reporter's clock; it is sending local time, not UTC.";
 
     // The failure mode the plan calls out by name: a line that merely mentions "alert" in ordinary
@@ -149,6 +162,19 @@ public sealed class LogTailTests : IDisposable
     }
 
     [Fact]
+    public void SkewDrops_DoesNotTruncateAMetricIdThatContainsASpace()
+    {
+        // The old `\S+` capture stopped at the first whitespace, which would have silently
+        // truncated "fps p1" down to "fps". metricId is opaque and unvalidated past a
+        // whitespace-only check, so a space in it is unlikely by convention but not impossible.
+        var tail = LogTail.OpenAt(_path);
+
+        var drops = tail.SkewDrops([SkewDropLineWithSpaceInMetricId]);
+
+        Assert.Equal(["fps p1"], drops);
+    }
+
+    [Fact]
     public void ALineThatMerelyMentionsTheWordAlert_IsNotMatchedByAnyRecogniser()
     {
         // The failure mode the plan is explicit about: a matcher firing on the word "alert"
@@ -223,5 +249,44 @@ public sealed class LogTailTests : IDisposable
         await appHandle.FlushAsync();
 
         Assert.Equal([RoutedNowhereLine], await tail.NewLinesAsync());
+    }
+
+    [Fact]
+    public async Task NewLinesAsync_WhileAWriterKeepsAppendingConcurrently_NeverReplaysOrLosesALine()
+    {
+        // Regression for a real bug: NewLinesAsync used to stamp its offset from the file length
+        // observed BEFORE ReadToEndAsync ran, not from where the read actually stopped. The app
+        // appends to this exact file for the whole life of a scenario — that is the entire premise
+        // of tailing it live — so when bytes land while a read is still in flight, ReadToEndAsync
+        // (which loops until it truly hits end-of-file) sweeps them up too, and the OLD code then
+        // recorded an offset that undercounted how far the read had actually gone. The next call
+        // re-read and re-returned the tail it had already handed back. A delivered line getting
+        // double-counted is not cosmetic — it is exactly what would turn the "repeated breaches do
+        // not become repeated toasts" scenario's "exactly one" assertion into a false failure.
+        // The prior concurrency test only writes strictly before and after a read and cannot catch
+        // this; this one keeps writing throughout a tight read loop so some write lands mid-read.
+        WriteLines("seed line before the race starts");
+        var tail = LogTail.OpenAt(_path);
+
+        const int totalWrites = 300;
+        var writer = Task.Run(async () =>
+        {
+            for (var i = 0; i < totalWrites; i++)
+            {
+                AppendLines(DeliveredLine);
+                await Task.Yield();
+            }
+        });
+
+        var totalSeen = 0;
+        while (!writer.IsCompleted)
+        {
+            totalSeen += tail.Delivered(await tail.NewLinesAsync()).Count;
+        }
+        await writer;
+        // Drain whatever landed between the writer's last append and this method's last read.
+        totalSeen += tail.Delivered(await tail.NewLinesAsync()).Count;
+
+        Assert.Equal(totalWrites, totalSeen);
     }
 }
