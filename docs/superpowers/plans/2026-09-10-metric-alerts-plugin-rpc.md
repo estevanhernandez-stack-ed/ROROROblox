@@ -811,10 +811,14 @@ public class MetricReportSinkAdapterTests
     [Fact]
     public void NoRules_MeansNoWork_AndNoAlert()
     {
-        var (_, clock, raised) = New(rules: new FixedRules());
-        var (sut, _, _) = New(rules: new FixedRules());
+        // One SUT. Subscribing to one adapter and reporting to another would make Assert.Empty
+        // pass no matter what the code did.
+        var (sut, clock, raised) = New(rules: new FixedRules());
 
         sut.Report(Acct.ToString(), M, 0, Ms(clock.GetUtcNow()));
+        clock.Advance(TimeSpan.FromMinutes(10));
+        sut.Report(Acct.ToString(), M, 0, Ms(clock.GetUtcNow()));   // 0/min would breach any floor
+
         Assert.Empty(raised);
     }
 
