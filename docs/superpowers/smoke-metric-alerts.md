@@ -175,10 +175,13 @@ uses. The routing control lives in Settings → Alerts, alongside the **Metric a
       runner's own wait-for-app gate uses the same probe the row asserts on. It has been proven able to
       fail, but only by killing RoRoRo the instant the pipe answers, before the row's own check
       completes.
-- [ ] **Settings still says "No alerts yet" while the Metric alerts toggle is off.** Deliberate, and
-      it will look like a bug if you do not expect it: the status line excludes `MetricBreach` from
-      the count until the toggle is on, even though `MetricBreachDestinations` defaults to the
-      desktop toast underneath. Turn the toggle on and confirm the sentence starts counting it.
+- [ ] **Settings still says "No alerts yet" while the Metric alerts toggle is off.** No harness covers
+      this yet. Deliberate, and it will look like a bug if you do not expect it: the status line
+      excludes `MetricBreach` from the count until the toggle is on, even though
+      `MetricBreachDestinations` defaults to the desktop toast underneath. Turn the toggle on and
+      confirm the sentence starts counting it. This is a status-LINE assertion, not a log line — the
+      harness reads the app's log file and never its UI, so covering this row needs a UIA path nobody
+      has built yet, not a limit of what a log can say.
 - [ ] **A breach reaches the phone. No harness will ever cover this.** Tick **My phone** on the
       metric-alerts routing row in Settings → Alerts, with phone credentials saved, report a
       breaching value, and confirm the push notification arrives. The phone leg was only ever

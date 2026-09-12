@@ -1,6 +1,7 @@
 # MetricSmoke
 
-Drives 16 of the 21 rows on [`docs/superpowers/smoke-metric-alerts.md`](../../docs/superpowers/smoke-metric-alerts.md)
+Drives 14 of the 21 rows on [`docs/superpowers/smoke-metric-alerts.md`](../../docs/superpowers/smoke-metric-alerts.md)
+— 16 scenarios, because two of those rows carry two cases each —
 against a live RoRoRo, over the real plugin pipe, using your real `%LOCALAPPDATA%\ROROROblox` profile.
 There is no scratch profile to run this against — the app has no data-root seam — so this tool backs
 your profile up before it touches anything and puts it back when it is done. Read the whole of this
@@ -34,11 +35,33 @@ It does **not** prove:
   verification record for how it was reached instead.
 - **The clock-skew row, from the product side.** It has only been reddened by changing the scenario's
   own input (a report stamped in the past), not by breaking the app's skew detection.
+- **The fallback row's actual counterfactual.** `Local` is routed alongside Phone, so what is observed
+  is the router taking the fallback arm (no `Alert → Phone`) — not "the alert lands on the desktop
+  instead of vanishing." Proving the vanishing needs a destination set with no `Local` in it, which
+  needs another app restart, and nothing here does that.
+- **"Normal reporting again after the reset"** — the second sentence of the counter-reset row. The
+  rate stays unmeasurable until the decrease leaves the ten-minute window, so asserting it costs ten
+  minutes; the harness only proves the first half (no false breach), not the recovery.
+- **That a skipped row changes the exit code.** It does not. `Program.RunAsync` returns non-zero for a
+  failure, a never-ran row, or an abort — a skip is none of those, so a run with an uncovered row can
+  still exit `0` with only a stdout sentence saying so. Any automation built on this tool's exit code
+  alone would read that run as a pass.
+- **That a "consent not in force" message always means consent.** With the host gone entirely, the
+  consented-report-accepted row's gRPC call comes back `Cancelled`, and the row currently reports that
+  as "the consent grant is not in force" — a dead pipe misreporting as a consent problem. Harmless in
+  context today (the pipe-binds row already said the host was gone), but worth knowing if you are
+  reading that specific message in isolation.
 - **Anything at all in CI.** This needs a real Windows profile and a human to launch the app in the
   three-minute window it opens. It has never been run there and nothing here claims otherwise.
 
-Five rows on the smoke list, plus the status-line row that needs a UIA path nobody has built yet, stay
-manual for these reasons. See the smoke list itself for exactly which and why.
+This list is the summary; [`docs/superpowers/smoke-harness-verification.md`](../../docs/superpowers/smoke-harness-verification.md)'s
+own "what the harness still does not prove" section is the fuller one and the one to trust if the two
+ever disagree.
+
+Six rows on the smoke list stay manual for reasons no harness changes: the phone and Discord-channel
+rows (a real destination has to receive it), the Este-gated real-battle row, the three-minute-cache-delay
+judgement, the "catches what it was built for" judgement, and the status-line row that needs a UIA path
+nobody has built yet. See the smoke list itself for exactly which and why.
 
 ## The one command
 
