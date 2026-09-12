@@ -18,6 +18,14 @@ carry two cases each (granted-then-revoked versus never-declared; live pickup ve
 marker is not a tick: the harness has to be RUN, and the row still gets its `[x]` and its date from
 whoever ran it.
 
+**2026-09-11: the harness has now been run, and every row it drives has been proven able to go red.**
+Sixteen scenarios green against v1.27.0 on a real machine, and then each one deliberately broken and
+watched to fail — including the `App.xaml.cs` line the whole feature hangs from, whose deletion leaves
+all 2239 unit tests green. The record, with what was broken and what was seen, is in
+[smoke-harness-verification.md](smoke-harness-verification.md). No box below is ticked from that run:
+several rows keep a half the harness cannot see (whether the shell actually drew the toast, above all),
+and that half is what a tick would be claiming.
+
 ---
 
 ## Setup — what you need before any row below

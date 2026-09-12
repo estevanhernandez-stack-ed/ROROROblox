@@ -29,11 +29,23 @@ public sealed class LogTail
     // AlertDispatcher.DispatchAsync, the delivered-alert line:
     //   log.LogInformation("Alert → {Destination}: {Title} ({Count} account(s)).",
     //       alert.Destination, payload.Title, alert.Triggers.Count);
-    // Rendered example (AppLogging.Configure's outputTemplate puts timestamp/level/version/
-    // SourceContext before the message; only the message is matched here):
-    //   Alert → Mine: BaronBloxwell dropped out (1 account(s)).
+    // Rendered example, copied out of a real run's log file rather than predicted from the template
+    // (AppLogging.Configure's outputTemplate puts timestamp/level/version/SourceContext before the
+    // message; only the message is matched here):
+    //   Alert → "Local":  — smoke.toast (1 account(s)).
+    //
+    // THE QUOTES ROUND THE DESTINATION ARE THE WHOLE POINT OF THIS COMMENT. The output template
+    // renders the message as {Message:lj}: `l` writes STRING properties literally, and `j` sends
+    // everything else through Serilog's JsonValueFormatter. AlertDestination is an enum, not a
+    // string, so the destination arrives JSON-quoted while the title right beside it does not. This
+    // pattern was originally written from the call site and captured `"Local"` WITH its quotes, so
+    // every row that filtered by destination compared `"Local"` against `Local`, saw zero
+    // deliveries, and failed while the alert had in fact been delivered — five rows of sixteen on
+    // the harness's first honest run against the app (2026-09-11, task 6). The quotes are optional
+    // here and outside the capture, so this reads both what the file sink writes and the bare form
+    // any other sink would.
     private static readonly Regex DeliveredPattern = new(
-        @"Alert → (?<destination>\S+): (?<title>.+) \((?<count>\d+) account\(s\)\)\.\s*$",
+        @"Alert → ""?(?<destination>[^"":]+)""?: (?<title>.+) \((?<count>\d+) account\(s\)\)\.\s*$",
         RegexOptions.Compiled);
 
     // AlertDispatcher.DispatchAsync, the swallowed-alert line — the opposite verdict from the one

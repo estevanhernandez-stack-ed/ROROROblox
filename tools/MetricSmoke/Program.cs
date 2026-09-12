@@ -477,12 +477,31 @@ internal static class Program
     /// care. The masked name is held in memory for one comparison and never printed — printing it would
     /// put a name the app is masking into a console log.
     /// </para>
+    /// <para>
+    /// <b>It keeps asking rather than trusting the first answer, and that is a fix rather than
+    /// caution.</b> The plugin pipe binds early and fire-and-forget, BEFORE the vault is read, so the
+    /// moment <see cref="WaitForAppAsync"/> returns the host can be answering <c>GetAccounts</c> with
+    /// an empty list on a profile that has eight accounts saved in it. Measured on 2026-09-11 during
+    /// the harness's first live run: the pipe answered two seconds after launch and the accounts
+    /// landed in <c>MainViewModel.AccountsSnapshot</c> twenty-eight seconds after that, so the row
+    /// skipped — and a row that skips on every unattended run is not a covered row, whatever the
+    /// table says. The window is <see cref="SmokeTimings.SettingsPickup"/>, two of the app's own
+    /// routine ticks, which is the same "the running app has had a fair chance at its startup work"
+    /// yardstick the opt-in row already waits on rather than a number picked here. An empty answer
+    /// after that really is a profile with no accounts, and the row skips on it.
+    /// </para>
     /// </summary>
     private static async Task ResolveNamedSubjectAsync(ScenarioContext context, string? subjectOverride)
     {
         try
         {
+            var deadline = DateTime.UtcNow + SmokeTimings.SettingsPickup;
             var accounts = await context.Reporter.SavedAccountsAsync().ConfigureAwait(false);
+            while (accounts.Count == 0 && DateTime.UtcNow < deadline)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+                accounts = await context.Reporter.SavedAccountsAsync().ConfigureAwait(false);
+            }
             var chosen = subjectOverride is null
                 ? accounts.FirstOrDefault()
                 : accounts.FirstOrDefault(a => string.Equals(a.AccountId, subjectOverride, StringComparison.OrdinalIgnoreCase));

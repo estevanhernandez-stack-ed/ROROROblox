@@ -11,16 +11,43 @@ namespace ROROROblox.Tests.SmokeHarness;
 /// wrapped in the prefix <c>AppLogging.Configure</c>'s outputTemplate actually produces
 /// (timestamp, level, version, SourceContext), not simplified strings a looser test would still
 /// pass against.
+/// <para>
+/// <b>And the values inside the message are rendered, not templated — which is where this file got
+/// it wrong once.</b> The output template is <c>{Message:lj}</c>: <c>l</c> writes string properties
+/// literally, <c>j</c> sends every other property value through Serilog's JsonValueFormatter. So a
+/// string title appears bare and an <c>AlertDestination</c> — an enum — appears JSON-QUOTED. The
+/// fixtures here were originally hand-written from the call sites with the prefix right and the
+/// quoting wrong, <see cref="LogTail"/>'s pattern was written to match them, and the result was five
+/// rows of sixteen failing on the harness's first honest run against the app while the alerts they
+/// asserted on had in fact been delivered (2026-09-11, task 6). The quoted forms below are copied
+/// out of a real run's log file.
+/// </para>
 /// </summary>
 public sealed class LogTailTests : IDisposable
 {
     private const string DeliveredLine =
         "2026-09-11 14:22:03.512 -07:00 [INF] v1.25.0.0 ROROROblox.App.Discord.AlertDispatcher "
-        + "Alert → Mine: BaronBloxwell dropped out (1 account(s)).";
+        + "Alert → \"Mine\": BaronBloxwell dropped out (1 account(s)).";
 
     private const string DeliveredLineWithPunctuationInTitle =
         "2026-09-11 14:22:04.001 -07:00 [INF] v1.25.0.0 ROROROblox.App.Discord.AlertDispatcher "
-        + "Alert → Clan: 3 accounts — Pet Simulator 99! (3 account(s)).";
+        + "Alert → \"Clan\": 3 accounts — Pet Simulator 99! (3 account(s)).";
+
+    // Copied verbatim out of %LOCALAPPDATA%\ROROROblox\logs on 2026-09-11, from the harness's own
+    // first run: a metric breach for an account the app has no record of, so the masked name in the
+    // title is empty and the title starts with the em dash. Two things about it are load-bearing and
+    // neither was guessable from the call site — the destination is quoted because the enum goes
+    // through JsonValueFormatter, and the title's leading space survives into the capture.
+    private const string DeliveredMetricBreachLineFromARealRun =
+        "2026-09-11 20:27:55.624 -05:00 [INF] v1.27.0 ROROROblox.App.Discord.AlertDispatcher "
+        + "Alert → \"Local\":  — smoke.toast (1 account(s)).";
+
+    // The same line as a sink that renders values bare would write it. Kept because the pattern
+    // tolerates both and a future console or seq sink should not be able to make this recogniser
+    // blind by not quoting.
+    private const string DeliveredLineWithAnUnquotedDestination =
+        "2026-09-11 14:22:03.512 -07:00 [INF] v1.25.0.0 ROROROblox.App.Discord.AlertDispatcher "
+        + "Alert → Mine: BaronBloxwell dropped out (1 account(s)).";
 
     // Derived from AlertRouter.Cooldown rather than restated as a literal number: this line has to
     // stay true to what AlertDispatcher.DispatchAsync actually renders, and a hand-typed number
@@ -114,6 +141,34 @@ public sealed class LogTailTests : IDisposable
         Assert.Equal("Mine", alert.Destination);
         Assert.Equal("BaronBloxwell dropped out", alert.Title);
         Assert.Equal(1, alert.AccountCount);
+    }
+
+    [Fact]
+    public void Delivered_ReadsTheQUOTEDDestinationTheFileSinkActuallyWrites()
+    {
+        // The regression test for the defect the harness's first live run found. A scenario compares
+        // this value against nameof(AlertDestination.Local), so a capture that keeps the quotes reads
+        // as "no alert was delivered" for an alert that was — a false RED on every positive row, and
+        // (had a row asserted the absence of a destination) a false green.
+        var tail = LogTail.OpenAt(_path);
+
+        var delivered = tail.Delivered([DeliveredMetricBreachLineFromARealRun]);
+
+        var alert = Assert.Single(delivered);
+        Assert.Equal(nameof(AlertDestination.Local), alert.Destination);
+        Assert.Contains("smoke.toast", alert.Title, StringComparison.Ordinal);
+        Assert.Equal(1, alert.AccountCount);
+    }
+
+    [Fact]
+    public void Delivered_AlsoReadsADestinationNoSinkQuoted()
+    {
+        var tail = LogTail.OpenAt(_path);
+
+        var alert = Assert.Single(tail.Delivered([DeliveredLineWithAnUnquotedDestination]));
+
+        Assert.Equal(nameof(AlertDestination.Mine), alert.Destination);
+        Assert.Equal("BaronBloxwell dropped out", alert.Title);
     }
 
     [Fact]
