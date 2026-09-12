@@ -6,8 +6,10 @@
 
 > **BUILD-REALITY CORRECTION (2026-09-11) — three of this plan's claims did not survive building it.**
 > The body below is left as written; read these first. The
-> [design spec](../specs/2026-09-11-metric-smoke-harness-design.md) carries the same corrections at §1
-> and is the document to trust.
+> [design spec](../specs/2026-09-11-metric-smoke-harness-design.md) is the document to trust, and it
+> carries these corrections in two places: the row counts (1 and 2 below) at **§1**, and the production
+> change (3 below) at **§0.6**, where it made the claim. The spec also banner-corrects its own §1.4 file
+> table, which this plan does not repeat.
 >
 > 1. **It is 14 rows, not 16.** "16" was always the number of *scenarios*, counted once the table
 >    existed: two of the list's rows carry two cases each (consent granted-then-revoked versus

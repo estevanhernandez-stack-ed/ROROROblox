@@ -22,9 +22,12 @@ namespace ROROROblox.MetricSmoke;
 /// <list type="bullet">
 ///   <item><c>consent.dat</c> — self-cleaning. Grant, then revoke. No backup: the harness only ever
 ///   adds and removes its own plugin id, so a backup could only ever lose someone else's grant.</item>
-///   <item><c>settings.json</c> — single key. Read the original, write the harness value, put the
-///   original back. Never rewritten wholesale: the app rewrites that file on exit, and a wholesale
-///   restore would discard whatever it wrote while the harness ran.</item>
+///   <item><c>settings.json</c> — per key, and there are two of them (<c>metricAlertsEnabled</c> and
+///   <c>streamerMode</c>; see <see cref="BooleanSetting.All"/>). Read the original, write the harness
+///   value, put the original back, one independent step each so a failure on one still restores the
+///   other. Never rewritten wholesale: the app rewrites that file on exit, and a wholesale restore
+///   would discard whatever it wrote while the harness ran. Design §1.4's table says "single key"
+///   and is bannered — it was written before the masked-naming row needed the second one.</item>
 ///   <item><c>metric-rules.json</c> — harness-owned. Backed up only if one already exists; otherwise
 ///   deleted on restore, so a profile that never had rules does not acquire them.</item>
 ///   <item><c>discord.dat</c> — full backup and restore. It holds real webhook URLs, so the backup

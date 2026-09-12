@@ -44,6 +44,23 @@ tractable piece of work rather than a large one.
    does take a log-directory override, but only a test uses it and production passes none — the
    harness reads the real log from a recorded offset instead, which needs nothing from the app.
 
+   > **BUILD-REALITY CORRECTION (2026-09-11) — one production change did land.** The sentence above is
+   > left as it was written, and it was right about what the harness *needs*: nothing in `tools/`
+   > depends on an app change. What it could not predict is what the harness would **find**.
+   > `TrayService.ShowToast` now marshals to the UI thread (`Application.Current?.Dispatcher.Invoke`),
+   > which it had never done. Its callers are not on the UI thread — `AlertDispatcher.DispatchAsync` is
+   > invoked fire-and-forget from `MetricReportSinkAdapter.AlertsRaised`, on whatever gRPC handler
+   > thread served a plugin's report — and `_taskbarIcon` is a WPF `FrameworkElement`, so the touch
+   > threw and the dispatcher's own catch swallowed it into one Warning line. Worse than a lost toast:
+   > the fan-out loop is sequential and stamps the per-(account, kind) cooldown inside it, after each
+   > destination's send, so the throw ended the loop and every destination ordered after `Local` lost
+   > its send too. The metric-alert default routes to `Local` and nowhere else, which is the exact
+   > configuration in which the failure is invisible. Reporting a real metric over the real pipe is what
+   > exposed it, so this is the harness earning its keep rather than a defect in this section's
+   > reasoning — but "no production change" is no longer true of the branch, and
+   > `docs/superpowers/plans/2026-09-11-metric-smoke-harness.md` repeats the claim and is bannered to
+   > point here.
+
 7. **UIA against this app is proven.** `scripts/capture-ui.ps1` drives it by AutomationId through a
    full language sweep, including reading localized control text. One smoke row needs that and no more.
 
@@ -82,6 +99,24 @@ purpose.**
    | `settings.json` | `metricAlertsEnabled` on and off | **Single key.** Read the original value, restore it at the end. Never rewrite the file wholesale. |
    | `metric-rules.json` | scenario rules | **Harness-owned.** Back up only if one already exists, then restore or delete. |
    | `discord.dat` | destinations plus two webhook URLs | **Full backup and restore.** The only file needing it, and it holds real webhook URLs, so the backup never leaves the machine and is never committed. |
+
+   > **BUILD-REALITY CORRECTION (2026-09-11) — five files, not four, and two settings keys, not one.**
+   > The table above is left as written; the strategies it names all survived, the inventory did not.
+   >
+   > - **`notify.dat` is the fifth file, full backup and restore.** The phone-fallback row needs the
+   >   phone *unconfigured*, so the harness overwrites the record with an empty one and puts the
+   >   original back. Without it that row would have been permanently unrunnable on any profile that
+   >   had ever set the phone up. It holds push credentials, so it gets `discord.dat`'s treatment
+   >   exactly — which also makes `discord.dat` no longer "the only file needing it".
+   > - **`settings.json` carries two keys, not one.** `streamerMode` joins `metricAlertsEnabled`, for
+   >   the masked-versus-real naming row. The strategy is unchanged and is per key: read the original,
+   >   write the harness value, put the original back, never rewrite the file wholesale.
+   >   `BooleanSetting.All` is the list, and a key absent from it cannot be restored from a crash marker.
+   > - **`consent.dat` is granted two capabilities, not one.** `host.queries.accounts` joins
+   >   `host.metrics.report`, so the runner can ask the host for an account id the masked-naming row can
+   >   report against. Still self-cleaning, still no backup.
+   >
+   > `ProfileGuard`'s class comment is the implementation's copy of this table and names all five.
 
 5. **The runner verifies the swap landed before it sends anything.** After writing `discord.dat` it
    reads the config back and confirms the webhook URLs are the localhost ones it just wrote. If they
@@ -129,6 +164,12 @@ purpose.**
 
 Five rows, and each for a reason that no harness changes.
 
+> **BUILD-REALITY CORRECTION (2026-09-11) — six, and the arithmetic at the end of this section shifts
+> with it.** The five below stand exactly as written. A sixth joined them: *Settings still says "No
+> alerts yet"*, a UI sentence that needs the UIA path §0.7 mentions and that nobody has built. So the
+> closing line's "16 rows" is 15 — 14 the harness drives plus the one already held by a unit fence —
+> against 6 manual, which is the 21. §1's banner is the primary record of both counts.
+
 1. **A breach reaching a real phone**, and 2. **the Este-gated version during a real battle.** The
    phone-alerts spec's discipline is that the delivery legs were only ever believed once a real phone
    rang. A local listener can prove the app POSTed; it cannot prove a phone buzzed.
@@ -156,6 +197,24 @@ Everything else — 16 rows — is automatable, and one of those 16 is already c
 > pipe already answers, and waits for the app after the swap. Streamer mode is the same shape for a
 > different reason: `StreamerIdentityProvider.IsActive` is read once at startup and changed only by the
 > app's own toggle, so the harness writes it before the app comes up rather than flipping it mid-run.
+>
+> **§4.1, completed 2026-09-11 (final review) — the list above is short by one, and it has a mirror.**
+> `notify.dat` is the third file of this shape, not a footnote to it: `PhoneNotifyConfigService` caches
+> its record at `InitializeAsync` and re-reads it only through the app's own `MutateAsync`, exactly as
+> `DiscordConfigService` does. So the three cached readers are `DiscordConfigService`,
+> `PhoneNotifyConfigService` and `StreamerIdentityProvider`. The other two things the harness writes are
+> genuinely live and need nothing: `metric-rules.json` is re-read per report against a hash of its bytes
+> and `consent.dat` off disk on every gated call.
+>
+> **The mirror is the part that was missed until the final review.** "The app must start after the
+> setup" has an exact opposite that is just as true and costs the user more: **the app must be restarted
+> after the restore.** A byte-perfect restore is invisible to the session that is still up, so it keeps
+> the harness's webhook URLs — pointing at a catcher that has just been disposed — its metric
+> destinations, the blanked `notify.dat` and streamer mode on, until it is quit and launched again. A
+> genuine drop-out that evening POSTs to a closed localhost port and is swallowed, the phone leg finds no
+> credentials, and account names stay masked. There is no fix from outside the app, so the runner now
+> ends every restore with a boxed instruction to restart, `--recover` prints the same, and the README and
+> `docs/superpowers/smoke-harness-verification.md` both carry it.
 >
 > **§4.4 — one window, keyed to `AlertRouter.Cooldown`, at a tenth of it (30 s today).** A positive row
 > may leave it the moment its line appears; a negative row sits through all of it. One constant for
