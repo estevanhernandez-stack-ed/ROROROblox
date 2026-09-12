@@ -2119,6 +2119,12 @@
   <data name="Shell_Pref_Reveal_Show" xml:space="preserve">
     <value>Показать</value>
   </data>
+  <data name="SettingsPage_DeletesTheSavedValue" xml:space="preserve">
+    <value>Удаляет сохранённое значение. Новое можно вставить в любой момент.</value>
+  </data>
+  <data name="SettingsPage_Remove" xml:space="preserve">
+    <value>Удалить</value>
+  </data>
   <data name="Shell_Pref_Reveal_StreamerConfirm" xml:space="preserve">
     <value>Режим стримера включён. Нажмите «Показать» ещё раз, чтобы всё равно показать.</value>
   </data>

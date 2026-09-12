@@ -1669,6 +1669,55 @@ internal partial class SettingsPage : UserControl, IDisposable
     }
 
     /// <summary>
+    /// Clears a saved credential and commits the clear, so removing one stops being "reveal it,
+    /// select all of it, delete it, then click somewhere else".
+    /// <para>
+    /// Asked for directly on 2026-09-12: <i>"Whenever I clicked on it, I had to click show and
+    /// highlight it all. There should be a delete or remove button or something."</i> The masked
+    /// field is read-only while something is saved, which is what forced the reveal first.
+    /// </para>
+    /// <para>
+    /// NO CONFIRMATION, deliberately, and it is worth saying why so nobody adds one reflexively.
+    /// Every value this clears is retrievable from the service that issued it — Discord shows a
+    /// channel's webhook URL in its integration settings, and Pushover shows the user key and the
+    /// application token on the site. Nothing here is the only copy. A confirm on a recoverable
+    /// action is the friction this button exists to remove, charged back at the moment of use.
+    /// </para>
+    /// <para>
+    /// The ntfy topic has no Remove button, which is not an omission. It is generated rather than
+    /// pasted, "New topic" already replaces it, and a saved-but-topicless ntfy config is a state
+    /// with no way back into it from this page.
+    /// </para>
+    /// </summary>
+    private void OnRemoveSecretClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.Button button) return;
+
+        var input = InputForRemoveButton(button);
+        if (input is null) return;
+
+        // The field is read-only while it holds a saved value behind the mask. Clearing it means
+        // writing an empty edit, so the read-only has to come off first.
+        input.IsReadOnly = false;
+        input.Text = string.Empty;
+        _revealConfirmArmed.Remove(input);
+
+        // Commit through the field's OWN handler, same as Enter does: an empty value is already a
+        // valid edit there (Empty is accepted alongside Valid) and already saves null. Writing the
+        // config here instead would be a second place that clears a credential.
+        CommitHandlerFor(input)?.Invoke(input, new RoutedEventArgs());
+    }
+
+    private TextBox? InputForRemoveButton(System.Windows.Controls.Button button)
+    {
+        if (ReferenceEquals(button, MineWebhookRemove)) return MineWebhookInput;
+        if (ReferenceEquals(button, ClanWebhookRemove)) return ClanWebhookInput;
+        if (ReferenceEquals(button, PushoverUserKeyRemove)) return PushoverUserKeyInput;
+        if (ReferenceEquals(button, PushoverAppTokenRemove)) return PushoverAppTokenInput;
+        return null;
+    }
+
+    /// <summary>
     /// Whether clicking Show on <paramref name="input"/> should warn instead of revealing: streamer
     /// mode is on and this field has not already been warned about.
     /// <para>

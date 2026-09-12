@@ -2119,6 +2119,12 @@ Tendrás que iniciar sesión de nuevo para volver a añadirla.</value>
   <data name="Shell_Pref_Reveal_Show" xml:space="preserve">
     <value>Mostrar</value>
   </data>
+  <data name="SettingsPage_DeletesTheSavedValue" xml:space="preserve">
+    <value>Borra el valor guardado. Pega uno nuevo cuando quieras.</value>
+  </data>
+  <data name="SettingsPage_Remove" xml:space="preserve">
+    <value>Quitar</value>
+  </data>
   <data name="Shell_Pref_Reveal_StreamerConfirm" xml:space="preserve">
     <value>El modo streamer está activado. Haz clic en Mostrar otra vez para mostrarlo de todos modos.</value>
   </data>

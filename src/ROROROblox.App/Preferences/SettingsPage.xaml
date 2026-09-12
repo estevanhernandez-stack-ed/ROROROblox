@@ -531,11 +531,19 @@
                                      the app stopped. Found by item 9's fence, which counts
                                      ToggleButton because the C2 gap proved a control type outside
                                      the definition is where this defect survives. -->
-                                <ToggleButton x:Name="MineWebhookReveal" Grid.Column="1" Content="{loc:Loc SettingsPage_Show}"
-                                              Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
-                                              Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
-                                              Style="{StaticResource SecondaryToggleButtonStyle}"
-                                              ToolTip="{loc:Loc SettingsPage_RevealTheSavedWebhookSo}" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <ToggleButton x:Name="MineWebhookReveal" Content="{loc:Loc SettingsPage_Show}"
+                                                  Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                                  Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
+                                                  Style="{StaticResource SecondaryToggleButtonStyle}"
+                                                  ToolTip="{loc:Loc SettingsPage_RevealTheSavedWebhookSo}" />
+                                    <Button x:Name="MineWebhookRemove" Content="{loc:Loc SettingsPage_Remove}"
+                                            Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            AutomationProperties.Name="{loc:Loc SettingsPage_MyChannelWebhookUrl_2}"
+                                            Click="OnRemoveSecretClick"
+                                            ToolTip="{loc:Loc SettingsPage_DeletesTheSavedValue}" />
+                                </StackPanel>
                             </Grid>
                             <TextBlock x:Name="MineWebhookVerdict" FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap" Margin="0,4,0,0"
                                        Foreground="{DynamicResource MutedTextBrush}" />
@@ -553,11 +561,19 @@
                                 <TextBox x:Name="ClanWebhookInput" AutomationProperties.Name="{loc:Loc SettingsPage_ClanChannelWebhookUrl_2}" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
                                          PreviewKeyDown="OnCommitOnEnter" LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
-                                <ToggleButton x:Name="ClanWebhookReveal" Grid.Column="1" Content="{loc:Loc SettingsPage_Show}"
-                                              Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
-                                              Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
-                                              Style="{StaticResource SecondaryToggleButtonStyle}"
-                                              ToolTip="{loc:Loc SettingsPage_RevealTheSavedWebhookSo}" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <ToggleButton x:Name="ClanWebhookReveal" Content="{loc:Loc SettingsPage_Show}"
+                                                  Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                                  Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
+                                                  Style="{StaticResource SecondaryToggleButtonStyle}"
+                                                  ToolTip="{loc:Loc SettingsPage_RevealTheSavedWebhookSo}" />
+                                    <Button x:Name="ClanWebhookRemove" Content="{loc:Loc SettingsPage_Remove}"
+                                            Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            AutomationProperties.Name="{loc:Loc SettingsPage_ClanChannelWebhookUrl_2}"
+                                            Click="OnRemoveSecretClick"
+                                            ToolTip="{loc:Loc SettingsPage_DeletesTheSavedValue}" />
+                                </StackPanel>
                             </Grid>
                             <TextBlock x:Name="ClanWebhookVerdict" FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap" Margin="0,4,0,0"
                                        Foreground="{DynamicResource MutedTextBrush}" />
@@ -607,12 +623,20 @@
                                     <TextBox x:Name="PushoverUserKeyInput" AutomationProperties.Name="{loc:Loc SettingsPage_PushoverUserKey}" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                              Background="{DynamicResource NavyBrush}"
                                              PreviewKeyDown="OnCommitOnEnter" LostFocus="OnPushoverKeyCommitted" Style="{StaticResource AppTextBoxStyle}"/>
-                                    <ToggleButton x:Name="PushoverUserKeyReveal" Grid.Column="1" Content="{loc:Loc SettingsPage_Show}"
-                                                  AutomationProperties.Name="{loc:Loc SettingsPage_ShowOrHideTheSaved}"
-                                                  Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
-                                                  Checked="OnRevealPhoneToggled" Unchecked="OnRevealPhoneToggled"
-                                                  Style="{StaticResource SecondaryToggleButtonStyle}"
-                                                  ToolTip="{loc:Loc SettingsPage_RevealTheSavedKeySo}" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <ToggleButton x:Name="PushoverUserKeyReveal" Content="{loc:Loc SettingsPage_Show}"
+                                                      AutomationProperties.Name="{loc:Loc SettingsPage_ShowOrHideTheSaved}"
+                                                      Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                                      Checked="OnRevealPhoneToggled" Unchecked="OnRevealPhoneToggled"
+                                                      Style="{StaticResource SecondaryToggleButtonStyle}"
+                                                      ToolTip="{loc:Loc SettingsPage_RevealTheSavedKeySo}" />
+                                        <Button x:Name="PushoverUserKeyRemove" Content="{loc:Loc SettingsPage_Remove}"
+                                                Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                AutomationProperties.Name="{loc:Loc SettingsPage_PushoverUserKey}"
+                                                Click="OnRemoveSecretClick"
+                                                ToolTip="{loc:Loc SettingsPage_DeletesTheSavedValue}" />
+                                    </StackPanel>
                                 </Grid>
                                 <TextBlock Text="{loc:Loc SettingsPage_ApplicationToken}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,6,0,2" />
                                 <Grid>
@@ -623,12 +647,20 @@
                                     <TextBox x:Name="PushoverAppTokenInput" AutomationProperties.Name="{loc:Loc SettingsPage_PushoverApplicationToken}" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                              Background="{DynamicResource NavyBrush}"
                                              PreviewKeyDown="OnCommitOnEnter" LostFocus="OnPushoverKeyCommitted" Style="{StaticResource AppTextBoxStyle}"/>
-                                    <ToggleButton x:Name="PushoverAppTokenReveal" Grid.Column="1" Content="{loc:Loc SettingsPage_Show}"
-                                                  AutomationProperties.Name="{loc:Loc SettingsPage_ShowOrHideTheSaved_2}"
-                                                  Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
-                                                  Checked="OnRevealPhoneToggled" Unchecked="OnRevealPhoneToggled"
-                                                  Style="{StaticResource SecondaryToggleButtonStyle}"
-                                                  ToolTip="{loc:Loc SettingsPage_RevealTheSavedTokenSo}" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <ToggleButton x:Name="PushoverAppTokenReveal" Content="{loc:Loc SettingsPage_Show}"
+                                                      AutomationProperties.Name="{loc:Loc SettingsPage_ShowOrHideTheSaved_2}"
+                                                      Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                                      Checked="OnRevealPhoneToggled" Unchecked="OnRevealPhoneToggled"
+                                                      Style="{StaticResource SecondaryToggleButtonStyle}"
+                                                      ToolTip="{loc:Loc SettingsPage_RevealTheSavedTokenSo}" />
+                                        <Button x:Name="PushoverAppTokenRemove" Content="{loc:Loc SettingsPage_Remove}"
+                                                Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                AutomationProperties.Name="{loc:Loc SettingsPage_PushoverApplicationToken}"
+                                                Click="OnRemoveSecretClick"
+                                                ToolTip="{loc:Loc SettingsPage_DeletesTheSavedValue}" />
+                                    </StackPanel>
                                 </Grid>
                                 <TextBlock x:Name="PhonePushoverVerdict" FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap" Margin="0,4,0,0"
                                            Foreground="{DynamicResource MutedTextBrush}" />

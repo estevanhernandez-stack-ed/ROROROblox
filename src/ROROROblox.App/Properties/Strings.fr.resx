@@ -2119,6 +2119,12 @@ Vous devrez vous reconnecter pour le rajouter.</value>
   <data name="Shell_Pref_Reveal_Show" xml:space="preserve">
     <value>Afficher</value>
   </data>
+  <data name="SettingsPage_DeletesTheSavedValue" xml:space="preserve">
+    <value>Supprime la valeur enregistrée. Collez-en une nouvelle quand vous voulez.</value>
+  </data>
+  <data name="SettingsPage_Remove" xml:space="preserve">
+    <value>Retirer</value>
+  </data>
   <data name="Shell_Pref_Reveal_StreamerConfirm" xml:space="preserve">
     <value>Le mode streamer est activé. Cliquez à nouveau sur Afficher pour le révéler quand même.</value>
   </data>
