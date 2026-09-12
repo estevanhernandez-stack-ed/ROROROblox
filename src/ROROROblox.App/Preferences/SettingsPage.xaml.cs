@@ -1635,6 +1635,62 @@ internal partial class SettingsPage : UserControl, IDisposable
         }
     }
 
+    /// <summary>
+    /// Enter commits, on every field on this page that commits at all.
+    /// <para>
+    /// Found by hand on 2026-09-12. Eight text fields committed on <c>LostFocus</c> and nothing
+    /// else, and this page has no Save button — so typing a value and pressing Enter did nothing,
+    /// and "nothing happened" is indistinguishable from "the save failed". On the webhook fields
+    /// the no-op was at least visible, because the field re-masks itself on commit and simply did
+    /// not; the tester had to click into another box before anything took. Everywhere else it was
+    /// silent.
+    /// </para>
+    /// <para>
+    /// This dispatches to the field's OWN <c>LostFocus</c> handler rather than committing anything
+    /// itself, so no commit logic moves and there stays exactly one place per field where a value
+    /// is written. Forcing focus away instead and letting the real handler fire reads as tidier and
+    /// is not: logical and keyboard focus are separate things in WPF, so whether <c>LostFocus</c>
+    /// actually fires depends on where focus lands — which works until someone reorders the page.
+    /// </para>
+    /// <para>
+    /// Committing twice is safe by existing design, and worth knowing since Enter now commits and
+    /// the later focus loss commits again: every masking field opens with "a mask is not an edit"
+    /// and returns early, and each handler also returns when the value is unchanged. The second
+    /// pass is a no-op rather than a save of the mask string.
+    /// </para>
+    /// <para><see cref="ROROROblox.Tests.SettingsCommitOnEnterFenceTests"/> fails if a committing
+    /// field is missing the markup that routes Enter here.</para>
+    /// </summary>
+    private void OnCommitOnEnter(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key != System.Windows.Input.Key.Enter) return;
+        if (sender is not TextBox box) return;
+
+        var commit = CommitHandlerFor(box);
+        if (commit is null) return;
+
+        // Handled so Enter does not travel on to a default button. Nothing on this page sets
+        // IsDefault today; this line is what keeps that from becoming a surprise later.
+        e.Handled = true;
+        commit(box, new RoutedEventArgs());
+    }
+
+    /// <summary>
+    /// The commit each field already had wired to <c>LostFocus</c>. Reference equality against the
+    /// named controls rather than a string lookup, so renaming a control is a compile error here
+    /// instead of a silently dead branch.
+    /// </summary>
+    private RoutedEventHandler? CommitHandlerFor(TextBox box)
+    {
+        if (ReferenceEquals(box, MineWebhookInput) || ReferenceEquals(box, ClanWebhookInput)) return OnWebhookCommitted;
+        if (ReferenceEquals(box, PushoverUserKeyInput) || ReferenceEquals(box, PushoverAppTokenInput)) return OnPushoverKeyCommitted;
+        if (ReferenceEquals(box, NtfyServerInput)) return OnNtfyServerCommitted;
+        if (ReferenceEquals(box, MemoryReserveMbInput)) return OnMemoryReserveCommitted;
+        if (ReferenceEquals(box, MemoryCapMbInput)) return OnMemoryCapCommitted;
+        if (ReferenceEquals(box, ProjectionWarnMinutesInput)) return OnProjectionWarnCommitted;
+        return null;
+    }
+
     private async void OnWebhookCommitted(object sender, RoutedEventArgs e)
     {
         if (_suppressClickHandlers) return;

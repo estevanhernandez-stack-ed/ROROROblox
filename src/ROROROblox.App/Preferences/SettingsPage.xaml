@@ -521,7 +521,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="MineWebhookInput" AutomationProperties.Name="{loc:Loc SettingsPage_MyChannelWebhookUrl_2}" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
-                                         LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
+                                         PreviewKeyDown="OnCommitOnEnter" LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
                                 <!-- Takes the rank rather than repeating it. The four attributes
                                      removed here were byte-identical to SecondaryToggleButtonStyle's
                                      setters, so nothing moves at rest; what changes is the TEMPLATE,
@@ -552,7 +552,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="ClanWebhookInput" AutomationProperties.Name="{loc:Loc SettingsPage_ClanChannelWebhookUrl_2}" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
-                                         LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
+                                         PreviewKeyDown="OnCommitOnEnter" LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
                                 <ToggleButton x:Name="ClanWebhookReveal" Grid.Column="1" Content="{loc:Loc SettingsPage_Show}"
                                               Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
                                               Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
@@ -606,7 +606,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBox x:Name="PushoverUserKeyInput" AutomationProperties.Name="{loc:Loc SettingsPage_PushoverUserKey}" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                              Background="{DynamicResource NavyBrush}"
-                                             LostFocus="OnPushoverKeyCommitted" Style="{StaticResource AppTextBoxStyle}"/>
+                                             PreviewKeyDown="OnCommitOnEnter" LostFocus="OnPushoverKeyCommitted" Style="{StaticResource AppTextBoxStyle}"/>
                                     <ToggleButton x:Name="PushoverUserKeyReveal" Grid.Column="1" Content="{loc:Loc SettingsPage_Show}"
                                                   AutomationProperties.Name="{loc:Loc SettingsPage_ShowOrHideTheSaved}"
                                                   Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
@@ -622,7 +622,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBox x:Name="PushoverAppTokenInput" AutomationProperties.Name="{loc:Loc SettingsPage_PushoverApplicationToken}" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                              Background="{DynamicResource NavyBrush}"
-                                             LostFocus="OnPushoverKeyCommitted" Style="{StaticResource AppTextBoxStyle}"/>
+                                             PreviewKeyDown="OnCommitOnEnter" LostFocus="OnPushoverKeyCommitted" Style="{StaticResource AppTextBoxStyle}"/>
                                     <ToggleButton x:Name="PushoverAppTokenReveal" Grid.Column="1" Content="{loc:Loc SettingsPage_Show}"
                                                   AutomationProperties.Name="{loc:Loc SettingsPage_ShowOrHideTheSaved_2}"
                                                   Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
@@ -683,7 +683,7 @@
                                 <TextBlock Text="{loc:Loc SettingsPage_Server}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,6,0,2" />
                                 <TextBox x:Name="NtfyServerInput" AutomationProperties.Name="{loc:Loc SettingsPage_NtfyServerAddress}" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
-                                         LostFocus="OnNtfyServerCommitted" Style="{StaticResource AppTextBoxStyle}"
+                                         PreviewKeyDown="OnCommitOnEnter" LostFocus="OnNtfyServerCommitted" Style="{StaticResource AppTextBoxStyle}"
                                          ToolTip="{loc:Loc SettingsPage_LeaveAsNtfyShUnless}" />
                                 <TextBlock x:Name="PhoneNtfyVerdict" FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap" Margin="0,4,0,0"
                                            Foreground="{DynamicResource MutedTextBrush}" />
@@ -816,7 +816,7 @@
                                          Style="{StaticResource AppTextBoxStyle}"
                                          AutomationProperties.Name="{loc:Loc SettingsPage_MemoryToKeepFreeIn}"
                                          AutomationProperties.HelpText="{loc:Loc SettingsPage_AWholeNumberFrom256}"
-                                         LostFocus="OnMemoryReserveCommitted"
+                                         PreviewKeyDown="OnCommitOnEnter" LostFocus="OnMemoryReserveCommitted"
                                          TextChanged="OnMemoryInputTextChanged" />
                                 <TextBlock x:Name="MemoryReserveGhost"
                                            FontSize="{DynamicResource BodyFontSize}"
@@ -845,7 +845,7 @@
                                          Style="{StaticResource AppTextBoxStyle}"
                                          AutomationProperties.Name="{loc:Loc SettingsPage_WarnWhenOneAccountPasses_2}"
                                          AutomationProperties.HelpText="{loc:Loc SettingsPage_AWholeNumberFrom256_2}"
-                                         LostFocus="OnMemoryCapCommitted"
+                                         PreviewKeyDown="OnCommitOnEnter" LostFocus="OnMemoryCapCommitted"
                                          TextChanged="OnMemoryInputTextChanged" />
                                 <TextBlock x:Name="MemoryCapGhost"
                                            FontSize="{DynamicResource BodyFontSize}"
@@ -875,7 +875,7 @@
                                          Style="{StaticResource AppTextBoxStyle}"
                                          AutomationProperties.Name="{loc:Loc SettingsPage_WarnThisManyMinutesAhead}"
                                          AutomationProperties.HelpText="{loc:Loc SettingsPage_AWholeNumberOfMinutes}"
-                                         LostFocus="OnProjectionWarnCommitted" />
+                                         PreviewKeyDown="OnCommitOnEnter" LostFocus="OnProjectionWarnCommitted" />
                                 <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"
