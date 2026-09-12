@@ -2119,6 +2119,24 @@ Vous devrez vous reconnecter pour le rajouter.</value>
   <data name="Shell_Pref_Reveal_Show" xml:space="preserve">
     <value>Afficher</value>
   </data>
+  <data name="SettingsPage_OpensPushoverInYourBrowser" xml:space="preserve">
+    <value>Ouvre Pushover dans votre navigateur, où votre user key est affichée.</value>
+  </data>
+  <data name="SettingsPage_CreateTheApplication" xml:space="preserve">
+    <value>Créer l'application</value>
+  </data>
+  <data name="SettingsPage_OpenTheDashboard" xml:space="preserve">
+    <value>Ouvrir le tableau de bord</value>
+  </data>
+  <data name="SettingsPage_DeletesTheSavedValue" xml:space="preserve">
+    <value>Supprime la valeur enregistrée. Collez-en une nouvelle quand vous voulez.</value>
+  </data>
+  <data name="SettingsPage_Remove" xml:space="preserve">
+    <value>Retirer</value>
+  </data>
+  <data name="Shell_Pref_Reveal_StreamerConfirm" xml:space="preserve">
+    <value>Le mode streamer est activé. Cliquez à nouveau sur Afficher pour le révéler quand même.</value>
+  </data>
   <data name="Shell_Pref_PushoverAppToken" xml:space="preserve">
     <value>jeton d'application</value>
   </data>

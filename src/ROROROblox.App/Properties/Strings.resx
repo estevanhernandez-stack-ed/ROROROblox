@@ -2450,6 +2450,24 @@ You'll need to log in again to add it back.</value><comment>Remove-account confi
   <data name="Shell_Pref_CouldntSavePhone" xml:space="preserve"><value>Couldn't save the phone setting: {0}</value><comment>Settings error; {0}=exception (localized Phase D step 3)</comment></data>
   <data name="Shell_Pref_Reveal_Hide" xml:space="preserve"><value>Hide</value><comment>Credential reveal toggle (localized Phase D step 3)</comment></data>
   <data name="Shell_Pref_Reveal_Show" xml:space="preserve"><value>Show</value><comment>Credential reveal toggle (localized Phase D step 3)</comment></data>
+  <data name="SettingsPage_OpensPushoverInYourBrowser" xml:space="preserve">
+    <value>Opens Pushover in your browser, where your user key is shown.</value>
+  </data>
+  <data name="SettingsPage_CreateTheApplication" xml:space="preserve">
+    <value>Create the application</value>
+  </data>
+  <data name="SettingsPage_OpenTheDashboard" xml:space="preserve">
+    <value>Open the dashboard</value>
+  </data>
+  <data name="SettingsPage_DeletesTheSavedValue" xml:space="preserve">
+    <value>Deletes the saved value. Paste a new one whenever you like.</value>
+  </data>
+  <data name="SettingsPage_Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Shell_Pref_Reveal_StreamerConfirm" xml:space="preserve">
+    <value>Streamer mode is on. Click Show again to reveal it anyway.</value>
+  </data>
   <data name="Shell_Pref_PushoverAppToken" xml:space="preserve"><value>application token</value><comment>Pushover field noun, passed into CoreMessageCatalog.ForPushoverKey (localized Phase D step 3)</comment></data>
   <data name="Shell_Pref_PushoverUserKey" xml:space="preserve"><value>user key</value><comment>Pushover field noun, passed into CoreMessageCatalog.ForPushoverKey (localized Phase D step 3)</comment></data>
   <data name="Shell_Pref_CouldntSaveKey" xml:space="preserve"><value>Couldn't save the key: {0}</value><comment>Settings error; {0}=exception (localized Phase D step 3)</comment></data>

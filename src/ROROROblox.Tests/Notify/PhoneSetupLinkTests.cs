@@ -71,4 +71,31 @@ public class PhoneSetupLinkTests
         Assert.Equal("https://ntfy.sh/we%20ird",
             PhoneSetupLinks.NtfySubscribe("https://ntfy.sh", "we ird"));
     }
+
+    // --- Pushover: public pages, opened in the PC's browser (never a QR — see PhoneSetupLinks) ---
+
+    [Fact]
+    public void PushoverApplicationForm_IsTheBuildPage()
+    {
+        // Where the application token comes from, and the form whose icon slot the app offers to
+        // save an icon for. Both halves of that flow happen on the PC, which is why this is a
+        // browser launch and not a code to scan.
+        Assert.Equal("https://pushover.net/apps/build", PhoneSetupLinks.PushoverApplicationForm);
+    }
+
+    [Fact]
+    public void PushoverDashboard_IsWhereTheUserKeyIs()
+    {
+        Assert.Equal("https://pushover.net/", PhoneSetupLinks.PushoverDashboard);
+    }
+
+    [Fact]
+    public void PushoverLinks_CarryNoCredential()
+    {
+        // These are launched without asking anyone, so they must stay fixed public pages. If a
+        // future change ever parameterises one, this test should fail and force the question of
+        // what is being put in a URL.
+        Assert.DoesNotContain("=", PhoneSetupLinks.PushoverApplicationForm);
+        Assert.DoesNotContain("=", PhoneSetupLinks.PushoverDashboard);
+    }
 }

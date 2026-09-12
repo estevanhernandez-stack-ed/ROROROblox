@@ -2119,6 +2119,24 @@ Aby dodać je z powrotem, musisz zalogować się ponownie.</value>
   <data name="Shell_Pref_Reveal_Show" xml:space="preserve">
     <value>Pokaż</value>
   </data>
+  <data name="SettingsPage_OpensPushoverInYourBrowser" xml:space="preserve">
+    <value>Otwiera Pushover w przeglądarce, gdzie widać twój user key.</value>
+  </data>
+  <data name="SettingsPage_CreateTheApplication" xml:space="preserve">
+    <value>Utwórz aplikację</value>
+  </data>
+  <data name="SettingsPage_OpenTheDashboard" xml:space="preserve">
+    <value>Otwórz panel</value>
+  </data>
+  <data name="SettingsPage_DeletesTheSavedValue" xml:space="preserve">
+    <value>Usuwa zapisaną wartość. Nową możesz wkleić w każdej chwili.</value>
+  </data>
+  <data name="SettingsPage_Remove" xml:space="preserve">
+    <value>Usuń</value>
+  </data>
+  <data name="Shell_Pref_Reveal_StreamerConfirm" xml:space="preserve">
+    <value>Tryb streamera jest włączony. Kliknij Pokaż ponownie, aby jednak wyświetlić.</value>
+  </data>
   <data name="Shell_Pref_PushoverAppToken" xml:space="preserve">
     <value>token aplikacji</value>
   </data>

@@ -498,6 +498,40 @@
                                         ToolTip="{loc:Loc SettingsPage_TurnAlertsBackOnFor}" />
                             </StackPanel>
 
+                            <!-- POSITION IS LOAD-BEARING, and it was wrong until 2026-09-12. This
+                                 line lived at the very bottom of the card, under the phone tokens,
+                                 where it was the last thing anyone reached. Its own copy had always
+                                 assumed otherwise: three arms say "paste it below" or "check the key
+                                 below", pointing at the webhook and phone fields — which sat ABOVE
+                                 it. So it was not merely buried, it was wrong in three states.
+                                 Between the rows it summarises and the fields it points at is the
+                                 only place the sentences are true. Same correction the hint above the
+                                 rows got on 2026-09-11, for the same reason, one card later.
+                                 AlertsStatusLinePositionFenceTests holds it here. -->
+                            <!-- F-094. Every arm of this line used to be CyanBrush — the accent, which
+                                 is the treatment a SUCCESS gets — so "your webhook was deleted, so
+                                 nothing is reaching your phone" rendered identically to "sending to
+                                 #alerts". The sentence said one thing and the styling said another,
+                                 and styling is what gets read first.
+
+                                 The failure arms take RowExpiredAccentBrush and the "▲ " prefix, which
+                                 is the pair MainWindow already uses for the compat and Bloxstrap
+                                 banners. Driven from a Tag rather than assigned in code-behind so the
+                                 colour stays visible to the theme gates — code-behind colour
+                                 assignment is exactly the blind spot F-098 records. -->
+                            <TextBlock x:Name="AlertsStatusLine" FontSize="{DynamicResource BodyFontSize}" Margin="0,10,0,0" TextWrapping="Wrap">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource CyanBrush}" />
+                                        <Style.Triggers>
+                                            <Trigger Property="Tag" Value="failure">
+                                                <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
                             <!-- Two separate webhooks, because they are two different audiences. "My
                                  channel" is a server you own and nobody else reads; "Clan channel" is a
                                  shared room. Keeping them apart is what lets someone send health noise
@@ -521,7 +555,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="MineWebhookInput" AutomationProperties.Name="{loc:Loc SettingsPage_MyChannelWebhookUrl_2}" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
-                                         LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
+                                         PreviewKeyDown="OnCommitOnEnter" LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
                                 <!-- Takes the rank rather than repeating it. The four attributes
                                      removed here were byte-identical to SecondaryToggleButtonStyle's
                                      setters, so nothing moves at rest; what changes is the TEMPLATE,
@@ -531,11 +565,19 @@
                                      the app stopped. Found by item 9's fence, which counts
                                      ToggleButton because the C2 gap proved a control type outside
                                      the definition is where this defect survives. -->
-                                <ToggleButton x:Name="MineWebhookReveal" Grid.Column="1" Content="{loc:Loc SettingsPage_Show}"
-                                              Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
-                                              Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
-                                              Style="{StaticResource SecondaryToggleButtonStyle}"
-                                              ToolTip="{loc:Loc SettingsPage_RevealTheSavedWebhookSo}" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <ToggleButton x:Name="MineWebhookReveal" Content="{loc:Loc SettingsPage_Show}"
+                                                  Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                                  Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
+                                                  Style="{StaticResource SecondaryToggleButtonStyle}"
+                                                  ToolTip="{loc:Loc SettingsPage_RevealTheSavedWebhookSo}" />
+                                    <Button x:Name="MineWebhookRemove" Content="{loc:Loc SettingsPage_Remove}"
+                                            Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            AutomationProperties.Name="{loc:Loc SettingsPage_MyChannelWebhookUrl_2}"
+                                            Click="OnRemoveSecretClick"
+                                            ToolTip="{loc:Loc SettingsPage_DeletesTheSavedValue}" />
+                                </StackPanel>
                             </Grid>
                             <TextBlock x:Name="MineWebhookVerdict" FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap" Margin="0,4,0,0"
                                        Foreground="{DynamicResource MutedTextBrush}" />
@@ -552,12 +594,20 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="ClanWebhookInput" AutomationProperties.Name="{loc:Loc SettingsPage_ClanChannelWebhookUrl_2}" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
-                                         LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
-                                <ToggleButton x:Name="ClanWebhookReveal" Grid.Column="1" Content="{loc:Loc SettingsPage_Show}"
-                                              Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
-                                              Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
-                                              Style="{StaticResource SecondaryToggleButtonStyle}"
-                                              ToolTip="{loc:Loc SettingsPage_RevealTheSavedWebhookSo}" />
+                                         PreviewKeyDown="OnCommitOnEnter" LostFocus="OnWebhookCommitted" Style="{StaticResource AppTextBoxStyle}"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <ToggleButton x:Name="ClanWebhookReveal" Content="{loc:Loc SettingsPage_Show}"
+                                                  Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                                  Checked="OnRevealWebhookToggled" Unchecked="OnRevealWebhookToggled"
+                                                  Style="{StaticResource SecondaryToggleButtonStyle}"
+                                                  ToolTip="{loc:Loc SettingsPage_RevealTheSavedWebhookSo}" />
+                                    <Button x:Name="ClanWebhookRemove" Content="{loc:Loc SettingsPage_Remove}"
+                                            Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            AutomationProperties.Name="{loc:Loc SettingsPage_ClanChannelWebhookUrl_2}"
+                                            Click="OnRemoveSecretClick"
+                                            ToolTip="{loc:Loc SettingsPage_DeletesTheSavedValue}" />
+                                </StackPanel>
                             </Grid>
                             <TextBlock x:Name="ClanWebhookVerdict" FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap" Margin="0,4,0,0"
                                        Foreground="{DynamicResource MutedTextBrush}" />
@@ -592,12 +642,24 @@
                                 <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                            Margin="0,0,0,4"
                                            Text="{loc:Loc SettingsPage_BothCodesComeFromPushover}" />
-                                <Button x:Name="SavePushoverIconButton" Content="{loc:Loc SettingsPage_SaveTheRororoIcon}" Padding="10,5" Margin="0,0,0,8"
-                                        HorizontalAlignment="Left"
-                                        Style="{StaticResource SecondaryButtonStyle}" FontSize="{DynamicResource BodyFontSize}"
-                                        AutomationProperties.Name="{loc:Loc SettingsPage_SaveTheRororoIconFor}"
-                                        Click="OnSavePushoverIconClick"
-                                        ToolTip="{loc:Loc SettingsPage_TheApplicationFormOnPushover}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <Button x:Name="PushoverDashboardButton" Content="{loc:Loc SettingsPage_OpenTheDashboard}" Padding="10,5"
+                                            Style="{StaticResource SecondaryButtonStyle}" FontSize="{DynamicResource BodyFontSize}"
+                                            AutomationProperties.Name="{loc:Loc SettingsPage_OpenTheDashboard}"
+                                            Click="OnOpenPushoverPageClick"
+                                            ToolTip="{loc:Loc SettingsPage_OpensPushoverInYourBrowser}" />
+                                    <Button x:Name="PushoverAppFormButton" Content="{loc:Loc SettingsPage_CreateTheApplication}" Padding="10,5" Margin="6,0,0,0"
+                                            Style="{StaticResource SecondaryButtonStyle}" FontSize="{DynamicResource BodyFontSize}"
+                                            AutomationProperties.Name="{loc:Loc SettingsPage_CreateTheApplication}"
+                                            Click="OnOpenPushoverPageClick"
+                                            ToolTip="{loc:Loc SettingsPage_TheApplicationFormOnPushover}" />
+                                    <Button x:Name="SavePushoverIconButton" Content="{loc:Loc SettingsPage_SaveTheRororoIcon}" Padding="10,5" Margin="6,0,0,0"
+                                            HorizontalAlignment="Left"
+                                            Style="{StaticResource SecondaryButtonStyle}" FontSize="{DynamicResource BodyFontSize}"
+                                            AutomationProperties.Name="{loc:Loc SettingsPage_SaveTheRororoIconFor}"
+                                            Click="OnSavePushoverIconClick"
+                                            ToolTip="{loc:Loc SettingsPage_TheApplicationFormOnPushover}" />
+                                </StackPanel>
                                 <TextBlock Text="{loc:Loc SettingsPage_UserKey}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,0,0,2" />
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -606,13 +668,21 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBox x:Name="PushoverUserKeyInput" AutomationProperties.Name="{loc:Loc SettingsPage_PushoverUserKey}" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                              Background="{DynamicResource NavyBrush}"
-                                             LostFocus="OnPushoverKeyCommitted" Style="{StaticResource AppTextBoxStyle}"/>
-                                    <ToggleButton x:Name="PushoverUserKeyReveal" Grid.Column="1" Content="{loc:Loc SettingsPage_Show}"
-                                                  AutomationProperties.Name="{loc:Loc SettingsPage_ShowOrHideTheSaved}"
-                                                  Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
-                                                  Checked="OnRevealPhoneToggled" Unchecked="OnRevealPhoneToggled"
-                                                  Style="{StaticResource SecondaryToggleButtonStyle}"
-                                                  ToolTip="{loc:Loc SettingsPage_RevealTheSavedKeySo}" />
+                                             PreviewKeyDown="OnCommitOnEnter" LostFocus="OnPushoverKeyCommitted" Style="{StaticResource AppTextBoxStyle}"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <ToggleButton x:Name="PushoverUserKeyReveal" Content="{loc:Loc SettingsPage_Show}"
+                                                      AutomationProperties.Name="{loc:Loc SettingsPage_ShowOrHideTheSaved}"
+                                                      Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                                      Checked="OnRevealPhoneToggled" Unchecked="OnRevealPhoneToggled"
+                                                      Style="{StaticResource SecondaryToggleButtonStyle}"
+                                                      ToolTip="{loc:Loc SettingsPage_RevealTheSavedKeySo}" />
+                                        <Button x:Name="PushoverUserKeyRemove" Content="{loc:Loc SettingsPage_Remove}"
+                                                Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                AutomationProperties.Name="{loc:Loc SettingsPage_PushoverUserKey}"
+                                                Click="OnRemoveSecretClick"
+                                                ToolTip="{loc:Loc SettingsPage_DeletesTheSavedValue}" />
+                                    </StackPanel>
                                 </Grid>
                                 <TextBlock Text="{loc:Loc SettingsPage_ApplicationToken}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,6,0,2" />
                                 <Grid>
@@ -622,13 +692,21 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBox x:Name="PushoverAppTokenInput" AutomationProperties.Name="{loc:Loc SettingsPage_PushoverApplicationToken}" Grid.Column="0" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                              Background="{DynamicResource NavyBrush}"
-                                             LostFocus="OnPushoverKeyCommitted" Style="{StaticResource AppTextBoxStyle}"/>
-                                    <ToggleButton x:Name="PushoverAppTokenReveal" Grid.Column="1" Content="{loc:Loc SettingsPage_Show}"
-                                                  AutomationProperties.Name="{loc:Loc SettingsPage_ShowOrHideTheSaved_2}"
-                                                  Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
-                                                  Checked="OnRevealPhoneToggled" Unchecked="OnRevealPhoneToggled"
-                                                  Style="{StaticResource SecondaryToggleButtonStyle}"
-                                                  ToolTip="{loc:Loc SettingsPage_RevealTheSavedTokenSo}" />
+                                             PreviewKeyDown="OnCommitOnEnter" LostFocus="OnPushoverKeyCommitted" Style="{StaticResource AppTextBoxStyle}"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <ToggleButton x:Name="PushoverAppTokenReveal" Content="{loc:Loc SettingsPage_Show}"
+                                                      AutomationProperties.Name="{loc:Loc SettingsPage_ShowOrHideTheSaved_2}"
+                                                      Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                                      Checked="OnRevealPhoneToggled" Unchecked="OnRevealPhoneToggled"
+                                                      Style="{StaticResource SecondaryToggleButtonStyle}"
+                                                      ToolTip="{loc:Loc SettingsPage_RevealTheSavedTokenSo}" />
+                                        <Button x:Name="PushoverAppTokenRemove" Content="{loc:Loc SettingsPage_Remove}"
+                                                Margin="6,0,0,0" Padding="10,5" FontSize="{DynamicResource BodyFontSize}"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                AutomationProperties.Name="{loc:Loc SettingsPage_PushoverApplicationToken}"
+                                                Click="OnRemoveSecretClick"
+                                                ToolTip="{loc:Loc SettingsPage_DeletesTheSavedValue}" />
+                                    </StackPanel>
                                 </Grid>
                                 <TextBlock x:Name="PhonePushoverVerdict" FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap" Margin="0,4,0,0"
                                            Foreground="{DynamicResource MutedTextBrush}" />
@@ -683,7 +761,7 @@
                                 <TextBlock Text="{loc:Loc SettingsPage_Server}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,6,0,2" />
                                 <TextBox x:Name="NtfyServerInput" AutomationProperties.Name="{loc:Loc SettingsPage_NtfyServerAddress}" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"
-                                         LostFocus="OnNtfyServerCommitted" Style="{StaticResource AppTextBoxStyle}"
+                                         PreviewKeyDown="OnCommitOnEnter" LostFocus="OnNtfyServerCommitted" Style="{StaticResource AppTextBoxStyle}"
                                          ToolTip="{loc:Loc SettingsPage_LeaveAsNtfyShUnless}" />
                                 <TextBlock x:Name="PhoneNtfyVerdict" FontSize="{DynamicResource BodyFontSize}" TextWrapping="Wrap" Margin="0,4,0,0"
                                            Foreground="{DynamicResource MutedTextBrush}" />
@@ -695,29 +773,6 @@
                                     AutomationProperties.Name="{loc:Loc SettingsPage_SendATestNotificationTo}"
                                     Click="OnPhoneTestClick" />
 
-                            <!-- F-094. Every arm of this line used to be CyanBrush — the accent, which
-                                 is the treatment a SUCCESS gets — so "your webhook was deleted, so
-                                 nothing is reaching your phone" rendered identically to "sending to
-                                 #alerts". The sentence said one thing and the styling said another,
-                                 and styling is what gets read first.
-
-                                 The failure arms take RowExpiredAccentBrush and the "▲ " prefix, which
-                                 is the pair MainWindow already uses for the compat and Bloxstrap
-                                 banners. Driven from a Tag rather than assigned in code-behind so the
-                                 colour stays visible to the theme gates — code-behind colour
-                                 assignment is exactly the blind spot F-098 records. -->
-                            <TextBlock x:Name="AlertsStatusLine" FontSize="{DynamicResource BodyFontSize}" Margin="0,10,0,0" TextWrapping="Wrap">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="{DynamicResource CyanBrush}" />
-                                        <Style.Triggers>
-                                            <Trigger Property="Tag" Value="failure">
-                                                <Setter Property="Foreground" Value="{DynamicResource RowExpiredAccentBrush}" />
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
                         </StackPanel>
                     </Border>
 
@@ -816,7 +871,7 @@
                                          Style="{StaticResource AppTextBoxStyle}"
                                          AutomationProperties.Name="{loc:Loc SettingsPage_MemoryToKeepFreeIn}"
                                          AutomationProperties.HelpText="{loc:Loc SettingsPage_AWholeNumberFrom256}"
-                                         LostFocus="OnMemoryReserveCommitted"
+                                         PreviewKeyDown="OnCommitOnEnter" LostFocus="OnMemoryReserveCommitted"
                                          TextChanged="OnMemoryInputTextChanged" />
                                 <TextBlock x:Name="MemoryReserveGhost"
                                            FontSize="{DynamicResource BodyFontSize}"
@@ -845,7 +900,7 @@
                                          Style="{StaticResource AppTextBoxStyle}"
                                          AutomationProperties.Name="{loc:Loc SettingsPage_WarnWhenOneAccountPasses_2}"
                                          AutomationProperties.HelpText="{loc:Loc SettingsPage_AWholeNumberFrom256_2}"
-                                         LostFocus="OnMemoryCapCommitted"
+                                         PreviewKeyDown="OnCommitOnEnter" LostFocus="OnMemoryCapCommitted"
                                          TextChanged="OnMemoryInputTextChanged" />
                                 <TextBlock x:Name="MemoryCapGhost"
                                            FontSize="{DynamicResource BodyFontSize}"
@@ -875,7 +930,7 @@
                                          Style="{StaticResource AppTextBoxStyle}"
                                          AutomationProperties.Name="{loc:Loc SettingsPage_WarnThisManyMinutesAhead}"
                                          AutomationProperties.HelpText="{loc:Loc SettingsPage_AWholeNumberOfMinutes}"
-                                         LostFocus="OnProjectionWarnCommitted" />
+                                         PreviewKeyDown="OnCommitOnEnter" LostFocus="OnProjectionWarnCommitted" />
                                 <TextBlock FontSize="{DynamicResource BodyFontSize}"
                                            Foreground="{DynamicResource MutedTextBrush}"
                                            TextWrapping="Wrap"
