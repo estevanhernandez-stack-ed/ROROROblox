@@ -51,6 +51,11 @@ Create `docs/store/release-notes-X.Y.Z.0.md`. Tone: clan-facing, builder-to-buil
 **Required sections** (model after `release-notes-1.23.0.0.md`):
 
 - **Download** — link to `rororo-win-Setup.exe` on the latest release
+- **Short list, for the GitHub release and the Discord post** — a **fenced block** of
+  `•` bullets, one per user-visible change, ending on the "nothing else moved" line.
+  Fenced because the whole point is that it travels into Discord unchanged; markdown
+  dashes render as someone else's list. v1.24 through v1.27 all shipped it this way and
+  v1.28 was drafted with dashes before this line existed.
 - **What changed** — one or two H3 sections per user-visible fix/feature, written as the *outcome* the user feels, not the diff
 - **Compatibility** — new permissions / migrations / deps. "None" is a valid section if it's clean.
 - **Known issues going into the next update** — anything that didn't make this release. Be honest; the clan reads these. **Verify each known-issue still applies before carrying it forward** from the previous release — `git log <prev-tag>..HEAD --grep='<topic>'` + a 60-second smoke. Carry-forward without verification is how we shipped a stale FPS-cap-bleed paragraph in v1.3.3.0 → v1.3.4.0 (the gate fix had already landed in `02aa4c4` pre-1.3.3.0). If a section is dropped, log it in an **Edit log** block in the file preamble (above the `---` markers, so it stays in-repo and out of the GH body).
@@ -163,9 +168,15 @@ $repo = 'estevanhernandez-stack-ed/ROROROblox'
     dev-cert.cer `
     --repo $repo
 
-# 2. Set the body from the release notes file (paste the block between --- markers).
+# 2. Set the body from the release notes BELOW the edit-log banner. Passing the whole
+#    file publishes the banner, which is written for whoever writes the NEXT release.
+#    -Encoding UTF8 on the read, or an em-dash becomes three characters (see Phase 3).
+$notes = Get-Content docs/store/release-notes-X.Y.Z.0.md -Raw -Encoding UTF8
+$body = $notes.Substring($notes.IndexOf('# RoRoRo vX.Y.Z.0'))
+$bodyPath = Join-Path $env:TEMP 'rororo-release-body.md'
+[IO.File]::WriteAllText($bodyPath, $body, (New-Object Text.UTF8Encoding $false))
 & $gh release edit vX.Y.Z.0 `
-    --notes-file docs/store/release-notes-X.Y.Z.0.md `
+    --notes-file $bodyPath `
     --repo $repo
 
 # 3. Publish (un-draft).
@@ -183,7 +194,7 @@ $repo = 'estevanhernandez-stack-ed/ROROROblox'
 
 1. Open Partner Center → Apps → RORORO → **Packages**.
 2. Drag BOTH `dist/RORORO-Store-x64-<version>.msix` and `dist/RORORO-Store-arm64-<version>.msix` into the Packages slot. Wait for upload + validation. If validation fails on version (4th component non-zero), bump and re-run from Phase 3.
-3. Edit **Notes for certification** — paste the `---` block from `docs/store/reviewer-letter-X.Y.Z.0.md` (the per-version reviewer letter; leads with that release's disclosure-surface change + the trademark disclaimer). This is reviewer-only, not shown to users.
+3. Edit **Notes for certification** — paste the fenced block from `docs/store/reviewer-letter-X.Y.Z.0.md` (the one below the single `---` marker; the file has one marker, not a pair) (the per-version reviewer letter; leads with that release's disclosure-surface change + the trademark disclaimer). This is reviewer-only, not shown to users.
 4. **Edit the Store listing → "What's new in this version"** — paste the fenced block from `docs/store/whats-new-X.Y.Z.0.md` (per-version file since v1.21; `listing-copy.md`'s What's-new section is now just a pointer). **DO NOT SKIP — this is the public update-note Store users see, and it's the step that keeps getting left off.** It's a *different field* from Notes for certification (step 3): step 3 is private to Microsoft's reviewer; this one is public. Both must be filled every release. (Partner Center: Store listings → [language] → "What's new in this version".)
 5. **Apply the listing changes from the submission packet's listing section** (Store listings → [language]) — the Phase 2 audit recorded them there: feature entries to add, and any short/long description replacement (paste blocks live in `listing-copy.md`). If the packet says "listing audited, unchanged," skip.
 6. **Submit to the Store**. Status moves through *In submission* → *Certification* → *Publishing* (success) or *Failed* (rejection). Typical turnaround 24-72h.

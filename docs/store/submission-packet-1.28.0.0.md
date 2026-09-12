@@ -31,8 +31,9 @@ a submission with only one silently narrows who can install.
 
 ## 2. Notes for certification
 
-Paste the block between the `---` markers in
-[`reviewer-letter-1.28.0.0.md`](reviewer-letter-1.28.0.0.md).
+Paste the fenced block in [`reviewer-letter-1.28.0.0.md`](reviewer-letter-1.28.0.0.md) — the one
+below the `---` marker, from `Hello reviewer,` to `626 Labs LLC`. Reviewer-only; not shown to
+users.
 
 ## 3. What's new in this version (public — do not skip)
 

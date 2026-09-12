@@ -1,7 +1,8 @@
 # Notes for certification — reviewer letter (v1.28.0.0)
 
-> Paste the block between the `---` markers below into Partner Center → your app → **Submission
-> options** → **Notes for certification**.
+> Paste the fenced block below the `---` marker — everything from `Hello reviewer,` to
+> `626 Labs LLC`, not the backticks — into Partner Center → your app → **Submission options**
+> → **Notes for certification**.
 >
 > **A single-version delta, unlike v1.27's.** Certification last saw v1.27.0.0 and it published, so
 > this letter covers one version rather than two.
