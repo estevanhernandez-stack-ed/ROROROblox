@@ -19,7 +19,7 @@
 
 ```
 • Alerts can watch a number. Settings > Alerts has a Metric alerts switch: turn it on, set your own thresholds, and RoRoRo tells you when a number crosses one — toast, your Discord channel, the clan's, or your phone. RoRoRo does not go and get the number; a plugin you install reports it, and nothing in this release reports one yet.
-• Phone setup is a photo. Connecting ntfy was typing a 33-character topic into a phone keyboard with no error correction. Point your camera at the code instead. It hides itself while streamer mode is on, because that topic is the credential.
+• Phone setup stops being a typing test. Connecting ntfy was typing a 33-character topic into a phone keyboard with no error correction; point your camera at the code instead. It hides itself while streamer mode is on, because that topic is the credential. Pushover, which is what most of you use, now has buttons that open the two pages its two codes come from.
 • Settings stopped losing your edits. Every box on the Alerts page held your typing until you clicked somewhere else. Enter saves now, and saved webhooks and phone keys have a Remove button instead of reveal-select-all-delete.
 • Streamer mode protects what is already on screen. Turning it on now re-hides a webhook or key you had revealed, and clicking Show while it is on asks first. Before this it masked your account names and left a Discord webhook URL in plain view.
 • Nothing else moved. Accounts, themes, plugins, history, and settings all carry over untouched.
@@ -51,6 +51,13 @@ camera at the code instead.
 The code hides itself while streamer mode is on. That topic is the credential — anyone who scans it
 can read your alerts — and a code lifts off a paused frame far more easily than 33 characters of
 text ever did.
+
+**Pushover, which is what most of the clan uses, gets two buttons instead of a guess.** Its two
+codes come from two different pages and look alike, so the fields now sit above a button that opens
+the dashboard where your user key lives and one that opens the application form that issues the app
+token. QR codes were tried here first and removed before release: side by side they were hard to
+aim a camera at individually, and the one under the user key led to a page for sending a single
+notification rather than to the key itself.
 
 ### Settings stopped losing your edits
 
