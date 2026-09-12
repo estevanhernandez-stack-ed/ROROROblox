@@ -295,9 +295,20 @@ uses. The routing control lives in Settings → Alerts, alongside the **Metric a
       can make from a throwaway plugin; this one needs a real clan, a real battle, and a member
       deliberately under the floor for the window, which is the only way to confirm the whole chain
       fires end to end against a live signal instead of a manufactured one. No harness manufactures a
-      real battle, so this stays a live event, not a rerunnable check. No longer blocked on routing —
-      a hand-written rules file and the phone checkbox are enough now that a breach can reach a
-      phone. Needs Este to run a real clan battle; nobody else can tick this box.
+      real battle, so this stays a live event, not a rerunnable check. Needs Este to run a real clan
+      battle; nobody else can tick this box.
+      **2026-09-12: still blocked, and NOT on routing — on the reporter.** An earlier draft of this
+      row said "a hand-written rules file and the phone checkbox are enough now that a breach can
+      reach a phone." That is wrong, and it would have sent someone into a battle expecting a
+      working chain. Routing is genuinely done and proven. What does not exist is anything that
+      reports a real number: every `ReportMetric` caller in the tree is the host side of the RPC, a
+      unit test, or `tools/MetricSmoke`. The four installed plugins are Ur AFK, Ur MCP, Ur OCR and
+      Ur Task, and none of them polls a game API.
+      So this row needs a plugin written first — one that polls the clan stats endpoint, maps a
+      member to the RoRoRo account id that is the metric's `subject_id`, and reports a rate on a
+      timer. That is the piece the whole plugin/core split exists to keep out of the shipped
+      binary, and it has never been built. Until it is, a real battle proves nothing, because
+      nothing will be watching it.
 
 ---
 
