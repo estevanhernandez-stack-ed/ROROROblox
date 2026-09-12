@@ -316,6 +316,20 @@ Recorded so the green run is not read as more than it is:
   Any automation that ever runs this — a nightly, a pre-release gate — would read a run with an uncovered
   row as a pass. The fix is a line in `Program.RunAsync`'s return; it is not made here because no
   behaviour was changed in this task.
+- **That the restore reaches the app that is still running.** It does not, and this is the limit with
+  the longest tail. The files go back byte-for-byte on disk, and `DiscordConfigService` and
+  `PhoneNotifyConfigService` each cached their record at `InitializeAsync` and re-read it only through
+  the app's own `MutateAsync`; `StreamerIdentityProvider.IsActive` is read once at startup and changed
+  only by the app's own toggle. So a session left up after a run keeps the harness's two webhook URLs
+  (pointing at a catcher that has been disposed), its metric-breach destination set, the blanked
+  `notify.dat` and streamer mode — and a genuine drop-out that evening POSTs to a closed localhost port
+  and is swallowed, the phone leg finds no credentials, and account names stay masked. It is the same
+  fact `Program.RefuseIfAppIsUpAsync` refuses on, in the other direction. The runner now ends every
+  restore with a boxed instruction to quit RoRoRo and start it again, and the README says so too; there
+  is no in-process fix from outside the app. Three things the harness writes are NOT affected, checked
+  by reading each reader: `metric-rules.json` is re-read per report against a hash of its bytes,
+  `consent.dat` is read off disk on every capability check, and `settings.json`'s `metricAlertsEnabled`
+  is re-read on the view model's 30-second tick (and is inert once the rules file is gone anyway).
 - **A `Cancelled` status reads as a consent problem.** With the host gone, the
   consented-report-accepted row reported "the consent grant for rororo.smoke is not in force" for what
   was actually a dead pipe. Harmless in context (row 1 had already said the host was gone) and worth
@@ -339,3 +353,7 @@ The profile was checked against a SHA-256 snapshot taken before the first run:
   difference: `metricAlertsEnabled` is now *present* and `false` where it was previously absent (and
   therefore false by default). That is the documented limit of the single-key restore — `AppSettings`
   writes the key to turn it on, and the restore puts the value back rather than the file.
+
+All of that is the state of the disk, which is not the state of the running app: see the restore limit in
+the section above. Quit RoRoRo and start it again after a run, or the session keeps what the harness
+wrote.

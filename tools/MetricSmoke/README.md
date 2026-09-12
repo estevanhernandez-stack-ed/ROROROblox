@@ -93,6 +93,16 @@ The run then:
 5. Runs the sixteen scenarios (a few minutes) against the running app.
 6. Restores every file it backed up, in a `finally` that also runs on the first Ctrl-C. A second Ctrl-C
    kills the process outright, for whoever wants out immediately.
+7. Tells you to **quit RoRoRo and start it again**, and means it. The restore puts the files back
+   byte-for-byte and the running app never looks at them: `DiscordConfigService` and
+   `PhoneNotifyConfigService` each cached their record at startup and re-read it only when you change it
+   in Settings, and streamer mode is the same. So a session left up after a run still holds the
+   harness's two webhook URLs — pointing at a catcher that has just been shut down — its metric
+   destinations, a phone with no credentials behind it, and streamer mode on. A real drop-out that
+   evening would POST to a closed port and be swallowed, the phone leg would find nothing, and account
+   names would stay masked, for as long as that session lasts. This is the same fact that makes the tool
+   refuse to start while the app is up; it applies at the end of a run too. A run is not finished until
+   you have restarted the app.
 
 Exit codes: `0` every scenario passed, `1` a scenario failed (or setup refused before anything was
 sent), `2` the profile is still not fully restored — read the last few lines, they say which file.
@@ -114,7 +124,9 @@ marker behind in `smoke-backup\`, next to whatever backups it had already taken.
   dotnet run --project tools/MetricSmoke -- --recover
   ```
 
-  Safe to run even when there is nothing to recover — it says so and exits `0`. If it cannot fully
+  Safe to run even when there is nothing to recover — it says so and exits `0`. It prints the same
+  restart notice as a finished run whenever it actually put something back, for the same reason: a
+  RoRoRo that is up right now is not reading the files it just restored. If it cannot fully
   restore (a backup file is gone, or something else has a file open), it says exactly which file, and
   what to re-enter by hand if the backup itself is unrecoverable: the two webhook URLs, or the phone
   credentials, out of wherever you keep them.

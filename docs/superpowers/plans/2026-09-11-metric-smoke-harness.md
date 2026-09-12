@@ -2,6 +2,26 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+---
+
+> **BUILD-REALITY CORRECTION (2026-09-11) — three of this plan's claims did not survive building it.**
+> The body below is left as written; read these first. The
+> [design spec](../specs/2026-09-11-metric-smoke-harness-design.md) carries the same corrections at §1
+> and is the document to trust.
+>
+> 1. **It is 14 rows, not 16.** "16" was always the number of *scenarios*, counted once the table
+>    existed: two of the list's rows carry two cases each (consent granted-then-revoked versus
+>    never-declared; the rules file picked up live versus absent), and each case is its own path through
+>    the code and so its own scenario. So the harness drives **16 scenarios over 14 of the 21 rows**.
+>    `ScenarioTableTests` holds the table and the list's `[harness]` markers in step.
+> 2. **Six rows stay manual, not five.** The five named in spec §3, plus *Settings still says "No alerts
+>    yet"* — a UI sentence that needs the UIA path §0.7 mentions and nobody built.
+> 3. **"No production change" is no longer true.** One shipped: `TrayService.ShowToast` now marshals to
+>    the UI thread. `AlertDispatcher`'s fan-out is sequential and stamps its cooldown per destination
+>    after that destination's send, so a toast raised from a gRPC handler thread throwing into WPF would
+>    have ended the loop and lost every later destination. The harness found it; the fix is in the app,
+>    not in `tools/`.
+
 **Goal:** Turn 16 of the metric-alert smoke list's 21 rows into one command.
 
 **Architecture:** A non-shipping console tool under `tools/` that sets up real app state, drives the running app over its real plugin pipe as a consented reporter, captures what the app POSTs to a local stand-in webhook, and asserts against the app's own log. No production change.

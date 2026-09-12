@@ -50,12 +50,16 @@ internal static class Program
             {
                 Console.WriteLine($"NOT fully restored: {ProfileGuard.MarkerFileName} is still in {backupRoot}. "
                     + "The lines above say which files could not be put back, or why this refused to try.");
+                // Whatever DID go back is as invisible to a live app as a full restore would be, and
+                // this path is the one most likely to be run with RoRoRo already up.
+                if (attempted) PrintRestartNotice();
                 return 2;
             }
 
             Console.WriteLine(attempted
                 ? "The profile is back: the marker and its backups are gone."
                 : $"Nothing to recover: no {ProfileGuard.MarkerFileName} in {backupRoot}.");
+            if (attempted) PrintRestartNotice();
             return 0;
         }
 
@@ -289,7 +293,58 @@ internal static class Program
             Console.WriteLine(report.ToString());
             guard.Dispose();
             await catcher.DisposeAsync().ConfigureAwait(false);
+
+            // Last, so it is the last thing on screen: the files are back and the running app is not
+            // reading them.
+            PrintRestartNotice();
         }
+    }
+
+    /// <summary>
+    /// Says the one thing a byte-perfect restore cannot do for itself: tell the app.
+    /// <para>
+    /// <see cref="RefuseIfAppIsUpAsync"/> exists because an external write to <c>discord.dat</c> is
+    /// invisible to a live session. That fact does not stop being true at the end of the run.
+    /// <c>DiscordConfigService</c> and <c>PhoneNotifyConfigService</c> each cache their record at
+    /// <c>InitializeAsync</c> and re-read it only through the app's own <c>MutateAsync</c>, and
+    /// <c>StreamerIdentityProvider.IsActive</c> is read once at startup and changed only by the app's
+    /// own toggle. So the restore puts three things back on disk that the session keeps the harness's
+    /// version of until it is restarted: both webhook URLs (pointing at a catcher that was just
+    /// disposed), the metric-breach destination set, the blanked <c>notify.dat</c>, and streamer mode.
+    /// A genuine drop-out that evening would POST to a closed localhost port and be swallowed, the
+    /// phone leg would find no credentials, and account names would stay masked — for as long as the
+    /// app stays up.
+    /// </para>
+    /// <para>
+    /// The two things the harness writes that a live app DOES pick up are deliberately not mentioned
+    /// here: <c>metric-rules.json</c> is re-read per report against a hash of its bytes, and
+    /// <c>consent.dat</c> is read off disk on every capability check.
+    /// <c>settings.json</c>'s <c>metricAlertsEnabled</c> is re-read on the view model's 30-second
+    /// tick, and is inert anyway once the rules file is gone.
+    /// </para>
+    /// <para>
+    /// Printed on every finished restore, not only a partial one: a clean restore is exactly the case
+    /// where the operator has no other reason to think anything is left to do.
+    /// </para>
+    /// </summary>
+    private static void PrintRestartNotice()
+    {
+        const string Rule = "============================================================================";
+        Console.WriteLine();
+        Console.WriteLine(Rule);
+        Console.WriteLine("  QUIT RORORO AND START IT AGAIN BEFORE YOU WALK AWAY.");
+        Console.WriteLine(Rule);
+        Console.WriteLine("  The files are back on disk. The app that is still running is not reading them:");
+        Console.WriteLine("  it cached discord.dat and notify.dat at startup, and streamer mode with them, and");
+        Console.WriteLine("  re-reads them only when you change them in Settings. Until you restart it, that");
+        Console.WriteLine("  session still holds this harness's webhook URLs — pointing at a catcher that has");
+        Console.WriteLine("  just been shut down — its metric destinations, a phone with no credentials behind");
+        Console.WriteLine("  it, and streamer mode on.");
+        Console.WriteLine();
+        Console.WriteLine("  So a real alert tonight would POST to a closed port and be swallowed, the phone");
+        Console.WriteLine("  leg would find nothing, and account names would stay masked. Quitting from the");
+        Console.WriteLine("  tray and launching again is the whole fix.");
+        Console.WriteLine(Rule);
     }
 
     /// <summary>
