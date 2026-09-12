@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -3107,5 +3107,11 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   </data>
   <data name="LanguageNotice_Body" xml:space="preserve">
     <value>Es folgt automatisch der Sprache deines Systems. Wähle jederzeit unter Einstellungen › Darstellung eine andere.</value>
+  </data>
+  <data name="SettingsPage_QrCodeThatSubscribesYour" xml:space="preserve">
+    <value>QR-Code, der dein Handy für dieses ntfy-Thema anmeldet</value>
+  </data>
+  <data name="SettingsPage_PointYourPhoneCameraAt" xml:space="preserve">
+    <value>Richte die Handykamera hierauf, um dich anzumelden — ohne Tippen. Wer ihn scannt, kann deine Alerts mitlesen, also halte ihn aus dem Stream.</value>
   </data>
 </root>

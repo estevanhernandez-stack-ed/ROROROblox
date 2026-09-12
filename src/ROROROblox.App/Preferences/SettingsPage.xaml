@@ -661,6 +661,25 @@
                                             Click="OnGenerateNtfyTopicClick"
                                             ToolTip="{loc:Loc SettingsPage_MakesAFreshRandomTopic}" />
                                 </Grid>
+                                <!-- The topic, scannable, so nobody retypes 33 base32 characters into
+                                     a phone. This code IS the credential - an ntfy topic grants
+                                     subscribe AND publish - so it is bound to the same reveal as the
+                                     topic text and is force-hidden while streamer mode is on. The
+                                     topic TEXT is not: revealing it and then turning streamer mode
+                                     on leaves it showing. Same for both webhook URLs and the
+                                     Pushover pair. This code is the only thing on the page that
+                                     reads the streamer toggle at all. A QR is
+                                     strictly MORE exposed than the string it replaces: a viewer can
+                                     scan one off a single paused frame, which is not true of the
+                                     text. See OnRevealPhoneToggled / RefreshNtfyQr. -->
+                                <StackPanel x:Name="NtfyQrPanel" Visibility="Collapsed" Margin="0,10,0,0" HorizontalAlignment="Left">
+                                    <Image x:Name="NtfyQrImage" Width="176" Height="176" Stretch="Uniform"
+                                           RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                           AutomationProperties.Name="{loc:Loc SettingsPage_QrCodeThatSubscribesYour}" />
+                                    <TextBlock Text="{loc:Loc SettingsPage_PointYourPhoneCameraAt}" TextWrapping="Wrap" MaxWidth="230"
+                                               FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}"
+                                               Margin="0,4,0,0" />
+                                </StackPanel>
                                 <TextBlock Text="{loc:Loc SettingsPage_Server}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,6,0,2" />
                                 <TextBox x:Name="NtfyServerInput" AutomationProperties.Name="{loc:Loc SettingsPage_NtfyServerAddress}" Padding="8,6" FontSize="{DynamicResource BodyFontSize}"
                                          Background="{DynamicResource NavyBrush}"

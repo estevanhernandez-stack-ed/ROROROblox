@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -3107,5 +3107,11 @@ Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que 
   </data>
   <data name="LanguageNotice_Body" xml:space="preserve">
     <value>Il suit automatiquement la langue de votre système. Choisissez-en une autre à tout moment dans Paramètres › Apparence.</value>
+  </data>
+  <data name="SettingsPage_QrCodeThatSubscribesYour" xml:space="preserve">
+    <value>Code QR qui abonne votre téléphone à ce sujet ntfy</value>
+  </data>
+  <data name="SettingsPage_PointYourPhoneCameraAt" xml:space="preserve">
+    <value>Pointez l'appareil photo de votre téléphone ici pour vous abonner — sans rien taper. Quiconque le scanne peut lire vos alertes, alors gardez-le hors stream.</value>
   </data>
 </root>

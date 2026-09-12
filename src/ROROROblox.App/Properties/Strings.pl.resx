@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -3107,5 +3107,11 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
   </data>
   <data name="LanguageNotice_Body" xml:space="preserve">
     <value>Automatycznie podąża za językiem systemu. W każdej chwili możesz wybrać inny w Ustawienia › Wygląd.</value>
+  </data>
+  <data name="SettingsPage_QrCodeThatSubscribesYour" xml:space="preserve">
+    <value>Kod QR zapisujący telefon na ten temat ntfy</value>
+  </data>
+  <data name="SettingsPage_PointYourPhoneCameraAt" xml:space="preserve">
+    <value>Skieruj tu aparat telefonu, aby się zapisać — bez pisania. Każdy, kto go zeskanuje, może czytać twoje alerty, więc trzymaj go poza streamem.</value>
   </data>
 </root>

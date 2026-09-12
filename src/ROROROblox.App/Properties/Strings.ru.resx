@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -3107,5 +3107,11 @@ RoRoRo спрашивает про обводку кнопок только дл
   </data>
   <data name="LanguageNotice_Body" xml:space="preserve">
     <value>Он автоматически следует языку вашей системы. Выбрать другой можно в любой момент в разделе Настройки › Внешний вид.</value>
+  </data>
+  <data name="SettingsPage_QrCodeThatSubscribesYour" xml:space="preserve">
+    <value>QR-код, который подписывает телефон на эту тему ntfy</value>
+  </data>
+  <data name="SettingsPage_PointYourPhoneCameraAt" xml:space="preserve">
+    <value>Наведите камеру телефона сюда, чтобы подписаться — без набора. Любой, кто отсканирует его, сможет читать ваши оповещения, так что не показывайте его в стриме.</value>
   </data>
 </root>

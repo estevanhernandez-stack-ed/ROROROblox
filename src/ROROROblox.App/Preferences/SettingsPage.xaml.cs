@@ -15,6 +15,9 @@ using ROROROblox.Core.Discord;
 using ROROROblox.Core.Theming;
 using ROROROblox.Core.Transport;
 
+using ROROROblox.App.Notify;
+using ROROROblox.Core.Notify;
+
 namespace ROROROblox.App.Preferences;
 
 /// <summary>
@@ -243,6 +246,10 @@ internal partial class SettingsPage : UserControl, IDisposable
         try
         {
             _suppressClickHandlers = true;
+            // Streamer mode just changed. If it went ON while the ntfy code was revealed, that
+            // code is a live credential now sitting on a stream — drop it in the same gesture
+            // that masks the names.
+            RefreshNtfyQr();
         }
         catch (Exception)
         {
@@ -1069,6 +1076,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             ? Visibility.Visible : Visibility.Collapsed;
         PhoneTestButton.Visibility = provider == ROROROblox.Core.Notify.PhoneProvider.None
             ? Visibility.Collapsed : Visibility.Visible;
+        RefreshNtfyQr();
     }
 
     private async void OnPhoneProviderChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -1135,6 +1143,44 @@ internal partial class SettingsPage : UserControl, IDisposable
             ShowWebhookMasked(input, reveal, saved);
             NtfyTopicInput.IsReadOnly = true;
         }
+
+        RefreshNtfyQr();
+    }
+
+    /// <summary>
+    /// Repaints the phone-setup QR codes. Cheap enough to call from every path that can change
+    /// what they should show, which is the point — there is no state to keep in sync.
+    ///
+    /// The two providers get opposite treatment, and the asymmetry is the whole design:
+    ///
+    /// <list type="bullet">
+    /// <item><b>Pushover</b> codes are fixed public pages. They carry no credential — Pushover's
+    /// secrets travel phone-to-PC, and only the DESTINATION travels PC-to-phone — so they render
+    /// as soon as the panel is on screen.</item>
+    /// <item><b>ntfy</b>'s code embeds the topic, and the topic grants subscribe AND publish. It
+    /// is therefore gated on the same reveal as the topic text AND force-hidden while streamer
+    /// mode is on. A QR is strictly more exposed than the string it replaces: a viewer can scan
+    /// one off a single paused frame, which nobody does with 33 base32 characters.</item>
+    /// </list>
+    ///
+    /// When it must not show, the bitmap is <b>dropped</b>, not merely collapsed — a hidden
+    /// element still holds its source, and "not currently rendered" is a weaker promise than
+    /// "not present".
+    /// </summary>
+    private void RefreshNtfyQr()
+    {
+        var link = PhoneSetupLinks.NtfySubscribe(
+            CurrentPhoneConfig.NtfyServerUrl, CurrentPhoneConfig.NtfyTopic);
+
+        // StreamerModeToggle is bound to MainViewModel.StreamerModeOn, so reading the control
+        // gives the same answer as reading the view model without needing a reference to it —
+        // and does it on the UI thread, which the view model's notifications are not.
+        var hide = link is null
+                   || NtfyTopicReveal.IsChecked != true
+                   || StreamerModeToggle.IsChecked == true;
+
+        NtfyQrImage.Source = hide ? null : QrImage.From(link);
+        NtfyQrPanel.Visibility = hide ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private (System.Windows.Controls.TextBox Input, System.Windows.Controls.Primitives.ToggleButton Reveal, string? Saved)
@@ -1239,6 +1285,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             NtfyTopicReveal.IsChecked = true;
             PhoneNtfyVerdict.Text = Loc.Get("Shell_Pref_NtfySubscribeHint");
             RefreshAlertsStatus();
+            RefreshNtfyQr();
         }
         catch (Exception ex)
         {
@@ -1276,6 +1323,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         {
             await _phoneNotifyService.MutateAsync(c => c with { NtfyServerUrl = value });
             RefreshAlertsStatus();
+            RefreshNtfyQr();
         }
         catch (Exception ex)
         {

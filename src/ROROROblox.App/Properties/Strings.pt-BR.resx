@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -3107,5 +3107,11 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
   </data>
   <data name="LanguageNotice_Body" xml:space="preserve">
     <value>Ele segue automaticamente o idioma do seu sistema. Escolha outro quando quiser em Configurações › Aparência.</value>
+  </data>
+  <data name="SettingsPage_QrCodeThatSubscribesYour" xml:space="preserve">
+    <value>Código QR que inscreve seu celular neste tópico do ntfy</value>
+  </data>
+  <data name="SettingsPage_PointYourPhoneCameraAt" xml:space="preserve">
+    <value>Aponte a câmera do celular aqui para se inscrever — sem digitar. Quem escanear pode ler seus alertas, então mantenha fora da stream.</value>
   </data>
 </root>
