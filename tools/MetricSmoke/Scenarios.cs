@@ -320,6 +320,21 @@ public sealed class LogWatch
     public int DispatchFailures => _tail.DispatchFailureCount(_lines);
 
     /// <summary>
+    /// Reads whatever has landed since the last read and adds it to what this watch has seen. Nothing
+    /// else here reads the file except <see cref="PollForAsync"/> and <see cref="SettleAsync"/>, both of
+    /// which stop reading the moment their own condition is met — so a line that arrives after a row's
+    /// last poll exists on disk and is invisible to every property below until this is called.
+    /// <para>
+    /// That is not a detail: it is how the swallowed-dispatch check would have inherited the exact hole
+    /// it was added to close. Five rows end on an early-exit poll (value, streamer, subject, repeat,
+    /// live), so a dispatch failure landing a few milliseconds later would have gone unread and the row
+    /// would have passed while the alert it asserted on was dropped. The runner calls this on the row's
+    /// watch before it decides any verdict.
+    /// </para>
+    /// </summary>
+    public async Task RefreshAsync() => _lines.AddRange(await _tail.NewLinesAsync().ConfigureAwait(false));
+
+    /// <summary>
     /// Reads until <paramref name="satisfied"/> is true or <paramref name="within"/> is spent. Early
     /// exit is allowed here and deliberately NOT in <see cref="SettleAsync"/>: proving a line arrived
     /// is finished the moment it arrives, while proving one never arrives is only finished when the
@@ -410,25 +425,47 @@ public sealed class ScenarioContext
     public string FreshSubject() => Guid.NewGuid().ToString();
 
     /// <summary>
-    /// Every <see cref="LogWatch"/> the scenario in flight opened. The runner clears this before each
-    /// scenario and reads <see cref="DispatchFailures"/> after it, which is what makes the
-    /// swallowed-dispatch check impossible for a new scenario to forget: the row does not opt in, it
-    /// just opens its watch the way every row already does.
+    /// The runner's own watch over the scenario in flight, opened by <see cref="BeginScenario"/> whether
+    /// the scenario opens one or not.
+    /// <para>
+    /// Structural on purpose. The swallowed-dispatch check used to read whatever watches the scenario
+    /// happened to open, which made it depend on every future author remembering to call
+    /// <see cref="WatchLog"/> — and two rows already do not (the pipe probe and the accepted-report row,
+    /// neither of which raises an alert today, which is exactly the kind of "fine for now" that stops
+    /// being true quietly). A watch the runner owns spans the whole row by construction and is a superset
+    /// of anything the row opened, so it is also the only one worth reading.
+    /// </para>
     /// </summary>
-    private readonly List<LogWatch> _watches = [];
+    private LogWatch? _rowWatch;
 
-    public LogWatch WatchLog()
+    /// <summary>A watch for a scenario's own assertions. The runner's check does not depend on it.</summary>
+    public LogWatch WatchLog() => LogWatch.Open(LogDirectory);
+
+    /// <summary>Called by the runner before each scenario, and the reason no row can opt out of the
+    /// swallowed-dispatch check.</summary>
+    public void BeginScenario() => _rowWatch = LogWatch.Open(LogDirectory);
+
+    /// <summary>
+    /// Swallowed dispatch failures logged during the scenario in flight. Takes a FINAL read off disk
+    /// first (see <see cref="LogWatch.RefreshAsync"/>) rather than reporting what happens to be buffered:
+    /// five rows end on an early-exit poll, and a failure landing after that poll is on disk and unread.
+    /// </summary>
+    public async Task<int> DispatchFailuresAsync()
     {
-        var watch = LogWatch.Open(LogDirectory);
-        _watches.Add(watch);
-        return watch;
+        // Throws rather than answering zero. A null watch means the runner stopped calling
+        // BeginScenario, and answering "no failures" to that question would turn a broken runner into a
+        // green run — the same silence this check exists to break. The restore still happens: this is
+        // raised inside the runner's try/finally.
+        if (_rowWatch is null)
+        {
+            throw new InvalidOperationException(
+                "No watch was opened for this scenario, so a swallowed dispatch failure could not have "
+                + "been seen. BeginScenario() must run before every scenario.");
+        }
+
+        await _rowWatch.RefreshAsync().ConfigureAwait(false);
+        return _rowWatch.DispatchFailures;
     }
-
-    /// <summary>Called by the runner before each scenario.</summary>
-    public void BeginScenario() => _watches.Clear();
-
-    /// <summary>Swallowed dispatch failures seen by any watch the scenario in flight opened.</summary>
-    public int DispatchFailures => _watches.Sum(w => w.DispatchFailures);
 
     public Task ReportAsync(string subjectId, string metricId, double value)
         => Reporter.ReportAsync(subjectId, metricId, value, DateTimeOffset.UtcNow);

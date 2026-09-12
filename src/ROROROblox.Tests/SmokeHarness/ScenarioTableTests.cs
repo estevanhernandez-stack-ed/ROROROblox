@@ -277,6 +277,38 @@ public class ScenarioTableTests
             "the apparent drop read as a rate collapse — the row would fail on its own setup.");
     }
 
+    [Fact]
+    public async Task AWatchThatNeverPolledStillSeesADispatchFailure_OnceRefreshed()
+    {
+        // The hole this closes had the same shape as the defect the recogniser was added for. A watch
+        // only knows what it has read, and five rows end on an early-exit poll — so a swallowed dispatch
+        // landing a few milliseconds after that poll sat on disk, unread, and the row passed while the
+        // alert it asserted on was dropped. The runner's final read is what makes the check honest.
+        var dir = Path.Combine(Path.GetTempPath(), $"rororo-smoke-logs-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(dir);
+        var logPath = Path.Combine(dir, $"rororoblox-{DateTime.Now:yyyyMMdd}.log");
+        try
+        {
+            await File.WriteAllTextAsync(logPath, "nothing interesting yet" + Environment.NewLine);
+
+            var watch = LogWatch.Open(dir);
+
+            await File.AppendAllTextAsync(logPath,
+                "2026-09-11 14:22:07.400 -07:00 [WRN] v1.25.0.0 ROROROblox.App.Discord.AlertDispatcher "
+                + "Alert dispatch failed; the alert was dropped." + Environment.NewLine);
+
+            // Before the read: invisible. This is the state a row that early-exited would be judged in.
+            Assert.Equal(0, watch.DispatchFailures);
+
+            await watch.RefreshAsync();
+            Assert.Equal(1, watch.DispatchFailures);
+        }
+        finally
+        {
+            try { Directory.Delete(dir, recursive: true); } catch (IOException) { }
+        }
+    }
+
     [Theory]
     [InlineData("0.79")]
     [InlineData("0,79")]

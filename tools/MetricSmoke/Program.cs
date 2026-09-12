@@ -218,12 +218,15 @@ internal static class Program
                     outcome = ScenarioOutcome.Fail($"threw {ex.GetType().Name}: {ex.Message}");
                 }
 
-                // Checked here rather than inside each row, so no future scenario can forget it. The
-                // dispatcher writes "Alert → {Destination}" BEFORE it sends and swallows whatever the
-                // send throws, so a row that asserts on that line passes while the delivery it names
-                // failed — which is how a broken toast could have gone green. See
+                // Checked here rather than inside each row, against a watch BeginScenario opened rather
+                // than one the row remembered to open, and after a final read off disk rather than off
+                // whatever the row happened to have buffered. All three because the dispatcher writes
+                // "Alert → {Destination}" BEFORE it sends and swallows whatever the send throws: a row
+                // asserting on that line passes while the delivery it names failed, which is how a broken
+                // toast could have gone green. Five rows end on an early-exit poll, so without the final
+                // read this check had a hole of exactly the shape it exists to close. See
                 // LogTail.DispatchFailureCount.
-                var dropped = context.DispatchFailures;
+                var dropped = await context.DispatchFailuresAsync().ConfigureAwait(false);
                 if (dropped > 0)
                 {
                     outcome = ScenarioOutcome.Fail(
