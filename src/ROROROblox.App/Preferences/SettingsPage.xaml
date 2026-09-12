@@ -598,30 +598,6 @@
                                         AutomationProperties.Name="{loc:Loc SettingsPage_SaveTheRororoIconFor}"
                                         Click="OnSavePushoverIconClick"
                                         ToolTip="{loc:Loc SettingsPage_TheApplicationFormOnPushover}" />
-                                <!-- Pushover's credentials travel phone-to-PC, so a QR cannot carry
-                                     them. What it can carry is the DESTINATION: these two codes save
-                                     typing a URL on a phone keyboard, and they map one-to-one onto
-                                     the two fields below. Both are public pages holding no secret,
-                                     which is why they show openly - unlike the ntfy code further
-                                     down, which IS the credential. -->
-                                <StackPanel x:Name="PushoverQrPanel" Orientation="Horizontal" Margin="0,0,0,10">
-                                    <StackPanel Margin="0,0,18,0">
-                                        <Image x:Name="PushoverDashboardQr" Width="118" Height="118" Stretch="Uniform"
-                                               RenderOptions.BitmapScalingMode="NearestNeighbor"
-                                               AutomationProperties.Name="{loc:Loc SettingsPage_QrCodeOpeningThePushover}" />
-                                        <TextBlock Text="{loc:Loc SettingsPage_ScanForYourUserKey}" TextWrapping="Wrap" MaxWidth="118"
-                                                   FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}"
-                                                   Margin="0,4,0,0" />
-                                    </StackPanel>
-                                    <StackPanel>
-                                        <Image x:Name="PushoverAppFormQr" Width="118" Height="118" Stretch="Uniform"
-                                               RenderOptions.BitmapScalingMode="NearestNeighbor"
-                                               AutomationProperties.Name="{loc:Loc SettingsPage_QrCodeOpeningThePushoverApplication}" />
-                                        <TextBlock Text="{loc:Loc SettingsPage_ScanToCreateTheApplication}" TextWrapping="Wrap" MaxWidth="118"
-                                                   FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}"
-                                                   Margin="0,4,0,0" />
-                                    </StackPanel>
-                                </StackPanel>
                                 <TextBlock Text="{loc:Loc SettingsPage_UserKey}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,0,0,2" />
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -688,7 +664,11 @@
                                 <!-- The topic, scannable, so nobody retypes 33 base32 characters into
                                      a phone. This code IS the credential - an ntfy topic grants
                                      subscribe AND publish - so it is bound to the same reveal as the
-                                     topic text and is force-hidden while streamer mode is on. A QR is
+                                     topic text and is force-hidden while streamer mode is on. The
+                                     topic TEXT is not: revealing it and then turning streamer mode
+                                     on leaves it showing. Same for both webhook URLs and the
+                                     Pushover pair. This code is the only thing on the page that
+                                     reads the streamer toggle at all. A QR is
                                      strictly MORE exposed than the string it replaces: a viewer can
                                      scan one off a single paused frame, which is not true of the
                                      text. See OnRevealPhoneToggled / RefreshNtfyQr. -->

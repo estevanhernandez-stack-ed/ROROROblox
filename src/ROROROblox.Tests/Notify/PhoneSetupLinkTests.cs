@@ -71,29 +71,4 @@ public class PhoneSetupLinkTests
         Assert.Equal("https://ntfy.sh/we%20ird",
             PhoneSetupLinks.NtfySubscribe("https://ntfy.sh", "we ird"));
     }
-
-    // --- Pushover: public destinations, carrying no secret ---
-
-    [Fact]
-    public void PushoverApplicationForm_IsTheBuildPage()
-    {
-        // Where the application token comes from. The app already offers to save the RoRoRo icon
-        // for this exact form.
-        Assert.Equal("https://pushover.net/apps/build", PhoneSetupLinks.PushoverApplicationForm);
-    }
-
-    [Fact]
-    public void PushoverDashboard_IsWhereTheUserKeyIs()
-    {
-        Assert.Equal("https://pushover.net/", PhoneSetupLinks.PushoverDashboard);
-    }
-
-    [Fact]
-    public void PushoverLinks_CarryNoCredential()
-    {
-        // The property that lets the UI show these openly while hiding the ntfy one. If a future
-        // change ever parameterises these, this test should start failing and force the question.
-        Assert.DoesNotContain("=", PhoneSetupLinks.PushoverApplicationForm);
-        Assert.DoesNotContain("=", PhoneSetupLinks.PushoverDashboard);
-    }
 }

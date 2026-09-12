@@ -249,7 +249,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             // Streamer mode just changed. If it went ON while the ntfy code was revealed, that
             // code is a live credential now sitting on a stream — drop it in the same gesture
             // that masks the names.
-            RefreshPhoneQrCodes();
+            RefreshNtfyQr();
         }
         catch (Exception)
         {
@@ -1076,7 +1076,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             ? Visibility.Visible : Visibility.Collapsed;
         PhoneTestButton.Visibility = provider == ROROROblox.Core.Notify.PhoneProvider.None
             ? Visibility.Collapsed : Visibility.Visible;
-        RefreshPhoneQrCodes();
+        RefreshNtfyQr();
     }
 
     private async void OnPhoneProviderChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -1144,7 +1144,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             NtfyTopicInput.IsReadOnly = true;
         }
 
-        RefreshPhoneQrCodes();
+        RefreshNtfyQr();
     }
 
     /// <summary>
@@ -1167,11 +1167,8 @@ internal partial class SettingsPage : UserControl, IDisposable
     /// element still holds its source, and "not currently rendered" is a weaker promise than
     /// "not present".
     /// </summary>
-    private void RefreshPhoneQrCodes()
+    private void RefreshNtfyQr()
     {
-        PushoverDashboardQr.Source ??= QrImage.From(PhoneSetupLinks.PushoverDashboard, 4);
-        PushoverAppFormQr.Source ??= QrImage.From(PhoneSetupLinks.PushoverApplicationForm, 4);
-
         var link = PhoneSetupLinks.NtfySubscribe(
             CurrentPhoneConfig.NtfyServerUrl, CurrentPhoneConfig.NtfyTopic);
 
@@ -1288,7 +1285,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             NtfyTopicReveal.IsChecked = true;
             PhoneNtfyVerdict.Text = Loc.Get("Shell_Pref_NtfySubscribeHint");
             RefreshAlertsStatus();
-            RefreshPhoneQrCodes();
+            RefreshNtfyQr();
         }
         catch (Exception ex)
         {
@@ -1326,7 +1323,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         {
             await _phoneNotifyService.MutateAsync(c => c with { NtfyServerUrl = value });
             RefreshAlertsStatus();
-            RefreshPhoneQrCodes();
+            RefreshNtfyQr();
         }
         catch (Exception ex)
         {

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -3107,18 +3107,6 @@ Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que 
   </data>
   <data name="LanguageNotice_Body" xml:space="preserve">
     <value>Il suit automatiquement la langue de votre système. Choisissez-en une autre à tout moment dans Paramètres › Apparence.</value>
-  </data>
-  <data name="SettingsPage_QrCodeOpeningThePushover" xml:space="preserve">
-    <value>Code QR qui ouvre le tableau de bord Pushover sur votre téléphone</value>
-  </data>
-  <data name="SettingsPage_ScanForYourUserKey" xml:space="preserve">
-    <value>Scannez pour votre clé utilisateur.</value>
-  </data>
-  <data name="SettingsPage_QrCodeOpeningThePushoverApplication" xml:space="preserve">
-    <value>Code QR qui ouvre le formulaire d'application Pushover sur votre téléphone</value>
-  </data>
-  <data name="SettingsPage_ScanToCreateTheApplication" xml:space="preserve">
-    <value>Scannez pour créer l'application.</value>
   </data>
   <data name="SettingsPage_QrCodeThatSubscribesYour" xml:space="preserve">
     <value>Code QR qui abonne votre téléphone à ce sujet ntfy</value>
