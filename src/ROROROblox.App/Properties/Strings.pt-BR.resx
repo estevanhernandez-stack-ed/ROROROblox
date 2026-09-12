@@ -2119,6 +2119,9 @@ Você vai precisar fazer login de novo para adicioná-la outra vez.</value>
   <data name="Shell_Pref_Reveal_Show" xml:space="preserve">
     <value>Mostrar</value>
   </data>
+  <data name="Shell_Pref_Reveal_StreamerConfirm" xml:space="preserve">
+    <value>O modo streamer está ativado. Clique em Mostrar novamente para exibir mesmo assim.</value>
+  </data>
   <data name="Shell_Pref_PushoverAppToken" xml:space="preserve">
     <value>token de aplicativo</value>
   </data>

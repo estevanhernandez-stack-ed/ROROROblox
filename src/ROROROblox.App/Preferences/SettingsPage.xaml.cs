@@ -246,9 +246,12 @@ internal partial class SettingsPage : UserControl, IDisposable
         try
         {
             _suppressClickHandlers = true;
-            // Streamer mode just changed. If it went ON while the ntfy code was revealed, that
-            // code is a live credential now sitting on a stream — drop it in the same gesture
-            // that masks the names.
+            // Streamer mode just changed. If it went ON while anything was revealed — the ntfy
+            // code, the topic itself, a webhook URL, a Pushover key — that credential is now
+            // sitting on a stream. Drop all of it in the same gesture that masks the names.
+            // Re-masking first matters: it unchecks the reveal toggles, which is what the QR
+            // refresh below then reads to decide the code is hidden too.
+            if (StreamerModeToggle.IsChecked == true) ReMaskRevealedSecrets();
             RefreshNtfyQr();
         }
         catch (Exception)
@@ -1130,6 +1133,12 @@ internal partial class SettingsPage : UserControl, IDisposable
         var (input, reveal, saved) = PhoneFieldFor(sender);
         if (reveal.IsChecked == true)
         {
+            if (RevealNeedsConfirming(input))
+            {
+                ArmRevealConfirm(input, reveal);
+                return;
+            }
+
             input.Text = saved ?? "";
             // The topic stays read-only even revealed — it is generated, and a hand-edited topic
             // is a weaker secret. The Pushover fields unlock like the webhook fields do.
@@ -1572,12 +1581,28 @@ internal partial class SettingsPage : UserControl, IDisposable
     /// swallowed a real user click earlier in this cycle.</summary>
     private bool _syncingWebhookReveal;
 
+    /// <summary>
+    /// Fields whose Show button has been clicked once while streamer mode is on, and so may be
+    /// revealed by a second click. Reference identity, not names. Cleared whenever the field goes
+    /// back behind its mask, so every reveal while streamer mode is on costs two clicks.
+    /// <para>
+    /// No timer. An armed field stays armed until it is masked again or the page is closed, because
+    /// a confirmation that expires while the user is reading the warning is worse than one that
+    /// waits: the second click would silently become a first click again.
+    /// </para>
+    /// </summary>
+    private readonly HashSet<TextBox> _revealConfirmArmed = [];
+
     private void ShowWebhookMasked(
         System.Windows.Controls.TextBox input,
         System.Windows.Controls.Primitives.ToggleButton reveal,
         string? savedUrl)
     {
         var hasSaved = !string.IsNullOrWhiteSpace(savedUrl);
+
+        // Back behind the mask re-arms the confirm. Without this, one confirmed reveal would make
+        // every later reveal of that field single-click for the rest of the session.
+        _revealConfirmArmed.Remove(input);
 
         input.Text = WebhookUrlMasker.Mask(savedUrl);
         input.IsReadOnly = hasSaved;
@@ -1623,6 +1648,14 @@ internal partial class SettingsPage : UserControl, IDisposable
 
         if (reveal.IsChecked == true)
         {
+            // Streamer mode on: warn once, reveal on the second click. A webhook URL is short
+            // enough to read off a single paused frame and grants posting rights to the channel.
+            if (RevealNeedsConfirming(input))
+            {
+                ArmRevealConfirm(input, reveal);
+                return;
+            }
+
             input.Text = saved ?? "";
             input.IsReadOnly = false;
             reveal.Content = Loc.Get("Shell_Pref_Reveal_Hide");
@@ -1633,6 +1666,102 @@ internal partial class SettingsPage : UserControl, IDisposable
         {
             ShowWebhookMasked(input, reveal, saved);
         }
+    }
+
+    /// <summary>
+    /// Whether clicking Show on <paramref name="input"/> should warn instead of revealing: streamer
+    /// mode is on and this field has not already been warned about.
+    /// <para>
+    /// A prompt rather than a refusal, because the state is genuinely ambiguous — someone may be
+    /// live and have forgotten, or be off air with the toggle still set from last night. Refusing
+    /// outright would stop a user reading their own key on their own machine; revealing silently is
+    /// how a credential ends up in a VOD. Two clicks resolves it without deciding for them.
+    /// </para>
+    /// <para>
+    /// Not a modal, deliberately. A dialog whose default button reveals a credential is exactly the
+    /// shape <c>ModalDefaultButtonSafetyTests</c> exists to catch — a stray Enter would put the key
+    /// on the stream. The verdict line under each field is already the surface that reports its
+    /// state, and a TextBlock cannot be triggered by a keystroke.
+    /// </para>
+    /// </summary>
+    private bool RevealNeedsConfirming(TextBox input) =>
+        StreamerModeToggle.IsChecked == true && !_revealConfirmArmed.Contains(input);
+
+    /// <summary>
+    /// Arms the confirm on a field and says so in its verdict line, leaving the value hidden. The
+    /// toggle is put back to unchecked through <see cref="_syncingWebhookReveal"/> so this does not
+    /// re-enter the handler that called it.
+    /// </summary>
+    private void ArmRevealConfirm(TextBox input, System.Windows.Controls.Primitives.ToggleButton reveal)
+    {
+        _revealConfirmArmed.Add(input);
+        VerdictLineFor(input).Text = Loc.Get("Shell_Pref_Reveal_StreamerConfirm");
+
+        try
+        {
+            _syncingWebhookReveal = true;
+            reveal.IsChecked = false;
+        }
+        finally
+        {
+            _syncingWebhookReveal = false;
+        }
+    }
+
+    /// <summary>
+    /// The line under a field where its state is already reported. Both Pushover fields share one,
+    /// which is how the page was built — the warning names no value, so sharing costs nothing here.
+    /// </summary>
+    private TextBlock VerdictLineFor(TextBox input)
+    {
+        if (ReferenceEquals(input, ClanWebhookInput)) return ClanWebhookVerdict;
+        if (ReferenceEquals(input, MineWebhookInput)) return MineWebhookVerdict;
+        if (ReferenceEquals(input, NtfyTopicInput)) return PhoneNtfyVerdict;
+        return PhonePushoverVerdict;
+    }
+
+    /// <summary>
+    /// Every field on this page that holds a credential behind a Show toggle: both Discord webhook
+    /// URLs, the Pushover user key and app token, and the ntfy topic.
+    /// <para>
+    /// One list, so streamer mode cannot protect four of five. Before 2026-09-12 it protected NONE
+    /// of them — <c>StreamerModeToggle</c> was read in exactly one place on this page, the ntfy QR
+    /// refresh, so a revealed webhook URL or Pushover key simply stayed on screen when streamer
+    /// mode came on. <see cref="ROROROblox.Tests.StreamerSecretFieldFenceTests"/> fails if the
+    /// markup grows a sixth reveal toggle that is not listed here.
+    /// </para>
+    /// </summary>
+    private IEnumerable<(TextBox Input, System.Windows.Controls.Primitives.ToggleButton Reveal, string? Saved)> SecretFields()
+    {
+        yield return (MineWebhookInput, MineWebhookReveal, CurrentDiscordConfig.MineWebhookUrl);
+        yield return (ClanWebhookInput, ClanWebhookReveal, CurrentDiscordConfig.ClanWebhookUrl);
+        yield return (PushoverUserKeyInput, PushoverUserKeyReveal, CurrentPhoneConfig.PushoverUserKey);
+        yield return (PushoverAppTokenInput, PushoverAppTokenReveal, CurrentPhoneConfig.PushoverAppToken);
+        yield return (NtfyTopicInput, NtfyTopicReveal, CurrentPhoneConfig.NtfyTopic);
+    }
+
+    /// <summary>
+    /// Puts every revealed credential back behind its mask, and re-arms the confirm on each. Called
+    /// when streamer mode turns ON.
+    /// <para>
+    /// No confirmation prompt here, deliberately, and the asymmetry with
+    /// <see cref="RevealNeedsConfirming"/> is the point: switching streamer mode on IS the user
+    /// asking for things to be hidden. Asking "are you sure?" would be asking them to repeat
+    /// themselves about a credential already on screen. The ambiguous case is the other one —
+    /// clicking Show while streamer mode is already on — and that is where the confirm lives.
+    /// </para>
+    /// </summary>
+    private void ReMaskRevealedSecrets()
+    {
+        foreach (var (input, reveal, saved) in SecretFields())
+        {
+            _revealConfirmArmed.Remove(input);
+            if (reveal.IsChecked != true) continue;
+            ShowWebhookMasked(input, reveal, saved);
+        }
+
+        // The topic is generated, so it stays read-only even when it was revealed for editing.
+        NtfyTopicInput.IsReadOnly = true;
     }
 
     /// <summary>
