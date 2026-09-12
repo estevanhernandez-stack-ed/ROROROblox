@@ -92,7 +92,13 @@ Copy-Item $manifestPath $backupPath -Force
 Write-Host "[finalize] Backed up manifest to $backupPath" -ForegroundColor Gray
 
 # Load and patch.
-[xml]$manifest = Get-Content $manifestPath -Raw
+# -Encoding UTF8 is load-bearing. Windows PowerShell's Get-Content defaults to the ANSI
+# codepage, so a UTF-8 em-dash in a comment was read as three Latin-1 characters and written
+# back out as UTF-8 -- tripling in length on EVERY release. Traced across three tags: 12
+# characters at v1.26, 50 at v1.27, 182 by the v1.28 build, all from one em-dash. Inert
+# because it sat in an XML comment, and growing geometrically regardless. The write side was
+# always careful; only the read side was not.
+[xml]$manifest = Get-Content $manifestPath -Raw -Encoding UTF8
 
 $identityNode = $manifest.Package.Identity
 $beforeName = $identityNode.Name
