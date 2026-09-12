@@ -32,6 +32,39 @@ named for, and **the clock-skew row** was reddened by changing the scenario's ow
 breaking the product. Both caveats are repeated at the row itself, below, rather than left to this
 paragraph alone.
 
+**2026-09-12: the list was walked end to end. Eighteen of twenty-one rows are ticked.** Everything
+that can be checked without a live clan battle now has been, against the v1.27.0.0 Release build at
+`50d4b47` — current `main`. The harness ran first: sixteen scenarios passed, none failed. The rest
+was done by hand with the app running on its real configuration, its real webhooks and a real
+phone, driven by a throwaway reporting plugin standing in for the one a player would write. The
+whole session is in the app's own `rororoblox-20260912.log`, where the `Alert → …` lines timestamp
+every alert named below.
+
+The three rows still open are the same three: a real clan battle, which no amount of tooling
+manufactures. They are Este's to tick, and nobody else's.
+
+Four things this walk established that no earlier run had:
+
+- **The gate nudge is 183 ms, measured.** The toggle was cycled with a watcher polling
+  `settings.json`, firing an identical report the instant the flag flipped. Off, the report died
+  silently; on, the dispatcher logged the alert 183 ms after the write. The 30-second poll cannot
+  account for that, which is what the row had been asserting without evidence.
+- **A `discord.dat` written before this feature existed reads back `MetricBreach → Local`.** That
+  is plan 1's default landing on a config file that has never heard of metric alerts — the exact
+  case where a breach used to route nowhere at all.
+- **The name policy holds against real Discord, not a local catcher.** One breach fanned out to
+  four legs; the toast, the personal channel and the phone carried the alias, and only the clan
+  channel carried the account's real name.
+- **A real phone rang**, which is the only evidence the phone leg has ever been allowed to count.
+
+One thing an earlier run surfaced that is not any row's failure and is recorded here rather than
+lost: the
+masked-name toast and the fallback toast were dispatched 170 ms apart, and only the later one was
+seen. Whether Windows queued the first or replaced it was not established. It has no bearing on the
+sixteen results — both alerts dispatched correctly — but two members breaching within the same
+fraction of a second is an ordinary thing during a battle, so what the shell does with back-to-back
+toasts is worth someone's attention before it is claimed that every breach is seen.
+
 ---
 
 ## Setup — what you need before any row below
@@ -119,31 +152,42 @@ All four delivery legs work: desktop toast, personal Discord channel, clan Disco
 phone, resolved through the same `AlertRouter`/`AlertDispatcher` every other alert kind already
 uses. The routing control lives in Settings → Alerts, alongside the **Metric alerts** opt-in toggle.
 
-- [ ] **A breach reaches the desktop toast.** `[harness]` Report twice across the window, under the floor.
+- [x] **A breach reaches the desktop toast.** `[harness]` Report twice across the window, under the floor.
       The simplest leg to test first — no webhook, no phone credentials, no routing tick required —
       and the row everything else rests on. The harness reads the `Alert → Local` line the dispatcher
       writes *before* it sends, which is not the same claim as the shell having drawn the toast — that
       one stays a by-eye check, once, because scraping a transient shell notification is worse than
       having no check at all (harness spec §2).
-- [ ] **A consented plugin can report at all.** `[harness]` Grant `host.metrics.report` at the consent sheet and
+- [x] **A consented plugin can report at all.** `[harness]` Grant `host.metrics.report` at the consent sheet and
       confirm the report is accepted rather than refused.
-- [ ] **An unconsented plugin is denied.** `[harness]` Two cases, and they are different paths through the
+- [x] **An unconsented plugin is denied.** `[harness]` Two cases, and they are different paths through the
       consent record: a capability that was granted and then revoked, and one the plugin never
       declared at all. Absence is denial, so both must refuse. Confirm `PermissionDenied` at the
       plugin AND no alert at the host — a gate that denied the caller while still recording the
       report would look identical from the plugin's side.
-- [ ] **The opt-in setting actually gates it.** `[harness]` Turn it off, report a breaching number, confirm
+- [x] **The opt-in setting actually gates it.** `[harness]` Turn it off, report a breaching number, confirm
       nothing fires. Then turn it on and confirm the next report is believed immediately — the
       Settings toggle nudges the gate the moment it saves, without waiting on the 30-second poll.
       This is the row that matters most: through plan 1 the feature was off only because the
       destination list was empty, not because the toggle said so.
-- [ ] **The observed value renders legibly.** `[harness]` Use the `Level` rule on a 0.0–1.0 ratio and report
+      **2026-09-12: passed, both halves, and the ON half was measured rather than eyeballed.** The
+      same account, the same rule and the same value were reported twice, so the toggle was the
+      only difference between them. With it off, a breaching `0.79` at 08:33:04 produced nothing —
+      no alert line, no toast. A watcher then polled `settings.json` and fired the identical report
+      the instant the flag flipped: the write landed at 08:33:28.366 and the dispatcher logged
+      `Alert → "Local": ELeonDog` at 08:33:28.549. **183 ms.** The toast was seen arriving on
+      screen, naming the right account.
+      That number is the point. The periodic re-read runs every 30 seconds, so a poll could only
+      account for a 183 ms response by having ticked inside that same fifth of a second — and the
+      report was sent *after* the flip, not before it. The toggle nudges the gate on save, exactly
+      as the Settings page claims.
+- [x] **The observed value renders legibly.** `[harness]` Use the `Level` rule on a 0.0–1.0 ratio and report
       `0.79`. It must read `0.79`, not `0`. The unit tests pin the formatter; only a real toast
       proves the sentence reads well at toast width.
-- [ ] **An unrecognised `subject_id` still reaches the user.** `[harness]` Report a breaching value against an
+- [x] **An unrecognised `subject_id` still reaches the user.** `[harness]` Report a breaching value against an
       account id RoRoRo has no record of. The alert must still fire, keyed globally, rather than
       vanishing because a plugin guessed an id wrong.
-- [ ] **A clock-skewed reporter is visible, not silent.** `[harness]` Report an observation stamped hours in the
+- [x] **A clock-skewed reporter is visible, not silent.** `[harness]` Report an observation stamped hours in the
       future. Confirm the log says so by name. The failure this guards against is Rate rules going
       permanently quiet while Level and Event keep working, which from outside looks like nothing
       happening at all. **Caveat carried from the verification record:** this row has only ever been
@@ -151,23 +195,35 @@ uses. The routing control lives in Settings → Alerts, alongside the **Metric a
       skew detection. `FutureTolerance` and the drop-log line have not themselves been made to
       misbehave; what is proven is that the row notices a missing drop line, not that it notices a
       broken skew check specifically.
-- [ ] **A resetting cumulative counter does not fire a false rate breach.** `[harness]` Report a rising value,
+- [x] **A resetting cumulative counter does not fire a false rate breach.** `[harness]` Report a rising value,
       then a lower one, as the author guide's worked example describes. No alert off the apparent
       drop, and normal reporting again once two fresh samples land after the reset.
-- [ ] **Repeated breaches do not become repeated toasts.** `[harness]` Report under the floor several times in
+- [x] **Repeated breaches do not become repeated toasts.** `[harness]` Report under the floor several times in
       a row inside the five-minute cooldown. Exactly one toast. This is the guarantee the whole
       design rests on — thresholding lives in the host precisely so a bad night cannot become forty
       notifications — and nothing else on this list checks it end to end.
-- [ ] **The rules file is picked up live, and its absence is inert.** `[harness]` With no rules file, the app
+- [x] **The rules file is picked up live, and its absence is inert.** `[harness]` With no rules file, the app
       starts clean and never alerts. Add one while running and confirm it takes effect without a
       restart.
-- [ ] **A malformed rules file does not take the app down.** `[harness]` Truncate it mid-object. The app must
+- [x] **A malformed rules file does not take the app down.** `[harness]` Truncate it mid-object. The app must
       keep running and the plugin host must keep working; you lose your rules, not your session.
       Check the log names the file — a user with a typo has nothing else to go on.
-- [ ] **Streamer mode masks the metric alert.** `[harness]` With streamer mode on, the toast carries the masked
+- [x] **Streamer mode masks the metric alert.** `[harness]` With streamer mode on, the toast carries the masked
       name, the personal Discord channel carries the masked name, and the clan Discord channel
       carries the real one — the same policy every other alert kind's channel routing already uses.
-- [ ] **The plugin pipe still binds with the new RPC present.** `[harness]` A missing capability-map entry
+      **2026-09-12: the toast half passed by eye.** With streamer mode switched on from the app
+      itself, a breach against the account really named `ItsjustesteAgain` dispatched as
+      `Alert → "Local": DoctorDuck`, and the toast seen on screen carried the alias rather than the
+      account name. The channel halves remain the harness's, against its own catcher. Note the
+      toggle must be flipped in the UI or the tray, never by editing `settings.json`:
+      `StreamerIdentityProvider.IsActive` is cached and updated only through the app's own write
+      path, so a hand-edited file leaves a running app still unmasked.
+      Checked and cleared while here: with streamer mode OFF, `GetAccounts` hands a consented
+      plugin the real account names. That is correct — `MetricReporter`'s comment about names
+      arriving "already streamer-masked" describes what happens when the mode is ON — but the two
+      read the same way at a glance, and a listing pulled a few seconds after toggling off looks
+      exactly like a mask that failed. It is not one.
+- [x] **The plugin pipe still binds with the new RPC present.** `[harness]` A missing capability-map entry
       disables plugins for the whole session and is logged only at Debug, so it does not crash and
       does not show. Confirm plugins still work AT ALL, not just that metrics work. **Caveat carried
       from the verification record:** this row has never actually gone red for that defect — deleting
@@ -175,26 +231,63 @@ uses. The routing control lives in Settings → Alerts, alongside the **Metric a
       runner's own wait-for-app gate uses the same probe the row asserts on. It has been proven able to
       fail, but only by killing RoRoRo the instant the pipe answers, before the row's own check
       completes.
-- [ ] **Settings still says "No alerts yet" while the Metric alerts toggle is off.** No harness covers
+- [x] **Settings still says "No alerts yet" while the Metric alerts toggle is off.** No harness covers
       this yet. Deliberate, and it will look like a bug if you do not expect it: the status line
       excludes `MetricBreach` from the count until the toggle is on, even though
       `MetricBreachDestinations` defaults to the desktop toast underneath. Turn the toggle on and
       confirm the sentence starts counting it. This is a status-LINE assertion, not a log line — the
       harness reads the app's log file and never its UI, so covering this row needs a UIA path nobody
       has built yet, not a limit of what a log can say.
-- [ ] **A breach reaches the phone. No harness will ever cover this.** Tick **My phone** on the
+      **2026-09-12: passed, and the instruction above needed correcting to get there.** "Turn the
+      toggle on and confirm the sentence starts counting it" only works from a standing start, and
+      on a profile with other alerts already configured it observes nothing. `AlertStatusLine`
+      names the personal channel, the clan channel and the phone; it never names the desktop. So
+      on a profile where any older kind already routes off-machine, the line is in the "Sending
+      to…" arm, and adding `Local` to the routed set changes the sentence not at all. Nothing is
+      wrong with that — the sentence exists to answer "is anything leaving this machine", and a
+      toast is not — but a reader following the row as written would tick a box having seen no
+      change, or report a bug.
+      What was actually done, and what the row means: with every older kind unrouted the line read
+      *"No alerts yet. Pick what you want to hear about above."* while **Metric alerts** was off,
+      even though `MetricBreach → Local` was live underneath. Ticking the toggle moved it to
+      *"Desktop only. You'll see these at the PC, but nothing will reach your phone."* Both
+      sentences were seen, then the original routing was re-ticked and read back out of
+      `discord.dat` to confirm it came back byte-for-byte.
+      A second thing this row proved by accident, worth more than the row itself: the `discord.dat`
+      under test was written on 2026-09-05, before metric alerts existed, and it still read back
+      `MetricBreach → Local`. That is the default from plan 1 landing correctly on a config file
+      that has never heard of the feature — the exact case where a breach used to route nowhere.
+- [x] **A breach reaches the phone. No harness will ever cover this.** Tick **My phone** on the
       metric-alerts routing row in Settings → Alerts, with phone credentials saved, report a
       breaching value, and confirm the push notification arrives. The phone leg was only ever
       believed once a real phone rang (phone-alerts spec §4); the same discipline applies here. A
       local listener can prove RoRoRo POSTed; it cannot prove a phone buzzed.
-- [ ] **A breach reaches a Discord channel, personal and clan.** No harness will ever fully cover
+      **2026-09-12: passed. A real phone rang.** With **My phone** ticked on the metric row and
+      Pushover credentials already saved, a breaching `0.15` against `CECPapa` dispatched to both
+      legs at 08:45:04.996 — `Alert → "Local"` and `Alert → "Phone"` on the same millisecond — and
+      the push arrived on the handset. The routing was read back out of `discord.dat` as
+      `MetricBreach -> Local, Phone` before the report was sent, so the tick had genuinely
+      persisted rather than merely being drawn.
+- [x] **A breach reaches a Discord channel, personal and clan.** No harness will ever fully cover
       this, with the clan one carrying the real account name and the personal one the masked one.
       Tick **My channel** and **Clan channel** on the metric-alerts routing row with a webhook saved
       for each, report a breaching value on each, and confirm both arrive with the right name policy.
       The harness's own `streamer-mode-masks` scenario proves the routing and the masking policy
       against a local catcher it starts itself; it cannot prove a payload lands and renders in real
       Discord, so a real webhook stays a by-hand check.
-- [ ] **An unconfigured destination falls back to the desktop toast.** `[harness]` Tick **My phone** on the
+      **2026-09-12: passed, against real Discord.** The clan leg was pointed at a channel in a
+      server the tester owns rather than at the clan's own channel — a synthetic alert with an
+      audience helps nobody, and what the row actually needs is a real webhook, not a real
+      readership. Streamer mode was on, without which the row is vacuous: with it off both
+      channels carry the real name and the comparison proves nothing.
+      One breach against `PapasbbBri` at 08:54:08 fanned out to all four legs, and the name policy
+      held exactly. The toast, the personal channel and the phone all carried the alias
+      `PrinceParsnip`; the clan channel carried `PapasbbBri`. Two `Webhook post accepted (204)`
+      lines, and both messages rendered in Discord. The real name reached precisely one
+      destination, the one with an audience, which is the policy stated backwards from how it
+      usually is: everywhere someone else might read over your shoulder gets the alias, and the
+      room that already knows who you are gets the name.
+- [x] **An unconfigured destination falls back to the desktop toast.** `[harness]` Tick **My phone** on the
       metric-alerts routing row with no phone credentials saved, report a breaching value, and
       confirm it lands as a toast rather than vanishing.
 - [ ] **A real threshold crossed on purpose, and a phone that buzzes (Este-gated).** No harness will
@@ -202,9 +295,20 @@ uses. The routing control lives in Settings → Alerts, alongside the **Metric a
       can make from a throwaway plugin; this one needs a real clan, a real battle, and a member
       deliberately under the floor for the window, which is the only way to confirm the whole chain
       fires end to end against a live signal instead of a manufactured one. No harness manufactures a
-      real battle, so this stays a live event, not a rerunnable check. No longer blocked on routing —
-      a hand-written rules file and the phone checkbox are enough now that a breach can reach a
-      phone. Needs Este to run a real clan battle; nobody else can tick this box.
+      real battle, so this stays a live event, not a rerunnable check. Needs Este to run a real clan
+      battle; nobody else can tick this box.
+      **2026-09-12: still blocked, and NOT on routing — on the reporter.** An earlier draft of this
+      row said "a hand-written rules file and the phone checkbox are enough now that a breach can
+      reach a phone." That is wrong, and it would have sent someone into a battle expecting a
+      working chain. Routing is genuinely done and proven. What does not exist is anything that
+      reports a real number: every `ReportMetric` caller in the tree is the host side of the RPC, a
+      unit test, or `tools/MetricSmoke`. The four installed plugins are Ur AFK, Ur MCP, Ur OCR and
+      Ur Task, and none of them polls a game API.
+      So this row needs a plugin written first — one that polls the clan stats endpoint, maps a
+      member to the RoRoRo account id that is the metric's `subject_id`, and reports a rate on a
+      timer. That is the piece the whole plugin/core split exists to keep out of the shipped
+      binary, and it has never been built. Until it is, a real battle proves nothing, because
+      nothing will be watching it.
 
 ---
 
@@ -214,7 +318,7 @@ The signed 626-hosted manifest this section used to wait on is dropped (2026-09-
 `docs/decisions.md` and the banner at the top of the spec). There is no manifest to rotate and no
 signature to corrupt, so those two rows are gone rather than parked.
 
-- [ ] **No vendor hostname or company name ships in source.** `NoVendorNameFenceTests` now proves
+- [x] **No vendor hostname or company name ships in source.** `NoVendorNameFenceTests` now proves
       this on every run instead of relying on review: it scans every
       `.cs`/`.proto`/`.resx`/`.xaml`/`.csproj`/`.json`
       file under `Core`, `App` and `PluginContract` for the vendor's own name and the acronym its
@@ -233,8 +337,19 @@ signature to corrupt, so those two rows are gone rather than parked.
       screenshots and reviewer letters, or the compiled binary's embedded resources.
       By eye before a release, then: grep the three shipping projects for `http` and read every
       hit. There should be no host in `Core`, `App` or `PluginContract` that belongs to a game's
-      API rather than to Roblox, GitHub or 626 Labs — whatever it calls itself. The fence proves
-      the name is absent; only a human proves the *call* is.
+      API rather than to Roblox, GitHub, 626 Labs, the XAML/framework namespaces, or the two phone
+      backends the alert feature ships — whatever it calls itself. The fence proves the name is
+      absent; only a human proves the *call* is.
+      **2026-09-12: passed.** `NoVendorNameFenceTests` green, and the by-eye half done. 369
+      committed source files across the three projects carry 17 distinct hosts: ten Roblox, one
+      GitHub, three Microsoft (two of them XAML namespaces), WPF-UI's `schemas.lepo.co`, and
+      `ntfy.sh` plus `api.pushover.net`, which are the phone-alert backends and expected. No game
+      API, no IP literal, nothing under a bare `ps99.*`. A second pass looked for schemeless
+      domain literals — a `"host.io"` string with no `http` in front of it, which neither the fence
+      nor a `http` grep would catch — and found none.
+      One trap for whoever repeats this: a naive recursive grep reports ~813
+      `raw.githubusercontent.com` hits. Every one is a SourceLink file under `obj/`. Scope the
+      scan to committed files or you will spend the check chasing build output.
 
 ---
 
