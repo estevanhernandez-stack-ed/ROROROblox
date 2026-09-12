@@ -143,6 +143,35 @@ public sealed class MetricReporter : IDisposable
     }
 
     /// <summary>
+    /// Every account RoRoRo has SAVED, as the host hands them to a plugin holding
+    /// <c>host.queries.accounts</c> — an account id and the display name the app shows for it
+    /// (already streamer-masked by the host, same as every other plugin-facing name).
+    /// <para>
+    /// Here for exactly one scenario, and it is not decoration: the masked-versus-real naming row
+    /// cannot be asserted against a made-up subject id. <c>App.ResolveAlertNames</c> answers an
+    /// unknown id with a pair of EMPTY strings, so a synthetic subject makes the personal and clan
+    /// bodies byte-identical and the row can only ever pass vacuously. It needs a subject the host
+    /// can resolve to an account, which means asking the host which accounts exist.
+    /// </para>
+    /// <para>
+    /// <c>GetAccounts</c> over <c>GetRunningAccounts</c> (which is a free read and would need no
+    /// grant) because the running list is empty unless a Roblox client is up, and this harness
+    /// launches none. The cost is one more capability on the harness's own consent record, revoked
+    /// with the rest of it by <see cref="ProfileGuard.RestoreAsync"/>. Nothing here keeps, prints or
+    /// logs a name: the runner compares them in memory and throws them away.
+    /// </para>
+    /// </summary>
+    public async Task<IReadOnlyList<SavedAccount>> SavedAccountsAsync()
+    {
+        var headers = new Metadata { { "x-plugin-id", PluginId } };
+        var list = await _client.GetAccountsAsync(
+            new Empty(),
+            headers: headers,
+            deadline: DateTime.UtcNow.Add(CallTimeout));
+        return [.. list.Accounts];
+    }
+
+    /// <summary>
     /// The exact conversion <see cref="ReportAsync"/> sends over the wire, pulled out as its own
     /// testable step. <see cref="DateTimeOffset.ToUnixTimeMilliseconds"/> is documented to truncate
     /// rather than round: a sub-millisecond remainder is dropped, never rounded up. That direction

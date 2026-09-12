@@ -328,6 +328,47 @@ public sealed class ProfileGuard : IDisposable
     }
 
     /// <summary>
+    /// Removes the rules file, for the one scenario whose subject IS its absence ("its absence is
+    /// inert"). No backup happens here for the same reason as <see cref="WriteRulesAsync"/> —
+    /// <see cref="AcquireAsync"/> already took one if there was anything to take — and the restore
+    /// is unaffected: it puts the backed-up file back, or deletes whatever is there if the profile
+    /// never had one, and both are true whether the harness deleted it mid-run or not.
+    /// <para>
+    /// A missing file is success, not an error: the scenario's postcondition is "there is no rules
+    /// file", and that is already met.
+    /// </para>
+    /// </summary>
+    public void DeleteRules()
+    {
+        EnsureUsable();
+        EnsureBackupsIntact();
+        if (File.Exists(RulesPath)) File.Delete(RulesPath);
+    }
+
+    /// <summary>
+    /// Revokes one plugin id's consent, for the denial scenario that has to take a grant away
+    /// again. Deliberately does NOT forget the id: the restore revokes every id in
+    /// <see cref="SmokeRunMarker.GrantedPluginIds"/>, a revoke of something already revoked is a
+    /// no-op, and dropping the record here would mean a scenario that re-granted afterwards left a
+    /// leftover in the user's consent list.
+    /// <para>
+    /// Consent is the one file with no backup (design §1.4): the harness only ever adds and removes
+    /// its own ids, so there is nothing of the user's to lose. Going through the guard rather than
+    /// straight to <see cref="ConsentStore"/> keeps every profile write in one place, where the
+    /// ownership and backup-integrity checks are.
+    /// </para>
+    /// </summary>
+    public async Task RevokeConsentAsync(string pluginId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(pluginId);
+        EnsureUsable();
+        EnsureBackupsIntact();
+
+        await new ConsentStore(ConsentPath).RevokeAsync(pluginId).ConfigureAwait(false);
+        _log($"[guard] revoked {pluginId}");
+    }
+
+    /// <summary>
     /// Read-modify-writes <c>discord.dat</c> through the production store, so the envelope the app
     /// reads next is one the app wrote the format of. A transform rather than two URL parameters
     /// because the runner also has to point a destination set at the catcher.

@@ -53,6 +53,14 @@ tractable piece of work rather than a large one.
 up state, replays scenarios, and asserts — covering 16 of 21 rows, with the other 5 staying manual on
 purpose.**
 
+> Counted precisely once the table existed (2026-09-11, task 5): **16 scenarios over 14 rows.** Two of
+> the list's rows carry two cases each — consent granted-then-revoked versus never-declared, and the
+> rules file picked up live versus absent — and each case is its own scenario because each is its own
+> path through the code. So "16" was always the number of scenarios, not of rows. The rows the harness
+> covers now carry a `[harness]` marker on the list itself, and `ScenarioTableTests` holds the two in
+> step. Six rows stay manual, not five: the five §3 names plus *Settings still says "No alerts yet"*,
+> which is a UI sentence and would need the UIA path §0.7 mentions.
+
 1. **`tools/MetricSmoke/`, not a test project.** `tools/CompatSigner` is the established home for a
    non-shipping executable in this repo. It must never be referenced by the app and never reach the
    Store build.
@@ -134,6 +142,27 @@ Five rows, and each for a reason that no harness changes.
 Everything else — 16 rows — is automatable, and one of those 16 is already covered by a unit fence.
 
 ## §4 Open questions for review
+
+> Answered 2026-09-11 by task 5, both of the two that were still open:
+>
+> **§4.1 — no restart between scenarios, but the app MUST start after the setup.** The rules file is
+> re-read per report (content-hashed, so a live edit is picked up) and consent is re-read per gated
+> call, so nothing in the run needs a restart. `discord.dat` is the exception and it is not a small
+> one: `DiscordConfigService` loads it ONCE, at startup, and `AlertDispatcher` reads that in-memory
+> copy on every dispatch. Nothing re-reads the file except a mutation through the app's own UI (opening
+> Settings happens to re-`InitializeAsync` it). So a RoRoRo that was already running when the harness
+> swapped the URLs would keep posting to the real ones, and the §1.5 read-back cannot see that — the
+> file is correct and the app is simply not reading it. The runner therefore refuses to start while the
+> pipe already answers, and waits for the app after the swap. Streamer mode is the same shape for a
+> different reason: `StreamerIdentityProvider.IsActive` is read once at startup and changed only by the
+> app's own toggle, so the harness writes it before the app comes up rather than flipping it mid-run.
+>
+> **§4.4 — one window, keyed to `AlertRouter.Cooldown`, at a tenth of it (30 s today).** A positive row
+> may leave it the moment its line appears; a negative row sits through all of it. One constant for
+> both, so the harness can never be patient about successes and impatient about failures. Not the whole
+> cooldown, because the cooldown suppresses a delivery rather than delaying one — nothing on the report
+> path waits, so five minutes buys nothing 30 seconds does not, five times over. `ScenarioTableTests`
+> fails if that stops being derived, or if it falls below the app's own 30-second routine tick.
 
 1. **Does the app need restarting between scenarios?** The rules file is re-read per report and the
    settings gate refreshes on a 30-second tick, so most scenarios should need no restart. Two might:

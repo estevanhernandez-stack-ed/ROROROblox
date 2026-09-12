@@ -9,6 +9,15 @@ below means the feature is unverified, not verified.
 Status key: `[ ]` runnable now, not done · `[x]` done, with the date and what was seen ·
 `[-]` not runnable yet, with the reason.
 
+A row whose title is followed by `` `[harness]` `` is driven by `tools/MetricSmoke` — one command
+replays it and asserts it (`dotnet run --project tools/MetricSmoke`). The marker is machine-read:
+`ScenarioTableTests` fails if the harness's scenario table names a row that is not marked here, if a
+marked row has no scenario, or if the total number of rows on this list changes. So marking a row is
+a claim the tests hold you to, and 14 rows carry it today — 16 scenarios, because two of those rows
+carry two cases each (granted-then-revoked versus never-declared; live pickup versus absence). A
+marker is not a tick: the harness has to be RUN, and the row still gets its `[x]` and its date from
+whoever ran it.
+
 ---
 
 ## Setup — what you need before any row below
@@ -59,48 +68,48 @@ All four delivery legs work: desktop toast, personal Discord channel, clan Disco
 phone, resolved through the same `AlertRouter`/`AlertDispatcher` every other alert kind already
 uses. The routing control lives in Settings → Alerts, alongside the **Metric alerts** opt-in toggle.
 
-- [ ] **A breach reaches the desktop toast.** Report twice across the window, under the floor.
+- [ ] **A breach reaches the desktop toast.** `[harness]` Report twice across the window, under the floor.
       The simplest leg to test first — no webhook, no phone credentials, no routing tick required —
       and the row everything else rests on.
-- [ ] **A consented plugin can report at all.** Grant `host.metrics.report` at the consent sheet and
+- [ ] **A consented plugin can report at all.** `[harness]` Grant `host.metrics.report` at the consent sheet and
       confirm the report is accepted rather than refused.
-- [ ] **An unconsented plugin is denied.** Two cases, and they are different paths through the
+- [ ] **An unconsented plugin is denied.** `[harness]` Two cases, and they are different paths through the
       consent record: a capability that was granted and then revoked, and one the plugin never
       declared at all. Absence is denial, so both must refuse. Confirm `PermissionDenied` at the
       plugin AND no alert at the host — a gate that denied the caller while still recording the
       report would look identical from the plugin's side.
-- [ ] **The opt-in setting actually gates it.** Turn it off, report a breaching number, confirm
+- [ ] **The opt-in setting actually gates it.** `[harness]` Turn it off, report a breaching number, confirm
       nothing fires. Then turn it on and confirm the next report is believed immediately — the
       Settings toggle nudges the gate the moment it saves, without waiting on the 30-second poll.
       This is the row that matters most: through plan 1 the feature was off only because the
       destination list was empty, not because the toggle said so.
-- [ ] **The observed value renders legibly.** Use the `Level` rule on a 0.0–1.0 ratio and report
+- [ ] **The observed value renders legibly.** `[harness]` Use the `Level` rule on a 0.0–1.0 ratio and report
       `0.79`. It must read `0.79`, not `0`. The unit tests pin the formatter; only a real toast
       proves the sentence reads well at toast width.
-- [ ] **An unrecognised `subject_id` still reaches the user.** Report a breaching value against an
+- [ ] **An unrecognised `subject_id` still reaches the user.** `[harness]` Report a breaching value against an
       account id RoRoRo has no record of. The alert must still fire, keyed globally, rather than
       vanishing because a plugin guessed an id wrong.
-- [ ] **A clock-skewed reporter is visible, not silent.** Report an observation stamped hours in the
+- [ ] **A clock-skewed reporter is visible, not silent.** `[harness]` Report an observation stamped hours in the
       future. Confirm the log says so by name. The failure this guards against is Rate rules going
       permanently quiet while Level and Event keep working, which from outside looks like nothing
       happening at all.
-- [ ] **A resetting cumulative counter does not fire a false rate breach.** Report a rising value,
+- [ ] **A resetting cumulative counter does not fire a false rate breach.** `[harness]` Report a rising value,
       then a lower one, as the author guide's worked example describes. No alert off the apparent
       drop, and normal reporting again once two fresh samples land after the reset.
-- [ ] **Repeated breaches do not become repeated toasts.** Report under the floor several times in
+- [ ] **Repeated breaches do not become repeated toasts.** `[harness]` Report under the floor several times in
       a row inside the five-minute cooldown. Exactly one toast. This is the guarantee the whole
       design rests on — thresholding lives in the host precisely so a bad night cannot become forty
       notifications — and nothing else on this list checks it end to end.
-- [ ] **The rules file is picked up live, and its absence is inert.** With no rules file, the app
+- [ ] **The rules file is picked up live, and its absence is inert.** `[harness]` With no rules file, the app
       starts clean and never alerts. Add one while running and confirm it takes effect without a
       restart.
-- [ ] **A malformed rules file does not take the app down.** Truncate it mid-object. The app must
+- [ ] **A malformed rules file does not take the app down.** `[harness]` Truncate it mid-object. The app must
       keep running and the plugin host must keep working; you lose your rules, not your session.
       Check the log names the file — a user with a typo has nothing else to go on.
-- [ ] **Streamer mode masks the metric alert.** With streamer mode on, the toast carries the masked
+- [ ] **Streamer mode masks the metric alert.** `[harness]` With streamer mode on, the toast carries the masked
       name, the personal Discord channel carries the masked name, and the clan Discord channel
       carries the real one — the same policy every other alert kind's channel routing already uses.
-- [ ] **The plugin pipe still binds with the new RPC present.** A missing capability-map entry
+- [ ] **The plugin pipe still binds with the new RPC present.** `[harness]` A missing capability-map entry
       disables plugins for the whole session and is logged only at Debug, so it does not crash and
       does not show. Confirm plugins still work AT ALL, not just that metrics work.
 - [ ] **Settings still says "No alerts yet" while the Metric alerts toggle is off.** Deliberate, and
@@ -116,7 +125,7 @@ uses. The routing control lives in Settings → Alerts, alongside the **Metric a
       account name and the personal one the masked name. Tick **My channel** and **Clan channel** on
       the metric-alerts routing row with a webhook saved for each, report a breaching value on each,
       and confirm both arrive with the right name policy.
-- [ ] **An unconfigured destination falls back to the desktop toast.** Tick **My phone** on the
+- [ ] **An unconfigured destination falls back to the desktop toast.** `[harness]` Tick **My phone** on the
       metric-alerts routing row with no phone credentials saved, report a breaching value, and
       confirm it lands as a toast rather than vanishing.
 - [ ] **A real threshold crossed on purpose, and a phone that buzzes (Este-gated).** Not a repeat of
