@@ -99,8 +99,9 @@ internal static class Program
     ///   the clan-channel guard and it is the reason the order has this step at all;</item>
     ///   <item>acquire the guard (backs up what needs backing up, writes the marker);</item>
     ///   <item>start the catcher, so the URLs written next point at something already listening;</item>
-    ///   <item>write <c>discord.dat</c> and READ IT BACK — abort without reporting a single metric if
-    ///   the read-back disagrees;</item>
+    ///   <item>unconfigure the phone, write <c>discord.dat</c>, and READ BOTH BACK — the two webhook
+    ///   URLs, the metric-breach destination set, and that the phone really has no credentials behind
+    ///   it. Abort without reporting a single metric if any of the three disagrees;</item>
     ///   <item>wait for the app to answer on the pipe;</item>
     ///   <item>run the scenarios;</item>
     ///   <item>restore, in a <c>finally</c> that also runs on Ctrl-C.</item>
@@ -147,13 +148,18 @@ internal static class Program
         }
 
         var catcher = WebhookCatcher.Start();
+        var passes = 0;
         var failures = 0;
         var skips = 0;
+        // Set when the run stopped early rather than any one row failing. Kept separate from the counts
+        // so neither is attributed to a row, and folded into the exit code — which matters when the stop
+        // happens on the last row, where "never ran" is zero and the abort would otherwise vanish.
+        var aborted = false;
 
         try
         {
-            var phoneConfigured = await PhoneIsConfiguredAsync(dataRoot).ConfigureAwait(false);
-            if (!await SetUpProfileAsync(guard, catcher, phoneConfigured).ConfigureAwait(false))
+            var phoneRouted = await SetUpProfileAsync(guard, catcher).ConfigureAwait(false);
+            if (phoneRouted is null)
             {
                 // SetUpProfileAsync has already said why. Nothing was reported, which is the point.
                 return 1;
@@ -177,7 +183,7 @@ internal static class Program
                 Reporter = reporter,
                 LogDirectory = logDirectory,
                 Log = Console.WriteLine,
-                PhoneRouted = !phoneConfigured,
+                PhoneRouted = phoneRouted.Value,
             };
             await ResolveNamedSubjectAsync(context, subjectOverride).ConfigureAwait(false);
 
@@ -194,11 +200,12 @@ internal static class Program
                 {
                     Console.WriteLine("Stopped by Ctrl-C before the remaining scenarios. The profile is being "
                         + "put back now.");
-                    failures++;
+                    aborted = true;
                     break;
                 }
 
                 Console.WriteLine($"→ {scenario.Name}");
+                context.BeginScenario();
                 ScenarioOutcome outcome;
                 try
                 {
@@ -211,9 +218,24 @@ internal static class Program
                     outcome = ScenarioOutcome.Fail($"threw {ex.GetType().Name}: {ex.Message}");
                 }
 
+                // Checked here rather than inside each row, so no future scenario can forget it. The
+                // dispatcher writes "Alert → {Destination}" BEFORE it sends and swallows whatever the
+                // send throws, so a row that asserts on that line passes while the delivery it names
+                // failed — which is how a broken toast could have gone green. See
+                // LogTail.DispatchFailureCount.
+                var dropped = context.DispatchFailures;
+                if (dropped > 0)
+                {
+                    outcome = ScenarioOutcome.Fail(
+                        $"the dispatcher logged {dropped} swallowed failure(s) in this row's window — an "
+                        + "alert was logged as routed and then dropped on an exception. "
+                        + $"Original verdict: {outcome.Status}, {outcome.Detail}");
+                }
+
                 switch (outcome.Status)
                 {
                     case ScenarioStatus.Passed:
+                        passes++;
                         Console.WriteLine($"   PASS  {scenario.SmokeRow}");
                         break;
                     case ScenarioStatus.Skipped:
@@ -236,18 +258,26 @@ internal static class Program
                     Console.WriteLine($"The webhook catcher recorded a request fault ({fault.GetType().Name}: "
                         + $"{fault.Message}). A lost POST makes every later row's silence meaningless, so the "
                         + "run stops here.");
-                    failures++;
+                    aborted = true;
                     break;
                 }
             }
 
+            // Counted, never subtracted. A run that stopped early — Ctrl-C, or a deaf catcher — leaves
+            // rows that never ran, and subtracting failures from the table's length reported those as
+            // passes: "15 passed, 1 failed" for a run that asserted nothing. The exit code was right and
+            // this line is the one a human transcribes into the smoke list, which makes it the more
+            // dangerous of the two.
+            var notRun = ScenarioTable.All.Count - passes - failures - skips;
             Console.WriteLine();
-            Console.WriteLine($"{ScenarioTable.All.Count - failures - skips} passed, {failures} failed, {skips} skipped.");
-            if (skips > 0)
+            Console.WriteLine($"{passes} passed, {failures} failed, {skips} skipped"
+                + (notRun > 0 ? $", {notRun} never ran." : "."));
+            if (skips > 0 || notRun > 0)
             {
-                Console.WriteLine("A skipped row is NOT a covered row — its smoke-list box stays unticked.");
+                Console.WriteLine("A row that skipped or never ran is NOT a covered row — its smoke-list box "
+                    + "stays unticked.");
             }
-            return failures == 0 ? 0 : 1;
+            return failures == 0 && notRun == 0 && !aborted ? 0 : 1;
         }
         finally
         {
@@ -294,33 +324,6 @@ internal static class Program
     }
 
     /// <summary>
-    /// Whether phone credentials are saved. Read through the production store so the answer is the same
-    /// one <c>AlertRouter</c> gets, rather than "notify.dat exists" — a file can be there with the
-    /// provider set to none, and that profile CAN run the fallback row.
-    /// <para>
-    /// Nothing here keeps, prints or logs a field of that record; the question asked is a single bool.
-    /// The harness does not back <c>notify.dat</c> up and never writes it, which is why the fallback row
-    /// skips rather than blanking one to become runnable.
-    /// </para>
-    /// </summary>
-    private static async Task<bool> PhoneIsConfiguredAsync(string dataRoot)
-    {
-        try
-        {
-            var store = new PhoneNotifyConfigStore(Path.Combine(dataRoot, "notify.dat"));
-            return (await store.LoadAsync().ConfigureAwait(false)).IsConfigured;
-        }
-        catch (Exception ex)
-        {
-            // Unreadable is treated as CONFIGURED: the cautious direction. Guessing "not configured"
-            // would route Phone and could page a real phone on a profile this could not read.
-            Console.WriteLine($"[setup] could not read the phone config ({ex.GetType().Name}); assuming "
-                + "credentials are saved and leaving Phone out of the destination set.");
-            return true;
-        }
-    }
-
-    /// <summary>
     /// Everything the app has to find on disk before it starts: both webhook URLs pointing at the
     /// catcher, a destination set that exercises all four legs, the opt-in on, streamer mode on, the
     /// rules file, and the harness's own consent grant.
@@ -339,9 +342,15 @@ internal static class Program
     /// <c>BooleanSetting.StreamerMode</c> — so nothing needed extending.
     /// </para>
     /// </summary>
-    private static async Task<bool> SetUpProfileAsync(
-        ProfileGuard guard, WebhookCatcher catcher, bool phoneConfigured)
+    private static async Task<bool?> SetUpProfileAsync(ProfileGuard guard, WebhookCatcher catcher)
     {
+        // The phone goes first, because whether it can be unconfigured decides the destination set.
+        // notify.dat is backed up by AcquireAsync and put back by the restore, so this is a swap like
+        // the webhooks' rather than a loss — and it has to happen BEFORE the app starts, because
+        // PhoneNotifyConfigService caches the record at startup exactly as DiscordConfigService does.
+        await guard.UnconfigurePhoneAsync().ConfigureAwait(false);
+        var phoneRouted = await guard.VerifyPhoneUnconfiguredAsync().ConfigureAwait(false);
+
         // ORDER MATTERS, in two ways, and neither is cosmetic.
         //
         // Phone LAST because AlertRouter resolves in order and dedupes: an unconfigured Phone falls
@@ -362,14 +371,13 @@ internal static class Program
             AlertDestination.Clan,
             AlertDestination.Local,
         };
-        if (!phoneConfigured) destinations.Add(AlertDestination.Phone);
+        if (phoneRouted) destinations.Add(AlertDestination.Phone);
 
         Console.WriteLine($"[setup] metric breaches route to {string.Join(", ", destinations)}");
-        if (phoneConfigured)
-        {
-            Console.WriteLine("[setup] phone credentials are saved, so Phone is NOT routed — the fallback row "
-                + "will skip rather than page a real phone.");
-        }
+        Console.WriteLine(phoneRouted
+            ? $"[setup] {ProfileGuard.NotifyFileName} reads back unconfigured, so Phone is routed and cannot ring"
+            : $"[setup] {ProfileGuard.NotifyFileName} could NOT be confirmed unconfigured, so Phone is not routed "
+                + "— the fallback row will skip rather than page a real phone.");
 
         await guard.MutateDiscordAsync(config => config with
         {
@@ -385,9 +393,24 @@ internal static class Program
             Console.WriteLine("  The lines above say which half disagreed. Until both URLs are the catcher's,");
             Console.WriteLine("  a breach could reach your real clan channel, so nothing will be sent. The");
             Console.WriteLine("  profile is about to be put back from the backups this run took.");
-            return false;
+            return null;
         }
-        Console.WriteLine("[setup] both webhook URLs read back as the catcher's");
+
+        // The destination set needs its own read-back: VerifyDiscordSwapAsync covers the two URLs and a
+        // fingerprint of the fields the harness never touches, and that fingerprint deliberately
+        // EXCLUDES MetricBreachDestinations — otherwise it would flag the harness's own edit every run
+        // and be ignored within a week. Which left the routing every row depends on unverified, and a
+        // lost write there is quiet: the field defaults to Local, so breaches still toast, most rows
+        // still look right, and only the two channel rows and the fallback row go wrong.
+        if (!await guard.VerifyMetricDestinationsAsync(destinations).ConfigureAwait(false))
+        {
+            Console.WriteLine();
+            Console.WriteLine("ABORTING before a single metric is reported: the metric-breach destination set");
+            Console.WriteLine("  did not read back as written (the line above says what it reads as). Nothing");
+            Console.WriteLine("  will be sent against routing this run did not write.");
+            return null;
+        }
+        Console.WriteLine("[setup] both webhook URLs and the destination set read back as written");
 
         await guard.SetMetricAlertsEnabledAsync(true).ConfigureAwait(false);
         await guard.SetStreamerModeAsync(true).ConfigureAwait(false);
@@ -396,7 +419,7 @@ internal static class Program
             [PluginCapability.HostMetricsReport, PluginCapability.HostQueriesAccounts]).ConfigureAwait(false);
         await guard.WriteRulesAsync(SmokeRules.ToJson(SmokeRules.Canonical)).ConfigureAwait(false);
         Console.WriteLine($"[setup] {SmokeRules.Canonical.Count} rules written");
-        return true;
+        return phoneRouted;
     }
 
     /// <summary>

@@ -5,11 +5,12 @@ using System.Text.Json;
 using ROROROblox.App.Plugins;
 using ROROROblox.Core;
 using ROROROblox.Core.Discord;
+using ROROROblox.Core.Notify;
 
 namespace ROROROblox.MetricSmoke;
 
 /// <summary>
-/// Saves the four profile files the metric-alert smoke harness has to touch, and gives them back.
+/// Saves the five profile files the metric-alert smoke harness has to touch, and gives them back.
 /// <para>
 /// This runs against the user's REAL <c>%LOCALAPPDATA%\ROROROblox</c>, because the app has no
 /// data-root seam (design 2026-09-11, §2: adding one is a bigger, riskier change than the harness it
@@ -26,9 +27,12 @@ namespace ROROROblox.MetricSmoke;
 ///   restore would discard whatever it wrote while the harness ran.</item>
 ///   <item><c>metric-rules.json</c> — harness-owned. Backed up only if one already exists; otherwise
 ///   deleted on restore, so a profile that never had rules does not acquire them.</item>
-///   <item><c>discord.dat</c> — full backup and restore. The only file that needs one, and the one
-///   holding real webhook URLs, so the backup stays on the machine, never gets committed, and is
-///   deleted as soon as the restore completes.</item>
+///   <item><c>discord.dat</c> — full backup and restore. It holds real webhook URLs, so the backup
+///   stays on the machine, never gets committed, and is deleted as soon as the restore completes.</item>
+///   <item><c>notify.dat</c> — full backup and restore, added 2026-09-11 (see
+///   <see cref="NotifyFileName"/>). Same reasoning as <c>discord.dat</c>, same treatment; it is the
+///   fifth file because the fallback smoke row needs the phone UNconfigured and would otherwise have
+///   been permanently unrunnable on any profile that had ever set it up.</item>
 /// </list>
 /// <para>
 /// <b>Both stores this class writes through lie to it on failure, and that is the central hazard.</b>
@@ -59,6 +63,22 @@ public sealed class ProfileGuard : IDisposable
     public const string DiscordFileName = "discord.dat";
     public const string ConsentFileName = "consent.dat";
 
+    /// <summary>
+    /// The phone credentials (<c>notify.dat</c>). Guarded since 2026-09-11 and the fifth file, added
+    /// because the alternative was a smoke row that could never run: the fallback row needs a routed
+    /// destination that is NOT configured, and on any profile where phone alerts were ever set up — this
+    /// machine, since v1.25 — Phone is configured. A row that always skips is not a covered row.
+    /// <para>
+    /// Same strategy as <see cref="DiscordFileName"/>: full byte-level backup and restore, because it
+    /// holds a real credential (a Pushover key pair or an ntfy topic, which IS the credential) and
+    /// losing it costs the user a re-paste. Unlike <c>discord.dat</c> the harness never reads-modifies-
+    /// writes it — it overwrites it wholesale with a default, unconfigured record — so an envelope that
+    /// has stopped decrypting cannot be silently half-merged, and <see cref="AcquireAsync"/> has nothing
+    /// to probe for and refuse over: the backup is the original bytes either way.
+    /// </para>
+    /// </summary>
+    public const string NotifyFileName = "notify.dat";
+
     private const string BackupSuffix = ".bak";
 
     private static readonly JsonSerializerOptions MarkerJson = new() { WriteIndented = true };
@@ -86,6 +106,7 @@ public sealed class ProfileGuard : IDisposable
     public string RulesPath => Path.Combine(DataRoot, RulesFileName);
     public string DiscordPath => Path.Combine(DataRoot, DiscordFileName);
     public string ConsentPath => Path.Combine(DataRoot, ConsentFileName);
+    public string NotifyPath => Path.Combine(DataRoot, NotifyFileName);
 
     /// <summary>
     /// The app's live data folder — derived from <see cref="AppSettings.DefaultPath"/> rather than
@@ -201,6 +222,7 @@ public sealed class ProfileGuard : IDisposable
                 RulesExisted = File.Exists(rulesPath),
                 SettingsExisted = settingsState == SettingsFileState.Readable,
                 ConsentExisted = File.Exists(Path.Combine(dataRoot, ConsentFileName)),
+                NotifyExisted = File.Exists(Path.Combine(dataRoot, NotifyFileName)),
             };
 
             // The marker is claimed BEFORE the first copy, with CreateNew so two runs cannot both
@@ -228,6 +250,21 @@ public sealed class ProfileGuard : IDisposable
                 File.Copy(rulesPath, Path.Combine(backupRoot, RulesFileName + BackupSuffix), overwrite: true);
                 marker.RulesBackupFile = RulesFileName + BackupSuffix;
                 write($"[guard] backed up {RulesFileName}");
+            }
+
+            if (marker.NotifyExisted)
+            {
+                // The bytes, like discord.dat: a DPAPI envelope round-tripped through Load/Save would
+                // be a re-encryption, not the same file back.
+                File.Copy(
+                    Path.Combine(dataRoot, NotifyFileName),
+                    Path.Combine(backupRoot, NotifyFileName + BackupSuffix), overwrite: true);
+                marker.NotifyBackupFile = NotifyFileName + BackupSuffix;
+                write($"[guard] backed up {NotifyFileName}");
+            }
+            else
+            {
+                write($"[guard] no {NotifyFileName} in the profile — restore will delete the one the harness writes.");
             }
 
             await SaveMarkerAsync(backupRoot, marker).ConfigureAwait(false);
@@ -453,6 +490,92 @@ public sealed class ProfileGuard : IDisposable
     }
 
     /// <summary>
+    /// Reads <c>discord.dat</c> back and says whether the metric-breach destination set is the one
+    /// written. Separate from <see cref="VerifyDiscordSwapAsync"/> because <see cref="ShapeOf"/>
+    /// deliberately excludes this field — a fingerprint that flagged the harness's own edits would be
+    /// ignored within a week — which left the routing the whole run depends on the one thing nothing
+    /// checked.
+    /// <para>
+    /// A lost write here is quiet and expensive: <c>MetricBreachDestinations</c> defaults to
+    /// <see cref="AlertDestination.Local"/>, so a breach still produces a toast and most rows still
+    /// look right, while the two channel rows have no posts to read and the fallback row asserts a
+    /// Phone absence that was never routed in the first place. Read through
+    /// <see cref="DiscordConfig.DestinationsFor"/>, not the raw property, so this asks the question the
+    /// app's own router asks — including the empty-list-means-migrate path.
+    /// </para>
+    /// </summary>
+    public async Task<bool> VerifyMetricDestinationsAsync(IReadOnlyList<AlertDestination> expected)
+    {
+        ArgumentNullException.ThrowIfNull(expected);
+
+        var read = await ReadDiscordAsync(DiscordPath).ConfigureAwait(false);
+        if (read.Outcome != DiscordReadOutcome.Ok)
+        {
+            _log($"[guard] the destination set cannot be confirmed: {read.Explain(DiscordPath)}");
+            return false;
+        }
+
+        var actual = read.Config!.DestinationsFor(AlertKind.MetricBreach);
+        if (actual.SequenceEqual(expected))
+        {
+            return true;
+        }
+
+        _log($"[guard] metric breaches read back as routing to [{string.Join(", ", actual)}], not "
+            + $"[{string.Join(", ", expected)}]. Nothing may be reported against routing this run did not write.");
+        return false;
+    }
+
+    /// <summary>
+    /// Overwrites <c>notify.dat</c> with a default, UNCONFIGURED record, so
+    /// <see cref="AlertDestination.Phone"/> can be routed without a real phone ringing — which is the
+    /// whole point of the fallback row, and what stopped it from ever running before this existed.
+    /// <para>
+    /// A wholesale write, never a read-modify-write: the point is to remove the credential, not to edit
+    /// around it, and <see cref="AcquireAsync"/> already holds the original bytes. So unlike
+    /// <see cref="MutateDiscordAsync"/> there is no undecryptable-file hazard to refuse over — a file
+    /// this tool could not read is restored from the backup byte for byte regardless.
+    /// </para>
+    /// <para>
+    /// The app caches this record exactly as it caches <c>discord.dat</c>
+    /// (<c>PhoneNotifyConfigService.Current</c>, loaded once at startup), so this has to happen BEFORE
+    /// the app starts. The cost while the run is in flight is the same private annoyance the webhook
+    /// swap already carries, and for the same window: a genuine drop-out would reach the desktop instead
+    /// of the phone.
+    /// </para>
+    /// </summary>
+    public async Task UnconfigurePhoneAsync()
+    {
+        EnsureUsable();
+        EnsureBackupsIntact();
+
+        await new PhoneNotifyConfigStore(NotifyPath).SaveAsync(new PhoneNotifyConfig()).ConfigureAwait(false);
+        _log($"[guard] {NotifyFileName} replaced with an unconfigured record (restored from backup at the end)");
+    }
+
+    /// <summary>
+    /// Reads <c>notify.dat</c> back and answers whether the phone really is unconfigured — the same
+    /// question <c>AlertDispatcher</c> asks (<c>PhoneNotifyConfig.IsConfigured</c>) before it decides
+    /// whether Phone is a real destination. False means Phone must not be routed: the alternative is
+    /// paging a real phone to demonstrate a fallback.
+    /// </summary>
+    public async Task<bool> VerifyPhoneUnconfiguredAsync()
+    {
+        try
+        {
+            return !(await new PhoneNotifyConfigStore(NotifyPath).LoadAsync().ConfigureAwait(false)).IsConfigured;
+        }
+        catch (Exception ex)
+        {
+            // The store maps a decryption failure and a bad blob to DEFAULTS rather than throwing, so
+            // this catch is for the genuinely exceptional — a locked or ACL-blocked file surfacing an
+            // IOException. Either way the honest answer is "cannot confirm", which reads as configured.
+            _log($"[guard] could not confirm {NotifyFileName} is unconfigured ({ex.GetType().Name}).");
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Grants the harness's own plugin id its capabilities, and records the id so the restore revokes
     /// exactly that and nothing else.
     /// </summary>
@@ -621,6 +744,14 @@ public sealed class ProfileGuard : IDisposable
             return Task.CompletedTask;
         }).ConfigureAwait(false);
 
+        var notifyPath = Path.Combine(marker.DataRoot, NotifyFileName);
+        await StepAsync(NotifyFileName, () =>
+        {
+            RestoreFileFromBackup(backupRoot, marker.NotifyBackupFile, notifyPath, marker.NotifyExisted,
+                NotifyFileName, "re-enter the phone credentials in Settings > Alerts", log);
+            return Task.CompletedTask;
+        }).ConfigureAwait(false);
+
         // One step per key, so a failure on one still puts the other back.
         var settingsPath = Path.Combine(marker.DataRoot, SettingsFileName);
         foreach (var (key, original) in marker.OriginalSettings)
@@ -697,6 +828,7 @@ public sealed class ProfileGuard : IDisposable
             // RestoreAsync — the runner's finally — a no-op rather than a false alarm.
             DeleteQuietly(Path.Combine(backupRoot, marker.DiscordBackupFile ?? ""), log);
             DeleteQuietly(Path.Combine(backupRoot, marker.RulesBackupFile ?? ""), log);
+            DeleteQuietly(Path.Combine(backupRoot, marker.NotifyBackupFile ?? ""), log);
             DeleteQuietly(Path.Combine(backupRoot, MarkerFileName), log);
             marker.ClearRestoredState();
         }
@@ -758,7 +890,7 @@ public sealed class ProfileGuard : IDisposable
     {
         var missing = new List<string>();
         if (!File.Exists(Path.Combine(_backupRoot, MarkerFileName))) missing.Add(MarkerFileName);
-        foreach (var name in new[] { _marker.DiscordBackupFile, _marker.RulesBackupFile })
+        foreach (var name in new[] { _marker.DiscordBackupFile, _marker.RulesBackupFile, _marker.NotifyBackupFile })
         {
             if (name is { Length: > 0 } && !File.Exists(Path.Combine(_backupRoot, name))) missing.Add(name);
         }
@@ -1114,6 +1246,14 @@ public sealed class SmokeRunMarker
 
     public bool RulesExisted { get; set; }
 
+    /// <summary>The backup file name for <c>notify.dat</c>, or null when the profile had none.</summary>
+    public string? NotifyBackupFile { get; set; }
+
+    /// <summary>Whether the profile had a <c>notify.dat</c> before the run. False means the restore
+    /// deletes the unconfigured one the harness wrote rather than leaving the profile with a file it
+    /// never had.</summary>
+    public bool NotifyExisted { get; set; }
+
     /// <summary>Whether a readable <c>settings.json</c> was there when the run started, so the restore
     /// never creates one to hold a value that would be the app's default anyway.</summary>
     public bool SettingsExisted { get; set; }
@@ -1139,8 +1279,10 @@ public sealed class SmokeRunMarker
     {
         DiscordBackupFile = null;
         RulesBackupFile = null;
+        NotifyBackupFile = null;
         DiscordExisted = true;
         RulesExisted = true;
+        NotifyExisted = true;
         OriginalSettings.Clear();
         GrantedPluginIds.Clear();
     }

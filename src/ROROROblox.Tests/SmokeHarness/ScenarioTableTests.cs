@@ -277,6 +277,28 @@ public class ScenarioTableTests
             "the apparent drop read as a rate collapse — the row would fail on its own setup.");
     }
 
+    [Theory]
+    [InlineData("0.79")]
+    [InlineData("0,79")]
+    public void TheObservedValueIsReadInWhateverCultureTheAppRenderedIt(string token)
+    {
+        // WebhookPayload formats {v:0.##} under the RUNNING APP's culture, and this app ships six —
+        // fr, de, ru, pt-BR, pl, es — several of which write a comma. A literal "0.79" comparison would
+        // fail the value row on a localised install for a formatting difference that is correct.
+        Assert.True(ScenarioTable.TryParseObserved(token, out var value));
+        Assert.Equal(0.79, value, precision: 4);
+    }
+
+    [Fact]
+    public void TheObservedValueReaderStillRejectsTheBugItWasWrittenFor()
+    {
+        // The defect the row exists for: the value rode a long? until 2026-09-09 and rendered "at 0" for
+        // 0.79 and for nothing alike. Culture tolerance must not swallow that.
+        Assert.True(ScenarioTable.TryParseObserved("0", out var zero));
+        Assert.NotEqual(0.79, zero, precision: 4);
+        Assert.False(ScenarioTable.TryParseObserved("not-a-number", out _));
+    }
+
     private static IEnumerable<string> AllMetricIds() =>
     [
         SmokeMetrics.Toast, SmokeMetrics.Accepted, SmokeMetrics.Denied, SmokeMetrics.Gate,

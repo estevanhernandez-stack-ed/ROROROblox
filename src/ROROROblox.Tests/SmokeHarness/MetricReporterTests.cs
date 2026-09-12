@@ -58,6 +58,20 @@ public sealed class MetricReporterTests
         Assert.False(reachable);
     }
 
+    [Fact]
+    public async Task SavedAccountsAsync_NoHostListeningOnThatPipe_ThrowsRatherThanAnsweringEmpty()
+    {
+        // The opposite contract from IsHostReachableAsync, and deliberately so. This one feeds the
+        // masked-naming row, which SKIPS when it cannot get an account — so an unreachable host quietly
+        // answering "no accounts" would look exactly like a profile with none, and the row would report
+        // itself as not applicable instead of as unable to ask. It throws; the runner catches it and says
+        // which of the two happened.
+        var pipeName = $"rororo-smoke-unreachable-{Guid.NewGuid():N}";
+        using var reporter = new MetricReporter(pipeName, "rororo.smoke");
+
+        await Assert.ThrowsAnyAsync<Exception>(() => reporter.SavedAccountsAsync());
+    }
+
     [Theory]
     [InlineData(0L)]
     [InlineData(1_700_000_000_000L)]

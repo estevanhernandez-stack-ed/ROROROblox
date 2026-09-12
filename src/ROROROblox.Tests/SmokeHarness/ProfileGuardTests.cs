@@ -1,6 +1,7 @@
 using System.Text.Json;
 using ROROROblox.App.Plugins;
 using ROROROblox.Core.Discord;
+using ROROROblox.Core.Notify;
 using ROROROblox.MetricSmoke;
 
 namespace ROROROblox.Tests.SmokeHarness;
@@ -31,6 +32,7 @@ public sealed class ProfileGuardTests : IDisposable
     private readonly string _settingsPath;
     private readonly string _rulesPath;
     private readonly string _consentPath;
+    private readonly string _notifyPath;
     private readonly List<string> _log = [];
     private readonly List<ProfileGuard> _guards = [];
 
@@ -44,6 +46,7 @@ public sealed class ProfileGuardTests : IDisposable
         _settingsPath = Path.Combine(_dataRoot, "settings.json");
         _rulesPath = Path.Combine(_dataRoot, "metric-rules.json");
         _consentPath = Path.Combine(_dataRoot, "consent.dat");
+        _notifyPath = Path.Combine(_dataRoot, "notify.dat");
 
         // A real envelope, written by the production store, holding both webhook URLs and a
         // routing set — the shape the guard has to hand back untouched.
@@ -673,6 +676,151 @@ public sealed class ProfileGuardTests : IDisposable
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             ProfileGuard.AcquireAsync(_dataRoot, _backupRoot, _log.Add));
+    }
+
+    // ── The mutators task 5 added (2026-09-11). Each writes a real profile, so each is pinned here
+    // alongside the four the guard already had.
+
+    [Fact]
+    public async Task DeleteRules_RemovesTheFile_AndTheRestoreStillPutsTheOriginalBack()
+    {
+        // The absence row's whole subject is a MISSING rules file, which is not the same claim as an
+        // empty one — LocalFileMetricRuleSource has separate paths for the two, and only the missing
+        // path clears its cache. The restore has to survive the harness deleting a file it backed up.
+        await File.WriteAllTextAsync(_rulesPath, """[{ "metricId": "mine", "kind": "Event" }]""");
+        var original = await File.ReadAllTextAsync(_rulesPath);
+
+        var guard = await AcquireAsync();
+        guard.DeleteRules();
+        Assert.False(File.Exists(_rulesPath));
+
+        await guard.RestoreAsync();
+        Assert.Equal(original, await File.ReadAllTextAsync(_rulesPath));
+    }
+
+    [Fact]
+    public async Task DeleteRules_WithNoRulesFile_IsNotAnError()
+    {
+        // The scenario's postcondition is "there is no rules file", and on a profile that never had one
+        // that is already true. Throwing here would fail a row for succeeding.
+        var guard = await AcquireAsync();
+        guard.DeleteRules();
+        guard.DeleteRules();
+        Assert.False(File.Exists(_rulesPath));
+    }
+
+    [Fact]
+    public async Task RevokeConsentAsync_TakesTheGrantAway_AndLeavesNothingBehindAfterRestore()
+    {
+        var guard = await AcquireAsync();
+        await guard.GrantConsentAsync("rororo.smoke.revoked", ["host.metrics.report"]);
+        Assert.NotEmpty(await new ConsentStore(_consentPath).ListAsync());
+
+        await guard.RevokeConsentAsync("rororo.smoke.revoked");
+        Assert.Empty(await new ConsentStore(_consentPath).ListAsync());
+
+        // The id stays recorded in the marker on purpose, so the restore's revoke still runs — a no-op
+        // here, and the thing that cleans up if a scenario re-granted after revoking. A profile that had
+        // no consent.dat must not keep an empty envelope either.
+        var report = await guard.RestoreAsync();
+        Assert.True(report.Complete);
+        Assert.False(File.Exists(_consentPath));
+    }
+
+    [Fact]
+    public async Task UnconfigurePhoneAsync_RemovesTheCredentials_AndTheRestorePutsThemBack()
+    {
+        // The fifth guarded file. Without this the fallback row could never run on any profile where
+        // phone alerts had been set up — it would skip forever while the table claimed it was covered.
+        var configured = new PhoneNotifyConfig
+        {
+            Provider = PhoneProvider.Ntfy,
+            NtfyTopic = "smoke-test-topic-not-a-real-one",
+        };
+        await new PhoneNotifyConfigStore(_notifyPath).SaveAsync(configured);
+        Assert.True((await new PhoneNotifyConfigStore(_notifyPath).LoadAsync()).IsConfigured);
+        var originalBytes = await File.ReadAllBytesAsync(_notifyPath);
+
+        var guard = await AcquireAsync();
+        await guard.UnconfigurePhoneAsync();
+
+        Assert.True(await guard.VerifyPhoneUnconfiguredAsync());
+        Assert.False((await new PhoneNotifyConfigStore(_notifyPath).LoadAsync()).IsConfigured);
+
+        await guard.RestoreAsync();
+
+        Assert.Equal(originalBytes, await File.ReadAllBytesAsync(_notifyPath));
+        var reloaded = await new PhoneNotifyConfigStore(_notifyPath).LoadAsync();
+        Assert.True(reloaded.IsConfigured);
+        Assert.Equal(configured.NtfyTopic, reloaded.NtfyTopic);
+    }
+
+    [Fact]
+    public async Task VerifyPhoneUnconfiguredAsync_IsFalseWhileCredentialsAreStillThere()
+    {
+        // The gate the runner uses to decide whether Phone may be routed at all. If this ever answered
+        // true while a credential was present, the fallback row would page a real phone.
+        await new PhoneNotifyConfigStore(_notifyPath).SaveAsync(new PhoneNotifyConfig
+        {
+            Provider = PhoneProvider.Ntfy,
+            NtfyTopic = "smoke-test-topic-not-a-real-one",
+        });
+
+        var guard = await AcquireAsync();
+        Assert.False(await guard.VerifyPhoneUnconfiguredAsync());
+    }
+
+    [Fact]
+    public async Task AnAbsentNotifyFile_IsDeletedOnRestore_NotLeftBehind()
+    {
+        // Symmetric with discord.dat and the rules file: a profile that never had phone settings must
+        // not acquire a notify.dat because the harness ran.
+        Assert.False(File.Exists(_notifyPath));
+
+        var guard = await AcquireAsync();
+        await guard.UnconfigurePhoneAsync();
+        Assert.True(File.Exists(_notifyPath));
+
+        await guard.RestoreAsync();
+        Assert.False(File.Exists(_notifyPath));
+    }
+
+    [Fact]
+    public async Task Restore_DeletesTheNotifyBackup_SoRealCredentialsDoNotLinger()
+    {
+        // Same reasoning as the discord.dat backup: an ntfy topic IS the credential.
+        await new PhoneNotifyConfigStore(_notifyPath).SaveAsync(new PhoneNotifyConfig
+        {
+            Provider = PhoneProvider.Ntfy,
+            NtfyTopic = "smoke-test-topic-not-a-real-one",
+        });
+
+        var guard = await AcquireAsync();
+        Assert.NotEmpty(Directory.GetFiles(_backupRoot, "notify.dat*"));
+
+        await guard.RestoreAsync();
+        Assert.Empty(Directory.GetFiles(_backupRoot, "notify.dat*"));
+    }
+
+    [Fact]
+    public async Task VerifyMetricDestinationsAsync_AnswersWhatTheAppWillActuallyRead()
+    {
+        // The routing every scenario depends on, and the one thing VerifyDiscordSwapAsync deliberately
+        // does not check: its fingerprint excludes MetricBreachDestinations so it cannot flag the
+        // harness's own edit. A lost write here is quiet — the field defaults to Local, so breaches
+        // still toast while both channel rows have nothing to read.
+        var guard = await AcquireAsync();
+        var wanted = new[] { AlertDestination.Mine, AlertDestination.Clan, AlertDestination.Local };
+
+        Assert.False(await guard.VerifyMetricDestinationsAsync(wanted));
+
+        await guard.MutateDiscordAsync(c => c with { MetricBreachDestinations = wanted });
+        Assert.True(await guard.VerifyMetricDestinationsAsync(wanted));
+
+        // Order is part of the claim: AlertRouter resolves in order and dedupes, which is what makes an
+        // unconfigured Phone fold into the Local already ahead of it instead of adding a line.
+        Assert.False(await guard.VerifyMetricDestinationsAsync(
+            [AlertDestination.Local, AlertDestination.Mine, AlertDestination.Clan]));
     }
 
     private async Task<bool> ReadSettingAsync(BooleanSetting setting)

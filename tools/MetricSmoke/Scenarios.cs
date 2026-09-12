@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Grpc.Core;
@@ -311,6 +312,14 @@ public sealed class LogWatch
     public IReadOnlyList<string> SkewDrops => _tail.SkewDrops(_lines);
 
     /// <summary>
+    /// Alerts the dispatcher logged and then lost to a swallowed exception. Checked by the runner after
+    /// EVERY scenario rather than by individual rows, because the hazard is universal: the delivered
+    /// line is written BEFORE the send, so any row asserting on that line passes while the delivery it
+    /// names failed. See <see cref="LogTail.DispatchFailureCount"/> for why this is worth a false red.
+    /// </summary>
+    public int DispatchFailures => _tail.DispatchFailureCount(_lines);
+
+    /// <summary>
     /// Reads until <paramref name="satisfied"/> is true or <paramref name="within"/> is spent. Early
     /// exit is allowed here and deliberately NOT in <see cref="SettleAsync"/>: proving a line arrived
     /// is finished the moment it arrives, while proving one never arrives is only finished when the
@@ -367,10 +376,10 @@ public sealed class ScenarioContext
     public required Action<string> Log { get; init; }
 
     /// <summary>
-    /// True when <see cref="AlertDestination.Phone"/> is in the metric-breach destination set,
-    /// which the runner only does on a profile with NO phone credentials saved. False means the
-    /// fallback row cannot run here: with credentials present, ticking Phone would page a real phone
-    /// instead of demonstrating a fallback.
+    /// True when <see cref="AlertDestination.Phone"/> is in the metric-breach destination set, which the
+    /// runner does once it has replaced <c>notify.dat</c> with an unconfigured record AND read that back.
+    /// False means the replacement could not be confirmed, so Phone was left out and the fallback row
+    /// skips — routing it against live credentials would page a real phone.
     /// </summary>
     public required bool PhoneRouted { get; init; }
 
@@ -400,7 +409,26 @@ public sealed class ScenarioContext
     /// </summary>
     public string FreshSubject() => Guid.NewGuid().ToString();
 
-    public LogWatch WatchLog() => LogWatch.Open(LogDirectory);
+    /// <summary>
+    /// Every <see cref="LogWatch"/> the scenario in flight opened. The runner clears this before each
+    /// scenario and reads <see cref="DispatchFailures"/> after it, which is what makes the
+    /// swallowed-dispatch check impossible for a new scenario to forget: the row does not opt in, it
+    /// just opens its watch the way every row already does.
+    /// </summary>
+    private readonly List<LogWatch> _watches = [];
+
+    public LogWatch WatchLog()
+    {
+        var watch = LogWatch.Open(LogDirectory);
+        _watches.Add(watch);
+        return watch;
+    }
+
+    /// <summary>Called by the runner before each scenario.</summary>
+    public void BeginScenario() => _watches.Clear();
+
+    /// <summary>Swallowed dispatch failures seen by any watch the scenario in flight opened.</summary>
+    public int DispatchFailures => _watches.Sum(w => w.DispatchFailures);
 
     public Task ReportAsync(string subjectId, string metricId, double value)
         => Reporter.ReportAsync(subjectId, metricId, value, DateTimeOffset.UtcNow);
@@ -618,23 +646,22 @@ public static class ScenarioTable
         await ctx.ReportAsync(subject, SmokeMetrics.Toast, 0, TimeSpan.FromMinutes(1)).ConfigureAwait(false);
         await ctx.ReportAsync(subject, SmokeMetrics.Toast, 1).ConfigureAwait(false);
 
-        var arrived = await watch
-            .PollForAsync(w => w.DeliveredFor(SmokeMetrics.Toast, LocalDestination).Count >= 1,
-                SmokeTimings.AlertWindow)
-            .ConfigureAwait(false);
-
-        if (!arrived)
-        {
-            return ScenarioOutcome.Fail(
-                $"no 'Alert → Local' for {SmokeMetrics.Toast} within {Describe(SmokeTimings.AlertWindow)}. "
-                + "The opt-in gate, the rules file, and the metric-breach destination set are the three "
-                + "things that can swallow this.");
-        }
+        // The whole window, no early exit, because "ONE line" is half a negative: leaving the moment the
+        // first arrives would assert the absence of a second after watching for milliseconds. The first
+        // report of the pair cannot breach (one sample makes no rate), so a second line would mean the
+        // history or the window is not behaving as the rule says.
+        await watch.SettleAsync(SmokeTimings.AlertWindow).ConfigureAwait(false);
 
         var count = watch.DeliveredFor(SmokeMetrics.Toast, LocalDestination).Count;
-        return count == 1
-            ? ScenarioOutcome.Pass("one 'Alert → Local' for a rate under the floor")
-            : ScenarioOutcome.Fail($"expected one 'Alert → Local', saw {count}.");
+        return count switch
+        {
+            1 => ScenarioOutcome.Pass("exactly one 'Alert → Local' for a rate under the floor"),
+            0 => ScenarioOutcome.Fail(
+                $"no 'Alert → Local' for {SmokeMetrics.Toast} in {Describe(SmokeTimings.AlertWindow)}. "
+                + "The opt-in gate, the rules file, and the metric-breach destination set are the three "
+                + "things that can swallow this."),
+            _ => ScenarioOutcome.Fail($"expected one 'Alert → Local', saw {count}."),
+        };
     }
 
     /// <summary>
@@ -678,10 +705,21 @@ public static class ScenarioTable
                 $"the body naming {SmokeMetrics.Value} carries no 'at <value>' reading at all.");
         }
 
-        var value = rendered.Groups["v"].Value.Trim();
-        return value == "0.79"
-            ? ScenarioOutcome.Pass("the body reads 'at 0.79'")
-            : ScenarioOutcome.Fail($"the body reads 'at {value}', not 'at 0.79'.");
+        // Parsed, not string-compared against "0.79". WebhookPayload formats with {v:0.##} under the
+        // running app's CURRENT culture, and this app ships six — fr, de, ru, pt-BR, pl, es — several of
+        // which write "0,79". A literal comparison would fail this row on a localised install for a
+        // formatting difference that is correct, which is the opposite of what the row is about. The bug
+        // it IS about (the value riding a long? and rendering "at 0") still fails: 0 does not parse to
+        // 0.79 in any culture.
+        var token = rendered.Groups["v"].Value.Trim();
+        if (!TryParseObserved(token, out var value))
+        {
+            return ScenarioOutcome.Fail($"the body reads 'at {token}', which is not a number in any culture.");
+        }
+
+        return Math.Abs(value - 0.79) < 0.0001
+            ? ScenarioOutcome.Pass($"the body reads 'at {token}' — the fraction survived")
+            : ScenarioOutcome.Fail($"the body reads 'at {token}', which is not 0.79.");
     }
 
     /// <summary>
@@ -721,11 +759,12 @@ public static class ScenarioTable
             ctx.FreshSubject(), SmokeMetrics.Skew, SmokeRules.BreachingLevel,
             DateTimeOffset.UtcNow.AddHours(3)).ConfigureAwait(false);
 
-        var named = await watch
-            .PollForAsync(w => w.SkewDrops.Contains(SmokeMetrics.Skew, StringComparer.Ordinal),
-                SmokeTimings.AlertWindow)
-            .ConfigureAwait(false);
-        if (!named)
+        // One settle for both halves rather than a poll for the drop line and then a glance at the
+        // deliveries: the second half is a negative, and a negative checked the instant the positive
+        // lands has watched for milliseconds of a thirty-second window.
+        await watch.SettleAsync(SmokeTimings.AlertWindow).ConfigureAwait(false);
+
+        if (!watch.SkewDrops.Contains(SmokeMetrics.Skew, StringComparer.Ordinal))
         {
             return ScenarioOutcome.Fail(
                 $"nothing in the log names {SmokeMetrics.Skew} as dropped for a future stamp within "
@@ -771,8 +810,9 @@ public static class ScenarioTable
     /// inside the fan-out loop, after each destination's send, so two dispatches genuinely in flight
     /// together can both pass the check and both send (documented in <c>AlertDispatcher</c> and
     /// deliberately not fixed there). Racing it would make this row flaky about something it is not
-    /// asserting. Local is last in the set the runner writes, and the loop is sequential, so its line
-    /// means the first destination's iteration — stamp included — is already behind us.
+    /// asserting. Phone is last in the set the runner writes, but Phone is unconfigured and dedupes into
+    /// the Local already there, so Local is the last destination actually dispatched — and the loop is
+    /// sequential, so its line means the first destination's iteration, stamp included, is behind us.
     /// </para>
     /// </summary>
     private static async Task<ScenarioOutcome> RepeatedBreachesAsync(ScenarioContext ctx)
@@ -967,14 +1007,20 @@ public static class ScenarioTable
                 + "so there are no two bodies to compare.");
         }
 
+        // Filtered by metric id as well as path, not by path alone. Every alert kind routed to Mine posts
+        // to the same URL and carries the same masked name, so an unrelated drop-out or memory warning
+        // arriving in this window would satisfy all three assertions below with a pair of posts that has
+        // nothing to do with this scenario — the row would go green having read someone else's alert.
         var posts = await ctx.Catcher.DrainAsync(SmokeTimings.AlertWindow).ConfigureAwait(false);
-        var mine = posts.FirstOrDefault(p => p.Path == WebhookCatcher.MinePath)?.Body;
-        var clan = posts.FirstOrDefault(p => p.Path == WebhookCatcher.ClanPath)?.Body;
+        var ours = posts.Where(p => p.Body.Contains(SmokeMetrics.Streamer, StringComparison.Ordinal)).ToList();
+        var mine = ours.FirstOrDefault(p => p.Path == WebhookCatcher.MinePath)?.Body;
+        var clan = ours.FirstOrDefault(p => p.Path == WebhookCatcher.ClanPath)?.Body;
         if (mine is null || clan is null)
         {
             return ScenarioOutcome.Fail(
-                $"expected a post on both {WebhookCatcher.MinePath} and {WebhookCatcher.ClanPath}; got "
-                + $"{posts.Count} post(s), {ctx.Catcher.RequestFaults.Count} request fault(s).");
+                $"expected a post naming {SmokeMetrics.Streamer} on both {WebhookCatcher.MinePath} and "
+                + $"{WebhookCatcher.ClanPath}; got {ours.Count} matching of {posts.Count} drained, "
+                + $"{ctx.Catcher.RequestFaults.Count} request fault(s).");
         }
 
         // The masked name goes through the same JSON escaping the app's own payload does, so a name
@@ -1016,9 +1062,12 @@ public static class ScenarioTable
     /// which needs another app restart, because <c>DiscordConfigService</c> reads the file once.
     /// </para>
     /// <para>
-    /// Skipped on a profile with phone credentials saved. The smoke row itself says "with no phone
-    /// credentials saved"; running it anyway would page a real phone to prove a fallback, and the
-    /// harness does not protect <c>notify.dat</c>, so it will not blank one to make the row runnable.
+    /// The phone is unconfigured by the runner during setup — <c>notify.dat</c> is backed up, replaced
+    /// with a default record, and read back (see <see cref="ProfileGuard.UnconfigurePhoneAsync"/>). This
+    /// row used to skip whenever credentials existed, which on any machine where phone alerts had been
+    /// set up meant always: a row that can never run is not a covered row, whatever the table says. It
+    /// still skips if that replacement could not be confirmed, because the alternative is paging a real
+    /// phone to prove a fallback.
     /// </para>
     /// </summary>
     private static async Task<ScenarioOutcome> UnconfiguredDestinationFallsBackAsync(ScenarioContext ctx)
@@ -1026,20 +1075,22 @@ public static class ScenarioTable
         if (!ctx.PhoneRouted)
         {
             return ScenarioOutcome.Skip(
-                "phone credentials are saved on this profile, so Phone was left out of the metric-breach "
-                + "destination set. This row needs an unconfigured destination; it will not page a real "
-                + "phone to prove a fallback.");
+                "the phone could not be confirmed unconfigured, so Phone was left out of the metric-breach "
+                + "destination set. This row needs a routed destination with no credentials behind it; it "
+                + "will not page a real phone to prove a fallback.");
         }
 
         var watch = ctx.WatchLog();
         await ctx.ReportAsync(ctx.FreshSubject(), SmokeMetrics.Fallback, SmokeRules.BreachingLevel)
             .ConfigureAwait(false);
 
-        var arrived = await watch
-            .PollForAsync(w => w.DeliveredFor(SmokeMetrics.Fallback, LocalDestination).Count >= 1,
-                SmokeTimings.AlertWindow)
-            .ConfigureAwait(false);
-        if (!arrived)
+        // The full window, no early exit, and this row is the reason the rule exists: "Phone was not
+        // routed" is the entire point of it, and leaving as soon as the Local line lands would conclude
+        // that before the dispatcher could have written a Phone line at all. Local comes LAST in the
+        // fan-out the runner writes, so the early exit was not even ordered in this row's favour.
+        await watch.SettleAsync(SmokeTimings.AlertWindow).ConfigureAwait(false);
+
+        if (watch.DeliveredFor(SmokeMetrics.Fallback, LocalDestination).Count == 0)
         {
             return ScenarioOutcome.Fail(
                 $"nothing reached the desktop for {SmokeMetrics.Fallback} within "
@@ -1116,6 +1167,20 @@ public static class ScenarioTable
     /// <summary>JSON-escapes a string the way <c>DiscordWebhookSender</c>'s serializer does, so a
     /// captured body can be searched for it literally.</summary>
     private static string JsonEncoded(string value) => JsonSerializer.Serialize(value).Trim('"');
+
+    /// <summary>
+    /// Reads a number the app rendered, in whatever culture the app is running in. Invariant first
+    /// (what an en install writes), then the harness's own culture, then a comma-for-point swap — which
+    /// covers the shipped comma-decimal languages even when the harness process and the app disagree
+    /// about culture, as they will when the app's UI language was chosen in Settings.
+    /// </summary>
+    public static bool TryParseObserved(string token, out double value)
+    {
+        if (double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out value)) return true;
+        if (double.TryParse(token, NumberStyles.Float, CultureInfo.CurrentCulture, out value)) return true;
+        return double.TryParse(
+            token.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out value);
+    }
 
     private static string Describe(TimeSpan span) =>
         span.TotalSeconds < 90 ? $"{span.TotalSeconds:0}s" : $"{span.TotalMinutes:0.#}m";

@@ -44,6 +44,23 @@ public sealed class LogTail
         @"Alert raised for \d+ account\(s\) but routed nowhere",
         RegexOptions.Compiled);
 
+    // AlertDispatcher.DispatchAsync's catch-all, the swallowed-failure line:
+    //   log.LogWarning(ex, "Alert dispatch failed; the alert was dropped.");
+    // No properties in that template, so this is a literal match on the rendered sentence; Serilog's
+    // outputTemplate puts the exception on the lines AFTER it, which is why this does not anchor to the
+    // end of the line.
+    //
+    // WHY THIS RECOGNISER EXISTS, since its absence was a real hole rather than an oversight: the
+    // dispatcher logs "Alert → {Destination}" BEFORE it sends, and then swallows anything the send
+    // throws into this one Warning. So a destination whose delivery is completely broken still produces
+    // the exact line a harness row asserts on, and the row goes green. That is how a live defect —
+    // TrayService.ShowToast touching a WPF TaskbarIcon from a gRPC handler thread, fixed the same day
+    // this was added — could have passed the desktop-toast row while no toast ever appeared. Any row
+    // whose window contains one of these is failed by the runner, wherever it sits in the fan-out.
+    private static readonly Regex DispatchFailurePattern = new(
+        @"Alert dispatch failed; the alert was dropped\.",
+        RegexOptions.Compiled);
+
     // MetricReportSinkAdapter.Report, the future-skew drop:
     //   log.LogInformation("Dropped a metric report for {MetricId} stamped {Skew} in the future —
     //       check the reporter's clock; it is sending local time, not UTC.", metricId, ...);
@@ -174,6 +191,24 @@ public sealed class LogTail
     {
         ArgumentNullException.ThrowIfNull(lines);
         return lines.Count(RoutedNowherePattern.IsMatch);
+    }
+
+    /// <summary>
+    /// How many alerts the dispatcher dropped on an exception it swallowed —
+    /// <c>AlertDispatcher.DispatchAsync</c>'s catch-all. NEVER zero-and-fine to ignore: this is the one
+    /// line that distinguishes "the alert was delivered" from "the alert was logged as delivered and
+    /// then thrown away", because the delivered line is written before the send.
+    /// <para>
+    /// Not attributable to a metric — the template carries no properties at all — so a row asserting
+    /// zero of these is asserting that nothing anywhere failed to dispatch in its window. An unrelated
+    /// alert kind failing would fail the row: a false red, never a false green, and rerunning settles
+    /// it. That trade is the right way round for a line that means a user silently lost an alert.
+    /// </para>
+    /// </summary>
+    public int DispatchFailureCount(IEnumerable<string> lines)
+    {
+        ArgumentNullException.ThrowIfNull(lines);
+        return lines.Count(DispatchFailurePattern.IsMatch);
     }
 
     /// <summary>The metric id named on every future-dated report <c>MetricReportSinkAdapter</c> dropped.</summary>

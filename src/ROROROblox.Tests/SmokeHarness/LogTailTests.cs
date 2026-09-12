@@ -31,6 +31,16 @@ public sealed class LogTailTests : IDisposable
         + "Alert raised for 2 account(s) but routed nowhere — check the destination, the "
         + $"per-account mute, and the {AlertRouter.Cooldown.TotalMinutes}-minute cooldown.";
 
+    // AlertDispatcher.DispatchAsync's catch-all. Serilog renders the message and then puts the
+    // exception on the lines after it, which is what the second line here stands in for.
+    private const string DispatchFailedLine =
+        "2026-09-11 14:22:07.400 -07:00 [WRN] v1.25.0.0 ROROROblox.App.Discord.AlertDispatcher "
+        + "Alert dispatch failed; the alert was dropped.";
+
+    private const string DispatchFailedExceptionLine =
+        "System.InvalidOperationException: The calling thread cannot access this object because a "
+        + "different thread owns it.";
+
     private const string SkewDropLine =
         "2026-09-11 14:22:06.114 -07:00 [INF] v1.25.0.0 ROROROblox.App.Plugins.Adapters.MetricReportSinkAdapter "
         + "Dropped a metric report for cpu.load stamped 00:00:45.1230000 in the future — check the "
@@ -149,6 +159,37 @@ public sealed class LogTailTests : IDisposable
         var tail = LogTail.OpenAt(_path);
 
         Assert.Empty(tail.Delivered([RoutedNowhereLine]));
+    }
+
+    [Fact]
+    public void DispatchFailureCount_SeesTheSwallowedFailure()
+    {
+        // THE hole this recogniser closes: "Alert → {Destination}" is logged BEFORE the send, and
+        // whatever the send throws is swallowed into this one Warning. So a destination whose delivery
+        // is completely broken still produces the exact line a smoke row asserts on. Without this, the
+        // desktop row would have gone green while TrayService.ShowToast threw on thread affinity and no
+        // toast ever appeared — measured on this build, and fixed the same day.
+        var tail = LogTail.OpenAt(_path);
+
+        Assert.Equal(1, tail.DispatchFailureCount([DispatchFailedLine, DispatchFailedExceptionLine]));
+    }
+
+    [Fact]
+    public void DispatchFailureCount_IsZeroForTheLinesThatMeanSomethingElse()
+    {
+        // The three recognisers must not bleed into each other: a delivered alert and an alert routed
+        // nowhere are both NOT dispatch failures, and counting either as one would fail every row.
+        var tail = LogTail.OpenAt(_path);
+
+        Assert.Equal(0, tail.DispatchFailureCount([DeliveredLine, RoutedNowhereLine, SkewDropLine]));
+    }
+
+    [Fact]
+    public void Delivered_DoesNotMatchASwallowedDispatchFailure()
+    {
+        var tail = LogTail.OpenAt(_path);
+
+        Assert.Empty(tail.Delivered([DispatchFailedLine, DispatchFailedExceptionLine]));
     }
 
     [Fact]
