@@ -42,6 +42,26 @@ public static class PhoneSetupLinks
     private const string DefaultNtfyHost = "https://ntfy.sh";
 
     /// <summary>
+    /// Where the Pushover user key is shown, opened in the PC's browser.
+    /// <para>
+    /// These two came back on 2026-09-12, the same day their QR codes were dropped, and the
+    /// difference is the whole lesson: the URLs were right and the delivery was wrong. Pushover
+    /// setup is a PC flow — the application is created in a browser, and the app's own
+    /// <c>SavePushoverIconButton</c> saves the icon TO THE PC for upload on that form — so the
+    /// useful thing is a button that opens the page on the same screen the fields are on, where
+    /// copy and paste is two keystrokes between two windows. A QR sent the user to a phone to read
+    /// a value they then had to type back into the PC, which is the transcription problem the QR
+    /// was supposed to remove, pointed the other way.
+    /// </para>
+    /// </summary>
+    public const string PushoverDashboard = "https://pushover.net/";
+
+    /// <summary>Where the Pushover application token is created, and the form whose icon slot
+    /// <c>SavePushoverIconButton</c> saves an icon for. Opened in the PC's browser, per
+    /// <see cref="PushoverDashboard"/>.</summary>
+    public const string PushoverApplicationForm = "https://pushover.net/apps/build";
+
+    /// <summary>
     /// The subscribe URL for <paramref name="topic"/> on <paramref name="server"/>, or
     /// <c>null</c> when there is no topic yet — callers render no QR rather than a code pointing
     /// at a bare server root.

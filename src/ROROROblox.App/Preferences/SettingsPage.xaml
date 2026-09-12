@@ -608,12 +608,24 @@
                                 <TextBlock FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                            Margin="0,0,0,4"
                                            Text="{loc:Loc SettingsPage_BothCodesComeFromPushover}" />
-                                <Button x:Name="SavePushoverIconButton" Content="{loc:Loc SettingsPage_SaveTheRororoIcon}" Padding="10,5" Margin="0,0,0,8"
-                                        HorizontalAlignment="Left"
-                                        Style="{StaticResource SecondaryButtonStyle}" FontSize="{DynamicResource BodyFontSize}"
-                                        AutomationProperties.Name="{loc:Loc SettingsPage_SaveTheRororoIconFor}"
-                                        Click="OnSavePushoverIconClick"
-                                        ToolTip="{loc:Loc SettingsPage_TheApplicationFormOnPushover}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <Button x:Name="PushoverDashboardButton" Content="{loc:Loc SettingsPage_OpenTheDashboard}" Padding="10,5"
+                                            Style="{StaticResource SecondaryButtonStyle}" FontSize="{DynamicResource BodyFontSize}"
+                                            AutomationProperties.Name="{loc:Loc SettingsPage_OpenTheDashboard}"
+                                            Click="OnOpenPushoverPageClick"
+                                            ToolTip="{loc:Loc SettingsPage_OpensPushoverInYourBrowser}" />
+                                    <Button x:Name="PushoverAppFormButton" Content="{loc:Loc SettingsPage_CreateTheApplication}" Padding="10,5" Margin="6,0,0,0"
+                                            Style="{StaticResource SecondaryButtonStyle}" FontSize="{DynamicResource BodyFontSize}"
+                                            AutomationProperties.Name="{loc:Loc SettingsPage_CreateTheApplication}"
+                                            Click="OnOpenPushoverPageClick"
+                                            ToolTip="{loc:Loc SettingsPage_TheApplicationFormOnPushover}" />
+                                    <Button x:Name="SavePushoverIconButton" Content="{loc:Loc SettingsPage_SaveTheRororoIcon}" Padding="10,5" Margin="6,0,0,0"
+                                            HorizontalAlignment="Left"
+                                            Style="{StaticResource SecondaryButtonStyle}" FontSize="{DynamicResource BodyFontSize}"
+                                            AutomationProperties.Name="{loc:Loc SettingsPage_SaveTheRororoIconFor}"
+                                            Click="OnSavePushoverIconClick"
+                                            ToolTip="{loc:Loc SettingsPage_TheApplicationFormOnPushover}" />
+                                </StackPanel>
                                 <TextBlock Text="{loc:Loc SettingsPage_UserKey}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,0,0,2" />
                                 <Grid>
                                     <Grid.ColumnDefinitions>

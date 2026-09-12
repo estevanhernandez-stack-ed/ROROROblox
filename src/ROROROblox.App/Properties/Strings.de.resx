@@ -2119,6 +2119,15 @@ Du musst dich erneut anmelden, um es wieder hinzuzufügen.</value>
   <data name="Shell_Pref_Reveal_Show" xml:space="preserve">
     <value>Anzeigen</value>
   </data>
+  <data name="SettingsPage_OpensPushoverInYourBrowser" xml:space="preserve">
+    <value>Öffnet Pushover in deinem Browser, wo dein User Key steht.</value>
+  </data>
+  <data name="SettingsPage_CreateTheApplication" xml:space="preserve">
+    <value>Anwendung anlegen</value>
+  </data>
+  <data name="SettingsPage_OpenTheDashboard" xml:space="preserve">
+    <value>Dashboard öffnen</value>
+  </data>
   <data name="SettingsPage_DeletesTheSavedValue" xml:space="preserve">
     <value>Löscht den gespeicherten Wert. Du kannst jederzeit einen neuen einfügen.</value>
   </data>

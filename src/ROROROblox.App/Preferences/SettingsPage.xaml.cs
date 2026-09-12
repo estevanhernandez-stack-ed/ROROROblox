@@ -1669,6 +1669,37 @@ internal partial class SettingsPage : UserControl, IDisposable
     }
 
     /// <summary>
+    /// Opens one of the two Pushover pages in the PC's browser.
+    /// <para>
+    /// This is what the Pushover QR codes were reaching for and getting wrong. Their URLs were
+    /// correct; their direction was not. Pushover setup happens on the PC start to finish — the
+    /// application is created in a browser, and <c>SavePushoverIconButton</c> right here saves the
+    /// icon TO THE PC for upload on that same form — so the useful control opens the page on the
+    /// screen the fields are already on, and the copy-paste is two keystrokes between two windows.
+    /// A QR sent the user to a phone to read a value they then typed back into the PC.
+    /// </para>
+    /// <para>
+    /// Best-effort, like every other shell launch in this app: a machine with no registered browser
+    /// is not a state worth a dialog about, and the page's body copy still names both URLs.
+    /// </para>
+    /// </summary>
+    private void OnOpenPushoverPageClick(object sender, RoutedEventArgs e)
+    {
+        var url = ReferenceEquals(sender, PushoverAppFormButton)
+            ? ROROROblox.Core.Notify.PhoneSetupLinks.PushoverApplicationForm
+            : ROROROblox.Core.Notify.PhoneSetupLinks.PushoverDashboard;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
+        }
+        catch (Exception)
+        {
+            // Best-effort.
+        }
+    }
+
+    /// <summary>
     /// Clears a saved credential and commits the clear, so removing one stops being "reveal it,
     /// select all of it, delete it, then click somewhere else".
     /// <para>
