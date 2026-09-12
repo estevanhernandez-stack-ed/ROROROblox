@@ -17,10 +17,13 @@
 
 ## Short list, for the GitHub release and the Discord post
 
-- Alerts can watch a number now, and tell you when it drops. A plugin supplies the number.
-- Setting up phone alerts through ntfy is a camera photo instead of typing 33 characters.
-- Settings stopped losing your edits — Enter saves, saved webhooks and keys have a Remove button.
-- Streamer mode now hides a webhook or key you had revealed, instead of leaving it on screen.
+```
+• Alerts can watch a number. Settings > Alerts has a Metric alerts switch: turn it on, set your own thresholds, and RoRoRo tells you when a number crosses one — toast, your Discord channel, the clan's, or your phone. RoRoRo does not go and get the number; a plugin you install reports it, and nothing in this release reports one yet.
+• Phone setup is a photo. Connecting ntfy was typing a 33-character topic into a phone keyboard with no error correction. Point your camera at the code instead. It hides itself while streamer mode is on, because that topic is the credential.
+• Settings stopped losing your edits. Every box on the Alerts page held your typing until you clicked somewhere else. Enter saves now, and saved webhooks and phone keys have a Remove button instead of reveal-select-all-delete.
+• Streamer mode protects what is already on screen. Turning it on now re-hides a webhook or key you had revealed, and clicking Show while it is on asks first. Before this it masked your account names and left a Discord webhook URL in plain view.
+• Nothing else moved. Accounts, themes, plugins, history, and settings all carry over untouched.
+```
 
 ## Longer form
 
