@@ -65,29 +65,36 @@ Les alertes se diffusent — bureau, salons Discord et téléphone, dans n'impor
 Disponible en six langues — toute l'app, écrans et messages, en français, allemand, russe, portugais (Brésil), polonais ou espagnol, changement immédiat, selon Windows ou votre choix
 ```
 
-## What's new in this version (v1.27.0.0, ≤1500 chars)
+## What's new in this version (v1.28.0.0, ≤1500 chars)
 
 ```
-v1.27.0.0
+v1.28.0.0
 
-RoRoRo parle votre langue
-• Toute l'application — menus, paramètres, chaque fenêtre, et
-  les messages que RoRoRo écrit pendant que vous l'utilisez —
-  est traduite en français, allemand, russe, portugais
-  (Brésil), polonais et espagnol. Si Windows est réglé sur
-  l'une d'elles, RoRoRo la reprend tout seul.
+Les alertes peuvent surveiller un nombre
+• Paramètres > Alertes contient un interrupteur Alertes
+  métriques. Activez-le et RoRoRo vous prévient quand un nombre
+  franchit un seuil que vous fixez — notification du bureau,
+  votre salon Discord, celui de votre clan, ou votre téléphone,
+  par le même routage que toutes les autres alertes.
+• RoRoRo ne collecte pas ce nombre lui-même. Un plugin que vous
+  installez le rapporte, et vous décidez de l'autoriser ou non
+  au moment de l'installation.
 
-Changez quand vous voulez, instantanément
-• Paramètres > Apparence ne propose que les langues dans
-  lesquelles RoRoRo est entièrement traduit : vous ne tombez
-  jamais sur un écran à moitié traduit. Choisissez-en une et
-  l'application bascule immédiatement — sans redémarrage.
+La configuration du téléphone se fait en photo
+• Connecter ntfy demandait de taper un sujet de 33 caractères
+  au clavier du téléphone. Visez le code avec l'appareil photo.
+• Le code disparaît quand le mode streamer est actif. C'est
+  l'identifiant, et il se lit bien plus vite sur une image
+  figée que le texte.
 
-Toujours l'anglais au fond
-• L'anglais reste la langue par défaut, et les noms de
-  fonctionnalités — Squad Launch, Recycle, RoRoRo — se lisent
-  pareil dans toutes les langues. Rien ne change pour vos
-  comptes, thèmes ou réglages.
+Les paramètres ne perdent plus vos saisies
+• Entrée enregistre. Chaque champ de la page Alertes gardait
+  votre texte jusqu'à ce que vous cliquiez ailleurs.
+• Les webhooks et les clés de téléphone enregistrés ont un
+  bouton Retirer.
+• Activer le mode streamer masque désormais un webhook ou une
+  clé affichés, et demande confirmation avant d'en afficher un
+  quand il est actif.
 ```
 
 ## Copyright (single line)

@@ -64,28 +64,34 @@ Alerty wachlarzem — pulpit, kanały Discord i telefon w dowolnej kombinacji, n
 Sześć języków — cała aplikacja, ekrany i komunikaty: francuski, niemiecki, rosyjski, portugalski (brazylijski), polski, hiszpański. Natychmiastowa zmiana, wg Windows lub twojego wyboru
 ```
 
-## What's new in this version (v1.27.0.0, ≤1500 chars)
+## What's new in this version (v1.28.0.0, ≤1500 chars)
 
 ```
-v1.27.0.0
+v1.28.0.0
 
-RoRoRo mówi w Twoim języku
-• Cała aplikacja — menu, ustawienia, każde okno i komunikaty,
-  które RoRoRo wypisuje podczas pracy — jest przetłumaczona na
-  francuski, niemiecki, rosyjski, portugalski (Brazylia),
-  polski i hiszpański. Jeśli Windows jest ustawiony na jeden z
-  nich, RoRoRo sam go podchwyci.
+Alerty mogą pilnować liczby
+• Ustawienia > Alerty mają przełącznik Alerty o wskaźnikach.
+  Włącz go, a RoRoRo powie ci, gdy liczba przekroczy próg,
+  który ustawisz — powiadomieniem na pulpicie, na twoim kanale
+  Discord, na kanale klanu albo na telefonie, tą samą drogą co
+  każdy inny alert.
+• RoRoRo sam tej liczby nie zbiera. Zgłasza ją plugin, który
+  instalujesz, a ty decydujesz przy instalacji, czy na to
+  pozwolić.
 
-Zmieniaj kiedy chcesz, natychmiast
-• Ustawienia > Wygląd pokazują tylko języki, na które RoRoRo
-  jest w pełni przetłumaczone — nigdy nie trafisz na ekran
-  przetłumaczony w połowie. Wybierz język, a aplikacja
-  przełączy się od razu, bez restartu.
+Konfiguracja telefonu to teraz zdjęcie
+• Podłączenie ntfy wymagało wpisania 33-znakowego tematu na
+  klawiaturze telefonu. Wyceluj w kod aparatem.
+• Kod znika, gdy tryb streamera jest włączony. To są dane
+  dostępowe, a z zatrzymanej klatki czyta się je o wiele
+  łatwiej niż tekst.
 
-W środku nadal angielski
-• Angielski pozostaje domyślny, a nazwy funkcji — Squad
-  Launch, Recycle, RoRoRo — czyta się tak samo w każdym
-  języku. Twoje konta, motywy i ustawienia się nie zmieniają.
+Ustawienia nie gubią już tego, co wpiszesz
+• Enter zapisuje. Każde pole na stronie alertów trzymało twój
+  tekst, dopóki nie kliknąłeś gdzie indziej.
+• Zapisane webhooki i klucze telefonu mają przycisk Usuń.
+• Włączenie trybu streamera ukrywa teraz pokazany webhook lub
+  klucz i pyta, zanim pokaże któryś, gdy tryb jest włączony.
 ```
 
 ## Copyright (single line)

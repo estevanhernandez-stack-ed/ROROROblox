@@ -65,28 +65,36 @@ Las alertas se reparten: escritorio, canales de Discord y móvil en cualquier co
 Disponible en seis idiomas — toda la app, pantallas y mensajes, en francés, alemán, ruso, portugués (Brasil), polaco o español, cambio inmediato, según Windows o tu elección
 ```
 
-## What's new in this version (v1.27.0.0, ≤1500 chars)
+## What's new in this version (v1.28.0.0, ≤1500 chars)
 
 ```
-v1.27.0.0
+v1.28.0.0
 
-RoRoRo habla tu idioma
-• Toda la app — menús, ajustes, cada ventana y los mensajes
-  que RoRoRo escribe mientras la usas — está traducida al
-  francés, alemán, ruso, portugués (Brasil), polaco y español.
-  Si Windows está en uno de ellos, RoRoRo lo adopta solo.
+Las alertas pueden vigilar un número
+• Configuración > Alertas tiene un interruptor Alertas de
+  métricas. Actívalo y RoRoRo te avisa cuando un número cruza
+  un límite que tú fijas — como aviso de escritorio, en tu
+  canal de Discord, en el de tu clan o en tu teléfono, por la
+  misma ruta que todas las demás alertas.
+• RoRoRo no recoge el número por su cuenta. Lo informa un
+  plugin que instalas, y tú decides al instalarlo si lo
+  permites.
 
-Cámbialo cuando quieras, al instante
-• Configuración > Apariencia solo lista los idiomas a los que
-  RoRoRo está totalmente traducido, así nunca acabas en una
-  pantalla a medias. Elige uno y la app cambia al momento, sin
-  reiniciar.
+Configurar el teléfono ahora es una foto
+• Conectar ntfy obligaba a escribir un tema de 33 caracteres en
+  el teclado del móvil. Apunta la cámara al código.
+• El código desaparece mientras el modo streamer está activo.
+  Es la credencial, y se lee de un fotograma detenido mucho más
+  fácil que el texto.
 
-Sigue siendo inglés de fondo
-• El inglés sigue siendo el idioma predeterminado, y los
-  nombres de funciones — Squad Launch, Recycle, RoRoRo — se
-  leen igual en todos los idiomas. Tus cuentas, temas y
-  ajustes no cambian.
+La configuración ya no pierde lo que escribes
+• Enter guarda. Cada campo de la página de alertas conservaba
+  lo escrito hasta que hacías clic en otro sitio.
+• Los webhooks y las claves de teléfono guardados tienen un
+  botón Quitar.
+• Activar el modo streamer ahora oculta un webhook o una clave
+  a la vista, y pregunta antes de mostrar uno mientras está
+  activo.
 ```
 
 ## Copyright (single line)

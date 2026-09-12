@@ -65,28 +65,36 @@ Alertas em leque — desktop, canais do Discord e celular em qualquer combinaç�
 Disponível em seis idiomas — o app inteiro, telas e mensagens, em francês, alemão, russo, português (Brasil), polonês ou espanhol, troca imediata, seguindo o Windows ou sua escolha
 ```
 
-## What's new in this version (v1.27.0.0, ≤1500 chars)
+## What's new in this version (v1.28.0.0, ≤1500 chars)
 
 ```
-v1.27.0.0
+v1.28.0.0
 
-O RoRoRo fala o seu idioma
-• O app inteiro — menus, configurações, cada janela e as
-  mensagens que o RoRoRo escreve enquanto você usa — está
-  traduzido para francês, alemão, russo, português (Brasil),
-  polonês e espanhol. Se o Windows estiver em um desses, o
-  RoRoRo adota sozinho.
+Os alertas podem vigiar um número
+• Configurações > Alertas tem uma chave Alertas de métricas.
+  Ative e o RoRoRo avisa quando um número cruza um limite que
+  você define — como aviso na área de trabalho, no seu canal do
+  Discord, no do seu clã ou no seu telefone, pelo mesmo caminho
+  que todos os outros alertas.
+• O RoRoRo não coleta o número sozinho. Um plugin que você
+  instala informa o número, e você decide se permite isso na
+  hora de instalar.
 
-Troque quando quiser, na hora
-• Configurações > Aparência lista só os idiomas para os quais
-  o RoRoRo está totalmente traduzido — você nunca cai numa
-  tela pela metade. Escolha um e o app muda na hora, sem
-  reiniciar.
+A configuração do telefone virou uma foto
+• Conectar o ntfy exigia digitar um tópico de 33 caracteres no
+  teclado do celular. Aponte a câmera para o código.
+• O código some enquanto o modo streamer está ligado. Ele é a
+  credencial, e se lê de um quadro parado muito mais fácil que
+  o texto.
 
-Ainda inglês no fundo
-• O inglês continua sendo o padrão, e os nomes de recursos —
-  Squad Launch, Recycle, RoRoRo — se leem igual em qualquer
-  idioma. Nada muda nas suas contas, temas ou configurações.
+As configurações não perdem mais o que você digita
+• Enter salva. Cada campo da página de alertas guardava o que
+  você digitou até você clicar em outro lugar.
+• Webhooks e chaves de telefone salvos ganharam um botão
+  Remover.
+• Ligar o modo streamer agora esconde um webhook ou chave à
+  mostra, e pergunta antes de mostrar um enquanto ele está
+  ligado.
 ```
 
 ## Copyright (single line)

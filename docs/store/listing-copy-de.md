@@ -65,29 +65,39 @@ Alarme fächern auf — Desktop, Discord-Kanäle und Handy in jeder Kombination,
 In sechs Sprachen — die ganze App, Bildschirme wie Meldungen: Französisch, Deutsch, Russisch, Portugiesisch (Brasilien), Polnisch, Spanisch. Sofortiger Wechsel, gemäß Windows oder deiner Wahl
 ```
 
-## What's new in this version (v1.27.0.0, ≤1500 chars)
+## What's new in this version (v1.28.0.0, ≤1500 chars)
 
 ```
-v1.27.0.0
+v1.28.0.0
 
-RoRoRo spricht deine Sprache
-• Die ganze App — Menüs, Einstellungen, jedes Fenster und die
-  Meldungen, die RoRoRo während der Nutzung schreibt — ist auf
-  Französisch, Deutsch, Russisch, Portugiesisch (Brasilien),
-  Polnisch und Spanisch übersetzt. Steht Windows auf einer
-  davon, übernimmt RoRoRo sie von selbst.
+Benachrichtigungen können eine Zahl überwachen
+• Einstellungen > Benachrichtigungen hat einen Schalter
+  Metrik-Benachrichtigungen. Schalte ihn ein, und RoRoRo meldet
+  sich, wenn eine Zahl eine Grenze überschreitet, die du setzt
+  — als Desktop-Hinweis, in deinem Discord-Kanal, in dem deines
+  Clans oder auf deinem Handy, über dieselbe Zustellung wie
+  jede andere Benachrichtigung.
+• RoRoRo erhebt die Zahl nicht selbst. Ein Plugin, das du
+  installierst, meldet sie — und du entscheidest bei der
+  Installation, ob du das erlaubst.
 
-Jederzeit wechseln, sofort
-• Einstellungen > Darstellung listet nur Sprachen, in die
-  RoRoRo vollständig übersetzt ist — du landest nie auf einem
-  halb übersetzten Bildschirm. Wähle eine, und die App stellt
-  sofort um — ohne Neustart.
+Die Handy-Einrichtung ist jetzt ein Foto
+• Für ntfy musstest du ein Thema mit 33 Zeichen auf einer
+  Handytastatur eintippen. Halte stattdessen die Kamera auf den
+  Code.
+• Der Code verschwindet, solange der Streamer-Modus an ist. Er
+  ist die Zugangsdaten, und aus einem Standbild liest er sich
+  weit leichter ab als der Text.
 
-Im Kern weiterhin Englisch
-• Englisch bleibt die Standardsprache, und Produktnamen —
-  Squad Launch, Recycle, RoRoRo — lesen sich in jeder Sprache
-  gleich. An deinen Konten, Themes und Einstellungen ändert
-  sich nichts.
+Einstellungen verlieren deine Eingaben nicht mehr
+• Enter speichert. Jedes Feld auf der Benachrichtigungsseite
+  hat deine Eingabe bisher behalten, bis du woanders geklickt
+  hast.
+• Gespeicherte Webhooks und Handy-Schlüssel haben einen
+  Entfernen-Knopf.
+• Der Streamer-Modus blendet jetzt einen sichtbaren Webhook
+  oder Schlüssel aus und fragt nach, bevor er einen einblendet,
+  solange er an ist.
 ```
 
 ## Copyright (single line)
