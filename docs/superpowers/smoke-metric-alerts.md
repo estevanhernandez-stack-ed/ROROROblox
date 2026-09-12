@@ -26,44 +26,87 @@ all 2239 unit tests green. The record, with what was broken and what was seen, i
 several rows keep a half the harness cannot see (whether the shell actually drew the toast, above all),
 and that half is what a tick would be claiming.
 
+Two of the sixteen do not get an unqualified pass even in that record, and this list does not smooth
+that away: **the plugin-pipe row** has only ever been reached by a different breakage than the one it is
+named for, and **the clock-skew row** was reddened by changing the scenario's own input rather than by
+breaking the product. Both caveats are repeated at the row itself, below, rather than left to this
+paragraph alone.
+
 ---
 
 ## Setup — what you need before any row below
 
-A smoke list nobody can execute is the same as no list, so this is the part that makes the rest
-runnable. Three things have to be true before a single toast can appear.
+**The sixteen `[harness]` rows: one command.** From the repo root, with RoRoRo **not** already
+running:
 
-**1. Turn the feature on.** Settings → Alerts → tick **Metric alerts**. The app writes
-`metricAlertsEnabled` into `settings.json` itself, so there is no file to hand-edit and no need to
-close RoRoRo first — and the toggle nudges the gate the moment the write succeeds, not on the next
-poll.
-
-**2. Write a rules file.** Absent means no rules, which means nothing can ever alert. Same folder:
-
-```
-%LOCALAPPDATA%\ROROROblox\metric-rules.json
+```text
+dotnet run --project tools/MetricSmoke
 ```
 
-```json
-[
-  { "metricId": "smoke.points", "kind": "Rate",  "threshold": 100, "windowMinutes": 10 },
-  { "metricId": "smoke.share",  "kind": "Level", "threshold": 0.8,  "alertWhenBelow": true },
-  { "metricId": "smoke.place",  "kind": "Event" }
-]
+If RoRoRo is up, the tool refuses to start rather than risk it — `discord.dat` is read once, at
+startup, so a running app would keep posting to your real webhooks no matter how cleanly this tool
+rewrites the file underneath it (the finding that shaped the runner; see
+[smoke-harness-verification.md](smoke-harness-verification.md)). Quit it from the tray first.
+
+What it does to your profile (`%LOCALAPPDATA%\ROROROblox`), and how it gives it back:
+
+- Backs up `discord.dat`, `notify.dat`, `metric-rules.json`, the one settings key it flips
+  (`metricAlertsEnabled`, and `streamerMode` for the masked-naming row), and its own grant in
+  `consent.dat` — five files, into `%LOCALAPPDATA%\ROROROblox\smoke-backup`, which never leaves the
+  machine and is `.gitignore`d.
+- Swaps in a scratch config: both webhook URLs point at a local catcher it starts itself, the phone
+  is overwritten with an unconfigured record, a canned rules file lands, the opt-in and streamer mode
+  go on, and its own plugin id is granted `host.metrics.report` (plus `host.queries.accounts`, for
+  the masked-naming row) — then reads every one of those writes back before reporting a single
+  metric, and aborts with nothing sent if any of them disagree.
+- Prints `START RORORO NOW` and waits up to three minutes for the app to answer on the plugin pipe —
+  start it in that window. It has to start *after* the swap to pick any of it up.
+- Runs the sixteen scenarios (a few minutes), then restores everything it backed up, in a `finally`
+  that also fires on the first Ctrl-C (a second one kills it outright, for whoever wants out now).
+
+**If a run is interrupted** — a second Ctrl-C, a crash, the machine losing power — the next
+`dotnet run --project tools/MetricSmoke` finds the marker the dead run left and restores from it
+before touching anything else. To put the profile back without starting a new run:
+
+```text
+dotnet run --project tools/MetricSmoke -- --recover
 ```
 
-`kind` is `Rate`, `Level` or `Event`. `Rate` breaches when the change per minute over the window
-falls BELOW the threshold. `Level` compares the latest value against the threshold in the direction
-`alertWhenBelow` sets. `Event` fires when the value simply changes. `windowMinutes` is unused by
-`Level` and `Event`.
+It is safe to run even when nothing needs recovering — it says so and exits. A
+`smoke-run-in-progress.json` sitting in `smoke-backup\` is the sign a restore did not finish; the
+tool's own output names which file(s) it could not put back, and what to re-enter by hand
+(webhook URLs, phone credentials) if the backup itself is gone too.
 
-**3. Get something to report.** Nothing ships that reports a metric — that is the whole point of the
-separation, and it is why `docs/plugins/AUTHOR_GUIDE.md` carries the recipe. You need a plugin that
-declares `host.metrics.report`, which you then grant at the consent sheet. The cheapest thing that
-works is a throwaway console app against `ROROROblox.PluginContract` calling `ReportMetric` twice
-with a gap between them; two samples is the minimum for a Rate rule to compute anything at all.
+**The rows that stay manual** — the five below marked as such, plus *Settings still says "No alerts
+yet"* — need the app running normally, no harness, with:
 
-**Toggling from Settings is live immediately** — no restart, no 30-second wait. The periodic 30-second
+1. **Metric alerts** ticked on in Settings → Alerts. The app writes `metricAlertsEnabled` into
+   `settings.json` itself; the toggle nudges the gate the moment the write succeeds, not on the next
+   poll.
+2. A real rules file at `%LOCALAPPDATA%\ROROROblox\metric-rules.json` — absent means no rules, which
+   means nothing can ever alert:
+
+   ```json
+   [
+     { "metricId": "smoke.points", "kind": "Rate",  "threshold": 100, "windowMinutes": 10 },
+     { "metricId": "smoke.share",  "kind": "Level", "threshold": 0.8,  "alertWhenBelow": true },
+     { "metricId": "smoke.place",  "kind": "Event" }
+   ]
+   ```
+
+   `kind` is `Rate`, `Level` or `Event`. `Rate` breaches when the change per minute over the window
+   falls BELOW the threshold. `Level` compares the latest value against the threshold in the
+   direction `alertWhenBelow` sets. `Event` fires when the value simply changes. `windowMinutes` is
+   unused by `Level` and `Event`.
+3. A plugin that actually reports something — nothing ships that does, which is the whole point of
+   the separation. `docs/plugins/AUTHOR_GUIDE.md` has the recipe; the cheapest thing that works is a
+   throwaway console app against `ROROROblox.PluginContract` calling `ReportMetric` twice with a gap
+   between them, granted `host.metrics.report` at the consent sheet.
+4. For the phone and Discord rows specifically: real credentials or webhooks saved in Settings →
+   Alerts. The point of those two rows is that a real destination receives it — the one thing the
+   harness's own local catcher exists to avoid needing.
+
+Toggling from Settings is live immediately — no restart, no 30-second wait. The periodic 30-second
 re-read still exists underneath (it is what catches a hand-edited `settings.json`, still a supported
 way in), and it skips the read entirely while no rules file is present, so a hand edit made before
 any rules file exists waits for the tick after the file appears, not 30 seconds from the edit.
@@ -78,7 +121,10 @@ uses. The routing control lives in Settings → Alerts, alongside the **Metric a
 
 - [ ] **A breach reaches the desktop toast.** `[harness]` Report twice across the window, under the floor.
       The simplest leg to test first — no webhook, no phone credentials, no routing tick required —
-      and the row everything else rests on.
+      and the row everything else rests on. The harness reads the `Alert → Local` line the dispatcher
+      writes *before* it sends, which is not the same claim as the shell having drawn the toast — that
+      one stays a by-eye check, once, because scraping a transient shell notification is worse than
+      having no check at all (harness spec §2).
 - [ ] **A consented plugin can report at all.** `[harness]` Grant `host.metrics.report` at the consent sheet and
       confirm the report is accepted rather than refused.
 - [ ] **An unconsented plugin is denied.** `[harness]` Two cases, and they are different paths through the
@@ -100,7 +146,11 @@ uses. The routing control lives in Settings → Alerts, alongside the **Metric a
 - [ ] **A clock-skewed reporter is visible, not silent.** `[harness]` Report an observation stamped hours in the
       future. Confirm the log says so by name. The failure this guards against is Rate rules going
       permanently quiet while Level and Event keep working, which from outside looks like nothing
-      happening at all.
+      happening at all. **Caveat carried from the verification record:** this row has only ever been
+      proven red by changing the *scenario's* stamp — the input side — not by breaking the product's
+      skew detection. `FutureTolerance` and the drop-log line have not themselves been made to
+      misbehave; what is proven is that the row notices a missing drop line, not that it notices a
+      broken skew check specifically.
 - [ ] **A resetting cumulative counter does not fire a false rate breach.** `[harness]` Report a rising value,
       then a lower one, as the author guide's worked example describes. No alert off the apparent
       drop, and normal reporting again once two fresh samples land after the reset.
@@ -119,30 +169,39 @@ uses. The routing control lives in Settings → Alerts, alongside the **Metric a
       carries the real one — the same policy every other alert kind's channel routing already uses.
 - [ ] **The plugin pipe still binds with the new RPC present.** `[harness]` A missing capability-map entry
       disables plugins for the whole session and is logged only at Debug, so it does not crash and
-      does not show. Confirm plugins still work AT ALL, not just that metrics work.
+      does not show. Confirm plugins still work AT ALL, not just that metrics work. **Caveat carried
+      from the verification record:** this row has never actually gone red for that defect — deleting
+      the capability-map entry makes the whole run abort before this row runs at all, because the
+      runner's own wait-for-app gate uses the same probe the row asserts on. It has been proven able to
+      fail, but only by killing RoRoRo the instant the pipe answers, before the row's own check
+      completes.
 - [ ] **Settings still says "No alerts yet" while the Metric alerts toggle is off.** Deliberate, and
       it will look like a bug if you do not expect it: the status line excludes `MetricBreach` from
       the count until the toggle is on, even though `MetricBreachDestinations` defaults to the
       desktop toast underneath. Turn the toggle on and confirm the sentence starts counting it.
-- [ ] **A breach reaches the phone.** Tick **My phone** on the metric-alerts routing row in Settings
-      → Alerts, with phone credentials saved, report a breaching value, and confirm the push
-      notification arrives. The phone leg was only ever believed once a real phone rang
-      (phone-alerts spec §4); the same discipline applies here, so this row cannot be waved through
-      on the strength of the toast working.
-- [ ] **A breach reaches a Discord channel**, personal and clan, with the clan one carrying the real
-      account name and the personal one the masked name. Tick **My channel** and **Clan channel** on
-      the metric-alerts routing row with a webhook saved for each, report a breaching value on each,
-      and confirm both arrive with the right name policy.
+- [ ] **A breach reaches the phone. No harness will ever cover this.** Tick **My phone** on the
+      metric-alerts routing row in Settings → Alerts, with phone credentials saved, report a
+      breaching value, and confirm the push notification arrives. The phone leg was only ever
+      believed once a real phone rang (phone-alerts spec §4); the same discipline applies here. A
+      local listener can prove RoRoRo POSTed; it cannot prove a phone buzzed.
+- [ ] **A breach reaches a Discord channel, personal and clan.** No harness will ever fully cover
+      this, with the clan one carrying the real account name and the personal one the masked one.
+      Tick **My channel** and **Clan channel** on the metric-alerts routing row with a webhook saved
+      for each, report a breaching value on each, and confirm both arrive with the right name policy.
+      The harness's own `streamer-mode-masks` scenario proves the routing and the masking policy
+      against a local catcher it starts itself; it cannot prove a payload lands and renders in real
+      Discord, so a real webhook stays a by-hand check.
 - [ ] **An unconfigured destination falls back to the desktop toast.** `[harness]` Tick **My phone** on the
       metric-alerts routing row with no phone credentials saved, report a breaching value, and
       confirm it lands as a toast rather than vanishing.
-- [ ] **A real threshold crossed on purpose, and a phone that buzzes (Este-gated).** Not a repeat of
-      the phone row above — that one is a synthetic report anyone can make from a throwaway plugin;
-      this one needs a real clan, a real battle, and a member deliberately under the floor for the
-      window, which is the only way to confirm the whole chain fires end to end against a live
-      signal instead of a manufactured one. No longer blocked on routing — a hand-written rules file
-      and the phone checkbox are enough now that a breach can reach a phone. Needs Este to run a real
-      clan battle; nobody else can tick this box.
+- [ ] **A real threshold crossed on purpose, and a phone that buzzes (Este-gated).** No harness will
+      ever cover this. Not a repeat of the phone row above — that one is a synthetic report anyone
+      can make from a throwaway plugin; this one needs a real clan, a real battle, and a member
+      deliberately under the floor for the window, which is the only way to confirm the whole chain
+      fires end to end against a live signal instead of a manufactured one. No harness manufactures a
+      real battle, so this stays a live event, not a rerunnable check. No longer blocked on routing —
+      a hand-written rules file and the phone checkbox are enough now that a breach can reach a
+      phone. Needs Este to run a real clan battle; nobody else can tick this box.
 
 ---
 
@@ -178,10 +237,12 @@ signature to corrupt, so those two rows are gone rather than parked.
 
 ## The live one (Este-gated, needs a real clan battle)
 
-- [-] **The 3-minute server cache does not read as a stall.** Confirm the delay between a real drop
-      and the alert is the cache plus the window, and that it feels like a detector rather than a
-      lag. A judgement call no test can make.
-- [-] **It catches the thing it was built for.** A macro that drifted out of its zone, or the wrong
-      loadout — not a disconnect, which presence-as-truth already covers. If the only alerts it ever
-      produces are for accounts that also dropped out, the feature is redundant and should be said
-      to be.
+- [-] **The 3-minute server cache does not read as a stall. No harness will ever cover this.**
+      Confirm the delay between a real drop and the alert is the cache plus the window, and that it
+      feels like a detector rather than a lag. A judgement call no test can make — "feels like" has
+      no assertion.
+- [-] **It catches the thing it was built for. No harness will ever cover this.** A macro that
+      drifted out of its zone, or the wrong loadout — not a disconnect, which presence-as-truth
+      already covers. If the only alerts it ever produces are for accounts that also dropped out, the
+      feature is redundant and should be said to be — and only a human watching a real battle, not a
+      synthetic report, can tell the two apart.
