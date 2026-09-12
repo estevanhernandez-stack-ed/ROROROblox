@@ -1,0 +1,616 @@
+using ROROROblox.App.Plugins;
+using ROROROblox.Core.Discord;
+using ROROROblox.Core.Notify;
+
+namespace ROROROblox.MetricSmoke;
+
+/// <summary>
+/// MetricSmoke's entry point (design
+/// docs/superpowers/specs/2026-09-11-metric-smoke-harness-design.md). The profile guard, the log
+/// reader, the pipe driver and the webhook catcher are tasks 1-4; this is task 5's runner, which sets
+/// the profile up, replays <see cref="ScenarioTable.All"/> against a live RoRoRo, and puts the profile
+/// back.
+/// <para>
+/// The one command that is not a run is <c>--recover</c>: putting the profile back after an
+/// interrupted one, because that is the failure a user feels — a <c>discord.dat</c> left pointing at a
+/// dead localhost webhook means alerts stop arriving and two URLs have to be re-pasted out of Discord.
+/// </para>
+/// <para>
+/// Explicitly named and INTERNAL, not top-level statements: top-level statements compile to a
+/// <c>Program</c> class in the global namespace, and ROROROblox.Tests references both this project and
+/// ROROROblox.App — whose own <c>Program</c> the tests call by its unqualified name. A global
+/// <c>Program</c> here shadowed that and broke ProgramPortableDetectionTests. Internal keeps this one
+/// out of the test project's sight entirely.
+/// </para>
+/// </summary>
+internal static class Program
+{
+    /// <summary>
+    /// How long the runner waits for RoRoRo to answer on the pipe after the profile is set up. Long,
+    /// because a human is expected to start the app inside it — the setup deliberately happens while
+    /// the app is DOWN (see <see cref="RunAsync"/>), so this window is where the operator launches it.
+    /// </summary>
+    private static readonly TimeSpan AppStartupWait = TimeSpan.FromMinutes(3);
+
+    /// <summary>Set by the first Ctrl-C. Checked between scenarios.</summary>
+    private static volatile bool _stopRequested;
+
+    private static async Task<int> Main(string[] args)
+    {
+        if (args is ["--recover"])
+        {
+            var backupRoot = ProfileGuard.DefaultBackupRoot();
+            var attempted = await ProfileGuard.RecoverOrphanedAsync(backupRoot, Console.WriteLine).ConfigureAwait(false);
+
+            // The marker outliving the attempt is the whole answer: it is removed only by a restore
+            // that put everything back. Recovery reports ATTEMPTED, not succeeded, and a command
+            // whose job is clearing a broken profile must not exit zero having left it broken —
+            // including when it refused because a run is still live.
+            if (ProfileGuard.HasOrphanedMarker(backupRoot))
+            {
+                Console.WriteLine($"NOT fully restored: {ProfileGuard.MarkerFileName} is still in {backupRoot}. "
+                    + "The lines above say which files could not be put back, or why this refused to try.");
+                // Whatever DID go back is as invisible to a live app as a full restore would be, and
+                // this path is the one most likely to be run with RoRoRo already up.
+                if (attempted) PrintRestartNotice();
+                return 2;
+            }
+
+            Console.WriteLine(attempted
+                ? "The profile is back: the marker and its backups are gone."
+                : $"Nothing to recover: no {ProfileGuard.MarkerFileName} in {backupRoot}.");
+            if (attempted) PrintRestartNotice();
+            return 0;
+        }
+
+        string? subjectOverride = null;
+        for (var i = 0; i < args.Length; i++)
+        {
+            if (args[i] == "--subject" && i + 1 < args.Length)
+            {
+                subjectOverride = args[++i];
+                continue;
+            }
+
+            Usage();
+            return 1;
+        }
+
+        if (subjectOverride is not null && !Guid.TryParse(subjectOverride, out _))
+        {
+            Console.WriteLine($"--subject must be an account id (a Guid); got '{subjectOverride}'.");
+            return 1;
+        }
+
+        return await RunAsync(subjectOverride).ConfigureAwait(false);
+    }
+
+    private static void Usage()
+    {
+        Console.WriteLine("MetricSmoke — replays the harness-covered rows of docs/superpowers/smoke-metric-alerts.md.");
+        Console.WriteLine("  (no arguments)        set the profile up, run every scenario, put the profile back");
+        Console.WriteLine("  --subject <guid>      the account id the masked-naming row reports against");
+        Console.WriteLine("  --recover             put the profile back after an interrupted run");
+        Console.WriteLine("Exit codes: 0 every scenario passed, 1 a scenario failed or setup refused, "
+            + "2 the profile is still not right.");
+    }
+
+    /// <summary>
+    /// The run, in the order the design fixes and every step of which is load-bearing:
+    /// <list type="number">
+    ///   <item>recover an orphaned marker, before anything else touches the profile;</item>
+    ///   <item>refuse if RoRoRo is ALREADY running — see <see cref="RefuseIfAppIsUpAsync"/>, this is
+    ///   the clan-channel guard and it is the reason the order has this step at all;</item>
+    ///   <item>acquire the guard (backs up what needs backing up, writes the marker);</item>
+    ///   <item>start the catcher, so the URLs written next point at something already listening;</item>
+    ///   <item>unconfigure the phone, write <c>discord.dat</c>, and READ BOTH BACK — the two webhook
+    ///   URLs, the metric-breach destination set, and that the phone really has no credentials behind
+    ///   it. Abort without reporting a single metric if any of the three disagrees;</item>
+    ///   <item>wait for the app to answer on the pipe;</item>
+    ///   <item>run the scenarios;</item>
+    ///   <item>restore, in a <c>finally</c> that also runs on Ctrl-C.</item>
+    /// </list>
+    /// </summary>
+    private static async Task<int> RunAsync(string? subjectOverride)
+    {
+        var dataRoot = ProfileGuard.DefaultDataRoot();
+        var backupRoot = ProfileGuard.DefaultBackupRoot();
+
+        Console.WriteLine($"MetricSmoke — {ScenarioTable.All.Count} scenarios against the real profile at {dataRoot}");
+        Console.WriteLine();
+
+        // 1. An orphan first. AcquireAsync would refuse on one anyway, but it refuses by throwing; a
+        //    tool whose first job is putting a broken profile back should try that first and say so.
+        if (ProfileGuard.HasOrphanedMarker(backupRoot))
+        {
+            Console.WriteLine($"An earlier run left {ProfileGuard.MarkerFileName} behind. Restoring from it first.");
+            await ProfileGuard.RecoverOrphanedAsync(backupRoot, Console.WriteLine).ConfigureAwait(false);
+            if (ProfileGuard.HasOrphanedMarker(backupRoot))
+            {
+                Console.WriteLine();
+                Console.WriteLine($"The marker is still in {backupRoot}, so the profile is not known-good. "
+                    + "Refusing to start: fresh backups taken now would overwrite the good ones.");
+                return 2;
+            }
+        }
+
+        // 2. The clan-channel guard. Before the guard, before the marker, before anything is written.
+        if (await RefuseIfAppIsUpAsync().ConfigureAwait(false)) return 1;
+
+        HookCtrlC();
+
+        ProfileGuard guard;
+        try
+        {
+            guard = await ProfileGuard.AcquireAsync(dataRoot, backupRoot, Console.WriteLine).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine();
+            Console.WriteLine($"Refusing to start: {ex.Message}");
+            return 1;
+        }
+
+        var catcher = WebhookCatcher.Start();
+        var passes = 0;
+        var failures = 0;
+        var skips = 0;
+        // Set when the run stopped early rather than any one row failing. Kept separate from the counts
+        // so neither is attributed to a row, and folded into the exit code — which matters when the stop
+        // happens on the last row, where "never ran" is zero and the abort would otherwise vanish.
+        var aborted = false;
+
+        try
+        {
+            var phoneRouted = await SetUpProfileAsync(guard, catcher).ConfigureAwait(false);
+            if (phoneRouted is null)
+            {
+                // SetUpProfileAsync has already said why. Nothing was reported, which is the point.
+                return 1;
+            }
+
+            using var reporter = new MetricReporter(SmokePluginIds.Reporting);
+            if (!await WaitForAppAsync(reporter).ConfigureAwait(false)) return 1;
+
+            var logDirectory = Path.Combine(guard.DataRoot, "logs");
+            if (!File.Exists(LogWatch.NewestLogFile(logDirectory)))
+            {
+                Console.WriteLine($"No log file under {logDirectory}. Every assertion here reads that file, "
+                    + "so there is nothing to assert against.");
+                return 1;
+            }
+
+            var context = new ScenarioContext
+            {
+                Guard = guard,
+                Catcher = catcher,
+                Reporter = reporter,
+                LogDirectory = logDirectory,
+                Log = Console.WriteLine,
+                PhoneRouted = phoneRouted.Value,
+            };
+            await ResolveNamedSubjectAsync(context, subjectOverride).ConfigureAwait(false);
+
+            Console.WriteLine();
+            Console.WriteLine($"Running {ScenarioTable.All.Count} scenarios. Negative rows sit through "
+                + $"{SmokeTimings.AlertWindow.TotalSeconds:0}s each (a tenth of the "
+                + $"{AlertRouter.Cooldown.TotalMinutes:0}-minute alert cooldown).");
+            Console.WriteLine();
+
+            var faultsSeen = catcher.RequestFaults.Count;
+            foreach (var scenario in ScenarioTable.All)
+            {
+                if (_stopRequested)
+                {
+                    Console.WriteLine("Stopped by Ctrl-C before the remaining scenarios. The profile is being "
+                        + "put back now.");
+                    aborted = true;
+                    break;
+                }
+
+                Console.WriteLine($"→ {scenario.Name}");
+                context.BeginScenario();
+                ScenarioOutcome outcome;
+                try
+                {
+                    outcome = await scenario.Run(context).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    // A scenario that throws is a failed scenario, not a failed run: the remaining rows
+                    // are still worth having, and the restore still has to happen either way.
+                    outcome = ScenarioOutcome.Fail($"threw {ex.GetType().Name}: {ex.Message}");
+                }
+
+                // Checked here rather than inside each row, against a watch BeginScenario opened rather
+                // than one the row remembered to open, and after a final read off disk rather than off
+                // whatever the row happened to have buffered. All three because the dispatcher writes
+                // "Alert → {Destination}" BEFORE it sends and swallows whatever the send throws: a row
+                // asserting on that line passes while the delivery it names failed, which is how a broken
+                // toast could have gone green. Five rows end on an early-exit poll, so without the final
+                // read this check had a hole of exactly the shape it exists to close. See
+                // LogTail.DispatchFailureCount.
+                var dropped = await context.DispatchFailuresAsync().ConfigureAwait(false);
+                if (dropped > 0)
+                {
+                    outcome = ScenarioOutcome.Fail(
+                        $"the dispatcher logged {dropped} swallowed failure(s) in this row's window — an "
+                        + "alert was logged as routed and then dropped on an exception. "
+                        + $"Original verdict: {outcome.Status}, {outcome.Detail}");
+                }
+
+                switch (outcome.Status)
+                {
+                    case ScenarioStatus.Passed:
+                        passes++;
+                        Console.WriteLine($"   PASS  {scenario.SmokeRow}");
+                        break;
+                    case ScenarioStatus.Skipped:
+                        skips++;
+                        Console.WriteLine($"   SKIP  {scenario.SmokeRow}");
+                        break;
+                    default:
+                        failures++;
+                        Console.WriteLine($"   FAIL  {scenario.SmokeRow}");
+                        break;
+                }
+                Console.WriteLine($"         {outcome.Detail}");
+
+                // A catcher that stopped hearing turns every later absence into a false green, so a new
+                // fault ends the run rather than being noted and walked past.
+                if (catcher.RequestFaults.Count > faultsSeen)
+                {
+                    var fault = catcher.RequestFaults[^1];
+                    Console.WriteLine();
+                    Console.WriteLine($"The webhook catcher recorded a request fault ({fault.GetType().Name}: "
+                        + $"{fault.Message}). A lost POST makes every later row's silence meaningless, so the "
+                        + "run stops here.");
+                    aborted = true;
+                    break;
+                }
+            }
+
+            // Counted, never subtracted. A run that stopped early — Ctrl-C, or a deaf catcher — leaves
+            // rows that never ran, and subtracting failures from the table's length reported those as
+            // passes: "15 passed, 1 failed" for a run that asserted nothing. The exit code was right and
+            // this line is the one a human transcribes into the smoke list, which makes it the more
+            // dangerous of the two.
+            var notRun = ScenarioTable.All.Count - passes - failures - skips;
+            Console.WriteLine();
+            Console.WriteLine($"{passes} passed, {failures} failed, {skips} skipped"
+                + (notRun > 0 ? $", {notRun} never ran." : "."));
+            if (skips > 0 || notRun > 0)
+            {
+                Console.WriteLine("A row that skipped or never ran is NOT a covered row — its smoke-list box "
+                    + "stays unticked.");
+            }
+            return failures == 0 && notRun == 0 && !aborted ? 0 : 1;
+        }
+        finally
+        {
+            // Restore first, catcher second: the profile matters and the port does not.
+            var report = await guard.RestoreAsync().ConfigureAwait(false);
+            Console.WriteLine(report.ToString());
+            guard.Dispose();
+            await catcher.DisposeAsync().ConfigureAwait(false);
+
+            // Last, so it is the last thing on screen: the files are back and the running app is not
+            // reading them.
+            PrintRestartNotice();
+        }
+    }
+
+    /// <summary>
+    /// Says the one thing a byte-perfect restore cannot do for itself: tell the app.
+    /// <para>
+    /// <see cref="RefuseIfAppIsUpAsync"/> exists because an external write to <c>discord.dat</c> is
+    /// invisible to a live session. That fact does not stop being true at the end of the run.
+    /// <c>DiscordConfigService</c> and <c>PhoneNotifyConfigService</c> each cache their record at
+    /// <c>InitializeAsync</c> and re-read it only through the app's own <c>MutateAsync</c>, and
+    /// <c>StreamerIdentityProvider.IsActive</c> is read once at startup and changed only by the app's
+    /// own toggle. So the restore puts three things back on disk that the session keeps the harness's
+    /// version of until it is restarted: both webhook URLs (pointing at a catcher that was just
+    /// disposed), the metric-breach destination set, the blanked <c>notify.dat</c>, and streamer mode.
+    /// A genuine drop-out that evening would POST to a closed localhost port and be swallowed, the
+    /// phone leg would find no credentials, and account names would stay masked — for as long as the
+    /// app stays up.
+    /// </para>
+    /// <para>
+    /// The two things the harness writes that a live app DOES pick up are deliberately not mentioned
+    /// here: <c>metric-rules.json</c> is re-read per report against a hash of its bytes, and
+    /// <c>consent.dat</c> is read off disk on every capability check.
+    /// <c>settings.json</c>'s <c>metricAlertsEnabled</c> is re-read on the view model's 30-second
+    /// tick, and is inert anyway once the rules file is gone.
+    /// </para>
+    /// <para>
+    /// Printed on every finished restore, not only a partial one: a clean restore is exactly the case
+    /// where the operator has no other reason to think anything is left to do.
+    /// </para>
+    /// </summary>
+    private static void PrintRestartNotice()
+    {
+        const string Rule = "============================================================================";
+        Console.WriteLine();
+        Console.WriteLine(Rule);
+        Console.WriteLine("  QUIT RORORO AND START IT AGAIN BEFORE YOU WALK AWAY.");
+        Console.WriteLine(Rule);
+        Console.WriteLine("  The files are back on disk. The app that is still running is not reading them:");
+        Console.WriteLine("  it cached discord.dat and notify.dat at startup, and streamer mode with them, and");
+        Console.WriteLine("  re-reads them only when you change them in Settings. Until you restart it, that");
+        Console.WriteLine("  session still holds this harness's webhook URLs — pointing at a catcher that has");
+        Console.WriteLine("  just been shut down — its metric destinations, a phone with no credentials behind");
+        Console.WriteLine("  it, and streamer mode on.");
+        Console.WriteLine();
+        Console.WriteLine("  So a real alert tonight would POST to a closed port and be swallowed, the phone");
+        Console.WriteLine("  leg would find nothing, and account names would stay masked. Quitting from the");
+        Console.WriteLine("  tray and launching again is the whole fix.");
+        Console.WriteLine(Rule);
+    }
+
+    /// <summary>
+    /// Refuses to run while RoRoRo is already up, and this is the only refusal in the tool with an
+    /// audience behind it.
+    /// <para>
+    /// <c>DiscordConfigService</c> loads <c>discord.dat</c> ONCE, at startup, and
+    /// <c>AlertDispatcher</c> reads its in-memory <c>Current</c> on every dispatch. Nothing re-reads
+    /// the file except a mutation through the app's own UI. So a running app holds the webhook URLs and
+    /// the destination set it started with — the REAL ones — and the harness's swap, however cleanly it
+    /// lands on disk and reads back, would not reach it. A test breach would then post to whatever that
+    /// running app already believes, which on a profile with clan routing configured is the real clan
+    /// channel.
+    /// </para>
+    /// <para>
+    /// The read-back guard cannot see this: the file is correct and the app is simply not reading it.
+    /// The only way to be sure the app has the harness's config is for the app to start after it, so
+    /// that is what the runner requires.
+    /// </para>
+    /// </summary>
+    private static async Task<bool> RefuseIfAppIsUpAsync()
+    {
+        using var probe = new MetricReporter(SmokePluginIds.Reporting);
+        if (!await probe.IsHostReachableAsync().ConfigureAwait(false)) return false;
+
+        Console.WriteLine("RoRoRo is already running, and that is why this is refusing to start.");
+        Console.WriteLine();
+        Console.WriteLine("  The app reads discord.dat once, at startup. A session that is already up holds");
+        Console.WriteLine("  your REAL webhook URLs and your real destination set in memory, and would keep");
+        Console.WriteLine("  using them however cleanly this tool rewrites the file. A test alert could land in");
+        Console.WriteLine("  your clan channel.");
+        Console.WriteLine();
+        Console.WriteLine("  Quit RoRoRo from the tray, run this again, and start RoRoRo when it asks you to.");
+        return true;
+    }
+
+    /// <summary>
+    /// Everything the app has to find on disk before it starts: both webhook URLs pointing at the
+    /// catcher, a destination set that exercises all four legs, the opt-in on, streamer mode on, the
+    /// rules file, and the harness's own consent grant.
+    /// <para>
+    /// <b>The read-back is the gate.</b> Of the three things that can go wrong with this harness two are
+    /// private annoyances; the only one with an audience is a test alert reaching the real clan channel
+    /// because the swap silently did not take. So nothing is reported until
+    /// <see cref="ProfileGuard.VerifyDiscordSwapAsync"/> answers true, and a false answer returns here
+    /// with no metric ever sent.
+    /// </para>
+    /// <para>
+    /// <b>Streamer mode goes on for the whole run, not just its own row.</b>
+    /// <c>StreamerIdentityProvider.IsActive</c> is read once at startup and changed only by the app's
+    /// own toggle, so a mid-run flip would have no effect on a running app. Every row except the naming
+    /// one is indifferent to it, and the guard's single-key save-and-restore already covered this key —
+    /// <c>BooleanSetting.StreamerMode</c> — so nothing needed extending.
+    /// </para>
+    /// </summary>
+    private static async Task<bool?> SetUpProfileAsync(ProfileGuard guard, WebhookCatcher catcher)
+    {
+        // The phone goes first, because whether it can be unconfigured decides the destination set.
+        // notify.dat is backed up by AcquireAsync and put back by the restore, so this is a swap like
+        // the webhooks' rather than a loss — and it has to happen BEFORE the app starts, because
+        // PhoneNotifyConfigService caches the record at startup exactly as DiscordConfigService does.
+        await guard.UnconfigurePhoneAsync().ConfigureAwait(false);
+        var phoneRouted = await guard.VerifyPhoneUnconfiguredAsync().ConfigureAwait(false);
+
+        // ORDER MATTERS, in two ways, and neither is cosmetic.
+        //
+        // Phone LAST because AlertRouter resolves in order and dedupes: an unconfigured Phone falls
+        // back to Local and must dedupe against the Local already there rather than add a second line.
+        //
+        // Local NOT FIRST because AlertDispatcher's loop is sequential and its cooldown stamp lands
+        // inside it, per destination, after that destination's send. Local's "send" is
+        // TrayService.ShowToast, which calls into a WPF TaskbarIcon from whatever gRPC handler thread
+        // raised the breach; if that throws, the loop ends there and every later destination in the
+        // fan-out is lost along with the stamp. Putting a webhook first means the stamp has already
+        // landed and both channel posts have already gone out before anything touches the tray. The
+        // desktop row is unaffected either way — the "Alert → Local" line is written BEFORE the send,
+        // which is exactly the line the design says stands in for the toast (§2: whether the shell
+        // then drew it is the one manual check that stays).
+        var destinations = new List<AlertDestination>
+        {
+            AlertDestination.Mine,
+            AlertDestination.Clan,
+            AlertDestination.Local,
+        };
+        if (phoneRouted) destinations.Add(AlertDestination.Phone);
+
+        Console.WriteLine($"[setup] metric breaches route to {string.Join(", ", destinations)}");
+        Console.WriteLine(phoneRouted
+            ? $"[setup] {ProfileGuard.NotifyFileName} reads back unconfigured, so Phone is routed and cannot ring"
+            : $"[setup] {ProfileGuard.NotifyFileName} could NOT be confirmed unconfigured, so Phone is not routed "
+                + "— the fallback row will skip rather than page a real phone.");
+
+        await guard.MutateDiscordAsync(config => config with
+        {
+            MineWebhookUrl = catcher.MineUrl,
+            ClanWebhookUrl = catcher.ClanUrl,
+            MetricBreachDestinations = destinations,
+        }).ConfigureAwait(false);
+
+        if (!await guard.VerifyDiscordSwapAsync(catcher.MineUrl, catcher.ClanUrl).ConfigureAwait(false))
+        {
+            Console.WriteLine();
+            Console.WriteLine("ABORTING before a single metric is reported: the webhook swap did not read back.");
+            Console.WriteLine("  The lines above say which half disagreed. Until both URLs are the catcher's,");
+            Console.WriteLine("  a breach could reach your real clan channel, so nothing will be sent. The");
+            Console.WriteLine("  profile is about to be put back from the backups this run took.");
+            return null;
+        }
+
+        // The destination set needs its own read-back: VerifyDiscordSwapAsync covers the two URLs and a
+        // fingerprint of the fields the harness never touches, and that fingerprint deliberately
+        // EXCLUDES MetricBreachDestinations — otherwise it would flag the harness's own edit every run
+        // and be ignored within a week. Which left the routing every row depends on unverified, and a
+        // lost write there is quiet: the field defaults to Local, so breaches still toast, most rows
+        // still look right, and only the two channel rows and the fallback row go wrong.
+        if (!await guard.VerifyMetricDestinationsAsync(destinations).ConfigureAwait(false))
+        {
+            Console.WriteLine();
+            Console.WriteLine("ABORTING before a single metric is reported: the metric-breach destination set");
+            Console.WriteLine("  did not read back as written (the line above says what it reads as). Nothing");
+            Console.WriteLine("  will be sent against routing this run did not write.");
+            return null;
+        }
+        Console.WriteLine("[setup] both webhook URLs and the destination set read back as written");
+
+        await guard.SetMetricAlertsEnabledAsync(true).ConfigureAwait(false);
+        await guard.SetStreamerModeAsync(true).ConfigureAwait(false);
+        await guard.GrantConsentAsync(
+            SmokePluginIds.Reporting,
+            [PluginCapability.HostMetricsReport, PluginCapability.HostQueriesAccounts]).ConfigureAwait(false);
+        await guard.WriteRulesAsync(SmokeRules.ToJson(SmokeRules.Canonical)).ConfigureAwait(false);
+        Console.WriteLine($"[setup] {SmokeRules.Canonical.Count} rules written");
+        return phoneRouted;
+    }
+
+    /// <summary>
+    /// Waits for the plugin pipe to answer, which is how the runner knows the app started — and,
+    /// because the setup above already landed, that it started holding the harness's config.
+    /// <para>
+    /// The pipe binds BEFORE the startup gate's modals (<c>App.StartPluginHostListener</c>,
+    /// fire-and-forget, deliberately), so this does not wait on a human dismissing a dialog. It may
+    /// well wait on a human starting the app, which is what the window is for.
+    /// </para>
+    /// </summary>
+    private static async Task<bool> WaitForAppAsync(MetricReporter reporter)
+    {
+        if (await reporter.IsHostReachableAsync().ConfigureAwait(false))
+        {
+            Console.WriteLine("[setup] RoRoRo is answering on the plugin pipe.");
+            return true;
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"START RORORO NOW. Waiting up to {AppStartupWait.TotalMinutes:0} minutes for it to "
+            + "answer on the plugin pipe.");
+        Console.WriteLine("  It has to start AFTER this point: that is how it picks up the harness's webhook");
+        Console.WriteLine("  URLs, its destination set, the opt-in and streamer mode.");
+
+        var deadline = DateTime.UtcNow + AppStartupWait;
+        while (DateTime.UtcNow < deadline)
+        {
+            if (_stopRequested)
+            {
+                Console.WriteLine("Stopped by Ctrl-C while waiting for the app.");
+                return false;
+            }
+            if (await reporter.IsHostReachableAsync().ConfigureAwait(false))
+            {
+                Console.WriteLine("[setup] RoRoRo is answering on the plugin pipe.");
+                return true;
+            }
+            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        }
+
+        Console.WriteLine($"RoRoRo never answered on {reporter.PipeName}. Nothing was reported.");
+        return false;
+    }
+
+    /// <summary>
+    /// Finds an account id the host can resolve to a name, for the masked-naming row alone. An explicit
+    /// <c>--subject</c> wins; otherwise the host is asked through <c>GetAccounts</c>, which is why the
+    /// harness's grant includes <c>host.queries.accounts</c>.
+    /// <para>
+    /// A failure here is never fatal: the naming row skips and says so, and the other fifteen do not
+    /// care. The masked name is held in memory for one comparison and never printed — printing it would
+    /// put a name the app is masking into a console log.
+    /// </para>
+    /// <para>
+    /// <b>It keeps asking rather than trusting the first answer, and that is a fix rather than
+    /// caution.</b> The plugin pipe binds early and fire-and-forget, BEFORE the vault is read, so the
+    /// moment <see cref="WaitForAppAsync"/> returns the host can be answering <c>GetAccounts</c> with
+    /// an empty list on a profile that has eight accounts saved in it. Measured on 2026-09-11 during
+    /// the harness's first live run: the pipe answered two seconds after launch and the accounts
+    /// landed in <c>MainViewModel.AccountsSnapshot</c> twenty-eight seconds after that, so the row
+    /// skipped — and a row that skips on every unattended run is not a covered row, whatever the
+    /// table says. The window is <see cref="SmokeTimings.SettingsPickup"/>, two of the app's own
+    /// routine ticks, which is the same "the running app has had a fair chance at its startup work"
+    /// yardstick the opt-in row already waits on rather than a number picked here. An empty answer
+    /// after that really is a profile with no accounts, and the row skips on it.
+    /// </para>
+    /// </summary>
+    private static async Task ResolveNamedSubjectAsync(ScenarioContext context, string? subjectOverride)
+    {
+        try
+        {
+            var deadline = DateTime.UtcNow + SmokeTimings.SettingsPickup;
+            var accounts = await context.Reporter.SavedAccountsAsync().ConfigureAwait(false);
+            while (accounts.Count == 0 && DateTime.UtcNow < deadline)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+                accounts = await context.Reporter.SavedAccountsAsync().ConfigureAwait(false);
+            }
+            var chosen = subjectOverride is null
+                ? accounts.FirstOrDefault()
+                : accounts.FirstOrDefault(a => string.Equals(a.AccountId, subjectOverride, StringComparison.OrdinalIgnoreCase));
+
+            if (chosen is null)
+            {
+                Console.WriteLine(subjectOverride is null
+                    ? "[setup] the host reports no saved accounts, so the masked-naming row will skip."
+                    : $"[setup] the host does not know the account id passed to --subject, so the masked-naming "
+                        + "row will skip.");
+                return;
+            }
+
+            context.ResolvableSubject = chosen.AccountId;
+            context.MaskedName = chosen.DisplayName;
+            if (string.IsNullOrEmpty(chosen.DisplayName))
+            {
+                Console.WriteLine("[setup] the host reports an empty display name for the chosen account, so the "
+                    + "masked-naming row will skip.");
+                context.MaskedName = null;
+            }
+            else
+            {
+                Console.WriteLine("[setup] the masked-naming row has an account the host can name.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[setup] could not ask the host which accounts exist ({ex.GetType().Name}), so the "
+                + "masked-naming row will skip.");
+        }
+    }
+
+    /// <summary>
+    /// Ctrl-C reaches the restore by NOT killing the process: <c>e.Cancel = true</c> stops the CLR
+    /// terminating, the flag is checked between scenarios, and the loop unwinds into
+    /// <see cref="RunAsync"/>'s <c>finally</c>, which restores. That is why a first Ctrl-C does not
+    /// return immediately — the scenario in flight finishes first, because abandoning one mid-write and
+    /// restoring underneath it is how a profile gets left half-swapped.
+    /// <para>
+    /// A SECOND Ctrl-C is allowed to kill. Someone pressing it twice wants out now, and the marker plus
+    /// <c>--recover</c> is exactly the net for a run that died — the same net a power cut needs.
+    /// </para>
+    /// </summary>
+    private static void HookCtrlC()
+    {
+        Console.CancelKeyPress += (_, e) =>
+        {
+            if (_stopRequested) return;   // second press: e.Cancel stays false and the process dies
+            _stopRequested = true;
+            e.Cancel = true;
+            Console.WriteLine();
+            Console.WriteLine("Ctrl-C: stopping after the scenario in flight, then putting the profile back. "
+                + "Press Ctrl-C again to kill it instead (then run --recover).");
+        };
+    }
+}

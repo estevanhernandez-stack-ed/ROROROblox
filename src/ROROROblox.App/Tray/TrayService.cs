@@ -307,13 +307,36 @@ internal sealed class TrayService : ITrayService
         return new Icon(stream);
     }
 
+    /// <summary>
+    /// The generic tray balloon — every alert kind routed to
+    /// <see cref="ROROROblox.Core.Discord.AlertDestination.Local"/> arrives here.
+    /// <para>
+    /// <b>Thread-safety (2026-09-11):</b> marshals for the same reason
+    /// <see cref="ShowMemoryWarning"/> does, and this one had been missing it. Its callers are not on
+    /// the UI thread: <c>AlertDispatcher.DispatchAsync</c> is invoked fire-and-forget from
+    /// <c>MetricReportSinkAdapter.AlertsRaised</c>, which is raised on whatever gRPC handler thread
+    /// served a plugin's report. <c>_taskbarIcon</c> is a WPF <c>FrameworkElement</c>, so touching it
+    /// from there throws — and the dispatcher's own catch swallows that into one Warning line, so the
+    /// alert vanished with no toast and no visible error.
+    /// </para>
+    /// <para>
+    /// Worse than it sounds, because the dispatcher's fan-out loop is sequential and stamps the
+    /// per-(account, kind) cooldown inside it, after each destination's send: a throw here ended the
+    /// loop, so every destination ordered after Local lost its send too. The metric-alert default
+    /// routes to Local and nowhere else, which is exactly the configuration in which the failure is
+    /// invisible.
+    /// </para>
+    /// </summary>
     public void ShowToast(string title, string message)
     {
-        if (_disposed) return;
-        // This balloon isn't about any one account — clear so a click doesn't replay a stale
-        // memory-warning account id via RequestFocusAccount.
-        _lastMemoryWarningAccountId = null;
-        _taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
+        Application.Current?.Dispatcher.Invoke(() =>
+        {
+            if (_disposed) return;
+            // This balloon isn't about any one account — clear so a click doesn't replay a stale
+            // memory-warning account id via RequestFocusAccount.
+            _lastMemoryWarningAccountId = null;
+            _taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
+        });
     }
 
     public void Dispose()
