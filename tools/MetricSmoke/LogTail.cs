@@ -40,7 +40,7 @@ public sealed class LogTail
     // string, so the destination arrives JSON-quoted while the title right beside it does not. This
     // pattern was originally written from the call site and captured `"Local"` WITH its quotes, so
     // every row that filtered by destination compared `"Local"` against `Local`, saw zero
-    // deliveries, and failed while the alert had in fact been delivered — five rows of sixteen on
+    // deliveries, and failed while the alert had in fact been delivered — SEVEN rows of sixteen on
     // the harness's first honest run against the app (2026-09-11, task 6). The quotes are optional
     // here and outside the capture, so this reads both what the file sink writes and the bare form
     // any other sink would.

@@ -70,6 +70,15 @@ A row that always skips is not a covered row. **Fixed** by asking again until th
 really is a profile with none, and the row still skips on it. Untested by construction — the helper
 needs a live host — so the live run below is its test.
 
+**The case is closed; the class is not, and this is an open limit rather than a fixed one.** A vault that
+takes longer than the pickup window — a bigger account list, a slower disk, a cold DPAPI — skips the row
+again, and **a skip does not change the exit code**: `Program.RunAsync` returns non-zero for failures,
+never-ran rows and aborts, and a skipped row is none of those. So that run exits **0** with only a line
+on stdout saying an uncovered row is not a covered row, which a human reads and no automation does. That
+behaviour came from task 5 and is not changed here; stating it is the point, because a record that
+credits a stdout sentence with the force of an exit code is the same species of false assurance this
+whole harness exists to prevent.
+
 ### The clean run, after those two fixes
 
 **16 passed, 0 failed, 0 skipped.** Every row ran; nothing skipped. Verdict lines, verbatim:
@@ -249,7 +258,7 @@ assertion; where a row also fell to a broader breakage, that is noted but not wh
 | 5 | breach-reaches-toast | the rate floor made unreachable (build B); also the subscription cut | **check** |
 | 6 | value-renders-legibly | the value cast back to `long` (build A); also the subscription cut | **check** |
 | 7 | unrecognised-subject | unknown subjects dropped in the sink (build G); also the subscription cut | **check** |
-| 8 | clock-skew-visible | the report stamped in the past instead of the future (build B) | **check** |
+| 8 | clock-skew-visible | the report stamped in the past instead of the future (build B) | **check, with an asterisk** — proven from the INPUT side (the scenario's own stamp), not by changing the product; the skew check itself was never made to misbehave |
 | 9 | counter-reset-no-false-breach | the rate's decrease guard deleted (build C) | **check** |
 | 10 | repeated-breaches-one-toast | the router's cooldown filter deleted (build A); also the subscription cut | **check** |
 | 11 | rules-picked-up-live | the rule cache never re-reading (build C); also the subscription cut | **check** |
@@ -259,9 +268,17 @@ assertion; where a row also fell to a broader breakage, that is noted but not wh
 | 15 | unconfigured-destination-falls-back | an unconfigured phone treated as configured (build C); also the subscription cut | **check** |
 | 16 | opt-in-gates-it | the sink's gate hardwired to `true` (build A) | **check** |
 
-**No row had to be marked "not yet a check."** The one row that came close is row 1, and the honest
-statement of it is in the table: its assertion has been seen to fail, but not from the breakage the
-row was written against, because the runner gates on the same probe.
+**No row had to be marked "not yet a check."** Two carry an asterisk, and the table states both rather
+than leaving them to the narrative:
+
+- **Row 1 (pipe-binds)** has been seen to fail, but not from the breakage it was written against — the
+  runner's wait-for-app gate uses the same probe the row asserts on, so the capability-map deletion
+  aborts the run instead of reddening the row.
+- **Row 8 (clock-skew-visible)** was reddened from the input side: the scenario stamped its report in the
+  past, so the row correctly reported the absence of a drop line it had given the sink no reason to
+  write. Twelve of the sixteen fell to a change in the product; this one did not, and `FutureTolerance`
+  and the drop line itself have not been made to misbehave. What is proven is that the row notices when
+  the line is missing — which is the assertion — not that it notices a broken skew check specifically.
 
 ## What the runs said about the feature, not the harness
 
@@ -295,6 +312,10 @@ Recorded so the green run is not read as more than it is:
   stays unmeasurable until the decrease leaves the ten-minute window, so asserting it costs ten minutes.
 - **Six rows of the list are not harness-driven at all** — the five §3 names and *Settings still says
   "No alerts yet"*, which needs the UIA path.
+- **A skipped row still exits zero.** See the note under Defect 2: the only signal is a stdout sentence.
+  Any automation that ever runs this — a nightly, a pre-release gate — would read a run with an uncovered
+  row as a pass. The fix is a line in `Program.RunAsync`'s return; it is not made here because no
+  behaviour was changed in this task.
 - **A `Cancelled` status reads as a consent problem.** With the host gone, the
   consented-report-accepted row reported "the consent grant for rororo.smoke is not in force" for what
   was actually a dead pipe. Harmless in context (row 1 had already said the host was gone) and worth

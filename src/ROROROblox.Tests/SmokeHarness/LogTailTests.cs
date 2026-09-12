@@ -17,10 +17,11 @@ namespace ROROROblox.Tests.SmokeHarness;
 /// literally, <c>j</c> sends every other property value through Serilog's JsonValueFormatter. So a
 /// string title appears bare and an <c>AlertDestination</c> — an enum — appears JSON-QUOTED. The
 /// fixtures here were originally hand-written from the call sites with the prefix right and the
-/// quoting wrong, <see cref="LogTail"/>'s pattern was written to match them, and the result was five
+/// quoting wrong, <see cref="LogTail"/>'s pattern was written to match them, and the result was SEVEN
 /// rows of sixteen failing on the harness's first honest run against the app while the alerts they
-/// asserted on had in fact been delivered (2026-09-11, task 6). The quoted forms below are copied
-/// out of a real run's log file.
+/// asserted on had in fact been delivered (2026-09-11, task 6) — every scenario that filters by
+/// destination: toast, value, subject, repeat, live, malformed and fallback. The quoted forms below are
+/// copied out of a real run's log file.
 /// </para>
 /// </summary>
 public sealed class LogTailTests : IDisposable
