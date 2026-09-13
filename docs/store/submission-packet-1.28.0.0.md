@@ -67,9 +67,12 @@ not a feature, and the phone-alerts entry already covers the capability it makes
 
 ## 5. After submission
 
-- Do not open this submission in Partner Center after it is submitted, and do not mix the API path
-  into it. This release is the **browser** path, because it carries packages and the listing API is
-  text-only by design.
+- **Corrected 2026-09-12, during the submission itself.** This said the release was the browser
+  path and that the API must not be mixed into it. Both halves were tried on one submission
+  (1152921505701878932) and it worked: the ten what's-new fields went in through the API, the
+  packages and the reviewer letter by hand, and the commit merged them. What is true is that
+  neither tool sees the other's edits until that commit, and that the reviewer letter is
+  browser-only. Do not open the submission in Partner Center once it is in certification.
 - Once it publishes, update `apps/rororo-live/config.toml` in the store-listing-console repo: `ref`
   to the commit carrying this copy, `version` to `1.28.0.0`. Then `console.py` and a `plan` should
   report **nothing would change** — that is the check that the repo and the Store agree.
