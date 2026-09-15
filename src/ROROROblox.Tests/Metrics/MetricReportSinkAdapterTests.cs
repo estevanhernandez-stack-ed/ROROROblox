@@ -58,6 +58,8 @@ public class MetricReportSinkAdapterTests
         sut.Report(Acct.ToString(), M, 0, Ms(clock.GetUtcNow()));
         clock.Advance(TimeSpan.FromMinutes(10));
         sut.Report(Acct.ToString(), M, 500, Ms(clock.GetUtcNow()));   // 50/min, floor is 100
+        Assert.Empty(raised);                        // held for the grouping window
+        clock.Advance(MetricBreachBatcher.Window);
 
         var t = Assert.Single(raised);
         Assert.Equal(AlertKind.MetricBreach, t.Kind);
@@ -85,6 +87,7 @@ public class MetricReportSinkAdapterTests
         clock.Advance(TimeSpan.FromMinutes(10));
         sut.Report(Acct.ToString(), M, 500, Ms(clock.GetUtcNow()));
 
+        clock.Advance(MetricBreachBatcher.Window);
         Assert.Empty(raised);
         Assert.Equal(0, rules.CallCount);
     }
@@ -107,10 +110,12 @@ public class MetricReportSinkAdapterTests
         sut.AlertsRaised += (_, t) => raised.AddRange(t);
 
         sut.Report(Acct.ToString(), M, 400, Ms(clock.GetUtcNow()));
+        clock.Advance(MetricBreachBatcher.Window);
         Assert.Empty(raised);
 
         enabled = true;
         sut.Report(Acct.ToString(), M, 400, Ms(clock.GetUtcNow()));
+        clock.Advance(MetricBreachBatcher.Window);
         Assert.Single(raised);
     }
 
@@ -125,6 +130,7 @@ public class MetricReportSinkAdapterTests
         clock.Advance(TimeSpan.FromMinutes(10));
         sut.Report(Acct.ToString(), M, 500, Ms(clock.GetUtcNow().AddHours(2)));
 
+        clock.Advance(MetricBreachBatcher.Window);
         // Had it been clamped to now, this would have been a 50/min breach.
         Assert.Empty(raised);
     }
@@ -141,6 +147,7 @@ public class MetricReportSinkAdapterTests
         clock.Advance(TimeSpan.FromMinutes(10));
         sut.Report(Acct.ToString(), M, 500, Ms(clock.GetUtcNow().AddSeconds(2)));
 
+        clock.Advance(MetricBreachBatcher.Window);
         Assert.Single(raised);
     }
 
@@ -163,6 +170,7 @@ public class MetricReportSinkAdapterTests
 
         sut.Report("not-a-guid", M, 400, Ms(clock.GetUtcNow()));
 
+        clock.Advance(MetricBreachBatcher.Window);
         Assert.Equal(Guid.Empty, Assert.Single(raised).AccountId);
     }
 
@@ -177,6 +185,7 @@ public class MetricReportSinkAdapterTests
         clock.Advance(TimeSpan.FromMinutes(10));
         sut.Report(Acct.ToString(), M, 0, Ms(clock.GetUtcNow()));   // 0/min would breach any floor
 
+        clock.Advance(MetricBreachBatcher.Window);
         Assert.Empty(raised);
     }
 
@@ -196,7 +205,54 @@ public class MetricReportSinkAdapterTests
 
         sut.AlertsRaised += (_, _) => throw new InvalidOperationException("subscriber blew up");
 
-        var ex = Record.Exception(() => sut.Report(Acct.ToString(), M, 400, Ms(clock.GetUtcNow())));
+        // Since 2026-09-15 the subscriber runs when the grouping window closes, on the timer, so
+        // both the report and the flush must stay quiet.
+        var ex = Record.Exception(() =>
+        {
+            sut.Report(Acct.ToString(), M, 400, Ms(clock.GetUtcNow()));
+            clock.Advance(MetricBreachBatcher.Window);
+        });
         Assert.Null(ex);
+    }
+
+    [Fact]
+    public void EightAccountsInOneRead_AreOneAlertOfEight()
+    {
+        // The live test on 2026-09-15: this rule, eight accounts in one Ur Score read ~100 ms apart,
+        // and 24 notifications — one per account per destination.
+        var rule = new MetricRule("ps99.diamonds", MetricRuleKind.Level, 0, TimeSpan.Zero,
+            AlertWhenBelow: false, Label: "Diamonds");
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var sut = new MetricReportSinkAdapter(
+            new FixedRules(rule), () => true, _ => ("Masked", "Real"), clock,
+            NullLogger<MetricReportSinkAdapter>.Instance);
+        var batches = new List<IReadOnlyList<AlertTrigger>>();
+        sut.AlertsRaised += (_, t) => batches.Add(t);
+
+        for (var i = 0; i < 8; i++)
+        {
+            sut.Report(Guid.NewGuid().ToString(), "ps99.diamonds", 2_974_993 + i, Ms(clock.GetUtcNow()));
+            clock.Advance(TimeSpan.FromMilliseconds(12));
+        }
+        Assert.Empty(batches);
+
+        clock.Advance(MetricBreachBatcher.Window);
+
+        var batch = Assert.Single(batches);
+        Assert.Equal(8, batch.Count);
+        Assert.All(batch, t => Assert.Equal(rule, t.Rule));
+    }
+
+    [Fact]
+    public void DisposingTheSink_DropsAGroupStillInsideTheWindow()
+    {
+        // The container disposes the sink on exit; its timers must not outlive it.
+        var (sut, clock, raised) = New(rules: new FixedRules(new MetricRule(M, MetricRuleKind.Level, 500, TimeSpan.Zero)));
+
+        sut.Report(Acct.ToString(), M, 400, Ms(clock.GetUtcNow()));
+        sut.Dispose();
+        clock.Advance(MetricBreachBatcher.Window);
+
+        Assert.Empty(raised);
     }
 }

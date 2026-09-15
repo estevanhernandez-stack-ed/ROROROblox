@@ -11,7 +11,7 @@ public class AlertRouterTests
     private static AlertTrigger Trigger(AlertKind kind, Guid id, string name, DateTimeOffset? at = null) =>
         new(kind, id, name, $"real_{name}", "Pet Simulator 99!", 4_000_000_000, at ?? Now);
 
-    private static readonly Dictionary<(Guid, AlertKind), DateTimeOffset> NothingSentYet = new();
+    private static readonly Dictionary<AlertCooldownKey, DateTimeOffset> NothingSentYet = new();
 
     [Fact]
     public void Route_TriggerSetToNone_ProducesNothing()
@@ -80,7 +80,10 @@ public class AlertRouterTests
     {
         // A flapping client must not page someone every thirty seconds.
         var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Local };
-        var lastSent = new Dictionary<(Guid, AlertKind), DateTimeOffset> { [(AccountA, AlertKind.AccountDroppedOut)] = Now.AddMinutes(-1) };
+        var lastSent = new Dictionary<AlertCooldownKey, DateTimeOffset>
+        {
+            [AlertCooldownKey.For(Trigger(AlertKind.AccountDroppedOut, AccountA, "A"))] = Now.AddMinutes(-1),
+        };
 
         var routed = AlertRouter.Route(
             [Trigger(AlertKind.AccountDroppedOut, AccountA, "A")], config, lastSent, Now);
@@ -92,7 +95,10 @@ public class AlertRouterTests
     public void Route_AccountAlertedBeforeTheCooldownExpired_SendsAgain()
     {
         var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Local };
-        var lastSent = new Dictionary<(Guid, AlertKind), DateTimeOffset> { [(AccountA, AlertKind.AccountDroppedOut)] = Now - AlertRouter.Cooldown.Add(TimeSpan.FromSeconds(1)) };
+        var lastSent = new Dictionary<AlertCooldownKey, DateTimeOffset>
+        {
+            [AlertCooldownKey.For(Trigger(AlertKind.AccountDroppedOut, AccountA, "A"))] = Now - AlertRouter.Cooldown.Add(TimeSpan.FromSeconds(1)),
+        };
 
         var routed = AlertRouter.Route(
             [Trigger(AlertKind.AccountDroppedOut, AccountA, "A")], config, lastSent, Now);
@@ -113,9 +119,9 @@ public class AlertRouterTests
             DroppedOutDestination = AlertDestination.Local,
             MemoryWarningDestination = AlertDestination.Local,
         };
-        var justWarnedAboutMemory = new Dictionary<(Guid, AlertKind), DateTimeOffset>
+        var justWarnedAboutMemory = new Dictionary<AlertCooldownKey, DateTimeOffset>
         {
-            [(AccountA, AlertKind.MemoryWarning)] = Now.AddSeconds(-30),
+            [AlertCooldownKey.For(Trigger(AlertKind.MemoryWarning, AccountA, "A"))] = Now.AddSeconds(-30),
         };
 
         var routed = AlertRouter.Route(
@@ -130,13 +136,31 @@ public class AlertRouterTests
         // The other half: splitting the key by kind must not weaken the guard it was written for.
         // A flapping client still gets one alert per five minutes, not one per flap.
         var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Local };
-        var justDropped = new Dictionary<(Guid, AlertKind), DateTimeOffset>
+        var justDropped = new Dictionary<AlertCooldownKey, DateTimeOffset>
         {
-            [(AccountA, AlertKind.AccountDroppedOut)] = Now.AddSeconds(-30),
+            [AlertCooldownKey.For(Trigger(AlertKind.AccountDroppedOut, AccountA, "A"))] = Now.AddSeconds(-30),
         };
 
         Assert.Empty(AlertRouter.Route(
             [Trigger(AlertKind.AccountDroppedOut, AccountA, "A")], config, justDropped, Now));
+    }
+
+    [Fact]
+    public void Route_ADropOutInAnotherGame_StillSharesTheAccountsOneDropOutCooldown()
+    {
+        // Metric breaches key their cooldown per metric id (2026-09-15), and GameName is where a
+        // breach carries that id. Every other kind must keep ignoring GameName: a client that flaps
+        // between two games is still one flapping client, and still gets one alert per five minutes.
+        var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Local };
+        var droppedFromPetSim = Trigger(AlertKind.AccountDroppedOut, AccountA, "A");
+        var justDropped = new Dictionary<AlertCooldownKey, DateTimeOffset>
+        {
+            [AlertCooldownKey.For(droppedFromPetSim)] = Now.AddSeconds(-30),
+        };
+
+        var droppedFromAnotherGame = droppedFromPetSim with { GameName = "Some Other Experience" };
+
+        Assert.Empty(AlertRouter.Route([droppedFromAnotherGame], config, justDropped, Now));
     }
 
     [Fact]

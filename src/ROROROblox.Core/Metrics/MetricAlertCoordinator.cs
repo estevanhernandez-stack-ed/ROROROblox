@@ -8,8 +8,9 @@ namespace ROROROblox.Core.Metrics;
 ///
 /// <para>
 /// Returning is the whole design. The caller hands these to <c>AlertDispatcher</c>, which routes
-/// through <c>AlertRouter</c> — so mute, per-(account, kind) cooldown, coalescing and
-/// fallback-to-Local all apply exactly as they do for every other kind. A coordinator that
+/// through <c>AlertRouter</c> — so mute, the cooldown, coalescing and fallback-to-Local all apply
+/// as they do for every other kind. (The cooldown slot for a breach is (account, metric id) rather
+/// than (account, kind), corrected 2026-09-15; see <c>AlertCooldownKey</c>.) A coordinator that
 /// dispatched directly would bypass all four, and "a bad night becomes forty notifications" is
 /// the one outcome this feature must not produce.
 /// </para>

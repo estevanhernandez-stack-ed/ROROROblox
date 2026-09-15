@@ -1864,10 +1864,13 @@ public partial class App : Application
             vm.AlertsRaised += (_, triggers) => _ = dispatcher.DispatchAsync(triggers);
 
             // Metric breaches reach the dispatcher by exactly the path every other alert kind
-            // takes, which is what makes mute, the per-(account, kind) cooldown and coalescing
-            // apply to them without a line of new routing code. Fire-and-forget for the reason
-            // above and one more: this event is raised on a gRPC handler thread, which must not
-            // be parked on an HTTP POST while a plugin waits for its Empty.
+            // takes, which is what makes mute, the cooldown and coalescing apply to them without a
+            // line of new routing code (the cooldown slot for a breach is per account and metric
+            // id rather than per account and kind, corrected 2026-09-15; see AlertCooldownKey).
+            // Fire-and-forget for the reason above and one more: this event is raised on a
+            // thread-pool timer thread when a metric grouping window closes (corrected 2026-09-15;
+            // through 1.28 it was the gRPC handler thread), and a timer callback must not be
+            // parked on an HTTP POST either.
             //
             // Cast to the concrete adapter on purpose. AlertsRaised lives there and not on
             // IMetricReportSink, because that interface is the plugin-facing sink and an event on

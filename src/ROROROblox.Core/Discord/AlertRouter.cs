@@ -7,6 +7,42 @@ public sealed record RoutedAlert(
     IReadOnlyList<AlertTrigger> Triggers);
 
 /// <summary>
+/// The cooldown slot a trigger occupies: (account, kind) for every kind, plus the metric id for
+/// <see cref="AlertKind.MetricBreach"/>. Built ONLY by <see cref="For"/>, which both
+/// <see cref="AlertRouter.Route"/> (the check) and <c>AlertDispatcher</c> (the stamp) call, so the
+/// check and the stamp cannot disagree about which slot an alert used — and a test cannot seed a
+/// slot the router would never look up.
+/// </summary>
+public readonly record struct AlertCooldownKey
+{
+    private AlertCooldownKey(Guid accountId, AlertKind kind, string? metricId)
+    {
+        AccountId = accountId;
+        Kind = kind;
+        MetricId = metricId;
+    }
+
+    public Guid AccountId { get; }
+
+    public AlertKind Kind { get; }
+
+    /// <summary>The metric id for a metric breach; null for every other kind.</summary>
+    public string? MetricId { get; }
+
+    public static AlertCooldownKey For(AlertTrigger trigger)
+    {
+        ArgumentNullException.ThrowIfNull(trigger);
+        // GameName is where a metric breach carries its metric id (see AlertTrigger). Every other
+        // kind carries a real game name there, which must NOT split the slot: a client flapping
+        // between two games is still one flapping client.
+        return new AlertCooldownKey(
+            trigger.AccountId,
+            trigger.Kind,
+            trigger.Kind == AlertKind.MetricBreach ? trigger.GameName : null);
+    }
+}
+
+/// <summary>
 /// Decides what actually gets sent. Pure — the caller supplies "now" and the per-account
 /// last-sent map, so cooldown behavior is a table of cases rather than a test that sleeps.
 /// <para>
@@ -21,7 +57,8 @@ public static class AlertRouter
     public static readonly TimeSpan Cooldown = TimeSpan.FromMinutes(5);
 
     /// <summary>
-    /// <paramref name="lastSentPerAccount"/> is keyed by (account, KIND), not by account alone.
+    /// <paramref name="lastSentPerAccount"/> is keyed by <see cref="AlertCooldownKey"/>: (account,
+    /// KIND), not by account alone, and for a metric breach (account, metric id).
     /// <para>
     /// Measured live on 2026-08-04: a memory warning at 00:13:55 stamped the cooldown for two
     /// accounts, and a genuine client close at 00:14:21 was swallowed because it fell inside that
@@ -29,11 +66,18 @@ public static class AlertRouter
     /// was never meant to let a memory warning silence a crash. Different kinds are different
     /// news, and the drop is the more urgent of the two.
     /// </para>
+    /// <para>
+    /// The same argument, one level down (2026-09-15): a Points stall and a Diamonds alert for one
+    /// account in the same plugin read are two different things to know, and keyed per (account,
+    /// kind) whichever sent first silenced the other for five minutes. So a metric breach's slot
+    /// adds its metric id. Two rules on ONE metric still share a slot, because the key is the metric,
+    /// not the rule.
+    /// </para>
     /// </summary>
     public static IReadOnlyList<RoutedAlert> Route(
         IReadOnlyList<AlertTrigger> pending,
         DiscordConfig config,
-        IReadOnlyDictionary<(Guid AccountId, AlertKind Kind), DateTimeOffset> lastSentPerAccount,
+        IReadOnlyDictionary<AlertCooldownKey, DateTimeOffset> lastSentPerAccount,
         DateTimeOffset nowUtc,
         bool phoneConfigured = false)
     {
@@ -45,13 +89,13 @@ public static class AlertRouter
 
         return pending
             .Where(t => !muted.Contains(t.AccountId))
-            .Where(t => !lastSentPerAccount.TryGetValue((t.AccountId, t.Kind), out var last) || nowUtc - last > Cooldown)
+            .Where(t => !lastSentPerAccount.TryGetValue(AlertCooldownKey.For(t), out var last) || nowUtc - last > Cooldown)
             .GroupBy(t => t.Kind)
             .SelectMany(group =>
             {
                 // One RoutedAlert per destination (fan-out, 2026-09-05): the dispatcher's switch
-                // and its cooldown stamping are unchanged — stamping the same (account, kind) at
-                // the same instant once per destination is idempotent.
+                // and its cooldown stamping are unchanged — stamping the same cooldown key at the
+                // same instant once per destination is idempotent.
                 var triggers = group.ToList();
                 return Resolve(group.Key, config, phoneConfigured)
                     .Select(destination => new RoutedAlert(destination, group.Key, triggers));

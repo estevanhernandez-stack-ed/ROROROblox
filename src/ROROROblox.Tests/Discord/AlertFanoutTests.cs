@@ -13,7 +13,7 @@ public class AlertFanoutTests
     private static AlertTrigger Dropped(Guid id, string name) =>
         new(AlertKind.AccountDroppedOut, id, name, name, null, null, DateTimeOffset.UnixEpoch);
 
-    private static readonly Dictionary<(Guid, AlertKind), DateTimeOffset> NoHistory = [];
+    private static readonly Dictionary<AlertCooldownKey, DateTimeOffset> NoHistory = [];
 
     [Fact]
     public void Route_MultipleDestinations_EmitsOneRoutedAlertPerDestination()

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Time.Testing;
 using ROROROblox.App.Discord;
 using ROROROblox.Core;
 using ROROROblox.Core.Discord;
+using ROROROblox.Core.Metrics;
 
 namespace ROROROblox.Tests.Discord;
 
@@ -340,9 +341,10 @@ public class AlertDispatcherTests
     public async Task DispatchAsync_ManyProducersAtOnce_DoesNotCorruptTheCooldownMap()
     {
         // The dispatcher has TWO fire-and-forget producers wired in App.xaml.cs: the view model,
-        // raising on the UI thread, and the metric sink, raising on whatever gRPC handler thread
-        // served a plugin's report. While the view model was the only one, an unsynchronised
-        // Dictionary was safe. It stopped being safe the moment MetricBreach got a destination.
+        // raising on the UI thread, and the metric sink, raising on a thread-pool timer thread when a
+        // metric grouping window closes (a gRPC handler thread until 2026-09-15). While the view model
+        // was the only one, an unsynchronised Dictionary was safe. It stopped being safe the moment
+        // MetricBreach got a destination.
         //
         // Sixteen producers rather than two: two threads reproduce the corruption only by luck,
         // and this test has to fail against the unfixed field, not merely be pointed at it.
@@ -400,6 +402,76 @@ public class AlertDispatcherTests
         // Each dispatch coalesces its triggers into exactly one RoutedAlert, so one toast each.
         // A short count is the swallowed-throw half of the same corruption.
         Assert.Equal((Producers * RoundsEach) + 1, tray.Toasts.Count);
+        Assert.Empty(handler.Bodies);
+    }
+
+    [Fact]
+    public async Task DispatchAsync_AGroupedMetricBatch_IsOneToastAndOnePost_NamingTheCount()
+    {
+        var rule = new MetricRule("battle.points", MetricRuleKind.Level, 1000, TimeSpan.Zero, Label: "Points");
+        AlertTrigger Breach(string name) =>
+            new(AlertKind.MetricBreach, Guid.NewGuid(), name, $"real_{name}", rule.MetricId, null,
+                DateTimeOffset.UtcNow, 250, rule);
+
+        var (sender, handler) = Sender(HttpStatusCode.NoContent);
+        var tray = new SpyTrayService();
+        var config = new DiscordConfig
+        {
+            MetricBreachDestinations = [AlertDestination.Local, AlertDestination.Mine],
+            MineWebhookUrl = MineUrl,
+        };
+
+        await Build(sender, tray, config).DispatchAsync([Breach("A"), Breach("B"), Breach("C")]);
+
+        Assert.StartsWith("3 accounts — Points fell below 1,000|", Assert.Single(tray.Toasts), StringComparison.Ordinal);
+        // The POST body is JSON, which escapes the em dash, so assert on the ASCII runs either side.
+        var body = Assert.Single(handler.Bodies);
+        Assert.Contains("3 accounts", body, StringComparison.Ordinal);
+        Assert.Contains("Points fell below 1,000", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task DispatchAsync_TwoStatsBreachingForOneAccountInOneRead_BothAlert_AndARepeatDoesNot()
+    {
+        // Controller ruling C1, 2026-09-15. One plugin read breaches Points and Diamonds for the same
+        // account. The batcher makes those two groups, so two dispatches at the same instant. Keyed
+        // per (account, kind), the first stamped the account's MetricBreach slot and the second was
+        // dropped as "inside the cooldown". Keyed per (account, metric id), both reach the desktop,
+        // and Points breaching again inside the cooldown still stays quiet.
+        var points = new MetricRule("battle.points", MetricRuleKind.Level, 1000, TimeSpan.Zero, Label: "Points");
+        var diamonds = new MetricRule("ps99.diamonds", MetricRuleKind.Level, 0, TimeSpan.Zero,
+            AlertWhenBelow: false, Label: "Diamonds");
+        var account = Guid.NewGuid();
+        AlertTrigger Breach(MetricRule rule, double value) =>
+            new(AlertKind.MetricBreach, account, "A", "real_A", rule.MetricId, null, DateTimeOffset.UnixEpoch,
+                value, rule);
+
+        var (sender, handler) = Sender(HttpStatusCode.NoContent);
+        var tray = new SpyTrayService();
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var config = new DiscordConfig { MetricBreachDestinations = [AlertDestination.Local] };
+        var dispatcher = new AlertDispatcher(sender, tray, () => config, clock, NullLogger<AlertDispatcher>.Instance);
+
+        // The real batcher on the same clock, wired the way App wires the sink's event.
+        using var batcher = new MetricBreachBatcher(clock, NullLogger.Instance);
+        var dispatches = new List<Task>();
+        batcher.Flushed += (_, group) => dispatches.Add(dispatcher.DispatchAsync(group));
+
+        batcher.Add([Breach(points, 250), Breach(diamonds, 2_974_993)]);
+        clock.Advance(MetricBreachBatcher.Window);
+        await Task.WhenAll(dispatches).WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Equal(2, dispatches.Count);   // two groups, two calls: the shape C1 is about
+        Assert.Equal(2, tray.Toasts.Count);
+        Assert.Contains(tray.Toasts, t => t.StartsWith("A — Points fell below 1,000|", StringComparison.Ordinal));
+        Assert.Contains(tray.Toasts, t => t.StartsWith("A — Diamonds went above 0|", StringComparison.Ordinal));
+
+        batcher.Add([Breach(points, 240)]);
+        clock.Advance(MetricBreachBatcher.Window);
+        await Task.WhenAll(dispatches).WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Equal(3, dispatches.Count);
+        Assert.Equal(2, tray.Toasts.Count);   // the same stat again, inside its cooldown
         Assert.Empty(handler.Bodies);
     }
 }

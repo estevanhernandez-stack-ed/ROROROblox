@@ -65,8 +65,9 @@ public class MetricAlertCoordinatorTests
     public void TheCoordinatorDoesNotDeduplicate_TheRouterDoes()
     {
         // Deliberate: repeated breaches produce repeated triggers here, and AlertRouter's
-        // per-(account, kind) cooldown is what stops them becoming forty notifications. Keeping
-        // suppression in ONE place is the point -- two half-implementations disagree eventually.
+        // cooldown (per account and metric id for a breach, corrected 2026-09-15) is what stops them
+        // becoming forty notifications. Keeping suppression in ONE place is the point -- two
+        // half-implementations disagree eventually.
         var (sut, clock) = New(new MetricRule(M, MetricRuleKind.Rate, 100, TimeSpan.FromMinutes(10)));
 
         sut.Observe(Obs(0, clock.GetUtcNow()), "Masked", "Real");

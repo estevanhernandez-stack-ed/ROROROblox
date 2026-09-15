@@ -28,7 +28,7 @@ public class PhoneRoutingTests
         var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Phone };
 
         var routed = AlertRouter.Route([Dropped(Guid.NewGuid(), "A")], config,
-            new Dictionary<(Guid, AlertKind), DateTimeOffset>(), DateTimeOffset.UnixEpoch,
+            new Dictionary<AlertCooldownKey, DateTimeOffset>(), DateTimeOffset.UnixEpoch,
             phoneConfigured: true);
 
         Assert.Equal(AlertDestination.Phone, Assert.Single(routed).Destination);
@@ -43,7 +43,7 @@ public class PhoneRoutingTests
         var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Phone };
 
         var routed = AlertRouter.Route([Dropped(Guid.NewGuid(), "A")], config,
-            new Dictionary<(Guid, AlertKind), DateTimeOffset>(), DateTimeOffset.UnixEpoch,
+            new Dictionary<AlertCooldownKey, DateTimeOffset>(), DateTimeOffset.UnixEpoch,
             phoneConfigured: false);
 
         Assert.Equal(AlertDestination.Local, Assert.Single(routed).Destination);
@@ -57,7 +57,7 @@ public class PhoneRoutingTests
         var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Phone };
 
         var routed = AlertRouter.Route([Dropped(Guid.NewGuid(), "A")], config,
-            new Dictionary<(Guid, AlertKind), DateTimeOffset>(), DateTimeOffset.UnixEpoch);
+            new Dictionary<AlertCooldownKey, DateTimeOffset>(), DateTimeOffset.UnixEpoch);
 
         Assert.Equal(AlertDestination.Local, Assert.Single(routed).Destination);
     }

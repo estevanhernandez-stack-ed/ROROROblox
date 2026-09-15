@@ -314,15 +314,16 @@ internal sealed class TrayService : ITrayService
     /// <b>Thread-safety (2026-09-11):</b> marshals for the same reason
     /// <see cref="ShowMemoryWarning"/> does, and this one had been missing it. Its callers are not on
     /// the UI thread: <c>AlertDispatcher.DispatchAsync</c> is invoked fire-and-forget from
-    /// <c>MetricReportSinkAdapter.AlertsRaised</c>, which is raised on whatever gRPC handler thread
-    /// served a plugin's report. <c>_taskbarIcon</c> is a WPF <c>FrameworkElement</c>, so touching it
-    /// from there throws — and the dispatcher's own catch swallows that into one Warning line, so the
-    /// alert vanished with no toast and no visible error.
+    /// <c>MetricReportSinkAdapter.AlertsRaised</c>, which is raised on a thread-pool timer thread when a
+    /// metric grouping window closes (a gRPC handler thread until 2026-09-15). <c>_taskbarIcon</c> is a
+    /// WPF <c>FrameworkElement</c>, so touching it from there throws — and the dispatcher's own catch
+    /// swallows that into one Warning line, so the alert vanished with no toast and no visible error.
     /// </para>
     /// <para>
     /// Worse than it sounds, because the dispatcher's fan-out loop is sequential and stamps the
-    /// per-(account, kind) cooldown inside it, after each destination's send: a throw here ended the
-    /// loop, so every destination ordered after Local lost its send too. The metric-alert default
+    /// cooldown (per account and kind; per account and metric id for a metric breach, corrected
+    /// 2026-09-15) inside it, after each destination's send: a throw here ended the loop, so every
+    /// destination ordered after Local lost its send too. The metric-alert default
     /// routes to Local and nowhere else, which is exactly the configuration in which the failure is
     /// invisible.
     /// </para>

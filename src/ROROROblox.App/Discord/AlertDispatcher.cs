@@ -15,8 +15,9 @@ namespace ROROROblox.App.Discord;
 /// <para>
 /// Degrade-safe like every other Discord surface: an alert is a passenger. Nothing here may throw
 /// into a caller, because the callers are the memory watchdog, the presence path and — since
-/// metric alerts, 2026-09-11 — a gRPC handler thread serving a plugin's report, and none of those
-/// may be taken down by Discord being unreachable.
+/// metric alerts, 2026-09-11 — a thread-pool timer thread flushing a plugin's grouped reports (a
+/// gRPC handler thread until 2026-09-15), and none of those may be taken down by Discord being
+/// unreachable.
 /// </para>
 /// </summary>
 public sealed class AlertDispatcher(
@@ -29,10 +30,14 @@ public sealed class AlertDispatcher(
     Func<ROROROblox.Core.Notify.PhoneNotifyConfig>? phoneConfig = null)
 {
     /// <summary>
-    /// Keyed by (account, KIND) — see <see cref="AlertRouter.Route"/> for why the kind belongs in
-    /// the key. Concurrent because this dispatcher has TWO fire-and-forget producers: the view
-    /// model, raising on the UI thread, and the metric sink, raising on whatever gRPC handler
-    /// thread served a plugin's report (both wired in <c>App.xaml.cs</c>). A plain Dictionary was
+    /// Keyed by <see cref="AlertCooldownKey"/> — (account, KIND), plus the metric id for a metric
+    /// breach (corrected 2026-09-15) — see <see cref="AlertRouter.Route"/> for why each belongs in
+    /// the key. The stamp below and the router's check both build the key with
+    /// <see cref="AlertCooldownKey.For"/>, so they cannot disagree about which slot an alert used.
+    /// Concurrent because this dispatcher has TWO fire-and-forget producers: the view model,
+    /// raising on the UI thread, and the metric sink, raising on a thread-pool timer thread when a
+    /// grouping window closes (a gRPC handler thread until 2026-09-15; both wired in
+    /// <c>App.xaml.cs</c>). A plain Dictionary was
     /// safe only while the view model was the sole producer, and stopped being safe the moment
     /// <see cref="AlertKind.MetricBreach"/> got a destination — before that the metric path routed
     /// nowhere and never reached the write below.
@@ -66,7 +71,7 @@ public sealed class AlertDispatcher(
     /// POST to a URL already known dead.
     /// </para>
     /// </summary>
-    private readonly ConcurrentDictionary<(Guid AccountId, AlertKind Kind), DateTimeOffset> _lastSent = new();
+    private readonly ConcurrentDictionary<AlertCooldownKey, DateTimeOffset> _lastSent = new();
 
     /// <summary>True once that webhook has returned 404. Surfaced in Settings; also stops the
     /// dispatcher offering the destination at all — see <see cref="EffectiveConfig"/>.</summary>
@@ -156,7 +161,7 @@ public sealed class AlertDispatcher(
                 // The indexer setter is the concurrent idiom for an unconditional overwrite —
                 // atomic per key, last writer wins, which is exactly the semantics this had
                 // single-threaded. AddOrUpdate would say the same thing in more words.
-                foreach (var t in alert.Triggers) { _lastSent[(t.AccountId, t.Kind)] = now; }
+                foreach (var t in alert.Triggers) { _lastSent[AlertCooldownKey.For(t)] = now; }
             }
         }
         catch (Exception ex)
