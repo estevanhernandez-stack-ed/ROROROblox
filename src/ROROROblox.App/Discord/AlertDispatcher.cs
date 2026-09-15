@@ -126,9 +126,13 @@ public sealed class AlertDispatcher(
                 // The clan channel is the one destination exempt from streamer mode — a room the
                 // user deliberately joined, full of people who already know which accounts are
                 // theirs. See AlertTrigger for the full reasoning. Every other destination
-                // (desktop toast, personal channel) keeps the masked name.
+                // (desktop toast, personal channel) keeps the masked name. Built per destination
+                // for its length envelope too: the desktop toast holds 63/255 characters where a
+                // webhook holds 250/992, so each names as many accounts as IT fits and says how
+                // many more (2026-09-15; see PayloadLimits.Toast).
                 var payload = WebhookPayload.ForAlert(
-                    alert.Kind, alert.Triggers, useRealNames: alert.Destination == AlertDestination.Clan);
+                    alert.Kind, alert.Triggers, useRealNames: alert.Destination == AlertDestination.Clan,
+                    limits: PayloadLimits.For(alert.Destination));
 
                 log.LogInformation("Alert → {Destination}: {Title} ({Count} account(s)).",
                     alert.Destination, payload.Title, alert.Triggers.Count);

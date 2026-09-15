@@ -431,6 +431,38 @@ public class AlertDispatcherTests
     }
 
     [Fact]
+    public async Task DispatchAsync_AnEightAccountGroup_ToastsWhatFitsTheBalloon_AndPostsEveryName()
+    {
+        // Final-review Important 1, 2026-09-15: the payload is built once per destination, so the
+        // desktop toast gets the balloon's 63/255 envelope while the webhook keeps 250/992.
+        var rule = new MetricRule("battle.points", MetricRuleKind.Rate, 5000, TimeSpan.FromMinutes(10), Label: "Points");
+        var triggers = Enumerable.Range(1, 8)
+            .Select(i => new AlertTrigger(AlertKind.MetricBreach, Guid.NewGuid(), $"CElCPap{i}", $"real_CElCPap{i}",
+                rule.MetricId, null, DateTimeOffset.UtcNow, 1234.5, rule))
+            .ToArray();
+
+        var (sender, handler) = Sender(HttpStatusCode.NoContent);
+        var tray = new SpyTrayService();
+        var config = new DiscordConfig
+        {
+            MetricBreachDestinations = [AlertDestination.Local, AlertDestination.Mine],
+            MineWebhookUrl = MineUrl,
+        };
+
+        await Build(sender, tray, config).DispatchAsync(triggers).WaitAsync(TimeSpan.FromSeconds(5));
+
+        var toast = Assert.Single(tray.Toasts).Split('|');
+        Assert.True(toast[0].Length <= 63, $"toast title is {toast[0].Length} characters");
+        Assert.True(toast[1].Length <= 255, $"toast text is {toast[1].Length} characters");
+        Assert.EndsWith("\nand 5 more", toast[1], StringComparison.Ordinal);
+        Assert.DoesNotContain("CElCPap8", toast[1], StringComparison.Ordinal);
+
+        var body = Assert.Single(handler.Bodies);
+        Assert.Contains("CElCPap8", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("more", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task DispatchAsync_TwoStatsBreachingForOneAccountInOneRead_BothAlert_AndARepeatDoesNot()
     {
         // Controller ruling C1, 2026-09-15. One plugin read breaches Points and Diamonds for the same

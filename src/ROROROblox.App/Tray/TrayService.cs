@@ -311,6 +311,12 @@ internal sealed class TrayService : ITrayService
     /// The generic tray balloon — every alert kind routed to
     /// <see cref="ROROROblox.Core.Discord.AlertDestination.Local"/> arrives here.
     /// <para>
+    /// <b>Length (2026-09-15):</b> the balloon holds 63 title and 255 text characters and the shell
+    /// cuts anything longer with no marker, so the dispatcher builds this destination's payload with
+    /// <see cref="ROROROblox.Core.Discord.PayloadLimits.Toast"/>: a group names the accounts that fit
+    /// and ends "and N more". A caller passing its own longer strings still gets the silent cut.
+    /// </para>
+    /// <para>
     /// <b>Thread-safety (2026-09-11):</b> marshals for the same reason
     /// <see cref="ShowMemoryWarning"/> does, and this one had been missing it. Its callers are not on
     /// the UI thread: <c>AlertDispatcher.DispatchAsync</c> is invoked fire-and-forget from

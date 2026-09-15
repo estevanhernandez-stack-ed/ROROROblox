@@ -28,38 +28,53 @@ public sealed record WebhookPayload(string Title, string Body)
     /// envelope overall: with the title at most <see cref="TitleLimit"/>, a Discord message
     /// ("**{Title}**\n{Body}") is at most 1247 of its 2000 characters, and an ntfy body
     /// ("{Title}\n{Body}", at most three UTF-8 bytes per UTF-16 unit) at most 3727 of its 4096 bytes.
-    /// So one capped payload fits every destination (2026-09-15).
+    /// So one capped payload fits every REMOTE destination (2026-09-15). The desktop toast is
+    /// tighter still and gets its own envelope: see <see cref="PayloadLimits.Toast"/>.
     /// </summary>
     internal const int BodyLimit = 992;
+
+    /// <summary>The tray balloon's title: 64 UTF-16 units less its terminator. See
+    /// <see cref="PayloadLimits.Toast"/>.</summary>
+    internal const int ToastTitleLimit = 63;
+
+    /// <summary>The tray balloon's text: 256 UTF-16 units less its terminator.</summary>
+    internal const int ToastBodyLimit = 255;
 
     /// <summary>
     /// <paramref name="useRealNames"/> is set only for the clan destination — see
     /// <see cref="AlertTrigger"/> for why that one room is exempt from streamer mode. Defaults to
     /// false so any future caller that forgets the question gets the masked names.
+    /// <paramref name="limits"/> is the destination's envelope (<see cref="PayloadLimits.For"/>);
+    /// null means <see cref="PayloadLimits.Remote"/>, today's 250/992.
     /// </summary>
     public static WebhookPayload ForAlert(
-        AlertKind kind, IReadOnlyList<AlertTrigger> triggers, bool useRealNames = false)
+        AlertKind kind, IReadOnlyList<AlertTrigger> triggers, bool useRealNames = false,
+        PayloadLimits? limits = null)
     {
         ArgumentNullException.ThrowIfNull(triggers);
         if (triggers.Count == 0) throw new ArgumentException("No triggers.", nameof(triggers));
+        var envelope = limits ?? PayloadLimits.Remote;
 
         string Name(AlertTrigger t) => useRealNames ? t.RealName : t.DisplayName;
 
         var noun = triggers.Count == 1 ? Name(triggers[0]) : $"{triggers.Count} accounts";
-        var title = kind switch
+        // Every title is a HEAD (the name or count, and for a metric the label) and a TAIL (the
+        // wording: its verb and threshold), so CapTitle can shorten the part that grows without
+        // cutting the part that says what happened (2026-09-15).
+        var (head, tail) = kind switch
         {
-            AlertKind.AccountDroppedOut => $"{noun} dropped out",
-            AlertKind.MemoryWarning => $"{noun} — memory warning",
-            AlertKind.Recycled => $"{noun} — recycled",
+            AlertKind.AccountDroppedOut => (noun, " dropped out"),
+            AlertKind.MemoryWarning => (noun, " — memory warning"),
+            AlertKind.Recycled => (noun, " — recycled"),
             // The uptime mark is one synthetic trigger: its DisplayName carries "4h up" and its
             // GameName carries "6 accounts in", composed by the tracker's caller. No identity in
             // either, so streamer mode has nothing to mask.
-            AlertKind.UptimeMark => $"{Name(triggers[0])} — {triggers[0].GameName}",
+            AlertKind.UptimeMark => ($"{Name(triggers[0])} — {triggers[0].GameName}", ""),
             // Worded from the rule that fired (2026-09-15). A trigger without one — nothing in
             // production builds that since the coordinator attaches the rule — keeps 1.28's
             // "{noun} — {metric id}". GameName still carries the metric id for this kind.
             AlertKind.MetricBreach => MetricTitle(noun, triggers[0]),
-            _ => noun,
+            _ => (noun, ""),
         };
 
         var lines = triggers.Select(t => kind switch
@@ -83,27 +98,27 @@ public sealed record WebhookPayload(string Title, string Body)
             _ => $"• {Name(t)}{(t.GameName is null ? "" : $" — {t.GameName}")}",
         }).ToList();
 
-        return new WebhookPayload(CapTitle(title), CapLines(lines));
+        return new WebhookPayload(CapTitle(head, tail, envelope.Title), CapLines(lines, envelope.Body));
     }
 
     /// <summary>
-    /// A metric breach's title, from the rule the FIRST trigger carries. A batch handed to
-    /// <see cref="ForAlert"/> shares one (metric id, rule) — <c>MetricBreachBatcher</c> raises one
-    /// group per call and <c>AlertRouter</c> keeps a call together — so the first trigger's rule is
-    /// the batch's rule. The noun is already "{n} accounts" or the one account's name.
+    /// A metric breach's title, from the rule the FIRST trigger carries, as (head, tail). A batch
+    /// handed to <see cref="ForAlert"/> shares one (metric id, rule) — <c>MetricBreachBatcher</c>
+    /// raises one group per call and <c>AlertRouter</c> keeps a call together — so the first
+    /// trigger's rule is the batch's rule. The noun is already "{n} accounts" or the one account's name.
     /// </summary>
-    private static string MetricTitle(string noun, AlertTrigger first)
+    private static (string Head, string Tail) MetricTitle(string noun, AlertTrigger first)
     {
-        if (first.Rule is not { } rule) return $"{noun} — {first.GameName}";
+        if (first.Rule is not { } rule) return ($"{noun} — {first.GameName}", "");
 
-        var label = rule.Label ?? rule.MetricId;
+        var head = $"{noun} — {rule.Label ?? rule.MetricId}";
         return rule.Kind switch
         {
-            MetricRuleKind.Rate => $"{noun} — {label} stopped climbing",
-            MetricRuleKind.Level when rule.AlertWhenBelow => $"{noun} — {label} fell below {FormatThreshold(rule.Threshold)}",
-            MetricRuleKind.Level => $"{noun} — {label} went above {FormatThreshold(rule.Threshold)}",
-            MetricRuleKind.Event => $"{noun} — {label} changed",
-            _ => $"{noun} — {label}",
+            MetricRuleKind.Rate => (head, " stopped climbing"),
+            MetricRuleKind.Level when rule.AlertWhenBelow => (head, $" fell below {FormatThreshold(rule.Threshold)}"),
+            MetricRuleKind.Level => (head, $" went above {FormatThreshold(rule.Threshold)}"),
+            MetricRuleKind.Event => (head, " changed"),
+            _ => (head, ""),
         };
     }
 
@@ -136,28 +151,49 @@ public sealed record WebhookPayload(string Title, string Body)
         value.ToString("#,0.##########", CultureInfo.InvariantCulture);
 
     /// <summary>
-    /// Cut an over-long title with an ellipsis. A grouped title uses the account COUNT, so it does
-    /// not grow with accounts, but a rule without a label puts the plugin-supplied metric id in it,
-    /// and that is unbounded (2026-09-15).
+    /// Fit a title into <paramref name="limit"/>. A grouped title uses the account COUNT, so it does
+    /// not grow with accounts, but a label (up to 40), a long masked name, and above all a rule
+    /// without a label — which puts the plugin-supplied, unbounded metric id in it — can overflow,
+    /// and the toast's 63 overflows easily (2026-09-15).
+    /// <para>
+    /// The rule: the <paramref name="tail"/> (the wording's verb and threshold, "went above
+    /// 1,000,000") stays whole, and the <paramref name="head"/> is cut from its END with an ellipsis,
+    /// so the label shortens first and the name only once the label is gone. "Diamonds went above
+    /// 1,000,000" losing its verb would say nothing; "Diamonds colle… went above 1,000,000" still
+    /// does. The tail keeps its place only while it takes at most half the title; a tail longer than
+    /// that (a threshold typed with dozens of digits) would squeeze out what fired and for whom, so
+    /// then the whole title keeps its front instead, as before.
+    /// </para>
     /// </summary>
-    private static string CapTitle(string title) =>
-        title.Length <= TitleLimit ? title : Front(title, TitleLimit - 1) + "…";
+    private static string CapTitle(string head, string tail, int limit)
+    {
+        var title = head + tail;
+        if (title.Length <= limit) return title;
+
+        // Over the limit with the tail at most half of it means the head is longer than the room
+        // left, so the cut below always removes at least one unit of it.
+        return tail.Length <= limit / 2
+            ? Front(head, limit - tail.Length - 1) + "…" + tail
+            : Front(title, limit - 1) + "…";
+    }
 
     /// <summary>
-    /// Join the account lines, keeping as many whole lines as fit <see cref="BodyLimit"/>, then say
+    /// Join the account lines, keeping as many whole lines as fit <paramref name="limit"/>, then say
     /// how many went unnamed ("and 12 more"). Every alert kind, not only metric groups: one line per
     /// account is unbounded, and through 1.28 a mass drop-out could overflow a Discord post while the
-    /// toast and the phone still arrived (controller ruling C2, 2026-09-15). A first line too long to
-    /// fit whole keeps its front rather than leaving the body empty.
+    /// toast and the phone still arrived (controller ruling C2, 2026-09-15). The limit is the
+    /// destination's, so the desktop toast names fewer accounts than a webhook post of the same
+    /// group, and says how many more (final review, 2026-09-15). A first line too long to fit whole
+    /// keeps its front rather than leaving the body empty.
     /// </summary>
-    private static string CapLines(IReadOnlyList<string> lines)
+    private static string CapLines(IReadOnlyList<string> lines, int limit)
     {
         var whole = string.Join("\n", lines);
-        if (whole.Length <= BodyLimit) return whole;
+        if (whole.Length <= limit) return whole;
 
         // Room for the longest trailer this call could need, so the trailer never pushes a kept
         // line over the limit.
-        var budget = BodyLimit - $"\nand {lines.Count} more".Length;
+        var budget = limit - $"\nand {lines.Count} more".Length;
         var body = new StringBuilder();
         var shown = 0;
         foreach (var line in lines)

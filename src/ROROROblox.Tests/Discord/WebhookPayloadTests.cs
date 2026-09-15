@@ -210,7 +210,8 @@ public class WebhookPayloadTests
     }
 
     // ── Length caps (controller ruling C2, 2026-09-15) ──────────────────────────────────────────
-    // One payload feeds every destination, so it has to fit the tightest envelope of each: the
+    // The default envelope feeds every REMOTE destination (the desktop toast has its own since the
+    // final review, corrected 2026-09-15, below), so it has to fit the tightest envelope of each: the
     // Discord message is "**{Title}**\n{Body}" in at most 2000 characters; Pushover takes a title of
     // at most 250 and a message of at most 1024, and its own truncation must never re-cut ours (it
     // would count the "and N more" trailer as an account); ntfy's body is "{Title}\n{Body}" in at
@@ -293,7 +294,9 @@ public class WebhookPayloadTests
 
         AssertFitsEveryDestination(payload);
         Assert.StartsWith("50 accounts — mmm", payload.Title, StringComparison.Ordinal);
-        Assert.EndsWith("…", payload.Title, StringComparison.Ordinal);
+        // Was EndsWith("…") until the title cut learned to keep the wording's verb (final-review
+        // Important 1, 2026-09-15): the long part is cut, the verb and threshold stay.
+        Assert.EndsWith("… went above 0", payload.Title, StringComparison.Ordinal);
         Assert.StartsWith("• Alt01 — now 5", payload.Body, StringComparison.Ordinal);
     }
 
@@ -308,5 +311,125 @@ public class WebhookPayloadTests
         Assert.StartsWith("• xxx", payload.Body, StringComparison.Ordinal);
         Assert.EndsWith("…", payload.Body, StringComparison.Ordinal);
         Assert.DoesNotContain("more", payload.Body, StringComparison.Ordinal);
+    }
+
+    // ── The desktop toast's own envelope (final-review Important 1, 2026-09-15) ────────────────
+    // The tray balloon marshals its title into 64 UTF-16 units and its text into 256, each with a
+    // terminator, and Windows cuts anything longer mid-line with no marker. So Local gets 63/255 and
+    // the same "and N more" logic; every other destination keeps 250/992.
+
+    private static readonly PayloadLimits Toast = PayloadLimits.For(AlertDestination.Local);
+
+    private static readonly MetricRule PointsRate =
+        new("battle.points", MetricRuleKind.Rate, 5000, TimeSpan.FromMinutes(10), Label: "Points");
+
+    private static void AssertFitsTheBalloon(WebhookPayload payload)
+    {
+        Assert.True(payload.Title.Length <= 63, $"toast title is {payload.Title.Length} characters");
+        Assert.True(payload.Body.Length <= 255, $"toast text is {payload.Body.Length} characters");
+    }
+
+    [Theory]
+    [InlineData(AlertDestination.Local, 63, 255)]
+    [InlineData(AlertDestination.Mine, 250, 992)]
+    [InlineData(AlertDestination.Clan, 250, 992)]
+    [InlineData(AlertDestination.Phone, 250, 992)]
+    public void OnlyTheDesktopToast_GetsTheBalloonsLimits(AlertDestination destination, int title, int body)
+    {
+        Assert.Equal(new PayloadLimits(title, body), PayloadLimits.For(destination));
+    }
+
+    [Fact]
+    public void ForTheToast_TheOwnersEightAccountRateGroup_NamesWhatFits_AndSaysHowManyMore()
+    {
+        // The review's case: eight 8-character names, each Rate line 61 characters. The 992 body
+        // named all eight and the balloon then cut it inside the fifth line, silently.
+        var triggers = Enumerable.Range(1, 8).Select(i => Fired(PointsRate, $"CElCPap{i}", 1234.5)).ToList();
+
+        var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, triggers, limits: Toast);
+
+        AssertFitsTheBalloon(payload);
+        Assert.Equal("8 accounts — Points stopped climbing", payload.Title);
+        var lines = payload.Body.Split('\n');
+        Assert.Equal(4, lines.Length);
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.Equal($"• CElCPap{i + 1} — 1,234.5 a minute over 10 min (alert under 5,000)", lines[i]);
+        }
+        Assert.Equal("and 5 more", lines[^1]);
+
+        // As many as fit: a fourth whole line plus its own trailer would not.
+        Assert.True(string.Join("\n", lines[..3]).Length + 1 + lines[0].Length + "\nand 4 more".Length > 255);
+
+        // The same group for a webhook still names all eight.
+        Assert.Equal(8, WebhookPayload.ForAlert(AlertKind.MetricBreach, triggers).Body.Split('\n').Length);
+    }
+
+    [Fact]
+    public void ForTheToast_ALongLabel_IsCut_AndTheVerbAndThresholdStay()
+    {
+        // 40 is the rule source's label cap. Front-cut at 63, this title lost "went above 1,000,000".
+        var rule = new MetricRule("ps99.diamonds", MetricRuleKind.Level, 1_000_000, TimeSpan.Zero,
+            AlertWhenBelow: false, Label: "Diamonds collected in every world so far");
+        var name = "BaronBloxwellTheBold";   // 20, Roblox's longest username
+
+        var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, [Fired(rule, name, 2_000_000)], limits: Toast);
+
+        AssertFitsTheBalloon(payload);
+        Assert.Equal("BaronBloxwellTheBold — Diamonds collected… went above 1,000,000", payload.Title);
+        Assert.Equal(63, payload.Title.Length);
+        Assert.Equal("• BaronBloxwellTheBold — now 2,000,000", payload.Body);
+    }
+
+    [Fact]
+    public void ForTheToast_AThresholdTooLongToKeepWhole_FallsBackToCuttingTheEnd()
+    {
+        // The verb and threshold keep their place only while they take at most half the title;
+        // past that the name and label matter more, so the title's front is kept instead.
+        var rule = DiamondsAbove with { Threshold = 1e40 };
+
+        var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, [Fired(rule, "CElCPapa", 5)], limits: Toast);
+
+        AssertFitsTheBalloon(payload);
+        Assert.Equal(63, payload.Title.Length);
+        Assert.StartsWith("CElCPapa — Diamonds went above 10,000,", payload.Title, StringComparison.Ordinal);
+        Assert.EndsWith("…", payload.Title, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ForTheToast_ASingleAccountThatFits_IsUnchanged()
+    {
+        var trigger = Fired(DiamondsAbove, "CElCPapa", 2974993);
+
+        var toast = WebhookPayload.ForAlert(AlertKind.MetricBreach, [trigger], limits: Toast);
+
+        Assert.Equal(WebhookPayload.ForAlert(AlertKind.MetricBreach, [trigger]), toast);
+        Assert.Equal("CElCPapa — Diamonds went above 0", toast.Title);
+        Assert.Equal("• CElCPapa — now 2,974,993", toast.Body);
+    }
+
+    [Fact]
+    public void ForTheToast_AMassDropOut_IsCappedToo()
+    {
+        var triggers = Enumerable.Range(1, 30).Select(i => Dropped($"Account{i:D3}")).ToList();
+
+        var payload = WebhookPayload.ForAlert(AlertKind.AccountDroppedOut, triggers, limits: Toast);
+
+        AssertFitsTheBalloon(payload);
+        Assert.Equal("30 accounts dropped out", payload.Title);
+        var lines = payload.Body.Split('\n');
+        Assert.Equal("• Account001 — Pet Simulator 99!", lines[0]);
+        Assert.Equal($"and {30 - (lines.Length - 1)} more", lines[^1]);
+    }
+
+    [Fact]
+    public void ForTheToast_AnEnormousName_CutsTheNameAndKeepsTheWording()
+    {
+        var payload = WebhookPayload.ForAlert(AlertKind.AccountDroppedOut, [Dropped(new string('x', 300))], limits: Toast);
+
+        AssertFitsTheBalloon(payload);
+        Assert.Equal(new string('x', 50) + "… dropped out", payload.Title);
+        Assert.StartsWith("• xxx", payload.Body, StringComparison.Ordinal);
+        Assert.EndsWith("…", payload.Body, StringComparison.Ordinal);
     }
 }
