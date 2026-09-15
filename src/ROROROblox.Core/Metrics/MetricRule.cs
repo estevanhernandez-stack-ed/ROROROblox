@@ -21,12 +21,17 @@ public enum MetricRuleKind
 
 /// <summary>One rule against one metric. Supplied by the caller; core never invents one.</summary>
 /// <param name="AlertWhenBelow">Level only. Ignored by Rate (always "below") and Event.</param>
+/// <param name="Label">The friendly name the alert uses in place of <paramref name="MetricId"/>
+/// ("Points" for <c>battle.points</c>). Optional, trailing, and data rather than prose: it is the
+/// user's (or their plugin's) own word, already normalised by the rule source, and
+/// <c>WebhookPayload</c> falls back to the metric id when it is null.</param>
 public sealed record MetricRule(
     string MetricId,
     MetricRuleKind Kind,
     double Threshold,
     TimeSpan Window,
-    bool AlertWhenBelow = true);
+    bool AlertWhenBelow = true,
+    string? Label = null);
 
 /// <summary>
 /// The outcome. <paramref name="Reason"/> is a resx KEY fragment, never a sentence —

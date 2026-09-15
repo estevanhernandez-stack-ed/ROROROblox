@@ -17,9 +17,10 @@ namespace ROROROblox.App.Metrics;
 /// <para>
 /// <b>Unsigned on purpose, and that is not an oversight.</b> A signed manifest would have named
 /// URLs the plugin calls, which hands an attacker this app's request targets — an exfiltration
-/// primitive. A rule names only a metric id, a kind, a threshold and a window, so there is
-/// nothing here that signing would protect. That is also why dropping the manifest plan was
-/// safe: nothing it would have added on the security side is missing from this file.
+/// primitive. A rule names only a metric id, a kind, a threshold and a window, plus an optional
+/// display label (2026-09-15), so there is nothing here that signing would protect. That is also
+/// why dropping the manifest plan was safe: nothing it would have added on the security side is
+/// missing from this file.
 /// </para>
 /// <para>
 /// Nothing here may throw. It is read on the gRPC report path, and a malformed file — or a
@@ -162,7 +163,8 @@ public sealed class LocalFileMetricRuleSource(string filePath, ILogger<LocalFile
                     kind,
                     parsed.Threshold,
                     TimeSpan.FromMinutes(parsed.WindowMinutes),
-                    parsed.AlertWhenBelow));
+                    parsed.AlertWhenBelow,
+                    NormaliseLabel(parsed.Label)));
             }
             catch (Exception ex)
             {
@@ -182,6 +184,33 @@ public sealed class LocalFileMetricRuleSource(string filePath, ILogger<LocalFile
         return rules.AsReadOnly();
     }
 
+    /// <summary>The longest label an alert will print. Forty covers "Diamonds per minute in the clan
+    /// battle" with room to spare; past it the label is cut with an ellipsis rather than dropped.</summary>
+    internal const int LabelLimit = 40;
+
+    /// <summary>
+    /// Turns a hand-written or plugin-written label into something safe to put in a title: control
+    /// characters (a newline above all, which would split the title from its own sentence) become
+    /// spaces, runs of spaces collapse, the ends are trimmed, and anything over
+    /// <see cref="LabelLimit"/> is cut with an ellipsis without splitting a surrogate pair. Blank
+    /// becomes null, which makes the alert fall back to the metric id exactly as 1.28 did.
+    /// </summary>
+    internal static string? NormaliseLabel(string? raw)
+    {
+        if (raw is null) return null;
+
+        var flattened = new StringBuilder(raw.Length);
+        foreach (var c in raw) flattened.Append(char.IsControl(c) ? ' ' : c);
+
+        var cleaned = string.Join(' ', flattened.ToString().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        if (cleaned.Length == 0) return null;
+        if (cleaned.Length <= LabelLimit) return cleaned;
+
+        var cut = LabelLimit - 1;
+        if (char.IsHighSurrogate(cleaned[cut - 1])) cut--;
+        return cleaned[..cut].TrimEnd() + "…";
+    }
+
     private sealed record RuleCache(string ContentHash, IReadOnlyList<MetricRule> Rules);
 
     /// <summary>The on-disk shape. Separate from <see cref="MetricRule"/> so the file format and
@@ -193,5 +222,6 @@ public sealed class LocalFileMetricRuleSource(string filePath, ILogger<LocalFile
         [JsonPropertyName("threshold")] public double Threshold { get; set; }
         [JsonPropertyName("windowMinutes")] public double WindowMinutes { get; set; }
         [JsonPropertyName("alertWhenBelow")] public bool AlertWhenBelow { get; set; } = true;
+        [JsonPropertyName("label")] public string? Label { get; set; }
     }
 }

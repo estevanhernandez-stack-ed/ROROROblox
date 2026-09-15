@@ -1,3 +1,5 @@
+using ROROROblox.Core.Metrics;
+
 namespace ROROROblox.Core.Discord;
 
 /// <summary>
@@ -57,6 +59,14 @@ public enum AlertKind
 /// and for nothing at all alike. That is the unknown-is-not-zero conflation the metric core defends
 /// against in three places; it must not come back at the display layer. Null for every other kind.
 /// </para>
+/// <para>
+/// <paramref name="Rule"/> is the <see cref="MetricRule"/> that breached, for a
+/// <see cref="AlertKind.MetricBreach"/> only — trailing and optional for the same reason as
+/// <paramref name="MetricValue"/>. It exists because the alert has to say WHAT fired (label, kind,
+/// threshold, window, direction), and through 1.28 nothing past the coordinator knew, so every post
+/// read "ps99.diamonds at 2974993" (live test, 2026-09-15). It is also the grouping key
+/// <c>MetricBreachBatcher</c> uses. <paramref name="GameName"/> keeps carrying the metric id.
+/// </para>
 /// </summary>
 public sealed record AlertTrigger(
     AlertKind Kind,
@@ -66,4 +76,5 @@ public sealed record AlertTrigger(
     string? GameName,
     long? PrivateBytes,
     DateTimeOffset OccurredAtUtc,
-    double? MetricValue = null);
+    double? MetricValue = null,
+    MetricRule? Rule = null);

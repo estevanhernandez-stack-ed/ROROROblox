@@ -76,7 +76,8 @@ public sealed class MetricAlertCoordinator(TimeProvider time, int historyCapacit
             // (MetricValue, trailing and optional, so those four are untouched) because
             // PrivateBytes is a long? and truncating a metric through it renders "at 0" for a 0.79
             // ratio, reintroducing at the display layer the unknown-is-not-zero conflation this
-            // core defends in three places.
+            // core defends in three places. The RULE rides along too (2026-09-15): the alert's
+            // wording comes from it, and MetricBreachBatcher groups by it.
             return [new AlertTrigger(
                 AlertKind.MetricBreach,
                 o.AccountId,
@@ -85,7 +86,8 @@ public sealed class MetricAlertCoordinator(TimeProvider time, int historyCapacit
                 o.MetricId,
                 null,
                 now,
-                verdict.Observed)];
+                verdict.Observed,
+                rule)];
         }
 
         return [];
