@@ -81,10 +81,12 @@ service RoRoRoHost {
   // is worth an alert.
   //
   // The split is deliberate and is the whole design. Thresholding stays in the host so a
-  // metric alert inherits per-account mute, the per-(account, kind) cooldown, and coalescing
-  // from the same router every other alert kind rides. A plugin that decided for itself when
-  // to page would bypass all three, and "a bad night becomes forty notifications" is the one
-  // outcome this feature must not produce.
+  // metric alert inherits per-account mute and coalescing from the same router every other
+  // alert kind rides. (Corrected 2026-09-15: a metric breach's cooldown is keyed by account
+  // and metric id, not account and kind — every other alert kind keeps the per-(account,
+  // kind) cooldown this comment used to claim for all of them.) A plugin that decided for
+  // itself when to page would bypass all of that, and "a bad night becomes forty
+  // notifications" is the one outcome this feature must not produce.
   //
   // Fire-and-forget: the host returns Empty whether or not the report produced an alert.
   // A plugin cannot learn whether it made the user's phone buzz, and does not need to.

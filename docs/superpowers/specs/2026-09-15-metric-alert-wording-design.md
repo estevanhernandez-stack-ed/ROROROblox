@@ -2,6 +2,31 @@
 
 Approved by the owner on 2026-09-15. Builds on `2026-09-09-external-metric-alerts-design.md` (rules come from the local, unsigned `metric-rules.json`, permanently) and the v1.28 metric alerts feature.
 
+---
+
+> **APPROVED DEVIATIONS (2026-09-15) — C1, C2, C3, added by the controller before execution and built as written.**
+>
+> Three rulings were added before any task was dispatched. Each knowingly changes a line stated
+> below; all three are approved, and all three shipped in `feat/metric-alert-wording`.
+>
+> - **C1** (contradicts §2 "the same … per-(account, kind) cooldown" below): a metric breach's
+>   cooldown is keyed by account and metric id, not account and kind, so two different stats
+>   breaching for one account in the same read both alert. Every other alert kind keeps the
+>   per-(account, kind) cooldown §2 describes.
+> - **C2** (new; §2's "existing alert kinds keep their current behaviour" is unaffected): a grouped
+>   alert caps its account lines to one body that fits Discord, Pushover and ntfy, then ends with
+>   "and N more." The cap applies to all five alert kinds, not only metric groups, because a large
+>   drop-out group overflows Discord the same way a large metric group would.
+> - **C3** (new): every webhook POST — all five alert kinds — now sends `allowed_mentions` with an
+>   empty `parse` array, so a label, metric id or account name can never ping the shared clan
+>   channel.
+>
+> Do not rewrite §2 below to match; this banner is the correction. Full account:
+> [docs/superpowers/plans/2026-09-15-metric-alert-wording.md](../plans/2026-09-15-metric-alert-wording.md#controller-rulings-added-before-execution-2026-09-15)
+> and the 2026-09-15 entry in `docs/decisions.md`.
+
+---
+
 ## Why
 
 A live test on 2026-09-15 used a temporary Level rule ("Diamonds above 0") against 8 accounts, with metric alerts going to Local, Mine and Phone. It produced 24 notifications, one per account per destination. Each Discord post read:

@@ -1425,7 +1425,7 @@ dotnet build ROROROblox.slnx -c Release
 dotnet test  ROROROblox.slnx -c Release --no-build
 ```
 
-Expected: 0 errors; unit count = baseline + 30 (theory cases counted individually: rule source 5, coordinator 1, payload 10, Pushover 2, batcher 7, sink 2, routing 1, dispatcher 1, smoke fence 1), all passing, none newly skipped; harness count unchanged from baseline, 1 skip by design. Warnings: nothing new beyond the known set, except possibly one CS9124 on `log` in `MetricReportSinkAdapter` (the pattern `time` already produces there).
+Expected: 0 errors; unit count 2,298 (baseline 2,258 before Task 1), all passing, none newly skipped; harness count unchanged from baseline at 27 passed, 1 skip by design. **Recounted 2026-09-15 (Task 5):** the actual delta is +40, not the +30 estimated here before execution — Task 1 +5, Task 2 +19, Task 3 +15, Task 4 +1 (per-task counts from the ledger: `progress.md`). The estimate predated the C1-C3 carry-ins, whose own tests (the router/dispatcher cooldown cases for C1, the three-envelope and trailer cases for C2, the `allowed_mentions` case for C3) landed inside Tasks 2 and 3's counts rather than as a separate line item. Warnings: nothing new beyond the known 51-warning baseline; no CS9124 on `log` in `MetricReportSinkAdapter` appeared in any task (confirmed in each task's report).
 
 Then `git diff main --name-only` names no file on the never-commit list. The pre-commit hooks (installed by `.claude/hooks/install.ps1`) and the CI `guards` job are the secret and local-path check; do not hand-roll one.
 
@@ -1501,7 +1501,7 @@ Each one is a call the spec leaves open: what was decided, why, and what it cost
 
 ## Noticed, not in scope
 
-- Discord parses mentions in webhook `content` unless `allowed_mentions` restricts it. A metric id (already, since 1.28) or a label containing `@everyone` could ping the clan channel. A one-line `allowed_mentions: { parse: [] }` in `DiscordWebhookSender` is the likely follow-up, but it changes all five kinds, so it gets its own change.
+- **Superseded by C3 — shipped.** Discord parses mentions in webhook `content` unless `allowed_mentions` restricts it. A metric id (already, since 1.28) or a label containing `@everyone` could ping the clan channel. This was flagged here, before execution, as a likely one-line follow-up because it changes all five alert kinds rather than only this plan's scope. The controller pulled it into this plan as **controller ruling C3** before dispatch, and Task 2 built it: `DiscordWebhookSender` now sends `allowed_mentions: { parse: [] }` on every webhook POST, for all five alert kinds, not only metric breaches (`477554e`).
 
 ## Self-review
 
