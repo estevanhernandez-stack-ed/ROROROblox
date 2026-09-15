@@ -1,7 +1,9 @@
 using System.Net;
+using System.Text.Json;
 using Microsoft.Extensions.Logging.Abstractions;
 using ROROROblox.App.Discord;
 using ROROROblox.Core.Discord;
+using ROROROblox.Core.Metrics;
 
 namespace ROROROblox.Tests.Discord;
 
@@ -20,6 +22,29 @@ public class DiscordWebhookSenderTests
 
         Assert.Equal(WebhookSendResult.Sent, result);
         Assert.Contains("BaronBloxwell", Assert.Single(handler.Bodies), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task SendAsync_TextCanNeverPing_AllowedMentionsParsesNothing()
+    {
+        // Controller ruling C3, 2026-09-15: labels come from a hand-edited file, metric ids from
+        // plugins, account names from users, and the clan destination is a shared channel. Discord
+        // parses @everyone, @here, role and user mentions out of content unless the post says not to.
+        var rule = new MetricRule("ps99.diamonds", MetricRuleKind.Level, 0, TimeSpan.Zero, AlertWhenBelow: false,
+            Label: "@everyone Diamonds");
+        var trigger = new AlertTrigger(AlertKind.MetricBreach, Guid.NewGuid(), "@here", "@here", rule.MetricId, null,
+            DateTimeOffset.UnixEpoch, 5, rule);
+        var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, [trigger]);
+        var handler = new StubHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.NoContent));
+        var sender = new DiscordWebhookSender(new HttpClient(handler), NullLogger<DiscordWebhookSender>.Instance);
+
+        await sender.SendAsync(Url, payload).WaitAsync(TimeSpan.FromSeconds(5));
+
+        using var json = JsonDocument.Parse(Assert.Single(handler.Bodies));
+        var parse = json.RootElement.GetProperty("allowed_mentions").GetProperty("parse");
+        Assert.Equal(JsonValueKind.Array, parse.ValueKind);
+        Assert.Equal(0, parse.GetArrayLength());
+        Assert.Contains("@everyone", json.RootElement.GetProperty("content").GetString(), StringComparison.Ordinal);
     }
 
     [Fact]

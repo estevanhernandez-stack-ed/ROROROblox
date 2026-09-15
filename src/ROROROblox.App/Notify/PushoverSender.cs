@@ -37,11 +37,32 @@ public sealed class PushoverSender(HttpClient client, ILogger<PushoverSender> lo
     /// <summary>Pushover's documented message cap.</summary>
     private const int MessageLimit = 1024;
 
+    /// <summary>Pushover's documented title cap.</summary>
+    private const int TitleLimit = 250;
+
+    /// <summary>
+    /// Cut an over-long title with an ellipsis. A grouped title uses the account COUNT, so it does
+    /// not grow with accounts, but a rule without a label puts the plugin-supplied metric id in it,
+    /// and that is unbounded. Over the cap, Pushover returns the bare 400 the caller treats as
+    /// terminal for the session (2026-09-15). <c>WebhookPayload.ForAlert</c> already caps its
+    /// titles at this length; this is the sender's own guard for a payload built any other way.
+    /// </summary>
+    internal static string TruncateTitleForPushover(string title)
+    {
+        if (title.Length <= TitleLimit) return title;
+
+        var cut = TitleLimit - 1;
+        if (char.IsHighSurrogate(title[cut - 1])) cut--;
+        return title[..cut] + "…";
+    }
+
     /// <summary>
     /// Cut an over-long coalesced body at a line break and say how many accounts went unnamed.
-    /// One line per dropped account is unbounded (the payload's shape is fixed, its LENGTH is
-    /// not), and Pushover answers an over-limit message with the same bare 400 a bad credential
-    /// gets — which the caller treats as terminal for the session.
+    /// Pushover answers an over-limit message with the same bare 400 a bad credential gets, which
+    /// the caller treats as terminal for the session. Corrected 2026-09-15: this used to say one
+    /// line per account is unbounded; <c>WebhookPayload.ForAlert</c> now caps its body at 992
+    /// characters with its own "and N more", so for its payloads this is identity (it must be, or
+    /// that trailer would be counted here as an account). It stays as the sender's own guard.
     /// </summary>
     internal static string TruncateForPushover(string body)
     {
@@ -80,7 +101,7 @@ public sealed class PushoverSender(HttpClient client, ILogger<PushoverSender> lo
             {
                 ["token"] = appToken,
                 ["user"] = userKey,
-                ["title"] = payload.Title,
+                ["title"] = TruncateTitleForPushover(payload.Title),
                 ["message"] = TruncateForPushover(payload.Body),
                 ["priority"] = kind == AlertKind.AccountDroppedOut ? "1" : "0",
             });
