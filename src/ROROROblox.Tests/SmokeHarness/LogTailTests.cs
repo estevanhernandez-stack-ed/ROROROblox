@@ -5,7 +5,7 @@ namespace ROROROblox.Tests.SmokeHarness;
 
 /// <summary>
 /// <see cref="LogTail"/> turns the app's own Serilog file into pass/fail for most of the smoke
-/// harness's 16 rows, so a loose matcher here is worse than no harness at all — it would turn
+/// harness's 17 rows, so a loose matcher here is worse than no harness at all — it would turn
 /// ordinary log noise into a green run. Every rendered line below is copied from the actual
 /// LogInformation call sites in <c>AlertDispatcher.cs</c> and <c>MetricReportSinkAdapter.cs</c>,
 /// wrapped in the prefix <c>AppLogging.Configure</c>'s outputTemplate actually produces

@@ -416,8 +416,10 @@ internal static class Program
         //
         // Local NOT FIRST because AlertDispatcher's loop is sequential and its cooldown stamp lands
         // inside it, per destination, after that destination's send. Local's "send" is
-        // TrayService.ShowToast, which calls into a WPF TaskbarIcon from whatever gRPC handler thread
-        // raised the breach; if that throws, the loop ends there and every later destination in the
+        // TrayService.ShowToast, which calls into a WPF TaskbarIcon from whatever thread raised the
+        // breach — for a metric breach that is a thread-pool timer thread, since MetricBreachBatcher's
+        // grouping window closes on one (corrected 2026-09-15; every other alert kind still raises on a
+        // gRPC handler thread); if that throws, the loop ends there and every later destination in the
         // fan-out is lost along with the stamp. Putting a webhook first means the stamp has already
         // landed and both channel posts have already gone out before anything touches the tray. The
         // desktop row is unaffected either way — the "Alert → Local" line is written BEFORE the send,
