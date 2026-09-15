@@ -1516,3 +1516,110 @@ These override the plan where they differ.
 - **C1. A metric alert's cooldown is per account and metric id**, not per account and alert kind. Two different stats breaching for one account in the same read both alert. Other alert kinds keep per-(account, kind). *Why:* a Points stall and a Diamonds alert in the same read are two different things to know. *Cost if wrong:* slightly more alerts when several stats breach together.
 - **C2. A grouped alert caps its account lines** so every destination stays under its length limit (Discord content or embed description, the Pushover title and message, the ntfy title). It then ends with "and N more". *Why:* a group of about 30 or more accounts would otherwise fail to post to Discord while the toast and phone still arrive. *Cost if wrong:* a very large group names only the first accounts.
 - **C3. Every RoRoRo webhook post sends `allowed_mentions` with no parse targets**, so a label, metric id or account name containing `@everyone`, `@here` or a role mention can never ping a channel. It applies to all alert kinds, which is a one-line change in the payload builder, with a test. *Why:* labels come from a hand-edited file and metric ids from plugins, and the clan destination is a shared channel. *Cost if wrong:* none known; RoRoRo's posts never intended to mention anyone.
+
+## Execution record (2026-09-15)
+
+**How it was built.** Five tasks, each dispatched to a subagent (superpowers:subagent-driven-development) and reviewed by a separate subagent before the next task started. A read-only pre-flight scan ahead of Task 1 found 3 BLOCKER findings — all three were the controller's own C1-C3 rulings contradicting the plan's own text — and carried each into the task that had to build it (C1 into Task 3, C2 and C3 into Task 2), plus 9 smaller FIX findings folded into task briefs. Every task landed Approved or Approved-with-parked-Minors; Task 4's commit trailer was the one Important finding at task level, and the controller amended it directly. After Task 5, a whole-branch review (`8e28eba..ae33ec7`) found one Important issue (the desktop toast inherited the webhook-sized payload and the shell cut it silently) and 12 Minors; one fix wave (3 commits) resolved the Important issue and four of the Minors, and a scoped re-review of that wave confirmed all four fixed with no new Critical or Important issues, ending **ready to merge**. A final documentation-only commit (`c3e0683`) cleaned up the decision entry's evidence list per the re-review's own last Minor.
+
+**Tasks and commits.**
+
+- Task 1 — the breach carries the rule that fired, labels: `dc44992`. Reviewed, Approved.
+- Task 2 — wording from the rule, with C2 (length caps, every alert kind) and C3 (`allowed_mentions`): `477554e`. Reviewed, Approved.
+- Task 3 — one alert per read (`MetricBreachBatcher`), with C1 (per-metric cooldown): `b245ef8`. Reviewed, Approved (`DONE_WITH_CONCERNS` at hand-off; the concerns were notes, not blockers).
+- Task 4 — the smoke harness reads the new line, proves one read is one alert: `ac459df`, amended by the controller to `9318c4b` (wrong commit-trailer name, an Important finding).
+- Task 5 — features/decisions docs, spec banner, full verification: `ae33ec7`. Reviewed, Approved.
+- Final fix wave (one dispatch): `649f1f5` (the toast's own 63/255 envelope), `a02fa24` (pending groups drop right after the plugin host stops, not at the very end of exit), `ab0b35e` (decisions.md and features.md wording). Re-reviewed, all four rulings **Fixed**, ready to merge.
+- Post-re-review cleanup: `c3e0683` (decisions.md's evidence list named one test file twice and stopped its commit list early; fixed).
+
+**Controller rulings made during execution** (beyond the three pre-flight C1-C3 carry-ins above):
+
+- Accepted the shared 992-character remote body cap for v1.29 as-is (the owner's clan runs 8 accounts; per-destination limits are a later change) and recorded the trade-off in the decision entry, rather than building per-destination remote limits now.
+- Ruled the plugin contract's proto-file edit comment-only (no field, number or RPC change), so "no proto change" still holds for release purposes; routed it and two other stale-comment fixes into Task 5.
+- Ran Task 5's own review and the whole-branch review in parallel, folding Task 5's review findings into the one final fix wave instead of a separate round.
+- Dispatched the final fix wave as one unit: give the desktop toast its own length envelope, drop pending groups right after the plugin host stops (not at the very end of exit), correct two decisions.md lines, and add the missing C2 clause to both `features.md` rows — every other Minor stayed parked.
+
+**Verification.** 2,311 unit tests + 27 harness tests passing, 1 harness test skipped by design (`ConsentRevocation_CancelsActiveStream_WithinOneSecond`) — the count after the final fix wave, unchanged by the docs-only cleanup commit. Baseline before Task 1 was 2,258 unit tests; the plan's own pre-execution estimate of "+30" undercounted the C1-C3 tests, and the real total came to +40 through Task 4, then +13 more from the fix wave.
+
+**What's still owed.** The plan's own Task 4 Step 6 — running the 17-scenario harness live against a real RoRoRo build — is owner-launched and was not run during this SDD cycle; the new grouping scenario has therefore not yet been proven to go red. Also owed: a by-eye look at a real Windows desktop toast for a group of four or more accounts, because no automated test can see how far Windows' own balloon-as-toast rendering clips beyond the 63/255 character envelope. The 626 Labs dashboard decision log (`mcp__626labs-cloud__manage_decisions log`) is a separate controller step from this file and has been handled outside this ledger.
+
+**Known costs recorded in `docs/decisions.md`** (2026-09-15 entry): every metric alert lands up to 5 seconds later than before; a plugin read spread over more than 5 seconds produces two alerts instead of one; the shared 992-character remote body shows "and N more" earlier than Discord's or ntfy's own limits would force (at roughly 28 dropped-out accounts, or 16 Rate lines); the desktop toast names far fewer accounts still (about 3 Rate lines) and Windows' own rendering may clip further than that, unseen by any automated test; two groups for the same metric under different rules can both alert for one account if they close within milliseconds of each other, because the dispatcher stamps its cooldown after sending rather than before; and `WebhookCatcherTests.AcceptLoop_ABadRequestThatFailsMidRead_CostsOnlyThatOneRequest` failed once under full-suite load this cycle and passed 5 of 5 alone — a pre-existing load flake, not caused by this branch, left for the backlog.
+
+### Nice-to-haves — every Minor found, kept durably
+
+Every "Minor" any review raised, plus the pre-flight NOTE rows that pointed at a real, still-checkable gap (not a closed "accept as designed" note), de-duplicated across sources. Checked against the tree at `c3e0683` on 2026-09-15.
+
+**Counts:** 38 OPEN, 8 FIXED, 2 GONE (48 total).
+
+**By source — open / fixed / gone:** Task 1 review 1/0/1 · Task 2 review 8/0/0 · Task 3 review 6/2/0 · Task 4 review 2/0/0 · Task 5 review 0/2/1 · Final whole-branch review 9/3/0 · Final scoped re-review 5/1/0 · Pre-flight-only 7/0/0.
+
+**Task 1 review**
+
+- MA-1.1 **GONE** — two doc comments named the grouping class ("MetricBreachBatcher") a task before it existed — self-resolved once Task 3 landed a class with that exact name — `src/ROROROblox.Core/Discord/AlertTrigger.cs`, `src/ROROROblox.Core/Metrics/MetricAlertCoordinator.cs` — task-1-review.md
+- MA-1.2 **OPEN** — the code path that avoids cutting an emoji in half when a label is shortened has no test exercising it — `src/ROROROblox.App/Metrics/LocalFileMetricRuleSource.cs:210` — task-1-review.md
+
+**Task 2 review**
+
+- MA-2.1 **OPEN** — one shared length limit for Discord and ntfy means a big group of accounts shows "and N more" sooner than either service actually requires; accepted for v1.29 (the owner's clan is 8 accounts) and written into the decision log as a known cost — `src/ROROROblox.Core/Discord/WebhookPayload.cs:34` — task-2-review.md
+- MA-2.2 **OPEN** — the code comment explaining why the limit is 992 characters describes Pushover's own trimming a little inaccurately — `src/ROROROblox.Core/Discord/WebhookPayload.cs:25-27` — task-2-review.md
+- MA-2.3 **OPEN** — the memory-warning and recycled-space lines still print numbers in whatever language the PC is set to, while the new metric lines always print in English-style numbers — pre-existing, not new — `src/ROROROblox.Core/Discord/WebhookPayload.cs` (MemoryWarning/Recycled lines) — task-2-review.md
+- MA-2.4 **OPEN** — a Rate alert's time window (e.g. "10 min") rounds to two decimal places instead of printing exactly what the rule says, unlike the threshold next to it — `src/ROROROblox.Core/Discord/WebhookPayload.cs:134` — task-2-review.md
+- MA-2.5 **OPEN** — the test that checks numbers print in English style on a German PC only checks the message body, not the title — `src/ROROROblox.Tests/Discord/WebhookPayloadTests.cs:183-198` — task-2-review.md
+- MA-2.6 **OPEN** — the 200-account test only checks "at least one account shown," not "as many accounts shown as actually fit" — `src/ROROROblox.Tests/Discord/WebhookPayloadTests.cs:243` — task-2-review.md
+- MA-2.7 **OPEN** — the test proving ntfy's message never gets too big uses only plain English names, never names with emoji or non-English characters, which take more space — `src/ROROROblox.Tests/Discord/WebhookPayloadTests.cs:227-228` — task-2-review.md
+- MA-2.8 **OPEN** — the safeguards against cutting an emoji in half in the phone title and in the general cutting logic have no test proving they work — `src/ROROROblox.App/Notify/PushoverSender.cs`, `src/ROROROblox.Core/Discord/WebhookPayload.cs:219` — task-2-review.md
+
+**Task 3 review**
+
+- MA-3.1 **OPEN** — nothing proves that two different rules on the same stat share one "already alerted, wait" timer the way the design intends — `src/ROROROblox.Tests/Metrics/MetricRoutingTests.cs` — task-3-review.md
+- MA-3.2 **OPEN** (accepted, written into the decision log) — two alerts for the same account and stat that finish within milliseconds of each other can both go out, because the "already alerted" flag is set after sending, not before — `src/ROROROblox.App/Discord/AlertDispatcher.cs:53-57` — task-3-review.md
+- MA-3.3 **FIXED** (Task 4, `9318c4b`) — a code comment in the smoke-test tool still said alerts fire from a different kind of background thread than they actually do — `tools/MetricSmoke/Program.cs:419` — task-3-review.md
+- MA-3.4 **FIXED** (Task 4, `9318c4b`) — a code comment referenced a smoke-test safeguard that didn't exist yet at the time; Task 4 built it — `src/ROROROblox.Core/Metrics/MetricBreachBatcher.cs:48-50` — task-3-review.md
+- MA-3.5 **OPEN** — in the extremely unlikely case the timer system itself fails to start a timer, that one group of accounts would silently never get its alert for the rest of the session — `src/ROROROblox.Core/Metrics/MetricBreachBatcher.cs:79-81` — task-3-review.md
+- MA-3.6 **OPEN** — no test deliberately runs "a new breach arrives" at the exact same instant as "a group's timer goes off," the trickiest timing case in this feature — `src/ROROROblox.Tests/Metrics/MetricBreachBatcherTests.cs:107` — task-3-review.md
+- MA-3.7 **OPEN** — a group's whole alert-sending work runs "tagged" as if it belonged to whichever account happened to trigger the group first, which is cosmetic but slightly wrong bookkeeping — `src/ROROROblox.Core/Metrics/MetricBreachBatcher.cs:81` — task-3-review.md
+- MA-3.8 **OPEN** — the plugin-facing "an alert was raised" event's description doesn't say the sender changed from the plugin adapter to the new grouping class (the grouping class's own event description does say so) — `src/ROROROblox.App/Plugins/Adapters/MetricReportSinkAdapter.cs` (`AlertsRaised`) — task-3-review.md
+
+**Task 4 review**
+
+- MA-4.1 **OPEN** — the smoke tool's number-reading helper has no path for numbers with commas (like "1,000"), a pre-existing gap the new test didn't need but a future one might trip over — `tools/MetricSmoke/Scenarios.cs` (`TryParseObserved`) — task-4-review.md
+- MA-4.2 **OPEN** (cosmetic) — one corrected code comment now reads as one long, dense sentence — `tools/MetricSmoke/Program.cs:419-422` — task-4-review.md
+
+**Task 5 review**
+
+- MA-5.1 **FIXED** (final fix wave, `ab0b35e`) — the Metric-alerts feature-doc row's opening sentence, read alone, implied the cooldown works identically to every other alert; the exception is now stated in that same opening clause — `docs/features.md:144` — task-5-review.md
+- MA-5.2 **FIXED** (final fix wave, `ab0b35e`) — the general Alerts feature-doc row didn't mention the new "cap the account list, then say how many more" behaviour that applies to every alert kind, not only metric alerts — `docs/features.md:114` — task-5-review.md
+- MA-5.3 **GONE** — the implementer's own written report cited the wrong line numbers for a doc fix; the fix itself, checked directly, was always at the right lines — `docs/plugins/AUTHOR_GUIDE.md:439-442` — task-5-review.md
+
+**Final whole-branch review**
+
+- MA-FR.1 **FIXED** (final fix wave, `a02fa24`) — an in-progress group of alerts could still be sent out during app shutdown instead of being dropped, because the cleanup ran too late in the shutdown sequence — `src/ROROROblox.App/App.xaml.cs`, `src/ROROROblox.App/Plugins/Adapters/MetricReportSinkAdapter.cs` — final-review.md
+- MA-FR.2 **OPEN** — showing a desktop toast still blocks a background timer thread on the main UI thread instead of a non-blocking hand-off; pre-existing, not introduced by this work — `src/ROROROblox.App/Tray/TrayService.cs:339` — final-review.md
+- MA-FR.3 **OPEN** — whether an alert is allowed to send at all, and whether a streamer's real name is hidden, are decided when the report first comes in, up to 5 seconds before the alert actually goes out; turning either setting off inside that 5-second window doesn't stop that one alert — `src/ROROROblox.App/Plugins/Adapters/MetricReportSinkAdapter.cs` — final-review.md
+- MA-FR.4 **OPEN** — label clean-up strips ordinary control characters but not some invisible Unicode formatting characters (line separators, right-to-left override characters), which could still visually break a title — `src/ROROROblox.App/Metrics/LocalFileMetricRuleSource.cs:203` — final-review.md
+- MA-FR.5 **OPEN** — when a rule has no label, the raw metric id (which can come from a plugin) goes straight into the title with none of the same clean-up a label gets — `src/ROROROblox.Core/Discord/WebhookPayload.cs` (title-building) — final-review.md
+- MA-FR.6 **OPEN** — a label or metric id could still use Discord formatting tricks (bold, links) to make an alert look different than intended in the shared clan channel; pinging is blocked, formatting tricks are not — `src/ROROROblox.App/Discord/DiscordWebhookSender.cs` — final-review.md
+- MA-FR.7 **OPEN** — the new English alert phrases and the new toast-specific length limit aren't yet listed in the future translation-work backlog item that already exists for alert text — `docs/store/localization-plan.md:131` — final-review.md
+- MA-FR.8 **FIXED** (final fix wave, `a02fa24`/`ab0b35e`) — the decision log linked to a working file that lives outside the repo and will be deleted — `docs/decisions.md:501` — final-review.md
+- MA-FR.9 **FIXED** (final fix wave, `ab0b35e`) — the decision log said routing and dispatching were "untouched," which its own next sentence contradicted — `docs/decisions.md:500` — final-review.md
+- MA-FR.10 **OPEN** — this plan file itself still has two old planning notes (numbers 13 and 15) and a decision-log template that describe the cooldown and Discord limit the OLD way, before the controller's rulings changed them, with nothing marking them as superseded — `docs/superpowers/plans/2026-09-15-metric-alert-wording.md` (rulings 13, 15; Task 5 Step 2 template) — final-review.md
+- MA-FR.11 **OPEN** — a smoke-test row's own description still says "three breaches," but the grouping change means the test now only truly exercises the "already alerted, wait" behaviour once, not the twice the description claims — `tools/MetricSmoke/Scenarios.cs:894` — final-review.md
+- MA-FR.12 **OPEN** — the new "several accounts, one alert" smoke-test row only checks the desktop notification, never checking that the personal and clan Discord webhooks also got exactly one post each — `tools/MetricSmoke/Scenarios.cs:921` — final-review.md
+
+**Final scoped re-review**
+
+- MA-RR.1 **OPEN** — no test proves the emoji-safety cutting logic still works correctly now that the desktop toast's title limit is so much shorter (63 characters instead of 250) — `src/ROROROblox.Tests/Discord/WebhookPayloadTests.cs` — final-rereview.md
+- MA-RR.2 **OPEN** — when a title gets cut short, it can leave an awkward trailing dash or space right before the "…", e.g. "Name —… went above 0" — `src/ROROROblox.Core/Discord/WebhookPayload.cs:168-178` — final-rereview.md
+- MA-RR.3 **OPEN** (cosmetic) — the general Alerts doc row still doesn't mention one rare title-cutting fallback, and the Metric-alerts doc row now mentions the same cooldown fact twice — `docs/features.md:114,144` — final-rereview.md
+- MA-RR.4 **FIXED** (`c3e0683`) — the decision log's evidence list named one test file twice and its list of commits stopped partway through, missing the fix-wave commits — `docs/decisions.md:501` — final-rereview.md
+- MA-RR.5 **OPEN** — the automated check that proves shutdown cleans up in the right order reads to the end of the file instead of stopping at the end of the specific method, and its final check has no explanation message if it ever fails — `src/ROROROblox.Tests/Metrics/MetricReportSinkAdapterTests.cs:292-306` — final-rereview.md
+- MA-RR.6 **OPEN** — the smoke-test tool's own notes don't mention that the desktop toast's title is now capped at 63 characters, which could someday cause a confusing false alarm from the test tool — `tools/MetricSmoke/Scenarios.cs:149-150` — final-rereview.md
+
+**Pre-flight-only findings** (real gaps the pre-flight scan raised that no later review picked back up)
+
+- MA-PF.1 **OPEN** — a metric rule can fire on a broken (NaN/Infinity) reading, and nothing rejects a broken number before it reaches an alert, which would print "now NaN" — `src/ROROROblox.Core/Metrics/MetricEvaluator.cs`, `src/ROROROblox.App/Plugins/Adapters/MetricReportSinkAdapter.cs` — preflight.md 3.4/5.10
+- MA-PF.2 **OPEN** — no test proves that a rule with a badly-typed label (e.g. a number instead of text) is dropped cleanly, the way a badly-typed threshold already is — `src/ROROROblox.Tests/Metrics/LocalFileMetricRuleSourceTests.cs` — preflight.md 3.26
+- MA-PF.3 **OPEN** — editing a rule's label while a group of alerts is still gathering can split that group into two smaller alerts instead of one; flagged for a one-line mention in the decision log, never added — `src/ROROROblox.App/Metrics/LocalFileMetricRuleSource.cs`, `docs/decisions.md` — preflight.md 3.27
+- MA-PF.4 **OPEN** — the smoke-test tool doesn't recognise the grouping class's own "dropped on exit" log line as a failure, so that specific failure mode is invisible to the test tool — `tools/MetricSmoke/LogTail.cs` — preflight.md 3.38/5.9
+- MA-PF.5 **OPEN** — the tests proving the new per-metric cooldown work were never deliberately run against the OLD cooldown code first to confirm they would have caught the bug; they passed the first time they were run — preflight.md 5.2
+- MA-PF.6 **OPEN** (optional) — no test proves the toast's account count updates correctly ("2 accounts") after someone in a group of three drops out from being on cooldown; only the underlying routing decision is tested, not the toast wording — preflight.md 6.5
+- MA-PF.7 **OPEN** (optional) — no automated check proves the four older alert kinds still skip the new grouping step entirely, the way the design intends "by construction" — preflight.md 6.6
