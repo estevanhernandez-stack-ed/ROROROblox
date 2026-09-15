@@ -125,7 +125,9 @@ public sealed class MetricReportSinkAdapter(
         }
     }
 
-    /// <summary>Stops the grouping timers and drops any group still inside its window. Called by the
-    /// container on exit, after the plugin host has stopped.</summary>
+    /// <summary>Stops the grouping timers and drops any group still inside its window. Called from
+    /// <c>App.OnExit</c> right after the plugin host stops, then again (a no-op) by the container
+    /// (corrected 2026-09-15: until then only the container called it, at the very end of exit).
+    /// A report after this raises nothing.</summary>
     public void Dispose() => _batcher.Dispose();
 }

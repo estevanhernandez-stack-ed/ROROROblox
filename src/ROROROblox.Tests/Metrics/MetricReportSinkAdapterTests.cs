@@ -255,4 +255,55 @@ public class MetricReportSinkAdapterTests
 
         Assert.Empty(raised);
     }
+
+    [Fact]
+    public void AReportAfterTheSinkIsDisposed_RaisesNothing_AndASecondDisposeIsHarmless()
+    {
+        // App.OnExit disposes the sink right after the plugin host stops, and the container disposes
+        // it again at the very end (2026-09-15). A handler still draining when the host's 2 s stop
+        // gives up can report into a disposed sink; that must neither throw nor open a new group.
+        var (sut, clock, raised) = New(rules: new FixedRules(new MetricRule(M, MetricRuleKind.Level, 500, TimeSpan.Zero)));
+
+        sut.Dispose();
+        sut.Report(Acct.ToString(), M, 400, Ms(clock.GetUtcNow()));
+        clock.Advance(MetricBreachBatcher.Window);
+        sut.Dispose();
+
+        Assert.Empty(raised);
+    }
+}
+
+/// <summary>
+/// App.OnExit is not constructible in a test (it is a WPF <c>Application</c> override), so this
+/// fence reads the source the way the repo's other composition fences do. It pins the ordering that
+/// makes "pending groups are dropped on exit" true: the metric sink is disposed right after the
+/// plugin host stops (nothing new can arrive) and before the rest of the teardown, rather than only
+/// by the container's DisposeAsync at the very end, when a group opened in the last five seconds
+/// could still send while the tray and HTTP clients were going away (final review, 2026-09-15).
+/// </summary>
+public class MetricSinkExitOrderFenceTests
+{
+    [Fact]
+    public void OnExit_DisposesTheMetricSink_RightAfterThePluginHostStops()
+    {
+        var root = XamlStyleScanner.FindRepoRoot();
+        Assert.False(root is null, "Could not locate the repo root from the test bin directory.");
+        var source = File.ReadAllText(Path.Combine(root!, "src", "ROROROblox.App", "App.xaml.cs"));
+
+        var onExit = source.IndexOf("protected override void OnExit(", StringComparison.Ordinal);
+        Assert.True(onExit >= 0, "OnExit is gone from App.xaml.cs — update this fence with its new home.");
+        var body = source[onExit..];
+
+        var hostStop = body.IndexOf("pluginHost.StopAsync(", StringComparison.Ordinal);
+        var sinkDispose = body.IndexOf("IMetricReportSink>() as IDisposable)?.Dispose()", StringComparison.Ordinal);
+        var presenceStop = body.IndexOf("presence?.Stop()", StringComparison.Ordinal);
+        var containerDispose = body.IndexOf("_services.DisposeAsync()", StringComparison.Ordinal);
+
+        Assert.True(hostStop >= 0, "The plugin host stop is gone from OnExit.");
+        Assert.True(sinkDispose >= 0, "OnExit no longer disposes the metric sink explicitly.");
+        Assert.True(presenceStop >= 0 && containerDispose >= 0, "OnExit's later teardown steps moved; re-anchor this fence.");
+        Assert.True(hostStop < sinkDispose, "The metric sink must be disposed AFTER the plugin host stops.");
+        Assert.True(sinkDispose < presenceStop, "The metric sink must be disposed right after the plugin host, before the rest of the teardown.");
+        Assert.True(sinkDispose < containerDispose);
+    }
 }

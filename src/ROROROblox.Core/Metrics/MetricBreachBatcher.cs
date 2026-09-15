@@ -34,10 +34,13 @@ namespace ROROROblox.Core.Metrics;
 /// exception leaving a timer callback terminates the process.
 /// </para>
 /// <para>
-/// <b>Exit.</b> <see cref="Dispose"/> drops what is still pending rather than flushing it. By then
-/// the plugin host has been stopped and the container is disposing the tray and the HTTP clients a
-/// flush would reach; the user is at the PC, quitting; and a condition that still holds breaches
-/// again on the plugin's next read in the next session.
+/// <b>Exit.</b> <see cref="Dispose"/> drops what is still pending rather than flushing it. It runs
+/// from <c>App.OnExit</c> right after the plugin host stops (corrected 2026-09-15: until then only the
+/// container's dispose at the very end of exit reached it, so a group could still send mid-teardown),
+/// before the rest of exit tears down the tray and the HTTP clients a flush would reach; the user is
+/// at the PC, quitting; and a condition that still holds breaches again on the plugin's next read in
+/// the next session. A group whose window had already closed is already dispatching and is not
+/// recalled.
 /// </para>
 /// </summary>
 /// <param name="log">The owning sink's logger. Not resolved from DI.</param>

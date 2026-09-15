@@ -2804,6 +2804,24 @@ public partial class App : Application
                 _log?.LogDebug(ex, "PluginHostStartupService.StopAsync threw on exit; ignoring.");
             }
 
+            // Close the metric grouping window right after the plugin host stops (2026-09-15).
+            // The sink holds breaches for five seconds before raising them to the alert dispatcher;
+            // until this call it was disposed only by the container at the very end of OnExit, so a
+            // group opened just before quit could still toast or POST while the tray and the HTTP
+            // clients were being torn down. Disposing here drops what is pending (see
+            // MetricBreachBatcher's Exit paragraph), and a report from a handler still draining
+            // after a timed-out host stop opens no new group. A group whose window had ALREADY
+            // closed is already dispatching and is not recalled. The container's dispose below is
+            // then a harmless second call. MetricSinkExitOrderFenceTests pins this ordering.
+            try
+            {
+                (_services.GetService<ROROROblox.App.Plugins.IMetricReportSink>() as IDisposable)?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "MetricReportSinkAdapter.Dispose threw on exit; ignoring.");
+            }
+
             // Stop the presence poll loop before the provider disposes (mirrors the process
             // tracker / plugin-host shutdown shape). _services.Dispose() also disposes it
             // (PresenceService : IDisposable), but stopping first halts the timer cleanly.
