@@ -65,36 +65,37 @@ Las alertas se reparten: escritorio, canales de Discord y móvil en cualquier co
 Disponible en seis idiomas — toda la app, pantallas y mensajes, en francés, alemán, ruso, portugués (Brasil), polaco o español, cambio inmediato, según Windows o tu elección
 ```
 
-## What's new in this version (v1.28.0.0, ≤1500 chars)
+## What's new in this version (v1.29.0.0, ≤1500 chars)
 
 ```
-v1.28.0.0
+v1.29.0.0
 
-Las alertas pueden vigilar un número
-• Configuración > Alertas tiene un interruptor Alertas de
-  métricas. Actívalo y RoRoRo te avisa cuando un número cruza
-  un límite que tú fijas — como aviso de escritorio, en tu
-  canal de Discord, en el de tu clan o en tu teléfono, por la
-  misma ruta que todas las demás alertas.
-• RoRoRo no recoge el número por su cuenta. Lo informa un
-  plugin que instalas, y tú decides al instalarlo si lo
-  permites.
+Las alertas de métricas dicen qué ha pasado
+• Una alerta se leía "ps99.diamonds at 2974993". Ahora se lee
+  "Diamonds went above 0" y debajo "now 2,974,993": el nombre
+  que le diste a la regla, lo que le pediste que vigilara, y
+  números que se leen de un vistazo.
+• Una regla sin nombre sigue volviendo al identificador de la
+  métrica, como antes.
+• RoRoRo sigue sin recoger ningún número. Lo informa un plugin
+  que instalas, y nada en este paquete lo hace.
+• La frase de la alerta está en inglés en todos los idiomas de
+  momento.
 
-Configurar el teléfono ahora es una foto
-• Conectar ntfy obligaba a escribir un tema de 33 caracteres en
-  el teclado del móvil. Apunta la cámara al código.
-• El código desaparece mientras el modo streamer está activo.
-  Es la credencial, y se lee de un fotograma detenido mucho más
-  fácil que el texto.
+Una lectura, una alerta
+• Un plugin que informa un número de ocho cuentas a la vez
+  enviaba ocho alertas a cada destino. Ahora es una:
+  "8 accounts — Diamonds went above 0", una línea por cuenta.
+• Dos números distintos que cruzan su límite en la misma
+  cuenta y en la misma lectura ahora llegan los dos.
 
-La configuración ya no pierde lo que escribes
-• Enter guarda. Cada campo de la página de alertas conservaba
-  lo escrito hasta que hacías clic en otro sitio.
-• Los webhooks y las claves de teléfono guardados tienen un
-  botón Quitar.
-• Activar el modo streamer ahora oculta un webhook o una clave
-  a la vista, y pregunta antes de mostrar uno mientras está
-  activo.
+Una alerta no puede mencionar un canal, y una larga llega
+igual
+• Los mensajes de Discord salen con las menciones desactivadas:
+  nada dentro de una alerta hace ping en el canal donde cae.
+• Una lista larga de cuentas se recorta para caber y termina en
+  "and 12 more", en lugar de fallar por longitud. Para
+  cualquier tipo de alerta.
 ```
 
 ## Copyright (single line)

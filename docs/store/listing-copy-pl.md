@@ -64,34 +64,36 @@ Alerty wachlarzem — pulpit, kanały Discord i telefon w dowolnej kombinacji, n
 Sześć języków — cała aplikacja, ekrany i komunikaty: francuski, niemiecki, rosyjski, portugalski (brazylijski), polski, hiszpański. Natychmiastowa zmiana, wg Windows lub twojego wyboru
 ```
 
-## What's new in this version (v1.28.0.0, ≤1500 chars)
+## What's new in this version (v1.29.0.0, ≤1500 chars)
 
 ```
-v1.28.0.0
+v1.29.0.0
 
-Alerty mogą pilnować liczby
-• Ustawienia > Alerty mają przełącznik Alerty o wskaźnikach.
-  Włącz go, a RoRoRo powie ci, gdy liczba przekroczy próg,
-  który ustawisz — powiadomieniem na pulpicie, na twoim kanale
-  Discord, na kanale klanu albo na telefonie, tą samą drogą co
-  każdy inny alert.
-• RoRoRo sam tej liczby nie zbiera. Zgłasza ją plugin, który
-  instalujesz, a ty decydujesz przy instalacji, czy na to
-  pozwolić.
+Alerty o wskaźnikach mówią, co się stało
+• Alert wyglądał tak: „ps99.diamonds at 2974993". Teraz czytasz
+  „Diamonds went above 0", a pod spodem „now 2,974,993" —
+  nazwę, którą nadałeś regule, to, czego kazałeś pilnować, i
+  liczby czytelne na pierwszy rzut oka.
+• Reguła bez nazwy nadal wraca do identyfikatora wskaźnika,
+  tak jak dotąd.
+• RoRoRo nadal sam nie zbiera żadnej liczby. Zgłasza ją plugin,
+  który instalujesz, a w tej paczce takiego nie ma.
+• Samo zdanie alertu jest na razie po angielsku we wszystkich
+  językach.
 
-Konfiguracja telefonu to teraz zdjęcie
-• Podłączenie ntfy wymagało wpisania 33-znakowego tematu na
-  klawiaturze telefonu. Wyceluj w kod aparatem.
-• Kod znika, gdy tryb streamera jest włączony. To są dane
-  dostępowe, a z zatrzymanej klatki czyta się je o wiele
-  łatwiej niż tekst.
+Jeden odczyt to jeden alert
+• Plugin zgłaszający liczbę dla ośmiu kont naraz wysyłał osiem
+  alertów na każdy adres. Teraz jest jeden: „8 accounts —
+  Diamonds went above 0", po jednej linii na konto.
+• Dwie różne liczby przekraczające próg na tym samym koncie w
+  jednym odczycie docierają teraz obie.
 
-Ustawienia nie gubią już tego, co wpiszesz
-• Enter zapisuje. Każde pole na stronie alertów trzymało twój
-  tekst, dopóki nie kliknąłeś gdzie indziej.
-• Zapisane webhooki i klucze telefonu mają przycisk Usuń.
-• Włączenie trybu streamera ukrywa teraz pokazany webhook lub
-  klucz i pyta, zanim pokaże któryś, gdy tryb jest włączony.
+Alert nie oznaczy kanału, a długi i tak dojdzie
+• Posty na Discordzie wychodzą z wyłączonymi wzmiankami: nic
+  wewnątrz alertu nie pinguje kanału, na który trafia.
+• Długa lista kont jest przycinana, żeby się zmieściła, i
+  kończy się „and 12 more", zamiast nie dojść przez długość.
+  Dotyczy każdego rodzaju alertu.
 ```
 
 ## Copyright (single line)

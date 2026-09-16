@@ -65,36 +65,39 @@ Les alertes se diffusent — bureau, salons Discord et téléphone, dans n'impor
 Disponible en six langues — toute l'app, écrans et messages, en français, allemand, russe, portugais (Brésil), polonais ou espagnol, changement immédiat, selon Windows ou votre choix
 ```
 
-## What's new in this version (v1.28.0.0, ≤1500 chars)
+## What's new in this version (v1.29.0.0, ≤1500 chars)
 
 ```
-v1.28.0.0
+v1.29.0.0
 
-Les alertes peuvent surveiller un nombre
-• Paramètres > Alertes contient un interrupteur Alertes
-  métriques. Activez-le et RoRoRo vous prévient quand un nombre
-  franchit un seuil que vous fixez — notification du bureau,
-  votre salon Discord, celui de votre clan, ou votre téléphone,
-  par le même routage que toutes les autres alertes.
-• RoRoRo ne collecte pas ce nombre lui-même. Un plugin que vous
-  installez le rapporte, et vous décidez de l'autoriser ou non
-  au moment de l'installation.
+Les alertes métriques disent ce qui s'est passé
+• Une alerte affichait « ps99.diamonds at 2974993 ». Elle
+  affiche maintenant « Diamonds went above 0 » puis « now
+  2,974,993 » — le nom que vous avez donné à la règle, ce que
+  vous lui demandez de guetter, et des nombres lisibles.
+• Une règle sans nom revient à l'identifiant de la métrique,
+  comme avant.
+• RoRoRo ne collecte toujours aucun nombre. Un plugin que vous
+  installez le rapporte, et rien dans ce paquet ne le fait.
+• La phrase de l'alerte reste en anglais dans toutes les
+  langues pour l'instant.
 
-La configuration du téléphone se fait en photo
-• Connecter ntfy demandait de taper un sujet de 33 caractères
-  au clavier du téléphone. Visez le code avec l'appareil photo.
-• Le code disparaît quand le mode streamer est actif. C'est
-  l'identifiant, et il se lit bien plus vite sur une image
-  figée que le texte.
+Une lecture, une alerte
+• Un plugin qui rapporte un nombre pour huit comptes d'un coup
+  envoyait huit alertes à chaque destination. C'est désormais
+  une seule : « 8 accounts — Diamonds went above 0 », une
+  ligne par compte.
+• Deux nombres différents qui franchissent leur seuil sur le
+  même compte dans la même lecture vous parviennent tous deux.
 
-Les paramètres ne perdent plus vos saisies
-• Entrée enregistre. Chaque champ de la page Alertes gardait
-  votre texte jusqu'à ce que vous cliquiez ailleurs.
-• Les webhooks et les clés de téléphone enregistrés ont un
-  bouton Retirer.
-• Activer le mode streamer masque désormais un webhook ou une
-  clé affichés, et demande confirmation avant d'en afficher un
-  quand il est actif.
+Une alerte ne peut plus notifier un salon, et une longue passe
+quand même
+• Les messages Discord partent avec les mentions désactivées :
+  rien dans une alerte ne peut notifier le salon où elle
+  arrive.
+• Une longue liste de comptes est raccourcie pour tenir et se
+  termine par « and 12 more » au lieu d'échouer. Pour tous les
+  types d'alerte.
 ```
 
 ## Copyright (single line)
