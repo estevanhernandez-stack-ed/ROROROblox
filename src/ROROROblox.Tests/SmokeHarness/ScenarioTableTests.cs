@@ -31,7 +31,7 @@ public class ScenarioTableTests
     /// smoke list, and it belongs in the same commit as a decision about whether the new row is
     /// covered — which is the whole reason it is asserted as equality rather than as a floor.
     /// </summary>
-    private const int RowsOnTheSmokeList = 21;
+    private const int RowsOnTheSmokeList = 22;
 
     private const string HarnessMarker = "`[harness]`";
 
@@ -111,10 +111,10 @@ public class ScenarioTableTests
     [Fact]
     public void TheMarkedRowCountMatchesTheRowsTheTableCovers()
     {
-        // The count check the brief asks for, stated over DISTINCT rows rather than scenarios: sixteen
-        // scenarios cover fourteen rows because two rows carry two cases each (granted-then-revoked
+        // The count check the brief asks for, stated over DISTINCT rows rather than scenarios: seventeen
+        // scenarios cover fifteen rows because two rows carry two cases each (granted-then-revoked
         // versus never-declared; live pickup versus absence). Counting scenarios here would wrongly
-        // demand a sixteenth and seventeenth marker.
+        // demand a seventeenth and eighteenth marker.
         var marked = ReadSmokeList().Count(r => r.HarnessCovered);
         var covered = ScenarioTable.All.Select(s => Normalise(s.SmokeRow)).Distinct(StringComparer.Ordinal).Count();
 
@@ -317,6 +317,7 @@ public class ScenarioTableTests
         // WebhookPayload formats {v:0.##} under the RUNNING APP's culture, and this app ships six —
         // fr, de, ru, pt-BR, pl, es — several of which write a comma. A literal "0.79" comparison would
         // fail the value row on a localised install for a formatting difference that is correct.
+        // Since 1.29 the payload formats invariant; the tolerance stays for a 1.28 build under test.
         Assert.True(ScenarioTable.TryParseObserved(token, out var value));
         Assert.Equal(0.79, value, precision: 4);
     }
@@ -331,12 +332,23 @@ public class ScenarioTableTests
         Assert.False(ScenarioTable.TryParseObserved("not-a-number", out _));
     }
 
+    [Fact]
+    public void TheGroupingWindowLeavesTheAlertWindowRoomToDeliver()
+    {
+        // Every positive row now waits out MetricBreachBatcher.Window before its first line can exist.
+        // If the grouping window grew toward the harness's alert window, positive rows would start
+        // failing for a delay that is by design — keep it to half at most.
+        Assert.True(MetricBreachBatcher.Window * 2 <= SmokeTimings.AlertWindow,
+            $"The grouping window ({MetricBreachBatcher.Window}) is more than half the harness's alert window "
+            + $"({SmokeTimings.AlertWindow}).");
+    }
+
     private static IEnumerable<string> AllMetricIds() =>
     [
         SmokeMetrics.Toast, SmokeMetrics.Accepted, SmokeMetrics.Denied, SmokeMetrics.Gate,
         SmokeMetrics.Value, SmokeMetrics.Subject, SmokeMetrics.Skew, SmokeMetrics.Reset,
         SmokeMetrics.Repeat, SmokeMetrics.Live, SmokeMetrics.Absent, SmokeMetrics.Malformed,
-        SmokeMetrics.Streamer, SmokeMetrics.Fallback,
+        SmokeMetrics.Streamer, SmokeMetrics.Fallback, SmokeMetrics.Group,
     ];
 
     /// <summary>Feeds the samples a scenario reports through the production history and evaluator, and

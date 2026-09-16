@@ -28,7 +28,7 @@ public class PhoneRoutingTests
         var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Phone };
 
         var routed = AlertRouter.Route([Dropped(Guid.NewGuid(), "A")], config,
-            new Dictionary<(Guid, AlertKind), DateTimeOffset>(), DateTimeOffset.UnixEpoch,
+            new Dictionary<AlertCooldownKey, DateTimeOffset>(), DateTimeOffset.UnixEpoch,
             phoneConfigured: true);
 
         Assert.Equal(AlertDestination.Phone, Assert.Single(routed).Destination);
@@ -43,7 +43,7 @@ public class PhoneRoutingTests
         var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Phone };
 
         var routed = AlertRouter.Route([Dropped(Guid.NewGuid(), "A")], config,
-            new Dictionary<(Guid, AlertKind), DateTimeOffset>(), DateTimeOffset.UnixEpoch,
+            new Dictionary<AlertCooldownKey, DateTimeOffset>(), DateTimeOffset.UnixEpoch,
             phoneConfigured: false);
 
         Assert.Equal(AlertDestination.Local, Assert.Single(routed).Destination);
@@ -57,7 +57,7 @@ public class PhoneRoutingTests
         var config = new DiscordConfig { DroppedOutDestination = AlertDestination.Phone };
 
         var routed = AlertRouter.Route([Dropped(Guid.NewGuid(), "A")], config,
-            new Dictionary<(Guid, AlertKind), DateTimeOffset>(), DateTimeOffset.UnixEpoch);
+            new Dictionary<AlertCooldownKey, DateTimeOffset>(), DateTimeOffset.UnixEpoch);
 
         Assert.Equal(AlertDestination.Local, Assert.Single(routed).Destination);
     }
@@ -264,6 +264,27 @@ public class PushoverTruncationTests
     {
         var cut = PushoverSender.TruncateForPushover(new string('x', 5000));
         Assert.True(cut.Length <= 1024);
+    }
+
+    [Fact]
+    public void TruncateTitleForPushover_CapsAtTheApiLimit()
+    {
+        // Pushover answers an over-limit title with the same bare 400 a bad credential gets, which
+        // latches EndpointRejected for the session. A metric id is plugin-supplied and unbounded, and
+        // a rule without a label puts it in the title.
+        var title = "8 accounts — " + new string('x', 400) + " went above 0";
+
+        var cut = PushoverSender.TruncateTitleForPushover(title);
+
+        Assert.Equal(250, cut.Length);
+        Assert.EndsWith("…", cut, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TruncateTitleForPushover_ShortTitlePassesThroughUntouched()
+    {
+        Assert.Equal("8 accounts — Diamonds went above 0",
+            PushoverSender.TruncateTitleForPushover("8 accounts — Diamonds went above 0"));
     }
 }
 

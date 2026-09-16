@@ -46,6 +46,7 @@ public static class SmokeMetrics
     public const string Malformed = "smoke.malformed";
     public const string Streamer = "smoke.streamer";
     public const string Fallback = "smoke.fallback";
+    public const string Group = "smoke.group";
 }
 
 /// <summary>
@@ -74,12 +75,16 @@ public static class SmokeTimings
     /// </para>
     /// <para>
     /// <b>Why not the whole cooldown.</b> The cooldown does not DELAY a delivery, it suppresses one.
-    /// Nothing on the report path waits: <c>ReportMetric</c> is a synchronous pass-through, the sink
-    /// raises on the gRPC thread, and <c>App</c> wires that straight into
+    /// <c>ReportMetric</c> is a synchronous pass-through, and through 1.28 nothing past it waited
+    /// either: the sink raised on the gRPC thread, and <c>App</c> wired that straight into
     /// <c>AlertDispatcher.DispatchAsync</c> fire-and-forget, whose first act is the log line this
-    /// harness reads. The physical latency is a localhost POST. So waiting out five whole minutes buys
-    /// nothing a tenth of it does not, five times over, on five negative rows — and a harness that
-    /// takes half an hour is one nobody runs twice, which is the same as not having it.
+    /// harness reads. The physical latency was a localhost POST. (Corrected 2026-09-15: one thing on
+    /// the path does wait now — <c>MetricBreachBatcher</c> holds a breach for its grouping window,
+    /// five seconds, so one read's accounts become one alert, raised on a thread-pool timer thread
+    /// rather than the gRPC thread. <c>ScenarioTableTests</c> keeps that window within half of this
+    /// one.) So waiting out five whole minutes buys nothing a tenth of it does not, five times over, on
+    /// five negative rows — and a harness that takes half an hour is one nobody runs twice, which is
+    /// the same as not having it.
     /// </para>
     /// </summary>
     public static readonly TimeSpan AlertWindow = AlertRouter.Cooldown / 10;
@@ -141,6 +146,8 @@ public sealed record MetricRuleRow(
 /// <see cref="SmokeMetrics.Live"/> is deliberately absent too — the live-pickup row's whole subject is
 /// a rule that was not there when the app started.
 /// </para>
+/// <para>No row carries a <c>label</c>, deliberately: <see cref="LogWatch.DeliveredFor"/> attributes an
+/// alert by finding the metric id in its title, and a label replaces the id there.</para>
 /// </summary>
 public static class SmokeRules
 {
@@ -178,6 +185,7 @@ public static class SmokeRules
         Level(SmokeMetrics.Malformed),
         Level(SmokeMetrics.Streamer),
         Level(SmokeMetrics.Fallback),
+        Level(SmokeMetrics.Group),
     ];
 
     /// <summary><see cref="Canonical"/> plus the rule the live-pickup row adds while the app runs.</summary>
@@ -411,7 +419,8 @@ public sealed class ScenarioContext
 
     /// <summary>
     /// A new subject id for every scenario, and this is a correctness requirement rather than hygiene.
-    /// The cooldown is keyed by (account, kind): one shared subject would mean the first delivered
+    /// The cooldown key for a metric breach is (account, metric id) (corrected 2026-09-15 — every other
+    /// alert kind still keys on (account, kind)): one shared subject would mean the first delivered
     /// breach suppressed every later scenario's for five minutes, turning eight rows green for the
     /// wrong reason and red for the rest. A fresh Guid gives each scenario its own cooldown slot and
     /// its own sample series.
@@ -484,7 +493,7 @@ public sealed class ScenarioContext
 }
 
 /// <summary>
-/// The sixteen scenarios, in run order.
+/// The seventeen scenarios, in run order.
 /// <para>
 /// <b>Order is not arbitrary.</b> The pipe probe runs first because everything after it is meaningless
 /// if the host is not answering. The opt-in row runs LAST because it is the only one that needs the
@@ -492,7 +501,7 @@ public sealed class ScenarioContext
 /// gate off at the end costs nothing, since the guard restores the user's value regardless.
 /// </para>
 /// <para>
-/// <b>Sixteen scenarios, fourteen rows.</b> Two rows carry two cases each — granted-then-revoked
+/// <b>Seventeen scenarios, fifteen rows.</b> Two rows carry two cases each — granted-then-revoked
 /// versus never-declared, and live pickup versus absence — and each case is its own scenario because
 /// each is its own path through the code. <c>ScenarioTableTests</c> checks the mapping in both
 /// directions rather than the count alone, so neither a new scenario naming nothing nor a marked row
@@ -538,6 +547,9 @@ public static class ScenarioTable
         new("repeated-breaches-one-toast",
             "Repeated breaches do not become repeated toasts.",
             RepeatedBreachesAsync),
+        new("several-accounts-one-alert",
+            "Breaches from several accounts in one read become one alert.",
+            SeveralAccountsOneAlertAsync),
         new("rules-picked-up-live",
             "The rules file is picked up live, and its absence is inert.",
             RulesPickedUpLiveAsync),
@@ -735,28 +747,29 @@ public static class ScenarioTable
                 + $"{ctx.Catcher.RequestFaults.Count} request fault(s) recorded).");
         }
 
-        var rendered = Regex.Match(body, Regex.Escape(SmokeMetrics.Value) + @" at (?<v>[^\\""]+)");
+        // Since 1.29 the line reads "• <account> — now <value>" and the metric id is in the title only
+        // (the harness's rules carry no label, so the title still names it). The em dash arrives
+        // JSON-escaped in the raw body, so the anchor is the word "now"; the value must start with a
+        // digit, so a name that merely contains "now" cannot match.
+        var rendered = Regex.Match(body, @"\bnow (?<v>-?[0-9][^\\""]*)");
         if (!rendered.Success)
         {
             return ScenarioOutcome.Fail(
-                $"the body naming {SmokeMetrics.Value} carries no 'at <value>' reading at all.");
+                $"the body naming {SmokeMetrics.Value} carries no 'now <value>' reading at all.");
         }
 
-        // Parsed, not string-compared against "0.79". WebhookPayload formats with {v:0.##} under the
-        // running app's CURRENT culture, and this app ships six — fr, de, ru, pt-BR, pl, es — several of
-        // which write "0,79". A literal comparison would fail this row on a localised install for a
-        // formatting difference that is correct, which is the opposite of what the row is about. The bug
-        // it IS about (the value riding a long? and rendering "at 0") still fails: 0 does not parse to
-        // 0.79 in any culture.
+        // Parsed, not string-compared against "0.79": a 1.28 build formats under the running app's
+        // culture ("0,79" in several shipped languages), and 1.29 formats invariant. The bug this row
+        // is about (the value riding a long? and rendering 0) still fails: 0 does not parse to 0.79.
         var token = rendered.Groups["v"].Value.Trim();
         if (!TryParseObserved(token, out var value))
         {
-            return ScenarioOutcome.Fail($"the body reads 'at {token}', which is not a number in any culture.");
+            return ScenarioOutcome.Fail($"the body reads 'now {token}', which is not a number in any culture.");
         }
 
         return Math.Abs(value - 0.79) < 0.0001
-            ? ScenarioOutcome.Pass($"the body reads 'at {token}' — the fraction survived")
-            : ScenarioOutcome.Fail($"the body reads 'at {token}', which is not 0.79.");
+            ? ScenarioOutcome.Pass($"the body reads 'now {token}' — the fraction survived")
+            : ScenarioOutcome.Fail($"the body reads 'now {token}', which is not 0.79.");
     }
 
     /// <summary>
@@ -882,6 +895,43 @@ public static class ScenarioTable
             : ScenarioOutcome.Fail(
                 $"three breaches inside the {AlertRouter.Cooldown.TotalMinutes:0}-minute cooldown produced "
                 + $"{locals} 'Alert → Local' line(s), not one.");
+    }
+
+    /// <summary>
+    /// Three accounts breaching one rule back to back — the shape of one plugin read — reach the
+    /// desktop as ONE alert covering three accounts. On 2026-09-15 eight accounts in one read became
+    /// twenty-four notifications, one per account per destination.
+    /// <para>
+    /// The whole window, no early exit: "exactly one" is half a negative, and the grouping window delays
+    /// the line by design. Fresh subjects, so no account is inside another row's cooldown.
+    /// </para>
+    /// </summary>
+    private static async Task<ScenarioOutcome> SeveralAccountsOneAlertAsync(ScenarioContext ctx)
+    {
+        var watch = ctx.WatchLog();
+
+        for (var i = 0; i < 3; i++)
+        {
+            await ctx.ReportAsync(ctx.FreshSubject(), SmokeMetrics.Group, SmokeRules.BreachingLevel)
+                .ConfigureAwait(false);
+        }
+
+        await watch.SettleAsync(SmokeTimings.AlertWindow).ConfigureAwait(false);
+
+        var locals = watch.DeliveredFor(SmokeMetrics.Group, LocalDestination);
+        return locals.Count switch
+        {
+            1 when locals[0].AccountCount == 3 =>
+                ScenarioOutcome.Pass("three breaches in one read, one 'Alert → Local' covering 3 accounts"),
+            1 => ScenarioOutcome.Fail(
+                $"one 'Alert → Local' for {SmokeMetrics.Group}, but it covers {locals[0].AccountCount} "
+                + "account(s), not 3."),
+            0 => ScenarioOutcome.Fail(
+                $"no 'Alert → Local' for {SmokeMetrics.Group} in {Describe(SmokeTimings.AlertWindow)}."),
+            _ => ScenarioOutcome.Fail(
+                $"{locals.Count} 'Alert → Local' lines for {SmokeMetrics.Group}; three breaches in one read "
+                + "should be one alert."),
+        };
     }
 
     /// <summary>

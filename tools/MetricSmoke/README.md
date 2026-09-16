@@ -1,7 +1,7 @@
 # MetricSmoke
 
-Drives 14 of the 21 rows on [`docs/superpowers/smoke-metric-alerts.md`](../../docs/superpowers/smoke-metric-alerts.md)
-— 16 scenarios, because two of those rows carry two cases each —
+Drives 15 of the 22 rows on [`docs/superpowers/smoke-metric-alerts.md`](../../docs/superpowers/smoke-metric-alerts.md)
+— 17 scenarios, because two of those rows carry two cases each —
 against a live RoRoRo, over the real plugin pipe, using your real `%LOCALAPPDATA%\ROROROblox` profile.
 There is no scratch profile to run this against — the app has no data-root seam — so this tool backs
 your profile up before it touches anything and puts it back when it is done. Read the whole of this
@@ -14,9 +14,11 @@ it starts itself, and asserts on what it sees: the plugin pipe answers, consent 
 a breach reaches the desktop toast line, the personal and clan Discord bodies, and (when it can be
 routed safely) the phone leg's fallback; rules are picked up live and survive a malformed file; a
 clock-skewed report is dropped and said so; a resetting counter does not fire a false breach; repeated
-breaches cost one toast, not several; streamer mode masks the right channel; the opt-in gate actually
-gates. Every one of those sixteen scenarios has been deliberately broken and watched turn red — the
-record is [`docs/superpowers/smoke-harness-verification.md`](../../docs/superpowers/smoke-harness-verification.md).
+breaches cost one toast, not several; several accounts in one read cost one alert; streamer mode masks
+the right channel; the opt-in gate actually gates. Sixteen of those seventeen scenarios have been
+deliberately broken and watched turn red (the one-read grouping scenario, added 2026-09-15, has not
+yet) — the record is
+[`docs/superpowers/smoke-harness-verification.md`](../../docs/superpowers/smoke-harness-verification.md).
 
 It does **not** prove:
 
@@ -90,7 +92,7 @@ The run then:
    sent — if any of them disagree with what it wrote.
 4. Prints `START RORORO NOW` and waits up to three minutes for the app to answer on the plugin pipe.
    Start it in that window. It has to start *after* the swap, or it will not pick any of it up.
-5. Runs the sixteen scenarios (a few minutes) against the running app.
+5. Runs the seventeen scenarios (a few minutes) against the running app.
 6. Restores every file it backed up, in a `finally` that also runs on the first Ctrl-C. A second Ctrl-C
    kills the process outright, for whoever wants out immediately.
 7. Tells you to **quit RoRoRo and start it again**, and means it. The restore puts the files back
@@ -146,7 +148,7 @@ against the real thing without leaving it worse off — hence the backup-and-res
 ## Related reading
 
 - [`docs/superpowers/smoke-metric-alerts.md`](../../docs/superpowers/smoke-metric-alerts.md) — the full
-  21-row list, with which rows this tool drives and which stay manual.
+  22-row list, with which rows this tool drives and which stay manual.
 - [`docs/superpowers/smoke-harness-verification.md`](../../docs/superpowers/smoke-harness-verification.md) —
   the record of every row being deliberately broken and watched fail, including the two that need a
   caveat.

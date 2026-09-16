@@ -42,7 +42,8 @@ public class TrayWiringTests
         // test. What it guards is a measured defect (2026-09-11): ShowToast called ShowBalloonTip
         // directly while two siblings in the same class marshalled, and its callers are NOT on the UI
         // thread — AlertDispatcher.DispatchAsync runs fire-and-forget from MetricReportSinkAdapter's
-        // event, raised on a gRPC handler thread. Touching a FrameworkElement from there throws, the
+        // event, raised on a thread-pool timer thread when a metric grouping window closes (a gRPC
+        // handler thread until 2026-09-15). Touching a FrameworkElement from there throws, the
         // dispatcher swallows it into one Warning, and the alert vanishes: no toast, no visible error.
         //
         // Worse than one lost toast, which is why this is a fence and not a comment: the dispatcher's

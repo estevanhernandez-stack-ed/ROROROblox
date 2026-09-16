@@ -16,7 +16,8 @@ public enum WebhookSendResult
 
 /// <summary>
 /// Posts an alert to a Discord webhook. Accepts only <see cref="WebhookPayload"/>, which by
-/// construction cannot carry a private-server link.
+/// construction cannot carry a private-server link, and posts it with mentions disabled so no text
+/// in it can ping the channel.
 /// <para>
 /// A 404 is terminal — a deleted webhook does not come back, and the caller disables that
 /// destination rather than retrying forever.
@@ -44,7 +45,17 @@ public sealed class DiscordWebhookSender(HttpClient client, ILogger<DiscordWebho
 
         try
         {
-            var body = new { content = $"**{payload.Title}**\n{payload.Body}" };
+            // allowed_mentions with an empty parse list: nothing in the text can ping. Labels come
+            // from a hand-edited file, metric ids from plugins and names from users, and the clan
+            // destination is a shared channel, so "@everyone" in any of them must stay text
+            // (controller ruling C3, 2026-09-15). Spelled with the underscore on purpose: the Web
+            // serializer defaults would turn a PascalCase member into "allowedMentions", which
+            // Discord silently ignores.
+            var body = new
+            {
+                content = $"**{payload.Title}**\n{payload.Body}",
+                allowed_mentions = new { parse = Array.Empty<string>() },
+            };
             using var response = await client.PostAsJsonAsync(url, body, ct).ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)

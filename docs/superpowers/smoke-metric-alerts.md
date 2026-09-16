@@ -13,7 +13,7 @@ A row whose title is followed by `` `[harness]` `` is driven by `tools/MetricSmo
 replays it and asserts it (`dotnet run --project tools/MetricSmoke`). The marker is machine-read:
 `ScenarioTableTests` fails if the harness's scenario table names a row that is not marked here, if a
 marked row has no scenario, or if the total number of rows on this list changes. So marking a row is
-a claim the tests hold you to, and 14 rows carry it today — 16 scenarios, because two of those rows
+a claim the tests hold you to, and 15 rows carry it today — 17 scenarios, because two of those rows
 carry two cases each (granted-then-revoked versus never-declared; live pickup versus absence). A
 marker is not a tick: the harness has to be RUN, and the row still gets its `[x]` and its date from
 whoever ran it.
@@ -69,7 +69,7 @@ toasts is worth someone's attention before it is claimed that every breach is se
 
 ## Setup — what you need before any row below
 
-**The sixteen `[harness]` rows: one command.** From the repo root, with RoRoRo **not** already
+**The fifteen `[harness]` rows (seventeen scenarios): one command.** From the repo root, with RoRoRo **not** already
 running:
 
 ```text
@@ -94,7 +94,7 @@ What it does to your profile (`%LOCALAPPDATA%\ROROROblox`), and how it gives it 
   metric, and aborts with nothing sent if any of them disagree.
 - Prints `START RORORO NOW` and waits up to three minutes for the app to answer on the plugin pipe —
   start it in that window. It has to start *after* the swap to pick any of it up.
-- Runs the sixteen scenarios (a few minutes), then restores everything it backed up, in a `finally`
+- Runs the seventeen scenarios (a few minutes), then restores everything it backed up, in a `finally`
   that also fires on the first Ctrl-C (a second one kills it outright, for whoever wants out now).
 
 **If a run is interrupted** — a second Ctrl-C, a crash, the machine losing power — the next
@@ -121,7 +121,7 @@ yet"* — need the app running normally, no harness, with:
 
    ```json
    [
-     { "metricId": "smoke.points", "kind": "Rate",  "threshold": 100, "windowMinutes": 10 },
+     { "metricId": "smoke.points", "kind": "Rate",  "threshold": 100, "windowMinutes": 10, "label": "Points" },
      { "metricId": "smoke.share",  "kind": "Level", "threshold": 0.8,  "alertWhenBelow": true },
      { "metricId": "smoke.place",  "kind": "Event" }
    ]
@@ -130,7 +130,8 @@ yet"* — need the app running normally, no harness, with:
    `kind` is `Rate`, `Level` or `Event`. `Rate` breaches when the change per minute over the window
    falls BELOW the threshold. `Level` compares the latest value against the threshold in the
    direction `alertWhenBelow` sets. `Event` fires when the value simply changes. `windowMinutes` is
-   unused by `Level` and `Event`.
+   unused by `Level` and `Event`. `label` is optional (1.29+): the name an alert uses in place of the
+   metric id, trimmed, one line, at most 40 characters.
 3. A plugin that actually reports something — nothing ships that does, which is the whole point of
    the separation. `docs/plugins/AUTHOR_GUIDE.md` has the recipe; the cheapest thing that works is a
    throwaway console app against `ROROROblox.PluginContract` calling `ReportMetric` twice with a gap
@@ -202,6 +203,14 @@ uses. The routing control lives in Settings → Alerts, alongside the **Metric a
       a row inside the five-minute cooldown. Exactly one toast. This is the guarantee the whole
       design rests on — thresholding lives in the host precisely so a bad night cannot become forty
       notifications — and nothing else on this list checks it end to end.
+- [ ] **Breaches from several accounts in one read become one alert.** `[harness]` Report a breaching
+      value for three accounts back to back against one `Level` rule. Exactly one `Alert → Local`
+      line, covering 3 accounts, not three lines. The alert waits out the grouping window
+      (`MetricBreachBatcher.Window`, five seconds) before it leaves, so nothing should be read into a
+      short pause. The 2026-09-15 live run is why this row exists: eight accounts in one Ur Score read
+      became 24 notifications. By eye, once, on a real Discord channel with a labelled rule: the post
+      reads `3 accounts — <label> fell below <threshold>` with one `• <account> — now <value>` line
+      per account, and a number of 1,000 or more carries its commas.
 - [x] **The rules file is picked up live, and its absence is inert.** `[harness]` With no rules file, the app
       starts clean and never alerts. Add one while running and confirm it takes effect without a
       restart.

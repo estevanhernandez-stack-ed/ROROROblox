@@ -8,8 +8,9 @@ namespace ROROROblox.Core.Metrics;
 ///
 /// <para>
 /// Returning is the whole design. The caller hands these to <c>AlertDispatcher</c>, which routes
-/// through <c>AlertRouter</c> — so mute, per-(account, kind) cooldown, coalescing and
-/// fallback-to-Local all apply exactly as they do for every other kind. A coordinator that
+/// through <c>AlertRouter</c> — so mute, the cooldown, coalescing and fallback-to-Local all apply
+/// as they do for every other kind. (The cooldown slot for a breach is (account, metric id) rather
+/// than (account, kind), corrected 2026-09-15; see <c>AlertCooldownKey</c>.) A coordinator that
 /// dispatched directly would bypass all four, and "a bad night becomes forty notifications" is
 /// the one outcome this feature must not produce.
 /// </para>
@@ -76,7 +77,8 @@ public sealed class MetricAlertCoordinator(TimeProvider time, int historyCapacit
             // (MetricValue, trailing and optional, so those four are untouched) because
             // PrivateBytes is a long? and truncating a metric through it renders "at 0" for a 0.79
             // ratio, reintroducing at the display layer the unknown-is-not-zero conflation this
-            // core defends in three places.
+            // core defends in three places. The RULE rides along too (2026-09-15): the alert's
+            // wording comes from it, and MetricBreachBatcher groups by it.
             return [new AlertTrigger(
                 AlertKind.MetricBreach,
                 o.AccountId,
@@ -85,7 +87,8 @@ public sealed class MetricAlertCoordinator(TimeProvider time, int historyCapacit
                 o.MetricId,
                 null,
                 now,
-                verdict.Observed)];
+                verdict.Observed,
+                rule)];
         }
 
         return [];

@@ -1864,10 +1864,13 @@ public partial class App : Application
             vm.AlertsRaised += (_, triggers) => _ = dispatcher.DispatchAsync(triggers);
 
             // Metric breaches reach the dispatcher by exactly the path every other alert kind
-            // takes, which is what makes mute, the per-(account, kind) cooldown and coalescing
-            // apply to them without a line of new routing code. Fire-and-forget for the reason
-            // above and one more: this event is raised on a gRPC handler thread, which must not
-            // be parked on an HTTP POST while a plugin waits for its Empty.
+            // takes, which is what makes mute, the cooldown and coalescing apply to them without a
+            // line of new routing code (the cooldown slot for a breach is per account and metric
+            // id rather than per account and kind, corrected 2026-09-15; see AlertCooldownKey).
+            // Fire-and-forget for the reason above and one more: this event is raised on a
+            // thread-pool timer thread when a metric grouping window closes (corrected 2026-09-15;
+            // through 1.28 it was the gRPC handler thread), and a timer callback must not be
+            // parked on an HTTP POST either.
             //
             // Cast to the concrete adapter on purpose. AlertsRaised lives there and not on
             // IMetricReportSink, because that interface is the plugin-facing sink and an event on
@@ -2799,6 +2802,24 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _log?.LogDebug(ex, "PluginHostStartupService.StopAsync threw on exit; ignoring.");
+            }
+
+            // Close the metric grouping window right after the plugin host stops (2026-09-15).
+            // The sink holds breaches for five seconds before raising them to the alert dispatcher;
+            // until this call it was disposed only by the container at the very end of OnExit, so a
+            // group opened just before quit could still toast or POST while the tray and the HTTP
+            // clients were being torn down. Disposing here drops what is pending (see
+            // MetricBreachBatcher's Exit paragraph), and a report from a handler still draining
+            // after a timed-out host stop opens no new group. A group whose window had ALREADY
+            // closed is already dispatching and is not recalled. The container's dispose below is
+            // then a harmless second call. MetricSinkExitOrderFenceTests pins this ordering.
+            try
+            {
+                (_services.GetService<ROROROblox.App.Plugins.IMetricReportSink>() as IDisposable)?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogDebug(ex, "MetricReportSinkAdapter.Dispose threw on exit; ignoring.");
             }
 
             // Stop the presence poll loop before the provider disposes (mirrors the process

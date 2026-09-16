@@ -65,8 +65,9 @@ public class MetricAlertCoordinatorTests
     public void TheCoordinatorDoesNotDeduplicate_TheRouterDoes()
     {
         // Deliberate: repeated breaches produce repeated triggers here, and AlertRouter's
-        // per-(account, kind) cooldown is what stops them becoming forty notifications. Keeping
-        // suppression in ONE place is the point -- two half-implementations disagree eventually.
+        // cooldown (per account and metric id for a breach, corrected 2026-09-15) is what stops them
+        // becoming forty notifications. Keeping suppression in ONE place is the point -- two
+        // half-implementations disagree eventually.
         var (sut, clock) = New(new MetricRule(M, MetricRuleKind.Rate, 100, TimeSpan.FromMinutes(10)));
 
         sut.Observe(Obs(0, clock.GetUtcNow()), "Masked", "Real");
@@ -77,7 +78,7 @@ public class MetricAlertCoordinatorTests
     }
 
     [Fact]
-    public void TwoRulesOnOneMetricBothBreaching_StillProduceOneTrigger()
+    public void TwoRulesOnOneMetric_ProduceOneTrigger_CarryingTheRuleThatFired()
     {
         // Two rules sharing a MetricId is the designed case: the three rule kinds exist so one
         // number can be judged several ways. Both breaching at once used to emit two triggers for
@@ -85,22 +86,38 @@ public class MetricAlertCoordinatorTests
         // handed WebhookPayload a batch that read "2 accounts — battle.points" with the same alt
         // listed twice at two different values, in the clan channel, the one destination that uses
         // real names. The tie-break is the configured order: first breaching rule wins.
-        var rate = new MetricRule(M, MetricRuleKind.Rate, 100, TimeSpan.FromMinutes(10));
-        var level = new MetricRule(M, MetricRuleKind.Level, 1000, TimeSpan.FromMinutes(10));
+        //
+        // The trigger also carries that rule (2026-09-15): the alert's wording needs the label,
+        // kind, threshold, window and direction of what fired, not just its metric id. "The rule
+        // that fired" is not "the first rule for the metric", so the third case puts a rule that
+        // stays quiet ahead of the one that breaches.
+        var rate = new MetricRule(M, MetricRuleKind.Rate, 100, TimeSpan.FromMinutes(10), Label: "Points");
+        var level = new MetricRule(M, MetricRuleKind.Level, 1000, TimeSpan.FromMinutes(10), Label: "Points");
+        var quietLevel = new MetricRule(M, MetricRuleKind.Level, 1000, TimeSpan.Zero, AlertWhenBelow: false, Label: "Points");
 
-        var (sut, clock) = New(rate, level);
-        sut.Observe(Obs(0, clock.GetUtcNow()), "Masked", "Real");
-        clock.Advance(TimeSpan.FromMinutes(10));
-        // 500 points in 10 minutes: 50/min, under the rate floor of 100 — and 500 is under the
-        // level floor of 1000. Both rules breach on this one observation.
-        var t = Assert.Single(sut.Observe(Obs(500, clock.GetUtcNow()), "Masked", "Real"));
-        Assert.Equal(50d, t.MetricValue);       // the rate rule, listed first, is the one that fired
+        // 0 then, ten minutes later, 500: 50/min is under the rate floor of 100, 500 is under the
+        // level floor of 1000, and neither 0 nor 500 is above 1000. The first two rules breach on
+        // the second observation; the quiet one never does.
+        static AlertTrigger FireOnce(params MetricRule[] rules)
+        {
+            var (sut, clock) = New(rules);
+            sut.Observe(Obs(0, clock.GetUtcNow()), "Masked", "Real");
+            clock.Advance(TimeSpan.FromMinutes(10));
+            return Assert.Single(sut.Observe(Obs(500, clock.GetUtcNow()), "Masked", "Real"));
+        }
 
-        var (reversed, clock2) = New(level, rate);
-        reversed.Observe(Obs(0, clock2.GetUtcNow()), "Masked", "Real");
-        clock2.Advance(TimeSpan.FromMinutes(10));
-        var t2 = Assert.Single(reversed.Observe(Obs(500, clock2.GetUtcNow()), "Masked", "Real"));
-        Assert.Equal(500d, t2.MetricValue);     // same observation, order reversed — the level wins
+        var t = FireOnce(rate, level);
+        Assert.Same(rate, t.Rule);              // the rate rule, listed first, is the one that fired
+        Assert.Equal(50d, t.MetricValue);       // for Rate, the measured rate per minute
+        Assert.Equal(M, t.GameName);            // the metric id stays where the harness looks for it
+
+        var t2 = FireOnce(level, rate);
+        Assert.Same(level, t2.Rule);            // same observation, order reversed — the level wins
+        Assert.Equal(500d, t2.MetricValue);
+
+        var t3 = FireOnce(quietLevel, rate);
+        Assert.Same(rate, t3.Rule);             // the first rule for the metric did not breach; the second did
+        Assert.Equal(50d, t3.MetricValue);
     }
 
     [Fact]

@@ -437,9 +437,10 @@ because nothing about it looks broken. Use `DateTimeOffset.UtcNow.ToUnixTimeMill
 whatever UTC timestamp your source already gives you — never `DateTime.Now`.
 
 **Report on your own clock, not the user's.** Whether an observation is worth an alert is RoRoRo's
-call, not yours — the per-(account, kind) cooldown, the coalescing across accounts, the mute list
-all live in the same router every other alert kind already rides, and a metric breach gets them
-for free. Report at whatever cadence is natural for what you're polling, and call `ReportMetric`
+call, not yours — the cooldown, the coalescing across accounts, and the mute list all live in the
+same router every other alert kind already rides, and a metric breach gets them for free. (A
+metric breach's cooldown is keyed by account and metric id, corrected 2026-09-15; every other
+alert kind's cooldown is per account and kind.) Report at whatever cadence is natural for what you're polling, and call `ReportMetric`
 every time you have a fresh number. Don't throttle, debounce, or skip reports on the theory that
 you're sparing the user's phone — that's RoRoRo's job, and it already does it for four other alert
 kinds. Rate-limiting on the user's behalf only starves the host of samples: fewer reports means

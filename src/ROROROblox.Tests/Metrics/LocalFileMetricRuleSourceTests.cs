@@ -171,6 +171,47 @@ public class LocalFileMetricRuleSourceTests : IDisposable
         Assert.Single(logger.Snapshot());
     }
 
+    [Fact]
+    public void ALabel_IsReadWhenPresent_AndAbsentMeansTheMetricIdSpeaks()
+    {
+        // Ur Score 0.3.2 writes "label"; a hand-written 1.28 file has none and must parse exactly as
+        // before. A null label is what makes the alert fall back to the metric id.
+        Write("""
+        [
+          { "metricId": "battle.points", "kind": "Rate",  "threshold": 100, "windowMinutes": 10, "label": "Points" },
+          { "metricId": "ps99.diamonds", "kind": "Level", "threshold": 0, "alertWhenBelow": false },
+          { "metricId": "c",             "kind": "Event", "label": "   " }
+        ]
+        """);
+
+        var rules = Sut().CurrentRules();
+
+        Assert.Equal(3, rules.Count);
+        Assert.Equal("Points", rules[0].Label);
+        Assert.Null(rules[1].Label);
+        Assert.Null(rules[2].Label);
+    }
+
+    [Theory]
+    [InlineData("  Points  ", "Points")]
+    [InlineData("Line\nbreak", "Line break")]
+    [InlineData("Tab\t\there", "Tab here")]
+    public void NormaliseLabel_TrimsAndFlattensControlCharacters(string raw, string expected)
+    {
+        // The label lands in a phone title and a bold Discord line. A newline inside it would split
+        // the title from its own sentence.
+        Assert.Equal(expected, LocalFileMetricRuleSource.NormaliseLabel(raw));
+    }
+
+    [Fact]
+    public void NormaliseLabel_CapsALongLabelWithAnEllipsis()
+    {
+        var cut = LocalFileMetricRuleSource.NormaliseLabel(new string('a', 100));
+
+        Assert.Equal(LocalFileMetricRuleSource.LabelLimit, cut!.Length);
+        Assert.EndsWith("…", cut, StringComparison.Ordinal);
+    }
+
     public void Dispose()
     {
         try { if (File.Exists(_path)) File.Delete(_path); } catch (Exception) { /* temp file */ }

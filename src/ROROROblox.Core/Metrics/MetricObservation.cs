@@ -5,9 +5,10 @@ namespace ROROROblox.Core.Metrics;
 ///
 /// <para>
 /// <paramref name="AccountId"/> is a RoRoRo account, NOT an external subject id. Mapping an
-/// external identity onto an account is the caller's job, so that mute and per-(account, kind)
-/// cooldown key exactly as they do for every other alert kind. An observation that belongs to no
-/// account uses <see cref="Guid.Empty"/> — the same global-carrier convention
+/// external identity onto an account is the caller's job, so that mute and the cooldown key on the
+/// account as they do for every other alert kind (the cooldown slot for a breach is (account,
+/// metric id), corrected 2026-09-15). An observation that belongs to no account uses
+/// <see cref="Guid.Empty"/> — the same global-carrier convention
 /// <c>AlertKind.UptimeMark</c> uses, and for the same reason: one account's mute must not
 /// silence something that is not about that account.
 /// </para>

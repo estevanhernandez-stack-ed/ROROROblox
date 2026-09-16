@@ -8,13 +8,15 @@ namespace ROROROblox.App.Plugins.Adapters;
 /// The seam between "a plugin reported a number" and "the alert system knows". Owns the
 /// <see cref="MetricAlertCoordinator"/>, enforces the opt-in setting, refuses observations from a
 /// clock that disagrees with ours, resolves the subject to the names an alert carries, and RAISES
-/// the resulting triggers rather than sending them.
+/// the resulting triggers rather than sending them — grouped per (metric id, rule) by
+/// <see cref="MetricBreachBatcher"/>, so one plugin read is one alert (2026-09-15).
 ///
 /// <para>
 /// Raising is the whole design, and it is why this class does not know what a webhook is.
 /// <c>App</c> wires <see cref="AlertsRaised"/> to <c>AlertDispatcher.DispatchAsync</c>, exactly as
 /// it already wires <c>MainViewModel.AlertsRaised</c>. Everything downstream — per-account mute,
-/// the per-(account, kind) cooldown, coalescing, fallback-to-Local — therefore applies to a metric
+/// the cooldown (keyed per (account, metric id) for a metric breach, corrected 2026-09-15; every
+/// other kind keeps (account, kind)), coalescing, fallback-to-Local — therefore applies to a metric
 /// breach for free, and cannot be bypassed from here.
 /// </para>
 /// </summary>
@@ -34,7 +36,7 @@ public sealed class MetricReportSinkAdapter(
     Func<bool> isEnabled,
     Func<Guid, (string Display, string Real)> resolveNames,
     TimeProvider time,
-    ILogger<MetricReportSinkAdapter> log) : IMetricReportSink
+    ILogger<MetricReportSinkAdapter> log) : IMetricReportSink, IDisposable
 {
     /// <summary>
     /// How far into the host's future a reported instant may sit before it is treated as a skewed
@@ -45,10 +47,17 @@ public sealed class MetricReportSinkAdapter(
     private static readonly TimeSpan FutureTolerance = TimeSpan.FromSeconds(30);
 
     private readonly MetricAlertCoordinator _coordinator = new(time);
+    private readonly MetricBreachBatcher _batcher = new(time, log);
 
-    /// <summary>Fired when a report produced one or more breaches. <c>App</c> subscribes this to
-    /// the alert dispatcher.</summary>
-    public event EventHandler<IReadOnlyList<AlertTrigger>>? AlertsRaised;
+    /// <summary>Fired once per (metric id, rule) group, <see cref="MetricBreachBatcher.Window"/> after
+    /// the group's first breach, on a thread-pool timer thread. <c>App</c> subscribes this to the alert
+    /// dispatcher. Forwarded to the batcher rather than raised here, so every subscriber sees groups and
+    /// no subscriber can see a single ungrouped breach.</summary>
+    public event EventHandler<IReadOnlyList<AlertTrigger>>? AlertsRaised
+    {
+        add => _batcher.Flushed += value;
+        remove => _batcher.Flushed -= value;
+    }
 
     public void Report(string subjectId, string metricId, double value, long observedAtUnixMs)
     {
@@ -104,7 +113,7 @@ public sealed class MetricReportSinkAdapter(
                 new MetricObservation(accountId, metricId, value, recordedAt), display, real);
 
             if (triggers.Count == 0) return;
-            AlertsRaised?.Invoke(this, triggers);
+            _batcher.Add(triggers);
         }
         catch (Exception ex)
         {
@@ -115,4 +124,10 @@ public sealed class MetricReportSinkAdapter(
             log.LogWarning(ex, "A metric report for {MetricId} was dropped.", metricId);
         }
     }
+
+    /// <summary>Stops the grouping timers and drops any group still inside its window. Called from
+    /// <c>App.OnExit</c> right after the plugin host stops, then again (a no-op) by the container
+    /// (corrected 2026-09-15: until then only the container called it, at the very end of exit).
+    /// A report after this raises nothing.</summary>
+    public void Dispose() => _batcher.Dispose();
 }

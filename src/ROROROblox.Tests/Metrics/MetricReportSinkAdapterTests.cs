@@ -58,6 +58,8 @@ public class MetricReportSinkAdapterTests
         sut.Report(Acct.ToString(), M, 0, Ms(clock.GetUtcNow()));
         clock.Advance(TimeSpan.FromMinutes(10));
         sut.Report(Acct.ToString(), M, 500, Ms(clock.GetUtcNow()));   // 50/min, floor is 100
+        Assert.Empty(raised);                        // held for the grouping window
+        clock.Advance(MetricBreachBatcher.Window);
 
         var t = Assert.Single(raised);
         Assert.Equal(AlertKind.MetricBreach, t.Kind);
@@ -85,6 +87,7 @@ public class MetricReportSinkAdapterTests
         clock.Advance(TimeSpan.FromMinutes(10));
         sut.Report(Acct.ToString(), M, 500, Ms(clock.GetUtcNow()));
 
+        clock.Advance(MetricBreachBatcher.Window);
         Assert.Empty(raised);
         Assert.Equal(0, rules.CallCount);
     }
@@ -107,10 +110,12 @@ public class MetricReportSinkAdapterTests
         sut.AlertsRaised += (_, t) => raised.AddRange(t);
 
         sut.Report(Acct.ToString(), M, 400, Ms(clock.GetUtcNow()));
+        clock.Advance(MetricBreachBatcher.Window);
         Assert.Empty(raised);
 
         enabled = true;
         sut.Report(Acct.ToString(), M, 400, Ms(clock.GetUtcNow()));
+        clock.Advance(MetricBreachBatcher.Window);
         Assert.Single(raised);
     }
 
@@ -125,6 +130,7 @@ public class MetricReportSinkAdapterTests
         clock.Advance(TimeSpan.FromMinutes(10));
         sut.Report(Acct.ToString(), M, 500, Ms(clock.GetUtcNow().AddHours(2)));
 
+        clock.Advance(MetricBreachBatcher.Window);
         // Had it been clamped to now, this would have been a 50/min breach.
         Assert.Empty(raised);
     }
@@ -141,6 +147,7 @@ public class MetricReportSinkAdapterTests
         clock.Advance(TimeSpan.FromMinutes(10));
         sut.Report(Acct.ToString(), M, 500, Ms(clock.GetUtcNow().AddSeconds(2)));
 
+        clock.Advance(MetricBreachBatcher.Window);
         Assert.Single(raised);
     }
 
@@ -163,6 +170,7 @@ public class MetricReportSinkAdapterTests
 
         sut.Report("not-a-guid", M, 400, Ms(clock.GetUtcNow()));
 
+        clock.Advance(MetricBreachBatcher.Window);
         Assert.Equal(Guid.Empty, Assert.Single(raised).AccountId);
     }
 
@@ -177,6 +185,7 @@ public class MetricReportSinkAdapterTests
         clock.Advance(TimeSpan.FromMinutes(10));
         sut.Report(Acct.ToString(), M, 0, Ms(clock.GetUtcNow()));   // 0/min would breach any floor
 
+        clock.Advance(MetricBreachBatcher.Window);
         Assert.Empty(raised);
     }
 
@@ -196,7 +205,105 @@ public class MetricReportSinkAdapterTests
 
         sut.AlertsRaised += (_, _) => throw new InvalidOperationException("subscriber blew up");
 
-        var ex = Record.Exception(() => sut.Report(Acct.ToString(), M, 400, Ms(clock.GetUtcNow())));
+        // Since 2026-09-15 the subscriber runs when the grouping window closes, on the timer, so
+        // both the report and the flush must stay quiet.
+        var ex = Record.Exception(() =>
+        {
+            sut.Report(Acct.ToString(), M, 400, Ms(clock.GetUtcNow()));
+            clock.Advance(MetricBreachBatcher.Window);
+        });
         Assert.Null(ex);
+    }
+
+    [Fact]
+    public void EightAccountsInOneRead_AreOneAlertOfEight()
+    {
+        // The live test on 2026-09-15: this rule, eight accounts in one Ur Score read ~100 ms apart,
+        // and 24 notifications — one per account per destination.
+        var rule = new MetricRule("ps99.diamonds", MetricRuleKind.Level, 0, TimeSpan.Zero,
+            AlertWhenBelow: false, Label: "Diamonds");
+        var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
+        var sut = new MetricReportSinkAdapter(
+            new FixedRules(rule), () => true, _ => ("Masked", "Real"), clock,
+            NullLogger<MetricReportSinkAdapter>.Instance);
+        var batches = new List<IReadOnlyList<AlertTrigger>>();
+        sut.AlertsRaised += (_, t) => batches.Add(t);
+
+        for (var i = 0; i < 8; i++)
+        {
+            sut.Report(Guid.NewGuid().ToString(), "ps99.diamonds", 2_974_993 + i, Ms(clock.GetUtcNow()));
+            clock.Advance(TimeSpan.FromMilliseconds(12));
+        }
+        Assert.Empty(batches);
+
+        clock.Advance(MetricBreachBatcher.Window);
+
+        var batch = Assert.Single(batches);
+        Assert.Equal(8, batch.Count);
+        Assert.All(batch, t => Assert.Equal(rule, t.Rule));
+    }
+
+    [Fact]
+    public void DisposingTheSink_DropsAGroupStillInsideTheWindow()
+    {
+        // The container disposes the sink on exit; its timers must not outlive it.
+        var (sut, clock, raised) = New(rules: new FixedRules(new MetricRule(M, MetricRuleKind.Level, 500, TimeSpan.Zero)));
+
+        sut.Report(Acct.ToString(), M, 400, Ms(clock.GetUtcNow()));
+        sut.Dispose();
+        clock.Advance(MetricBreachBatcher.Window);
+
+        Assert.Empty(raised);
+    }
+
+    [Fact]
+    public void AReportAfterTheSinkIsDisposed_RaisesNothing_AndASecondDisposeIsHarmless()
+    {
+        // App.OnExit disposes the sink right after the plugin host stops, and the container disposes
+        // it again at the very end (2026-09-15). A handler still draining when the host's 2 s stop
+        // gives up can report into a disposed sink; that must neither throw nor open a new group.
+        var (sut, clock, raised) = New(rules: new FixedRules(new MetricRule(M, MetricRuleKind.Level, 500, TimeSpan.Zero)));
+
+        sut.Dispose();
+        sut.Report(Acct.ToString(), M, 400, Ms(clock.GetUtcNow()));
+        clock.Advance(MetricBreachBatcher.Window);
+        sut.Dispose();
+
+        Assert.Empty(raised);
+    }
+}
+
+/// <summary>
+/// App.OnExit is not constructible in a test (it is a WPF <c>Application</c> override), so this
+/// fence reads the source the way the repo's other composition fences do. It pins the ordering that
+/// makes "pending groups are dropped on exit" true: the metric sink is disposed right after the
+/// plugin host stops (nothing new can arrive) and before the rest of the teardown, rather than only
+/// by the container's DisposeAsync at the very end, when a group opened in the last five seconds
+/// could still send while the tray and HTTP clients were going away (final review, 2026-09-15).
+/// </summary>
+public class MetricSinkExitOrderFenceTests
+{
+    [Fact]
+    public void OnExit_DisposesTheMetricSink_RightAfterThePluginHostStops()
+    {
+        var root = XamlStyleScanner.FindRepoRoot();
+        Assert.False(root is null, "Could not locate the repo root from the test bin directory.");
+        var source = File.ReadAllText(Path.Combine(root!, "src", "ROROROblox.App", "App.xaml.cs"));
+
+        var onExit = source.IndexOf("protected override void OnExit(", StringComparison.Ordinal);
+        Assert.True(onExit >= 0, "OnExit is gone from App.xaml.cs — update this fence with its new home.");
+        var body = source[onExit..];
+
+        var hostStop = body.IndexOf("pluginHost.StopAsync(", StringComparison.Ordinal);
+        var sinkDispose = body.IndexOf("IMetricReportSink>() as IDisposable)?.Dispose()", StringComparison.Ordinal);
+        var presenceStop = body.IndexOf("presence?.Stop()", StringComparison.Ordinal);
+        var containerDispose = body.IndexOf("_services.DisposeAsync()", StringComparison.Ordinal);
+
+        Assert.True(hostStop >= 0, "The plugin host stop is gone from OnExit.");
+        Assert.True(sinkDispose >= 0, "OnExit no longer disposes the metric sink explicitly.");
+        Assert.True(presenceStop >= 0 && containerDispose >= 0, "OnExit's later teardown steps moved; re-anchor this fence.");
+        Assert.True(hostStop < sinkDispose, "The metric sink must be disposed AFTER the plugin host stops.");
+        Assert.True(sinkDispose < presenceStop, "The metric sink must be disposed right after the plugin host, before the rest of the teardown.");
+        Assert.True(sinkDispose < containerDispose);
     }
 }
