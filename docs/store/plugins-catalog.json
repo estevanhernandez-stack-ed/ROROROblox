@@ -21,7 +21,7 @@
     "name": "RoRoRo Ur AFK",
     "description": "Keeps idle Roblox accounts alive — focuses each and taps space before the ~20-minute idle timeout. One toggle, one key ever sent.",
     "publisher": "626 Labs LLC",
-    "latestVersion": "0.5.0",
+    "latestVersion": "0.5.2",
     "installUrl": "https://github.com/estevanhernandez-stack-ed/rororo-ur-afk/releases/latest/download/",
     "minHostVersion": "1.8.0.0"
   },
@@ -39,7 +39,7 @@
     "name": "RoRoRo Ur Score",
     "description": "A scoreboard for your accounts. Reads Pet Sim 99 clan battles and your own profiles from recipe files, keeps every reading in a score book on your PC, and hands the stats you pick to RoRoRo's alerts. Only your own accounts' numbers are kept or sent.",
     "publisher": "626 Labs LLC",
-    "latestVersion": "0.3.4",
+    "latestVersion": "0.3.5",
     "installUrl": "https://github.com/estevanhernandez-stack-ed/Ur-Score/releases/latest/download/",
     "minHostVersion": "1.28.0.0"
   }
