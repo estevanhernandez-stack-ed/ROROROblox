@@ -94,8 +94,8 @@ Demandez qu'on vous dise quand tout rentre dans l'ordre
 
 Les plugins s'installent sur une connexion lente
 • L'installation d'un plugin abandonnait après 100 secondes :
-  qui ne pouvait pas télécharger le fichier entier dans ce
-  délai n'y arrivait jamais. Elle dispose maintenant de dix
+  quiconque ne pouvait pas télécharger le fichier entier dans
+  ce délai n'y arrivait jamais. Elle dispose maintenant de dix
   minutes, et dit quoi essayer si le délai est dépassé.
 • Une alerte portant sur un nombre qui n'appartient à aucun
   compte commence désormais par le nom de la règle au lieu
