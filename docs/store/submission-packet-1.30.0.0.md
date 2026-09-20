@@ -3,6 +3,10 @@
 Everything Partner Center asks for on this submission, in the order it asks. Certification last saw
 **v1.29.0.0**, which certified and published on 2026-09-16, so this is a single version's delta.
 
+> **SUBMITTED for certification 2026-09-20** by the owner. What remains on this side: publish the
+> GitHub release draft, and the clan Discord post (`discord-post-1.30.0.0.md`), which by standing
+> rule goes out when the Store listing actually shows 1.30 rather than when certification clears.
+
 ---
 
 ## Read this first — everything in this release narrows
