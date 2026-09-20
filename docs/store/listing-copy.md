@@ -27,6 +27,12 @@
 
 ## Short description (200 characters max, inclusive — Store snippet)
 
+> **Audited 2026-09-20 for v1.30.0.0 — unchanged.** Nothing in 1.30 makes this snippet
+> incomplete: the crossing rule and recovery alerts refine alerting, which the snippet already
+> claims, and the plugin-install fix is a repair to a claimed feature rather than a new one.
+> Two PRE-EXISTING gaps were found in the long description and the hub page while auditing and
+> are recorded there; neither was introduced by this release, and both are the owner's call.
+
 > Refreshed 2026-09-07 (v1.26.0.0) — "now in 6 languages" leads the snippet (the app's UI is
 > localized this release); "auto-update" dropped to fit the cap (it keeps its feature entry and
 > long-description claim). 197/200 chars.
@@ -42,6 +48,22 @@ Multi-launcher for Windows, now in 6 languages. Run several Roblox clients side 
 ```
 
 ## Long description
+
+> **Audited 2026-09-20 for v1.30.0.0 — unchanged, with two gaps flagged for the owner.**
+> Neither was introduced by 1.30, so neither is edited here without a decision:
+>
+> 1. The alerts bullet ENUMERATES the alert kinds — drops, memory warnings, recycle
+>    completions, the two-hourly mark — and omits metric alerts, which shipped in v1.28. That
+>    was defensible while no reporter existed; Ur Score is in `plugins-catalog.json` now, so a
+>    reader can install one from inside RoRoRo and the enumeration reads as complete when it is
+>    not. Either add a clause or stop enumerating.
+> 2. The privacy paragraph says nothing leaves your machine except the Roblox-side calls and,
+>    if you set them up, your own webhook or push service. A plugin you install makes its own
+>    network calls — that is what a reporter IS — and the paragraph does not say so. The
+>    plugin bullet says plugins run as separate processes with no permissions until granted,
+>    which is true but is not the same claim.
+>
+> The same alert-kind enumeration appears on the hub page (`docs/index.md`, "What you get").
 
 > Refreshed 2026-09-08 (v1.27.0.0) — the "speaks your language" bullet now covers the messages the
 > app composes while you use it, not just the screens, and says switching is instant. The v1.26
