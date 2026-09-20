@@ -1155,6 +1155,15 @@ public partial class App : Application
             var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
             client.DefaultRequestHeaders.UserAgent.Add(
                 new ProductInfoHeaderValue("ROROROblox-PluginInstaller", version));
+
+            // Issue #136: HttpClient's default is 100 seconds for the WHOLE request, and a
+            // plugin.zip is megabytes — so a user on a slow line got "the request was canceled
+            // due to the configured HttpClient.Timeout of 100 seconds elapsing" and no install,
+            // ever, however many times they tried. It is not a per-read idle timeout, so a
+            // download that is progressing fine still dies at 100 seconds. Ten minutes is a
+            // budget for a big plugin on a bad connection, and PluginInstaller streams the body
+            // rather than buffering it under this clock.
+            client.Timeout = ROROROblox.App.Plugins.PluginInstaller.DownloadTimeout;
         });
         services.AddSingleton(sp =>
         {

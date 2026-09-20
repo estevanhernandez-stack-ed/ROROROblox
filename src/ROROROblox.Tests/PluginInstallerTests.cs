@@ -40,6 +40,43 @@ public class PluginInstallerTests : IDisposable
         return (bytes, sha);
     }
 
+    /// <summary>
+    /// Issue #136. HttpClient's default is 100 seconds for the WHOLE request, and a plugin.zip is
+    /// megabytes, so a user on a slow line got "the request was canceled due to the configured
+    /// HttpClient.Timeout of 100 seconds elapsing" and could never install anything. The budget is
+    /// now the installer's own, named where the code that needs it lives.
+    /// </summary>
+    [Fact]
+    public void DownloadTimeout_IsWellPastHttpClientsOwnDefault()
+    {
+        using var stock = new HttpClient();
+
+        Assert.True(PluginInstaller.DownloadTimeout > stock.Timeout,
+            $"the installer's budget ({PluginInstaller.DownloadTimeout}) is not past HttpClient's default ({stock.Timeout}), which is the whole bug in #136");
+        Assert.True(PluginInstaller.DownloadTimeout >= TimeSpan.FromMinutes(5));
+    }
+
+    /// <summary>
+    /// A timed-out download says what happened and what to do instead. The raw exception named a
+    /// number and a class and left the user with nothing to try — which is how #136 was reported.
+    /// </summary>
+    [Fact]
+    public async Task InstallAsync_WhenTheDownloadTimesOut_SaysWhatToDoAboutIt()
+    {
+        // What HttpClient itself raises when its own Timeout elapses.
+        _http.EnqueueResponse(_ => throw new TaskCanceledException(
+            "The request was canceled due to the configured HttpClient.Timeout of 100 seconds elapsing."));
+
+        var installer = new PluginInstaller(new HttpClient(_http), _pluginsRoot, (_, _) => Task.CompletedTask, new Version(1, 4, 3, 0));
+
+        var ex = await Assert.ThrowsAsync<PluginInstallerException>(
+            () => installer.InstallAsync("https://example.invalid/plugin/", Array.Empty<string>()));
+
+        Assert.Contains("did not finish in time", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("unzip them into the plugins folder", ex.Message, StringComparison.Ordinal);
+        Assert.IsType<TaskCanceledException>(ex.InnerException);
+    }
+
     [Fact]
     public async Task InstallAsync_ValidPackage_ExtractsManifestAndZipContent()
     {
