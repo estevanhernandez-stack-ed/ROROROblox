@@ -31,7 +31,8 @@ public sealed record MetricRule(
     double Threshold,
     TimeSpan Window,
     bool AlertWhenBelow = true,
-    string? Label = null);
+    string? Label = null,
+    bool TellMeWhenItRecovers = false);
 
 /// <summary>
 /// The outcome. <paramref name="Reason"/> is a resx KEY fragment, never a sentence —
@@ -46,4 +47,4 @@ public sealed record MetricRule(
 /// today, and a renderer must not be assumed to exist.
 /// </para>
 /// </summary>
-public sealed record MetricBreachVerdict(bool Breached, double? Observed, string? Reason);
+public sealed record MetricBreachVerdict(bool Breached, double? Observed, string? Reason, bool Recovered = false);

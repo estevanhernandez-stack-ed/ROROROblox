@@ -28,6 +28,20 @@ public enum AlertKind
     /// outside the app; the RULE is evaluated here so this kind inherits mute, cooldown and
     /// coalescing like every other.</summary>
     MetricBreach,
+
+    /// <summary>
+    /// A metric that had breached its rule is back on the right side of it. The companion to
+    /// <see cref="MetricBreach"/> and the reason it can be trusted: once a breach is announced
+    /// ONCE, on the crossing, silence afterwards means "still bad" and nothing distinguishes it
+    /// from "nothing is wrong". This is the buzz that lets you stop watching.
+    /// <para>
+    /// Opt-in per rule (<c>MetricRule.TellMeWhenItRecovers</c>), because it doubles how often a
+    /// rule can speak. It goes wherever its breach goes — <c>DiscordConfig.DestinationsFor</c>
+    /// maps it to the same destinations — since anyone who wanted the bad news here wants the
+    /// good news here too, and a second settings row for it would be a worse question to ask.
+    /// </para>
+    /// </summary>
+    MetricRecovered,
 }
 
 /// <summary>

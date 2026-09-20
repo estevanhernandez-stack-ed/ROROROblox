@@ -19,6 +19,9 @@ public class MetricBreachBatcherTests
     private static AlertTrigger Breach(MetricRule rule, Guid account, double value) =>
         new(AlertKind.MetricBreach, account, "Masked", "Real", rule.MetricId, null, DateTimeOffset.UnixEpoch, value, rule);
 
+    private static AlertTrigger Recovered(MetricRule rule, Guid account, double value) =>
+        new(AlertKind.MetricRecovered, account, "Masked", "Real", rule.MetricId, null, DateTimeOffset.UnixEpoch, value, rule);
+
     private static (MetricBreachBatcher Sut, FakeTimeProvider Clock, List<IReadOnlyList<AlertTrigger>> Flushed) New()
     {
         var clock = new FakeTimeProvider(DateTimeOffset.UnixEpoch);
@@ -153,5 +156,28 @@ public class MetricBreachBatcherTests
 
         Assert.Empty(flushed);
         sut.Dispose();   // twice is harmless: the container and a test may both call it
+    }
+
+    /// <summary>
+    /// Within one window some accounts can breach while others recover on the SAME metric and the
+    /// SAME rule. A group is rendered as one alert of one kind, so if the two shared a group the
+    /// losing half would be listed under a sentence that is false for them. Kind is part of the key.
+    /// </summary>
+    [Fact]
+    public void ABreachAndARecovery_OnOneRule_AreNeverTheSameGroup()
+    {
+        var (sut, clock, flushed) = New();
+        var falling = Guid.NewGuid();
+        var rising = Guid.NewGuid();
+
+        sut.Add([Breach(Points, falling, 10), Recovered(Points, rising, 900)]);
+        clock.Advance(MetricBreachBatcher.Window);
+
+        Assert.Equal(2, flushed.Count);
+
+        var breach = Assert.Single(flushed, g => g[0].Kind == AlertKind.MetricBreach);
+        var recovery = Assert.Single(flushed, g => g[0].Kind == AlertKind.MetricRecovered);
+        Assert.Equal(falling, Assert.Single(breach).AccountId);
+        Assert.Equal(rising, Assert.Single(recovery).AccountId);
     }
 }

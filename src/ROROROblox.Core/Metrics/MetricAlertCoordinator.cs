@@ -54,7 +54,7 @@ public sealed class MetricAlertCoordinator(TimeProvider time, int historyCapacit
             if (!string.Equals(rule.MetricId, o.MetricId, StringComparison.Ordinal)) continue;
 
             var verdict = MetricEvaluator.Evaluate(rule, _history, o.AccountId, now);
-            if (!verdict.Breached) continue;
+            if (!verdict.Breached && !verdict.Recovered) continue;
 
             // AT MOST ONE TRIGGER PER ACCOUNT PER CALL. Two rules may legitimately share a
             // MetricId — the three rule kinds exist precisely so one number can be judged several
@@ -80,7 +80,7 @@ public sealed class MetricAlertCoordinator(TimeProvider time, int historyCapacit
             // core defends in three places. The RULE rides along too (2026-09-15): the alert's
             // wording comes from it, and MetricBreachBatcher groups by it.
             return [new AlertTrigger(
-                AlertKind.MetricBreach,
+                verdict.Recovered ? AlertKind.MetricRecovered : AlertKind.MetricBreach,
                 o.AccountId,
                 displayName,
                 realName,

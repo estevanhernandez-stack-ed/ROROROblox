@@ -88,6 +88,48 @@ public class WebhookPayloadTests
         new("ps99.diamonds", MetricRuleKind.Level, 0, TimeSpan.Zero, AlertWhenBelow: false, Label: "Diamonds");
 
     /// <summary>
+    /// The breach and its recovery read as a pair: same subject, same numbers, the sentence turned
+    /// around. Whatever the breach said went wrong, this says is no longer wrong.
+    /// </summary>
+    [Fact]
+    public void ARecoveryTurnsItsOwnBreachsSentenceAround()
+    {
+        var below = new MetricRule("clan.standing.points", MetricRuleKind.Level, 9_000_000_000, TimeSpan.Zero,
+            AlertWhenBelow: true, Label: "K0i2 clan points", TellMeWhenItRecovers: true);
+
+        var down = WebhookPayload.ForAlert(AlertKind.MetricBreach, [Fired(below, "CElCPapa", 8_500_000_000)]);
+        var up = WebhookPayload.ForAlert(AlertKind.MetricRecovered, [Fired(below, "CElCPapa", 9_200_000_000)]);
+
+        Assert.Equal("CElCPapa — K0i2 clan points fell below 9,000,000,000", down.Title);
+        Assert.Equal("CElCPapa — K0i2 clan points is back above 9,000,000,000", up.Title);
+        Assert.Equal("• CElCPapa — now 9,200,000,000", up.Body);
+    }
+
+    [Fact]
+    public void ARateRecoveryIsClimbingAgain()
+    {
+        var rate = new MetricRule("clan.standing.points", MetricRuleKind.Rate, 5_000_000, TimeSpan.FromMinutes(15),
+            AlertWhenBelow: true, Label: "K0i2 clan points", TellMeWhenItRecovers: true);
+
+        var up = WebhookPayload.ForAlert(AlertKind.MetricRecovered, [Fired(rate, "CElCPapa", 7_400_000)]);
+
+        Assert.Equal("CElCPapa — K0i2 clan points is climbing again", up.Title);
+        Assert.Equal("• CElCPapa — 7,400,000 a minute over 15 min (alert under 5,000,000)", up.Body);
+    }
+
+    /// <summary>An above-rule recovers downward, and says so rather than borrowing the other sentence.</summary>
+    [Fact]
+    public void AnAboveRuleRecoversByComingBackDown()
+    {
+        var above = new MetricRule("ps99.diamonds", MetricRuleKind.Level, 1_000, TimeSpan.Zero,
+            AlertWhenBelow: false, Label: "Diamonds", TellMeWhenItRecovers: true);
+
+        var up = WebhookPayload.ForAlert(AlertKind.MetricRecovered, [Fired(above, "CElCPapa", 900)]);
+
+        Assert.Equal("CElCPapa — Diamonds is back below 1,000", up.Title);
+    }
+
+    /// <summary>
     /// A metric that belongs to no account. Ur Score's clan-and-field numbers report with
     /// Guid.Empty as the subject — the documented global carrier — and ResolveAlertNames answers
     /// an unmatched id with two empty strings, so the noun reaching this code is "". Every trigger

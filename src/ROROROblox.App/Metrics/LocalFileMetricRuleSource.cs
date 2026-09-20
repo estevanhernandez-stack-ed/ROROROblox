@@ -164,7 +164,8 @@ public sealed class LocalFileMetricRuleSource(string filePath, ILogger<LocalFile
                     parsed.Threshold,
                     TimeSpan.FromMinutes(parsed.WindowMinutes),
                     parsed.AlertWhenBelow,
-                    NormaliseLabel(parsed.Label)));
+                    NormaliseLabel(parsed.Label),
+                    parsed.TellMeWhenItRecovers));
             }
             catch (Exception ex)
             {
@@ -223,5 +224,13 @@ public sealed class LocalFileMetricRuleSource(string filePath, ILogger<LocalFile
         [JsonPropertyName("windowMinutes")] public double WindowMinutes { get; set; }
         [JsonPropertyName("alertWhenBelow")] public bool AlertWhenBelow { get; set; } = true;
         [JsonPropertyName("label")] public string? Label { get; set; }
+
+        /// <summary>
+        /// Opt-in, so an existing file keeps saying exactly what it said. A rule that asks for it
+        /// speaks twice as often — once when it goes wrong and once when it comes right — and
+        /// turning that on for every rule already in the wild is not a decision this parser gets
+        /// to make on the user's behalf.
+        /// </summary>
+        [JsonPropertyName("tellMeWhenItRecovers")] public bool TellMeWhenItRecovers { get; set; }
     }
 }
