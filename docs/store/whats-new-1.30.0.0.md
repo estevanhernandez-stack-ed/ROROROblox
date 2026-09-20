@@ -89,6 +89,8 @@ Demandez qu'on vous dise quand tout rentre dans l'ordre
   son seuil.
 • Désactivé sauf si vous le cochez, et destiné aux mêmes
   endroits que les alertes de cette règle.
+• La phrase de l'alerte reste en anglais dans toutes les
+  langues pour l'instant.
 
 Les plugins s'installent sur une connexion lente
 • L'installation d'un plugin abandonnait après 100 secondes :
@@ -98,8 +100,6 @@ Les plugins s'installent sur une connexion lente
 • Une alerte portant sur un nombre qui n'appartient à aucun
   compte commence désormais par le nom de la règle au lieu
   d'un blanc.
-• La phrase de l'alerte reste en anglais dans toutes les
-  langues pour l'instant.
 ```
 
 ## Deutsch (de)
@@ -124,6 +124,8 @@ Lass dir sagen, wenn es wieder in Ordnung ist
   sobald die Zahl ihre Grenze wieder überschreitet.
 • Aus, bis du es setzt, und sie geht dorthin, wohin die
   Benachrichtigungen dieser Regel ohnehin gehen.
+• Der Satz der Benachrichtigung ist vorerst in jeder Sprache
+  englisch.
 
 Plugins lassen sich mit langsamer Verbindung installieren
 • Die Installation eines Plugins gab nach 100 Sekunden auf:
@@ -133,8 +135,6 @@ Plugins lassen sich mit langsamer Verbindung installieren
 • Eine Benachrichtigung über eine Zahl, die zu keinem Konto
   gehört, beginnt jetzt mit dem Namen der Regel statt mit
   einer Lücke.
-• Der Satz der Benachrichtigung ist vorerst in jeder Sprache
-  englisch.
 ```
 
 ## Русский (ru)
@@ -159,6 +159,7 @@ v1.30.0.0
   границу.
 • Выключено, пока вы не отметите, и уходит туда же, куда уже
   уходят оповещения этого правила.
+• Сама фраза оповещения пока на английском во всех языках.
 
 Plugin устанавливается и на медленном соединении
 • Установка plugin сдавалась через 100 секунд: тот, чьё
@@ -168,7 +169,6 @@ Plugin устанавливается и на медленном соедине�
 • Оповещение о числе, которое не принадлежит ни одному
   аккаунту, теперь начинается с названия правила, а не с
   пустого места.
-• Сама фраза оповещения пока на английском во всех языках.
 ```
 
 ## Português (Brasil) (pt-BR)
@@ -193,6 +193,7 @@ Peça para avisarem quando voltar ao normal
   limite.
 • Desligado até você marcar, e vai para os mesmos lugares que
   os alertas dessa regra já vão.
+• A frase do alerta ainda sai em inglês em todos os idiomas.
 
 Plugin instala em conexão lenta
 • A instalação de um plugin desistia depois de 100 segundos:
@@ -201,7 +202,6 @@ Plugin instala em conexão lenta
   ainda assim estourar.
 • Um alerta sobre um número que não pertence a nenhuma conta
   agora começa com o nome da regra, em vez de um espaço vazio.
-• A frase do alerta ainda sai em inglês em todos os idiomas.
 ```
 
 ## Polski (pl)
@@ -224,6 +224,8 @@ Poproś, żeby dać ci znać, gdy wróci do normy
   próg.
 • Wyłączone, dopóki nie zaznaczysz, i idzie tam, gdzie i tak
   idą alerty tej reguły.
+• Samo zdanie alertu jest na razie po angielsku we wszystkich
+  językach.
 
 Plugin instaluje się na wolnym łączu
 • Instalacja plugina poddawała się po 100 sekundach: kto nie
@@ -232,8 +234,6 @@ Plugin instaluje się na wolnym łączu
   komunikat podpowie, co zrobić.
 • Alert o liczbie, która nie należy do żadnego konta, zaczyna
   się teraz od nazwy reguły, a nie od pustego miejsca.
-• Samo zdanie alertu jest na razie po angielsku we wszystkich
-  językach.
 ```
 
 ## Español (es)
@@ -258,6 +258,8 @@ Pide que te avisen cuando vuelva a estar bien
   su límite.
 • Desactivado hasta que lo marques, y va a los mismos sitios a
   los que ya van las alertas de esa regla.
+• La frase de la alerta está en inglés en todos los idiomas de
+  momento.
 
 Los plugins se instalan con conexión lenta
 • Instalar un plugin se rendía a los 100 segundos: quien no
@@ -267,8 +269,6 @@ Los plugins se instalan con conexión lenta
 • Una alerta sobre un número que no pertenece a ninguna cuenta
   empieza ahora por el nombre de la regla, en vez de por un
   hueco.
-• La frase de la alerta está en inglés en todos los idiomas de
-  momento.
 ```
 
 ## What is deliberately not in this copy
