@@ -64,7 +64,22 @@ public sealed class WebhookCatcher : IAsyncDisposable
     /// </summary>
     public const int QuietPeriodMilliseconds = 150;
 
-    private static readonly TimeSpan QuietPeriod = TimeSpan.FromMilliseconds(QuietPeriodMilliseconds);
+    private static readonly TimeSpan DefaultQuietPeriod = TimeSpan.FromMilliseconds(QuietPeriodMilliseconds);
+
+    /// <summary>
+    /// This catcher's quiet period. The smoke run uses <see cref="QuietPeriodMilliseconds"/>, which
+    /// is tuned for a real alert dispatch; a TEST that pins the boundary can ask for a longer one so
+    /// that the thing it measures is the boundary and not the scheduler.
+    /// <para>
+    /// Added 2026-09-20 after <c>WebhookCatcherTests</c> failed on a loaded CI runner. The test
+    /// posted once, waited 50 ms, posted again, and required the second to arrive inside a 150 ms
+    /// window — leaving about 100 ms for a <c>Task.Delay</c> and an HTTP round trip on a machine
+    /// running the rest of the suite beside it. That is a coin flip, not an assertion. The test
+    /// still expresses its gap as a fraction of whatever period it is given, so it pins the same
+    /// boundary; it just no longer races the clock to do it.
+    /// </para>
+    /// </summary>
+    public TimeSpan QuietPeriod { get; }
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(20);
 
     private readonly HttpListener _listener;
@@ -85,9 +100,10 @@ public sealed class WebhookCatcher : IAsyncDisposable
     /// </summary>
     public IReadOnlyList<Exception> RequestFaults => _requestFaults.ToArray();
 
-    private WebhookCatcher(HttpListener listener, int port)
+    private WebhookCatcher(HttpListener listener, int port, TimeSpan quietPeriod)
     {
         _listener = listener;
+        QuietPeriod = quietPeriod;
         MineUrl = $"http://127.0.0.1:{port}{MinePath}";
         ClanUrl = $"http://127.0.0.1:{port}{ClanPath}";
         _acceptLoop = Task.Run(AcceptLoopAsync);
@@ -106,7 +122,11 @@ public sealed class WebhookCatcher : IAsyncDisposable
     /// listening.
     /// </para>
     /// </summary>
-    public static WebhookCatcher Start()
+    /// <param name="quietPeriod">
+    /// How long after the last arrival a drain waits before closing. Null takes
+    /// <see cref="QuietPeriodMilliseconds"/>, which is what the smoke run uses.
+    /// </param>
+    public static WebhookCatcher Start(TimeSpan? quietPeriod = null)
     {
         var port = ReserveFreeLoopbackPort();
 
@@ -114,7 +134,7 @@ public sealed class WebhookCatcher : IAsyncDisposable
         listener.Prefixes.Add($"http://127.0.0.1:{port}/");
         listener.Start();
 
-        return new WebhookCatcher(listener, port);
+        return new WebhookCatcher(listener, port, quietPeriod ?? DefaultQuietPeriod);
     }
 
     /// <summary>

@@ -94,8 +94,11 @@ public sealed class WebhookCatcherTests
     [Fact]
     public async Task DrainAsync_TwoPostsWellUnderTheQuietPeriodApart_AreBothCapturedInOneDrain()
     {
-        await using var catcher = WebhookCatcher.Start();
-        var gap = TimeSpan.FromMilliseconds(WebhookCatcher.QuietPeriodMilliseconds / 3); // 50ms of 150ms
+        // A generous quiet period, so what this measures is the boundary and not the scheduler. At
+        // the shipped 150 ms it left about 100 ms for a Task.Delay plus an HTTP round trip, which a
+        // loaded CI runner lost on 2026-09-20. The gap is still a fraction of the period in force.
+        await using var catcher = WebhookCatcher.Start(TimeSpan.FromSeconds(2));
+        var gap = catcher.QuietPeriod / 3;
 
         await PostAsync(catcher.MineUrl, "first");
         var postingSecond = PostAfterDelayAsync(catcher.ClanUrl, "second", gap);
@@ -111,8 +114,10 @@ public sealed class WebhookCatcherTests
     [Fact]
     public async Task DrainAsync_TwoPostsWellOverTheQuietPeriodApart_TheSecondArrivesOnlyOnTheNextDrain()
     {
-        await using var catcher = WebhookCatcher.Start();
-        var gap = TimeSpan.FromMilliseconds(WebhookCatcher.QuietPeriodMilliseconds * 4); // 600ms of 150ms
+        // The other side of the same boundary, and the safe direction: overshoot only makes the gap
+        // more over. It takes the same period so the pair reads as one test of one constant.
+        await using var catcher = WebhookCatcher.Start(TimeSpan.FromSeconds(2));
+        var gap = catcher.QuietPeriod * 2;
 
         await PostAsync(catcher.MineUrl, "first");
         var postingSecond = PostAfterDelayAsync(catcher.ClanUrl, "second", gap);
