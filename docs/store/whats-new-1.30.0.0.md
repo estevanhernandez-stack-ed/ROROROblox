@@ -30,6 +30,21 @@
 > Product nouns stay English throughout: RoRoRo, Discord, Pushover, ntfy, plugin, webhook. So do the
 > quoted alert strings, because they are what the app actually prints.
 >
+> **Verifier run, 2026-09-20 (commit 7994bdf, both shapes, 18 pairs).** 12 of 18 approve with
+> no issues. The 6 that say `revise` all say the same thing: the English-sentence caveat is a
+> claim with no English counterpart, which is Rule 1 (claim fidelity) working exactly as
+> designed. It is kept anyway, as a **deliberate, precedented deviation** — v1.29 made the same
+> call, certified and published with it. An English reader does not need to be told the
+> sentence is in English; a Polish reader who is told alerts changed and then gets an English
+> sentence has been misled unless we say so. Reversing this is Este's call, not the rubric's.
+>
+> **The run earned its keep twice.** The first pass caught nothing here but the flag exposed
+> that the caveat was sitting under "Plugins install on a slow connection", which it has
+> nothing to do with; it now follows the alerts material. The SECOND pass, after that move,
+> caught a real French grammar bug the first had not reached — "qui ne pouvait pas" with no
+> antecedent, now "quiconque". A German word-order error ("doch reicht nicht") was caught by
+> eye before either run. Three defects in six hand-written translations.
+>
 > Sources: `docs/store/release-notes-1.30.0.0.md`, the 2026-09-20 entry in `docs/decisions.md`,
 > PRs #215, #216 and #218.
 
