@@ -50,15 +50,78 @@ public class MetricEvaluatorTests
     public void Level_BelowThreshold_Breaches_WhenAlertWhenBelow()
     {
         var rule = new MetricRule(M, MetricRuleKind.Level, 500, TimeSpan.Zero, AlertWhenBelow: true);
-        Assert.True(MetricEvaluator.Evaluate(rule, Seeded((0, 400)), Acct, T(0)).Breached);
-        Assert.False(MetricEvaluator.Evaluate(rule, Seeded((0, 600)), Acct, T(0)).Breached);
+        Assert.True(MetricEvaluator.Evaluate(rule, Seeded((0, 600), (5, 400)), Acct, T(5)).Breached);
+        Assert.False(MetricEvaluator.Evaluate(rule, Seeded((0, 400), (5, 600)), Acct, T(5)).Breached);
     }
 
     [Fact]
     public void Level_AboveThreshold_Breaches_WhenAlertWhenAbove()
     {
         var rule = new MetricRule(M, MetricRuleKind.Level, 500, TimeSpan.Zero, AlertWhenBelow: false);
-        Assert.True(MetricEvaluator.Evaluate(rule, Seeded((0, 600)), Acct, T(0)).Breached);
+        Assert.True(MetricEvaluator.Evaluate(rule, Seeded((0, 400), (5, 600)), Acct, T(5)).Breached);
+        Assert.False(MetricEvaluator.Evaluate(rule, Seeded((0, 600), (5, 400)), Acct, T(5)).Breached);
+    }
+
+    /// <summary>
+    /// The whole point of the crossing rule. A condition that stays true is announced ONCE. Before
+    /// 2026-09-20 every one of these observations was a fresh breach, and with a reporter on a
+    /// three-minute timer and a five-minute cooldown that is a notification roughly every six
+    /// minutes, for hours, on every phone the rule was set on.
+    /// </summary>
+    [Fact]
+    public void Level_StayingBreached_IsAnnouncedOnce()
+    {
+        var rule = new MetricRule(M, MetricRuleKind.Level, 500, TimeSpan.Zero, AlertWhenBelow: true);
+        var h = Seeded((0, 600));
+
+        h.Add(new MetricObservation(Acct, M, 400, T(5)));
+        Assert.True(MetricEvaluator.Evaluate(rule, h, Acct, T(5)).Breached);
+
+        foreach (var minute in new[] { 10, 15, 20, 25 })
+        {
+            h.Add(new MetricObservation(Acct, M, 300, T(minute)));
+            Assert.False(MetricEvaluator.Evaluate(rule, h, Acct, T(minute)).Breached);
+        }
+
+        // Back over the line, then under it again: a second genuine crossing, a second alert.
+        h.Add(new MetricObservation(Acct, M, 700, T(30)));
+        Assert.False(MetricEvaluator.Evaluate(rule, h, Acct, T(30)).Breached);
+        h.Add(new MetricObservation(Acct, M, 450, T(35)));
+        Assert.True(MetricEvaluator.Evaluate(rule, h, Acct, T(35)).Breached);
+    }
+
+    /// <summary>
+    /// A rate that stays under the floor is one alert too. The previous state is measured over the
+    /// same window ending one sample back, not over the whole series.
+    /// </summary>
+    [Fact]
+    public void Rate_StayingUnderTheFloor_IsAnnouncedOnce()
+    {
+        var rule = Rate(100);
+        var h = Seeded((0, 0), (10, 2000));
+        Assert.False(MetricEvaluator.Evaluate(rule, h, Acct, T(10)).Breached);
+
+        // Falls off: 2000 -> 2100 over ten minutes is 10 a minute, under the floor of 100.
+        h.Add(new MetricObservation(Acct, M, 2100, T(20)));
+        Assert.True(MetricEvaluator.Evaluate(rule, h, Acct, T(20)).Breached);
+
+        h.Add(new MetricObservation(Acct, M, 2150, T(30)));
+        Assert.False(MetricEvaluator.Evaluate(rule, h, Acct, T(30)).Breached);
+
+        h.Add(new MetricObservation(Acct, M, 2200, T(40)));
+        Assert.False(MetricEvaluator.Evaluate(rule, h, Acct, T(40)).Breached);
+    }
+
+    /// <summary>
+    /// One sample is no crossing. This is also what a RoRoRo restart looks like, since the
+    /// coordinator's history is in memory: a condition that was already true is not re-announced
+    /// on startup. The alternative pages everyone whose condition is still true, every launch.
+    /// </summary>
+    [Fact]
+    public void Level_WithOnlyOneSample_HasNoCrossingToAnnounce()
+    {
+        var rule = new MetricRule(M, MetricRuleKind.Level, 500, TimeSpan.Zero, AlertWhenBelow: true);
+
         Assert.False(MetricEvaluator.Evaluate(rule, Seeded((0, 400)), Acct, T(0)).Breached);
     }
 

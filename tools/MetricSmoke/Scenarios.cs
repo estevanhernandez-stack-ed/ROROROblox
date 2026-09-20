@@ -151,12 +151,24 @@ public sealed record MetricRuleRow(
 /// </summary>
 public static class SmokeRules
 {
-    /// <summary>A Level rule below this threshold breaches on one report of
-    /// <see cref="BreachingLevel"/>, which is what lets most rows be a single report rather than a
-    /// two-sample rate dance.</summary>
+    /// <summary>A Level rule below this threshold breaches when a report of
+    /// <see cref="BreachingLevel"/> follows one of <see cref="QuietLevel"/>, which is what lets most
+    /// rows be a baseline plus a report rather than a two-sample rate dance.</summary>
     public const double LevelThreshold = 0.8;
 
     public const double BreachingLevel = 0.1;
+
+    /// <summary>
+    /// A value ABOVE <see cref="LevelThreshold"/>, so it never breaches an alert-when-below rule.
+    /// <para>
+    /// Every Level row needs one of these before its breaching report, because a rule fires on the
+    /// CROSSING and not on the state (2026-09-20): a series whose only sample is already under the
+    /// floor has nothing to cross from. <see cref="ScenarioContext.ReportAsync"/> sends it
+    /// automatically the first time a subject reports a Level metric, so no row had to learn the
+    /// rule — but the constant is here because the rows' own comments talk about it.
+    /// </para>
+    /// </summary>
+    public const double QuietLevel = 1.0;
 
     /// <summary>The floor for the two Rate rows, in units per minute. Both feed samples whose real
     /// rate is far below it, so a breach is unambiguous rather than borderline.</summary>
@@ -476,11 +488,46 @@ public sealed class ScenarioContext
         return _rowWatch.DispatchFailures;
     }
 
-    public Task ReportAsync(string subjectId, string metricId, double value)
-        => Reporter.ReportAsync(subjectId, metricId, value, DateTimeOffset.UtcNow);
+    /// <summary>
+    /// Subjects that have already had their Level baseline sent, so it is sent once per series.
+    /// </summary>
+    private readonly HashSet<(string Subject, string Metric)> _baselined = [];
 
-    public Task ReportAsync(string subjectId, string metricId, double value, TimeSpan ago)
-        => Reporter.ReportAsync(subjectId, metricId, value, DateTimeOffset.UtcNow - ago);
+    /// <summary>
+    /// Reports a value, preceded — once per (subject, metric) and only for a metric whose canonical
+    /// rule is a Level — by a non-breaching <see cref="SmokeRules.QuietLevel"/>.
+    /// <para>
+    /// A rule fires on the CROSSING, not on the state (2026-09-20), so a series whose only sample is
+    /// already under the floor never alerts. Every Level row in this file was written as a single
+    /// report against the old state-based evaluator; putting the baseline here rather than in
+    /// seventeen rows keeps each row about the thing it actually asserts. Rate rows are untouched:
+    /// their sample sequences ARE the assertion, and an injected sample would corrupt them.
+    /// </para>
+    /// </summary>
+    public async Task ReportAsync(string subjectId, string metricId, double value)
+    {
+        await BaselineIfLevelAsync(subjectId, metricId).ConfigureAwait(false);
+        await Reporter.ReportAsync(subjectId, metricId, value, DateTimeOffset.UtcNow).ConfigureAwait(false);
+    }
+
+    public async Task ReportAsync(string subjectId, string metricId, double value, TimeSpan ago)
+    {
+        await BaselineIfLevelAsync(subjectId, metricId).ConfigureAwait(false);
+        await Reporter.ReportAsync(subjectId, metricId, value, DateTimeOffset.UtcNow - ago).ConfigureAwait(false);
+    }
+
+    /// <summary>Sends the baseline the crossing rule needs, once per series, for Level metrics only.</summary>
+    private async Task BaselineIfLevelAsync(string subjectId, string metricId)
+    {
+        var rule = SmokeRules.Canonical.FirstOrDefault(r => string.Equals(r.MetricId, metricId, StringComparison.Ordinal));
+        if (rule is null || !string.Equals(rule.Kind, "Level", StringComparison.Ordinal)) return;
+        if (!_baselined.Add((subjectId, metricId))) return;
+
+        // Stamped a minute back so it can never share an instant with the report that follows it.
+        await Reporter
+            .ReportAsync(subjectId, metricId, SmokeRules.QuietLevel, DateTimeOffset.UtcNow - TimeSpan.FromMinutes(1))
+            .ConfigureAwait(false);
+    }
 
     public Task WriteRulesAsync(IReadOnlyList<MetricRuleRow> rows)
         => Guard.WriteRulesAsync(SmokeRules.ToJson(rows));
@@ -891,10 +938,12 @@ public static class ScenarioTable
 
         var locals = watch.DeliveredFor(SmokeMetrics.Repeat, LocalDestination).Count;
         return locals == 1
-            ? ScenarioOutcome.Pass("three breaches inside the cooldown, one toast")
+            ? ScenarioOutcome.Pass("a condition that stays true, reported three times, one toast")
             : ScenarioOutcome.Fail(
-                $"three breaches inside the {AlertRouter.Cooldown.TotalMinutes:0}-minute cooldown produced "
-                + $"{locals} 'Alert → Local' line(s), not one.");
+                $"a condition that stayed true across three reports produced {locals} 'Alert → Local' "
+                + $"line(s), not one. Two things have to fail for that: the evaluator's crossing rule "
+                + $"(reports two and three are the same state, so not breaches at all) and the "
+                + $"{AlertRouter.Cooldown.TotalMinutes:0}-minute cooldown behind it.");
     }
 
     /// <summary>

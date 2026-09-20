@@ -113,7 +113,17 @@ public class MetricReportSinkAdapterTests
         clock.Advance(MetricBreachBatcher.Window);
         Assert.Empty(raised);
 
+        // A report made while the gate is shut is not recorded at all, so switching the gate on
+        // starts the series from nothing — and a rule fires on the CROSSING (2026-09-20), which
+        // needs a previous state to cross from. So the first reading after the switch is the
+        // baseline and the second is the one that can alert. That is a real few minutes of
+        // quiet after someone turns metric alerts on, and it is the honest behaviour: the app
+        // has not yet seen this number do anything.
         enabled = true;
+        sut.Report(Acct.ToString(), M, 600, Ms(clock.GetUtcNow()));
+        clock.Advance(MetricBreachBatcher.Window);
+        Assert.Empty(raised);
+
         sut.Report(Acct.ToString(), M, 400, Ms(clock.GetUtcNow()));
         clock.Advance(MetricBreachBatcher.Window);
         Assert.Single(raised);
@@ -168,6 +178,11 @@ public class MetricReportSinkAdapterTests
         var raised = new List<AlertTrigger>();
         sut.AlertsRaised += (_, t) => raised.AddRange(t);
 
+        // Two reports, because a rule fires on the CROSSING (2026-09-20): 600 is above the floor,
+        // 400 is under it. Both land on the same series, which is the thing being proved — an
+        // unparseable subject maps to one carrier rather than a new series per bad id.
+        sut.Report("not-a-guid", M, 600, Ms(clock.GetUtcNow()));
+        clock.Advance(TimeSpan.FromSeconds(30));
         sut.Report("not-a-guid", M, 400, Ms(clock.GetUtcNow()));
 
         clock.Advance(MetricBreachBatcher.Window);
@@ -229,9 +244,21 @@ public class MetricReportSinkAdapterTests
         var batches = new List<IReadOnlyList<AlertTrigger>>();
         sut.AlertsRaised += (_, t) => batches.Add(t);
 
-        for (var i = 0; i < 8; i++)
+        // A baseline read for all eight, at zero, which is not above the floor of zero. Then the
+        // read that crosses. A rule fires on the CROSSING (2026-09-20), and this test is about
+        // what the BATCHER does with eight of them at once, which is unchanged.
+        var accounts = Enumerable.Range(0, 8).Select(_ => Guid.NewGuid().ToString()).ToList();
+        foreach (var account in accounts)
         {
-            sut.Report(Guid.NewGuid().ToString(), "ps99.diamonds", 2_974_993 + i, Ms(clock.GetUtcNow()));
+            sut.Report(account, "ps99.diamonds", 0, Ms(clock.GetUtcNow()));
+            clock.Advance(TimeSpan.FromMilliseconds(12));
+        }
+        clock.Advance(MetricBreachBatcher.Window);
+        Assert.Empty(batches);
+
+        for (var i = 0; i < accounts.Count; i++)
+        {
+            sut.Report(accounts[i], "ps99.diamonds", 2_974_993 + i, Ms(clock.GetUtcNow()));
             clock.Advance(TimeSpan.FromMilliseconds(12));
         }
         Assert.Empty(batches);
