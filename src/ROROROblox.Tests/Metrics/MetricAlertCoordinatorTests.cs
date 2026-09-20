@@ -62,19 +62,31 @@ public class MetricAlertCoordinatorTests
     }
 
     [Fact]
-    public void TheCoordinatorDoesNotDeduplicate_TheRouterDoes()
+    public void AConditionThatStaysTrue_IsOneTrigger_NotOnePerObservation()
     {
-        // Deliberate: repeated breaches produce repeated triggers here, and AlertRouter's
-        // cooldown (per account and metric id for a breach, corrected 2026-09-15) is what stops them
-        // becoming forty notifications. Keeping suppression in ONE place is the point -- two
-        // half-implementations disagree eventually.
+        // REVERSED 2026-09-20. This test used to assert the opposite, on the reasoning that
+        // suppression belongs in ONE place and that place was AlertRouter's cooldown. That reading
+        // conflated two different jobs. The cooldown is RATE LIMITING -- a backstop against a
+        // flood, keyed on (account, metric id). Whether a rule that is still true is a NEW breach
+        // is a question about the rule's meaning, and it belongs with the rule. It only looked
+        // academic because the cooldown hid it at five-minute granularity: with a reporter on a
+        // three-minute timer, "still true" meant a notification roughly every six minutes, for
+        // hours, on every phone the rule was set on.
+        //
+        // The cooldown is untouched and still does its own job: two genuine crossings inside five
+        // minutes are still collapsed by the router.
         var (sut, clock) = New(new MetricRule(M, MetricRuleKind.Rate, 100, TimeSpan.FromMinutes(10)));
 
         sut.Observe(Obs(0, clock.GetUtcNow()), "Masked", "Real");
         clock.Advance(TimeSpan.FromMinutes(10));
         Assert.Single(sut.Observe(Obs(500, clock.GetUtcNow()), "Masked", "Real"));
+
+        // Still under the floor a minute later, and a minute after that. The condition has not
+        // changed, so there is nothing new to say about it.
         clock.Advance(TimeSpan.FromMinutes(1));
-        Assert.Single(sut.Observe(Obs(550, clock.GetUtcNow()), "Masked", "Real"));
+        Assert.Empty(sut.Observe(Obs(550, clock.GetUtcNow()), "Masked", "Real"));
+        clock.Advance(TimeSpan.FromMinutes(1));
+        Assert.Empty(sut.Observe(Obs(600, clock.GetUtcNow()), "Masked", "Real"));
     }
 
     [Fact]
@@ -92,12 +104,17 @@ public class MetricAlertCoordinatorTests
         // that fired" is not "the first rule for the metric", so the third case puts a rule that
         // stays quiet ahead of the one that breaches.
         var rate = new MetricRule(M, MetricRuleKind.Rate, 100, TimeSpan.FromMinutes(10), Label: "Points");
-        var level = new MetricRule(M, MetricRuleKind.Level, 1000, TimeSpan.FromMinutes(10), Label: "Points");
+        var level = new MetricRule(M, MetricRuleKind.Level, 100, TimeSpan.FromMinutes(10), AlertWhenBelow: false, Label: "Points");
         var quietLevel = new MetricRule(M, MetricRuleKind.Level, 1000, TimeSpan.Zero, AlertWhenBelow: false, Label: "Points");
 
-        // 0 then, ten minutes later, 500: 50/min is under the rate floor of 100, 500 is under the
-        // level floor of 1000, and neither 0 nor 500 is above 1000. The first two rules breach on
-        // the second observation; the quiet one never does.
+        // 0 then, ten minutes later, 500. The rate is 50/min, under the floor of 100, and no rate
+        // could be measured a sample earlier -- a crossing. The level goes from 0 (not above 100)
+        // to 500 (above it) -- also a crossing, on the same observation, which is the case this
+        // test is about. Neither value is above 1000, so the quiet one never breaches.
+        //
+        // Both rules have to CROSS here, not merely be true: a level of "below 1000" would have
+        // been true at 0 as well as at 500, so under the crossing rule (2026-09-20) it would not
+        // fire on the second observation at all and the tie-break would never be exercised.
         static AlertTrigger FireOnce(params MetricRule[] rules)
         {
             var (sut, clock) = New(rules);

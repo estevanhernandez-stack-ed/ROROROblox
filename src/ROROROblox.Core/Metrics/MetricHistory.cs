@@ -101,6 +101,23 @@ public sealed class MetricHistory(int capacity = 64, int maxSeries = 256)
         lock (series.Samples) return series.Samples.Count == 0 ? null : series.Samples[^1].Value;
     }
 
+    /// <summary>
+    /// The sample before the newest one, or null with fewer than two. This is what lets a rule ask
+    /// "was this already true last time?" — the difference between alerting on a CROSSING and
+    /// alerting on a STATE, which is the difference between one notification and one every few
+    /// minutes for as long as the condition lasts (<see cref="MetricEvaluator"/>).
+    /// </summary>
+    public (double Value, DateTimeOffset AtUtc)? Previous(Guid accountId, string metricId)
+    {
+        if (!_series.TryGetValue((accountId, metricId), out var series)) return null;
+        lock (series.Samples)
+        {
+            if (series.Samples.Count < 2) return null;
+            var previous = series.Samples[^2];
+            return (previous.Value, previous.AtUtc);
+        }
+    }
+
     /// <summary>True when the two most recent samples differ. Used by
     /// <see cref="MetricRuleKind.Event"/>; false when there are fewer than two.</summary>
     public bool Changed(Guid accountId, string metricId)

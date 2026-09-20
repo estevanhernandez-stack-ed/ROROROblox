@@ -245,11 +245,27 @@ public class ScenarioTableTests
         var account = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
 
+        // A rule fires on the CROSSING, not on the state (2026-09-20), so a Level row is a
+        // non-breaching baseline and then the report that crosses — which is exactly what
+        // ScenarioContext.ReportAsync now sends, once per series, without any row asking.
         var level = Assert.Single(SmokeRules.Canonical.Where(r => r.MetricId == SmokeMetrics.Value));
-        Assert.True(Breaches(level, account, now, [(SmokeRules.BreachingLevel, TimeSpan.Zero)]),
-            $"{SmokeRules.BreachingLevel} does not breach the Level rule the harness writes.");
-        Assert.True(Breaches(level, account, now, [(0.79, TimeSpan.Zero)]),
-            "0.79 does not breach the Level rule, so the value-rendering row would never produce a body.");
+
+        Assert.False(Breaches(level, account, now, [(SmokeRules.QuietLevel, TimeSpan.FromMinutes(1))]),
+            $"{SmokeRules.QuietLevel} breaches the Level rule, so it is no baseline and every Level row "
+            + "would alert on its own setup.");
+
+        Assert.True(
+            Breaches(level, account, now, [(SmokeRules.QuietLevel, TimeSpan.FromMinutes(1)), (SmokeRules.BreachingLevel, TimeSpan.Zero)]),
+            $"{SmokeRules.BreachingLevel} after the baseline does not breach the Level rule the harness writes.");
+
+        Assert.True(
+            Breaches(level, account, now, [(SmokeRules.QuietLevel, TimeSpan.FromMinutes(1)), (0.79, TimeSpan.Zero)]),
+            "0.79 after the baseline does not breach the Level rule, so the value-rendering row would never produce a body.");
+
+        // And the state on its own is not a breach, which is the whole change: a single sample
+        // already under the floor has nothing to cross from.
+        Assert.False(Breaches(level, account, now, [(SmokeRules.BreachingLevel, TimeSpan.Zero)]),
+            "one sample under the floor breached, so the evaluator is still alerting on the state.");
 
         // The toast row: two samples a minute apart, a real rate of one per minute against the floor.
         var rate = Assert.Single(SmokeRules.Canonical.Where(r => r.MetricId == SmokeMetrics.Toast));
