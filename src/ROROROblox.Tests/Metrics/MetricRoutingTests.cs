@@ -174,4 +174,28 @@ public class MetricRoutingTests
         Assert.All(routed, r => Assert.DoesNotContain(r.Triggers, t => t.AccountId == coolingForPoints));
         Assert.All(routed, r => Assert.Contains(r.Triggers, t => t.AccountId == coolingForDiamonds));
     }
+
+    /// <summary>
+    /// A recovery goes exactly where its breach goes. It has no settings row of its own on purpose
+    /// -- anyone who wanted the bad news in a place wants the good news there too, and a second row
+    /// would be a worse question to ask. This pins that, so nobody later adds a row for it without
+    /// also deciding what an empty one means.
+    /// </summary>
+    [Fact]
+    public void ARecoveryGoesWhereItsBreachGoes()
+    {
+        var config = new DiscordConfig
+        {
+            MetricBreachDestinations = [AlertDestination.Phone, AlertDestination.Clan],
+        };
+
+        Assert.Equal(
+            config.DestinationsFor(AlertKind.MetricBreach),
+            config.DestinationsFor(AlertKind.MetricRecovered));
+
+        var none = new DiscordConfig();
+        Assert.Equal(
+            none.DestinationsFor(AlertKind.MetricBreach),
+            none.DestinationsFor(AlertKind.MetricRecovered));
+    }
 }

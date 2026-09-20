@@ -73,7 +73,12 @@ public sealed class MetricBreachBatcher(TimeProvider time, ILogger log) : IDispo
 
             foreach (var trigger in triggers)
             {
-                var key = new GroupKey(trigger.GameName, trigger.Rule);
+                // KIND is part of the key. Within one five-second window some accounts can breach
+                // while others recover on the same metric and rule, and a group is raised as one
+                // alert of one kind — so without this the two would be merged and rendered as
+                // whichever kind the router picked, with the other half of the accounts listed
+                // under a sentence that is false for them.
+                var key = new GroupKey(trigger.Kind, trigger.GameName, trigger.Rule);
                 if (!_pending.TryGetValue(key, out var group))
                 {
                     group = new PendingGroup();
@@ -133,7 +138,7 @@ public sealed class MetricBreachBatcher(TimeProvider time, ILogger log) : IDispo
         }
     }
 
-    private readonly record struct GroupKey(string? MetricId, MetricRule? Rule);
+    private readonly record struct GroupKey(AlertKind Kind, string? MetricId, MetricRule? Rule);
 
     private sealed class PendingGroup
     {

@@ -132,6 +132,93 @@ public class MetricEvaluatorTests
         Assert.False(MetricEvaluator.Evaluate(rule, new MetricHistory(), Acct, T(0)).Breached);
     }
 
+    /// <summary>
+    /// The companion to the crossing rule, and the reason it can be trusted. A breach is announced
+    /// once; after that, silence means "still bad", which on a lock screen is indistinguishable
+    /// from "nothing is wrong". This is the buzz that says you can stop watching.
+    /// </summary>
+    [Fact]
+    public void Level_ComingBackOverTheLine_IsARecovery_WhenTheRuleAsked()
+    {
+        var rule = new MetricRule(M, MetricRuleKind.Level, 500, TimeSpan.Zero, AlertWhenBelow: true,
+            TellMeWhenItRecovers: true);
+        var h = Seeded((0, 600));
+
+        h.Add(new MetricObservation(Acct, M, 400, T(5)));
+        var down = MetricEvaluator.Evaluate(rule, h, Acct, T(5));
+        Assert.True(down.Breached);
+        Assert.False(down.Recovered);
+
+        // Still under: neither news, in either direction.
+        h.Add(new MetricObservation(Acct, M, 450, T(10)));
+        var still = MetricEvaluator.Evaluate(rule, h, Acct, T(10));
+        Assert.False(still.Breached);
+        Assert.False(still.Recovered);
+
+        h.Add(new MetricObservation(Acct, M, 700, T(15)));
+        var up = MetricEvaluator.Evaluate(rule, h, Acct, T(15));
+        Assert.False(up.Breached);
+        Assert.True(up.Recovered);
+        Assert.Equal(700d, up.Observed);
+        Assert.Equal("level_recovered", up.Reason);
+
+        // And staying fine is not an endless all-clear.
+        h.Add(new MetricObservation(Acct, M, 800, T(20)));
+        Assert.False(MetricEvaluator.Evaluate(rule, h, Acct, T(20)).Recovered);
+    }
+
+    /// <summary>Opt-in. A rule that did not ask stays exactly as quiet as it was before.</summary>
+    [Fact]
+    public void ComingBackOverTheLine_SaysNothing_WhenTheRuleDidNotAsk()
+    {
+        var rule = new MetricRule(M, MetricRuleKind.Level, 500, TimeSpan.Zero, AlertWhenBelow: true);
+        var h = Seeded((0, 600), (5, 400));
+
+        h.Add(new MetricObservation(Acct, M, 700, T(10)));
+        var up = MetricEvaluator.Evaluate(rule, h, Acct, T(10));
+
+        Assert.False(up.Breached);
+        Assert.False(up.Recovered);
+        Assert.Null(up.Reason);
+    }
+
+    [Fact]
+    public void Rate_ClimbingAgain_IsARecovery_WhenTheRuleAsked()
+    {
+        var rule = new MetricRule(M, MetricRuleKind.Rate, 100, TimeSpan.FromMinutes(10),
+            TellMeWhenItRecovers: true);
+        var h = Seeded((0, 0), (10, 2000));
+
+        // 2000 -> 2100 over ten minutes is 10 a minute, under the floor of 100.
+        h.Add(new MetricObservation(Acct, M, 2100, T(20)));
+        Assert.True(MetricEvaluator.Evaluate(rule, h, Acct, T(20)).Breached);
+
+        // 2100 -> 4100 over ten minutes is 200 a minute, back over it.
+        h.Add(new MetricObservation(Acct, M, 4100, T(30)));
+        var up = MetricEvaluator.Evaluate(rule, h, Acct, T(30));
+
+        Assert.False(up.Breached);
+        Assert.True(up.Recovered);
+        Assert.Equal("rate_recovered", up.Reason);
+    }
+
+    /// <summary>
+    /// A rate nobody could measure is not a state to recover FROM. "It was unknown and now it is
+    /// fine" is not news anyone asked for, and it is what every restart would say otherwise.
+    /// </summary>
+    [Fact]
+    public void Rate_RecoveringFromAnUnmeasurableWindow_SaysNothing()
+    {
+        var rule = new MetricRule(M, MetricRuleKind.Rate, 100, TimeSpan.FromMinutes(10),
+            TellMeWhenItRecovers: true);
+
+        var h = Seeded((0, 0), (10, 5000));
+        var first = MetricEvaluator.Evaluate(rule, h, Acct, T(10));
+
+        Assert.False(first.Breached);
+        Assert.False(first.Recovered);
+    }
+
     [Fact]
     public void Event_BreachesOnChange_NotOnRepeat()
     {

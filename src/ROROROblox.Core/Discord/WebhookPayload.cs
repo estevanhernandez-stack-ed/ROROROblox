@@ -74,6 +74,7 @@ public sealed record WebhookPayload(string Title, string Body)
             // production builds that since the coordinator attaches the rule — keeps 1.28's
             // "{noun} — {metric id}". GameName still carries the metric id for this kind.
             AlertKind.MetricBreach => MetricTitle(noun, triggers[0]),
+            AlertKind.MetricRecovered => MetricRecoveredTitle(noun, triggers[0]),
             _ => (noun, ""),
         };
 
@@ -91,9 +92,9 @@ public sealed record WebhookPayload(string Title, string Body)
             // floor; Level and Event give the current value. The rule-less arm below it is 1.28's
             // line, kept for a trigger built without a rule. `0.##` there, invariant `#,0.##` here:
             // see FormatNumber.
-            AlertKind.MetricBreach when t.Rule is { } rule =>
+            AlertKind.MetricBreach or AlertKind.MetricRecovered when t.Rule is { } rule =>
                 MetricLine(Name(t), rule, t.MetricValue),
-            AlertKind.MetricBreach when t.MetricValue is { } v =>
+            AlertKind.MetricBreach or AlertKind.MetricRecovered when t.MetricValue is { } v =>
                 $"• {Name(t)} — {t.GameName} at {v:0.##}",
             _ => $"• {Name(t)}{(t.GameName is null ? "" : $" — {t.GameName}")}",
         }).ToList();
@@ -109,9 +110,12 @@ public sealed record WebhookPayload(string Title, string Body)
     /// </summary>
     private static (string Head, string Tail) MetricTitle(string noun, AlertTrigger first)
     {
-        if (first.Rule is not { } rule) return ($"{noun} — {first.GameName}", "");
+        // Shares Head with MetricRecoveredTitle so a breach and its recovery can never disagree
+        // about who they are about. (PR #215 makes the same change on its own branch for the
+        // empty-noun case; whichever merges second resolves to this.)
+        if (first.Rule is not { } rule) return (Head(noun, first.GameName ?? ""), "");
 
-        var head = $"{noun} — {rule.Label ?? rule.MetricId}";
+        var head = Head(noun, rule.Label ?? rule.MetricId);
         return rule.Kind switch
         {
             MetricRuleKind.Rate => (head, " stopped climbing"),
@@ -121,6 +125,32 @@ public sealed record WebhookPayload(string Title, string Body)
             _ => (head, ""),
         };
     }
+
+    /// <summary>
+    /// A recovery's title: the same head as its breach, with the sentence turned around. Whatever
+    /// the breach said went wrong, this says is no longer wrong — in the rule's own numbers, so the
+    /// two read as a pair rather than as two unrelated alerts about the same thing.
+    /// </summary>
+    private static (string Head, string Tail) MetricRecoveredTitle(string noun, AlertTrigger first)
+    {
+        if (first.Rule is not { } rule) return (Head(noun, first.GameName ?? ""), " is back to normal");
+
+        var head = Head(noun, rule.Label ?? rule.MetricId);
+        return rule.Kind switch
+        {
+            MetricRuleKind.Rate => (head, " is climbing again"),
+            MetricRuleKind.Level when rule.AlertWhenBelow => (head, $" is back above {FormatThreshold(rule.Threshold)}"),
+            MetricRuleKind.Level => (head, $" is back below {FormatThreshold(rule.Threshold)}"),
+            _ => (head, " is back to normal"),
+        };
+    }
+
+    /// <summary>
+    /// The subject of a metric title. With no account — the Guid.Empty carrier every metric that
+    /// belongs to nobody uses — the label IS the subject, so the dash has nothing to join.
+    /// </summary>
+    private static string Head(string noun, string label) =>
+        string.IsNullOrWhiteSpace(noun) ? label : $"{noun} — {label}";
 
     /// <summary>
     /// One account's line. No value means no number, never zero. A Rate breach's value is the

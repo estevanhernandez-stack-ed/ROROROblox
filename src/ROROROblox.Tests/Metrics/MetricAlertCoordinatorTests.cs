@@ -137,6 +137,31 @@ public class MetricAlertCoordinatorTests
         Assert.Equal(50d, t3.MetricValue);
     }
 
+    /// <summary>
+    /// A recovery is its own kind, so it gets its own cooldown slot (AlertCooldownKey keys on kind)
+    /// and cannot be swallowed by the breach that came moments before it.
+    /// </summary>
+    [Fact]
+    public void ARecovery_IsItsOwnKindOfTrigger()
+    {
+        var rule = new MetricRule(M, MetricRuleKind.Level, 500, TimeSpan.Zero, AlertWhenBelow: true,
+            TellMeWhenItRecovers: true);
+        var (sut, clock) = New(rule);
+
+        sut.Observe(Obs(600, clock.GetUtcNow()), "Masked", "Real");
+        clock.Advance(TimeSpan.FromMinutes(1));
+        var down = Assert.Single(sut.Observe(Obs(400, clock.GetUtcNow()), "Masked", "Real"));
+        Assert.Equal(AlertKind.MetricBreach, down.Kind);
+
+        clock.Advance(TimeSpan.FromMinutes(1));
+        var up = Assert.Single(sut.Observe(Obs(700, clock.GetUtcNow()), "Masked", "Real"));
+
+        Assert.Equal(AlertKind.MetricRecovered, up.Kind);
+        Assert.Equal(700d, up.MetricValue);
+        Assert.Same(rule, up.Rule);
+        Assert.NotEqual(AlertCooldownKey.For(down), AlertCooldownKey.For(up));
+    }
+
     [Fact]
     public void TriggerCarriesNoProse()
     {

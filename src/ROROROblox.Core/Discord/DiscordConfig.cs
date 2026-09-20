@@ -86,6 +86,9 @@ public sealed record DiscordConfig
             AlertKind.Recycled => (RecycledDestinations, AlertDestination.None),
             AlertKind.UptimeMark => (UptimeMarkDestinations, AlertDestination.None),
             AlertKind.MetricBreach => (MetricBreachDestinations, AlertDestination.None),
+            // A recovery follows its breach: anyone who wanted the bad news in a place wants the
+            // good news there too, and a second settings row would be a worse question to ask.
+            AlertKind.MetricRecovered => (MetricBreachDestinations, AlertDestination.None),
             _ => ((IReadOnlyList<AlertDestination>)[], AlertDestination.None),
         };
 
