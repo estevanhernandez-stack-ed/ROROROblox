@@ -1,0 +1,54 @@
+{
+  "product": "RoRoRo",
+  "storeId": "9NMJCS390KWB",
+  "sourceLanguage": "en",
+  "languages": [
+    "fr",
+    "de",
+    "ru",
+    "pt-br",
+    "pl",
+    "es"
+  ],
+  "sourceCommit": "6d5f6501656fa76388f76fb6c325d52de32f68fb",
+  "generatedUtc": "2026-09-20T00:00:00Z",
+  "sourceOfTruth": "docs/store/whats-new-1.30.0.0.md",
+  "fields": [
+    {
+      "field": "whatsNew.section1",
+      "en": "Alerts fire once, when something changes\n• A rule that stayed true used to alert again every few\n  minutes, for as long as it stayed true. It now alerts once,\n  when the number crosses the line, and goes quiet until it\n  crosses back.\n• If a rule of yours was talking a lot, it will go quiet. That\n  is the fix, not a fault.\n• A rule needs two readings before it can say anything, and a\n  restart does not re-announce a problem that was already\n  happening.",
+      "translations": {
+        "fr": "Les alertes se déclenchent une fois, au changement\n• Une règle qui restait vraie vous alertait de nouveau toutes\n  les quelques minutes, tant qu'elle restait vraie. Elle\n  alerte maintenant une seule fois, quand le nombre franchit\n  le seuil, puis se tait jusqu'au franchissement inverse.\n• Si une de vos règles parlait beaucoup, elle va se taire.\n  C'est le correctif, pas une panne.\n• Une règle a besoin de deux lectures avant de pouvoir dire\n  quoi que ce soit, et un redémarrage ne réannonce pas un\n  problème déjà en cours.",
+        "de": "Benachrichtigungen kommen einmal, beim Wechsel\n• Eine Regel, die wahr blieb, meldete sich alle paar Minuten\n  erneut, solange sie wahr blieb. Jetzt meldet sie sich\n  einmal, wenn die Zahl die Grenze überschreitet, und bleibt\n  still, bis sie zurückgeht.\n• Wenn eine deiner Regeln viel geredet hat, wird sie still.\n  Das ist die Korrektur, kein Fehler.\n• Eine Regel braucht zwei Messwerte, bevor sie etwas sagen\n  kann, und ein Neustart meldet ein bereits laufendes Problem\n  nicht erneut.",
+        "ru": "Оповещения приходят один раз — в момент изменения\n• Правило, остававшееся верным, оповещало заново каждые\n  несколько минут, пока оставалось верным. Теперь оно\n  оповещает один раз, когда число пересекает границу, и\n  молчит до обратного пересечения.\n• Если какое-то ваше правило говорило много, оно замолчит.\n  Это и есть исправление, а не поломка.\n• Правилу нужны два показания, прежде чем оно сможет что-то\n  сказать, а перезапуск не объявляет заново уже идущую\n  проблему.",
+        "pt-br": "Os alertas disparam uma vez, quando algo muda\n• Uma regra que continuava verdadeira alertava de novo a cada\n  poucos minutos, enquanto continuasse verdadeira. Agora ela\n  alerta uma vez, quando o número cruza o limite, e fica\n  quieta até cruzar de volta.\n• Se alguma regra sua falava muito, ela vai ficar quieta. É a\n  correção, não um defeito.\n• Uma regra precisa de duas leituras antes de poder dizer\n  qualquer coisa, e reiniciar não anuncia de novo um problema\n  que já estava acontecendo.",
+        "pl": "Alerty odzywają się raz, przy zmianie\n• Reguła, która pozostawała prawdziwa, alarmowała ponownie co\n  kilka minut, dopóki pozostawała prawdziwa. Teraz alarmuje\n  raz, gdy liczba przekracza próg, i milknie aż do powrotu.\n• Jeśli któraś twoja reguła dużo mówiła, teraz zamilknie. To\n  jest poprawka, nie awaria.\n• Reguła potrzebuje dwóch odczytów, zanim cokolwiek powie, a\n  restart nie ogłasza ponownie problemu, który już trwał.",
+        "es": "Las alertas saltan una vez, cuando algo cambia\n• Una regla que seguía siendo cierta volvía a avisar cada\n  pocos minutos, mientras siguiera siéndolo. Ahora avisa una\n  vez, cuando el número cruza el límite, y se calla hasta que\n  lo cruza de vuelta.\n• Si alguna regla tuya hablaba mucho, se va a callar. Es el\n  arreglo, no una avería.\n• Una regla necesita dos lecturas antes de poder decir nada, y\n  reiniciar no vuelve a anunciar un problema que ya estaba\n  pasando."
+      }
+    },
+    {
+      "field": "whatsNew.section2",
+      "en": "Ask to be told when it comes right again\n• Tick \"Also tell me when it comes right again\" on a rule and\n  a second alert arrives when the number comes back over its\n  line.\n• Off unless you tick it, and it goes where that rule's alerts\n  already go.",
+      "translations": {
+        "fr": "Demandez qu'on vous dise quand tout rentre dans l'ordre\n• Cochez « Also tell me when it comes right again » sur une\n  règle et une seconde alerte arrive quand le nombre repasse\n  son seuil.\n• Désactivé sauf si vous le cochez, et destiné aux mêmes\n  endroits que les alertes de cette règle.",
+        "de": "Lass dir sagen, wenn es wieder in Ordnung ist\n• Setze bei einer Regel das Häkchen „Also tell me when it\n  comes right again\", und eine zweite Benachrichtigung kommt,\n  sobald die Zahl ihre Grenze wieder überschreitet.\n• Aus, bis du es setzt, und sie geht dorthin, wohin die\n  Benachrichtigungen dieser Regel ohnehin gehen.",
+        "ru": "Попросите сообщить, когда всё вернётся в норму\n• Отметьте у правила «Also tell me when it comes right again»,\n  и второе оповещение придёт, когда число вернётся за свою\n  границу.\n• Выключено, пока вы не отметите, и уходит туда же, куда уже\n  уходят оповещения этого правила.",
+        "pt-br": "Peça para avisarem quando voltar ao normal\n• Marque \"Also tell me when it comes right again\" numa regra e\n  um segundo alerta chega quando o número volta a cruzar o\n  limite.\n• Desligado até você marcar, e vai para os mesmos lugares que\n  os alertas dessa regra já vão.",
+        "pl": "Poproś, żeby dać ci znać, gdy wróci do normy\n• Zaznacz przy regule „Also tell me when it comes right\n  again\", a drugi alert przyjdzie, gdy liczba wróci za swój\n  próg.\n• Wyłączone, dopóki nie zaznaczysz, i idzie tam, gdzie i tak\n  idą alerty tej reguły.",
+        "es": "Pide que te avisen cuando vuelva a estar bien\n• Marca \"Also tell me when it comes right again\" en una regla\n  y llega una segunda alerta cuando el número vuelve a cruzar\n  su límite.\n• Desactivado hasta que lo marques, y va a los mismos sitios a\n  los que ya van las alertas de esa regla."
+      }
+    },
+    {
+      "field": "whatsNew.section3",
+      "en": "Plugins install on a slow connection\n• Installing a plugin gave up after 100 seconds, so anyone\n  whose connection could not pull the whole file in that time\n  could never install one. It now has ten minutes, and says\n  what to try if it still runs out.\n• An alert about a number that belongs to no single account\n  now leads with the rule's own name instead of a blank.",
+      "translations": {
+        "fr": "Les plugins s'installent sur une connexion lente\n• L'installation d'un plugin abandonnait après 100 secondes :\n  qui ne pouvait pas télécharger le fichier entier dans ce\n  délai n'y arrivait jamais. Elle dispose maintenant de dix\n  minutes, et dit quoi essayer si le délai est dépassé.\n• Une alerte portant sur un nombre qui n'appartient à aucun\n  compte commence désormais par le nom de la règle au lieu\n  d'un blanc.\n• La phrase de l'alerte reste en anglais dans toutes les\n  langues pour l'instant.",
+        "de": "Plugins lassen sich mit langsamer Verbindung installieren\n• Die Installation eines Plugins gab nach 100 Sekunden auf:\n  wer die ganze Datei in dieser Zeit nicht laden konnte, schaffte\n  es nie. Jetzt sind es zehn Minuten, und sie sagt, was du\n  versuchen kannst, wenn die Zeit doch nicht reicht.\n• Eine Benachrichtigung über eine Zahl, die zu keinem Konto\n  gehört, beginnt jetzt mit dem Namen der Regel statt mit\n  einer Lücke.\n• Der Satz der Benachrichtigung ist vorerst in jeder Sprache\n  englisch.",
+        "ru": "Plugin устанавливается и на медленном соединении\n• Установка plugin сдавалась через 100 секунд: тот, чьё\n  соединение не успевало вытянуть весь файл за это время, не\n  мог установить его никогда. Теперь есть десять минут, и\n  сообщение подскажет, что делать, если и их не хватило.\n• Оповещение о числе, которое не принадлежит ни одному\n  аккаунту, теперь начинается с названия правила, а не с\n  пустого места.\n• Сама фраза оповещения пока на английском во всех языках.",
+        "pt-br": "Plugin instala em conexão lenta\n• A instalação de um plugin desistia depois de 100 segundos:\n  quem não conseguia puxar o arquivo inteiro nesse tempo nunca\n  instalava. Agora são dez minutos, e ele diz o que tentar se\n  ainda assim estourar.\n• Um alerta sobre um número que não pertence a nenhuma conta\n  agora começa com o nome da regra, em vez de um espaço vazio.\n• A frase do alerta ainda sai em inglês em todos os idiomas.",
+        "pl": "Plugin instaluje się na wolnym łączu\n• Instalacja plugina poddawała się po 100 sekundach: kto nie\n  zdążył pobrać całego pliku w tym czasie, nie zainstalował go\n  nigdy. Teraz jest dziesięć minut, a jeśli i tak się skończą,\n  komunikat podpowie, co zrobić.\n• Alert o liczbie, która nie należy do żadnego konta, zaczyna\n  się teraz od nazwy reguły, a nie od pustego miejsca.\n• Samo zdanie alertu jest na razie po angielsku we wszystkich\n  językach.",
+        "es": "Los plugins se instalan con conexión lenta\n• Instalar un plugin se rendía a los 100 segundos: quien no\n  pudiera descargar el archivo entero en ese tiempo no lo\n  instalaba nunca. Ahora tiene diez minutos, y dice qué probar\n  si aun así se acaba.\n• Una alerta sobre un número que no pertenece a ninguna cuenta\n  empieza ahora por el nombre de la regla, en vez de por un\n  hueco.\n• La frase de la alerta está en inglés en todos los idiomas de\n  momento."
+      }
+    }
+  ]
+}
