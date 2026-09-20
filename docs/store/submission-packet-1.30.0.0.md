@@ -67,19 +67,13 @@ existing claim incomplete — the crossing rule and recovery alerts refine alert
 already claims, and the plugin-install fix repairs a claimed feature rather than adding one. No new
 feature entry; still 19 of 20 used.
 
-**Two PRE-EXISTING gaps were found while auditing and are recorded in `listing-copy.md` rather than
-silently edited, because neither came from this release:**
-
-1. The alerts bullet in the long description (and the matching line on the hub page) **enumerates**
-   the alert kinds and omits metric alerts, which shipped in v1.28. That was defensible while no
-   reporter existed; a reporter is in `plugins-catalog.json` now, so the enumeration reads as
-   complete when it is not. Either add a clause or stop enumerating.
-2. The privacy paragraph says nothing leaves the machine except Roblox-side calls and, if configured,
-   the user's own webhook or push service. **A plugin the user installs makes its own network calls.**
-   The plugin bullet says plugins are separate processes with no permissions until granted, which is
-   true but is a different claim.
-
-Both are the owner's call. Neither blocks this submission.
+**Two questions were raised in the audit and RULED ON by the owner the same day: no change needed.**
+A Store install arrives with no plugin, so there are no metric alerts for the alerts bullet to
+enumerate, and nothing the user has not installed and granted makes a network call. The bullet and
+the privacy paragraph are both claims about RoRoRo itself; the listing's plugin bullet covers the
+rest. Full reasoning in `listing-copy.md`, including the fact that qualifies it — the plugin
+marketplace is gated to unpackaged builds, but install-from-URL is not, so the ruling rests on the
+default state rather than on plugins being unreachable.
 
 ## 3. What's new in this version
 

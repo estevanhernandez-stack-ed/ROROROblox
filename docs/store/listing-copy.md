@@ -30,8 +30,8 @@
 > **Audited 2026-09-20 for v1.30.0.0 — unchanged.** Nothing in 1.30 makes this snippet
 > incomplete: the crossing rule and recovery alerts refine alerting, which the snippet already
 > claims, and the plugin-install fix is a repair to a claimed feature rather than a new one.
-> Two PRE-EXISTING gaps were found in the long description and the hub page while auditing and
-> are recorded there; neither was introduced by this release, and both are the owner's call.
+> Two questions raised against the long description in the same audit were RULED ON by the owner
+> the same day and closed; see there.
 
 > Refreshed 2026-09-07 (v1.26.0.0) — "now in 6 languages" leads the snippet (the app's UI is
 > localized this release); "auto-update" dropped to fit the cap (it keeps its feature entry and
@@ -49,21 +49,27 @@ Multi-launcher for Windows, now in 6 languages. Run several Roblox clients side 
 
 ## Long description
 
-> **Audited 2026-09-20 for v1.30.0.0 — unchanged, with two gaps flagged for the owner.**
-> Neither was introduced by 1.30, so neither is edited here without a decision:
+> **Audited 2026-09-20 for v1.30.0.0 — unchanged. Two questions raised, both RULED ON by the
+> owner the same day: no change needed.** Recorded in full because they will look like drift again
+> next release, and the reasoning is what stops them being re-opened.
 >
-> 1. The alerts bullet ENUMERATES the alert kinds — drops, memory warnings, recycle
->    completions, the two-hourly mark — and omits metric alerts, which shipped in v1.28. That
->    was defensible while no reporter existed; Ur Score is in `plugins-catalog.json` now, so a
->    reader can install one from inside RoRoRo and the enumeration reads as complete when it is
->    not. Either add a clause or stop enumerating.
-> 2. The privacy paragraph says nothing leaves your machine except the Roblox-side calls and,
->    if you set them up, your own webhook or push service. A plugin you install makes its own
->    network calls — that is what a reporter IS — and the paragraph does not say so. The
->    plugin bullet says plugins run as separate processes with no permissions until granted,
->    which is true but is not the same claim.
+> 1. *Does the alerts bullet need to name metric alerts, now that a reporter is installable?* **No.**
+>    Owner's ruling: a Store install arrives with no plugin, so there are no metric alerts to
+>    enumerate. The bullet describes what RoRoRo itself alerts on; a plugin is a separate process
+>    the user chose to add, and the listing's plugin bullet already covers that.
+> 2. *Does the privacy paragraph need to account for a plugin's own network calls?* **No**, for the
+>    same reason. The paragraph is a claim about this app. Nothing the user has not installed and
+>    granted makes a call.
 >
-> The same alert-kind enumeration appears on the hub page (`docs/index.md`, "What you get").
+> **The one fact that qualifies the ruling, checked rather than assumed.** The plugin MARKETPLACE
+> is gated to unpackaged builds (`PluginsViewModel.MarketplaceEnabled => !IsPackaged`), which is
+> what keeps the Store build inside the v1.4 reviewer letter's promise never to read a curated list
+> from a server. **Install-from-URL is NOT gated** — `PluginsPage.xaml`'s manifest-URL box is
+> outside that block — so a Store user CAN paste a URL and install a plugin. That is deliberate
+> and consented (the sheet, per-capability grants, policy 10.2.2: core observes, plugins act). So
+> "no plugins on Store" is true of the DEFAULT STATE, not of what is reachable, and the ruling
+> rests on the former. If a future listing ever claims plugins are unavailable on Store outright,
+> that claim would be false.
 
 > Refreshed 2026-09-08 (v1.27.0.0) — the "speaks your language" bullet now covers the messages the
 > app composes while you use it, not just the screens, and says switching is instant. The v1.26
