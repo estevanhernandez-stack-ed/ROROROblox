@@ -110,9 +110,14 @@ public sealed record WebhookPayload(string Title, string Body)
     /// </summary>
     private static (string Head, string Tail) MetricTitle(string noun, AlertTrigger first)
     {
-        // Shares Head with MetricRecoveredTitle so a breach and its recovery can never disagree
-        // about who they are about. (PR #215 makes the same change on its own branch for the
-        // empty-noun case; whichever merges second resolves to this.)
+        // A metric that belongs to no account carries Guid.Empty as its subject — the documented
+        // global carrier — and ResolveAlertNames answers an unmatched id with two empty strings.
+        // So the noun is empty, and pasting it in front of an em dash produced " — Clan points
+        // went above 9,000,000,000": a title that opens on a dash and names nobody. Found before
+        // any user saw it (2026-09-20), on the first feature to report metrics without accounts.
+        // With no noun the label IS the subject, so the dash has nothing to join and goes. Head is
+        // shared with MetricRecoveredTitle, so a breach and its recovery can never disagree about
+        // who they are about.
         if (first.Rule is not { } rule) return (Head(noun, first.GameName ?? ""), "");
 
         var head = Head(noun, rule.Label ?? rule.MetricId);
@@ -157,13 +162,19 @@ public sealed record WebhookPayload(string Title, string Body)
     /// measured rate per minute, and it is never negative: <c>MetricHistory.RatePerMinute</c>
     /// returns null on any decrease or zero span, and <c>MetricEvaluator</c> treats null as no breach.
     /// </summary>
-    private static string MetricLine(string name, MetricRule rule, double? value) => (rule.Kind, value) switch
+    private static string MetricLine(string name, MetricRule rule, double? value)
     {
-        (_, null) => $"• {name}",
-        (MetricRuleKind.Rate, { } rate) =>
-            $"• {name} — {FormatNumber(rate)} a minute over {FormatNumber(rule.Window.TotalMinutes)} min (alert under {FormatThreshold(rule.Threshold)})",
-        (_, { } v) => $"• {name} — now {FormatNumber(v)}",
-    };
+        // Same empty subject as MetricTitle: with no account there is no name to lead the line,
+        // and "•  — now 9,040,000,000" is what that used to render as.
+        var lead = string.IsNullOrWhiteSpace(name) ? "• " : $"• {name} — ";
+        return (rule.Kind, value) switch
+        {
+            (_, null) => string.IsNullOrWhiteSpace(name) ? $"• {rule.Label ?? rule.MetricId}" : $"• {name}",
+            (MetricRuleKind.Rate, { } rate) =>
+                $"{lead}{FormatNumber(rate)} a minute over {FormatNumber(rule.Window.TotalMinutes)} min (alert under {FormatThreshold(rule.Threshold)})",
+            (_, { } v) => $"{lead}now {FormatNumber(v)}",
+        };
+    }
 
     /// <summary>
     /// A reading: thousands separators from 1,000 up, at most two decimals below that ("50", "0.79",

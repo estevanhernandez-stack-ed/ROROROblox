@@ -16,6 +16,20 @@ namespace ROROROblox.App.Plugins;
 /// </summary>
 public sealed class PluginInstaller
 {
+    /// <summary>
+    /// How long the whole of one download may take. HttpClient's own default is 100 seconds for
+    /// the entire request, which is what issue #136 hit: a multi-megabyte plugin.zip on a slow
+    /// connection cannot finish inside it, and the failure is total rather than slow. Set on the
+    /// registered client in <c>App.xaml.cs</c>; named here so the number and the reason live in
+    /// the same file as the code that depends on it.
+    /// </summary>
+    public static readonly TimeSpan DownloadTimeout = TimeSpan.FromMinutes(10);
+
+    internal const string TimedOut =
+        "The download did not finish in time. Check your connection and try again. If it keeps failing, "
+        + "download the plugin's files yourself and unzip them into the plugins folder — RoRoRo asks for "
+        + "consent the first time you launch a plugin it finds there.";
+
     private readonly HttpClient _http;
     private readonly string _pluginsRoot;
     private readonly Func<string, string, Task> _stopRunningPluginAsync;
@@ -217,22 +231,51 @@ public sealed class PluginInstaller
 
     private async Task<string> GetStringAsync(Uri uri)
     {
-        using var response = await _http.GetAsync(uri).ConfigureAwait(false);
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            throw new PluginInstallerException($"GET {uri} returned {(int)response.StatusCode}.");
+            using var response = await _http.GetAsync(uri).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new PluginInstallerException($"GET {uri} returned {(int)response.StatusCode}.");
+            }
+            return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         }
-        return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        catch (TaskCanceledException ex)
+        {
+            // No token is passed to any of these calls, so a cancellation here is the client's
+            // own timeout and nothing else. Issue #136: the raw message names a number and a
+            // class name, which told the user nothing they could do.
+            throw new PluginInstallerException(TimedOut, ex);
+        }
     }
 
+    /// <summary>
+    /// The zip, read as a stream rather than buffered by HttpClient. <c>ResponseHeadersRead</c>
+    /// returns as soon as the headers land, so a failing URL is known in seconds instead of after
+    /// the body, and the bytes are copied under this method's control rather than inside one
+    /// opaque call that the request clock has to cover whole (issue #136).
+    /// </summary>
     private async Task<byte[]> GetByteArrayAsync(Uri uri)
     {
-        using var response = await _http.GetAsync(uri).ConfigureAwait(false);
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            throw new PluginInstallerException($"GET {uri} returned {(int)response.StatusCode}.");
+            using var response = await _http
+                .GetAsync(uri, HttpCompletionOption.ResponseHeadersRead)
+                .ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new PluginInstallerException($"GET {uri} returned {(int)response.StatusCode}.");
+            }
+
+            using var body = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            using var buffer = new MemoryStream();
+            await body.CopyToAsync(buffer).ConfigureAwait(false);
+            return buffer.ToArray();
         }
-        return await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+        catch (TaskCanceledException ex)
+        {
+            throw new PluginInstallerException(TimedOut, ex);
+        }
     }
 }
 

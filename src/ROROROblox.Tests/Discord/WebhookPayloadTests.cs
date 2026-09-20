@@ -129,6 +129,60 @@ public class WebhookPayloadTests
         Assert.Equal("CElCPapa — Diamonds is back below 1,000", up.Title);
     }
 
+    /// <summary>
+    /// A metric that belongs to no account. Ur Score's clan-and-field numbers report with
+    /// Guid.Empty as the subject — the documented global carrier — and ResolveAlertNames answers
+    /// an unmatched id with two empty strings, so the noun reaching this code is "". Every trigger
+    /// in this file was built with a real name, so the suite was green while the first alert a
+    /// clan would ever receive rendered as " — Clan points went above 9,000,000,000" over a body
+    /// of "•  — now 9,040,000,000". With no noun the label IS the subject and the dash goes.
+    /// </summary>
+    [Fact]
+    public void AMetricWithNoAccountLeadsWithItsLabel()
+    {
+        var rule = new MetricRule("clan.standing.points", MetricRuleKind.Level, 9_000_000_000, TimeSpan.Zero,
+            AlertWhenBelow: false, Label: "K0i2 clan points");
+
+        var payload = WebhookPayload.ForAlert(
+            AlertKind.MetricBreach,
+            [new AlertTrigger(AlertKind.MetricBreach, Guid.Empty, "", "", rule.MetricId, null, At, 9_040_000_000, rule)]);
+
+        Assert.Equal("K0i2 clan points went above 9,000,000,000", payload.Title);
+        Assert.Equal("• now 9,040,000,000", payload.Body);
+        Assert.DoesNotContain(" — ", payload.Title, StringComparison.Ordinal);
+    }
+
+    /// <summary>The same, for a rate rule and for a breach that carries no value at all.</summary>
+    [Fact]
+    public void AnAccountLessRateAndAValuelessBreachAlsoLeadWithTheLabel()
+    {
+        var rate = new MetricRule("clan.standing.points", MetricRuleKind.Rate, 5_000_000, TimeSpan.FromMinutes(15),
+            AlertWhenBelow: true, Label: "K0i2 clan points");
+
+        var withRate = WebhookPayload.ForAlert(
+            AlertKind.MetricBreach,
+            [new AlertTrigger(AlertKind.MetricBreach, Guid.Empty, "", "", rate.MetricId, null, At, 1_200_000, rate)]);
+
+        Assert.Equal("K0i2 clan points stopped climbing", withRate.Title);
+        Assert.Equal("• 1,200,000 a minute over 15 min (alert under 5,000,000)", withRate.Body);
+
+        var none = WebhookPayload.ForAlert(
+            AlertKind.MetricBreach,
+            [new AlertTrigger(AlertKind.MetricBreach, Guid.Empty, "", "", rate.MetricId, null, At, null, rate)]);
+
+        Assert.Equal("• K0i2 clan points", none.Body);
+    }
+
+    /// <summary>An account-backed alert is untouched: it still leads with the alt's name.</summary>
+    [Fact]
+    public void AnAccountsAlertStillLeadsWithTheAccount()
+    {
+        var payload = WebhookPayload.ForAlert(AlertKind.MetricBreach, [Fired(DiamondsAbove, "CElCPapa", 12)]);
+
+        Assert.StartsWith("CElCPapa — ", payload.Title, StringComparison.Ordinal);
+        Assert.StartsWith("• CElCPapa — ", payload.Body, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void TheLiveTestCase_ReadsAsASentenceWithSeparators()
     {

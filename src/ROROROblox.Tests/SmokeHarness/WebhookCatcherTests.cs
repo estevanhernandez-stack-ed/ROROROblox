@@ -178,9 +178,15 @@ public sealed class WebhookCatcherTests
 
         SendThenResetMidBody(uri);
 
-        // Give the server a moment to hit the reset inside HandleAsync and fall into
+        // Wait for the server to hit the reset inside HandleAsync and fall into
         // HandleSafelyAsync's catch, before the real POST that proves the loop is still alive.
-        await Task.Delay(TimeSpan.FromMilliseconds(200));
+        // This was a flat 200 ms sleep, which is a guess about a machine rather than a fact about
+        // the server: adding five unrelated tests to this assembly in 2026-09-20 was enough extra
+        // load to make it lose that race, deterministically, in a full run while still passing on
+        // its own. Waiting for the fault itself cannot lose that race on any machine.
+        Assert.True(
+            await WaitUntil(() => catcher.RequestFaults.Count > 0, TimeSpan.FromSeconds(10)),
+            "the server never recorded the mid-read fault, so the rest of this test would prove nothing");
 
         await PostAsync(catcher.MineUrl, "still hears me");
         var posts = await catcher.DrainAsync(TimeSpan.FromSeconds(5));
@@ -188,6 +194,19 @@ public sealed class WebhookCatcherTests
         var post = Assert.Single(posts);
         Assert.Equal("still hears me", post.Body);
         Assert.NotEmpty(catcher.RequestFaults);
+    }
+
+    /// <summary>Polls until <paramref name="until"/> holds, or the budget runs out. False on timeout.</summary>
+    private static async Task<bool> WaitUntil(Func<bool> until, TimeSpan budget)
+    {
+        var deadline = DateTimeOffset.UtcNow + budget;
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            if (until()) return true;
+            await Task.Delay(TimeSpan.FromMilliseconds(20));
+        }
+
+        return until();
     }
 
     /// <summary>
