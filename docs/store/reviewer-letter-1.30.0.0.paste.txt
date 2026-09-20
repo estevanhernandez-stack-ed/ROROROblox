@@ -1,0 +1,84 @@
+Hello reviewer,
+
+RoRoRo is a launcher that runs several Roblox clients side by side, each signed
+in as a different account the user saved. This is v1.30.0.0. Certification last
+saw v1.29.0.0, so this is one version's delta and a small one.
+
+1. WHAT CHANGED, AND WHICH WAY IT POINTS
+
+Every behaviour change in this release makes the app do less, not more.
+
+  a) Alerts fire once, on the change, instead of repeatedly while a condition
+     lasts. A user rule that was true for three hours used to notify roughly
+     every six minutes for those three hours. It now notifies when the number
+     crosses the line and then stays quiet. This is strictly fewer
+     notifications and strictly fewer outbound calls.
+
+  b) Installing a plugin from a user-supplied link had a 100-second limit on
+     the whole download, so a large plugin on a slow connection could never
+     install. The limit is now ten minutes and the file is read as it arrives.
+     Same single call to the same user-supplied address; no new destination.
+
+  c) One addition: a rule may ask for a second notification when the number
+     comes back over its line. It is off unless the user ticks it, and it goes
+     to the destinations that rule's first notification already goes to. There
+     is no new setting and no new destination.
+
+  d) A notification about a number that belongs to no single account used to
+     print with an empty name where the account name goes. It now leads with
+     the rule's own name. Display only.
+
+2. THE MANIFEST DID NOT MOVE
+
+Package.appxmanifest differs from v1.29.0.0 by the Version attribute and
+nothing else. Same runFullTrust capability, same declared languages, same
+protocol declarations, same startup task. No new capability is requested.
+
+3. THE PLUGIN INTERFACE DID NOT MOVE
+
+plugin_contract.proto does not appear in this diff at all - no field, no
+message, no RPC, not even a comment. No file governing plugin capabilities or
+consent appears either. A plugin built against v1.28 or v1.29 runs against this
+build untouched.
+
+4. NO NEW NETWORK DESTINATION
+
+The app contacts no host it did not contact at v1.29.0.0. Every added line in
+this diff mentioning a URL or an HttpClient is inside a unit test, including an
+intentionally unreachable example.invalid address used to prove a timeout is
+reported helpfully. The one production change sets a timeout value on an
+HttpClient that already existed.
+
+RoRoRo gathers no third-party game data itself. It holds no address, no field
+path and no vendor name for any such source; a build-time test
+(NoVendorNameFenceTests) fails if one appears. Numbers come from a plugin the
+user installs and grants permission to, per capability, by name.
+
+5. WHAT YOU CANNOT EXERCISE ON CERTIFICATION HARDWARE, AND WHY
+
+The notification path in section 1(a) and 1(c) only runs for someone who has
+installed a plugin that reports numbers and has written a rule for it. This
+package ships no such plugin, and a fresh install makes no notification calls
+at all until the user configures a destination themselves. So there is nothing
+to observe here without that setup, and we would rather say so than have you
+hunt for it.
+
+Everything else in the app is exercisable normally: launching accounts,
+themes, settings, the tools window, and the plugin page with its per-capability
+consent sheet.
+
+6. UNCHANGED SINCE THE LAST REVIEW, RESTATED
+
+  - The app synthesizes no input and injects into no process. It observes and
+    it launches; it does not play the game for anyone.
+  - Account credentials are never seen by the app. Sign-in happens inside
+    Roblox's own page in a WebView2 frame; only the session cookie Roblox sets
+    is captured, and it is encrypted to the Windows user before it touches
+    disk.
+  - No telemetry and no analytics.
+  - Optional notifications go only to a Discord webhook or a push service the
+    user sets up themselves.
+
+Thank you for your time.
+
+626 Labs LLC
