@@ -121,6 +121,19 @@ A 626 Labs product.
 > had been folded into the live-status line, but the live listing carried it standalone and
 > it is a control, not a readout. 19/20 entries used.
 >
+> **That entry never reached the six translated sheets, and it is live that way.** Read off the
+> published v1.30 submission on 2026-09-21: `en-us` serves 19 feature entries, `de`/`es`/`fr`/
+> `pl`/`pt-br`/`ru` serve 18 each — uniformly one short, and the missing one is this entry.
+> German #4 is the RAM watchdog (English #5); the standalone frame-rate bullet has no
+> counterpart. The translated live-status line does mention the FPS limit, so the capability is
+> not unclaimed, but it loses its own row in six of the ten listings.
+>
+> Pre-existing and not caused by any release since: it entered English on a branch
+> (`store/fps-feature-bullet`, merged at `189573e`) after the translated sheets were written, and
+> nothing has diffed the counts across languages since. **First item for the next release's
+> listing audit** — translate one entry into six sheets and it closes. Not worth its own
+> submission on its own.
+>
 > One entry edited 2026-09-08 (v1.27.0.0): the language entry now says switching is instant and
 > covers the whole app rather than the screens alone. No new entry — v1.27 completes a claim the
 > v1.26 entry already made. Still 18/20 entries used.
