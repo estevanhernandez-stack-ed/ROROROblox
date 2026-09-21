@@ -1,9 +1,15 @@
 # Clan Discord post — v1.30.0.0
 
 > Post when the Store listing actually shows 1.30, not when certification clears — same rule as
-> every post since 1.21. Submitted for certification 2026-09-20. Setup.exe users get it within a
-> day of the GitHub release regardless, so if the release is published first this post can go out
-> on that and say so.
+> every post since 1.21. Setup.exe users get it within a day of the GitHub release regardless, so
+> if the release is published first this post can go out on that and say so.
+>
+> **Status 2026-09-21: certification PASSED.** Submission `1152921505701938673` moved
+> `Certification` → `Release`. That is not Published: at that moment the app's
+> `lastPublishedApplicationSubmission` was still v1.29's, so the listing was still serving 1.29.
+> **If this goes out before the listing flips, the opening two lines are wrong** — a Store user
+> told to hit "Get updates" gets nothing and concludes the post is mistaken. Either wait for the
+> flip, or lead on the GitHub release and say the Store copy is still on its way.
 >
 > **This one CAN lead with alerts, and 1.28's post could not.** The 1.28 post deliberately buried
 > metric alerts because nothing reported a number — a plugin had to, and no plugin was out. Both
@@ -17,9 +23,18 @@
 > why — so the post says outright that going quiet is the fix, not a fault. Same sentence as the
 > release notes; this is the audience that most needs it.
 >
-> **The recovery tick is second, not first.** It is the genuinely new thing, but it needs Ur Score
-> 0.5.4 AND this release, and it is off until you tick it. Leading with it would send people
-> looking for a switch whose other half may not be installed yet.
+> **The recovery tick is second, not first.** It is the genuinely new thing, but it is off until
+> you tick it, so leading with it would send people hunting for a switch most of them will not
+> turn on.
+>
+> **Corrected 2026-09-21: it does NOT need Ur Score 0.5.4.** This post said so, and the draft note
+> here argued the ordering from it. Wrong, and checked rather than reasoned: `plugin_contract.proto`
+> does not appear in `git diff v1.29.0.0..v1.30.0.0` at all, and `TellMeWhenItRecovers` lives
+> entirely host-side — `MetricRule` in Core, read from the rules file by
+> `LocalFileMetricRuleSource`, evaluated in `MetricEvaluator`. The plugin just keeps reporting the
+> number as it always has. Any working reporter does, including 0.5.3. The line mattered because a
+> version gate in clan copy is self-fulfilling: somebody on 0.5.3 reads it, concludes the tick is
+> not for them, and never ticks it.
 >
 > **The plugin-install fix gets a line because a real person reported it.** Issue #136, from
 > NinjaZix on v1.21: installing a plugin timed out after 100 seconds and there was nothing they
@@ -59,7 +74,8 @@ Tick "Also tell me when it comes right again" on any rule and you get a
 second buzz when the number comes back — "K0i2 clan points is back above
 9B", or "is climbing again" for a pace rule. Off unless you tick it, and
 it goes wherever that rule's alerts already go.
-Needs Ur Score 0.5.4, which is out now.
+Works with whatever's already reporting your numbers — no plugin update
+needed.
 
 **Plugins install on a slow connection**
 Installing a plugin gave up after 100 seconds, so if your connection
