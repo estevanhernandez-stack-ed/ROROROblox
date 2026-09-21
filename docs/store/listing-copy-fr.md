@@ -65,39 +65,39 @@ Les alertes se diffusent — bureau, salons Discord et téléphone, dans n'impor
 Disponible en six langues — toute l'app, écrans et messages, en français, allemand, russe, portugais (Brésil), polonais ou espagnol, changement immédiat, selon Windows ou votre choix
 ```
 
-## What's new in this version (v1.29.0.0, ≤1500 chars)
+## What's new in this version (v1.30.0.0, ≤1500 chars)
 
 ```
-v1.29.0.0
+v1.30.0.0
 
-Les alertes métriques disent ce qui s'est passé
-• Une alerte affichait « ps99.diamonds at 2974993 ». Elle
-  affiche maintenant « Diamonds went above 0 » puis « now
-  2,974,993 » — le nom que vous avez donné à la règle, ce que
-  vous lui demandez de guetter, et des nombres lisibles.
-• Une règle sans nom revient à l'identifiant de la métrique,
-  comme avant.
-• RoRoRo ne collecte toujours aucun nombre. Un plugin que vous
-  installez le rapporte, et rien dans ce paquet ne le fait.
+Les alertes se déclenchent une fois, au changement
+• Une règle qui restait vraie vous alertait de nouveau toutes
+  les quelques minutes, tant qu'elle restait vraie. Elle
+  alerte maintenant une seule fois, quand le nombre franchit
+  le seuil, puis se tait jusqu'au franchissement inverse.
+• Si une de vos règles parlait beaucoup, elle va se taire.
+  C'est le correctif, pas une panne.
+• Une règle a besoin de deux lectures avant de pouvoir dire
+  quoi que ce soit, et un redémarrage ne réannonce pas un
+  problème déjà en cours.
+
+Demandez qu'on vous dise quand tout rentre dans l'ordre
+• Cochez « Also tell me when it comes right again » sur une
+  règle et une seconde alerte arrive quand le nombre repasse
+  son seuil.
+• Désactivé sauf si vous le cochez, et destiné aux mêmes
+  endroits que les alertes de cette règle.
 • La phrase de l'alerte reste en anglais dans toutes les
   langues pour l'instant.
 
-Une lecture, une alerte
-• Un plugin qui rapporte un nombre pour huit comptes d'un coup
-  envoyait huit alertes à chaque destination. C'est désormais
-  une seule : « 8 accounts — Diamonds went above 0 », une
-  ligne par compte.
-• Deux nombres différents qui franchissent leur seuil sur le
-  même compte dans la même lecture vous parviennent tous deux.
-
-Une alerte ne peut plus notifier un salon, et une longue passe
-quand même
-• Les messages Discord partent avec les mentions désactivées :
-  rien dans une alerte ne peut notifier le salon où elle
-  arrive.
-• Une longue liste de comptes est raccourcie pour tenir et se
-  termine par « and 12 more » au lieu d'échouer. Pour tous les
-  types d'alerte.
+Les plugins s'installent sur une connexion lente
+• L'installation d'un plugin abandonnait après 100 secondes :
+  quiconque ne pouvait pas télécharger le fichier entier dans
+  ce délai n'y arrivait jamais. Elle dispose maintenant de dix
+  minutes, et dit quoi essayer si le délai est dépassé.
+• Une alerte portant sur un nombre qui n'appartient à aucun
+  compte commence désormais par le nom de la règle au lieu
+  d'un blanc.
 ```
 
 ## Copyright (single line)

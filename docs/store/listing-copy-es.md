@@ -65,37 +65,39 @@ Las alertas se reparten: escritorio, canales de Discord y móvil en cualquier co
 Disponible en seis idiomas — toda la app, pantallas y mensajes, en francés, alemán, ruso, portugués (Brasil), polaco o español, cambio inmediato, según Windows o tu elección
 ```
 
-## What's new in this version (v1.29.0.0, ≤1500 chars)
+## What's new in this version (v1.30.0.0, ≤1500 chars)
 
 ```
-v1.29.0.0
+v1.30.0.0
 
-Las alertas de métricas dicen qué ha pasado
-• Una alerta se leía "ps99.diamonds at 2974993". Ahora se lee
-  "Diamonds went above 0" y debajo "now 2,974,993": el nombre
-  que le diste a la regla, lo que le pediste que vigilara, y
-  números que se leen de un vistazo.
-• Una regla sin nombre sigue volviendo al identificador de la
-  métrica, como antes.
-• RoRoRo sigue sin recoger ningún número. Lo informa un plugin
-  que instalas, y nada en este paquete lo hace.
+Las alertas saltan una vez, cuando algo cambia
+• Una regla que seguía siendo cierta volvía a avisar cada
+  pocos minutos, mientras siguiera siéndolo. Ahora avisa una
+  vez, cuando el número cruza el límite, y se calla hasta que
+  lo cruza de vuelta.
+• Si alguna regla tuya hablaba mucho, se va a callar. Es el
+  arreglo, no una avería.
+• Una regla necesita dos lecturas antes de poder decir nada, y
+  reiniciar no vuelve a anunciar un problema que ya estaba
+  pasando.
+
+Pide que te avisen cuando vuelva a estar bien
+• Marca "Also tell me when it comes right again" en una regla
+  y llega una segunda alerta cuando el número vuelve a cruzar
+  su límite.
+• Desactivado hasta que lo marques, y va a los mismos sitios a
+  los que ya van las alertas de esa regla.
 • La frase de la alerta está en inglés en todos los idiomas de
   momento.
 
-Una lectura, una alerta
-• Un plugin que informa un número de ocho cuentas a la vez
-  enviaba ocho alertas a cada destino. Ahora es una:
-  "8 accounts — Diamonds went above 0", una línea por cuenta.
-• Dos números distintos que cruzan su límite en la misma
-  cuenta y en la misma lectura ahora llegan los dos.
-
-Una alerta no puede mencionar un canal, y una larga llega
-igual
-• Los mensajes de Discord salen con las menciones desactivadas:
-  nada dentro de una alerta hace ping en el canal donde cae.
-• Una lista larga de cuentas se recorta para caber y termina en
-  "and 12 more", en lugar de fallar por longitud. Para
-  cualquier tipo de alerta.
+Los plugins se instalan con conexión lenta
+• Instalar un plugin se rendía a los 100 segundos: quien no
+  pudiera descargar el archivo entero en ese tiempo no lo
+  instalaba nunca. Ahora tiene diez minutos, y dice qué probar
+  si aun así se acaba.
+• Una alerta sobre un número que no pertenece a ninguna cuenta
+  empieza ahora por el nombre de la regla, en vez de por un
+  hueco.
 ```
 
 ## Copyright (single line)

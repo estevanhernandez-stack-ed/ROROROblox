@@ -64,36 +64,36 @@ Alerty wachlarzem — pulpit, kanały Discord i telefon w dowolnej kombinacji, n
 Sześć języków — cała aplikacja, ekrany i komunikaty: francuski, niemiecki, rosyjski, portugalski (brazylijski), polski, hiszpański. Natychmiastowa zmiana, wg Windows lub twojego wyboru
 ```
 
-## What's new in this version (v1.29.0.0, ≤1500 chars)
+## What's new in this version (v1.30.0.0, ≤1500 chars)
 
 ```
-v1.29.0.0
+v1.30.0.0
 
-Alerty o wskaźnikach mówią, co się stało
-• Alert wyglądał tak: „ps99.diamonds at 2974993". Teraz czytasz
-  „Diamonds went above 0", a pod spodem „now 2,974,993" —
-  nazwę, którą nadałeś regule, to, czego kazałeś pilnować, i
-  liczby czytelne na pierwszy rzut oka.
-• Reguła bez nazwy nadal wraca do identyfikatora wskaźnika,
-  tak jak dotąd.
-• RoRoRo nadal sam nie zbiera żadnej liczby. Zgłasza ją plugin,
-  który instalujesz, a w tej paczce takiego nie ma.
+Alerty odzywają się raz, przy zmianie
+• Reguła, która pozostawała prawdziwa, alarmowała ponownie co
+  kilka minut, dopóki pozostawała prawdziwa. Teraz alarmuje
+  raz, gdy liczba przekracza próg, i milknie aż do powrotu.
+• Jeśli któraś twoja reguła dużo mówiła, teraz zamilknie. To
+  jest poprawka, nie awaria.
+• Reguła potrzebuje dwóch odczytów, zanim cokolwiek powie, a
+  restart nie ogłasza ponownie problemu, który już trwał.
+
+Poproś, żeby dać ci znać, gdy wróci do normy
+• Zaznacz przy regule „Also tell me when it comes right
+  again", a drugi alert przyjdzie, gdy liczba wróci za swój
+  próg.
+• Wyłączone, dopóki nie zaznaczysz, i idzie tam, gdzie i tak
+  idą alerty tej reguły.
 • Samo zdanie alertu jest na razie po angielsku we wszystkich
   językach.
 
-Jeden odczyt to jeden alert
-• Plugin zgłaszający liczbę dla ośmiu kont naraz wysyłał osiem
-  alertów na każdy adres. Teraz jest jeden: „8 accounts —
-  Diamonds went above 0", po jednej linii na konto.
-• Dwie różne liczby przekraczające próg na tym samym koncie w
-  jednym odczycie docierają teraz obie.
-
-Alert nie oznaczy kanału, a długi i tak dojdzie
-• Posty na Discordzie wychodzą z wyłączonymi wzmiankami: nic
-  wewnątrz alertu nie pinguje kanału, na który trafia.
-• Długa lista kont jest przycinana, żeby się zmieściła, i
-  kończy się „and 12 more", zamiast nie dojść przez długość.
-  Dotyczy każdego rodzaju alertu.
+Plugin instaluje się na wolnym łączu
+• Instalacja plugina poddawała się po 100 sekundach: kto nie
+  zdążył pobrać całego pliku w tym czasie, nie zainstalował go
+  nigdy. Teraz jest dziesięć minut, a jeśli i tak się skończą,
+  komunikat podpowie, co zrobić.
+• Alert o liczbie, która nie należy do żadnego konta, zaczyna
+  się teraz od nazwy reguły, a nie od pustego miejsca.
 ```
 
 ## Copyright (single line)

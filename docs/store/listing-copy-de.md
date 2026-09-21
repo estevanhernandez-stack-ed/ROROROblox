@@ -65,41 +65,39 @@ Alarme fächern auf — Desktop, Discord-Kanäle und Handy in jeder Kombination,
 In sechs Sprachen — die ganze App, Bildschirme wie Meldungen: Französisch, Deutsch, Russisch, Portugiesisch (Brasilien), Polnisch, Spanisch. Sofortiger Wechsel, gemäß Windows oder deiner Wahl
 ```
 
-## What's new in this version (v1.29.0.0, ≤1500 chars)
+## What's new in this version (v1.30.0.0, ≤1500 chars)
 
 ```
-v1.29.0.0
+v1.30.0.0
 
-Metrik-Benachrichtigungen sagen, was passiert ist
-• Eine Benachrichtigung las sich als „ps99.diamonds at
-  2974993". Jetzt steht dort „Diamonds went above 0" und
-  darunter „now 2,974,993" — der Name, den du der Regel
-  gegeben hast, wonach sie suchen soll, und lesbare Zahlen.
-• Eine Regel ohne Namen fällt weiter auf die Metrik-ID zurück,
-  wie bisher.
-• RoRoRo erhebt weiterhin keine Zahl selbst. Ein Plugin, das
-  du installierst, meldet sie, und in diesem Paket tut das
-  nichts.
+Benachrichtigungen kommen einmal, beim Wechsel
+• Eine Regel, die wahr blieb, meldete sich alle paar Minuten
+  erneut, solange sie wahr blieb. Jetzt meldet sie sich
+  einmal, wenn die Zahl die Grenze überschreitet, und bleibt
+  still, bis sie zurückgeht.
+• Wenn eine deiner Regeln viel geredet hat, wird sie still.
+  Das ist die Korrektur, kein Fehler.
+• Eine Regel braucht zwei Messwerte, bevor sie etwas sagen
+  kann, und ein Neustart meldet ein bereits laufendes Problem
+  nicht erneut.
+
+Lass dir sagen, wenn es wieder in Ordnung ist
+• Setze bei einer Regel das Häkchen „Also tell me when it
+  comes right again", und eine zweite Benachrichtigung kommt,
+  sobald die Zahl ihre Grenze wieder überschreitet.
+• Aus, bis du es setzt, und sie geht dorthin, wohin die
+  Benachrichtigungen dieser Regel ohnehin gehen.
 • Der Satz der Benachrichtigung ist vorerst in jeder Sprache
   englisch.
 
-Ein Lesevorgang, eine Benachrichtigung
-• Ein Plugin, das eine Zahl für acht Konten auf einmal meldet,
-  schickte acht Benachrichtigungen an jedes Ziel. Das ist
-  jetzt eine: „8 accounts — Diamonds went above 0", eine Zeile
-  pro Konto.
-• Zwei verschiedene Zahlen, die im selben Lesevorgang auf
-  demselben Konto ihre Grenze überschreiten, erreichen dich
-  jetzt beide.
-
-Keine Benachrichtigung kann einen Kanal anpingen, und eine
-lange kommt trotzdem an
-• Discord-Posts gehen mit abgeschalteten Erwähnungen raus:
-  nichts in einer Benachrichtigung kann den Kanal anpingen, in
-  dem sie landet.
-• Eine lange Kontoliste wird passend gekürzt und endet mit
-  „and 12 more", statt an der Länge zu scheitern. Für jede Art
-  von Benachrichtigung.
+Plugins lassen sich mit langsamer Verbindung installieren
+• Die Installation eines Plugins gab nach 100 Sekunden auf:
+  wer die ganze Datei in dieser Zeit nicht laden konnte, schaffte
+  es nie. Jetzt sind es zehn Minuten, und sie sagt, was du
+  versuchen kannst, wenn die Zeit doch nicht reicht.
+• Eine Benachrichtigung über eine Zahl, die zu keinem Konto
+  gehört, beginnt jetzt mit dem Namen der Regel statt mit
+  einer Lücke.
 ```
 
 ## Copyright (single line)
