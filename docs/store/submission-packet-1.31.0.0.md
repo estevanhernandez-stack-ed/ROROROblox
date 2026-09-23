@@ -3,7 +3,7 @@
 Everything Partner Center asks for on this submission, in the order it asks. Certification last saw
 **v1.30.0.0**, which certified and published on 2026-09-21, so this is a single version's delta.
 
-> **DRAFTED 2026-09-23, not yet submitted.** Open before the owner's submit click: the verifier run on
+> **DRAFTED 2026-09-23, not yet submitted.** Nothing open before the owner's submit click. The verifier run on
 > the what's-new translations (section 3). Package sizes and the CI result were filled the same day.
 
 ---
@@ -119,11 +119,21 @@ the same commit.
 `docs/store/whats-new-1.31.0.0.md`, seven blocks — English plus fr, de, ru, pt-BR, pl, es. Each under
 1,500 characters (English 899, longest French 1,140).
 
-**NOT YET VERIFIED.** The dataset is written (`whats-new-1.31.0.0.translations.json`, three sections
-× six languages, `sourceCommit: PENDING`). The translation verifier runs remotely and could not read a
-local path; it needs the dataset at a commit it can reach. Commit, set `sourceCommit`, run both
-shapes, fix, re-run — the 1.30 path. Expected flags: the six English-content caveat lines have no
-English counterpart (claim fidelity), the same deliberate, precedented deviation as v1.29 and v1.30.
+**Verified by the translation verifier at commit `5628edc`, both shapes, 18 pairs: 5 approve clean,
+13 revise. One real defect, fixed; the rest are two known false positives, overruled.**
+
+- **Fixed:** Polish section 2 said "to działa *nowa* funkcja" (the *new* feature), a word the English
+  does not have. Now "to działa ta funkcja".
+- **Overruled, 6 pairs (section 1):** the verifier wants "Tools" left in English "because the app
+  interface is in English". It is not, since UI localization wave 1: each translation uses that
+  culture's own `MainWindow_Tools` value (Outils, Werkzeuge, Инструменты, Ferramentas, Narzędzia,
+  Herramientas), which is what a reader in that language sees on the button. The verifier's
+  RoRoRo profile predates UI localization; worth an issue on the verifier repo.
+- **Overruled, 6 pairs (section 3):** the "page is in your language; descriptions are in English for
+  now" line has no English counterpart. Deliberate and precedented (v1.29, v1.30 certified with the
+  same call); an English reader does not need telling that English text is English.
+
+The Polish fix changes the text after the run, so that one pair is unverified at its final wording.
 
 UI names in the translated blocks are the app's own (`MainWindow_KnownRobloxIssues`,
 `MainWindow_Tools_2` from `Strings.<culture>.resx`), not re-translated.

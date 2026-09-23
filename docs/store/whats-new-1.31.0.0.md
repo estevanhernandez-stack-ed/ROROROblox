@@ -217,7 +217,7 @@ Powiadomienie o poważnych problemach
   głównego okna. Zamknij je, a zostanie zamknięte; wróci
   tylko przy nowym problemie.
 • Przy pierwszym otwarciu tej wersji zobaczysz jedno, o
-  zawieszającym się oknie. To działa nowa funkcja, a nie
+  zawieszającym się oknie. To działa ta funkcja, a nie
   nowy problem.
 
 Lista aktualizuje się sama
