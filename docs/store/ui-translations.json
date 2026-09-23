@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "1606bb6",
-  "generatedUtc": "2026-09-23T18:29:12+00:00",
+  "sourceCommit": "f311cf0",
+  "generatedUtc": "2026-09-23T19:36:09+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -12449,14 +12449,14 @@
     },
     {
       "field": "KnownIssuesPage_Intro",
-      "en": "Problems in Roblox itself, not in RoRoRo, and what to do about them.",
+      "en": "Problems in Roblox itself, and what to do about them.",
       "translations": {
-        "fr": "Des problèmes de Roblox lui-même, pas de RoRoRo, et quoi faire.",
-        "de": "Probleme in Roblox selbst, nicht in RoRoRo, und was du dagegen tun kannst.",
-        "ru": "Проблемы в самом Roblox, а не в RoRoRo, и что с ними делать.",
-        "pt-br": "Problemas do próprio Roblox, não do RoRoRo, e o que fazer a respeito.",
-        "pl": "Problemy w samym Roblox, a nie w RoRoRo, i co z nimi zrobić.",
-        "es": "Problemas del propio Roblox, no de RoRoRo, y qué hacer al respecto."
+        "fr": "Des problèmes de Roblox lui-même, et quoi faire.",
+        "de": "Probleme in Roblox selbst und was du dagegen tun kannst.",
+        "ru": "Проблемы в самом Roblox и что с ними делать.",
+        "pt-br": "Problemas do próprio Roblox e o que fazer a respeito.",
+        "pl": "Problemy w samym Roblox i co z nimi zrobić.",
+        "es": "Problemas del propio Roblox y qué hacer al respecto."
       }
     },
     {

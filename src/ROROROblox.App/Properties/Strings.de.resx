@@ -3142,7 +3142,7 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
     <value>Bekannte Roblox-Probleme</value>
   </data>
   <data name="KnownIssuesPage_Intro" xml:space="preserve">
-    <value>Probleme in Roblox selbst, nicht in RoRoRo, und was du dagegen tun kannst.</value>
+    <value>Probleme in Roblox selbst und was du dagegen tun kannst.</value>
   </data>
   <data name="KnownIssuesPage_EnglishOnly" xml:space="preserve">
     <value>Die Problembeschreibungen sind auf Englisch.</value>

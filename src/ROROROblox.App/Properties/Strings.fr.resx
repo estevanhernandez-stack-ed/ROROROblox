@@ -3142,7 +3142,7 @@ Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que 
     <value>Problèmes Roblox connus</value>
   </data>
   <data name="KnownIssuesPage_Intro" xml:space="preserve">
-    <value>Des problèmes de Roblox lui-même, pas de RoRoRo, et quoi faire.</value>
+    <value>Des problèmes de Roblox lui-même, et quoi faire.</value>
   </data>
   <data name="KnownIssuesPage_EnglishOnly" xml:space="preserve">
     <value>Les descriptions des problèmes sont en anglais.</value>
