@@ -3,8 +3,9 @@
 Everything Partner Center asks for on this submission, in the order it asks. Certification last saw
 **v1.30.0.0**, which certified and published on 2026-09-21, so this is a single version's delta.
 
-> **DRAFTED 2026-09-23, not yet submitted.** Nothing open before the owner's submit click. The verifier run on
-> the what's-new translations (section 3). Package sizes and the CI result were filled the same day.
+> **DRAFTED 2026-09-23, not yet submitted.** Nothing open before the owner's submit click. The
+> verifier run on the what's-new translations (section 3), the package sizes and the CI result were
+> all filled the same day.
 
 ---
 
@@ -133,7 +134,7 @@ the same commit.
   now" line has no English counterpart. Deliberate and precedented (v1.29, v1.30 certified with the
   same call); an English reader does not need telling that English text is English.
 
-The Polish fix changes the text after the run, so that one pair is unverified at its final wording.
+The Polish fix was re-run on its own at `f888737`: section 2 approves clean.
 
 UI names in the translated blocks are the app's own (`MainWindow_KnownRobloxIssues`,
 `MainWindow_Tools_2` from `Strings.<culture>.resx`), not re-translated.
