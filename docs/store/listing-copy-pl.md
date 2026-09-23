@@ -1,6 +1,6 @@
 # Store listing — Polski (pl)
 
-> Paste-ready dla Partner Center → Store listings → **Polski**. Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
+> Paste-ready dla Partner Center → Store listings → **Polski**. Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
 > `listing-copy.md` (v1.25.0.0 state). Product nouns stay in English (RoRoRo, Squad Launch,
 > Friend Follow, Pushover, ntfy); the app UI is now localized to Polish (v1.26.0.0). Register: ty (norma dla gier).
 
@@ -23,7 +23,7 @@ Co dostajesz:
 • Status każdego konta na żywo. Widzisz, które konto jest w której grze, kto stoi bezczynnie i jak długo, a limit FPS ustawiasz osobno dla każdego konta — i on się trzyma.
 • Squad Launch + Friend Follow. Wyślij wszystkie zaznaczone konta na ten sam prywatny serwer, dołącz za znajomym na jego serwer albo wyląduj kontami razem na jednym publicznym.
 • Strażnik pamięci + Recycle. RoRoRo uczy się, ile RAM-u klient Roblox naprawdę kosztuje na twojej maszynie, i ostrzega, zanim jej zabraknie. Jedno kliknięcie zamyka ciężkiego klienta i odsyła go na ten sam serwer.
-• Jedno okno narzędzi. Gry, ustawienia, historia, diagnostyka, pluginy i O programie to strony jednego okna obok listy kont — ze skrótami klawiszowymi wszędzie; F1 pokazuje listę.
+• Jedno okno narzędzi. Gry, ustawienia, historia, diagnostyka, pluginy, Znane problemy Roblox i O programie to strony jednego okna obok listy kont — ze skrótami klawiszowymi wszędzie; F1 pokazuje listę.
 • Motywy. Cztery wbudowane, w tym jeden, który nigdy nie przekazuje znaczenia samym kolorem, plus edytor własnych motywów z dziesięciu kolorów, z udostępnianiem w pliku.
 • Alerty opcjonalne — pulpit, Discord albo telefon. Skieruj każdy alert w dowolną kombinację: powiadomienia na pulpicie, utworzony przez ciebie webhook Discorda albo telefon przez Pushover lub ntfy. Wylogowania altów, ostrzeżenia o pamięci, zakończenia Recycle i sygnał „wszystko gra" co dwie godziny. Świeża instalacja nie wykonuje żadnych wywołań alertów — nic nie wychodzi, dopóki sam czegoś nie skonfigurujesz.
 • Zasobnik systemowy. Ikona w kolorze stanu rzutem oka pokazuje stan multi-instancji; dwuklik uruchamia główne konto.
@@ -33,7 +33,7 @@ Co dostajesz:
 • Mówi w twoim języku. Cała aplikacja — każde menu, ustawienie, podpowiedź i okno, a także komunikaty, które RoRoRo wypisuje podczas pracy — jest przetłumaczona na francuski, niemiecki, rosyjski, portugalski (brazylijski), polski i hiszpański, zgodnie z językiem Windows lub twoim wyborem w Ustawieniach. Zmiana działa natychmiast, a lista pokazuje tylko w pełni przetłumaczone języki, więc nigdy nie trafisz na ekran w połowie po angielsku.
 
 Prywatność i bezpieczeństwo:
-RoRoRo nigdy nie widzi twojego hasła do Roblox. Logowanie odbywa się w całości na stronie samego Roblox, osadzonej w ramce Microsoft Edge WebView2 — ten sam HTML, to samo połączenie HTTPS co w przeglądarce. RoRoRo przechwytuje tylko cookie sesji, które Roblox ustawia po zalogowaniu, i szyfruje je przed zapisem na dysk. Zero telemetrii. Zero analityki. Nic nie opuszcza twojej maszyny poza wywołaniami do Roblox przy starcie — tymi samymi, które Roblox.com robi z przeglądarki — oraz, wyłącznie jeśli sam je skonfigurujesz, alertami na twój webhook Discorda albo wybraną usługę push (Pushover lub ntfy).
+RoRoRo nigdy nie widzi twojego hasła do Roblox. Logowanie odbywa się w całości na stronie samego Roblox, osadzonej w ramce Microsoft Edge WebView2 — ten sam HTML, to samo połączenie HTTPS co w przeglądarce. RoRoRo przechwytuje tylko cookie sesji, które Roblox ustawia po zalogowaniu, i szyfruje je przed zapisem na dysk. Zero telemetrii. Zero analityki. Nic o tobie nie opuszcza twojej maszyny poza wywołaniami do Roblox przy starcie — tymi samymi, które Roblox.com robi z przeglądarki — oraz, wyłącznie jeśli sam je skonfigurujesz, alertami na twój webhook Discorda albo wybraną usługę push (Pushover lub ntfy). RoRoRo pobiera też własne podpisane pliki ze swoich wydań na GitHubie — aktualizacje, ustawienia zgodności z Roblox i listę znanych problemów Roblox — i nie wysyła przy tym nic o tobie.
 
 Ważne: znaki towarowe i powiązania.
 „Roblox" i logo Roblox są znakami towarowymi Roblox Corporation. RoRoRo to niezależne narzędzie zewnętrzne, niepowiązane z Roblox Corporation, nierekomendowane ani niesponsorowane przez nią. Znak towarowy służy wyłącznie opisaniu zgodności z platformą Roblox. RoRoRo uruchamia oficjalnego klienta Roblox bez modyfikacji — bez wstrzykiwania, bez hooków, bez ingerencji w proces Roblox; przed startem jedynie trzyma nazwany mutex Windows, tak aby kolejne instancje klienta widziały sprawdzenie singletona jako już zajęte.
@@ -41,12 +41,13 @@ Ważne: znaki towarowe i powiązania.
 Produkt 626 Labs.
 ```
 
-## Product features (18 entries, ≤200 chars each)
+## Product features (20 entries, ≤200 chars each)
 
 ```
 Launcher multi-instancji dla Roblox na Windows — jednym kliknięciem
 Szyfrowany sejf kont DPAPI z eksportem chronionym frazą-hasłem
 Status każdego konta na żywo — gra, czas bezczynności i limit FPS na konto
+Limity FPS na konto — podniesione, obniżone albo całkiem zniesione, osobno dla każdego klienta
 Strażnik pamięci uczący się prawdziwego kosztu RAM każdego klienta, plus Recycle jednym kliknięciem na ten sam serwer
 Squad Launch i Friend Follow — ten sam prywatny serwer albo wspólny publiczny
 Dołączanie z linku z dowolnego URL roblox.com, z zapisanymi prywatnymi serwerami na konto
@@ -62,6 +63,7 @@ Alerty na telefon przez Pushover lub ntfy — alt wypada i telefon wibruje, nawe
 Sygnał „wszystko gra" co dwie godziny, póki konta działają — cisza znaczy: sprawdź PC
 Alerty wachlarzem — pulpit, kanały Discord i telefon w dowolnej kombinacji, na każdy alert
 Sześć języków — cała aplikacja, ekrany i komunikaty: francuski, niemiecki, rosyjski, portugalski (brazylijski), polski, hiszpański. Natychmiastowa zmiana, wg Windows lub twojego wyboru
+Znane problemy Roblox — problemy po stronie Roblox, co robić i która funkcja RoRoRo pomaga, aktualne bez aktualizacji aplikacji
 ```
 
 ## What's new in this version (v1.30.0.0, ≤1500 chars)

@@ -1,6 +1,6 @@
 # Store listing — Deutsch (de)
 
-> Paste-ready für Partner Center → Store listings → **Deutsch**. Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
+> Paste-ready für Partner Center → Store listings → **Deutsch**. Refreshed 2026-09-23 for v1.31.0.0 (feature entries for Known Roblox issues and per-account frame-rate caps, 18 → 20; privacy sentence; tools-window page list). Refreshed 2026-09-08 for v1.27.0.0 (what's-new + language claims). Drafted 2026-09-05 from
 > `listing-copy.md`, refreshed for v1.26.0.0. Product nouns stay in English (RoRoRo, Squad
 > Launch, Friend Follow, Pushover, ntfy); the interface is now localized to six languages, so
 > the old English-only caveat is gone. Register: du (Gaming-Store-Norm).
@@ -24,7 +24,7 @@ Was du bekommst:
 • Live-Status für jedes Konto. Sieh, welches Konto in welchem Spiel ist, wer wie lange inaktiv ist, und setze FPS-Limits pro Konto, die halten.
 • Squad Launch + Friend Follow. Schicke alle ausgewählten Konten in denselben privaten Server, folge einem Freund in seinen, oder lande mit deinen Konten gemeinsam auf einem öffentlichen Server.
 • RAM-Wächter + Recycle. RoRoRo lernt, was ein Roblox-Client auf deiner Maschine wirklich an RAM kostet, und warnt, bevor er ausgeht. Ein Klick schließt einen schweren Client und bringt ihn zurück in denselben Server.
-• Ein Werkzeugfenster. Spiele, Einstellungen, Verlauf, Diagnose, Plugins und Über sind Seiten eines Fensters neben deinen Konten — mit Tastenkürzeln überall; F1 zeigt die Liste.
+• Ein Werkzeugfenster. Spiele, Einstellungen, Verlauf, Diagnose, Plugins, Bekannte Roblox-Probleme und Über sind Seiten eines Fensters neben deinen Konten — mit Tastenkürzeln überall; F1 zeigt die Liste.
 • Themes. Vier eingebaute, darunter eines, das Bedeutung nie allein über Farbe transportiert, plus ein Editor für eigene Themes aus zehn Farben, teilbar als Datei.
 • Optionale Alarme — Desktop, Discord oder Handy. Leite jeden Alarm an jede Kombination: Desktop-Benachrichtigungen, einen selbst erstellten Discord-Webhook oder dein Handy über Pushover oder ntfy. Verbindungsabbrüche, RAM-Warnungen, Recycle-Abschlüsse und ein „Alles gut“-Zeichen alle zwei Stunden. Eine frische Installation macht keinerlei Alarm-Aufrufe — nichts sendet, bevor du etwas einrichtest.
 • Infobereich mit statusfarbenem Symbol — der Multi-Instanz-Status auf einen Blick; Doppelklick startet dein Hauptkonto.
@@ -34,7 +34,7 @@ Was du bekommst:
 • Spricht deine Sprache. Die gesamte App — jedes Menü, jede Einstellung, jeder Tooltip und jedes Fenster sowie die Meldungen, die RoRoRo während der Nutzung schreibt — ist auf Französisch, Deutsch, Russisch, Portugiesisch (Brasilien), Polnisch und Spanisch übersetzt, je nach Windows-Sprache oder deiner Wahl in den Einstellungen. Der Wechsel wirkt sofort, und die Auswahl bietet nur vollständig übersetzte Sprachen an, damit du nie auf einem halb englischen Bildschirm landest.
 
 Datenschutz und Sicherheit:
-Dein Roblox-Passwort sieht RoRoRo nie. Die Anmeldung passiert vollständig auf Robloxs eigener Seite, eingebettet in einen Microsoft-Edge-WebView2-Rahmen — dasselbe HTML, dieselbe HTTPS-Verbindung wie in deinem Browser. RoRoRo erfasst nur das Sitzungscookie, das Roblox nach erfolgreicher Anmeldung setzt, und verschlüsselt es vor dem Schreiben auf die Festplatte. Keine Telemetrie. Keine Analyse. Nichts verlässt deine Maschine außer den Roblox-Aufrufen beim Start — denselben, die Roblox.com aus deinem Browser macht — und, nur wenn du sie selbst einrichtest, Alarmen an deinen eigenen Discord-Webhook oder den gewählten Push-Dienst (Pushover oder ntfy).
+Dein Roblox-Passwort sieht RoRoRo nie. Die Anmeldung passiert vollständig auf Robloxs eigener Seite, eingebettet in einen Microsoft-Edge-WebView2-Rahmen — dasselbe HTML, dieselbe HTTPS-Verbindung wie in deinem Browser. RoRoRo erfasst nur das Sitzungscookie, das Roblox nach erfolgreicher Anmeldung setzt, und verschlüsselt es vor dem Schreiben auf die Festplatte. Keine Telemetrie. Keine Analyse. Nichts über dich verlässt deine Maschine außer den Roblox-Aufrufen beim Start — denselben, die Roblox.com aus deinem Browser macht — und, nur wenn du sie selbst einrichtest, Alarmen an deinen eigenen Discord-Webhook oder den gewählten Push-Dienst (Pushover oder ntfy). RoRoRo lädt außerdem seine eigenen signierten Dateien aus seinen GitHub-Releases herunter — Updates, die Roblox-Kompatibilitätseinstellungen und die Liste bekannter Roblox-Probleme — und sendet dafür nichts über dich.
 
 Wichtig: Marken- und Zugehörigkeitshinweis.
 „Roblox" und das Roblox-Logo sind Marken der Roblox Corporation. RoRoRo ist ein unabhängiges Drittanbieter-Werkzeug, nicht mit der Roblox Corporation verbunden, von ihr befürwortet oder gesponsert. Der Markenbegriff wird ausschließlich zur Beschreibung der Kompatibilität mit der Roblox-Plattform verwendet. RoRoRo startet den offiziellen Roblox-Client unverändert — keine Injektion, keine Hooks, keine Veränderung des Roblox-Prozesses; es hält lediglich vor dem Start einen benannten Windows-Mutex, damit weitere Client-Instanzen die Singleton-Prüfung als bereits vergeben sehen.
@@ -42,12 +42,13 @@ Wichtig: Marken- und Zugehörigkeitshinweis.
 Ein Produkt von 626 Labs.
 ```
 
-## Product features (18 entries, ≤200 chars each)
+## Product features (20 entries, ≤200 chars each)
 
 ```
 Multi-Instanz-Launcher für Roblox auf Windows, mit einem Klick
 DPAPI-verschlüsselter Konten-Tresor mit passphrasengeschütztem Export
 Live-Status je Konto — aktuelles Spiel, Inaktivitätszeit und FPS-Limits pro Konto
+FPS-Limits pro Konto — je Client angehoben, gesenkt oder ganz aufgehoben
 RAM-Wächter, der die echten Kosten jedes Clients lernt, plus Ein-Klick-Recycle zurück in denselben Server
 Squad Launch und Friend Follow — derselbe private Server, oder gemeinsam auf einen öffentlichen
 Beitritt per Link von jeder roblox.com-URL, mit gespeicherten privaten Servern je Konto
@@ -63,6 +64,7 @@ Handy-Alarme über Pushover oder ntfy — ein Alt fliegt raus und dein Handy vib
 Alle zwei Stunden ein „Alles gut“-Zeichen, solange deine Konten laufen — Stille heißt: nachsehen
 Alarme fächern auf — Desktop, Discord-Kanäle und Handy in jeder Kombination, je Alarm
 In sechs Sprachen — die ganze App, Bildschirme wie Meldungen: Französisch, Deutsch, Russisch, Portugiesisch (Brasilien), Polnisch, Spanisch. Sofortiger Wechsel, gemäß Windows oder deiner Wahl
+Bekannte Roblox-Probleme — Probleme auf Roblox-Seite, was zu tun ist und welche RoRoRo-Funktion hilft, aktuell gehalten ohne App-Update
 ```
 
 ## What's new in this version (v1.30.0.0, ≤1500 chars)

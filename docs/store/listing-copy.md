@@ -71,6 +71,11 @@ Multi-launcher for Windows, now in 6 languages. Run several Roblox clients side 
 > rests on the former. If a future listing ever claims plugins are unavailable on Store outright,
 > that claim would be false.
 
+> Refreshed 2026-09-23 (v1.31.0.0), owner-approved per `submission-packet-1.31.0.0.md` §2: the
+> privacy sentence now says nothing *about you* leaves the machine and names the GitHub
+> downloads (updates, the compatibility settings, the known Roblox issues list), a gap that
+> predates 1.31; the tools-window bullet names the seventh page. Same edits in all six sheets.
+>
 > Refreshed 2026-09-08 (v1.27.0.0) — the "speaks your language" bullet now covers the messages the
 > app composes while you use it, not just the screens, and says switching is instant. The v1.26
 > wording ("every menu, setting, tooltip, and window") claimed the whole interface before that was
@@ -97,7 +102,7 @@ What you get:
 • Live status for every account. See which account is in which game, who is idle and for how long, and per-account frame-rate caps that stick.
 • Squad Launch + Friend Follow. Send every selected account into the same private server, follow a friend into theirs, or land your accounts together in one public server.
 • Memory watchdog + Recycle. RoRoRo learns what a Roblox client actually costs in RAM on your machine and warns before you run out. One click closes a heavy client and puts it back in the same server it was in.
-• One tools window. Games, Settings, History, Diagnostics, Plugins and About are pages of one window that sits beside your accounts. Keyboard shortcuts throughout — F1 shows the list.
+• One tools window. Games, Settings, History, Diagnostics, Plugins, Known Roblox issues and About are pages of one window that sits beside your accounts. Keyboard shortcuts throughout — F1 shows the list.
 • Themes. Four built-in, including one that carries no meaning in colour alone, plus a builder to make your own from ten colours and share it as a file.
 • Optional alerts — desktop, Discord, or your phone. Route each alert to any mix of desktop notifications, a Discord webhook you create, and your phone through Pushover or ntfy. Drops, memory warnings, recycle completions, and an every-two-hours all-good mark while your accounts run. A fresh install makes no alert calls at all — nothing fires until you set a destination up.
 • System tray UX. A state-coloured tray icon shows the multi-instance state at a glance; double-click launches your main account.
@@ -107,7 +112,7 @@ What you get:
 • Speaks your language. The whole interface — every menu, setting, tooltip and window, and the messages RoRoRo writes as you use it — is translated into French, German, Russian, Portuguese (Brazil), Polish, and Spanish, following your Windows language or your pick in Settings. Switching takes effect instantly, and the picker only offers a language that's fully translated, so you never land on a half-English screen.
 
 Privacy & security:
-Your Roblox password is never seen by RoRoRo. Login happens entirely inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame — same HTML, same HTTPS connection your browser would make. RoRoRo captures only the session cookie that Roblox sets after successful login, and encrypts it before writing it to disk. No telemetry. No analytics. Nothing leaves your machine except the Roblox-side calls during launch — the same calls Roblox.com makes from your browser — and, only if you set them up yourself, alerts to your own Discord webhook or to the phone push service you chose (Pushover or ntfy).
+Your Roblox password is never seen by RoRoRo. Login happens entirely inside Roblox's own page, embedded in a Microsoft Edge WebView2 frame — same HTML, same HTTPS connection your browser would make. RoRoRo captures only the session cookie that Roblox sets after successful login, and encrypts it before writing it to disk. No telemetry. No analytics. Nothing about you leaves your machine except the Roblox-side calls during launch — the same calls Roblox.com makes from your browser — and, only if you set them up yourself, alerts to your own Discord webhook or to the phone push service you chose (Pushover or ntfy). RoRoRo also downloads its own signed files from its GitHub releases — updates, the Roblox compatibility settings, and the known Roblox issues list — and sends nothing about you to get them.
 
 Important: trademark and affiliation notice.
 "Roblox" and the Roblox logo are trademarks of Roblox Corporation. RoRoRo is an independent third-party tool, not affiliated with, endorsed by, or sponsored by Roblox Corporation. The trademarked term is used solely to describe compatibility with the Roblox platform. RoRoRo launches the official Roblox client unmodified — it does not inject into, hook into, or alter the Roblox process in any way; it only holds a Windows named-mutex before launch so that subsequent client instances see the singleton check as already-claimed.
@@ -117,6 +122,11 @@ A 626 Labs product.
 
 ## Product features (paste each as one feature; Partner Center accepts up to 20, ≤200 chars each)
 
+> One entry added 2026-09-23 (v1.31.0.0): Known Roblox issues. **20/20 entries used — the
+> field is full.** A new entry now means merging or retiring one (the alert fan-out and phone
+> alert entries are the obvious pair). The same pass translated the frame-rate entry below into
+> all six sheets, so every language serves 20 and the gap recorded next is CLOSED.
+>
 > One entry added 2026-09-09: per-account frame-rate control gets its own entry again. It
 > had been folded into the live-status line, but the live listing carried it standalone and
 > it is a control, not a readout. 19/20 entries used.
@@ -172,6 +182,7 @@ Phone alerts through Pushover or ntfy — an alt drops and your phone buzzes, ev
 Uptime marks — an all-good buzz every two hours while your accounts run, so silence means something's wrong
 Alerts fan out — desktop, Discord channels, and your phone in any mix, per alert
 Available in six languages — the whole app, screens and messages alike, in French, German, Russian, Portuguese (Brazil), Polish, or Spanish, switching instantly, following Windows or your pick
+Known Roblox issues — Roblox-side problems, what to do, and the RoRoRo feature that helps, kept current without an app update
 ```
 
 ## Copyright (single line)
