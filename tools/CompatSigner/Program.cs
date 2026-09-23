@@ -1,12 +1,12 @@
 using System.Security.Cryptography;
 using ROROROblox.Core;
 
-// CompatSigner: standalone CLI that detached-signs an arbitrary already-written file (today,
-// roblox-compat.json; plugins-catalog.json is a natural follow-up, out of scope for now) with
-// ECDSA P-256 / SHA-256, in the EXACT RobloxCompatSignature.Format the app verifies with -- so
-// sign and verify cannot drift. Ported from 626-mod-launcher's ManifestMiner --sign-file mode
-// (tools/ManifestMiner/Program.cs + ManifestSigner.cs), which does the identical generic
-// detached-sign-an-arbitrary-file job for that repo's manifest feed.
+// CompatSigner: standalone CLI that detached-signs an arbitrary already-written file
+// (roblox-compat.json and known-issues.json; plugins-catalog.json is a natural follow-up, out of
+// scope for now) with ECDSA P-256 / SHA-256, in the EXACT RobloxCompatSignature.Format the app
+// verifies with -- so sign and verify cannot drift. Ported from 626-mod-launcher's ManifestMiner
+// --sign-file mode (tools/ManifestMiner/Program.cs + ManifestSigner.cs), which does the identical
+// generic detached-sign-an-arbitrary-file job for that repo's manifest feed.
 //
 // The private key (PKCS#8 PEM, or that PEM base64-encoded to survive CI secrets mangling
 // multi-line newlines) comes ONLY from the ROBLOXCOMPAT_SIGNING_KEY env var (a GitHub Actions
@@ -14,14 +14,23 @@ using ROROROblox.Core;
 // a key that won't import -- never emits an unsigned-but-named .sig.
 //
 // Usage: dotnet run --project tools/CompatSigner -- <path-to-file-to-sign>
+//        dotnet run --project tools/CompatSigner -- --validate-known-issues <path-to-known-issues.json>
 // Writes: <path-to-file-to-sign>.sig (overwritten if it already exists -- nothing in this repo
 // commits a .sig, it only ever rides as a fresh release asset, so there's no git-churn reason to
 // skip re-signing unchanged content the way the mod-launcher's --sign-file mode does for a
 // committed sibling).
 
+// --validate-known-issues <path>: run the app's own validator (KnownIssuesParser, in Core) so the
+// workflow can never sign a known-issues.json that every client would refuse. Exit 0 valid, 1 not.
+if (args is ["--validate-known-issues", var knownIssuesPath])
+{
+    Environment.Exit(ValidateKnownIssues(knownIssuesPath));
+    return;
+}
+
 if (args.Length != 1)
 {
-    Console.Error.WriteLine("Usage: CompatSigner <path-to-file-to-sign>");
+    Console.Error.WriteLine("Usage: CompatSigner <path-to-file-to-sign> | CompatSigner --validate-known-issues <path>");
     Environment.Exit(1);
     return;
 }
@@ -89,4 +98,31 @@ static string NormalizeKey(string privateKeyPem)
     }
 
     return trimmed;
+}
+
+static int ValidateKnownIssues(string path)
+{
+    if (!File.Exists(path))
+    {
+        Console.Error.WriteLine($"CompatSigner: file not found: {path}");
+        return 1;
+    }
+
+    var result = ROROROblox.Core.KnownIssues.KnownIssuesParser.Parse(File.ReadAllBytes(path));
+    if (result.IsValid)
+    {
+        var issues = result.Document!.Issues;
+        Console.WriteLine($"known-issues.json is valid: {issues.Count} issue(s), {issues.Count(i => i.Notify)} with a notice.");
+        return 0;
+    }
+
+    foreach (var problem in result.Problems)
+    {
+        Console.Error.WriteLine(
+            $"known-issues.json: {problem.Kind}"
+            + (problem.IssueId is null ? string.Empty : $" in '{problem.IssueId}'")
+            + (problem.Field is null ? string.Empty : $" at {problem.Field}"));
+    }
+
+    return 1;
 }
