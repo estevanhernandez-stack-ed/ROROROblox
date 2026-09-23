@@ -174,6 +174,19 @@ public sealed class WebhookCatcherTests
     /// instead of finishing it, so the server-side read fails hard while it is blocked waiting for
     /// bytes that will never arrive. A normal POST sent afterward must still be captured, and the
     /// fault must be visible on <see cref="WebhookCatcher.RequestFaults"/> rather than silent.
+    /// <para>
+    /// Fix round 2 (final-fix wave, commit A): the reset used to fire immediately after the
+    /// headers were sent, with nothing to say the server had even accepted the connection yet.
+    /// The accept loop starts via <c>Task.Run(AcceptLoopAsync)</c> in the constructor, so on a fast
+    /// or loaded machine the client's reset can land before that task has even posted its first
+    /// <c>GetContextAsync</c> -- http.sys then has nothing to hand the app, no context is ever
+    /// delivered, <c>HandleSafelyAsync</c> never runs, and the 10 s wait for a fault times out.
+    /// Reproduced deterministically (4/4) on this machine before this fix; see the RED evidence in
+    /// the final-fix report. The fix waits on <see cref="WebhookCatcher.RequestsReceived"/> --
+    /// incremented at the very top of <c>HandleSafelyAsync</c>, before anything that can fail --
+    /// so the reset cannot fire until the server is provably inside its handler for this exact
+    /// request.
+    /// </para>
     /// </summary>
     [Fact]
     public async Task AcceptLoop_ABadRequestThatFailsMidRead_CostsOnlyThatOneRequest()
@@ -181,17 +194,25 @@ public sealed class WebhookCatcherTests
         await using var catcher = WebhookCatcher.Start();
         var uri = new Uri(catcher.MineUrl);
 
-        SendThenResetMidBody(uri);
+        using var socket = SendHeadersPromisingABodyNeverSent(uri);
 
-        // Wait for the server to hit the reset inside HandleAsync and fall into
+        // Wait for the server to have actually accepted this connection -- i.e. for
+        // HandleSafelyAsync to have started running for it -- before severing it. Resetting any
+        // earlier races http.sys handing the accepted context to the app at all: lose that race
+        // and no handler ever runs, so nothing below can prove anything either way.
+        Assert.True(
+            await WaitUntil(() => catcher.RequestsReceived > 0, TimeSpan.FromSeconds(10)),
+            $"the server never accepted the connection before the reset was sent " +
+            $"(RequestsReceived={catcher.RequestsReceived}, faults so far={catcher.RequestFaults.Count})");
+
+        ResetMidBody(socket);
+
+        // Now wait for that accepted request to hit the reset inside HandleAsync and fall into
         // HandleSafelyAsync's catch, before the real POST that proves the loop is still alive.
-        // This was a flat 200 ms sleep, which is a guess about a machine rather than a fact about
-        // the server: adding five unrelated tests to this assembly in 2026-09-20 was enough extra
-        // load to make it lose that race, deterministically, in a full run while still passing on
-        // its own. Waiting for the fault itself cannot lose that race on any machine.
         Assert.True(
             await WaitUntil(() => catcher.RequestFaults.Count > 0, TimeSpan.FromSeconds(10)),
-            "the server never recorded the mid-read fault, so the rest of this test would prove nothing");
+            $"the server never recorded the mid-read fault, so the rest of this test would prove " +
+            $"nothing (RequestsReceived={catcher.RequestsReceived}, faults so far={catcher.RequestFaults.Count})");
 
         await PostAsync(catcher.MineUrl, "still hears me");
         var posts = await catcher.DrainAsync(TimeSpan.FromSeconds(5));
@@ -215,22 +236,34 @@ public sealed class WebhookCatcherTests
     }
 
     /// <summary>
-    /// Sends a request line and headers promising a 1000-byte body, then forces an abortive RST
-    /// (via <see cref="LingerOption"/> with a zero timeout, instead of a graceful close) without
-    /// ever sending that body -- the server is left blocked on a read that will now fail rather
-    /// than quietly see a short body or a clean EOF.
+    /// Connects and sends a request line and headers promising a 1000-byte body that never
+    /// follows, then returns the still-open socket. Split from the reset itself (see
+    /// <see cref="ResetMidBody"/>) so a caller can wait for proof the server has accepted the
+    /// connection before severing it -- sending and resetting back to back left nothing to stop
+    /// the reset from landing before the accept loop had even called <c>GetContextAsync</c>.
     /// </summary>
-    private static void SendThenResetMidBody(Uri uri)
+    private static Socket SendHeadersPromisingABodyNeverSent(Uri uri)
     {
-        using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         socket.Connect(IPAddress.Loopback, uri.Port);
 
         var request = Encoding.ASCII.GetBytes(
             $"POST {uri.AbsolutePath} HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 1000\r\nConnection: close\r\n\r\n");
         socket.Send(request);
 
+        return socket;
+    }
+
+    /// <summary>
+    /// Forces an abortive RST (via <see cref="LingerOption"/> with a zero timeout, instead of a
+    /// graceful close) on a socket already sitting mid-body, per <see cref="SendHeadersPromisingABodyNeverSent"/>
+    /// -- the server is left blocked on a read that will now fail rather than quietly see a short
+    /// body or a clean EOF.
+    /// </summary>
+    private static void ResetMidBody(Socket socket)
+    {
         socket.LingerState = new LingerOption(true, 0);
-        // Disposal below closes the socket with that LingerState in effect, sending the reset.
+        socket.Dispose(); // Closes with that LingerState in effect, sending the reset now.
     }
 
     /// <summary>
