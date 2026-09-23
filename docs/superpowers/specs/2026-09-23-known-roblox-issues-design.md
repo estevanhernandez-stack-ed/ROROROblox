@@ -1,7 +1,8 @@
 # Known Roblox issues — design
 
-**Status:** approved in conversation 2026-09-23, section by section; this document awaits the owner's
-review before an implementation plan is written.
+**Status:** approved by the owner 2026-09-23. Two corrections made the same day while planning, from
+reading the code rather than the conversation: the Roblox version source (§4) and how the notice sits
+in the main window's notice area (§3). Both are marked *Corrected while planning*.
 **Scope:** RoRoRo (ROROROblox repo). No plugin-contract change, no new network host.
 
 ## Why
@@ -113,6 +114,9 @@ the latest release, so a release without the file would silence the page the day
 **Signing key.** The existing `ROBLOXCOMPAT_SIGNING_KEY` signs both files, and the app verifies both
 against the key it already pins (`RobloxCompatSigningKey`). A second key would add a secret to rotate
 without separating any real trust: both files are published by the same person from the same repo.
+`RobloxCompatSigningKey`'s own comment states "one key per trust surface", and it means separate
+*products* — it was written to keep this feed apart from 626-mod-launcher's. Two feeds of one product
+from one repo are one trust surface; the comment is updated to say it now signs both.
 
 ## 2. In the app: download, cache, failure
 
@@ -180,9 +184,13 @@ buttons: **See known issues**, which opens the page, and close. When more than o
 says "2 known Roblox issues" instead of one title. Closing it records every entry id it was showing;
 only an id not seen before brings it back.
 
-**Existing warnings take precedence.** That notice area also carries the contested-singleton warning,
-which is about RoRoRo working at all. The known-issues notice shows only when the area is otherwise
-empty, and never displaces an existing warning.
+**Existing warnings take precedence.** *Corrected while planning:* the notice area is not one slot but
+a stack of independently collapsing rows (status text, idle summary, the contested-singleton warning,
+the frame-rate-cap warning), so nothing displaces anything by appearing. The known-issues row is
+therefore **suppressed while the contested-singleton warning is showing**, because that warning is
+about RoRoRo working at all and must not compete for attention; alongside the other rows it simply
+stacks. It is added to the area's collapse condition so the strip still disappears when every row
+is empty.
 
 **The count.** The menu item for the page shows how many entries apply to this PC. Zero shows no count.
 
@@ -208,14 +216,26 @@ recorded here so it is a decision rather than a discovery.
 An unknown key shows its `text` with no button, so an entry written for a newer app still reads on an
 older one.
 
-**Versions.** The installed Roblox version comes from `RobloxCompatChecker.GetInstalledRobloxVersion`
-in Core. `DiagnosticsCollector` already duplicates that scan; this feature does not add a third copy.
+**Versions.** *Corrected while planning:* the version compared is the one a launch **will run** —
+`RobloxCompatChecker.GetHandlerRobloxVersion()`, the `FileVersion` of the binary the `roblox-player`
+handler points at — falling back to `GetInstalledRobloxVersion()` only when the handler read returns
+null (absent, strap-owned, or unreadable). The installed read orders version folders by write time,
+which F-104 measured as a coin flip during a launch batch; it answers "what is on disk", while this
+feature asks "what will I get". Both live in Core, and this feature adds no third copy of either.
 
 - An entry **applies** when it has no `robloxVersions`; or when the installed version is at or above
   `from` (if given) and below `fixedIn` (if given); or when the installed version cannot be read, in
   which case it applies and the page says so.
-- Versions compare with `System.Version`, which reads Roblox's own `0.740.0.7400838` form, so a PC on
-  `0.740.0.7400838` is not affected by an entry with `fixedIn: "0.740"`.
+- Versions compare as `System.Version` after normalising. *Corrected while planning:* Roblox's binary
+  reports its `FileVersion` as `0, 740, 0, 7400927` — commas and spaces, read off every version folder
+  on the owner's PC on 2026-09-23 — and `Version.TryParse` rejects that form outright. A small Core
+  helper strips the spaces and turns commas into dots first, so a PC on `0, 740, 0, 7400927` reads as
+  `0.740.0.7400927` and is not affected by an entry with `fixedIn: "0.740"`.
+- The same raw string reaches `RobloxCompatChecker.CheckAsync`, which calls `Version.TryParse` on it
+  directly, so its version-drift banner can never fire. That is a pre-existing defect, recorded here
+  and **deliberately not fixed by this feature**: `knownGoodVersionMax` is still `0.729.24`, so
+  repairing the parse would show a drift banner to every user on 0.740 the day it shipped. It needs its
+  own decision.
 - The version decides **only the notice and the count**. The page always lists every entry, because
   the running client can be older than the installed one: the frozen window on 2026-09-22 was 0.739,
   launched from Chrome, while 0.740 was installed.
