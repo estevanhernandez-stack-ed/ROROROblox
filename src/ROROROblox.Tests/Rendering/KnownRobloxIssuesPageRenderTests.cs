@@ -69,8 +69,53 @@ public class KnownRobloxIssuesPageRenderTests(ITestOutputHelper output)
                 {
                     var list = (ItemsControl)ThemedWindowRender.Find(content, fe => fe is ItemsControl { Name: "IssueList" }, "the issue list");
                     var count = CountButtons(list); // inside the list only, so shared page chrome cannot move the count
-                    var bitmap = new RenderTargetBitmap((int)content.ActualWidth, (int)content.ActualHeight, 96, 96, PixelFormats.Pbgra32);
-                    bitmap.Render(content);
+
+                    // The review PNGs are the surface the owner judges this page by (R9). Rendering
+                    // `content` alone — as the first cut of this test did — captures the PAGE, not the
+                    // Tools window it actually sits in: the page's own root Grid carries no Background,
+                    // so every theme showed a white rectangle with a near-invisible heading, which is not
+                    // what ships. ThemedWindowRender.HostPage sets the WINDOW's Background to the themed
+                    // "BgBrush", so the ground has to be pulled from there and painted first.
+                    //
+                    // Window.GetWindow(content) is the obvious way to reach it and, verified here, is the
+                    // one that actually resolves: this harness never calls Window.Show() (Arrange only
+                    // Measures/Arranges offscreen), but Window.Content establishes a logical-tree parent
+                    // link independent of any HwndSource, and GetWindow walks that — no real HWND needed.
+                    // TryFindResource("BgBrush") is kept as a fallback for robustness (e.g. if a future
+                    // harness change hosts the page without a Window ancestor); Brushes.Transparent is
+                    // never allowed to be what actually gets painted — a null ground fails the test loudly
+                    // instead of quietly shipping another white PNG.
+                    var window = Window.GetWindow(content);
+                    Brush? ground = window?.Background as Brush;
+                    var groundSource = "Window.GetWindow(content)?.Background";
+                    if (ground is null)
+                    {
+                        ground = content.TryFindResource("BgBrush") as Brush;
+                        groundSource = "content.TryFindResource(\"BgBrush\")";
+                    }
+
+                    if (ground is null)
+                    {
+                        throw new InvalidOperationException(
+                            $"Theme '{theme.Id}': neither Window.GetWindow(content)?.Background nor "
+                            + "content.TryFindResource(\"BgBrush\") resolved a brush. Painting "
+                            + "Brushes.Transparent would silently ship another white review PNG, so this "
+                            + "fails loudly instead.");
+                    }
+
+                    output.WriteLine($"{theme.Id}: ground resolved via {groundSource} ({ground})");
+
+                    var width = content.ActualWidth;
+                    var height = content.ActualHeight;
+                    var visual = new DrawingVisual();
+                    using (var dc = visual.RenderOpen())
+                    {
+                        dc.DrawRectangle(ground, null, new Rect(0, 0, width, height));
+                        dc.DrawRectangle(new VisualBrush(content), null, new Rect(0, 0, width, height));
+                    }
+
+                    var bitmap = new RenderTargetBitmap((int)width, (int)height, 96, 96, PixelFormats.Pbgra32);
+                    bitmap.Render(visual);
                     var encoder = new PngBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(bitmap));
                     using var stream = new MemoryStream();
