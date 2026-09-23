@@ -67,39 +67,36 @@ Disponible en six langues — toute l'app, écrans et messages, en français, al
 Problèmes Roblox connus — les problèmes côté Roblox, que faire, et la fonction RoRoRo qui aide, tenus à jour sans mise à jour de l'app
 ```
 
-## What's new in this version (v1.30.0.0, ≤1500 chars)
+## What's new in this version (v1.31.0.0, ≤1500 chars)
 
 ```
-v1.30.0.0
+v1.31.0.0
 
-Les alertes se déclenchent une fois, au changement
-• Une règle qui restait vraie vous alertait de nouveau toutes
-  les quelques minutes, tant qu'elle restait vraie. Elle
-  alerte maintenant une seule fois, quand le nombre franchit
-  le seuil, puis se tait jusqu'au franchissement inverse.
-• Si une de vos règles parlait beaucoup, elle va se taire.
-  C'est le correctif, pas une panne.
-• Une règle a besoin de deux lectures avant de pouvoir dire
-  quoi que ce soit, et un redémarrage ne réannonce pas un
-  problème déjà en cours.
+Problèmes Roblox connus
+• Une nouvelle page liste les problèmes de Roblox lui-même :
+  ce qui se passe, quoi faire, et la fonction de RoRoRo qui
+  aide, avec un bouton qui vous y emmène. Ouvrez-la depuis le
+  menu Outils, ou appuyez sur Ctrl+7 dans la fenêtre des
+  outils.
+• Les deux premiers : la fenêtre Roblox qui se fige quand vous
+  la déplacez ou la redimensionnez, et Roblox qui consomme de
+  plus en plus de mémoire au fil des heures.
 
-Demandez qu'on vous dise quand tout rentre dans l'ordre
-• Cochez « Also tell me when it comes right again » sur une
-  règle et une seconde alerte arrive quand le nombre repasse
-  son seuil.
-• Désactivé sauf si vous le cochez, et destiné aux mêmes
-  endroits que les alertes de cette règle.
-• La phrase de l'alerte reste en anglais dans toutes les
-  langues pour l'instant.
+Un avis pour les problèmes sérieux
+• Un problème sérieux affiche un seul avis en haut de la
+  fenêtre principale. Fermez-le et il reste fermé ; seul un
+  nouveau problème le fait revenir.
+• Attendez-vous à en voir un à la première ouverture de cette
+  version, au sujet de la fenêtre qui se fige. C'est la
+  fonction qui marche, pas un nouveau problème.
 
-Les plugins s'installent sur une connexion lente
-• L'installation d'un plugin abandonnait après 100 secondes :
-  quiconque ne pouvait pas télécharger le fichier entier dans
-  ce délai n'y arrivait jamais. Elle dispose maintenant de dix
-  minutes, et dit quoi essayer si le délai est dépassé.
-• Une alerte portant sur un nombre qui n'appartient à aucun
-  compte commence désormais par le nom de la règle au lieu
-  d'un blanc.
+La liste se met à jour toute seule
+• RoRoRo cherche une nouvelle liste au démarrage puis toutes
+  les quatre heures, au même endroit que ses réglages de
+  compatibilité Roblox. La liste est signée, et rien sur vous
+  n'est envoyé.
+• La page est dans votre langue ; les descriptions des
+  problèmes sont en anglais pour l'instant.
 ```
 
 ## Copyright (single line)

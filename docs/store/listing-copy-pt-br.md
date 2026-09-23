@@ -67,37 +67,35 @@ Disponível em seis idiomas — o app inteiro, telas e mensagens, em francês, a
 Problemas conhecidos do Roblox — problemas do lado do Roblox, o que fazer e o recurso do RoRoRo que ajuda, sempre atualizados sem atualizar o app
 ```
 
-## What's new in this version (v1.30.0.0, ≤1500 chars)
+## What's new in this version (v1.31.0.0, ≤1500 chars)
 
 ```
-v1.30.0.0
+v1.31.0.0
 
-Os alertas disparam uma vez, quando algo muda
-• Uma regra que continuava verdadeira alertava de novo a cada
-  poucos minutos, enquanto continuasse verdadeira. Agora ela
-  alerta uma vez, quando o número cruza o limite, e fica
-  quieta até cruzar de volta.
-• Se alguma regra sua falava muito, ela vai ficar quieta. É a
-  correção, não um defeito.
-• Uma regra precisa de duas leituras antes de poder dizer
-  qualquer coisa, e reiniciar não anuncia de novo um problema
-  que já estava acontecendo.
+Problemas conhecidos do Roblox
+• Uma nova página lista problemas do próprio Roblox: o que
+  acontece, o que fazer e o recurso do RoRoRo que ajuda, com
+  um botão que leva você até ele. Abra pelo menu Ferramentas
+  ou aperte Ctrl+7 na janela de ferramentas.
+• Os dois primeiros: a janela do Roblox que trava quando você
+  arrasta ou redimensiona, e o Roblox usando cada vez mais
+  memória quanto mais tempo fica aberto.
 
-Peça para avisarem quando voltar ao normal
-• Marque "Also tell me when it comes right again" numa regra e
-  um segundo alerta chega quando o número volta a cruzar o
-  limite.
-• Desligado até você marcar, e vai para os mesmos lugares que
-  os alertas dessa regra já vão.
-• A frase do alerta ainda sai em inglês em todos os idiomas.
+Um aviso para os casos sérios
+• Um problema sério mostra um único aviso no topo da janela
+  principal. Feche e ele continua fechado; só um problema
+  novo faz ele voltar.
+• Na primeira vez que você abrir esta versão vai aparecer
+  um, sobre a janela que trava. É o recurso funcionando, não
+  um problema novo.
 
-Plugin instala em conexão lenta
-• A instalação de um plugin desistia depois de 100 segundos:
-  quem não conseguia puxar o arquivo inteiro nesse tempo nunca
-  instalava. Agora são dez minutos, e ele diz o que tentar se
-  ainda assim estourar.
-• Um alerta sobre um número que não pertence a nenhuma conta
-  agora começa com o nome da regra, em vez de um espaço vazio.
+A lista se atualiza sozinha
+• O RoRoRo procura uma lista nova ao iniciar e a cada quatro
+  horas, no mesmo lugar de onde já pega as configurações de
+  compatibilidade com o Roblox. A lista é assinada, e nada
+  sobre você é enviado.
+• A página está no seu idioma; as descrições dos problemas
+  ainda estão em inglês.
 ```
 
 ## Copyright (single line)

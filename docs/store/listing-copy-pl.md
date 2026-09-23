@@ -66,36 +66,35 @@ Sześć języków — cała aplikacja, ekrany i komunikaty: francuski, niemiecki
 Znane problemy Roblox — problemy po stronie Roblox, co robić i która funkcja RoRoRo pomaga, aktualne bez aktualizacji aplikacji
 ```
 
-## What's new in this version (v1.30.0.0, ≤1500 chars)
+## What's new in this version (v1.31.0.0, ≤1500 chars)
 
 ```
-v1.30.0.0
+v1.31.0.0
 
-Alerty odzywają się raz, przy zmianie
-• Reguła, która pozostawała prawdziwa, alarmowała ponownie co
-  kilka minut, dopóki pozostawała prawdziwa. Teraz alarmuje
-  raz, gdy liczba przekracza próg, i milknie aż do powrotu.
-• Jeśli któraś twoja reguła dużo mówiła, teraz zamilknie. To
-  jest poprawka, nie awaria.
-• Reguła potrzebuje dwóch odczytów, zanim cokolwiek powie, a
-  restart nie ogłasza ponownie problemu, który już trwał.
+Znane problemy Roblox
+• Nowa strona wymienia problemy samego Roblox: co się dzieje,
+  co zrobić i która funkcja RoRoRo pomaga, z przyciskiem,
+  który do niej prowadzi. Otwórz ją z menu Narzędzia albo
+  naciśnij Ctrl+7 w oknie narzędzi.
+• Pierwsze dwa: okno Roblox, które zawiesza się przy
+  przeciąganiu lub zmianie rozmiaru, oraz Roblox zużywający
+  coraz więcej pamięci, im dłużej działa.
 
-Poproś, żeby dać ci znać, gdy wróci do normy
-• Zaznacz przy regule „Also tell me when it comes right
-  again", a drugi alert przyjdzie, gdy liczba wróci za swój
-  próg.
-• Wyłączone, dopóki nie zaznaczysz, i idzie tam, gdzie i tak
-  idą alerty tej reguły.
-• Samo zdanie alertu jest na razie po angielsku we wszystkich
-  językach.
+Powiadomienie o poważnych problemach
+• Poważny problem pokazuje jedno powiadomienie u góry
+  głównego okna. Zamknij je, a zostanie zamknięte; wróci
+  tylko przy nowym problemie.
+• Przy pierwszym otwarciu tej wersji zobaczysz jedno, o
+  zawieszającym się oknie. To działa ta funkcja, a nie
+  nowy problem.
 
-Plugin instaluje się na wolnym łączu
-• Instalacja plugina poddawała się po 100 sekundach: kto nie
-  zdążył pobrać całego pliku w tym czasie, nie zainstalował go
-  nigdy. Teraz jest dziesięć minut, a jeśli i tak się skończą,
-  komunikat podpowie, co zrobić.
-• Alert o liczbie, która nie należy do żadnego konta, zaczyna
-  się teraz od nazwy reguły, a nie od pustego miejsca.
+Lista aktualizuje się sama
+• RoRoRo sprawdza nową listę przy starcie i co cztery
+  godziny, z tego samego miejsca, z którego już pobiera
+  ustawienia zgodności z Roblox. Lista jest podpisana i nic
+  o tobie nie jest wysyłane.
+• Strona jest w twoim języku; opisy problemów są na razie
+  po angielsku.
 ```
 
 ## Copyright (single line)

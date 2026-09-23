@@ -67,39 +67,35 @@ Disponible en seis idiomas — toda la app, pantallas y mensajes, en francés, a
 Problemas conocidos de Roblox — problemas del lado de Roblox, qué hacer y la función de RoRoRo que ayuda, al día sin actualizar la app
 ```
 
-## What's new in this version (v1.30.0.0, ≤1500 chars)
+## What's new in this version (v1.31.0.0, ≤1500 chars)
 
 ```
-v1.30.0.0
+v1.31.0.0
 
-Las alertas saltan una vez, cuando algo cambia
-• Una regla que seguía siendo cierta volvía a avisar cada
-  pocos minutos, mientras siguiera siéndolo. Ahora avisa una
-  vez, cuando el número cruza el límite, y se calla hasta que
-  lo cruza de vuelta.
-• Si alguna regla tuya hablaba mucho, se va a callar. Es el
-  arreglo, no una avería.
-• Una regla necesita dos lecturas antes de poder decir nada, y
-  reiniciar no vuelve a anunciar un problema que ya estaba
-  pasando.
+Problemas conocidos de Roblox
+• Una página nueva enumera problemas del propio Roblox: qué
+  pasa, qué hacer y la función de RoRoRo que ayuda, con un
+  botón que te lleva a ella. Ábrela desde el menú
+  Herramientas o pulsa Ctrl+7 en la ventana de herramientas.
+• Los dos primeros: la ventana de Roblox que se congela al
+  arrastrarla o cambiar su tamaño, y Roblox usando cada vez
+  más memoria cuanto más tiempo lleva abierto.
 
-Pide que te avisen cuando vuelva a estar bien
-• Marca "Also tell me when it comes right again" en una regla
-  y llega una segunda alerta cuando el número vuelve a cruzar
-  su límite.
-• Desactivado hasta que lo marques, y va a los mismos sitios a
-  los que ya van las alertas de esa regla.
-• La frase de la alerta está en inglés en todos los idiomas de
-  momento.
+Un aviso para los casos serios
+• Un problema serio muestra un solo aviso arriba de la
+  ventana principal. Ciérralo y se queda cerrado; solo un
+  problema nuevo lo trae de vuelta.
+• La primera vez que abras esta versión verás uno, sobre la
+  ventana que se congela. Es la función haciendo su trabajo,
+  no un problema nuevo.
 
-Los plugins se instalan con conexión lenta
-• Instalar un plugin se rendía a los 100 segundos: quien no
-  pudiera descargar el archivo entero en ese tiempo no lo
-  instalaba nunca. Ahora tiene diez minutos, y dice qué probar
-  si aun así se acaba.
-• Una alerta sobre un número que no pertenece a ninguna cuenta
-  empieza ahora por el nombre de la regla, en vez de por un
-  hueco.
+La lista se mantiene al día sola
+• RoRoRo busca una lista nueva al arrancar y cada cuatro
+  horas, en el mismo sitio del que ya obtiene sus ajustes de
+  compatibilidad con Roblox. La lista está firmada y no se
+  envía nada sobre ti.
+• La página está en tu idioma; las descripciones de los
+  problemas están en inglés de momento.
 ```
 
 ## Copyright (single line)

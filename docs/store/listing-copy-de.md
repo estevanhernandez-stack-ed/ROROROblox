@@ -67,39 +67,36 @@ In sechs Sprachen — die ganze App, Bildschirme wie Meldungen: Französisch, De
 Bekannte Roblox-Probleme — Probleme auf Roblox-Seite, was zu tun ist und welche RoRoRo-Funktion hilft, aktuell gehalten ohne App-Update
 ```
 
-## What's new in this version (v1.30.0.0, ≤1500 chars)
+## What's new in this version (v1.31.0.0, ≤1500 chars)
 
 ```
-v1.30.0.0
+v1.31.0.0
 
-Benachrichtigungen kommen einmal, beim Wechsel
-• Eine Regel, die wahr blieb, meldete sich alle paar Minuten
-  erneut, solange sie wahr blieb. Jetzt meldet sie sich
-  einmal, wenn die Zahl die Grenze überschreitet, und bleibt
-  still, bis sie zurückgeht.
-• Wenn eine deiner Regeln viel geredet hat, wird sie still.
-  Das ist die Korrektur, kein Fehler.
-• Eine Regel braucht zwei Messwerte, bevor sie etwas sagen
-  kann, und ein Neustart meldet ein bereits laufendes Problem
-  nicht erneut.
+Bekannte Roblox-Probleme
+• Eine neue Seite listet Probleme in Roblox selbst: was
+  passiert, was du tun kannst und welche RoRoRo-Funktion
+  hilft, mit einer Schaltfläche, die dich direkt hinführt.
+  Öffne sie über das Menü Werkzeuge oder drück Strg+7 im
+  Werkzeugfenster.
+• Die ersten zwei: das Roblox-Fenster, das beim Verschieben
+  oder bei einer Größenänderung einfriert, und Roblox, das mit
+  der Zeit immer mehr Arbeitsspeicher braucht.
 
-Lass dir sagen, wenn es wieder in Ordnung ist
-• Setze bei einer Regel das Häkchen „Also tell me when it
-  comes right again", und eine zweite Benachrichtigung kommt,
-  sobald die Zahl ihre Grenze wieder überschreitet.
-• Aus, bis du es setzt, und sie geht dorthin, wohin die
-  Benachrichtigungen dieser Regel ohnehin gehen.
-• Der Satz der Benachrichtigung ist vorerst in jeder Sprache
-  englisch.
+Ein Hinweis für die ernsten Fälle
+• Ein ernstes Problem zeigt einen einzigen Hinweis oben im
+  Hauptfenster. Schließ ihn, und er bleibt zu; nur ein neues
+  Problem bringt ihn zurück.
+• Beim ersten Öffnen dieser Version siehst du einen, zum
+  einfrierenden Fenster. Das ist die Funktion bei der Arbeit,
+  kein neues Problem.
 
-Plugins lassen sich mit langsamer Verbindung installieren
-• Die Installation eines Plugins gab nach 100 Sekunden auf:
-  wer die ganze Datei in dieser Zeit nicht laden konnte, schaffte
-  es nie. Jetzt sind es zehn Minuten, und sie sagt, was du
-  versuchen kannst, wenn die Zeit doch nicht reicht.
-• Eine Benachrichtigung über eine Zahl, die zu keinem Konto
-  gehört, beginnt jetzt mit dem Namen der Regel statt mit
-  einer Lücke.
+Die Liste bleibt von selbst aktuell
+• RoRoRo sucht beim Start und alle vier Stunden nach einer
+  neuen Liste, am selben Ort, von dem es schon seine
+  Roblox-Kompatibilitätseinstellungen holt. Die Liste ist
+  signiert, und nichts über dich wird gesendet.
+• Die Seite ist in deiner Sprache; die Problembeschreibungen
+  sind vorerst auf Englisch.
 ```
 
 ## Copyright (single line)
