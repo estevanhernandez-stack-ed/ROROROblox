@@ -1035,7 +1035,7 @@
   "ShellWindow_KnownRobloxIssues": "Problèmes Roblox connus",
   "Shell_Title_KnownRobloxIssues": "Problèmes Roblox connus",
   "KnownIssuesPage_Heading": "Problèmes Roblox connus",
-  "KnownIssuesPage_Intro": "Des problèmes de Roblox lui-même, pas de RoRoRo, et quoi faire.",
+  "KnownIssuesPage_Intro": "Des problèmes de Roblox lui-même, et quoi faire.",
   "KnownIssuesPage_EnglishOnly": "Les descriptions des problèmes sont en anglais.",
   "KnownIssuesPage_Empty": "Aucun problème Roblox connu pour le moment.",
   "KnownIssuesPage_LastChecked": "Dernière vérification à {0}.",

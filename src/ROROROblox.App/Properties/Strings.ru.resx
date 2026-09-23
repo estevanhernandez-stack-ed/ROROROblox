@@ -3142,7 +3142,7 @@ RoRoRo спрашивает про обводку кнопок только дл
     <value>Известные проблемы Roblox</value>
   </data>
   <data name="KnownIssuesPage_Intro" xml:space="preserve">
-    <value>Проблемы в самом Roblox, а не в RoRoRo, и что с ними делать.</value>
+    <value>Проблемы в самом Roblox и что с ними делать.</value>
   </data>
   <data name="KnownIssuesPage_EnglishOnly" xml:space="preserve">
     <value>Описания проблем приводятся на английском.</value>

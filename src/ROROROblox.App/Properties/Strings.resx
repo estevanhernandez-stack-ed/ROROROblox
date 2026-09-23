@@ -2823,7 +2823,7 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
     <value>Known Roblox issues</value>
   </data>
   <data name="KnownIssuesPage_Intro" xml:space="preserve">
-    <value>Problems in Roblox itself, not in RoRoRo, and what to do about them.</value>
+    <value>Problems in Roblox itself, and what to do about them.</value>
   </data>
   <data name="KnownIssuesPage_EnglishOnly" xml:space="preserve">
     <value>Issue descriptions are in English.</value>
