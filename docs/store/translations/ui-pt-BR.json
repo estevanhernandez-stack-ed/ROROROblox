@@ -1040,6 +1040,8 @@
   "KnownIssuesPage_Empty": "Nenhum problema conhecido do Roblox no momento.",
   "KnownIssuesPage_LastChecked": "Última verificação às {0}.",
   "KnownIssuesPage_Checking": "Verificando problemas conhecidos…",
+  "KnownIssuesPage_CheckFailed": "Não foi possível verificar às {0}. Mostrando a lista salva.",
+  "KnownIssuesPage_NeverReached": "Ainda não foi possível acessar a lista de problemas conhecidos.",
   "KnownIssuesPage_RobloxTag": "Roblox",
   "KnownIssuesPage_Posted": "Publicado em {0}",
   "KnownIssuesPage_WhatToDo": "O que fazer",

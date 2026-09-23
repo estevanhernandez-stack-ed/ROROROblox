@@ -23,7 +23,9 @@ internal sealed class KnownIssuesNoticeModel : INotifyPropertyChanged
     private IReadOnlyList<KnownIssue> _issues = [];
     private IReadOnlySet<string> _dismissed;
     private Version? _running;
+    private KnownIssuesSource _source = KnownIssuesSource.None;
     private DateTimeOffset? _checkedAt;
+    private KnownIssuesRefreshKind? _lastOutcome;
     private bool _suppressed;
     private KnownIssueNoticeSelection _selection = KnownIssueNoticeSelection.None;
 
@@ -44,7 +46,11 @@ internal sealed class KnownIssuesNoticeModel : INotifyPropertyChanged
 
     public Version? RunningVersion => _running;
 
+    public KnownIssuesSource Source => _source;
+
     public DateTimeOffset? CheckedAt => _checkedAt;
+
+    public KnownIssuesRefreshKind? LastOutcome => _lastOutcome;
 
     public int ApplicableCount => KnownIssueNotice.CountApplicable(_issues, _running);
 
@@ -67,7 +73,9 @@ internal sealed class KnownIssuesNoticeModel : INotifyPropertyChanged
         _ui.Invoke(() =>
         {
             _issues = snapshot.Issues;
+            _source = snapshot.Source;
             _checkedAt = snapshot.CheckedAt;
+            _lastOutcome = snapshot.LastOutcome;
             _running = _readRunningVersion();
             Recompute();
         });

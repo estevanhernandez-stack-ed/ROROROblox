@@ -10,7 +10,14 @@ public enum KnownIssuesSource
 }
 
 /// <param name="CheckedAt">When the last download attempt finished, whatever its outcome; null until the first one does.</param>
-public sealed record KnownIssuesSnapshot(IReadOnlyList<KnownIssue> Issues, KnownIssuesSource Source, DateTimeOffset? CheckedAt)
+/// <param name="LastOutcome">
+/// What the last finished attempt concluded; null until one has finished. Loading the saved copy at
+/// startup is not an attempt, so it leaves this null too — the page reads this, together with
+/// <see cref="Source"/> and <see cref="CheckedAt"/>, to tell "empty and current" from "broken"
+/// (<c>KnownIssuesStatusLine</c>, App project).
+/// </param>
+public sealed record KnownIssuesSnapshot(
+    IReadOnlyList<KnownIssue> Issues, KnownIssuesSource Source, DateTimeOffset? CheckedAt, KnownIssuesRefreshKind? LastOutcome = null)
 {
     public static readonly KnownIssuesSnapshot Empty = new([], KnownIssuesSource.None, null);
 }
@@ -64,13 +71,41 @@ public sealed class KnownIssuesState
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var fetch = await feed.FetchAsync(cancellationToken).ConfigureAwait(false);
+            KnownIssuesFetch fetch;
+            try
+            {
+                fetch = await feed.FetchAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // A genuine caller cancellation, not a feed failure -- propagate rather than
+                // reporting a phantom "checked and failed" the caller never asked for.
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // IKnownIssuesFeed.FetchAsync is documented "never throws", but a caller who
+                // trusted that alone would show "Last checked at 12:47 PM" for a check that never
+                // finished -- the false all-clear this whole commit exists to close. Treated the
+                // same as a network failure: keep the list, stamp the check, say so.
+                var failedNow = _time.GetUtcNow();
+                var failed = Current with { CheckedAt = failedNow, LastOutcome = KnownIssuesRefreshKind.NetworkFailed };
+                _log.LogWarning(ex, "Known issues: the refresh failed unexpectedly; keeping what we have.");
+                _log.LogInformation(
+                    "Known issues: kept {Count} entries from {Source}: {Outcome}.",
+                    failed.Issues.Count,
+                    failed.Source,
+                    KnownIssuesRefreshKind.NetworkFailed);
+                Publish(failed);
+                return KnownIssuesRefreshKind.NetworkFailed;
+            }
+
             var now = _time.GetUtcNow();
 
             KnownIssuesSnapshot next;
             if (fetch.Kind == KnownIssuesRefreshKind.Updated && fetch.Document is { } document)
             {
-                next = new KnownIssuesSnapshot(document.Issues, KnownIssuesSource.Release, now);
+                next = new KnownIssuesSnapshot(document.Issues, KnownIssuesSource.Release, now, fetch.Kind);
                 _log.LogInformation(
                     "Known issues: {Count} entries, {NotifyCount} with a notice, from the release.",
                     next.Issues.Count,
@@ -78,7 +113,7 @@ public sealed class KnownIssuesState
             }
             else
             {
-                next = Current with { CheckedAt = now };
+                next = Current with { CheckedAt = now, LastOutcome = fetch.Kind };
                 _log.LogInformation(
                     "Known issues: kept {Count} entries from {Source}: {Outcome}.",
                     next.Issues.Count,

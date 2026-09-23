@@ -56,6 +56,7 @@ public class KnownIssuesStateTests
 
         Assert.Equal(KnownIssuesSource.SavedCopy, state.Current.Source);
         Assert.Null(state.Current.CheckedAt);
+        Assert.Null(state.Current.LastOutcome); // loading the saved copy is not a check
         Assert.Equal(2, state.Current.Issues.Count);
         Assert.Same(state.Current, raised);
         Assert.Contains(_log.Snapshot(), l => l == "[Information] Known issues: 2 entries, 1 with a notice, from the saved copy.");
@@ -86,6 +87,7 @@ public class KnownIssuesStateTests
         Assert.Equal(KnownIssuesRefreshKind.Updated, kind);
         Assert.Equal(KnownIssuesSource.Release, state.Current.Source);
         Assert.Equal(Noon, state.Current.CheckedAt);
+        Assert.Equal(KnownIssuesRefreshKind.Updated, state.Current.LastOutcome);
         Assert.Contains(_log.Snapshot(), l => l == "[Information] Known issues: 1 entries, 1 with a notice, from the release.");
     }
 
@@ -102,7 +104,49 @@ public class KnownIssuesStateTests
         Assert.Equal("a", Assert.Single(state.Current.Issues).Id);
         Assert.Equal(KnownIssuesSource.SavedCopy, state.Current.Source);
         Assert.Equal(Noon, state.Current.CheckedAt);
+        Assert.Equal(KnownIssuesRefreshKind.NetworkFailed, state.Current.LastOutcome);
         Assert.Contains(_log.Snapshot(), l => l == "[Information] Known issues: kept 1 entries from SavedCopy: NetworkFailed.");
+    }
+
+    /// <summary>
+    /// Final-fix wave, commit B: before this fix a failed download still stamped CheckedAt with no
+    /// record of the failure, so the page could not tell "empty and current" from "broken" — a
+    /// fresh install behind a network that blocks GitHub read "No known Roblox issues right now.
+    /// Last checked at 12:47 PM." <see cref="KnownIssuesSnapshot.LastOutcome"/> is what the status
+    /// line (<c>KnownIssuesStatusLine</c>, App project) now reads to tell the two apart.
+    /// </summary>
+    [Fact]
+    public async Task AThrowingFeed_YieldsNetworkFailed_KeepsTheListStampsTheCheckAndLogsAWarning_WithoutThrowing()
+    {
+        var state = State();
+        var feed = new ScriptedFeed { Saved = Doc(Issue("a")) };
+        state.LoadSavedCopy(feed);
+        feed.Fetches.Enqueue(() => throw new InvalidOperationException("the network stack blew up"));
+
+        var kind = await state.RefreshAsync(feed);
+
+        Assert.Equal(KnownIssuesRefreshKind.NetworkFailed, kind);
+        Assert.Equal("a", Assert.Single(state.Current.Issues).Id);
+        Assert.Equal(KnownIssuesSource.SavedCopy, state.Current.Source);
+        Assert.Equal(Noon, state.Current.CheckedAt);
+        Assert.Equal(KnownIssuesRefreshKind.NetworkFailed, state.Current.LastOutcome);
+        Assert.Contains(_log.Snapshot(), l => l.StartsWith("[Warning] Known issues: the refresh failed unexpectedly"));
+    }
+
+    /// <summary>A cancellation that is genuinely the caller's own token must still propagate.</summary>
+    [Fact]
+    public async Task ACallerCancelledTokenStillThrows()
+    {
+        var state = State();
+        var feed = new ScriptedFeed();
+        using var cts = new CancellationTokenSource();
+        feed.Fetches.Enqueue(() =>
+        {
+            cts.Cancel();
+            throw new OperationCanceledException(cts.Token);
+        });
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() => state.RefreshAsync(feed, cts.Token));
     }
 
     [Fact]

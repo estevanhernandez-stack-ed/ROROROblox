@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "103ec78",
-  "generatedUtc": "2026-09-23T17:05:51+00:00",
+  "sourceCommit": "1606bb6",
+  "generatedUtc": "2026-09-23T18:29:12+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -12505,6 +12505,30 @@
         "pt-br": "Verificando problemas conhecidos…",
         "pl": "Sprawdzanie znanych problemów…",
         "es": "Buscando problemas conocidos…"
+      }
+    },
+    {
+      "field": "KnownIssuesPage_CheckFailed",
+      "en": "Couldn't check at {0}. Showing the saved list.",
+      "translations": {
+        "fr": "Vérification impossible à {0}. La liste enregistrée est affichée.",
+        "de": "Prüfung um {0} fehlgeschlagen. Die gespeicherte Liste wird angezeigt.",
+        "ru": "Не удалось проверить в {0}. Показан сохранённый список.",
+        "pt-br": "Não foi possível verificar às {0}. Mostrando a lista salva.",
+        "pl": "Nie udało się sprawdzić o {0}. Wyświetlana jest zapisana lista.",
+        "es": "No se pudo comprobar a las {0}. Se muestra la lista guardada."
+      }
+    },
+    {
+      "field": "KnownIssuesPage_NeverReached",
+      "en": "Couldn't reach the list of known issues yet.",
+      "translations": {
+        "fr": "Impossible de joindre la liste des problèmes connus pour l'instant.",
+        "de": "Die Liste der bekannten Probleme war noch nicht erreichbar.",
+        "ru": "Список известных проблем пока недоступен.",
+        "pt-br": "Ainda não foi possível acessar a lista de problemas conhecidos.",
+        "pl": "Nie udało się jeszcze pobrać listy znanych problemów.",
+        "es": "Todavía no se pudo acceder a la lista de problemas conocidos."
       }
     },
     {

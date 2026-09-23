@@ -62,7 +62,7 @@ public class KnownRobloxIssuesPageRenderTests(ITestOutputHelper output)
                 () =>
                 {
                     var model = new KnownIssuesNoticeModel(new KnownIssuesDismissals(dismissed), () => Version.Parse("0.739.0.7390687"), new Inline());
-                    model.Apply(new KnownIssuesSnapshot(Sample, KnownIssuesSource.Release, DateTimeOffset.Now));
+                    model.Apply(new KnownIssuesSnapshot(Sample, KnownIssuesSource.Release, DateTimeOffset.Now, KnownIssuesRefreshKind.Updated));
                     return ThemedWindowRender.HostPage(new KnownRobloxIssuesPage(model, _ => { }, new NoShell()), 760, 900);
                 },
                 content =>

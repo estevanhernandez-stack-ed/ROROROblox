@@ -3156,6 +3156,12 @@ Benachrichtigungen kommen in diesem Server an — auch auf deinem Handy, solange
   <data name="KnownIssuesPage_Checking" xml:space="preserve">
     <value>Suche nach bekannten Problemen…</value>
   </data>
+  <data name="KnownIssuesPage_CheckFailed" xml:space="preserve">
+    <value>Prüfung um {0} fehlgeschlagen. Die gespeicherte Liste wird angezeigt.</value>
+  </data>
+  <data name="KnownIssuesPage_NeverReached" xml:space="preserve">
+    <value>Die Liste der bekannten Probleme war noch nicht erreichbar.</value>
+  </data>
   <data name="KnownIssuesPage_RobloxTag" xml:space="preserve">
     <value>Roblox</value>
   </data>

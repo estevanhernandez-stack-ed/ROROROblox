@@ -43,14 +43,15 @@ internal sealed partial class KnownRobloxIssuesPage : UserControl, IDisposable
         var culture = TranslationSource.Instance.CurrentCulture;
         var views = _model.PageIssues.Select(i => KnownIssueView.From(i, _model.RunningVersion, culture)).ToList();
 
+        var line = KnownIssuesStatusLine.For(
+            _model.Source, views.Count, _model.CheckedAt, _model.LastOutcome, DateTimeOffset.Now, culture);
+
         IssueList.ItemsSource = views;
-        EmptyText.Visibility = views.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        EmptyText.Visibility = views.Count == 0 && line.ShowAllClear ? Visibility.Visible : Visibility.Collapsed;
         EnglishOnlyText.Visibility = views.Count > 0 && culture.TwoLetterISOLanguageName != "en"
             ? Visibility.Visible
             : Visibility.Collapsed;
-        LastCheckedText.Text = _model.CheckedAt is { } checkedAt
-            ? Loc.Format("KnownIssuesPage_LastChecked", checkedAt.ToLocalTime().ToString("t", culture))
-            : Loc.Get("KnownIssuesPage_Checking");
+        LastCheckedText.Text = line.Text;
     }
 
     private void OnHelpClick(object sender, RoutedEventArgs e)

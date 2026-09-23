@@ -2837,6 +2837,12 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="KnownIssuesPage_Checking" xml:space="preserve">
     <value>Checking for known issues…</value>
   </data>
+  <data name="KnownIssuesPage_CheckFailed" xml:space="preserve">
+    <value>Couldn't check at {0}. Showing the saved list.</value>
+  </data>
+  <data name="KnownIssuesPage_NeverReached" xml:space="preserve">
+    <value>Couldn't reach the list of known issues yet.</value>
+  </data>
   <data name="KnownIssuesPage_RobloxTag" xml:space="preserve">
     <value>Roblox</value>
   </data>

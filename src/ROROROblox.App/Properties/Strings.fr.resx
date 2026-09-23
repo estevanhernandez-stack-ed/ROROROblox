@@ -3156,6 +3156,12 @@ Les alertes arriveront sur ce serveur — sur votre téléphone aussi, tant que 
   <data name="KnownIssuesPage_Checking" xml:space="preserve">
     <value>Recherche des problèmes connus…</value>
   </data>
+  <data name="KnownIssuesPage_CheckFailed" xml:space="preserve">
+    <value>Vérification impossible à {0}. La liste enregistrée est affichée.</value>
+  </data>
+  <data name="KnownIssuesPage_NeverReached" xml:space="preserve">
+    <value>Impossible de joindre la liste des problèmes connus pour l'instant.</value>
+  </data>
   <data name="KnownIssuesPage_RobloxTag" xml:space="preserve">
     <value>Roblox</value>
   </data>

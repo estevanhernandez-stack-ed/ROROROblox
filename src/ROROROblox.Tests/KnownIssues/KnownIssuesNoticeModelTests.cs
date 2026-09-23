@@ -111,4 +111,24 @@ public sealed class KnownIssuesNoticeModelTests : IDisposable
 
         Assert.Equal(1, raised);
     }
+
+    /// <summary>
+    /// Final-fix wave, commit B: the page's status line (<c>KnownIssuesStatusLine</c>) needs both
+    /// of these off the applied snapshot to tell a verified empty list from a check that failed.
+    /// </summary>
+    [Fact]
+    public void ApplyCarriesSourceAndLastOutcomeFromTheSnapshot()
+    {
+        var model = Model();
+
+        model.Apply(new KnownIssuesSnapshot([], KnownIssuesSource.SavedCopy, DateTimeOffset.UnixEpoch, KnownIssuesRefreshKind.NetworkFailed));
+
+        Assert.Equal(KnownIssuesSource.SavedCopy, model.Source);
+        Assert.Equal(KnownIssuesRefreshKind.NetworkFailed, model.LastOutcome);
+
+        model.Apply(new KnownIssuesSnapshot([], KnownIssuesSource.Release, DateTimeOffset.UnixEpoch, KnownIssuesRefreshKind.Updated));
+
+        Assert.Equal(KnownIssuesSource.Release, model.Source);
+        Assert.Equal(KnownIssuesRefreshKind.Updated, model.LastOutcome);
+    }
 }
