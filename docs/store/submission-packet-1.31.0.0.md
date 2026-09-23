@@ -115,6 +115,26 @@ TL;DR GitHub bullet names the known-issues list; the `github.com` Releases row n
 or install updates on its own" (false since auto-update was wired on 2026-09-05), was corrected in
 the same commit.
 
+### Owner's rulings, 2026-09-23, and what was applied
+
+Applied to all seven sheets: feature entry 20 as drafted above; the privacy sentence replaced as
+drafted; `Known Roblox issues` added to the tools-window page list; the frame-rate entry translated
+into the six sheets (each now 20 features). The hub bullet was declined.
+
+**Listing verifier, at `a44e5ad` then `35035a1`** (long description + features, six languages; the
+other four fields were already approved and unchanged). The new text drew one finding: French dropped
+"that sits beside your accounts". Fixed. The run also surfaced defects in long-live text, fixed in
+`35035a1`: Spanish dropped "while your accounts run"; Russian and Polish turned "silence means
+something's wrong" into "check your PC"; German lost the Uptime marks name and "with Discord closed";
+Russian said a client "costs" RAM like a price, and its tray bullet lacked its heading.
+
+**Overruled:** five findings that the tray "double-click main launch" was mistranslated as
+launching the main account. It does launch the main account (`App.ActivateMainFromTray` runs
+`StartMainCommand`); the translations are right and the English is the vague one. **Left as minor,
+not chased:** a second pass raised new style points on text it had passed on the first (the Uptime
+marks name in ru and pt-BR, "by name" in Spanish's plugin sentence). The verifier is not
+deterministic across passes, and these are wording, not claims.
+
 ## 3. What's new in this version
 
 `docs/store/whats-new-1.31.0.0.md`, seven blocks — English plus fr, de, ru, pt-BR, pl, es. Each under
