@@ -10,7 +10,7 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "PENDING",
+  "sourceCommit": "84a360ad0802bc6d8e516b70e929c9d218dbc689",
   "generatedUtc": "2026-09-23T22:22:01+00:00",
   "sourceOfTruth": "docs/store/listing-copy*.md — corrections are edits there, then re-run this script",
   "fields": [
