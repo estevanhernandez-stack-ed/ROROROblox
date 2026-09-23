@@ -26,6 +26,7 @@ public class TypedHttpClientRegistrationTests
     [InlineData(typeof(WebhookProbe))]
     [InlineData(typeof(ROROROblox.App.Notify.PushoverSender))]
     [InlineData(typeof(ROROROblox.App.Notify.NtfySender))]
+    [InlineData(typeof(ROROROblox.Core.KnownIssues.IKnownIssuesFeed))]
     public void TypedHttpClient_Resolves_WithExactlyOneApplicableCtor(Type serviceType)
     {
         var services = new ServiceCollection();
@@ -37,6 +38,7 @@ public class TypedHttpClientRegistrationTests
         services.AddHttpClient<WebhookProbe>();
         services.AddHttpClient<ROROROblox.App.Notify.PushoverSender>();
         services.AddHttpClient<ROROROblox.App.Notify.NtfySender>();
+        services.AddHttpClient<ROROROblox.Core.KnownIssues.IKnownIssuesFeed, ROROROblox.Core.KnownIssues.KnownIssuesFeed>();
         using var provider = services.BuildServiceProvider();
 
         var resolved = provider.GetRequiredService(serviceType);

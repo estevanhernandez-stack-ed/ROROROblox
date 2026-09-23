@@ -36,6 +36,7 @@
             <ListBoxItem Content="{loc:Loc ShellWindow_Diagnostics}" />
             <ListBoxItem Content="{loc:Loc ShellWindow_Plugins}" />
             <ListBoxItem Content="{loc:Loc ShellWindow_About}" />
+            <ListBoxItem Content="{loc:Loc ShellWindow_KnownRobloxIssues}" />
         </ListBox>
 
         <ContentControl Grid.Column="1" x:Name="PageHost" Margin="16,0,0,0" Focusable="False" />

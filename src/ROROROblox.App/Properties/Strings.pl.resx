@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -20,7 +20,7 @@
                     Kopia accounts.dat przeniesiona na inny komputer nie zostanie odszyfrowana.</value>
   </data>
   <data name="AboutPage_InsideTheToolsWindowCtrl" xml:space="preserve">
-    <value>W oknie narzędzi klawisze Ctrl+1 do Ctrl+6 również przenoszą bezpośrednio do strony.</value>
+    <value>W oknie narzędzi klawisze Ctrl+1 do Ctrl+7 również przenoszą bezpośrednio do strony.</value>
   </data>
   <data name="AboutPage_KeyboardShortcuts" xml:space="preserve">
     <value>Skróty klawiszowe</value>
@@ -504,7 +504,7 @@
     <value>Historia</value>
   </data>
   <data name="MainWindow_HistoryDiagnosticsPluginsLogFolder" xml:space="preserve">
-    <value>Historia, Diagnostyka, Wtyczki, folder dzienników, Zatrzymaj wszystko, przewodnik, O programie.</value>
+    <value>Historia, Diagnostyka, Wtyczki, Znane problemy Roblox, folder dzienników, Zatrzymaj wszystko, przewodnik, O programie.</value>
   </data>
   <data name="MainWindow_HoldingYourOtherAccountsUntil" xml:space="preserve">
     <value>Wstrzymujemy Twoje pozostałe konta, aż to się zakończy — dzieje się tak tylko wtedy, gdy Roblox potrzebuje świeżego klienta.</value>
@@ -3131,5 +3131,89 @@ Alerty będą docierać na ten serwer — również na twój telefon, o ile jest
   </data>
   <data name="SettingsPage_PointYourPhoneCameraAt" xml:space="preserve">
     <value>Skieruj tu aparat telefonu, aby się zapisać — bez pisania. Każdy, kto go zeskanuje, może czytać twoje alerty, więc trzymaj go poza streamem.</value>
+  </data>
+  <data name="ShellWindow_KnownRobloxIssues" xml:space="preserve">
+    <value>Znane problemy Roblox</value>
+  </data>
+  <data name="Shell_Title_KnownRobloxIssues" xml:space="preserve">
+    <value>Znane problemy Roblox</value>
+  </data>
+  <data name="KnownIssuesPage_Heading" xml:space="preserve">
+    <value>Znane problemy Roblox</value>
+  </data>
+  <data name="KnownIssuesPage_Intro" xml:space="preserve">
+    <value>Problemy w samym Roblox, a nie w RoRoRo, i co z nimi zrobić.</value>
+  </data>
+  <data name="KnownIssuesPage_EnglishOnly" xml:space="preserve">
+    <value>Opisy problemów są po angielsku.</value>
+  </data>
+  <data name="KnownIssuesPage_Empty" xml:space="preserve">
+    <value>Obecnie brak znanych problemów Roblox.</value>
+  </data>
+  <data name="KnownIssuesPage_LastChecked" xml:space="preserve">
+    <value>Ostatnie sprawdzenie o {0}.</value>
+  </data>
+  <data name="KnownIssuesPage_Checking" xml:space="preserve">
+    <value>Sprawdzanie znanych problemów…</value>
+  </data>
+  <data name="KnownIssuesPage_CheckFailed" xml:space="preserve">
+    <value>Nie udało się sprawdzić o {0}. Wyświetlana jest zapisana lista.</value>
+  </data>
+  <data name="KnownIssuesPage_NeverReached" xml:space="preserve">
+    <value>Nie udało się jeszcze pobrać listy znanych problemów.</value>
+  </data>
+  <data name="KnownIssuesPage_RobloxTag" xml:space="preserve">
+    <value>Roblox</value>
+  </data>
+  <data name="KnownIssuesPage_Posted" xml:space="preserve">
+    <value>Opublikowano {0}</value>
+  </data>
+  <data name="KnownIssuesPage_WhatToDo" xml:space="preserve">
+    <value>Co zrobić</value>
+  </data>
+  <data name="KnownIssuesPage_RororoCanHelp" xml:space="preserve">
+    <value>RoRoRo może pomóc</value>
+  </data>
+  <data name="KnownIssuesPage_VersionAffected" xml:space="preserve">
+    <value>Twoja wersja Roblox ({0}) jest objęta problemem.</value>
+  </data>
+  <data name="KnownIssuesPage_VersionFixed" xml:space="preserve">
+    <value>Naprawiono w {0}. Masz {1}.</value>
+  </data>
+  <data name="KnownIssuesPage_VersionNotYet" xml:space="preserve">
+    <value>Dotyczy wersji {0} i nowszych. Masz {1}.</value>
+  </data>
+  <data name="KnownIssuesPage_VersionUnknown" xml:space="preserve">
+    <value>Nie udało się odczytać Twojej wersji Roblox.</value>
+  </data>
+  <data name="KnownIssuesPage_OpenMemorySettings" xml:space="preserve">
+    <value>Otwórz ustawienia pamięci</value>
+  </data>
+  <data name="KnownIssuesPage_ShowAccounts" xml:space="preserve">
+    <value>Pokaż konta</value>
+  </data>
+  <data name="KnownIssuesPage_OpenLink" xml:space="preserve">
+    <value>Otwórz {0} w przeglądarce</value>
+  </data>
+  <data name="MainWindow_KnownIssueNoticeOne" xml:space="preserve">
+    <value>Znany problem Roblox: {0}</value>
+  </data>
+  <data name="MainWindow_KnownIssueNoticeMany" xml:space="preserve">
+    <value>Znane problemy Roblox, które Cię dotyczą: {0}</value>
+  </data>
+  <data name="MainWindow_SeeKnownIssues" xml:space="preserve">
+    <value>Zobacz znane problemy</value>
+  </data>
+  <data name="MainWindow_DismissKnownIssueNotice" xml:space="preserve">
+    <value>Odrzuć powiadomienie o znanym problemie Roblox</value>
+  </data>
+  <data name="MainWindow_KnownRobloxIssues" xml:space="preserve">
+    <value>Znane problemy Roblox</value>
+  </data>
+  <data name="MainWindow_KnownRobloxIssuesCount" xml:space="preserve">
+    <value>Znane problemy Roblox ({0})</value>
+  </data>
+  <data name="MainWindow_KnownRobloxIssuesTooltip" xml:space="preserve">
+    <value>Problemy w samym Roblox i co z nimi zrobić</value>
   </data>
 </root>

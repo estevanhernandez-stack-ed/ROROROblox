@@ -7,7 +7,10 @@ namespace ROROROblox.Core;
 ///
 /// A SEPARATE keypair from 626-mod-launcher's manifest-signing key (one key per trust surface —
 /// this feed and the mod-launcher's games manifest are unrelated products and unrelated blast
-/// radii). The matching private key lives ONLY in this repo's CI as the <c>ROBLOXCOMPAT_SIGNING_KEY</c>
+/// radii). Since 2026-09-23 the same key also signs <c>known-issues.json</c> (<see cref="KnownIssues.KnownIssuesFeed"/>).
+/// "One key per trust surface" separates PRODUCTS; two feeds of this one product, published by the
+/// same person from the same repo, are one trust surface.
+/// The matching private key lives ONLY in this repo's CI as the <c>ROBLOXCOMPAT_SIGNING_KEY</c>
 /// GitHub Actions secret; it never appears in source. A public key is safe to commit. Rotation =
 /// mint a new keypair and ship a release that re-pins <see cref="PublicKeySpki"/> (the key is pinned
 /// in the binary, so rotation is a release — no rotation machinery by design, matching the

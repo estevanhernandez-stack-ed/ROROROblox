@@ -147,6 +147,13 @@ jobs:
           $compatPath = (Resolve-Path 'roblox-compat.json').Path
           dotnet run --project tools/CompatSigner --configuration Release -- $compatPath
           if ($LASTEXITCODE -ne 0) { throw "CompatSigner failed (exit $LASTEXITCODE)" }
+          # known-issues.json is validated by the app's own parser, then signed with the same key, so
+          # KnownIssuesFeed can verify it exactly as RobloxCompatChecker verifies roblox-compat.json.
+          $issuesPath = (Resolve-Path 'known-issues.json').Path
+          dotnet run --project tools/CompatSigner --configuration Release -- --validate-known-issues $issuesPath
+          if ($LASTEXITCODE -ne 0) { throw "known-issues.json failed validation (exit $LASTEXITCODE)" }
+          dotnet run --project tools/CompatSigner --configuration Release -- $issuesPath
+          if ($LASTEXITCODE -ne 0) { throw "CompatSigner failed on known-issues.json (exit $LASTEXITCODE)" }
 
       - name: Upload remote compat config
         env:
@@ -168,6 +175,11 @@ jobs:
           # the marketplace for everyone — so every release carries the current catalog. Not signed
           # yet — a natural follow-up, out of scope for this change.
           gh release upload '${{ steps.ver.outputs.tag }}' docs/store/plugins-catalog.json --clobber
+          # known-issues.json rides every release for the same reason as the two above: the app reads
+          # releases/latest/download/known-issues.json (+ .sig), so a release that becomes latest
+          # without it would empty the Known Roblox issues page for everyone.
+          gh release upload '${{ steps.ver.outputs.tag }}' known-issues.json known-issues.json.sig --clobber
+          if ($LASTEXITCODE -ne 0) { throw "gh release upload of known-issues.json failed (exit $LASTEXITCODE)" }
 
       - name: Summary
         shell: pwsh

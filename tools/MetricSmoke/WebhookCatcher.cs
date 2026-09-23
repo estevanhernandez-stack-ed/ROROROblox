@@ -88,6 +88,7 @@ public sealed class WebhookCatcher : IAsyncDisposable
     private readonly ConcurrentDictionary<Task, byte> _inFlight = new();
     private readonly Task _acceptLoop;
     private long _lastArrivalTicks;
+    private long _requestsReceived;
 
     public string MineUrl { get; }
     public string ClanUrl { get; }
@@ -99,6 +100,20 @@ public sealed class WebhookCatcher : IAsyncDisposable
     /// seeing an absence that reads identically to "the app never posted."
     /// </summary>
     public IReadOnlyList<Exception> RequestFaults => _requestFaults.ToArray();
+
+    /// <summary>
+    /// How many requests <see cref="HttpListener.GetContextAsync"/> has actually handed to
+    /// <see cref="HandleSafelyAsync"/> so far, incremented at that method's very first line —
+    /// before anything that can fail. A caller that needs to know the server has truly accepted a
+    /// connection (as opposed to merely having sent bytes at it) waits on this rather than on
+    /// <see cref="RequestFaults"/> or <see cref="CapturedPost"/>s, both of which stay empty until a
+    /// request not only arrived but was also read. Added after a test that severed its own
+    /// connection right after sending headers raced http.sys: the reset could land before the
+    /// accept loop's <c>Task.Run</c> had even posted its first <c>GetContextAsync</c>, so no
+    /// context was ever delivered, no handler ran, and nothing here or in
+    /// <see cref="RequestFaults"/> ever moved.
+    /// </summary>
+    public long RequestsReceived => Interlocked.Read(ref _requestsReceived);
 
     private WebhookCatcher(HttpListener listener, int port, TimeSpan quietPeriod)
     {
@@ -204,6 +219,7 @@ public sealed class WebhookCatcher : IAsyncDisposable
     /// </summary>
     private async Task HandleSafelyAsync(HttpListenerContext context)
     {
+        Interlocked.Increment(ref _requestsReceived);
         try
         {
             await HandleAsync(context).ConfigureAwait(false);

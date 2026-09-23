@@ -66,6 +66,11 @@ internal partial class SettingsPage : UserControl, IDisposable
     private bool _suppressClickHandlers; // true while we set the initial check states.
     private bool _loaded;                 // true once OnLoaded has populated; gates the culture-change re-render.
 
+    // Known Roblox issues' "Open memory settings" (spec §4). OnLoaded resets the rail to its first
+    // section every time the page is shown — the shell swaps pages in and out — so a reveal asked for
+    // before Loaded is queued here and applied straight after that reset.
+    private bool _revealMemoryOnLoad;
+
     /// <summary>Channel names reported by the probe for each webhook, if it answered.</summary>
     private string? _mineChannelName;
 
@@ -272,6 +277,12 @@ internal partial class SettingsPage : UserControl, IDisposable
         try
         {
             SettingsNav.SelectedIndex = 0;
+            if (_revealMemoryOnLoad)
+            {
+                _revealMemoryOnLoad = false;
+                ShowMemorySwitch();
+            }
+
             RunOnLoginToggle.IsChecked = SafeIsStartupEnabled();
             LaunchMainToggle.IsChecked = await _settings.GetLaunchMainOnStartupAsync();
             LaunchWindowedToggle.IsChecked = await _settings.GetLaunchWindowedAsync();
@@ -2581,6 +2592,36 @@ internal partial class SettingsPage : UserControl, IDisposable
         {
             pages[i].Visibility = i == SettingsNav.SelectedIndex ? Visibility.Visible : Visibility.Collapsed;
         }
+    }
+
+    /// <summary>
+    /// Alerts &amp; memory, scrolled to "Watch memory while accounts are running", with focus on it.
+    /// Found by the rail item's AutomationId, not its index, so reordering the rail cannot send it to
+    /// the wrong section.
+    /// </summary>
+    internal void RevealMemorySettings()
+    {
+        if (IsLoaded)
+        {
+            ShowMemorySwitch();
+            return;
+        }
+
+        _revealMemoryOnLoad = true;
+    }
+
+    private void ShowMemorySwitch()
+    {
+        SettingsNav.SelectedItem = SettingsNav.Items
+            .OfType<System.Windows.Controls.ListBoxItem>()
+            .First(item => System.Windows.Automation.AutomationProperties.GetAutomationId(item) == "NavAlerts");
+
+        // After the section becomes visible and lays out; BringIntoView on a collapsed element does nothing.
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+        {
+            MemoryWatchdogEnabledToggle.BringIntoView();
+            MemoryWatchdogEnabledToggle.Focus();
+        }));
     }
 
 }

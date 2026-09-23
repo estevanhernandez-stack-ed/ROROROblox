@@ -14,6 +14,14 @@
 #
 # Why a Windows runner: tools/CompatSigner references ROROROblox.Core (net10.0-windows), same as
 # release.yml.
+#
+# known-issues.json rides the same run: edit it on main, merge, run this workflow. It is validated
+# by the app's own parser (tools/CompatSigner --validate-known-issues), signed with the same key,
+# and attached beside roblox-compat.json. Clients pick it up within four hours, or on next start.
+# Its steps run strictly AFTER roblox-compat.json is validated, signed and uploaded -- deliberately,
+# so a malformed known-issues.json can end this job red without ever blocking the mutex-name push,
+# which is the whole reason the two files were kept separate (design doc, "Two transports were
+# rejected"). Do not interleave them again.
 
 name: compat
 
@@ -34,7 +42,7 @@ env:
 
 jobs:
   push-compat:
-    name: sign + upload roblox-compat.json
+    name: sign + upload roblox-compat.json and known-issues.json
     runs-on: windows-latest
     timeout-minutes: 15
 
@@ -73,7 +81,7 @@ jobs:
           if ($c.mutexName -notlike 'Local\*') { throw "mutexName must be a Local\ kernel name, got '$($c.mutexName)'." }
           Write-Host "mutexName=$($c.mutexName) knownGood=$($c.knownGoodVersionMin)..$($c.knownGoodVersionMax) generatedAt=$($c.generatedAt)"
 
-      - name: Sign compat config
+      - name: Sign roblox-compat.json
         env:
           ROBLOXCOMPAT_SIGNING_KEY: ${{ secrets.ROBLOXCOMPAT_SIGNING_KEY }}
         shell: pwsh
@@ -83,7 +91,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "CompatSigner failed (exit $LASTEXITCODE)" }
           if (-not (Test-Path 'roblox-compat.json.sig') -or (Get-Item 'roblox-compat.json.sig').Length -eq 0) { throw "No signature written." }
 
-      - name: Upload to the release
+      - name: Upload roblox-compat.json to the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
@@ -97,5 +105,43 @@ jobs:
 
           ``````json
           $(Get-Content roblox-compat.json -Raw)
+          ``````
+          "@ | Out-File $env:GITHUB_STEP_SUMMARY -Append
+
+      # Everything from here down is known-issues.json, strictly AFTER roblox-compat.json has
+      # already shipped -- see the header comment. A bad known-issues.json can fail the job red
+      # without ever having put the mutex-name push at risk.
+      - name: Validate known-issues.json
+        shell: pwsh
+        run: |
+          # The SAME validator the app runs after downloading (KnownIssuesParser, in Core), so this
+          # workflow cannot sign a file every client would refuse.
+          $issuesPath = (Resolve-Path 'known-issues.json').Path
+          dotnet run --project tools/CompatSigner --configuration Release -- --validate-known-issues $issuesPath
+          if ($LASTEXITCODE -ne 0) { throw "known-issues.json failed validation (exit $LASTEXITCODE)" }
+
+      - name: Sign known-issues.json
+        env:
+          ROBLOXCOMPAT_SIGNING_KEY: ${{ secrets.ROBLOXCOMPAT_SIGNING_KEY }}
+        shell: pwsh
+        run: |
+          $issuesPath = (Resolve-Path 'known-issues.json').Path
+          dotnet run --project tools/CompatSigner --configuration Release -- $issuesPath
+          if ($LASTEXITCODE -ne 0) { throw "CompatSigner failed on known-issues.json (exit $LASTEXITCODE)" }
+          if (-not (Test-Path 'known-issues.json.sig') -or (Get-Item 'known-issues.json.sig').Length -eq 0) { throw "No known-issues signature written." }
+
+      - name: Upload known-issues.json to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          gh release upload '${{ steps.rel.outputs.tag }}' known-issues.json known-issues.json.sig --clobber --repo $env:GITHUB_REPOSITORY
+          if ($LASTEXITCODE -ne 0) { throw "gh release upload of known-issues.json failed (exit $LASTEXITCODE)" }
+          @"
+
+          ## known-issues.json pushed to ${{ steps.rel.outputs.tag }}
+
+          ``````json
+          $(Get-Content known-issues.json -Raw)
           ``````
           "@ | Out-File $env:GITHUB_STEP_SUMMARY -Append

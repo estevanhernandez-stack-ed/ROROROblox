@@ -1202,6 +1202,10 @@
                                           Command="{Binding OpenPluginsCommand}"
                                           InputGestureText="Ctrl+P"
                                           ToolTip="{loc:Loc MainWindow_InstallAndManageRororoPlugins}" />
+                                <MenuItem Header="{Binding KnownIssuesMenuHeader}"
+                                AutomationProperties.AutomationId="ToolsKnownRobloxIssues"
+                                          Command="{Binding OpenKnownIssuesCommand}"
+                                          ToolTip="{loc:Loc MainWindow_KnownRobloxIssuesTooltip}" />
                                 <!-- F-001 group 2 — verbs that reach outside the app. Kept apart
                                      from the destinations above so the one destructive item is not
                                      a row away from Plugins; the confirm catches a mis-click, but
@@ -1563,6 +1567,7 @@
                                 <Condition Binding="{Binding IdleSummaryText}" Value="" />
                                 <Condition Binding="{Binding ContestedBannerText}" Value="" />
                                 <Condition Binding="{Binding FpsCapWarningText}" Value="" />
+                                <Condition Binding="{Binding KnownIssueNoticeText}" Value="" />
                             </MultiDataTrigger.Conditions>
                             <Setter Property="Visibility" Value="Collapsed" />
                         </MultiDataTrigger>
@@ -1643,6 +1648,39 @@
                             FontSize="{DynamicResource BodyFontSize}"
                             VerticalAlignment="Top"
                             Cursor="Hand" />
+                </Grid>
+                <!-- Known Roblox issues (spec 2026-09-23). Suppressed while the contested warning shows
+                     (KnownIssuesNoticeModel.SetSuppressed, fed from SetContested). A Grid for the same
+                     reason as the frame-rate row above: declaration order is reading order, so the
+                     message is read before its two actions. -->
+                <Grid Margin="0,4,0,0"
+                      Visibility="{Binding KnownIssueNoticeText, Converter={StaticResource StringToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding KnownIssueNoticeText}"
+                               FontSize="{DynamicResource BodyFontSize}"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource WhiteBrush}" />
+                    <Button Grid.Column="1"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Content="{loc:Loc MainWindow_SeeKnownIssues}"
+                            Command="{Binding OpenKnownIssuesCommand}"
+                            Padding="10,4"
+                            Margin="8,0,0,0"
+                            FontSize="{DynamicResource BodyFontSize}" />
+                    <Button Grid.Column="2"
+                            Style="{StaticResource GhostButtonStyle}"
+                            Content="{loc:Loc MainWindow_Dismiss}"
+                            AutomationProperties.Name="{loc:Loc MainWindow_DismissKnownIssueNotice}"
+                            Command="{Binding DismissKnownIssueNoticeCommand}"
+                            Padding="10,4"
+                            Margin="4,0,0,0"
+                            FontSize="{DynamicResource BodyFontSize}" />
                 </Grid>
             </StackPanel>
         </Border>
