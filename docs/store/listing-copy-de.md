@@ -60,8 +60,8 @@ Plugin-System mit Zustimmung je Berechtigung und Isolation in eigenen Prozessen
 Auto-Update, das weiterläuft, wenn Roblox sich darunter ändert
 Start mit Windows, wenn du willst — ein Schalter, und Windows' eigene Autostart-Liste behält die Kontrolle
 Discord Join startet RoRoRo auch geschlossen — und fragt immer, bevor irgendetwas startet
-Handy-Alarme über Pushover oder ntfy — ein Alt fliegt raus und dein Handy vibriert, auch ohne Discord
-Alle zwei Stunden ein „Alles gut“-Zeichen, solange deine Konten laufen — Stille heißt: nachsehen
+Handy-Alarme über Pushover oder ntfy — ein Alt fliegt raus und dein Handy vibriert, auch wenn Discord geschlossen ist
+Lebenszeichen — alle zwei Stunden ein „Alles gut“, solange deine Konten laufen, also heißt Stille: etwas stimmt nicht
 Alarme fächern auf — Desktop, Discord-Kanäle und Handy in jeder Kombination, je Alarm
 In sechs Sprachen — die ganze App, Bildschirme wie Meldungen: Französisch, Deutsch, Russisch, Portugiesisch (Brasilien), Polnisch, Spanisch. Sofortiger Wechsel, gemäß Windows oder deiner Wahl
 Bekannte Roblox-Probleme — Probleme auf Roblox-Seite, was zu tun ist und welche RoRoRo-Funktion hilft, aktuell gehalten ohne App-Update

@@ -60,7 +60,7 @@ Automatyczne aktualizacje odporne na zmiany po stronie Roblox
 Start z Windows, jeśli chcesz — jeden przełącznik, a lista Autostartu Windows ma ostatnie słowo
 Discord Join uruchamia RoRoRo nawet zamknięte — i zawsze pyta, zanim cokolwiek wystartuje
 Alerty na telefon przez Pushover lub ntfy — alt wypada i telefon wibruje, nawet bez Discorda
-Sygnał „wszystko gra" co dwie godziny, póki konta działają — cisza znaczy: sprawdź PC
+Sygnał „wszystko gra" co dwie godziny, póki konta działają — cisza znaczy, że coś jest nie tak
 Alerty wachlarzem — pulpit, kanały Discord i telefon w dowolnej kombinacji, na każdy alert
 Sześć języków — cała aplikacja, ekrany i komunikaty: francuski, niemiecki, rosyjski, portugalski (brazylijski), polski, hiszpański. Natychmiastowa zmiana, wg Windows lub twojego wyboru
 Znane problemy Roblox — problemy po stronie Roblox, co robić i która funkcja RoRoRo pomaga, aktualne bez aktualizacji aplikacji
