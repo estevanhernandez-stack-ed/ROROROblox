@@ -20,7 +20,7 @@ internal sealed partial class ShellWindow : Window
 {
     /// <summary>Rail order — must match the ListBoxItems in XAML.</summary>
     private static readonly ShellPage[] RailOrder =
-        [ShellPage.Games, ShellPage.Settings, ShellPage.History, ShellPage.Diagnostics, ShellPage.Plugins, ShellPage.About];
+        [ShellPage.Games, ShellPage.Settings, ShellPage.History, ShellPage.Diagnostics, ShellPage.Plugins, ShellPage.About, ShellPage.KnownRobloxIssues];
 
     // Resx KEYS, not the English titles — resolved through Loc at navigation time and again on a
     // live culture toggle. The shell is a long-lived surface (it hosts the Settings page, where the
@@ -34,6 +34,7 @@ internal sealed partial class ShellWindow : Window
         [ShellPage.Diagnostics] = "Shell_Title_Diagnostics",
         [ShellPage.Plugins] = "Shell_Title_Plugins",
         [ShellPage.About] = "Shell_Title_About",
+        [ShellPage.KnownRobloxIssues] = "Shell_Title_KnownRobloxIssues",
     };
 
     private readonly Func<ShellPage, UserControl> _createPage;
@@ -65,7 +66,7 @@ internal sealed partial class ShellWindow : Window
         TranslationSource.Instance.CultureChanged += OnUiCultureChanged;
 
         // The same vocabulary the main window binds (F-112), scoped to what makes sense here:
-        // destination shortcuts navigate this window's pages, and Ctrl+1..6 walk the rail in
+        // destination shortcuts navigate this window's pages, and Ctrl+1..7 walk the rail in
         // order. Actions that need the main window (add account, launches, the filter) are not
         // mapped — BuildBindings skips what a window does not answer for.
         foreach (var binding in Input.KeyboardVocabulary.BuildBindings(action => action switch
@@ -97,6 +98,9 @@ internal sealed partial class ShellWindow : Window
     /// <summary>Select a page, creating it on first visit. Also the initial-navigation entry.</summary>
     public void NavigateTo(ShellPage page)
         => ShellNav.SelectedIndex = Array.IndexOf(RailOrder, page);
+
+    /// <summary>The page on screen, for callers that must act on it after navigating (Known Roblox issues → Settings).</summary>
+    internal UserControl? CurrentPage => PageHost.Content as UserControl;
 
     private void OnNavSelectionChanged(object sender, SelectionChangedEventArgs e)
     {

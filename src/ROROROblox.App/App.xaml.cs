@@ -882,6 +882,15 @@ public partial class App : Application
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
         });
 
+        // Known Roblox issues (spec 2026-09-23). The dismissals file and the worded model are
+        // singletons; the feed and its state are registered with the startup wiring (Task 10).
+        services.AddSingleton(_ => new ROROROblox.Core.KnownIssues.KnownIssuesDismissals(
+            ROROROblox.Core.KnownIssues.KnownIssuesDismissals.DefaultPath));
+        services.AddSingleton(sp => new KnownIssues.KnownIssuesNoticeModel(
+            sp.GetRequiredService<ROROROblox.Core.KnownIssues.KnownIssuesDismissals>(),
+            ROROROblox.Core.KnownIssues.RunningRobloxVersion.Read,
+            new Threading.WpfUiDispatcher()));
+
         services.AddSingleton<IBloxstrapDetector, BloxstrapDetector>();
 
         // v1.7.0 install-deferral probe (item 1). Its own typed HttpClient — the CDN GET against
@@ -1434,8 +1443,31 @@ public partial class App : Application
                 _services.GetRequiredService<IDiagnosticsCollector>()),
             Shell.ShellPage.Plugins => BuildPluginsPage(),
             Shell.ShellPage.About => new About.AboutPage(),
+            Shell.ShellPage.KnownRobloxIssues => new KnownIssues.KnownRobloxIssuesPage(
+                _services.GetRequiredService<KnownIssues.KnownIssuesNoticeModel>(),
+                GoToKnownIssueFeature,
+                _services.GetRequiredService<IShellOpener>()),
             _ => throw new ArgumentOutOfRangeException(nameof(page), page, null),
         };
+    }
+
+    /// <summary>Where a known issue's "RoRoRo can help" button goes (spec §4).</summary>
+    private void GoToKnownIssueFeature(KnownIssues.KnownIssueFeatureRoute route)
+    {
+        switch (route)
+        {
+            case KnownIssues.KnownIssueFeatureRoute.MemorySettings:
+                OpenShellPage(Shell.ShellPage.Settings);
+                (_shell?.CurrentPage as Preferences.SettingsPage)?.RevealMemorySettings();
+                break;
+            case KnownIssues.KnownIssueFeatureRoute.MainWindow:
+                if (Current.MainWindow is { } main)
+                {
+                    SurfaceMainWindow(main);
+                }
+
+                break;
+        }
     }
 
     private Plugins.PluginsPage BuildPluginsPage()
