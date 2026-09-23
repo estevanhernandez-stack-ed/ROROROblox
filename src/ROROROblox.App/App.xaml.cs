@@ -509,6 +509,7 @@ public partial class App : Application
         // The gate has been answered by now (both modal branches above are blocking), so it is
         // safe to let plugin processes launch. The pipe they handshake against bound earlier.
         StartPluginAutostart();
+        StartKnownIssuesFeed();
         await InitializeIdleSettingsAsync();
         await InitializeStreamerModeAsync();
 
@@ -525,6 +526,8 @@ public partial class App : Application
         // Alerts are a passenger; this is not. Set it first, unconditionally, before anything that
         // can fail.
         _services.GetRequiredService<MainViewModel>().ShellPageOpener = OpenShellPage;
+        _services.GetRequiredService<MainViewModel>().KnownIssuesNotice =
+            _services.GetRequiredService<KnownIssues.KnownIssuesNoticeModel>();
 
         await WireDiscordPresenceAsync(mainWindow, discordApplicationId);
 
@@ -890,6 +893,18 @@ public partial class App : Application
             sp.GetRequiredService<ROROROblox.Core.KnownIssues.KnownIssuesDismissals>(),
             ROROROblox.Core.KnownIssues.RunningRobloxVersion.Read,
             new Threading.WpfUiDispatcher()));
+
+        // Its own typed HttpClient with the RORORO UA, like the compat checker. Transient and
+        // stateless; KnownIssuesState is the singleton that holds the list.
+        services.AddHttpClient<ROROROblox.Core.KnownIssues.IKnownIssuesFeed, ROROROblox.Core.KnownIssues.KnownIssuesFeed>(client =>
+        {
+            client.DefaultRequestHeaders.UserAgent.Clear();
+            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RORORO", version));
+        });
+        services.AddSingleton(sp => new ROROROblox.Core.KnownIssues.KnownIssuesState(
+            TimeProvider.System,
+            sp.GetRequiredService<ILogger<ROROROblox.Core.KnownIssues.KnownIssuesState>>()));
 
         services.AddSingleton<IBloxstrapDetector, BloxstrapDetector>();
 
@@ -2758,6 +2773,63 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "Plugin autostart threw; plugins not launched this session.");
+        }
+    }
+
+    private ITimer? _knownIssuesTimer;
+
+    private static readonly TimeSpan KnownIssuesRefreshInterval = TimeSpan.FromHours(4);
+
+    /// <summary>
+    /// Known Roblox issues (spec 2026-09-23 §2). Shows the saved copy at once, then downloads now and
+    /// every four hours on the thread pool. Called after the gate, beside plugin autostart, so it never
+    /// touches the theme → mutex → gate order. A failure here costs the page, never startup.
+    /// </summary>
+    private void StartKnownIssuesFeed()
+    {
+        if (_services is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var state = _services.GetRequiredService<ROROROblox.Core.KnownIssues.KnownIssuesState>();
+            var model = _services.GetRequiredService<KnownIssues.KnownIssuesNoticeModel>();
+            state.Changed += (_, snapshot) => model.Apply(snapshot);
+            state.LoadSavedCopy(_services.GetRequiredService<ROROROblox.Core.KnownIssues.IKnownIssuesFeed>());
+
+            _knownIssuesTimer = TimeProvider.System.CreateTimer(
+                _ => _ = RefreshKnownIssuesAsync(),
+                state: null,
+                dueTime: TimeSpan.Zero,
+                period: KnownIssuesRefreshInterval);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Known issues could not start; the page stays empty this session.");
+        }
+    }
+
+    private async Task RefreshKnownIssuesAsync()
+    {
+        try
+        {
+            var services = _services;
+            if (services is null)
+            {
+                return;
+            }
+
+            // A fresh typed client per attempt: IHttpClientFactory pools the handler, so this is the
+            // intended use and keeps DNS rotation honest over a days-long session.
+            await services.GetRequiredService<ROROROblox.Core.KnownIssues.KnownIssuesState>()
+                .RefreshAsync(services.GetRequiredService<ROROROblox.Core.KnownIssues.IKnownIssuesFeed>())
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Known issues refresh threw; trying again on the next tick.");
         }
     }
 

@@ -266,6 +266,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         OpenHistoryCommand = new RelayCommand(OpenHistory);
         OpenPreferencesCommand = new RelayCommand(OpenPreferences);
         OpenPluginsCommand = new RelayCommand(_ => RequestOpenPlugins?.Invoke(this, EventArgs.Empty));
+        OpenKnownIssuesCommand = new RelayCommand(() => OpenShellPage(Shell.ShellPage.KnownRobloxIssues));
+        DismissKnownIssueNoticeCommand = new RelayCommand(() => _knownIssuesNotice?.Dismiss());
         DismissBloxstrapWarningCommand = new RelayCommand(_ => _ = DismissBloxstrapWarningAsync());
         DismissFpsCapWarningCommand = new RelayCommand(_ => _ = DismissFpsCapWarningAsync());
 
@@ -703,6 +705,10 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     public ICommand OpenHistoryCommand { get; }
     public ICommand OpenPreferencesCommand { get; }
     public ICommand OpenPluginsCommand { get; }
+
+    public ICommand OpenKnownIssuesCommand { get; }
+
+    public ICommand DismissKnownIssueNoticeCommand { get; }
     public ICommand DismissBloxstrapWarningCommand { get; }
     public ICommand DismissFpsCapWarningCommand { get; }
 
@@ -4303,6 +4309,51 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         _isContested = contested;
         ContestedBannerText = contested ? MultiInstanceCopy.ContestedBanner : string.Empty;
+        _knownIssuesNotice?.SetSuppressed(contested);
+    }
+
+    private ROROROblox.App.KnownIssues.KnownIssuesNoticeModel? _knownIssuesNotice;
+
+    /// <summary>
+    /// Known Roblox issues' notice and menu count (spec 2026-09-23). Set by the composition root, like
+    /// <see cref="ShellPageOpener"/>; null in tests that do not exercise it. Attaching one while the
+    /// contested warning shows starts it suppressed.
+    /// </summary>
+    internal ROROROblox.App.KnownIssues.KnownIssuesNoticeModel? KnownIssuesNotice
+    {
+        get => _knownIssuesNotice;
+        set
+        {
+            if (ReferenceEquals(_knownIssuesNotice, value))
+            {
+                return;
+            }
+
+            if (_knownIssuesNotice is not null)
+            {
+                _knownIssuesNotice.PropertyChanged -= OnKnownIssuesNoticeChanged;
+            }
+
+            _knownIssuesNotice = value;
+            if (_knownIssuesNotice is not null)
+            {
+                _knownIssuesNotice.PropertyChanged += OnKnownIssuesNoticeChanged;
+                _knownIssuesNotice.SetSuppressed(_isContested);
+            }
+
+            OnKnownIssuesNoticeChanged(this, new PropertyChangedEventArgs(string.Empty));
+        }
+    }
+
+    /// <summary>The notice row's text; empty collapses the row, like the other rows of the strip.</summary>
+    public string KnownIssueNoticeText => _knownIssuesNotice?.NoticeText ?? string.Empty;
+
+    public string KnownIssuesMenuHeader => _knownIssuesNotice?.MenuHeader ?? Loc.Get("MainWindow_KnownRobloxIssues");
+
+    private void OnKnownIssuesNoticeChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(KnownIssueNoticeText));
+        OnPropertyChanged(nameof(KnownIssuesMenuHeader));
     }
 
     private MultiInstanceState _multiInstanceState = MultiInstanceState.Off;
