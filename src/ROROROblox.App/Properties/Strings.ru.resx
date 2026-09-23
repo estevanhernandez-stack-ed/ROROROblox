@@ -20,7 +20,7 @@
                     Копия accounts.dat, перенесённая на другой ПК, не расшифруется.</value>
   </data>
   <data name="AboutPage_InsideTheToolsWindowCtrl" xml:space="preserve">
-    <value>В окне инструментов Ctrl+1 — Ctrl+6 также сразу открывают нужную страницу.</value>
+    <value>В окне инструментов Ctrl+1 — Ctrl+7 также сразу открывают нужную страницу.</value>
   </data>
   <data name="AboutPage_KeyboardShortcuts" xml:space="preserve">
     <value>Сочетания клавиш</value>
@@ -504,7 +504,7 @@
     <value>История</value>
   </data>
   <data name="MainWindow_HistoryDiagnosticsPluginsLogFolder" xml:space="preserve">
-    <value>История, диагностика, плагины, папка журналов, «Остановить все», тур, «О программе».</value>
+    <value>История, диагностика, плагины, известные проблемы Roblox, папка журналов, «Остановить все», тур, «О программе».</value>
   </data>
   <data name="MainWindow_HoldingYourOtherAccountsUntil" xml:space="preserve">
     <value>Остальные аккаунты придержаны, пока он не закончит — это происходит только когда Roblox нужен новый клиент.</value>
@@ -3131,5 +3131,83 @@ RoRoRo спрашивает про обводку кнопок только дл
   </data>
   <data name="SettingsPage_PointYourPhoneCameraAt" xml:space="preserve">
     <value>Наведите камеру телефона сюда, чтобы подписаться — без набора. Любой, кто отсканирует его, сможет читать ваши оповещения, так что не показывайте его в стриме.</value>
+  </data>
+  <data name="ShellWindow_KnownRobloxIssues" xml:space="preserve">
+    <value>Известные проблемы Roblox</value>
+  </data>
+  <data name="Shell_Title_KnownRobloxIssues" xml:space="preserve">
+    <value>Известные проблемы Roblox</value>
+  </data>
+  <data name="KnownIssuesPage_Heading" xml:space="preserve">
+    <value>Известные проблемы Roblox</value>
+  </data>
+  <data name="KnownIssuesPage_Intro" xml:space="preserve">
+    <value>Проблемы в самом Roblox, а не в RoRoRo, и что с ними делать.</value>
+  </data>
+  <data name="KnownIssuesPage_EnglishOnly" xml:space="preserve">
+    <value>Описания проблем приводятся на английском.</value>
+  </data>
+  <data name="KnownIssuesPage_Empty" xml:space="preserve">
+    <value>Сейчас известных проблем Roblox нет.</value>
+  </data>
+  <data name="KnownIssuesPage_LastChecked" xml:space="preserve">
+    <value>Последняя проверка в {0}.</value>
+  </data>
+  <data name="KnownIssuesPage_Checking" xml:space="preserve">
+    <value>Проверяем известные проблемы…</value>
+  </data>
+  <data name="KnownIssuesPage_RobloxTag" xml:space="preserve">
+    <value>Roblox</value>
+  </data>
+  <data name="KnownIssuesPage_Posted" xml:space="preserve">
+    <value>Опубликовано {0}</value>
+  </data>
+  <data name="KnownIssuesPage_WhatToDo" xml:space="preserve">
+    <value>Что делать</value>
+  </data>
+  <data name="KnownIssuesPage_RororoCanHelp" xml:space="preserve">
+    <value>RoRoRo может помочь</value>
+  </data>
+  <data name="KnownIssuesPage_VersionAffected" xml:space="preserve">
+    <value>Ваша версия Roblox ({0}) затронута.</value>
+  </data>
+  <data name="KnownIssuesPage_VersionFixed" xml:space="preserve">
+    <value>Исправлено в {0}. У вас {1}.</value>
+  </data>
+  <data name="KnownIssuesPage_VersionNotYet" xml:space="preserve">
+    <value>Затрагивает {0} и новее. У вас {1}.</value>
+  </data>
+  <data name="KnownIssuesPage_VersionUnknown" xml:space="preserve">
+    <value>Не удалось определить вашу версию Roblox.</value>
+  </data>
+  <data name="KnownIssuesPage_OpenMemorySettings" xml:space="preserve">
+    <value>Открыть настройки памяти</value>
+  </data>
+  <data name="KnownIssuesPage_ShowAccounts" xml:space="preserve">
+    <value>Показать аккаунты</value>
+  </data>
+  <data name="KnownIssuesPage_OpenLink" xml:space="preserve">
+    <value>Открыть {0} в браузере</value>
+  </data>
+  <data name="MainWindow_KnownIssueNoticeOne" xml:space="preserve">
+    <value>Известная проблема Roblox: {0}</value>
+  </data>
+  <data name="MainWindow_KnownIssueNoticeMany" xml:space="preserve">
+    <value>Известные проблемы Roblox, которые вас затрагивают: {0}</value>
+  </data>
+  <data name="MainWindow_SeeKnownIssues" xml:space="preserve">
+    <value>Посмотреть известные проблемы</value>
+  </data>
+  <data name="MainWindow_DismissKnownIssueNotice" xml:space="preserve">
+    <value>Скрыть уведомление об известной проблеме Roblox</value>
+  </data>
+  <data name="MainWindow_KnownRobloxIssues" xml:space="preserve">
+    <value>Известные проблемы Roblox</value>
+  </data>
+  <data name="MainWindow_KnownRobloxIssuesCount" xml:space="preserve">
+    <value>Известные проблемы Roblox ({0})</value>
+  </data>
+  <data name="MainWindow_KnownRobloxIssuesTooltip" xml:space="preserve">
+    <value>Проблемы в самом Roblox и что с ними делать</value>
   </data>
 </root>

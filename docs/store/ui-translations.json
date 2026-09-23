@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "4e48591",
-  "generatedUtc": "2026-09-23T17:05:05+00:00",
+  "sourceCommit": "103ec78",
+  "generatedUtc": "2026-09-23T17:05:51+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -41,14 +41,14 @@
     },
     {
       "field": "AboutPage_InsideTheToolsWindowCtrl",
-      "en": "Inside the tools window, Ctrl+1 through Ctrl+6 also jump straight to a page.",
+      "en": "Inside the tools window, Ctrl+1 through Ctrl+7 also jump straight to a page.",
       "translations": {
-        "fr": "Dans la fenêtre des outils, Ctrl+1 à Ctrl+6 sautent aussi directement à une page.",
-        "de": "Im Werkzeugfenster springen auch Ctrl+1 bis Ctrl+6 direkt zu einer Seite.",
-        "ru": "В окне инструментов Ctrl+1 — Ctrl+6 также сразу открывают нужную страницу.",
-        "pt-br": "Dentro da janela de ferramentas, Ctrl+1 a Ctrl+6 também pulam direto para uma página.",
-        "pl": "W oknie narzędzi klawisze Ctrl+1 do Ctrl+6 również przenoszą bezpośrednio do strony.",
-        "es": "Dentro de la ventana de herramientas, Ctrl+1 a Ctrl+6 también saltan directamente a una página."
+        "fr": "Dans la fenêtre des outils, Ctrl+1 à Ctrl+7 sautent aussi directement à une page.",
+        "de": "Im Werkzeugfenster springen auch Ctrl+1 bis Ctrl+7 direkt zu einer Seite.",
+        "ru": "В окне инструментов Ctrl+1 — Ctrl+7 также сразу открывают нужную страницу.",
+        "pt-br": "Dentro da janela de ferramentas, Ctrl+1 a Ctrl+7 também pulam direto para uma página.",
+        "pl": "W oknie narzędzi klawisze Ctrl+1 do Ctrl+7 również przenoszą bezpośrednio do strony.",
+        "es": "Dentro de la ventana de herramientas, Ctrl+1 a Ctrl+7 también saltan directamente a una página."
       }
     },
     {
@@ -1961,14 +1961,14 @@
     },
     {
       "field": "MainWindow_HistoryDiagnosticsPluginsLogFolder",
-      "en": "History, Diagnostics, Plugins, log folder, Stop all, tour, About.",
+      "en": "History, Diagnostics, Plugins, Known Roblox issues, log folder, Stop all, tour, About.",
       "translations": {
-        "fr": "Historique, Diagnostics, Plugins, dossier des journaux, Tout arrêter, visite, À propos.",
-        "de": "Verlauf, Diagnose, Plugins, Log-Ordner, Alle stoppen, Tour, Über.",
-        "ru": "История, диагностика, плагины, папка журналов, «Остановить все», тур, «О программе».",
-        "pt-br": "Histórico, Diagnóstico, Plugins, pasta de logs, Parar tudo, tour, Sobre.",
-        "pl": "Historia, Diagnostyka, Wtyczki, folder dzienników, Zatrzymaj wszystko, przewodnik, O programie.",
-        "es": "Historial, Diagnóstico, Complementos, carpeta de registros, Detener todo, recorrido, Acerca de."
+        "fr": "Historique, Diagnostics, Plugins, Problèmes Roblox connus, dossier des journaux, Tout arrêter, visite, À propos.",
+        "de": "Verlauf, Diagnose, Plugins, Bekannte Roblox-Probleme, Log-Ordner, Alle stoppen, Tour, Über.",
+        "ru": "История, диагностика, плагины, известные проблемы Roblox, папка журналов, «Остановить все», тур, «О программе».",
+        "pt-br": "Histórico, Diagnóstico, Plugins, Problemas conhecidos do Roblox, pasta de logs, Parar tudo, tour, Sobre.",
+        "pl": "Historia, Diagnostyka, Wtyczki, Znane problemy Roblox, folder dzienników, Zatrzymaj wszystko, przewodnik, O programie.",
+        "es": "Historial, Diagnóstico, Complementos, Problemas conocidos de Roblox, carpeta de registros, Detener todo, recorrido, Acerca de."
       }
     },
     {
@@ -12409,6 +12409,318 @@
         "pt-br": "Aponte a câmera do celular aqui para se inscrever — sem digitar. Quem escanear pode ler seus alertas, então mantenha fora da stream.",
         "pl": "Skieruj tu aparat telefonu, aby się zapisać — bez pisania. Każdy, kto go zeskanuje, może czytać twoje alerty, więc trzymaj go poza streamem.",
         "es": "Apunta la cámara del teléfono aquí para suscribirte — sin escribir. Quien lo escanee puede leer tus alertas, así que mantenlo fuera del stream."
+      }
+    },
+    {
+      "field": "ShellWindow_KnownRobloxIssues",
+      "en": "Known Roblox issues",
+      "translations": {
+        "fr": "Problèmes Roblox connus",
+        "de": "Bekannte Roblox-Probleme",
+        "ru": "Известные проблемы Roblox",
+        "pt-br": "Problemas conhecidos do Roblox",
+        "pl": "Znane problemy Roblox",
+        "es": "Problemas conocidos de Roblox"
+      }
+    },
+    {
+      "field": "Shell_Title_KnownRobloxIssues",
+      "en": "Known Roblox issues",
+      "translations": {
+        "fr": "Problèmes Roblox connus",
+        "de": "Bekannte Roblox-Probleme",
+        "ru": "Известные проблемы Roblox",
+        "pt-br": "Problemas conhecidos do Roblox",
+        "pl": "Znane problemy Roblox",
+        "es": "Problemas conocidos de Roblox"
+      }
+    },
+    {
+      "field": "KnownIssuesPage_Heading",
+      "en": "Known Roblox issues",
+      "translations": {
+        "fr": "Problèmes Roblox connus",
+        "de": "Bekannte Roblox-Probleme",
+        "ru": "Известные проблемы Roblox",
+        "pt-br": "Problemas conhecidos do Roblox",
+        "pl": "Znane problemy Roblox",
+        "es": "Problemas conocidos de Roblox"
+      }
+    },
+    {
+      "field": "KnownIssuesPage_Intro",
+      "en": "Problems in Roblox itself, not in RoRoRo, and what to do about them.",
+      "translations": {
+        "fr": "Des problèmes de Roblox lui-même, pas de RoRoRo, et quoi faire.",
+        "de": "Probleme in Roblox selbst, nicht in RoRoRo, und was du dagegen tun kannst.",
+        "ru": "Проблемы в самом Roblox, а не в RoRoRo, и что с ними делать.",
+        "pt-br": "Problemas do próprio Roblox, não do RoRoRo, e o que fazer a respeito.",
+        "pl": "Problemy w samym Roblox, a nie w RoRoRo, i co z nimi zrobić.",
+        "es": "Problemas del propio Roblox, no de RoRoRo, y qué hacer al respecto."
+      }
+    },
+    {
+      "field": "KnownIssuesPage_EnglishOnly",
+      "en": "Issue descriptions are in English.",
+      "translations": {
+        "fr": "Les descriptions des problèmes sont en anglais.",
+        "de": "Die Problembeschreibungen sind auf Englisch.",
+        "ru": "Описания проблем приводятся на английском.",
+        "pt-br": "As descrições dos problemas estão em inglês.",
+        "pl": "Opisy problemów są po angielsku.",
+        "es": "Las descripciones de los problemas están en inglés."
+      }
+    },
+    {
+      "field": "KnownIssuesPage_Empty",
+      "en": "No known Roblox issues right now.",
+      "translations": {
+        "fr": "Aucun problème Roblox connu pour le moment.",
+        "de": "Derzeit keine bekannten Roblox-Probleme.",
+        "ru": "Сейчас известных проблем Roblox нет.",
+        "pt-br": "Nenhum problema conhecido do Roblox no momento.",
+        "pl": "Obecnie brak znanych problemów Roblox.",
+        "es": "No hay problemas conocidos de Roblox ahora mismo."
+      }
+    },
+    {
+      "field": "KnownIssuesPage_LastChecked",
+      "en": "Last checked at {0}.",
+      "translations": {
+        "fr": "Dernière vérification à {0}.",
+        "de": "Zuletzt geprüft um {0}.",
+        "ru": "Последняя проверка в {0}.",
+        "pt-br": "Última verificação às {0}.",
+        "pl": "Ostatnie sprawdzenie o {0}.",
+        "es": "Última comprobación a las {0}."
+      }
+    },
+    {
+      "field": "KnownIssuesPage_Checking",
+      "en": "Checking for known issues…",
+      "translations": {
+        "fr": "Recherche des problèmes connus…",
+        "de": "Suche nach bekannten Problemen…",
+        "ru": "Проверяем известные проблемы…",
+        "pt-br": "Verificando problemas conhecidos…",
+        "pl": "Sprawdzanie znanych problemów…",
+        "es": "Buscando problemas conocidos…"
+      }
+    },
+    {
+      "field": "KnownIssuesPage_RobloxTag",
+      "en": "Roblox",
+      "translations": {
+        "fr": "Roblox",
+        "de": "Roblox",
+        "ru": "Roblox",
+        "pt-br": "Roblox",
+        "pl": "Roblox",
+        "es": "Roblox"
+      }
+    },
+    {
+      "field": "KnownIssuesPage_Posted",
+      "en": "Posted {0}",
+      "translations": {
+        "fr": "Publié le {0}",
+        "de": "Veröffentlicht am {0}",
+        "ru": "Опубликовано {0}",
+        "pt-br": "Publicado em {0}",
+        "pl": "Opublikowano {0}",
+        "es": "Publicado el {0}"
+      }
+    },
+    {
+      "field": "KnownIssuesPage_WhatToDo",
+      "en": "What to do",
+      "translations": {
+        "fr": "Que faire",
+        "de": "Was du tun kannst",
+        "ru": "Что делать",
+        "pt-br": "O que fazer",
+        "pl": "Co zrobić",
+        "es": "Qué hacer"
+      }
+    },
+    {
+      "field": "KnownIssuesPage_RororoCanHelp",
+      "en": "RoRoRo can help",
+      "translations": {
+        "fr": "RoRoRo peut aider",
+        "de": "RoRoRo kann helfen",
+        "ru": "RoRoRo может помочь",
+        "pt-br": "O RoRoRo pode ajudar",
+        "pl": "RoRoRo może pomóc",
+        "es": "RoRoRo puede ayudar"
+      }
+    },
+    {
+      "field": "KnownIssuesPage_VersionAffected",
+      "en": "Your Roblox version ({0}) is affected.",
+      "translations": {
+        "fr": "Votre version de Roblox ({0}) est concernée.",
+        "de": "Deine Roblox-Version ({0}) ist betroffen.",
+        "ru": "Ваша версия Roblox ({0}) затронута.",
+        "pt-br": "Sua versão do Roblox ({0}) é afetada.",
+        "pl": "Twoja wersja Roblox ({0}) jest objęta problemem.",
+        "es": "Tu versión de Roblox ({0}) está afectada."
+      }
+    },
+    {
+      "field": "KnownIssuesPage_VersionFixed",
+      "en": "Fixed in {0}. You have {1}.",
+      "translations": {
+        "fr": "Corrigé dans la version {0}. Vous avez la {1}.",
+        "de": "Behoben in {0}. Du hast {1}.",
+        "ru": "Исправлено в {0}. У вас {1}.",
+        "pt-br": "Corrigido na {0}. Você tem a {1}.",
+        "pl": "Naprawiono w {0}. Masz {1}.",
+        "es": "Corregido en {0}. Tienes {1}."
+      }
+    },
+    {
+      "field": "KnownIssuesPage_VersionNotYet",
+      "en": "Affects {0} and later. You have {1}.",
+      "translations": {
+        "fr": "Concerne la version {0} et les suivantes. Vous avez la {1}.",
+        "de": "Betrifft {0} und neuer. Du hast {1}.",
+        "ru": "Затрагивает {0} и новее. У вас {1}.",
+        "pt-br": "Afeta a {0} e posteriores. Você tem a {1}.",
+        "pl": "Dotyczy wersji {0} i nowszych. Masz {1}.",
+        "es": "Afecta a {0} y posteriores. Tienes {1}."
+      }
+    },
+    {
+      "field": "KnownIssuesPage_VersionUnknown",
+      "en": "Couldn't read your Roblox version.",
+      "translations": {
+        "fr": "Impossible de lire votre version de Roblox.",
+        "de": "Deine Roblox-Version konnte nicht gelesen werden.",
+        "ru": "Не удалось определить вашу версию Roblox.",
+        "pt-br": "Não foi possível ler sua versão do Roblox.",
+        "pl": "Nie udało się odczytać Twojej wersji Roblox.",
+        "es": "No se pudo leer tu versión de Roblox."
+      }
+    },
+    {
+      "field": "KnownIssuesPage_OpenMemorySettings",
+      "en": "Open memory settings",
+      "translations": {
+        "fr": "Ouvrir les paramètres de mémoire",
+        "de": "Speichereinstellungen öffnen",
+        "ru": "Открыть настройки памяти",
+        "pt-br": "Abrir configurações de memória",
+        "pl": "Otwórz ustawienia pamięci",
+        "es": "Abrir la configuración de memoria"
+      }
+    },
+    {
+      "field": "KnownIssuesPage_ShowAccounts",
+      "en": "Show accounts",
+      "translations": {
+        "fr": "Afficher les comptes",
+        "de": "Konten anzeigen",
+        "ru": "Показать аккаунты",
+        "pt-br": "Mostrar contas",
+        "pl": "Pokaż konta",
+        "es": "Mostrar cuentas"
+      }
+    },
+    {
+      "field": "KnownIssuesPage_OpenLink",
+      "en": "Open {0} in your browser",
+      "translations": {
+        "fr": "Ouvrir {0} dans votre navigateur",
+        "de": "{0} im Browser öffnen",
+        "ru": "Открыть {0} в браузере",
+        "pt-br": "Abrir {0} no navegador",
+        "pl": "Otwórz {0} w przeglądarce",
+        "es": "Abrir {0} en tu navegador"
+      }
+    },
+    {
+      "field": "MainWindow_KnownIssueNoticeOne",
+      "en": "Known Roblox issue: {0}",
+      "translations": {
+        "fr": "Problème Roblox connu : {0}",
+        "de": "Bekanntes Roblox-Problem: {0}",
+        "ru": "Известная проблема Roblox: {0}",
+        "pt-br": "Problema conhecido do Roblox: {0}",
+        "pl": "Znany problem Roblox: {0}",
+        "es": "Problema conocido de Roblox: {0}"
+      }
+    },
+    {
+      "field": "MainWindow_KnownIssueNoticeMany",
+      "en": "Known Roblox issues that affect you: {0}",
+      "translations": {
+        "fr": "Problèmes Roblox connus qui vous concernent : {0}",
+        "de": "Bekannte Roblox-Probleme, die dich betreffen: {0}",
+        "ru": "Известные проблемы Roblox, которые вас затрагивают: {0}",
+        "pt-br": "Problemas conhecidos do Roblox que afetam você: {0}",
+        "pl": "Znane problemy Roblox, które Cię dotyczą: {0}",
+        "es": "Problemas conocidos de Roblox que te afectan: {0}"
+      }
+    },
+    {
+      "field": "MainWindow_SeeKnownIssues",
+      "en": "See known issues",
+      "translations": {
+        "fr": "Voir les problèmes connus",
+        "de": "Bekannte Probleme ansehen",
+        "ru": "Посмотреть известные проблемы",
+        "pt-br": "Ver problemas conhecidos",
+        "pl": "Zobacz znane problemy",
+        "es": "Ver problemas conocidos"
+      }
+    },
+    {
+      "field": "MainWindow_DismissKnownIssueNotice",
+      "en": "Dismiss the known Roblox issue notice",
+      "translations": {
+        "fr": "Ignorer l'avis de problème Roblox connu",
+        "de": "Hinweis zum bekannten Roblox-Problem ausblenden",
+        "ru": "Скрыть уведомление об известной проблеме Roblox",
+        "pt-br": "Dispensar o aviso de problema conhecido do Roblox",
+        "pl": "Odrzuć powiadomienie o znanym problemie Roblox",
+        "es": "Descartar el aviso de problema conocido de Roblox"
+      }
+    },
+    {
+      "field": "MainWindow_KnownRobloxIssues",
+      "en": "Known Roblox issues",
+      "translations": {
+        "fr": "Problèmes Roblox connus",
+        "de": "Bekannte Roblox-Probleme",
+        "ru": "Известные проблемы Roblox",
+        "pt-br": "Problemas conhecidos do Roblox",
+        "pl": "Znane problemy Roblox",
+        "es": "Problemas conocidos de Roblox"
+      }
+    },
+    {
+      "field": "MainWindow_KnownRobloxIssuesCount",
+      "en": "Known Roblox issues ({0})",
+      "translations": {
+        "fr": "Problèmes Roblox connus ({0})",
+        "de": "Bekannte Roblox-Probleme ({0})",
+        "ru": "Известные проблемы Roblox ({0})",
+        "pt-br": "Problemas conhecidos do Roblox ({0})",
+        "pl": "Znane problemy Roblox ({0})",
+        "es": "Problemas conocidos de Roblox ({0})"
+      }
+    },
+    {
+      "field": "MainWindow_KnownRobloxIssuesTooltip",
+      "en": "Problems in Roblox itself, and what to do about them",
+      "translations": {
+        "fr": "Des problèmes de Roblox lui-même, et quoi faire",
+        "de": "Probleme in Roblox selbst und was du dagegen tun kannst",
+        "ru": "Проблемы в самом Roblox и что с ними делать",
+        "pt-br": "Problemas do próprio Roblox e o que fazer a respeito",
+        "pl": "Problemy w samym Roblox i co z nimi zrobić",
+        "es": "Problemas del propio Roblox y qué hacer al respecto"
       }
     }
   ]
