@@ -70,13 +70,17 @@ internal sealed class KnownIssuesNoticeModel : INotifyPropertyChanged
     public void Apply(KnownIssuesSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
+        // The registry, a file version and a folder listing are read here -- not UI-thread work --
+        // on the calling thread, before the hop to the UI thread, so the read is never mistaken for
+        // needing to run on it.
+        var running = _readRunningVersion();
         _ui.Invoke(() =>
         {
             _issues = snapshot.Issues;
             _source = snapshot.Source;
             _checkedAt = snapshot.CheckedAt;
             _lastOutcome = snapshot.LastOutcome;
-            _running = _readRunningVersion();
+            _running = running;
             Recompute();
         });
     }

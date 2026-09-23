@@ -20,6 +20,24 @@ public sealed class KnownIssuesNoticeModelTests : IDisposable
         public void Invoke(Action action) => action();
     }
 
+    /// <summary>
+    /// Queues the action instead of running it, so a test can prove something happened BEFORE
+    /// <see cref="IUiDispatcher.Invoke"/> was ever asked to run anything -- as opposed to happening
+    /// inside the queued action, which <see cref="InlineDispatcher"/> cannot distinguish because it
+    /// runs everything synchronously either way.
+    /// </summary>
+    private sealed class DeferredDispatcher : IUiDispatcher
+    {
+        private Action? _pending;
+        public void Invoke(Action action) => _pending = action;
+        public void RunPending()
+        {
+            var action = _pending ?? throw new InvalidOperationException("nothing was dispatched");
+            _pending = null;
+            action();
+        }
+    }
+
     private KnownIssuesNoticeModel Model(Version? running = null) =>
         new(new KnownIssuesDismissals(_dismissedPath), () => running, new InlineDispatcher());
 
@@ -130,5 +148,23 @@ public sealed class KnownIssuesNoticeModelTests : IDisposable
 
         Assert.Equal(KnownIssuesSource.Release, model.Source);
         Assert.Equal(KnownIssuesRefreshKind.Updated, model.LastOutcome);
+    }
+
+    /// <summary>
+    /// Final-fix wave, commit D: <c>_readRunningVersion</c> reads the registry, a file version and
+    /// a folder listing -- not UI-thread work -- so it must run BEFORE the hop to the UI thread, not
+    /// inside the dispatched action. <see cref="DeferredDispatcher"/> proves this by never running
+    /// the dispatched action at all: if the read happened inside it, this test would see zero reads.
+    /// </summary>
+    [Fact]
+    public void ApplyReadsTheRunningVersion_BeforeEverDispatchingToTheUiThread()
+    {
+        var reads = 0;
+        var dispatcher = new DeferredDispatcher();
+        var model = new KnownIssuesNoticeModel(new KnownIssuesDismissals(_dismissedPath), () => { reads++; return null; }, dispatcher);
+
+        model.Apply(Snapshot(Issue("a")));
+
+        Assert.Equal(1, reads);
     }
 }

@@ -28,7 +28,11 @@ if (args is ["--validate-known-issues", var knownIssuesPath])
     return;
 }
 
-if (args.Length != 1)
+// Guards --validate-known-issues invoked with no path (or the wrong number of args) from falling
+// through to the single-file-to-sign branch below, which would otherwise treat the literal string
+// "--validate-known-issues" as a file to sign -- it happened to fail with "file not found" rather
+// than actually signing anything, but for the wrong reason and with the wrong message.
+if (args.Length != 1 || args[0] == "--validate-known-issues")
 {
     Console.Error.WriteLine("Usage: CompatSigner <path-to-file-to-sign> | CompatSigner --validate-known-issues <path>");
     Environment.Exit(1);

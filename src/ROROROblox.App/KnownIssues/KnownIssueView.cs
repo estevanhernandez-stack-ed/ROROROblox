@@ -51,11 +51,21 @@ internal sealed class KnownIssueView
             KnownIssueVersionStatus.NoVersions => null,
             KnownIssueVersionStatus.UnknownInstalled => Loc.Get("KnownIssuesPage_VersionUnknown"),
             KnownIssueVersionStatus.Affected => Loc.Format("KnownIssuesPage_VersionAffected", Short(running!)),
-            KnownIssueVersionStatus.Fixed => Loc.Format("KnownIssuesPage_VersionFixed", issue.RobloxVersions!.FixedIn!.ToString(), Short(running!)),
-            KnownIssueVersionStatus.NotYetAffected => Loc.Format("KnownIssuesPage_VersionNotYet", issue.RobloxVersions!.From!.ToString(), Short(running!)),
+            KnownIssueVersionStatus.Fixed => Loc.Format(
+                "KnownIssuesPage_VersionFixed", issue.RobloxVersions!.FixedIn!.ToString(), Comparable(issue.RobloxVersions!.FixedIn!, running!)),
+            KnownIssueVersionStatus.NotYetAffected => Loc.Format(
+                "KnownIssuesPage_VersionNotYet", issue.RobloxVersions!.From!.ToString(), Comparable(issue.RobloxVersions!.From!, running!)),
             _ => null,
         };
 
     /// <summary>"0.740", not "0.740.0.7400927": the build number means nothing to a reader.</summary>
     private static string Short(Version version) => $"{version.Major}.{version.Minor}";
+
+    /// <summary>
+    /// The running version, shaped to match the bound it is being read next to: a two-part bound
+    /// ("0.740") reads fine against a shortened running version, but a bound written with a build
+    /// number ("0.740.0.7400838") against a shortened running version ("0.740") looks like a
+    /// mismatch that isn't one -- the two numbers in the sentence have to be comparable.
+    /// </summary>
+    private static string Comparable(Version bound, Version running) => bound.Build >= 0 ? running.ToString() : Short(running);
 }

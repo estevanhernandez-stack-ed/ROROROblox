@@ -42,6 +42,26 @@ public class KnownIssueViewTests
             KnownIssueView.From(Issue("a", fixedIn: new Version(0, 740)), null, Culture).VersionText);
     }
 
+    /// <summary>
+    /// Final-fix wave, commit D: a two-part bound compared against a shortened running version
+    /// ("0.740") reads fine, but a bound written with more precision than that ("0.740.0.7400838")
+    /// compared against a shortened running version ("0.740") looks like a mismatch that isn't one.
+    /// Once the bound carries a build number, the running version is shown in full so the two
+    /// numbers in the sentence are actually comparable.
+    /// </summary>
+    [Fact]
+    public void AFourPartFixedInShowsTheRunningVersionInFullToo()
+    {
+        var fixedIn = Version.Parse("0.740.0.7400838");
+        var running = Version.Parse("0.740.0.7400927");
+
+        var view = KnownIssueView.From(Issue("a", fixedIn: fixedIn), running, Culture);
+
+        Assert.Equal(
+            Loc.Format("KnownIssuesPage_VersionFixed", "0.740.0.7400838", "0.740.0.7400927"),
+            view.VersionText);
+    }
+
     [Fact]
     public void AKnownFeatureGetsAButtonThatGoesThere()
     {
