@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "40a587b",
-  "generatedUtc": "2026-09-08T23:41:41+00:00",
+  "sourceCommit": "4e48591",
+  "generatedUtc": "2026-09-23T17:05:05+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -3388,6 +3388,18 @@
       }
     },
     {
+      "field": "SettingsPage_AMetricCrossesAThreshold",
+      "en": "A metric crosses a threshold",
+      "translations": {
+        "fr": "Une métrique franchit un seuil",
+        "de": "Eine Metrik überschreitet einen Schwellenwert",
+        "ru": "Метрика пересекает порог",
+        "pt-br": "Uma métrica cruza um limite",
+        "pl": "Wskaźnik przekracza próg",
+        "es": "Una métrica cruza un umbral"
+      }
+    },
+    {
       "field": "SettingsPage_AnAccountDropsOut",
       "en": "An account drops out",
       "translations": {
@@ -3889,6 +3901,30 @@
         "pt-br": "Memória a manter livre (MB)",
         "pl": "Pamięć do zachowania wolnej (MB)",
         "es": "Memoria que mantener libre (MB)"
+      }
+    },
+    {
+      "field": "SettingsPage_MetricAlerts",
+      "en": "Metric alerts",
+      "translations": {
+        "fr": "Alertes métriques",
+        "de": "Metrik-Benachrichtigungen",
+        "ru": "Оповещения о метриках",
+        "pt-br": "Alertas de métricas",
+        "pl": "Alerty o wskaźnikach",
+        "es": "Alertas de métricas"
+      }
+    },
+    {
+      "field": "SettingsPage_MetricAlertsHint",
+      "en": "Alerts you when a number a plugin reports crosses a threshold you set. Needs a plugin that reports one, and a rules file.",
+      "translations": {
+        "fr": "Vous alerte quand un chiffre transmis par un plugin franchit un seuil que vous définissez. Nécessite un plugin qui en transmet un, et un fichier de règles.",
+        "de": "Benachrichtigt dich, wenn eine von einem Plugin gemeldete Zahl einen von dir festgelegten Schwellenwert überschreitet. Braucht ein Plugin, das eine meldet, und eine Regeldatei.",
+        "ru": "Уведомляет вас, когда число, переданное плагином, пересекает порог, который вы задаёте. Нужен плагин, который его передаёт, и файл правил.",
+        "pt-br": "Avisa você quando um número enviado por um plugin cruza um limite que você define. Precisa de um plugin que o envie, e de um arquivo de regras.",
+        "pl": "Powiadamia Cię, gdy liczba przesłana przez wtyczkę przekroczy próg, który ustalisz. Wymaga wtyczki, która ją przesyła, oraz pliku reguł.",
+        "es": "Te avisa cuando un número enviado por un plugin cruza un umbral que defines. Necesita un plugin que lo envíe, y un archivo de reglas."
       }
     },
     {
@@ -4453,6 +4489,54 @@
         "pt-br": "Enviar avisos de memória para o canal do clã no Discord",
         "pl": "Wysyłaj ostrzeżenia o pamięci na kanał Discord klanu",
         "es": "Enviar advertencias de memoria al canal de Discord del clan"
+      }
+    },
+    {
+      "field": "SettingsPage_SendMetricAlertsToMy",
+      "en": "Send metric alerts to my channel",
+      "translations": {
+        "fr": "Envoyer les alertes métriques à mon canal",
+        "de": "Metrik-Benachrichtigungen an meinen Kanal senden",
+        "ru": "Отправлять оповещения о метриках в мой канал",
+        "pt-br": "Enviar alertas de métricas para o meu canal",
+        "pl": "Wysyłaj alerty o wskaźnikach na mój kanał",
+        "es": "Enviar alertas de métricas a mi canal"
+      }
+    },
+    {
+      "field": "SettingsPage_SendMetricAlertsToMy_2",
+      "en": "Send metric alerts to my phone",
+      "translations": {
+        "fr": "Envoyer les alertes métriques à mon téléphone",
+        "de": "Metrik-Benachrichtigungen an mein Handy senden",
+        "ru": "Отправлять оповещения о метриках на мой телефон",
+        "pt-br": "Enviar alertas de métricas para o meu celular",
+        "pl": "Wysyłaj alerty o wskaźnikach na mój telefon",
+        "es": "Enviar alertas de métricas a mi teléfono"
+      }
+    },
+    {
+      "field": "SettingsPage_SendMetricAlertsToThe",
+      "en": "Send metric alerts to the desktop",
+      "translations": {
+        "fr": "Envoyer les alertes métriques au bureau",
+        "de": "Metrik-Benachrichtigungen an den Desktop senden",
+        "ru": "Отправлять оповещения о метриках на рабочий стол",
+        "pt-br": "Enviar alertas de métricas para a área de trabalho",
+        "pl": "Wysyłaj alerty o wskaźnikach na pulpit",
+        "es": "Enviar alertas de métricas al escritorio"
+      }
+    },
+    {
+      "field": "SettingsPage_SendMetricAlertsToThe_2",
+      "en": "Send metric alerts to the clan channel",
+      "translations": {
+        "fr": "Envoyer les alertes métriques au canal du clan",
+        "de": "Metrik-Benachrichtigungen an den Clan-Kanal senden",
+        "ru": "Отправлять оповещения о метриках в канал клана",
+        "pt-br": "Enviar alertas de métricas para o canal do clã",
+        "pl": "Wysyłaj alerty o wskaźnikach na kanał klanu",
+        "es": "Enviar alertas de métricas al canal del clan"
       }
     },
     {
@@ -5801,14 +5885,14 @@
     },
     {
       "field": "SettingsPage_LanguageHint",
-      "en": "Choose the language RoRoRo's interface uses. New languages appear here as they're translated, and a change takes effect the next time you open RoRoRo.",
+      "en": "Choose the language RoRoRo's interface uses. New languages appear here as they're translated, and a change takes effect right away.",
       "translations": {
-        "fr": "Choisissez la langue de l'interface de RoRoRo. De nouvelles langues apparaissent ici à mesure qu'elles sont traduites, et un changement prend effet à la prochaine ouverture de RoRoRo.",
-        "de": "Wähle die Sprache, die RoRoRos Oberfläche verwendet. Neue Sprachen erscheinen hier, sobald sie übersetzt sind, und eine Änderung wird wirksam, wenn du RoRoRo das nächste Mal öffnest.",
-        "ru": "Выберите язык интерфейса RoRoRo. Новые языки появляются здесь по мере перевода, а изменение вступает в силу при следующем открытии RoRoRo.",
-        "pt-br": "Escolha o idioma que a interface do RoRoRo usa. Novos idiomas aparecem aqui à medida que são traduzidos, e uma mudança entra em vigor na próxima vez que você abrir o RoRoRo.",
-        "pl": "Wybierz język interfejsu RoRoRo. Nowe języki pojawiają się tutaj w miarę tłumaczenia, a zmiana zacznie obowiązywać przy następnym otwarciu RoRoRo.",
-        "es": "Elige el idioma que usa la interfaz de RoRoRo. Los nuevos idiomas aparecen aquí a medida que se traducen, y un cambio surte efecto la próxima vez que abras RoRoRo."
+        "fr": "Choisissez la langue de l'interface de RoRoRo. Les nouvelles langues apparaissent ici au fur et à mesure de leur traduction, et le changement est immédiat.",
+        "de": "Wähle die Sprache der RoRoRo-Oberfläche. Neue Sprachen erscheinen hier, sobald sie übersetzt sind, und der Wechsel wirkt sofort.",
+        "ru": "Выберите язык интерфейса RoRoRo. Новые языки появляются здесь по мере перевода, и переключение происходит мгновенно.",
+        "pt-br": "Escolha o idioma da interface do RoRoRo. Novos idiomas aparecem aqui conforme são traduzidos, e a troca é imediata.",
+        "pl": "Wybierz język interfejsu RoRoRo. Nowe języki pojawiają się tutaj w miarę tłumaczenia, a zmiana działa natychmiast.",
+        "es": "Elige el idioma de la interfaz de RoRoRo. Los nuevos idiomas aparecen aquí a medida que se traducen, y el cambio es inmediato."
       }
     },
     {
@@ -8329,6 +8413,78 @@
         "pt-br": "Mostrar",
         "pl": "Pokaż",
         "es": "Mostrar"
+      }
+    },
+    {
+      "field": "SettingsPage_OpensPushoverInYourBrowser",
+      "en": "Opens Pushover in your browser, where your user key is shown.",
+      "translations": {
+        "fr": "Ouvre Pushover dans votre navigateur, où votre user key est affichée.",
+        "de": "Öffnet Pushover in deinem Browser, wo dein User Key steht.",
+        "ru": "Открывает Pushover в браузере, где показан ваш user key.",
+        "pt-br": "Abre o Pushover no seu navegador, onde sua user key aparece.",
+        "pl": "Otwiera Pushover w przeglądarce, gdzie widać twój user key.",
+        "es": "Abre Pushover en tu navegador, donde se muestra tu user key."
+      }
+    },
+    {
+      "field": "SettingsPage_CreateTheApplication",
+      "en": "Create the application",
+      "translations": {
+        "fr": "Créer l'application",
+        "de": "Anwendung anlegen",
+        "ru": "Создать приложение",
+        "pt-br": "Criar a aplicação",
+        "pl": "Utwórz aplikację",
+        "es": "Crear la aplicación"
+      }
+    },
+    {
+      "field": "SettingsPage_OpenTheDashboard",
+      "en": "Open the dashboard",
+      "translations": {
+        "fr": "Ouvrir le tableau de bord",
+        "de": "Dashboard öffnen",
+        "ru": "Открыть панель",
+        "pt-br": "Abrir o painel",
+        "pl": "Otwórz panel",
+        "es": "Abrir el panel"
+      }
+    },
+    {
+      "field": "SettingsPage_DeletesTheSavedValue",
+      "en": "Deletes the saved value. Paste a new one whenever you like.",
+      "translations": {
+        "fr": "Supprime la valeur enregistrée. Collez-en une nouvelle quand vous voulez.",
+        "de": "Löscht den gespeicherten Wert. Du kannst jederzeit einen neuen einfügen.",
+        "ru": "Удаляет сохранённое значение. Новое можно вставить в любой момент.",
+        "pt-br": "Apaga o valor salvo. Cole um novo quando quiser.",
+        "pl": "Usuwa zapisaną wartość. Nową możesz wkleić w każdej chwili.",
+        "es": "Borra el valor guardado. Pega uno nuevo cuando quieras."
+      }
+    },
+    {
+      "field": "SettingsPage_Remove",
+      "en": "Remove",
+      "translations": {
+        "fr": "Retirer",
+        "de": "Entfernen",
+        "ru": "Удалить",
+        "pt-br": "Remover",
+        "pl": "Usuń",
+        "es": "Quitar"
+      }
+    },
+    {
+      "field": "Shell_Pref_Reveal_StreamerConfirm",
+      "en": "Streamer mode is on. Click Show again to reveal it anyway.",
+      "translations": {
+        "fr": "Le mode streamer est activé. Cliquez à nouveau sur Afficher pour le révéler quand même.",
+        "de": "Der Streamer-Modus ist an. Klicke erneut auf Anzeigen, um es trotzdem einzublenden.",
+        "ru": "Режим стримера включён. Нажмите «Показать» ещё раз, чтобы всё равно показать.",
+        "pt-br": "O modo streamer está ativado. Clique em Mostrar novamente para exibir mesmo assim.",
+        "pl": "Tryb streamera jest włączony. Kliknij Pokaż ponownie, aby jednak wyświetlić.",
+        "es": "El modo streamer está activado. Haz clic en Mostrar otra vez para mostrarlo de todos modos."
       }
     },
     {
@@ -11440,6 +11596,18 @@
       }
     },
     {
+      "field": "Plugin_Cap_MetricsReport",
+      "en": "Report numbers it gathers, so RoRoRo can alert you about them",
+      "translations": {
+        "fr": "Transmettre les chiffres qu'il collecte, pour que RoRoRo vous alerte à leur sujet",
+        "de": "Gesammelte Zahlen melden, damit RoRoRo dich darüber benachrichtigen kann",
+        "ru": "Передавать собранные числа, чтобы RoRoRo мог вас о них уведомлять",
+        "pt-br": "Enviar os números que coleta, para que o RoRoRo possa avisar você sobre eles",
+        "pl": "Przesyłać zebrane liczby, aby RoRoRo mógł Cię o nich powiadamiać",
+        "es": "Enviar los números que recopila, para que RoRoRo pueda avisarte sobre ellos"
+      }
+    },
+    {
       "field": "Plugin_Cap_TrayMenu",
       "en": "Allow the plugin to add tray menu items.",
       "translations": {
@@ -12217,6 +12385,30 @@
         "pt-br": "Ele segue automaticamente o idioma do seu sistema. Escolha outro quando quiser em Configurações › Aparência.",
         "pl": "Automatycznie podąża za językiem systemu. W każdej chwili możesz wybrać inny w Ustawienia › Wygląd.",
         "es": "Sigue automáticamente el idioma de tu sistema. Elige otro cuando quieras en Configuración › Apariencia."
+      }
+    },
+    {
+      "field": "SettingsPage_QrCodeThatSubscribesYour",
+      "en": "QR code that subscribes your phone to this ntfy topic",
+      "translations": {
+        "fr": "Code QR qui abonne votre téléphone à ce sujet ntfy",
+        "de": "QR-Code, der dein Handy für dieses ntfy-Thema anmeldet",
+        "ru": "QR-код, который подписывает телефон на эту тему ntfy",
+        "pt-br": "Código QR que inscreve seu celular neste tópico do ntfy",
+        "pl": "Kod QR zapisujący telefon na ten temat ntfy",
+        "es": "Código QR que suscribe tu teléfono a este tema de ntfy"
+      }
+    },
+    {
+      "field": "SettingsPage_PointYourPhoneCameraAt",
+      "en": "Point your phone camera here to subscribe — no typing. Anyone who scans it can read your alerts, so keep it off stream.",
+      "translations": {
+        "fr": "Pointez l'appareil photo de votre téléphone ici pour vous abonner — sans rien taper. Quiconque le scanne peut lire vos alertes, alors gardez-le hors stream.",
+        "de": "Richte die Handykamera hierauf, um dich anzumelden — ohne Tippen. Wer ihn scannt, kann deine Alerts mitlesen, also halte ihn aus dem Stream.",
+        "ru": "Наведите камеру телефона сюда, чтобы подписаться — без набора. Любой, кто отсканирует его, сможет читать ваши оповещения, так что не показывайте его в стриме.",
+        "pt-br": "Aponte a câmera do celular aqui para se inscrever — sem digitar. Quem escanear pode ler seus alertas, então mantenha fora da stream.",
+        "pl": "Skieruj tu aparat telefonu, aby się zapisać — bez pisania. Każdy, kto go zeskanuje, może czytać twoje alerty, więc trzymaj go poza streamem.",
+        "es": "Apunta la cámara del teléfono aquí para suscribirte — sin escribir. Quien lo escanee puede leer tus alertas, así que mantenlo fuera del stream."
       }
     }
   ]

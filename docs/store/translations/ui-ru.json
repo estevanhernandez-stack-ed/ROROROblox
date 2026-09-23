@@ -1025,5 +1025,11 @@
   "WelcomeWindow_TogglesWhetherThisAccountJoins": "— переключает, участвует ли этот аккаунт в запусках «Запустить несколько» / Squad Launch. Сохраняется между перезапусками.",
   "WelcomeWindow_WelcomeTo": "Добро пожаловать в",
   "WelcomeWindow_WelcomeToRororo": "Добро пожаловать в RoRoRo",
-  "WelcomeWindow_WindowsHidesNewTrayIcons": "Windows по умолчанию скрывает новые значки в области уведомлений, поэтому значок RoRoRo может появиться не сразу."
+  "WelcomeWindow_WindowsHidesNewTrayIcons": "Windows по умолчанию скрывает новые значки в области уведомлений, поэтому значок RoRoRo может появиться не сразу.",
+  "SettingsPage_OpensPushoverInYourBrowser": "Открывает Pushover в браузере, где показан ваш user key.",
+  "SettingsPage_CreateTheApplication": "Создать приложение",
+  "SettingsPage_OpenTheDashboard": "Открыть панель",
+  "SettingsPage_DeletesTheSavedValue": "Удаляет сохранённое значение. Новое можно вставить в любой момент.",
+  "SettingsPage_Remove": "Удалить",
+  "Shell_Pref_Reveal_StreamerConfirm": "Режим стримера включён. Нажмите «Показать» ещё раз, чтобы всё равно показать."
 }

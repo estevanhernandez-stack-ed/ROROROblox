@@ -1025,5 +1025,11 @@
   "WelcomeWindow_TogglesWhetherThisAccountJoins": "— alterna si esta cuenta participa en las ejecuciones de Iniciar varias / Squad Launch. Persiste entre reinicios.",
   "WelcomeWindow_WelcomeTo": "Te damos la bienvenida a",
   "WelcomeWindow_WelcomeToRororo": "Te damos la bienvenida a RoRoRo",
-  "WelcomeWindow_WindowsHidesNewTrayIcons": "Windows oculta los iconos nuevos de la bandeja del sistema de forma predeterminada, así que puede que el icono de RoRoRo no aparezca de inmediato."
+  "WelcomeWindow_WindowsHidesNewTrayIcons": "Windows oculta los iconos nuevos de la bandeja del sistema de forma predeterminada, así que puede que el icono de RoRoRo no aparezca de inmediato.",
+  "SettingsPage_OpensPushoverInYourBrowser": "Abre Pushover en tu navegador, donde se muestra tu user key.",
+  "SettingsPage_CreateTheApplication": "Crear la aplicación",
+  "SettingsPage_OpenTheDashboard": "Abrir el panel",
+  "SettingsPage_DeletesTheSavedValue": "Borra el valor guardado. Pega uno nuevo cuando quieras.",
+  "SettingsPage_Remove": "Quitar",
+  "Shell_Pref_Reveal_StreamerConfirm": "El modo streamer está activado. Haz clic en Mostrar otra vez para mostrarlo de todos modos."
 }
