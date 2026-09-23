@@ -49,4 +49,16 @@ public sealed class KnownIssuesDismissalsTests : IDisposable
         Assert.Empty(store.Load());
         Assert.Equal(["a"], store.Dismiss(["a"], liveIds: ["a"]).Order().ToArray());
     }
+
+    /// <summary>A path with no folder to create still degrades: the write fails and is swallowed, the dismissal holds for the session.</summary>
+    [Fact]
+    public void APathWithNoFolderStillDegradesInsteadOfThrowing()
+    {
+        var root = Path.GetPathRoot(Path.GetTempPath())!;
+        var store = new KnownIssuesDismissals(root);
+
+        var now = store.Dismiss(["a"], liveIds: ["a"]);
+
+        Assert.Equal(["a"], now.Order().ToArray());
+    }
 }

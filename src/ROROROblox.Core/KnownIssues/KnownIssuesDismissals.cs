@@ -55,7 +55,12 @@ public sealed class KnownIssuesDismissals
         var next = new HashSet<string>(Load().Concat(ids).Where(live.Contains), StringComparer.Ordinal);
         try
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
+            var directory = Path.GetDirectoryName(_path);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
             var dto = new Dto { Dismissed = next.Order(StringComparer.Ordinal).ToList() };
             File.WriteAllBytes(_path, JsonSerializer.SerializeToUtf8Bytes(dto, Options));
         }
