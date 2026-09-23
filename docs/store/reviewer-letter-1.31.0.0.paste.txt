@@ -1,0 +1,74 @@
+Hello reviewer,
+
+RoRoRo is a launcher that runs several Roblox clients side by side, each signed
+in as a different account the user saved. This is v1.31.0.0. Certification last
+saw v1.30.0.0, so this is one version's delta.
+
+1. WHAT CHANGED
+
+One addition: a read-only page, Tools > Known Roblox issues, listing current
+problems in Roblox itself, each with a workaround and, where the app has a
+relevant feature, a button that opens that feature. A serious entry also shows
+a one-time notice at the top of the main window, which the user can close.
+
+2. WHERE THE LIST COMES FROM
+
+The list is a small text file fetched from the same GitHub release address the
+app already uses for its signed compatibility file. No new host.
+
+  - Fetched at startup and every four hours. A plain download: no account
+    data, no identifier, nothing about the user or the PC is sent.
+  - Signed. The signature is checked against the public key already built
+    into the app before a byte is read; a file that fails is ignored and the
+    last verified copy stays. Over 256 KB is refused.
+  - Text only: titles, sentences and https links. A non-https link is
+    refused. A link opens in the default browser only when the user clicks
+    it, with the full address shown beside it.
+  - The buttons are a fixed set compiled into the app. An entry names one of
+    three keys; each leads to one of two places inside RoRoRo (the memory
+    setting, or the main window). An unknown key shows text with no button.
+    The file cannot add an action, download anything, run code, change a
+    setting or launch Roblox.
+
+The v1.4 letter said the app never reads a curated list of plugins from a
+server. That still holds: this list names no plugin and installs nothing.
+
+3. THE MANIFEST DID NOT MOVE
+
+Package.appxmanifest differs from v1.30.0.0 by the Version attribute only.
+Same runFullTrust capability, same languages, same protocol declarations, same
+startup task. No new capability is requested.
+
+4. THE PLUGIN INTERFACE DID NOT MOVE
+
+plugin_contract.proto does not appear in this diff, nor does any file
+governing plugin capabilities or consent. A plugin built for v1.30 runs
+untouched.
+
+5. NO INPUT SYNTHESIS ADDED
+
+No added line calls SendInput, keybd_event, mouse_event, SetWindowsHookEx,
+PostMessage, SendMessage, WriteProcessMemory or OpenProcess, and no new
+DllImport was added.
+
+6. WHAT YOU CAN EXERCISE
+
+Unlike the last three versions, this one is visible on a fresh install with a
+network connection: open Tools > Known Roblox issues. Two entries are live. One
+is marked serious, so the notice appears at the top of the main window shortly
+after first launch; "See known issues" opens the page, and closing it keeps it
+closed. Page text is in all seven interface languages; the entries are English,
+and a non-English interface says so under the page title.
+
+7. UNCHANGED, RESTATED
+
+  - The app synthesizes no input and injects into no process.
+  - Sign-in happens inside Roblox's own page in a WebView2 frame; only the
+    session cookie is captured, encrypted to the Windows user.
+  - No telemetry and no analytics.
+  - Optional alerts go only to a Discord webhook or push service the user
+    sets up themselves.
+
+Thank you for your time.
+
+626 Labs LLC
