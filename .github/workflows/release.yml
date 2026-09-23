@@ -179,6 +179,7 @@ jobs:
           # releases/latest/download/known-issues.json (+ .sig), so a release that becomes latest
           # without it would empty the Known Roblox issues page for everyone.
           gh release upload '${{ steps.ver.outputs.tag }}' known-issues.json known-issues.json.sig --clobber
+          if ($LASTEXITCODE -ne 0) { throw "gh release upload of known-issues.json failed (exit $LASTEXITCODE)" }
 
       - name: Summary
         shell: pwsh
