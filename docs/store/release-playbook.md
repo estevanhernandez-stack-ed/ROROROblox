@@ -171,8 +171,10 @@ $repo = 'estevanhernandez-stack-ed/ROROROblox'
 # 2. Set the body from the release notes BELOW the edit-log banner. Passing the whole
 #    file publishes the banner, which is written for whoever writes the NEXT release.
 #    -Encoding UTF8 on the read, or an em-dash becomes three characters (see Phase 3).
-$notes = Get-Content docs/store/release-notes-X.Y.Z.0.md -Raw -Encoding UTF8
-$body = $notes.Substring($notes.IndexOf('# RoRoRo vX.Y.Z.0'))
+# Match the heading on its own line: the file's TITLE is "# RoRoRo vX.Y.Z.0 — release notes",
+# which a bare IndexOf finds first and so publishes the edit log (v1.31, corrected 2026-09-23).
+$notes = (Get-Content docs/store/release-notes-X.Y.Z.0.md -Raw -Encoding UTF8) -replace "`r`n", "`n"
+$body = $notes.Substring($notes.IndexOf("`n# RoRoRo vX.Y.Z.0`n") + 1)
 $bodyPath = Join-Path $env:TEMP 'rororo-release-body.md'
 [IO.File]::WriteAllText($bodyPath, $body, (New-Object Text.UTF8Encoding $false))
 & $gh release edit vX.Y.Z.0 `
