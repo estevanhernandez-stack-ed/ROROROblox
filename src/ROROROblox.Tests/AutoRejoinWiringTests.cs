@@ -2,6 +2,7 @@ using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
 using ROROROblox.Core.Discord;
+using ROROROblox.Core.Transport;
 
 namespace ROROROblox.Tests;
 
@@ -272,9 +273,14 @@ public class AutoRejoinWiringTests
             Assert.Equal(alt.Id, trigger.AccountId);
             Assert.Equal("Alt", trigger.DisplayName);
 
-            await vm.ToggleAutoRejoinAsync(alt).WaitAsync(Limit); // off
+            // I4: the pause is visible and durable: off on the row (the menu shows it off) and in
+            // the store (a restart can't silently unpause it).
+            Assert.False(alt.AutoRejoin);
+            Assert.False((await store.ListAsync()).Single(a => a.Id == alt.Id).AutoRejoin);
+
             await vm.ToggleAutoRejoinAsync(alt).WaitAsync(Limit); // on again: resumes
             Assert.True(alt.AutoRejoin);
+            Assert.True((await store.ListAsync()).Single(a => a.Id == alt.Id).AutoRejoin);
 
             // Resumed with a fresh clock (M1): the first pass starts it, the first-join grace later
             // it's due.
@@ -507,6 +513,8 @@ public class AutoRejoinWiringTests
             await vm.RunAutoRejoinAsync(t3.AddMinutes(4)).WaitAsync(Limit);
 
             Assert.Equal(1, pauseAttempts); // the alert was raised once, and its subscriber threw
+            Assert.False(a.AutoRejoin);     // I4: paused shows as off
+            Assert.True(b.AutoRejoin);
             Assert.Equal([a.Id, a.Id, a.Id, b.Id], stopper.StoppedAccountIds);
             Assert.Equal(4, launcher.Launches.Count);
         }
@@ -726,6 +734,9 @@ public class AutoRejoinWiringTests
             var trigger = Assert.Single(raised); // given up
             Assert.Equal(AlertKind.AutoRejoinPaused, trigger.Kind);
             Assert.Equal(AutoRejoinPauseReason.RelaunchFailed, trigger.PauseReason);
+            // I4: off on the row and in the store.
+            Assert.False(alt.AutoRejoin);
+            Assert.False((await store.ListAsync()).Single(a => a.Id == alt.Id).AutoRejoin);
 
             // The user launches it by hand; it drops out. Paused, so auto-rejoin leaves it be.
             await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.DefaultGame()).WaitAsync(Limit);
@@ -735,7 +746,7 @@ public class AutoRejoinWiringTests
 
             // Turned back on: the next due tick rejoins it.
             await vm.ToggleAutoRejoinAsync(alt).WaitAsync(Limit);
-            await vm.ToggleAutoRejoinAsync(alt).WaitAsync(Limit);
+            Assert.True(alt.AutoRejoin);
             await vm.RunAutoRejoinAsync(t0.AddMinutes(21)).WaitAsync(Limit); // fresh clock starts (M1)
             Assert.Single(stopper.StoppedAccountIds);
             await vm.RunAutoRejoinAsync(t0.AddMinutes(26)).WaitAsync(Limit);
@@ -1215,5 +1226,61 @@ public class AutoRejoinWiringTests
             Assert.Equal(new LaunchTarget.FollowFriend(1), Assert.Single(launcher.Launches));
         }
         finally { Cleanup(path); }
+    }
+
+    // I4: the store refusing the write must not unpause anything. Logged; the monitor stays paused.
+    [Fact]
+    public async Task PausePersistFailure_KeepsTheMonitorPaused()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var failing = false;
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi(),
+            wrapStore: inner => new AutoRejoinWriteFailsStore(inner, () => failing));
+        try
+        {
+            await SeedMainAsync(store);
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, RobloxUserId = 2 };
+            vm.Accounts.Add(alt);
+            vm.WaitForClientExitAsync = ExitsOnStop(tracker);
+            var t0 = DateTimeOffset.UtcNow;
+            failing = true;
+            for (var i = 0; i < 4; i++)
+            {
+                await DropCycleAsync(vm, tracker, alt, t0.AddMinutes(10 * i));
+            }
+            Assert.Equal(3, stopper.StoppedAccountIds.Count);
+
+            // A later drop, still paused: nothing stopped.
+            await DropCycleAsync(vm, tracker, alt, t0.AddMinutes(40));
+            Assert.Equal(3, stopper.StoppedAccountIds.Count);
+        }
+        finally { Cleanup(path); }
+    }
+
+    private sealed class AutoRejoinWriteFailsStore(IAccountStore inner, Func<bool> failing) : IAccountStore
+    {
+        public Task SetAutoRejoinAsync(Guid id, bool autoRejoin)
+            => failing() ? throw new IOException("disk full") : inner.SetAutoRejoinAsync(id, autoRejoin);
+        public Task SetJoinViaFriendAsync(Guid id, bool joinViaFriend) => inner.SetJoinViaFriendAsync(id, joinViaFriend);
+        public Task UpdateRobloxUserIdAsync(Guid accountId, long userId) => inner.UpdateRobloxUserIdAsync(accountId, userId);
+        public Task UpdateBrowserTrackerIdAsync(Guid accountId, long browserTrackerId) => inner.UpdateBrowserTrackerIdAsync(accountId, browserTrackerId);
+        public int GetCookieGeneration(Guid id) => inner.GetCookieGeneration(id);
+        public Task<IReadOnlyList<Account>> ListAsync() => inner.ListAsync();
+        public Task<Account> AddAsync(string displayName, string avatarUrl, string cookie) => inner.AddAsync(displayName, avatarUrl, cookie);
+        public Task RemoveAsync(Guid id) => inner.RemoveAsync(id);
+        public Task<string> RetrieveCookieAsync(Guid id) => inner.RetrieveCookieAsync(id);
+        public Task UpdateCookieAsync(Guid id, string newCookie) => inner.UpdateCookieAsync(id, newCookie);
+        public Task TouchLastLaunchedAsync(Guid id) => inner.TouchLastLaunchedAsync(id);
+        public Task SetMainAsync(Guid id) => inner.SetMainAsync(id);
+        public Task UpdateSortOrderAsync(IReadOnlyList<Guid> idsInOrder) => inner.UpdateSortOrderAsync(idsInOrder);
+        public Task SetSelectedAsync(Guid id, bool isSelected) => inner.SetSelectedAsync(id, isSelected);
+        public Task SetCaptionColorAsync(Guid id, string? hex) => inner.SetCaptionColorAsync(id, hex);
+        public Task SetFpsCapAsync(Guid id, int? fps) => inner.SetFpsCapAsync(id, fps);
+        public Task UpdateLocalNameAsync(Guid accountId, string? localName) => inner.UpdateLocalNameAsync(accountId, localName);
+        public Task UpdateStreamerIdentityAsync(Guid accountId, string fakeName, string fakeAvatarId) => inner.UpdateStreamerIdentityAsync(accountId, fakeName, fakeAvatarId);
+        public Task SetTagsAsync(Guid id, IReadOnlyList<string> tags) => inner.SetTagsAsync(id, tags);
+        public Task<AccountExportResult> ExportAccountsAsync(IEnumerable<Guid> ids) => inner.ExportAccountsAsync(ids);
+        public Task<ImportMergeResult> ImportMergeAsync(IReadOnlyList<AccountExportRecord> records) => inner.ImportMergeAsync(records);
     }
 }

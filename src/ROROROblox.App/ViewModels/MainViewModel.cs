@@ -3677,7 +3677,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     switch (action)
                     {
                         case AutoRejoinAction.Pause pause:
-                            RaiseAutoRejoinPaused(pause.AccountId, AutoRejoinPauseReason.RepeatedDrops);
+                            await PauseAutoRejoinAsync(pause.AccountId, AutoRejoinPauseReason.RepeatedDrops).ConfigureAwait(true);
                             break;
                         case AutoRejoinAction.Rejoin rejoin:
                             await RejoinAsync(rejoin, now).ConfigureAwait(true);
@@ -3795,8 +3795,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     _log.LogWarning("Auto-rejoin {AccountId}: relaunch failed {Attempts} times; giving up until it is turned back on.", id, attempts);
                     // Really paused, not just alerted: a later manual launch that drops out is not
                     // auto-rejoined until the user turns it back on (ToggleAutoRejoinAsync -> Resume).
-                    _autoRejoin.Pause(id);
-                    RaiseAutoRejoinPaused(id, AutoRejoinPauseReason.RelaunchFailed);
+                    await PauseAutoRejoinAsync(id, AutoRejoinPauseReason.RelaunchFailed).ConfigureAwait(true);
                 }
                 else
                 {
@@ -3818,6 +3817,34 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             _relaunchPending[accountId] = new PendingRelaunch(0, unflaggedTarget, now);
         }
         _log.LogInformation("Auto-rejoin {AccountId}: client stopped but not relaunched; relaunch pending.", accountId);
+    }
+
+    /// <summary>
+    /// Pause auto-rejoin for one account, for either reason, so the pause is visible and durable:
+    /// the monitor is paused, the row's <see cref="AccountSummary.AutoRejoin"/> goes off (the menu
+    /// shows it off, and the alert's "paused" is literally true), the setting is persisted (a
+    /// restart can't silently unpause it), and the alert is raised. Turning it back on
+    /// (<see cref="ToggleAutoRejoinAsync"/> -> Resume) is the way out. A persist failure is logged
+    /// and changes nothing else: the monitor stays paused.
+    /// </summary>
+    private async Task PauseAutoRejoinAsync(Guid accountId, AutoRejoinPauseReason reason)
+    {
+        _autoRejoin.Pause(accountId);
+        _relaunchPending.Remove(accountId);
+        var row = Accounts.FirstOrDefault(a => a.Id == accountId);
+        if (row is not null && row.AutoRejoin)
+        {
+            row.AutoRejoin = false;
+            try
+            {
+                await _accountStore.SetAutoRejoinAsync(accountId, false).ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "Auto-rejoin {AccountId}: paused, but saving it as off failed; it stays paused for this session.", accountId);
+            }
+        }
+        RaiseAutoRejoinPaused(accountId, reason);
     }
 
     /// <summary>
