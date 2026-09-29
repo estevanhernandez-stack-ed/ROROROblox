@@ -2047,6 +2047,40 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 summary.CurrentServer?.PlaceId, summary.CurrentServer?.JobId ?? "(none)");
         }
 
+        // Spec rule 1, decided BEFORE the recycler stops the client: the relaunch would otherwise
+        // open the flagged-launch question with the client already gone, and Cancel there would
+        // leave a running account stopped. Ask first; Cancel stops nothing.
+        var decision = DecideFlaggedLaunch(summary, target);
+        switch (decision.Outcome)
+        {
+            case FlaggedLaunchOutcome.Direct:
+                break;
+            case FlaggedLaunchOutcome.Follow:
+                target = decision.Target;
+                break;
+            default:
+                var choice = FlaggedLaunchPrompt(new FlaggedLaunchAsk(
+                    [summary.RenderName], MainAccount?.RenderName, JoinableFollowTargets(summary.Id)));
+                _log.LogInformation("Recycle: flagged-launch decision for {AccountId}: {Outcome}, chose {Choice} (before the stop)",
+                    summary.Id, decision.Outcome, choice.GetType().Name);
+                switch (choice)
+                {
+                    case FlaggedLaunchChoice.FollowAccount f:
+                        target = new LaunchTarget.FollowFriend(f.UserId);
+                        break;
+                    case FlaggedLaunchChoice.JoinDirectly:
+                        await ToggleJoinViaFriendAsync(summary).ConfigureAwait(true); // clears + persists, reverts on failure
+                        if (summary.JoinViaFriend)
+                        {
+                            return false; // the save failed (StatusBanner says so); nothing stopped
+                        }
+                        break;
+                    default:
+                        return false; // Cancel: the client keeps running
+                }
+                break;
+        }
+
         // Spec log table: pre-recycle private bytes + the target being restored, never a cookie.
         // AccountMemory is a struct, so a plain FirstOrDefault() can't return null on a miss —
         // project through a nullable Select first so "no reading yet" stays distinguishable from

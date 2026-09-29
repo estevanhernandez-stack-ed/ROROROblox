@@ -1007,7 +1007,7 @@ public class MainViewModelTests
     /// <see cref="FakeMemoryWatchdog"/> below throws on both (deliberately, for tests that never
     /// touch memory-watchdog behavior), so Task 8's recycle tests need a capable double instead.
     /// </summary>
-    private sealed class SpyMemoryWatchdog : IMemoryWatchdog
+    internal sealed class SpyMemoryWatchdog : IMemoryWatchdog  // internal: FlaggedLaunchTests recycles with it
     {
         public readonly List<(Guid Id, int Pid)> Resets = new();
         public MemoryPressureSnapshot Snapshot = new(0, 0, 0, false, null, []);

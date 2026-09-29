@@ -242,6 +242,83 @@ public class FlaggedLaunchTests
         finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
 
+    // M2: Recycle stops the client before it relaunches. For a flagged account that would ask,
+    // the question comes first, so Cancel leaves the client running.
+    [Fact]
+    public async Task Recycle_FlaggedAlt_MainNotJoinable_AsksBeforeStopping_AndCancelStopsNothing()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper);
+        try
+        {
+            var (_, alt) = await SeedAsync(vm, store, mainInGame: false);
+            alt.LastLaunchTarget = new LaunchTarget.Place(5);
+            var asked = 0;
+            vm.FlaggedLaunchPrompt = _ => { asked++; return new FlaggedLaunchChoice.Cancel(); };
+
+            var ok = await vm.RecycleAccountAsync(alt).WaitAsync(TimeSpan.FromSeconds(10));
+
+            Assert.False(ok);
+            Assert.Equal(1, asked);
+            Assert.Empty(stopper.StoppedAccountIds); // the client is still running
+            Assert.Empty(launcher.Launches);
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
+    [Fact]
+    public async Task Recycle_FlaggedAlt_MainNotJoinable_FollowAnother_AsksOnceThenStopsAndFollows()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper,
+            memoryWatchdog: new MainViewModelTests.SpyMemoryWatchdog());
+        try
+        {
+            var (_, alt) = await SeedAsync(vm, store, mainInGame: false);
+            alt.LastLaunchTarget = new LaunchTarget.Place(5);
+            var asked = 0;
+            var stoppedWhenAsked = -1;
+            vm.FlaggedLaunchPrompt = _ =>
+            {
+                asked++;
+                stoppedWhenAsked = stopper.StoppedAccountIds.Count;
+                return new FlaggedLaunchChoice.FollowAccount(333);
+            };
+
+            var ok = await vm.RecycleAccountAsync(alt).WaitAsync(TimeSpan.FromSeconds(10));
+
+            Assert.True(ok);
+            Assert.Equal(1, asked);            // not asked again after the stop
+            Assert.Equal(0, stoppedWhenAsked); // asked while the client was still running
+            Assert.Equal(alt.Id, Assert.Single(stopper.StoppedAccountIds));
+            Assert.Equal(new LaunchTarget.FollowFriend(333), Assert.Single(launcher.Launches));
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
+    [Fact]
+    public async Task Recycle_FlaggedAlt_MainInGame_FollowsWithoutAsking()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper,
+            memoryWatchdog: new MainViewModelTests.SpyMemoryWatchdog());
+        try
+        {
+            var (_, alt) = await SeedAsync(vm, store, mainInGame: true);
+            alt.LastLaunchTarget = new LaunchTarget.Place(5);
+            vm.FlaggedLaunchPrompt = _ => throw new InvalidOperationException("must not ask");
+
+            var ok = await vm.RecycleAccountAsync(alt).WaitAsync(TimeSpan.FromSeconds(10));
+
+            Assert.True(ok);
+            Assert.Equal(new LaunchTarget.FollowFriend(111), Assert.Single(launcher.Launches));
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
     [Fact]
     public async Task UnflaggedAlt_IsUnchanged()
     {
