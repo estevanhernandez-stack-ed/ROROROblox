@@ -1058,7 +1058,16 @@ internal partial class SettingsPage : UserControl, IDisposable
             // control the user is looking at. Without this the line would count MetricBreach's
             // destinations as routed while the feature was off, which is the one thing
             // AlertStatusLine exists not to do.
-            MetricAlertsEnabledToggle.IsChecked == true);
+            MetricAlertsEnabledToggle.IsChecked == true,
+            // Same shape as the metric opt-in above, off the accounts themselves rather than a
+            // checkbox on this page: auto-rejoin has no page-local "feature enabled" control, it is
+            // opted into per account from the main window's row menu. Read fresh every call rather
+            // than cached — MainWindow's ToggleAutoRejoinCommand is disabled while this page is open
+            // (a modal ShowDialog only disables the top-level windows that existed when it opened,
+            // and MainWindow is one of them), so the value cannot change out from under an open
+            // Settings session; it only needs to be current at the moment this method runs, same as
+            // CurrentDiscordConfig above.
+            autoRejoinInUse: _mainViewModel.Accounts.Any(a => a.AutoRejoin));
 
         // The glyph is the view's, not the composer's — same rule MainWindow.xaml records for the
         // compat banner. The Tag drives the brush from the Style so the colour stays in markup where

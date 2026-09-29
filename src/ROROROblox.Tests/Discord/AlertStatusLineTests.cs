@@ -16,14 +16,36 @@ public class AlertStatusLineTests
     [Fact]
     public void Compose_NothingRouted_SaysSoPlainly()
     {
-        // AutoRejoinPausedDestinations ships as [Local] (controller correction, 2026-09-29 — the
-        // spec's pause toast always showed, so it needed the same shipped-on default
-        // MetricBreachDestinations has), so a config that means "genuinely nothing configured"
-        // opts it out explicitly, the same way this test would need to null out MineWebhookUrl if
-        // that ever shipped a default.
-        var line = AlertStatusLine.Compose(new DiscordConfig { AutoRejoinPausedDestinations = [] });
+        var line = AlertStatusLine.Compose(new DiscordConfig());
 
         Assert.Contains("No alerts yet", line.Text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Compose_FreshConfig_AutoRejoinNeverUsed_SaysNoAlertsYet_ExactText()
+    {
+        // Controller correction (2026-09-29, round 2): AutoRejoinPausedDestinations ships as
+        // [Local] so the pause toast is on the moment someone turns auto-rejoin on for anything
+        // (round 1's fix), but folding that in UNCONDITIONALLY made this exact sentence — the one
+        // every fresh install sees — say "Desktop only" for users who never touch auto-rejoin at
+        // all. Gated on autoRejoinInUse instead, the same shape the metric flag already uses.
+        // Exact text pinned: this is the line every user reads before configuring anything.
+        var line = AlertStatusLine.Compose(new DiscordConfig(), autoRejoinInUse: false);
+
+        Assert.Equal("No alerts yet. Pick what you want to hear about above.", line.Text);
+        Assert.False(line.IsFailure);
+    }
+
+    [Fact]
+    public void Compose_FreshConfig_AutoRejoinInUse_SaysDesktopOnly_ExactText()
+    {
+        // The other side of the gate: once at least one saved account has auto-rejoin on, the
+        // shipped-on toast destination counts, and a bare fresh config reads as "Desktop only" —
+        // exactly what the temporary toast Task 10 replaced always did, unconditionally.
+        var line = AlertStatusLine.Compose(new DiscordConfig(), autoRejoinInUse: true);
+
+        Assert.Equal("Desktop only. You'll see these at the PC, but nothing will reach your phone.", line.Text);
+        Assert.False(line.IsFailure);
     }
 
     [Fact]
@@ -219,9 +241,10 @@ public class AlertStatusLineTests
         // The regression the plan-2 exclusion existed to prevent. MetricBreachDestinations ships
         // as [Local] so a breach has somewhere to go; that is a default, not a user choice, and
         // this sentence reports back what the user chose. AutoRejoinPausedDestinations picked up
-        // the same shipped-on default for the same reason (controller correction, 2026-09-29) and
-        // is opted out explicitly here so this test still isolates the metric gate it is about.
-        var line = AlertStatusLine.Compose(new DiscordConfig { AutoRejoinPausedDestinations = [] });
+        // the same shipped-on default for the same reason (controller correction, 2026-09-29) —
+        // gated on autoRejoinInUse, same as this test's config needs no opt-out: the gate defaults
+        // closed, so a call that (like every real fresh-install read) doesn't pass it stays excluded.
+        var line = AlertStatusLine.Compose(new DiscordConfig());
 
         Assert.Contains("No alerts yet", line.Text, StringComparison.OrdinalIgnoreCase);
     }
@@ -229,11 +252,7 @@ public class AlertStatusLineTests
     [Fact]
     public void WithMetricAlertsOff_TheMetricDestinationIsNotCounted()
     {
-        var config = new DiscordConfig
-        {
-            MetricBreachDestinations = [AlertDestination.Local],
-            AutoRejoinPausedDestinations = [], // isolate the metric gate this test is about
-        };
+        var config = new DiscordConfig { MetricBreachDestinations = [AlertDestination.Local] };
         var line = AlertStatusLine.Compose(config, metricAlertsEnabled: false);
 
         Assert.Contains("No alerts yet", line.Text, StringComparison.OrdinalIgnoreCase);
