@@ -2196,13 +2196,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             string? leftStoppedBanner = null;
             if (plan.Flagged.Count > 0)
             {
-                // The main anchors a Launch multiple even when it's already in a game and so not in
-                // this batch; it's who a flagged account follows on a single launch too.
+                // The main is the ONLY anchor here (spec rules 1-2), whether it's in this batch or
+                // already in a game. An unflagged alt landing first is not a reason to follow it;
+                // no main, or a main that never becomes joinable, means one ask.
+                var main = MainAccount;
                 (_, leftStoppedBanner) = await ReleaseFlaggedAfterAnchorAsync(
-                    plan.Direct,
+                    main is null ? [] : [main],
                     plan.Flagged,
                     CancellationToken.None,
-                    preferredAnchor: MainAccount,
+                    waitingBanner: main is null ? null : Loc.Format("Shell_Msg_WaitingForLanding", main.RenderName),
                     joinDirectly: cleared => plan.Direct.Count == 0
                         ? DispatchBatchAsync(cleared, overrideTarget: null, launchingBanner)
                         : ReleaseBatchAsync(cleared, overrideTarget: null, launchingBanner, startIndex: 0));
@@ -2507,34 +2509,31 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// With no anchor the user is asked ONCE for the whole group; the flagged accounts never join
     /// directly on their own (spec rule 1), and no per-row dialog opens.
     /// </summary>
-    /// <param name="direct">The rows this batch just dispatched directly: the anchor candidates.
-    /// When empty (and <paramref name="preferredAnchor"/> isn't already up) there is nothing that can
-    /// still land, so the wait is skipped.</param>
-    /// <param name="preferredAnchor">Checked before <paramref name="direct"/>. Launch multiple passes
-    /// the main, which anchors even when it's already in a game and so not in the batch. Squad
-    /// Launch passes nothing: its anchor has to be in the squad's server.</param>
+    /// <param name="anchors">Who the flagged rows may follow, in preference order. Squad Launch
+    /// passes its direct batch (the anchor has to be in the squad's server). Launch multiple passes
+    /// the main ONLY: a flagged account follows the main, never whichever alt happened to land
+    /// first (spec rules 1-2). Empty means nobody can anchor, so the ask comes straight away.</param>
+    /// <param name="waitingBanner">Shown during the wait; defaults to the squad wording.</param>
     /// <param name="joinDirectly">The caller's direct path, taken only after the user chose
     /// "join directly" and the flags were cleared. Gets only the rows whose flag actually cleared.</param>
     /// <returns>The flagged rows released, and the banner to finish on when some were left
     /// stopped (null when none were).</returns>
     private async Task<(IReadOnlyList<AccountSummary> Released, string? LeftStoppedBanner)> ReleaseFlaggedAfterAnchorAsync(
-        IReadOnlyList<AccountSummary> direct,
+        IReadOnlyList<AccountSummary> anchors,
         IReadOnlyList<AccountSummary> flagged,
         CancellationToken ct,
-        AccountSummary? preferredAnchor = null,
+        string? waitingBanner = null,
         bool careful = false,
         Func<IReadOnlyList<AccountSummary>, Task>? joinDirectly = null)
     {
-        // The preferred anchor is skipped if it's one of the rows waiting to follow. SquadLaunchPlan
-        // already keeps the main in Direct, so this is a guard, not a path.
-        IReadOnlyList<AccountSummary> candidates = preferredAnchor is null || flagged.Contains(preferredAnchor)
-            ? direct
-            : [preferredAnchor, .. direct.Where(a => !ReferenceEquals(a, preferredAnchor))];
+        // A row waiting to follow can't anchor. SquadLaunchPlan already keeps the main in Direct,
+        // so this is a guard, not a path.
+        IReadOnlyList<AccountSummary> candidates = anchors.Where(a => !flagged.Contains(a)).ToList();
 
         var anchor = AnchorGate.PickAnchor(candidates);
-        if (anchor is null && (direct.Count > 0 || preferredAnchor is { IsRunning: true }))
+        if (anchor is null && candidates.Count > 0)
         {
-            StatusBanner = Loc.Get("Shell_Msg_WaitingSquadMember");
+            StatusBanner = waitingBanner ?? Loc.Get("Shell_Msg_WaitingSquadMember");
             var deadline = DateTime.UtcNow + AnchorWait;
             var poll = PreWarmPollInterval < AnchorWait ? PreWarmPollInterval : AnchorWait;
             while (anchor is null && !ct.IsCancellationRequested && !AnchorGate.WaitExpired(DateTime.UtcNow, deadline))
@@ -2593,7 +2592,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 var stillFlagged = flagged.Where(r => r.JoinViaFriend).Select(r => r.RenderName).ToList();
                 if (cleared.Count > 0 && joinDirectly is not null)
                 {
-                    StatusBanner = direct.Count == 0
+                    StatusBanner = candidates.Count == 0
                         ? Loc.Get("Shell_Msg_NoAnchorAccounts")
                         : Loc.Get("Shell_Msg_NoSquadLanded");
                     await joinDirectly(cleared).ConfigureAwait(true);

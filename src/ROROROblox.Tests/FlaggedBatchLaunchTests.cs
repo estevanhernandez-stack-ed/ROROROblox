@@ -234,4 +234,88 @@ public class FlaggedBatchLaunchTests
         }
         finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
+
+    /// <summary>Records every launch and runs a hook on the Nth, so a test can land a row in game at
+    /// a known point in the batch rather than racing it.</summary>
+    private sealed class HookLauncher(Action<int> onLaunch) : IRobloxLauncher
+    {
+        public List<LaunchTarget> Launches { get; } = [];
+
+        public Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null)
+        {
+            Launches.Add(target);
+            onLaunch(Launches.Count);
+            return Task.FromResult<LaunchResult>(new LaunchResult.Started(7000 + Launches.Count, DateTimeOffset.UtcNow));
+        }
+
+        public Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null, long? browserTrackerId = null)
+            => throw new NotImplementedException();
+    }
+
+    /// <summary>Main, an unflagged AltDirect and a flagged AltFollower, all selected and offline.
+    /// Launch order in the batch: Main (#1), AltDirect (#2); AltFollower is held.</summary>
+    private static async Task<(AccountSummary Main, AccountSummary Direct, AccountSummary Follower)> SeedMainDirectFollowerAsync(
+        MainViewModel vm, IAccountStore store)
+    {
+        var main = new AccountSummary(await store.AddAsync("Main", "", "c0")) { RobloxUserId = 111 };
+        Assert.True(main.IsMain);
+        var direct = new AccountSummary(await store.AddAsync("AltDirect", "", "c1")) { RobloxUserId = 333 };
+        var added = await store.AddAsync("AltFollower", "", "c2");
+        await store.SetJoinViaFriendAsync(added.Id, true);
+        var follower = new AccountSummary(added) { JoinViaFriend = true, RobloxUserId = 222 };
+        vm.Accounts.Add(main); vm.Accounts.Add(direct); vm.Accounts.Add(follower);
+        return (main, direct, follower);
+    }
+
+    [Fact]
+    public async Task LaunchAll_AnUnflaggedAltLandsFirst_FlaggedRowNeverFollowsIt_AsksOnceWhenTheMainNeverLands()
+    {
+        AccountSummary? altDirect = null;
+        // AltDirect is in game the moment it launches; the main's presence never moves.
+        var launcher = new HookLauncher(n => { if (n == 2) altDirect!.PresenceState = UserPresenceType.InGame; });
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher);
+        try
+        {
+            (_, altDirect, _) = await SeedMainDirectFollowerAsync(vm, store);
+            Quick(vm, TimeSpan.FromMilliseconds(300));
+            var asks = new List<FlaggedLaunchAsk>();
+            vm.FlaggedLaunchPrompt = ask => { asks.Add(ask); return new FlaggedLaunchChoice.Cancel(); };
+
+            await vm.LaunchAllForTestAsync().WaitAsync(TimeSpan.FromSeconds(10));
+
+            Assert.True(altDirect.InGame);
+            Assert.DoesNotContain(new LaunchTarget.FollowFriend(333), launcher.Launches);
+            var ask = Assert.Single(asks);
+            Assert.Equal(["AltFollower"], ask.AccountNames);
+            Assert.Equal(2, launcher.Launches.Count); // Main and AltDirect only
+            Assert.All(launcher.Launches, t => Assert.IsType<LaunchTarget.DefaultGame>(t));
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
+    [Fact]
+    public async Task LaunchAll_TheMainLands_FlaggedRowFollowsTheMainWithoutAsking()
+    {
+        AccountSummary? main = null;
+        AccountSummary? altDirect = null;
+        var launcher = new HookLauncher(n =>
+        {
+            if (n == 1) main!.PresenceState = UserPresenceType.InGame;
+            if (n == 2) altDirect!.PresenceState = UserPresenceType.InGame;
+        });
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher);
+        try
+        {
+            (main, altDirect, _) = await SeedMainDirectFollowerAsync(vm, store);
+            Quick(vm, TimeSpan.FromSeconds(5));
+            vm.FlaggedLaunchPrompt = _ => throw new InvalidOperationException("must not ask");
+
+            await vm.LaunchAllForTestAsync().WaitAsync(TimeSpan.FromSeconds(10));
+
+            Assert.Equal(3, launcher.Launches.Count);
+            Assert.Equal(new LaunchTarget.FollowFriend(111), launcher.Launches[2]);
+            Assert.DoesNotContain(new LaunchTarget.FollowFriend(333), launcher.Launches);
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
 }
