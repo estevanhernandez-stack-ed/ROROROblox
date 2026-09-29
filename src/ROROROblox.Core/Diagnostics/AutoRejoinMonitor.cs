@@ -101,6 +101,14 @@ public sealed class AutoRejoinMonitor
         public readonly List<DateTimeOffset> RejoinTimes = [];
         public bool InFlight;
         public bool Paused;
+
+        /// <summary>Forget the watch clock, so the next reading starts a fresh one.</summary>
+        public void ResetWatch()
+        {
+            WatchSince = null;
+            EverInGameSinceLaunch = false;
+            LastInGameAt = null;
+        }
     }
 
     private readonly Dictionary<Guid, State> _states = [];
@@ -138,12 +146,13 @@ public sealed class AutoRejoinMonitor
             var state = GetOrCreate(candidate.AccountId);
 
             // Rule 1: opted out, the main, already paused, or a rejoin we started is still
-            // in flight. Forgetting WatchSince only on the not-enabled path means flipping the
-            // toggle back on later starts a fresh clock rather than reusing a stale one.
+            // in flight. The watch clock is forgotten on every path but in-flight, so turning the
+            // toggle back on (or Resume) starts a fresh clock rather than reusing a stale
+            // LastInGameAt from before the account was switched off.
             if (!candidate.Enabled || candidate.IsMain || state.Paused || state.InFlight)
             {
-                if (!candidate.Enabled)
-                    state.WatchSince = null;
+                if (!state.InFlight)
+                    state.ResetWatch();
                 continue;
             }
 
@@ -151,9 +160,7 @@ public sealed class AutoRejoinMonitor
             // client is never relaunched, and a stop-in-progress isn't a drop to react to.
             if (!candidate.IsRunning || candidate.StopInProgress)
             {
-                state.WatchSince = null;
-                state.EverInGameSinceLaunch = false;
-                state.LastInGameAt = null;
+                state.ResetWatch();
                 continue;
             }
 
@@ -274,14 +281,15 @@ public sealed class AutoRejoinMonitor
     }
 
     /// <summary>
-    /// The user turned auto-rejoin back on for a paused account. Clears the pause and the budget
-    /// history — a resume is a fresh start, not a partially refilled one.
+    /// The user turned auto-rejoin back on for a paused account. Clears the pause, the budget
+    /// history and the watch clock — a resume is a fresh start, not a partially refilled one.
     /// </summary>
     public void Resume(Guid accountId)
     {
         var state = GetOrCreate(accountId);
         state.Paused = false;
         state.RejoinTimes.Clear();
+        state.ResetWatch();
     }
 
     /// <summary>True if this account is currently paused (fourth drop inside the hour).</summary>

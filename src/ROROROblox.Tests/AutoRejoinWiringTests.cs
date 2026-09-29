@@ -276,7 +276,11 @@ public class AutoRejoinWiringTests
             await vm.ToggleAutoRejoinAsync(alt).WaitAsync(Limit); // on again: resumes
             Assert.True(alt.AutoRejoin);
 
+            // Resumed with a fresh clock (M1): the first pass starts it, the first-join grace later
+            // it's due.
             await vm.RunAutoRejoinAsync(t0.AddMinutes(35)).WaitAsync(Limit);
+            Assert.Equal(3, stopper.StoppedAccountIds.Count);
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(40)).WaitAsync(Limit);
             Assert.Equal(4, stopper.StoppedAccountIds.Count);
             Assert.Equal(4, launcher.Launches.Count);
         }
@@ -732,7 +736,9 @@ public class AutoRejoinWiringTests
             // Turned back on: the next due tick rejoins it.
             await vm.ToggleAutoRejoinAsync(alt).WaitAsync(Limit);
             await vm.ToggleAutoRejoinAsync(alt).WaitAsync(Limit);
-            await vm.RunAutoRejoinAsync(t0.AddMinutes(21)).WaitAsync(Limit);
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(21)).WaitAsync(Limit); // fresh clock starts (M1)
+            Assert.Single(stopper.StoppedAccountIds);
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(26)).WaitAsync(Limit);
             Assert.Equal(2, stopper.StoppedAccountIds.Count);
         }
         finally { Cleanup(path); }

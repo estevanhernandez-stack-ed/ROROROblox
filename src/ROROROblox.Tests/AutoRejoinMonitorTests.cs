@@ -223,6 +223,34 @@ public class AutoRejoinMonitorTests
         m.Pause(Id);
         Assert.Empty(At(m, 10, C(inGame: false)));
         m.Resume(Id);
-        Assert.IsType<AutoRejoinAction.Rejoin>(Assert.Single(At(m, 11, C(inGame: false))));
+        // A resume starts a fresh clock (M1): first reading at 11, never in game since, so the
+        // first-join grace applies.
+        Assert.Empty(At(m, 11, C(inGame: false)));
+        Assert.IsType<AutoRejoinAction.Rejoin>(Assert.Single(At(m, 16, C(inGame: false))));
+    }
+
+    // M1: enabling (or resuming) starts a fresh clock; it never reuses a stale LastInGameAt.
+    [Fact]
+    public void TurningItBackOn_StartsAFreshClock_NotAStaleOne()
+    {
+        var m = new AutoRejoinMonitor();
+        At(m, 0, C(inGame: true));
+        At(m, 1, C(inGame: false, enabled: false));
+        // Back on at 10, still out of game. The last in-game reading (t=0) is ten minutes old, but
+        // that time was spent opted out: nothing is due yet.
+        Assert.Empty(At(m, 10, C(inGame: false)));
+        Assert.Empty(At(m, 12.9, C(inGame: false)));
+    }
+
+    [Fact]
+    public void Resume_StartsAFreshClock_NotAStaleOne()
+    {
+        var m = new AutoRejoinMonitor();
+        At(m, 0, C(inGame: true));
+        m.Pause(Id);
+        At(m, 1, C(inGame: false)); // paused: skipped
+        m.Resume(Id);
+        Assert.Empty(At(m, 10, C(inGame: false)));
+        Assert.Empty(At(m, 12.9, C(inGame: false)));
     }
 }
