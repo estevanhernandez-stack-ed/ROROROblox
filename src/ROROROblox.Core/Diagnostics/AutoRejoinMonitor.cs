@@ -56,6 +56,13 @@ public abstract record AutoRejoinAction(Guid AccountId)
 /// lock; calling it from more than one thread is a bug in the caller, not something this class
 /// guards against.
 /// </para>
+/// <para>
+/// <b>Every <see cref="Tick"/> call must pass every candidate row</b> the caller currently knows
+/// about, not a filtered subset. An id absent from one call's <c>accounts</c> list is read as "this
+/// account row was removed" — its state, including <see cref="IsPaused"/> and the rejoin budget, is
+/// forgotten before that call returns. Passing a filtered list (e.g. "just the running ones") would
+/// silently reset a paused or budget-tracked account the next time it reappears.
+/// </para>
 /// </summary>
 public sealed class AutoRejoinMonitor
 {
@@ -110,9 +117,15 @@ public sealed class AutoRejoinMonitor
 
     /// <summary>
     /// Evaluate every candidate against <paramref name="now"/> and this monitor's own per-account
-    /// state, returning the actions (if any) the caller should carry out. Accounts absent from
-    /// <paramref name="accounts"/> have their state dropped before this call returns — a removed
-    /// row (account deleted, list rebuilt without it) does not leak state forever.
+    /// state, returning the actions (if any) the caller should carry out.
+    /// <para>
+    /// <b>Contract:</b> <paramref name="accounts"/> must be the caller's full, current row list on
+    /// every call, not a filtered subset. An id absent here is treated as "that row is gone" — its
+    /// state is dropped before this call returns, including <see cref="IsPaused"/> and the rejoin
+    /// budget, so a removed account does not leak state forever. If the caller later reintroduces
+    /// the same id (re-added account, or a filter that was only temporary), it starts over as if it
+    /// were brand new: not paused, empty budget.
+    /// </para>
     /// </summary>
     public IReadOnlyList<AutoRejoinAction> Tick(DateTimeOffset now, IReadOnlyList<AutoRejoinCandidate> accounts)
     {
@@ -218,10 +231,18 @@ public sealed class AutoRejoinMonitor
     /// modal was already open, a squad launch was mid-flight, whatever). Refunds the budget slot
     /// that decision spent — removes the newest <c>RejoinTimes</c> entry, the one this rejoin just
     /// added — and clears in-flight so the next <see cref="Tick"/> can try again.
+    /// <para>
+    /// A no-op when there's no outstanding rejoin to skip: an unknown <paramref name="accountId"/>,
+    /// or one that isn't currently <c>InFlight</c>. Without that guard, a duplicate call (or one
+    /// for an account that never had a rejoin in flight) would refund a slot nothing spent, letting
+    /// more than <see cref="BudgetPerWindow"/> rejoins through inside <see cref="BudgetWindow"/>.
+    /// </para>
     /// </summary>
     public void NotifyRejoinSkipped(Guid accountId)
     {
-        var state = GetOrCreate(accountId);
+        if (!_states.TryGetValue(accountId, out var state) || !state.InFlight)
+            return;
+
         state.InFlight = false;
         if (state.RejoinTimes.Count > 0)
             state.RejoinTimes.RemoveAt(state.RejoinTimes.Count - 1);

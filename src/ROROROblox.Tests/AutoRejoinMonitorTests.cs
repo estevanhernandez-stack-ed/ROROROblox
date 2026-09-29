@@ -131,4 +131,42 @@ public class AutoRejoinMonitorTests
         }
         Assert.False(m.IsPaused(Id));
     }
+
+    [Fact]
+    public void DoubleNotifyRejoinSkipped_RefundsOnlyOnce_SoTheBudgetCapStillHolds()
+    {
+        var m = new AutoRejoinMonitor();
+
+        // A confirmed rejoin — a real spent slot a later duplicate skip must not be able to touch.
+        At(m, 0, C(inGame: true));
+        Assert.IsType<AutoRejoinAction.Rejoin>(Assert.Single(At(m, 3, C(inGame: false))));
+        m.NotifyLaunched(Id, T0.AddMinutes(3));
+
+        // A second rejoin, skipped twice in a row (duplicate/stale UI event). Only the first call
+        // should refund anything; the second has no outstanding rejoin to refund.
+        At(m, 4, C(inGame: true));
+        Assert.IsType<AutoRejoinAction.Rejoin>(Assert.Single(At(m, 7, C(inGame: false))));
+        m.NotifyRejoinSkipped(Id);
+        m.NotifyRejoinSkipped(Id);
+
+        // Two more confirmed rejoins bring the real, counted total in the window to 3.
+        At(m, 8, C(inGame: true));
+        Assert.IsType<AutoRejoinAction.Rejoin>(Assert.Single(At(m, 11, C(inGame: false))));
+        m.NotifyLaunched(Id, T0.AddMinutes(11));
+
+        At(m, 12, C(inGame: true));
+        Assert.IsType<AutoRejoinAction.Rejoin>(Assert.Single(At(m, 15, C(inGame: false))));
+        m.NotifyLaunched(Id, T0.AddMinutes(15));
+
+        Assert.False(m.IsPaused(Id));
+
+        // A 4th drop: if the duplicate skip above had wrongly refunded the first confirmed slot
+        // too, this would come back as a 4th Rejoin instead of a Pause.
+        At(m, 16, C(inGame: true));
+        Assert.IsType<AutoRejoinAction.Pause>(Assert.Single(At(m, 19, C(inGame: false))));
+        Assert.True(m.IsPaused(Id));
+
+        // And a "5th" never sneaks through either — a paused account is simply skipped.
+        Assert.Empty(At(m, 30, C(inGame: false)));
+    }
 }
