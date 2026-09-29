@@ -56,6 +56,23 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private readonly IRobloxRunningProbe _runningProbe;
     private readonly IShellOpener _shellOpener;
     private readonly AccountRecycler _accountRecycler;
+
+    /// <summary>
+    /// Auto-rejoin decisions (spec item 6). Single-threaded by contract: every call happens on the
+    /// UI thread. <see cref="RunAutoRejoinAsync"/> runs there off the ticker, and the launch path's
+    /// <c>NotifyLaunched</c> marshals through <see cref="_ui"/>.
+    /// </summary>
+    private readonly AutoRejoinMonitor _autoRejoin = new();
+
+    /// <summary>
+    /// The last target each account was launched into, captured in <see cref="LaunchAccountAsync"/>'s
+    /// <c>Started</c> case. <see cref="AccountSummary.LastLaunchTarget"/> can't serve: ApplyPresence
+    /// clears it on the very not-in-game reading that makes a rejoin due. UI thread only.
+    /// </summary>
+    private readonly Dictionary<Guid, LaunchTarget> _lastRejoinTargets = [];
+
+    /// <summary>True while a <see cref="RunAutoRejoinAsync"/> pass is running; a pass that finds it set returns at once.</summary>
+    private bool _autoRejoinRunning;
     private readonly ITrayService _tray;
     private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
 
@@ -205,6 +222,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // Capturing the method group is safe mid-constructor: the delegate isn't INVOKED until
         // later, well after construction finishes.
         _accountRecycler = new AccountRecycler(_instanceStopper, LaunchForRecycleAsync, _memoryWatchdog, _log);
+        WaitForClientExitAsync = DefaultWaitForClientExitAsync;
 
         // F-106 seam defaults — the real dialogs. Assigned here rather than at the property
         // because they capture instance state (stores, the API client, the share-URL resolver).
@@ -437,6 +455,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         // when the UI culture changes. Unsubscribed in StopPeriodicRefresh so a leaked VM doesn't
         // keep refreshing after a test ends (same hazard the ticker documents).
         TranslationSource.Instance.CultureChanged += OnUiCultureChanged;
+
+        // Auto-rejoin rides the same 30 s cadence. PeriodicTick is raised from the DispatcherTimer's
+        // Tick, so on the UI thread this view model was built on, which the monitor and Accounts
+        // both require. No marshal needed.
+        PeriodicTick += OnAutoRejoinTick;
     }
 
     /// <summary>
@@ -1854,6 +1877,16 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     // Task 8: remembered so a later Recycle relaunches into the SAME target
                     // rather than re-resolving from the row's (possibly since-changed) picker.
                     summary.LastLaunchTarget = target;
+                    // Auto-rejoin: remember the target where ApplyPresence can't clear it, and give
+                    // the fresh client its own first-join grace. Marshalled because recycle and
+                    // plugin launches can reach this line off the UI thread, and the monitor is
+                    // UI-thread-only by contract.
+                    var launchedTarget = target;
+                    _ui.Invoke(() =>
+                    {
+                        _lastRejoinTargets[summary.Id] = launchedTarget;
+                        _autoRejoin.NotifyLaunched(summary.Id, DateTimeOffset.UtcNow);
+                    });
                     _log.LogInformation("Launcher pid {Pid} for {AccountId}; tracking RobloxPlayerBeta", started.Pid, summary.Id);
                     await RecordSessionStartAsync(summary, target, started.LaunchedAtUtc);
                     // Fire-and-forget: tracker watches for the player process. UI updates flow back
@@ -3519,6 +3552,167 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal event EventHandler? PeriodicTick;
 
     /// <summary>
+    /// Seam: wait for the account's client to exit after auto-rejoin stopped it. The default polls
+    /// <see cref="AccountSummary.IsRunning"/> every 500 ms for up to 15 s and returns either way;
+    /// <see cref="RunAutoRejoinAsync"/> re-reads <c>IsRunning</c> afterwards and never launches a
+    /// second client beside one that didn't exit. Tests replace it so nothing really waits.
+    /// </summary>
+    internal Func<Guid, Task> WaitForClientExitAsync { get; set; }
+
+    private async Task DefaultWaitForClientExitAsync(Guid accountId)
+    {
+        var deadline = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(15);
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            var row = Accounts.FirstOrDefault(a => a.Id == accountId);
+            if (row is null || !row.IsRunning)
+            {
+                return;
+            }
+            await Task.Delay(500).ConfigureAwait(true);
+        }
+    }
+
+    /// <summary>
+    /// PeriodicTick subscriber. async void on purpose, with a catch-all: a throw anywhere in the
+    /// pass, synchronous or after an await, is logged here and never reaches the ticker.
+    /// </summary>
+    private async void OnAutoRejoinTick(object? sender, EventArgs e)
+    {
+        try
+        {
+            await RunAutoRejoinAsync(DateTimeOffset.UtcNow).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Auto-rejoin pass threw; the next tick tries again.");
+        }
+    }
+
+    /// <summary>
+    /// One auto-rejoin pass (spec item 6): offer every row to <see cref="AutoRejoinMonitor"/>, alert
+    /// on a pause, and stop-and-relaunch each account it says is due. UI thread only. Never opens
+    /// the flagged-launch prompt and never touches a client's window. A pass that starts while an
+    /// earlier one is still waiting on a client to exit returns immediately.
+    /// </summary>
+    internal async Task RunAutoRejoinAsync(DateTimeOffset now)
+    {
+        if (_autoRejoinRunning)
+        {
+            return;
+        }
+        _autoRejoinRunning = true;
+        try
+        {
+            // Every row, every tick: the monitor reads an absent id as a removed account.
+            var candidates = Accounts
+                .Select(r => new AutoRejoinCandidate(
+                    r.Id, r.AutoRejoin, r.IsMain, r.IsRunning, r.InGame, r.CurrentServer,
+                    StopInProgress: WasCloseExpected(r.Id, now)))
+                .ToList();
+            var actions = _autoRejoin.Tick(now, candidates);
+
+            foreach (var action in actions)
+            {
+                switch (action)
+                {
+                    case AutoRejoinAction.Pause pause:
+                        RaiseAutoRejoinPaused(pause.AccountId);
+                        break;
+                    case AutoRejoinAction.Rejoin rejoin:
+                        try
+                        {
+                            await RejoinAsync(rejoin).ConfigureAwait(true);
+                        }
+                        catch (Exception ex)
+                        {
+                            _log.LogWarning(ex, "Auto-rejoin {AccountId} threw; retrying next tick.", rejoin.AccountId);
+                            _autoRejoin.NotifyRejoinSkipped(rejoin.AccountId); // no-op once the launch has landed
+                        }
+                        break;
+                }
+            }
+        }
+        finally
+        {
+            _autoRejoinRunning = false;
+        }
+    }
+
+    private void RaiseAutoRejoinPaused(Guid accountId)
+    {
+        var name = Accounts.FirstOrDefault(a => a.Id == accountId)?.RenderName ?? string.Empty;
+        _log.LogInformation("Auto-rejoin {AccountId}: paused after {Count} drops inside {Window}; resumes when it is turned back on.",
+            accountId, AutoRejoinMonitor.BudgetPerWindow + 1, AutoRejoinMonitor.BudgetWindow);
+        // Temporary: Task 10 replaces this toast with AlertKind.AutoRejoinPaused through RaiseAlerts.
+        _tray.ShowToast(
+            Loc.Get("Shell_AutoRejoin_PausedTitle"),
+            Loc.Format("Shell_AutoRejoin_PausedBody", name));
+    }
+
+    private async Task RejoinAsync(AutoRejoinAction.Rejoin action)
+    {
+        var id = action.AccountId;
+        var row = Accounts.FirstOrDefault(a => a.Id == id);
+        if (row is null)
+        {
+            _autoRejoin.NotifyRejoinSkipped(id);
+            return;
+        }
+
+        // Spec: an unflagged account rejoins the server it was last in when presence recorded one,
+        // otherwise its last launch target. Upgrade leaves DefaultGame and Home untouched (the
+        // launcher resolves those from favorites), so a known server is pinned through its own
+        // Place first, which Upgrade then turns into that exact GameJob. PrivateServer and
+        // FollowFriend stay as they were.
+        var baseTarget = _lastRejoinTargets.GetValueOrDefault(id) ?? ResolveLaunchTarget(row.SelectedGame, null);
+        if (baseTarget is LaunchTarget.DefaultGame or LaunchTarget.Home && action.LastServer is { } server)
+        {
+            baseTarget = new LaunchTarget.Place(server.PlaceId);
+        }
+        var target = ServerInstanceTargeting.Upgrade(baseTarget, action.LastServer);
+
+        // The flagged pre-check runs BEFORE anything is stopped: a flagged alt with no joinable
+        // main keeps its client and costs no budget, and the next tick retries. It only needs the
+        // main joinable, not the old server, so a refusal against the rejoin target is re-decided
+        // against the default game.
+        var decision = DecideFlaggedLaunch(row, target);
+        if (row.JoinViaFriend && decision.Outcome is FlaggedLaunchOutcome.MainNotJoinable or FlaggedLaunchOutcome.MainNotInThatServer)
+        {
+            decision = DecideFlaggedLaunch(row, new LaunchTarget.DefaultGame());
+        }
+        if (decision.Outcome is FlaggedLaunchOutcome.MainNotJoinable or FlaggedLaunchOutcome.MainNotInThatServer)
+        {
+            _log.LogInformation("Auto-rejoin {AccountId}: main not joinable ({Outcome}), retrying next tick.", id, decision.Outcome);
+            _autoRejoin.NotifyRejoinSkipped(id);
+            return;
+        }
+
+        var reason = action.FailedJoin ? "failed join" : "dropped out";
+        ExpectClose(id);
+        _instanceStopper.StopAccount(id);
+        await WaitForClientExitAsync(id).ConfigureAwait(true);
+
+        if (row.IsRunning)
+        {
+            // Never launch a second client beside one that didn't exit. Refunded, so the next
+            // tick decides again from fresh state.
+            _log.LogWarning("Auto-rejoin {AccountId}: {Reason}, but the client didn't exit after the stop; retrying next tick.", id, reason);
+            _autoRejoin.NotifyRejoinSkipped(id);
+            return;
+        }
+
+        var launchTarget = decision.Outcome == FlaggedLaunchOutcome.Follow ? decision.Target : target;
+        _log.LogInformation("Auto-rejoin {AccountId}: {Reason} -> {TargetKind}", id, reason, launchTarget.GetType().Name);
+        var pid = await LaunchAccountAsync(row, launchTarget, FlaggedLaunchMode.Refuse).ConfigureAwait(true);
+        if (pid == 0)
+        {
+            _log.LogInformation("Auto-rejoin {AccountId}: the relaunch didn't start; retrying next tick.", id);
+            _autoRejoin.NotifyRejoinSkipped(id);
+        }
+    }
+
+    /// <summary>
     /// Accounts the user just closed on purpose, and when. A dropped-out alert exists to report a
     /// client dying when nobody asked — a crash, a kick, a session dropping while the user is out.
     /// Clicking Stop and then being told the thing you clicked Stop on stopped is noise.
@@ -3953,6 +4147,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         try
         {
             await _accountStore.SetAutoRejoinAsync(summary.Id, next);
+            if (next)
+            {
+                // Turning it back on is how a paused account resumes: fresh budget, no pause.
+                _autoRejoin.Resume(summary.Id);
+            }
         }
         catch (Exception ex)
         {

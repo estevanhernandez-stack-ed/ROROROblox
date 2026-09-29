@@ -1637,7 +1637,7 @@ public class MainViewModelTests
         public bool Kill(Guid accountId) => throw new NotImplementedException();
     }
 
-    private sealed class FakeRobloxInstanceStopper : IRobloxInstanceStopper
+    internal sealed class FakeRobloxInstanceStopper : IRobloxInstanceStopper
     {
         public readonly List<Guid> StoppedAccountIds = new();
         public int StopAll() => 0;
