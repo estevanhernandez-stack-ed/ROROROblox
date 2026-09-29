@@ -380,6 +380,48 @@ public class AutoRejoinWiringTests
     }
 
     [Fact]
+    public async Task FlaggedAlt_Rejoins_ByFollowingTheMain()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            var main = new AccountSummary(await store.AddAsync("Main", "", "m")) { RobloxUserId = 1 };
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, JoinViaFriend = true, RobloxUserId = 2 };
+            vm.Accounts.Add(main);
+            vm.Accounts.Add(alt);
+            vm.WaitForClientExitAsync = ExitsOnStop(tracker);
+            var t0 = DateTimeOffset.UtcNow;
+
+            // Main is in game.
+            tracker.RaiseAttached(new RobloxProcessEventArgs(main.Id, 1111));
+            vm.ApplyPresence(P(main.Id, true, t0));
+
+            // Alt is launched normally while the main is in game: stored target is FollowFriend(main).
+            await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.DefaultGame()).WaitAsync(Limit);
+            Assert.Equal(new LaunchTarget.FollowFriend(1), Assert.Single(launcher.Launches));
+
+            // Alt is in game.
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+            vm.ApplyPresence(P(alt.Id, true, t0));
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
+
+            // Alt drops out.
+            vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
+
+            // At 4 minutes, the alt is past the 3-minute threshold and auto-rejoin triggers.
+            // It is stopped once and relaunched once with FollowFriend(main).
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4)).WaitAsync(Limit);
+
+            Assert.Equal([alt.Id], stopper.StoppedAccountIds);
+            Assert.Equal(2, launcher.Launches.Count);
+            Assert.Equal(new LaunchTarget.FollowFriend(1), launcher.Launches[1]);
+        }
+        finally { Cleanup(path); }
+    }
+
+    [Fact]
     public async Task FlaggedAlt_MainLeavesDuringTheExitWait_IsRelaunchedOnceTheMainIsBack()
     {
         var launcher = new MainViewModelTests.RecordingSuccessLauncher();
