@@ -8,9 +8,16 @@ public sealed record FlaggedLaunchDecision(FlaggedLaunchOutcome Outcome, LaunchT
 
 public static class FlaggedLaunchRule
 {
+    /// <summary>
+    /// Decide how a launch of one account goes. Pure: every input is passed in.
+    /// </summary>
+    /// <param name="mainLastTarget">The main's last launch target. Presence can't tell a private
+    /// server from a public one in the same place, so a <see cref="LaunchTarget.PrivateServer"/>
+    /// target is followed only when the main was itself launched into that same private server
+    /// (same place and code). Null, or anything else, means "not known to be in it".</param>
     public static FlaggedLaunchDecision Decide(
         bool joinViaFriend, bool isMain, LaunchTarget resolved,
-        long? mainUserId, UserPresence? mainPresence)
+        long? mainUserId, UserPresence? mainPresence, LaunchTarget? mainLastTarget = null)
     {
         if (!joinViaFriend || isMain || resolved is LaunchTarget.FollowFriend)
             return new(FlaggedLaunchOutcome.Direct, resolved);
@@ -26,6 +33,9 @@ public static class FlaggedLaunchRule
                 => new(FlaggedLaunchOutcome.Follow, follow),
             LaunchTarget.GameJob => new(FlaggedLaunchOutcome.MainNotInThatServer, resolved),
             LaunchTarget.PrivateServer ps when ps.PlaceId == p.PlaceId
+                    && mainLastTarget is LaunchTarget.PrivateServer mps
+                    && mps.PlaceId == ps.PlaceId
+                    && string.Equals(mps.Code, ps.Code, StringComparison.Ordinal)
                 => new(FlaggedLaunchOutcome.Follow, follow),
             LaunchTarget.PrivateServer => new(FlaggedLaunchOutcome.MainNotInThatServer, resolved),
             _ => new(FlaggedLaunchOutcome.Follow, follow),

@@ -208,6 +208,41 @@ public class FlaggedLaunchTests
     }
 
     [Fact]
+    public async Task FlaggedAlt_PrivateServerLink_MainInThatPlaceButNotThatServer_RefusesAndDoesNotFollow()
+    {
+        // I5: the main is in place 5 (a public server, as far as its last launch says), and the
+        // alt is handed the clan's private link for place 5. Place-only matching used to follow the
+        // main into the public server.
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher);
+        try
+        {
+            var (main, alt) = await SeedAsync(vm, store, mainInGame: true);
+            main.LastLaunchTarget = new LaunchTarget.Place(5);
+            vm.FlaggedLaunchPrompt = _ => throw new InvalidOperationException("plugins never ask");
+            await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.PrivateServer(5, "clan", PrivateServerCodeKind.LinkCode));
+            Assert.Empty(launcher.Launches);
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
+    [Fact]
+    public async Task FlaggedAlt_PrivateServerLink_MainInThatSamePrivateServer_FollowsTheMain()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher);
+        try
+        {
+            var (main, alt) = await SeedAsync(vm, store, mainInGame: true);
+            main.LastLaunchTarget = new LaunchTarget.PrivateServer(5, "clan", PrivateServerCodeKind.LinkCode);
+            vm.FlaggedLaunchPrompt = _ => throw new InvalidOperationException("plugins never ask");
+            await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.PrivateServer(5, "clan", PrivateServerCodeKind.LinkCode));
+            Assert.Equal(new LaunchTarget.FollowFriend(111), Assert.Single(launcher.Launches));
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
+    [Fact]
     public async Task UnflaggedAlt_IsUnchanged()
     {
         var launcher = new MainViewModelTests.RecordingSuccessLauncher();

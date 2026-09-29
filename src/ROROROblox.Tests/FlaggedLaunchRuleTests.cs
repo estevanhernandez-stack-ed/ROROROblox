@@ -76,12 +76,48 @@ public class FlaggedLaunchRuleTests
     }
 
     [Fact]
-    public void FlaggedPrivateServer_FollowsOnlyWhenTheMainIsInThatPlace()
+    public void FlaggedPrivateServer_FollowsWhenTheMainWasLaunchedIntoThatSameServer()
     {
         var ps = new LaunchTarget.PrivateServer(5, "code", PrivateServerCodeKind.LinkCode);
-        Assert.Equal(FlaggedLaunchOutcome.Follow,
-            FlaggedLaunchRule.Decide(true, false, ps, MainId, InGame(5)).Outcome);
+        var mainLast = new LaunchTarget.PrivateServer(5, "code", PrivateServerCodeKind.LinkCode);
+        var d = FlaggedLaunchRule.Decide(true, false, ps, MainId, InGame(5), mainLast);
+        Assert.Equal(FlaggedLaunchOutcome.Follow, d.Outcome);
+        Assert.Equal(new LaunchTarget.FollowFriend(MainId), d.Target);
+    }
+
+    [Fact]
+    public void FlaggedPrivateServer_SamePlaceDifferentCode_IsMainNotInThatServer()
+    {
+        // I5: the main is in the same place but a different (or public) server. Following it would
+        // put the alt somewhere other than the private server it was pointed at.
+        var ps = new LaunchTarget.PrivateServer(5, "code", PrivateServerCodeKind.LinkCode);
+        var mainLast = new LaunchTarget.PrivateServer(5, "other", PrivateServerCodeKind.LinkCode);
         Assert.Equal(FlaggedLaunchOutcome.MainNotInThatServer,
-            FlaggedLaunchRule.Decide(true, false, ps, MainId, InGame(6)).Outcome);
+            FlaggedLaunchRule.Decide(true, false, ps, MainId, InGame(5), mainLast).Outcome);
+    }
+
+    [Fact]
+    public void FlaggedPrivateServer_MainLastTargetNull_IsMainNotInThatServer()
+    {
+        var ps = new LaunchTarget.PrivateServer(5, "code", PrivateServerCodeKind.LinkCode);
+        Assert.Equal(FlaggedLaunchOutcome.MainNotInThatServer,
+            FlaggedLaunchRule.Decide(true, false, ps, MainId, InGame(5), mainLastTarget: null).Outcome);
+    }
+
+    [Fact]
+    public void FlaggedPrivateServer_MainInAPublicServerOfThatPlace_IsMainNotInThatServer()
+    {
+        var ps = new LaunchTarget.PrivateServer(5, "code", PrivateServerCodeKind.LinkCode);
+        Assert.Equal(FlaggedLaunchOutcome.MainNotInThatServer,
+            FlaggedLaunchRule.Decide(true, false, ps, MainId, InGame(5), new LaunchTarget.Place(5)).Outcome);
+    }
+
+    [Fact]
+    public void FlaggedPrivateServer_MainInADifferentPlace_IsMainNotInThatServer()
+    {
+        var ps = new LaunchTarget.PrivateServer(5, "code", PrivateServerCodeKind.LinkCode);
+        var mainLast = new LaunchTarget.PrivateServer(5, "code", PrivateServerCodeKind.LinkCode);
+        Assert.Equal(FlaggedLaunchOutcome.MainNotInThatServer,
+            FlaggedLaunchRule.Decide(true, false, ps, MainId, InGame(6), mainLast).Outcome);
     }
 }

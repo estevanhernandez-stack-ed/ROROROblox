@@ -1970,7 +1970,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     {
         var main = AccountsSnapshot.FirstOrDefault(a => a.IsMain);
         var mainPresence = main is null ? null : ProjectPresence(main);
-        return FlaggedLaunchRule.Decide(summary.JoinViaFriend, summary.IsMain, resolved, main?.RobloxUserId, mainPresence);
+        return FlaggedLaunchRule.Decide(summary.JoinViaFriend, summary.IsMain, resolved, main?.RobloxUserId, mainPresence,
+            main?.LastLaunchTarget);
     }
 
     /// <summary>
