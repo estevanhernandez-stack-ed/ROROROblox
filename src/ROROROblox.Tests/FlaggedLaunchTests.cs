@@ -172,6 +172,21 @@ public class FlaggedLaunchTests
     }
 
     [Fact]
+    public async Task LaunchAccountForPluginAsync_JoinByLinkToAServerTheMainIsNotIn_RefusesAndDoesNotAsk()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher);
+        try
+        {
+            var (_, alt) = await SeedAsync(vm, store, mainInGame: true);
+            vm.FlaggedLaunchPrompt = _ => throw new InvalidOperationException("plugins never ask");
+            await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.GameJob(5, "job-OTHER"));
+            Assert.Empty(launcher.Launches);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
     public async Task UnflaggedAlt_IsUnchanged()
     {
         var launcher = new MainViewModelTests.RecordingSuccessLauncher();

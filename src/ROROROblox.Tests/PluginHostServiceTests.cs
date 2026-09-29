@@ -339,6 +339,28 @@ public class PluginHostServiceTests
     }
 
     [Fact]
+    public async Task RequestLaunch_Refused_CarriesReasonCode()
+    {
+        var service = new PluginHostService(
+            new InMemoryRegistry(Array.Empty<InstalledPlugin>()),
+            "1.4.0", "1.0",
+            HostStateOff(),
+            NoAccounts(),
+            new InProcessPluginEventBus(),
+            new RefusingWithReasonCodeLaunchInvoker(),
+            NoUITranslator(),
+            NoActivity(), NoActivityMarker(), NoStopper());
+
+        var result = await service.RequestLaunch(new LaunchRequest
+        {
+            AccountId = Guid.NewGuid().ToString(),
+        }, FakeServerCallContext.Create());
+
+        Assert.False(result.Ok);
+        Assert.Equal("follow-target-not-joinable", result.ReasonCode);
+    }
+
+    [Fact]
     public async Task RequestLaunchTarget_DispatchesShareUrl_ToLauncher()
     {
         var fake = new FakeLaunchInvoker();
@@ -665,19 +687,32 @@ public class PluginHostServiceTests
         public List<(string acct, string? url, long? follow)> TargetInvocations { get; } = new();
         public CurrentServerInfo? Current { get; set; }
 
-        public Task<(bool ok, string? failureReason, int processId)> RequestLaunchAsync(string accountId)
+        public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchAsync(string accountId)
         {
             Invocations.Add(accountId);
-            return Task.FromResult<(bool, string?, int)>((true, null, 12345));
+            return Task.FromResult<(bool, string?, int, string?)>((true, null, 12345, null));
         }
 
-        public Task<(bool ok, string? failureReason, int processId)> RequestLaunchTargetAsync(string accountId, string? shareUrl, long? followUserId)
+        public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchTargetAsync(string accountId, string? shareUrl, long? followUserId)
         {
             TargetInvocations.Add((accountId, shareUrl, followUserId));
-            return Task.FromResult<(bool, string?, int)>((true, null, 6789));
+            return Task.FromResult<(bool, string?, int, string?)>((true, null, 6789, null));
         }
 
         public Task<CurrentServerInfo?> GetCurrentServerAsync() => Task.FromResult(Current);
+    }
+
+    /// <summary>Refuses every launch with a fixed reason code, so <c>RequestLaunch</c>'s
+    /// <c>LaunchResult.ReasonCode</c> mapping can be tested without wiring a real flagged account.</summary>
+    private sealed class RefusingWithReasonCodeLaunchInvoker : IPluginLaunchInvoker
+    {
+        public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchAsync(string accountId)
+            => Task.FromResult<(bool, string?, int, string?)>((false, "x", 0, "follow-target-not-joinable"));
+
+        public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchTargetAsync(string accountId, string? shareUrl, long? followUserId)
+            => Task.FromResult<(bool, string?, int, string?)>((false, "x", 0, "follow-target-not-joinable"));
+
+        public Task<CurrentServerInfo?> GetCurrentServerAsync() => Task.FromResult<CurrentServerInfo?>(null);
     }
 
     private sealed class TestStreamWriter<T> : IServerStreamWriter<T>

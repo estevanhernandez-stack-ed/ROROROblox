@@ -95,12 +95,12 @@ public class ReportMetricHandlerTests
 
     private sealed class FakeLaunchInvoker : IPluginLaunchInvoker
     {
-        public Task<(bool ok, string? failureReason, int processId)> RequestLaunchAsync(string accountId)
-            => Task.FromResult<(bool, string?, int)>((true, null, 0));
+        public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchAsync(string accountId)
+            => Task.FromResult<(bool, string?, int, string?)>((true, null, 0, null));
 
-        public Task<(bool ok, string? failureReason, int processId)> RequestLaunchTargetAsync(
+        public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchTargetAsync(
             string accountId, string? shareUrl, long? followUserId)
-            => Task.FromResult<(bool, string?, int)>((true, null, 0));
+            => Task.FromResult<(bool, string?, int, string?)>((true, null, 0, null));
 
         public Task<CurrentServerInfo?> GetCurrentServerAsync() => Task.FromResult<CurrentServerInfo?>(null);
     }

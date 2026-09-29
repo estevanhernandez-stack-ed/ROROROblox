@@ -13,10 +13,13 @@ public interface IPluginLaunchInvoker
     /// Launch the saved account identified by <paramref name="accountId"/>.
     /// Returns success + the launched PID, or failure with a reason string.
     /// Implementations must not throw on user-recoverable errors (account
-    /// missing, mutex held, cookie expired) — return <c>(false, reason, 0)</c>
-    /// so the calling plugin can surface the failure cleanly.
+    /// missing, mutex held, cookie expired) — return <c>(false, reason, 0, reasonCode)</c>
+    /// so the calling plugin can surface the failure cleanly. <c>reasonCode</c> is a stable,
+    /// machine-readable string (see <see cref="PluginLaunchReasonCodes"/>) for failures a plugin
+    /// might want to branch on, and null otherwise — a plugin can't answer the flagged-launch
+    /// dialog, so a refusal must be diagnosable without parsing prose.
     /// </summary>
-    Task<(bool ok, string? failureReason, int processId)> RequestLaunchAsync(string accountId);
+    Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchAsync(string accountId);
 
     /// <summary>
     /// Launch <paramref name="accountId"/> into a target. Exactly one of
@@ -24,7 +27,7 @@ public interface IPluginLaunchInvoker
     /// shareUrl is resolved by the host's share-URL resolver, followUserId becomes a
     /// follow-friend launch. Same return contract as <see cref="RequestLaunchAsync"/>.
     /// </summary>
-    Task<(bool ok, string? failureReason, int processId)> RequestLaunchTargetAsync(
+    Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchTargetAsync(
         string accountId, string? shareUrl, long? followUserId);
 
     /// <summary>Most-recently-launched saved private server, or null if none.</summary>

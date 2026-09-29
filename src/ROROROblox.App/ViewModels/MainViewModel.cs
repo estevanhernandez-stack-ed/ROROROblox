@@ -1564,9 +1564,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         RelayCommand.RaiseCanExecuteChanged();
     }
 
-    /// <summary>Plugin-host seam: launch a specific account into a resolved target.</summary>
+    /// <summary>
+    /// Plugin-host seam: launch a specific account into a resolved target. A plugin can't answer
+    /// the flagged-launch dialog, so this always runs in <see cref="FlaggedLaunchMode.Refuse"/> —
+    /// a flagged account either follows the main (or the caller's already-resolved follow target)
+    /// or the launch is refused outright. <see cref="FlaggedLaunchPrompt"/> is never reached from
+    /// this path.
+    /// </summary>
     internal Task LaunchAccountForPluginAsync(AccountSummary summary, LaunchTarget target)
-        => LaunchAccountAsync(summary, overrideTarget: target);
+        => LaunchAccountAsync(summary, overrideTarget: target, flaggedMode: FlaggedLaunchMode.Refuse);
 
     /// <summary>Plugin-host seam: read-only access to the saved private-server store.</summary>
     internal IPrivateServerStore PrivateServerStoreForPlugin => _privateServerStore;
@@ -1869,6 +1875,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Project a saved row's presence fields into the <see cref="UserPresence"/> shape
+    /// <see cref="EvaluateFollow"/> and <see cref="FlaggedLaunchRule"/> read. Shared by
+    /// <see cref="DecideFlaggedLaunch"/>, <see cref="JoinableFollowTargets"/>, and the plugin-host
+    /// adapter's follow-user-id lookup, so the same account row always yields the same presence.
+    /// </summary>
+    internal static UserPresence ProjectPresence(AccountSummary account)
+        => new(account.RobloxUserId ?? 0, account.PresenceState, account.CurrentPlaceId, account.CurrentServer?.JobId, null);
+
+    /// <summary>
     /// Apply <see cref="FlaggedLaunchRule"/> to one row against the main's current presence.
     /// Reads <see cref="AccountsSnapshot"/>, so it is safe off the UI thread. The main's presence
     /// is projected from its saved row exactly as <see cref="FollowAltAsync"/> projects a target's.
@@ -1876,9 +1891,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal FlaggedLaunchDecision DecideFlaggedLaunch(AccountSummary summary, LaunchTarget resolved)
     {
         var main = AccountsSnapshot.FirstOrDefault(a => a.IsMain);
-        var mainPresence = main is null
-            ? null
-            : new UserPresence(main.RobloxUserId ?? 0, main.PresenceState, main.CurrentPlaceId, main.CurrentServer?.JobId, null);
+        var mainPresence = main is null ? null : ProjectPresence(main);
         return FlaggedLaunchRule.Decide(summary.JoinViaFriend, summary.IsMain, resolved, main?.RobloxUserId, mainPresence);
     }
 
@@ -1891,9 +1904,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal IReadOnlyList<(string Name, long UserId)> JoinableFollowTargets(Guid excludingAccountId)
         => AccountsSnapshot
             .Where(a => a.Id != excludingAccountId && a.RobloxUserId is > 0)
-            .Where(a => EvaluateFollow(
-                new UserPresence(a.RobloxUserId!.Value, a.PresenceState, a.CurrentPlaceId, a.CurrentServer?.JobId, null),
-                a.RenderName).CanFollow)
+            .Where(a => EvaluateFollow(ProjectPresence(a), a.RenderName).CanFollow)
             .Select(a => (a.RenderName, a.RobloxUserId!.Value))
             .ToList();
 

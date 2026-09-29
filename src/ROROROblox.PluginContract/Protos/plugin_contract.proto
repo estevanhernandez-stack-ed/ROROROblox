@@ -247,6 +247,9 @@ message LaunchResult {
   bool ok = 1;
   string failure_reason = 2;
   int32 process_id = 3;
+  // Machine-readable refusal code (e.g. "follow-target-not-joinable"). Empty when ok is true or
+  // the failure has no stable code yet. Additive field — contract stays "1.0".
+  string reason_code = 4;
 }
 
 message LaunchTargetRequest {
