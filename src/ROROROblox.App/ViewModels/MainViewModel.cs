@@ -3835,9 +3835,12 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
         else
         {
+            // A failed join never reached a server, so there's no server to go back to: upgrade
+            // with null, which degrades a remembered GameJob (possibly the dead one that just
+            // failed) to its Place instead of aiming at it again.
             target = ServerInstanceTargeting.Upgrade(
                 _lastRejoinTargets.GetValueOrDefault(id) ?? ResolveLaunchTarget(row.SelectedGame, null),
-                action.LastServer);
+                action.FailedJoin ? null : action.LastServer);
         }
 
         var reason = action.FailedJoin ? "failed join" : "dropped out";

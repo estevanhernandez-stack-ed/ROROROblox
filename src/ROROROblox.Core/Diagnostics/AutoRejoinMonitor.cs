@@ -247,7 +247,8 @@ public sealed class AutoRejoinMonitor
     /// <summary>
     /// A launch of ours started for this account. Clears in-flight and resets the watch clock so
     /// the fresh client gets its own <see cref="FirstJoinGrace"/> rather than inheriting whatever
-    /// drop triggered the relaunch.
+    /// drop triggered the relaunch. Also forgets the last server: the new client may have been
+    /// sent somewhere else entirely, and a failed join must not retarget the old client's server.
     /// </summary>
     public void NotifyLaunched(Guid accountId, DateTimeOffset now)
     {
@@ -255,7 +256,9 @@ public sealed class AutoRejoinMonitor
         state.InFlight = false;
         state.WatchSince = now;
         state.EverInGameSinceLaunch = false;
+        state.LastInGameAt = null;
         state.UnknownSince = null;
+        state.LastServer = null;
     }
 
     /// <summary>

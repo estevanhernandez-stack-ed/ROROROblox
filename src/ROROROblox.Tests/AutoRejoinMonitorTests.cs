@@ -287,4 +287,16 @@ public class AutoRejoinMonitorTests
         Assert.Empty(At(m, 31.9, C(inGame: false)));
         Assert.IsType<AutoRejoinAction.Rejoin>(Assert.Single(At(m, 32, C(inGame: false))));
     }
+
+    // I2: a relaunch is a new client; the server the old one was in is not its server.
+    [Fact]
+    public void NotifyLaunched_ForgetsTheLastServer()
+    {
+        var m = new AutoRejoinMonitor();
+        At(m, 0, C(inGame: true));                 // seen in Srv
+        m.NotifyLaunched(Id, T0.AddMinutes(1));    // launched somewhere else, never reaches InGame
+        var a = Assert.IsType<AutoRejoinAction.Rejoin>(Assert.Single(At(m, 6, C(inGame: false))));
+        Assert.True(a.FailedJoin);
+        Assert.Null(a.LastServer);
+    }
 }

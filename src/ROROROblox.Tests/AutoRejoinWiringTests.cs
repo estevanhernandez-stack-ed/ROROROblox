@@ -939,4 +939,74 @@ public class AutoRejoinWiringTests
         }
         finally { Cleanup(path); }
     }
+
+    // I2 (a): in game A, closed by hand, launched by the user into game B, never reaches InGame.
+    // The failed-join rejoin goes back to B, never to the server A presence once saw.
+    [Fact]
+    public async Task FailedJoinAfterTheUserLaunchedElsewhere_DoesNotTargetTheOldServer()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            await SeedMainAsync(store);
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, RobloxUserId = 2 };
+            vm.Accounts.Add(alt);
+            vm.WaitForClientExitAsync = ExitsOnStop(tracker);
+            await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.Place(5)).WaitAsync(Limit);
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+            var t0 = DateTimeOffset.UtcNow;
+            vm.ApplyPresence(P(alt.Id, true, t0)); // game A: server (5, job-1)
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
+
+            // Closed by hand, then launched by the user into game B.
+            tracker.RaiseExited(new RobloxProcessEventArgs(alt.Id, 4242));
+            vm.ApplyPresence(P(alt.Id, false, t0));
+            await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.Place(7)).WaitAsync(Limit);
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4343));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(1)).WaitAsync(Limit);
+
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(6)).WaitAsync(Limit); // the 5-min grace is up
+
+            Assert.Equal([alt.Id], stopper.StoppedAccountIds);
+            Assert.Equal(3, launcher.Launches.Count);
+            Assert.Equal(new LaunchTarget.Place(7), launcher.Launches[2]);
+        }
+        finally { Cleanup(path); }
+    }
+
+    // I2 (b): the first rejoin goes to the exact server; when that join fails, the next one must
+    // not keep aiming at the same (possibly dead) job id.
+    [Fact]
+    public async Task RepeatedFailedJoins_DoNotKeepRetargetingTheSameGameJob()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            await SeedMainAsync(store);
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, RobloxUserId = 2 };
+            vm.Accounts.Add(alt);
+            vm.WaitForClientExitAsync = ExitsOnStop(tracker);
+            await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.Place(5)).WaitAsync(Limit);
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+            var t0 = DateTimeOffset.UtcNow;
+            vm.ApplyPresence(P(alt.Id, true, t0));
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
+            vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
+
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4)).WaitAsync(Limit); // drop: exact server
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4343));  // never reaches InGame
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(10)).WaitAsync(Limit); // failed join
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4444));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(16)).WaitAsync(Limit); // failed join again
+
+            Assert.Equal<LaunchTarget>(
+                [new LaunchTarget.Place(5), new LaunchTarget.GameJob(5, "job-1"), new LaunchTarget.Place(5), new LaunchTarget.Place(5)],
+                launcher.Launches);
+        }
+        finally { Cleanup(path); }
+    }
 }
