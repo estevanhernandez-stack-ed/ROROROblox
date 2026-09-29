@@ -1578,6 +1578,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal IPrivateServerStore PrivateServerStoreForPlugin => _privateServerStore;
 
     /// <summary>
+    /// Plugin-host seam: the same <see cref="Core.IUiDispatcher"/> this view model marshals its own
+    /// UI mutations through (<c>_ui</c>). <see cref="Core.IUiDispatcher.Invoke"/> blocks the calling
+    /// thread until the marshaled action has actually run — unlike a raw
+    /// <c>Application.Current?.Dispatcher.InvokeAsync(...)</c>, which queues and returns immediately.
+    /// A plugin-launch adapter that needs a launch to have STARTED (so <c>IsLaunching</c> is already
+    /// true) before its own RPC returns must dispatch through here, not through
+    /// <see cref="Application.Current"/> directly. See <c>MainViewModelLaunchInvokerAdapter</c>.
+    /// </summary>
+    internal Core.IUiDispatcher UiDispatcher => _ui;
+
+    /// <summary>
     /// A Discord join request landed — either the in-client Join button or the
     /// <c>roblox-rororo:</c> OS protocol handler; <paramref name="origin"/> says which.
     /// <paramref name="confirm"/> is injected so the decision is testable without showing a window.

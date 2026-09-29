@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Windows;
+using Microsoft.Extensions.Logging;
 using ROROROblox.App.Plugins;
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
@@ -30,14 +31,21 @@ namespace ROROROblox.App.Plugins.Adapters;
 ///         launch refuses with a stable code the plugin can branch on.</item>
 /// </list>
 /// Plugins that want the actual PID subscribe to <c>SubscribeAccountLaunched</c>.
+/// <para>
+/// <b>Fix round 2.</b> <see cref="RequestLaunchAsync"/>'s Follow/Direct dispatch marshals through
+/// <see cref="MainViewModel.UiDispatcher"/> (blocking), not <c>Application.Current?.Dispatcher</c>
+/// directly (non-blocking when marshaling across threads). See the inline note on that method.
+/// </para>
 /// </summary>
 internal sealed class MainViewModelLaunchInvokerAdapter : IPluginLaunchInvoker
 {
     private readonly MainViewModel _vm;
+    private readonly ILogger<MainViewModelLaunchInvokerAdapter>? _log;
 
-    public MainViewModelLaunchInvokerAdapter(MainViewModel vm)
+    public MainViewModelLaunchInvokerAdapter(MainViewModel vm, ILogger<MainViewModelLaunchInvokerAdapter>? log = null)
     {
         _vm = vm ?? throw new ArgumentNullException(nameof(vm));
+        _log = log;
     }
 
     public Task<(bool ok, string? failureReason, int processId, string? reasonCode)> RequestLaunchAsync(string accountId)
@@ -96,18 +104,20 @@ internal sealed class MainViewModelLaunchInvokerAdapter : IPluginLaunchInvoker
         // unconditionally true — nothing is lost by no longer routing through it.
         var launchTarget = decision.Outcome == FlaggedLaunchOutcome.Follow ? decision.Target : resolvedTarget;
 
-        // Marshal to the WPF dispatcher — the plugin-host launch seam mutates ObservableCollection
-        // state on the UI thread. Application.Current is null in headless tests; fall back to
-        // direct dispatch in that case.
-        var dispatcher = Application.Current?.Dispatcher;
-        if (dispatcher is null || dispatcher.CheckAccess())
-        {
-            DispatchLaunch(summary, launchTarget);
-        }
-        else
-        {
-            dispatcher.InvokeAsync(() => DispatchLaunch(summary, launchTarget));
-        }
+        // Fix round 2: marshal through MainViewModel's own injected IUiDispatcher, not
+        // Application.Current?.Dispatcher directly. The two are NOT equivalent under full-suite
+        // load: Application.Current can be non-null and owned by another (STA) thread here (other
+        // tests construct a real App), so dispatcher.CheckAccess() is false and the old code fell
+        // into dispatcher.InvokeAsync(...) — which QUEUES the delegate and returns immediately,
+        // fire-and-forget, with no wait for it to even start. That let this method return
+        // (true, ...) before LaunchAccountAsync had run its first line (summary.IsLaunching = true),
+        // so a caller awaiting this call could observe IsLaunching still false. _vm.UiDispatcher
+        // (WpfUiDispatcher in production) calls the BLOCKING Dispatcher.Invoke, which only returns
+        // once the marshaled action has actually run — and runs directly, inline, when there is no
+        // dispatcher at all (headless tests), so this is correct in every mode. By the time Invoke
+        // returns, DispatchLaunch has already started LaunchAccountAsync synchronously up to its
+        // first await, so IsLaunching is guaranteed true before this method hands back its result.
+        _vm.UiDispatcher.Invoke(() => DispatchLaunch(summary, launchTarget));
         return Task.FromResult<(bool, string?, int, string?)>((true, null, 0, null));
     }
 
@@ -190,15 +200,32 @@ internal sealed class MainViewModelLaunchInvokerAdapter : IPluginLaunchInvoker
     }
 
     /// <summary>
-    /// Fire-and-forget: the caller gets <c>(true, null, 0, null)</c> once this is dispatched, and
-    /// the real PID arrives later via <c>SubscribeAccountLaunched</c>. Used for every
-    /// <see cref="RequestLaunchAsync"/> outcome (Direct and Follow alike) — always through
+    /// Fire-and-forget WITH RESPECT TO COMPLETION: the caller gets <c>(true, null, 0, null)</c>
+    /// once this is dispatched, and the real PID arrives later via <c>SubscribeAccountLaunched</c>.
+    /// It is not fire-and-forget with respect to STARTING — called via <c>_vm.UiDispatcher.Invoke</c>
+    /// (a blocking marshal), so by the time that call returns, <c>LaunchAccountForPluginAsync</c>
+    /// has already run synchronously up to its first await, which is exactly where
+    /// <c>summary.IsLaunching</c> is set. Used for every <see cref="RequestLaunchAsync"/> outcome
+    /// (Direct and Follow alike) — always through
     /// <see cref="MainViewModel.LaunchAccountForPluginAsync"/>, never
     /// <see cref="MainViewModel.LaunchAccountCommand"/>, so <see cref="MainViewModel.FlaggedLaunchPrompt"/>
     /// is structurally unreachable from this adapter.
+    /// <para>
+    /// The launch task itself is still discarded (its completion is genuinely fire-and-forget —
+    /// the plugin contract returns pid 0 up front), but a fault on it is not left unobserved: the
+    /// continuation below logs it, following the same shape as <c>App.StartPluginHostListener</c>'s
+    /// <c>_pluginHostListening.ContinueWith(...)</c>.
+    /// </para>
     /// </summary>
     private void DispatchLaunch(AccountSummary summary, LaunchTarget target)
     {
-        _ = _vm.LaunchAccountForPluginAsync(summary, target);
+        var launch = _vm.LaunchAccountForPluginAsync(summary, target);
+        _ = launch.ContinueWith(t =>
+        {
+            if (t.IsFaulted)
+            {
+                _log?.LogWarning(t.Exception, "Plugin-initiated launch for account {AccountId} faulted.", summary.Id);
+            }
+        }, TaskScheduler.Default);
     }
 }

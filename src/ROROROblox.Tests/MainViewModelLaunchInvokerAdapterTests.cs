@@ -6,11 +6,32 @@ using ROROROblox.Core;
 namespace ROROROblox.Tests;
 
 /// <remarks>
-/// Review round 1, finding 2: every <c>finally</c> block's temp-file cleanup below is best-effort
-/// (<c>try</c>/<c>catch (IOException)</c>), not because the delete itself is under test, but
-/// because real-time AV/EDR scanning was confirmed (on the machine that reproduced this) to
-/// transiently hold this exact file open under full-suite load — a cleanup delete racing that
-/// hold must not mask what the test above it already proved. The OS reclaims %TEMP% regardless.
+/// Every <c>finally</c> block's temp-file cleanup below is best-effort
+/// (<c>try</c>/<c>catch (IOException)</c>), matching the established convention already used
+/// throughout this test project for scratch temp-file/dir cleanup (e.g. <c>BannerRecipeTests</c>,
+/// <c>ContrastPairGateTests</c>, <c>ExpiredRowRedundancyTests</c>, <c>AppLoggingVersionTests</c>).
+/// A scratch file's cleanup failing should never mask what the test above it already proved, and
+/// the OS reclaims %TEMP% regardless.
+/// <para>
+/// <b>Fix round 2 correction.</b> Review round 1 attributed the full-suite-only flake on
+/// <c>RequestLaunch_FlaggedAltWithMainInGame_FollowsTheMain</c> to real-time AV/EDR scanning
+/// transiently holding the account-store file open. <b>That theory was wrong.</b> The actual cause:
+/// <c>RequestLaunchAsync</c> marshaled its Follow/Direct dispatch through
+/// <c>Application.Current?.Dispatcher.InvokeAsync(...)</c> — fire-and-forget, returning before the
+/// queued delegate had even started — so under full-suite load, when another test's real
+/// <c>Application</c> made <c>Application.Current</c> non-null and owned by a different thread,
+/// this method could hand back <c>ok: true</c> before <c>LaunchAccountAsync</c> had set
+/// <c>IsLaunching = true</c>. <c>FlaggedLaunchTests.UntilSettledAsync</c> then observed
+/// <c>IsLaunching == false</c> immediately and returned, believing the launch had already settled;
+/// the test's own <c>finally</c> deleted the temp <c>.dat</c> file; and the actually-still-queued
+/// launch then ran and hit <c>KeyNotFoundException</c> in <c>AccountStore.RetrieveCookieAsync</c>
+/// against the now-deleted file — the exact symptom the open finding described. Fixed by marshaling
+/// through <c>MainViewModel.UiDispatcher</c> (a blocking <c>Invoke</c>) instead; see
+/// <c>MainViewModelLaunchInvokerAdapter.RequestLaunchAsync</c>. The AV/EDR-driven
+/// <c>IOException</c> retry theory and its two escalating <c>AccountStore.LoadAsync</c> retry
+/// attempts were reverted along with it — this cleanup catch is kept solely because it already
+/// matches this project's general best-effort-cleanup convention, not because of that theory.
+/// </para>
 /// </remarks>
 public class MainViewModelLaunchInvokerAdapterTests
 {
@@ -84,6 +105,59 @@ public class MainViewModelLaunchInvokerAdapterTests
             Assert.Equal(new LaunchTarget.FollowFriend(111), Assert.Single(launcher.Launches));
         }
         finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
+    /// <summary>
+    /// Fix round 2. The full-suite flake on <see cref="RequestLaunch_FlaggedAltWithMainInGame_FollowsTheMain"/>
+    /// traced to <c>RequestLaunchAsync</c> marshaling through <c>Application.Current?.Dispatcher</c>
+    /// directly: when another test's real <c>App</c> owns a non-null <c>Application.Current</c> on a
+    /// different thread, <c>CheckAccess()</c> is false and the old code fell into
+    /// <c>dispatcher.InvokeAsync(...)</c> — fire-and-forget, returning before the queued delegate even
+    /// started. That let <c>RequestLaunchAsync</c> hand back <c>ok: true</c> before
+    /// <c>LaunchAccountAsync</c>'s first line (<c>summary.IsLaunching = true</c>) had run, so the
+    /// caller's next read of <c>IsLaunching</c> raced the launch's own start.
+    /// <para>
+    /// Reproducing the exact trigger (a real, differently-threaded, non-null <c>Application.Current</c>)
+    /// deterministically in an isolated unit test would mean standing up a second STA <c>App</c> here —
+    /// heavy, and it would reintroduce the same cross-test global-state hazard that caused the flake in
+    /// the first place. Instead this pins the actual code-level contract the fix establishes: dispatch
+    /// goes through <see cref="MainViewModel.UiDispatcher"/> (recorded via a fake here), never through
+    /// <c>Application.Current</c> directly. The old adapter code never touched the injected dispatcher
+    /// at all for this path, so this fake is never invoked pre-fix — a genuine, deterministic RED — and
+    /// because the fake's <c>Invoke</c> runs the action inline before returning, once the adapter routes
+    /// through it, <c>IsLaunching</c> is provably true by the time <c>RequestLaunchAsync</c> returns, in
+    /// every environment, with no dependence on Application.Current at all.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public async Task RequestLaunch_FlaggedAltWithMainInGame_DispatchesThroughTheInjectedUiDispatcherBeforeReturning()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var dispatcher = new RecordingInlineUiDispatcher();
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher, uiDispatcher: dispatcher);
+        try
+        {
+            var (_, alt) = await FlaggedLaunchTests.SeedAsync(vm, store, mainInGame: true);
+            var (ok, _, _, _) = await new MainViewModelLaunchInvokerAdapter(vm).RequestLaunchAsync(alt.Id.ToString());
+            Assert.True(ok);
+            Assert.True(dispatcher.Invoked, "RequestLaunchAsync must marshal the launch through MainViewModel.UiDispatcher, not Application.Current directly.");
+            Assert.True(alt.IsLaunching, "the launch must have started, synchronously, before RequestLaunchAsync returns.");
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
+    /// <summary>Runs the marshaled action inline, synchronously, like <c>WpfUiDispatcher</c> does
+    /// when there is no real dispatcher — and records that it was actually called, which
+    /// <c>Application.Current?.Dispatcher</c> is not, from this adapter, after the fix.</summary>
+    private sealed class RecordingInlineUiDispatcher : Core.IUiDispatcher
+    {
+        public bool Invoked { get; private set; }
+
+        public void Invoke(Action action)
+        {
+            Invoked = true;
+            action();
+        }
     }
 
     [Fact]

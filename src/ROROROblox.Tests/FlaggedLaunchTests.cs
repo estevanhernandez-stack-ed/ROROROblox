@@ -10,11 +10,25 @@ namespace ROROROblox.Tests;
 /// It never joins directly on its own.
 /// </summary>
 /// <remarks>
-/// Review round 1, finding 2: every <c>finally</c> block's temp-file cleanup below is best-effort
-/// (<c>try</c>/<c>catch (IOException)</c>), not because the delete itself is under test, but
-/// because real-time AV/EDR scanning was confirmed (on the machine that reproduced this) to
-/// transiently hold this exact file open under full-suite load — a cleanup delete racing that
-/// hold must not mask what the test above it already proved. The OS reclaims %TEMP% regardless.
+/// Every <c>finally</c> block's temp-file cleanup below is best-effort
+/// (<c>try</c>/<c>catch (IOException)</c>), matching the established convention already used
+/// throughout this test project for scratch temp-file/dir cleanup (e.g. <c>BannerRecipeTests</c>,
+/// <c>ContrastPairGateTests</c>, <c>ExpiredRowRedundancyTests</c>, <c>AppLoggingVersionTests</c>).
+/// A scratch file's cleanup failing should never mask what the test above it already proved, and
+/// the OS reclaims %TEMP% regardless.
+/// <para>
+/// <b>Fix round 2 correction.</b> Review round 1 attributed the full-suite-only flake on
+/// <c>MainViewModelLaunchInvokerAdapterTests.RequestLaunch_FlaggedAltWithMainInGame_FollowsTheMain</c>
+/// to real-time AV/EDR scanning transiently holding this file open — <b>that theory was wrong</b>.
+/// The real cause was a fire-and-forget dispatch race in
+/// <c>MainViewModelLaunchInvokerAdapter.RequestLaunchAsync</c> that let it return before the launch
+/// had even set <c>IsLaunching = true</c>, which made <see cref="UntilSettledAsync"/> declare the
+/// launch settled too early, this class's own cleanup delete the account-store file while a launch
+/// was still actually queued, and the queued launch then hit <c>KeyNotFoundException</c> reading
+/// the now-deleted file. Fixed at the dispatch site; see that method's fix-round-2 note. This
+/// cleanup catch is kept because it independently matches this project's general convention, not
+/// because of the AV/EDR theory.
+/// </para>
 /// </remarks>
 public class FlaggedLaunchTests
 {
