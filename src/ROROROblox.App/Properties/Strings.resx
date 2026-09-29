@@ -2929,4 +2929,8 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
     <value>Cancel</value>
     <comment>Flagged-launch dialog button; the Enter-key default</comment>
   </data>
+  <data name="Shell_Msg_FlaggedLeftStopped" xml:space="preserve">
+    <value>{0} left stopped: nobody they can follow is in a game.</value>
+    <comment>Batch banner when the user cancels the flagged-accounts ask; {0}=account names joined with ", "</comment>
+  </data>
 </root>

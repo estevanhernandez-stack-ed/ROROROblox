@@ -62,6 +62,19 @@ public class SquadLaunchPlanTests
     }
 
     [Fact]
+    public void Build_FlaggedMain_StaysDirect_NeverWaitsToFollowItself()
+    {
+        var main = NewSummary("Main", joinViaFriend: true);
+        main.IsMain = true;
+        var alt = NewSummary("Alt", joinViaFriend: true);
+
+        var plan = SquadLaunchPlan.Build([main, alt]);
+
+        Assert.Equal([main], plan.Direct);
+        Assert.Equal([alt], plan.Flagged);
+    }
+
+    [Fact]
     public void Build_EmptyInput_BothEmpty()
     {
         var plan = SquadLaunchPlan.Build([]);

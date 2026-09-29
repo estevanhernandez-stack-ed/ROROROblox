@@ -2026,6 +2026,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     internal TimeSpan SquadServerResolveMaxWait { get; set; } = AnchorGate.MaxWait;
 
     /// <summary>
+    /// How long a batch holds its <see cref="AccountSummary.JoinViaFriend"/> accounts waiting for a
+    /// joinable anchor before asking what to do with them. Defaults to <see cref="AnchorGate.MaxWait"/>;
+    /// tests shorten it.
+    /// </summary>
+    internal TimeSpan AnchorWait { get; set; } = AnchorGate.MaxWait;
+
+    /// <summary>
     /// The in-flight landing verification for the most recent server-targeted recycle, or null when
     /// the last relaunch made no server-specific claim to check.
     /// </summary>
@@ -2119,7 +2126,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// the tracker time to claim each <c>RobloxPlayerBeta.exe</c> by start time before the next
     /// launch fires (otherwise FIFO matching gets murky).
     /// </summary>
-    private async Task LaunchAllAsync()
+    private Task LaunchAllAsync() => LaunchAllCoreAsync(askHeadroom: true);
+
+    /// <summary>
+    /// Test seam: <see cref="LaunchAllAsync"/> without the F-082 headroom modal. The modal call
+    /// reads <c>Application.Current.MainWindow</c>, which throws off the WPF thread whenever the
+    /// suite's real <c>App</c> exists, so a test can't reach the batch body through the command.
+    /// Everything after the modal (eligibility, dispatch, the flagged release) is the same code.
+    /// </summary>
+    internal Task LaunchAllForTestAsync() => LaunchAllCoreAsync(askHeadroom: false);
+
+    private async Task LaunchAllCoreAsync(bool askHeadroom)
     {
         if (IsBusy) return;
         IsBusy = true;
@@ -2146,7 +2163,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // Advisory: the user can go ahead. Deliberately NOT on the single-launch path, where the
             // same dialog would interrupt one-at-a-time play on a machine already near its limit.
             // That is nagging, and a nagged warning gets ignored by the time it finally matters.
-            if (targets.Count > 0
+            if (askHeadroom
+                && targets.Count > 0
                 && !Modals.LaunchHeadroomWindow.ShouldProceed(
                     _memoryWatchdog.GetSnapshot(), _memoryWatchdog.ReserveBytes, targets.Count,
                     Application.Current?.MainWindow, _memoryWatchdog.ExpectedClientMb))
@@ -2167,11 +2185,29 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             }
 
             StatusBanner = Loc.Plural("Shell_Msg_LaunchingSelected", targets.Count);
-            await DispatchBatchAsync(
-                targets,
-                overrideTarget: null,
-                launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_LaunchingProgress", summary.RenderName, n, total));
-            StatusBanner = result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbMultiple"));
+            Func<AccountSummary, int, int, string> launchingBanner =
+                (summary, n, total) => Loc.Format("Shell_Msg_LaunchingProgress", summary.RenderName, n, total);
+
+            // Join-via-friend rows are held back: the direct rows go first exactly as before, then
+            // the flagged rows follow a landed anchor (the main first), or the user is asked once.
+            var plan = SquadLaunchPlan.Build(targets);
+            await DispatchBatchAsync(plan.Direct, overrideTarget: null, launchingBanner);
+
+            string? leftStoppedBanner = null;
+            if (plan.Flagged.Count > 0)
+            {
+                // The main anchors a Launch multiple even when it's already in a game and so not in
+                // this batch; it's who a flagged account follows on a single launch too.
+                (_, leftStoppedBanner) = await ReleaseFlaggedAfterAnchorAsync(
+                    plan.Direct,
+                    plan.Flagged,
+                    CancellationToken.None,
+                    preferredAnchor: MainAccount,
+                    joinDirectly: cleared => plan.Direct.Count == 0
+                        ? DispatchBatchAsync(cleared, overrideTarget: null, launchingBanner)
+                        : ReleaseBatchAsync(cleared, overrideTarget: null, launchingBanner, startIndex: 0));
+            }
+            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbMultiple"));
         }
         finally
         {
@@ -2281,7 +2317,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // Stamped BEFORE the launch so the tail resolver can tell a presence reading about the
             // client we just started from one left over from before it.
             var firstLaunchedAtUtc = DateTimeOffset.UtcNow;
-            await LaunchAccountAsync(first, overrideTarget).ConfigureAwait(true);
+            // A batch never opens a per-row flagged dialog; the batch asks once itself.
+            await LaunchAccountAsync(first, overrideTarget, FlaggedLaunchMode.Refuse).ConfigureAwait(true);
 
             if (decision == PreWarmDecision.PreWarmThenRelease)
             {
@@ -2430,19 +2467,23 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// name="waitForLanding"/> (careful mode, v1.9.0) serializes each join behind an
     /// <see cref="AnchorGate"/>-bounded wait for that account's presence-fed InGame flag before
     /// moving on — a trust-aware throttle beyond the fixed 5s inter-launch gap.
+    /// <paramref name="flaggedMode"/> is <see cref="FlaggedLaunchMode.Refuse"/> for every batch: a
+    /// flagged row that can't follow is skipped rather than prompting per row, because the batch
+    /// itself asks once (<see cref="ReleaseFlaggedAfterAnchorAsync"/>).
     /// </summary>
     private async Task ReleaseBatchAsync(
         IReadOnlyList<AccountSummary> targets,
         LaunchTarget? overrideTarget,
         Func<AccountSummary, int, int, string> launchingBanner,
         int startIndex,
-        bool waitForLanding = false)
+        bool waitForLanding = false,
+        FlaggedLaunchMode flaggedMode = FlaggedLaunchMode.Refuse)
     {
         for (var idx = startIndex; idx < targets.Count; idx++)
         {
             var summary = targets[idx];
             StatusBanner = launchingBanner(summary, idx + 1, targets.Count);
-            await LaunchAccountAsync(summary, overrideTarget).ConfigureAwait(true);
+            await LaunchAccountAsync(summary, overrideTarget, flaggedMode).ConfigureAwait(true);
             if (waitForLanding)
             {
                 // careful mode: serialize joins
@@ -2456,6 +2497,114 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             {
                 await Task.Delay(InterLaunchThrottle).ConfigureAwait(true);
             }
+        }
+    }
+
+    /// <summary>
+    /// The shared back half of Squad Launch and Launch multiple for
+    /// <see cref="AccountSummary.JoinViaFriend"/> accounts: wait up to <see cref="AnchorWait"/> for an
+    /// anchor (<see cref="AnchorGate.PickAnchor"/>), then release every flagged row following it.
+    /// With no anchor the user is asked ONCE for the whole group; the flagged accounts never join
+    /// directly on their own (spec rule 1), and no per-row dialog opens.
+    /// </summary>
+    /// <param name="direct">The rows this batch just dispatched directly: the anchor candidates.
+    /// When empty (and <paramref name="preferredAnchor"/> isn't already up) there is nothing that can
+    /// still land, so the wait is skipped.</param>
+    /// <param name="preferredAnchor">Checked before <paramref name="direct"/>. Launch multiple passes
+    /// the main, which anchors even when it's already in a game and so not in the batch. Squad
+    /// Launch passes nothing: its anchor has to be in the squad's server.</param>
+    /// <param name="joinDirectly">The caller's direct path, taken only after the user chose
+    /// "join directly" and the flags were cleared. Gets only the rows whose flag actually cleared.</param>
+    /// <returns>The flagged rows released, and the banner to finish on when some were left
+    /// stopped (null when none were).</returns>
+    private async Task<(IReadOnlyList<AccountSummary> Released, string? LeftStoppedBanner)> ReleaseFlaggedAfterAnchorAsync(
+        IReadOnlyList<AccountSummary> direct,
+        IReadOnlyList<AccountSummary> flagged,
+        CancellationToken ct,
+        AccountSummary? preferredAnchor = null,
+        bool careful = false,
+        Func<IReadOnlyList<AccountSummary>, Task>? joinDirectly = null)
+    {
+        // The preferred anchor is skipped if it's one of the rows waiting to follow. SquadLaunchPlan
+        // already keeps the main in Direct, so this is a guard, not a path.
+        IReadOnlyList<AccountSummary> candidates = preferredAnchor is null || flagged.Contains(preferredAnchor)
+            ? direct
+            : [preferredAnchor, .. direct.Where(a => !ReferenceEquals(a, preferredAnchor))];
+
+        var anchor = AnchorGate.PickAnchor(candidates);
+        if (anchor is null && (direct.Count > 0 || preferredAnchor is { IsRunning: true }))
+        {
+            StatusBanner = Loc.Get("Shell_Msg_WaitingSquadMember");
+            var deadline = DateTime.UtcNow + AnchorWait;
+            var poll = PreWarmPollInterval < AnchorWait ? PreWarmPollInterval : AnchorWait;
+            while (anchor is null && !ct.IsCancellationRequested && !AnchorGate.WaitExpired(DateTime.UtcNow, deadline))
+            {
+                await Task.Delay(poll).ConfigureAwait(true);
+                anchor = AnchorGate.PickAnchor(candidates);
+            }
+        }
+
+        if (anchor is { RobloxUserId: { } anchorUserId })
+        {
+            _log.LogInformation("Join-via-friend: {Count} account(s) following anchor {Anchor} (userId {UserId}).",
+                flagged.Count, anchor.DisplayName, anchorUserId);
+            await ReleaseBatchAsync(
+                flagged,
+                overrideTarget: new LaunchTarget.FollowFriend(anchorUserId),
+                launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_JoiningViaAnchorProgress", summary.RenderName, anchor.RenderName, n, total),
+                startIndex: 0,
+                waitForLanding: careful,
+                flaggedMode: FlaggedLaunchMode.Refuse).ConfigureAwait(true);
+            return (flagged, null);
+        }
+
+        // No anchor: one ask for the whole group, never one per row and never a silent direct join.
+        var names = flagged.Select(r => r.RenderName).ToList();
+        var ask = new FlaggedLaunchAsk(names, MainAccount?.RenderName, JoinableFollowTargets(Guid.Empty));
+        var choice = FlaggedLaunchPrompt(ask);
+        _log.LogInformation("Join-via-friend: no anchor within {Cap}s ({Candidates} candidate(s)); asked once for {Count} flagged account(s), chose {Choice}.",
+            (int)AnchorWait.TotalSeconds, candidates.Count, flagged.Count, choice.GetType().Name);
+
+        switch (choice)
+        {
+            case FlaggedLaunchChoice.FollowAccount f:
+            {
+                var followName = ask.JoinableOthers.FirstOrDefault(o => o.UserId == f.UserId).Name
+                    ?? f.UserId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                await ReleaseBatchAsync(
+                    flagged,
+                    overrideTarget: new LaunchTarget.FollowFriend(f.UserId),
+                    launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_JoiningViaAnchorProgress", summary.RenderName, followName, n, total),
+                    startIndex: 0,
+                    waitForLanding: careful,
+                    flaggedMode: FlaggedLaunchMode.Refuse).ConfigureAwait(true);
+                return (flagged, null);
+            }
+            case FlaggedLaunchChoice.JoinDirectly:
+            {
+                foreach (var row in flagged)
+                {
+                    if (row.JoinViaFriend)
+                    {
+                        await ToggleJoinViaFriendAsync(row).ConfigureAwait(true); // clears + persists, reverts on failure
+                    }
+                }
+                var cleared = flagged.Where(r => !r.JoinViaFriend).ToList();
+                var stillFlagged = flagged.Where(r => r.JoinViaFriend).Select(r => r.RenderName).ToList();
+                if (cleared.Count > 0 && joinDirectly is not null)
+                {
+                    StatusBanner = direct.Count == 0
+                        ? Loc.Get("Shell_Msg_NoAnchorAccounts")
+                        : Loc.Get("Shell_Msg_NoSquadLanded");
+                    await joinDirectly(cleared).ConfigureAwait(true);
+                }
+                // A row whose flag didn't save is still flagged, so it must not join directly.
+                return (cleared, stillFlagged.Count == 0
+                    ? null
+                    : Loc.Format("Shell_Msg_FlaggedLeftStopped", string.Join(", ", stillFlagged)));
+            }
+            default:
+                return ([], Loc.Format("Shell_Msg_FlaggedLeftStopped", string.Join(", ", names)));
         }
     }
 
@@ -2556,76 +2705,38 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     resolveTailTarget: resolveTailTarget);
             }
 
+            // Phases 2 and 3: flagged accounts wait for a landed direct-batch anchor and follow it.
+            // No anchor means one ask for the whole group; they never join directly on their own.
+            IReadOnlyList<AccountSummary> releasedFlagged = [];
+            string? leftStoppedBanner = null;
             if (plan.Flagged.Count > 0)
             {
-                // Phase 2 — anchor: first direct-batch account that is InGame with a known userId.
-                AccountSummary? anchor = null;
-                if (plan.Direct.Count > 0)
-                {
-                    StatusBanner = Loc.Get("Shell_Msg_WaitingSquadMember");
-                    var deadline = DateTime.UtcNow + AnchorGate.MaxWait;
-                    while (anchor is null && !AnchorGate.WaitExpired(DateTime.UtcNow, deadline))
-                    {
-                        anchor = AnchorGate.PickAnchor(plan.Direct);
-                        if (anchor is null)
-                        {
-                            await Task.Delay(PreWarmPollInterval).ConfigureAwait(true);
-                        }
-                    }
-                }
-
-                if (anchor is { RobloxUserId: { } anchorUserId })
-                {
-                    // Phase 3 — flagged accounts follow the anchor into the same server.
-                    _log.LogInformation("Join-via-friend: {Count} account(s) following anchor {Anchor} (userId {UserId}).",
-                        plan.Flagged.Count, anchor.DisplayName, anchorUserId);
-                    await ReleaseBatchAsync(
-                        plan.Flagged,
-                        overrideTarget: new LaunchTarget.FollowFriend(anchorUserId),
-                        launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_JoiningViaAnchorProgress", summary.RenderName, anchor.RenderName, n, total),
-                        startIndex: 0,
-                        waitForLanding: careful);
-                }
-                else
-                {
-                    // Fallback — never strand: flagged accounts go direct with the standard throttle.
-                    _log.LogWarning("Join-via-friend: no anchor landed within {Cap}s (direct batch: {Direct}); falling back to direct joins for {Count} flagged account(s).",
-                        (int)AnchorGate.MaxWait.TotalSeconds, plan.Direct.Count, plan.Flagged.Count);
-                    StatusBanner = plan.Direct.Count == 0
-                        ? Loc.Get("Shell_Msg_NoAnchorAccounts")
-                        : Loc.Get("Shell_Msg_NoSquadLanded");
-                    if (plan.Direct.Count == 0)
-                    {
-                        // No Phase 1 ran, so no anchor was ever possible and the pre-warm gate
-                        // never fired for this squad. Route the all-flagged fallback through
-                        // DispatchBatchAsync so an install-pending update still serializes #1
-                        // instead of firing every flagged client at once via ReleaseBatchAsync.
-                        await DispatchBatchAsync(
-                            plan.Flagged,
+                (releasedFlagged, leftStoppedBanner) = await ReleaseFlaggedAfterAnchorAsync(
+                    plan.Direct,
+                    plan.Flagged,
+                    CancellationToken.None,
+                    careful: careful,
+                    joinDirectly: cleared => plan.Direct.Count == 0
+                        // No Phase 1 ran, so the pre-warm gate never fired for this squad. Route
+                        // through DispatchBatchAsync so an install-pending update still serializes
+                        // #1, and #1 defines the server the rest aim at.
+                        ? DispatchBatchAsync(
+                            cleared,
                             overrideTarget: target,
                             launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_JoiningServerFallbackProgress", summary.RenderName, n, total),
                             waitForLanding: careful,
-                            // Nothing landed before this batch, so #1 here defines the server the
-                            // rest aim at — same first-lands-then-follow shape as the direct batch.
-                            resolveTailTarget: resolveTailTarget);
-                    }
-                    else
-                    {
-                        // Anchor timed out, but Phase 1 already ran the pre-warm decision for the
-                        // direct batch — no need to re-gate here. A squad server read during phase 1
-                        // still applies: these accounts couldn't follow a friend, but they can still
-                        // be sent at the server the direct batch is in.
-                        await ReleaseBatchAsync(
-                            plan.Flagged,
+                            resolveTailTarget: resolveTailTarget)
+                        // Phase 1 already ran the pre-warm decision. A squad server read during
+                        // phase 1 still applies: aim these at the server the direct batch is in.
+                        : ReleaseBatchAsync(
+                            cleared,
                             overrideTarget: ServerInstanceTargeting.Upgrade(target, squadServer),
                             launchingBanner: (summary, n, total) => Loc.Format("Shell_Msg_JoiningServerFallbackProgress", summary.RenderName, n, total),
                             startIndex: 0,
-                            waitForLanding: careful);
-                    }
-                }
+                            waitForLanding: careful));
             }
 
-            StatusBanner = result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbSquad"));
+            StatusBanner = leftStoppedBanner ?? result.PartialBanner(targets.Count, Loc.Get("Shell_Launch_VerbSquad"));
 
             // Everyone was aimed at one specific server — check with presence who actually made it.
             // Fire-and-forget: the verdict is up to four minutes out (ServerLandingGate.MaxWait,
@@ -2633,7 +2744,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // batch is done either way.
             if (squadServer is not null)
             {
-                var dispatched = plan.Direct.Concat(plan.Flagged).ToList();
+                var dispatched = plan.Direct.Concat(releasedFlagged).ToList();
                 PendingServerVerification = VerifySquadLandingsAsync(dispatched, squadServer, DateTimeOffset.UtcNow);
             }
         }

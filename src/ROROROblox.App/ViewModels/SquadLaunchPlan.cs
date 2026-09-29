@@ -21,12 +21,14 @@ internal static class SquadLaunchPlan
 {
     /// <summary>
     /// Split eligible accounts: non-flagged keep their order (direct batch); flagged accounts come
-    /// after (follow batch). Pure — two order-preserving passes over <paramref name="eligible"/>.
+    /// after (follow batch). The main is always direct, flagged or not: it is who the others
+    /// follow, and <c>FlaggedLaunchRule</c> never makes it follow anyone. Pure — two
+    /// order-preserving passes over <paramref name="eligible"/>.
     /// </summary>
     public static SquadPlan Build(IReadOnlyList<AccountSummary> eligible)
     {
-        var direct = eligible.Where(s => !s.JoinViaFriend).ToList();
-        var flagged = eligible.Where(s => s.JoinViaFriend).ToList();
+        var direct = eligible.Where(s => !s.JoinViaFriend || s.IsMain).ToList();
+        var flagged = eligible.Where(s => s.JoinViaFriend && !s.IsMain).ToList();
         return new SquadPlan(direct, flagged);
     }
 }
