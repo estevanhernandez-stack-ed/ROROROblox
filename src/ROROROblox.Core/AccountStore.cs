@@ -55,7 +55,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
         {
             var blob = await LoadAsync().ConfigureAwait(false);
             return blob.Accounts
-                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName, a.RobloxUserId, a.Tags ?? [], a.BrowserTrackerId, a.JoinViaFriend, a.StreamerName, a.StreamerAvatarId))
+                .Select(a => new Account(a.Id, a.DisplayName, a.AvatarUrl, a.CreatedAt, a.LastLaunchedAt, a.IsMain, a.SortOrder, a.IsSelected, a.CaptionColorHex, a.FpsCap, a.LocalName, a.RobloxUserId, a.Tags ?? [], a.BrowserTrackerId, a.JoinViaFriend, a.StreamerName, a.StreamerAvatarId, a.AutoRejoin))
                 .ToList();
         }
         finally
@@ -98,7 +98,7 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 JoinViaFriend: false); // a fresh account is never flagged
             blob.Accounts.Add(stored);
             await SaveAsync(blob).ConfigureAwait(false);
-            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName, stored.RobloxUserId, stored.Tags ?? [], stored.BrowserTrackerId, JoinViaFriend: false, StreamerName: stored.StreamerName, StreamerAvatarId: stored.StreamerAvatarId);
+            return new Account(stored.Id, stored.DisplayName, stored.AvatarUrl, stored.CreatedAt, stored.LastLaunchedAt, stored.IsMain, stored.SortOrder, stored.IsSelected, stored.CaptionColorHex, stored.FpsCap, stored.LocalName, stored.RobloxUserId, stored.Tags ?? [], stored.BrowserTrackerId, JoinViaFriend: false, StreamerName: stored.StreamerName, StreamerAvatarId: stored.StreamerAvatarId, AutoRejoin: false);
         }
         finally
         {
@@ -201,6 +201,30 @@ public sealed class AccountStore : IAccountStore, IDisposable
                 return; // no-op write avoidance — saves a DPAPI roundtrip on chatty toggles.
             }
             blob.Accounts[idx] = blob.Accounts[idx] with { JoinViaFriend = joinViaFriend };
+            await SaveAsync(blob).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task SetAutoRejoinAsync(Guid id, bool autoRejoin)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var blob = await LoadAsync().ConfigureAwait(false);
+            var idx = blob.Accounts.FindIndex(a => a.Id == id);
+            if (idx < 0)
+            {
+                return;
+            }
+            if (blob.Accounts[idx].AutoRejoin == autoRejoin)
+            {
+                return; // no-op write avoidance — saves a DPAPI roundtrip on chatty toggles.
+            }
+            blob.Accounts[idx] = blob.Accounts[idx] with { AutoRejoin = autoRejoin };
             await SaveAsync(blob).ConfigureAwait(false);
         }
         finally
@@ -758,7 +782,8 @@ public sealed class AccountStore : IAccountStore, IDisposable
         long? BrowserTrackerId = null,
         bool JoinViaFriend = false,
         string? StreamerName = null,
-        string? StreamerAvatarId = null);
+        string? StreamerAvatarId = null,
+        bool AutoRejoin = false);
 
     internal sealed record StoredAccountsBlob(
         int Version,

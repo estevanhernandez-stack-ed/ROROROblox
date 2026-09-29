@@ -144,6 +144,16 @@ public interface IAccountStore
     Task SetJoinViaFriendAsync(Guid id, bool joinViaFriend);
 
     /// <summary>
+    /// Per-account opt-in: rejoin this account's game automatically when its client is open but
+    /// out of the game for the auto-rejoin grace window. Never used for the main — enforced by the
+    /// caller (<see cref="Account.AutoRejoin"/> is never surfaced in the UI for the main row), not
+    /// here; this setter itself just persists the bit for whatever id it's given. Silent no-op on
+    /// unknown id + no-op-write avoidance, matching <see cref="SetJoinViaFriendAsync"/>. Per-machine
+    /// preference — not carried by account export/import. Auto-rejoin (task 5, 2026-09-29).
+    /// </summary>
+    Task SetAutoRejoinAsync(Guid id, bool autoRejoin);
+
+    /// <summary>
     /// Merge import for account transport (v1.6.0 — spec §1). Non-destructive: merge by Roblox
     /// userId. Each record whose userId is NOT already present among local accounts is added (new
     /// Guid, CreatedAt=now, all fields incl. RobloxUserId, cookie DPAPI-encrypted). Records whose

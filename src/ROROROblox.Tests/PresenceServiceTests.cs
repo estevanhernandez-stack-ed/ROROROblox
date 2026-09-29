@@ -670,6 +670,7 @@ public class PresenceServiceTests
         public Task UpdateSortOrderAsync(IReadOnlyList<Guid> idsInOrder) => throw new NotImplementedException();
         public Task SetSelectedAsync(Guid id, bool isSelected) => throw new NotImplementedException();
         public Task SetJoinViaFriendAsync(Guid id, bool joinViaFriend) => throw new NotImplementedException();
+        public Task SetAutoRejoinAsync(Guid id, bool autoRejoin) => Task.CompletedTask;
         public Task SetCaptionColorAsync(Guid id, string? hex) => throw new NotImplementedException();
         public Task SetFpsCapAsync(Guid id, int? fps) => throw new NotImplementedException();
         public Task UpdateLocalNameAsync(Guid accountId, string? localName) => throw new NotImplementedException();

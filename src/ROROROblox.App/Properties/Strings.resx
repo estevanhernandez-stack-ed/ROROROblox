@@ -781,6 +781,18 @@
     <value>Recycle — close and relaunch this client back into the server it's in now, and reclaim leaked memory.</value>
     <comment>src/ROROROblox.App/MainWindow.xaml:144 title</comment>
   </data>
+  <data name="MainWindow_RejoinIfItDropsOut" xml:space="preserve">
+    <value>Rejoin if it drops out</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:302 xaml-text</comment>
+  </data>
+  <data name="MainWindow_RejoinIfItDropsOut_2" xml:space="preserve">
+    <value>Rejoin if it drops out (on)</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:305 xaml-text</comment>
+  </data>
+  <data name="MainWindow_RejoinIfItDropsOutTip" xml:space="preserve">
+    <value>When this account's client is open but out of the game for 3 minutes, RoRoRo closes it and joins again. Never used for your main.</value>
+    <comment>src/ROROROblox.App/MainWindow.xaml:299 title</comment>
+  </data>
   <data name="MainWindow_Remove" xml:space="preserve">
     <value>Remove</value>
     <comment>duplicate value; key kept addressable for x:Static</comment>
@@ -2429,6 +2441,7 @@ You'll need to log in again to add it back.</value><comment>Remove-account confi
   <data name="Shell_Msg_ReauthDifferentAccount" xml:space="preserve"><value>That login was a different account (@{0}) — {1} is unchanged.</value><comment>Re-auth guard; {0}=username {1}=name (localized Phase D step 3)</comment></data>
   <data name="Shell_Status_Reauthenticated" xml:space="preserve"><value>Re-authenticated.</value><comment>Row status (localized Phase D step 3)</comment></data>
   <data name="Shell_Msg_CouldntSaveJoinViaFriend" xml:space="preserve"><value>Couldn't save join-via-friend: {0}</value><comment>Banner; {0}=exception text (localized Phase D step 3)</comment></data>
+  <data name="Shell_Msg_CouldntSaveAutoRejoin" xml:space="preserve"><value>Couldn't save the rejoin setting: {0}</value><comment>Banner; {0}=exception text (task 5, 2026-09-29)</comment></data>
   <data name="Shell_Msg_SourceExpired" xml:space="preserve"><value>{0} has an expired session — re-authenticate first.</value><comment>Follow banner; {0}=name (localized Phase D step 3)</comment></data>
   <data name="Shell_Msg_CouldntFollowNoUserId" xml:space="preserve"><value>Couldn't follow {0} — Roblox userId not yet known. Try Re-authenticating that account, or wait a moment after login.</value><comment>Follow banner; {0}=name; "Roblox" stays English (localized Phase D step 3)</comment></data>
   <data name="Shell_Msg_FollowingFromSource" xml:space="preserve"><value>Following {0} from {1}...</value><comment>Follow banner; {0}=target {1}=source (localized Phase D step 3)</comment></data>

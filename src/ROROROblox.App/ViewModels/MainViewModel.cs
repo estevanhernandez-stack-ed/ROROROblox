@@ -284,6 +284,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         ResetItemNameCommand = new RelayCommand(p => _ = ResetItemNameAsync(BuildRenameTarget(p)));
         RemoveGameCommand = new RelayCommand(p => _ = RemoveGameAsync(p as FavoriteGame));
         ToggleJoinViaFriendCommand = new RelayCommand(p => _ = ToggleJoinViaFriendAsync(p as AccountSummary));
+        ToggleAutoRejoinCommand = new RelayCommand(p => _ = ToggleAutoRejoinAsync(p as AccountSummary));
         ToggleAlertsMutedCommand = new RelayCommand(p =>
         {
             if (p is AccountSummary row) { _ = SetAlertsMutedAsync(row, !row.AlertsMuted); }
@@ -796,6 +797,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// is the row's <see cref="AccountSummary"/>. See <see cref="ToggleJoinViaFriendAsync"/>.
     /// </summary>
     public ICommand ToggleJoinViaFriendCommand { get; }
+
+    /// <summary>
+    /// Flips an account row's <see cref="AccountSummary.AutoRejoin"/> preference and persists it —
+    /// the account row's context-menu checkbox, Part B auto-rejoin. Never available for the main;
+    /// the row's context-menu item is hidden for it, and <see cref="ToggleAutoRejoinAsync"/> refuses
+    /// to flip it even if called directly. Parameter is the row's <see cref="AccountSummary"/>.
+    /// </summary>
+    public ICommand ToggleAutoRejoinCommand { get; }
 
     /// <summary>
     /// Flips an account row's <see cref="AccountSummary.AlertsMuted"/> preference and persists it
@@ -3918,6 +3927,37 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             summary.JoinViaFriend = !next; // revert on persist failure
             StatusBanner = Loc.Format("Shell_Msg_CouldntSaveJoinViaFriend", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Flip an account row's auto-rejoin preference (Part B — an opted-in alt whose client drops
+    /// out of the game gets stopped and relaunched) and persist it. Refuses and does nothing for
+    /// the main: the main is never rejoined automatically, and this method is the one place that
+    /// rule can't slip past a UI slip-up (context menu hidden, but this holds even if something
+    /// else calls it directly). Optimistic like <see cref="ToggleJoinViaFriendAsync"/>: the row
+    /// flips immediately, and on persist failure the flip is reverted and the failure surfaces via
+    /// <see cref="StatusBanner"/> rather than leaving the UI silently out of sync with disk.
+    /// Tasks 6-7 read <see cref="AccountSummary.AutoRejoin"/>; task 7 calls
+    /// <c>_autoRejoin.Resume(id)</c> here when the flip turns it on.
+    /// </summary>
+    internal async Task ToggleAutoRejoinAsync(AccountSummary? summary)
+    {
+        if (summary is null || summary.IsMain)
+        {
+            return;
+        }
+
+        var next = !summary.AutoRejoin;
+        summary.AutoRejoin = next;
+        try
+        {
+            await _accountStore.SetAutoRejoinAsync(summary.Id, next);
+        }
+        catch (Exception ex)
+        {
+            summary.AutoRejoin = !next; // revert on persist failure
+            StatusBanner = Loc.Format("Shell_Msg_CouldntSaveAutoRejoin", ex.Message);
         }
     }
 
