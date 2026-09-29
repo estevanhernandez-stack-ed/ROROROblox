@@ -19,7 +19,7 @@ public class AutoRejoinToggleTests
         var (vm, store, _, path) = MainViewModelTests.Build();
         try
         {
-            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c"));
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { RobloxUserId = 2 };
             alt.IsMain = false; // first AddAsync into a fresh store auto-promotes to main; override for the VM's view (MainViewModelTests.TryResolveMainFriendSource_NoMain_ReturnsNull does the same)
             vm.Accounts.Add(alt);
             await vm.ToggleAutoRejoinAsync(alt);
@@ -41,5 +41,41 @@ public class AutoRejoinToggleTests
             Assert.False(main.AutoRejoin);
         }
         finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    // I1: without a Roblox user id presence is never polled, so auto-rejoin could only ever read
+    // the row as out of game. Turning it on is refused.
+    [Fact]
+    public async Task Toggle_On_WithNoUserId_IsRefused()
+    {
+        var (vm, store, _, path) = MainViewModelTests.Build();
+        try
+        {
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { RobloxUserId = null };
+            alt.IsMain = false;
+            vm.Accounts.Add(alt);
+            await vm.ToggleAutoRejoinAsync(alt);
+            Assert.False(alt.AutoRejoin);
+            Assert.False((await store.ListAsync()).Single(a => a.Id == alt.Id).AutoRejoin);
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
+    [Fact]
+    public async Task Toggle_Off_WithNoUserId_StillWorks()
+    {
+        var (vm, store, _, path) = MainViewModelTests.Build();
+        try
+        {
+            var added = await store.AddAsync("Alt", "", "c");
+            await store.SetAutoRejoinAsync(added.Id, true);
+            var alt = new AccountSummary(added) { RobloxUserId = null, AutoRejoin = true };
+            alt.IsMain = false;
+            vm.Accounts.Add(alt);
+            await vm.ToggleAutoRejoinAsync(alt);
+            Assert.False(alt.AutoRejoin);
+            Assert.False((await store.ListAsync()).Single(a => a.Id == alt.Id).AutoRejoin);
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
 }

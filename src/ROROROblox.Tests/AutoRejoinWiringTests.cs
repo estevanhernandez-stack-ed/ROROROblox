@@ -880,4 +880,63 @@ public class AutoRejoinWiringTests
         }
         finally { Cleanup(path); }
     }
+
+    // I1: after three presence 403s the row is SessionLimited and reads Offline. The client is
+    // running and (as far as anyone knows) still in game: auto-rejoin must never kill it.
+    [Fact]
+    public async Task SessionLimitedRunningAlt_IsNeverStopped()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            await SeedMainAsync(store);
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, RobloxUserId = 2 };
+            vm.Accounts.Add(alt);
+            vm.WaitForClientExitAsync = ExitsOnStop(tracker);
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+            var t0 = DateTimeOffset.UtcNow;
+            vm.ApplyPresence(P(alt.Id, true, t0));
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
+
+            vm.ApplySessionLimited(alt.Id);
+            Assert.False(alt.InGame);
+            for (var i = 1; i <= 12; i++)
+            {
+                await vm.RunAutoRejoinAsync(t0.AddMinutes(i * 5)).WaitAsync(Limit);
+            }
+
+            Assert.Empty(stopper.StoppedAccountIds);
+            Assert.Empty(launcher.Launches);
+        }
+        finally { Cleanup(path); }
+    }
+
+    // I1: a row with no Roblox user id is never polled, so it always reads Offline.
+    [Fact]
+    public async Task RowWithNoUserId_IsNeverStopped()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            await SeedMainAsync(store);
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, RobloxUserId = null };
+            vm.Accounts.Add(alt);
+            vm.WaitForClientExitAsync = ExitsOnStop(tracker);
+            await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.Place(5)).WaitAsync(Limit);
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+            var t0 = DateTimeOffset.UtcNow;
+            for (var i = 0; i <= 12; i++)
+            {
+                await vm.RunAutoRejoinAsync(t0.AddMinutes(i * 5)).WaitAsync(Limit);
+            }
+
+            Assert.Empty(stopper.StoppedAccountIds);
+            Assert.Single(launcher.Launches); // only the user's own launch
+        }
+        finally { Cleanup(path); }
+    }
 }

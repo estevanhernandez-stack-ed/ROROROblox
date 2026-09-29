@@ -3633,10 +3633,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             await RunPendingRelaunchesAsync().ConfigureAwait(true);
 
             // Every row, every tick: the monitor reads an absent id as a removed account.
+            // PresenceKnown: a row with no user id is never polled, and a rate-limited or expired
+            // session's presence is stale (ApplySessionLimited sets Offline). Either way InGame
+            // says nothing, and the monitor holds instead of reading it as a drop.
             var candidates = Accounts
                 .Select(r => new AutoRejoinCandidate(
                     r.Id, r.AutoRejoin, r.IsMain, r.IsRunning, r.InGame, r.CurrentServer,
-                    StopInProgress: WasCloseExpected(r.Id, now)))
+                    StopInProgress: WasCloseExpected(r.Id, now),
+                    PresenceKnown: IsPresenceKnown(r)))
                 .ToList();
             var actions = _autoRejoin.Tick(now, candidates);
 
@@ -3675,6 +3679,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             _autoRejoinRunning = false;
         }
     }
+
+    /// <summary>
+    /// True when this row's presence is actually read (a Roblox user id to poll with, and a session
+    /// that isn't rate-limited or expired). Auto-rejoin only trusts "not in game" when this holds.
+    /// </summary>
+    internal static bool IsPresenceKnown(AccountSummary row)
+        => row.RobloxUserId is > 0 && !row.SessionLimited && !row.SessionExpired;
 
     /// <summary>
     /// Retry every relaunch-pending account (see <see cref="_relaunchPending"/>). Runs at the start
@@ -4353,6 +4364,14 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
 
         var next = !summary.AutoRejoin;
+        if (next && summary.RobloxUserId is not > 0)
+        {
+            // No user id means presence is never polled for this row, so auto-rejoin could never
+            // tell in game from out of it. The menu hides the item for such rows; this holds even
+            // if something calls it directly. Turning it OFF stays allowed.
+            _log.LogInformation("Auto-rejoin for {AccountId} not turned on: no Roblox user id, so presence can't be read.", summary.Id);
+            return;
+        }
         summary.AutoRejoin = next;
         try
         {

@@ -307,6 +307,16 @@
                                         <DataTrigger Binding="{Binding PlacementTarget.DataContext.IsMain, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Value="True">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                         </DataTrigger>
+                                        <!-- No Roblox user id: presence is never polled, so auto-rejoin
+                                             couldn't tell in game from out of it. Hidden while off;
+                                             still shown while on, so it can be turned off. -->
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding PlacementTarget.DataContext.RobloxUserId, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Value="{x:Null}" />
+                                                <Condition Binding="{Binding PlacementTarget.DataContext.AutoRejoin, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Value="False" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </MultiDataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </MenuItem.Style>

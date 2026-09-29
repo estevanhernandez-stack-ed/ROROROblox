@@ -10,8 +10,8 @@ public class AutoRejoinMonitorTests
     private static readonly ServerInstance Srv = new(5, "job-1");
 
     private static AutoRejoinCandidate C(bool inGame, bool running = true, bool enabled = true,
-        bool isMain = false, bool stopping = false) =>
-        new(Id, enabled, isMain, running, inGame, inGame ? Srv : null, stopping);
+        bool isMain = false, bool stopping = false, bool known = true) =>
+        new(Id, enabled, isMain, running, inGame, inGame ? Srv : null, stopping, PresenceKnown: known);
 
     private static IReadOnlyList<AutoRejoinAction> At(AutoRejoinMonitor m, double minutes, AutoRejoinCandidate c) =>
         m.Tick(T0.AddMinutes(minutes), [c]);
@@ -252,5 +252,39 @@ public class AutoRejoinMonitorTests
         m.Resume(Id);
         Assert.Empty(At(m, 10, C(inGame: false)));
         Assert.Empty(At(m, 12.9, C(inGame: false)));
+    }
+
+    // I1: presence unknown (session limited, no user id) is "no information", never "out of game".
+    [Fact]
+    public void PresenceUnknown_NeverRejoins()
+    {
+        var m = new AutoRejoinMonitor();
+        At(m, 0, C(inGame: true));
+        for (var t = 1; t <= 60; t++)
+            Assert.Empty(At(m, t, C(inGame: false, known: false)));
+    }
+
+    [Fact]
+    public void PresenceUnknownFromLaunch_NeverCountsAsAFailedJoin()
+    {
+        var m = new AutoRejoinMonitor();
+        m.NotifyLaunched(Id, T0);
+        for (var t = 1; t <= 60; t++)
+            Assert.Empty(At(m, t, C(inGame: false, known: false)));
+    }
+
+    [Fact]
+    public void PresenceUnknown_DoesNotAdvanceTheOutOfGameClock()
+    {
+        var m = new AutoRejoinMonitor();
+        At(m, 0, C(inGame: true));
+        Assert.Empty(At(m, 1, C(inGame: false)));                // out of game
+        Assert.Empty(At(m, 2, C(inGame: false, known: false)));  // unknown from here...
+        Assert.Empty(At(m, 30, C(inGame: false, known: false)));
+        // ...known again at 31. The 29 unknown minutes don't count: the clock had 2 minutes on it
+        // when presence went dark (last in game at 0), so it's due one minute after it's back.
+        Assert.Empty(At(m, 31, C(inGame: false)));
+        Assert.Empty(At(m, 31.9, C(inGame: false)));
+        Assert.IsType<AutoRejoinAction.Rejoin>(Assert.Single(At(m, 32, C(inGame: false))));
     }
 }

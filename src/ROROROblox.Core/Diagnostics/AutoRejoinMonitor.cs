@@ -7,6 +7,10 @@ namespace ROROROblox.Core.Diagnostics;
 /// One presence/process reading for an account auto-rejoin might act on, offered to a single
 /// <see cref="AutoRejoinMonitor.Tick"/> call.
 /// </summary>
+/// <param name="PresenceKnown">False when presence can't be read for this account at all (no
+/// Roblox user id, a rate-limited or expired session). <paramref name="InGame"/> is meaningless
+/// then: the monitor holds (no out-of-game time accrues, nothing is rejoined) rather than reading
+/// "no information" as "out of game".</param>
 public sealed record AutoRejoinCandidate(
     Guid AccountId,
     bool Enabled,
@@ -14,7 +18,8 @@ public sealed record AutoRejoinCandidate(
     bool IsRunning,
     bool InGame,
     ServerInstance? CurrentServer,
-    bool StopInProgress);
+    bool StopInProgress,
+    bool PresenceKnown = true);
 
 /// <summary>
 /// What <see cref="AutoRejoinMonitor.Tick"/> wants done for one account. This type carries the
@@ -101,6 +106,8 @@ public sealed class AutoRejoinMonitor
         public readonly List<DateTimeOffset> RejoinTimes = [];
         public bool InFlight;
         public bool Paused;
+        /// <summary>First tick of the current presence-unknown stretch; null while presence is known.</summary>
+        public DateTimeOffset? UnknownSince;
 
         /// <summary>Forget the watch clock, so the next reading starts a fresh one.</summary>
         public void ResetWatch()
@@ -108,6 +115,7 @@ public sealed class AutoRejoinMonitor
             WatchSince = null;
             EverInGameSinceLaunch = false;
             LastInGameAt = null;
+            UnknownSince = null;
         }
     }
 
@@ -162,6 +170,22 @@ public sealed class AutoRejoinMonitor
             {
                 state.ResetWatch();
                 continue;
+            }
+
+            // Rule 2b: presence can't be read for this account (no user id, rate-limited or
+            // expired session). "No information" is not "out of game": hold. The clock doesn't
+            // advance while presence is dark; when it comes back, the dark stretch is skipped.
+            if (!candidate.PresenceKnown)
+            {
+                state.UnknownSince ??= now;
+                continue;
+            }
+            if (state.UnknownSince is { } darkFrom)
+            {
+                var dark = now - darkFrom;
+                if (state.LastInGameAt is { } lastIn) state.LastInGameAt = lastIn + dark;
+                if (state.WatchSince is { } since) state.WatchSince = since + dark;
+                state.UnknownSince = null;
             }
 
             // Rule 3: in a game right now — record it and move on.
@@ -231,6 +255,7 @@ public sealed class AutoRejoinMonitor
         state.InFlight = false;
         state.WatchSince = now;
         state.EverInGameSinceLaunch = false;
+        state.UnknownSince = null;
     }
 
     /// <summary>
