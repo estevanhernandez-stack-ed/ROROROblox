@@ -3612,24 +3612,31 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 .ToList();
             var actions = _autoRejoin.Tick(now, candidates);
 
+            // Each action is handled on its own: a throw from one (a toast, a stop, a launch) is
+            // logged and the loop moves on, so a later Rejoin in the same batch still reaches
+            // NotifyLaunched or NotifyRejoinSkipped instead of sitting InFlight for the session.
             foreach (var action in actions)
             {
-                switch (action)
+                try
                 {
-                    case AutoRejoinAction.Pause pause:
-                        RaiseAutoRejoinPaused(pause.AccountId);
-                        break;
-                    case AutoRejoinAction.Rejoin rejoin:
-                        try
-                        {
+                    switch (action)
+                    {
+                        case AutoRejoinAction.Pause pause:
+                            RaiseAutoRejoinPaused(pause.AccountId);
+                            break;
+                        case AutoRejoinAction.Rejoin rejoin:
                             await RejoinAsync(rejoin).ConfigureAwait(true);
-                        }
-                        catch (Exception ex)
-                        {
-                            _log.LogWarning(ex, "Auto-rejoin {AccountId} threw; retrying next tick.", rejoin.AccountId);
-                            _autoRejoin.NotifyRejoinSkipped(rejoin.AccountId); // no-op once the launch has landed
-                        }
-                        break;
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _log.LogWarning(ex, "Auto-rejoin {AccountId}: handling {Action} threw; carrying on with the rest of the tick.",
+                        action.AccountId, action.GetType().Name);
+                    if (action is AutoRejoinAction.Rejoin)
+                    {
+                        _autoRejoin.NotifyRejoinSkipped(action.AccountId); // no-op once the launch has landed
+                    }
                 }
             }
         }
@@ -3660,32 +3667,29 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
 
-        // Spec: an unflagged account rejoins the server it was last in when presence recorded one,
-        // otherwise its last launch target. Upgrade leaves DefaultGame and Home untouched (the
-        // launcher resolves those from favorites), so a known server is pinned through its own
-        // Place first, which Upgrade then turns into that exact GameJob. PrivateServer and
-        // FollowFriend stay as they were.
-        var baseTarget = _lastRejoinTargets.GetValueOrDefault(id) ?? ResolveLaunchTarget(row.SelectedGame, null);
-        if (baseTarget is LaunchTarget.DefaultGame or LaunchTarget.Home && action.LastServer is { } server)
+        // A flagged account never uses a stored target: its last one is usually FollowFriend(main),
+        // which FlaggedLaunchRule passes as Direct, so the pre-check could never refuse it and a
+        // dropped alt would be stopped and relaunched into a follow that fails. It only needs the
+        // main joinable, so it always decides against the default game and follows on Follow.
+        // An unflagged account targets exactly as Recycle does: its last target (or the row's
+        // resolved one), upgraded to the server presence last saw it in.
+        LaunchTarget target;
+        if (row.JoinViaFriend)
         {
-            baseTarget = new LaunchTarget.Place(server.PlaceId);
+            if (DecideFlaggedFollow(row) is not { } follow)
+            {
+                // Before anything is stopped: the client stays, no budget is spent, next tick retries.
+                _log.LogInformation("Auto-rejoin {AccountId}: main not joinable, retrying next tick.", id);
+                _autoRejoin.NotifyRejoinSkipped(id);
+                return;
+            }
+            target = follow;
         }
-        var target = ServerInstanceTargeting.Upgrade(baseTarget, action.LastServer);
-
-        // The flagged pre-check runs BEFORE anything is stopped: a flagged alt with no joinable
-        // main keeps its client and costs no budget, and the next tick retries. It only needs the
-        // main joinable, not the old server, so a refusal against the rejoin target is re-decided
-        // against the default game.
-        var decision = DecideFlaggedLaunch(row, target);
-        if (row.JoinViaFriend && decision.Outcome is FlaggedLaunchOutcome.MainNotJoinable or FlaggedLaunchOutcome.MainNotInThatServer)
+        else
         {
-            decision = DecideFlaggedLaunch(row, new LaunchTarget.DefaultGame());
-        }
-        if (decision.Outcome is FlaggedLaunchOutcome.MainNotJoinable or FlaggedLaunchOutcome.MainNotInThatServer)
-        {
-            _log.LogInformation("Auto-rejoin {AccountId}: main not joinable ({Outcome}), retrying next tick.", id, decision.Outcome);
-            _autoRejoin.NotifyRejoinSkipped(id);
-            return;
+            target = ServerInstanceTargeting.Upgrade(
+                _lastRejoinTargets.GetValueOrDefault(id) ?? ResolveLaunchTarget(row.SelectedGame, null),
+                action.LastServer);
         }
 
         var reason = action.FailedJoin ? "failed join" : "dropped out";
@@ -3702,14 +3706,36 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
 
-        var launchTarget = decision.Outcome == FlaggedLaunchOutcome.Follow ? decision.Target : target;
-        _log.LogInformation("Auto-rejoin {AccountId}: {Reason} -> {TargetKind}", id, reason, launchTarget.GetType().Name);
-        var pid = await LaunchAccountAsync(row, launchTarget, FlaggedLaunchMode.Refuse).ConfigureAwait(true);
+        if (row.JoinViaFriend)
+        {
+            // The main can leave its game during the up-to-15 s wait. Decide again: the client is
+            // already stopped, which is acceptable; the next due tick rejoins once the main is back.
+            if (DecideFlaggedFollow(row) is not { } follow)
+            {
+                _log.LogInformation("Auto-rejoin {AccountId}: main stopped being joinable while the client exited; retrying next tick.", id);
+                _autoRejoin.NotifyRejoinSkipped(id);
+                return;
+            }
+            target = follow;
+        }
+
+        _log.LogInformation("Auto-rejoin {AccountId}: {Reason} -> {TargetKind}", id, reason, target.GetType().Name);
+        var pid = await LaunchAccountAsync(row, target, FlaggedLaunchMode.Refuse).ConfigureAwait(true);
         if (pid == 0)
         {
             _log.LogInformation("Auto-rejoin {AccountId}: the relaunch didn't start; retrying next tick.", id);
             _autoRejoin.NotifyRejoinSkipped(id);
         }
+    }
+
+    /// <summary>
+    /// A flagged row's rejoin target: follow the main, decided against the default game. Null for
+    /// any other outcome (the main isn't joinable), which auto-rejoin treats as "don't launch".
+    /// </summary>
+    private LaunchTarget? DecideFlaggedFollow(AccountSummary row)
+    {
+        var decision = DecideFlaggedLaunch(row, new LaunchTarget.DefaultGame());
+        return decision.Outcome == FlaggedLaunchOutcome.Follow ? decision.Target : null;
     }
 
     /// <summary>
