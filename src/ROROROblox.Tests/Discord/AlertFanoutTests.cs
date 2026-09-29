@@ -134,18 +134,26 @@ public class AlertFanoutTests
     }
 
     [Fact]
-    public void DestinationsFor_AutoRejoinPaused_DefaultsEmptyLikeDroppedOut()
+    public void DestinationsFor_AutoRejoinPaused_DefaultsToTheDesktopToast()
     {
-        // Task 10: the new kind's default is the SAME kind of default AccountDroppedOut ships with
-        // (an empty list, off until the user ticks something) rather than MetricBreach's
-        // shipped-on default — that one only exists because MetricBreach had no routing checkbox
-        // for a while. AutoRejoinPaused has one from day one.
-        Assert.Empty(new DiscordConfig().DestinationsFor(AlertKind.AutoRejoinPaused));
+        // Corrected same-day (controller ruling, 2026-09-29): the spec says a pause "raises a toast
+        // and the Discord alert (when alerts are on)", and the temporary toast it replaces always
+        // showed — so this follows MetricBreachDestinations' shipped-on precedent, not
+        // AccountDroppedOut's empty one. Discord stays opt-in; the toast does not.
+        Assert.Equal(
+            [AlertDestination.Local],
+            new DiscordConfig().DestinationsFor(AlertKind.AutoRejoinPaused));
 
         var config = new DiscordConfig { AutoRejoinPausedDestinations = [AlertDestination.Phone, AlertDestination.Local] };
         Assert.Equal(
             [AlertDestination.Phone, AlertDestination.Local],
             config.DestinationsFor(AlertKind.AutoRejoinPaused));
+
+        // The trap the default's doc comment calls out: an explicit, deliberate "nothing" must not
+        // spring back to the shipped default. DestinationsFor cannot see WHY the list is empty
+        // (never touched vs. explicitly emptied) — that distinction lives one layer down, in
+        // whether the JSON key is present at all (DiscordConfigStoreTests pins the load side).
+        Assert.Empty(new DiscordConfig { AutoRejoinPausedDestinations = [] }.DestinationsFor(AlertKind.AutoRejoinPaused));
     }
 
     [Fact]

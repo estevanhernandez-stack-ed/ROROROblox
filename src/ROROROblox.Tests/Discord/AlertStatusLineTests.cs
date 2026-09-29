@@ -16,7 +16,12 @@ public class AlertStatusLineTests
     [Fact]
     public void Compose_NothingRouted_SaysSoPlainly()
     {
-        var line = AlertStatusLine.Compose(new DiscordConfig());
+        // AutoRejoinPausedDestinations ships as [Local] (controller correction, 2026-09-29 — the
+        // spec's pause toast always showed, so it needed the same shipped-on default
+        // MetricBreachDestinations has), so a config that means "genuinely nothing configured"
+        // opts it out explicitly, the same way this test would need to null out MineWebhookUrl if
+        // that ever shipped a default.
+        var line = AlertStatusLine.Compose(new DiscordConfig { AutoRejoinPausedDestinations = [] });
 
         Assert.Contains("No alerts yet", line.Text, StringComparison.OrdinalIgnoreCase);
     }
@@ -213,8 +218,10 @@ public class AlertStatusLineTests
     {
         // The regression the plan-2 exclusion existed to prevent. MetricBreachDestinations ships
         // as [Local] so a breach has somewhere to go; that is a default, not a user choice, and
-        // this sentence reports back what the user chose.
-        var line = AlertStatusLine.Compose(new DiscordConfig());
+        // this sentence reports back what the user chose. AutoRejoinPausedDestinations picked up
+        // the same shipped-on default for the same reason (controller correction, 2026-09-29) and
+        // is opted out explicitly here so this test still isolates the metric gate it is about.
+        var line = AlertStatusLine.Compose(new DiscordConfig { AutoRejoinPausedDestinations = [] });
 
         Assert.Contains("No alerts yet", line.Text, StringComparison.OrdinalIgnoreCase);
     }
@@ -222,7 +229,11 @@ public class AlertStatusLineTests
     [Fact]
     public void WithMetricAlertsOff_TheMetricDestinationIsNotCounted()
     {
-        var config = new DiscordConfig { MetricBreachDestinations = [AlertDestination.Local] };
+        var config = new DiscordConfig
+        {
+            MetricBreachDestinations = [AlertDestination.Local],
+            AutoRejoinPausedDestinations = [], // isolate the metric gate this test is about
+        };
         var line = AlertStatusLine.Compose(config, metricAlertsEnabled: false);
 
         Assert.Contains("No alerts yet", line.Text, StringComparison.OrdinalIgnoreCase);
