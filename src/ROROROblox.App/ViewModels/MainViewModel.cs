@@ -2316,13 +2316,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             {
                 // The main is the ONLY anchor here (spec rules 1-2), whether it's in this batch or
                 // already in a game. An unflagged alt landing first is not a reason to follow it;
-                // no main, or a main that never becomes joinable, means one ask.
+                // no main, or a main that never becomes joinable, means one ask. A main that sits
+                // this batch out and isn't running or launching can't land in the next AnchorWait
+                // either, so it isn't waited on: the ask comes at once.
                 var main = MainAccount;
+                var mainCanLand = main is not null
+                    && (plan.Direct.Contains(main) || main.IsRunning || main.IsLaunching || main.InGame);
                 (_, leftStoppedBanner) = await ReleaseFlaggedAfterAnchorAsync(
-                    main is null ? [] : [main],
+                    mainCanLand ? [main!] : [],
                     plan.Flagged,
                     CancellationToken.None,
-                    waitingBanner: main is null ? null : Loc.Format("Shell_Msg_WaitingForLanding", main.RenderName),
+                    waitingBanner: mainCanLand ? Loc.Format("Shell_Msg_WaitingForLanding", main!.RenderName) : null,
                     joinDirectly: cleared => plan.Direct.Count == 0
                         ? DispatchBatchAsync(cleared, overrideTarget: null, launchingBanner)
                         : ReleaseBatchAsync(cleared, overrideTarget: null, launchingBanner, startIndex: 0));

@@ -215,6 +215,53 @@ public class FlaggedBatchLaunchTests
         finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
 
+    // M3: the main sits this batch out and isn't running or launching, so it can't land in the
+    // next 90 s. Ask straight away instead of holding the batch for AnchorWait.
+    [Fact]
+    public async Task LaunchAll_MainNotInTheBatchAndNotRunning_AsksAtOnce()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher);
+        try
+        {
+            await SeedIdleMainAsync(vm, store);
+            await SeedTwoFlaggedAsync(vm, store);
+            Quick(vm, TimeSpan.FromMinutes(10)); // were it to wait, the WaitAsync below would time out
+            var asks = new List<FlaggedLaunchAsk>();
+            vm.FlaggedLaunchPrompt = ask => { asks.Add(ask); return new FlaggedLaunchChoice.Cancel(); };
+
+            await vm.LaunchAllForTestAsync().WaitAsync(TimeSpan.FromSeconds(10));
+
+            Assert.Equal(["AltA", "AltB"], Assert.Single(asks).AccountNames);
+            Assert.Empty(launcher.Launches);
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
+    [Fact]
+    public async Task LaunchAll_MainNotInTheBatchButRunning_StillWaitsForIt()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher);
+        try
+        {
+            var main = await SeedIdleMainAsync(vm, store);
+            tracker.RaiseAttached(new RobloxProcessEventArgs(main.Id, 1111)); // running, not in a game yet
+            await SeedTwoFlaggedAsync(vm, store);
+            Quick(vm, TimeSpan.FromSeconds(5));
+            vm.FlaggedLaunchPrompt = _ => throw new InvalidOperationException("must not ask");
+
+            var batch = vm.LaunchAllForTestAsync();
+            vm.ApplyPresence(new AccountPresenceEventArgs(main.Id, UserPresenceType.InGame, 5, "Game",
+                DateTimeOffset.UtcNow, new ServerInstance(5, "job-1")));
+            await batch.WaitAsync(TimeSpan.FromSeconds(10));
+
+            Assert.Equal(2, launcher.Launches.Count);
+            Assert.All(launcher.Launches, t => Assert.Equal(new LaunchTarget.FollowFriend(111), t));
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
     [Fact]
     public async Task LaunchAll_FlaggedMain_LaunchesDirectlyAndNeverWaitsOnItself()
     {
