@@ -94,7 +94,28 @@ public class MainViewModelTests
         // above does for the decorator's timer.
         vm.StopPeriodicRefresh();
 
+        // The flagged-launch question's production default constructs and shows a modal Window. A
+        // test that reaches it without overriding the seam must fail fast and say why, not try to
+        // open a dialog on whatever thread it happens to be on.
+        vm.FlaggedLaunchPrompt = _ => throw new InvalidOperationException(
+            "FlaggedLaunchPrompt was reached but this test did not override it.");
+
         return (vm, accountStore, processTracker, path);
+    }
+
+    // M7: a test that reaches the flagged-launch question without overriding it must fail fast,
+    // not construct a real modal Window.
+    [Fact]
+    public void Build_DefaultsTheFlaggedLaunchPromptToAThrowingStub()
+    {
+        var (vm, _, _, path) = Build();
+        try
+        {
+            Assert.NotEqual(typeof(ROROROblox.App.Modals.FlaggedLaunchWindow), vm.FlaggedLaunchPrompt.Method.DeclaringType);
+            Assert.Throws<InvalidOperationException>(() =>
+                vm.FlaggedLaunchPrompt(new FlaggedLaunchAsk(["Alt"], "Main", [])));
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
 
     [Fact]
