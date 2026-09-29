@@ -66,6 +66,11 @@ internal partial class SettingsPage : UserControl, IDisposable
     private bool _suppressClickHandlers; // true while we set the initial check states.
     private bool _loaded;                 // true once OnLoaded has populated; gates the culture-change re-render.
 
+    // Keeps the alerts status line's "auto-rejoin in use" answer live while the page is shown
+    // (Settings is a non-modal shell page, F-013). Created in OnLoaded, disposed on Unloaded and in
+    // Dispose, so a page swapped out by the shell holds no subscription on the view model's rows.
+    private AutoRejoinUsageWatcher? _autoRejoinWatcher;
+
     // Known Roblox issues' "Open memory settings" (spec §4). OnLoaded resets the rail to its first
     // section every time the page is shown — the shell swaps pages in and out — so a reveal asked for
     // before Loaded is queued here and applied straight after that reset.
@@ -142,6 +147,7 @@ internal partial class SettingsPage : UserControl, IDisposable
             });
 
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
 
         // Live-refresh the code-composed summaries on a language toggle (the deferred half of the
         // Phase D live-toggle). The language picker below sets TranslationSource.CurrentCulture, which
@@ -178,6 +184,35 @@ internal partial class SettingsPage : UserControl, IDisposable
         // The culture source is an app-lifetime singleton too — leave a subscription on it and this
         // disposed page's re-render fires for the rest of the process.
         TranslationSource.Instance.CultureChanged -= OnUiCultureChanged;
+
+        // And the account rows, which belong to the singleton view model.
+        _autoRejoinWatcher?.Dispose();
+        _autoRejoinWatcher = null;
+    }
+
+    /// <summary>The shell swapped this page out: stop listening to the account rows until it is shown again.</summary>
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        _autoRejoinWatcher?.Dispose();
+        _autoRejoinWatcher = null;
+    }
+
+    /// <summary>
+    /// Some account's auto-rejoin changed (the row menu, or a pause turned it off) or an account
+    /// came or went while this page is shown. The status line counts auto-rejoin-paused alerts
+    /// only while an account has it on, so recompute it.
+    /// </summary>
+    private void OnAutoRejoinUsageChanged()
+    {
+        if (!_loaded) return; // OnLoaded paints the line itself once population is done
+        if (Dispatcher.CheckAccess())
+        {
+            RefreshAlertsStatus();
+        }
+        else
+        {
+            Dispatcher.BeginInvoke(new Action(RefreshAlertsStatus));
+        }
     }
 
     /// <summary>
@@ -440,6 +475,12 @@ internal partial class SettingsPage : UserControl, IDisposable
 
             // Population done — the culture-change re-render may now run against real state.
             _loaded = true;
+
+            // Page activation: repaint the status line against the accounts as they are now (an
+            // account's auto-rejoin may have changed while the page was swapped out), then keep it
+            // live while the page is shown.
+            RefreshAlertsStatus();
+            _autoRejoinWatcher ??= new AutoRejoinUsageWatcher(_mainViewModel.Accounts, OnAutoRejoinUsageChanged);
         }
         finally
         {
@@ -1062,11 +1103,9 @@ internal partial class SettingsPage : UserControl, IDisposable
             // Same shape as the metric opt-in above, off the accounts themselves rather than a
             // checkbox on this page: auto-rejoin has no page-local "feature enabled" control, it is
             // opted into per account from the main window's row menu. Read fresh every call rather
-            // than cached — MainWindow's ToggleAutoRejoinCommand is disabled while this page is open
-            // (a modal ShowDialog only disables the top-level windows that existed when it opened,
-            // and MainWindow is one of them), so the value cannot change out from under an open
-            // Settings session; it only needs to be current at the moment this method runs, same as
-            // CurrentDiscordConfig above.
+            // than cached. Settings is a non-modal shell page (F-013), so the row menu stays usable
+            // and a pause can turn an account's auto-rejoin off while this page is shown: the
+            // AutoRejoinUsageWatcher set up in OnLoaded calls back here on every such change.
             autoRejoinInUse: _mainViewModel.Accounts.Any(a => a.AutoRejoin));
 
         // The glyph is the view's, not the composer's — same rule MainWindow.xaml records for the
