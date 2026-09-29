@@ -75,6 +75,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private bool _autoRejoinRunning;
 
     /// <summary>
+    /// Flagged accounts whose due rejoin is currently held because the main isn't joinable, so the
+    /// "retrying next tick" line is logged when the wait starts, not on every 30 s tick of it. An id
+    /// leaves the set when a pass no longer has a rejoin for it, or its rejoin goes ahead. UI thread only.
+    /// </summary>
+    private readonly HashSet<Guid> _waitingForMainLogged = [];
+
+    /// <summary>
     /// Relaunch-pending: accounts whose client auto-rejoin STOPPED but then did not relaunch (the
     /// main left during the exit wait, or the launch returned 0 or threw). The monitor never acts on
     /// a closed client, so without this they would stay closed for good. Each pass retries them
@@ -3712,6 +3719,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 .ToList();
             var actions = _autoRejoin.Tick(now, candidates);
 
+            // A flagged account's "main not joinable" wait ends when it is no longer due (back in
+            // game, closed, turned off, gone). The next wait logs its own line.
+            _waitingForMainLogged.RemoveWhere(id =>
+                !actions.Any(a => a is AutoRejoinAction.Rejoin && a.AccountId == id));
+
             // Each action is handled on its own: a throw from one (a toast, a stop, a launch) is
             // logged and the loop moves on, so a later Rejoin in the same batch still reaches
             // NotifyLaunched or NotifyRejoinSkipped instead of sitting InFlight for the session.
@@ -3931,10 +3943,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             if (DecideFlaggedFollow(row) is not { } follow)
             {
                 // Before anything is stopped: the client stays, no budget is spent, next tick retries.
-                _log.LogInformation("Auto-rejoin {AccountId}: main not joinable, retrying next tick.", id);
+                // Logged when the wait starts only; the tick repeats every 30 s while it lasts.
+                if (_waitingForMainLogged.Add(id))
+                {
+                    _log.LogInformation("Auto-rejoin {AccountId}: main not joinable, retrying next tick.", id);
+                }
                 _autoRejoin.NotifyRejoinSkipped(id);
                 return;
             }
+            _waitingForMainLogged.Remove(id);
             target = follow;
         }
         else

@@ -40,7 +40,8 @@ public class MainViewModelTests
         IBloxstrapDetector? bloxstrapDetector = null,
         FakeActivityMonitor? activityMonitor = null,
         Core.IUiDispatcher? uiDispatcher = null,
-        ISessionHistoryStore? sessionHistory = null)
+        ISessionHistoryStore? sessionHistory = null,
+        Microsoft.Extensions.Logging.ILogger<MainViewModel>? log = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"rororo-mvm-test-{Guid.NewGuid():N}.dat");
         var accountStore = new AccountStore(path);
@@ -76,7 +77,8 @@ public class MainViewModelTests
             shellOpener: shellOpener ?? new NullShellOpener(),
             tray: trayService,
             idleAlertPresenter: new IdleAlertPresenter(trayService),
-            uiDispatcher: uiDispatcher);
+            uiDispatcher: uiDispatcher,
+            log: log);
 
         // MainViewModel never disposes the window decorator (App.xaml.cs's DI container owns
         // that lifetime in production); its ctor starts a real 1.5s reapply Timer that would

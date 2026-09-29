@@ -1374,6 +1374,55 @@ public class AutoRejoinWiringTests
         finally { Cleanup(path); }
     }
 
+    // M8: a flagged alt waiting for its main logs "main not joinable" when it starts waiting,
+    // not on every 30 s tick while it waits.
+    [Fact]
+    public async Task MainNotJoinable_LogsOnTheTransitionOnly()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var log = new CapturingLogger<MainViewModel>();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi(), log: log);
+        try
+        {
+            var main = new AccountSummary(await store.AddAsync("Main", "", "m")) { RobloxUserId = 1 };
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, JoinViaFriend = true, RobloxUserId = 2 };
+            vm.Accounts.Add(main);
+            vm.Accounts.Add(alt);
+            vm.WaitForClientExitAsync = ExitsOnStop(tracker);
+            int Lines() => log.Snapshot().Count(l => l.Contains("main not joinable, retrying next tick"));
+            var t0 = DateTimeOffset.UtcNow;
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+            vm.ApplyPresence(P(alt.Id, true, t0));
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
+            vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
+
+            for (var i = 0; i < 6; i++)
+            {
+                await vm.RunAutoRejoinAsync(t0.AddMinutes(4 + 0.5 * i)).WaitAsync(Limit);
+            }
+            Assert.Equal(1, Lines());
+
+            // The main comes back: the alt rejoins by following it. Later it drops again with the
+            // main gone: a new wait, so one new line.
+            tracker.RaiseAttached(new RobloxProcessEventArgs(main.Id, 1111));
+            vm.ApplyPresence(P(main.Id, true, t0.AddMinutes(7)));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(7)).WaitAsync(Limit);
+            Assert.Equal([alt.Id], stopper.StoppedAccountIds);
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4343));
+            vm.ApplyPresence(P(alt.Id, true, t0.AddMinutes(10)));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(10)).WaitAsync(Limit);
+            vm.ApplyPresence(P(main.Id, false, t0.AddMinutes(11)));
+            vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(11)));
+            for (var i = 0; i < 4; i++)
+            {
+                await vm.RunAutoRejoinAsync(t0.AddMinutes(14 + 0.5 * i)).WaitAsync(Limit);
+            }
+            Assert.Equal(2, Lines());
+        }
+        finally { Cleanup(path); }
+    }
+
     private sealed class AutoRejoinWriteFailsStore(IAccountStore inner, Func<bool> failing) : IAccountStore
     {
         public Task SetAutoRejoinAsync(Guid id, bool autoRejoin)
