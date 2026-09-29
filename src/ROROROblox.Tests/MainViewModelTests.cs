@@ -921,7 +921,7 @@ public class MainViewModelTests
     /// throws — pins <see cref="MainViewModel.ToggleJoinViaFriendAsync"/>'s revert-on-persist-
     /// failure contract (Task 4, trust-aware squad launch).
     /// </summary>
-    private sealed class JoinViaFriendThrowingStore(IAccountStore inner) : IAccountStore
+    internal sealed class JoinViaFriendThrowingStore(IAccountStore inner) : IAccountStore  // internal: FlaggedLaunchTests drives the "it's fixed" save failure with it
     {
         public Task SetJoinViaFriendAsync(Guid id, bool joinViaFriend)
             => throw new IOException("simulated persist failure");

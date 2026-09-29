@@ -93,6 +93,27 @@ public class FlaggedLaunchTests
     }
 
     [Fact]
+    public async Task FlaggedAlt_ItsFixed_SaveFails_LaunchesNothingAndClearsTheLaunchingStatus()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var (vm, store, _, path) = MainViewModelTests.Build(
+            launcher, wrapStore: inner => new MainViewModelTests.JoinViaFriendThrowingStore(inner));
+        try
+        {
+            var (_, alt) = await SeedAsync(vm, store, mainInGame: false); // Build hands back the inner store
+            vm.FlaggedLaunchPrompt = _ => new FlaggedLaunchChoice.JoinDirectly();
+            vm.LaunchAccountCommand.Execute(alt);
+            await UntilSettledAsync(alt);
+            Assert.Empty(launcher.Launches);
+            Assert.True(alt.JoinViaFriend);
+            Assert.Equal(string.Empty, alt.StatusText);
+            Assert.False(alt.IsLaunching);
+            Assert.Contains("Couldn't save join-via-friend", vm.StatusBanner);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
     public async Task FlaggedAlt_FollowAnotherAccount_FollowsThePick()
     {
         var launcher = new MainViewModelTests.RecordingSuccessLauncher();

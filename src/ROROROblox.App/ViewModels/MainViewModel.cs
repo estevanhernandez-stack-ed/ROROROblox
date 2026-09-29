@@ -1727,6 +1727,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                             await ToggleJoinViaFriendAsync(summary); // clears the flag, persists, reverts on failure
                             if (summary.JoinViaFriend)
                             {
+                                summary.StatusText = string.Empty;
                                 return 0; // the save failed (StatusBanner says so); don't join directly
                             }
                             break;
