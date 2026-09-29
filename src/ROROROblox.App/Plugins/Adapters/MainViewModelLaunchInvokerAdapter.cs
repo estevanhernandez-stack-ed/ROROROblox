@@ -8,10 +8,17 @@ namespace ROROROblox.App.Plugins.Adapters;
 
 /// <summary>
 /// Bridges <see cref="IPluginLaunchInvoker.RequestLaunchAsync"/> onto
-/// <see cref="MainViewModel.LaunchAccountCommand"/>. v1.4 contract:
+/// <see cref="MainViewModel.LaunchAccountForPluginAsync"/>. Every outcome — Direct and Follow
+/// alike — routes through that seam, never <see cref="MainViewModel.LaunchAccountCommand"/>:
+/// the command's own <c>LaunchAccountAsync</c> call re-decides the flagged-launch outcome from
+/// whatever state is current when it actually runs (in <c>Ask</c> mode), so a Direct decision
+/// made here could still open <see cref="MainViewModel.FlaggedLaunchPrompt"/> later if
+/// <c>JoinViaFriend</c> or the main's presence changed in between. Routing Direct through the
+/// same Refuse-mode seam as Follow closes that window structurally (see the review-round-1 note
+/// inline in <see cref="RequestLaunchAsync"/>). v1.4 contract:
 /// <list type="bullet">
 ///   <item><c>(true, null, 0, null)</c> when the launch was dispatched. PID is 0 because
-///         <c>LaunchAccountAsync</c> is fire-and-forget from the command's POV — the
+///         <c>LaunchAccountAsync</c> is fire-and-forget from this seam's POV — the
 ///         tracker raises <see cref="ROROROblox.Core.Diagnostics.IRobloxProcessTracker.ProcessAttached"/>
 ///         later with the real PID, which the bus forwards as <c>AccountLaunched</c>.</item>
 ///   <item><c>(false, "reason", 0, null)</c> for user-recoverable failures (account not found,
@@ -66,36 +73,40 @@ internal sealed class MainViewModelLaunchInvokerAdapter : IPluginLaunchInvoker
         // Spec rule 1, plugin surface: a plugin can't answer the flagged-launch dialog, so it never
         // reaches FlaggedLaunchPrompt. A flagged account either follows the main (Follow) or the
         // launch is refused with a machine-readable reason code — never a silent direct join.
-        var decision = _vm.DecideFlaggedLaunch(summary, MainViewModel.ResolveLaunchTarget(summary.SelectedGame, null));
+        var resolvedTarget = MainViewModel.ResolveLaunchTarget(summary.SelectedGame, null);
+        var decision = _vm.DecideFlaggedLaunch(summary, resolvedTarget);
         if (decision.Outcome is FlaggedLaunchOutcome.MainNotJoinable or FlaggedLaunchOutcome.MainNotInThatServer)
         {
             return Task.FromResult<(bool, string?, int, string?)>(
                 (false, "This account joins through your main, and your main isn't in a joinable game.", 0, PluginLaunchReasonCodes.FollowTargetNotJoinable));
         }
 
-        // Marshal to the WPF dispatcher — both the command path and the plugin-host launch seam
-        // mutate ObservableCollection state on the UI thread. Application.Current is null in
-        // headless tests; fall back to direct dispatch in that case.
+        // Review round 1: Direct used to route through LaunchAccountCommand -> LaunchAccountAsync
+        // in Ask mode, which RE-DECIDES the flagged-launch outcome from whatever state is current
+        // when it actually runs — not the state the decision above was made from. If JoinViaFriend
+        // flipped, or the main's presence changed, between this decision and that one, a Direct
+        // decision made HERE could still open FlaggedLaunchPrompt once the command's own
+        // re-decision came out MainNotJoinable/MainNotInThatServer. Routing Direct through the
+        // SAME LaunchAccountForPluginAsync seam as Follow closes that window structurally:
+        // whatever LaunchAccountAsync re-decides, it still runs in Refuse mode (see
+        // MainViewModel.LaunchAccountForPluginAsync), so it can only follow or silently decline —
+        // it can never reach FlaggedLaunchPrompt. LaunchAccountCommand's CanExecute carried no
+        // meaning here to preserve: it's constructed with no canExecute predicate
+        // (MainViewModel.cs, LaunchAccountCommand assignment), so RelayCommand.CanExecute is
+        // unconditionally true — nothing is lost by no longer routing through it.
+        var launchTarget = decision.Outcome == FlaggedLaunchOutcome.Follow ? decision.Target : resolvedTarget;
+
+        // Marshal to the WPF dispatcher — the plugin-host launch seam mutates ObservableCollection
+        // state on the UI thread. Application.Current is null in headless tests; fall back to
+        // direct dispatch in that case.
         var dispatcher = Application.Current?.Dispatcher;
-        if (decision.Outcome == FlaggedLaunchOutcome.Follow)
+        if (dispatcher is null || dispatcher.CheckAccess())
         {
-            // Not the command — LaunchAccountForPluginAsync, so no prompt can ever open on this path.
-            if (dispatcher is null || dispatcher.CheckAccess())
-            {
-                DispatchFollow(summary, decision.Target);
-            }
-            else
-            {
-                dispatcher.InvokeAsync(() => DispatchFollow(summary, decision.Target));
-            }
-        }
-        else if (dispatcher is null || dispatcher.CheckAccess())
-        {
-            DispatchExecute(summary);
+            DispatchLaunch(summary, launchTarget);
         }
         else
         {
-            dispatcher.Invoke(() => DispatchExecute(summary));
+            dispatcher.InvokeAsync(() => DispatchLaunch(summary, launchTarget));
         }
         return Task.FromResult<(bool, string?, int, string?)>((true, null, 0, null));
     }
@@ -178,20 +189,15 @@ internal sealed class MainViewModelLaunchInvokerAdapter : IPluginLaunchInvoker
             newest.LastLaunchedAt!.Value.ToUnixTimeMilliseconds());
     }
 
-    private void DispatchExecute(AccountSummary summary)
-    {
-        if (_vm.LaunchAccountCommand.CanExecute(summary))
-        {
-            _vm.LaunchAccountCommand.Execute(summary);
-        }
-    }
-
     /// <summary>
-    /// Fire-and-forget, matching <see cref="DispatchExecute"/>'s POV: the caller gets
-    /// <c>(true, null, 0, null)</c> once this is dispatched, and the real PID arrives later via
-    /// <c>SubscribeAccountLaunched</c>.
+    /// Fire-and-forget: the caller gets <c>(true, null, 0, null)</c> once this is dispatched, and
+    /// the real PID arrives later via <c>SubscribeAccountLaunched</c>. Used for every
+    /// <see cref="RequestLaunchAsync"/> outcome (Direct and Follow alike) — always through
+    /// <see cref="MainViewModel.LaunchAccountForPluginAsync"/>, never
+    /// <see cref="MainViewModel.LaunchAccountCommand"/>, so <see cref="MainViewModel.FlaggedLaunchPrompt"/>
+    /// is structurally unreachable from this adapter.
     /// </summary>
-    private void DispatchFollow(AccountSummary summary, LaunchTarget target)
+    private void DispatchLaunch(AccountSummary summary, LaunchTarget target)
     {
         _ = _vm.LaunchAccountForPluginAsync(summary, target);
     }

@@ -9,6 +9,13 @@ namespace ROROROblox.Tests;
 /// <c>JoinViaFriend</c> account follows the main when the main is joinable, and asks when it isn't.
 /// It never joins directly on its own.
 /// </summary>
+/// <remarks>
+/// Review round 1, finding 2: every <c>finally</c> block's temp-file cleanup below is best-effort
+/// (<c>try</c>/<c>catch (IOException)</c>), not because the delete itself is under test, but
+/// because real-time AV/EDR scanning was confirmed (on the machine that reproduced this) to
+/// transiently hold this exact file open under full-suite load — a cleanup delete racing that
+/// hold must not mask what the test above it already proved. The OS reclaims %TEMP% regardless.
+/// </remarks>
 public class FlaggedLaunchTests
 {
     internal static async Task<(AccountSummary Main, AccountSummary Alt)> SeedAsync(MainViewModel vm, IAccountStore store, bool mainInGame)
@@ -49,7 +56,7 @@ public class FlaggedLaunchTests
             await UntilSettledAsync(alt);
             Assert.Equal(new LaunchTarget.FollowFriend(111), Assert.Single(launcher.Launches));
         }
-        finally { if (File.Exists(path)) File.Delete(path); }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
 
     [Fact]
@@ -71,7 +78,7 @@ public class FlaggedLaunchTests
             Assert.False(alt.IsLaunching);
             Assert.Equal(string.Empty, alt.StatusText);
         }
-        finally { if (File.Exists(path)) File.Delete(path); }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
 
     [Fact]
@@ -89,7 +96,7 @@ public class FlaggedLaunchTests
             Assert.False((await store.ListAsync()).Single(a => a.Id == alt.Id).JoinViaFriend);
             Assert.IsType<LaunchTarget.DefaultGame>(Assert.Single(launcher.Launches));
         }
-        finally { if (File.Exists(path)) File.Delete(path); }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
 
     [Fact]
@@ -110,7 +117,7 @@ public class FlaggedLaunchTests
             Assert.False(alt.IsLaunching);
             Assert.Contains("Couldn't save join-via-friend", vm.StatusBanner);
         }
-        finally { if (File.Exists(path)) File.Delete(path); }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
 
     [Fact]
@@ -126,7 +133,7 @@ public class FlaggedLaunchTests
             await UntilSettledAsync(alt);
             Assert.Equal(new LaunchTarget.FollowFriend(333), Assert.Single(launcher.Launches));
         }
-        finally { if (File.Exists(path)) File.Delete(path); }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
 
     [Fact]
@@ -150,7 +157,7 @@ public class FlaggedLaunchTests
 
             Assert.Equal(("Friend", 333L), Assert.Single(asked!.JoinableOthers));
         }
-        finally { if (File.Exists(path)) File.Delete(path); }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
 
     [Fact]
@@ -168,7 +175,7 @@ public class FlaggedLaunchTests
             Assert.True(asked);
             Assert.Empty(launcher.Launches);
         }
-        finally { if (File.Exists(path)) File.Delete(path); }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
 
     [Fact]
@@ -183,7 +190,7 @@ public class FlaggedLaunchTests
             await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.GameJob(5, "job-OTHER"));
             Assert.Empty(launcher.Launches);
         }
-        finally { if (File.Exists(path)) File.Delete(path); }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
 
     [Fact]
@@ -199,6 +206,6 @@ public class FlaggedLaunchTests
             await UntilSettledAsync(alt);
             Assert.IsType<LaunchTarget.DefaultGame>(Assert.Single(launcher.Launches));
         }
-        finally { if (File.Exists(path)) File.Delete(path); }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
 }
