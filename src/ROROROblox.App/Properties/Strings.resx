@@ -2897,4 +2897,36 @@ Alerts will arrive in that server — on your phone too, as long as Discord is i
   <data name="MainWindow_KnownRobloxIssuesTooltip" xml:space="preserve">
     <value>Problems in Roblox itself, and what to do about them</value>
   </data>
+  <data name="FlaggedLaunchWindow_Title" xml:space="preserve">
+    <value>Join through your main</value>
+    <comment>Flagged-launch dialog title and heading</comment>
+  </data>
+  <data name="Shell_FlaggedLaunch_Body" xml:space="preserve">
+    <value>{0} joins through your main, and your main isn't in a game yet.</value>
+    <comment>Flagged-launch body, one account; {0}=account name</comment>
+  </data>
+  <data name="Shell_FlaggedLaunch_BodyMany" xml:space="preserve">
+    <value>{0} join through your main, and your main isn't in a game yet.</value>
+    <comment>Flagged-launch body, several accounts; {0}=account names joined with ", "</comment>
+  </data>
+  <data name="FlaggedLaunchWindow_FollowAnother" xml:space="preserve">
+    <value>Follow another account</value>
+    <comment>Flagged-launch dialog label over the account picker</comment>
+  </data>
+  <data name="FlaggedLaunchWindow_Follow" xml:space="preserve">
+    <value>Follow</value>
+    <comment>Flagged-launch dialog button: follow the picked account</comment>
+  </data>
+  <data name="FlaggedLaunchWindow_NobodyJoinable" xml:space="preserve">
+    <value>None of your accounts is in a game you can join right now.</value>
+    <comment>Flagged-launch dialog note when no account is joinable</comment>
+  </data>
+  <data name="FlaggedLaunchWindow_ItsFixed" xml:space="preserve">
+    <value>It's fixed, join directly</value>
+    <comment>Flagged-launch dialog button: clear the join-via-friend flag and join directly</comment>
+  </data>
+  <data name="FlaggedLaunchWindow_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>Flagged-launch dialog button; the Enter-key default</comment>
+  </data>
 </root>

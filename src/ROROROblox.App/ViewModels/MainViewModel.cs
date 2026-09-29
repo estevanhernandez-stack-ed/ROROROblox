@@ -740,6 +740,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// <summary>The rename prompt. The default resolves the owner window and answers Cancel when none exists.</summary>
     internal Func<RenameTarget, Task<RenameResult>> RenamePrompt { get; set; }
 
+    /// <summary>
+    /// The flagged-launch question: a <c>JoinViaFriend</c> account can't follow the main, so follow
+    /// someone else, clear the flag and join directly, or cancel. Runs on the UI thread; every UI
+    /// caller of <see cref="LaunchAccountAsync"/> already is.
+    /// </summary>
+    internal Func<FlaggedLaunchAsk, FlaggedLaunchChoice> FlaggedLaunchPrompt { get; set; } = Modals.FlaggedLaunchWindow.Ask;
+
     /// <summary>The WebView2-missing interruption.</summary>
     internal Action WebView2NotInstalledPrompt { get; set; } = static () =>
     {
@@ -1670,7 +1677,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// rather than making the caller reverse-engineer success from mutated <see cref="AccountSummary"/>
     /// state.
     /// </summary>
-    private async Task<int> LaunchAccountAsync(AccountSummary? summary, LaunchTarget? overrideTarget = null)
+    private async Task<int> LaunchAccountAsync(AccountSummary? summary, LaunchTarget? overrideTarget = null,
+        FlaggedLaunchMode flaggedMode = FlaggedLaunchMode.Ask)
     {
         if (summary is null)
         {
@@ -1685,6 +1693,52 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             summary.Id, summary.DisplayName, overrideTarget?.GetType().Name ?? "from-row");
         try
         {
+            LaunchTarget target = ResolveLaunchTarget(summary.SelectedGame, overrideTarget);
+
+            // Spec rule 1: a JoinViaFriend account never joins directly on its own. Decided BEFORE
+            // the cookie read and the appStorage defender below, so a cancelled or refused launch
+            // leaves nothing behind (a defender armed for a launch that never happens would keep
+            // stamping this account's identity for up to two minutes).
+            var decision = DecideFlaggedLaunch(summary, target);
+            switch (decision.Outcome)
+            {
+                case FlaggedLaunchOutcome.Direct:
+                    break;
+                case FlaggedLaunchOutcome.Follow:
+                    target = decision.Target;
+                    break;
+                default:
+                    if (flaggedMode == FlaggedLaunchMode.Refuse)
+                    {
+                        _log.LogInformation("Flagged-launch decision for {AccountId}: {Outcome}, refused", summary.Id, decision.Outcome);
+                        summary.StatusText = string.Empty;
+                        return 0;
+                    }
+                    var choice = FlaggedLaunchPrompt(new FlaggedLaunchAsk(
+                        [summary.RenderName], MainAccount?.RenderName, JoinableFollowTargets(summary.Id)));
+                    _log.LogInformation("Flagged-launch decision for {AccountId}: {Outcome}, chose {Choice}",
+                        summary.Id, decision.Outcome, choice.GetType().Name);
+                    switch (choice)
+                    {
+                        case FlaggedLaunchChoice.FollowAccount f:
+                            target = new LaunchTarget.FollowFriend(f.UserId);
+                            break;
+                        case FlaggedLaunchChoice.JoinDirectly:
+                            await ToggleJoinViaFriendAsync(summary); // clears the flag, persists, reverts on failure
+                            if (summary.JoinViaFriend)
+                            {
+                                return 0; // the save failed (StatusBanner says so); don't join directly
+                            }
+                            break;
+                        default:
+                            summary.StatusText = string.Empty;
+                            return 0;
+                    }
+                    break;
+            }
+            _log.LogInformation("Flagged-launch decision for {AccountId}: {Outcome}, target={TargetKind}",
+                summary.Id, decision.Outcome, target.GetType().Name);
+
             string cookie;
             try
             {
@@ -1741,8 +1795,6 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     "Skipping appStorage defender for {Account} — RobloxUserId is null",
                     summary.DisplayName);
             }
-
-            LaunchTarget target = ResolveLaunchTarget(summary.SelectedGame, overrideTarget);
 
             // Ensure a stable per-account browserTrackerId (v1.8.1 trust hygiene — followups
             // 2026-06-30 §6): a real client keeps one btid per account, so a fresh random one
@@ -1814,6 +1866,35 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(HasCompactRows));
         }
     }
+
+    /// <summary>
+    /// Apply <see cref="FlaggedLaunchRule"/> to one row against the main's current presence.
+    /// Reads <see cref="AccountsSnapshot"/>, so it is safe off the UI thread. The main's presence
+    /// is projected from its saved row exactly as <see cref="FollowAltAsync"/> projects a target's.
+    /// </summary>
+    internal FlaggedLaunchDecision DecideFlaggedLaunch(AccountSummary summary, LaunchTarget resolved)
+    {
+        var main = AccountsSnapshot.FirstOrDefault(a => a.IsMain);
+        var mainPresence = main is null
+            ? null
+            : new UserPresence(main.RobloxUserId ?? 0, main.PresenceState, main.CurrentPlaceId, main.CurrentServer?.JobId, null);
+        return FlaggedLaunchRule.Decide(summary.JoinViaFriend, summary.IsMain, resolved, main?.RobloxUserId, mainPresence);
+    }
+
+    /// <summary>
+    /// The saved accounts a flagged account could follow instead of the main: every row but
+    /// <paramref name="excludingAccountId"/> with a known user id whose presence passes
+    /// <see cref="EvaluateFollow"/>. A flagged row not in a game is skipped by the same test.
+    /// Reads <see cref="AccountsSnapshot"/>, so it is safe off the UI thread.
+    /// </summary>
+    internal IReadOnlyList<(string Name, long UserId)> JoinableFollowTargets(Guid excludingAccountId)
+        => AccountsSnapshot
+            .Where(a => a.Id != excludingAccountId && a.RobloxUserId is > 0)
+            .Where(a => EvaluateFollow(
+                new UserPresence(a.RobloxUserId!.Value, a.PresenceState, a.CurrentPlaceId, a.CurrentServer?.JobId, null),
+                a.RenderName).CanFollow)
+            .Select(a => (a.RenderName, a.RobloxUserId!.Value))
+            .ToList();
 
     /// <summary>
     /// <see cref="AccountRecycler.LaunchDelegate"/> implementation — runs the SAME launch path
