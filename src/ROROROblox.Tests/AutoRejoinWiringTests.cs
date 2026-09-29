@@ -53,13 +53,15 @@ public class AutoRejoinWiringTests
     private sealed class FailingLauncher(int failures = int.MaxValue) : IRobloxLauncher
     {
         public int Failures { get; } = failures;
+        /// <summary>When set, decides per call number (1-based) instead of <see cref="Failures"/>.</summary>
+        public Func<int, bool>? FailWhen { get; init; }
         public int Calls;
         public readonly List<LaunchTarget> Launches = [];
         public Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null)
         {
             Calls++;
             Launches.Add(target);
-            return Task.FromResult<LaunchResult>(Calls <= Failures
+            return Task.FromResult<LaunchResult>((FailWhen?.Invoke(Calls) ?? Calls <= Failures)
                 ? new LaunchResult.Failed(LaunchFailureKind.ProcessStartFailed, "test")
                 : new LaunchResult.Started(9000 + Calls, DateTimeOffset.UtcNow));
         }
@@ -479,7 +481,7 @@ public class AutoRejoinWiringTests
     }
 
     [Fact]
-    public async Task ARelaunchThatFails_IsRefunded_SoLaterDropsRejoinWithoutAPause()
+    public async Task ARelaunchThatFails_StillSpendsTheSlot_SoTheFourthDropPauses()
     {
         var launcher = new FailingLauncher();
         var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
@@ -493,9 +495,10 @@ public class AutoRejoinWiringTests
             vm.WaitForClientExitAsync = ExitsOnStop(tracker);
             var t0 = DateTimeOffset.UtcNow;
 
-            // Four drops inside the hour, each relaunch failing (pid 0). Refunded every time, so
-            // none of them spends budget: no pause, and each due tick stops-and-relaunches again.
-            // (The client is re-attached each cycle, as if the user had started it by hand.)
+            // Four drops inside the hour, each relaunch failing (pid 0). The client WAS stopped each
+            // time, so each cycle counts: three stops, then the fourth drop pauses instead.
+            // (The client is re-attached each cycle, as if the user had started it by hand, which
+            // also drops the relaunch-pending entry.)
             for (var i = 0; i < 4; i++)
             {
                 var at = t0.AddMinutes(10 * i);
@@ -506,9 +509,9 @@ public class AutoRejoinWiringTests
                 await vm.RunAutoRejoinAsync(at.AddMinutes(4)).WaitAsync(Limit);
             }
 
-            Assert.Equal(4, stopper.StoppedAccountIds.Count);
-            Assert.Equal(4, launcher.Calls);
-            Assert.Empty(tray.Toasts);
+            Assert.Equal(3, stopper.StoppedAccountIds.Count);
+            Assert.Equal(3, launcher.Calls);
+            Assert.Equal("Auto-rejoin paused", Assert.Single(tray.Toasts).Title);
         }
         finally { Cleanup(path); }
     }
@@ -610,6 +613,150 @@ public class AutoRejoinWiringTests
             await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5)).WaitAsync(Limit);
             await vm.RunAutoRejoinAsync(t0.AddMinutes(5)).WaitAsync(Limit);
             Assert.Equal(1, launcher.Calls); // only the rejoin's own failed launch
+        }
+        finally { Cleanup(path); }
+    }
+
+    /// <summary>One drop cycle for an unflagged alt: attach, in game at b, out at b+1, due at b+4.</summary>
+    private static async Task DropCycleAsync(MainViewModel vm, MainViewModelTests.FakeRobloxProcessTracker tracker,
+        AccountSummary alt, DateTimeOffset b)
+    {
+        tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+        vm.ApplyPresence(P(alt.Id, true, b));
+        await vm.RunAutoRejoinAsync(b).WaitAsync(Limit);
+        vm.ApplyPresence(P(alt.Id, false, b.AddMinutes(1)));
+        await vm.RunAutoRejoinAsync(b.AddMinutes(4)).WaitAsync(Limit);
+    }
+
+    [Fact]
+    public async Task PendingRelaunches_StillCountAgainstTheHourlyBudget()
+    {
+        // Every rejoin's own launch fails; the relaunch-pending retry on the next pass succeeds.
+        var launcher = new FailingLauncher { FailWhen = call => call % 2 == 1 };
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var tray = new RecordingTray();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, tray: tray, uiDispatcher: new InlineUi());
+        try
+        {
+            await SeedMainAsync(store);
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, RobloxUserId = 2 };
+            vm.Accounts.Add(alt);
+            vm.WaitForClientExitAsync = ExitsOnStop(tracker);
+            var t0 = DateTimeOffset.UtcNow;
+
+            for (var i = 0; i < 3; i++)
+            {
+                var b = t0.AddMinutes(10 * i);
+                await DropCycleAsync(vm, tracker, alt, b);                       // stop, launch fails
+                await vm.RunAutoRejoinAsync(b.AddMinutes(4.5)).WaitAsync(Limit); // pending retry starts
+            }
+            Assert.Equal(3, stopper.StoppedAccountIds.Count);
+            Assert.Equal(6, launcher.Calls);
+            Assert.Empty(tray.Toasts);
+
+            // Fourth drop inside the hour: a Pause, not a fourth stop.
+            await DropCycleAsync(vm, tracker, alt, t0.AddMinutes(30));
+            Assert.Equal(3, stopper.StoppedAccountIds.Count);
+            Assert.Equal(6, launcher.Calls);
+            Assert.Equal("Auto-rejoin paused", Assert.Single(tray.Toasts).Title);
+        }
+        finally { Cleanup(path); }
+    }
+
+    [Fact]
+    public async Task GivingUpOnAPendingRelaunch_PausesAutoRejoin_UntilItIsTurnedBackOn()
+    {
+        // The rejoin's launch and all three pending attempts fail; after that, launches start.
+        var launcher = new FailingLauncher(failures: 1 + MainViewModel.PendingRelaunchMaxAttempts);
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var tray = new RecordingTray();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, tray: tray, uiDispatcher: new InlineUi());
+        try
+        {
+            var (alt, t0) = await StopThenFailRelaunchAsync(vm, store, tracker);
+            for (var i = 0; i < MainViewModel.PendingRelaunchMaxAttempts; i++)
+            {
+                await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5 + 0.5 * i)).WaitAsync(Limit);
+            }
+            Assert.Single(tray.Toasts); // given up
+
+            // The user launches it by hand; it drops out. Paused, so auto-rejoin leaves it be.
+            await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.DefaultGame()).WaitAsync(Limit);
+            await DropCycleAsync(vm, tracker, alt, t0.AddMinutes(10));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(20)).WaitAsync(Limit);
+            Assert.Single(stopper.StoppedAccountIds);
+
+            // Turned back on: the next due tick rejoins it.
+            await vm.ToggleAutoRejoinAsync(alt).WaitAsync(Limit);
+            await vm.ToggleAutoRejoinAsync(alt).WaitAsync(Limit);
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(21)).WaitAsync(Limit);
+            Assert.Equal(2, stopper.StoppedAccountIds.Count);
+        }
+        finally { Cleanup(path); }
+    }
+
+    [Fact]
+    public async Task AUserStopDuringTheExitWait_CancelsTheRelaunch()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            await SeedMainAsync(store);
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, RobloxUserId = 2 };
+            vm.Accounts.Add(alt);
+            // While auto-rejoin waits for the exit, the user presses Stop on the same account.
+            vm.WaitForClientExitAsync = id =>
+            {
+                vm.ExpectClose(id);
+                tracker.RaiseExited(new RobloxProcessEventArgs(id, 4242));
+                return Task.CompletedTask;
+            };
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+            var t0 = DateTimeOffset.UtcNow;
+            vm.ApplyPresence(P(alt.Id, true, t0));
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
+            vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
+
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4)).WaitAsync(Limit);
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5)).WaitAsync(Limit); // no relaunch-pending either
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(10)).WaitAsync(Limit);
+
+            Assert.Single(stopper.StoppedAccountIds);
+            Assert.Empty(launcher.Launches);
+        }
+        finally { Cleanup(path); }
+    }
+
+    [Fact]
+    public async Task TurningAutoRejoinOffDuringTheExitWait_CancelsTheRelaunch()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            await SeedMainAsync(store);
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, RobloxUserId = 2 };
+            vm.Accounts.Add(alt);
+            vm.WaitForClientExitAsync = id =>
+            {
+                tracker.RaiseExited(new RobloxProcessEventArgs(id, 4242));
+                return vm.ToggleAutoRejoinAsync(alt); // off, while the client exits
+            };
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+            var t0 = DateTimeOffset.UtcNow;
+            vm.ApplyPresence(P(alt.Id, true, t0));
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
+            vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
+
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4)).WaitAsync(Limit);
+            Assert.False(alt.AutoRejoin);
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5)).WaitAsync(Limit);
+
+            Assert.Single(stopper.StoppedAccountIds);
+            Assert.Empty(launcher.Launches);
         }
         finally { Cleanup(path); }
     }

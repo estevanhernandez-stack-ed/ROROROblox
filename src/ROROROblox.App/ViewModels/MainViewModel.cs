@@ -3662,7 +3662,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                         action.AccountId, action.GetType().Name);
                     if (action is AutoRejoinAction.Rejoin)
                     {
-                        _autoRejoin.NotifyRejoinSkipped(action.AccountId); // no-op once the launch has landed
+                        // Only a throw from BEFORE the stop reaches here (RejoinAsync settles its own
+                        // post-stop failures), so nothing was stopped: refund. No-op if not in flight.
+                        _autoRejoin.NotifyRejoinSkipped(action.AccountId);
                     }
                 }
             }
@@ -3747,6 +3749,9 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 {
                     _relaunchPending.Remove(id);
                     _log.LogWarning("Auto-rejoin {AccountId}: relaunch failed {Attempts} times; giving up until it is turned back on.", id, attempts);
+                    // Really paused, not just alerted: a later manual launch that drops out is not
+                    // auto-rejoined until the user turns it back on (ToggleAutoRejoinAsync -> Resume).
+                    _autoRejoin.Pause(id);
                     RaiseAutoRejoinPaused(id);
                 }
                 else
@@ -3819,49 +3824,67 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         var reason = action.FailedJoin ? "failed join" : "dropped out";
         var unflaggedTarget = row.JoinViaFriend ? null : target;
         ExpectClose(id);
+        var ownCloseRequest = _closeRequests.GetValueOrDefault(id);
         _instanceStopper.StopAccount(id);
-        await WaitForClientExitAsync(id).ConfigureAwait(true);
 
-        if (row.IsRunning)
-        {
-            // Never launch a second client beside one that didn't exit. Refunded, so the next
-            // tick decides again from fresh state.
-            _log.LogWarning("Auto-rejoin {AccountId}: {Reason}, but the client didn't exit after the stop; retrying next tick.", id, reason);
-            _autoRejoin.NotifyRejoinSkipped(id);
-            return;
-        }
-
-        if (row.JoinViaFriend)
-        {
-            // The main can leave its game during the up-to-15 s wait. Decide again: the client is
-            // already stopped, which is acceptable; the next due tick rejoins once the main is back.
-            if (DecideFlaggedFollow(row) is not { } follow)
-            {
-                // The client is already stopped; relaunch-pending brings it back once the main is.
-                _log.LogInformation("Auto-rejoin {AccountId}: main stopped being joinable while the client exited.", id);
-                _autoRejoin.NotifyRejoinSkipped(id);
-                MarkRelaunchPending(id, null);
-                return;
-            }
-            target = follow;
-        }
-
-        _log.LogInformation("Auto-rejoin {AccountId}: {Reason} -> {TargetKind}", id, reason, target.GetType().Name);
-        int pid;
+        // From here on the client has been stopped, so this cycle COUNTS against the hourly budget:
+        // every way out clears in-flight (ClearInFlight) and none refunds (NotifyRejoinSkipped is
+        // only for a rejoin that stopped nothing). Without that, a relaunch that lands later via
+        // relaunch-pending would let drop, stop and relaunch repeat without limit inside the hour.
         try
         {
-            pid = await LaunchAccountAsync(row, target, FlaggedLaunchMode.Refuse).ConfigureAwait(true);
+            await WaitForClientExitAsync(id).ConfigureAwait(true);
+
+            if (row.IsRunning)
+            {
+                // Never launch a second client beside one that didn't exit. The stop was issued, so
+                // it counts; the next due tick decides again from fresh state.
+                _log.LogWarning("Auto-rejoin {AccountId}: {Reason}, but the client didn't exit after the stop; retrying next tick.", id, reason);
+                _autoRejoin.ClearInFlight(id);
+                return;
+            }
+
+            // The user may have acted during the wait. A Stop (or Stop all, or Recycle) of their own
+            // is a newer close request than ours; turning auto-rejoin off is just as clear. Either
+            // way: no launch and no relaunch-pending.
+            if (_closeRequests.GetValueOrDefault(id) != ownCloseRequest || !row.AutoRejoin)
+            {
+                _log.LogInformation("Auto-rejoin {AccountId}: the user stopped it or turned auto-rejoin off during the exit wait; not relaunching.", id);
+                _autoRejoin.ClearInFlight(id);
+                return;
+            }
+
+            if (row.JoinViaFriend)
+            {
+                // The main can leave its game during the up-to-15 s wait. Decide again.
+                if (DecideFlaggedFollow(row) is not { } follow)
+                {
+                    // The client is already stopped; relaunch-pending brings it back once the main is.
+                    _log.LogInformation("Auto-rejoin {AccountId}: main stopped being joinable while the client exited.", id);
+                    _autoRejoin.ClearInFlight(id);
+                    MarkRelaunchPending(id, null);
+                    return;
+                }
+                target = follow;
+            }
+
+            _log.LogInformation("Auto-rejoin {AccountId}: {Reason} -> {TargetKind}", id, reason, target.GetType().Name);
+            var pid = await LaunchAccountAsync(row, target, FlaggedLaunchMode.Refuse).ConfigureAwait(true);
+            if (pid == 0)
+            {
+                _log.LogInformation("Auto-rejoin {AccountId}: the relaunch didn't start.", id);
+                _autoRejoin.ClearInFlight(id);
+                MarkRelaunchPending(id, unflaggedTarget);
+            }
         }
-        catch
+        catch (Exception ex)
         {
-            MarkRelaunchPending(id, unflaggedTarget); // the caller logs and refunds
-            throw;
-        }
-        if (pid == 0)
-        {
-            _log.LogInformation("Auto-rejoin {AccountId}: the relaunch didn't start.", id);
-            _autoRejoin.NotifyRejoinSkipped(id);
-            MarkRelaunchPending(id, unflaggedTarget);
+            _log.LogWarning(ex, "Auto-rejoin {AccountId}: failed after the stop.", id);
+            _autoRejoin.ClearInFlight(id); // no-op once the launch has landed
+            if (!row.IsRunning && row.AutoRejoin && _closeRequests.GetValueOrDefault(id) == ownCloseRequest)
+            {
+                MarkRelaunchPending(id, unflaggedTarget);
+            }
         }
     }
 
@@ -3909,9 +3932,18 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex) { _log.LogDebug(ex, "Reading window placement failed; using the default."); return null; }
     }
 
+    /// <summary>
+    /// How many times a close has been requested for each account (every <see cref="ExpectClose"/>
+    /// and <see cref="ExpectCloseForAll"/>). Auto-rejoin reads it before and after its exit wait:
+    /// a change means someone else asked for a stop in between. A counter rather than the
+    /// <see cref="_expectedCloses"/> stamp, because presence confirmation removes that stamp.
+    /// </summary>
+    private readonly Dictionary<Guid, long> _closeRequests = [];
+
     internal void ExpectClose(Guid accountId)
     {
         _expectedCloses[accountId] = DateTimeOffset.UtcNow;
+        _closeRequests[accountId] = _closeRequests.GetValueOrDefault(accountId) + 1;
         // A stop the user (or Recycle) asked for supersedes a relaunch auto-rejoin still owes.
         // Auto-rejoin's own stop calls this too, before it could ever mark the account pending.
         _relaunchPending.Remove(accountId);
@@ -3923,6 +3955,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         foreach (var row in AccountsSnapshot)
         {
             _expectedCloses[row.Id] = DateTimeOffset.UtcNow;
+            _closeRequests[row.Id] = _closeRequests.GetValueOrDefault(row.Id) + 1;
         }
     }
 

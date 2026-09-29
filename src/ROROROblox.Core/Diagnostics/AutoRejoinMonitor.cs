@@ -249,6 +249,31 @@ public sealed class AutoRejoinMonitor
     }
 
     /// <summary>
+    /// The view model acted on a <see cref="AutoRejoinAction.Rejoin"/> (the client was stopped) but
+    /// the relaunch didn't land, or was abandoned. Clears in-flight so later ticks can act again,
+    /// and does NOT refund: the stop happened, so the cycle counts against
+    /// <see cref="BudgetPerWindow"/>. Contrast <see cref="NotifyRejoinSkipped"/>, which is for a
+    /// rejoin that stopped nothing. A no-op when there's no outstanding rejoin.
+    /// </summary>
+    public void ClearInFlight(Guid accountId)
+    {
+        if (_states.TryGetValue(accountId, out var state))
+            state.InFlight = false;
+    }
+
+    /// <summary>
+    /// Pause auto-rejoin for this account from outside the budget rule (the view model gave up
+    /// relaunching a client it had stopped). Same state a fourth drop inside the hour produces:
+    /// skipped by every <see cref="Tick"/> until <see cref="Resume"/>. Also clears in-flight.
+    /// </summary>
+    public void Pause(Guid accountId)
+    {
+        var state = GetOrCreate(accountId);
+        state.Paused = true;
+        state.InFlight = false;
+    }
+
+    /// <summary>
     /// The user turned auto-rejoin back on for a paused account. Clears the pause and the budget
     /// history — a resume is a fresh start, not a partially refilled one.
     /// </summary>

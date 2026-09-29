@@ -169,4 +169,60 @@ public class AutoRejoinMonitorTests
         // And a "5th" never sneaks through either — a paused account is simply skipped.
         Assert.Empty(At(m, 30, C(inGame: false)));
     }
+
+    [Fact]
+    public void ClearInFlight_LetsTheNextTickActAgain_WithoutRefundingTheSlot()
+    {
+        var m = new AutoRejoinMonitor();
+
+        // Three rejoins whose client was stopped but whose relaunch didn't land: each one is
+        // cleared in-flight (so the account isn't stuck) but still counts.
+        for (var i = 0; i < 3; i++)
+        {
+            At(m, 10 * i, C(inGame: true));
+            Assert.IsType<AutoRejoinAction.Rejoin>(Assert.Single(At(m, 10 * i + 3, C(inGame: false))));
+            m.ClearInFlight(Id);
+        }
+
+        // Not stuck: the 4th drop is acted on, and as a Pause, because nothing was refunded.
+        At(m, 30, C(inGame: true));
+        Assert.IsType<AutoRejoinAction.Pause>(Assert.Single(At(m, 33, C(inGame: false))));
+    }
+
+    [Fact]
+    public void ClearInFlight_WhenNothingIsInFlight_IsANoOp()
+    {
+        var m = new AutoRejoinMonitor();
+        m.ClearInFlight(Id); // unknown id
+        At(m, 0, C(inGame: true));
+        m.ClearInFlight(Id); // known, not in flight
+        Assert.IsType<AutoRejoinAction.Rejoin>(Assert.Single(At(m, 3, C(inGame: false))));
+    }
+
+    [Fact]
+    public void Pause_SkipsTheAccountUntilResume()
+    {
+        var m = new AutoRejoinMonitor();
+        At(m, 0, C(inGame: true));
+        m.Pause(Id);
+        Assert.True(m.IsPaused(Id));
+        Assert.Empty(At(m, 10, C(inGame: false)));
+
+        m.Resume(Id);
+        Assert.False(m.IsPaused(Id));
+        At(m, 11, C(inGame: true));
+        Assert.IsType<AutoRejoinAction.Rejoin>(Assert.Single(At(m, 14, C(inGame: false))));
+    }
+
+    [Fact]
+    public void Pause_WhileARejoinIsInFlight_ClearsIt_AndStillSkips()
+    {
+        var m = new AutoRejoinMonitor();
+        At(m, 0, C(inGame: true));
+        Assert.IsType<AutoRejoinAction.Rejoin>(Assert.Single(At(m, 3, C(inGame: false))));
+        m.Pause(Id);
+        Assert.Empty(At(m, 10, C(inGame: false)));
+        m.Resume(Id);
+        Assert.IsType<AutoRejoinAction.Rejoin>(Assert.Single(At(m, 11, C(inGame: false))));
+    }
 }
