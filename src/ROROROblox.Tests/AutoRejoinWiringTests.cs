@@ -1258,6 +1258,84 @@ public class AutoRejoinWiringTests
         finally { Cleanup(path); }
     }
 
+    /// <summary>One opted-in alt that goes due at t0+4; <paramref name="duringWait"/> runs inside the exit wait.</summary>
+    private static async Task<(AccountSummary Alt, DateTimeOffset T0)> DueWithActionDuringWaitAsync(
+        MainViewModel vm, IAccountStore store, MainViewModelTests.FakeRobloxProcessTracker tracker, Action<AccountSummary> duringWait)
+    {
+        await SeedMainAsync(store);
+        var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, RobloxUserId = 2 };
+        vm.Accounts.Add(alt);
+        vm.WaitForClientExitAsync = id =>
+        {
+            tracker.RaiseExited(new RobloxProcessEventArgs(id, 4242));
+            duringWait(alt);
+            return Task.CompletedTask;
+        };
+        tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+        var t0 = DateTimeOffset.UtcNow;
+        vm.ApplyPresence(P(alt.Id, true, t0));
+        await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
+        vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
+        await vm.RunAutoRejoinAsync(t0.AddMinutes(4)).WaitAsync(Limit);
+        return (alt, t0);
+    }
+
+    // M4: the row was removed during the exit wait. Nothing to relaunch, and nothing pending.
+    [Fact]
+    public async Task RowRemovedDuringTheExitWait_IsNotRelaunched()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            var (alt, t0) = await DueWithActionDuringWaitAsync(vm, store, tracker, row => vm.Accounts.Remove(row));
+            Assert.Single(stopper.StoppedAccountIds);
+            Assert.Empty(launcher.Launches);
+
+            vm.Accounts.Add(alt); // even if it came back, nothing is owed
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5)).WaitAsync(Limit);
+            Assert.Empty(launcher.Launches);
+        }
+        finally { Cleanup(path); }
+    }
+
+    // M4: the user (or a plugin) started a launch of the same account during the exit wait.
+    [Fact]
+    public async Task ALaunchStartedDuringTheExitWait_IsNotDoubled()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            var (alt, t0) = await DueWithActionDuringWaitAsync(vm, store, tracker, row => row.IsLaunching = true);
+            Assert.Empty(launcher.Launches);
+
+            alt.IsLaunching = false; // that launch failed; auto-rejoin owes nothing
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5)).WaitAsync(Limit);
+            Assert.Empty(launcher.Launches);
+        }
+        finally { Cleanup(path); }
+    }
+
+    // M4: promoted to main during the exit wait. The main is never rejoined automatically.
+    [Fact]
+    public async Task PromotedToMainDuringTheExitWait_IsNotRelaunched()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            var (_, t0) = await DueWithActionDuringWaitAsync(vm, store, tracker, row => row.IsMain = true);
+            Assert.Empty(launcher.Launches);
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5)).WaitAsync(Limit);
+            Assert.Empty(launcher.Launches);
+        }
+        finally { Cleanup(path); }
+    }
+
     private sealed class AutoRejoinWriteFailsStore(IAccountStore inner, Func<bool> failing) : IAccountStore
     {
         public Task SetAutoRejoinAsync(Guid id, bool autoRejoin)

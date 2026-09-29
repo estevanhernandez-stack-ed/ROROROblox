@@ -3954,6 +3954,17 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             await WaitForClientExitAsync(id).ConfigureAwait(true);
 
+            // The world can move during the wait. Each of these ends the cycle: no launch, and no
+            // relaunch-pending (nothing is owed to a row that is gone, is now the main, or is
+            // already being launched by someone else).
+            if (!Accounts.Contains(row) || row.IsMain || row.IsLaunching)
+            {
+                _log.LogInformation("Auto-rejoin {AccountId}: during the exit wait the row was {What}; not relaunching.", id,
+                    !Accounts.Contains(row) ? "removed" : row.IsMain ? "made the main" : "launched by someone else");
+                _autoRejoin.ClearInFlight(id);
+                return;
+            }
+
             if (row.IsRunning)
             {
                 // Never launch a second client beside one that didn't exit. The stop was issued, so
