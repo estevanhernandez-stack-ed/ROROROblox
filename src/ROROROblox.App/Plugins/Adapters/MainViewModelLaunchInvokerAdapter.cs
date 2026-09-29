@@ -1,5 +1,4 @@
 using System.Linq;
-using System.Windows;
 using Microsoft.Extensions.Logging;
 using ROROROblox.App.Plugins;
 using ROROROblox.App.ViewModels;
@@ -176,11 +175,13 @@ internal sealed class MainViewModelLaunchInvokerAdapter : IPluginLaunchInvoker
             target = decision.Outcome == FlaggedLaunchOutcome.Follow ? decision.Target : resolved;
         }
 
-        var dispatcher = Application.Current?.Dispatcher;
-        if (dispatcher is null || dispatcher.CheckAccess())
-            await _vm.LaunchAccountForPluginAsync(summary, target).ConfigureAwait(false);
-        else
-            await dispatcher.InvokeAsync(() => _vm.LaunchAccountForPluginAsync(summary, target)).Task.Unwrap().ConfigureAwait(false);
+        // Same marshal as RequestLaunchAsync: the view model's own IUiDispatcher, a blocking Invoke
+        // that runs inline when there is no dispatcher or we are already on it. It starts the launch
+        // on the UI thread (up to its first await) and hands the task back, which is then awaited
+        // here, so this call still returns only once the launch has run.
+        Task launch = Task.CompletedTask;
+        _vm.UiDispatcher.Invoke(() => launch = _vm.LaunchAccountForPluginAsync(summary, target));
+        await launch.ConfigureAwait(false);
 
         return (true, null, 0, null); // PID arrives via SubscribeAccountLaunched
     }

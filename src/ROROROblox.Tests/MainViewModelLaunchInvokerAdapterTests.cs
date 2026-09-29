@@ -209,4 +209,43 @@ public class MainViewModelLaunchInvokerAdapterTests
         }
         finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
     }
+
+    /// <summary>Runs every marshalled action inline and records how deeply Invoke calls nest.</summary>
+    private sealed class DepthRecordingUi : IUiDispatcher
+    {
+        private int _depth;
+        public int MaxDepth { get; private set; }
+        public void Invoke(Action action)
+        {
+            _depth++;
+            MaxDepth = Math.Max(MaxDepth, _depth);
+            try { action(); } finally { _depth--; }
+        }
+    }
+
+    // M6: RequestLaunchTargetAsync marshals through the view model's own IUiDispatcher, like
+    // RequestLaunchAsync, not Application.Current's Dispatcher. The launch's own marshal (it
+    // settles relaunch-pending through the same dispatcher) then runs nested inside the outer one,
+    // and the call still awaits the launch.
+    [Fact]
+    public async Task RequestLaunchTarget_MarshalsThroughTheViewModelsDispatcher_AndAwaitsTheLaunch()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var ui = new DepthRecordingUi();
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher, uiDispatcher: ui);
+        try
+        {
+            var (_, alt) = await FlaggedLaunchTests.SeedAsync(vm, store, mainInGame: false);
+            alt.JoinViaFriend = false;
+
+            var (ok, _, _, _) = await new MainViewModelLaunchInvokerAdapter(vm)
+                .RequestLaunchTargetAsync(alt.Id.ToString(), null, followUserId: 999)
+                .WaitAsync(TimeSpan.FromSeconds(10));
+
+            Assert.True(ok);
+            Assert.Equal(new LaunchTarget.FollowFriend(999), Assert.Single(launcher.Launches)); // awaited, not queued
+            Assert.True(ui.MaxDepth >= 2, $"the launch did not start inside the view model's dispatcher (max depth {ui.MaxDepth})");
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
 }
