@@ -320,6 +320,81 @@ public class FlaggedLaunchTests
     }
 
     [Fact]
+    public async Task FlaggedAlt_PrivateServerLink_MainStillLoadingThenInGame_StillFollows()
+    {
+        // I5 regression: ApplyPresence used to null LastLaunchTarget on EVERY not-in-game
+        // presence reading, including the "still loading" one that lands while the main's own
+        // PrivateServer launch is still starting up (PresenceService polls every 25s, and a
+        // client's real first-InGame reading routinely lands after at least one such poll). That
+        // wiped the proof FlaggedLaunchRule needs before the main ever reported InGame, so once
+        // the main did land InGame in X, the alt's link asked (or refused) instead of following.
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher);
+        try
+        {
+            var (main, alt) = await SeedAsync(vm, store, mainInGame: false);
+            var privateServer = new LaunchTarget.PrivateServer(5, "clan", PrivateServerCodeKind.LinkCode);
+            await vm.LaunchAccountForPluginAsync(main, privateServer);
+            Assert.Same(privateServer, main.LastLaunchTarget);
+
+            // The main's client is still loading: presence answers not-in-game before its first
+            // InGame poll ever lands. OnlineWebsite here (not Offline) is the closer real shape,
+            // but the bug fired on either not-in-game reading.
+            vm.ApplyPresence(new AccountPresenceEventArgs(
+                main.Id, UserPresenceType.OnlineWebsite, null, null, DateTimeOffset.UtcNow));
+            Assert.Same(privateServer, main.LastLaunchTarget); // the loading poll must not clear it
+
+            // Now the client has actually joined the private server.
+            vm.ApplyPresence(new AccountPresenceEventArgs(main.Id, UserPresenceType.InGame, 5, "Game",
+                DateTimeOffset.UtcNow, new ServerInstance(5, "job-1")));
+
+            vm.FlaggedLaunchPrompt = _ => throw new InvalidOperationException("plugins never ask");
+            await vm.LaunchAccountForPluginAsync(alt, privateServer);
+
+            Assert.Equal(new LaunchTarget.FollowFriend(111), launcher.Launches[1]);
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
+    [Fact]
+    public async Task FlaggedAlt_PrivateServerLink_MainReallyLeftThenInGameElsewhere_Refuses()
+    {
+        // The other half of the same fix: a GENUINE leave (InGame -> not-in-game, the client
+        // actually exiting the private server) must still drop the stale credential, exactly as
+        // the MINOR 1 comment in ApplyPresence describes -- otherwise a later public server of the
+        // same place would wrongly inherit the old private-server proof.
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var (vm, store, _, path) = MainViewModelTests.Build(launcher);
+        try
+        {
+            var (main, alt) = await SeedAsync(vm, store, mainInGame: false);
+            var privateServer = new LaunchTarget.PrivateServer(5, "clan", PrivateServerCodeKind.LinkCode);
+            await vm.LaunchAccountForPluginAsync(main, privateServer);
+
+            // Main actually joins the private server.
+            vm.ApplyPresence(new AccountPresenceEventArgs(main.Id, UserPresenceType.InGame, 5, "Game",
+                DateTimeOffset.UtcNow, new ServerInstance(5, "job-1")));
+            Assert.Same(privateServer, main.LastLaunchTarget);
+
+            // Main genuinely leaves (InGame -> not-in-game): the real leave the comment describes.
+            vm.ApplyPresence(new AccountPresenceEventArgs(
+                main.Id, UserPresenceType.Offline, null, null, DateTimeOffset.UtcNow));
+            Assert.Null(main.LastLaunchTarget);
+
+            // Main comes back InGame in the SAME place, but now a PUBLIC server (no matching
+            // private code survives the leave).
+            vm.ApplyPresence(new AccountPresenceEventArgs(main.Id, UserPresenceType.InGame, 5, "Game",
+                DateTimeOffset.UtcNow, new ServerInstance(5, "job-PUBLIC")));
+
+            vm.FlaggedLaunchPrompt = _ => throw new InvalidOperationException("plugins never ask");
+            await vm.LaunchAccountForPluginAsync(alt, privateServer);
+
+            Assert.Single(launcher.Launches); // only the main's launch; the alt refused
+        }
+        finally { try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { } }
+    }
+
+    [Fact]
     public async Task UnflaggedAlt_IsUnchanged()
     {
         var launcher = new MainViewModelTests.RecordingSuccessLauncher();

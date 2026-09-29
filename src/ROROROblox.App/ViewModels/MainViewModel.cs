@@ -3437,11 +3437,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             }
             else
             {
-                // Capture combined active state BEFORE mutating presence so we can tell whether
-                // this poll is the moment the row went fully inactive. The game name goes with it:
-                // the dropped-out alert wants to say WHICH game the account fell out of, and the
-                // lines below have already blanked it by the time that alert is built.
+                // Capture combined active state, and whether this row was actually InGame, BEFORE
+                // mutating presence so we can tell whether this poll is the moment the row went
+                // fully inactive. The game name goes with it: the dropped-out alert wants to say
+                // WHICH game the account fell out of, and the lines below have already blanked it
+                // by the time that alert is built.
                 var wasActive = summary.InGame || summary.IsRunning;
+                var wasInGame = summary.InGame;
                 var lastGameName = summary.CurrentGameName;
 
                 summary.PresenceState = e.PresenceType;
@@ -3449,17 +3451,28 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 summary.CurrentPlaceId = null;
                 summary.CurrentServer = null;
                 summary.InGameSinceUtc = null;
-                // MINOR 1 (re-review, 2026-08-03): an account cannot join a genuinely different
-                // server — public or private — without first fully leaving whatever it was in, so
-                // presence reporting not-in-game is the deterministic point to drop a private-server
-                // LastLaunchTarget. Without this, a stale private code from an earlier launch would
-                // keep attaching itself to a later PUBLIC server of the same place (place matching
-                // alone can't catch this, and the blocking-finding fix above deliberately stopped
+                // MINOR 1 (re-review, 2026-08-03; corrected 2026-09-29 — I5): an account cannot
+                // join a genuinely different server — public or private — without first fully
+                // leaving whatever it was in, so the InGame -> not-InGame TRANSITION is the
+                // deterministic point to drop a private-server LastLaunchTarget, not merely
+                // "presence says not-in-game right now". A launching client reads not-in-game (or
+                // Offline) on every poll before its first InGame reading ever lands — PresenceService
+                // polls every 25s, and a real Roblox launch routinely takes longer than that to
+                // finish loading — so clearing unconditionally here wiped the just-recorded proof
+                // before the launched client had a chance to report InGame at all, which made a
+                // flagged alt given the SAME private-server link get refused (MainNotInThatServer)
+                // instead of following. Gating on wasInGame keeps the stale-credential guard for an
+                // actual leave: without it, a stale private code from an earlier launch would keep
+                // attaching itself to a later PUBLIC server of the same place (place matching alone
+                // can't catch this, and the blocking-finding fix above deliberately stopped
                 // requiring presence to agree on place at all). A within-session universe teleport
                 // never passes through this branch — CurrentServer just gets a fresh (place, job)
                 // while PresenceState stays InGame the whole time — so a genuinely continuous
                 // private-server session's credential survives exactly as intended.
-                summary.LastLaunchTarget = null;
+                if (wasInGame)
+                {
+                    summary.LastLaunchTarget = null;
+                }
 
                 // Presence-confirmed close: the row was active, presence now says not-in-game,
                 // and the process is also gone — both signals agree, so stamp the close. This is
