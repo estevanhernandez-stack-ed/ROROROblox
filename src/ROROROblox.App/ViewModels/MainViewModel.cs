@@ -3688,6 +3688,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         {
             return;
         }
+        if (IsBusy)
+        {
+            // A batch (Launch multiple, Squad Launch) is running: its launches, stops and anchor
+            // waits own the rows right now. Skip the whole pass, pending relaunches and the monitor
+            // tick alike. The monitor isn't ticked, so nothing is spent; the next pass decides.
+            return;
+        }
         _autoRejoinRunning = true;
         try
         {

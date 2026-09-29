@@ -1336,6 +1336,44 @@ public class AutoRejoinWiringTests
         finally { Cleanup(path); }
     }
 
+    // M5: a batch (Launch multiple, Squad Launch) is running: the whole auto-rejoin pass waits,
+    // pending relaunches and the monitor tick alike, and nothing is spent.
+    [Fact]
+    public async Task WhileABatchIsRunning_ThePassIsSkipped_AndSpendsNothing()
+    {
+        var launcher = new FailingLauncher(failures: 2);
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            var raised = new List<AlertTrigger>();
+            vm.AlertsRaised += (_, triggers) => raised.AddRange(triggers);
+            var (alt, t0) = await StopThenFailRelaunchAsync(vm, store, tracker); // relaunch pending
+            var other = new AccountSummary(await store.AddAsync("Other", "", "o")) { AutoRejoin = true, RobloxUserId = 3 };
+            vm.Accounts.Add(other);
+            tracker.RaiseAttached(new RobloxProcessEventArgs(other.Id, 4343));
+            vm.ApplyPresence(P(other.Id, true, t0.AddMinutes(4)));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4)).WaitAsync(Limit); // pending retry: failure two
+            Assert.Equal(2, launcher.Calls);
+            vm.ApplyPresence(P(other.Id, false, t0.AddMinutes(5)));
+
+            vm.IsBusy = true;
+            for (var i = 0; i < 6; i++)
+            {
+                await vm.RunAutoRejoinAsync(t0.AddMinutes(9 + i)).WaitAsync(Limit); // Other is due throughout
+            }
+            Assert.Equal(2, launcher.Calls);               // no pending retry while busy
+            Assert.Equal([alt.Id], stopper.StoppedAccountIds); // Other not stopped while busy
+            Assert.Empty(raised);
+
+            vm.IsBusy = false;
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(15)).WaitAsync(Limit);
+            Assert.Equal(4, launcher.Calls);               // the pending retry (starts), then Other's rejoin
+            Assert.Equal([alt.Id, other.Id], stopper.StoppedAccountIds);
+        }
+        finally { Cleanup(path); }
+    }
+
     private sealed class AutoRejoinWriteFailsStore(IAccountStore inner, Func<bool> failing) : IAccountStore
     {
         public Task SetAutoRejoinAsync(Guid id, bool autoRejoin)
