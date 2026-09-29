@@ -75,6 +75,10 @@ public sealed record WebhookPayload(string Title, string Body)
             // "{noun} — {metric id}". GameName still carries the metric id for this kind.
             AlertKind.MetricBreach => MetricTitle(noun, triggers[0]),
             AlertKind.MetricRecovered => MetricRecoveredTitle(noun, triggers[0]),
+            // Fixed, not "{noun} paused": the name belongs to the body (one line per account,
+            // below), and both reasons share the same title — repeated drops and a failed relaunch
+            // are the same headline, just a different sentence underneath it.
+            AlertKind.AutoRejoinPaused => ("Auto-rejoin paused", ""),
             _ => (noun, ""),
         };
 
@@ -96,6 +100,13 @@ public sealed record WebhookPayload(string Title, string Body)
                 MetricLine(Name(t), rule, t.MetricValue),
             AlertKind.MetricBreach or AlertKind.MetricRecovered when t.MetricValue is { } v =>
                 $"• {Name(t)} — {t.GameName} at {v:0.##}",
+            // Two reasons, two sentences (task 10, 2026-09-29): a trigger built without a reason
+            // (nothing in production does that — every pause site passes one) falls through to the
+            // repeated-drops wording, the more common of the two.
+            AlertKind.AutoRejoinPaused when t.PauseReason == AutoRejoinPauseReason.RelaunchFailed =>
+                $"• RoRoRo couldn't restart {Name(t)} after 3 tries. Auto-rejoin is paused for it until you turn it back on.",
+            AlertKind.AutoRejoinPaused =>
+                $"• {Name(t)} dropped out 4 times in an hour. Auto-rejoin is paused for it until you turn it back on.",
             _ => $"• {Name(t)}{(t.GameName is null ? "" : $" — {t.GameName}")}",
         }).ToList();
 

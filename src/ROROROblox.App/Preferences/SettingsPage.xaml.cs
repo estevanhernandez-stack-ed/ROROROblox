@@ -919,6 +919,11 @@ internal partial class SettingsPage : UserControl, IDisposable
         UptimeMarkMineCheck.IsChecked = uptime.Contains(AlertDestination.Mine);
         UptimeMarkClanCheck.IsChecked = uptime.Contains(AlertDestination.Clan);
         UptimeMarkPhoneCheck.IsChecked = uptime.Contains(AlertDestination.Phone);
+        var autoRejoinPaused = config.DestinationsFor(AlertKind.AutoRejoinPaused);
+        AutoRejoinPausedLocalCheck.IsChecked = autoRejoinPaused.Contains(AlertDestination.Local);
+        AutoRejoinPausedMineCheck.IsChecked = autoRejoinPaused.Contains(AlertDestination.Mine);
+        AutoRejoinPausedClanCheck.IsChecked = autoRejoinPaused.Contains(AlertDestination.Clan);
+        AutoRejoinPausedPhoneCheck.IsChecked = autoRejoinPaused.Contains(AlertDestination.Phone);
         // MetricBreach's routing lives in the same config as the four above it. Its ON/OFF switch
         // does NOT — MetricAlertsEnabledToggle is painted from IAppSettings in OnLoaded.
         var metric = config.DestinationsFor(AlertKind.MetricBreach);
@@ -986,6 +991,13 @@ internal partial class SettingsPage : UserControl, IDisposable
                 (UptimeMarkMineCheck, AlertDestination.Mine),
                 (UptimeMarkClanCheck, AlertDestination.Clan),
                 (UptimeMarkPhoneCheck, AlertDestination.Phone),
+            },
+            AlertKind.AutoRejoinPaused => new (System.Windows.Controls.CheckBox Box, AlertDestination Destination)[]
+            {
+                (AutoRejoinPausedLocalCheck, AlertDestination.Local),
+                (AutoRejoinPausedMineCheck, AlertDestination.Mine),
+                (AutoRejoinPausedClanCheck, AlertDestination.Clan),
+                (AutoRejoinPausedPhoneCheck, AlertDestination.Phone),
             },
             AlertKind.MetricBreach => new (System.Windows.Controls.CheckBox Box, AlertDestination Destination)[]
             {
@@ -1542,6 +1554,7 @@ internal partial class SettingsPage : UserControl, IDisposable
         var recycled = ReadChecks(AlertKind.Recycled);
         var uptimeMarks = ReadChecks(AlertKind.UptimeMark);
         var metricBreaches = ReadChecks(AlertKind.MetricBreach);
+        var autoRejoinPaused = ReadChecks(AlertKind.AutoRejoinPaused);
 
         try
         {
@@ -1552,6 +1565,7 @@ internal partial class SettingsPage : UserControl, IDisposable
                 RecycledDestinations = recycled,
                 UptimeMarkDestinations = uptimeMarks,
                 MetricBreachDestinations = metricBreaches,
+                AutoRejoinPausedDestinations = autoRejoinPaused,
                 // The singular fields are the rollback mirror: an older binary reads only them,
                 // and "first ticked destination" beats "silently dropped" — the destination-4
                 // hazard the phone spec records. The newer kinds need no mirror: Recycled,

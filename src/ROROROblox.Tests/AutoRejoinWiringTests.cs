@@ -1,6 +1,7 @@
 using ROROROblox.App.ViewModels;
 using ROROROblox.Core;
 using ROROROblox.Core.Diagnostics;
+using ROROROblox.Core.Discord;
 
 namespace ROROROblox.Tests;
 
@@ -16,34 +17,6 @@ public class AutoRejoinWiringTests
     private sealed class InlineUi : IUiDispatcher
     {
         public void Invoke(Action action) => action();
-    }
-
-    private sealed class RecordingTray : ITrayService
-    {
-        public readonly List<(string Title, string Message)> Toasts = [];
-        public bool ThrowOnToast;
-        public void ShowToast(string title, string message)
-        {
-            Toasts.Add((title, message));
-            if (ThrowOnToast) throw new InvalidOperationException("toast failed");
-        }
-        public void Show() { }
-        public void UpdateStatus(MultiInstanceState state) { }
-        public void Dispose() { }
-        public void SetMemoryWarning(bool active) { }
-        public void ShowMemoryWarning(string title, string message, Guid accountId) { }
-        public event EventHandler<MultiInstanceState>? StatusChanged { add { } remove { } }
-        public event EventHandler? RequestOpenMainWindow { add { } remove { } }
-        public event EventHandler? RequestToggleMutex { add { } remove { } }
-        public event EventHandler? RequestStopAllInstances { add { } remove { } }
-        public event EventHandler? RequestQuit { add { } remove { } }
-        public event EventHandler? RequestOpenDiagnostics { add { } remove { } }
-        public event EventHandler? RequestOpenLogs { add { } remove { } }
-        public event EventHandler? RequestOpenPreferences { add { } remove { } }
-        public event EventHandler? RequestOpenHistory { add { } remove { } }
-        public event EventHandler? RequestOpenPlugins { add { } remove { } }
-        public event EventHandler? RequestActivateMain { add { } remove { } }
-        public event EventHandler<Guid>? RequestFocusAccount { add { } remove { } }
     }
 
     /// <summary>
@@ -266,14 +239,15 @@ public class AutoRejoinWiringTests
     }
 
     [Fact]
-    public async Task FourthDropInAnHour_PausesWithAToast_AndTurningItBackOnResumes()
+    public async Task FourthDropInAnHour_PausesWithAnAlert_AndTurningItBackOnResumes()
     {
         var launcher = new MainViewModelTests.RecordingSuccessLauncher();
         var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
-        var tray = new RecordingTray();
-        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, tray: tray, uiDispatcher: new InlineUi());
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
         try
         {
+            var raised = new List<AlertTrigger>();
+            vm.AlertsRaised += (_, triggers) => raised.AddRange(triggers);
             await SeedMainAsync(store);
             var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, RobloxUserId = 2 };
             vm.Accounts.Add(alt);
@@ -292,9 +266,11 @@ public class AutoRejoinWiringTests
 
             Assert.Equal(3, stopper.StoppedAccountIds.Count);
             Assert.Equal(3, launcher.Launches.Count);
-            var toast = Assert.Single(tray.Toasts);
-            Assert.Equal("Auto-rejoin paused", toast.Title);
-            Assert.Equal("Alt dropped out 4 times in an hour. Auto-rejoin is paused for it.", toast.Message);
+            var trigger = Assert.Single(raised);
+            Assert.Equal(AlertKind.AutoRejoinPaused, trigger.Kind);
+            Assert.Equal(AutoRejoinPauseReason.RepeatedDrops, trigger.PauseReason);
+            Assert.Equal(alt.Id, trigger.AccountId);
+            Assert.Equal("Alt", trigger.DisplayName);
 
             await vm.ToggleAutoRejoinAsync(alt).WaitAsync(Limit); // off
             await vm.ToggleAutoRejoinAsync(alt).WaitAsync(Limit); // on again: resumes
@@ -479,10 +455,21 @@ public class AutoRejoinWiringTests
     {
         var launcher = new MainViewModelTests.RecordingSuccessLauncher();
         var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
-        var tray = new RecordingTray { ThrowOnToast = true };
-        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, tray: tray, uiDispatcher: new InlineUi());
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
         try
         {
+            // Stands in for a throwing alert subscriber (a dead tray, say). RaiseAlerts's own guard
+            // (not the per-action catch in RunAutoRejoinAsync) is what must stop this from stranding
+            // B's Rejoin, due in the same batch right after A's Pause.
+            var pauseAttempts = 0;
+            vm.AlertsRaised += (_, triggers) =>
+            {
+                if (triggers.Any(t => t.Kind == AlertKind.AutoRejoinPaused))
+                {
+                    pauseAttempts++;
+                    throw new InvalidOperationException("alert subscriber failed");
+                }
+            };
             await SeedMainAsync(store);
             var a = new AccountSummary(await store.AddAsync("AltA", "", "c")) { AutoRejoin = true, RobloxUserId = 2 };
             var b = new AccountSummary(await store.AddAsync("AltB", "", "c")) { AutoRejoin = true, RobloxUserId = 3 };
@@ -515,7 +502,7 @@ public class AutoRejoinWiringTests
             vm.ApplyPresence(P(b.Id, false, t3.AddMinutes(1)));
             await vm.RunAutoRejoinAsync(t3.AddMinutes(4)).WaitAsync(Limit);
 
-            Assert.Single(tray.Toasts); // the pause toast was attempted, and threw
+            Assert.Equal(1, pauseAttempts); // the alert was raised once, and its subscriber threw
             Assert.Equal([a.Id, a.Id, a.Id, b.Id], stopper.StoppedAccountIds);
             Assert.Equal(4, launcher.Launches.Count);
         }
@@ -527,10 +514,11 @@ public class AutoRejoinWiringTests
     {
         var launcher = new FailingLauncher();
         var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
-        var tray = new RecordingTray();
-        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, tray: tray, uiDispatcher: new InlineUi());
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
         try
         {
+            var raised = new List<AlertTrigger>();
+            vm.AlertsRaised += (_, triggers) => raised.AddRange(triggers);
             await SeedMainAsync(store);
             var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, RobloxUserId = 2 };
             vm.Accounts.Add(alt);
@@ -553,7 +541,11 @@ public class AutoRejoinWiringTests
 
             Assert.Equal(3, stopper.StoppedAccountIds.Count);
             Assert.Equal(3, launcher.Calls);
-            Assert.Equal("Auto-rejoin paused", Assert.Single(tray.Toasts).Title);
+            // Repeated drops, not a give-up: each cycle re-attached by hand before hitting the
+            // pending-relaunch attempt cap, so it's the monitor's own 4th-drop Pause that fires.
+            var trigger = Assert.Single(raised);
+            Assert.Equal(AlertKind.AutoRejoinPaused, trigger.Kind);
+            Assert.Equal(AutoRejoinPauseReason.RepeatedDrops, trigger.PauseReason);
         }
         finally { Cleanup(path); }
     }
@@ -584,10 +576,11 @@ public class AutoRejoinWiringTests
     {
         var launcher = new FailingLauncher(failures: 2);
         var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
-        var tray = new RecordingTray();
-        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, tray: tray, uiDispatcher: new InlineUi());
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
         try
         {
+            var raised = new List<AlertTrigger>();
+            vm.AlertsRaised += (_, triggers) => raised.AddRange(triggers);
             var (alt, t0) = await StopThenFailRelaunchAsync(vm, store, tracker);
             Assert.Equal(1, launcher.Calls); // the rejoin's own launch: failure one
 
@@ -602,7 +595,7 @@ public class AutoRejoinWiringTests
 
             await vm.RunAutoRejoinAsync(t0.AddMinutes(5.5)).WaitAsync(Limit);
             Assert.Equal(3, launcher.Calls); // settled
-            Assert.Empty(tray.Toasts);
+            Assert.Empty(raised); // never gave up: no AutoRejoinPaused alert
             Assert.Equal([alt.Id], stopper.StoppedAccountIds);
         }
         finally { Cleanup(path); }
@@ -613,10 +606,11 @@ public class AutoRejoinWiringTests
     {
         var launcher = new FailingLauncher();
         var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
-        var tray = new RecordingTray();
-        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, tray: tray, uiDispatcher: new InlineUi());
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
         try
         {
+            var raised = new List<AlertTrigger>();
+            vm.AlertsRaised += (_, triggers) => raised.AddRange(triggers);
             var (_, t0) = await StopThenFailRelaunchAsync(vm, store, tracker);
 
             for (var i = 0; i < MainViewModel.PendingRelaunchMaxAttempts; i++)
@@ -624,14 +618,15 @@ public class AutoRejoinWiringTests
                 await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5 + 0.5 * i)).WaitAsync(Limit);
             }
             Assert.Equal(1 + MainViewModel.PendingRelaunchMaxAttempts, launcher.Calls);
-            var toast = Assert.Single(tray.Toasts);
-            Assert.Equal("Auto-rejoin paused", toast.Title);
+            var trigger = Assert.Single(raised);
+            Assert.Equal(AlertKind.AutoRejoinPaused, trigger.Kind);
+            Assert.Equal(AutoRejoinPauseReason.RelaunchFailed, trigger.PauseReason);
 
             // Given up: no more attempts, no second alert.
             await vm.RunAutoRejoinAsync(t0.AddMinutes(7)).WaitAsync(Limit);
             await vm.RunAutoRejoinAsync(t0.AddMinutes(7.5)).WaitAsync(Limit);
             Assert.Equal(1 + MainViewModel.PendingRelaunchMaxAttempts, launcher.Calls);
-            Assert.Single(tray.Toasts);
+            Assert.Single(raised);
         }
         finally { Cleanup(path); }
     }
@@ -676,10 +671,11 @@ public class AutoRejoinWiringTests
         // Every rejoin's own launch fails; the relaunch-pending retry on the next pass succeeds.
         var launcher = new FailingLauncher { FailWhen = call => call % 2 == 1 };
         var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
-        var tray = new RecordingTray();
-        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, tray: tray, uiDispatcher: new InlineUi());
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
         try
         {
+            var raised = new List<AlertTrigger>();
+            vm.AlertsRaised += (_, triggers) => raised.AddRange(triggers);
             await SeedMainAsync(store);
             var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, RobloxUserId = 2 };
             vm.Accounts.Add(alt);
@@ -694,13 +690,15 @@ public class AutoRejoinWiringTests
             }
             Assert.Equal(3, stopper.StoppedAccountIds.Count);
             Assert.Equal(6, launcher.Calls);
-            Assert.Empty(tray.Toasts);
+            Assert.Empty(raised);
 
             // Fourth drop inside the hour: a Pause, not a fourth stop.
             await DropCycleAsync(vm, tracker, alt, t0.AddMinutes(30));
             Assert.Equal(3, stopper.StoppedAccountIds.Count);
             Assert.Equal(6, launcher.Calls);
-            Assert.Equal("Auto-rejoin paused", Assert.Single(tray.Toasts).Title);
+            var trigger = Assert.Single(raised);
+            Assert.Equal(AlertKind.AutoRejoinPaused, trigger.Kind);
+            Assert.Equal(AutoRejoinPauseReason.RepeatedDrops, trigger.PauseReason);
         }
         finally { Cleanup(path); }
     }
@@ -711,16 +709,19 @@ public class AutoRejoinWiringTests
         // The rejoin's launch and all three pending attempts fail; after that, launches start.
         var launcher = new FailingLauncher(failures: 1 + MainViewModel.PendingRelaunchMaxAttempts);
         var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
-        var tray = new RecordingTray();
-        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, tray: tray, uiDispatcher: new InlineUi());
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
         try
         {
+            var raised = new List<AlertTrigger>();
+            vm.AlertsRaised += (_, triggers) => raised.AddRange(triggers);
             var (alt, t0) = await StopThenFailRelaunchAsync(vm, store, tracker);
             for (var i = 0; i < MainViewModel.PendingRelaunchMaxAttempts; i++)
             {
                 await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5 + 0.5 * i)).WaitAsync(Limit);
             }
-            Assert.Single(tray.Toasts); // given up
+            var trigger = Assert.Single(raised); // given up
+            Assert.Equal(AlertKind.AutoRejoinPaused, trigger.Kind);
+            Assert.Equal(AutoRejoinPauseReason.RelaunchFailed, trigger.PauseReason);
 
             // The user launches it by hand; it drops out. Paused, so auto-rejoin leaves it be.
             await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.DefaultGame()).WaitAsync(Limit);

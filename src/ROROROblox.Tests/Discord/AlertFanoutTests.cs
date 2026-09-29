@@ -134,6 +134,47 @@ public class AlertFanoutTests
     }
 
     [Fact]
+    public void DestinationsFor_AutoRejoinPaused_DefaultsEmptyLikeDroppedOut()
+    {
+        // Task 10: the new kind's default is the SAME kind of default AccountDroppedOut ships with
+        // (an empty list, off until the user ticks something) rather than MetricBreach's
+        // shipped-on default — that one only exists because MetricBreach had no routing checkbox
+        // for a while. AutoRejoinPaused has one from day one.
+        Assert.Empty(new DiscordConfig().DestinationsFor(AlertKind.AutoRejoinPaused));
+
+        var config = new DiscordConfig { AutoRejoinPausedDestinations = [AlertDestination.Phone, AlertDestination.Local] };
+        Assert.Equal(
+            [AlertDestination.Phone, AlertDestination.Local],
+            config.DestinationsFor(AlertKind.AutoRejoinPaused));
+    }
+
+    [Fact]
+    public void Payload_AutoRejoinPaused_RepeatedDrops_NamesTheAccountAndSaysDropped()
+    {
+        var payload = WebhookPayload.ForAlert(AlertKind.AutoRejoinPaused,
+            [new AlertTrigger(AlertKind.AutoRejoinPaused, Guid.NewGuid(), "BaronBloxwell", "Real",
+                null, null, DateTimeOffset.UnixEpoch, PauseReason: AutoRejoinPauseReason.RepeatedDrops)]);
+
+        Assert.Equal("Auto-rejoin paused", payload.Title);
+        Assert.Contains("BaronBloxwell dropped out 4 times in an hour", payload.Body, StringComparison.Ordinal);
+        Assert.Contains("until you turn it back on", payload.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Payload_AutoRejoinPaused_RelaunchFailed_SaysRoRoRoCouldntRestartIt()
+    {
+        var payload = WebhookPayload.ForAlert(AlertKind.AutoRejoinPaused,
+            [new AlertTrigger(AlertKind.AutoRejoinPaused, Guid.NewGuid(), "BaronBloxwell", "Real",
+                null, null, DateTimeOffset.UnixEpoch, PauseReason: AutoRejoinPauseReason.RelaunchFailed)]);
+
+        // Same title as the repeated-drops case: both are "auto-rejoin paused", the account's name
+        // and the reason live in the body instead.
+        Assert.Equal("Auto-rejoin paused", payload.Title);
+        Assert.Contains("couldn't restart BaronBloxwell after 3 tries", payload.Body, StringComparison.Ordinal);
+        Assert.Contains("until you turn it back on", payload.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Payload_UptimeMark_ReadsHoursAndCount()
     {
         // The tracker's caller composes the synthetic trigger: DisplayName carries the hours,

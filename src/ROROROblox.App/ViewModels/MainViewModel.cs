@@ -3649,7 +3649,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     switch (action)
                     {
                         case AutoRejoinAction.Pause pause:
-                            RaiseAutoRejoinPaused(pause.AccountId);
+                            RaiseAutoRejoinPaused(pause.AccountId, AutoRejoinPauseReason.RepeatedDrops);
                             break;
                         case AutoRejoinAction.Rejoin rejoin:
                             await RejoinAsync(rejoin).ConfigureAwait(true);
@@ -3752,7 +3752,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     // Really paused, not just alerted: a later manual launch that drops out is not
                     // auto-rejoined until the user turns it back on (ToggleAutoRejoinAsync -> Resume).
                     _autoRejoin.Pause(id);
-                    RaiseAutoRejoinPaused(id);
+                    RaiseAutoRejoinPaused(id, AutoRejoinPauseReason.RelaunchFailed);
                 }
                 else
                 {
@@ -3776,14 +3776,21 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _log.LogInformation("Auto-rejoin {AccountId}: client stopped but not relaunched; relaunch pending.", accountId);
     }
 
-    private void RaiseAutoRejoinPaused(Guid accountId)
+    /// <summary>
+    /// Task 10: routes through the same <see cref="AlertKind"/> pipeline as every other alert
+    /// (mute, cooldown, fan-out) rather than a direct tray toast. <paramref name="reason"/> tells
+    /// <see cref="WebhookPayload"/> which of the two sentences to say — the monitor's own Pause
+    /// action (4th drop in an hour) reads differently from giving up on a pending relaunch, even
+    /// though both end the account's auto-rejoin the same way.
+    /// </summary>
+    private void RaiseAutoRejoinPaused(Guid accountId, AutoRejoinPauseReason reason)
     {
-        var name = Accounts.FirstOrDefault(a => a.Id == accountId)?.RenderName ?? string.Empty;
+        var row = Accounts.FirstOrDefault(a => a.Id == accountId);
         _log.LogInformation("Auto-rejoin {AccountId}: paused; resumes when it is turned back on.", accountId);
-        // Temporary: Task 10 replaces this toast with AlertKind.AutoRejoinPaused through RaiseAlerts.
-        _tray.ShowToast(
-            Loc.Get("Shell_AutoRejoin_PausedTitle"),
-            Loc.Format("Shell_AutoRejoin_PausedBody", name));
+        RaiseAlerts([new AlertTrigger(
+            AlertKind.AutoRejoinPaused, accountId, row?.RenderName ?? string.Empty,
+            row?.DisplayName ?? string.Empty, row?.CurrentGameName, null, DateTimeOffset.UtcNow,
+            PauseReason: reason)]);
     }
 
     private async Task RejoinAsync(AutoRejoinAction.Rejoin action)

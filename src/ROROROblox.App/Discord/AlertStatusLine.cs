@@ -68,6 +68,7 @@ public static class AlertStatusLine
             .Concat(config.DestinationsFor(AlertKind.MemoryWarning))
             .Concat(config.DestinationsFor(AlertKind.Recycled))
             .Concat(config.DestinationsFor(AlertKind.UptimeMark))
+            .Concat(config.DestinationsFor(AlertKind.AutoRejoinPaused))
             // MetricBreach counts only when the feature is switched on. Its destinations default
             // to the desktop toast so a breach has somewhere to go, which is a shipped default
             // rather than a user's choice — and this sentence reports back what the user chose.

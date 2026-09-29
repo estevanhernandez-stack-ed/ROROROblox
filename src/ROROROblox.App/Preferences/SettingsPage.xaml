@@ -396,6 +396,21 @@
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{loc:Loc SettingsPage_AutoRejoinPausesForAnAccount}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Top" Margin="0,2,0,0" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource WhiteBrush}" Width="180" />
+                                <WrapPanel Grid.Column="1">
+                                    <CheckBox x:Name="AutoRejoinPausedLocalCheck" Content="{loc:Loc SettingsPage_Desktop}" AutomationProperties.Name="{loc:Loc SettingsPage_SendAutoRejoinPausedAlertsToThe}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="AutoRejoinPausedMineCheck" Content="{loc:Loc SettingsPage_MyChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendAutoRejoinPausedAlertsToMy}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="AutoRejoinPausedClanCheck" Content="{loc:Loc SettingsPage_ClanChannel}" AutomationProperties.Name="{loc:Loc SettingsPage_SendAutoRejoinPausedAlertsToThe_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                    <CheckBox x:Name="AutoRejoinPausedPhoneCheck" Content="{loc:Loc SettingsPage_MyPhone}" AutomationProperties.Name="{loc:Loc SettingsPage_SendAutoRejoinPausedAlertsToMy_2}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource WhiteBrush}" Margin="0,2,12,2" Checked="OnAlertRoutingChanged" Unchecked="OnAlertRoutingChanged" />
+                                </WrapPanel>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="{loc:Loc SettingsPage_UptimeMarksEvery2Hours}" FontSize="{DynamicResource BodyFontSize}" VerticalAlignment="Top" Margin="0,2,0,0" TextWrapping="Wrap"
                                            Foreground="{DynamicResource WhiteBrush}" Width="180" />
                                 <WrapPanel Grid.Column="1">

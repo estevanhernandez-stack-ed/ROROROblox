@@ -48,6 +48,14 @@ public sealed record DiscordConfig
 
     public IReadOnlyList<AlertDestination> UptimeMarkDestinations { get; init; } = [];
 
+    /// <summary>Where an <see cref="AlertKind.AutoRejoinPaused"/> goes (task 10, 2026-09-29).
+    /// Defaults to the same empty list <see cref="DroppedOutDestinations"/> does — it is the same
+    /// kind of news as a drop-out, so it gets the same "off until you tick something" default
+    /// rather than <see cref="MetricBreachDestinations"/>'s shipped-on default, which exists only
+    /// because that kind had no routing checkbox at all for a while. This one ships with one from
+    /// day one.</summary>
+    public IReadOnlyList<AlertDestination> AutoRejoinPausedDestinations { get; init; } = [];
+
     /// <summary>
     /// Where a <see cref="AlertKind.MetricBreach"/> goes. The one kind that does NOT start empty,
     /// because it is the one kind with no routing checkbox: Settings paints the fan-out sets for
@@ -89,6 +97,7 @@ public sealed record DiscordConfig
             // A recovery follows its breach: anyone who wanted the bad news in a place wants the
             // good news there too, and a second settings row would be a worse question to ask.
             AlertKind.MetricRecovered => (MetricBreachDestinations, AlertDestination.None),
+            AlertKind.AutoRejoinPaused => (AutoRejoinPausedDestinations, AlertDestination.None),
             _ => ((IReadOnlyList<AlertDestination>)[], AlertDestination.None),
         };
 
