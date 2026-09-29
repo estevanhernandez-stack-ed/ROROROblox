@@ -81,9 +81,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// (<see cref="RunPendingRelaunchesAsync"/>). This is its own small budget, separate from the
     /// monitor's per-hour one: <see cref="PendingRelaunchMaxAttempts"/> failed launches, then the
     /// paused alert and the entry is dropped. A flagged account waiting for its main to come back
-    /// does not spend attempts. Cleared by any Started launch of the account, by turning
-    /// auto-rejoin off, by a user stop or recycle (<see cref="ExpectClose"/>), and when the row
-    /// is gone. UI thread only.
+    /// does not spend attempts, but gives up quietly after <see cref="FlaggedPendingMaxWait"/>.
+    /// Cleared by any Started launch of the account, by any launch attempt that isn't auto-rejoin's
+    /// own (whatever its outcome, including a flagged-dialog Cancel or a refusal), by turning
+    /// auto-rejoin off, by a user stop or recycle (<see cref="ExpectClose"/>), by Stop all
+    /// (<see cref="ExpectCloseForAll"/>), and when the row is gone. UI thread only.
     /// </summary>
     private readonly Dictionary<Guid, PendingRelaunch> _relaunchPending = [];
 
@@ -91,9 +93,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// One relaunch-pending entry. <paramref name="Target"/> is the unflagged account's rejoin
     /// target as it was worked out before the stop, so the retry still goes to the server presence
     /// last saw (presence has forgotten it by now). Null for a flagged account, which re-decides
-    /// against the main on every attempt.
+    /// against the main on every attempt. <paramref name="Since"/> is when the entry was made (the
+    /// pass clock), which the flagged wait expires against.
     /// </summary>
-    private readonly record struct PendingRelaunch(int Attempts, LaunchTarget? Target);
+    private readonly record struct PendingRelaunch(int Attempts, LaunchTarget? Target, DateTimeOffset Since);
+
+    /// <summary>How long a flagged relaunch-pending account waits for its main before it is dropped (logged, no alert).</summary>
+    internal static readonly TimeSpan FlaggedPendingMaxWait = TimeSpan.FromMinutes(30);
 
     /// <summary>Failed relaunch attempts allowed for one relaunch-pending account before the paused alert.</summary>
     internal const int PendingRelaunchMaxAttempts = 3;
@@ -1751,11 +1757,21 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// state.
     /// </summary>
     private async Task<int> LaunchAccountAsync(AccountSummary? summary, LaunchTarget? overrideTarget = null,
-        FlaggedLaunchMode flaggedMode = FlaggedLaunchMode.Ask)
+        FlaggedLaunchMode flaggedMode = FlaggedLaunchMode.Ask, bool fromAutoRejoin = false)
     {
         if (summary is null)
         {
             return 0;
+        }
+
+        if (!fromAutoRejoin)
+        {
+            // Somebody else is launching this row (the user, a batch, a plugin). Whatever comes of
+            // it (started, failed, cancelled at the flagged dialog, refused), a relaunch auto-rejoin
+            // still owes is superseded. Marshalled: plugin and recycle launches arrive off the UI
+            // thread, and the pending set is UI-thread only.
+            var launchingId = summary.Id;
+            _ui.Invoke(() => _relaunchPending.Remove(launchingId));
         }
 
         summary.IsLaunching = true;
@@ -2594,6 +2610,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         bool careful = false,
         Func<IReadOnlyList<AccountSummary>, Task>? joinDirectly = null)
     {
+        // The user launched these rows as part of a batch. Some may never reach LaunchAccountAsync
+        // (the ask below can be cancelled), so settle any relaunch auto-rejoin still owes them here.
+        foreach (var row in flagged)
+        {
+            _relaunchPending.Remove(row.Id);
+        }
+
         // A row waiting to follow can't anchor. SquadLaunchPlan already keeps the main in Direct,
         // so this is a guard, not a path.
         IReadOnlyList<AccountSummary> candidates = anchors.Where(a => !flagged.Contains(a)).ToList();
@@ -3630,7 +3653,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _autoRejoinRunning = true;
         try
         {
-            await RunPendingRelaunchesAsync().ConfigureAwait(true);
+            await RunPendingRelaunchesAsync(now).ConfigureAwait(true);
 
             // Every row, every tick: the monitor reads an absent id as a removed account.
             // PresenceKnown: a row with no user id is never polled, and a rate-limited or expired
@@ -3657,7 +3680,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                             RaiseAutoRejoinPaused(pause.AccountId, AutoRejoinPauseReason.RepeatedDrops);
                             break;
                         case AutoRejoinAction.Rejoin rejoin:
-                            await RejoinAsync(rejoin).ConfigureAwait(true);
+                            await RejoinAsync(rejoin, now).ConfigureAwait(true);
                             break;
                     }
                 }
@@ -3692,7 +3715,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     /// of each pass. An entry is dropped when its row is gone, is the main, has auto-rejoin off, or
     /// is running again (something else brought the client back). A row mid-launch is left alone.
     /// </summary>
-    private async Task RunPendingRelaunchesAsync()
+    private async Task RunPendingRelaunchesAsync(DateTimeOffset now)
     {
         if (_relaunchPending.Count == 0)
         {
@@ -3713,6 +3736,15 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             }
             if (row.IsLaunching)
             {
+                continue;
+            }
+            if (row.JoinViaFriend && now - pending.Since >= FlaggedPendingMaxWait)
+            {
+                // The main has been away too long; stop waiting for it. Quietly: the account was
+                // already stopped and nothing failed, so there is nothing to alert about.
+                _relaunchPending.Remove(id);
+                _log.LogInformation("Auto-rejoin {AccountId}: relaunch pending waited {Minutes} min for the main; dropped.",
+                    id, (int)FlaggedPendingMaxWait.TotalMinutes);
                 continue;
             }
 
@@ -3740,7 +3772,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                 var pid = 0;
                 try
                 {
-                    pid = await LaunchAccountAsync(row, target, FlaggedLaunchMode.Refuse).ConfigureAwait(true);
+                    pid = await LaunchAccountAsync(row, target, FlaggedLaunchMode.Refuse, fromAutoRejoin: true).ConfigureAwait(true);
                 }
                 catch (Exception ex)
                 {
@@ -3779,11 +3811,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private void MarkRelaunchPending(Guid accountId, LaunchTarget? unflaggedTarget)
+    private void MarkRelaunchPending(Guid accountId, LaunchTarget? unflaggedTarget, DateTimeOffset now)
     {
         if (!_relaunchPending.ContainsKey(accountId))
         {
-            _relaunchPending[accountId] = new PendingRelaunch(0, unflaggedTarget);
+            _relaunchPending[accountId] = new PendingRelaunch(0, unflaggedTarget, now);
         }
         _log.LogInformation("Auto-rejoin {AccountId}: client stopped but not relaunched; relaunch pending.", accountId);
     }
@@ -3805,7 +3837,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             PauseReason: reason)]);
     }
 
-    private async Task RejoinAsync(AutoRejoinAction.Rejoin action)
+    private async Task RejoinAsync(AutoRejoinAction.Rejoin action, DateTimeOffset now)
     {
         var id = action.AccountId;
         var row = Accounts.FirstOrDefault(a => a.Id == id);
@@ -3884,19 +3916,19 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     // The client is already stopped; relaunch-pending brings it back once the main is.
                     _log.LogInformation("Auto-rejoin {AccountId}: main stopped being joinable while the client exited.", id);
                     _autoRejoin.ClearInFlight(id);
-                    MarkRelaunchPending(id, null);
+                    MarkRelaunchPending(id, null, now);
                     return;
                 }
                 target = follow;
             }
 
             _log.LogInformation("Auto-rejoin {AccountId}: {Reason} -> {TargetKind}", id, reason, target.GetType().Name);
-            var pid = await LaunchAccountAsync(row, target, FlaggedLaunchMode.Refuse).ConfigureAwait(true);
+            var pid = await LaunchAccountAsync(row, target, FlaggedLaunchMode.Refuse, fromAutoRejoin: true).ConfigureAwait(true);
             if (pid == 0)
             {
                 _log.LogInformation("Auto-rejoin {AccountId}: the relaunch didn't start.", id);
                 _autoRejoin.ClearInFlight(id);
-                MarkRelaunchPending(id, unflaggedTarget);
+                MarkRelaunchPending(id, unflaggedTarget, now);
             }
         }
         catch (Exception ex)
@@ -3905,7 +3937,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             _autoRejoin.ClearInFlight(id); // no-op once the launch has landed
             if (!row.IsRunning && row.AutoRejoin && _closeRequests.GetValueOrDefault(id) == ownCloseRequest)
             {
-                MarkRelaunchPending(id, unflaggedTarget);
+                MarkRelaunchPending(id, unflaggedTarget, now);
             }
         }
     }
@@ -3971,7 +4003,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _relaunchPending.Remove(accountId);
     }
 
-    /// <summary>Mark every running account as expected — app shutdown closes them all at once.</summary>
+    /// <summary>Mark every running account as expected — app shutdown closes them all at once.
+    /// Stop all also means "leave them stopped": every relaunch auto-rejoin still owes is dropped.</summary>
     internal void ExpectCloseForAll()
     {
         foreach (var row in AccountsSnapshot)
@@ -3979,6 +4012,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             _expectedCloses[row.Id] = DateTimeOffset.UtcNow;
             _closeRequests[row.Id] = _closeRequests.GetValueOrDefault(row.Id) + 1;
         }
+        _relaunchPending.Clear();
     }
 
     private bool WasCloseExpected(Guid accountId, DateTimeOffset atUtc) =>

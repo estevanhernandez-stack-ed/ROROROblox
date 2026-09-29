@@ -1009,4 +1009,211 @@ public class AutoRejoinWiringTests
         }
         finally { Cleanup(path); }
     }
+
+    // I3: Stop all is the user saying "leave them stopped", including one auto-rejoin still owes.
+    [Fact]
+    public async Task PendingRelaunch_StopAll_ClearsIt()
+    {
+        var launcher = new FailingLauncher(failures: 1);
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            var (_, t0) = await StopThenFailRelaunchAsync(vm, store, tracker);
+
+            vm.ExpectCloseForAll();
+
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5)).WaitAsync(Limit);
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(5)).WaitAsync(Limit);
+            Assert.Equal(1, launcher.Calls); // only the rejoin's own failed launch
+        }
+        finally { Cleanup(path); }
+    }
+
+    // I3: a user launch that doesn't start (any outcome, not only Started) still settles the
+    // pending entry: the user has taken the row over.
+    [Fact]
+    public async Task PendingRelaunch_AUserLaunchThatFails_StillClearsIt()
+    {
+        var launcher = new FailingLauncher(failures: 2);
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            var (alt, t0) = await StopThenFailRelaunchAsync(vm, store, tracker);
+
+            vm.LaunchAccountCommand.Execute(alt); // the user's own launch: failure two
+            await FlaggedLaunchTests.UntilSettledAsync(alt);
+            Assert.Equal(2, launcher.Calls);
+
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5)).WaitAsync(Limit);
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(5)).WaitAsync(Limit);
+            Assert.Equal(2, launcher.Calls); // auto-rejoin didn't launch it again
+        }
+        finally { Cleanup(path); }
+    }
+
+    /// <summary>
+    /// A main row (offline) plus an opted-in alt whose rejoin stopped the client and whose relaunch
+    /// failed, so it is relaunch-pending. The alt is then flagged, as if the user ticked Join via
+    /// friend afterwards.
+    /// </summary>
+    private static async Task<(AccountSummary Main, AccountSummary Alt, DateTimeOffset T0)> PendingThenFlaggedAsync(
+        MainViewModel vm, IAccountStore store, MainViewModelTests.FakeRobloxProcessTracker tracker)
+    {
+        var main = new AccountSummary(await store.AddAsync("Main", "", "m")) { RobloxUserId = 1 };
+        var added = await store.AddAsync("Alt", "", "c");
+        var alt = new AccountSummary(added) { AutoRejoin = true, RobloxUserId = 2 };
+        vm.Accounts.Add(main);
+        vm.Accounts.Add(alt);
+        vm.WaitForClientExitAsync = ExitsOnStop(tracker);
+        tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+        var t0 = DateTimeOffset.UtcNow;
+        vm.ApplyPresence(P(alt.Id, true, t0));
+        await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
+        vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
+        await vm.RunAutoRejoinAsync(t0.AddMinutes(4)).WaitAsync(Limit); // stopped; relaunch fails
+        Assert.False(alt.IsRunning);
+        await store.SetJoinViaFriendAsync(added.Id, true);
+        alt.JoinViaFriend = true;
+        return (main, alt, t0);
+    }
+
+    // I3: the flagged-launch dialog's Cancel means "leave it stopped". A pending relaunch must
+    // not bring it back once the main is joinable again.
+    [Fact]
+    public async Task PendingRelaunch_FlaggedDialogCancel_ClearsIt()
+    {
+        var launcher = new FailingLauncher(failures: 1);
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            var (main, alt, t0) = await PendingThenFlaggedAsync(vm, store, tracker);
+            var asked = 0;
+            vm.FlaggedLaunchPrompt = _ => { asked++; return new FlaggedLaunchChoice.Cancel(); };
+
+            vm.LaunchAccountCommand.Execute(alt); // main offline: asks; the user cancels
+            await FlaggedLaunchTests.UntilSettledAsync(alt);
+            Assert.Equal(1, asked);
+
+            tracker.RaiseAttached(new RobloxProcessEventArgs(main.Id, 1111));
+            vm.ApplyPresence(P(main.Id, true, t0.AddMinutes(5)));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(5)).WaitAsync(Limit);
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(5.5)).WaitAsync(Limit);
+            Assert.Equal(1, launcher.Calls); // only the rejoin's own failed launch
+        }
+        finally { Cleanup(path); }
+    }
+
+    // I3: same for a batch. Launch multiple asks once for the flagged rows; Cancel leaves the
+    // pending one stopped for good.
+    [Fact]
+    public async Task PendingRelaunch_BatchCancel_ClearsIt()
+    {
+        var launcher = new FailingLauncher(failures: 1);
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            var (main, alt, t0) = await PendingThenFlaggedAsync(vm, store, tracker);
+            main.IsSelected = false;
+            alt.IsSelected = true;
+            vm.AnchorWait = TimeSpan.FromMilliseconds(50);
+            vm.InterLaunchThrottle = TimeSpan.Zero;
+            var asked = 0;
+            vm.FlaggedLaunchPrompt = _ => { asked++; return new FlaggedLaunchChoice.Cancel(); };
+
+            await vm.LaunchAllForTestAsync().WaitAsync(Limit);
+            Assert.Equal(1, asked);
+
+            tracker.RaiseAttached(new RobloxProcessEventArgs(main.Id, 1111));
+            vm.ApplyPresence(P(main.Id, true, t0.AddMinutes(5)));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(5)).WaitAsync(Limit);
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(5.5)).WaitAsync(Limit);
+            Assert.Equal(1, launcher.Calls);
+        }
+        finally { Cleanup(path); }
+    }
+
+    // I3 ruling: a flagged pending entry waiting for the main expires after 30 minutes, with a log
+    // line and no alert.
+    [Fact]
+    public async Task FlaggedPendingRelaunch_WaitingForTheMain_ExpiresAfterThirtyMinutes()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            var raised = new List<AlertTrigger>();
+            vm.AlertsRaised += (_, triggers) => raised.AddRange(triggers);
+            var main = new AccountSummary(await store.AddAsync("Main", "", "m")) { RobloxUserId = 1 };
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, JoinViaFriend = true, RobloxUserId = 2 };
+            vm.Accounts.Add(main);
+            vm.Accounts.Add(alt);
+            var t0 = DateTimeOffset.UtcNow;
+            tracker.RaiseAttached(new RobloxProcessEventArgs(main.Id, 1111));
+            vm.ApplyPresence(P(main.Id, true, t0));
+            vm.WaitForClientExitAsync = id =>
+            {
+                vm.ApplyPresence(P(main.Id, false, t0.AddMinutes(4)));
+                tracker.RaiseExited(new RobloxProcessEventArgs(id, 4242));
+                return Task.CompletedTask;
+            };
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+            vm.ApplyPresence(P(alt.Id, true, t0));
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
+            vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4)).WaitAsync(Limit); // stopped; main gone: pending
+            Assert.Empty(launcher.Launches);
+
+            // Waiting for the main, pass after pass, up to just under 30 minutes.
+            for (var m = 5.0; m < 34; m += 5)
+            {
+                await vm.RunAutoRejoinAsync(t0.AddMinutes(m)).WaitAsync(Limit);
+            }
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(34)).WaitAsync(Limit); // 30 min after the stop: expired
+
+            vm.ApplyPresence(P(main.Id, true, t0.AddMinutes(35)));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(35)).WaitAsync(Limit);
+            Assert.Empty(launcher.Launches); // dropped, not relaunched once the main is back
+            Assert.Empty(raised);             // and no alert
+        }
+        finally { Cleanup(path); }
+    }
+
+    [Fact]
+    public async Task FlaggedPendingRelaunch_MainBackInsideThirtyMinutes_StillRelaunches()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            var main = new AccountSummary(await store.AddAsync("Main", "", "m")) { RobloxUserId = 1 };
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, JoinViaFriend = true, RobloxUserId = 2 };
+            vm.Accounts.Add(main);
+            vm.Accounts.Add(alt);
+            var t0 = DateTimeOffset.UtcNow;
+            tracker.RaiseAttached(new RobloxProcessEventArgs(main.Id, 1111));
+            vm.ApplyPresence(P(main.Id, true, t0));
+            vm.WaitForClientExitAsync = id =>
+            {
+                vm.ApplyPresence(P(main.Id, false, t0.AddMinutes(4)));
+                tracker.RaiseExited(new RobloxProcessEventArgs(id, 4242));
+                return Task.CompletedTask;
+            };
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+            vm.ApplyPresence(P(alt.Id, true, t0));
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
+            vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4)).WaitAsync(Limit);
+
+            vm.ApplyPresence(P(main.Id, true, t0.AddMinutes(33)));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(33.5)).WaitAsync(Limit); // 29.5 min after the stop
+            Assert.Equal(new LaunchTarget.FollowFriend(1), Assert.Single(launcher.Launches));
+        }
+        finally { Cleanup(path); }
+    }
 }
