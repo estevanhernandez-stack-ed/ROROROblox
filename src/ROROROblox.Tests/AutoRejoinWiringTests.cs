@@ -46,19 +46,33 @@ public class AutoRejoinWiringTests
         public event EventHandler<Guid>? RequestFocusAccount { add { } remove { } }
     }
 
-    /// <summary>Every launch fails outright, so the relaunch returns pid 0.</summary>
-    private sealed class FailingLauncher : IRobloxLauncher
+    /// <summary>
+    /// The first <see cref="Failures"/> launches fail outright (pid 0); after that they start.
+    /// Defaults to failing forever.
+    /// </summary>
+    private sealed class FailingLauncher(int failures = int.MaxValue) : IRobloxLauncher
     {
+        public int Failures { get; } = failures;
         public int Calls;
+        public readonly List<LaunchTarget> Launches = [];
         public Task<LaunchResult> LaunchAsync(string cookie, LaunchTarget target, int? fpsCap = null, long? browserTrackerId = null)
         {
             Calls++;
-            return Task.FromResult<LaunchResult>(new LaunchResult.Failed(LaunchFailureKind.ProcessStartFailed, "test"));
+            Launches.Add(target);
+            return Task.FromResult<LaunchResult>(Calls <= Failures
+                ? new LaunchResult.Failed(LaunchFailureKind.ProcessStartFailed, "test")
+                : new LaunchResult.Started(9000 + Calls, DateTimeOffset.UtcNow));
         }
 
         public Task<LaunchResult> LaunchAsync(string cookie, string? placeUrl = null, int? fpsCap = null, long? browserTrackerId = null)
             => throw new NotImplementedException();
     }
+
+    /// <summary>
+    /// Every await here that could park (a pass, a wait seam, a TaskCompletionSource) is bounded by
+    /// this, so a bug fails the test instead of hanging the test host.
+    /// </summary>
+    private static readonly TimeSpan Limit = TimeSpan.FromSeconds(10);
 
     private static AccountPresenceEventArgs P(Guid id, bool inGame, DateTimeOffset at) =>
         inGame ? new(id, UserPresenceType.InGame, 5, "Game", at, new ServerInstance(5, "job-1"))
@@ -97,16 +111,16 @@ public class AutoRejoinWiringTests
             vm.WaitForClientExitAsync = ExitsOnStop(tracker);
             // Launched once through the VM into a plain Place, so the stored target is Place(5):
             // auto-rejoin targets as Recycle does, and Upgrade pins that to the server presence saw.
-            await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.Place(5));
+            await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.Place(5)).WaitAsync(Limit);
             tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
             var t0 = DateTimeOffset.UtcNow;
             vm.ApplyPresence(P(alt.Id, true, t0));
-            await vm.RunAutoRejoinAsync(t0);
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
             vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
-            await vm.RunAutoRejoinAsync(t0.AddMinutes(1));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(1)).WaitAsync(Limit);
             Assert.Empty(stopper.StoppedAccountIds);
 
-            await vm.RunAutoRejoinAsync(t0.AddMinutes(4));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4)).WaitAsync(Limit);
 
             Assert.Equal(alt.Id, Assert.Single(stopper.StoppedAccountIds));
             Assert.Equal<LaunchTarget>([new LaunchTarget.Place(5), new LaunchTarget.GameJob(5, "job-1")], launcher.Launches);
@@ -128,10 +142,10 @@ public class AutoRejoinWiringTests
             tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
             var t0 = DateTimeOffset.UtcNow;
             vm.ApplyPresence(P(alt.Id, true, t0));
-            await vm.RunAutoRejoinAsync(t0);
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
             tracker.RaiseExited(new RobloxProcessEventArgs(alt.Id, 4242));
             vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
-            await vm.RunAutoRejoinAsync(t0.AddMinutes(10));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(10)).WaitAsync(Limit);
             Assert.Empty(stopper.StoppedAccountIds);
             Assert.Empty(launcher.Launches);
         }
@@ -154,9 +168,9 @@ public class AutoRejoinWiringTests
             tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
             var t0 = DateTimeOffset.UtcNow;
             vm.ApplyPresence(P(alt.Id, true, t0));
-            await vm.RunAutoRejoinAsync(t0);
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
             vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
-            await vm.RunAutoRejoinAsync(t0.AddMinutes(4)); // no main at all: must not throw
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4)).WaitAsync(Limit); // no main at all: must not throw
             Assert.Empty(launcher.Launches);
             // The flagged pre-check refuses BEFORE anything is stopped (ruling: stop nothing).
             Assert.Empty(stopper.StoppedAccountIds);
@@ -190,7 +204,7 @@ public class AutoRejoinWiringTests
             var t0 = DateTimeOffset.UtcNow;
             vm.ApplyPresence(P(a.Id, true, t0));
             vm.ApplyPresence(P(b.Id, true, t0));
-            await vm.RunAutoRejoinAsync(t0);
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
             vm.ApplyPresence(P(a.Id, false, t0.AddMinutes(1)));
 
             // A is due; its pass parks on the client-exit wait with B still in game.
@@ -202,17 +216,17 @@ public class AutoRejoinWiringTests
             vm.ApplyPresence(P(b.Id, false, t0.AddMinutes(5)));
             var second = vm.RunAutoRejoinAsync(t0.AddMinutes(10));
             Assert.True(second.IsCompleted);
-            await second;
+            await second.WaitAsync(Limit);
             Assert.Equal([a.Id], stopper.StoppedAccountIds);
             Assert.Empty(launcher.Launches);
 
             tracker.RaiseExited(new RobloxProcessEventArgs(a.Id, 4242));
             aExited.SetResult();
-            await first;
+            await first.WaitAsync(Limit);
             Assert.Single(launcher.Launches);
 
             // B wasn't lost, only deferred: the next pass picks it up.
-            await vm.RunAutoRejoinAsync(t0.AddMinutes(11));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(11)).WaitAsync(Limit);
             Assert.Equal([a.Id, b.Id], stopper.StoppedAccountIds);
             Assert.Equal(2, launcher.Launches.Count);
         }
@@ -234,15 +248,15 @@ public class AutoRejoinWiringTests
             tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
             var t0 = DateTimeOffset.UtcNow;
             vm.ApplyPresence(P(alt.Id, true, t0));
-            await vm.RunAutoRejoinAsync(t0);
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
             vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
 
-            await vm.RunAutoRejoinAsync(t0.AddMinutes(4));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4)).WaitAsync(Limit);
             Assert.Single(stopper.StoppedAccountIds);
             Assert.Empty(launcher.Launches); // never a second client alongside the first
 
             // Skipped, not spent: the next tick (past the stop's grace window) is free to try again.
-            await vm.RunAutoRejoinAsync(t0.AddMinutes(6));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(6)).WaitAsync(Limit);
             Assert.Equal(2, stopper.StoppedAccountIds.Count);
             Assert.Empty(launcher.Launches);
         }
@@ -269,9 +283,9 @@ public class AutoRejoinWiringTests
                 var b = t0.AddMinutes(10 * i);
                 tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
                 vm.ApplyPresence(P(alt.Id, true, b));
-                await vm.RunAutoRejoinAsync(b);
+                await vm.RunAutoRejoinAsync(b).WaitAsync(Limit);
                 vm.ApplyPresence(P(alt.Id, false, b.AddMinutes(1)));
-                await vm.RunAutoRejoinAsync(b.AddMinutes(4));
+                await vm.RunAutoRejoinAsync(b.AddMinutes(4)).WaitAsync(Limit);
             }
 
             Assert.Equal(3, stopper.StoppedAccountIds.Count);
@@ -280,11 +294,11 @@ public class AutoRejoinWiringTests
             Assert.Equal("Auto-rejoin paused", toast.Title);
             Assert.Equal("Alt dropped out 4 times in an hour. Auto-rejoin is paused for it.", toast.Message);
 
-            await vm.ToggleAutoRejoinAsync(alt); // off
-            await vm.ToggleAutoRejoinAsync(alt); // on again: resumes
+            await vm.ToggleAutoRejoinAsync(alt).WaitAsync(Limit); // off
+            await vm.ToggleAutoRejoinAsync(alt).WaitAsync(Limit); // on again: resumes
             Assert.True(alt.AutoRejoin);
 
-            await vm.RunAutoRejoinAsync(t0.AddMinutes(35));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(35)).WaitAsync(Limit);
             Assert.Equal(4, stopper.StoppedAccountIds.Count);
             Assert.Equal(4, launcher.Launches.Count);
         }
@@ -307,9 +321,9 @@ public class AutoRejoinWiringTests
             tracker.RaiseAttached(new RobloxProcessEventArgs(main.Id, 4242));
             var t0 = DateTimeOffset.UtcNow;
             vm.ApplyPresence(P(main.Id, true, t0));
-            await vm.RunAutoRejoinAsync(t0);
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
             vm.ApplyPresence(P(main.Id, false, t0.AddMinutes(1)));
-            await vm.RunAutoRejoinAsync(t0.AddMinutes(10));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(10)).WaitAsync(Limit);
             Assert.Empty(stopper.StoppedAccountIds);
             Assert.Empty(launcher.Launches);
         }
@@ -335,12 +349,12 @@ public class AutoRejoinWiringTests
             vm.ApplyPresence(P(main.Id, true, t0));
 
             // Launched normally while the main was in game: the stored target is FollowFriend(main).
-            await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.DefaultGame());
+            await vm.LaunchAccountForPluginAsync(alt, new LaunchTarget.DefaultGame()).WaitAsync(Limit);
             Assert.Equal(new LaunchTarget.FollowFriend(1), Assert.Single(launcher.Launches));
 
             tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
             vm.ApplyPresence(P(alt.Id, true, t0));
-            await vm.RunAutoRejoinAsync(t0);
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
             vm.ApplyPresence(P(main.Id, false, t0.AddMinutes(1)));
             vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
 
@@ -348,14 +362,14 @@ public class AutoRejoinWiringTests
             // budget, the fourth would already have paused it.
             for (var i = 0; i < 7; i++)
             {
-                await vm.RunAutoRejoinAsync(t0.AddMinutes(4 + 0.5 * i));
+                await vm.RunAutoRejoinAsync(t0.AddMinutes(4 + 0.5 * i)).WaitAsync(Limit);
             }
             Assert.Empty(stopper.StoppedAccountIds);
             Assert.Single(launcher.Launches);
 
             // The main is back: the next tick rejoins by following it.
             vm.ApplyPresence(P(main.Id, true, t0.AddMinutes(7.5)));
-            await vm.RunAutoRejoinAsync(t0.AddMinutes(8));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(8)).WaitAsync(Limit);
             Assert.Equal([alt.Id], stopper.StoppedAccountIds);
             Assert.Equal(2, launcher.Launches.Count);
             Assert.Equal(new LaunchTarget.FollowFriend(1), launcher.Launches[1]);
@@ -364,7 +378,7 @@ public class AutoRejoinWiringTests
     }
 
     [Fact]
-    public async Task FlaggedAlt_MainLeavesDuringTheExitWait_IsNotLaunched()
+    public async Task FlaggedAlt_MainLeavesDuringTheExitWait_IsRelaunchedOnceTheMainIsBack()
     {
         var launcher = new MainViewModelTests.RecordingSuccessLauncher();
         var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
@@ -387,13 +401,31 @@ public class AutoRejoinWiringTests
             };
             tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
             vm.ApplyPresence(P(alt.Id, true, t0));
-            await vm.RunAutoRejoinAsync(t0);
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
             vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
 
-            await vm.RunAutoRejoinAsync(t0.AddMinutes(4));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4)).WaitAsync(Limit);
 
             Assert.Equal([alt.Id], stopper.StoppedAccountIds); // the main was joinable when it stopped
             Assert.Empty(launcher.Launches);                   // but not by launch time
+
+            // Relaunch pending. While the main is away, passes wait and spend no attempts: more
+            // passes than the attempt budget, and still no launch and no give-up.
+            for (var i = 0; i < MainViewModel.PendingRelaunchMaxAttempts + 2; i++)
+            {
+                await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5 + 0.5 * i)).WaitAsync(Limit);
+            }
+            Assert.Empty(launcher.Launches);
+
+            // The main is back: the next pass relaunches the (closed) alt by following it.
+            vm.ApplyPresence(P(main.Id, true, t0.AddMinutes(8)));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(8.5)).WaitAsync(Limit);
+            Assert.Equal(new LaunchTarget.FollowFriend(1), Assert.Single(launcher.Launches));
+            Assert.Equal([alt.Id], stopper.StoppedAccountIds);
+
+            // Settled: a later pass doesn't launch it again.
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(9)).WaitAsync(Limit);
+            Assert.Single(launcher.Launches);
         }
         finally { Cleanup(path); }
     }
@@ -423,9 +455,9 @@ public class AutoRejoinWiringTests
                 var at = t0.AddMinutes(10 * i);
                 tracker.RaiseAttached(new RobloxProcessEventArgs(a.Id, 4242));
                 vm.ApplyPresence(P(a.Id, true, at));
-                await vm.RunAutoRejoinAsync(at);
+                await vm.RunAutoRejoinAsync(at).WaitAsync(Limit);
                 vm.ApplyPresence(P(a.Id, false, at.AddMinutes(1)));
-                await vm.RunAutoRejoinAsync(at.AddMinutes(4));
+                await vm.RunAutoRejoinAsync(at.AddMinutes(4)).WaitAsync(Limit);
             }
             Assert.Equal([a.Id, a.Id, a.Id], stopper.StoppedAccountIds);
 
@@ -434,10 +466,10 @@ public class AutoRejoinWiringTests
             tracker.RaiseAttached(new RobloxProcessEventArgs(a.Id, 4242));
             vm.ApplyPresence(P(a.Id, true, t3));
             vm.ApplyPresence(P(b.Id, true, t3));
-            await vm.RunAutoRejoinAsync(t3);
+            await vm.RunAutoRejoinAsync(t3).WaitAsync(Limit);
             vm.ApplyPresence(P(a.Id, false, t3.AddMinutes(1)));
             vm.ApplyPresence(P(b.Id, false, t3.AddMinutes(1)));
-            await vm.RunAutoRejoinAsync(t3.AddMinutes(4));
+            await vm.RunAutoRejoinAsync(t3.AddMinutes(4)).WaitAsync(Limit);
 
             Assert.Single(tray.Toasts); // the pause toast was attempted, and threw
             Assert.Equal([a.Id, a.Id, a.Id, b.Id], stopper.StoppedAccountIds);
@@ -469,14 +501,115 @@ public class AutoRejoinWiringTests
                 var at = t0.AddMinutes(10 * i);
                 tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
                 vm.ApplyPresence(P(alt.Id, true, at));
-                await vm.RunAutoRejoinAsync(at);
+                await vm.RunAutoRejoinAsync(at).WaitAsync(Limit);
                 vm.ApplyPresence(P(alt.Id, false, at.AddMinutes(1)));
-                await vm.RunAutoRejoinAsync(at.AddMinutes(4));
+                await vm.RunAutoRejoinAsync(at.AddMinutes(4)).WaitAsync(Limit);
             }
 
             Assert.Equal(4, stopper.StoppedAccountIds.Count);
             Assert.Equal(4, launcher.Calls);
             Assert.Empty(tray.Toasts);
+        }
+        finally { Cleanup(path); }
+    }
+
+    /// <summary>
+    /// Drives one alt to a stopped-but-not-relaunched state: in game at t0, out at t0+1, due at
+    /// t0+4, stopped, and the relaunch fails (the launcher's first failure).
+    /// </summary>
+    private static async Task<(AccountSummary Alt, DateTimeOffset T0)> StopThenFailRelaunchAsync(
+        MainViewModel vm, IAccountStore store, MainViewModelTests.FakeRobloxProcessTracker tracker)
+    {
+        await SeedMainAsync(store);
+        var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, RobloxUserId = 2 };
+        vm.Accounts.Add(alt);
+        vm.WaitForClientExitAsync = ExitsOnStop(tracker);
+        tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+        var t0 = DateTimeOffset.UtcNow;
+        vm.ApplyPresence(P(alt.Id, true, t0));
+        await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
+        vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
+        await vm.RunAutoRejoinAsync(t0.AddMinutes(4)).WaitAsync(Limit);
+        Assert.False(alt.IsRunning);
+        return (alt, t0);
+    }
+
+    [Fact]
+    public async Task PendingRelaunch_FailsTwice_ThenStartsOnTheThirdPass()
+    {
+        var launcher = new FailingLauncher(failures: 2);
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var tray = new RecordingTray();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, tray: tray, uiDispatcher: new InlineUi());
+        try
+        {
+            var (alt, t0) = await StopThenFailRelaunchAsync(vm, store, tracker);
+            Assert.Equal(1, launcher.Calls); // the rejoin's own launch: failure one
+
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5)).WaitAsync(Limit);
+            Assert.Equal(2, launcher.Calls); // pending retry: failure two
+
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(5)).WaitAsync(Limit);
+            Assert.Equal(3, launcher.Calls); // pending retry: starts
+
+            // Same target every time: the one worked out before the stop.
+            Assert.All(launcher.Launches, t => Assert.Equal(launcher.Launches[0], t));
+
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(5.5)).WaitAsync(Limit);
+            Assert.Equal(3, launcher.Calls); // settled
+            Assert.Empty(tray.Toasts);
+            Assert.Equal([alt.Id], stopper.StoppedAccountIds);
+        }
+        finally { Cleanup(path); }
+    }
+
+    [Fact]
+    public async Task PendingRelaunch_ThreeFailedAttempts_RaiseThePausedAlert_AndStop()
+    {
+        var launcher = new FailingLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var tray = new RecordingTray();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, tray: tray, uiDispatcher: new InlineUi());
+        try
+        {
+            var (_, t0) = await StopThenFailRelaunchAsync(vm, store, tracker);
+
+            for (var i = 0; i < MainViewModel.PendingRelaunchMaxAttempts; i++)
+            {
+                await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5 + 0.5 * i)).WaitAsync(Limit);
+            }
+            Assert.Equal(1 + MainViewModel.PendingRelaunchMaxAttempts, launcher.Calls);
+            var toast = Assert.Single(tray.Toasts);
+            Assert.Equal("Auto-rejoin paused", toast.Title);
+
+            // Given up: no more attempts, no second alert.
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(7)).WaitAsync(Limit);
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(7.5)).WaitAsync(Limit);
+            Assert.Equal(1 + MainViewModel.PendingRelaunchMaxAttempts, launcher.Calls);
+            Assert.Single(tray.Toasts);
+        }
+        finally { Cleanup(path); }
+    }
+
+    [Fact]
+    public async Task PendingRelaunch_TurningAutoRejoinOff_ClearsIt()
+    {
+        var launcher = new FailingLauncher(failures: 1);
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            var (alt, t0) = await StopThenFailRelaunchAsync(vm, store, tracker);
+
+            // Off and straight back on before any pass runs. Were the entry only skipped while
+            // off (not cleared), this next pass would relaunch the closed client.
+            await vm.ToggleAutoRejoinAsync(alt).WaitAsync(Limit);
+            await vm.ToggleAutoRejoinAsync(alt).WaitAsync(Limit);
+            Assert.True(alt.AutoRejoin);
+
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5)).WaitAsync(Limit);
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(5)).WaitAsync(Limit);
+            Assert.Equal(1, launcher.Calls); // only the rejoin's own failed launch
         }
         finally { Cleanup(path); }
     }

@@ -73,6 +73,30 @@ internal sealed class MainViewModel : INotifyPropertyChanged
 
     /// <summary>True while a <see cref="RunAutoRejoinAsync"/> pass is running; a pass that finds it set returns at once.</summary>
     private bool _autoRejoinRunning;
+
+    /// <summary>
+    /// Relaunch-pending: accounts whose client auto-rejoin STOPPED but then did not relaunch (the
+    /// main left during the exit wait, or the launch returned 0 or threw). The monitor never acts on
+    /// a closed client, so without this they would stay closed for good. Each pass retries them
+    /// (<see cref="RunPendingRelaunchesAsync"/>). This is its own small budget, separate from the
+    /// monitor's per-hour one: <see cref="PendingRelaunchMaxAttempts"/> failed launches, then the
+    /// paused alert and the entry is dropped. A flagged account waiting for its main to come back
+    /// does not spend attempts. Cleared by any Started launch of the account, by turning
+    /// auto-rejoin off, by a user stop or recycle (<see cref="ExpectClose"/>), and when the row
+    /// is gone. UI thread only.
+    /// </summary>
+    private readonly Dictionary<Guid, PendingRelaunch> _relaunchPending = [];
+
+    /// <summary>
+    /// One relaunch-pending entry. <paramref name="Target"/> is the unflagged account's rejoin
+    /// target as it was worked out before the stop, so the retry still goes to the server presence
+    /// last saw (presence has forgotten it by now). Null for a flagged account, which re-decides
+    /// against the main on every attempt.
+    /// </summary>
+    private readonly record struct PendingRelaunch(int Attempts, LaunchTarget? Target);
+
+    /// <summary>Failed relaunch attempts allowed for one relaunch-pending account before the paused alert.</summary>
+    internal const int PendingRelaunchMaxAttempts = 3;
     private readonly ITrayService _tray;
     private readonly Notifications.IdleAlertPresenter _idleAlertPresenter;
 
@@ -1885,6 +1909,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
                     _ui.Invoke(() =>
                     {
                         _lastRejoinTargets[summary.Id] = launchedTarget;
+                        _relaunchPending.Remove(summary.Id); // any launch that starts settles a pending relaunch
                         _autoRejoin.NotifyLaunched(summary.Id, DateTimeOffset.UtcNow);
                     });
                     _log.LogInformation("Launcher pid {Pid} for {AccountId}; tracking RobloxPlayerBeta", started.Pid, summary.Id);
@@ -3604,6 +3629,8 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         _autoRejoinRunning = true;
         try
         {
+            await RunPendingRelaunchesAsync().ConfigureAwait(true);
+
             // Every row, every tick: the monitor reads an absent id as a removed account.
             var candidates = Accounts
                 .Select(r => new AutoRejoinCandidate(
@@ -3646,11 +3673,108 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Retry every relaunch-pending account (see <see cref="_relaunchPending"/>). Runs at the start
+    /// of each pass. An entry is dropped when its row is gone, is the main, has auto-rejoin off, or
+    /// is running again (something else brought the client back). A row mid-launch is left alone.
+    /// </summary>
+    private async Task RunPendingRelaunchesAsync()
+    {
+        if (_relaunchPending.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var id in _relaunchPending.Keys.ToList())
+        {
+            if (!_relaunchPending.TryGetValue(id, out var pending))
+            {
+                continue; // cleared by an earlier launch in this same loop
+            }
+            var row = Accounts.FirstOrDefault(a => a.Id == id);
+            if (row is null || row.IsMain || !row.AutoRejoin || row.IsRunning)
+            {
+                _relaunchPending.Remove(id);
+                continue;
+            }
+            if (row.IsLaunching)
+            {
+                continue;
+            }
+
+            try
+            {
+                LaunchTarget target;
+                if (row.JoinViaFriend)
+                {
+                    if (DecideFlaggedFollow(row) is not { } follow)
+                    {
+                        continue; // waiting for the main costs no attempt
+                    }
+                    target = follow;
+                }
+                else
+                {
+                    target = pending.Target
+                        ?? ServerInstanceTargeting.Upgrade(
+                            _lastRejoinTargets.GetValueOrDefault(id) ?? ResolveLaunchTarget(row.SelectedGame, null),
+                            null);
+                }
+
+                _log.LogInformation("Auto-rejoin {AccountId}: relaunch pending, attempt {Attempt} -> {TargetKind}",
+                    id, pending.Attempts + 1, target.GetType().Name);
+                var pid = 0;
+                try
+                {
+                    pid = await LaunchAccountAsync(row, target, FlaggedLaunchMode.Refuse).ConfigureAwait(true);
+                }
+                catch (Exception ex)
+                {
+                    _log.LogWarning(ex, "Auto-rejoin {AccountId}: pending relaunch threw.", id);
+                }
+                if (pid != 0)
+                {
+                    _relaunchPending.Remove(id); // the Started case already did; belt and braces
+                    continue;
+                }
+                if (!_relaunchPending.ContainsKey(id))
+                {
+                    continue; // cleared while the launch was in flight (toggle off, user stop)
+                }
+
+                var attempts = pending.Attempts + 1;
+                if (attempts >= PendingRelaunchMaxAttempts)
+                {
+                    _relaunchPending.Remove(id);
+                    _log.LogWarning("Auto-rejoin {AccountId}: relaunch failed {Attempts} times; giving up until it is turned back on.", id, attempts);
+                    RaiseAutoRejoinPaused(id);
+                }
+                else
+                {
+                    _relaunchPending[id] = pending with { Attempts = attempts };
+                }
+            }
+            catch (Exception ex)
+            {
+                // One bad entry (a throwing toast, say) never stops the rest of the pass.
+                _log.LogWarning(ex, "Auto-rejoin {AccountId}: pending relaunch handling threw.", id);
+            }
+        }
+    }
+
+    private void MarkRelaunchPending(Guid accountId, LaunchTarget? unflaggedTarget)
+    {
+        if (!_relaunchPending.ContainsKey(accountId))
+        {
+            _relaunchPending[accountId] = new PendingRelaunch(0, unflaggedTarget);
+        }
+        _log.LogInformation("Auto-rejoin {AccountId}: client stopped but not relaunched; relaunch pending.", accountId);
+    }
+
     private void RaiseAutoRejoinPaused(Guid accountId)
     {
         var name = Accounts.FirstOrDefault(a => a.Id == accountId)?.RenderName ?? string.Empty;
-        _log.LogInformation("Auto-rejoin {AccountId}: paused after {Count} drops inside {Window}; resumes when it is turned back on.",
-            accountId, AutoRejoinMonitor.BudgetPerWindow + 1, AutoRejoinMonitor.BudgetWindow);
+        _log.LogInformation("Auto-rejoin {AccountId}: paused; resumes when it is turned back on.", accountId);
         // Temporary: Task 10 replaces this toast with AlertKind.AutoRejoinPaused through RaiseAlerts.
         _tray.ShowToast(
             Loc.Get("Shell_AutoRejoin_PausedTitle"),
@@ -3693,6 +3817,7 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         }
 
         var reason = action.FailedJoin ? "failed join" : "dropped out";
+        var unflaggedTarget = row.JoinViaFriend ? null : target;
         ExpectClose(id);
         _instanceStopper.StopAccount(id);
         await WaitForClientExitAsync(id).ConfigureAwait(true);
@@ -3712,19 +3837,31 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             // already stopped, which is acceptable; the next due tick rejoins once the main is back.
             if (DecideFlaggedFollow(row) is not { } follow)
             {
-                _log.LogInformation("Auto-rejoin {AccountId}: main stopped being joinable while the client exited; retrying next tick.", id);
+                // The client is already stopped; relaunch-pending brings it back once the main is.
+                _log.LogInformation("Auto-rejoin {AccountId}: main stopped being joinable while the client exited.", id);
                 _autoRejoin.NotifyRejoinSkipped(id);
+                MarkRelaunchPending(id, null);
                 return;
             }
             target = follow;
         }
 
         _log.LogInformation("Auto-rejoin {AccountId}: {Reason} -> {TargetKind}", id, reason, target.GetType().Name);
-        var pid = await LaunchAccountAsync(row, target, FlaggedLaunchMode.Refuse).ConfigureAwait(true);
+        int pid;
+        try
+        {
+            pid = await LaunchAccountAsync(row, target, FlaggedLaunchMode.Refuse).ConfigureAwait(true);
+        }
+        catch
+        {
+            MarkRelaunchPending(id, unflaggedTarget); // the caller logs and refunds
+            throw;
+        }
         if (pid == 0)
         {
-            _log.LogInformation("Auto-rejoin {AccountId}: the relaunch didn't start; retrying next tick.", id);
+            _log.LogInformation("Auto-rejoin {AccountId}: the relaunch didn't start.", id);
             _autoRejoin.NotifyRejoinSkipped(id);
+            MarkRelaunchPending(id, unflaggedTarget);
         }
     }
 
@@ -3772,7 +3909,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex) { _log.LogDebug(ex, "Reading window placement failed; using the default."); return null; }
     }
 
-    internal void ExpectClose(Guid accountId) => _expectedCloses[accountId] = DateTimeOffset.UtcNow;
+    internal void ExpectClose(Guid accountId)
+    {
+        _expectedCloses[accountId] = DateTimeOffset.UtcNow;
+        // A stop the user (or Recycle) asked for supersedes a relaunch auto-rejoin still owes.
+        // Auto-rejoin's own stop calls this too, before it could ever mark the account pending.
+        _relaunchPending.Remove(accountId);
+    }
 
     /// <summary>Mark every running account as expected — app shutdown closes them all at once.</summary>
     internal void ExpectCloseForAll()
@@ -4177,6 +4320,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
             {
                 // Turning it back on is how a paused account resumes: fresh budget, no pause.
                 _autoRejoin.Resume(summary.Id);
+            }
+            else
+            {
+                // Off means off: a relaunch still pending from before must not fire later.
+                _relaunchPending.Remove(summary.Id);
             }
         }
         catch (Exception ex)
