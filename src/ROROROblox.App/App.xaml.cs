@@ -502,6 +502,7 @@ public partial class App : Application
         WireMainAvatarTrayPainter();
         WireRobloxWindowDecorator();
         WirePluginEventBus();
+        WirePluginAccountStopper();
         WireActivityMonitor();
         await WireMemoryWatchdogAsync();
         WireMemoryWarningTray(); // Task 8 — closes the loop WireMemoryWatchdogAsync doesn't own
@@ -2576,6 +2577,36 @@ public partial class App : Application
         catch (Exception ex)
         {
             _log?.LogDebug(ex, "Plugin event bus mutex-state raise failed; ignoring.");
+        }
+    }
+
+    /// <summary>
+    /// Task 9: a plugin stop is never mistaken for a drop.
+    /// <see cref="ROROROblox.App.Plugins.Adapters.ProcessTrackerAccountStopper"/> is registered
+    /// singleton against <see cref="ROROROblox.App.Plugins.IPluginAccountStopper"/> (see the
+    /// AddSingleton call above) — <c>PluginHostService</c> resolves that same interface, so
+    /// resolving it here too and casting back to the concrete type reaches the exact instance the
+    /// plugin host calls into, not a second one. Its <c>OnStopping</c> hook fires right before a
+    /// stop it is actually going to issue; marshalling that onto <c>MainViewModel.ExpectClose</c>
+    /// through the UI dispatcher stamps the same expected-close protection a user's own Stop button
+    /// gets, so auto-rejoin, the dropped-out alert and the relaunch-pending logic all leave the
+    /// account alone during the grace window.
+    /// </summary>
+    private void WirePluginAccountStopper()
+    {
+        if (_services is null) return;
+        try
+        {
+            var vm = _services.GetRequiredService<MainViewModel>();
+            var stopper = _services.GetRequiredService<ROROROblox.App.Plugins.IPluginAccountStopper>()
+                as ROROROblox.App.Plugins.Adapters.ProcessTrackerAccountStopper;
+            if (stopper is null) return;
+
+            stopper.OnStopping = id => vm.UiDispatcher.Invoke(() => vm.ExpectClose(id));
+        }
+        catch (Exception ex)
+        {
+            _log?.LogDebug(ex, "Plugin account stopper wiring threw; ignoring.");
         }
     }
 

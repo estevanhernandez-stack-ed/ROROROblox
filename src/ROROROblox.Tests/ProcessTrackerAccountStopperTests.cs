@@ -68,6 +68,46 @@ public class ProcessTrackerAccountStopperTests
         Assert.NotNull(stopper.InFlightFor(FakeTracker.Id));
     }
 
+    /// <summary>
+    /// Task 9: a plugin stop is never mistaken for a drop. <c>OnStopping</c> is the seam
+    /// <c>MainViewModel.ExpectClose</c> hangs off of, so it has to fire — with the right id —
+    /// before the stop sequence starts, not after.
+    /// </summary>
+    [Fact]
+    public void StopAccount_ReportsTheStopBeforeIssuingIt()
+    {
+        var tracker = new FakeTracker(exitsAfterAsks: 1);
+        Guid? reported = null;
+        var stopper = NewStopper(tracker);
+        stopper.OnStopping = g => reported = g;
+
+        Assert.True(stopper.StopAccount(FakeTracker.Id.ToString()));
+
+        Assert.Equal(FakeTracker.Id, reported);
+    }
+
+    [Fact]
+    public void OnStopping_IsNotInvoked_WhenNoStopIsIssued()
+    {
+        var reported = false;
+        var stopper = NewStopper(new FakeTracker(0) { Tracking = false });
+        stopper.OnStopping = _ => reported = true;
+
+        Assert.False(stopper.StopAccount(FakeTracker.Id.ToString()));
+        Assert.False(reported);
+    }
+
+    [Fact]
+    public void AThrowingOnStopping_IsSwallowed_AndTheStopStillProceeds()
+    {
+        var tracker = new FakeTracker(exitsAfterAsks: 1);
+        var stopper = NewStopper(tracker);
+        stopper.OnStopping = _ => throw new InvalidOperationException("subscriber blew up");
+
+        Assert.True(stopper.StopAccount(FakeTracker.Id.ToString()));
+        Assert.NotNull(stopper.InFlightFor(FakeTracker.Id));
+    }
+
     /// <summary>Injects an instant delay so the ten-second grace costs nothing in test time.</summary>
     private static ProcessTrackerAccountStopper NewStopper(FakeTracker tracker)
         => new(tracker, settings: null, log: null, delay: (_, _) => Task.CompletedTask);

@@ -1632,9 +1632,13 @@ public class MainViewModelTests
         // Started/success path (e.g. the Task 8 recycle tests below).
         public Task TrackLaunchAsync(Guid accountId, DateTimeOffset launchedAtUtc, CancellationToken ct = default) => Task.CompletedTask;
         public bool AttachExisting(Guid accountId, int pid) => throw new NotImplementedException();
-        public bool IsTracking(Guid accountId) => throw new NotImplementedException();
-        public bool RequestClose(Guid accountId) => throw new NotImplementedException();
-        public bool Kill(Guid accountId) => throw new NotImplementedException();
+
+        // Task 9: ProcessTrackerAccountStopperTests' own FakeTracker plays the "in-game client"
+        // role; this one only needs to answer honestly for the ProcessTrackerAccountStopper wiring
+        // test, which stops an account already present in AttachedMap.
+        public bool IsTracking(Guid accountId) => AttachedMap.ContainsKey(accountId);
+        public bool RequestClose(Guid accountId) => true;
+        public bool Kill(Guid accountId) => true;
     }
 
     internal sealed class FakeRobloxInstanceStopper : IRobloxInstanceStopper

@@ -771,6 +771,77 @@ public class AutoRejoinWiringTests
         finally { Cleanup(path); }
     }
 
+    /// <summary>
+    /// Task 9: a plugin stop is never mistaken for a drop. <c>ProcessTrackerAccountStopper.OnStopping</c>
+    /// calls exactly <c>vm.ExpectClose(id)</c> — the same stamp a user's own Stop button leaves — so
+    /// this test drives it the same way: directly through <c>ExpectClose</c>, standing in for the
+    /// plugin's hook, rather than through a live stopper.
+    /// </summary>
+    [Fact]
+    public async Task PluginStop_OfAnOptedInAlt_IsNotRelaunched()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, RobloxUserId = 2 };
+            vm.Accounts.Add(alt);
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+            var t0 = DateTimeOffset.UtcNow;
+            vm.ApplyPresence(P(alt.Id, true, t0));
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
+            vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(3.9)).WaitAsync(Limit); // not due yet
+
+            vm.ExpectClose(alt.Id); // what the plugin stopper's OnStopping hook does
+            await vm.RunAutoRejoinAsync(DateTimeOffset.UtcNow.AddSeconds(5)).WaitAsync(Limit); // inside the 60 s window
+
+            Assert.Empty(launcher.Launches);
+        }
+        finally { Cleanup(path); }
+    }
+
+    /// <summary>
+    /// Same shape as <see cref="AUserStopDuringTheExitWait_CancelsTheRelaunch"/>, because
+    /// <c>ExpectClose</c> does not know or care who called it — a plugin's stop gets exactly the
+    /// same cancellation of the auto-rejoin already in flight for the same account.
+    /// </summary>
+    [Fact]
+    public async Task APluginStopDuringTheExitWait_CancelsTheRelaunch()
+    {
+        var launcher = new MainViewModelTests.RecordingSuccessLauncher();
+        var stopper = new MainViewModelTests.FakeRobloxInstanceStopper();
+        var (vm, store, tracker, path) = MainViewModelTests.Build(launcher, instanceStopper: stopper, uiDispatcher: new InlineUi());
+        try
+        {
+            await SeedMainAsync(store);
+            var alt = new AccountSummary(await store.AddAsync("Alt", "", "c")) { AutoRejoin = true, RobloxUserId = 2 };
+            vm.Accounts.Add(alt);
+            // While auto-rejoin waits for the exit, a plugin stops the same account -- the path is
+            // ProcessTrackerAccountStopper.OnStopping -> vm.UiDispatcher.Invoke(() => vm.ExpectClose(id)).
+            vm.WaitForClientExitAsync = id =>
+            {
+                vm.ExpectClose(id);
+                tracker.RaiseExited(new RobloxProcessEventArgs(id, 4242));
+                return Task.CompletedTask;
+            };
+            tracker.RaiseAttached(new RobloxProcessEventArgs(alt.Id, 4242));
+            var t0 = DateTimeOffset.UtcNow;
+            vm.ApplyPresence(P(alt.Id, true, t0));
+            await vm.RunAutoRejoinAsync(t0).WaitAsync(Limit);
+            vm.ApplyPresence(P(alt.Id, false, t0.AddMinutes(1)));
+
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4)).WaitAsync(Limit);
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(4.5)).WaitAsync(Limit); // no relaunch-pending either
+            await vm.RunAutoRejoinAsync(t0.AddMinutes(10)).WaitAsync(Limit);
+
+            Assert.Single(stopper.StoppedAccountIds);
+            Assert.Empty(launcher.Launches);
+        }
+        finally { Cleanup(path); }
+    }
+
     [Fact]
     public async Task TurningAutoRejoinOffDuringTheExitWait_CancelsTheRelaunch()
     {

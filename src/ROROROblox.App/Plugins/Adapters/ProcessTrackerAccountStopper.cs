@@ -60,10 +60,28 @@ public sealed class ProcessTrackerAccountStopper : IPluginAccountStopper
     public IReadOnlyList<string> TrackedAccountIds =>
         _tracker.Attached.Keys.Select(id => id.ToString()).ToList();
 
+    /// <summary>
+    /// Fired after the checks pass and immediately before a stop is actually issued — never for a
+    /// call that returns false. This is the seam that tells <c>MainViewModel.ExpectClose</c> a
+    /// plugin, not a drop, is about to close the client, so auto-rejoin, the dropped-out alert and
+    /// the relaunch-pending logic all leave it alone during the grace window. A throwing subscriber
+    /// is logged and never blocks the stop it is here to announce.
+    /// </summary>
+    public Action<Guid>? OnStopping { get; set; }
+
     public bool StopAccount(string accountId)
     {
         if (!Guid.TryParse(accountId, out var id)) return false;
         if (!_tracker.IsTracking(id)) return false;
+
+        try
+        {
+            OnStopping?.Invoke(id);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "OnStopping hook threw for {AccountId}; stopping it anyway.", id);
+        }
 
         // Issued, not completed — the contract this interface has always documented and what the
         // caller is told ("confirm with running_status"). What was missing was never the wording;
