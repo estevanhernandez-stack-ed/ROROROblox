@@ -11,8 +11,8 @@
     "pl",
     "es"
   ],
-  "sourceCommit": "f311cf0",
-  "generatedUtc": "2026-09-23T19:36:09+00:00",
+  "sourceCommit": "f32290d",
+  "generatedUtc": "2026-09-30T00:35:42+00:00",
   "sourceOfTruth": "src/ROROROblox.App/Properties/Strings.resx (en) + docs/store/translations/ui-<culture>.json — corrections are edits to the ui-<culture>.json, then re-run gen-culture-resx.py and this script",
   "fields": [
     {
@@ -2308,6 +2308,42 @@
       }
     },
     {
+      "field": "MainWindow_RejoinIfItDropsOut",
+      "en": "Rejoin if it drops out",
+      "translations": {
+        "fr": "Rejoindre à nouveau s'il décroche",
+        "de": "Erneut beitreten, wenn es ausfällt",
+        "ru": "Перезаходить, если отвалится",
+        "pt-br": "Entrar de novo se cair",
+        "pl": "Dołącz ponownie, jeśli wypadnie",
+        "es": "Volver a unirse si se desconecta"
+      }
+    },
+    {
+      "field": "MainWindow_RejoinIfItDropsOut_2",
+      "en": "Rejoin if it drops out (on)",
+      "translations": {
+        "fr": "Rejoindre à nouveau s'il décroche (activé)",
+        "de": "Erneut beitreten, wenn es ausfällt (an)",
+        "ru": "Перезаходить, если отвалится (вкл.)",
+        "pt-br": "Entrar de novo se cair (ligado)",
+        "pl": "Dołącz ponownie, jeśli wypadnie (włączone)",
+        "es": "Volver a unirse si se desconecta (activado)"
+      }
+    },
+    {
+      "field": "MainWindow_RejoinIfItDropsOutTip",
+      "en": "When this account's client is open but out of the game for 3 minutes, RoRoRo closes it and joins again. Never used for your main.",
+      "translations": {
+        "fr": "Quand le client de ce compte est ouvert mais hors du jeu pendant 3 minutes, RoRoRo le ferme et rejoint à nouveau. Jamais utilisé pour votre compte principal.",
+        "de": "Wenn der Client dieses Kontos geöffnet, aber 3 Minuten lang nicht im Spiel ist, schließt RoRoRo ihn und tritt erneut bei. Wird nie für dein Hauptkonto verwendet.",
+        "ru": "Если клиент этого аккаунта открыт, но 3 минуты находится вне игры, RoRoRo закрывает его и заходит снова. Никогда не применяется к вашему основному аккаунту.",
+        "pt-br": "Quando o cliente desta conta está aberto, mas fora do jogo por 3 minutos, o RoRoRo o fecha e entra de novo. Nunca é usado na sua conta principal.",
+        "pl": "Gdy klient tego konta jest otwarty, ale przez 3 minuty jest poza grą, RoRoRo zamyka go i dołącza ponownie. Nigdy nie dotyczy głównego konta.",
+        "es": "Cuando el cliente de esta cuenta está abierto pero fuera del juego durante 3 minutos, RoRoRo lo cierra y vuelve a unirse. Nunca se usa para tu cuenta principal."
+      }
+    },
+    {
       "field": "MainWindow_Remove",
       "en": "Remove",
       "translations": {
@@ -3496,6 +3532,18 @@
       }
     },
     {
+      "field": "SettingsPage_AutoRejoinPausesForAnAccount",
+      "en": "Auto-rejoin pauses for an account",
+      "translations": {
+        "fr": "La reconnexion automatique est suspendue pour un compte",
+        "de": "Automatischer Neubeitritt pausiert für ein Konto",
+        "ru": "Автоперезаход аккаунта приостанавливается",
+        "pt-br": "A reentrada automática é pausada para uma conta",
+        "pl": "Automatyczne ponowne dołączanie konta wstrzymane",
+        "es": "El reingreso automático se pausa para una cuenta"
+      }
+    },
+    {
       "field": "SettingsPage_AWholeNumberFrom256",
       "en": "A whole number from 256 to 65536, or blank to let RoRoRo pick.",
       "translations": {
@@ -4393,6 +4441,54 @@
         "pt-br": "Enviar uma notificação de teste para o meu celular",
         "pl": "Wyślij testowe powiadomienie na mój telefon",
         "es": "Enviar una notificación de prueba a mi teléfono"
+      }
+    },
+    {
+      "field": "SettingsPage_SendAutoRejoinPausedAlertsToMy",
+      "en": "Send auto-rejoin-paused alerts to my Discord channel",
+      "translations": {
+        "fr": "Envoyer les alertes de reconnexion suspendue à mon canal Discord",
+        "de": "Neubeitritt-Pause-Benachrichtigungen an meinen Discord-Kanal senden",
+        "ru": "Отправлять оповещения о паузе автоперезахода в мой канал Discord",
+        "pt-br": "Enviar alertas de reentrada pausada para o meu canal do Discord",
+        "pl": "Wysyłaj alerty o wstrzymaniu ponownego dołączania na mój kanał Discord",
+        "es": "Enviar alertas de reingreso pausado a mi canal de Discord"
+      }
+    },
+    {
+      "field": "SettingsPage_SendAutoRejoinPausedAlertsToMy_2",
+      "en": "Send auto-rejoin-paused alerts to my phone",
+      "translations": {
+        "fr": "Envoyer les alertes de reconnexion suspendue à mon téléphone",
+        "de": "Neubeitritt-Pause-Benachrichtigungen an mein Handy senden",
+        "ru": "Отправлять оповещения о паузе автоперезахода на мой телефон",
+        "pt-br": "Enviar alertas de reentrada pausada para o meu celular",
+        "pl": "Wysyłaj alerty o wstrzymaniu ponownego dołączania na mój telefon",
+        "es": "Enviar alertas de reingreso pausado a mi teléfono"
+      }
+    },
+    {
+      "field": "SettingsPage_SendAutoRejoinPausedAlertsToThe",
+      "en": "Send auto-rejoin-paused alerts to the desktop",
+      "translations": {
+        "fr": "Envoyer les alertes de reconnexion suspendue au bureau",
+        "de": "Neubeitritt-Pause-Benachrichtigungen an den Desktop senden",
+        "ru": "Отправлять оповещения о паузе автоперезахода на рабочий стол",
+        "pt-br": "Enviar alertas de reentrada pausada para a área de trabalho",
+        "pl": "Wysyłaj alerty o wstrzymaniu ponownego dołączania na pulpit",
+        "es": "Enviar alertas de reingreso pausado al escritorio"
+      }
+    },
+    {
+      "field": "SettingsPage_SendAutoRejoinPausedAlertsToThe_2",
+      "en": "Send auto-rejoin-paused alerts to the clan Discord channel",
+      "translations": {
+        "fr": "Envoyer les alertes de reconnexion suspendue au canal Discord du clan",
+        "de": "Neubeitritt-Pause-Benachrichtigungen an den Clan-Discord-Kanal senden",
+        "ru": "Отправлять оповещения о паузе автоперезахода в канал Discord клана",
+        "pt-br": "Enviar alertas de reentrada pausada para o canal do clã no Discord",
+        "pl": "Wysyłaj alerty o wstrzymaniu ponownego dołączania na kanał Discord klanu",
+        "es": "Enviar alertas de reingreso pausado al canal de Discord del clan"
       }
     },
     {
@@ -8161,6 +8257,18 @@
         "pt-br": "Não foi possível salvar a entrada via amigo: {0}",
         "pl": "Nie udało się zapisać dołączania przez znajomego: {0}",
         "es": "No se pudo guardar la unión a través de un amigo: {0}"
+      }
+    },
+    {
+      "field": "Shell_Msg_CouldntSaveAutoRejoin",
+      "en": "Couldn't save the rejoin setting: {0}",
+      "translations": {
+        "fr": "Impossible d'enregistrer le réglage de reconnexion : {0}",
+        "de": "Die Neubeitritt-Einstellung konnte nicht gespeichert werden: {0}",
+        "ru": "Не удалось сохранить настройку перезахода: {0}",
+        "pt-br": "Não foi possível salvar a configuração de reentrada: {0}",
+        "pl": "Nie udało się zapisać ustawienia ponownego dołączania: {0}",
+        "es": "No se pudo guardar el ajuste de reingreso: {0}"
       }
     },
     {
@@ -12745,6 +12853,114 @@
         "pt-br": "Problemas do próprio Roblox e o que fazer a respeito",
         "pl": "Problemy w samym Roblox i co z nimi zrobić",
         "es": "Problemas del propio Roblox y qué hacer al respecto"
+      }
+    },
+    {
+      "field": "FlaggedLaunchWindow_Title",
+      "en": "Join through your main",
+      "translations": {
+        "fr": "Rejoindre via votre compte principal",
+        "de": "Über dein Hauptkonto beitreten",
+        "ru": "Присоединиться через основной аккаунт",
+        "pt-br": "Entrar via sua conta principal",
+        "pl": "Dołącz przez główne konto",
+        "es": "Unirse mediante tu cuenta principal"
+      }
+    },
+    {
+      "field": "Shell_FlaggedLaunch_Body",
+      "en": "{0} joins through your main, and your main isn't in a game yet.",
+      "translations": {
+        "fr": "{0} rejoint via votre compte principal, qui n'est pas encore dans un jeu.",
+        "de": "{0} tritt über dein Hauptkonto bei, das noch in keinem Spiel ist.",
+        "ru": "{0} присоединяется через ваш основной аккаунт, а он ещё не в игре.",
+        "pt-br": "{0} entra via sua conta principal, que ainda não está em um jogo.",
+        "pl": "{0} dołącza przez Twoje główne konto, które nie jest jeszcze w grze.",
+        "es": "{0} se une mediante tu cuenta principal, que aún no está en un juego."
+      }
+    },
+    {
+      "field": "Shell_FlaggedLaunch_BodyMany",
+      "en": "{0} join through your main, and your main isn't in a game yet.",
+      "translations": {
+        "fr": "{0} rejoignent via votre compte principal, qui n'est pas encore dans un jeu.",
+        "de": "{0} treten über dein Hauptkonto bei, das noch in keinem Spiel ist.",
+        "ru": "{0} присоединяются через ваш основной аккаунт, а он ещё не в игре.",
+        "pt-br": "{0} entram via sua conta principal, que ainda não está em um jogo.",
+        "pl": "{0} dołączają przez Twoje główne konto, które nie jest jeszcze w grze.",
+        "es": "{0} se unen mediante tu cuenta principal, que aún no está en un juego."
+      }
+    },
+    {
+      "field": "FlaggedLaunchWindow_FollowAnother",
+      "en": "Follow another account",
+      "translations": {
+        "fr": "Suivre un autre compte",
+        "de": "Einem anderen Konto folgen",
+        "ru": "Присоединиться к другому аккаунту",
+        "pt-br": "Seguir outra conta",
+        "pl": "Dołącz do innego konta",
+        "es": "Seguir a otra cuenta"
+      }
+    },
+    {
+      "field": "FlaggedLaunchWindow_Follow",
+      "en": "Follow",
+      "translations": {
+        "fr": "Suivre",
+        "de": "Folgen",
+        "ru": "Присоединиться",
+        "pt-br": "Seguir",
+        "pl": "Dołącz",
+        "es": "Seguir"
+      }
+    },
+    {
+      "field": "FlaggedLaunchWindow_NobodyJoinable",
+      "en": "None of your accounts is in a game you can join right now.",
+      "translations": {
+        "fr": "Aucun de vos comptes n'est actuellement dans un jeu que vous puissiez rejoindre.",
+        "de": "Keines deiner Konten ist gerade in einem Spiel, dem du beitreten kannst.",
+        "ru": "Сейчас ни один из ваших аккаунтов не в игре, к которой можно присоединиться.",
+        "pt-br": "Nenhuma das suas contas está agora em um jogo em que você possa entrar.",
+        "pl": "Żadne z Twoich kont nie jest teraz w grze, do której można dołączyć.",
+        "es": "Ninguna de tus cuentas está ahora en un juego al que puedas unirte."
+      }
+    },
+    {
+      "field": "FlaggedLaunchWindow_ItsFixed",
+      "en": "It's fixed, join directly",
+      "translations": {
+        "fr": "C'est réglé, rejoindre directement",
+        "de": "Behoben, direkt beitreten",
+        "ru": "Исправлено, присоединиться напрямую",
+        "pt-br": "Resolvido, entrar direto",
+        "pl": "Naprawione, dołącz bezpośrednio",
+        "es": "Solucionado, unirse directamente"
+      }
+    },
+    {
+      "field": "FlaggedLaunchWindow_Cancel",
+      "en": "Cancel",
+      "translations": {
+        "fr": "Annuler",
+        "de": "Abbrechen",
+        "ru": "Отмена",
+        "pt-br": "Cancelar",
+        "pl": "Anuluj",
+        "es": "Cancelar"
+      }
+    },
+    {
+      "field": "Shell_Msg_FlaggedLeftStopped",
+      "en": "{0} left stopped: nobody they can follow is in a game.",
+      "translations": {
+        "fr": "Aucun lancement pour {0} : personne à suivre n'est dans un jeu.",
+        "de": "Kein Start für {0}: Niemand, dem gefolgt werden kann, ist in einem Spiel.",
+        "ru": "Не запущено: {0}. Никого, к кому можно присоединиться, нет в игре.",
+        "pt-br": "{0}: sem iniciar, ninguém que possa ser seguido está em um jogo.",
+        "pl": "{0}: nie uruchomiono, bo nikt, do kogo można dołączyć, nie jest w grze.",
+        "es": "{0}: sin iniciar, no hay nadie en un juego a quien seguir."
       }
     }
   ]

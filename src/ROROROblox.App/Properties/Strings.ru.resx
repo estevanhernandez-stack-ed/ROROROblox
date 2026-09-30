@@ -590,6 +590,15 @@
   <data name="MainWindow_RecycleCloseAndRelaunchThis" xml:space="preserve">
     <value>Recycle — закрыть и перезапустить этот клиент обратно на сервер, где он сейчас, и вернуть утёкшую память.</value>
   </data>
+  <data name="MainWindow_RejoinIfItDropsOut" xml:space="preserve">
+    <value>Перезаходить, если отвалится</value>
+  </data>
+  <data name="MainWindow_RejoinIfItDropsOut_2" xml:space="preserve">
+    <value>Перезаходить, если отвалится (вкл.)</value>
+  </data>
+  <data name="MainWindow_RejoinIfItDropsOutTip" xml:space="preserve">
+    <value>Если клиент этого аккаунта открыт, но 3 минуты находится вне игры, RoRoRo закрывает его и заходит снова. Никогда не применяется к вашему основному аккаунту.</value>
+  </data>
   <data name="MainWindow_Remove" xml:space="preserve">
     <value>Удалить</value>
   </data>
@@ -887,6 +896,9 @@
   <data name="SettingsPage_AssignEveryFakeNameAnd" xml:space="preserve">
     <value>Назначить новое вымышленное имя и аватар каждому.</value>
   </data>
+  <data name="SettingsPage_AutoRejoinPausesForAnAccount" xml:space="preserve">
+    <value>Автоперезаход аккаунта приостанавливается</value>
+  </data>
   <data name="SettingsPage_AWholeNumberFrom256" xml:space="preserve">
     <value>Целое число от 256 до 65536 или пусто, чтобы RoRoRo выбрал сам.</value>
   </data>
@@ -1111,6 +1123,18 @@
   </data>
   <data name="SettingsPage_SendATestNotificationTo" xml:space="preserve">
     <value>Отправить тестовое уведомление на мой телефон</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToMy" xml:space="preserve">
+    <value>Отправлять оповещения о паузе автоперезахода в мой канал Discord</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToMy_2" xml:space="preserve">
+    <value>Отправлять оповещения о паузе автоперезахода на мой телефон</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToThe" xml:space="preserve">
+    <value>Отправлять оповещения о паузе автоперезахода на рабочий стол</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToThe_2" xml:space="preserve">
+    <value>Отправлять оповещения о паузе автоперезахода в канал Discord клана</value>
   </data>
   <data name="SettingsPage_SendDropOutAlertsTo" xml:space="preserve">
     <value>Отправлять оповещения об отвале на рабочий стол</value>
@@ -2055,6 +2079,9 @@
   </data>
   <data name="Shell_Msg_CouldntSaveJoinViaFriend" xml:space="preserve">
     <value>Не удалось сохранить присоединение через друга: {0}</value>
+  </data>
+  <data name="Shell_Msg_CouldntSaveAutoRejoin" xml:space="preserve">
+    <value>Не удалось сохранить настройку перезахода: {0}</value>
   </data>
   <data name="Shell_Msg_SourceExpired" xml:space="preserve">
     <value>У {0} истекла сессия — сначала пройдите повторную авторизацию.</value>
@@ -3215,5 +3242,32 @@ RoRoRo спрашивает про обводку кнопок только дл
   </data>
   <data name="MainWindow_KnownRobloxIssuesTooltip" xml:space="preserve">
     <value>Проблемы в самом Roblox и что с ними делать</value>
+  </data>
+  <data name="FlaggedLaunchWindow_Title" xml:space="preserve">
+    <value>Присоединиться через основной аккаунт</value>
+  </data>
+  <data name="Shell_FlaggedLaunch_Body" xml:space="preserve">
+    <value>{0} присоединяется через ваш основной аккаунт, а он ещё не в игре.</value>
+  </data>
+  <data name="Shell_FlaggedLaunch_BodyMany" xml:space="preserve">
+    <value>{0} присоединяются через ваш основной аккаунт, а он ещё не в игре.</value>
+  </data>
+  <data name="FlaggedLaunchWindow_FollowAnother" xml:space="preserve">
+    <value>Присоединиться к другому аккаунту</value>
+  </data>
+  <data name="FlaggedLaunchWindow_Follow" xml:space="preserve">
+    <value>Присоединиться</value>
+  </data>
+  <data name="FlaggedLaunchWindow_NobodyJoinable" xml:space="preserve">
+    <value>Сейчас ни один из ваших аккаунтов не в игре, к которой можно присоединиться.</value>
+  </data>
+  <data name="FlaggedLaunchWindow_ItsFixed" xml:space="preserve">
+    <value>Исправлено, присоединиться напрямую</value>
+  </data>
+  <data name="FlaggedLaunchWindow_Cancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="Shell_Msg_FlaggedLeftStopped" xml:space="preserve">
+    <value>Не запущено: {0}. Никого, к кому можно присоединиться, нет в игре.</value>
   </data>
 </root>

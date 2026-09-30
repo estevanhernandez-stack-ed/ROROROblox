@@ -590,6 +590,15 @@
   <data name="MainWindow_RecycleCloseAndRelaunchThis" xml:space="preserve">
     <value>Recycle — feche e reinicie este cliente de volta no servidor em que está agora, e recupere a memória vazada.</value>
   </data>
+  <data name="MainWindow_RejoinIfItDropsOut" xml:space="preserve">
+    <value>Entrar de novo se cair</value>
+  </data>
+  <data name="MainWindow_RejoinIfItDropsOut_2" xml:space="preserve">
+    <value>Entrar de novo se cair (ligado)</value>
+  </data>
+  <data name="MainWindow_RejoinIfItDropsOutTip" xml:space="preserve">
+    <value>Quando o cliente desta conta está aberto, mas fora do jogo por 3 minutos, o RoRoRo o fecha e entra de novo. Nunca é usado na sua conta principal.</value>
+  </data>
   <data name="MainWindow_Remove" xml:space="preserve">
     <value>Remover</value>
   </data>
@@ -887,6 +896,9 @@
   <data name="SettingsPage_AssignEveryFakeNameAnd" xml:space="preserve">
     <value>Atribua a cada nome e avatar falso uma nova escolha.</value>
   </data>
+  <data name="SettingsPage_AutoRejoinPausesForAnAccount" xml:space="preserve">
+    <value>A reentrada automática é pausada para uma conta</value>
+  </data>
   <data name="SettingsPage_AWholeNumberFrom256" xml:space="preserve">
     <value>Um número inteiro de 256 a 65536, ou em branco para deixar o RoRoRo escolher.</value>
   </data>
@@ -1111,6 +1123,18 @@
   </data>
   <data name="SettingsPage_SendATestNotificationTo" xml:space="preserve">
     <value>Enviar uma notificação de teste para o meu celular</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToMy" xml:space="preserve">
+    <value>Enviar alertas de reentrada pausada para o meu canal do Discord</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToMy_2" xml:space="preserve">
+    <value>Enviar alertas de reentrada pausada para o meu celular</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToThe" xml:space="preserve">
+    <value>Enviar alertas de reentrada pausada para a área de trabalho</value>
+  </data>
+  <data name="SettingsPage_SendAutoRejoinPausedAlertsToThe_2" xml:space="preserve">
+    <value>Enviar alertas de reentrada pausada para o canal do clã no Discord</value>
   </data>
   <data name="SettingsPage_SendDropOutAlertsTo" xml:space="preserve">
     <value>Enviar alertas de queda para a área de trabalho</value>
@@ -2055,6 +2079,9 @@ Você vai precisar fazer login de novo para adicioná-la outra vez.</value>
   </data>
   <data name="Shell_Msg_CouldntSaveJoinViaFriend" xml:space="preserve">
     <value>Não foi possível salvar a entrada via amigo: {0}</value>
+  </data>
+  <data name="Shell_Msg_CouldntSaveAutoRejoin" xml:space="preserve">
+    <value>Não foi possível salvar a configuração de reentrada: {0}</value>
   </data>
   <data name="Shell_Msg_SourceExpired" xml:space="preserve">
     <value>{0} tem uma sessão expirada — reautentique primeiro.</value>
@@ -3215,5 +3242,32 @@ Os alertas vão chegar nesse servidor — no seu celular também, desde que o Di
   </data>
   <data name="MainWindow_KnownRobloxIssuesTooltip" xml:space="preserve">
     <value>Problemas do próprio Roblox e o que fazer a respeito</value>
+  </data>
+  <data name="FlaggedLaunchWindow_Title" xml:space="preserve">
+    <value>Entrar via sua conta principal</value>
+  </data>
+  <data name="Shell_FlaggedLaunch_Body" xml:space="preserve">
+    <value>{0} entra via sua conta principal, que ainda não está em um jogo.</value>
+  </data>
+  <data name="Shell_FlaggedLaunch_BodyMany" xml:space="preserve">
+    <value>{0} entram via sua conta principal, que ainda não está em um jogo.</value>
+  </data>
+  <data name="FlaggedLaunchWindow_FollowAnother" xml:space="preserve">
+    <value>Seguir outra conta</value>
+  </data>
+  <data name="FlaggedLaunchWindow_Follow" xml:space="preserve">
+    <value>Seguir</value>
+  </data>
+  <data name="FlaggedLaunchWindow_NobodyJoinable" xml:space="preserve">
+    <value>Nenhuma das suas contas está agora em um jogo em que você possa entrar.</value>
+  </data>
+  <data name="FlaggedLaunchWindow_ItsFixed" xml:space="preserve">
+    <value>Resolvido, entrar direto</value>
+  </data>
+  <data name="FlaggedLaunchWindow_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Shell_Msg_FlaggedLeftStopped" xml:space="preserve">
+    <value>{0}: sem iniciar, ninguém que possa ser seguido está em um jogo.</value>
   </data>
 </root>
